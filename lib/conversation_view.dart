@@ -26,7 +26,6 @@ class _ConversationViewState extends State<ConversationView> {
   List<MessageData> messages = <MessageData>[
     MessageData("sender", true),
     MessageData("receiver", false),
-    MessageData("sender", true),
     MessageData("receiver", false),
     MessageData("sender", true),
     MessageData("receiver", false),
@@ -48,7 +47,6 @@ class _ConversationViewState extends State<ConversationView> {
     MessageData("receiver", false),
     MessageData("sender", true),
     MessageData("receiver", false),
-    MessageData("sender", true),
     MessageData("receiver", false),
     MessageData("sender", true),
     MessageData("receiver", false),
