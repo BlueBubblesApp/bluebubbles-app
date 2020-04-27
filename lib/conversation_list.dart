@@ -7,24 +7,18 @@ import 'package:flutter/material.dart';
 import 'hex_color.dart';
 import 'settings.dart';
 import 'settings_panel.dart';
+import 'singleton.dart';
 
 class ConversationList extends StatefulWidget {
-  final Function onPressed;
-  final Settings settings;
-  final Function saveSettings;
-  final Function sendSocketMessage;
-  final Function requestMessages;
-  final List chats;
+  // final Function onPressed;
+  // final Settings settings;
+  // final Function saveSettings;
+  // final Function requestMessages;
+  // final List chats;
+  // final List contacts;
+  // final Function sendMessage;
 
-  ConversationList({
-    Key key,
-    this.onPressed,
-    this.settings,
-    this.saveSettings,
-    this.sendSocketMessage,
-    this.chats,
-    this.requestMessages,
-  }) : super(key: key);
+  ConversationList({Key key}) : super(key: key);
   @override
   _ConversationListState createState() => _ConversationListState();
 }
@@ -36,6 +30,9 @@ class _ConversationListState extends State<ConversationList> {
   @override
   void initState() {
     super.initState();
+    Singleton().subscribe(() {
+      setState(() {});
+    });
 
     _scrollController = ScrollController()
       ..addListener(
@@ -155,10 +152,7 @@ class _ConversationListState extends State<ConversationList> {
                               Navigator.of(context).push(
                                 CupertinoPageRoute(
                                   builder: (BuildContext context) {
-                                    return SettingsPanel(
-                                      settings: widget.settings,
-                                      saveSettings: widget.saveSettings,
-                                    );
+                                    return SettingsPanel();
                                   },
                                 ),
                               );
@@ -210,11 +204,10 @@ class _ConversationListState extends State<ConversationList> {
               (context, index) {
                 return ConversationTile(
                   key: Key(index.toString()),
-                  data: widget.chats[index],
-                  requestMessages: widget.requestMessages,
+                  data: Singleton().chats[index],
                 );
               },
-              childCount: widget.chats.length,
+              childCount: Singleton().chats.length,
             ),
           )
         ],

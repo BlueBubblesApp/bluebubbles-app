@@ -3,6 +3,7 @@ import 'dart:ui';
 
 // import 'package:bluebubble_messages/qr_code_scanner.dart';
 import 'package:bluebubble_messages/settings.dart';
+import 'package:bluebubble_messages/singleton.dart';
 import 'package:flutter/cupertino.dart';
 
 import './hex_color.dart';
@@ -11,10 +12,10 @@ import 'package:flutter/material.dart';
 import 'qr_code_scanner.dart';
 
 class SettingsPanel extends StatefulWidget {
-  final Settings settings;
-  final Function saveSettings;
+  // final Settings settings;
+  // final Function saveSettings;
 
-  SettingsPanel({Key key, this.settings, this.saveSettings}) : super(key: key);
+  SettingsPanel({Key key}) : super(key: key);
 
   @override
   _SettingsPanelState createState() => _SettingsPanelState();
@@ -25,7 +26,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
   @override
   void initState() {
     super.initState();
-    _settingsCopy = widget.settings;
+    _settingsCopy = Singleton().settings;
   }
 
   @override
@@ -77,7 +78,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                 };
                 _settingsCopy.serverAddress = fcmData[0];
                 debugPrint(_settingsCopy.fcmAuthData.toString());
-                widget.saveSettings(_settingsCopy);
+                Singleton().saveSettings(_settingsCopy);
               }
             },
           ),
@@ -128,7 +129,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                         child: Text("Ok"),
                         onPressed: () {
                           _settingsCopy.serverAddress = _controller.text;
-                          widget.saveSettings(_settingsCopy);
+                          Singleton().saveSettings(_settingsCopy);
                           Navigator.of(context).pop();
                         },
                       ),

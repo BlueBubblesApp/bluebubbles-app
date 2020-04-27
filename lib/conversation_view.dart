@@ -3,21 +3,12 @@ import 'dart:ui';
 import './hex_color.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-
-class MessageData {
-  String message;
-  String date;
-  String hasRead;
-  bool sentBySelf;
-  MessageData(String _message, bool _sentBySelf) {
-    message = _message;
-    sentBySelf = _sentBySelf;
-  }
-}
+import './main.dart';
 
 class ConversationView extends StatefulWidget {
   final List messages;
-  ConversationView({Key key, this.messages}) : super(key: key);
+  final data;
+  ConversationView({Key key, this.messages, this.data}) : super(key: key);
 
   @override
   _ConversationViewState createState() => _ConversationViewState();
@@ -25,11 +16,13 @@ class ConversationView extends StatefulWidget {
 
 class _ConversationViewState extends State<ConversationView> {
   List messages = [];
+  TextEditingController _controller;
 
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
+    _controller = TextEditingController();
   }
 
   @override
@@ -135,6 +128,7 @@ class _ConversationViewState extends State<ConversationView> {
                           children: <Widget>[
                             TextField(
                               // autofocus: true,
+                              controller: _controller,
                               scrollPhysics: BouncingScrollPhysics(),
                               style: TextStyle(
                                 color: Colors.white,
@@ -161,7 +155,12 @@ class _ConversationViewState extends State<ConversationView> {
                                   horizontal: 0,
                                 ),
                                 color: Colors.blue,
-                                onPressed: () {},
+                                onPressed: () {
+                                  Map params = Map();
+                                  params["guid"] = widget.data["guid"];
+                                  params["message"] = _controller.text;
+                                  // widget.sendMessage(params);
+                                },
                                 child: Icon(
                                   Icons.arrow_upward,
                                   color: Colors.white,
@@ -196,11 +195,44 @@ class Message extends StatelessWidget {
   Widget build(BuildContext context) {
     String body = message["text"].toString();
 
-    return Row(
-      mainAxisAlignment:
-          this.fromSelf ? MainAxisAlignment.end : MainAxisAlignment.start,
+    return Stack(
+      alignment: this.fromSelf
+          ? AlignmentDirectional.bottomEnd
+          : AlignmentDirectional.bottomStart,
       children: <Widget>[
+        Stack(
+          alignment: AlignmentDirectional.bottomEnd,
+          children: <Widget>[
+            Container(
+              margin: EdgeInsets.only(bottom: 1),
+              width: 20,
+              height: 15,
+              decoration: BoxDecoration(
+                color: Colors.blue,
+                borderRadius:
+                    BorderRadius.only(bottomLeft: Radius.circular(12)),
+              ),
+            ),
+            Container(
+              margin: EdgeInsets.only(bottom: 2),
+              height: 28,
+              width: 11,
+              decoration: BoxDecoration(
+                  color: Colors.black,
+                  borderRadius:
+                      BorderRadius.only(bottomLeft: Radius.circular(8))),
+            ),
+            Container(
+              height: 30,
+              width: 6,
+              color: Colors.black,
+            )
+          ],
+        ),
         Container(
+          margin: EdgeInsets.symmetric(
+            horizontal: 10,
+          ),
           constraints: BoxConstraints(
             maxWidth: MediaQuery.of(context).size.width * 3 / 4,
           ),

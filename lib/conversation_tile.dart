@@ -1,15 +1,20 @@
+import 'dart:async';
+
+import 'package:bluebubble_messages/singleton.dart';
+import 'package:contacts_service/contacts_service.dart';
+
 import './hex_color.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
+import 'SQL/Models/Chats.dart';
+import 'SQL/Repositories/RepoService.dart';
 import 'conversation_view.dart';
 
 class ConversationTile extends StatefulWidget {
   final data;
-  final Function requestMessages;
 
-  ConversationTile({Key key, this.data, this.requestMessages})
-      : super(key: key);
+  ConversationTile({Key key, this.data}) : super(key: key);
 
   @override
   _ConversationTileState createState() => _ConversationTileState();
@@ -22,19 +27,56 @@ class _ConversationTileState extends State<ConversationTile> {
   void initState() {
     // TODO: implement initState
     super.initState();
+    debugPrint(widget.data.toString());
     if (widget.data == null || widget.data["displayName"] == "") {
       // title = widget.data["participants"]
       // .map((participant) => participant["id"] + ", ");
       String _title = "";
       for (int i = 0; i < widget.data["participants"].length; i++) {
         var participant = widget.data["participants"][i];
-        _title += (participant["id"] + ", ").toString();
+        // _title += (participant["id"] + ", ").toString();
+        _title = _convertNumberToContact(participant["id"]) + ", ";
       }
-      debugPrint(_title.toString());
+      // debugPrint(_title.toString());
       title = _title;
+      Chat chat = Chat(widget.data["guid"], title,
+          widget.data["lastMessageTimestamp"], widget.data["chatIdentifier"]);
+      RepositoryServiceChats.addChat(chat);
     } else {
       title = widget.data["displayName"];
     }
+  }
+
+  String _convertNumberToContact(String id) {
+    if (Singleton().contacts == null) return id;
+    String contactTitle = id;
+    Singleton().contacts.forEach((Contact contact) {
+      contact.phones.forEach((Item item) {
+        String formattedNumber = item.value.replaceAll(RegExp(r'[-() ]'), '');
+        if (formattedNumber == id || "+1" + formattedNumber == id) {
+          contactTitle = contact.displayName;
+          return contactTitle;
+        }
+      });
+      contact.emails.forEach((Item item) {
+        if (item.value == id) {
+          contactTitle = contact.displayName;
+          return contactTitle;
+        }
+      });
+    });
+    return contactTitle;
+  }
+
+  Future _getMessages(Map params) {
+    Completer completer = new Completer();
+    Singleton().socket.emit("get-chat-messages", [params]);
+    Singleton().socket.on("chat-messages", (data) {
+      debugPrint("got messages");
+      if (completer != null) completer.complete(data["data"]);
+      completer = null;
+    });
+    return completer.future;
   }
 
   @override
@@ -42,25 +84,22 @@ class _ConversationTileState extends State<ConversationTile> {
     return Material(
       color: Colors.black,
       child: InkWell(
-        onTap: () {
-          if (widget.data["chatIdentifier"] != null) {
-            widget.requestMessages({
-              "identifier": widget.data["chatIdentifier"],
-              "limit": 100,
-            }, (data) {
-              Navigator.of(context).push(
-                CupertinoPageRoute(
-                  builder: (BuildContext context) {
-                    return ConversationView(
-                      messages: data,
-                    );
-                  },
-                ),
-              );
-            });
-          } else {
-            debugPrint("widget chatIdentifier is null");
-          }
+        onTap: () async {
+          debugPrint(widget.data["guid"].toString());
+          Map params = new Map();
+          params["identifier"] = widget.data["guid"].toString();
+          params["limit"] = 50;
+          var data = await _getMessages(params);
+          Navigator.of(context).push(
+            CupertinoPageRoute(
+              builder: (BuildContext context) {
+                return ConversationView(
+                  messages: data,
+                  data: widget.data,
+                );
+              },
+            ),
+          );
         },
         child: ListTile(
           title: Text(
