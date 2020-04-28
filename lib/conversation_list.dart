@@ -31,7 +31,7 @@ class _ConversationListState extends State<ConversationList> {
   void initState() {
     super.initState();
     Singleton().subscribe(() {
-      setState(() {});
+      if (this.mounted) setState(() {});
     });
 
     _scrollController = ScrollController()

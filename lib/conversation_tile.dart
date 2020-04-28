@@ -28,21 +28,29 @@ class _ConversationTileState extends State<ConversationTile> {
   void initState() {
     // TODO: implement initState
     super.initState();
+    Singleton().subscribe(() {
+      if (this.mounted) _updateTile();
+    });
+  }
+
+  void _updateTile() {
+    RepositoryServiceMessage.getMessagesFromChat(widget.chat.guid)
+        .then((List<Message> messages) {
+      subtitle = messages[0].text;
+      // lastMessageTime =
+      DateTime date = new DateTime.fromMillisecondsSinceEpoch(
+          messages[0].dateCreated * 1000);
+      lastMessageTime =
+          TimeOfDay(hour: date.hour, minute: date.minute).format(context);
+      setState(() {});
+    });
   }
 
   @override
   Future<void> didChangeDependencies() async {
     // TODO: implement didChangeDependencies
     super.didChangeDependencies();
-    List<Message> messages =
-        await RepositoryServiceMessage.getMessagesFromChat(widget.chat.guid);
-    subtitle = messages[0].text;
-    // lastMessageTime =
-    DateTime date =
-        new DateTime.fromMillisecondsSinceEpoch(messages[0].dateCreated * 1000);
-    lastMessageTime =
-        TimeOfDay(hour: date.hour, minute: date.minute).format(context);
-    setState(() {});
+    _updateTile();
   }
 
   @override

@@ -74,14 +74,15 @@ class _SettingsPanelState extends State<SettingsPanel> {
               }
               if (fcmData != null) {
                 _settingsCopy.fcmAuthData = {
-                  "project_id": fcmData[1],
-                  "storage_bucket": fcmData[2],
-                  "api_key": fcmData[3],
-                  "firebase_url": fcmData[4],
-                  "client_id": fcmData[5],
-                  "application_id": fcmData[6],
+                  "project_id": fcmData[2],
+                  "storage_bucket": fcmData[3],
+                  "api_key": fcmData[4],
+                  "firebase_url": fcmData[5],
+                  "client_id": fcmData[6],
+                  "application_id": fcmData[7],
                 };
-                _settingsCopy.serverAddress = fcmData[0];
+                _settingsCopy.guidAuthKey = fcmData[0];
+                _settingsCopy.serverAddress = fcmData[1];
                 debugPrint(_settingsCopy.fcmAuthData.toString());
                 Singleton().saveSettings(_settingsCopy);
               }

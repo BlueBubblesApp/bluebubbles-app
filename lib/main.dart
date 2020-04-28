@@ -64,9 +64,8 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
         .addPostFrameCallback((_) => Singleton().getSavedSettings());
     WidgetsBinding.instance.addObserver(this);
     _setupNotifications();
-    // Singleton().startSocketIO();
     Singleton().subscribe(() {
-      setState(() {});
+      if (this.mounted) setState(() {});
     });
   }
 
@@ -99,12 +98,12 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
         return new Future.value("");
       case "new-message":
         Map<String, dynamic> data = jsonDecode(call.arguments);
+        Singleton().handleNewMessage(data);
         debugPrint("New Message: " + data.toString());
         String chat = data["from"]["id"].toString();
         String message = data["text"].toString();
         debugPrint("New notification: " + data.toString());
 
-        RepositoryServiceMessage.addMessagesToChat([new Message.Message(data)]);
         await _showNotificationWithDefaultSound(0, chat, message);
         return new Future.value("");
     }

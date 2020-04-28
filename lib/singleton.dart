@@ -1,9 +1,12 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
+import 'dart:typed_data';
 
 // import 'package:adhara_socket_io/manager.dart';
 // import 'package:adhara_socket_io/options.dart';
 // import 'package:adhara_socket_io/socket.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'package:bluebubble_messages/SQL/Models/Chats.dart';
 import 'package:bluebubble_messages/SQL/Repositories/RepoService.dart';
@@ -37,6 +40,7 @@ class Singleton {
   Settings settings;
   SharedPreferences sharedPreferences;
   String token;
+  Directory appDocDir;
 
   //for setup, when the user has no saved db
   Completer setupProgress = new Completer();
@@ -61,6 +65,7 @@ class Singleton {
   }
 
   void getSavedSettings() async {
+    appDocDir = await getApplicationDocumentsDirectory();
     _singleton.sharedPreferences = await SharedPreferences.getInstance();
     var result = _singleton.sharedPreferences.getString('Settings');
     if (result != null) {
@@ -80,7 +85,7 @@ class Singleton {
     _singleton.authFCM();
   }
 
-  void startSocketIO() async {
+  startSocketIO() async {
     if (_singleton.chats.length == 0) {
       List<Chat> _chats = await RepositoryServiceChats.getAllChats();
       if (_chats.length != 0) {
@@ -97,6 +102,7 @@ class Singleton {
       _singleton.socket =
           IO.io(_singleton.settings.serverAddress, <String, dynamic>{
         'transports': ['websocket'],
+        'query': 'guid=${_singleton.settings.guidAuthKey}',
       });
 
       debugPrint("connecting...");
@@ -170,5 +176,51 @@ class Singleton {
       token = "Failed to get token: " + e.toString();
       debugPrint(token);
     }
+  }
+
+  void handleNewMessage(Map<String, dynamic> data) {
+    Message message = new Message(data);
+    Map<String, dynamic> params = new Map();
+    RepositoryServiceMessage.addMessagesToChat([message]);
+    params["identifier"] = message.chatGuid;
+    params["limit"] = 25;
+    startSocketIO();
+    _singleton.socket.emitWithAck("get-chat-messages", params,
+        ack: (_messages) {
+      // closeSocket();
+      List dataMessages = _messages["data"];
+      List<Message> messages = <Message>[];
+      for (int i = 0; i < dataMessages.length; i++) {
+        messages.add(new Message(dataMessages[i]));
+      }
+      RepositoryServiceMessage.addMessagesToChat(messages)
+          .then((void newMessages) {
+        notify();
+      });
+    });
+  }
+
+  Future getImage(Map attachment, String messageGuid) {
+    Completer completer = new Completer();
+    Map<String, dynamic> params = new Map();
+    String guid = attachment["guid"];
+    params["identifier"] = guid;
+    debugPrint("getting attachment");
+    _singleton.socket.emitWithAck("get-attachment", params, ack: (data) async {
+      debugPrint("got attachment: " + data.toString());
+      String fileName = data["data"]["transferName"];
+      String appDocPath = _singleton.appDocDir.path;
+      String pathName = "$appDocPath/$guid/$fileName";
+
+      File file = await writeToFile(data["data"]["data"], pathName);
+      completer.complete(file);
+    });
+    return completer.future;
+  }
+
+  Future<File> writeToFile(Uint8List data, String path) async {
+    // final buffer = data.buffer;
+    File file = await new File(path).create(recursive: true);
+    return file.writeAsBytes(data);
   }
 }

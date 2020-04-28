@@ -1,7 +1,14 @@
+import 'dart:convert';
+import 'dart:io';
 import 'dart:ui';
+import 'dart:math';
+import 'dart:typed_data';
 
 import 'package:bluebubble_messages/SQL/Models/Chats.dart';
+import 'package:bluebubble_messages/send_transition.dart';
 import 'package:bluebubble_messages/singleton.dart';
+import 'package:implicitly_animated_reorderable_list/implicitly_animated_reorderable_list.dart';
+import 'package:path_provider/path_provider.dart';
 
 import './hex_color.dart';
 import 'package:flutter/cupertino.dart';
@@ -23,6 +30,8 @@ class _ConversationViewState extends State<ConversationView> {
   List<Message> messages = <Message>[];
   TextEditingController _controller;
 
+  // final animatedListKey = GlobalKey<AnimatedListState>();
+
   @override
   void initState() {
     // TODO: implement initState
@@ -35,12 +44,21 @@ class _ConversationViewState extends State<ConversationView> {
     // TODO: implement didChangeDependencies
     super.didChangeDependencies();
     _updateMessages();
+    Singleton().subscribe(() {
+      if (this.mounted) _updateMessages();
+    });
   }
 
   void _updateMessages() async {
-    messages =
-        await RepositoryServiceMessage.getMessagesFromChat(widget.chat.guid);
-    setState(() {});
+    RepositoryServiceMessage.getMessagesFromChat(widget.chat.guid).then(
+      (List<Message> _messages) {
+        setState(
+          () {
+            messages = _messages;
+          },
+        );
+      },
+    );
   }
 
   @override
@@ -74,20 +92,46 @@ class _ConversationViewState extends State<ConversationView> {
       body: Stack(
         alignment: AlignmentDirectional.bottomCenter,
         children: <Widget>[
-          ListView.builder(
-            reverse: true,
+          // ListView.builder(
+          //   reverse: true,
+          //   physics:
+          //       AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+          //   itemCount: messages.length,
+          //   itemBuilder: (BuildContext context, int index) {
+          //     if (index == 0) {
+          //       return SizedBox(
+          //         height: 80,
+          //       );
+          //     }
+          //     return MessageWidget(
+          //       fromSelf: messages[index - 1].isFromMe,
+          //       message: messages[index - 1],
+          //     );
+          //   },
+          // ),
+          ImplicitlyAnimatedList<Message>(
             physics:
                 AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-            itemCount: messages.length,
-            itemBuilder: (BuildContext context, int index) {
+            reverse: true,
+            items: messages,
+            areItemsTheSame: (a, b) => a.guid == b.guid,
+            insertDuration: Duration(milliseconds: 250),
+            itemBuilder: (BuildContext context, Animation animation,
+                Message item, int index) {
               if (index == 0) {
                 return SizedBox(
                   height: 80,
                 );
               }
-              return MessageWidget(
-                fromSelf: messages[index - 1].isFromMe,
-                message: messages[index - 1],
+              return SlideTransition(
+                key: Key(messages[index - 1].guid),
+                position: animation.drive(
+                    Tween<Offset>(begin: Offset(1, 0), end: Offset.zero)
+                        .chain(CurveTween(curve: Curves.easeInOut))),
+                child: MessageWidget(
+                  fromSelf: messages[index - 1].isFromMe,
+                  message: messages[index - 1],
+                ),
               );
             },
           ),
@@ -168,7 +212,9 @@ class _ConversationViewState extends State<ConversationView> {
                                   Map params = Map();
                                   params["guid"] = widget.chat.guid;
                                   params["message"] = _controller.text;
-                                  // Singleton().socket.emit("")
+                                  Singleton()
+                                      .socket
+                                      .emit("send-message", params);
                                   // widget.sendMessage(params);
                                 },
                                 child: Icon(
@@ -196,17 +242,52 @@ class _ConversationViewState extends State<ConversationView> {
   }
 }
 
-class MessageWidget extends StatelessWidget {
+class MessageWidget extends StatefulWidget {
   final fromSelf;
   final Message message;
-  const MessageWidget({Key key, this.fromSelf, this.message}) : super(key: key);
+  MessageWidget({Key key, this.fromSelf, this.message}) : super(key: key);
+
+  @override
+  _messageState createState() => _messageState();
+}
+
+class _messageState extends State<MessageWidget>
+    with AutomaticKeepAliveClientMixin {
+  String body;
+  List attachments;
+  List images = [];
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    attachments = jsonDecode(widget.message.attachments);
+    body = widget.message.text.substring(
+        attachments.length); //ensure that the "obj" text doesn't appear
+    if (attachments.length > 0) {
+      debugPrint(widget.message.text);
+      debugPrint(widget.message.attachments);
+      for (int i = 0; i < attachments.length; i++) {
+        String transferName = attachments[i]["transferName"];
+        String guid = attachments[i]["guid"];
+        String appDocPath = Singleton().appDocDir.path;
+        String pathName = "$appDocPath/$guid/$transferName";
+
+        if (FileSystemEntity.typeSync(pathName) !=
+            FileSystemEntityType.notFound) {
+          images.add(File(pathName));
+        } else {
+          images.add(Singleton().getImage(attachments[i], widget.message.guid));
+        }
+      }
+      setState(() {});
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    String body = message.text.toString();
-
     return Stack(
-      alignment: this.fromSelf
+      alignment: widget.fromSelf
           ? AlignmentDirectional.bottomEnd
           : AlignmentDirectional.bottomStart,
       children: <Widget>[
@@ -249,18 +330,60 @@ class MessageWidget extends StatelessWidget {
           padding: EdgeInsets.all(10),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
-            color: fromSelf ? Colors.blue : HexColor('26262a'),
+            color: widget.fromSelf ? Colors.blue : HexColor('26262a'),
           ),
           // color: Colors.blue,
           // height: 20,
-          child: Text(
-            body,
-            style: TextStyle(
-              color: Colors.white,
-            ),
+          child: Column(
+            children: _constructContent(),
           ),
         ),
       ],
     );
   }
+
+  List<Widget> _constructContent() {
+    List<Widget> content = <Widget>[];
+    for (int i = 0; i < images.length; i++) {
+      if (images[i] is File) {
+        content.add(Image.file(images[i]));
+      } else {
+        content.add(
+          FutureBuilder(
+            builder: (BuildContext context, AsyncSnapshot snapshot) {
+              if (snapshot.connectionState == ConnectionState.done) {
+                if (snapshot.hasData) {
+                  debugPrint("loaded image");
+                  return Image.file(snapshot.data);
+                } else {
+                  return Text(
+                    "Error loading",
+                    style: TextStyle(color: Colors.white),
+                  );
+                }
+              } else {
+                return CircularProgressIndicator();
+              }
+            },
+            future: images[i],
+          ),
+        );
+      }
+    }
+    if (body.length > 0) {
+      content.add(
+        Text(
+          body,
+          style: TextStyle(
+            color: Colors.white,
+          ),
+        ),
+      );
+    }
+    return content;
+  }
+
+  @override
+  // TODO: implement wantKeepAlive
+  bool get wantKeepAlive => true;
 }

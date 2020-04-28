@@ -1,5 +1,6 @@
 import 'package:bluebubble_messages/SQL/Models/Chats.dart';
 import 'package:bluebubble_messages/SQL/Models/Messages.dart';
+import 'package:bluebubble_messages/singleton.dart';
 import 'package:flutter/material.dart';
 
 import 'DatabaseCreator.dart';
@@ -153,7 +154,7 @@ class RepositoryServiceMessage {
       attachments,
       isFromMe
     )
-    VALUES (?,?,?,?,?,?) ORDER BY dateCreated ''';
+    VALUES (?,?,?,?,?,?)''';
       List<dynamic> params = [
         messages[i].guid,
         messages[i].text,
@@ -163,13 +164,15 @@ class RepositoryServiceMessage {
         messages[i].isFromMe
       ];
       List existingMessage = await getSpecificMessage(messages[i].guid);
-      if (existingMessage != null && existingMessage.length > 1) {
+      if (existingMessage != null && existingMessage.length > 0) {
         debugPrint("chat " + messages[i].guid + "already exists");
-        return;
+      } else {
+        final result = await db.rawInsert(sql, params);
+        DatabaseCreator.databaseLog('Add message', sql, null, result, params);
       }
-
-      final result = await db.rawInsert(sql, params);
-      DatabaseCreator.databaseLog('Add message', sql, null, result, params);
+      if (i == messages.length - 1) {
+        Singleton().notify();
+      }
     }
   }
 }

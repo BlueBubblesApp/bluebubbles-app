@@ -1,10 +1,5 @@
 import 'dart:convert';
 
-import 'package:bluebubble_messages/SQL/Repositories/RepoService.dart';
-import 'package:contacts_service/contacts_service.dart';
-
-import '../../singleton.dart';
-
 class Message {
   String guid;
   String text;
