@@ -199,12 +199,49 @@ class _ConversationListState extends State<ConversationList> {
               ),
             ),
           ),
+          SliverToBoxAdapter(
+            child: FutureBuilder(
+              future: Singleton().setup(),
+              builder: (BuildContext context, AsyncSnapshot snapshot) {
+                if (snapshot.connectionState == ConnectionState.done) {
+                  // return ListView.builder(
+                  //   itemBuilder: (BuildContext context, int index) {
+                  //     return ConversationTile(
+                  //       key: Key(index.toString()),
+                  //       chat: Singleton().chats[index],
+                  //     );
+                  //   },
+                  //   itemCount: Singleton().chats.length,
+                  // );
+                  return Container();
+                } else {
+                  return Column(
+                    children: <Widget>[
+                      SizedBox(
+                        height: 3.5,
+                        child: LinearProgressIndicator(),
+                      ),
+                      Container(
+                        height: 20,
+                      ),
+                      Text(
+                        "Setting things up, this make take a while...",
+                        style: TextStyle(
+                          color: Colors.white,
+                        ),
+                      )
+                    ],
+                  );
+                }
+              },
+            ),
+          ),
           SliverList(
             delegate: SliverChildBuilderDelegate(
               (context, index) {
                 return ConversationTile(
                   key: Key(index.toString()),
-                  data: Singleton().chats[index],
+                  chat: Singleton().chats[index],
                 );
               },
               childCount: Singleton().chats.length,

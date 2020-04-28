@@ -58,15 +58,20 @@ class _SettingsPanelState extends State<SettingsPanel> {
             title: "Scan QR Code From Mac Server",
             trailing: Icon(Icons.camera, color: HexColor('26262a')),
             onTap: () async {
-              var fcmData = jsonDecode(
-                await Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (BuildContext context) {
-                      return QRCodeScanner();
-                    },
+              var fcmData;
+              try {
+                fcmData = jsonDecode(
+                  await Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (BuildContext context) {
+                        return QRCodeScanner();
+                      },
+                    ),
                   ),
-                ),
-              );
+                );
+              } catch (e) {
+                return;
+              }
               if (fcmData != null) {
                 _settingsCopy.fcmAuthData = {
                   "project_id": fcmData[1],

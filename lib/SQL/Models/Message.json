@@ -1,0 +1,7 @@
+{
+    guid: 0663EA09-C4E1-482F-8608-451A744577C6, text: test, from: {messages: [], chats: [], id: alma.mata@sbcglobal.net, country: US, uncanonicalizedId: null
+    }, chats: [
+        {guid: iMessage;-;alma.mata@sbcglobal.net, participants: [], messages: [], style: 45, chatIdentifier: alma.mata@sbcglobal.net, isArchived: false, displayName: , groupId: B35A9B46-5A02-4CF1-87F7-0FC6809420C2, lastMessageTimestamp: null
+        }
+    ], attachments: [], subject: null, country: null, error: false, dateCreated: 1587862186000, dateRead: null, dateDelivered: 1587862188000, isFromMe: true, isDelayed: false, isAutoReply: false, isSystemMessage: false, isServiceMessage: false, isForward: false, isArchived: false, cacheRoomnames: null, isAudioMessage: false, datePlayed: null, itemType: 0, groupTitle: null, isExpired: false, associatedMessageGuid: null, associatedMessageType: null, expressiveSendStyleId: null, timeExpressiveSendStyleId: null
+}

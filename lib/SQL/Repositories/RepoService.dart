@@ -1,4 +1,6 @@
 import 'package:bluebubble_messages/SQL/Models/Chats.dart';
+import 'package:bluebubble_messages/SQL/Models/Messages.dart';
+import 'package:flutter/material.dart';
 
 import 'DatabaseCreator.dart';
 
@@ -15,19 +17,19 @@ class RepositoryServiceChats {
     return todos;
   }
 
-  static Future<Chat> getChat(String guid) async {
+  static Future<List<Map<String, dynamic>>> getChat(String guid) async {
     //final sql = '''SELECT * FROM ${DatabaseCreator.todoTable}
     //WHERE ${DatabaseCreator.id} = $id''';
     //final data = await db.rawQuery(sql);
 
     final sql = '''SELECT * FROM ${DatabaseCreator.chatsTable}
-    WHERE guid = ?''';
+    WHERE guid = ? ''';
 
     List<dynamic> params = [guid];
     final data = await db.rawQuery(sql, params);
 
-    final todo = Chat.fromJson(data.first);
-    return todo;
+    // final todo = Chat.fromJson(data.first);
+    return data;
   }
 
   static Future<void> addChat(Chat chat) async {
@@ -51,16 +53,22 @@ class RepositoryServiceChats {
       guid,
       title,
       lastMessageTimeStamp,
-      chatIdentifier,
+      chatIdentifier
       
     )
-    VALUES (?,?,?,?,?)''';
+    VALUES (?,?,?,?)''';
     List<dynamic> params = [
       chat.guid,
       chat.title,
       chat.lastMessageTimeStamp,
       chat.chatIdentifier
     ];
+    List existingChats = await getChat(chat.guid);
+    if (existingChats.length > 0) {
+      debugPrint("chat " + chat.guid + "already exists");
+      return;
+    }
+
     final result = await db.rawInsert(sql, params);
     DatabaseCreator.databaseLog('Add chat', sql, null, result, params);
   }
@@ -107,4 +115,61 @@ class RepositoryServiceChats {
   //   int idForNewItem = count++;
   //   return idForNewItem;
   // }
+}
+
+class RepositoryServiceMessage {
+  static Future<List<Message>> getMessagesFromChat(String chatGuid) async {
+    var sql = '''SELECT * FROM ${DatabaseCreator.messagesTable}
+    WHERE chatGuid = ? ORDER BY dateCreated DESC''';
+
+    List<dynamic> params = [chatGuid];
+    final data = await db.rawQuery(sql, params);
+    List<Message> messages = List();
+
+    for (final node in data) {
+      final message = Message.fromJson(node);
+      messages.add(message);
+    }
+    return messages;
+  }
+
+  static Future<List<Map<String, dynamic>>> getSpecificMessage(
+      String guid) async {
+    final sql =
+        '''SELECT * FROM ${DatabaseCreator.messagesTable} WHERE guid = ?''';
+    List<dynamic> params = [guid];
+    final data = await db.rawQuery(sql, params);
+    return data;
+  }
+
+  static Future<void> addMessagesToChat(List<Message> messages) async {
+    for (int i = 0; i < messages.length; i++) {
+      final sql = '''INSERT INTO ${DatabaseCreator.messagesTable}
+    (
+      guid,
+      text,
+      chatGuid,
+      dateCreated,
+      attachments,
+      isFromMe
+    )
+    VALUES (?,?,?,?,?,?) ORDER BY dateCreated ''';
+      List<dynamic> params = [
+        messages[i].guid,
+        messages[i].text,
+        messages[i].chatGuid,
+        messages[i].dateCreated,
+        messages[i].attachments,
+        messages[i].isFromMe
+      ];
+      List existingMessage = await getSpecificMessage(messages[i].guid);
+      if (existingMessage != null && existingMessage.length > 1) {
+        debugPrint("chat " + messages[i].guid + "already exists");
+        return;
+      }
+
+      final result = await db.rawInsert(sql, params);
+      DatabaseCreator.databaseLog('Add message', sql, null, result, params);
+    }
+  }
 }

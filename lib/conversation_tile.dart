@@ -8,75 +8,41 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import 'SQL/Models/Chats.dart';
+import 'SQL/Models/Messages.dart';
 import 'SQL/Repositories/RepoService.dart';
 import 'conversation_view.dart';
 
 class ConversationTile extends StatefulWidget {
-  final data;
+  final Chat chat;
 
-  ConversationTile({Key key, this.data}) : super(key: key);
+  ConversationTile({Key key, this.chat}) : super(key: key);
 
   @override
   _ConversationTileState createState() => _ConversationTileState();
 }
 
 class _ConversationTileState extends State<ConversationTile> {
-  String title = "";
-
+  String subtitle = "";
+  String lastMessageTime = "";
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
-    debugPrint(widget.data.toString());
-    if (widget.data == null || widget.data["displayName"] == "") {
-      // title = widget.data["participants"]
-      // .map((participant) => participant["id"] + ", ");
-      String _title = "";
-      for (int i = 0; i < widget.data["participants"].length; i++) {
-        var participant = widget.data["participants"][i];
-        // _title += (participant["id"] + ", ").toString();
-        _title = _convertNumberToContact(participant["id"]) + ", ";
-      }
-      // debugPrint(_title.toString());
-      title = _title;
-      Chat chat = Chat(widget.data["guid"], title,
-          widget.data["lastMessageTimestamp"], widget.data["chatIdentifier"]);
-      RepositoryServiceChats.addChat(chat);
-    } else {
-      title = widget.data["displayName"];
-    }
   }
 
-  String _convertNumberToContact(String id) {
-    if (Singleton().contacts == null) return id;
-    String contactTitle = id;
-    Singleton().contacts.forEach((Contact contact) {
-      contact.phones.forEach((Item item) {
-        String formattedNumber = item.value.replaceAll(RegExp(r'[-() ]'), '');
-        if (formattedNumber == id || "+1" + formattedNumber == id) {
-          contactTitle = contact.displayName;
-          return contactTitle;
-        }
-      });
-      contact.emails.forEach((Item item) {
-        if (item.value == id) {
-          contactTitle = contact.displayName;
-          return contactTitle;
-        }
-      });
-    });
-    return contactTitle;
-  }
-
-  Future _getMessages(Map params) {
-    Completer completer = new Completer();
-    Singleton().socket.emit("get-chat-messages", [params]);
-    Singleton().socket.on("chat-messages", (data) {
-      debugPrint("got messages");
-      if (completer != null) completer.complete(data["data"]);
-      completer = null;
-    });
-    return completer.future;
+  @override
+  Future<void> didChangeDependencies() async {
+    // TODO: implement didChangeDependencies
+    super.didChangeDependencies();
+    List<Message> messages =
+        await RepositoryServiceMessage.getMessagesFromChat(widget.chat.guid);
+    subtitle = messages[0].text;
+    // lastMessageTime =
+    DateTime date =
+        new DateTime.fromMillisecondsSinceEpoch(messages[0].dateCreated * 1000);
+    lastMessageTime =
+        TimeOfDay(hour: date.hour, minute: date.minute).format(context);
+    setState(() {});
   }
 
   @override
@@ -85,17 +51,14 @@ class _ConversationTileState extends State<ConversationTile> {
       color: Colors.black,
       child: InkWell(
         onTap: () async {
-          debugPrint(widget.data["guid"].toString());
-          Map params = new Map();
-          params["identifier"] = widget.data["guid"].toString();
-          params["limit"] = 50;
-          var data = await _getMessages(params);
+          debugPrint(widget.chat.guid.toString());
+          // List<Message>
+          debugPrint(widget.chat.guid);
           Navigator.of(context).push(
             CupertinoPageRoute(
               builder: (BuildContext context) {
                 return ConversationView(
-                  messages: data,
-                  data: widget.data,
+                  chat: widget.chat,
                 );
               },
             ),
@@ -103,7 +66,7 @@ class _ConversationTileState extends State<ConversationTile> {
         },
         child: ListTile(
           title: Text(
-            title,
+            widget.chat.title,
             style: TextStyle(
               color: Colors.white,
             ),
@@ -111,7 +74,7 @@ class _ConversationTileState extends State<ConversationTile> {
             overflow: TextOverflow.ellipsis,
           ),
           subtitle: Text(
-            "most recent message",
+            subtitle,
             style: TextStyle(
               color: HexColor('36363a'),
             ),
@@ -136,7 +99,7 @@ class _ConversationTileState extends State<ConversationTile> {
             ),
           ),
           trailing: Container(
-            width: 70,
+            width: 73,
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
@@ -144,7 +107,7 @@ class _ConversationTileState extends State<ConversationTile> {
                 Container(
                   padding: EdgeInsets.only(right: 10),
                   child: Text(
-                    "4:20",
+                    lastMessageTime,
                     style: TextStyle(
                       color: HexColor('36363a'),
                       fontSize: 10,

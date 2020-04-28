@@ -12,6 +12,8 @@ import './conversation_list.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'SQL/Models/Chats.dart';
+import 'SQL/Models/Messages.dart' as Message;
 import 'SQL/Repositories/DatabaseCreator.dart';
 import 'hex_color.dart';
 import 'settings.dart';
@@ -81,7 +83,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
       // Singleton().manager.clearInstance(Singleton().socket);
       Singleton().closeSocket();
     } else if (state == AppLifecycleState.resumed) {
-      // Singleton().startSocketIO();
+      Singleton().startSocketIO();
     }
   }
 
@@ -100,7 +102,9 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
         debugPrint("New Message: " + data.toString());
         String chat = data["from"]["id"].toString();
         String message = data["text"].toString();
-        // debugPrint("New notification: " + chat);
+        debugPrint("New notification: " + data.toString());
+
+        RepositoryServiceMessage.addMessagesToChat([new Message.Message(data)]);
         await _showNotificationWithDefaultSound(0, chat, message);
         return new Future.value("");
     }
@@ -152,6 +156,9 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
           // await _showNotificationWithDefaultSound(0, "test", "body");
+          debugPrint("getting chats");
+          List<Chat> chats = await RepositoryServiceChats.getAllChats();
+          debugPrint("got chats");
         },
       ),
       body: ConversationList(),

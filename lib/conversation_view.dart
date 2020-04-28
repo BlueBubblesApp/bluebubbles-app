@@ -1,21 +1,26 @@
 import 'dart:ui';
 
+import 'package:bluebubble_messages/SQL/Models/Chats.dart';
+import 'package:bluebubble_messages/singleton.dart';
+
 import './hex_color.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import './main.dart';
+import 'SQL/Models/Messages.dart';
+import 'SQL/Repositories/RepoService.dart';
 
 class ConversationView extends StatefulWidget {
-  final List messages;
-  final data;
-  ConversationView({Key key, this.messages, this.data}) : super(key: key);
+  // final data;
+  final Chat chat;
+  ConversationView({Key key, this.chat}) : super(key: key);
 
   @override
   _ConversationViewState createState() => _ConversationViewState();
 }
 
 class _ConversationViewState extends State<ConversationView> {
-  List messages = [];
+  List<Message> messages = <Message>[];
   TextEditingController _controller;
 
   @override
@@ -29,9 +34,13 @@ class _ConversationViewState extends State<ConversationView> {
   void didChangeDependencies() {
     // TODO: implement didChangeDependencies
     super.didChangeDependencies();
-    setState(() {
-      messages = widget.messages;
-    });
+    _updateMessages();
+  }
+
+  void _updateMessages() async {
+    messages =
+        await RepositoryServiceMessage.getMessagesFromChat(widget.chat.guid);
+    setState(() {});
   }
 
   @override
@@ -46,7 +55,7 @@ class _ConversationViewState extends State<ConversationView> {
         // elevation: 0,
         // title: Text("Title"),
         middle: Text(
-          "Title",
+          widget.chat.title,
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.normal),
         ),
         // leading: IconButton(
@@ -76,9 +85,9 @@ class _ConversationViewState extends State<ConversationView> {
                   height: 80,
                 );
               }
-              return Message(
-                fromSelf: messages[index]["isFromMe"],
-                message: messages[index],
+              return MessageWidget(
+                fromSelf: messages[index - 1].isFromMe,
+                message: messages[index - 1],
               );
             },
           ),
@@ -148,8 +157,8 @@ class _ConversationViewState extends State<ConversationView> {
                               ),
                             ),
                             ButtonTheme(
-                              minWidth: 40,
-                              height: 40,
+                              minWidth: 30,
+                              height: 30,
                               child: RaisedButton(
                                 padding: EdgeInsets.symmetric(
                                   horizontal: 0,
@@ -157,8 +166,9 @@ class _ConversationViewState extends State<ConversationView> {
                                 color: Colors.blue,
                                 onPressed: () {
                                   Map params = Map();
-                                  params["guid"] = widget.data["guid"];
+                                  params["guid"] = widget.chat.guid;
                                   params["message"] = _controller.text;
+                                  // Singleton().socket.emit("")
                                   // widget.sendMessage(params);
                                 },
                                 child: Icon(
@@ -186,14 +196,14 @@ class _ConversationViewState extends State<ConversationView> {
   }
 }
 
-class Message extends StatelessWidget {
+class MessageWidget extends StatelessWidget {
   final fromSelf;
-  final message;
-  const Message({Key key, this.fromSelf, this.message}) : super(key: key);
+  final Message message;
+  const MessageWidget({Key key, this.fromSelf, this.message}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    String body = message["text"].toString();
+    String body = message.text.toString();
 
     return Stack(
       alignment: this.fromSelf

@@ -7,6 +7,7 @@ Database db;
 
 class DatabaseCreator {
   static const chatsTable = 'chats';
+  static const messagesTable = 'messages';
 
   static void databaseLog(String functionName, String sql,
       [List<Map<String, dynamic>> selectQueryResult,
@@ -25,7 +26,7 @@ class DatabaseCreator {
   }
 
   Future<void> createChatsTable(Database db) async {
-    final todoSql = '''CREATE TABLE $chatsTable
+    final chatSql = '''CREATE TABLE $chatsTable
     (
       id INTEGER PRIMARY KEY,
       guid TEXT,
@@ -35,7 +36,22 @@ class DatabaseCreator {
       chatIdentifier TEXT
     )''';
 
-    await db.execute(todoSql);
+    await db.execute(chatSql);
+  }
+
+  Future<void> createMessagesTable(Database db) async {
+    final messageSql = '''CREATE TABLE $messagesTable
+    (
+      id INTEGER PRIMARY KEY,
+      guid TEXT,
+      text LONGTEXT,
+      chatGuid TEXT,
+      dateCreated INTEGER,
+      attachments TEXT,
+      isFromMe BIT DEFAULT 1
+    )''';
+
+    await db.execute(messageSql);
   }
 
   Future<String> getDatabasePath(String dbName) async {
@@ -59,5 +75,6 @@ class DatabaseCreator {
 
   Future<void> onCreate(Database db, int version) async {
     await createChatsTable(db);
+    await createMessagesTable(db);
   }
 }
