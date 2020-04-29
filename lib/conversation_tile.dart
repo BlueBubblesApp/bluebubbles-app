@@ -55,6 +55,7 @@ class _ConversationTileState extends State<ConversationTile> {
 
   @override
   Widget build(BuildContext context) {
+    String initials;
     return Material(
       color: Colors.black,
       child: InkWell(
@@ -101,7 +102,7 @@ class _ConversationTileState extends State<ConversationTile> {
                 borderRadius: BorderRadius.circular(30),
               ),
               child: Container(
-                child: Text("BW"),
+                child: Text("${widget.chat.title[0]}"),
                 alignment: AlignmentDirectional.center,
               ),
             ),

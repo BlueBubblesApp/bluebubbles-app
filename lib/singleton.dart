@@ -89,6 +89,22 @@ class Singleton {
     _singleton.startSocketIO();
   }
 
+  void socketStatusUpdate(data) {
+    switch (data) {
+      case "connect":
+        debugPrint("connected");
+        authFCM();
+        syncChats();
+        return;
+      case "disconnect":
+        debugPrint("disconnected");
+        return;
+      default:
+        return;
+    }
+    // debugPrint("update status: ${data.toString()}");
+  }
+
   startSocketIO() async {
     if (_singleton.chats.length == 0) {
       List<Chat> _chats = await RepositoryServiceChats.getAllChats();
@@ -105,14 +121,12 @@ class Singleton {
     try {
       _singleton.socket = SocketIOManager().createSocketIO(
           _singleton.settings.serverAddress, "/",
-          query: "guid=${_singleton.settings.guidAuthKey}");
+          query: "guid=${_singleton.settings.guidAuthKey}",
+          socketStatusCallback: socketStatusUpdate);
       _singleton.socket.init();
       _singleton.socket.connect();
-      _singleton.socket.subscribe("connected", (data) {
-        debugPrint("connected");
-        authFCM();
-        syncChats();
-      });
+      // _singleton.socket.subscribe("connected", (data) {
+      // });
       debugPrint("connecting...");
       // _singleton.socket.on('error', (error) {});
       _singleton.socket.subscribe("fcm-device-id-added", (data) {

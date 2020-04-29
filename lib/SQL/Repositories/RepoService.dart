@@ -160,7 +160,8 @@ class RepositoryServiceMessage {
     return data;
   }
 
-  static Future<int> updateSpecificMessage(int id, String guid) async {
+  static Future<int> updateSpecificMessage(
+      int id, String guid, int dateCreated) async {
     // final sql =
     //     '''UPDATE ${DatabaseCreator.chatsTable} SET guid = ? WHERE id = ?''';
     // List params = [
@@ -169,7 +170,7 @@ class RepositoryServiceMessage {
     // ];
     Map<String, dynamic> values = new Map();
     values["guid"] = guid;
-    final result = await db.update(DatabaseCreator.chatsTable, values,
+    final result = await db.update(DatabaseCreator.messagesTable, values,
         where: "id = ?", whereArgs: [id]);
     debugPrint("updated $result rows");
     return result;
@@ -213,7 +214,8 @@ class RepositoryServiceMessage {
     final results = await db.rawQuery(sql, params);
     if (results != null && results.length > 0) {
       debugPrint("found match: " + results[0].toString());
-      // updateSpecificMessage(results[0], message.guid)
+      updateSpecificMessage(
+          results[0]["id"], message.guid, message.dateCreated);
     } else {
       debugPrint("could not find message");
       addMessagesToChat([message]);

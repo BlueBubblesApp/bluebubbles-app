@@ -168,7 +168,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
           // Singleton().sortChats();
-          Singleton().syncChats();
+          // Singleton().syncChats();
         },
       ),
       body: ConversationList(),
