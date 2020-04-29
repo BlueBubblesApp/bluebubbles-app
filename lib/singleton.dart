@@ -85,8 +85,8 @@ class Singleton {
       _singleton.sharedPreferences = await SharedPreferences.getInstance();
     }
     _singleton.sharedPreferences.setString('Settings', jsonEncode(settings));
+    await _singleton.authFCM();
     _singleton.startSocketIO();
-    _singleton.authFCM();
   }
 
   startSocketIO() async {
@@ -107,7 +107,8 @@ class Singleton {
           _singleton.settings.serverAddress, "/",
           query: "guid=${_singleton.settings.guidAuthKey}");
       _singleton.socket.init();
-      _singleton.socket.connect().whenComplete(() {
+      _singleton.socket.connect();
+      _singleton.socket.subscribe("connected", (data) {
         debugPrint("connected");
         authFCM();
         syncChats();
