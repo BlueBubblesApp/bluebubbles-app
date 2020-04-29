@@ -54,6 +54,24 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused) {
+      debugPrint("closed socket");
+      // Singleton().manager.clearInstance(Singleton().socket);
+      Singleton().closeSocket();
+    } else if (state == AppLifecycleState.resumed) {
+      Singleton().startSocketIO();
+      // Singleton().syncMessages();
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
   void initState() {
     super.initState();
     _getContacts();
@@ -67,24 +85,6 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     Singleton().subscribe(() {
       if (this.mounted) setState(() {});
     });
-  }
-
-  @override
-  void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    super.dispose();
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.paused) {
-      debugPrint("closed socket");
-      // Singleton().manager.clearInstance(Singleton().socket);
-      Singleton().closeSocket();
-    } else if (state == AppLifecycleState.resumed) {
-      Singleton().startSocketIO();
-      // Singleton().syncMessages();
-    }
   }
 
   Future<dynamic> _handleFCM(MethodCall call) async {
@@ -162,19 +162,6 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
         payload: 'Default_Sound');
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          // Singleton().sortChats();
-          // Singleton().syncChats();
-        },
-      ),
-      body: ConversationList(),
-    );
-  }
-
   void _getContacts() async {
     if (await Permission.contacts.request().isGranted) {
       debugPrint("Contacts granted");
@@ -191,5 +178,18 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
         });
       }
     }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      floatingActionButton: FloatingActionButton(
+        onPressed: () async {
+          // Singleton().sortChats();
+          // Singleton().syncChats();
+        },
+      ),
+      body: ConversationList(),
+    );
   }
 }

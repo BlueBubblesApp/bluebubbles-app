@@ -19,6 +19,7 @@ class ConversationList extends StatefulWidget {
   // final Function sendMessage;
 
   ConversationList({Key key}) : super(key: key);
+
   @override
   _ConversationListState createState() => _ConversationListState();
 }
@@ -26,6 +27,14 @@ class ConversationList extends StatefulWidget {
 class _ConversationListState extends State<ConversationList> {
   ScrollController _scrollController;
   Color _theme;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    setState(() {
+      _theme = Colors.transparent;
+    });
+  }
 
   @override
   void initState() {
@@ -48,14 +57,6 @@ class _ConversationListState extends State<ConversationList> {
                   })
                 : {},
       );
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    setState(() {
-      _theme = Colors.transparent;
-    });
   }
 
   bool get _isAppBarExpanded {

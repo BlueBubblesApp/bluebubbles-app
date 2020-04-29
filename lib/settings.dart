@@ -1,8 +1,4 @@
 class Settings {
-  String serverAddress = "";
-  var fcmAuthData;
-  String guidAuthKey = "";
-
   Settings() {
     //this is the default thing that will redirect to the default fcm server
     fcmAuthData = {
@@ -24,6 +20,10 @@ class Settings {
       : serverAddress = json['server_address'],
         fcmAuthData = json['fcm_auth_data'],
         guidAuthKey = json['guidAuthKey'];
+
+  var fcmAuthData;
+  String guidAuthKey = "";
+  String serverAddress = "";
 
   Map<String, dynamic> toJson() => {
         'server_address': serverAddress,

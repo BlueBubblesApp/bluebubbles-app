@@ -23,6 +23,7 @@ class SettingsPanel extends StatefulWidget {
 
 class _SettingsPanelState extends State<SettingsPanel> {
   Settings _settingsCopy;
+
   @override
   void initState() {
     super.initState();
@@ -161,13 +162,14 @@ class _SettingsPanelState extends State<SettingsPanel> {
 }
 
 class SettingsTile extends StatelessWidget {
-  final String title;
-  final String subTitle;
-  final Widget trailing;
-  final Function onTap;
   const SettingsTile(
       {Key key, this.onTap, this.title, this.trailing, this.subTitle})
       : super(key: key);
+
+  final Function onTap;
+  final String subTitle;
+  final String title;
+  final Widget trailing;
 
   @override
   Widget build(BuildContext context) {

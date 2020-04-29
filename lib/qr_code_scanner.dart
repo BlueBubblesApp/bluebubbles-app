@@ -9,18 +9,14 @@ class QRCodeScanner extends StatefulWidget {
 }
 
 class _QRCodeScannerState extends State<QRCodeScanner> {
+  QRViewController controller;
   final GlobalKey qrKey = GlobalKey(debugLabel: 'QR');
   var qrText = "";
-  QRViewController controller;
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: QRView(
-        key: qrKey,
-        onQRViewCreated: _onQRViewCreated,
-      ),
-    );
+  void dispose() {
+    controller?.dispose();
+    super.dispose();
   }
 
   void _onQRViewCreated(QRViewController controller) {
@@ -34,8 +30,12 @@ class _QRCodeScannerState extends State<QRCodeScanner> {
   }
 
   @override
-  void dispose() {
-    controller?.dispose();
-    super.dispose();
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: QRView(
+        key: qrKey,
+        onQRViewCreated: _onQRViewCreated,
+      ),
+    );
   }
 }

@@ -18,9 +18,10 @@ import 'SQL/Models/Messages.dart';
 import 'SQL/Repositories/RepoService.dart';
 
 class ConversationView extends StatefulWidget {
+  ConversationView({Key key, this.chat}) : super(key: key);
+
   // final data;
   final Chat chat;
-  ConversationView({Key key, this.chat}) : super(key: key);
 
   @override
   _ConversationViewState createState() => _ConversationViewState();
@@ -28,16 +29,8 @@ class ConversationView extends StatefulWidget {
 
 class _ConversationViewState extends State<ConversationView> {
   List<Message> messages = <Message>[];
+
   TextEditingController _controller;
-
-  // final animatedListKey = GlobalKey<AnimatedListState>();
-
-  @override
-  void initState() {
-    // TODO: implement initState
-    super.initState();
-    _controller = TextEditingController();
-  }
 
   @override
   void didChangeDependencies() {
@@ -47,6 +40,15 @@ class _ConversationViewState extends State<ConversationView> {
     Singleton().subscribe(() {
       if (this.mounted) _updateMessages();
     });
+  }
+
+  // final animatedListKey = GlobalKey<AnimatedListState>();
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    _controller = TextEditingController();
   }
 
   void _updateMessages() async {
@@ -248,17 +250,18 @@ class _ConversationViewState extends State<ConversationView> {
 }
 
 class MessageWidget extends StatefulWidget {
+  MessageWidget({Key key, this.fromSelf, this.message}) : super(key: key);
+
   final fromSelf;
   final Message message;
-  MessageWidget({Key key, this.fromSelf, this.message}) : super(key: key);
 
   @override
   _messageState createState() => _messageState();
 }
 
 class _messageState extends State<MessageWidget> {
-  String body;
   List attachments;
+  String body;
   List images = [];
 
   @override
@@ -276,6 +279,9 @@ class _messageState extends State<MessageWidget> {
         String guid = attachments[i]["guid"];
         String appDocPath = Singleton().appDocDir.path;
         String pathName = "$appDocPath/$guid/$transferName";
+        debugPrint(guid);
+        debugPrint(appDocPath);
+        debugPrint(pathName);
 
         if (FileSystemEntity.typeSync(pathName) !=
             FileSystemEntityType.notFound) {
@@ -286,6 +292,47 @@ class _messageState extends State<MessageWidget> {
       }
       setState(() {});
     }
+  }
+
+  List<Widget> _constructContent() {
+    List<Widget> content = <Widget>[];
+    for (int i = 0; i < images.length; i++) {
+      if (images[i] is File) {
+        content.add(Image.file(images[i]));
+      } else {
+        content.add(
+          FutureBuilder(
+            builder: (BuildContext context, AsyncSnapshot snapshot) {
+              if (snapshot.connectionState == ConnectionState.done) {
+                if (snapshot.hasData) {
+                  debugPrint("loaded image");
+                  return Image.file(snapshot.data);
+                } else {
+                  return Text(
+                    "Error loading",
+                    style: TextStyle(color: Colors.white),
+                  );
+                }
+              } else {
+                return CircularProgressIndicator();
+              }
+            },
+            future: images[i],
+          ),
+        );
+      }
+    }
+    if (body.length > 0) {
+      content.add(
+        Text(
+          body,
+          style: TextStyle(
+            color: Colors.white,
+          ),
+        ),
+      );
+    }
+    return content;
   }
 
   @override
@@ -344,46 +391,5 @@ class _messageState extends State<MessageWidget> {
         ),
       ],
     );
-  }
-
-  List<Widget> _constructContent() {
-    List<Widget> content = <Widget>[];
-    for (int i = 0; i < images.length; i++) {
-      if (images[i] is File) {
-        content.add(Image.file(images[i]));
-      } else {
-        content.add(
-          FutureBuilder(
-            builder: (BuildContext context, AsyncSnapshot snapshot) {
-              if (snapshot.connectionState == ConnectionState.done) {
-                if (snapshot.hasData) {
-                  debugPrint("loaded image");
-                  return Image.file(snapshot.data);
-                } else {
-                  return Text(
-                    "Error loading",
-                    style: TextStyle(color: Colors.white),
-                  );
-                }
-              } else {
-                return CircularProgressIndicator();
-              }
-            },
-            future: images[i],
-          ),
-        );
-      }
-    }
-    if (body.length > 0) {
-      content.add(
-        Text(
-          body,
-          style: TextStyle(
-            color: Colors.white,
-          ),
-        ),
-      );
-    }
-    return content;
   }
 }

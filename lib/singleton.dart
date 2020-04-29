@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:ffi';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -21,40 +22,42 @@ import 'SQL/Models/Messages.dart';
 import 'settings.dart';
 
 class Singleton {
-  static final Singleton _singleton = Singleton._internal();
   factory Singleton() {
     return _singleton;
   }
+
+  static final Singleton _singleton = Singleton._internal();
+
   Singleton._internal();
 
-  //Socket io
-  // SocketIOManager manager;
-  SocketIO socket;
-
+  Directory appDocDir;
   //general data
   List<Chat> chats = [];
-  List<Contact> contacts = <Contact>[];
 
+  List<Contact> contacts = <Contact>[];
   //interface with native code
   final platform = const MethodChannel('samples.flutter.dev/fcm');
 
+  List<String> processedGUIDS = [];
   //settings
   Settings settings;
-  SharedPreferences sharedPreferences;
-  String token;
-  Directory appDocDir;
 
   //for setup, when the user has no saved db
   Completer setupProgress = new Completer();
 
-  List<String> processedGUIDS = [];
+  SharedPreferences sharedPreferences;
+  //Socket io
+  // SocketIOManager manager;
+  SocketIO socket;
+
+  //setstate for these widgets
+  List<Function> subscribers = <Function>[];
+
+  String token;
 
   Future setup() {
     return setupProgress.future;
   }
-
-  //setstate for these widgets
-  List<Function> subscribers = <Function>[];
 
   void subscribe(Function cb) {
     _singleton.subscribers.add(cb);
@@ -311,15 +314,24 @@ class Singleton {
     params["identifier"] = guid;
     debugPrint("getting attachment");
     _singleton.socket.sendMessage("get-attachment", jsonEncode(params),
-        (data) async {
-      debugPrint("got attachment: " + data.toString());
-      String fileName = data["data"]["data"]["transferName"];
+        (String data) async {
+
+      // Read the data as an object
+      dynamic attachmentResponse = jsonDecode(data);
+      String fileName = attachmentResponse["data"]["transferName"];
       String appDocPath = _singleton.appDocDir.path;
       String pathName = "$appDocPath/$guid/$fileName";
 
-      File file = await writeToFile(data["data"]["data"], pathName);
+      // Pull out the bytes and map them to a Uint8List
+      Map<String, dynamic> newData = attachmentResponse["data"]["data"];
+      List<int> intList = newData.values.map((s) => s as int).toList();
+      
+      // Create the Uint8List and write the file
+      Uint8List bytes = Uint8List.fromList(intList);
+      File file = await writeToFile(bytes, pathName);
       completer.complete(file);
     });
+
     return completer.future;
   }
 

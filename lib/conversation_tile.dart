@@ -13,17 +13,25 @@ import 'SQL/Repositories/RepoService.dart';
 import 'conversation_view.dart';
 
 class ConversationTile extends StatefulWidget {
-  final Chat chat;
-
   ConversationTile({Key key, this.chat}) : super(key: key);
+
+  final Chat chat;
 
   @override
   _ConversationTileState createState() => _ConversationTileState();
 }
 
 class _ConversationTileState extends State<ConversationTile> {
-  String subtitle = "";
   String lastMessageTime = "";
+  String subtitle = "";
+
+  @override
+  Future<void> didChangeDependencies() async {
+    // TODO: implement didChangeDependencies
+    super.didChangeDependencies();
+    if (this.mounted) _updateTile();
+  }
+
   @override
   void initState() {
     // TODO: implement initState
@@ -44,13 +52,6 @@ class _ConversationTileState extends State<ConversationTile> {
           TimeOfDay(hour: date.hour, minute: date.minute).format(context);
       setState(() {});
     });
-  }
-
-  @override
-  Future<void> didChangeDependencies() async {
-    // TODO: implement didChangeDependencies
-    super.didChangeDependencies();
-    if (this.mounted) _updateTile();
   }
 
   @override
