@@ -240,7 +240,7 @@ class _ConversationListState extends State<ConversationList> {
             delegate: SliverChildBuilderDelegate(
               (context, index) {
                 return ConversationTile(
-                  key: Key(index.toString()),
+                  key: Key(Singleton().chats[index].guid.toString()),
                   chat: Singleton().chats[index],
                 );
               },

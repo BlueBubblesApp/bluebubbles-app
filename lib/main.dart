@@ -83,6 +83,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
       Singleton().closeSocket();
     } else if (state == AppLifecycleState.resumed) {
       Singleton().startSocketIO();
+      // Singleton().syncMessages();
     }
   }
 
@@ -98,13 +99,25 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
         return new Future.value("");
       case "new-message":
         Map<String, dynamic> data = jsonDecode(call.arguments);
+        if (Singleton().processedGUIDS.contains(data["guid"])) {
+          debugPrint("already proccessed");
+          return;
+        }
         Singleton().handleNewMessage(data);
         debugPrint("New Message: " + data.toString());
-        String chat = data["from"]["id"].toString();
-        String message = data["text"].toString();
-        debugPrint("New notification: " + data.toString());
+        if (data["isFromMe"]) return new Future.value("");
 
-        await _showNotificationWithDefaultSound(0, chat, message);
+        for (int i = 0; i < Singleton().chats.length; i++) {
+          if (Singleton().chats[i].guid == data["chats"][0]["guid"]) {
+            String message = data["text"].toString();
+            debugPrint("New notification: " + data.toString());
+
+            await _showNotificationWithDefaultSound(
+                0, Singleton().chats[i].title, message);
+
+            return new Future.value("");
+          }
+        }
         return new Future.value("");
     }
   }
@@ -154,10 +167,8 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     return Scaffold(
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
-          // await _showNotificationWithDefaultSound(0, "test", "body");
-          debugPrint("getting chats");
-          List<Chat> chats = await RepositoryServiceChats.getAllChats();
-          debugPrint("got chats");
+          // Singleton().sortChats();
+          Singleton().syncChats();
         },
       ),
       body: ConversationList(),
@@ -170,7 +181,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
       var contacts =
           (await ContactsService.getContacts(withThumbnails: false)).toList();
       Singleton().contacts = contacts;
-      setState(() {});
+      if (this.mounted) setState(() {});
 
       // Lazy load thumbnails after rendering initial contacts.
       for (final Contact contact in Singleton().contacts) {

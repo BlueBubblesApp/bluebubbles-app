@@ -8,6 +8,8 @@ class Message {
   String attachments;
   bool isFromMe;
 
+  Message.manual(this.text, this.chatGuid, this.dateCreated, this.attachments);
+
   Message(Map data) {
     this.guid = data["guid"];
     this.text = data["text"];

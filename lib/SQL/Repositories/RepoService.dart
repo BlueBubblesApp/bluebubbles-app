@@ -7,7 +7,8 @@ import 'DatabaseCreator.dart';
 
 class RepositoryServiceChats {
   static Future<List<Chat>> getAllChats() async {
-    final sql = '''SELECT * FROM ${DatabaseCreator.chatsTable}''';
+    final sql =
+        '''SELECT * FROM ${DatabaseCreator.chatsTable} ORDER BY lastMessageTimeStamp DESC''';
     final data = await db.rawQuery(sql);
     List<Chat> todos = List();
 
@@ -31,6 +32,22 @@ class RepositoryServiceChats {
 
     // final todo = Chat.fromJson(data.first);
     return data;
+  }
+
+  static Future<int> updateChatTime(
+      String guid, int lastMessageTimeStamp) async {
+    // final sql =
+    //     '''UPDATE ${DatabaseCreator.chatsTable} SET lastMessageTimeStamp = ? WHERE guid = ?''';
+    // List params = [
+    //   lastMessageTimeStamp,
+    //   guid,
+    // ];
+    Map<String, dynamic> values = new Map();
+    values["lastMessageTimeStamp"] = lastMessageTimeStamp;
+    final result = await db.update(DatabaseCreator.chatsTable, values,
+        where: "guid = ?", whereArgs: [guid]);
+    debugPrint("updated $result rows");
+    return result;
   }
 
   static Future<void> addChat(Chat chat) async {
@@ -143,6 +160,66 @@ class RepositoryServiceMessage {
     return data;
   }
 
+  static Future<int> updateSpecificMessage(int id, String guid) async {
+    // final sql =
+    //     '''UPDATE ${DatabaseCreator.chatsTable} SET guid = ? WHERE id = ?''';
+    // List params = [
+    //   id,
+    //   dateCreated,
+    // ];
+    Map<String, dynamic> values = new Map();
+    values["guid"] = guid;
+    final result = await db.update(DatabaseCreator.chatsTable, values,
+        where: "id = ?", whereArgs: [id]);
+    debugPrint("updated $result rows");
+    return result;
+  }
+
+  static Future<void> addEmptyMessageToChat(Message message) async {
+    /*
+    1. Save to your DB without a guid, when sending
+2. Wait for new message from the server
+3. On the client, get all texts without a guid
+4. Filter that list down by matching on the incoming message text
+5. Order that list and match based on which was created first
+6. When match is found, replace DB data with data from the server
+     */
+    final sql = '''INSERT INTO ${DatabaseCreator.messagesTable} 
+    (
+      guid,
+      text,
+      chatGuid,
+      dateCreated,
+      attachments,
+      isFromMe 
+      ) 
+      VALUES (?,?,?,?,?,?)''';
+    List<dynamic> params = [
+      "NOT-SET",
+      message.text,
+      message.chatGuid,
+      message.dateCreated,
+      message.attachments,
+      1,
+    ];
+    final result = await db.rawInsert(sql, params);
+    DatabaseCreator.databaseLog('Add message', sql, null, result, params);
+  }
+
+  static Future<void> attemptToFixMessage(Message message) async {
+    final sql =
+        '''SELECT * FROM ${DatabaseCreator.messagesTable} WHERE text = ? AND guid = ? ORDER BY dateCreated DESC''';
+    List<dynamic> params = [message.text, "NOT-SET"];
+    final results = await db.rawQuery(sql, params);
+    if (results != null && results.length > 0) {
+      debugPrint("found match: " + results[0].toString());
+      // updateSpecificMessage(results[0], message.guid)
+    } else {
+      debugPrint("could not find message");
+      addMessagesToChat([message]);
+    }
+  }
+
   static Future<void> addMessagesToChat(List<Message> messages) async {
     for (int i = 0; i < messages.length; i++) {
       final sql = '''INSERT INTO ${DatabaseCreator.messagesTable}
@@ -167,6 +244,7 @@ class RepositoryServiceMessage {
       if (existingMessage != null && existingMessage.length > 0) {
         debugPrint("chat " + messages[i].guid + "already exists");
       } else {
+        debugPrint(messages[i].guid);
         final result = await db.rawInsert(sql, params);
         DatabaseCreator.databaseLog('Add message', sql, null, result, params);
       }

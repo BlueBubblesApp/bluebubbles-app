@@ -92,49 +92,50 @@ class _ConversationViewState extends State<ConversationView> {
       body: Stack(
         alignment: AlignmentDirectional.bottomCenter,
         children: <Widget>[
-          // ListView.builder(
-          //   reverse: true,
-          //   physics:
-          //       AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-          //   itemCount: messages.length,
-          //   itemBuilder: (BuildContext context, int index) {
-          //     if (index == 0) {
-          //       return SizedBox(
-          //         height: 80,
-          //       );
-          //     }
-          //     return MessageWidget(
-          //       fromSelf: messages[index - 1].isFromMe,
-          //       message: messages[index - 1],
-          //     );
-          //   },
-          // ),
-          ImplicitlyAnimatedList<Message>(
+          ListView.builder(
+            reverse: true,
             physics:
                 AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-            reverse: true,
-            items: messages,
-            areItemsTheSame: (a, b) => a.guid == b.guid,
-            insertDuration: Duration(milliseconds: 250),
-            itemBuilder: (BuildContext context, Animation animation,
-                Message item, int index) {
+            itemCount: messages.length + 1,
+            itemBuilder: (BuildContext context, int index) {
               if (index == 0) {
                 return SizedBox(
                   height: 80,
                 );
               }
-              return SlideTransition(
+              return MessageWidget(
                 key: Key(messages[index - 1].guid),
-                position: animation.drive(
-                    Tween<Offset>(begin: Offset(1, 0), end: Offset.zero)
-                        .chain(CurveTween(curve: Curves.easeInOut))),
-                child: MessageWidget(
-                  fromSelf: messages[index - 1].isFromMe,
-                  message: messages[index - 1],
-                ),
+                fromSelf: messages[index - 1].isFromMe,
+                message: messages[index - 1],
               );
             },
           ),
+          // ImplicitlyAnimatedList<Message>(
+          //   physics:
+          //       AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+          //   reverse: true,
+          //   items: messages,
+          //   areItemsTheSame: (a, b) => a.guid == b.guid,
+          //   insertDuration: Duration(milliseconds: 250),
+          //   itemBuilder: (BuildContext context, Animation animation,
+          //       Message item, int index) {
+          //     if (index == 0) {
+          //       return SizedBox(
+          //         height: 80,
+          //       );
+          //     }
+          //     return SlideTransition(
+          //       key: Key(messages[index - 1].guid),
+          //       position: animation.drive(
+          //           Tween<Offset>(begin: Offset(1, 0), end: Offset.zero)
+          //               .chain(CurveTween(curve: Curves.easeInOut))),
+          //       child: MessageWidget(
+          //         fromSelf: messages[index - 1].isFromMe,
+          //         message: messages[index - 1],
+          //       ),
+          //     );
+          //   },
+          // ),
           ClipRRect(
             child: BackdropFilter(
               filter: ImageFilter.blur(
@@ -209,12 +210,16 @@ class _ConversationViewState extends State<ConversationView> {
                                 ),
                                 color: Colors.blue,
                                 onPressed: () {
-                                  Map params = Map();
-                                  params["guid"] = widget.chat.guid;
-                                  params["message"] = _controller.text;
-                                  Singleton()
-                                      .socket
-                                      .emit("send-message", params);
+                                  debugPrint("sending message");
+                                  // Singleton().sendMessage(
+                                  //     widget.chat.guid, _controller.text);
+                                  Message message = Message.manual(
+                                      _controller.text,
+                                      widget.chat.guid,
+                                      DateTime.now().microsecondsSinceEpoch,
+                                      "[]");
+                                  Singleton().sendMessage(message);
+                                  _controller.text = "";
                                   // widget.sendMessage(params);
                                 },
                                 child: Icon(
@@ -251,8 +256,7 @@ class MessageWidget extends StatefulWidget {
   _messageState createState() => _messageState();
 }
 
-class _messageState extends State<MessageWidget>
-    with AutomaticKeepAliveClientMixin {
+class _messageState extends State<MessageWidget> {
   String body;
   List attachments;
   List images = [];
@@ -382,8 +386,4 @@ class _messageState extends State<MessageWidget>
     }
     return content;
   }
-
-  @override
-  // TODO: implement wantKeepAlive
-  bool get wantKeepAlive => true;
 }

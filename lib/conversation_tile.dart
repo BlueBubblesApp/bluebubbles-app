@@ -36,9 +36,9 @@ class _ConversationTileState extends State<ConversationTile> {
   void _updateTile() {
     RepositoryServiceMessage.getMessagesFromChat(widget.chat.guid)
         .then((List<Message> messages) {
+      if (messages.length == 0) return;
       subtitle = messages[0].text;
-      // lastMessageTime =
-      DateTime date = new DateTime.fromMillisecondsSinceEpoch(
+      DateTime date = new DateTime.fromMicrosecondsSinceEpoch(
           messages[0].dateCreated * 1000);
       lastMessageTime =
           TimeOfDay(hour: date.hour, minute: date.minute).format(context);
@@ -50,7 +50,7 @@ class _ConversationTileState extends State<ConversationTile> {
   Future<void> didChangeDependencies() async {
     // TODO: implement didChangeDependencies
     super.didChangeDependencies();
-    _updateTile();
+    if (this.mounted) _updateTile();
   }
 
   @override

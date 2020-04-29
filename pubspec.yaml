@@ -20,7 +20,8 @@ dependencies:
   flutter:
     sdk: flutter
   shared_preferences: ^0.5.7
-  socket_io_client: ^0.9.9
+  # socket_io_client: ^0.9.9
+  flutter_socket_io: ^0.6.0
   qr_code_scanner: ^0.0.12
   flutter_local_notifications: any
   contacts_service: ^0.4.4
