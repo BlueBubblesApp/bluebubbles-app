@@ -218,7 +218,7 @@ class _ConversationViewState extends State<ConversationView> {
                                   Message message = Message.manual(
                                       _controller.text,
                                       widget.chat.guid,
-                                      DateTime.now().microsecondsSinceEpoch,
+                                      DateTime.now().millisecondsSinceEpoch,
                                       "[]");
                                   Singleton().sendMessage(message);
                                   _controller.text = "";

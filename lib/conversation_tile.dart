@@ -46,8 +46,8 @@ class _ConversationTileState extends State<ConversationTile> {
         .then((List<Message> messages) {
       if (messages.length == 0) return;
       subtitle = messages[0].text;
-      DateTime date = new DateTime.fromMicrosecondsSinceEpoch(
-          messages[0].dateCreated * 1000);
+      DateTime date =
+          new DateTime.fromMillisecondsSinceEpoch(messages[0].dateCreated);
       lastMessageTime =
           TimeOfDay(hour: date.hour, minute: date.minute).format(context);
       setState(() {});
