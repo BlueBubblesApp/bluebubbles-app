@@ -1,28 +1,23 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:bluebubble_messages/SQL/Repositories/RepoService.dart';
+import 'package:bluebubble_messages/repository/database.dart';
 import 'package:flutter/scheduler.dart' hide Priority;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:contacts_service/contacts_service.dart';
 
-import './conversation_list.dart';
+// import './conversation_list.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import 'SQL/Models/Chats.dart';
-import 'SQL/Models/Messages.dart' as Message;
-import 'SQL/Repositories/DatabaseCreator.dart';
-import 'hex_color.dart';
 import 'settings.dart';
 import 'singleton.dart';
 
 // void main() => runApp(Main());
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await DatabaseCreator().initDatabase();
+  await DBProvider.db.initDB();
   runApp(Main());
 }
 
@@ -54,24 +49,6 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
 
   @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.paused) {
-      debugPrint("closed socket");
-      // Singleton().manager.clearInstance(Singleton().socket);
-      Singleton().closeSocket();
-    } else if (state == AppLifecycleState.resumed) {
-      Singleton().startSocketIO();
-      // Singleton().syncMessages();
-    }
-  }
-
-  @override
-  void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    super.dispose();
-  }
-
-  @override
   void initState() {
     super.initState();
     _getContacts();
@@ -85,6 +62,24 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     Singleton().subscribe(() {
       if (this.mounted) setState(() {});
     });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused) {
+      debugPrint("closed socket");
+      // Singleton().manager.clearInstance(Singleton().socket);
+      Singleton().closeSocket();
+    } else if (state == AppLifecycleState.resumed) {
+      Singleton().startSocketIO();
+      // Singleton().syncMessages();
+    }
   }
 
   Future<dynamic> _handleFCM(MethodCall call) async {
@@ -103,7 +98,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
           debugPrint("already proccessed");
           return;
         }
-        Singleton().handleNewMessage(data);
+        // Singleton().handleNewMessage(data);
         debugPrint("New Message: " + data.toString());
         if (data["isFromMe"]) return new Future.value("");
 
@@ -112,8 +107,8 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
             String message = data["text"].toString();
             debugPrint("New notification: " + data.toString());
 
-            await _showNotificationWithDefaultSound(
-                0, Singleton().chats[i].title, message);
+            // await _showNotificationWithDefaultSound(
+            //     0, Singleton().chats[i].title, message);
 
             return new Future.value("");
           }
@@ -162,6 +157,19 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
         payload: 'Default_Sound');
   }
 
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      floatingActionButton: FloatingActionButton(
+        onPressed: () async {
+          // Singleton().sortChats();
+          // Singleton().syncChats();
+        },
+      ),
+      body: null //ConversationList(),
+    );
+  }
+
   void _getContacts() async {
     if (await Permission.contacts.request().isGranted) {
       debugPrint("Contacts granted");
@@ -178,18 +186,5 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
         });
       }
     }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          // Singleton().sortChats();
-          // Singleton().syncChats();
-        },
-      ),
-      body: ConversationList(),
-    );
   }
 }
