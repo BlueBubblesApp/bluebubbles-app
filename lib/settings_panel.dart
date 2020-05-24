@@ -84,7 +84,6 @@ class _SettingsPanelState extends State<SettingsPanel> {
                 };
                 _settingsCopy.guidAuthKey = fcmData[0];
                 _settingsCopy.serverAddress = fcmData[1];
-                debugPrint(_settingsCopy.fcmAuthData.toString());
                 Singleton().saveSettings(_settingsCopy);
               }
             },

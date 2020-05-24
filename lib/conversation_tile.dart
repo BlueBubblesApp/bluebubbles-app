@@ -1,21 +1,28 @@
 import 'dart:async';
 
+import 'package:bluebubble_messages/repository/models/message.dart';
 import 'package:bluebubble_messages/singleton.dart';
-import 'package:contacts_service/contacts_service.dart';
 
 import './hex_color.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-import 'SQL/Models/Chats.dart';
-import 'SQL/Models/Messages.dart';
-import 'SQL/Repositories/RepoService.dart';
 import 'conversation_view.dart';
+import 'repository/models/chat.dart';
+
+// import 'SQL/Models/Chats.dart';
+// import 'SQL/Models/Messages.dart';
+// import 'SQL/Repositories/RepoService.dart';
+// import 'conversation_view.dart';
 
 class ConversationTile extends StatefulWidget {
-  ConversationTile({Key key, this.chat}) : super(key: key);
-
   final Chat chat;
+  ConversationTile({
+    Key key,
+    this.chat,
+  }) : super(key: key);
+
+  // final Chat chat;
 
   @override
   _ConversationTileState createState() => _ConversationTileState();
@@ -24,32 +31,41 @@ class ConversationTile extends StatefulWidget {
 class _ConversationTileState extends State<ConversationTile> {
   String lastMessageTime = "";
   String subtitle = "";
+  String title = "title";
+  List<Message> messages = <Message>[];
 
   @override
   Future<void> didChangeDependencies() async {
-    // TODO: implement didChangeDependencies
     super.didChangeDependencies();
-    if (this.mounted) _updateTile();
+    if (this.mounted) _updateMessages();
   }
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
+    chatTitle(widget.chat).then((value) {
+      title = value;
+      setState(() {});
+    });
+    _updateMessages();
     Singleton().subscribe(() {
-      if (this.mounted) _updateTile();
+      if (this.mounted) _updateMessages();
     });
   }
 
-  void _updateTile() {
-    RepositoryServiceMessage.getMessagesFromChat(widget.chat.guid)
-        .then((List<Message> messages) {
-      if (messages.length == 0) return;
-      subtitle = messages[0].text;
-      DateTime date =
-          new DateTime.fromMillisecondsSinceEpoch(messages[0].dateCreated);
-      lastMessageTime =
-          TimeOfDay(hour: date.hour, minute: date.minute).format(context);
+  void _updateMessages() {
+    Chat.getMessages(widget.chat).then((value) {
+      messages = value;
+      messages.sort((a, b) => -a.dateCreated.compareTo(b.dateCreated));
+      if (messages.length > 0) {
+        Message.getAttachments(messages.first).then((attachments) {
+          String text = messages.first.text.substring(attachments.length);
+          if (text.length == 0 && attachments.length > 0) {
+            text = "${attachments.length} attachments";
+          }
+          subtitle = text;
+        });
+      }
       setState(() {});
     });
   }
@@ -61,9 +77,6 @@ class _ConversationTileState extends State<ConversationTile> {
       color: Colors.black,
       child: InkWell(
         onTap: () async {
-          debugPrint(widget.chat.guid.toString());
-          // List<Message>
-          debugPrint(widget.chat.guid);
           Navigator.of(context).push(
             CupertinoPageRoute(
               builder: (BuildContext context) {
@@ -76,7 +89,7 @@ class _ConversationTileState extends State<ConversationTile> {
         },
         child: ListTile(
           title: Text(
-            widget.chat.title,
+            title,
             style: TextStyle(
               color: Colors.white,
             ),
@@ -103,7 +116,8 @@ class _ConversationTileState extends State<ConversationTile> {
                 borderRadius: BorderRadius.circular(30),
               ),
               child: Container(
-                child: Text("${widget.chat.title[0]}"),
+                // child: Text("${widget.chat.title[0]}"),
+                child: Text(""),
                 alignment: AlignmentDirectional.center,
               ),
             ),

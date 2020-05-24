@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:bluebubble_messages/repository/database.dart';
+import 'package:bluebubble_messages/repository/models/chat.dart';
 import 'package:flutter/scheduler.dart' hide Priority;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -11,6 +12,7 @@ import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'conversation_list.dart';
 import 'settings.dart';
 import 'singleton.dart';
 
@@ -53,7 +55,6 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     super.initState();
     _getContacts();
     Singleton().settings = new Settings();
-    // Singleton().getSavedSettings();
     Singleton().platform.setMethodCallHandler(_handleFCM);
     SchedulerBinding.instance
         .addPostFrameCallback((_) => Singleton().getSavedSettings());
@@ -74,11 +75,9 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.paused) {
       debugPrint("closed socket");
-      // Singleton().manager.clearInstance(Singleton().socket);
       Singleton().closeSocket();
     } else if (state == AppLifecycleState.resumed) {
       Singleton().startSocketIO();
-      // Singleton().syncMessages();
     }
   }
 
@@ -95,24 +94,24 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
       case "new-message":
         Map<String, dynamic> data = jsonDecode(call.arguments);
         if (Singleton().processedGUIDS.contains(data["guid"])) {
-          debugPrint("already proccessed");
           return;
+        } else {
+          Singleton().processedGUIDS.add(data["guid"]);
         }
-        // Singleton().handleNewMessage(data);
-        debugPrint("New Message: " + data.toString());
-        if (data["isFromMe"]) return new Future.value("");
-
-        for (int i = 0; i < Singleton().chats.length; i++) {
-          if (Singleton().chats[i].guid == data["chats"][0]["guid"]) {
-            String message = data["text"].toString();
-            debugPrint("New notification: " + data.toString());
-
-            // await _showNotificationWithDefaultSound(
-            //     0, Singleton().chats[i].title, message);
-
-            return new Future.value("");
-          }
+        if (data["chats"].length == 0) return new Future.value("");
+        Chat chat = await Chat.findOne({"guid": data["chats"][0]["guid"]});
+        if (chat == null) return;
+        String title = await chatTitle(chat);
+        debugPrint("found chat: " + title);
+        Singleton().handleNewMessage(data, chat);
+        if (data["isFromMe"]) {
+          return new Future.value("");
         }
+
+        String message = data["text"].toString();
+
+        await _showNotificationWithDefaultSound(0, title, message);
+
         return new Future.value("");
     }
   }
@@ -166,13 +165,12 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
           // Singleton().syncChats();
         },
       ),
-      body: null //ConversationList(),
+      body: ConversationList(),
     );
   }
 
   void _getContacts() async {
     if (await Permission.contacts.request().isGranted) {
-      debugPrint("Contacts granted");
       var contacts =
           (await ContactsService.getContacts(withThumbnails: false)).toList();
       Singleton().contacts = contacts;

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:bluebubble_messages/repository/models/message.dart';
 import 'package:sqflite/sqflite.dart';
 
 import '../database.dart';
@@ -17,40 +18,45 @@ class Attachment {
   int id;
   String guid;
   String uti;
-  int transferState;
+  String transferState;
   bool isOutgoing;
   String transferName;
   int totalBytes;
   bool isSticker;
   bool hideAttachment;
 
-  Attachment({
-    this.id,
-    this.guid,
-    this.uti,
-    this.transferState,
-    this.isOutgoing,
-    this.transferName,
-    this.totalBytes,
-    this.isSticker,
-    this.hideAttachment
-  });
+  Attachment(
+      {this.id,
+      this.guid,
+      this.uti,
+      this.transferState,
+      this.isOutgoing,
+      this.transferName,
+      this.totalBytes,
+      this.isSticker,
+      this.hideAttachment});
 
   factory Attachment.fromMap(Map<String, dynamic> json) {
     return new Attachment(
       id: json.containsKey("ROWID") ? json["ROWID"] : null,
       guid: json["guid"],
       uti: json["uti"],
-      transferState: json['transferState'],
-      isOutgoing: (json["isOutgoing"] is bool) ? json['isOutgoing'] : ((json['isOutgoing'] == 1) ? true : false),
+      transferState: json['transferState'].toString(),
+      isOutgoing: (json["isOutgoing"] is bool)
+          ? json['isOutgoing']
+          : ((json['isOutgoing'] == 1) ? true : false),
       transferName: json['transferName'],
-      totalBytes: json['totalBytes'],
-      isSticker: (json["isSticker"] is bool) ? json['isSticker'] : ((json['isSticker'] == 1) ? true : false),
-      hideAttachment: (json["hideAttachment"] is bool) ? json['hideAttachment'] : ((json['hideAttachment'] == 1) ? true : false),
+      totalBytes: json['totalBytes'] is int ? json['totalBytes'] : 0,
+      isSticker: (json["isSticker"] is bool)
+          ? json['isSticker']
+          : ((json['isSticker'] == 1) ? true : false),
+      hideAttachment: (json["hideAttachment"] is bool)
+          ? json['hideAttachment']
+          : ((json['hideAttachment'] == 1) ? true : false),
     );
   }
 
-  Future<Attachment> save() async {
+  Future<Attachment> save(Message message) async {
     final Database db = await DBProvider.db.database;
 
     // Try to find an existing attachment before saving it
@@ -69,8 +75,14 @@ class Attachment {
       if (map.containsKey("participants")) {
         map.remove("participants");
       }
+      // if (message.id == null) {
+      //   //and here
+      //   await message.save();
+      // }
 
       this.id = await db.insert("attachment", map);
+      await db.insert("attachment_message_join",
+          {"attachmentId": this.id, "messageId": message.id});
     }
 
     return this;
@@ -83,7 +95,8 @@ class Attachment {
     filters.keys.forEach((filter) => whereParams.add('$filter = ?'));
     List<dynamic> whereArgs = [];
     filters.values.forEach((filter) => whereArgs.add(filter));
-    var res = await db.query("attachment", where: whereParams.join(" AND "), whereArgs: whereArgs, limit: 1);
+    var res = await db.query("attachment",
+        where: whereParams.join(" AND "), whereArgs: whereArgs, limit: 1);
 
     if (res.isEmpty) {
       return null;
@@ -92,7 +105,8 @@ class Attachment {
     return Attachment.fromMap(res.elementAt(0));
   }
 
-  static Future<List<Attachment>> find([Map<String, dynamic> filters = const{}]) async {
+  static Future<List<Attachment>> find(
+      [Map<String, dynamic> filters = const {}]) async {
     final Database db = await DBProvider.db.database;
 
     List<String> whereParams = [];
@@ -100,20 +114,23 @@ class Attachment {
     List<dynamic> whereArgs = [];
     filters.values.forEach((filter) => whereArgs.add(filter));
 
-    var res = await db.query(
-      "attachment", where: (whereParams.length > 0) ? whereParams.join(" AND ") : null , whereArgs: (whereArgs.length > 0) ? whereArgs : null);
-    return (res.isNotEmpty) ? res.map((c) => Attachment.fromMap(c)).toList() : [];
+    var res = await db.query("attachment",
+        where: (whereParams.length > 0) ? whereParams.join(" AND ") : null,
+        whereArgs: (whereArgs.length > 0) ? whereArgs : null);
+    return (res.isNotEmpty)
+        ? res.map((c) => Attachment.fromMap(c)).toList()
+        : [];
   }
 
   Map<String, dynamic> toMap() => {
-    "ROWID": id,
-    "guid": guid,
-    "uti": uti,
-    "transferState": uti,
-    "isOutgoing": isOutgoing ? 1 : 0,
-    "transferName": uti,
-    "totalBytes": uti,
-    "isSticker": isSticker ? 1 : 0,
-    "hideAttachment": hideAttachment ? 1 : 0
-  };
+        "ROWID": id,
+        "guid": guid,
+        "uti": uti,
+        "transferState": transferState,
+        "isOutgoing": isOutgoing ? 1 : 0,
+        "transferName": transferName,
+        "totalBytes": totalBytes,
+        "isSticker": isSticker ? 1 : 0,
+        "hideAttachment": hideAttachment ? 1 : 0
+      };
 }

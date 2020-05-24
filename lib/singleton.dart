@@ -2,14 +2,8 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
-
-// import 'package:adhara_socket_io/manager.dart';
-// import 'package:adhara_socket_io/options.dart';
-// import 'package:adhara_socket_io/socket.dart';
 import 'package:flutter_socket_io/socket_io_manager.dart';
-import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
-// import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'package:flutter_socket_io/flutter_socket_io.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/material.dart';
@@ -67,8 +61,6 @@ class Singleton {
   }
 
   void notify() {
-    debugPrint(
-        "notifying subscribers: " + _singleton.subscribers.length.toString());
     for (int i = 0; i < _singleton.subscribers.length; i++) {
       _singleton.subscribers[i]();
     }
@@ -126,7 +118,8 @@ class Singleton {
       _singleton.socket.destroy();
     }
 
-    debugPrint("Starting socket io with the server: ${_singleton.settings.serverAddress}");
+    debugPrint(
+        "Starting socket io with the server: ${_singleton.settings.serverAddress}");
 
     try {
       // Create a new socket connection
@@ -146,74 +139,61 @@ class Singleton {
       _singleton.socket.subscribe("error", (data) {
         debugPrint("An error occurred: " + data.toString());
       });
+
+      // _singleton.socket.subscribe("new-message", (_data) {
+      //   Map<String, dynamic> data = jsonDecode(_data);
+      //   debugPrint(data.toString());
+      // });
     } catch (e) {
       debugPrint("FAILED TO CONNECT");
     }
   }
 
   void syncChats() async {
-    debugPrint("Syncing chats from the server");
-    _singleton.socket.sendMessage("get-chats", '{}', (data) async {
-      List chats = jsonDecode(data)["data"];
+    if (!_singleton.settings.finishedSetup) {
+      debugPrint("Syncing chats from the server");
+      _singleton.socket.sendMessage("get-chats", '{}', (data) async {
+        List chats = jsonDecode(data)["data"];
 
-      debugPrint("Got ${chats.length} chats from server. Adding to database...");
-      for (int i = 0; i < chats.length; i++) {
-        // Get the chat and add it to the DB
-        debugPrint(chats[i].toString());
-        Chat chat = Chat.fromMap(chats[i]);
+        for (int i = 0; i < chats.length; i++) {
+          // Get the chat and add it to the DB
+          debugPrint(chats[i].toString());
+          Chat chat = Chat.fromMap(chats[i]);
+          // This will check for an existing chat as well
+          await chat.save();
 
-        // This will check for an existing chat as well
-        debugPrint("Saving/Updating Chat: ${chat.chatIdentifier}");
-        await chat.save();
+          Map<String, dynamic> params = Map();
+          params["identifier"] = chat.guid;
+          params["limit"] = 100;
+          _singleton.socket.sendMessage("get-chat-messages", jsonEncode(params),
+              (data) async {
+            List messages = jsonDecode(data)["data"];
 
-        debugPrint("Syncing messages from the server");
-        Map<String, dynamic> params = Map();
-        params["identifier"] = chat.guid;
-        params["limit"] = 100;
-        _singleton.socket.sendMessage("get-chat-messages", jsonEncode(params), (data) async {
-          List messages = jsonDecode(data)["data"];
-          debugPrint("Got ${messages.length} messages for chat, ${chat.chatIdentifier}");
+            messages.forEach((item) {
+              Message message = Message.fromMap(item);
+              //and here
+              chat.addMessage(message).then((value) {
+                // Create the attachments
+                List<dynamic> attachments = item['attachments'];
 
-          messages.forEach((item) async {
-            Message message = Message.fromMap(item);
-            await chat.addMessage(message);
-
-            // Create the attachments
-            List<dynamic> attachments = item['attachments'];
-            if (attachments.length > 0) {
-              debugPrint("Saving ${attachments.length} attachments");
-            }
-  
-            attachments.forEach((attachmentItem) async {
-              Attachment file = Attachment.fromMap(attachmentItem);
-              await file.save();
+                attachments.forEach((attachmentItem) {
+                  Attachment file = Attachment.fromMap(attachmentItem);
+                  file.save(message);
+                });
+              });
             });
+            if (i == chats.length - 1) {
+              Settings _settings = _singleton.settings;
+              _settings.finishedSetup = true;
+              _singleton.saveSettings(_singleton.settings);
+              List<Chat> _chats = await Chat.find();
+              _singleton.chats = _chats;
+              notify();
+            }
           });
-        });
-
-
-        // Map<String, dynamic> params = Map();
-        // params["identifier"] = chat.guid;
-        // params["limit"] = 200;
-        // _singleton.socket.sendMessage("get-chat-messages", jsonEncode(params),
-        //     (data) {
-        //   List messagesData = jsonDecode(data)["data"];
-        //   List<Message> messages = <Message>[];
-        //   for (int j = 0; j < messagesData.length; j++) {
-        //     Message message = Message(messagesData[j]);
-        //     messages.add(message);
-        //   }
-        //   RepositoryServiceMessage.addMessagesToChat(messages)
-        //       .whenComplete(() {
-        //     if (i == chats.length - 1) {
-        //       debugPrint("finished setting up");
-        //       notify();
-        //       setupProgress.complete();
-        //     }
-        //   });
-        // });
-      }
-    });
+        }
+      });
+    }
   }
 
   void closeSocket() {
@@ -226,31 +206,49 @@ class Singleton {
       final String result =
           await platform.invokeMethod('auth', _singleton.settings.fcmAuthData);
       token = result;
-      if (_singleton.socket != null)
-        _singleton.socket.sendMessage("add-fcm-device-id",
-            jsonEncode({"deviceId": token, "deviceName": "android-client"}));
-      debugPrint(token);
+      if (_singleton.socket != null) {
+        _singleton.socket.sendMessage(
+            "add-fcm-device",
+            jsonEncode({"deviceId": token, "deviceName": "android-client"}),
+            () {});
+        debugPrint(token);
+      }
     } on PlatformException catch (e) {
       token = "Failed to get token: " + e.toString();
       debugPrint(token);
     }
   }
 
-  // void handleNewMessage(Map<String, dynamic> data) {
-  //   Message message = new Message(data);
-  //   if (message.isFromMe) {
-  //     RepositoryServiceMessage.attemptToFixMessage(message);
-  //   } else {
-  //     RepositoryServiceMessage.addMessagesToChat([message]);
-  //   }
-  //   _singleton.processedGUIDS.add(message.guid);
-  //   // if (_singleton.socket != null) {
-  //   //   syncMessages();
-  //   // } else {
-  //   //   debugPrint("not syncing, socket is null");
-  //   // }
-  //   sortChats();
-  // }
+  void handleNewMessage(Map<String, dynamic> data, Chat chat) {
+    Message message = new Message.fromMap(data);
+    if (message.isFromMe) {
+      chat.addMessage(message).then((value) {
+        // Create the attachments
+        List<dynamic> attachments = data['attachments'];
+
+        attachments.forEach((attachmentItem) {
+          Attachment file = Attachment.fromMap(attachmentItem);
+          file.save(message);
+        });
+      });
+    } else {
+      chat.addMessage(message).then((value) {
+        // Create the attachments
+        List<dynamic> attachments = data['attachments'];
+
+        attachments.forEach((attachmentItem) {
+          Attachment file = Attachment.fromMap(attachmentItem);
+          file.save(message);
+        });
+      });
+    }
+    // if (_singleton.socket != null) {
+    //   syncMessages();
+    // } else {
+    //   debugPrint("not syncing, socket is null");
+    // }
+    // sortChats();
+  }
 
   // void sortChats() async {
   //   Map<String, Message> guidToMessage = new Map<String, Message>();
@@ -281,11 +279,11 @@ class Singleton {
   //     });
   //   }
 
-    // updatedChats.sort(
-    //     (a, b) => a.lastMessageTimeStamp.compareTo(b.lastMessageTimeStamp));
-    // _singleton.chats = updatedChats;
-    // notify();
-    // }
+  //   updatedChats.sort(
+  //       (a, b) => a.lastMessageTimeStamp.compareTo(b.lastMessageTimeStamp));
+  //   _singleton.chats = updatedChats;
+  //   notify();
+  // }
 
   // void sendMessage(Message message) {
   //   RepositoryServiceMessage.addEmptyMessageToChat(message).whenComplete(() {
@@ -318,36 +316,66 @@ class Singleton {
   //   }
   // }
 
-  // Future getImage(Map attachment, String messageGuid) {
-  //   Completer completer = new Completer();
-  //   Map<String, dynamic> params = new Map();
-  //   String guid = attachment["guid"];
-  //   params["identifier"] = guid;
-  //   debugPrint("getting attachment");
-  //   _singleton.socket.sendMessage("get-attachment", jsonEncode(params),
-  //       (String data) async {
-  //     // Read the data as an object
-  //     dynamic attachmentResponse = jsonDecode(data);
-  //     String fileName = attachmentResponse["data"]["transferName"];
-  //     String appDocPath = _singleton.appDocDir.path;
-  //     String pathName = "$appDocPath/$guid/$fileName";
+  getChunkRecursive(String guid, int index, int total, List<int> currentBytes,
+      int chunkSize, Function cb) {
+    if (index <= total) {
+      Map<String, dynamic> params = new Map();
+      params["identifier"] = guid;
+      params["start"] = index * chunkSize;
+      params["chunkSize"] = chunkSize;
+      params["compress"] = true;
+      _singleton.socket.sendMessage("get-attachment-chunk", jsonEncode(params),
+          (chunk) async {
+        dynamic attachmentResponse = jsonDecode(chunk);
 
-  //     // Pull out the bytes and map them to a Uint8List
-  //     Map<String, dynamic> newData = attachmentResponse["data"]["data"];
-  //     List<int> intList = newData.values.map((s) => s as int).toList();
+        Utf8Encoder encoder = new Utf8Encoder();
 
-  //     // Create the Uint8List and write the file
-  //     Uint8List bytes = Uint8List.fromList(intList);
-  //     File file = await writeToFile(bytes, pathName);
-  //     completer.complete(file);
-  //   });
+        List<int> bytes = attachmentResponse["data"].codeUnits;
+        // debugPrint(
+        //     encoder.convert(attachmentResponse["data"].toString()).toList());
+        // List<int> newDataAsInts =
+        //     zlib.decode(encoder.convert(attachmentResponse["data"], 3));
+        // var data = utf8.decode(inflated);
+        // json.decode(data);
+        // Map<String, dynamic> newData = attachmentResponse["data"];
+        // List<int> newDataAsInts = newData.values.map((e) => e as int).toList();
+        currentBytes.addAll(bytes);
+        if (index < total) {
+          debugPrint("${index / total * 100}% of the image");
+          debugPrint("next start is ${index + 1} out of $total");
+          getChunkRecursive(
+              guid, index + 1, total, currentBytes, chunkSize, cb);
+        } else {
+          debugPrint("finished getting image");
+          await cb(currentBytes);
+        }
+      });
+    }
+  }
 
-  //   return completer.future;
-  // }
+  Future getImage(Attachment attachment) {
+    int chunkSize = 8192;
+    Completer completer = new Completer();
+    debugPrint("getting attachment");
+    int numOfChunks = (attachment.totalBytes / chunkSize).ceil();
+    debugPrint("num Of Chunks is $numOfChunks");
 
-  // Future<File> writeToFile(Uint8List data, String path) async {
-  //   // final buffer = data.buffer;
-  //   File file = await new File(path).create(recursive: true);
-  //   return file.writeAsBytes(data);
-  // }
+    getChunkRecursive(attachment.guid, 0, numOfChunks, [], chunkSize,
+        (data) async {
+      String fileName = attachment.transferName;
+      String appDocPath = _singleton.appDocDir.path;
+      String pathName = "$appDocPath/${attachment.guid}/$fileName";
+      List<int> decodedData = zlib.decode(data);
+      Uint8List bytes = Uint8List.fromList(decodedData);
+
+      File file = await writeToFile(bytes, pathName);
+      completer.complete(file);
+    });
+    return completer.future;
+  }
+
+  Future<File> writeToFile(Uint8List data, String path) async {
+    File file = await new File(path).create(recursive: true);
+    return file.writeAsBytes(data);
+  }
 }

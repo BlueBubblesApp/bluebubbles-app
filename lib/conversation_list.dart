@@ -5,19 +5,10 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import 'hex_color.dart';
-import 'settings.dart';
 import 'settings_panel.dart';
 import 'singleton.dart';
 
 class ConversationList extends StatefulWidget {
-  // final Function onPressed;
-  // final Settings settings;
-  // final Function saveSettings;
-  // final Function requestMessages;
-  // final List chats;
-  // final List contacts;
-  // final Function sendMessage;
-
   ConversationList({Key key}) : super(key: key);
 
   @override

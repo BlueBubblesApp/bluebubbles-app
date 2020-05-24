@@ -29,11 +29,13 @@ class Handle {
   });
 
   factory Handle.fromMap(Map<String, dynamic> json) => new Handle(
-    id: json.containsKey("ROWID") ? json["ROWID"] : null,
-    address: json["address"],
-    country: json.containsKey("country") ? json["country"] : null,
-    uncanonicalizedId: json.containsKey("uncanonicalizedId") ? json["uncanonicalizedId"] : null,
-  );
+        id: json.containsKey("ROWID") ? json["ROWID"] : null,
+        address: json["address"],
+        country: json.containsKey("country") ? json["country"] : null,
+        uncanonicalizedId: json.containsKey("uncanonicalizedId")
+            ? json["uncanonicalizedId"]
+            : null,
+      );
 
   Future<Handle> save([bool updateIfAbsent = false]) async {
     final Database db = await DBProvider.db.database;
@@ -43,24 +45,27 @@ class Handle {
     if (existing != null) {
       this.id = existing.id;
     }
-    
+
     // If it already exists, update it
     if (existing == null) {
       // Remove the ID from the map for inserting
       var map = this.toMap();
       map.remove("ROWID");
-
-      this.id = await db.insert("handle", map);
+      try {
+        this.id = await db.insert("handle", map);
+      } catch (e) {
+        this.id = null;
+      }
     } else if (updateIfAbsent) {
       await this.update();
     }
-    
+
     return this;
   }
 
   Future<Handle> update() async {
     final Database db = await DBProvider.db.database;
-    
+
     // If it already exists, update it
     if (this.id != null) {
       await db.update("handle", {
@@ -71,7 +76,7 @@ class Handle {
     } else {
       await this.save(false);
     }
-    
+
     return this;
   }
 
@@ -85,10 +90,8 @@ class Handle {
 
     try {
       // Try/catch in case it already exists
-      await db.insert("chat_handle_join", {
-        "chatId": chat.id,
-        "handleId": this.id
-      });
+      await db
+          .insert("chat_handle_join", {"chatId": chat.id, "handleId": this.id});
     } catch (ex) {
       debugPrint("Failed to add participant to chat: $ex");
     }
@@ -101,7 +104,8 @@ class Handle {
     filters.keys.forEach((filter) => whereParams.add('$filter = ?'));
     List<dynamic> whereArgs = [];
     filters.values.forEach((filter) => whereArgs.add(filter));
-    var res = await db.query("handle", where: whereParams.join(" AND "), whereArgs: whereArgs, limit: 1);
+    var res = await db.query("handle",
+        where: whereParams.join(" AND "), whereArgs: whereArgs, limit: 1);
 
     if (res.isEmpty) {
       return null;
@@ -117,15 +121,17 @@ class Handle {
     filters.keys.forEach((filter) => whereParams.add('$filter = ?'));
     List<dynamic> whereArgs = [];
     filters.values.forEach((filter) => whereArgs.add(filter));
-    var res = await db.query("handle", where: whereParams.join(" AND "), whereArgs: whereArgs);
+    var res = await db.query("handle",
+        where: whereParams.join(" AND "), whereArgs: whereArgs);
 
     return (res.isNotEmpty) ? res.map((c) => Handle.fromMap(c)).toList() : [];
   }
 
   static Future<List<Chat>> getChats(Handle handle) async {
     final Database db = await DBProvider.db.database;
-    
-    var res = await db.rawQuery("SELECT"
+
+    var res = await db.rawQuery(
+        "SELECT"
         " chat.ROWID AS ROWID,"
         " chat.guid AS guid,"
         " chat.style AS style,"
@@ -137,16 +143,15 @@ class Handle {
         " JOIN chat_handle_join AS chj ON handle.ROWID = chj.handleId"
         " JOIN chat ON chat.ROWID = chj.chatId"
         " WHERE handle.address = ? OR handle.ROWID;",
-        [handle.address, handle.id]
-    );
+        [handle.address, handle.id]);
 
     return (res.isNotEmpty) ? res.map((c) => Chat.fromMap(c)).toList() : [];
   }
 
   Map<String, dynamic> toMap() => {
-    "ROWID": id,
-    "address": address,
-    "country": country,
-    "uncanonicalizedId": uncanonicalizedId,
-  };
+        "ROWID": id,
+        "address": address,
+        "country": country,
+        "uncanonicalizedId": uncanonicalizedId,
+      };
 }
