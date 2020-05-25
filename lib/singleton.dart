@@ -140,10 +140,31 @@ class Singleton {
         debugPrint("An error occurred: " + data.toString());
       });
 
-      // _singleton.socket.subscribe("new-message", (_data) {
-      //   Map<String, dynamic> data = jsonDecode(_data);
-      //   debugPrint(data.toString());
-      // });
+      _singleton.socket.subscribe("new-message", (_data) async {
+        // debugPrint(data.toString());
+        debugPrint("found new message");
+        Map<String, dynamic> data = jsonDecode(_data);
+        if (Singleton().processedGUIDS.contains(data["guid"])) {
+          return new Future.value("");
+        } else {
+          Singleton().processedGUIDS.add(data["guid"]);
+        }
+        if (data["chats"].length == 0) return new Future.value("");
+        Chat chat = await Chat.findOne({"guid": data["chats"][0]["guid"]});
+        if (chat == null) return new Future.value("");
+        String title = await chatTitle(chat);
+        debugPrint("found chat: " + title);
+        Singleton().handleNewMessage(data, chat);
+        if (data["isFromMe"]) {
+          return new Future.value("");
+        }
+
+        // String message = data["text"].toString();
+
+        // await _showNotificationWithDefaultSound(0, title, message);
+
+        return new Future.value("");
+      });
     } catch (e) {
       debugPrint("FAILED TO CONNECT");
     }

@@ -62,6 +62,8 @@ class _ConversationListState extends State<ConversationList> {
     for (int i = 0; i < Singleton().chats.length; i++) {
       Chat chat = Singleton().chats[i];
       String title = await chatTitle(chat);
+      if (title.substring(title.length - 2) == ", ")
+        title = title.substring(0, title.length - 2);
       List<Message> messages = await Chat.getMessages(chat);
       messages.sort((a, b) => -a.dateCreated.compareTo(b.dateCreated));
       String subtitle = "";

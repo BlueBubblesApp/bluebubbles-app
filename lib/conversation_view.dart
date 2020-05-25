@@ -39,6 +39,7 @@ class _ConversationViewState extends State<ConversationView> {
   @override
   void initState() {
     _controller = TextEditingController();
+    Singleton().subscribe(_updateMessages);
     chatTitle(widget.chat).then((value) {
       setState(() {
         title = value;
@@ -50,7 +51,7 @@ class _ConversationViewState extends State<ConversationView> {
     Chat.getMessages(widget.chat).then((value) {
       messages = value;
       messages.sort((a, b) => -a.dateCreated.compareTo(b.dateCreated));
-      setState(() {});
+      if (this.mounted) setState(() {});
     });
   }
 

@@ -68,7 +68,19 @@ class _MessageState extends State<MessageWidget> {
     List<Widget> content = <Widget>[];
     for (int i = 0; i < images.length; i++) {
       if (images[i] is File) {
-        content.add(Image.file(images[i]));
+        content.add(Stack(
+          children: <Widget>[
+            Image.file(images[i]),
+            Positioned.fill(
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () {},
+                ),
+              ),
+            ),
+          ],
+        ));
       } else if (images[i] is Attachment) {
         content.add(RaisedButton(
           onPressed: () {
@@ -88,7 +100,12 @@ class _MessageState extends State<MessageWidget> {
               if (snapshot.connectionState == ConnectionState.done) {
                 if (snapshot.hasData) {
                   debugPrint("loaded image");
-                  return Image.file(snapshot.data);
+                  return InkWell(
+                    onTap: () {
+                      debugPrint("tap");
+                    },
+                    child: Image.file(snapshot.data),
+                  );
                 } else {
                   return Text(
                     "Error loading",
