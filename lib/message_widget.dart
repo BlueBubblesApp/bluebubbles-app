@@ -10,12 +10,13 @@ import 'hex_color.dart';
 import 'repository/models/message.dart';
 
 class MessageWidget extends StatefulWidget {
-  MessageWidget({Key key, this.fromSelf, this.message, this.previousMessage})
+  MessageWidget({Key key, this.fromSelf, this.message, this.olderMessage, this.newerMessage})
       : super(key: key);
 
   final fromSelf;
   final Message message;
-  final Message previousMessage;
+  final Message olderMessage;
+  final Message newerMessage;
 
   @override
   _MessageState createState() => _MessageState();
@@ -32,18 +33,7 @@ class _MessageState extends State<MessageWidget> {
   void initState() {
     super.initState();
 
-    if (widget.previousMessage != null) {
-      // debugPrint(getDifferenceInTime().inMinutes.toString());
-      showTail = getDifferenceInTime().inMinutes > 5 ||
-          widget.previousMessage.isFromMe != widget.message.isFromMe ||
-          widget.previousMessage.handleId != widget.message.handleId;
-    } else {
-      showTail = true;
-    }
-
-    if (widget.message != null && widget.message.from != null) {
-      debugPrint(widget.message.from.address);
-    }
+    showTail = shouldShowTail(widget.message, widget.olderMessage, widget.newerMessage);
 
     Message.getAttachments(widget.message).then((data) {
       attachments = data;
@@ -66,9 +56,22 @@ class _MessageState extends State<MessageWidget> {
     });
   }
 
-  Duration getDifferenceInTime() {
-    return widget.message.dateCreated
-        .difference(widget.previousMessage.dateCreated);
+  bool sameSender(Message first, Message second) {
+    return (first != null && first.id != null && second != null && second.id != null && (
+      first.isFromMe == second.isFromMe ||
+      first.handleId == second.handleId
+    ));
+  }
+
+  bool shouldShowTail(Message current, Message older, Message newer) {
+    if (newer == null || newer.id == null) return true;
+    if (sameSender(current, older) && getDifferenceInTime(current, older).inMinutes > 30) return true;
+    if (!sameSender(current, older)) return true;
+    return false;
+  }
+
+  Duration getDifferenceInTime(Message first, Message second) {
+    return first.dateCreated.difference(second.dateCreated);
   }
 
   List<Widget> _constructContent() {
@@ -175,43 +178,32 @@ class _MessageState extends State<MessageWidget> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: <Widget>[
-        Padding(
-          padding: EdgeInsets.only(
-              bottom: (widget.previousMessage != null &&
-                          getDifferenceInTime().inMinutes < 30 &&
-                          getDifferenceInTime().inMinutes > 3) ||
-                      (widget.previousMessage != null &&
-                          widget.previousMessage.isFromMe !=
-                              widget.message.isFromMe)
-                  ? 10.0
-                  : 0.0),
-          child: Stack(
-            alignment: AlignmentDirectional.bottomEnd,
-            children: <Widget>[
-              Stack(
-                alignment: AlignmentDirectional.bottomEnd,
-                children: stack,
+        Stack(
+          alignment: AlignmentDirectional.bottomEnd,
+          children: <Widget>[
+            Stack(
+              alignment: AlignmentDirectional.bottomEnd,
+              children: stack,
+            ),
+            Container(
+              margin: EdgeInsets.symmetric(
+                horizontal: 10,
               ),
-              Container(
-                margin: EdgeInsets.symmetric(
-                  horizontal: 10,
-                ),
-                constraints: BoxConstraints(
-                  maxWidth: MediaQuery.of(context).size.width * 3 / 4,
-                ),
-                padding: EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20),
-                  color: Colors.blue,
-                ),
-                // color: Colors.blue,
-                // height: 20,
-                child: Column(
-                  children: _constructContent(),
-                ),
+              constraints: BoxConstraints(
+                maxWidth: MediaQuery.of(context).size.width * 3 / 4,
               ),
-            ],
-          ),
+              padding: EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                color: Colors.blue,
+              ),
+              // color: Colors.blue,
+              // height: 20,
+              child: Column(
+                children: _constructContent(),
+              ),
+            ),
+          ],
         ),
         _buildTimeStamp(),
       ],
@@ -285,18 +277,18 @@ class _MessageState extends State<MessageWidget> {
   }
 
   Widget _buildTimeStamp() {
-    if (widget.previousMessage != null &&
-        getDifferenceInTime().inMinutes > 30) {
-      DateTime timeOfpreviousMessage = widget.previousMessage.dateCreated;
-      String time = new DateFormat.jm().format(timeOfpreviousMessage);
+    if (widget.olderMessage != null &&
+        getDifferenceInTime(widget.message, widget.olderMessage).inMinutes > 30) {
+      DateTime timeOfolderMessage = widget.olderMessage.dateCreated;
+      String time = new DateFormat.jm().format(timeOfolderMessage);
       String date;
-      if (widget.previousMessage.dateCreated.isToday()) {
+      if (widget.olderMessage.dateCreated.isToday()) {
         date = "Today";
-      } else if (widget.previousMessage.dateCreated.isYesterday()) {
+      } else if (widget.olderMessage.dateCreated.isYesterday()) {
         date = "Yesterday";
       } else {
         date =
-            "${timeOfpreviousMessage.month.toString()}/${timeOfpreviousMessage.day.toString()}/${timeOfpreviousMessage.year.toString()}";
+            "${timeOfolderMessage.month.toString()}/${timeOfolderMessage.day.toString()}/${timeOfolderMessage.year.toString()}";
       }
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 14.0),

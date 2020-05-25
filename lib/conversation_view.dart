@@ -38,6 +38,8 @@ class _ConversationViewState extends State<ConversationView> {
 
   @override
   void initState() {
+    super.initState();
+
     _controller = TextEditingController();
     Singleton().subscribe(_updateMessages);
     chatTitle(widget.chat).then((value) {
@@ -51,7 +53,9 @@ class _ConversationViewState extends State<ConversationView> {
     Chat.getMessages(widget.chat).then((value) {
       messages = value;
       messages.sort((a, b) => -a.dateCreated.compareTo(b.dateCreated));
-      messages.insert(0, new Message());
+      if (messages.length > 0) {
+        messages.insert(0, new Message());
+      }
       if (this.mounted) setState(() {});
     });
   }
@@ -99,20 +103,26 @@ class _ConversationViewState extends State<ConversationView> {
                 );
               }
 
-              Message previousMessage;
+              Message olderMessage;
+              Message newerMessage;
               if (index + 1 >= 0 && index + 1 <= messages.length) {
-                previousMessage = messages[index + 1];
+                olderMessage = messages[index + 1];
               }
+              if (index - 1 >= 0 && index - 1 <= messages.length) {
+                newerMessage = messages[index - 1];
+              }
+
               return MessageWidget(
                 key: Key(messages[index].guid),
                 fromSelf: messages[index].isFromMe,
                 message: messages[index],
-                previousMessage: previousMessage,
+                olderMessage: olderMessage,
+                newerMessage: newerMessage
               );
             },
             separatorBuilder: (BuildContext context, int index) {
               return SizedBox(
-                height: 10,
+                height: 5,
               );
             },
           ),

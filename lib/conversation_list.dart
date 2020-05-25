@@ -62,29 +62,32 @@ class _ConversationListState extends State<ConversationList> {
     for (int i = 0; i < Singleton().chats.length; i++) {
       Chat chat = Singleton().chats[i];
       String title = await chatTitle(chat);
-      if (title.substring(title.length - 2) == ", ")
-        title = title.substring(0, title.length - 2);
+
+      // pull out the messages
       List<Message> messages = await Chat.getMessages(chat);
       messages.sort((a, b) => -a.dateCreated.compareTo(b.dateCreated));
+
+      // Calculate what the chat metadata should be
       String subtitle = "";
       String date = "";
       if (messages.length > 0) {
-        List<Attachment> attachments =
-            await Message.getAttachments(messages.first);
+        // Get first message or first attachment
+        List<Attachment> attachments =await Message.getAttachments(messages.first);
         String text = messages.first.text.substring(attachments.length);
         if (text.length == 0 && attachments.length > 0) {
           text = "${attachments.length} attachments";
         }
+
         subtitle = text;
 
+        // Get the date of the last message
         Message lastMessage = messages.first;
         if (lastMessage.dateCreated.isToday()) {
           date = new DateFormat.jm().format(lastMessage.dateCreated);
         } else if (lastMessage.dateCreated.isYesterday()) {
           date = "Yesterday";
         } else {
-          date =
-              "${lastMessage.dateCreated.month.toString()}/${lastMessage.dateCreated.day.toString()}/${lastMessage.dateCreated.year.toString()}";
+          date = "${lastMessage.dateCreated.month.toString()}/${lastMessage.dateCreated.day.toString()}/${lastMessage.dateCreated.year.toString()}";
         }
       }
 
