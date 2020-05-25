@@ -175,35 +175,40 @@ class _MessageState extends State<MessageWidget> {
     if (showTail) {
       stack.insertAll(0, tail);
     }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: <Widget>[
-        Stack(
-          alignment: AlignmentDirectional.bottomEnd,
-          children: <Widget>[
-            Stack(
-              alignment: AlignmentDirectional.bottomEnd,
-              children: stack,
-            ),
-            Container(
-              margin: EdgeInsets.symmetric(
-                horizontal: 10,
+        Padding(
+          padding: EdgeInsets.only(
+              bottom: showTail ? 10.0 : 5.0),
+          child: Stack(
+            alignment: AlignmentDirectional.bottomEnd,
+            children: <Widget>[
+              Stack(
+                alignment: AlignmentDirectional.bottomEnd,
+                children: stack,
               ),
-              constraints: BoxConstraints(
-                maxWidth: MediaQuery.of(context).size.width * 3 / 4,
+              Container(
+                margin: EdgeInsets.symmetric(
+                  horizontal: 10,
+                ),
+                constraints: BoxConstraints(
+                  maxWidth: MediaQuery.of(context).size.width * 3 / 4,
+                ),
+                padding: EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  color: Colors.blue,
+                ),
+                // color: Colors.blue,
+                // height: 20,
+                child: Column(
+                  children: _constructContent(),
+                ),
               ),
-              padding: EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
-                color: Colors.blue,
-              ),
-              // color: Colors.blue,
-              // height: 20,
-              child: Column(
-                children: _constructContent(),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
         _buildTimeStamp(),
       ],
