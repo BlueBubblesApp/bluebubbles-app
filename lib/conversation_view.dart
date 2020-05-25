@@ -91,7 +91,7 @@ class _ConversationViewState extends State<ConversationView> {
       body: Stack(
         alignment: AlignmentDirectional.bottomCenter,
         children: <Widget>[
-          ListView.separated(
+          ListView.builder(
             reverse: true,
             physics:
                 AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
@@ -119,12 +119,7 @@ class _ConversationViewState extends State<ConversationView> {
                 olderMessage: olderMessage,
                 newerMessage: newerMessage
               );
-            },
-            separatorBuilder: (BuildContext context, int index) {
-              return SizedBox(
-                height: 5,
-              );
-            },
+            }
           ),
           ClipRRect(
             child: BackdropFilter(
