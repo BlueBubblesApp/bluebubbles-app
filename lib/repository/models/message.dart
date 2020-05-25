@@ -190,6 +190,8 @@ class Message {
     return this;
   }
 
+  Future<Message> createMessage() async {}
+
   Future<Message> update() async {
     final Database db = await DBProvider.db.database;
 

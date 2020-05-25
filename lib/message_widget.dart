@@ -52,7 +52,6 @@ class _MessageState extends State<MessageWidget> {
             images.add(File(pathName));
           } else {
             images.add(attachments[i]);
-            debugPrint("added attachment");
           }
         }
         setState(() {});
@@ -105,10 +104,10 @@ class _MessageState extends State<MessageWidget> {
         );
       }
     }
-    if (widget.message.text.length > 0) {
+    if (widget.message.text.substring(attachments.length).length > 0) {
       content.add(
         Text(
-          widget.message.text,
+          widget.message.text.substring(attachments.length),
           style: TextStyle(
             color: Colors.white,
           ),

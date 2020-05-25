@@ -230,6 +230,7 @@ class Singleton {
           Attachment file = Attachment.fromMap(attachmentItem);
           file.save(message);
         });
+        notify();
       });
     } else {
       chat.addMessage(message).then((value) {
@@ -240,6 +241,7 @@ class Singleton {
           Attachment file = Attachment.fromMap(attachmentItem);
           file.save(message);
         });
+        notify();
       });
     }
     // if (_singleton.socket != null) {
@@ -285,10 +287,7 @@ class Singleton {
   //   notify();
   // }
 
-  // void sendMessage(Message message) {
-  //   RepositoryServiceMessage.addEmptyMessageToChat(message).whenComplete(() {
-  //     notify();
-  //   });
+  // void sendMessage(String text) {
   //   Map params = Map();
   //   params["guid"] = message.chatGuid;
   //   params["message"] = message.text;
@@ -323,23 +322,12 @@ class Singleton {
       params["identifier"] = guid;
       params["start"] = index * chunkSize;
       params["chunkSize"] = chunkSize;
-      params["compress"] = true;
+      params["compress"] = false;
       _singleton.socket.sendMessage("get-attachment-chunk", jsonEncode(params),
           (chunk) async {
         dynamic attachmentResponse = jsonDecode(chunk);
-
-        Utf8Encoder encoder = new Utf8Encoder();
-
-        List<int> bytes = attachmentResponse["data"].codeUnits;
-        // debugPrint(
-        //     encoder.convert(attachmentResponse["data"].toString()).toList());
-        // List<int> newDataAsInts =
-        //     zlib.decode(encoder.convert(attachmentResponse["data"], 3));
-        // var data = utf8.decode(inflated);
-        // json.decode(data);
-        // Map<String, dynamic> newData = attachmentResponse["data"];
-        // List<int> newDataAsInts = newData.values.map((e) => e as int).toList();
-        currentBytes.addAll(bytes);
+        Uint8List bytes = base64Decode(attachmentResponse["data"]);
+        currentBytes.addAll(bytes.toList());
         if (index < total) {
           debugPrint("${index / total * 100}% of the image");
           debugPrint("next start is ${index + 1} out of $total");
@@ -359,14 +347,18 @@ class Singleton {
     debugPrint("getting attachment");
     int numOfChunks = (attachment.totalBytes / chunkSize).ceil();
     debugPrint("num Of Chunks is $numOfChunks");
-
+    Stopwatch stopwatch = new Stopwatch();
+    stopwatch.start();
     getChunkRecursive(attachment.guid, 0, numOfChunks, [], chunkSize,
-        (data) async {
+        (List<int> data) async {
+      stopwatch.stop();
+      debugPrint("time elapsed is ${stopwatch.elapsedMilliseconds}");
       String fileName = attachment.transferName;
       String appDocPath = _singleton.appDocDir.path;
       String pathName = "$appDocPath/${attachment.guid}/$fileName";
-      List<int> decodedData = zlib.decode(data);
-      Uint8List bytes = Uint8List.fromList(decodedData);
+      debugPrint(
+          "length of array is ${data.length} / ${attachment.totalBytes}");
+      Uint8List bytes = Uint8List.fromList(data);
 
       File file = await writeToFile(bytes, pathName);
       completer.complete(file);

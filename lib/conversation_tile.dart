@@ -17,9 +17,15 @@ import 'repository/models/chat.dart';
 
 class ConversationTile extends StatefulWidget {
   final Chat chat;
+  final String title;
+  final String subtitle;
+  final String date;
   ConversationTile({
     Key key,
     this.chat,
+    this.title,
+    this.subtitle,
+    this.date,
   }) : super(key: key);
 
   // final Chat chat;
@@ -37,7 +43,7 @@ class _ConversationTileState extends State<ConversationTile> {
   @override
   Future<void> didChangeDependencies() async {
     super.didChangeDependencies();
-    if (this.mounted) _updateMessages();
+    // if (this.mounted) _updateMessages();
   }
 
   @override
@@ -47,9 +53,9 @@ class _ConversationTileState extends State<ConversationTile> {
       title = value;
       setState(() {});
     });
-    _updateMessages();
+    // _updateMessages();
     Singleton().subscribe(() {
-      if (this.mounted) _updateMessages();
+      if (this.mounted) setState(() {});
     });
   }
 
@@ -89,7 +95,7 @@ class _ConversationTileState extends State<ConversationTile> {
         },
         child: ListTile(
           title: Text(
-            title,
+            widget.title,
             style: TextStyle(
               color: Colors.white,
             ),
@@ -97,7 +103,7 @@ class _ConversationTileState extends State<ConversationTile> {
             overflow: TextOverflow.ellipsis,
           ),
           subtitle: Text(
-            subtitle,
+            widget.subtitle,
             style: TextStyle(
               color: HexColor('36363a'),
             ),
@@ -123,15 +129,15 @@ class _ConversationTileState extends State<ConversationTile> {
             ),
           ),
           trailing: Container(
-            width: 73,
+            width: 90,
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
                 Container(
-                  padding: EdgeInsets.only(right: 10),
+                  padding: EdgeInsets.only(right: 5),
                   child: Text(
-                    lastMessageTime,
+                    widget.date,
                     style: TextStyle(
                       color: HexColor('36363a'),
                       fontSize: 10,

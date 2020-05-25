@@ -1,5 +1,7 @@
 import 'dart:ui';
 
+import 'package:bluebubble_messages/singleton.dart';
+
 import './hex_color.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -182,15 +184,13 @@ class _ConversationViewState extends State<ConversationView> {
                                 onPressed: () {
                                   debugPrint("sending message");
                                   // Singleton().sendMessage(
-                                  //     widget.chat.guid, _controller.text);
+                                  //     widget.chat, _controller.text);
                                   // Message message = Message.manual(
                                   //     _controller.text,
                                   //     widget.chat.guid,
                                   //     DateTime.now().millisecondsSinceEpoch,
                                   //     "[]");
-                                  // Singleton().sendMessage(message);
                                   _controller.text = "";
-                                  // widget.sendMessage(params);
                                 },
                                 child: Icon(
                                   Icons.arrow_upward,
