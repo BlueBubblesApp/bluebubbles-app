@@ -22,13 +22,13 @@ String chatToJson(Chat data) {
 Future<String> chatTitle(Chat _chat) async {
   String title = "";
   if (_chat.displayName == null || _chat.displayName == "") {
-    title = "";
     Chat chat = await _chat.getParticipants();
+    List<String> titles = [];
     for (int i = 0; i < chat.participants.length; i++) {
-      Handle participant = chat.participants[i];
-      // _title += (participant["id"] + ", ").toString();
-      title += _convertNumberToContact(participant.address.toString()) + ", ";
+      titles.add(_convertNumberToContact(chat.participants[i].address.toString()));
     }
+
+    title = titles.join(', ');
   } else {
     title = _chat.displayName;
   }
@@ -214,7 +214,7 @@ class Chat {
         " FROM message"
         " JOIN chat_message_join AS cmj ON message.ROWID = cmj.messageId"
         " JOIN chat ON cmj.chatId = chat.ROWID"
-        " JOIN handle ON handle.ROWID = message.handleId"
+        " LEFT OUTER JOIN handle ON handle.ROWID = message.handleId"
         " WHERE chat.ROWID = ?;",
         [chat.id]);
 
