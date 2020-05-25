@@ -192,7 +192,6 @@ class Singleton {
 
             messages.forEach((item) {
               Message message = Message.fromMap(item);
-              //and here
               chat.addMessage(message).then((value) {
                 // Create the attachments
                 List<dynamic> attachments = item['attachments'];
@@ -346,7 +345,11 @@ class Singleton {
       params["compress"] = false;
       _singleton.socket.sendMessage("get-attachment-chunk", jsonEncode(params),
           (chunk) async {
-        dynamic attachmentResponse = jsonDecode(chunk);
+        Map<String, dynamic> attachmentResponse = jsonDecode(chunk);
+        if (!attachmentResponse.containsKey("data") || attachmentResponse["data"] == null) {
+          await cb(currentBytes);
+        }
+
         Uint8List bytes = base64Decode(attachmentResponse["data"]);
         currentBytes.addAll(bytes.toList());
         if (index < total) {
@@ -363,7 +366,7 @@ class Singleton {
   }
 
   Future getImage(Attachment attachment) {
-    int chunkSize = 8192;
+    int chunkSize = 1024 * 1000;
     Completer completer = new Completer();
     debugPrint("getting attachment");
     int numOfChunks = (attachment.totalBytes / chunkSize).ceil();
@@ -374,6 +377,12 @@ class Singleton {
         (List<int> data) async {
       stopwatch.stop();
       debugPrint("time elapsed is ${stopwatch.elapsedMilliseconds}");
+
+      if (data.length == 0) {
+        completer.completeError("Unable to fetch attachment from server");
+        return;
+      }
+
       String fileName = attachment.transferName;
       String appDocPath = _singleton.appDocDir.path;
       String pathName = "$appDocPath/${attachment.guid}/$fileName";
@@ -384,6 +393,7 @@ class Singleton {
       File file = await writeToFile(bytes, pathName);
       completer.complete(file);
     });
+
     return completer.future;
   }
 

@@ -47,10 +47,11 @@ class _ConversationViewState extends State<ConversationView> {
     });
   }
 
-  void _updateMessages() {
+  void _updateMessages() async{
     Chat.getMessages(widget.chat).then((value) {
       messages = value;
       messages.sort((a, b) => -a.dateCreated.compareTo(b.dateCreated));
+      messages.insert(0, new Message());
       if (this.mounted) setState(() {});
     });
   }
@@ -86,7 +87,7 @@ class _ConversationViewState extends State<ConversationView> {
       body: Stack(
         alignment: AlignmentDirectional.bottomCenter,
         children: <Widget>[
-          ListView.builder(
+          ListView.separated(
             reverse: true,
             physics:
                 AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
@@ -97,15 +98,21 @@ class _ConversationViewState extends State<ConversationView> {
                   height: 80,
                 );
               }
-              Message followingMessage;
-              if (index - 2 >= 0 && index - 2 < messages.length) {
-                followingMessage = messages[index - 2];
+
+              Message previousMessage;
+              if (index + 1 >= 0 && index + 1 <= messages.length) {
+                previousMessage = messages[index + 1];
               }
               return MessageWidget(
-                key: Key(messages[index - 1].guid),
-                fromSelf: messages[index - 1].isFromMe,
-                message: messages[index - 1],
-                followingMessage: followingMessage,
+                key: Key(messages[index].guid),
+                fromSelf: messages[index].isFromMe,
+                message: messages[index],
+                previousMessage: previousMessage,
+              );
+            },
+            separatorBuilder: (BuildContext context, int index) {
+              return SizedBox(
+                height: 10,
               );
             },
           ),

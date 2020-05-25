@@ -10,12 +10,12 @@ import 'hex_color.dart';
 import 'repository/models/message.dart';
 
 class MessageWidget extends StatefulWidget {
-  MessageWidget({Key key, this.fromSelf, this.message, this.followingMessage})
+  MessageWidget({Key key, this.fromSelf, this.message, this.previousMessage})
       : super(key: key);
 
   final fromSelf;
   final Message message;
-  final Message followingMessage;
+  final Message previousMessage;
 
   @override
   _MessageState createState() => _MessageState();
@@ -32,12 +32,19 @@ class _MessageState extends State<MessageWidget> {
   void initState() {
     super.initState();
 
-    if (widget.followingMessage != null) {
+    if (widget.previousMessage != null) {
+      // debugPrint(getDifferenceInTime().inMinutes.toString());
       showTail = getDifferenceInTime().inMinutes > 5 ||
-          widget.followingMessage.isFromMe != widget.message.isFromMe;
+          widget.previousMessage.isFromMe != widget.message.isFromMe ||
+          widget.previousMessage.handleId != widget.message.handleId;
     } else {
       showTail = true;
     }
+
+    if (widget.message != null && widget.message.from != null) {
+      debugPrint(widget.message.from.address);
+    }
+
     Message.getAttachments(widget.message).then((data) {
       attachments = data;
       body = widget.message.text.substring(
@@ -60,8 +67,8 @@ class _MessageState extends State<MessageWidget> {
   }
 
   Duration getDifferenceInTime() {
-    return widget.followingMessage.dateCreated
-        .difference(widget.message.dateCreated);
+    return widget.message.dateCreated
+        .difference(widget.previousMessage.dateCreated);
   }
 
   List<Widget> _constructContent() {
@@ -170,11 +177,11 @@ class _MessageState extends State<MessageWidget> {
       children: <Widget>[
         Padding(
           padding: EdgeInsets.only(
-              bottom: (widget.followingMessage != null &&
+              bottom: (widget.previousMessage != null &&
                           getDifferenceInTime().inMinutes < 30 &&
                           getDifferenceInTime().inMinutes > 3) ||
-                      (widget.followingMessage != null &&
-                          widget.followingMessage.isFromMe !=
+                      (widget.previousMessage != null &&
+                          widget.previousMessage.isFromMe !=
                               widget.message.isFromMe)
                   ? 10.0
                   : 0.0),
@@ -245,43 +252,32 @@ class _MessageState extends State<MessageWidget> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        Padding(
-          padding: EdgeInsets.only(
-              bottom: (widget.followingMessage != null &&
-                          getDifferenceInTime().inMinutes < 30 &&
-                          getDifferenceInTime().inMinutes > 3) ||
-                      (widget.followingMessage != null &&
-                          widget.followingMessage.isFromMe !=
-                              widget.message.isFromMe)
-                  ? 10.0
-                  : 0.0),
-          child: Stack(
-            alignment: AlignmentDirectional.bottomStart,
-            children: <Widget>[
-              Stack(
-                alignment: AlignmentDirectional.bottomStart,
-                children: stack,
+        Stack(
+          alignment: AlignmentDirectional.bottomStart,
+          children: <Widget>[
+            Stack(
+              alignment: AlignmentDirectional.bottomStart,
+              children: stack,
+            ),
+            Container(
+              margin: EdgeInsets.symmetric(
+                horizontal: 10,
               ),
-              Container(
-                margin: EdgeInsets.symmetric(
-                  horizontal: 10,
-                ),
-                constraints: BoxConstraints(
-                  maxWidth: MediaQuery.of(context).size.width * 3 / 4,
-                ),
-                padding: EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20),
-                  color: HexColor('26262a'),
-                ),
-                // color: Colors.blue,
-                // height: 20,
-                child: Column(
-                  children: _constructContent(),
-                ),
+              constraints: BoxConstraints(
+                maxWidth: MediaQuery.of(context).size.width * 3 / 4,
               ),
-            ],
-          ),
+              padding: EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                color: HexColor('26262a'),
+              ),
+              // color: Colors.blue,
+              // height: 20,
+              child: Column(
+                children: _constructContent(),
+              ),
+            ),
+          ],
         ),
         _buildTimeStamp(),
       ],
@@ -289,18 +285,18 @@ class _MessageState extends State<MessageWidget> {
   }
 
   Widget _buildTimeStamp() {
-    if (widget.followingMessage != null &&
+    if (widget.previousMessage != null &&
         getDifferenceInTime().inMinutes > 30) {
-      DateTime timeOfFollowingMessage = widget.followingMessage.dateCreated;
-      String time = new DateFormat.jm().format(timeOfFollowingMessage);
+      DateTime timeOfpreviousMessage = widget.previousMessage.dateCreated;
+      String time = new DateFormat.jm().format(timeOfpreviousMessage);
       String date;
-      if (widget.followingMessage.dateCreated.isToday()) {
+      if (widget.previousMessage.dateCreated.isToday()) {
         date = "Today";
-      } else if (widget.followingMessage.dateCreated.isYesterday()) {
+      } else if (widget.previousMessage.dateCreated.isYesterday()) {
         date = "Yesterday";
       } else {
         date =
-            "${timeOfFollowingMessage.month.toString()}/${timeOfFollowingMessage.day.toString()}/${timeOfFollowingMessage.year.toString()}";
+            "${timeOfpreviousMessage.month.toString()}/${timeOfpreviousMessage.day.toString()}/${timeOfpreviousMessage.year.toString()}";
       }
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 14.0),

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:bluebubble_messages/repository/models/attachment.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:sqflite/sqflite.dart';
 
 import '../database.dart';
@@ -163,11 +164,14 @@ class Message {
     }
 
     // Save the participant
-    if (this.from != null && this.from.id != null) {
+    if (this.from != null) {
       await this.from.save();
-      this.handleId = this.from.id;
-    } else {
-      this.handleId = 0;
+
+      // Pull out the from ID, if it's present and not null
+      if (this.handleId == null && this.from.id != null) {
+        debugPrint("setting handle ID to from ID: " + this.from.id.toString());
+        this.handleId = this.from.id;
+      }
     }
 
     // If it already exists, update it
@@ -244,6 +248,24 @@ class Message {
     return (res.isNotEmpty)
         ? res.map((c) => Attachment.fromMap(c)).toList()
         : [];
+  }
+
+  Future<Handle> getFrom() async {
+    final Database db = await DBProvider.db.database;
+
+    var res = await db.rawQuery(
+        "SELECT"
+        " handle.ROWID AS ROWID,"
+        " handle.address AS address,"
+        " handle.country AS country,"
+        " handle.uncanonicalizedId AS uncanonicalizedId"
+        " FROM handle"
+        " JOIN message ON message.handleId = handle.ROWID"
+        " WHERE message.ROWID = ?;",
+        [this.id]);
+
+    this.from = (res.isNotEmpty) ? res.map((c) => Handle.fromMap(c)).toList()[0] : null;
+    return this.from;
   }
 
   static Future<Message> findOne(Map<String, dynamic> filters) async {
