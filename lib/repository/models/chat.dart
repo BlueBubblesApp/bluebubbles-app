@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:contacts_service/contacts_service.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:sqflite/sqflite.dart';
 
 import '../../singleton.dart';
@@ -205,14 +206,33 @@ class Chat {
         " message.associatedMessageGuid AS associatedMessageGuid,"
         " message.associatedMessageType AS associatedMessageType,"
         " message.expressiveSendStyleId AS texexpressiveSendStyleIdt,"
-        " message.timeExpressiveSendStyleId AS timeExpressiveSendStyleId"
+        " message.timeExpressiveSendStyleId AS timeExpressiveSendStyleId,"
+        " handle.ROWID AS handleId,"
+        " handle.address AS handleAddress,"
+        " handle.country AS handleCountry,"
+        " handle.uncanonicalizedId AS handleUncanonicalizedId"
         " FROM message"
-        " JOIN chat_message_join AS cmj ON message.ROWID = cmj.messageId "
-        " JOIN chat ON cmj.chatId = chat.ROWID "
+        " JOIN chat_message_join AS cmj ON message.ROWID = cmj.messageId"
+        " JOIN chat ON cmj.chatId = chat.ROWID"
+        " JOIN handle ON handle.ROWID = message.handleId"
         " WHERE chat.ROWID = ?;",
         [chat.id]);
 
-    return (res.isNotEmpty) ? res.map((c) => Message.fromMap(c)).toList() : [];
+    // Add the from/handle data to the messages
+    List<Message> output = [];
+    for (int i = 0; i < res.length; i++) {
+      Message msg = Message.fromMap(res[i]);
+      msg.from = Handle.fromMap({
+        'id': res[i]['handleId'],
+        'address': res[i]['handleAddress'],
+        'country': res[i]['handleCountry'],
+        'uncanonicalizedId': res[i]['handleUncanonicalizedId']
+      });
+
+      output.add(msg);
+    }
+
+    return output;
   }
 
   Future<Chat> getParticipants() async {
