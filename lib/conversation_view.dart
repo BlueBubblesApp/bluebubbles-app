@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:bluebubble_messages/repository/blocs/message_bloc.dart';
 import 'package:bluebubble_messages/singleton.dart';
 
 import './hex_color.dart';
@@ -10,54 +11,47 @@ import 'repository/models/chat.dart';
 import 'repository/models/message.dart';
 
 class ConversationView extends StatefulWidget {
-  ConversationView({Key key, this.chat}) : super(key: key);
+  ConversationView({
+    Key key,
+    @required this.chat,
+    @required this.title,
+  }) : super(key: key);
 
   // final data;
   final Chat chat;
+  final String title;
 
   @override
   _ConversationViewState createState() => _ConversationViewState();
 }
 
 class _ConversationViewState extends State<ConversationView> {
-  List<Message> messages = <Message>[];
+  // List<Message> _messages = <Message>[];
 
   TextEditingController _controller;
-  String title = "";
+  // String title = "";
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _updateMessages();
-    // Singleton().subscribe(() {
-    //   if (this.mounted) _updateMessages();
-    // });
-  }
+  MessageBloc _messageBloc;
 
   // final animatedListKey = GlobalKey<AnimatedListState>();
 
   @override
   void initState() {
     super.initState();
+    _messageBloc = new MessageBloc(widget.chat);
 
     _controller = TextEditingController();
-    Singleton().subscribe(_updateMessages);
-    chatTitle(widget.chat).then((value) {
-      setState(() {
-        title = value;
-      });
-    });
+    // Singleton().subscribe(_updateMessages);
+    // chatTitle(widget.chat).then((value) {
+    //   title = value;
+    // });
   }
 
-  void _updateMessages() async{
-    Chat.getMessages(widget.chat).then((value) {
-      messages = value;
-      messages.sort((a, b) => -a.dateCreated.compareTo(b.dateCreated));
-      if (messages.length > 0) {
-        messages.insert(0, new Message());
-      }
-      if (this.mounted) setState(() {});
-    });
+  @override
+  void didChangeDependencies() {
+    // TODO: implement didChangeDependencies
+    super.didChangeDependencies();
+    Singleton().removeChatNotification(widget.chat);
   }
 
   @override
@@ -72,7 +66,7 @@ class _ConversationViewState extends State<ConversationView> {
         // elevation: 0,
         // title: Text("Title"),
         middle: Text(
-          title,
+          widget.title,
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.normal),
         ),
         // leading: IconButton(
@@ -91,35 +85,40 @@ class _ConversationViewState extends State<ConversationView> {
       body: Stack(
         alignment: AlignmentDirectional.bottomCenter,
         children: <Widget>[
-          ListView.builder(
-            reverse: true,
-            physics:
-                AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-            itemCount: messages.length + 1,
-            itemBuilder: (BuildContext context, int index) {
-              if (index == 0) {
-                return SizedBox(
-                  height: 80,
+          StreamBuilder(
+            stream: _messageBloc.stream,
+            builder:
+                (BuildContext context, AsyncSnapshot<List<Message>> snapshot) {
+              if (snapshot.hasData) {
+                List<Message> _messages = snapshot.data;
+                return ListView.builder(
+                  reverse: true,
+                  physics: AlwaysScrollableScrollPhysics(
+                      parent: BouncingScrollPhysics()),
+                  itemCount: _messages.length + 1,
+                  itemBuilder: (BuildContext context, int index) {
+                    if (index == 0) {
+                      return SizedBox(
+                        height: 80,
+                      );
+                    }
+                    Message followingMessage;
+                    if (index - 2 >= 0 && index - 2 < _messages.length) {
+                      followingMessage = _messages[index - 2];
+                    }
+                    return MessageWidget(
+                      key: Key(_messages[index - 1].guid),
+                      fromSelf: _messages[index - 1].isFromMe,
+                      message: _messages[index - 1],
+                      followingMessage: followingMessage,
+                    );
+                  },
                 );
+              } else {
+                debugPrint("no data");
+                return Container();
               }
-
-              Message olderMessage;
-              Message newerMessage;
-              if (index + 1 >= 0 && index + 1 <= messages.length) {
-                olderMessage = messages[index + 1];
-              }
-              if (index - 1 >= 0 && index - 1 <= messages.length) {
-                newerMessage = messages[index - 1];
-              }
-
-              return MessageWidget(
-                key: Key(messages[index].guid),
-                fromSelf: messages[index].isFromMe,
-                message: messages[index],
-                olderMessage: olderMessage,
-                newerMessage: newerMessage
-              );
-            }
+            },
           ),
           ClipRRect(
             child: BackdropFilter(

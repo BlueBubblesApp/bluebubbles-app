@@ -11,12 +11,13 @@ class Settings {
   String guidAuthKey = "";
   String serverAddress = "";
   bool _finishedSetup = false;
+  int _chunkSize = 1;
 
-  set finishedSetup(bool val) {
-    _finishedSetup = val;
-  }
-
+  set finishedSetup(bool val) => _finishedSetup = val;
   bool get finishedSetup => _finishedSetup;
+
+  set chunkSize(int val) => _chunkSize = val;
+  int get chunkSize => _chunkSize;
 
   Map<String, dynamic> toJson() => {
         'server_address': serverAddress,

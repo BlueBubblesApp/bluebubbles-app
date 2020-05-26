@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:bluebubble_messages/repository/blocs/message_bloc.dart';
 import 'package:bluebubble_messages/repository/models/message.dart';
 import 'package:bluebubble_messages/singleton.dart';
 
@@ -20,12 +21,14 @@ class ConversationTile extends StatefulWidget {
   final String title;
   final String subtitle;
   final String date;
+  final bool hasNewMessage;
   ConversationTile({
     Key key,
     this.chat,
     this.title,
     this.subtitle,
     this.date,
+    this.hasNewMessage,
   }) : super(key: key);
 
   // final Chat chat;
@@ -37,7 +40,6 @@ class ConversationTile extends StatefulWidget {
 class _ConversationTileState extends State<ConversationTile> {
   String lastMessageTime = "";
   String subtitle = "";
-  String title = "title";
   List<Message> messages = <Message>[];
 
   @override
@@ -49,31 +51,10 @@ class _ConversationTileState extends State<ConversationTile> {
   @override
   void initState() {
     super.initState();
-    chatTitle(widget.chat).then((value) {
-      title = value;
-      setState(() {});
-    });
     // _updateMessages();
-    Singleton().subscribe(() {
-      if (this.mounted) setState(() {});
-    });
-  }
-
-  void _updateMessages() {
-    Chat.getMessages(widget.chat).then((value) {
-      messages = value;
-      messages.sort((a, b) => -a.dateCreated.compareTo(b.dateCreated));
-      if (messages.length > 0) {
-        Message.getAttachments(messages.first).then((attachments) {
-          String text = messages.first.text.substring(attachments.length);
-          if (text.length == 0 && attachments.length > 0) {
-            text = "${attachments.length} attachments";
-          }
-          subtitle = text;
-        });
-      }
-      setState(() {});
-    });
+    // Singleton().subscribe(() {
+    //   if (this.mounted) setState(() {});
+    // });
   }
 
   @override
@@ -88,70 +69,99 @@ class _ConversationTileState extends State<ConversationTile> {
               builder: (BuildContext context) {
                 return ConversationView(
                   chat: widget.chat,
+                  title: widget.title,
                 );
               },
             ),
           );
         },
-        child: ListTile(
-          title: Text(
-            widget.title,
-            style: TextStyle(
-              color: Colors.white,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          subtitle: Text(
-            widget.subtitle,
-            style: TextStyle(
-              color: HexColor('36363a'),
-            ),
-            maxLines: 1,
-          ),
-          leading: CircleAvatar(
-            radius: 20,
-            child: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: AlignmentDirectional.topStart,
-                  colors: [HexColor('a0a4af'), HexColor('848894')],
+        child: Stack(
+          children: <Widget>[
+            Padding(
+              padding: const EdgeInsets.only(left: 16.0),
+              child: ListTile(
+                title: Text(
+                  widget.title,
+                  style: TextStyle(
+                    color: Colors.white,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                borderRadius: BorderRadius.circular(30),
-              ),
-              child: Container(
-                // child: Text("${widget.chat.title[0]}"),
-                child: Text(""),
-                alignment: AlignmentDirectional.center,
-              ),
-            ),
-          ),
-          trailing: Container(
-            width: 90,
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                Container(
-                  padding: EdgeInsets.only(right: 5),
-                  child: Text(
-                    widget.date,
-                    style: TextStyle(
-                      color: HexColor('36363a'),
-                      fontSize: 10,
+                subtitle: Text(
+                  widget.subtitle,
+                  style: TextStyle(
+                    color: HexColor('36363a'),
+                  ),
+                  maxLines: 1,
+                ),
+                leading: CircleAvatar(
+                  radius: 20,
+                  child: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: AlignmentDirectional.topStart,
+                        colors: [HexColor('a0a4af'), HexColor('848894')],
+                      ),
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                    child: Container(
+                      // child: Text("${widget.chat.title[0]}"),
+                      child: Text(""),
+                      alignment: AlignmentDirectional.center,
                     ),
                   ),
                 ),
-                Icon(
-                  Icons.arrow_forward_ios,
-                  color: HexColor('36363a'),
-                  size: 15,
+                trailing: Container(
+                  width: 90,
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      Container(
+                        padding: EdgeInsets.only(right: 5),
+                        child: Text(
+                          widget.date,
+                          style: TextStyle(
+                            color: HexColor('36363a'),
+                            fontSize: 10,
+                          ),
+                        ),
+                      ),
+                      Icon(
+                        Icons.arrow_forward_ios,
+                        color: HexColor('36363a'),
+                        size: 15,
+                      ),
+                    ],
+                  ),
                 ),
-              ],
+              ),
             ),
-          ),
+            Padding(
+              padding: const EdgeInsets.only(left: 8.0),
+              child: Container(
+                height: 70,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(35),
+                        color: widget.hasNewMessage
+                            ? Colors.blue
+                            : Colors.transparent,
+                      ),
+                      width: 15,
+                      height: 15,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

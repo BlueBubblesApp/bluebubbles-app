@@ -1,5 +1,7 @@
 import 'dart:ui';
 
+import 'package:animated_stream_list/animated_stream_list.dart';
+import 'package:bluebubble_messages/repository/blocs/chat_bloc.dart';
 import 'package:bluebubble_messages/repository/models/attachment.dart';
 import 'package:bluebubble_messages/repository/models/chat.dart';
 import 'package:bluebubble_messages/repository/models/message.dart';
@@ -24,12 +26,12 @@ class ConversationList extends StatefulWidget {
 class _ConversationListState extends State<ConversationList> {
   ScrollController _scrollController;
   Color _theme;
-  Map<Chat, Map<String, String>> tileVals = new Map();
+  ChatBloc _chatBloc;
+  List<Chat> _chats = <Chat>[];
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    updateChatVals();
     setState(() {
       _theme = Colors.transparent;
     });
@@ -38,8 +40,13 @@ class _ConversationListState extends State<ConversationList> {
   @override
   void initState() {
     super.initState();
+    _chatBloc = new ChatBloc();
+    _chatBloc.chatStream.listen((List<Chat> chats) {
+      _chats = chats;
+      // setState(() {});
+    });
     Singleton().subscribe(() {
-      updateChatVals();
+      _chatBloc.getChats();
     });
 
     _scrollController = ScrollController()
@@ -56,56 +63,6 @@ class _ConversationListState extends State<ConversationList> {
                   })
                 : {},
       );
-  }
-
-  void updateChatVals() async {
-    for (int i = 0; i < Singleton().chats.length; i++) {
-      Chat chat = Singleton().chats[i];
-      String title = await chatTitle(chat);
-
-      // pull out the messages
-      List<Message> messages = await Chat.getMessages(chat);
-      messages.sort((a, b) => -a.dateCreated.compareTo(b.dateCreated));
-
-      // Calculate what the chat metadata should be
-      String subtitle = "";
-      String date = "";
-      if (messages.length > 0) {
-        // Get first message or first attachment
-        List<Attachment> attachments =await Message.getAttachments(messages.first);
-        String text = messages.first.text.substring(attachments.length);
-        if (text.length == 0 && attachments.length > 0) {
-          text = "${attachments.length} attachments";
-        }
-
-        subtitle = text;
-
-        // Get the date of the last message
-        Message lastMessage = messages.first;
-        if (lastMessage.dateCreated.isToday()) {
-          date = new DateFormat.jm().format(lastMessage.dateCreated);
-        } else if (lastMessage.dateCreated.isYesterday()) {
-          date = "Yesterday";
-        } else {
-          date = "${lastMessage.dateCreated.month.toString()}/${lastMessage.dateCreated.day.toString()}/${lastMessage.dateCreated.year.toString()}";
-        }
-      }
-
-      Map<String, String> chatMap = {
-        "title": title,
-        "subtitle": subtitle,
-        "date": date
-      };
-      if (tileVals.containsKey(chat)) {
-        tileVals.remove(chat);
-      }
-      tileVals[chat] = chatMap;
-      if (this.mounted &&
-          tileVals.keys.length >= Singleton().chats.length &&
-          i == Singleton().chats.length - 1) {
-        setState(() {});
-      }
-    }
   }
 
   bool get _isAppBarExpanded {
@@ -286,25 +243,49 @@ class _ConversationListState extends State<ConversationList> {
               },
             ),
           ),
-          SliverList(
-            delegate: SliverChildBuilderDelegate(
-              (context, index) {
-                if (!tileVals.containsKey(Singleton().chats[index])) {
-                  updateChatVals();
-                }
-                return ConversationTile(
-                  key: Key(Singleton().chats[index].guid.toString()),
-                  chat: Singleton().chats[index],
-                  title: tileVals[Singleton().chats[index]]["title"],
-                  subtitle: tileVals[Singleton().chats[index]]["subtitle"],
-                  date: tileVals[Singleton().chats[index]]["date"],
+          StreamBuilder(
+            stream: _chatBloc.tileStream,
+            builder: (BuildContext context,
+                AsyncSnapshot<Map<Chat, Map<String, dynamic>>> snapshot) {
+              if (snapshot.hasData) {
+                _chats.sort((a, b) {
+                  return -snapshot.data[a]["actualDate"]
+                      .compareTo(snapshot.data[b]["actualDate"]);
+                });
+                return SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      if (!snapshot.data.containsKey(_chats[index]))
+                        return Container();
+                      return ConversationTile(
+                        key: Key(_chats[index].guid.toString()),
+                        chat: _chats[index],
+                        title: snapshot.data[_chats[index]]["title"],
+                        subtitle: snapshot.data[_chats[index]]["subtitle"],
+                        date: snapshot.data[_chats[index]]["date"],
+                        hasNewMessage: snapshot.data[_chats[index]]
+                            ["hasNotification"],
+                      );
+                    },
+                    childCount: _chats.length,
+                  ),
                 );
-              },
-              childCount: Singleton().chats.length,
-            ),
-          )
+              } else {
+                return SliverToBoxAdapter(
+                  child: Container(),
+                );
+              }
+            },
+          ),
         ],
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    // TODO: implement dispose
+    debugPrint("disposed");
+    super.dispose();
   }
 }

@@ -25,7 +25,8 @@ Future<String> chatTitle(Chat _chat) async {
     Chat chat = await _chat.getParticipants();
     List<String> titles = [];
     for (int i = 0; i < chat.participants.length; i++) {
-      titles.add(_convertNumberToContact(chat.participants[i].address.toString()));
+      titles.add(
+          _convertNumberToContact(chat.participants[i].address.toString()));
     }
 
     title = titles.join(', ');
@@ -286,11 +287,12 @@ class Chat {
     filters.keys.forEach((filter) => whereParams.add('$filter = ?'));
     List<dynamic> whereArgs = [];
     filters.values.forEach((filter) => whereArgs.add(filter));
-
-    var res = await db.query("chat",
-        where: (whereParams.length > 0) ? whereParams.join(" AND ") : null,
-        whereArgs: (whereArgs.length > 0) ? whereArgs : null);
-    return (res.isNotEmpty) ? res.map((c) => Chat.fromMap(c)).toList() : [];
+    if (db.isOpen) {
+      var res = await db.query("chat",
+          where: (whereParams.length > 0) ? whereParams.join(" AND ") : null,
+          whereArgs: (whereArgs.length > 0) ? whereArgs : null);
+      return (res.isNotEmpty) ? res.map((c) => Chat.fromMap(c)).toList() : [];
+    }
   }
 
   Map<String, dynamic> toMap() => {

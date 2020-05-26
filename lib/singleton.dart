@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:bluebubble_messages/repository/database.dart';
 import 'package:flutter_socket_io/socket_io_manager.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter_socket_io/flutter_socket_io.dart';
@@ -9,11 +10,12 @@ import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sqflite/sqflite.dart';
 
 import 'repository/models/attachment.dart';
 import 'repository/models/message.dart';
 import 'settings.dart';
-import './repository/blocs/chat.dart';
+import './repository/blocs/chat_bloc.dart';
 import './repository/models/chat.dart';
 
 class Singleton {
@@ -31,6 +33,19 @@ class Singleton {
   ChatBloc chatContext = new ChatBloc();
   List<Chat> chats = [];
 
+  List<Chat> chatsWithNotifications = <Chat>[];
+
+  void removeChatNotification(Chat chat) {
+    for (int i = 0; i < chatsWithNotifications.length; i++) {
+      debugPrint(i.toString());
+      if (chatsWithNotifications[i].guid == chat.guid) {
+        chatsWithNotifications.removeAt(i);
+        notify();
+        break;
+      }
+    }
+  }
+
   List<Contact> contacts = <Contact>[];
   //interface with native code
   final platform = const MethodChannel('samples.flutter.dev/fcm');
@@ -46,6 +61,8 @@ class Singleton {
   //Socket io
   // SocketIOManager manager;
   SocketIO socket;
+
+  bool alreadyStartedSetup = false;
 
   //setstate for these widgets
   List<Function> subscribers = <Function>[];
@@ -93,6 +110,7 @@ class Singleton {
         debugPrint("connected");
         authFCM();
         syncChats();
+        alreadyStartedSetup = true;
         return;
       case "disconnect":
         debugPrint("disconnected");
@@ -103,13 +121,32 @@ class Singleton {
     // debugPrint("update status: ${data.toString()}");
   }
 
+  void deleteDB() async {
+    Database db = await DBProvider.db.database;
+    await db.execute("DELETE FROM handle");
+    await db.execute("DELETE FROM chat");
+    await db.execute("DELETE FROM message");
+    await db.execute("DELETE FROM attachment");
+    await db.execute("DELETE FROM chat_handle_join");
+    await db.execute("DELETE FROM chat_message_join");
+    await db.execute("DELETE FROM attachment_message_join");
+
+    await DBProvider.db.createHandleTable(db);
+    await DBProvider.db.createChatTable(db);
+    await DBProvider.db.createMessageTable(db);
+    await DBProvider.db.createAttachmentTable(db);
+    await DBProvider.db.createAttachmentMessageJoinTable(db);
+    await DBProvider.db.createChatHandleJoinTable(db);
+    await DBProvider.db.createChatMessageJoinTable(db);
+  }
+
   startSocketIO() async {
     // If we have no chats, loads chats from database
-    if (_singleton.chats.length == 0) {
-      List<Chat> _chats = await Chat.find();
-      if (_chats.length != 0) {
-        _singleton.chats = _chats;
-        setupProgress.complete();
+    if (_singleton.settings.finishedSetup) {
+      if (!setupProgress.isCompleted) setupProgress.complete();
+    } else {
+      if (alreadyStartedSetup && !_singleton.settings.finishedSetup) {
+        deleteDB();
       }
     }
 
@@ -261,6 +298,7 @@ class Singleton {
           Attachment file = Attachment.fromMap(attachmentItem);
           file.save(message);
         });
+        chatsWithNotifications.add(chat);
         notify();
       });
     }
@@ -346,7 +384,8 @@ class Singleton {
       _singleton.socket.sendMessage("get-attachment-chunk", jsonEncode(params),
           (chunk) async {
         Map<String, dynamic> attachmentResponse = jsonDecode(chunk);
-        if (!attachmentResponse.containsKey("data") || attachmentResponse["data"] == null) {
+        if (!attachmentResponse.containsKey("data") ||
+            attachmentResponse["data"] == null) {
           await cb(currentBytes);
         }
 
@@ -366,7 +405,7 @@ class Singleton {
   }
 
   Future getImage(Attachment attachment) {
-    int chunkSize = 1024 * 1000;
+    int chunkSize = _singleton.settings.chunkSize;
     Completer completer = new Completer();
     debugPrint("getting attachment");
     int numOfChunks = (attachment.totalBytes / chunkSize).ceil();

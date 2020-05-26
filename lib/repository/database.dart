@@ -10,20 +10,22 @@ class DBProvider {
   static final DBProvider db = DBProvider._();
 
   static Database _database;
+  static String _path = "";
 
   Future<Database> get database async {
-    if (_database != null)
-    return _database;
+    if (_database != null) return _database;
 
     // if _database is null we instantiate it
     _database = await initDB();
     return _database;
   }
 
+  String get path => _path;
+
   initDB() async {
     Directory documentsDirectory = await getApplicationDocumentsDirectory();
-    String path = join(documentsDirectory.path, "chat.db");
-    return await openDatabase(path, version: 1, onOpen: (Database db) {
+    _path = join(documentsDirectory.path, "chat.db");
+    return await openDatabase(_path, version: 1, onOpen: (Database db) {
       debugPrint("Database Opened");
     }, onCreate: (Database db, int version) async {
       await createHandleTable(db);
@@ -42,8 +44,7 @@ class DBProvider {
         "address TEXT UNIQUE NOT NULL,"
         "country TEXT DEFAULT NULL,"
         "uncanonicalizedId TEXT DEFAULT NULL"
-        ");"
-    );
+        ");");
   }
 
   createChatTable(Database db) async {
@@ -55,8 +56,7 @@ class DBProvider {
         "isArchived INTEGER DEFAULT 0,"
         "displayName TEXT DEFAULT NULL,"
         "lastMessageTimestamp DEFAULT 0"
-        ");"
-    );
+        ");");
   }
 
   createMessageTable(Database db) async {
@@ -89,8 +89,7 @@ class DBProvider {
         "expressiveSendStyleId TEXT DEFAULT NULL,"
         "timeExpressiveSendStyleId INTEGER DEFAULT 0,"
         "FOREIGN KEY(handleId) REFERENCES handle(ROWID)"
-        ");"
-    );
+        ");");
   }
 
   createAttachmentTable(Database db) async {
@@ -104,10 +103,8 @@ class DBProvider {
         "totalBytes INTEGER NOT NULL,"
         "isSticker INTEGER DEFAULT 0,"
         "hideAttachment INTEGER DEFAULT 0"
-        ");"
-    );
+        ");");
   }
-
 
   createChatHandleJoinTable(Database db) async {
     await db.execute("CREATE TABLE chat_handle_join ("
@@ -116,8 +113,7 @@ class DBProvider {
         "handleId INTEGER NOT NULL,"
         "FOREIGN KEY(chatId) REFERENCES chat(ROWID),"
         "FOREIGN KEY(handleId) REFERENCES handle(ROWID)"
-        ");"
-    );
+        ");");
   }
 
   createChatMessageJoinTable(Database db) async {
@@ -127,8 +123,7 @@ class DBProvider {
         "messageId INTEGER NOT NULL,"
         "FOREIGN KEY(chatId) REFERENCES chat(ROWID),"
         "FOREIGN KEY(messageId) REFERENCES message(ROWID)"
-        ");"
-    );
+        ");");
   }
 
   createAttachmentMessageJoinTable(Database db) async {
@@ -138,7 +133,11 @@ class DBProvider {
         "messageId INTEGER NOT NULL,"
         "FOREIGN KEY(attachmentId) REFERENCES attachment(ROWID),"
         "FOREIGN KEY(messageId) REFERENCES message(ROWID)"
-        ");"
-    );
+        ");");
+  }
+
+  deleteDB(Database db) async {
+    db.close();
+    deleteDatabase(_path);
   }
 }

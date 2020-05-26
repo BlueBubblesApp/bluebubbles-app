@@ -84,7 +84,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                 };
                 _settingsCopy.guidAuthKey = fcmData[0];
                 _settingsCopy.serverAddress = fcmData[1];
-                Singleton().saveSettings(_settingsCopy);
+                // Singleton().saveSettings(_settingsCopy);
               }
             },
           ),
@@ -135,7 +135,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                         child: Text("Ok"),
                         onPressed: () {
                           _settingsCopy.serverAddress = _controller.text;
-                          Singleton().saveSettings(_settingsCopy);
+                          // Singleton().saveSettings(_settingsCopy);
                           Navigator.of(context).pop();
                         },
                       ),
@@ -154,9 +154,25 @@ class _SettingsPanelState extends State<SettingsPanel> {
             subTitle: _settingsCopy.serverAddress,
             trailing: Icon(Icons.edit, color: HexColor('26262a')),
           ),
+          SettingsSlider(
+            startingVal: _settingsCopy.chunkSize.toDouble(),
+            update: (int val) {
+              _settingsCopy.chunkSize = val;
+            },
+          ),
         ],
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    // TODO: implement dispose
+    // if (_settingsCopy != Singleton().settings) {
+    debugPrint("saving settings");
+    Singleton().saveSettings(_settingsCopy);
+    // }
+    super.dispose();
   }
 }
 
@@ -200,6 +216,63 @@ class SettingsTile extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class SettingsSlider extends StatefulWidget {
+  SettingsSlider({this.startingVal, this.update, Key key}) : super(key: key);
+
+  final double startingVal;
+  final Function update;
+
+  @override
+  _SettingsSliderState createState() => _SettingsSliderState();
+}
+
+class _SettingsSliderState extends State<SettingsSlider> {
+  double currentVal = 1;
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    debugPrint(widget.startingVal.toString());
+    if (widget.startingVal > 1 && widget.startingVal < 5000) {
+      currentVal = widget.startingVal;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: <Widget>[
+        ListTile(
+          title: Text(
+            "Chunk Size",
+            style: TextStyle(color: Colors.white),
+          ),
+          subtitle: Slider(
+            value: currentVal,
+            onChanged: (double value) {
+              debugPrint(value.toString());
+              setState(() {
+                currentVal = value;
+                widget.update(currentVal.floor());
+              });
+            },
+            label: currentVal < 1000
+                ? "${(currentVal * 1024 / 1000).floor()}kb"
+                : "${(currentVal * 1024 * 0.000001).floor()}mb",
+            divisions: 20,
+            min: 1,
+            max: 5000,
+          ),
+        ),
+        Divider(
+          color: HexColor('26262a').withOpacity(0.5),
+          thickness: 1,
+        ),
+      ],
     );
   }
 }

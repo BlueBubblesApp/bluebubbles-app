@@ -11,6 +11,7 @@ import 'package:contacts_service/contacts_service.dart';
 // import './conversation_list.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:sqflite/sqflite.dart';
 
 import 'conversation_list.dart';
 import 'settings.dart';
@@ -60,9 +61,9 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
         .addPostFrameCallback((_) => Singleton().getSavedSettings());
     WidgetsBinding.instance.addObserver(this);
     _setupNotifications();
-    Singleton().subscribe(() {
-      if (this.mounted) setState(() {});
-    });
+    // Singleton().subscribe(() {
+    //   if (this.mounted) setState(() {});
+    // });
   }
 
   @override
@@ -163,6 +164,10 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
         onPressed: () async {
           // Singleton().sortChats();
           // Singleton().syncChats();
+          Singleton().deleteDB();
+          Settings currentSettings = Singleton().settings;
+          currentSettings.finishedSetup = false;
+          Singleton().saveSettings(currentSettings);
         },
       ),
       body: ConversationList(),
