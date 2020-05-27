@@ -146,10 +146,7 @@ class Chat {
       return this;
     }
 
-    if (message.id == null) {
-      //and here
-      await message.save();
-    }
+    await message.save();
 
     if (this.id == null) {
       await this.save();
