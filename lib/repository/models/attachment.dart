@@ -122,6 +122,11 @@ class Attachment {
         : [];
   }
 
+  static flush() async {
+    final Database db = await DBProvider.db.database;
+    await db.delete("attachment");
+  }
+
   Map<String, dynamic> toMap() => {
         "ROWID": id,
         "guid": guid,

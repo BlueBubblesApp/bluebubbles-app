@@ -254,9 +254,7 @@ class Singleton {
 
         for (int i = 0; i < chats.length; i++) {
           // Get the chat and add it to the DB
-          debugPrint(chats[i].toString());
           Chat chat = Chat.fromMap(chats[i]);
-          // This will check for an existing chat as well
           await chat.save();
 
           Map<String, dynamic> params = Map();
@@ -357,7 +355,7 @@ class Singleton {
   }
 
   void deleteDupMessages() {
-    Message.cleanMessages();
+    // Message.cleanMessages();
   }
 
   // void sortChats() async {

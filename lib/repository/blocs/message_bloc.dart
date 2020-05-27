@@ -20,7 +20,6 @@ class MessageBloc {
     getMessages(chat);
     Singleton().subscribe(_currentChat.guid, () {
       getMessages(_currentChat);
-      debugPrint("");
     });
   }
 

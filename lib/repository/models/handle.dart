@@ -74,29 +74,12 @@ class Handle {
         "address": this.address,
         "country": this.country,
         "uncanonicalizedId": this.uncanonicalizedId
-      });
+      }, where: "ROWID = ?", whereArgs: [this.id]);
     } else {
       await this.save(false);
     }
 
     return this;
-  }
-
-  Future addToChat(Chat chat) async {
-    final Database db = await DBProvider.db.database;
-
-    // If we don't exist, try to find self
-    if (this.id == null) {
-      await this.save();
-    }
-
-    try {
-      // Try/catch in case it already exists
-      await db
-          .insert("chat_handle_join", {"chatId": chat.id, "handleId": this.id});
-    } catch (ex) {
-      debugPrint("Failed to add participant to chat: $ex");
-    }
   }
 
   static Future<Handle> findOne(Map<String, dynamic> filters) async {
@@ -139,8 +122,7 @@ class Handle {
         " chat.style AS style,"
         " chat.chatIdentifier AS chatIdentifier,"
         " chat.isArchived AS isArchived,"
-        " chat.displayName AS displayName,"
-        " chat.lastMessageTimestamp AS lastMessageTimestamp"
+        " chat.displayName AS displayName"
         " FROM handle"
         " JOIN chat_handle_join AS chj ON handle.ROWID = chj.handleId"
         " JOIN chat ON chat.ROWID = chj.chatId"
@@ -148,6 +130,11 @@ class Handle {
         [handle.address, handle.id]);
 
     return (res.isNotEmpty) ? res.map((c) => Chat.fromMap(c)).toList() : [];
+  }
+
+  static flush() async {
+    final Database db = await DBProvider.db.database;
+    await db.delete("handle");
   }
 
   Map<String, dynamic> toMap() => {

@@ -191,7 +191,7 @@ class _ConversationListState extends State<ConversationList> {
                               child: Icon(
                                 Icons.message,
                                 color: Colors.white,
-                                size: 20,
+                                size: 15,
                               ),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(40),
