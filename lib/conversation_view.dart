@@ -17,11 +17,13 @@ class ConversationView extends StatefulWidget {
     Key key,
     @required this.chat,
     @required this.title,
+    @required this.messageBloc,
   }) : super(key: key);
 
   // final data;
   final Chat chat;
   final String title;
+  final MessageBloc messageBloc;
 
   @override
   _ConversationViewState createState() => _ConversationViewState();
@@ -33,14 +35,12 @@ class _ConversationViewState extends State<ConversationView> {
   TextEditingController _controller;
   // String title = "";
 
-  MessageBloc _messageBloc;
-
   // final animatedListKey = GlobalKey<AnimatedListState>();
 
   @override
   void initState() {
     super.initState();
-    _messageBloc = new MessageBloc(widget.chat);
+    // _messageBloc = new MessageBloc(widget.chat);
 
     _controller = TextEditingController();
     // Singleton().subscribe(_updateMessages);
@@ -52,7 +52,7 @@ class _ConversationViewState extends State<ConversationView> {
   @override
   void dispose() {
     // TODO: implement dispose
-    _messageBloc.dispose();
+    // _messageBloc.dispose();
     super.dispose();
   }
 
@@ -96,7 +96,7 @@ class _ConversationViewState extends State<ConversationView> {
         alignment: AlignmentDirectional.bottomCenter,
         children: <Widget>[
           StreamBuilder(
-            stream: _messageBloc.stream,
+            stream: widget.messageBloc.stream,
             builder:
                 (BuildContext context, AsyncSnapshot<List<Message>> snapshot) {
               if (snapshot.hasData) {

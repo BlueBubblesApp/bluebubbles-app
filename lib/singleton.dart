@@ -135,8 +135,9 @@ class Singleton {
         authFCM();
         syncChats();
         alreadyStartedSetup = true;
-        _singleton.disconnectSubscribers.values.forEach((f) {
-          f();
+        _singleton.disconnectSubscribers.forEach((key, value) {
+          value();
+          _singleton.disconnectSubscribers.remove(key);
         });
         return;
       case "disconnect":
@@ -144,6 +145,9 @@ class Singleton {
           f();
         });
         debugPrint("disconnected");
+        return;
+      case "reconnect":
+        debugPrint("RECONNECTED");
         return;
       default:
         return;

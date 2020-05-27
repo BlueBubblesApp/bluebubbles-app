@@ -98,7 +98,8 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
         if (chat == null) return;
         String title = await chatTitle(chat);
         String message = data["text"].toString();
-        await _showNotificationWithDefaultSound(0, title, message);
+        if (!data["isFromMe"])
+          await _showNotificationWithDefaultSound(0, title, message);
 
         if (Singleton().processedGUIDS.contains(data["guid"])) {
           debugPrint("contains guid");

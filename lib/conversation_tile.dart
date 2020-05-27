@@ -22,6 +22,7 @@ class ConversationTile extends StatefulWidget {
   final String subtitle;
   final String date;
   final bool hasNewMessage;
+  final MessageBloc messageBloc;
   ConversationTile({
     Key key,
     this.chat,
@@ -29,6 +30,7 @@ class ConversationTile extends StatefulWidget {
     this.subtitle,
     this.date,
     this.hasNewMessage,
+    this.messageBloc,
   }) : super(key: key);
 
   // final Chat chat;
@@ -70,6 +72,7 @@ class _ConversationTileState extends State<ConversationTile> {
                 return ConversationView(
                   chat: widget.chat,
                   title: widget.title,
+                  messageBloc: widget.messageBloc,
                 );
               },
             ),

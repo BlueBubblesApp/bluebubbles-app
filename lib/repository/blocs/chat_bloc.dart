@@ -83,7 +83,6 @@ class ChatBloc {
                 i++) {
               if (Singleton().chatsWithNotifications[i].guid == chat.guid) {
                 hasNotification = true;
-                break;
               }
             }
             chatMap["hasNotification"] = hasNotification;

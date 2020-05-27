@@ -30,7 +30,7 @@ class AttachmentDownloader {
   resumeChunkingAfterDisconnect() {
     if (_guid != "" && _cb != null) {
       debugPrint("restarting chunking");
-      getChunkRecursive(_guid, _currentChunk + 1, _totalChunks, _currentBytes,
+      getChunkRecursive(_guid, _currentChunk, _totalChunks, _currentBytes,
           _chunkSize * 1024, _cb);
     } else {
       debugPrint("could not restart chunking");
@@ -39,12 +39,8 @@ class AttachmentDownloader {
 
   getChunkRecursive(String guid, int index, int total, List<int> currentBytes,
       int chunkSize, Function cb) {
-    _guid = guid;
-    _currentChunk = index;
-    _totalChunks = total;
     _currentBytes = currentBytes;
-    _cb = cb;
-    _chunkSize = chunkSize;
+
     if (index <= total) {
       Map<String, dynamic> params = new Map();
       params["identifier"] = guid;
@@ -65,6 +61,8 @@ class AttachmentDownloader {
           debugPrint("${(index + 1) / total * 100}% of the image");
           debugPrint("next start is ${index + 1} out of $total");
           _stream.sink.add({"Progress": (index + 1) / total as double});
+          _currentBytes = currentBytes;
+          _currentChunk = index + 1;
           getChunkRecursive(
               guid, index + 1, total, currentBytes, chunkSize, cb);
         } else {
@@ -82,9 +80,10 @@ class AttachmentDownloader {
     debugPrint("num Of Chunks is $numOfChunks");
     Stopwatch stopwatch = new Stopwatch();
     stopwatch.start();
-    Singleton().addAttachmentDownloader(attachment.guid, this);
-    Singleton()
-        .disconnectCallback(resumeChunkingAfterDisconnect, attachment.guid);
+
+    _guid = attachment.guid;
+    _totalChunks = numOfChunks;
+    _chunkSize = chunkSize;
     _cb = (List<int> data) async {
       stopwatch.stop();
       debugPrint("time elapsed is ${stopwatch.elapsedMilliseconds}");
@@ -105,6 +104,17 @@ class AttachmentDownloader {
       Singleton().finishDownloader(attachment.guid);
       _stream.sink.add(file);
     };
+
+    Singleton().addAttachmentDownloader(attachment.guid, this);
+    Singleton().disconnectCallback(() {
+      _currentChunk = 0;
+      _totalChunks = 0;
+      _currentBytes = <int>[];
+      _guid = "";
+      _cb = null;
+      _chunkSize = 1;
+      getImage(attachment);
+    }, attachment.guid);
     getChunkRecursive(attachment.guid, 0, numOfChunks, [], chunkSize, _cb);
   }
 

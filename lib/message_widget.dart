@@ -37,6 +37,11 @@ class _MessageState extends State<MessageWidget> {
   @override
   void initState() {
     super.initState();
+    if (!widget.message.isFromMe) {
+      debugPrint(
+          widget.message.text + ":" + widget.message.handleId.toString());
+    }
+
     if (widget.followingMessage != null) {
       showTail = getDifferenceInTime().inMinutes > 5 || !sameSender();
     } else {

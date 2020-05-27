@@ -226,9 +226,9 @@ packages:
   flutter_socket_io:
     dependency: "direct main"
     description:
-      name: flutter_socket_io
-      url: "https://pub.dartlang.org"
-    source: hosted
+      path: "packages/flutter_socket_io-0.6.0"
+      relative: true
+    source: path
     version: "0.6.0"
   flutter_test:
     dependency: transitive
