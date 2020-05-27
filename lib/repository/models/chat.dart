@@ -206,19 +206,18 @@ class Chat {
     List<Message> output = [];
     for (int i = 0; i < res.length; i++) {
       Message msg = Message.fromMap(res[i]);
-      if (res[i].containsKey('handleAddress')) {
-        // debugPrint("has handle " +
-        //     getContact(
-        //         Singleton().contacts, res[i]['handleAddress'].toString()));
-      } else {
-        debugPrint("no handle address");
+
+      // If the handle is not null, load the handle data
+      // The handle is null if the message.handleId is 0
+      // the handleId is 0 when isFromMe is true and the chat is a group chat
+      if (res[i].containsKey('handleAddress') && res[i]['handleAddress'] != null) {
+        msg.handle = Handle.fromMap({
+          'id': res[i]['handleId'],
+          'address': res[i]['handleAddress'],
+          'country': res[i]['handleCountry'],
+          'uncanonicalizedId': res[i]['handleUncanonicalizedId']
+        });
       }
-      msg.from = Handle.fromMap({
-        'id': res[i]['handleId'],
-        'address': res[i]['handleAddress'],
-        'country': res[i]['handleCountry'],
-        'uncanonicalizedId': res[i]['handleUncanonicalizedId']
-      });
 
       output.add(msg);
     }
