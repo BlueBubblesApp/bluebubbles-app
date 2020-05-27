@@ -5,7 +5,8 @@ class Settings {
       : serverAddress = json['server_address'],
         fcmAuthData = json['fcm_auth_data'],
         guidAuthKey = json['guidAuthKey'],
-        _finishedSetup = json['finishedSetup'];
+        _finishedSetup = json['finishedSetup'],
+        _chunkSize = json['chunkSize'];
 
   var fcmAuthData;
   String guidAuthKey = "";
@@ -24,5 +25,6 @@ class Settings {
         'fcm_auth_data': fcmAuthData,
         'guidAuthKey': guidAuthKey,
         'finishedSetup': _finishedSetup,
+        'chunkSize': _chunkSize,
       };
 }

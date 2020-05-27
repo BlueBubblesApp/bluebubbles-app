@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:bluebubble_messages/helpers/attachment_downloader.dart';
 import 'package:bluebubble_messages/repository/database.dart';
 import 'package:flutter_socket_io/socket_io_manager.dart';
 import 'package:path_provider/path_provider.dart';
@@ -40,10 +41,10 @@ class Singleton {
       debugPrint(i.toString());
       if (chatsWithNotifications[i].guid == chat.guid) {
         chatsWithNotifications.removeAt(i);
-        notify();
         break;
       }
     }
+    notify();
   }
 
   List<Contact> contacts = <Contact>[];
@@ -65,7 +66,18 @@ class Singleton {
   bool alreadyStartedSetup = false;
 
   //setstate for these widgets
-  List<Function> subscribers = <Function>[];
+  Map<String, Function> subscribers = new Map();
+
+  Map<String, AttachmentDownloader> attachmentDownloaders = Map();
+  void addAttachmentDownloader(String guid, AttachmentDownloader downloader) {
+    attachmentDownloaders[guid] = downloader;
+  }
+
+  void finishDownloader(String guid) {
+    attachmentDownloaders.remove(guid);
+  }
+
+  Map<String, Function> disconnectSubscribers = new Map();
 
   String token;
 
@@ -73,13 +85,25 @@ class Singleton {
     return setupProgress.future;
   }
 
-  void subscribe(Function cb) {
-    _singleton.subscribers.add(cb);
+  void subscribe(String guid, Function cb) {
+    _singleton.subscribers[guid] = cb;
+  }
+
+  void unsubscribe(String guid) {
+    _singleton.subscribers.remove(guid);
+  }
+
+  void disconnectCallback(Function cb, String guid) {
+    _singleton.disconnectSubscribers[guid] = cb;
+  }
+
+  void unSubscribeDisconnectCallback(String guid) {
+    _singleton.disconnectSubscribers.remove(guid);
   }
 
   void notify() {
-    for (int i = 0; i < _singleton.subscribers.length; i++) {
-      _singleton.subscribers[i]();
+    for (Function cb in _singleton.subscribers.values) {
+      cb();
     }
   }
 
@@ -107,12 +131,18 @@ class Singleton {
   void socketStatusUpdate(data) {
     switch (data) {
       case "connect":
-        debugPrint("connected");
+        debugPrint("CONNECTED");
         authFCM();
         syncChats();
         alreadyStartedSetup = true;
+        _singleton.disconnectSubscribers.values.forEach((f) {
+          f();
+        });
         return;
       case "disconnect":
+        _singleton.disconnectSubscribers.values.forEach((f) {
+          f();
+        });
         debugPrint("disconnected");
         return;
       default:
@@ -166,6 +196,7 @@ class Singleton {
           socketStatusCallback: socketStatusUpdate);
       _singleton.socket.init();
       _singleton.socket.connect();
+      _singleton.socket.unSubscribesAll();
 
       // Let us know when our device was added
       _singleton.socket.subscribe("fcm-device-id-added", (data) {
@@ -176,10 +207,9 @@ class Singleton {
       _singleton.socket.subscribe("error", (data) {
         debugPrint("An error occurred: " + data.toString());
       });
-
       _singleton.socket.subscribe("new-message", (_data) async {
         // debugPrint(data.toString());
-        debugPrint("found new message");
+        debugPrint("new-message");
         Map<String, dynamic> data = jsonDecode(_data);
         if (Singleton().processedGUIDS.contains(data["guid"])) {
           return new Future.value("");
@@ -190,7 +220,6 @@ class Singleton {
         Chat chat = await Chat.findOne({"guid": data["chats"][0]["guid"]});
         if (chat == null) return new Future.value("");
         String title = await chatTitle(chat);
-        debugPrint("found chat: " + title);
         Singleton().handleNewMessage(data, chat);
         if (data["isFromMe"]) {
           return new Future.value("");
@@ -201,6 +230,12 @@ class Singleton {
         // await _showNotificationWithDefaultSound(0, title, message);
 
         return new Future.value("");
+      });
+
+      _singleton.socket.subscribe("updated-message", (_data) async {
+        debugPrint("updated-message");
+        // Map<String, dynamic> data = jsonDecode(_data);
+        // debugPrint("updated message: " + data.toString());
       });
     } catch (e) {
       debugPrint("FAILED TO CONNECT");
@@ -280,6 +315,11 @@ class Singleton {
     Message message = new Message.fromMap(data);
     if (message.isFromMe) {
       chat.addMessage(message).then((value) {
+        if (value == null) {
+          return;
+        }
+
+        debugPrint("new message");
         // Create the attachments
         List<dynamic> attachments = data['attachments'];
 
@@ -291,7 +331,9 @@ class Singleton {
       });
     } else {
       chat.addMessage(message).then((value) {
+        if (value == null) return;
         // Create the attachments
+        debugPrint("new message");
         List<dynamic> attachments = data['attachments'];
 
         attachments.forEach((attachmentItem) {
@@ -308,6 +350,10 @@ class Singleton {
     //   debugPrint("not syncing, socket is null");
     // }
     // sortChats();
+  }
+
+  void deleteDupMessages() {
+    Message.cleanMessages();
   }
 
   // void sortChats() async {
@@ -373,71 +419,4 @@ class Singleton {
   //   }
   // }
 
-  getChunkRecursive(String guid, int index, int total, List<int> currentBytes,
-      int chunkSize, Function cb) {
-    if (index <= total) {
-      Map<String, dynamic> params = new Map();
-      params["identifier"] = guid;
-      params["start"] = index * chunkSize;
-      params["chunkSize"] = chunkSize;
-      params["compress"] = false;
-      _singleton.socket.sendMessage("get-attachment-chunk", jsonEncode(params),
-          (chunk) async {
-        Map<String, dynamic> attachmentResponse = jsonDecode(chunk);
-        if (!attachmentResponse.containsKey("data") ||
-            attachmentResponse["data"] == null) {
-          await cb(currentBytes);
-        }
-
-        Uint8List bytes = base64Decode(attachmentResponse["data"]);
-        currentBytes.addAll(bytes.toList());
-        if (index < total) {
-          debugPrint("${index / total * 100}% of the image");
-          debugPrint("next start is ${index + 1} out of $total");
-          getChunkRecursive(
-              guid, index + 1, total, currentBytes, chunkSize, cb);
-        } else {
-          debugPrint("finished getting image");
-          await cb(currentBytes);
-        }
-      });
-    }
-  }
-
-  Future getImage(Attachment attachment) {
-    int chunkSize = _singleton.settings.chunkSize;
-    Completer completer = new Completer();
-    debugPrint("getting attachment");
-    int numOfChunks = (attachment.totalBytes / chunkSize).ceil();
-    debugPrint("num Of Chunks is $numOfChunks");
-    Stopwatch stopwatch = new Stopwatch();
-    stopwatch.start();
-    getChunkRecursive(attachment.guid, 0, numOfChunks, [], chunkSize,
-        (List<int> data) async {
-      stopwatch.stop();
-      debugPrint("time elapsed is ${stopwatch.elapsedMilliseconds}");
-
-      if (data.length == 0) {
-        completer.completeError("Unable to fetch attachment from server");
-        return;
-      }
-
-      String fileName = attachment.transferName;
-      String appDocPath = _singleton.appDocDir.path;
-      String pathName = "$appDocPath/${attachment.guid}/$fileName";
-      debugPrint(
-          "length of array is ${data.length} / ${attachment.totalBytes}");
-      Uint8List bytes = Uint8List.fromList(data);
-
-      File file = await writeToFile(bytes, pathName);
-      completer.complete(file);
-    });
-
-    return completer.future;
-  }
-
-  Future<File> writeToFile(Uint8List data, String path) async {
-    File file = await new File(path).create(recursive: true);
-    return file.writeAsBytes(data);
-  }
 }

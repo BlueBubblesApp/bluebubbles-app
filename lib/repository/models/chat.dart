@@ -25,8 +25,8 @@ Future<String> chatTitle(Chat _chat) async {
     Chat chat = await _chat.getParticipants();
     List<String> titles = [];
     for (int i = 0; i < chat.participants.length; i++) {
-      titles.add(
-          _convertNumberToContact(chat.participants[i].address.toString()));
+      titles.add(getContact(
+          Singleton().contacts, chat.participants[i].address.toString()));
     }
 
     title = titles.join(', ');
@@ -34,27 +34,6 @@ Future<String> chatTitle(Chat _chat) async {
     title = _chat.displayName;
   }
   return title;
-}
-
-String _convertNumberToContact(String id) {
-  if (Singleton().contacts == null) return id;
-  String contactTitle = id;
-  Singleton().contacts.forEach((Contact contact) {
-    contact.phones.forEach((Item item) {
-      String formattedNumber = item.value.replaceAll(RegExp(r'[-() ]'), '');
-      if (formattedNumber == id || "+1" + formattedNumber == id) {
-        contactTitle = contact.displayName;
-        return contactTitle;
-      }
-    });
-    contact.emails.forEach((Item item) {
-      if (item.value == id) {
-        contactTitle = contact.displayName;
-        return contactTitle;
-      }
-    });
-  });
-  return contactTitle;
 }
 
 class Chat {
@@ -162,6 +141,10 @@ class Chat {
 
   Future<Chat> addMessage(Message message) async {
     final Database db = await DBProvider.db.database;
+    List<Message> existing = await Message.find({"guid": message.guid});
+    if (existing != null && existing.length > 0) {
+      return this;
+    }
 
     if (message.id == null) {
       //and here
@@ -223,6 +206,13 @@ class Chat {
     List<Message> output = [];
     for (int i = 0; i < res.length; i++) {
       Message msg = Message.fromMap(res[i]);
+      if (res[i].containsKey('handleAddress')) {
+        // debugPrint("has handle " +
+        //     getContact(
+        //         Singleton().contacts, res[i]['handleAddress'].toString()));
+      } else {
+        debugPrint("no handle address");
+      }
       msg.from = Handle.fromMap({
         'id': res[i]['handleId'],
         'address': res[i]['handleAddress'],

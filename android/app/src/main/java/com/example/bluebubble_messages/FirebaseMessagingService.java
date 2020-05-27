@@ -48,7 +48,6 @@ public class FirebaseMessagingService extends com.google.firebase.messaging.Fire
 
         // Check if message contains a data payload.
         if (remoteMessage.getData().size() > 0) {
-            Log.d(TAG, "Message data payload: " + remoteMessage.getData());
             Intent intent = new Intent("MyData");
             intent.putExtra("type", remoteMessage.getData().get("type"));
             intent.putExtra("data", remoteMessage.getData().get("data"));

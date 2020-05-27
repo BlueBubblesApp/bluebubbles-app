@@ -28,14 +28,16 @@ class Handle {
     this.uncanonicalizedId,
   });
 
-  factory Handle.fromMap(Map<String, dynamic> json) => new Handle(
-        id: json.containsKey("ROWID") ? json["ROWID"] : null,
-        address: json["address"],
-        country: json.containsKey("country") ? json["country"] : null,
-        uncanonicalizedId: json.containsKey("uncanonicalizedId")
-            ? json["uncanonicalizedId"]
-            : null,
-      );
+  factory Handle.fromMap(Map<String, dynamic> json) {
+    return new Handle(
+      id: json.containsKey("ROWID") ? json["ROWID"] : null,
+      address: json["address"],
+      country: json.containsKey("country") ? json["country"] : null,
+      uncanonicalizedId: json.containsKey("uncanonicalizedId")
+          ? json["uncanonicalizedId"]
+          : null,
+    );
+  }
 
   Future<Handle> save([bool updateIfAbsent = false]) async {
     final Database db = await DBProvider.db.database;

@@ -172,6 +172,8 @@ class Message {
         debugPrint("setting handle ID to from ID: " + this.from.id.toString());
         this.handleId = this.from.id;
       }
+    } else {
+      debugPrint("this.from is null");
     }
 
     // If it already exists, update it
@@ -224,10 +226,14 @@ class Message {
     return this;
   }
 
+  //remove duplicate messages
+  static cleanMessages() async {
+    final Database db = await DBProvider.db.database;
+  }
+
   static Future<List<Attachment>> getAttachments(Message message) async {
     final Database db = await DBProvider.db.database;
 
-    // debugPrint("GETTING ATTACHMENTS");
     var res = await db.rawQuery(
         "SELECT"
         " attachment.ROWID AS ROWID,"
@@ -264,7 +270,8 @@ class Message {
         " WHERE message.ROWID = ?;",
         [this.id]);
 
-    this.from = (res.isNotEmpty) ? res.map((c) => Handle.fromMap(c)).toList()[0] : null;
+    this.from =
+        (res.isNotEmpty) ? res.map((c) => Handle.fromMap(c)).toList()[0] : null;
     return this.from;
   }
 

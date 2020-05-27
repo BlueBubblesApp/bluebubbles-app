@@ -94,25 +94,26 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
         return new Future.value("");
       case "new-message":
         Map<String, dynamic> data = jsonDecode(call.arguments);
+        Chat chat = await Chat.findOne({"guid": data["chats"][0]["guid"]});
+        if (chat == null) return;
+        String title = await chatTitle(chat);
+        String message = data["text"].toString();
+        await _showNotificationWithDefaultSound(0, title, message);
+
         if (Singleton().processedGUIDS.contains(data["guid"])) {
+          debugPrint("contains guid");
           return;
         } else {
           Singleton().processedGUIDS.add(data["guid"]);
         }
         if (data["chats"].length == 0) return new Future.value("");
-        Chat chat = await Chat.findOne({"guid": data["chats"][0]["guid"]});
-        if (chat == null) return;
-        String title = await chatTitle(chat);
-        debugPrint("found chat: " + title);
         Singleton().handleNewMessage(data, chat);
         if (data["isFromMe"]) {
           return new Future.value("");
         }
 
-        String message = data["text"].toString();
-
-        await _showNotificationWithDefaultSound(0, title, message);
-
+        return new Future.value("");
+      case "updated-message":
         return new Future.value("");
     }
   }
@@ -164,10 +165,11 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
         onPressed: () async {
           // Singleton().sortChats();
           // Singleton().syncChats();
-          Singleton().deleteDB();
-          Settings currentSettings = Singleton().settings;
-          currentSettings.finishedSetup = false;
-          Singleton().saveSettings(currentSettings);
+          // Singleton().deleteDB();
+          // Settings currentSettings = Singleton().settings;
+          // currentSettings.finishedSetup = false;
+          // Singleton().saveSettings(currentSettings);
+          Singleton().deleteDupMessages();
         },
       ),
       body: ConversationList(),
@@ -185,7 +187,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
       for (final Contact contact in Singleton().contacts) {
         ContactsService.getAvatar(contact).then((avatar) {
           if (avatar == null) return; // Don't redraw if no change.
-          setState(() => contact.avatar = avatar);
+          contact.avatar = avatar;
         });
       }
     }

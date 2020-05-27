@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:bluebubble_messages/helpers/attachment_downloader.dart';
 import 'package:bluebubble_messages/helpers/utils.dart';
 import 'package:bluebubble_messages/repository/models/attachment.dart';
 import 'package:bluebubble_messages/singleton.dart';
@@ -7,11 +8,16 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import 'hex_color.dart';
+import 'repository/models/handle.dart';
 import 'repository/models/message.dart';
 
 class MessageWidget extends StatefulWidget {
-  MessageWidget({Key key, this.fromSelf, this.message, this.followingMessage})
-      : super(key: key);
+  MessageWidget({
+    Key key,
+    this.fromSelf,
+    this.message,
+    this.followingMessage,
+  }) : super(key: key);
 
   final fromSelf;
   final Message message;
@@ -31,13 +37,12 @@ class _MessageState extends State<MessageWidget> {
   @override
   void initState() {
     super.initState();
-
     if (widget.followingMessage != null) {
-      showTail = getDifferenceInTime().inMinutes > 5 ||
-          widget.followingMessage.isFromMe != widget.message.isFromMe;
+      showTail = getDifferenceInTime().inMinutes > 5 || !sameSender();
     } else {
       showTail = true;
     }
+
     Message.getAttachments(widget.message).then((data) {
       attachments = data;
       body = widget.message.text.substring(
@@ -50,6 +55,10 @@ class _MessageState extends State<MessageWidget> {
           if (FileSystemEntity.typeSync(pathName) !=
               FileSystemEntityType.notFound) {
             images.add(File(pathName));
+          } else if (Singleton()
+              .attachmentDownloaders
+              .containsKey(attachments[i].guid)) {
+            images.add(Singleton().attachmentDownloaders[attachments[i].guid]);
           } else {
             images.add(attachments[i]);
           }
@@ -57,6 +66,17 @@ class _MessageState extends State<MessageWidget> {
         setState(() {});
       }
     });
+  }
+
+  @override
+  void didChangeDependencies() async {
+    super.didChangeDependencies();
+    // Handle handle = await widget.message.from.update();
+    // debugPrint("handle id is ${widget.message.from.address}");
+  }
+
+  bool sameSender() {
+    return (widget.message.isFromMe == widget.followingMessage.isFromMe);
   }
 
   Duration getDifferenceInTime() {
@@ -84,7 +104,7 @@ class _MessageState extends State<MessageWidget> {
       } else if (images[i] is Attachment) {
         content.add(RaisedButton(
           onPressed: () {
-            images[i] = Singleton().getImage(images[i]);
+            images[i] = new AttachmentDownloader(images[i]);
             setState(() {});
           },
           color: HexColor('26262a'),
@@ -93,30 +113,50 @@ class _MessageState extends State<MessageWidget> {
             style: TextStyle(color: Colors.white),
           ),
         ));
+      } else if (images[i] is AttachmentDownloader) {
+        content.add(
+          StreamBuilder(
+            stream: images[i].stream,
+            builder: (BuildContext context, AsyncSnapshot snapshot) {
+              if (snapshot.hasError) {
+                return Text(
+                  "Error loading",
+                  style: TextStyle(color: Colors.white),
+                );
+              }
+              // if (snapshot.hasData) {
+              if (snapshot.data is File) {
+                return InkWell(
+                  onTap: () {
+                    debugPrint("tap");
+                  },
+                  child: Image.file(snapshot.data),
+                );
+              } else {
+                double progress = 0.0;
+                if (snapshot.hasData) {
+                  progress = snapshot.data["Progress"];
+                } else {
+                  progress = images[i].progress;
+                }
+                return CircularProgressIndicator(
+                  value: progress,
+                );
+              }
+              // } else {
+              //   return Text(
+              //     "Error loading",
+              //     style: TextStyle(color: Colors.white),
+              //   );
+              // }
+            },
+          ),
+        );
       } else {
         content.add(
-          FutureBuilder(
-            builder: (BuildContext context, AsyncSnapshot snapshot) {
-              if (snapshot.connectionState == ConnectionState.done) {
-                if (snapshot.hasData) {
-                  debugPrint("loaded image");
-                  return InkWell(
-                    onTap: () {
-                      debugPrint("tap");
-                    },
-                    child: Image.file(snapshot.data),
-                  );
-                } else {
-                  return Text(
-                    "Error loading",
-                    style: TextStyle(color: Colors.white),
-                  );
-                }
-              } else {
-                return CircularProgressIndicator();
-              }
-            },
-            future: images[i],
+          Text(
+            "Error loading",
+            style: TextStyle(color: Colors.white),
           ),
         );
       }

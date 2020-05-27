@@ -1,6 +1,8 @@
 import 'dart:ui';
 
+import 'package:bluebubble_messages/helpers/utils.dart';
 import 'package:bluebubble_messages/repository/blocs/message_bloc.dart';
+import 'package:bluebubble_messages/repository/models/handle.dart';
 import 'package:bluebubble_messages/singleton.dart';
 
 import './hex_color.dart';
@@ -48,10 +50,18 @@ class _ConversationViewState extends State<ConversationView> {
   }
 
   @override
-  void didChangeDependencies() {
+  void dispose() {
+    // TODO: implement dispose
+    _messageBloc.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didChangeDependencies() async {
     // TODO: implement didChangeDependencies
     super.didChangeDependencies();
     Singleton().removeChatNotification(widget.chat);
+    Chat chatWithParticipants = await widget.chat.getParticipants();
   }
 
   @override
@@ -115,7 +125,6 @@ class _ConversationViewState extends State<ConversationView> {
                   },
                 );
               } else {
-                debugPrint("no data");
                 return Container();
               }
             },
