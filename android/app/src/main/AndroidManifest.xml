@@ -14,7 +14,7 @@
     <uses-permission android:name="android.permission.WRITE_CONTACTS" />  
     <application
         android:name="io.flutter.app.FlutterApplication"
-        android:label="bluebubble_messages"
+        android:label="BlueBubbles"
         android:usesCleartextTraffic="true"
         android:icon="@mipmap/ic_launcher">
         <!-- [START firebase_service] -->
