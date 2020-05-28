@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:bluebubble_messages/repository/blocs/message_bloc.dart';
 import 'package:bluebubble_messages/repository/models/attachment.dart';
 import 'package:bluebubble_messages/repository/models/message.dart';
-import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../singleton.dart';

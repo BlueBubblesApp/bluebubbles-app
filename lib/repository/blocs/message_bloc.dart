@@ -1,10 +1,7 @@
 import 'dart:async';
 
-import 'package:bluebubble_messages/helpers/utils.dart';
 import 'package:bluebubble_messages/repository/models/chat.dart';
-import 'package:bluebubble_messages/repository/models/handle.dart';
 import 'package:bluebubble_messages/repository/models/message.dart';
-import 'package:flutter/material.dart';
 
 import '../../singleton.dart';
 
@@ -12,6 +9,10 @@ class MessageBloc {
   final _messageController = StreamController<List<Message>>.broadcast();
 
   Stream<List<Message>> get stream => _messageController.stream;
+
+  List<Message> _messageCache = <Message>[];
+
+  List<Message> get messages => _messageCache;
 
   Chat _currentChat;
 
@@ -24,8 +25,8 @@ class MessageBloc {
   }
 
   void getMessages(Chat chat) async {
-    List<Message> messages = await Chat.getMessages(chat);
-    messages.sort((a, b) => -a.dateCreated.compareTo(b.dateCreated));
+    _messageCache = await Chat.getMessages(chat);
+    _messageCache.sort((a, b) => -a.dateCreated.compareTo(b.dateCreated));
     _messageController.sink.add(messages);
   }
 

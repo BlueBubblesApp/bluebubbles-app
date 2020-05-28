@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:bluebubble_messages/helpers/utils.dart';
 import 'package:bluebubble_messages/repository/database.dart';
 import 'package:bluebubble_messages/repository/models/chat.dart';
+import 'package:bluebubble_messages/setup_view.dart';
 import 'package:flutter/scheduler.dart' hide Priority;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -54,7 +56,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
-    _getContacts();
+    // _getContacts();
     Singleton().settings = new Settings();
     Singleton().platform.setMethodCallHandler(_handleFCM);
     SchedulerBinding.instance
@@ -90,7 +92,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
         Singleton().settings.serverAddress = call.arguments
             .toString()
             .substring(1, call.arguments.toString().length - 1);
-        Singleton().saveSettings(Singleton().settings);
+        Singleton().saveSettings(Singleton().settings, true);
         return new Future.value("");
       case "new-message":
         Map<String, dynamic> data = jsonDecode(call.arguments);
@@ -162,35 +164,21 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          // Singleton().sortChats();
-          // Singleton().syncChats();
-          // Singleton().deleteDB();
-          // Settings currentSettings = Singleton().settings;
-          // currentSettings.finishedSetup = false;
-          // Singleton().saveSettings(currentSettings);
-          Singleton().deleteDupMessages();
-        },
-      ),
-      body: ConversationList(),
-    );
-  }
-
-  void _getContacts() async {
-    if (await Permission.contacts.request().isGranted) {
-      var contacts =
-          (await ContactsService.getContacts(withThumbnails: false)).toList();
-      Singleton().contacts = contacts;
-      if (this.mounted) setState(() {});
-
-      // Lazy load thumbnails after rendering initial contacts.
-      for (final Contact contact in Singleton().contacts) {
-        ContactsService.getAvatar(contact).then((avatar) {
-          if (avatar == null) return; // Don't redraw if no change.
-          contact.avatar = avatar;
-        });
-      }
-    }
+        backgroundColor: Colors.black,
+        body: StreamBuilder(
+          stream: Singleton().finishedSetup.stream,
+          builder: (BuildContext context, AsyncSnapshot<bool> snapshot) {
+            if (snapshot.hasData) {
+              if (snapshot.data) {
+                getContacts();
+                return ConversationList();
+              } else {
+                return SetupView();
+              }
+            } else {
+              return Container();
+            }
+          },
+        ));
   }
 }

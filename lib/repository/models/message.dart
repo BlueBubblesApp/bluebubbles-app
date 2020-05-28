@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'package:bluebubble_messages/repository/models/attachment.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:sqflite/sqflite.dart';
 
 import '../database.dart';
@@ -172,6 +171,7 @@ class Message {
     // If it already exists, update it
     if (existing == null) {
       // Remove the ID from the map for inserting
+      if (this.handleId == null) this.handleId = 0;
       var map = this.toMap();
       if (map.containsKey("ROWID")) {
         map.remove("ROWID");

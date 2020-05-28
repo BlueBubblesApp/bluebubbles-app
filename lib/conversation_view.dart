@@ -99,34 +99,47 @@ class _ConversationViewState extends State<ConversationView> {
             stream: widget.messageBloc.stream,
             builder:
                 (BuildContext context, AsyncSnapshot<List<Message>> snapshot) {
+              List<Message> _messages = <Message>[];
               if (snapshot.hasData) {
-                List<Message> _messages = snapshot.data;
-                return ListView.builder(
-                  reverse: true,
-                  physics: AlwaysScrollableScrollPhysics(
-                      parent: BouncingScrollPhysics()),
-                  itemCount: _messages.length + 1,
-                  itemBuilder: (BuildContext context, int index) {
-                    if (index == 0) {
-                      return SizedBox(
-                        height: 80,
-                      );
-                    }
-                    Message followingMessage;
-                    if (index - 2 >= 0 && index - 2 < _messages.length) {
-                      followingMessage = _messages[index - 2];
-                    }
-                    return MessageWidget(
-                      key: Key(_messages[index - 1].guid),
-                      fromSelf: _messages[index - 1].isFromMe,
-                      message: _messages[index - 1],
-                      followingMessage: followingMessage,
-                    );
-                  },
-                );
+                _messages = snapshot.data;
               } else {
-                return Container();
+                _messages = widget.messageBloc.messages;
               }
+
+              int counter = 0;
+              int total = 0;
+              _messages.forEach((element) {
+                if (!element.isFromMe) {
+                  if (element.handle == null) {
+                    counter++;
+                  }
+                  total++;
+                }
+              });
+              debugPrint("$counter/$total");
+              return ListView.builder(
+                reverse: true,
+                physics: AlwaysScrollableScrollPhysics(
+                    parent: BouncingScrollPhysics()),
+                itemCount: _messages.length + 1,
+                itemBuilder: (BuildContext context, int index) {
+                  if (index == 0) {
+                    return SizedBox(
+                      height: 80,
+                    );
+                  }
+                  Message followingMessage;
+                  if (index - 2 >= 0 && index - 2 < _messages.length) {
+                    followingMessage = _messages[index - 2];
+                  }
+                  return MessageWidget(
+                    key: Key(_messages[index - 1].guid),
+                    fromSelf: _messages[index - 1].isFromMe,
+                    message: _messages[index - 1],
+                    followingMessage: followingMessage,
+                  );
+                },
+              );
             },
           ),
           ClipRRect(

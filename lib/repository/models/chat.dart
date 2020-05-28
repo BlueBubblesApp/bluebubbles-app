@@ -1,6 +1,4 @@
 import 'dart:convert';
-import 'package:contacts_service/contacts_service.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:sqflite/sqflite.dart';
 
 import '../../singleton.dart';
@@ -197,7 +195,8 @@ class Chat {
       // If the handle is not null, load the handle data
       // The handle is null if the message.handleId is 0
       // the handleId is 0 when isFromMe is true and the chat is a group chat
-      if (res[i].containsKey('handleAddress') && res[i]['handleAddress'] != null) {
+      if (res[i].containsKey('handleAddress') &&
+          res[i]['handleAddress'] != null) {
         msg.handle = Handle.fromMap({
           'id': res[i]['handleId'],
           'address': res[i]['handleAddress'],
@@ -283,20 +282,18 @@ class Chat {
     return Chat.fromMap(res.elementAt(0));
   }
 
-  static Future<List<Chat>> find(
-      [Map<String, dynamic> filters = const {}]) async {
+  static Future<List<Chat>> find([Map<String, dynamic> filters = const {}]) async {
     final Database db = await DBProvider.db.database;
 
     List<String> whereParams = [];
     filters.keys.forEach((filter) => whereParams.add('$filter = ?'));
     List<dynamic> whereArgs = [];
     filters.values.forEach((filter) => whereArgs.add(filter));
-    if (db.isOpen) {
-      var res = await db.query("chat",
-          where: (whereParams.length > 0) ? whereParams.join(" AND ") : null,
-          whereArgs: (whereArgs.length > 0) ? whereArgs : null);
-      return (res.isNotEmpty) ? res.map((c) => Chat.fromMap(c)).toList() : [];
-    }
+
+    var res = await db.query("chat",
+        where: (whereParams.length > 0) ? whereParams.join(" AND ") : null,
+        whereArgs: (whereArgs.length > 0) ? whereArgs : null);
+    return (res.isNotEmpty) ? res.map((c) => Chat.fromMap(c)).toList() : [];
   }
 
   Map<String, dynamic> toMap() => {
