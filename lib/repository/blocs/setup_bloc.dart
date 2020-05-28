@@ -92,6 +92,7 @@ class SetupBloc {
     Settings _settingsCopy = Singleton().settings;
     _settingsCopy.finishedSetup = true;
     _finishedSetup = true;
+    Singleton().saveSettings(_settingsCopy, false);
     Singleton().finishSetup();
   }
 

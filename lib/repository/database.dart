@@ -28,14 +28,18 @@ class DBProvider {
     return await openDatabase(_path, version: 1, onOpen: (Database db) {
       debugPrint("Database Opened");
     }, onCreate: (Database db, int version) async {
-      await createHandleTable(db);
-      await createChatTable(db);
-      await createMessageTable(db);
-      await createAttachmentTable(db);
-      await createAttachmentMessageJoinTable(db);
-      await createChatHandleJoinTable(db);
-      await createChatMessageJoinTable(db);
+      await this.buildDatabase(db);
     });
+  }
+
+  Future<void> buildDatabase(Database db) async {
+    await createHandleTable(db);
+    await createChatTable(db);
+    await createMessageTable(db);
+    await createAttachmentTable(db);
+    await createAttachmentMessageJoinTable(db);
+    await createChatHandleJoinTable(db);
+    await createChatMessageJoinTable(db);
   }
 
   createHandleTable(Database db) async {

@@ -296,6 +296,11 @@ class Chat {
     return (res.isNotEmpty) ? res.map((c) => Chat.fromMap(c)).toList() : [];
   }
 
+  static flush() async {
+    final Database db = await DBProvider.db.database;
+    await db.delete("chat");
+  }
+
   Map<String, dynamic> toMap() => {
     "ROWID": id,
     "guid": guid,

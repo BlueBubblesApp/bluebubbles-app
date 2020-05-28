@@ -128,14 +128,14 @@ class Attachment {
   }
 
   Map<String, dynamic> toMap() => {
-        "ROWID": id,
-        "guid": guid,
-        "uti": uti,
-        "transferState": transferState,
-        "isOutgoing": isOutgoing ? 1 : 0,
-        "transferName": transferName,
-        "totalBytes": totalBytes,
-        "isSticker": isSticker ? 1 : 0,
-        "hideAttachment": hideAttachment ? 1 : 0
-      };
+    "ROWID": id,
+    "guid": guid,
+    "uti": uti,
+    "transferState": transferState,
+    "isOutgoing": isOutgoing ? 1 : 0,
+    "transferName": transferName,
+    "totalBytes": totalBytes,
+    "isSticker": isSticker ? 1 : 0,
+    "hideAttachment": hideAttachment ? 1 : 0
+  };
 }

@@ -219,11 +219,6 @@ class Message {
     return this;
   }
 
-  static flush() async {
-    final Database db = await DBProvider.db.database;
-    await db.delete("message");
-  }
-
   static Future<List<Attachment>> getAttachments(Message message) async {
     final Database db = await DBProvider.db.database;
 
@@ -300,40 +295,45 @@ class Message {
     return (res.isNotEmpty) ? res.map((c) => Message.fromMap(c)).toList() : [];
   }
 
+  static flush() async {
+    final Database db = await DBProvider.db.database;
+    await db.delete("message");
+  }
+
   Map<String, dynamic> toMap() => {
-        "ROWID": id,
-        "guid": guid,
-        "handleId": handleId,
-        "text": text,
-        "subject": subject,
-        "country": country,
-        "error": error ? 1 : 0,
-        "dateCreated":
-            (dateCreated == null) ? null : dateCreated.millisecondsSinceEpoch,
-        "dateRead": (dateRead == null) ? null : dateRead.millisecondsSinceEpoch,
-        "dateDelivered": (dateDelivered == null)
-            ? null
-            : dateDelivered.millisecondsSinceEpoch,
-        "isFromMe": isFromMe ? 1 : 0,
-        "isDelayed": isDelayed ? 1 : 0,
-        "isAutoReply": isAutoReply ? 1 : 0,
-        "isSystemMessage": isSystemMessage ? 1 : 0,
-        "isServiceMessage": isServiceMessage ? 1 : 0,
-        "isForward": isForward ? 1 : 0,
-        "isArchived": isArchived ? 1 : 0,
-        "cacheRoomnames": cacheRoomnames,
-        "isAudioMessage": isAudioMessage ? 1 : 0,
-        "datePlayed":
-            (datePlayed == null) ? null : datePlayed.millisecondsSinceEpoch,
-        "itemType": itemType,
-        "groupTitle": groupTitle,
-        "isExpired": isExpired ? 1 : 0,
-        "associatedMessageGuid": associatedMessageGuid,
-        "associatedMessageType": associatedMessageType,
-        "expressiveSendStyleId": expressiveSendStyleId,
-        "timeExpressiveSendStyleId": (timeExpressiveSendStyleId == null)
-            ? null
-            : timeExpressiveSendStyleId.millisecondsSinceEpoch,
-        "handle": (handle != null) ? handle.toMap() : null
-      };
+    "ROWID": id,
+    "guid": guid,
+    "handleId": handleId,
+    "text": text,
+    "subject": subject,
+    "country": country,
+    "error": error ? 1 : 0,
+    "dateCreated":
+        (dateCreated == null) ? null : dateCreated.millisecondsSinceEpoch,
+    "dateRead": (dateRead == null) ? null : dateRead.millisecondsSinceEpoch,
+    "dateDelivered": (dateDelivered == null)
+        ? null
+        : dateDelivered.millisecondsSinceEpoch,
+    "isFromMe": isFromMe ? 1 : 0,
+    "isDelayed": isDelayed ? 1 : 0,
+    "isAutoReply": isAutoReply ? 1 : 0,
+    "isSystemMessage": isSystemMessage ? 1 : 0,
+    "isServiceMessage": isServiceMessage ? 1 : 0,
+    "isForward": isForward ? 1 : 0,
+    "isArchived": isArchived ? 1 : 0,
+    "cacheRoomnames": cacheRoomnames,
+    "isAudioMessage": isAudioMessage ? 1 : 0,
+    "datePlayed":
+        (datePlayed == null) ? null : datePlayed.millisecondsSinceEpoch,
+    "itemType": itemType,
+    "groupTitle": groupTitle,
+    "isExpired": isExpired ? 1 : 0,
+    "associatedMessageGuid": associatedMessageGuid,
+    "associatedMessageType": associatedMessageType,
+    "expressiveSendStyleId": expressiveSendStyleId,
+    "timeExpressiveSendStyleId": (timeExpressiveSendStyleId == null)
+        ? null
+        : timeExpressiveSendStyleId.millisecondsSinceEpoch,
+    "handle": (handle != null) ? handle.toMap() : null
+  };
 }

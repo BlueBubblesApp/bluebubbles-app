@@ -137,9 +137,9 @@ class Handle {
   }
 
   Map<String, dynamic> toMap() => {
-        "ROWID": id,
-        "address": address,
-        "country": country,
-        "uncanonicalizedId": uncanonicalizedId,
-      };
+    "ROWID": id,
+    "address": address,
+    "country": country,
+    "uncanonicalizedId": uncanonicalizedId,
+  };
 }
