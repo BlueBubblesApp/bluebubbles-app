@@ -1,6 +1,4 @@
 import 'dart:convert';
-import 'package:contacts_service/contacts_service.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:sqflite/sqflite.dart';
 
 import '../../singleton.dart';
@@ -52,7 +50,7 @@ class Chat {
     this.chatIdentifier,
     this.isArchived,
     this.displayName,
-    this.participants,
+    this.participants
   });
 
   factory Chat.fromMap(Map<String, dynamic> json) {
@@ -113,7 +111,7 @@ class Chat {
     final Database db = await DBProvider.db.database;
 
     Map<String, dynamic> params = {
-      "isArchived": this.isArchived ? 1 : 0,
+      "isArchived": this.isArchived ? 1 : 0
     };
 
     // Add display name if it's been updated
@@ -139,21 +137,26 @@ class Chat {
     await message.save();
 
     // Check join table and add if relationship doesn't exist
-    List entries = await db.query("chat_message_join",
-        where: "chatId = ? AND messageId = ?",
-        whereArgs: [this.id, message.id]);
+    List entries = await db.query(
+      "chat_message_join", where: "chatId = ? AND messageId = ?", whereArgs: [this.id, message.id]);
     if (entries.length == 0) {
-      await db.insert(
-          "chat_message_join", {"chatId": this.id, "messageId": message.id});
+       await db.insert("chat_message_join", {"chatId": this.id, "messageId": message.id});
     }
-
+   
     return this;
   }
 
-  static Future<List<Message>> getMessages(Chat chat) async {
+  static Future<List<Message>> getMessages(
+    Chat chat, {
+      bool reactionsOnly = false,
+      int offset = 0,
+      int limit = 100
+    }
+  ) async {
     final Database db = await DBProvider.db.database;
 
-    var res = await db.rawQuery(
+    String reactionQualifier = reactionsOnly ? "IS NOT" : "IS";
+    String query = (
         "SELECT"
         " message.ROWID AS ROWID,"
         " message.guid AS guid,"
@@ -180,6 +183,7 @@ class Chat {
         " message.associatedMessageType AS associatedMessageType,"
         " message.expressiveSendStyleId AS texexpressiveSendStyleIdt,"
         " message.timeExpressiveSendStyleId AS timeExpressiveSendStyleId,"
+        " message.hasAttachments AS hasAttachments,"
         " handle.ROWID AS handleId,"
         " handle.address AS handleAddress,"
         " handle.country AS handleCountry,"
@@ -188,8 +192,14 @@ class Chat {
         " JOIN chat_message_join AS cmj ON message.ROWID = cmj.messageId"
         " JOIN chat ON cmj.chatId = chat.ROWID"
         " LEFT OUTER JOIN handle ON handle.ROWID = message.handleId"
-        " WHERE chat.ROWID = ?;",
-        [chat.id]);
+        " WHERE chat.ROWID = ? AND message.associatedMessageType $reactionQualifier NULL"
+    );
+
+    // Add pagination
+    query += " LIMIT $limit OFFSET $offset";
+
+    // Execute the query
+    var res = await db.rawQuery("$query;", [chat.id]);
 
     // Add the from/handle data to the messages
     List<Message> output = [];
@@ -245,12 +255,10 @@ class Chat {
     }
 
     // Check join table and add if relationship doesn't exist
-    List entries = await db.query("chat_handle_join",
-        where: "chatId = ? AND handleId = ?",
-        whereArgs: [this.id, participant.id]);
+    List entries = await db.query(
+      "chat_handle_join", where: "chatId = ? AND handleId = ?", whereArgs: [this.id, participant.id]);
     if (entries.length == 0) {
-      await db.insert(
-          "chat_handle_join", {"chatId": this.id, "handleId": participant.id});
+       await db.insert("chat_handle_join", {"chatId": this.id, "handleId": participant.id});
     }
 
     return this;
@@ -261,8 +269,8 @@ class Chat {
 
     // First, remove from the JOIN table
     await db.delete("chat_handle_join",
-        where: "chatId = ? AND handleId = ?",
-        whereArgs: [this.id, participant.id]);
+        where: "chatId = ? AND handleId = ?", whereArgs: [this.id, participant.id]);
+
     // Second, remove from this object instance
     if (this.participants.contains(participant)) {
       this.participants.remove(participant);
@@ -288,29 +296,32 @@ class Chat {
     return Chat.fromMap(res.elementAt(0));
   }
 
-  static Future<List<Chat>> find(
-      [Map<String, dynamic> filters = const {}]) async {
+  static Future<List<Chat>> find([Map<String, dynamic> filters = const {}]) async {
     final Database db = await DBProvider.db.database;
 
     List<String> whereParams = [];
     filters.keys.forEach((filter) => whereParams.add('$filter = ?'));
     List<dynamic> whereArgs = [];
     filters.values.forEach((filter) => whereArgs.add(filter));
-    if (db.isOpen) {
-      var res = await db.query("chat",
-          where: (whereParams.length > 0) ? whereParams.join(" AND ") : null,
-          whereArgs: (whereArgs.length > 0) ? whereArgs : null);
-      return (res.isNotEmpty) ? res.map((c) => Chat.fromMap(c)).toList() : [];
-    }
+
+    var res = await db.query("chat",
+        where: (whereParams.length > 0) ? whereParams.join(" AND ") : null,
+        whereArgs: (whereArgs.length > 0) ? whereArgs : null);
+    return (res.isNotEmpty) ? res.map((c) => Chat.fromMap(c)).toList() : [];
+  }
+
+  static flush() async {
+    final Database db = await DBProvider.db.database;
+    await db.delete("chat");
   }
 
   Map<String, dynamic> toMap() => {
-        "ROWID": id,
-        "guid": guid,
-        "style": style,
-        "chatIdentifier": chatIdentifier,
-        "isArchived": isArchived ? 1 : 0,
-        "displayName": displayName,
-        "participants": participants.map((item) => item.toMap())
-      };
+    "ROWID": id,
+    "guid": guid,
+    "style": style,
+    "chatIdentifier": chatIdentifier,
+    "isArchived": isArchived ? 1 : 0,
+    "displayName": displayName,
+    "participants": participants.map((item) => item.toMap())
+  };
 }

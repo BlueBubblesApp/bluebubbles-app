@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:flutter/material.dart';
 import 'package:sqflite/sqflite.dart';
 
 import '../database.dart';
@@ -70,15 +69,11 @@ class Handle {
 
     // If it already exists, update it
     if (this.id != null) {
-      await db.update(
-          "handle",
-          {
-            "address": this.address,
-            "country": this.country,
-            "uncanonicalizedId": this.uncanonicalizedId
-          },
-          where: "ROWID = ?",
-          whereArgs: [this.id]);
+      await db.update("handle", {
+        "address": this.address,
+        "country": this.country,
+        "uncanonicalizedId": this.uncanonicalizedId
+      }, where: "ROWID = ?", whereArgs: [this.id]);
     } else {
       await this.save(false);
     }
@@ -126,7 +121,7 @@ class Handle {
         " chat.style AS style,"
         " chat.chatIdentifier AS chatIdentifier,"
         " chat.isArchived AS isArchived,"
-        " chat.displayName AS displayName,"
+        " chat.displayName AS displayName"
         " FROM handle"
         " JOIN chat_handle_join AS chj ON handle.ROWID = chj.handleId"
         " JOIN chat ON chat.ROWID = chj.chatId"
@@ -142,9 +137,9 @@ class Handle {
   }
 
   Map<String, dynamic> toMap() => {
-        "ROWID": id,
-        "address": address,
-        "country": country,
-        "uncanonicalizedId": uncanonicalizedId,
-      };
+    "ROWID": id,
+    "address": address,
+    "country": country,
+    "uncanonicalizedId": uncanonicalizedId,
+  };
 }

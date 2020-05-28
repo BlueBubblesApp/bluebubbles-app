@@ -1,10 +1,7 @@
 import 'dart:async';
 
-import 'package:bluebubble_messages/helpers/utils.dart';
 import 'package:bluebubble_messages/repository/models/chat.dart';
-import 'package:bluebubble_messages/repository/models/handle.dart';
 import 'package:bluebubble_messages/repository/models/message.dart';
-import 'package:flutter/material.dart';
 
 import '../../singleton.dart';
 

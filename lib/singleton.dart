@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:bluebubble_messages/helpers/attachment_downloader.dart';
 import 'package:bluebubble_messages/repository/blocs/setup_bloc.dart';
 import 'package:bluebubble_messages/repository/database.dart';
@@ -19,6 +18,7 @@ import 'repository/models/message.dart';
 import 'settings.dart';
 import './repository/blocs/chat_bloc.dart';
 import './repository/models/chat.dart';
+import './repository/models/handle.dart';
 
 class Singleton {
   factory Singleton() {
@@ -158,21 +158,20 @@ class Singleton {
 
   Future<void> deleteDB() async {
     Database db = await DBProvider.db.database;
-    db.execute("DELETE FROM handle");
-    db.execute("DELETE FROM chat");
-    db.execute("DELETE FROM message");
-    db.execute("DELETE FROM attachment");
-    db.execute("DELETE FROM chat_handle_join");
-    db.execute("DELETE FROM chat_message_join");
-    db.execute("DELETE FROM attachment_message_join");
 
-    DBProvider.db.createHandleTable(db);
-    DBProvider.db.createChatTable(db);
-    DBProvider.db.createMessageTable(db);
-    DBProvider.db.createAttachmentTable(db);
-    DBProvider.db.createAttachmentMessageJoinTable(db);
-    DBProvider.db.createChatHandleJoinTable(db);
-    DBProvider.db.createChatMessageJoinTable(db);
+    // Remove base tables
+    await Handle.flush();
+    await Chat.flush();
+    await Attachment.flush();
+    await Message.flush();
+
+    // Remove join tables
+    await db.execute("DELETE FROM chat_handle_join");
+    await db.execute("DELETE FROM chat_message_join");
+    await db.execute("DELETE FROM attachment_message_join");
+
+    // Recreate tables
+    DBProvider.db.buildDatabase(db);
   }
 
   startSocketIO([Function connectCb]) async {

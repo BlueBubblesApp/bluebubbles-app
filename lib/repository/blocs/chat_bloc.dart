@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:bluebubble_messages/repository/blocs/message_bloc.dart';
 import 'package:bluebubble_messages/repository/models/attachment.dart';
 import 'package:bluebubble_messages/repository/models/message.dart';
-import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../singleton.dart';
@@ -58,14 +57,13 @@ class ChatBloc {
             Message firstMessage = messages.first;
             String text = firstMessage.text;
             if (firstMessage.hasAttachments) {
-              List<Attachment> attachments =
-                  await Message.getAttachments(firstMessage);
-
+              List<Attachment> attachments = await Message.getAttachments(firstMessage);
+              
               if (text.length == 0 && attachments.length > 0) {
                 text = "${attachments.length} attachments";
               }
             }
-
+            
             subtitle = text;
 
             Message lastMessage = messages.first;
