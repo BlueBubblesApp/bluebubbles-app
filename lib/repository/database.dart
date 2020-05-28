@@ -91,6 +91,7 @@ class DBProvider {
         "associatedMessageType TEXT DEFAULT NULL,"
         "expressiveSendStyleId TEXT DEFAULT NULL,"
         "timeExpressiveSendStyleId INTEGER DEFAULT 0,"
+        "hasAttachments INTEGER DEFAULT 0,"
         "FOREIGN KEY(handleId) REFERENCES handle(ROWID)"
         ");");
   }

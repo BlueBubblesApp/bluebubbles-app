@@ -16,12 +16,14 @@ class MessageWidget extends StatefulWidget {
     Key key,
     this.fromSelf,
     this.message,
-    this.followingMessage,
+    this.olderMessage,
+    this.newerMessage
   }) : super(key: key);
 
   final fromSelf;
   final Message message;
-  final Message followingMessage;
+  final Message olderMessage;
+  final Message newerMessage;
 
   @override
   _MessageState createState() => _MessageState();
@@ -32,23 +34,22 @@ class _MessageState extends State<MessageWidget> {
   String body;
   List images = [];
 
-  bool showTail = false;
+  bool showTail = true;
 
   @override
   void initState() {
     super.initState();
-    if (widget.followingMessage != null) {
-      showTail = getDifferenceInTime().inMinutes > 5 || differentSender();
-    } else {
-      showTail = true;
+    if (widget.olderMessage != null) {
+      showTail = shouldShowTail(widget.message, widget.olderMessage, widget.newerMessage);
     }
 
+    // if (widget.message.hasAttachments) {
     Message.getAttachments(widget.message).then((data) {
       attachments = data;
       if (widget.message.text != null) {
-        body = widget.message.text.substring(
-            attachments.length); //ensure that the "obj" text doesn't appear
+        body = widget.message.text.substring(attachments.length); //ensure that the "obj" text doesn't appear
       }
+
       if (attachments.length > 0) {
         for (int i = 0; i < attachments.length; i++) {
           String appDocPath = Singleton().appDocDir.path;
@@ -68,6 +69,7 @@ class _MessageState extends State<MessageWidget> {
         setState(() {});
       }
     });
+    // }
   }
 
   @override
@@ -77,18 +79,28 @@ class _MessageState extends State<MessageWidget> {
     // debugPrint("handle id is ${widget.message.from.address}");
   }
 
-  bool differentSender() {
-    if (widget.message.isFromMe || widget.followingMessage.isFromMe) {
-      return widget.message.isFromMe != widget.followingMessage.isFromMe;
-    } else {
-      return widget.message.handle.address !=
-          widget.followingMessage.handle.address;
-    }
+  bool sameSender(Message first, Message second) {
+    return (first != null && second != null && (
+      first.isFromMe && second.isFromMe ||
+      (!first.isFromMe && !second.isFromMe && first.handleId == second.handleId)
+    ));
   }
 
-  Duration getDifferenceInTime() {
-    return widget.followingMessage.dateCreated
-        .difference(widget.message.dateCreated);
+  bool shouldShowTail(Message current, Message older, Message newer) {
+    if (newer == null) return true;
+    if (sameSender(current, older) && (
+        withinTimeThreshold(current, older) ||
+        !sameSender(current, newer)
+      )
+    ) return true;
+    if (!sameSender(current, older) && !sameSender(current, newer)) return true;
+
+    return false;
+  }
+
+  bool withinTimeThreshold(Message first, Message second, { threshold: 5 }) {
+    if (first == null || second == null) return false;
+    return first.dateCreated.difference(second.dateCreated).inMinutes > threshold;
   }
 
   List<Widget> _constructContent() {
@@ -282,21 +294,27 @@ class _MessageState extends State<MessageWidget> {
     if (showTail) {
       stack.insertAll(0, tail);
     }
+
+    Widget contactItem = new Container(width: 0, height: 0);
+    if (!sameSender(widget.message, widget.olderMessage)) {
+      contactItem = Padding(
+        padding: EdgeInsets.only(left: 25.0, top: 5.0, bottom: 3.0),
+        child: Text(
+          getContact(Singleton().contacts, widget.message.handle.address),
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 12,
+          ),
+        ),
+      );
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
+        contactItem,
         Padding(
-          padding: EdgeInsets.only(left: 16.0),
-          child: Text(
-            getContact(Singleton().contacts, widget.message.handle.address),
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 12,
-            ),
-          ),
-        ),
-        Padding(
-          padding: EdgeInsets.only(bottom: showTail ? 10.0 : 0.0),
+          padding: EdgeInsets.only(bottom: 3.0),
           child: Stack(
             alignment: AlignmentDirectional.bottomStart,
             children: <Widget>[
@@ -331,18 +349,16 @@ class _MessageState extends State<MessageWidget> {
   }
 
   Widget _buildTimeStamp() {
-    if (widget.followingMessage != null &&
-        getDifferenceInTime().inMinutes > 30) {
-      DateTime timeOfFollowingMessage = widget.followingMessage.dateCreated;
-      String time = new DateFormat.jm().format(timeOfFollowingMessage);
+    if (widget.olderMessage != null && withinTimeThreshold(widget.message, widget.olderMessage, threshold: 30)) {
+      DateTime timeOfolderMessage = widget.olderMessage.dateCreated;
+      String time = new DateFormat.jm().format(timeOfolderMessage);
       String date;
-      if (widget.followingMessage.dateCreated.isToday()) {
+      if (widget.olderMessage.dateCreated.isToday()) {
         date = "Today";
-      } else if (widget.followingMessage.dateCreated.isYesterday()) {
+      } else if (widget.olderMessage.dateCreated.isYesterday()) {
         date = "Yesterday";
       } else {
-        date =
-            "${timeOfFollowingMessage.month.toString()}/${timeOfFollowingMessage.day.toString()}/${timeOfFollowingMessage.year.toString()}";
+        date = "${timeOfolderMessage.month.toString()}/${timeOfolderMessage.day.toString()}/${timeOfolderMessage.year.toString()}";
       }
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 14.0),

@@ -147,7 +147,7 @@ class Message {
             ? (json['handle'] != null ? Handle.fromMap(json['handle']) : null)
             : null,
         hasAttachments: json.containsKey("attachments")
-            ? (((json['attachments'] as List<dynamic>).length > 0)
+            ? (((json['attachments'] as List).length > 0)
                 ? true
                 : false)
             : false);
@@ -334,6 +334,7 @@ class Message {
     "timeExpressiveSendStyleId": (timeExpressiveSendStyleId == null)
         ? null
         : timeExpressiveSendStyleId.millisecondsSinceEpoch,
-    "handle": (handle != null) ? handle.toMap() : null
+    "handle": (handle != null) ? handle.toMap() : null,
+    "hasAttachments": hasAttachments ? 1 : 0
   };
 }

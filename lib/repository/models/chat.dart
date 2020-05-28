@@ -183,6 +183,7 @@ class Chat {
         " message.associatedMessageType AS associatedMessageType,"
         " message.expressiveSendStyleId AS texexpressiveSendStyleIdt,"
         " message.timeExpressiveSendStyleId AS timeExpressiveSendStyleId,"
+        " message.hasAttachments AS hasAttachments,"
         " handle.ROWID AS handleId,"
         " handle.address AS handleAddress,"
         " handle.country AS handleCountry,"

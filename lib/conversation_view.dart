@@ -106,17 +106,6 @@ class _ConversationViewState extends State<ConversationView> {
                 _messages = widget.messageBloc.messages;
               }
 
-              int counter = 0;
-              int total = 0;
-              _messages.forEach((element) {
-                if (!element.isFromMe) {
-                  if (element.handle == null) {
-                    counter++;
-                  }
-                  total++;
-                }
-              });
-              debugPrint("$counter/$total");
               return ListView.builder(
                 reverse: true,
                 physics: AlwaysScrollableScrollPhysics(
@@ -128,15 +117,22 @@ class _ConversationViewState extends State<ConversationView> {
                       height: 80,
                     );
                   }
-                  Message followingMessage;
-                  if (index - 2 >= 0 && index - 2 < _messages.length) {
-                    followingMessage = _messages[index - 2];
+
+                  Message olderMessage;
+                  Message newerMessage;
+                  if (index >= 0 && index <= _messages.length) {
+                    olderMessage = _messages[index];
                   }
+                  if (index - 2 >= 0 && index - 2 <= _messages.length) {
+                    newerMessage = _messages[index - 2];
+                  }
+
                   return MessageWidget(
                     key: Key(_messages[index - 1].guid),
                     fromSelf: _messages[index - 1].isFromMe,
                     message: _messages[index - 1],
-                    followingMessage: followingMessage,
+                    olderMessage: olderMessage,
+                    newerMessage: newerMessage
                   );
                 },
               );
