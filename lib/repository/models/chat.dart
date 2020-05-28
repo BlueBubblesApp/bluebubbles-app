@@ -146,10 +146,17 @@ class Chat {
     return this;
   }
 
-  static Future<List<Message>> getMessages(Chat chat) async {
+  static Future<List<Message>> getMessages(
+    Chat chat, {
+      bool reactionsOnly = false,
+      int offset = 0,
+      int limit = 100
+    }
+  ) async {
     final Database db = await DBProvider.db.database;
 
-    var res = await db.rawQuery(
+    String reactionQualifier = reactionsOnly ? "IS NOT" : "IS";
+    String query = (
         "SELECT"
         " message.ROWID AS ROWID,"
         " message.guid AS guid,"
@@ -184,8 +191,14 @@ class Chat {
         " JOIN chat_message_join AS cmj ON message.ROWID = cmj.messageId"
         " JOIN chat ON cmj.chatId = chat.ROWID"
         " LEFT OUTER JOIN handle ON handle.ROWID = message.handleId"
-        " WHERE chat.ROWID = ?;",
-        [chat.id]);
+        " WHERE chat.ROWID = ? AND message.associatedMessageType $reactionQualifier NULL"
+    );
+
+    // Add pagination
+    query += " LIMIT $limit OFFSET $offset";
+
+    // Execute the query
+    var res = await db.rawQuery("$query;", [chat.id]);
 
     // Add the from/handle data to the messages
     List<Message> output = [];
