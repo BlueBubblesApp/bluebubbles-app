@@ -160,6 +160,41 @@ class _SettingsPanelState extends State<SettingsPanel> {
               _settingsCopy.chunkSize = val;
             },
           ),
+          SettingsTile(
+            onTap: () {
+              showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                    title: Text(
+                      "Are you sure?",
+                      style: TextStyle(
+                        color: Colors.white,
+                      ),
+                    ),
+                    backgroundColor: HexColor('26262a'),
+                    actions: <Widget>[
+                      FlatButton(
+                        child: Text("Yes"),
+                        onPressed: () {
+                          Singleton().deleteDB().then((value) {
+                            Singleton().notify();
+                          });
+                        },
+                      ),
+                      FlatButton(
+                        child: Text("Cancel"),
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                    ],
+                  );
+                },
+              );
+            },
+            title: "Reset DB",
+          ),
         ],
       ),
     );
@@ -170,7 +205,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
     // TODO: implement dispose
     // if (_settingsCopy != Singleton().settings) {
     debugPrint("saving settings");
-    Singleton().saveSettings(_settingsCopy);
+    Singleton().saveSettings(_settingsCopy, true);
     // }
     super.dispose();
   }

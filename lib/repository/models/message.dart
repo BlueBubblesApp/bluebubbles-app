@@ -163,14 +163,16 @@ class Message {
       this.id = existing.id;
     }
 
-    // Save the participant
+    // Save the participant & set the handle ID to the new participant
     if (this.handle != null) {
       await this.handle.save();
+      this.handleId = this.handle.id;
     }
 
     // If it already exists, update it
     if (existing == null) {
       // Remove the ID from the map for inserting
+      if (this.handleId == null) this.handleId = 0;
       var map = this.toMap();
       if (map.containsKey("ROWID")) {
         map.remove("ROWID");
@@ -211,6 +213,8 @@ class Message {
     // If it already exists, update it
     if (this.id != null) {
       await db.update("message", params);
+      await db
+          .update("message", params, where: "ROWID = ?", whereArgs: [this.id]);
     } else {
       await this.save(false);
     }
@@ -218,9 +222,9 @@ class Message {
     return this;
   }
 
-  //remove duplicate messages
-  static cleanMessages() async {
+  static flush() async {
     final Database db = await DBProvider.db.database;
+    await db.delete("message");
   }
 
   static Future<List<Attachment>> getAttachments(Message message) async {

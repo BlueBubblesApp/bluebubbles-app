@@ -37,21 +37,18 @@ class _MessageState extends State<MessageWidget> {
   @override
   void initState() {
     super.initState();
-    if (!widget.message.isFromMe) {
-      debugPrint(
-          widget.message.text + ":" + widget.message.handleId.toString());
-    }
-
     if (widget.followingMessage != null) {
-      showTail = getDifferenceInTime().inMinutes > 5 || !sameSender();
+      showTail = getDifferenceInTime().inMinutes > 5 || differentSender();
     } else {
       showTail = true;
     }
 
     Message.getAttachments(widget.message).then((data) {
       attachments = data;
-      body = widget.message.text.substring(
-          attachments.length); //ensure that the "obj" text doesn't appear
+      if (widget.message.text != null) {
+        body = widget.message.text.substring(
+            attachments.length); //ensure that the "obj" text doesn't appear
+      }
       if (attachments.length > 0) {
         for (int i = 0; i < attachments.length; i++) {
           String appDocPath = Singleton().appDocDir.path;
@@ -80,8 +77,13 @@ class _MessageState extends State<MessageWidget> {
     // debugPrint("handle id is ${widget.message.from.address}");
   }
 
-  bool sameSender() {
-    return (widget.message.isFromMe == widget.followingMessage.isFromMe);
+  bool differentSender() {
+    if (widget.message.isFromMe || widget.followingMessage.isFromMe) {
+      return widget.message.isFromMe != widget.followingMessage.isFromMe;
+    } else {
+      return widget.message.handle.address !=
+          widget.followingMessage.handle.address;
+    }
   }
 
   Duration getDifferenceInTime() {
@@ -166,7 +168,8 @@ class _MessageState extends State<MessageWidget> {
         );
       }
     }
-    if (widget.message.text.substring(attachments.length).length > 0) {
+    if (widget.message.text != null &&
+        widget.message.text.substring(attachments.length).length > 0) {
       content.add(
         Text(
           widget.message.text.substring(attachments.length),
@@ -214,15 +217,7 @@ class _MessageState extends State<MessageWidget> {
       crossAxisAlignment: CrossAxisAlignment.end,
       children: <Widget>[
         Padding(
-          padding: EdgeInsets.only(
-              bottom: (widget.followingMessage != null &&
-                          getDifferenceInTime().inMinutes < 30 &&
-                          getDifferenceInTime().inMinutes > 3) ||
-                      (widget.followingMessage != null &&
-                          widget.followingMessage.isFromMe !=
-                              widget.message.isFromMe)
-                  ? 10.0
-                  : 0.0),
+          padding: EdgeInsets.only(bottom: showTail ? 10.0 : 0.0),
           child: Stack(
             alignment: AlignmentDirectional.bottomEnd,
             children: <Widget>[
@@ -291,15 +286,17 @@ class _MessageState extends State<MessageWidget> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Padding(
-          padding: EdgeInsets.only(
-              bottom: (widget.followingMessage != null &&
-                          getDifferenceInTime().inMinutes < 30 &&
-                          getDifferenceInTime().inMinutes > 3) ||
-                      (widget.followingMessage != null &&
-                          widget.followingMessage.isFromMe !=
-                              widget.message.isFromMe)
-                  ? 10.0
-                  : 0.0),
+          padding: EdgeInsets.only(left: 16.0),
+          child: Text(
+            getContact(Singleton().contacts, widget.message.handle.address),
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+            ),
+          ),
+        ),
+        Padding(
+          padding: EdgeInsets.only(bottom: showTail ? 10.0 : 0.0),
           child: Stack(
             alignment: AlignmentDirectional.bottomStart,
             children: <Widget>[

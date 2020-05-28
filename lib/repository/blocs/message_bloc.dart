@@ -13,6 +13,10 @@ class MessageBloc {
 
   Stream<List<Message>> get stream => _messageController.stream;
 
+  List<Message> _messageCache = <Message>[];
+
+  List<Message> get messages => _messageCache;
+
   Chat _currentChat;
 
   MessageBloc(Chat chat) {
@@ -20,13 +24,12 @@ class MessageBloc {
     getMessages(chat);
     Singleton().subscribe(_currentChat.guid, () {
       getMessages(_currentChat);
-      debugPrint("");
     });
   }
 
   void getMessages(Chat chat) async {
-    List<Message> messages = await Chat.getMessages(chat);
-    messages.sort((a, b) => -a.dateCreated.compareTo(b.dateCreated));
+    _messageCache = await Chat.getMessages(chat);
+    _messageCache.sort((a, b) => -a.dateCreated.compareTo(b.dateCreated));
     _messageController.sink.add(messages);
   }
 

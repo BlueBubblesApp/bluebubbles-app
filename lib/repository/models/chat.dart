@@ -43,7 +43,6 @@ class Chat {
   String chatIdentifier;
   bool isArchived;
   String displayName;
-  DateTime lastMessageTimestamp;
   List<Handle> participants;
 
   Chat({
@@ -53,7 +52,6 @@ class Chat {
     this.chatIdentifier,
     this.isArchived,
     this.displayName,
-    this.lastMessageTimestamp,
     this.participants,
   });
 
@@ -74,9 +72,6 @@ class Chat {
           ? json['isArchived']
           : ((json['isArchived'] == 1) ? true : false),
       displayName: json.containsKey("displayName") ? json["displayName"] : null,
-      lastMessageTimestamp: json.containsKey("lastMessageTimestamp")
-          ? parseDate(json["lastMessageTimestamp"])
-          : null,
       participants: participants,
     );
   }
@@ -102,13 +97,13 @@ class Chat {
       }
 
       this.id = await db.insert("chat", map);
-
-      // Save participants to the chat
-      for (int i = 0; i < this.participants.length; i++) {
-        await this.participants[i].addToChat(this);
-      }
     } else if (updateIfAbsent) {
       await this.update();
+    }
+
+    // Save participants to the chat
+    for (int i = 0; i < this.participants.length; i++) {
+      await this.addParticipant(this.participants[i]);
     }
 
     return this;
@@ -119,19 +114,16 @@ class Chat {
 
     Map<String, dynamic> params = {
       "isArchived": this.isArchived ? 1 : 0,
-      "lastMessageTimestamp": (this.lastMessageTimestamp == null)
-          ? null
-          : this.lastMessageTimestamp.millisecondsSinceEpoch
     };
 
-    // Add GUID if we need to update it
+    // Add display name if it's been updated
     if (this.displayName != null) {
       params.putIfAbsent("displayName", () => this.displayName);
     }
 
     // If it already exists, update it
     if (this.id != null) {
-      await db.update("chat", params);
+      await db.update("chat", params, where: "ROWID = ?", whereArgs: [this.id]);
     } else {
       await this.save(false);
     }
@@ -141,19 +133,19 @@ class Chat {
 
   Future<Chat> addMessage(Message message) async {
     final Database db = await DBProvider.db.database;
-    List<Message> existing = await Message.find({"guid": message.guid});
-    if (existing != null && existing.length > 0) {
-      return this;
-    }
 
+    // Save the message and the chat
+    await this.save();
     await message.save();
 
-    if (this.id == null) {
-      await this.save();
+    // Check join table and add if relationship doesn't exist
+    List entries = await db.query("chat_message_join",
+        where: "chatId = ? AND messageId = ?",
+        whereArgs: [this.id, message.id]);
+    if (entries.length == 0) {
+      await db.insert(
+          "chat_message_join", {"chatId": this.id, "messageId": message.id});
     }
-
-    await db.insert(
-        "chat_message_join", {"chatId": this.id, "messageId": message.id});
 
     return this;
   }
@@ -207,7 +199,8 @@ class Chat {
       // If the handle is not null, load the handle data
       // The handle is null if the message.handleId is 0
       // the handleId is 0 when isFromMe is true and the chat is a group chat
-      if (res[i].containsKey('handleAddress') && res[i]['handleAddress'] != null) {
+      if (res[i].containsKey('handleAddress') &&
+          res[i]['handleAddress'] != null) {
         msg.handle = Handle.fromMap({
           'id': res[i]['handleId'],
           'address': res[i]['handleAddress'],
@@ -242,10 +235,40 @@ class Chat {
     return this;
   }
 
-  Future removeParticipant(Handle handle) async {
+  Future<Chat> addParticipant(Handle participant) async {
     final Database db = await DBProvider.db.database;
+
+    // Save participant and add to list
+    await participant.save();
+    if (!this.participants.contains(participant)) {
+      this.participants.add(participant);
+    }
+
+    // Check join table and add if relationship doesn't exist
+    List entries = await db.query("chat_handle_join",
+        where: "chatId = ? AND handleId = ?",
+        whereArgs: [this.id, participant.id]);
+    if (entries.length == 0) {
+      await db.insert(
+          "chat_handle_join", {"chatId": this.id, "handleId": participant.id});
+    }
+
+    return this;
+  }
+
+  Future<Chat> removeParticipant(Handle participant) async {
+    final Database db = await DBProvider.db.database;
+
+    // First, remove from the JOIN table
     await db.delete("chat_handle_join",
-        where: "handleId = ?", whereArgs: [handle.id]);
+        where: "chatId = ? AND handleId = ?",
+        whereArgs: [this.id, participant.id]);
+    // Second, remove from this object instance
+    if (this.participants.contains(participant)) {
+      this.participants.remove(participant);
+    }
+
+    return this;
   }
 
   static Future<Chat> findOne(Map<String, dynamic> filters) async {
@@ -288,9 +311,6 @@ class Chat {
         "chatIdentifier": chatIdentifier,
         "isArchived": isArchived ? 1 : 0,
         "displayName": displayName,
-        "lastMessageTimestamp": (lastMessageTimestamp == null)
-            ? null
-            : lastMessageTimestamp.millisecondsSinceEpoch,
         "participants": participants.map((item) => item.toMap())
       };
 }

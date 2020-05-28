@@ -54,12 +54,18 @@ class ChatBloc {
           if (messages.length > 0) {
             String subtitle = "";
             String date = "";
-            List<Attachment> attachments =
-                await Message.getAttachments(messages.first);
-            String text = messages.first.text.substring(attachments.length);
-            if (text.length == 0 && attachments.length > 0) {
-              text = "${attachments.length} attachments";
+
+            Message firstMessage = messages.first;
+            String text = firstMessage.text;
+            if (firstMessage.hasAttachments) {
+              List<Attachment> attachments =
+                  await Message.getAttachments(firstMessage);
+
+              if (text.length == 0 && attachments.length > 0) {
+                text = "${attachments.length} attachments";
+              }
             }
+
             subtitle = text;
 
             Message lastMessage = messages.first;
@@ -137,8 +143,7 @@ class ChatBloc {
 
   addParticipant(Chat chat, Handle participant) async {
     // Add the participant to the chat
-    await participant.addToChat(chat);
-    chat.participants.add(participant);
+    await chat.addParticipant(participant);
     getChats();
   }
 

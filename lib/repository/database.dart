@@ -54,8 +54,7 @@ class DBProvider {
         "style INTEGER NOT NULL,"
         "chatIdentifier TEXT NOT NULL,"
         "isArchived INTEGER DEFAULT 0,"
-        "displayName TEXT DEFAULT NULL,"
-        "lastMessageTimestamp DEFAULT 0"
+        "displayName TEXT DEFAULT NULL"
         ");");
   }
 

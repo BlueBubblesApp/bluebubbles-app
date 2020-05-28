@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:bluebubble_messages/helpers/attachment_downloader.dart';
+import 'package:bluebubble_messages/repository/blocs/setup_bloc.dart';
 import 'package:bluebubble_messages/repository/database.dart';
 import 'package:flutter_socket_io/socket_io_manager.dart';
 import 'package:path_provider/path_provider.dart';
@@ -55,15 +56,13 @@ class Singleton {
   //settings
   Settings settings;
 
-  //for setup, when the user has no saved db
-  Completer setupProgress = new Completer();
+  SetupBloc setup = new SetupBloc();
+  StreamController<bool> finishedSetup = StreamController<bool>();
 
   SharedPreferences sharedPreferences;
   //Socket io
   // SocketIOManager manager;
   SocketIO socket;
-
-  bool alreadyStartedSetup = false;
 
   //setstate for these widgets
   Map<String, Function> subscribers = new Map();
@@ -80,10 +79,6 @@ class Singleton {
   Map<String, Function> disconnectSubscribers = new Map();
 
   String token;
-
-  Future setup() {
-    return setupProgress.future;
-  }
 
   void subscribe(String guid, Function cb) {
     _singleton.subscribers[guid] = cb;
@@ -115,26 +110,32 @@ class Singleton {
       Map resultMap = jsonDecode(result);
       _singleton.settings = Settings.fromJson(resultMap);
     }
+    finishedSetup.sink.add(_singleton.settings.finishedSetup);
     _singleton.startSocketIO();
     _singleton.authFCM();
   }
 
-  void saveSettings(Settings settings) async {
+  void saveSettings(Settings settings,
+      [bool connectToSocket = false, Function connectCb]) async {
     if (_singleton.sharedPreferences == null) {
       _singleton.sharedPreferences = await SharedPreferences.getInstance();
     }
     _singleton.sharedPreferences.setString('Settings', jsonEncode(settings));
     await _singleton.authFCM();
-    _singleton.startSocketIO();
+    if (connectToSocket) {
+      _singleton.startSocketIO(connectCb);
+    }
   }
 
-  void socketStatusUpdate(data) {
+  void socketStatusUpdate(data, [Function connectCB]) {
     switch (data) {
       case "connect":
         debugPrint("CONNECTED");
         authFCM();
-        syncChats();
-        alreadyStartedSetup = true;
+        // syncChats();
+        if (connectCB != null) {
+          connectCB();
+        }
         _singleton.disconnectSubscribers.forEach((key, value) {
           value();
           _singleton.disconnectSubscribers.remove(key);
@@ -155,35 +156,27 @@ class Singleton {
     // debugPrint("update status: ${data.toString()}");
   }
 
-  void deleteDB() async {
+  Future<void> deleteDB() async {
     Database db = await DBProvider.db.database;
-    await db.execute("DELETE FROM handle");
-    await db.execute("DELETE FROM chat");
-    await db.execute("DELETE FROM message");
-    await db.execute("DELETE FROM attachment");
-    await db.execute("DELETE FROM chat_handle_join");
-    await db.execute("DELETE FROM chat_message_join");
-    await db.execute("DELETE FROM attachment_message_join");
+    db.execute("DELETE FROM handle");
+    db.execute("DELETE FROM chat");
+    db.execute("DELETE FROM message");
+    db.execute("DELETE FROM attachment");
+    db.execute("DELETE FROM chat_handle_join");
+    db.execute("DELETE FROM chat_message_join");
+    db.execute("DELETE FROM attachment_message_join");
 
-    await DBProvider.db.createHandleTable(db);
-    await DBProvider.db.createChatTable(db);
-    await DBProvider.db.createMessageTable(db);
-    await DBProvider.db.createAttachmentTable(db);
-    await DBProvider.db.createAttachmentMessageJoinTable(db);
-    await DBProvider.db.createChatHandleJoinTable(db);
-    await DBProvider.db.createChatMessageJoinTable(db);
+    DBProvider.db.createHandleTable(db);
+    DBProvider.db.createChatTable(db);
+    DBProvider.db.createMessageTable(db);
+    DBProvider.db.createAttachmentTable(db);
+    DBProvider.db.createAttachmentMessageJoinTable(db);
+    DBProvider.db.createChatHandleJoinTable(db);
+    DBProvider.db.createChatMessageJoinTable(db);
   }
 
-  startSocketIO() async {
-    // If we have no chats, loads chats from database
-    if (_singleton.settings.finishedSetup) {
-      if (!setupProgress.isCompleted) setupProgress.complete();
-    } else {
-      if (alreadyStartedSetup && !_singleton.settings.finishedSetup) {
-        deleteDB();
-      }
-    }
-
+  startSocketIO([Function connectCb]) async {
+    if (connectCb == null && _singleton.settings.finishedSetup == false) return;
     // If we already have a socket connection, kill it
     if (_singleton.socket != null) {
       _singleton.socket.destroy();
@@ -197,7 +190,7 @@ class Singleton {
       _singleton.socket = SocketIOManager().createSocketIO(
           _singleton.settings.serverAddress, "/",
           query: "guid=${_singleton.settings.guidAuthKey}",
-          socketStatusCallback: socketStatusUpdate);
+          socketStatusCallback: (data) => socketStatusUpdate(data, connectCb));
       _singleton.socket.init();
       _singleton.socket.connect();
       _singleton.socket.unSubscribesAll();
@@ -243,52 +236,6 @@ class Singleton {
       });
     } catch (e) {
       debugPrint("FAILED TO CONNECT");
-    }
-  }
-
-  void syncChats() async {
-    if (!_singleton.settings.finishedSetup) {
-      debugPrint("Syncing chats from the server");
-      _singleton.socket.sendMessage("get-chats", '{}', (data) async {
-        List chats = jsonDecode(data)["data"];
-
-        for (int i = 0; i < chats.length; i++) {
-          // Get the chat and add it to the DB
-          debugPrint(chats[i].toString());
-          Chat chat = Chat.fromMap(chats[i]);
-          // This will check for an existing chat as well
-          await chat.save();
-
-          Map<String, dynamic> params = Map();
-          params["identifier"] = chat.guid;
-          params["limit"] = 100;
-          _singleton.socket.sendMessage("get-chat-messages", jsonEncode(params),
-              (data) async {
-            List messages = jsonDecode(data)["data"];
-
-            messages.forEach((item) {
-              Message message = Message.fromMap(item);
-              chat.addMessage(message).then((value) {
-                // Create the attachments
-                List<dynamic> attachments = item['attachments'];
-
-                attachments.forEach((attachmentItem) {
-                  Attachment file = Attachment.fromMap(attachmentItem);
-                  file.save(message);
-                });
-              });
-            });
-            if (i == chats.length - 1) {
-              Settings _settings = _singleton.settings;
-              _settings.finishedSetup = true;
-              _singleton.saveSettings(_singleton.settings);
-              List<Chat> _chats = await Chat.find();
-              _singleton.chats = _chats;
-              notify();
-            }
-          });
-        }
-      });
     }
   }
 
@@ -356,8 +303,9 @@ class Singleton {
     // sortChats();
   }
 
-  void deleteDupMessages() {
-    Message.cleanMessages();
+  void finishSetup() {
+    finishedSetup.sink.add(true);
+    notify();
   }
 
   // void sortChats() async {
