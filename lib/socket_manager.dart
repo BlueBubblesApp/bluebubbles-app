@@ -301,21 +301,43 @@ class SocketManager {
     notify();
   }
 
-  void sendMessage(Chat chat, String text) {
+  void sendMessage(Chat chat, String text, { List<Attachment> attachments = const [] }) async {
+    debugPrint(chat.participants.toString());
     Map<String, dynamic> params = new Map();
     params["guid"] = chat.guid;
     params["message"] = text;
-    String tempGuid = "Temp${randomString(5)}";
-    Message sentMessage =
-        Message(guid: tempGuid, text: text, dateCreated: DateTime.now());
-    sentMessage.save();
-    chat.save();
-    chat.addMessage(sentMessage);
+    String tempGuid = "temp-${randomString(8)}";
+
+    // Create the message
+    Message sentMessage = Message(
+      guid: tempGuid,
+      text: text,
+      dateCreated: DateTime.now(),
+      hasAttachments: attachments.length > 0 ? true : false
+    );
+
+    // Add attachments
+    for (int i = 0; i < attachments.length; i++) {
+      // TODO: Do something here
+    }
+
+    await sentMessage.save();
+    await chat.save();
+    await chat.addMessage(sentMessage);
     notify();
 
-    _manager.socket.sendMessage("send-message", jsonEncode(params), (data) {
+    _manager.socket.sendMessage("send-message", jsonEncode(params), (data) async {
       Map response = jsonDecode(data);
       debugPrint("message sent: " + response.toString());
+
+      // Find the message and update the message with the new GUID
+      if (response['status'] == 200) {
+        await Message.replaceMessage(tempGuid, Message.fromMap(response['data']));
+      } else {
+        // If there is an error, replace the temp value with an error
+        sentMessage.guid = sentMessage.guid.replaceAll("temp", "error");
+        await Message.replaceMessage(tempGuid, sentMessage);
+      }
     });
   }
 }
