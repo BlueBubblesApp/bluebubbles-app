@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:bluebubble_messages/repository/models/attachment.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:sqflite/sqflite.dart';
 
 import '../database.dart';
@@ -54,29 +55,31 @@ class Message {
       this.text,
       this.subject,
       this.country,
-      this.error,
+      this.error = false,
       this.dateCreated,
       this.dateRead,
       this.dateDelivered,
-      this.isFromMe,
-      this.isDelayed,
-      this.isAutoReply,
-      this.isSystemMessage,
-      this.isServiceMessage,
-      this.isForward,
-      this.isArchived,
+      this.isFromMe = true,
+      this.isDelayed = false,
+      this.isAutoReply = false,
+      this.isSystemMessage = false,
+      this.isServiceMessage = false,
+      this.isForward = false,
+      this.isArchived = false,
       this.cacheRoomnames,
-      this.isAudioMessage,
+      this.isAudioMessage = false,
       this.datePlayed,
-      this.itemType,
+      this.itemType = 0,
       this.groupTitle,
-      this.isExpired,
+      this.isExpired = false,
       this.associatedMessageGuid,
       this.associatedMessageType,
       this.expressiveSendStyleId,
       this.timeExpressiveSendStyleId,
       this.handle,
-      this.hasAttachments});
+      this.hasAttachments = false
+    }
+  );
 
   factory Message.fromMap(Map<String, dynamic> json) {
     return new Message(
@@ -180,7 +183,6 @@ class Message {
         map.remove("handle");
       }
 
-      //this is where the issue is
       this.id = await db.insert("message", map);
     } else if (updateIfAbsent) {
       await this.update();
@@ -190,6 +192,26 @@ class Message {
   }
 
   Future<Message> createMessage() async {}
+
+  static Future<Message> replaceMessage(String tempGuid, Message newMessage) async {
+    final Database db = await DBProvider.db.database;
+    debugPrint(tempGuid);
+    Message existing = await Message.findOne({"guid": tempGuid});
+    if (existing == null) {
+      throw("Temp GUID does not exist!");
+    }
+
+    Map<String, dynamic> params = newMessage.toMap();
+    if (params.containsKey("ROWID")) {
+      params.remove("ROWID");
+    }
+    if (params.containsKey("handle")) {
+      params.remove("handle");
+    }
+
+    await db.update("message", params, where: "ROWID = ?", whereArgs: [existing.id]);
+    return newMessage;
+  }
 
   Future<Message> update() async {
     final Database db = await DBProvider.db.database;
