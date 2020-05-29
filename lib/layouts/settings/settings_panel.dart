@@ -3,13 +3,13 @@ import 'dart:ui';
 
 // import 'package:bluebubble_messages/qr_code_scanner.dart';
 import 'package:bluebubble_messages/settings.dart';
-import 'package:bluebubble_messages/singleton.dart';
+import 'package:bluebubble_messages/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 
-import './hex_color.dart';
+import '../../helpers/hex_color.dart';
 import 'package:flutter/material.dart';
 
-import 'qr_code_scanner.dart';
+import '../setup/qr_code_scanner.dart';
 
 class SettingsPanel extends StatefulWidget {
   // final Settings settings;
@@ -27,7 +27,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
   @override
   void initState() {
     super.initState();
-    _settingsCopy = Singleton().settings;
+    _settingsCopy = SocketManager().settings;
   }
 
   @override
@@ -177,8 +177,8 @@ class _SettingsPanelState extends State<SettingsPanel> {
                       FlatButton(
                         child: Text("Yes"),
                         onPressed: () {
-                          Singleton().deleteDB().then((value) {
-                            Singleton().notify();
+                          SocketManager().deleteDB().then((value) {
+                            SocketManager().notify();
                           });
                         },
                       ),
@@ -205,7 +205,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
     // TODO: implement dispose
     // if (_settingsCopy != Singleton().settings) {
     debugPrint("saving settings");
-    Singleton().saveSettings(_settingsCopy, true);
+    SocketManager().saveSettings(_settingsCopy, true);
     // }
     super.dispose();
   }

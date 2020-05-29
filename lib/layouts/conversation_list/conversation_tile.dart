@@ -1,15 +1,15 @@
 import 'dart:async';
 
-import 'package:bluebubble_messages/repository/blocs/message_bloc.dart';
+import 'package:bluebubble_messages/blocs/message_bloc.dart';
 import 'package:bluebubble_messages/repository/models/message.dart';
-import 'package:bluebubble_messages/singleton.dart';
+import 'package:bluebubble_messages/socket_manager.dart';
 
-import './hex_color.dart';
+import '../../helpers/hex_color.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-import 'conversation_view.dart';
-import 'repository/models/chat.dart';
+import '../conversation_view/conversation_view.dart';
+import '../../repository/models/chat.dart';
 
 // import 'SQL/Models/Chats.dart';
 // import 'SQL/Models/Messages.dart';

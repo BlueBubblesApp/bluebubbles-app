@@ -6,7 +6,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:bluebubble_messages/repository/models/attachment.dart';
-import 'package:bluebubble_messages/singleton.dart';
+import 'package:bluebubble_messages/socket_manager.dart';
 import 'package:flutter/material.dart';
 
 class AttachmentDownloader {
@@ -47,8 +47,8 @@ class AttachmentDownloader {
       params["start"] = index * chunkSize;
       params["chunkSize"] = chunkSize;
       params["compress"] = false;
-      Singleton().socket.sendMessage("get-attachment-chunk", jsonEncode(params),
-          (chunk) async {
+      SocketManager().socket.sendMessage(
+          "get-attachment-chunk", jsonEncode(params), (chunk) async {
         Map<String, dynamic> attachmentResponse = jsonDecode(chunk);
         if (!attachmentResponse.containsKey("data") ||
             attachmentResponse["data"] == null) {
@@ -74,7 +74,7 @@ class AttachmentDownloader {
   }
 
   void getImage(Attachment attachment) {
-    int chunkSize = Singleton().settings.chunkSize * 1024;
+    int chunkSize = SocketManager().settings.chunkSize * 1024;
     debugPrint("getting attachment");
     int numOfChunks = (attachment.totalBytes / chunkSize).ceil();
     debugPrint("num Of Chunks is $numOfChunks");
@@ -94,19 +94,19 @@ class AttachmentDownloader {
       }
 
       String fileName = attachment.transferName;
-      String appDocPath = Singleton().appDocDir.path;
+      String appDocPath = SocketManager().appDocDir.path;
       String pathName = "$appDocPath/${attachment.guid}/$fileName";
       debugPrint(
           "length of array is ${data.length} / ${attachment.totalBytes}");
       Uint8List bytes = Uint8List.fromList(data);
 
       File file = await writeToFile(bytes, pathName);
-      Singleton().finishDownloader(attachment.guid);
+      SocketManager().finishDownloader(attachment.guid);
       _stream.sink.add(file);
     };
 
-    Singleton().addAttachmentDownloader(attachment.guid, this);
-    Singleton().disconnectCallback(() {
+    SocketManager().addAttachmentDownloader(attachment.guid, this);
+    SocketManager().disconnectCallback(() {
       _currentChunk = 0;
       _totalChunks = 0;
       _currentBytes = <int>[];

@@ -1,4 +1,7 @@
-import 'package:bluebubble_messages/singleton.dart';
+import 'dart:math';
+
+import 'package:bluebubble_messages/managers/contact_manager.dart';
+import 'package:bluebubble_messages/socket_manager.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -44,19 +47,13 @@ String getContact(List<Contact> contacts, String id) {
   return contactTitle;
 }
 
-void getContacts() async {
-  if (await Permission.contacts.request().isGranted) {
-    var contacts =
-        (await ContactsService.getContacts(withThumbnails: false)).toList();
-    Singleton().contacts = contacts;
-    // Lazy load thumbnails after rendering initial contacts.
-    for (final Contact contact in Singleton().contacts) {
-      ContactsService.getAvatar(contact).then((avatar) {
-        if (avatar == null) return; // Don't redraw if no change.
-        contact.avatar = avatar;
-      });
-    }
-  }
+String randomString(int length) {
+  var rand = new Random();
+  var codeUnits = new List.generate(length, (index) {
+    return rand.nextInt(33) + 89;
+  });
+
+  return new String.fromCharCodes(codeUnits);
 }
 
 extension DateHelpers on DateTime {

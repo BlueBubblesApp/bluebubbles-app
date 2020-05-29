@@ -63,6 +63,11 @@ dependencies {
     implementation 'com.google.firebase:firebase-analytics:17.3.0'
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 
+
+    //for notifications
+    implementation "com.android.support:support-compat:28.0.0"
+
+
     // Add the SDK for Firebase Cloud Messaging
     implementation 'com.google.firebase:firebase-messaging:20.1.5'
     implementation 'androidx.work:work-runtime:2.1.0'

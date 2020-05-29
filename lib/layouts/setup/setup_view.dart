@@ -1,9 +1,10 @@
 import 'dart:convert';
 
 import 'package:bluebubble_messages/helpers/utils.dart';
-import 'package:bluebubble_messages/qr_code_scanner.dart';
+import 'package:bluebubble_messages/layouts/setup/qr_code_scanner.dart';
+import 'package:bluebubble_messages/managers/contact_manager.dart';
 import 'package:bluebubble_messages/settings.dart';
-import 'package:bluebubble_messages/singleton.dart';
+import 'package:bluebubble_messages/socket_manager.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -24,7 +25,7 @@ class _SetupViewState extends State<SetupView> {
   void initState() {
     // TODO: implement initState
     super.initState();
-    _settingsCopy = Singleton().settings;
+    _settingsCopy = SocketManager().settings;
   }
 
   @override
@@ -115,7 +116,7 @@ class _SetupViewState extends State<SetupView> {
           RaisedButton(
             color: Colors.grey,
             onPressed: () {
-              getContacts();
+              ContactManager().getContacts();
               controller.nextPage(
                 duration: Duration(milliseconds: 300),
                 curve: Curves.easeInOut,
@@ -263,7 +264,7 @@ class _SetupViewState extends State<SetupView> {
                       duration: Duration(milliseconds: 3),
                       curve: Curves.easeInOut);
                 } else {
-                  Singleton().setup.startSync(_settingsCopy);
+                  SocketManager().setup.startSync(_settingsCopy);
                   controller.nextPage(
                     duration: Duration(milliseconds: 300),
                     curve: Curves.easeInOut,
@@ -286,9 +287,9 @@ class _SetupViewState extends State<SetupView> {
 
   Widget _inSyncSetup() {
     return StreamBuilder(
-      stream: Singleton().setup.stream,
+      stream: SocketManager().setup.stream,
       builder: (BuildContext context, AsyncSnapshot<double> snapshot) {
-        double progress = Singleton().setup.progress;
+        double progress = SocketManager().setup.progress;
         if (snapshot.hasData) {
           progress = snapshot.data;
           return Center(

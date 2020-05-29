@@ -7,12 +7,19 @@ import io.flutter.embedding.engine.FlutterEngine;
 import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugins.GeneratedPluginRegistrant;
 
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.os.Build;
 import android.util.Log;
 
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -64,12 +71,58 @@ public class MainActivity extends FlutterActivity {
                                                 }
                                             }
                                         });
+                            } else if(call.method.equals("create-notif-channel")) {
+                                createNotificationChannel(call.argument("channel_name"), call.argument("channel_description"), call.argument("CHANNEL_ID"));
+                                result.success("");
+                            } else if(call.method.equals("new-message-notification"))    {
+                                Intent intent = new Intent(this, MainActivity.class);
+                                intent.setType("NotificationOpen");
+                                intent.putExtra("id", call.argument("notificationId").toString());
+                                PendingIntent pendingIntent = PendingIntent.getActivity(MainActivity.this, 0, intent, Intent.FILL_IN_ACTION);
+                                NotificationCompat.Builder builder = new NotificationCompat.Builder(this, call.argument("CHANNEL_ID"))
+                                        .setSmallIcon(R.mipmap.ic_launcher)
+                                        .setContentTitle(call.argument("contentTitle"))
+                                        .setContentText(call.argument("contentText"))
+//                                        .setLargeIcon()
+                                        .setAutoCancel(true)
+                                        .setContentIntent(pendingIntent)
+                                        .setGroup(call.argument("group"));
+                                NotificationManagerCompat notificationManager = NotificationManagerCompat.from(getContext());
+                                notificationManager.notify(call.argument("notificationId"), builder.build());
+                                result.success("");
                             } else {
                                 result.notImplemented();
                             }
                         }
                 );
     }
+
+
+    //for notifications
+    private void createNotificationChannel(String channel_name, String channel_description, String CHANNEL_ID) {
+        // Create the NotificationChannel, but only on API 26+ because
+        // the NotificationChannel class is new and not in the support library
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            CharSequence name = channel_name;
+            String description = channel_description;
+            int importance = NotificationManager.IMPORTANCE_HIGH;
+            NotificationChannel channel = new NotificationChannel(CHANNEL_ID, name, importance);
+            channel.setDescription(description);
+            // Register the channel with the system; you can't change the importance
+            // or other notification behaviors after this
+            NotificationManager notificationManager = getSystemService(NotificationManager.class);
+            notificationManager.createNotificationChannel(channel);
+        }
+    }
+
+    protected void onNewIntent(Intent intent) {
+        if(intent == null || intent.getType() == null) return;
+        if(intent.getType().equals("NotificationOpen")) {
+            Log.d("Notifications",  "tapped on notification by id " +intent.getExtras().getString("id"));
+            new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL) .invokeMethod("ChatOpen", intent.getExtras().getString("id"));
+        }
+    }
+
 
     @Override
     protected void onStart() {

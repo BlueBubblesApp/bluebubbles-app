@@ -2,8 +2,9 @@ import 'dart:async';
 
 import 'package:bluebubble_messages/repository/models/chat.dart';
 import 'package:bluebubble_messages/repository/models/message.dart';
+import 'package:flutter/material.dart';
 
-import '../../singleton.dart';
+import '../socket_manager.dart';
 
 class MessageBloc {
   final _messageController = StreamController<List<Message>>.broadcast();
@@ -19,14 +20,18 @@ class MessageBloc {
   MessageBloc(Chat chat) {
     _currentChat = chat;
     getMessages(chat);
-    Singleton().subscribe(_currentChat.guid, () {
+    SocketManager().subscribe(_currentChat.guid, () {
       getMessages(_currentChat);
     });
   }
 
   void getMessages(Chat chat) async {
-    _messageCache = await Chat.getMessages(chat);
-    _messageCache.sort((a, b) => -a.dateCreated.compareTo(b.dateCreated));
+    List<Message> messages = await Chat.getMessages(chat);
+    messages.sort((a, b) => -a.dateCreated.compareTo(b.dateCreated));
+    _messageCache = [];
+    for (int i = 0; i < (messages.length <= 25 ? messages.length : 25); i++) {
+      _messageCache.add(messages[i]);
+    }
     _messageController.sink.add(messages);
   }
 

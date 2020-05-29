@@ -1,20 +1,16 @@
 import 'dart:ui';
 
-import 'package:animated_stream_list/animated_stream_list.dart';
-import 'package:bluebubble_messages/repository/blocs/chat_bloc.dart';
-import 'package:bluebubble_messages/repository/models/attachment.dart';
+import 'package:bluebubble_messages/blocs/chat_bloc.dart';
+import 'package:bluebubble_messages/managers/notification_manager.dart';
 import 'package:bluebubble_messages/repository/models/chat.dart';
-import 'package:bluebubble_messages/repository/models/message.dart';
-import 'package:intl/intl.dart';
 
 import './conversation_tile.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-import 'hex_color.dart';
-import 'settings_panel.dart';
-import 'singleton.dart';
-import 'helpers/utils.dart';
+import '../../helpers/hex_color.dart';
+import '../settings/settings_panel.dart';
+import '../../socket_manager.dart';
 
 class ConversationList extends StatefulWidget {
   ConversationList({Key key}) : super(key: key);
@@ -74,7 +70,7 @@ class _ConversationListState extends State<ConversationList> {
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: () async {
-        return true;
+        return false;
       },
       child: Scaffold(
         appBar: PreferredSize(
@@ -250,6 +246,13 @@ class _ConversationListState extends State<ConversationList> {
               },
             ),
           ],
+        ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: () {
+            debugPrint("notification");
+            NotificationManager().createNewNotification(
+                "test notification", "test", "testGroupKey", 1);
+          },
         ),
       ),
     );

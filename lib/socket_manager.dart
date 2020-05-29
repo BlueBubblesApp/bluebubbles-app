@@ -2,7 +2,8 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:bluebubble_messages/helpers/attachment_downloader.dart';
-import 'package:bluebubble_messages/repository/blocs/setup_bloc.dart';
+import 'package:bluebubble_messages/blocs/setup_bloc.dart';
+import 'package:bluebubble_messages/helpers/utils.dart';
 import 'package:bluebubble_messages/repository/database.dart';
 import 'package:flutter_socket_io/socket_io_manager.dart';
 import 'package:path_provider/path_provider.dart';
@@ -13,27 +14,24 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
 
+import 'managers/method_channel_interface.dart';
 import 'repository/models/attachment.dart';
 import 'repository/models/message.dart';
 import 'settings.dart';
-import './repository/blocs/chat_bloc.dart';
+import './blocs/chat_bloc.dart';
 import './repository/models/chat.dart';
 import './repository/models/handle.dart';
 
-class Singleton {
-  factory Singleton() {
-    return _singleton;
+class SocketManager {
+  factory SocketManager() {
+    return _manager;
   }
 
-  static final Singleton _singleton = Singleton._internal();
+  static final SocketManager _manager = SocketManager._internal();
 
-  Singleton._internal();
+  SocketManager._internal();
 
   Directory appDocDir;
-
-  // Chat repo
-  ChatBloc chatContext = new ChatBloc();
-  List<Chat> chats = [];
 
   List<Chat> chatsWithNotifications = <Chat>[];
 
@@ -47,10 +45,6 @@ class Singleton {
     }
     notify();
   }
-
-  List<Contact> contacts = <Contact>[];
-  //interface with native code
-  final platform = const MethodChannel('samples.flutter.dev/fcm');
 
   List<String> processedGUIDS = [];
   //settings
@@ -81,49 +75,49 @@ class Singleton {
   String token;
 
   void subscribe(String guid, Function cb) {
-    _singleton.subscribers[guid] = cb;
+    _manager.subscribers[guid] = cb;
   }
 
   void unsubscribe(String guid) {
-    _singleton.subscribers.remove(guid);
+    _manager.subscribers.remove(guid);
   }
 
   void disconnectCallback(Function cb, String guid) {
-    _singleton.disconnectSubscribers[guid] = cb;
+    _manager.disconnectSubscribers[guid] = cb;
   }
 
   void unSubscribeDisconnectCallback(String guid) {
-    _singleton.disconnectSubscribers.remove(guid);
+    _manager.disconnectSubscribers.remove(guid);
   }
 
   void notify() {
-    for (Function cb in _singleton.subscribers.values) {
+    for (Function cb in _manager.subscribers.values) {
       cb();
     }
   }
 
   void getSavedSettings() async {
     appDocDir = await getApplicationDocumentsDirectory();
-    _singleton.sharedPreferences = await SharedPreferences.getInstance();
-    var result = _singleton.sharedPreferences.getString('Settings');
+    _manager.sharedPreferences = await SharedPreferences.getInstance();
+    var result = _manager.sharedPreferences.getString('Settings');
     if (result != null) {
       Map resultMap = jsonDecode(result);
-      _singleton.settings = Settings.fromJson(resultMap);
+      _manager.settings = Settings.fromJson(resultMap);
     }
-    finishedSetup.sink.add(_singleton.settings.finishedSetup);
-    _singleton.startSocketIO();
-    _singleton.authFCM();
+    finishedSetup.sink.add(_manager.settings.finishedSetup);
+    _manager.startSocketIO();
+    _manager.authFCM();
   }
 
   void saveSettings(Settings settings,
       [bool connectToSocket = false, Function connectCb]) async {
-    if (_singleton.sharedPreferences == null) {
-      _singleton.sharedPreferences = await SharedPreferences.getInstance();
+    if (_manager.sharedPreferences == null) {
+      _manager.sharedPreferences = await SharedPreferences.getInstance();
     }
-    _singleton.sharedPreferences.setString('Settings', jsonEncode(settings));
-    await _singleton.authFCM();
+    _manager.sharedPreferences.setString('Settings', jsonEncode(settings));
+    await _manager.authFCM();
     if (connectToSocket) {
-      _singleton.startSocketIO(connectCb);
+      _manager.startSocketIO(connectCb);
     }
   }
 
@@ -136,13 +130,13 @@ class Singleton {
         if (connectCB != null) {
           connectCB();
         }
-        _singleton.disconnectSubscribers.forEach((key, value) {
+        _manager.disconnectSubscribers.forEach((key, value) {
           value();
-          _singleton.disconnectSubscribers.remove(key);
+          _manager.disconnectSubscribers.remove(key);
         });
         return;
       case "disconnect":
-        _singleton.disconnectSubscribers.values.forEach((f) {
+        _manager.disconnectSubscribers.values.forEach((f) {
           f();
         });
         debugPrint("disconnected");
@@ -153,7 +147,6 @@ class Singleton {
       default:
         return;
     }
-    // debugPrint("update status: ${data.toString()}");
   }
 
   Future<void> deleteDB() async {
@@ -175,48 +168,48 @@ class Singleton {
   }
 
   startSocketIO([Function connectCb]) async {
-    if (connectCb == null && _singleton.settings.finishedSetup == false) return;
+    if (connectCb == null && _manager.settings.finishedSetup == false) return;
     // If we already have a socket connection, kill it
-    if (_singleton.socket != null) {
-      _singleton.socket.destroy();
+    if (_manager.socket != null) {
+      _manager.socket.destroy();
     }
 
     debugPrint(
-        "Starting socket io with the server: ${_singleton.settings.serverAddress}");
+        "Starting socket io with the server: ${_manager.settings.serverAddress}");
 
     try {
       // Create a new socket connection
-      _singleton.socket = SocketIOManager().createSocketIO(
-          _singleton.settings.serverAddress, "/",
-          query: "guid=${_singleton.settings.guidAuthKey}",
+      _manager.socket = SocketIOManager().createSocketIO(
+          _manager.settings.serverAddress, "/",
+          query: "guid=${_manager.settings.guidAuthKey}",
           socketStatusCallback: (data) => socketStatusUpdate(data, connectCb));
-      _singleton.socket.init();
-      _singleton.socket.connect();
-      _singleton.socket.unSubscribesAll();
+      _manager.socket.init();
+      _manager.socket.connect();
+      _manager.socket.unSubscribesAll();
 
       // Let us know when our device was added
-      _singleton.socket.subscribe("fcm-device-id-added", (data) {
+      _manager.socket.subscribe("fcm-device-id-added", (data) {
         debugPrint("fcm device added: " + data.toString());
       });
 
       // Let us know when there is an error
-      _singleton.socket.subscribe("error", (data) {
+      _manager.socket.subscribe("error", (data) {
         debugPrint("An error occurred: " + data.toString());
       });
-      _singleton.socket.subscribe("new-message", (_data) async {
+      _manager.socket.subscribe("new-message", (_data) async {
         // debugPrint(data.toString());
         debugPrint("new-message");
         Map<String, dynamic> data = jsonDecode(_data);
-        if (Singleton().processedGUIDS.contains(data["guid"])) {
+        if (SocketManager().processedGUIDS.contains(data["guid"])) {
           return new Future.value("");
         } else {
-          Singleton().processedGUIDS.add(data["guid"]);
+          SocketManager().processedGUIDS.add(data["guid"]);
         }
         if (data["chats"].length == 0) return new Future.value("");
         Chat chat = await Chat.findOne({"guid": data["chats"][0]["guid"]});
         if (chat == null) return new Future.value("");
         String title = await chatTitle(chat);
-        Singleton().handleNewMessage(data, chat);
+        SocketManager().handleNewMessage(data, chat);
         if (data["isFromMe"]) {
           return new Future.value("");
         }
@@ -228,7 +221,7 @@ class Singleton {
         return new Future.value("");
       });
 
-      _singleton.socket.subscribe("updated-message", (_data) async {
+      _manager.socket.subscribe("updated-message", (_data) async {
         debugPrint("updated-message");
         // Map<String, dynamic> data = jsonDecode(_data);
         // debugPrint("updated message: " + data.toString());
@@ -239,17 +232,17 @@ class Singleton {
   }
 
   void closeSocket() {
-    _singleton.socket.destroy();
-    _singleton.socket = null;
+    _manager.socket.destroy();
+    _manager.socket = null;
   }
 
   Future<void> authFCM() async {
     try {
-      final String result =
-          await platform.invokeMethod('auth', _singleton.settings.fcmAuthData);
+      final String result = await MethodChannelInterface()
+          .invokeMethod('auth', _manager.settings.fcmAuthData);
       token = result;
-      if (_singleton.socket != null) {
-        _singleton.socket.sendMessage(
+      if (_manager.socket != null) {
+        _manager.socket.sendMessage(
             "add-fcm-device",
             jsonEncode({"deviceId": token, "deviceName": "android-client"}),
             () {});
@@ -264,26 +257,28 @@ class Singleton {
   void handleNewMessage(Map<String, dynamic> data, Chat chat) {
     Message message = new Message.fromMap(data);
     if (message.isFromMe) {
-      chat.addMessage(message).then((value) {
-        if (value == null) {
-          return;
-        }
+      chat.save().then((_chat) {
+        _chat.addMessage(message).then((value) {
+          // if (value == null) {
+          //   return;
+          // }
 
-        debugPrint("new message");
-        // Create the attachments
-        List<dynamic> attachments = data['attachments'];
+          debugPrint("new message " + message.text);
+          // Create the attachments
+          List<dynamic> attachments = data['attachments'];
 
-        attachments.forEach((attachmentItem) {
-          Attachment file = Attachment.fromMap(attachmentItem);
-          file.save(message);
+          attachments.forEach((attachmentItem) {
+            Attachment file = Attachment.fromMap(attachmentItem);
+            file.save(message);
+          });
+          notify();
         });
-        notify();
       });
     } else {
       chat.addMessage(message).then((value) {
-        if (value == null) return;
+        // if (value == null) return;
         // Create the attachments
-        debugPrint("new message");
+        debugPrint("new message " + chat.guid);
         List<dynamic> attachments = data['attachments'];
 
         attachments.forEach((attachmentItem) {
@@ -294,12 +289,6 @@ class Singleton {
         notify();
       });
     }
-    // if (_singleton.socket != null) {
-    //   syncMessages();
-    // } else {
-    //   debugPrint("not syncing, socket is null");
-    // }
-    // sortChats();
   }
 
   void finishSetup() {
@@ -307,67 +296,21 @@ class Singleton {
     notify();
   }
 
-  // void sortChats() async {
-  //   Map<String, Message> guidToMessage = new Map<String, Message>();
-  //   int counter = 0;
-  //   for (int i = 0; i < _singleton.chats.length; i++) {
-  //     RepositoryServiceMessage.getMessagesFromChat(_singleton.chats[i].guid)
-  //         .then((List<Message> messages) {
-  //       counter++;
-  //       if (messages.length > 0) {
-  //         RepositoryServiceChats.updateChatTime(
-  //                 _singleton.chats[i].guid, messages.first.dateCreated)
-  //             .then((int n) {
-  //           if (counter == _singleton.chats.length - 1) {
-  //             RepositoryServiceChats.getAllChats().then((List<Chat> chats) {
-  //               _singleton.chats = chats;
-  //               notify();
-  //             });
-  //           }
-  //         });
-  //       } else {
-  //         if (counter == _singleton.chats.length - 1) {
-  //           RepositoryServiceChats.getAllChats().then((List<Chat> chats) {
-  //             _singleton.chats = chats;
-  //             notify();
-  //           });
-  //         }
-  //       }
-  //     });
-  //   }
+  void sendMessage(Chat chat, String text) {
+    Map<String, dynamic> params = new Map();
+    params["guid"] = chat.guid;
+    params["message"] = text;
+    String tempGuid = "Temp${randomString(5)}";
+    Message sentMessage =
+        Message(guid: tempGuid, text: text, dateCreated: DateTime.now());
+    sentMessage.save();
+    chat.save();
+    chat.addMessage(sentMessage);
+    notify();
 
-  //   updatedChats.sort(
-  //       (a, b) => a.lastMessageTimeStamp.compareTo(b.lastMessageTimeStamp));
-  //   _singleton.chats = updatedChats;
-  //   notify();
-  // }
-
-  // void sendMessage(String text) {
-  //   Map params = Map();
-  //   params["guid"] = message.chatGuid;
-  //   params["message"] = message.text;
-  //   _singleton.socket.sendMessage("send-message", jsonEncode(params));
-  // }
-
-  // void syncMessages() {
-  //   debugPrint("sync messages");
-  //   for (int i = 0; i < _singleton.chats.length; i++) {
-  //     Map<String, dynamic> params = new Map();
-  //     params["identifier"] = _singleton.chats[i].guid;
-  //     params["limit"] = 100;
-  //     _singleton.socket.sendMessage("get-chat-messages", jsonEncode(params),
-  //         (_messages) {
-  //       List dataMessages = _messages["data"];
-  //       List<Message> messages = <Message>[];
-  //       for (int i = 0; i < dataMessages.length; i++) {
-  //         messages.add(new Message(dataMessages[i]));
-  //       }
-  //       RepositoryServiceMessage.addMessagesToChat(messages)
-  //           .then((void newMessages) {
-  //         notify();
-  //       });
-  //     });
-  //   }
-  // }
-
+    _manager.socket.sendMessage("send-message", jsonEncode(params), (data) {
+      Map response = jsonDecode(data);
+      debugPrint("message sent: " + response.toString());
+    });
+  }
 }

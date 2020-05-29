@@ -5,7 +5,7 @@ import 'package:bluebubble_messages/repository/models/attachment.dart';
 import 'package:bluebubble_messages/repository/models/chat.dart';
 import 'package:bluebubble_messages/repository/models/message.dart';
 import 'package:bluebubble_messages/settings.dart';
-import 'package:bluebubble_messages/singleton.dart';
+import 'package:bluebubble_messages/socket_manager.dart';
 import 'package:flutter/material.dart';
 
 class SetupBloc {
@@ -24,12 +24,12 @@ class SetupBloc {
 
   void startSync(Settings settings) {
     debugPrint(settings.toJson().toString());
-    Singleton().saveSettings(settings, true, () => onConnect());
+    SocketManager().saveSettings(settings, true, () => onConnect());
   }
 
   void onConnect() {
     debugPrint("connected");
-    Singleton().socket.sendMessage("get-chats", '{}', (data) {
+    SocketManager().socket.sendMessage("get-chats", '{}', (data) {
       receivedChats(data);
     });
   }
@@ -48,7 +48,7 @@ class SetupBloc {
     Map<String, dynamic> params = Map();
     params["identifier"] = chat.guid;
     params["limit"] = 100;
-    Singleton().socket.sendMessage("get-chat-messages", jsonEncode(params),
+    SocketManager().socket.sendMessage("get-chat-messages", jsonEncode(params),
         (data) {
       receivedMessagesForChat(chat, data);
       if (index + 1 < chats.length) {
@@ -89,11 +89,11 @@ class SetupBloc {
   }
 
   void finishSetup() {
-    Settings _settingsCopy = Singleton().settings;
+    Settings _settingsCopy = SocketManager().settings;
     _settingsCopy.finishedSetup = true;
     _finishedSetup = true;
-    Singleton().saveSettings(_settingsCopy, false);
-    Singleton().finishSetup();
+    SocketManager().saveSettings(_settingsCopy, false);
+    SocketManager().finishSetup();
   }
 
   void dispose() {

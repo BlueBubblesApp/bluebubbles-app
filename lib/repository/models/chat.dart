@@ -1,7 +1,7 @@
 import 'dart:convert';
+import 'package:bluebubble_messages/managers/contact_manager.dart';
 import 'package:sqflite/sqflite.dart';
 
-import '../../singleton.dart';
 import '../database.dart';
 import 'handle.dart';
 import 'message.dart';
@@ -17,14 +17,14 @@ String chatToJson(Chat data) {
   return json.encode(dyn);
 }
 
-Future<String> chatTitle(Chat _chat) async {
+chatTitle(Chat _chat) async {
   String title = "";
   if (_chat.displayName == null || _chat.displayName == "") {
     Chat chat = await _chat.getParticipants();
     List<String> titles = [];
     for (int i = 0; i < chat.participants.length; i++) {
       titles.add(getContact(
-          Singleton().contacts, chat.participants[i].address.toString()));
+          ContactManager().contacts, chat.participants[i].address.toString()));
     }
 
     title = titles.join(', ');
@@ -43,15 +43,14 @@ class Chat {
   String displayName;
   List<Handle> participants;
 
-  Chat({
-    this.id,
-    this.guid,
-    this.style,
-    this.chatIdentifier,
-    this.isArchived,
-    this.displayName,
-    this.participants
-  });
+  Chat(
+      {this.id,
+      this.guid,
+      this.style,
+      this.chatIdentifier,
+      this.isArchived,
+      this.displayName,
+      this.participants});
 
   factory Chat.fromMap(Map<String, dynamic> json) {
     List<Handle> participants = [];
@@ -110,9 +109,7 @@ class Chat {
   Future<Chat> update() async {
     final Database db = await DBProvider.db.database;
 
-    Map<String, dynamic> params = {
-      "isArchived": this.isArchived ? 1 : 0
-    };
+    Map<String, dynamic> params = {"isArchived": this.isArchived ? 1 : 0};
 
     // Add display name if it's been updated
     if (this.displayName != null) {
@@ -137,27 +134,23 @@ class Chat {
     await message.save();
 
     // Check join table and add if relationship doesn't exist
-    List entries = await db.query(
-      "chat_message_join", where: "chatId = ? AND messageId = ?", whereArgs: [this.id, message.id]);
+    List entries = await db.query("chat_message_join",
+        where: "chatId = ? AND messageId = ?",
+        whereArgs: [this.id, message.id]);
     if (entries.length == 0) {
-       await db.insert("chat_message_join", {"chatId": this.id, "messageId": message.id});
+      await db.insert(
+          "chat_message_join", {"chatId": this.id, "messageId": message.id});
     }
-   
+
     return this;
   }
 
-  static Future<List<Message>> getMessages(
-    Chat chat, {
-      bool reactionsOnly = false,
-      int offset = 0,
-      int limit = 100
-    }
-  ) async {
+  static Future<List<Message>> getMessages(Chat chat,
+      {bool reactionsOnly = false, int offset = 0, int limit = 100}) async {
     final Database db = await DBProvider.db.database;
 
     String reactionQualifier = reactionsOnly ? "IS NOT" : "IS";
-    String query = (
-        "SELECT"
+    String query = ("SELECT"
         " message.ROWID AS ROWID,"
         " message.guid AS guid,"
         " message.handleId AS handleId,"
@@ -192,11 +185,10 @@ class Chat {
         " JOIN chat_message_join AS cmj ON message.ROWID = cmj.messageId"
         " JOIN chat ON cmj.chatId = chat.ROWID"
         " LEFT OUTER JOIN handle ON handle.ROWID = message.handleId"
-        " WHERE chat.ROWID = ? AND message.associatedMessageType $reactionQualifier NULL"
-    );
+        " WHERE chat.ROWID = ? AND message.associatedMessageType $reactionQualifier NULL");
 
     // Add pagination
-    query += " LIMIT $limit OFFSET $offset";
+    query += " ORDER BY message.dateCreated DESC LIMIT $limit OFFSET $offset";
 
     // Execute the query
     var res = await db.rawQuery("$query;", [chat.id]);
@@ -255,10 +247,12 @@ class Chat {
     }
 
     // Check join table and add if relationship doesn't exist
-    List entries = await db.query(
-      "chat_handle_join", where: "chatId = ? AND handleId = ?", whereArgs: [this.id, participant.id]);
+    List entries = await db.query("chat_handle_join",
+        where: "chatId = ? AND handleId = ?",
+        whereArgs: [this.id, participant.id]);
     if (entries.length == 0) {
-       await db.insert("chat_handle_join", {"chatId": this.id, "handleId": participant.id});
+      await db.insert(
+          "chat_handle_join", {"chatId": this.id, "handleId": participant.id});
     }
 
     return this;
@@ -269,7 +263,8 @@ class Chat {
 
     // First, remove from the JOIN table
     await db.delete("chat_handle_join",
-        where: "chatId = ? AND handleId = ?", whereArgs: [this.id, participant.id]);
+        where: "chatId = ? AND handleId = ?",
+        whereArgs: [this.id, participant.id]);
 
     // Second, remove from this object instance
     if (this.participants.contains(participant)) {
@@ -296,7 +291,8 @@ class Chat {
     return Chat.fromMap(res.elementAt(0));
   }
 
-  static Future<List<Chat>> find([Map<String, dynamic> filters = const {}]) async {
+  static Future<List<Chat>> find(
+      [Map<String, dynamic> filters = const {}]) async {
     final Database db = await DBProvider.db.database;
 
     List<String> whereParams = [];
@@ -316,12 +312,12 @@ class Chat {
   }
 
   Map<String, dynamic> toMap() => {
-    "ROWID": id,
-    "guid": guid,
-    "style": style,
-    "chatIdentifier": chatIdentifier,
-    "isArchived": isArchived ? 1 : 0,
-    "displayName": displayName,
-    "participants": participants.map((item) => item.toMap())
-  };
+        "ROWID": id,
+        "guid": guid,
+        "style": style,
+        "chatIdentifier": chatIdentifier,
+        "isArchived": isArchived ? 1 : 0,
+        "displayName": displayName,
+        "participants": participants.map((item) => item.toMap())
+      };
 }

@@ -1,14 +1,14 @@
 import 'dart:async';
 
-import 'package:bluebubble_messages/repository/blocs/message_bloc.dart';
+import 'package:bluebubble_messages/blocs/message_bloc.dart';
 import 'package:bluebubble_messages/repository/models/attachment.dart';
 import 'package:bluebubble_messages/repository/models/message.dart';
 import 'package:intl/intl.dart';
 
-import '../../singleton.dart';
-import '../models/handle.dart';
-import '../models/chat.dart';
-import '../../helpers/utils.dart';
+import '../socket_manager.dart';
+import '../repository/models/handle.dart';
+import '../repository/models/chat.dart';
+import '../helpers/utils.dart';
 
 class ChatBloc {
   //Stream controller is the 'Admin' that manages
@@ -57,13 +57,14 @@ class ChatBloc {
             Message firstMessage = messages.first;
             String text = firstMessage.text;
             if (firstMessage.hasAttachments) {
-              List<Attachment> attachments = await Message.getAttachments(firstMessage);
-              
+              List<Attachment> attachments =
+                  await Message.getAttachments(firstMessage);
+
               if (text.length == 0 && attachments.length > 0) {
                 text = "${attachments.length} attachments";
               }
             }
-            
+
             subtitle = text;
 
             Message lastMessage = messages.first;
@@ -83,9 +84,9 @@ class ChatBloc {
             bool hasNotification = false;
 
             for (int i = 0;
-                i < Singleton().chatsWithNotifications.length;
+                i < SocketManager().chatsWithNotifications.length;
                 i++) {
-              if (Singleton().chatsWithNotifications[i].guid == chat.guid) {
+              if (SocketManager().chatsWithNotifications[i].guid == chat.guid) {
                 hasNotification = true;
               }
             }
@@ -100,8 +101,8 @@ class ChatBloc {
 
       bool hasNotification = false;
 
-      for (int i = 0; i < Singleton().chatsWithNotifications.length; i++) {
-        if (Singleton().chatsWithNotifications[i].guid == chat.guid) {
+      for (int i = 0; i < SocketManager().chatsWithNotifications.length; i++) {
+        if (SocketManager().chatsWithNotifications[i].guid == chat.guid) {
           hasNotification = true;
           break;
         }

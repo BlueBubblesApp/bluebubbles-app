@@ -1,16 +1,16 @@
 import 'dart:ui';
 
 import 'package:bluebubble_messages/helpers/utils.dart';
-import 'package:bluebubble_messages/repository/blocs/message_bloc.dart';
+import 'package:bluebubble_messages/blocs/message_bloc.dart';
 import 'package:bluebubble_messages/repository/models/handle.dart';
-import 'package:bluebubble_messages/singleton.dart';
+import 'package:bluebubble_messages/socket_manager.dart';
 
-import './hex_color.dart';
+import '../../helpers/hex_color.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'message_widget.dart';
-import 'repository/models/chat.dart';
-import 'repository/models/message.dart';
+import '../../repository/models/chat.dart';
+import '../../repository/models/message.dart';
 
 class ConversationView extends StatefulWidget {
   ConversationView({
@@ -60,7 +60,7 @@ class _ConversationViewState extends State<ConversationView> {
   void didChangeDependencies() async {
     // TODO: implement didChangeDependencies
     super.didChangeDependencies();
-    Singleton().removeChatNotification(widget.chat);
+    SocketManager().removeChatNotification(widget.chat);
     Chat chatWithParticipants = await widget.chat.getParticipants();
   }
 
@@ -120,20 +120,19 @@ class _ConversationViewState extends State<ConversationView> {
 
                   Message olderMessage;
                   Message newerMessage;
-                  if (index >= 0 && index <= _messages.length) {
+                  if (index >= 0 && index < _messages.length) {
                     olderMessage = _messages[index];
                   }
-                  if (index - 2 >= 0 && index - 2 <= _messages.length) {
+                  if (index - 2 >= 0 && index - 2 < _messages.length) {
                     newerMessage = _messages[index - 2];
                   }
 
                   return MessageWidget(
-                    key: Key(_messages[index - 1].guid),
-                    fromSelf: _messages[index - 1].isFromMe,
-                    message: _messages[index - 1],
-                    olderMessage: olderMessage,
-                    newerMessage: newerMessage
-                  );
+                      key: Key(_messages[index - 1].guid),
+                      fromSelf: _messages[index - 1].isFromMe,
+                      message: _messages[index - 1],
+                      olderMessage: olderMessage,
+                      newerMessage: newerMessage);
                 },
               );
             },
@@ -215,6 +214,8 @@ class _ConversationViewState extends State<ConversationView> {
                                   debugPrint("sending message");
                                   // Singleton().sendMessage(
                                   //     widget.chat, _controller.text);
+                                  SocketManager().sendMessage(
+                                      widget.chat, _controller.text);
                                   // Message message = Message.manual(
                                   //     _controller.text,
                                   //     widget.chat.guid,
