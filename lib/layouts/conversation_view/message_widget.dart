@@ -22,8 +22,8 @@ class MessageWidget extends StatefulWidget {
 
   final fromSelf;
   final Message message;
-  final Message olderMessage;
   final Message newerMessage;
+  final Message olderMessage;
 
   @override
   _MessageState createState() => _MessageState();
@@ -33,14 +33,22 @@ class _MessageState extends State<MessageWidget> {
   List<Attachment> attachments = <Attachment>[];
   String body;
   List images = [];
-
   bool showTail = true;
+
+  @override
+  void didChangeDependencies() async {
+    super.didChangeDependencies();
+    // Handle handle = await widget.message.from.update();
+    // debugPrint("handle id is ${widget.message.from.address}");
+  }
 
   @override
   void initState() {
     super.initState();
     if (widget.newerMessage != null) {
-      showTail = getDifferenceInTime().inMinutes > 1 || differentSender();
+      showTail = withinTimeThreshold(widget.message, widget.newerMessage,
+              threshold: 1) ||
+          !sameSender(widget.message, widget.newerMessage);
     }
 
     // if (widget.message.hasAttachments) {
@@ -74,26 +82,13 @@ class _MessageState extends State<MessageWidget> {
     // }
   }
 
-  @override
-  void didChangeDependencies() async {
-    super.didChangeDependencies();
-    // Handle handle = await widget.message.from.update();
-    // debugPrint("handle id is ${widget.message.from.address}");
-  }
-
-  bool differentSender() {
-    if (widget.newerMessage == null) return false;
-    if (widget.message.isFromMe || widget.newerMessage.isFromMe) {
-      return widget.message.isFromMe != widget.newerMessage.isFromMe;
-    } else {
-      return widget.message.handle.address !=
-          widget.newerMessage.handle.address;
-    }
-  }
-
-  Duration getDifferenceInTime() {
-    return widget.newerMessage.dateCreated
-        .difference(widget.message.dateCreated);
+  bool sameSender(Message first, Message second) {
+    return (first != null &&
+        second != null &&
+        (first.isFromMe && second.isFromMe ||
+            (!first.isFromMe &&
+                !second.isFromMe &&
+                first.handleId == second.handleId)));
   }
 
   bool withinTimeThreshold(Message first, Message second, {threshold: 5}) {
@@ -295,7 +290,7 @@ class _MessageState extends State<MessageWidget> {
     }
 
     Widget contactItem = new Container(width: 0, height: 0);
-    if (differentSender()) {
+    if (!sameSender(widget.message, widget.olderMessage)) {
       contactItem = Padding(
         padding: EdgeInsets.only(left: 25.0, top: 5.0, bottom: 3.0),
         child: Text(

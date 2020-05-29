@@ -237,6 +237,11 @@ class SocketManager {
   }
 
   Future<void> authFCM() async {
+    if (_manager.settings.fcmAuthData == null) {
+      debugPrint("No FCM Auth data found. Skipping FCM authentication");
+      return;
+    }
+
     try {
       final String result = await MethodChannelInterface()
           .invokeMethod('auth', _manager.settings.fcmAuthData);
