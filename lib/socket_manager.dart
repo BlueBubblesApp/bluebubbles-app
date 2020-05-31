@@ -328,37 +328,40 @@ class SocketManager {
     // 3 -> Run the resync
 
     final Database db = await DBProvider.db.database;
-    
+
     // Fetch messages associated with the chat
     var items = await db.rawQuery(
-      "SELECT"
-      " chatId,"
-      " messageId"
-      " FROM chat_message_join"
-      " WHERE chatId = ?",
-      [chat.id]
-    );
+        "SELECT"
+        " chatId,"
+        " messageId"
+        " FROM chat_message_join"
+        " WHERE chatId = ?",
+        [chat.id]);
 
     // If there are no messages, return
     if (items.length == 0) return;
-    
+
     Batch batch = db.batch();
     for (int i = 0; i < items.length; i++) {
       // 1 -> Delete all messages associated with a chat
-      batch.delete("message", where: "ROWID = ?", whereArgs: [items[0]["messageId"]]);
+      batch.delete("message",
+          where: "ROWID = ?", whereArgs: [items[0]["messageId"]]);
       // 2 -> Delete all chat_message_join entries associated with a chat
-      batch.delete("chat_message_join", where: "ROWID = ?", whereArgs: [items[0]["ROWID"]]);
+      batch.delete("chat_message_join",
+          where: "ROWID = ?", whereArgs: [items[0]["ROWID"]]);
     }
 
-    // Commit the changes and notify the subscribers
     await batch.commit(noResult: true);
-    notify();
+
+    // notify();
+    NewMessageManager().updateWithMessage(chat, null);
 
     // 3 -> Run the resync
     Map<String, dynamic> params = Map();
     params["identifier"] = chat.guid;
     params["limit"] = 100;
-    SocketManager().socket.sendMessage("get-chat-messages", jsonEncode(params), (data) {
+    SocketManager().socket.sendMessage("get-chat-messages", jsonEncode(params),
+        (data) {
       List messages = jsonDecode(data)["data"];
       MessageHelper.bulkAddMessages(chat, messages);
     });
