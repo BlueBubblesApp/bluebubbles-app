@@ -86,7 +86,7 @@ class ChatBloc {
             for (int i = 0;
                 i < SocketManager().chatsWithNotifications.length;
                 i++) {
-              if (SocketManager().chatsWithNotifications[i].guid == chat.guid) {
+              if (SocketManager().chatsWithNotifications[i] == chat.guid) {
                 hasNotification = true;
               }
             }
@@ -102,7 +102,7 @@ class ChatBloc {
       bool hasNotification = false;
 
       for (int i = 0; i < SocketManager().chatsWithNotifications.length; i++) {
-        if (SocketManager().chatsWithNotifications[i].guid == chat.guid) {
+        if (SocketManager().chatsWithNotifications[i] == chat.guid) {
           hasNotification = true;
           break;
         }

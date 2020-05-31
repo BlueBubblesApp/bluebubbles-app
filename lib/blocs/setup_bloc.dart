@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:bluebubble_messages/managers/settings_manager.dart';
 import 'package:bluebubble_messages/repository/models/attachment.dart';
 import 'package:bluebubble_messages/repository/models/chat.dart';
 import 'package:bluebubble_messages/repository/models/message.dart';
@@ -9,7 +10,7 @@ import 'package:bluebubble_messages/socket_manager.dart';
 import 'package:flutter/material.dart';
 
 class SetupBloc {
-  final _stream = StreamController<double>();
+  final _stream = StreamController<double>.broadcast();
 
   bool _finishedSetup = false;
   double _progress = 0.0;
@@ -24,7 +25,7 @@ class SetupBloc {
 
   void startSync(Settings settings) {
     debugPrint(settings.toJson().toString());
-    SocketManager().saveSettings(settings, true, () => onConnect());
+    SettingsManager().saveSettings(settings, true, () => onConnect());
   }
 
   void onConnect() {
@@ -89,10 +90,10 @@ class SetupBloc {
   }
 
   void finishSetup() {
-    Settings _settingsCopy = SocketManager().settings;
+    Settings _settingsCopy = SettingsManager().settings;
     _settingsCopy.finishedSetup = true;
     _finishedSetup = true;
-    SocketManager().saveSettings(_settingsCopy, false);
+    SettingsManager().saveSettings(_settingsCopy, false);
     SocketManager().finishSetup();
   }
 

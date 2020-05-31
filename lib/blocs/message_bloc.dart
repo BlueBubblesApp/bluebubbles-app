@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:bluebubble_messages/managers/new_message_manager.dart';
 import 'package:bluebubble_messages/repository/models/chat.dart';
 import 'package:bluebubble_messages/repository/models/message.dart';
 import 'package:flutter/material.dart';
@@ -20,8 +21,18 @@ class MessageBloc {
   MessageBloc(Chat chat) {
     _currentChat = chat;
     getMessages(chat);
-    SocketManager().subscribe(_currentChat.guid, () {
-      getMessages(_currentChat);
+    NewMessageManager().stream.listen((Map<String, Message> event) {
+      if (event.containsKey(_currentChat.guid)) {
+        if (event[_currentChat.guid] == null) {
+          getMessages(chat);
+        } else {
+          _messageCache.add(event[_currentChat.guid]);
+          _messageController.sink.add(_messageCache);
+          getMessages(chat);
+        }
+      } else if (event.keys.first == null) {
+        getMessages(_currentChat);
+      }
     });
   }
 

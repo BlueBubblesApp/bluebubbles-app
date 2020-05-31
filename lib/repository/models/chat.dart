@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:bluebubble_messages/managers/contact_manager.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:sqflite/sqflite.dart';
 
 import '../database.dart';
@@ -213,6 +214,9 @@ class Chat {
 
       output.add(msg);
     }
+    output.forEach((element) {
+      debugPrint("message text is " + element.text.toString());
+    });
 
     return output;
   }

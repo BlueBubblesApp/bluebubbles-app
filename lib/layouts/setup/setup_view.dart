@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:bluebubble_messages/helpers/utils.dart';
 import 'package:bluebubble_messages/layouts/setup/qr_code_scanner.dart';
 import 'package:bluebubble_messages/managers/contact_manager.dart';
+import 'package:bluebubble_messages/managers/settings_manager.dart';
 import 'package:bluebubble_messages/settings.dart';
 import 'package:bluebubble_messages/socket_manager.dart';
 import 'package:contacts_service/contacts_service.dart';
@@ -25,7 +26,7 @@ class _SetupViewState extends State<SetupView> {
   void initState() {
     // TODO: implement initState
     super.initState();
-    _settingsCopy = SocketManager().settings;
+    _settingsCopy = SettingsManager().settings;
   }
 
   @override

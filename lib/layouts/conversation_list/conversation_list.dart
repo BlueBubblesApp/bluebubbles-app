@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:bluebubble_messages/blocs/chat_bloc.dart';
+import 'package:bluebubble_messages/managers/method_channel_interface.dart';
 import 'package:bluebubble_messages/managers/notification_manager.dart';
 import 'package:bluebubble_messages/repository/models/chat.dart';
 
@@ -248,10 +249,14 @@ class _ConversationListState extends State<ConversationList> {
           ],
         ),
         floatingActionButton: FloatingActionButton(
-          onPressed: () {
-            debugPrint("notification");
-            NotificationManager().createNewNotification(
-                "test notification", "test", "testGroupKey", 1);
+          onPressed: () async {
+            // debugPrint("notification");
+
+            // NotificationManager().createNewNotification(
+            //     "test notification", "test", "testGroupKey", 1);
+            // bool result = await MethodChannelInterface()
+            //     .invokeMethod("getAutoStartPermission");
+            // debugPrint("auto start is $result");
           },
         ),
       ),

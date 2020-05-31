@@ -5,6 +5,7 @@ import 'package:bluebubble_messages/helpers/utils.dart';
 import 'package:bluebubble_messages/managers/contact_manager.dart';
 import 'package:bluebubble_messages/managers/method_channel_interface.dart';
 import 'package:bluebubble_messages/managers/notification_manager.dart';
+import 'package:bluebubble_messages/managers/settings_manager.dart';
 import 'package:bluebubble_messages/repository/database.dart';
 import 'package:bluebubble_messages/repository/models/chat.dart';
 import 'package:bluebubble_messages/layouts/setup/setup_view.dart';
@@ -13,6 +14,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 import './layouts/conversation_list/conversation_list.dart';
 import 'settings.dart';
@@ -22,7 +24,7 @@ import 'socket_manager.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await DBProvider.db.initDB();
-  runApp(Main());
+  initializeDateFormatting('fr_FR', null).then((_) => runApp(Main()));
 }
 
 class Main extends StatelessWidget with WidgetsBindingObserver {
@@ -54,11 +56,11 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
-    SocketManager().settings = new Settings();
+    SettingsManager().init();
     MethodChannelInterface().init();
     NotificationManager().createNotificationChannel();
     SchedulerBinding.instance
-        .addPostFrameCallback((_) => SocketManager().getSavedSettings());
+        .addPostFrameCallback((_) => SettingsManager().getSavedSettings());
     WidgetsBinding.instance.addObserver(this);
   }
 

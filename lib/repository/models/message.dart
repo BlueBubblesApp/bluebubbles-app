@@ -77,9 +77,7 @@ class Message {
       this.expressiveSendStyleId,
       this.timeExpressiveSendStyleId,
       this.handle,
-      this.hasAttachments = false
-    }
-  );
+      this.hasAttachments = false});
 
   factory Message.fromMap(Map<String, dynamic> json) {
     return new Message(
@@ -150,9 +148,7 @@ class Message {
             ? (json['handle'] != null ? Handle.fromMap(json['handle']) : null)
             : null,
         hasAttachments: json.containsKey("attachments")
-            ? (((json['attachments'] as List).length > 0)
-                ? true
-                : false)
+            ? (((json['attachments'] as List).length > 0) ? true : false)
             : false);
   }
 
@@ -191,14 +187,13 @@ class Message {
     return this;
   }
 
-  Future<Message> createMessage() async {}
-
-  static Future<Message> replaceMessage(String tempGuid, Message newMessage) async {
+  static Future<Message> replaceMessage(
+      String oldGuid, Message newMessage) async {
     final Database db = await DBProvider.db.database;
-    debugPrint(tempGuid);
-    Message existing = await Message.findOne({"guid": tempGuid});
+    debugPrint(oldGuid);
+    Message existing = await Message.findOne({"guid": oldGuid});
     if (existing == null) {
-      throw("Temp GUID does not exist!");
+      throw ("Old GUID does not exist!");
     }
 
     Map<String, dynamic> params = newMessage.toMap();
@@ -209,7 +204,8 @@ class Message {
       params.remove("handle");
     }
 
-    await db.update("message", params, where: "ROWID = ?", whereArgs: [existing.id]);
+    await db.update("message", params,
+        where: "ROWID = ?", whereArgs: [existing.id]);
     return newMessage;
   }
 
@@ -233,7 +229,8 @@ class Message {
 
     // If it already exists, update it
     if (this.id != null) {
-      await db.update("message", params, where: "ROWID = ?", whereArgs: [this.id]);
+      await db
+          .update("message", params, where: "ROWID = ?", whereArgs: [this.id]);
     } else {
       await this.save(false);
     }
@@ -323,40 +320,40 @@ class Message {
   }
 
   Map<String, dynamic> toMap() => {
-    "ROWID": id,
-    "guid": guid,
-    "handleId": handleId,
-    "text": text,
-    "subject": subject,
-    "country": country,
-    "error": error ? 1 : 0,
-    "dateCreated":
-        (dateCreated == null) ? null : dateCreated.millisecondsSinceEpoch,
-    "dateRead": (dateRead == null) ? null : dateRead.millisecondsSinceEpoch,
-    "dateDelivered": (dateDelivered == null)
-        ? null
-        : dateDelivered.millisecondsSinceEpoch,
-    "isFromMe": isFromMe ? 1 : 0,
-    "isDelayed": isDelayed ? 1 : 0,
-    "isAutoReply": isAutoReply ? 1 : 0,
-    "isSystemMessage": isSystemMessage ? 1 : 0,
-    "isServiceMessage": isServiceMessage ? 1 : 0,
-    "isForward": isForward ? 1 : 0,
-    "isArchived": isArchived ? 1 : 0,
-    "cacheRoomnames": cacheRoomnames,
-    "isAudioMessage": isAudioMessage ? 1 : 0,
-    "datePlayed":
-        (datePlayed == null) ? null : datePlayed.millisecondsSinceEpoch,
-    "itemType": itemType,
-    "groupTitle": groupTitle,
-    "isExpired": isExpired ? 1 : 0,
-    "associatedMessageGuid": associatedMessageGuid,
-    "associatedMessageType": associatedMessageType,
-    "expressiveSendStyleId": expressiveSendStyleId,
-    "timeExpressiveSendStyleId": (timeExpressiveSendStyleId == null)
-        ? null
-        : timeExpressiveSendStyleId.millisecondsSinceEpoch,
-    "handle": (handle != null) ? handle.toMap() : null,
-    "hasAttachments": hasAttachments ? 1 : 0
-  };
+        "ROWID": id,
+        "guid": guid,
+        "handleId": handleId,
+        "text": text,
+        "subject": subject,
+        "country": country,
+        "error": error ? 1 : 0,
+        "dateCreated":
+            (dateCreated == null) ? null : dateCreated.millisecondsSinceEpoch,
+        "dateRead": (dateRead == null) ? null : dateRead.millisecondsSinceEpoch,
+        "dateDelivered": (dateDelivered == null)
+            ? null
+            : dateDelivered.millisecondsSinceEpoch,
+        "isFromMe": isFromMe ? 1 : 0,
+        "isDelayed": isDelayed ? 1 : 0,
+        "isAutoReply": isAutoReply ? 1 : 0,
+        "isSystemMessage": isSystemMessage ? 1 : 0,
+        "isServiceMessage": isServiceMessage ? 1 : 0,
+        "isForward": isForward ? 1 : 0,
+        "isArchived": isArchived ? 1 : 0,
+        "cacheRoomnames": cacheRoomnames,
+        "isAudioMessage": isAudioMessage ? 1 : 0,
+        "datePlayed":
+            (datePlayed == null) ? null : datePlayed.millisecondsSinceEpoch,
+        "itemType": itemType,
+        "groupTitle": groupTitle,
+        "isExpired": isExpired ? 1 : 0,
+        "associatedMessageGuid": associatedMessageGuid,
+        "associatedMessageType": associatedMessageType,
+        "expressiveSendStyleId": expressiveSendStyleId,
+        "timeExpressiveSendStyleId": (timeExpressiveSendStyleId == null)
+            ? null
+            : timeExpressiveSendStyleId.millisecondsSinceEpoch,
+        "handle": (handle != null) ? handle.toMap() : null,
+        "hasAttachments": hasAttachments ? 1 : 0
+      };
 }

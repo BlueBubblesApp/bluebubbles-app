@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:bluebubble_messages/helpers/attachment_downloader.dart';
 import 'package:bluebubble_messages/helpers/utils.dart';
 import 'package:bluebubble_messages/managers/contact_manager.dart';
+import 'package:bluebubble_messages/managers/settings_manager.dart';
 import 'package:bluebubble_messages/repository/models/attachment.dart';
 import 'package:bluebubble_messages/socket_manager.dart';
 import 'package:flutter/material.dart';
@@ -61,7 +62,7 @@ class _MessageState extends State<MessageWidget> {
 
       if (attachments.length > 0) {
         for (int i = 0; i < attachments.length; i++) {
-          String appDocPath = SocketManager().appDocDir.path;
+          String appDocPath = SettingsManager().appDocDir.path;
           String pathName =
               "$appDocPath/${attachments[i].guid}/${attachments[i].transferName}";
           if (FileSystemEntity.typeSync(pathName) !=
@@ -76,7 +77,7 @@ class _MessageState extends State<MessageWidget> {
             images.add(attachments[i]);
           }
         }
-        setState(() {});
+        if (this.mounted) setState(() {});
       }
     });
     // }

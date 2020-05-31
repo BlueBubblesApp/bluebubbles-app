@@ -4,6 +4,8 @@ import 'dart:io';
 import 'package:bluebubble_messages/helpers/attachment_downloader.dart';
 import 'package:bluebubble_messages/blocs/setup_bloc.dart';
 import 'package:bluebubble_messages/helpers/utils.dart';
+import 'package:bluebubble_messages/managers/new_message_manager.dart';
+import 'package:bluebubble_messages/managers/settings_manager.dart';
 import 'package:bluebubble_messages/repository/database.dart';
 import 'package:flutter_socket_io/socket_io_manager.dart';
 import 'package:path_provider/path_provider.dart';
@@ -31,29 +33,25 @@ class SocketManager {
 
   SocketManager._internal();
 
-  Directory appDocDir;
-
-  List<Chat> chatsWithNotifications = <Chat>[];
+  List<String> chatsWithNotifications = <String>[];
 
   void removeChatNotification(Chat chat) {
     for (int i = 0; i < chatsWithNotifications.length; i++) {
       debugPrint(i.toString());
-      if (chatsWithNotifications[i].guid == chat.guid) {
+      if (chatsWithNotifications[i] == chat.guid) {
         chatsWithNotifications.removeAt(i);
         break;
       }
     }
-    notify();
+    NewMessageManager().updateWithMessage(chat, null);
+    // notify();
   }
 
   List<String> processedGUIDS = [];
-  //settings
-  Settings settings;
 
   SetupBloc setup = new SetupBloc();
   StreamController<bool> finishedSetup = StreamController<bool>();
 
-  SharedPreferences sharedPreferences;
   //Socket io
   // SocketIOManager manager;
   SocketIO socket;
@@ -74,51 +72,12 @@ class SocketManager {
 
   String token;
 
-  void subscribe(String guid, Function cb) {
-    _manager.subscribers[guid] = cb;
-  }
-
-  void unsubscribe(String guid) {
-    _manager.subscribers.remove(guid);
-  }
-
   void disconnectCallback(Function cb, String guid) {
     _manager.disconnectSubscribers[guid] = cb;
   }
 
   void unSubscribeDisconnectCallback(String guid) {
     _manager.disconnectSubscribers.remove(guid);
-  }
-
-  void notify() {
-    for (Function cb in _manager.subscribers.values) {
-      cb();
-    }
-  }
-
-  void getSavedSettings() async {
-    appDocDir = await getApplicationDocumentsDirectory();
-    _manager.sharedPreferences = await SharedPreferences.getInstance();
-    var result = _manager.sharedPreferences.getString('Settings');
-    if (result != null) {
-      Map resultMap = jsonDecode(result);
-      _manager.settings = Settings.fromJson(resultMap);
-    }
-    finishedSetup.sink.add(_manager.settings.finishedSetup);
-    _manager.startSocketIO();
-    _manager.authFCM();
-  }
-
-  void saveSettings(Settings settings,
-      [bool connectToSocket = false, Function connectCb]) async {
-    if (_manager.sharedPreferences == null) {
-      _manager.sharedPreferences = await SharedPreferences.getInstance();
-    }
-    _manager.sharedPreferences.setString('Settings', jsonEncode(settings));
-    await _manager.authFCM();
-    if (connectToSocket) {
-      _manager.startSocketIO(connectCb);
-    }
   }
 
   void socketStatusUpdate(data, [Function connectCB]) {
@@ -168,20 +127,21 @@ class SocketManager {
   }
 
   startSocketIO([Function connectCb]) async {
-    if (connectCb == null && _manager.settings.finishedSetup == false) return;
+    if (connectCb == null && SettingsManager().settings.finishedSetup == false)
+      return;
     // If we already have a socket connection, kill it
     if (_manager.socket != null) {
       _manager.socket.destroy();
     }
 
     debugPrint(
-        "Starting socket io with the server: ${_manager.settings.serverAddress}");
+        "Starting socket io with the server: ${SettingsManager().settings.serverAddress}");
 
     try {
       // Create a new socket connection
       _manager.socket = SocketIOManager().createSocketIO(
-          _manager.settings.serverAddress, "/",
-          query: "guid=${_manager.settings.guidAuthKey}",
+          SettingsManager().settings.serverAddress, "/",
+          query: "guid=${SettingsManager().settings.guidAuthKey}",
           socketStatusCallback: (data) => socketStatusUpdate(data, connectCb));
       _manager.socket.init();
       _manager.socket.connect();
@@ -223,6 +183,7 @@ class SocketManager {
 
       _manager.socket.subscribe("updated-message", (_data) async {
         debugPrint("updated-message");
+        updateMessage(_data);
         // Map<String, dynamic> data = jsonDecode(_data);
         // debugPrint("updated message: " + data.toString());
       });
@@ -237,14 +198,14 @@ class SocketManager {
   }
 
   Future<void> authFCM() async {
-    if (_manager.settings.fcmAuthData == null) {
+    if (SettingsManager().settings.fcmAuthData == null) {
       debugPrint("No FCM Auth data found. Skipping FCM authentication");
       return;
     }
 
     try {
       final String result = await MethodChannelInterface()
-          .invokeMethod('auth', _manager.settings.fcmAuthData);
+          .invokeMethod('auth', SettingsManager().settings.fcmAuthData);
       token = result;
       if (_manager.socket != null) {
         _manager.socket.sendMessage(
@@ -259,25 +220,37 @@ class SocketManager {
     }
   }
 
+  void updateMessage(Map<String, dynamic> data) async {
+    // Message updatedMessage = new Message.fromMap(data);
+    // updatedMessage =
+    //     await Message.replaceMessage(updatedMessage.guid, updatedMessage);
+    // updatedMessage.save();
+    // debugPrint("updated message with ROWID " + updatedMessage.id.toString());
+  }
+
   void handleNewMessage(Map<String, dynamic> data, Chat chat) {
     Message message = new Message.fromMap(data);
     if (message.isFromMe) {
-      chat.save().then((_chat) {
-        _chat.addMessage(message).then((value) {
-          // if (value == null) {
-          //   return;
-          // }
+      Timer(Duration(seconds: 3), () {
+        if (!processedGUIDS.contains(message.guid)) {
+          chat.save().then((_chat) {
+            _chat.addMessage(message).then((value) {
+              // if (value == null) {
+              //   return;
+              // }
 
-          debugPrint("new message " + message.text);
-          // Create the attachments
-          List<dynamic> attachments = data['attachments'];
+              debugPrint("new message " + message.text);
+              // Create the attachments
+              List<dynamic> attachments = data['attachments'];
 
-          attachments.forEach((attachmentItem) {
-            Attachment file = Attachment.fromMap(attachmentItem);
-            file.save(message);
+              attachments.forEach((attachmentItem) {
+                Attachment file = Attachment.fromMap(attachmentItem);
+                file.save(message);
+              });
+              NewMessageManager().updateWithMessage(_chat, message);
+            });
           });
-          notify();
-        });
+        }
       });
     } else {
       chat.addMessage(message).then((value) {
@@ -290,18 +263,22 @@ class SocketManager {
           Attachment file = Attachment.fromMap(attachmentItem);
           file.save(message);
         });
-        chatsWithNotifications.add(chat);
-        notify();
+        if (!chatsWithNotifications.contains(chat.guid)) {
+          chatsWithNotifications.add(chat.guid);
+        }
+        NewMessageManager().updateWithMessage(chat, message);
       });
     }
   }
 
   void finishSetup() {
     finishedSetup.sink.add(true);
-    notify();
+    NewMessageManager().updateWithMessage(null, null);
+    // notify();
   }
 
-  void sendMessage(Chat chat, String text, { List<Attachment> attachments = const [] }) async {
+  void sendMessage(Chat chat, String text,
+      {List<Attachment> attachments = const []}) async {
     debugPrint(chat.participants.toString());
     Map<String, dynamic> params = new Map();
     params["guid"] = chat.guid;
@@ -313,7 +290,7 @@ class SocketManager {
       guid: tempGuid,
       text: text,
       dateCreated: DateTime.now(),
-      hasAttachments: attachments.length > 0 ? true : false
+      hasAttachments: attachments.length > 0 ? true : false,
     );
 
     // Add attachments
@@ -324,15 +301,18 @@ class SocketManager {
     await sentMessage.save();
     await chat.save();
     await chat.addMessage(sentMessage);
-    notify();
+    NewMessageManager().updateWithMessage(chat, sentMessage);
 
-    _manager.socket.sendMessage("send-message", jsonEncode(params), (data) async {
+    _manager.socket.sendMessage("send-message", jsonEncode(params),
+        (data) async {
       Map response = jsonDecode(data);
       debugPrint("message sent: " + response.toString());
 
       // Find the message and update the message with the new GUID
       if (response['status'] == 200) {
-        await Message.replaceMessage(tempGuid, Message.fromMap(response['data']));
+        processedGUIDS.add(response['data']['guid']);
+        await Message.replaceMessage(
+            tempGuid, Message.fromMap(response['data']));
       } else {
         // If there is an error, replace the temp value with an error
         sentMessage.guid = sentMessage.guid.replaceAll("temp", "error");

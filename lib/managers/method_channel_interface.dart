@@ -1,6 +1,9 @@
 import 'dart:convert';
+import 'dart:ui';
 
 import 'package:bluebubble_messages/managers/notification_manager.dart';
+import 'package:bluebubble_messages/managers/settings_manager.dart';
+import 'package:bluebubble_messages/repository/database.dart';
 import 'package:bluebubble_messages/repository/models/chat.dart';
 import 'package:bluebubble_messages/socket_manager.dart';
 import 'package:flutter/material.dart';
@@ -32,10 +35,10 @@ class MethodChannelInterface {
       case "new-server":
         debugPrint("New Server: " + call.arguments.toString());
         debugPrint(call.arguments.toString().length.toString());
-        SocketManager().settings.serverAddress = call.arguments
+        SettingsManager().settings.serverAddress = call.arguments
             .toString()
             .substring(1, call.arguments.toString().length - 1);
-        SocketManager().saveSettings(SocketManager().settings, true);
+        SettingsManager().saveSettings(SettingsManager().settings, true);
         return new Future.value("");
       case "new-message":
         Map<String, dynamic> data = jsonDecode(call.arguments);
@@ -65,6 +68,10 @@ class MethodChannelInterface {
         return new Future.value("");
       case "ChatOpen":
         debugPrint("open chat " + call.arguments.toString());
+        return new Future.value("");
+
+      case "restart-fcm":
+        debugPrint("restart fcm");
         return new Future.value("");
     }
   }

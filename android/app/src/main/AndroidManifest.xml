@@ -11,20 +11,35 @@
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <uses-permission android:name="android.permission.READ_CONTACTS" />  
-    <uses-permission android:name="android.permission.WRITE_CONTACTS" />  
+    <uses-permission android:name="android.permission.WRITE_CONTACTS" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+<!--    <uses-permission android:name="android.permission.REQUEST_COMPANION_RUN_IN_BACKGROUND"/>-->
+<!--    <uses-permission android:name="android.permission.REQUEST_COMPANION_USE_DATA_IN_BACKGROUND"/>-->
     <application
-        android:name="io.flutter.app.FlutterApplication"
+        android:name=".Application"
         android:label="BlueBubbles"
         android:usesCleartextTraffic="true"
         android:icon="@mipmap/ic_launcher">
+
+        <receiver android:name=".autostart">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
         <!-- [START firebase_service] -->
         <service
             android:name=".FirebaseMessagingService"
+            android:stopWithTask="false"
             android:exported="false">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
+        <service
+            android:name=".BackgroundService"
+            android:enabled="true"
+            android:stopWithTask="false" />
         <provider
             android:name="com.google.firebase.provider.FirebaseInitProvider"
             android:authorities="${applicationId}.firebaseinitprovider"

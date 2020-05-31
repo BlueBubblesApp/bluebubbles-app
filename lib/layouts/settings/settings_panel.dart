@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:ui';
 
 // import 'package:bluebubble_messages/qr_code_scanner.dart';
+import 'package:bluebubble_messages/managers/settings_manager.dart';
 import 'package:bluebubble_messages/settings.dart';
 import 'package:bluebubble_messages/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
@@ -27,7 +28,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
   @override
   void initState() {
     super.initState();
-    _settingsCopy = SocketManager().settings;
+    _settingsCopy = SettingsManager().settings;
   }
 
   @override
@@ -177,9 +178,9 @@ class _SettingsPanelState extends State<SettingsPanel> {
                       FlatButton(
                         child: Text("Yes"),
                         onPressed: () {
-                          SocketManager().deleteDB().then((value) {
-                            SocketManager().notify();
-                          });
+                          // SocketManager().deleteDB().then((value) {
+                          //   SocketManager().notify();
+                          // });
                         },
                       ),
                       FlatButton(
@@ -205,7 +206,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
     // TODO: implement dispose
     // if (_settingsCopy != Singleton().settings) {
     debugPrint("saving settings");
-    SocketManager().saveSettings(_settingsCopy, true);
+    SettingsManager().saveSettings(_settingsCopy, true);
     // }
     super.dispose();
   }

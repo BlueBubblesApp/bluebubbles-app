@@ -12,10 +12,16 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.ServiceConnection;
+import android.content.SharedPreferences;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Build;
+import android.os.IBinder;
+import android.preference.PreferenceManager;
 import android.util.Log;
 
 import androidx.core.app.NotificationCompat;
@@ -28,20 +34,24 @@ import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.iid.InstanceIdResult;
-
+import com.google.firebase.messaging.FirebaseMessaging;
+import com.google.firebase.messaging.FirebaseMessagingService;
+import com.judemanutd.autostarter.AutoStartPermissionHelper;
 
 
 public class MainActivity extends FlutterActivity {
     private static final String CHANNEL = "samples.flutter.dev/fcm";
     private static final String TAG = "MainActivity";
     FirebaseApp app;
-    FlutterEngine engine;
+    public FlutterEngine engine;
+    public Long callbackHandle;
 
 
     @Override
     public void configureFlutterEngine(@NonNull FlutterEngine flutterEngine) {
         GeneratedPluginRegistrant.registerWith(flutterEngine);
         engine = flutterEngine;
+
         new MethodChannel(flutterEngine.getDartExecutor().getBinaryMessenger(), CHANNEL)
                 .setMethodCallHandler(
                         (call, result) -> {
@@ -55,6 +65,7 @@ public class MainActivity extends FlutterActivity {
                                             .setGcmSenderId(call.argument("client_id"))
                                             .setApplicationId(call.argument("application_id"))
                                             .build());
+
                                 }
                                 FirebaseInstanceId.getInstance(app).getInstanceId()
                                         .addOnCompleteListener(new OnCompleteListener<InstanceIdResult>() {
@@ -74,7 +85,7 @@ public class MainActivity extends FlutterActivity {
                             } else if(call.method.equals("create-notif-channel")) {
                                 createNotificationChannel(call.argument("channel_name"), call.argument("channel_description"), call.argument("CHANNEL_ID"));
                                 result.success("");
-                            } else if(call.method.equals("new-message-notification"))    {
+                            } else if(call.method.equals("new-message-notification")) {
                                 Intent intent = new Intent(this, MainActivity.class);
                                 intent.setType("NotificationOpen");
                                 intent.putExtra("id", call.argument("notificationId").toString());
@@ -89,6 +100,13 @@ public class MainActivity extends FlutterActivity {
                                         .setGroup(call.argument("group"));
                                 NotificationManagerCompat notificationManager = NotificationManagerCompat.from(getContext());
                                 notificationManager.notify(call.argument("notificationId"), builder.build());
+                                result.success("");
+                            } else if(call.method.equals("setupCallbackHandle")) {
+                                SharedPreferences preferences = getSharedPreferences("PREFS", Context.MODE_PRIVATE);
+                                SharedPreferences.Editor editor = preferences.edit();
+                                editor.putLong("handle", (Long) call.argument("handle"));
+                                editor.apply();
+                                Log.d("handle", "put handle");
                                 result.success("");
                             } else {
                                 result.notImplemented();
@@ -123,6 +141,23 @@ public class MainActivity extends FlutterActivity {
         }
     }
 
+    BackgroundService backgroundService;
+
+    protected ServiceConnection mServerConn = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder binder) {
+            backgroundService = ((BackgroundService.LocalBinder) binder).getService();
+            backgroundService.isAlive = true;
+            backgroundService.stopDB();
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            backgroundService.isAlive = false;
+            backgroundService = null;
+            backgroundService.openDB();
+        }
+    };
 
     @Override
     protected void onStart() {
@@ -130,12 +165,32 @@ public class MainActivity extends FlutterActivity {
         LocalBroadcastManager.getInstance(this).registerReceiver((mMessageReceiver),
                 new IntentFilter("MyData")
         );
+        getApplicationContext().bindService(new Intent(getApplicationContext(), BackgroundService.class), mServerConn, Context.BIND_AUTO_CREATE);
+        Intent serviceIntent = new Intent(getApplicationContext(), BackgroundService.class);
+        startService(serviceIntent);
+    }
+
+    @Override
+    protected void onDestroy() {
+        Log.d("MainActivity", "removed from memory");
+//        unregisterReceiver(mMessageReceiver);
+        try {
+            getApplicationContext().unbindService(mServerConn);
+        } catch (Exception e) {
+            e.printStackTrace();
+            Log.d("isolate", "unable to unbind service");
+
+        }
+//        if(backgroundService != null) {
+//            backgroundService.unbindService(mServerConn);
+//        }
+        super.onDestroy();
     }
 
     private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod(intent.getExtras().getString("type"), intent.getExtras().getString("data"));
+                new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod(intent.getExtras().getString("type"), intent.getExtras().getString("data"));
         }
     };
 }
