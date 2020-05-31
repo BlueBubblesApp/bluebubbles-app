@@ -1,10 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:bluebubble_messages/helpers/message_helper.dart';
 import 'package:bluebubble_messages/managers/settings_manager.dart';
-import 'package:bluebubble_messages/repository/models/attachment.dart';
 import 'package:bluebubble_messages/repository/models/chat.dart';
-import 'package:bluebubble_messages/repository/models/message.dart';
 import 'package:bluebubble_messages/settings.dart';
 import 'package:bluebubble_messages/socket_manager.dart';
 import 'package:flutter/material.dart';
@@ -72,19 +71,8 @@ class SetupBloc {
   void receivedMessagesForChat(Chat chat, data) async {
     debugPrint("got messages");
     List messages = jsonDecode(data)["data"];
+    MessageHelper.bulkAddMessages(chat, messages);
 
-    messages.forEach((item) {
-      Message message = Message.fromMap(item);
-      chat.addMessage(message).then((value) {
-        // Create the attachments
-        List<dynamic> attachments = item['attachments'];
-
-        attachments.forEach((attachmentItem) {
-          Attachment file = Attachment.fromMap(attachmentItem);
-          file.save(message);
-        });
-      });
-    });
     _progress = (_currentIndex + 1) / chats.length;
     _stream.sink.add(_progress);
   }

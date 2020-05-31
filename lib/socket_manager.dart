@@ -10,11 +10,11 @@ import 'package:bluebubble_messages/repository/database.dart';
 import 'package:flutter_socket_io/socket_io_manager.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter_socket_io/flutter_socket_io.dart';
-import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:bluebubble_messages/helpers/message_helper.dart';
 
 import 'managers/method_channel_interface.dart';
 import 'repository/models/attachment.dart';
@@ -319,5 +319,50 @@ class SocketManager {
         await Message.replaceMessage(tempGuid, sentMessage);
       }
     });
+  }
+
+  Future<void> resyncChat(Chat chat) async {
+    // Flow:
+    // 1 -> Delete all messages associated with a chat
+    // 2 -> Delete all chat_message_join entries associated with a chat
+    // 3 -> Run the resync
+
+    final Database db = await DBProvider.db.database;
+    
+    // Fetch messages associated with the chat
+    var items = await db.rawQuery(
+      "SELECT"
+      " chatId,"
+      " messageId"
+      " FROM chat_message_join"
+      " WHERE chatId = ?",
+      [chat.id]
+    );
+
+    // If there are no messages, return
+    if (items.length == 0) return;
+    
+    Batch batch = db.batch();
+    for (int i = 0; i < items.length; i++) {
+      // 1 -> Delete all messages associated with a chat
+      batch.delete("message", where: "ROWID = ?", whereArgs: [items[0]["messageId"]]);
+      // 2 -> Delete all chat_message_join entries associated with a chat
+      batch.delete("chat_message_join", where: "ROWID = ?", whereArgs: [items[0]["ROWID"]]);
+    }
+
+    // Commit the changes and notify the subscribers
+    await batch.commit(noResult: true);
+    notify();
+
+    // 3 -> Run the resync
+    Map<String, dynamic> params = Map();
+    params["identifier"] = chat.guid;
+    params["limit"] = 100;
+    SocketManager().socket.sendMessage("get-chat-messages", jsonEncode(params), (data) {
+      List messages = jsonDecode(data)["data"];
+      MessageHelper.bulkAddMessages(chat, messages);
+    });
+
+    // TODO: Notify when done?
   }
 }
