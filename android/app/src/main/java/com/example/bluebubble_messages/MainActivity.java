@@ -11,6 +11,7 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.app.RemoteInput;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -18,8 +19,10 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.util.Log;
@@ -82,31 +85,34 @@ public class MainActivity extends FlutterActivity {
                                                 }
                                             }
                                         });
-                            } else if(call.method.equals("create-notif-channel")) {
+                            } else if (call.method.equals("create-notif-channel")) {
                                 createNotificationChannel(call.argument("channel_name"), call.argument("channel_description"), call.argument("CHANNEL_ID"));
                                 result.success("");
-                            } else if(call.method.equals("new-message-notification")) {
-                                Intent intent = new Intent(this, MainActivity.class);
-                                intent.setType("NotificationOpen");
-                                intent.putExtra("id", call.argument("notificationId").toString());
-                                PendingIntent pendingIntent = PendingIntent.getActivity(MainActivity.this, 0, intent, Intent.FILL_IN_ACTION);
+                            } else if (call.method.equals("new-message-notification")) {
+                                //occurs when clicking on the notification
+                                PendingIntent openIntent = PendingIntent.getActivity(MainActivity.this, call.argument("notificationId"), new Intent(this, MainActivity.class).putExtra("id", (int) call.argument("notificationId")).setType("NotificationOpen"), Intent.FILL_IN_ACTION);
+
+                                //for the dismiss button
+                                PendingIntent dismissIntent = PendingIntent.getActivity(MainActivity.this, call.argument("notificationId"), new Intent(this, MainActivity.class).putExtra("id", (int) call.argument("notificationId")).setType("markAsRead"), PendingIntent.FLAG_UPDATE_CURRENT);
+                                NotificationCompat.Action dismissAction = new NotificationCompat.Action.Builder(0, "Mark As Read", dismissIntent).build();
+
+                                //for the quick reply
+                                PendingIntent replyIntent = PendingIntent.getBroadcast(getApplicationContext(), call.argument("notificationId"), new Intent(this, ReplyReceiver.class).putExtra("id", (int) call.argument("notificationId")).setType("reply"), PendingIntent.FLAG_UPDATE_CURRENT);
+                                androidx.core.app.RemoteInput replyInput = new androidx.core.app.RemoteInput.Builder("key_text_reply").setLabel("Reply").build();
+                                NotificationCompat.Action replyAction = new NotificationCompat.Action.Builder(0, "Reply", replyIntent).addRemoteInput(replyInput).build();
+
+                                //actual notification
                                 NotificationCompat.Builder builder = new NotificationCompat.Builder(this, call.argument("CHANNEL_ID"))
                                         .setSmallIcon(R.mipmap.ic_launcher)
                                         .setContentTitle(call.argument("contentTitle"))
                                         .setContentText(call.argument("contentText"))
-//                                        .setLargeIcon()
                                         .setAutoCancel(true)
-                                        .setContentIntent(pendingIntent)
+                                        .setContentIntent(openIntent)
+                                        .addAction(dismissAction)
+                                        .addAction(replyAction)
                                         .setGroup(call.argument("group"));
                                 NotificationManagerCompat notificationManager = NotificationManagerCompat.from(getContext());
                                 notificationManager.notify(call.argument("notificationId"), builder.build());
-                                result.success("");
-                            } else if(call.method.equals("setupCallbackHandle")) {
-                                SharedPreferences preferences = getSharedPreferences("PREFS", Context.MODE_PRIVATE);
-                                SharedPreferences.Editor editor = preferences.edit();
-                                editor.putLong("handle", (Long) call.argument("handle"));
-                                editor.apply();
-                                Log.d("handle", "put handle");
                                 result.success("");
                             } else {
                                 result.notImplemented();
@@ -134,10 +140,14 @@ public class MainActivity extends FlutterActivity {
     }
 
     protected void onNewIntent(Intent intent) {
-        if(intent == null || intent.getType() == null) return;
-        if(intent.getType().equals("NotificationOpen")) {
-            Log.d("Notifications",  "tapped on notification by id " +intent.getExtras().getString("id"));
-            new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL) .invokeMethod("ChatOpen", intent.getExtras().getString("id"));
+        if (intent == null || intent.getType() == null) return;
+        if (intent.getType().equals("NotificationOpen")) {
+            Log.d("Notifications", "tapped on notification by id " + intent.getExtras().getString("id"));
+            new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod("ChatOpen", intent.getExtras().getString("id"));
+        } else if (intent.getType().equals("reply")) {
+        } else if (intent.getType().equals("markAsRead")) {
+            NotificationManagerCompat notificationManager = NotificationManagerCompat.from(getContext());
+            notificationManager.cancel(intent.getExtras().getInt("id"));
         }
     }
 
@@ -162,9 +172,7 @@ public class MainActivity extends FlutterActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        LocalBroadcastManager.getInstance(this).registerReceiver((mMessageReceiver),
-                new IntentFilter("MyData")
-        );
+        LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver, new IntentFilter("MyData"));
         getApplicationContext().bindService(new Intent(getApplicationContext(), BackgroundService.class), mServerConn, Context.BIND_AUTO_CREATE);
         Intent serviceIntent = new Intent(getApplicationContext(), BackgroundService.class);
         startService(serviceIntent);
@@ -190,7 +198,11 @@ public class MainActivity extends FlutterActivity {
     private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
+            if (intent.getType() != null && intent.getType().equals("reply")) {
+                new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod("reply", intent.getExtras());
+            } else {
                 new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod(intent.getExtras().getString("type"), intent.getExtras().getString("data"));
+            }
         }
     };
 }

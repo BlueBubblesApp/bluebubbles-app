@@ -40,9 +40,12 @@ public class BackgroundService extends Service {
     static boolean isRunning = false;
     public boolean isAlive = false;
     SQLiteDatabase db;
+    public LocalBroadcastManager broadcaster;
 
     public void stopDB() {
-        db.close();
+        if(db != null) {
+            db.close();
+        }
         db = null;
     }
 
@@ -62,6 +65,7 @@ public class BackgroundService extends Service {
 //       startForegroundService()
         Log.d("isolate", "created background service");
         openDB();
+        broadcaster = LocalBroadcastManager.getInstance(this);
     }
 
     public static Map<String, Object> jsonToMap(String t) throws JSONException {
@@ -81,7 +85,7 @@ public class BackgroundService extends Service {
 
 
     public void saveMessage(String _data) {
-        if(isAlive || db == null) return;
+        if (isAlive || db == null) return;
         Map<String, Object> data = null;
         try {
             data = jsonToMap(_data);
@@ -124,37 +128,15 @@ public class BackgroundService extends Service {
         Log.d("db", "new message " + message.text);
         chat.save(db, true);
         chat.addMessage(db, message);
-
-
-//        if (message.isFromMe) {
-//            chat.save().then((_chat) {
-//                    _chat.addMessage(message).then((value) {
-//                            // if (value == null) {
-//                            //   return;
-//                            // }
-//
-//                            debugPrint("new message " + message.text);
-//            // Create the attachments
-//            List<dynamic> attachments = data['attachments'];
-//
-//            attachments.forEach((attachmentItem) {
-//                    Attachment file = Attachment.fromMap(attachmentItem);
-//            file.save(message);
-//              });
-//            });
-//            } else{
-//                chat.addMessage(message).then((value) {
-//                        // if (value == null) return;
-//                        // Create the attachments
-//                        debugPrint("new message " + chat.guid);
-//                List<dynamic> attachments = data['attachments'];
-//
-//                attachments.forEach((attachmentItem) {
-//                        Attachment file = Attachment.fromMap(attachmentItem);
-//                file.save(message);
-//        });
-//                if (!chatsWithNotifications.contains(chat.guid)) {
-//                    chatsWithNotifications.add(chat.guid);
+        //TODO add attachments
+//            try {
+//                JSONArray attachments = new JSONArray(data.get("attachments"));
+//                for(int i = 0; i < attachments.length(); i++ ) {
+//                    Attachment file = A
+//                }
+//            } catch (JSONException e) {
+//                e.printStackTrace();
+//            }
 //                }
 //                NewMessageManager().updateWithMessage(chat, message);
 //      });

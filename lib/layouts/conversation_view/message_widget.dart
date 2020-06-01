@@ -295,7 +295,8 @@ class _MessageState extends State<MessageWidget> {
       contactItem = Padding(
         padding: EdgeInsets.only(left: 25.0, top: 5.0, bottom: 3.0),
         child: Text(
-          getContact(ContactManager().contacts, widget.message.handle.address),
+          getContactTitle(
+              ContactManager().contacts, widget.message.handle.address),
           style: TextStyle(
             color: Colors.white,
             fontSize: 12,

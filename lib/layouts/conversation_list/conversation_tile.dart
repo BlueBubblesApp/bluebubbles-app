@@ -1,8 +1,11 @@
 import 'dart:async';
 
 import 'package:bluebubble_messages/blocs/message_bloc.dart';
+import 'package:bluebubble_messages/helpers/utils.dart';
+import 'package:bluebubble_messages/managers/contact_manager.dart';
 import 'package:bluebubble_messages/repository/models/message.dart';
 import 'package:bluebubble_messages/socket_manager.dart';
+import 'package:contacts_service/contacts_service.dart';
 
 import '../../helpers/hex_color.dart';
 import 'package:flutter/cupertino.dart';
@@ -43,11 +46,20 @@ class _ConversationTileState extends State<ConversationTile> {
   String lastMessageTime = "";
   String subtitle = "";
   List<Message> messages = <Message>[];
+  ImageProvider contactImage;
 
   @override
   Future<void> didChangeDependencies() async {
     super.didChangeDependencies();
-    // if (this.mounted) _updateMessages();
+    Chat chat = await widget.chat.getParticipants();
+    if (chat.participants.length == 1) {
+      Contact contact = getContact(
+          ContactManager().contacts, chat.participants.first.address);
+      if (contact != null && contact.avatar.length > 0) {
+        contactImage = MemoryImage(contact.avatar);
+        setState(() {});
+      }
+    }
   }
 
   @override
@@ -100,22 +112,26 @@ class _ConversationTileState extends State<ConversationTile> {
                 ),
                 leading: CircleAvatar(
                   radius: 20,
-                  child: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: AlignmentDirectional.topStart,
-                        colors: [HexColor('a0a4af'), HexColor('848894')],
-                      ),
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                    child: Container(
-                      // child: Text("${widget.chat.title[0]}"),
-                      child: Text(""),
-                      alignment: AlignmentDirectional.center,
-                    ),
-                  ),
+                  child: contactImage == null
+                      ? Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: AlignmentDirectional.topStart,
+                              colors: [HexColor('a0a4af'), HexColor('848894')],
+                            ),
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                          child: Container(
+                            // child: Text("${widget.chat.title[0]}"),
+                            child: Text(""),
+                            alignment: AlignmentDirectional.center,
+                          ),
+                        )
+                      : CircleAvatar(
+                          backgroundImage: contactImage,
+                        ),
                 ),
                 trailing: Container(
                   width: 90,

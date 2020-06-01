@@ -26,7 +26,7 @@ DateTime parseDate(dynamic value) {
 //   return initials;
 // }
 
-String getContact(List<Contact> contacts, String id) {
+String getContactTitle(List<Contact> contacts, String id) {
   if (contacts == null) return id;
   String contactTitle = id;
   contacts.forEach((Contact contact) {
@@ -45,6 +45,26 @@ String getContact(List<Contact> contacts, String id) {
     });
   });
   return contactTitle;
+}
+
+Contact getContact(List<Contact> contacts, String id) {
+  Contact contact;
+  contacts.forEach((Contact _contact) {
+    _contact.phones.forEach((Item item) {
+      String formattedNumber = item.value.replaceAll(RegExp(r'[-() ]'), '');
+      if (formattedNumber == id || "+1" + formattedNumber == id) {
+        contact = _contact;
+        return contact;
+      }
+    });
+    _contact.emails.forEach((Item item) {
+      if (item.value == id) {
+        contact = _contact;
+        return contact;
+      }
+    });
+  });
+  return contact;
 }
 
 String randomString(int length) {

@@ -5,6 +5,7 @@ import 'package:bluebubble_messages/managers/notification_manager.dart';
 import 'package:bluebubble_messages/managers/settings_manager.dart';
 import 'package:bluebubble_messages/repository/database.dart';
 import 'package:bluebubble_messages/repository/models/chat.dart';
+import 'package:bluebubble_messages/repository/models/message.dart';
 import 'package:bluebubble_messages/socket_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -42,13 +43,17 @@ class MethodChannelInterface {
         return new Future.value("");
       case "new-message":
         Map<String, dynamic> data = jsonDecode(call.arguments);
+
         Chat chat = await Chat.findOne({"guid": data["chats"][0]["guid"]});
         if (chat == null) return;
+
         String title = await chatTitle(chat);
-        String message = data["text"].toString();
-        if (!data["isFromMe"])
-          NotificationManager()
-              .createNewNotification(title, message, "message_group", chat.id);
+        Message message = Message.fromMap(data);
+        message.save().then((value) {
+          if (!value.isFromMe)
+            NotificationManager().createNewNotification(
+                title, value.text, "message_group", value.id);
+        });
 
         if (SocketManager().processedGUIDS.contains(data["guid"])) {
           debugPrint("contains guid");
@@ -57,11 +62,8 @@ class MethodChannelInterface {
           SocketManager().processedGUIDS.add(data["guid"]);
         }
         if (data["chats"].length == 0) return new Future.value("");
-        SocketManager().handleNewMessage(data, chat);
-        if (data["isFromMe"]) {
-          return new Future.value("");
-        }
 
+        SocketManager().handleNewMessage(data, chat);
         return new Future.value("");
       case "updated-message":
         debugPrint("update message");
@@ -72,6 +74,10 @@ class MethodChannelInterface {
 
       case "restart-fcm":
         debugPrint("restart fcm");
+        return new Future.value("");
+      case "reply":
+        debugPrint("replying with data " + call.arguments.toString());
+        // SocketManager().sendMessage(chat, text)
         return new Future.value("");
     }
   }

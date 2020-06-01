@@ -24,7 +24,7 @@ chatTitle(Chat _chat) async {
     Chat chat = await _chat.getParticipants();
     List<String> titles = [];
     for (int i = 0; i < chat.participants.length; i++) {
-      titles.add(getContact(
+      titles.add(getContactTitle(
           ContactManager().contacts, chat.participants[i].address.toString()));
     }
 
@@ -214,10 +214,6 @@ class Chat {
 
       output.add(msg);
     }
-    output.forEach((element) {
-      debugPrint("message text is " + element.text.toString());
-    });
-
     return output;
   }
 
