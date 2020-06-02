@@ -1,6 +1,5 @@
 package com.example.bluebubble_messages;
-
-
+;
 import android.annotation.SuppressLint;
 import android.content.ContentValues;
 import android.database.Cursor;
@@ -24,32 +23,40 @@ class Handle {
     String country;
     String uncanonicalizedId;
 
-    public static Handle fromMap(Map<String, Object> json) {
-        Log.d("db", "creating from map " + json.containsKey("address"));
-        Handle handle = new Handle();
-        handle.id = json.containsKey("ROWID") ? (int) json.get("ROWID") : null;
-        handle.address = (String) json.get("address");
-        handle.country = json.containsKey("country") ? (String) json.get("country") : null;
-        handle.uncanonicalizedId = json.containsKey("uncanonicalizedId")
-                ? (String) json.get("uncanonicalizedId")
-                : null;
+    private SQLiteDatabase db;
+
+    public Handle(Context context) {
+        DatabaseHelper helper = DatabaseHelper.getInstance(context);
+        this.db = helper.getWritableDatabase();
+    }
+
+    public static Handle fromMap(Map<String, Object> json, Context context) {
+        Handle handle = new Handle(context);
+
+        // Parse generic fields
+        handle.id = (Integer) Utils.parseField(json, "ROWID", "integer");
+        handle.address = (String) Utils.parseField(json, "address", "string");
+        handle.country = (String) Utils.parseField(json, "country", "string");
+        handle.uncanonicalizedId = (String) Utils.parseField(json, "uncanonicalizedId", "string");
+
         return handle;
 
     }
     @SuppressLint("NewApi")
-    public Handle save(SQLiteDatabase db, boolean updateIfAbsent) {
-        // Try to find an existing chat before saving it
-//        Handle existing = Handle.findOne({"address": this.address});
-        Cursor existing = null;
+    public Handle save(boolean updateIfAbsent) {
+        Cursor cursor = null;
         if(this.address != null) {
-            existing = db.rawQuery("SELECT * FROM handle WHERE address = ? LIMIT 1", new String[]{this.address});
-            if (existing.moveToFirst() ) {
-                this.id = existing.getInt(existing.getColumnIndex("ROWID"));
+            cursor = db.rawQuery("SELECT * FROM handle WHERE address = ? LIMIT 1", new String[]{this.address});
+            if (cursor.moveToFirst() ) {
+                this.id = cursor.getInt(cursor.getColumnIndex("ROWID"));
             }
         }
 
+        int count = cursor.getCount();
+        cursor.close();
+
         // If it already exists, update it
-        if (existing == null) {
+        if (count == 0) {
             // Remove the ID from the map for inserting
             ContentValues map = this.toContentValues();
             map.remove("ROWID");

@@ -158,14 +158,16 @@ public class MainActivity extends FlutterActivity {
         public void onServiceConnected(ComponentName name, IBinder binder) {
             backgroundService = ((BackgroundService.LocalBinder) binder).getService();
             backgroundService.isAlive = true;
-            backgroundService.stopDB();
         }
 
         @Override
         public void onServiceDisconnected(ComponentName name) {
             backgroundService.isAlive = false;
             backgroundService = null;
-            backgroundService.openDB();
+
+            // Close the DB connection
+            DatabaseHelper helper = DatabaseHelper.getInstance(getContext());
+            helper.close();
         }
     };
 

@@ -24,39 +24,48 @@ class Chat {
     String displayName;
     List<Handle> participants;
 
-    public static Chat fromMap(Map<String, Object> json) {
+    private SQLiteDatabase db;
+
+    public Chat(Context context) {
+        DatabaseHelper helper = DatabaseHelper.getInstance(context);
+        this.db = helper.getReadableDatabase();
+    }
+
+    public static Chat fromMap(Map<String, Object> json, Context context) {
         List<Handle> participants = new ArrayList<Handle>();
         if (json.containsKey("participants")) {
             for (Map<String, Object> participant : (List<Map<String, Object>>) json.get("participants")) {
-                participants.add(Handle.fromMap(participant));
+                participants.add(Handle.fromMap(participant, context));
             }
         }
-        Chat chat = new Chat();
-        chat.id = json.containsKey("ROWID") ? (int) json.get("ROWID") : null;
-        chat.guid = (String) json.get("guid");
-        chat.style = (int) json.get("style");
-        chat.chatIdentifier = json.containsKey("chatIdentifier") ? (String) json.get("chatIdentifier") : null;
-        chat.isArchived = (json.get("isArchived") instanceof Boolean)
-                ? (boolean) json.get("isArchived")
-                : (((int) json.get("isArchived") == 1) ? true : false);
-        chat.displayName = json.containsKey("displayName") ? (String) json.get("displayName") : null;
+
+        Chat chat = new Chat(context);
+
+        // Parse generic fields
+        chat.id = (Integer) Utils.parseField(json, "ROWID", "integer");
+        chat.guid = (String) Utils.parseField(json, "guid", "string");
+        chat.style = (Integer) Utils.parseField(json, "style", "integer");
+        chat.chatIdentifier = (String) Utils.parseField(json, "chatIdentifier", "string");
+        chat.isArchived = (Boolean) Utils.parseField(json, "isArchived", "boolean");
+        chat.displayName = (String) Utils.parseField(json, "displayName", "string");
         chat.participants = participants;
+
         return chat;
     }
 
-    public static Chat fromCursor(Cursor cursor) {
+    public static Chat fromCursor(Cursor cursor, Context context) {
         List<Handle> participants = new ArrayList<>();
         if(cursor.getColumnIndex("participants") != -1) {
             try {
                 JSONArray _participants = new JSONArray(cursor.getString(cursor.getColumnIndex("participants")));
                 for(int i = 0; i < _participants.length(); i++) {
-                    participants.add(Handle.fromMap((Map<String, Object>) _participants.get(i)));
+                    participants.add(Handle.fromMap((Map<String, Object>) _participants.get(i), context));
                 }
             } catch (JSONException e) {
                 e.printStackTrace();
             }
         }
-        Chat chat = new Chat();
+        Chat chat = new Chat(context);
         chat.id = cursor.getInt(cursor.getColumnIndex("ROWID"));
         chat.guid = cursor.getString(cursor.getColumnIndex("guid"));
         chat.style = cursor.getInt(cursor.getColumnIndex("style"));
@@ -64,6 +73,7 @@ class Chat {
         chat.isArchived = cursor.getInt(cursor.getColumnIndex("isArchived")) == 1 ? true : false;
         chat.displayName = cursor.getString(cursor.getColumnIndex("displayName"));
         chat.participants = participants;
+
         return chat;
 
 
@@ -86,15 +96,18 @@ class Chat {
     }
 
     @SuppressLint("NewApi")
-    public Chat save(SQLiteDatabase db, boolean updateIfAbsent) {
-
+    public Chat save(boolean updateIfAbsent) {
         // Try to find an existing chat before saving it
-        Cursor existing = db.rawQuery("SELECT * FROM chat_message_join WHERE chatId = ? AND messageId = ? LIMIT 1", new String[]{});
-        if (existing.moveToFirst()) {
-            this.id = existing.getInt(existing.getColumnIndex("ROWID"));
+        Cursor cursor = db.rawQuery("SELECT * FROM chat WHERE guid = ? LIMIT 1", new String[]{this.guid});
+        if (cursor.moveToFirst()) {
+            this.id = cursor.getInt(cursor.getColumnIndex("ROWID"));
         }
+
+        int count = cursor.getCount();
+        cursor.close();
+
         // If it already exists, update it
-        if (existing == null) {
+        if (count == 0) {
             // Remove the ID from the map for inserting
             ContentValues map = this.toMap();
             if (map.containsKey("ROWID")) {
@@ -106,20 +119,19 @@ class Chat {
 
             this.id = Math.toIntExact(db.insert("chat", null, map));
         } else if(updateIfAbsent){
-            this.update(db);
+            this.update();
         }
 
         // Save participants to the chat
         for (int i = 0; i < this.participants.size(); i++) {
-            this.addParticipant(db, this.participants.get(i));
+            this.addParticipant(this.participants.get(i));
         }
 
         return this;
     }
 
     //
-    public Chat update(SQLiteDatabase db) {
-
+    public Chat update() {
         ContentValues params = new ContentValues();
         params.put("isArchived", this.isArchived ? 1 : 0);
 
@@ -131,19 +143,19 @@ class Chat {
 
         // If it already exists, update it
         if (this.id != null) {
-            db.update("chat", params, "ROWID = ?", new String[] {String.valueOf(this.id)});
+            db.update("chat", params, "ROWID = ?", new String[]{String.valueOf(this.id)});
         } else {
-            this.save(db, false);
+            this.save(false);
         }
 
         return this;
     }
 
     //
-    public Chat addMessage(SQLiteDatabase db, Message message) {
+    public Chat addMessage(Message message) {
         // Save the message and the chat
-        this.save(db, true);
-        message.save(db);
+        this.save(true);
+        message.save();
 
         // Check join table and add if relationship doesn't exist
         Cursor entries = db.rawQuery("SELECT * FROM chat_message_join WHERE chatId = ? AND messageId = ?", new String[]{String.valueOf(this.id), String.valueOf(message.id)});
@@ -249,22 +261,26 @@ class Chat {
 //        return this;
 //    }
 //
-    public Chat addParticipant(SQLiteDatabase db, Handle participant) {
+    public Chat addParticipant(Handle participant) {
 
         // Save participant and add to list
-        participant.save(db, true);
+        participant.save(true);
         if (!this.participants.contains(participant)) {
             this.participants.add(participant);
         }
 
         // Check join table and add if relationship doesn't exist
-        Cursor entries = db.rawQuery("SELECT * FROM chat_handle_join WHERE chatId = ? AND handleId = ?", new String[]{String.valueOf(this.id), String.valueOf(participant.id)});
-        if (entries.getCount() == 0) {
+        Cursor cursor = db.rawQuery("SELECT * FROM chat_handle_join WHERE chatId = ? AND handleId = ?", new String[]{String.valueOf(this.id), String.valueOf(participant.id)});
+        int count = cursor.getCount();
+        cursor.close();
+
+        if (count == 0) {
             ContentValues map = new ContentValues();
             map.put("chatId", this.id);
             map.put("handleId", participant.id);
             db.insert("chat_handle_join", null, map);
         }
+
         return this;
     }
 //
