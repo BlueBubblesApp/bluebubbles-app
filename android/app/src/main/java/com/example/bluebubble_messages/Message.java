@@ -1,6 +1,8 @@
 package com.example.bluebubble_messages;
 
+import android.annotation.SuppressLint;
 import android.content.ContentValues;
+import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.health.TimerStat;
@@ -160,6 +162,7 @@ class Message {
 //        : [];
 //    }
 //
+    @SuppressLint("NewApi")
     public ContentValues toMap() {
         ContentValues map = new ContentValues();
         map.put("ROWID", id);

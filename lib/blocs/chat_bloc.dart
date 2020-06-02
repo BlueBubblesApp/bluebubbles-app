@@ -43,7 +43,7 @@ class ChatBloc {
     for (int i = 0; i < chats.length; i++) {
       Chat chat = chats[i];
       String title = await chatTitle(chat);
-      if (title.substring(title.length - 2) == ", ")
+      if (title.length - 2 > 0 && title.substring(title.length - 2) == ", ")
         title = title.substring(0, title.length - 2);
       MessageBloc messageBloc;
 

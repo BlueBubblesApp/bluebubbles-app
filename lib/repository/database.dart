@@ -25,9 +25,16 @@ class DBProvider {
   initDB() async {
     Directory documentsDirectory = await getApplicationDocumentsDirectory();
     _path = join(documentsDirectory.path, "chat.db");
-    return await openDatabase(_path, version: 1, onOpen: (Database db) {
+    return await openDatabase(_path, version: 1, onOpen: (Database db) async {
       debugPrint("Database Opened");
+      var chatTable = await db.rawQuery(
+          "SELECT * FROM sqlite_master WHERE name ='chat' and type='table'; ");
+      if (chatTable.length == 0) {
+        debugPrint("building db tables");
+        DBProvider.db.buildDatabase(db);
+      }
     }, onCreate: (Database db, int version) async {
+      debugPrint("creating database");
       await this.buildDatabase(db);
     });
   }

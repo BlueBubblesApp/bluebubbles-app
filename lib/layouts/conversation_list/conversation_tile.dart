@@ -14,6 +14,8 @@ import 'package:flutter/material.dart';
 import '../conversation_view/conversation_view.dart';
 import '../../repository/models/chat.dart';
 
+import '../../helpers/utils.dart';
+
 // import 'SQL/Models/Chats.dart';
 // import 'SQL/Models/Messages.dart';
 // import 'SQL/Repositories/RepoService.dart';
@@ -57,23 +59,19 @@ class _ConversationTileState extends State<ConversationTile> {
           ContactManager().contacts, chat.participants.first.address);
       if (contact != null && contact.avatar.length > 0) {
         contactImage = MemoryImage(contact.avatar);
-        setState(() {});
+        if (this.mounted) setState(() {});
       }
     }
   }
 
   @override
-  void initState() {
-    super.initState();
-    // _updateMessages();
-    // Singleton().subscribe(() {
-    //   if (this.mounted) setState(() {});
-    // });
-  }
-
-  @override
   Widget build(BuildContext context) {
     String initials;
+    if (widget.title.contains(",")) {
+      initials = "";
+    } else {
+      initials = getInitials(widget.title, " ");
+    }
     return Material(
       color: Colors.black,
       child: InkWell(
@@ -104,7 +102,7 @@ class _ConversationTileState extends State<ConversationTile> {
                   overflow: TextOverflow.ellipsis,
                 ),
                 subtitle: Text(
-                  widget.subtitle,
+                  widget.subtitle != null ? widget.subtitle : "",
                   style: TextStyle(
                     color: HexColor('36363a'),
                   ),
@@ -125,7 +123,7 @@ class _ConversationTileState extends State<ConversationTile> {
                           ),
                           child: Container(
                             // child: Text("${widget.chat.title[0]}"),
-                            child: Text(""),
+                            child: Text(initials),
                             alignment: AlignmentDirectional.center,
                           ),
                         )

@@ -63,7 +63,7 @@ public class BackgroundService extends Service {
     }
 
     public void saveMessage(String _data) {
-        if (isAlive || this.db == null) return;
+//        if (isAlive || this.db == null) return;
 
         Map<String, Object> data = null;
         try {

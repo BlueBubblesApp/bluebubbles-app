@@ -67,6 +67,22 @@ Contact getContact(List<Contact> contacts, String id) {
   return contact;
 }
 
+getInitials(String name, String delimeter) {
+  List array = name.split(delimeter);
+  if (array[0].length < 1) return "";
+
+  switch (array.length) {
+    case 1:
+      return array[0][0].toUpperCase();
+
+      break;
+    default:
+      if (array.length - 1 < 0 || array[array.length - 1].length < 1) return "";
+      return array[0][0].toUpperCase() +
+          array[array.length - 1][0].toUpperCase();
+  }
+}
+
 String randomString(int length) {
   var rand = new Random();
   var codeUnits = new List.generate(length, (index) {

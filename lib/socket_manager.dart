@@ -167,8 +167,10 @@ class SocketManager {
         }
         if (data["chats"].length == 0) return new Future.value("");
         Chat chat = await Chat.findOne({"guid": data["chats"][0]["guid"]});
-        if (chat == null) return new Future.value("");
-        String title = await chatTitle(chat);
+        if (chat == null) {
+          debugPrint("could not find chat, returning");
+          return new Future.value("");
+        }
         SocketManager().handleNewMessage(data, chat);
         if (data["isFromMe"]) {
           return new Future.value("");

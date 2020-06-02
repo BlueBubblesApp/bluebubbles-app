@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:ui';
 
+import 'package:bluebubble_messages/main.dart';
 import 'package:bluebubble_messages/managers/notification_manager.dart';
 import 'package:bluebubble_messages/managers/settings_manager.dart';
 import 'package:bluebubble_messages/repository/database.dart';
@@ -23,7 +24,9 @@ class MethodChannelInterface {
   //interface with native code
   final platform = const MethodChannel('samples.flutter.dev/fcm');
 
-  void init() {
+  BuildContext _context;
+
+  void init(BuildContext context) {
     platform.setMethodCallHandler(callHandler);
   }
 
@@ -45,7 +48,10 @@ class MethodChannelInterface {
         Map<String, dynamic> data = jsonDecode(call.arguments);
 
         Chat chat = await Chat.findOne({"guid": data["chats"][0]["guid"]});
-        if (chat == null) return;
+        if (chat == null) {
+          debugPrint("could not find chat, returning");
+          return;
+        }
 
         String title = await chatTitle(chat);
         Message message = Message.fromMap(data);
@@ -81,4 +87,13 @@ class MethodChannelInterface {
         return new Future.value("");
     }
   }
+
+  // void openChat() async {
+  //   List<Chat> _chats = await Chat.find();
+  //   Chat openedChat;
+  //   _chats.forEach((element) {
+  //     // if(element.)
+  //   });
+  //   Navigator.of(_context).pushNamedAndRemoveUntil(, (route) => false)
+  // }
 }

@@ -57,7 +57,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     SettingsManager().init();
-    MethodChannelInterface().init();
+    MethodChannelInterface().init(context);
     NotificationManager().createNotificationChannel();
     SchedulerBinding.instance
         .addPostFrameCallback((_) => SettingsManager().getSavedSettings());
@@ -79,26 +79,25 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     }
   }
 
-  Future<dynamic> _handleFCM(MethodCall call) async {}
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        backgroundColor: Colors.black,
-        body: StreamBuilder(
-          stream: SocketManager().finishedSetup.stream,
-          builder: (BuildContext context, AsyncSnapshot<bool> snapshot) {
-            if (snapshot.hasData) {
-              if (snapshot.data) {
-                ContactManager().getContacts();
-                return ConversationList();
-              } else {
-                return SetupView();
-              }
+      backgroundColor: Colors.black,
+      body: StreamBuilder(
+        stream: SocketManager().finishedSetup.stream,
+        builder: (BuildContext context, AsyncSnapshot<bool> snapshot) {
+          if (snapshot.hasData) {
+            if (snapshot.data) {
+              ContactManager().getContacts();
+              return ConversationList();
             } else {
-              return Container();
+              return SetupView();
             }
-          },
-        ));
+          } else {
+            return Container();
+          }
+        },
+      ),
+    );
   }
 }

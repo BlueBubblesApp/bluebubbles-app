@@ -361,6 +361,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.4.8"
+  overlay_container:
+    dependency: "direct main"
+    description:
+      name: overlay_container
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.0.4+1"
   package_config:
     dependency: transitive
     description:
