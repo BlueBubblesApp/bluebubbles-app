@@ -1,5 +1,6 @@
 package com.example.bluebubble_messages;
 
+import android.content.Context;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.BroadcastReceiver;
@@ -28,6 +29,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.ArrayList;
 
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
@@ -37,21 +39,10 @@ import io.flutter.view.FlutterNativeView;
 import io.flutter.view.FlutterRunArguments;
 
 public class BackgroundService extends Service {
-    static boolean isRunning = false;
+    // static boolean isRunning = false;
     public boolean isAlive = false;
-    SQLiteDatabase db;
     public LocalBroadcastManager broadcaster;
-
-    public void stopDB() {
-        if(db != null) {
-            db.close();
-        }
-        db = null;
-    }
-
-    public void openDB() {
-        db = SQLiteDatabase.openDatabase("/data/data/com.example.bluebubble_messages/app_flutter/chat.db", null, 0);
-    }
+    private SQLiteDatabase db;
 
     public class LocalBinder extends Binder {
         BackgroundService getService() {
@@ -64,84 +55,40 @@ public class BackgroundService extends Service {
     public void onCreate() {
 //       startForegroundService()
         Log.d("isolate", "created background service");
-        openDB();
+        
+        DatabaseHelper helper = DatabaseHelper.getInstance(this);
+        this.db = helper.getWritableDatabase();
+
         broadcaster = LocalBroadcastManager.getInstance(this);
     }
 
-    public static Map<String, Object> jsonToMap(String t) throws JSONException {
-
-        Map<String, Object> map = new HashMap<>();
-        JSONObject jObject = new JSONObject(t);
-        Iterator<?> keys = jObject.keys();
-
-        while (keys.hasNext()) {
-            String key = (String) keys.next();
-            String value = jObject.getString(key);
-            map.put(key, value);
-
-        }
-        return map;
-    }
-
-
     public void saveMessage(String _data) {
-        if (isAlive || db == null) return;
+        if (isAlive || this.db == null) return;
+
         Map<String, Object> data = null;
         try {
-            data = jsonToMap(_data);
+            JSONObject jObject = new JSONObject(_data);
+            data = (Map<String, Object>) this.jsonToMap(jObject);
         } catch (JSONException e) {
             e.printStackTrace();
         }
-//        if ((new JSONArray (data.get("chats")).size()) == 0) return;
-        JSONArray chats = null;
-        try {
-            chats = new JSONArray((String) data.get("chats"));
-            Log.d("db", "chats is " + chats.get(0).toString());
-        } catch (JSONException e) {
-            return;
-        }
-//        Chat chat = Chat.findOne({"guid": data["chats"][0]["guid"]});
-//        List<Map<String, Object>> chats = (List<Map<String, Object>>) data.get("chats");
-        Cursor result;
-        try {
-            result = db.rawQuery("SELECT * FROM chat WHERE guid = ? LIMIT 1", new String[]{((JSONObject) chats.get(0)).getString("guid")});
-        } catch (JSONException e) {
-            return;
-        }
-        if (!result.moveToFirst()) {
-            Log.d("db", "chat not found");
-            return;
-        }
-        Chat chat = Chat.fromCursor(result);
 
-//        String title = chat.guid;
+        // Decode the message
+        Message message = Message.fromMap(data, this);
+        
+        // Iterate each chat and save the message
+        List<Map<String, Object>> chats = (List<Map<String, Object>>) data.get("chats");
+        for (int i = 0; i < chats.size(); i++) {
+            Map<String, Object> chatMap = chats.get(i);
+            Chat chat = Chat.fromMap(chatMap, this);
 
-//        SocketManager().handleNewMessage(data, chat);
-//
-//        Message message = Message.fromMap(data);
-        Message message = null;
-        try {
-            message = Message.fromMap(_data);
-        } catch (JSONException e) {
-            return;
+            chat.save(true);
+            chat.addMessage(message);
         }
-        Log.d("db", "new message " + message.text);
-        chat.save(db, true);
-        chat.addMessage(db, message);
-        //TODO add attachments
-//            try {
-//                JSONArray attachments = new JSONArray(data.get("attachments"));
-//                for(int i = 0; i < attachments.length(); i++ ) {
-//                    Attachment file = A
-//                }
-//            } catch (JSONException e) {
-//                e.printStackTrace();
-//            }
-//                }
-//                NewMessageManager().updateWithMessage(chat, message);
-//      });
-//            }
-//        }
+
+        // Close the DB to commit the messages
+        Log.d("isolate", "Closing database to commit");
+        this.db.close();
     }
 
 
@@ -154,6 +101,51 @@ public class BackgroundService extends Service {
     @Override
     public IBinder onBind(Intent intent) {
         return mBinder;
+    }
+
+    private Map<String, Object> jsonToMap(JSONObject json) throws JSONException {
+        Map<String, Object> retMap = new HashMap<String, Object>();
+
+        if(json != JSONObject.NULL) {
+            retMap = this.toMap(json);
+        }
+        return retMap;
+    }
+
+    private Map<String, Object> toMap(JSONObject object) throws JSONException {
+        Map<String, Object> map = new HashMap<String, Object>();
+
+        Iterator<String> keysItr = object.keys();
+        while(keysItr.hasNext()) {
+            String key = keysItr.next();
+            Object value = object.get(key);
+
+            if(value instanceof JSONArray) {
+                value = this.toList((JSONArray) value);
+            }
+
+            else if(value instanceof JSONObject) {
+                value = this.toMap((JSONObject) value);
+            }
+            map.put(key, value);
+        }
+        return map;
+    }
+
+    private List<Object> toList(JSONArray array) throws JSONException {
+        List<Object> list = new ArrayList<Object>();
+        for(int i = 0; i < array.length(); i++) {
+            Object value = array.get(i);
+            if(value instanceof JSONArray) {
+                value = toList((JSONArray) value);
+            }
+
+            else if(value instanceof JSONObject) {
+                value = this.toMap((JSONObject) value);
+            }
+            list.add(value);
+        }
+        return list;
     }
 
     private final IBinder mBinder = new LocalBinder();

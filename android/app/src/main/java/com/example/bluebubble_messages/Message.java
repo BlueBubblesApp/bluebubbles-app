@@ -1,6 +1,5 @@
 package com.example.bluebubble_messages;
 
-
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -49,106 +48,77 @@ class Message {
     Handle handle;
     boolean hasAttachments;
 
-    public static Message fromMap(String data) throws JSONException {
-        Map<String, Object> json = BackgroundService.jsonToMap(data);
-        Log.d("db", "converting from map " + String.valueOf(json.get("handle") != "null"));
-        Message message = new Message();
-        message.id = json.containsKey("ROWID") ? (Integer) json.get("ROWID") : null;
-        message.guid = (String) json.get("guid");
-        message.handleId = (json.get("handleId") != null) ? Integer.parseInt((String) json.get("handleId")) : 0;
-        message.text = (String) json.get("text");
-        message.subject = json.containsKey("subject") ? (String) json.get("subject") : null;
-        message.country = json.containsKey("country") ? (String) json.get("country") : null;
-        message.error = (Boolean.valueOf((String) json.get("error")) instanceof Boolean) ? Boolean.valueOf((String) json.get("error")) : (Integer.parseInt((String) json.get("error")) == 1 ? true : false);
-        message.dateCreated = json.containsKey("dateCreated")
-                ? json.get("dateCreated") == null ? null : new Timestamp(Long.valueOf((String) json.get("dateCreated")))
-                : null;
-        message.dateRead = json.containsKey("dateRead") ? json.get(json.get("dateRead")) == null ? null : new Timestamp(Long.valueOf((String) json.get("dateRead"))) : null;
-        message.dateDelivered =
-                json.containsKey("dateDelivered")
-                        ? json.get("dateDelivered") == null || json.get("dateDelivered") == "null" ? null : new Timestamp(Long.valueOf((String) json.get("dateDelivered")))
-                        : null;
-        message.isFromMe = (Boolean.valueOf((String) json.get("isFromMe")) instanceof Boolean)
-                ? Boolean.valueOf((String) json.get("isFromMe"))
-                : (((Integer) json.get("isFromMe") == 1) ? true : false);
-        message.isDelayed = (Boolean.valueOf((String) json.get("isDelayed")) instanceof Boolean)
-                ? Boolean.valueOf((String) json.get("isDelayed"))
-                : (((Integer) json.get("isDelayed") == 1) ? true : false);
-        message.isAutoReply = (Boolean.valueOf((String) json.get("isAutoReply")) instanceof Boolean)
-                ? Boolean.valueOf((String) json.get("isAutoReply"))
-                : (((Integer) json.get("isAutoReply") == 1) ? true : false);
-        message.isSystemMessage =
-                (Boolean.valueOf((String) json.get("isSystemMessage")) instanceof Boolean)
-                        ? Boolean.valueOf((String) json.get("isSystemMessage"))
-                        : ((Integer.parseInt((String) json.get("isSystemMessage")) == 1) ? true : false);
-        message.isServiceMessage =
-                (Boolean.valueOf((String) json.get("isServiceMessage")) instanceof Boolean)
-                        ? Boolean.valueOf((String) json.get("isServiceMessage"))
-                        : ((Integer.parseInt((String) json.get("isServiceMessage")) == 1) ? true : false);
-        message.isForward = (Boolean.valueOf((String) json.get("isForward")) instanceof Boolean)
-                ? Boolean.valueOf((String) json.get("isForward"))
-                : ((Integer.parseInt((String) json.get("isForward")) == 1) ? true : false);
-        message.isArchived =
-                (Boolean.valueOf((String) json.get("isArchived")) instanceof Boolean)
-                        ? Boolean.valueOf((String) json.get("isArchived"))
-                        : ((Integer.parseInt((String) json.get("isArchived")) == 1) ? true : false);
-        message.cacheRoomnames =
-                json.containsKey("cacheRoomnames") ? (String) json.get("cacheRoomnames") : null;
-        message.isAudioMessage = (Boolean.valueOf((String) json.get("isAudioMessage")) instanceof Boolean)
-                ? Boolean.valueOf((String) json.get("isAudioMessage"))
-                : ((Integer.parseInt((String) json.get("isAudioMessage")) == 1) ? true : false);
-        message.datePlayed =
-                json.containsKey("datePlayed")
-                        ? json.get("datePlayed") == "null" ? null : new Timestamp(Long.valueOf((String) json.get("datePlayed")))
-                        : null;
-        message.itemType = json.containsKey("itemType") ? Integer.parseInt((String) json.get("itemType")) : null;
-        message.groupTitle = json.containsKey("groupTitle") ? (String) json.get("groupTitle") : null;
-        message.isExpired = (Boolean.valueOf((String) json.get("isExpired")) instanceof Boolean)
-                ? Boolean.valueOf((String) json.get("isExpired"))
-                : ((Integer.parseInt((String) json.get("isExpired")) == 1) ? true : false);
-        message.associatedMessageGuid =
-                json.containsKey("associatedMessageGuid")
-                        ? (String) json.get("associatedMessageGuid")
-                        : null;
-        message.associatedMessageType =
-                json.containsKey("associatedMessageType")
-                        ? (String) json.get("associatedMessageType")
-                        : null;
-        message.expressiveSendStyleId =
-                json.containsKey("expressiveSendStyleId")
-                        ? (String) json.get("expressiveSendStyleId")
-                        : null;
-        message.timeExpressiveSendStyleId =
-                json.containsKey("timeExpressiveSendStyleId")
-                        ? json.get("timeExpressiveSendStyleId") == "null" ? null : new Timestamp(Long.valueOf((String) json.get("timeExpressiveSendStyleId")))
-                        : null;
-        Log.d("db", "handle map is " + BackgroundService.jsonToMap((String) json.get("handle")).toString());
-        message.handle = json.containsKey("handle")
-                ? (json.get("handle") != "null" ? Handle.fromMap(BackgroundService.jsonToMap((String) json.get("handle"))) : null)
-                : null;
-        message.hasAttachments = json.containsKey("attachments")
-                ? (((new JSONArray((String) json.get("attachments"))).length() > 0) ? true : false)
-                : false;
+    private SQLiteDatabase db;
+
+    public Message(Context context) {
+        DatabaseHelper helper = DatabaseHelper.getInstance(context);
+        this.db = helper.getWritableDatabase();
+    }
+
+    public static Message fromMap(Map<String, Object> json, Context context) {
+        Message message = new Message(context);
+
+        // Parse some of the generic fields
+        message.id = (Integer) Utils.parseField(json, "ROWID", "integer");
+        message.guid = (String) Utils.parseField(json, "guid", "string");
+        message.handleId = (Integer) Utils.parseField(json, "handleId", "integer");
+        message.text = (String) Utils.parseField(json, "text", "string");
+        message.subject = (String) Utils.parseField(json, "subject", "string");
+        message.country = (String) Utils.parseField(json, "country", "string");
+        message.error = (Boolean) Utils.parseField(json, "error", "boolean");
+        message.dateCreated = (Timestamp) Utils.parseField(json, "dateCreated", "timestamp");
+        message.dateRead = (Timestamp) Utils.parseField(json, "dateRead", "timestamp");
+        message.dateDelivered = (Timestamp) Utils.parseField(json, "dateDelivered", "timestamp");
+        message.isFromMe = (Boolean) Utils.parseField(json, "isFromMe", "boolean");
+        message.isDelayed = (Boolean) Utils.parseField(json, "isDelayed", "boolean");
+        message.isAutoReply = (Boolean) Utils.parseField(json, "isAutoReply", "boolean");
+        message.isSystemMessage = (Boolean) Utils.parseField(json, "isSystemMessage", "boolean");
+        message.isServiceMessage = (Boolean) Utils.parseField(json, "isServiceMessage", "boolean");
+        message.isForward = (Boolean) Utils.parseField(json, "isForward", "boolean");
+        message.isArchived = (Boolean) Utils.parseField(json, "isArchived", "boolean");
+        message.cacheRoomnames = (String) Utils.parseField(json, "cacheRoomnames", "string");
+        message.isAudioMessage = (Boolean) Utils.parseField(json, "isAudioMessage", "boolean");
+        message.datePlayed = (Timestamp) Utils.parseField(json, "datePlayed", "timestamp");
+        message.itemType = (Integer) Utils.parseField(json, "itemType", "integer");
+        message.groupTitle = (String) Utils.parseField(json, "groupTitle", "string");
+        message.isExpired = (Boolean) Utils.parseField(json, "isExpired", "boolean");
+        message.associatedMessageGuid = (String) Utils.parseField(json, "associatedMessageGuid", "string");
+        message.associatedMessageType = (String) Utils.parseField(json, "associatedMessageType", "string");
+        message.expressiveSendStyleId = (String) Utils.parseField(json, "expressiveSendStyleId", "string");
+        message.timeExpressiveSendStyleId = (Timestamp) Utils.parseField(json, "timeExpressiveSendStyleId", "timestamp");
+
+        // Parse handles slightly differently
+        if (json.containsKey("handle") && json.get("handle") != null && !String.valueOf(json.get("handle")).equals("null")) {
+            message.handle = Handle.fromMap((Map<String, Object>) json.get("handle"), context);
+        }
+
+        // Parse attachments slightly differently, too
+        if (json.containsKey("attachments") && json.get("attachments") != null && !String.valueOf(json.get("attachments")).equals("null")) {
+            message.hasAttachments = ((List<Object>)json.get("attachments")).size() > 0 ? true : false;
+        }
+
         return message;
     }
 
-    public Message save(SQLiteDatabase db) {
+    public Message save() {
         // Try to find an existing chat before saving it
-        Cursor existing = db.rawQuery("SELECT * FROM message WHERE guid = ? LIMIT 1", new String[]{this.guid});
+        Cursor cursor = db.rawQuery("SELECT * FROM message WHERE guid = ? LIMIT 1", new String[]{this.guid});
 
-        if (existing.moveToFirst()) {
-            this.id = existing.getInt(existing.getColumnIndex("ROWID"));
+        if (cursor.moveToFirst()) {
+            this.id = cursor.getInt(cursor.getColumnIndex("ROWID"));
         }
+
+        int count = cursor.getCount();
+        cursor.close();
 
         // Save the participant & set the handle ID to the new participant
         if (this.handle != null) {
-            Log.d("db", "handle address is " + this.handle.address);
-            this.handle.save(db, false);
+            this.handle.save(false);
             this.handleId = this.handle.id;
         }
 
-        // If it already exists, update it
-        if (!existing.moveToFirst()) {
+        // If the message doesn't exist, add it
+        if (count == 0) {
             // Remove the ID from the map for inserting
             if (this.handleId == null) this.handleId = 0;
             ContentValues map = this.toMap();
@@ -159,6 +129,7 @@ class Message {
                 map.remove("handle");
             }
             this.id = (int) db.insert("message", null, map);
+            Log.d("db", "Inserted Message at ROWID: " + String.valueOf(this.id));
         }
 
         return this;
@@ -198,9 +169,9 @@ class Message {
         map.put("subject", subject);
         map.put("country", country);
         map.put("error", error ? 1 : 0);
-        map.put("dateCreated", (dateCreated == null) ? null : (int) dateCreated.getTime());
-        map.put("dateRead", (dateRead == null) ? null : (int) dateRead.getTime());
-        map.put("dateDelivered", (dateDelivered == null) ? null : (int) dateDelivered.getTime());
+        map.put("dateCreated", (dateCreated == null) ? null : dateCreated.toInstant().toEpochMilli());
+        map.put("dateRead", (dateRead == null) ? null : dateRead.toInstant().toEpochMilli());
+        map.put("dateDelivered", (dateDelivered == null) ? null : dateDelivered.toInstant().toEpochMilli());
         map.put("isFromMe", isFromMe ? 1 : 0);
         map.put("isDelayed", isDelayed ? 1 : 0);
         map.put("isAutoReply", isAutoReply ? 1 : 0);
@@ -211,7 +182,7 @@ class Message {
         map.put("cacheRoomnames", cacheRoomnames);
         map.put("isAudioMessage", isAudioMessage ? 1 : 0);
         map.put("datePlayed",
-                (datePlayed == null) ? null : datePlayed.getTime());
+                (datePlayed == null) ? null : datePlayed.toInstant().toEpochMilli());
         map.put("itemType", itemType);
         map.put("groupTitle", groupTitle);
         map.put("isExpired", isExpired ? 1 : 0);
@@ -220,7 +191,7 @@ class Message {
         map.put("expressiveSendStyleId", expressiveSendStyleId);
         map.put("timeExpressiveSendStyleId", (timeExpressiveSendStyleId == null)
                 ? null
-                : timeExpressiveSendStyleId.getTime());
+                : timeExpressiveSendStyleId.toInstant().toEpochMilli());
         if (handle == null) {
             map.putNull("handle");
         } else {
