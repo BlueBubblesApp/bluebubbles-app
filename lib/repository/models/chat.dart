@@ -172,6 +172,7 @@ class Chat {
         " message.datePlayed AS datePlayed,"
         " message.itemType AS itemType,"
         " message.groupTitle AS groupTitle,"
+        " message.groupActionType AS groupActionType,"
         " message.isExpired AS isExpired,"
         " message.associatedMessageGuid AS associatedMessageGuid,"
         " message.associatedMessageType AS associatedMessageType,"
