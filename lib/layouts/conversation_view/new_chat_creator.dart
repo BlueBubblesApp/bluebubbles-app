@@ -297,6 +297,3 @@ class Participant {
     }
   }
 }
-
-//zshames2@icloud.com
-//zshames2@live.com
