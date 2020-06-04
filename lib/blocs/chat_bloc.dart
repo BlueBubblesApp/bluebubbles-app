@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:bluebubble_messages/blocs/message_bloc.dart';
 import 'package:bluebubble_messages/repository/models/attachment.dart';
 import 'package:bluebubble_messages/repository/models/message.dart';
+import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../socket_manager.dart';
@@ -24,19 +25,29 @@ class ChatBloc {
       _tileValController.stream;
 
   List<Chat> _chats;
+  List<Chat> get chats => _chatBloc._chats;
   Map<String, Map<String, dynamic>> _tileVals = new Map();
+  Map<String, Map<String, dynamic>> get tileVals => _chatBloc._tileVals;
 
-  ChatBloc() {
-    getChats();
+  factory ChatBloc() {
+    return _chatBloc;
   }
 
-  void getChats() async {
+  static final ChatBloc _chatBloc = ChatBloc._internal();
+
+  ChatBloc._internal();
+
+  Future<List<Chat>> getChats() async {
     //sink is a way of adding data reactively to the stream
     //by registering a new event
-    _chats = await Chat.find();
-    initTileVals(_chats).then((value) {
-      _chatController.sink.add(_chats);
-    });
+    _chatBloc._chats = await Chat.find();
+    await _chatBloc.initTileVals(_chatBloc._chats);
+    // _chatBloc._chats.sort((a, b) {
+    //   return -_chatBloc.tileVals[a.guid]["actualDate"]
+    //       .compareTo(_chatBloc.tileVals[b.guid]["actualDate"]);
+    // });
+    _chatBloc._chatController.sink.add(_chatBloc._chats);
+    return _chatBloc._chats;
   }
 
   Future<void> initTileVals(List<Chat> chats) async {
@@ -76,7 +87,7 @@ class ChatBloc {
               date =
                   "${lastMessage.dateCreated.month.toString()}/${lastMessage.dateCreated.day.toString()}/${lastMessage.dateCreated.year.toString()}";
             }
-            Map<String, dynamic> chatMap = _tileVals[chat.guid];
+            Map<String, dynamic> chatMap = _chatBloc._tileVals[chat.guid];
             chatMap["subtitle"] = subtitle;
             chatMap["date"] = date;
             chatMap["actualDate"] =
@@ -91,12 +102,12 @@ class ChatBloc {
               }
             }
             chatMap["hasNotification"] = hasNotification;
-            updateTileVals(chat, chatMap);
-            _tileValController.add(_tileVals);
+            _chatBloc.updateTileVals(chat, chatMap);
+            _chatBloc._tileValController.add(_chatBloc._tileVals);
           }
         });
       } else {
-        messageBloc = _tileVals[chat.guid]["bloc"];
+        messageBloc = _chatBloc._tileVals[chat.guid]["bloc"];
       }
 
       bool hasNotification = false;
@@ -116,16 +127,16 @@ class ChatBloc {
         "actualDate": 0,
         "hasNotification": hasNotification,
       };
-      updateTileVals(chat, chatMap);
+      _chatBloc.updateTileVals(chat, chatMap);
     }
-    _tileValController.sink.add(_tileVals);
+    _chatBloc._tileValController.sink.add(_tileVals);
   }
 
   void updateTileVals(Chat chat, Map<String, dynamic> chatMap) {
-    if (_tileVals.containsKey(chat.guid)) {
-      _tileVals.remove(chat.guid);
+    if (_chatBloc._tileVals.containsKey(chat.guid)) {
+      _chatBloc._tileVals.remove(chat.guid);
     }
-    _tileVals[chat.guid] = chatMap;
+    _chatBloc._tileVals[chat.guid] = chatMap;
   }
 
   addChat(Chat chat) async {

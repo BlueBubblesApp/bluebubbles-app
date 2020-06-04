@@ -18,6 +18,10 @@ class NewMessageManager {
   Stream<Map<String, Message>> get stream => _stream.stream;
 
   void updateWithMessage(Chat chat, Message message) {
-    _stream.sink.add({chat.guid: message});
+    if (chat == null) {
+      _stream.sink.add({null: message});
+    } else {
+      _stream.sink.add({chat.guid: message});
+    }
   }
 }

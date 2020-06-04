@@ -12,7 +12,6 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 public class ReplyReceiver extends BroadcastReceiver {
 
-
     @Override
     public void onReceive(Context context, Intent intent) {
 
@@ -20,7 +19,8 @@ public class ReplyReceiver extends BroadcastReceiver {
         NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
         notificationManager.cancel(intent.getExtras().getInt("id"));
         Log.d("Notifications", "replied to notification " + remoteInput.getString("key_text_reply"));
-        Intent sendMessageIntent = new Intent("myData");
+        Intent sendMessageIntent = new Intent(context, MainActivity.class);
+        sendMessageIntent.setAction("Reply");
         sendMessageIntent.setType("reply");
         sendMessageIntent.putExtra("text", remoteInput.getString("key_text_reply"));
         sendMessageIntent.putExtra("id", intent.getExtras().getInt("id"));

@@ -1,6 +1,7 @@
 import 'package:bluebubble_messages/blocs/message_bloc.dart';
 import 'package:bluebubble_messages/layouts/conversation_view/message_widget.dart';
 import 'package:bluebubble_messages/repository/models/message.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class MessageView extends StatefulWidget {
@@ -28,12 +29,20 @@ class _MessageViewState extends State<MessageView> {
           reverse: true,
           physics:
               AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-          itemCount: _messages.length + 1,
+          itemCount: _messages.length + 2,
           itemBuilder: (BuildContext context, int index) {
             if (index == 0) {
               return SizedBox(
                 height: 80,
               );
+            } else if (index == _messages.length + 1) {
+              return NewMessageLoader(
+                messageBloc: widget.messageBloc,
+                offset: _messages.length,
+              );
+            }
+            if (_messages.length + 1 - index < 10) {
+              debugPrint("getting close to the top");
             }
 
             Message olderMessage;
@@ -52,6 +61,65 @@ class _MessageViewState extends State<MessageView> {
                 olderMessage: olderMessage,
                 newerMessage: newerMessage);
           },
+        );
+      },
+    );
+  }
+}
+
+class NewMessageLoader extends StatefulWidget {
+  final MessageBloc messageBloc;
+  final int offset;
+  NewMessageLoader({
+    Key key,
+    this.messageBloc,
+    this.offset,
+  }) : super(key: key);
+
+  @override
+  _NewMessageLoaderState createState() => _NewMessageLoaderState();
+}
+
+class _NewMessageLoaderState extends State<NewMessageLoader> {
+  Future loadMessages;
+
+  @override
+  void initState() {
+    super.initState();
+    loadMessages = widget.messageBloc.loadMessageChunk(widget.offset);
+  }
+
+  @override
+  void dispose() {
+    widget.messageBloc.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder(
+      future: loadMessages,
+      builder: (BuildContext context, AsyncSnapshot snapshot) {
+        if (snapshot.connectionState == ConnectionState.done) {
+          return Container();
+        }
+        return Column(
+          children: <Widget>[
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text(
+                "Loading more messages...",
+                style: TextStyle(color: Colors.white, fontSize: 10),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: CupertinoActivityIndicator(
+                animating: true,
+                radius: 15,
+              ),
+            ),
+          ],
         );
       },
     );

@@ -90,14 +90,14 @@ public class MainActivity extends FlutterActivity {
                                 result.success("");
                             } else if (call.method.equals("new-message-notification")) {
                                 //occurs when clicking on the notification
-                                PendingIntent openIntent = PendingIntent.getActivity(MainActivity.this, call.argument("notificationId"), new Intent(this, MainActivity.class).putExtra("id", (int) call.argument("notificationId")).setType("NotificationOpen"), Intent.FILL_IN_ACTION);
+                                PendingIntent openIntent = PendingIntent.getActivity(MainActivity.this, call.argument("notificationId"), new Intent(this, MainActivity.class).putExtra("id", (int) call.argument("notificationId")).putExtra("chatGUID", (String) call.argument("group")).setType("NotificationOpen"), Intent.FILL_IN_ACTION);
 
                                 //for the dismiss button
                                 PendingIntent dismissIntent = PendingIntent.getActivity(MainActivity.this, call.argument("notificationId"), new Intent(this, MainActivity.class).putExtra("id", (int) call.argument("notificationId")).setType("markAsRead"), PendingIntent.FLAG_UPDATE_CURRENT);
                                 NotificationCompat.Action dismissAction = new NotificationCompat.Action.Builder(0, "Mark As Read", dismissIntent).build();
 
                                 //for the quick reply
-                                PendingIntent replyIntent = PendingIntent.getBroadcast(getApplicationContext(), call.argument("notificationId"), new Intent(this, ReplyReceiver.class).putExtra("id", (int) call.argument("notificationId")).setType("reply"), PendingIntent.FLAG_UPDATE_CURRENT);
+                                PendingIntent replyIntent = PendingIntent.getBroadcast(this, call.argument("notificationId"), new Intent(this, ReplyReceiver.class).putExtra("id", (int) call.argument("notificationId")).setType("reply"), PendingIntent.FLAG_UPDATE_CURRENT);
                                 androidx.core.app.RemoteInput replyInput = new androidx.core.app.RemoteInput.Builder("key_text_reply").setLabel("Reply").build();
                                 NotificationCompat.Action replyAction = new NotificationCompat.Action.Builder(0, "Reply", replyIntent).addRemoteInput(replyInput).build();
 
@@ -142,8 +142,8 @@ public class MainActivity extends FlutterActivity {
     protected void onNewIntent(Intent intent) {
         if (intent == null || intent.getType() == null) return;
         if (intent.getType().equals("NotificationOpen")) {
-            Log.d("Notifications", "tapped on notification by id " + intent.getExtras().getString("id"));
-            new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod("ChatOpen", intent.getExtras().getString("id"));
+            Log.d("Notifications", "tapped on notification by id " + intent.getExtras().getInt("id"));
+            new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod("ChatOpen", intent.getExtras().getString("chatGUID"));
         } else if (intent.getType().equals("reply")) {
         } else if (intent.getType().equals("markAsRead")) {
             NotificationManagerCompat notificationManager = NotificationManagerCompat.from(getContext());
@@ -175,6 +175,7 @@ public class MainActivity extends FlutterActivity {
     protected void onStart() {
         super.onStart();
         LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver, new IntentFilter("MyData"));
+        registerReceiver(replyReceiver, new IntentFilter("Reply"));
         getApplicationContext().bindService(new Intent(getApplicationContext(), BackgroundService.class), mServerConn, Context.BIND_AUTO_CREATE);
         Intent serviceIntent = new Intent(getApplicationContext(), BackgroundService.class);
         startService(serviceIntent);
@@ -205,6 +206,13 @@ public class MainActivity extends FlutterActivity {
             } else {
                 new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod(intent.getExtras().getString("type"), intent.getExtras().getString("data"));
             }
+        }
+    };
+
+    private BroadcastReceiver replyReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Log.d("Notification", "reply");
         }
     };
 }

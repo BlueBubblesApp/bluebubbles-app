@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:bluebubble_messages/blocs/chat_bloc.dart';
 import 'package:bluebubble_messages/layouts/conversation_view/new_chat_creator.dart';
 import 'package:bluebubble_messages/managers/method_channel_interface.dart';
+import 'package:bluebubble_messages/managers/new_message_manager.dart';
 import 'package:bluebubble_messages/managers/notification_manager.dart';
 import 'package:bluebubble_messages/repository/models/chat.dart';
 
@@ -24,7 +25,6 @@ class ConversationList extends StatefulWidget {
 class _ConversationListState extends State<ConversationList> {
   ScrollController _scrollController;
   Color _theme;
-  ChatBloc _chatBloc;
   List<Chat> _chats = <Chat>[];
 
   @override
@@ -38,14 +38,10 @@ class _ConversationListState extends State<ConversationList> {
   @override
   void initState() {
     super.initState();
-    _chatBloc = new ChatBloc();
-    _chatBloc.chatStream.listen((List<Chat> chats) {
+    ChatBloc().chatStream.listen((List<Chat> chats) {
       _chats = chats;
-      // setState(() {});
     });
-    // Singleton().subscribe("main", () {
-    //   _chatBloc.getChats();
-    // });
+    ChatBloc().getChats();
 
     _scrollController = ScrollController()
       ..addListener(
@@ -218,7 +214,7 @@ class _ConversationListState extends State<ConversationList> {
               ),
             ),
             StreamBuilder(
-              stream: _chatBloc.tileStream,
+              stream: ChatBloc().tileStream,
               builder: (BuildContext context,
                   AsyncSnapshot<Map<String, Map<String, dynamic>>> snapshot) {
                 if (snapshot.hasData) {
@@ -257,10 +253,12 @@ class _ConversationListState extends State<ConversationList> {
             ),
           ],
         ),
-        // floatingActionButton: FloatingActionButton(
-        //   onPressed: () async {
-        //   },
-        // ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: () async {
+            await ChatBloc().getChats();
+            await NewMessageManager().updateWithMessage(null, null);
+          },
+        ),
       ),
     );
   }

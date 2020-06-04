@@ -18,7 +18,7 @@ String chatToJson(Chat data) {
   return json.encode(dyn);
 }
 
-chatTitle(Chat _chat) async {
+Future<String> chatTitle(Chat _chat) async {
   String title = "";
   if (_chat.displayName == null || _chat.displayName == "") {
     Chat chat = await _chat.getParticipants();
