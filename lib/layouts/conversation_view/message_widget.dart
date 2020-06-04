@@ -13,18 +13,20 @@ import '../../helpers/hex_color.dart';
 import '../../repository/models/message.dart';
 
 class MessageWidget extends StatefulWidget {
-  MessageWidget(
-      {Key key,
-      this.fromSelf,
-      this.message,
-      this.olderMessage,
-      this.newerMessage})
-      : super(key: key);
+  MessageWidget({
+    Key key,
+    this.fromSelf,
+    this.message,
+    this.olderMessage,
+    this.newerMessage,
+    this.reactions,
+  }) : super(key: key);
 
   final fromSelf;
   final Message message;
   final Message newerMessage;
   final Message olderMessage;
+  final List<Message> reactions;
 
   @override
   _MessageState createState() => _MessageState();
@@ -35,12 +37,23 @@ class _MessageState extends State<MessageWidget> {
   String body;
   List images = [];
   bool showTail = true;
+  final String like = "like";
+  final String love = "love";
+  final String dislike = "dislike";
+  final String question = "question";
+  final String emphasize = "emphasize";
+  Map<String, List<Message>> reactions = new Map();
 
   @override
   void didChangeDependencies() async {
     super.didChangeDependencies();
     // Handle handle = await widget.message.from.update();
     // debugPrint("handle id is ${widget.message.from.address}");
+    reactions[like] = [];
+    reactions[love] = [];
+    reactions[dislike] = [];
+    reactions[question] = [];
+    reactions[emphasize] = [];
   }
 
   @override

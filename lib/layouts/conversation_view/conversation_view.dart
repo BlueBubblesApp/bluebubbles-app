@@ -40,7 +40,6 @@ class _ConversationViewState extends State<ConversationView> {
 
   @override
   void didChangeDependencies() async {
-    // TODO: implement didChangeDependencies
     super.didChangeDependencies();
     SocketManager().removeChatNotification(widget.chat);
     Chat chatWithParticipants = await widget.chat.getParticipants();

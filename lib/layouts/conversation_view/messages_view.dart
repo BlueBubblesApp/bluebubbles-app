@@ -13,6 +13,8 @@ class MessageView extends StatefulWidget {
 }
 
 class _MessageViewState extends State<MessageView> {
+  Future loader;
+
   @override
   Widget build(BuildContext context) {
     return StreamBuilder(
@@ -36,13 +38,15 @@ class _MessageViewState extends State<MessageView> {
                 height: 80,
               );
             } else if (index == _messages.length + 1) {
+              if (loader == null) {
+                loader = widget.messageBloc.loadMessageChunk(_messages.length);
+                loader.whenComplete(() => loader = null);
+              }
               return NewMessageLoader(
                 messageBloc: widget.messageBloc,
                 offset: _messages.length,
+                loader: loader,
               );
-            }
-            if (_messages.length + 1 - index < 10) {
-              debugPrint("getting close to the top");
             }
 
             Message olderMessage;
@@ -53,13 +57,25 @@ class _MessageViewState extends State<MessageView> {
             if (index - 2 >= 0 && index - 2 < _messages.length) {
               newerMessage = _messages[index - 2];
             }
+            List<Message> reactions = <Message>[];
+            if (widget.messageBloc.reactions
+                .containsKey(_messages[index - 1].guid)) {
+              reactions.addAll(
+                  widget.messageBloc.reactions[_messages[index - 1].guid]);
+            }
+            // widget.messageBloc.reactions
+            //           .containsKey(_messages[index - 1].guid)
+            //       ? widget.messageBloc.reactions[_messages[index - 1]]
+            //       : null
 
             return MessageWidget(
-                key: Key(_messages[index - 1].guid),
-                fromSelf: _messages[index - 1].isFromMe,
-                message: _messages[index - 1],
-                olderMessage: olderMessage,
-                newerMessage: newerMessage);
+              key: Key(_messages[index - 1].guid),
+              fromSelf: _messages[index - 1].isFromMe,
+              message: _messages[index - 1],
+              olderMessage: olderMessage,
+              newerMessage: newerMessage,
+              reactions: reactions,
+            );
           },
         );
       },
@@ -70,10 +86,12 @@ class _MessageViewState extends State<MessageView> {
 class NewMessageLoader extends StatefulWidget {
   final MessageBloc messageBloc;
   final int offset;
+  final Future loader;
   NewMessageLoader({
     Key key,
     this.messageBloc,
     this.offset,
+    this.loader,
   }) : super(key: key);
 
   @override
@@ -81,24 +99,15 @@ class NewMessageLoader extends StatefulWidget {
 }
 
 class _NewMessageLoaderState extends State<NewMessageLoader> {
-  Future loadMessages;
-
   @override
   void initState() {
     super.initState();
-    loadMessages = widget.messageBloc.loadMessageChunk(widget.offset);
-  }
-
-  @override
-  void dispose() {
-    widget.messageBloc.dispose();
-    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return FutureBuilder(
-      future: loadMessages,
+      future: widget.loader,
       builder: (BuildContext context, AsyncSnapshot snapshot) {
         if (snapshot.connectionState == ConnectionState.done) {
           return Container();
