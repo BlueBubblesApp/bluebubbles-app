@@ -1,10 +1,14 @@
 import 'dart:convert';
 import 'dart:ui';
 
+import 'package:bluebubble_messages/blocs/chat_bloc.dart';
 import 'package:bluebubble_messages/helpers/hex_color.dart';
+import 'package:bluebubble_messages/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubble_messages/layouts/conversation_view/messages_view.dart';
 import 'package:bluebubble_messages/layouts/conversation_view/text_field.dart';
 import 'package:bluebubble_messages/managers/contact_manager.dart';
+import 'package:bluebubble_messages/managers/new_message_manager.dart';
+import 'package:bluebubble_messages/repository/models/chat.dart';
 import 'package:bluebubble_messages/socket_manager.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/cupertino.dart';
@@ -240,30 +244,83 @@ class _NewChatCreatorState extends State<NewChatCreator> {
                 flex: 1,
               ),
               // BlueBubblesTextField(),
-              RaisedButton(
-                onPressed: () {
-                  Map<String, dynamic> params = new Map();
-                  List<String> _participants = <String>[];
-                  participants.forEach((e) {
-                    if (e is Contact) {
-                      if (e.phones.length > 0) {
-                        _participants.add(e.phones.first.value);
-                      } else if (e.emails.length > 0) {
-                        _participants.add(e.emails.first.value);
-                      }
-                    } else {
-                      _participants.add(e);
-                    }
-                  });
-                  params["participants"] = _participants;
-                  SocketManager()
-                      .socket
-                      .sendMessage("start-chat", jsonEncode(params), (data) {
-                    debugPrint(data.toString());
-                  });
-                },
-                color: Colors.white,
-                child: Text("Create"),
+              ClipRRect(
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                  child: Container(
+                    height: 60,
+                    width: MediaQuery.of(context).size.width,
+                    child: RaisedButton(
+                      onPressed: () {
+                        if (_controller.text.length == 0) return;
+                        if (!_controller.text.endsWith(", ")) {
+                          participants.add(_controller.text.split(",").last);
+                        }
+                        Map<String, dynamic> params = new Map();
+                        List<String> _participants = <String>[];
+                        participants.forEach((e) {
+                          if (e is Contact) {
+                            if (e.phones.length > 0) {
+                              _participants.add(e.phones.first.value);
+                            } else if (e.emails.length > 0) {
+                              _participants.add(e.emails.first.value);
+                            }
+                          } else {
+                            _participants.add(e);
+                          }
+                        });
+                        showDialog(
+                          context: context,
+                          child: ClipRRect(
+                            child: BackdropFilter(
+                              filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                              child: SizedBox(
+                                height: 100,
+                                width: 100,
+                                child: CircularProgressIndicator(),
+                              ),
+                            ),
+                          ),
+                        );
+                        params["participants"] = _participants;
+                        SocketManager().socket.sendMessage(
+                          "start-chat",
+                          jsonEncode(params),
+                          (_data) async {
+                            debugPrint(_data);
+                            Map<String, dynamic> data = jsonDecode(_data);
+                            Chat newChat = Chat.fromMap(data["data"]);
+                            newChat = await newChat.save();
+                            String title = await chatTitle(newChat);
+                            await ChatBloc().getChats();
+                            await NewMessageManager()
+                                .updateWithMessage(null, null);
+                            // await ChatBloc().getChats();
+                            debugPrint("tile vals:" +
+                                ChatBloc().tileVals[newChat.guid].toString());
+
+                            Navigator.of(context, rootNavigator: true).pop();
+                            Navigator.of(context).pushReplacement(
+                              CupertinoPageRoute(
+                                builder: (context) => ConversationView(
+                                  chat: newChat,
+                                  title: title,
+                                  messageBloc: ChatBloc().tileVals[newChat.guid]
+                                      ["bloc"],
+                                ),
+                              ),
+                            );
+                          },
+                        );
+                      },
+                      color: HexColor('26262a').withOpacity(0.5),
+                      child: Text(
+                        "Create",
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ),
+                ),
               ),
             ],
           ),
@@ -273,6 +330,7 @@ class _NewChatCreatorState extends State<NewChatCreator> {
   }
 }
 
+//TODO update everything so that it is more organized
 class Participant {
   String _displayName = "";
   Contact _contact;

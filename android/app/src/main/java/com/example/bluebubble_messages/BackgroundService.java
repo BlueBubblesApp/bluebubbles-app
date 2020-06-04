@@ -64,13 +64,13 @@ public class BackgroundService extends Service {
 
     public void saveMessage(String _data) {
 //        if (isAlive || this.db == null) return;
-
         Map<String, Object> data = null;
         try {
             JSONObject jObject = new JSONObject(_data);
             data = (Map<String, Object>) this.jsonToMap(jObject);
         } catch (JSONException e) {
             e.printStackTrace();
+            return;
         }
 
         // Decode the message
