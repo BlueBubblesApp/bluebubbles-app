@@ -40,6 +40,7 @@ class Message {
   DateTime datePlayed;
   int itemType;
   String groupTitle;
+  int groupActionType;
   bool isExpired;
   String associatedMessageGuid;
   String associatedMessageType;
@@ -71,6 +72,7 @@ class Message {
       this.datePlayed,
       this.itemType = 0,
       this.groupTitle,
+      this.groupActionType = 0,
       this.isExpired = false,
       this.associatedMessageGuid,
       this.associatedMessageType,
@@ -129,6 +131,7 @@ class Message {
             : null,
         itemType: json.containsKey("itemType") ? json["itemType"] : null,
         groupTitle: json.containsKey("groupTitle") ? json["groupTitle"] : null,
+        groupActionType: (json["groupActionType"] != null) ? json["groupActionType"] : 0,
         isExpired: (json["isExpired"] is bool)
             ? json['isExpired']
             : ((json['isExpired'] == 1) ? true : false),
@@ -346,6 +349,7 @@ class Message {
             (datePlayed == null) ? null : datePlayed.millisecondsSinceEpoch,
         "itemType": itemType,
         "groupTitle": groupTitle,
+        "groupActionType": groupActionType,
         "isExpired": isExpired ? 1 : 0,
         "associatedMessageGuid": associatedMessageGuid,
         "associatedMessageType": associatedMessageType,

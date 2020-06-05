@@ -93,6 +93,7 @@ class DBProvider {
         "datePlayed INTEGER DEFAULT 0,"
         "itemType INTEGER NOT NULL,"
         "groupTitle TEXT DEFAULT NULL,"
+        "groupActionType INTEGER DEFAULT 0,"
         "isExpired INTEGER DEFAULT 0,"
         "associatedMessageGuid TEXT DEFAULT NULL,"
         "associatedMessageType TEXT DEFAULT NULL,"

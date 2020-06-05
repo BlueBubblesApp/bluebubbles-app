@@ -194,6 +194,7 @@ class Chat {
 //        map.put(" message.datePlayed AS datePlayed,"
 //        map.put(" message.itemType AS itemType,"
 //        map.put(" message.groupTitle AS groupTitle,"
+//        map.put(" message.groupActionType AS groupActionType,"
 //        map.put(" message.isExpired AS isExpired,"
 //        map.put(" message.associatedMessageGuid AS associatedMessageGuid,"
 //        map.put(" message.associatedMessageType AS associatedMessageType,"

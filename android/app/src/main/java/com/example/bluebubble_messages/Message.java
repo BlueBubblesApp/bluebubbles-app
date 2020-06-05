@@ -42,6 +42,7 @@ class Message {
     Date datePlayed;
     Integer itemType;
     String groupTitle;
+    Integer groupActionType;
     boolean isExpired;
     String associatedMessageGuid;
     String associatedMessageType;
@@ -83,6 +84,7 @@ class Message {
         message.datePlayed = (Timestamp) Utils.parseField(json, "datePlayed", "timestamp");
         message.itemType = (Integer) Utils.parseField(json, "itemType", "integer");
         message.groupTitle = (String) Utils.parseField(json, "groupTitle", "string");
+        message.groupActionType = (Integer) Utils.parseField(json, "groupActionType", "integer");
         message.isExpired = (Boolean) Utils.parseField(json, "isExpired", "boolean");
         message.associatedMessageGuid = (String) Utils.parseField(json, "associatedMessageGuid", "string");
         message.associatedMessageType = (String) Utils.parseField(json, "associatedMessageType", "string");
@@ -188,6 +190,7 @@ class Message {
                 (datePlayed == null) ? null : datePlayed.toInstant().toEpochMilli());
         map.put("itemType", itemType);
         map.put("groupTitle", groupTitle);
+        map.put("groupActionType", groupActionType);
         map.put("isExpired", isExpired ? 1 : 0);
         map.put("associatedMessageGuid", associatedMessageGuid);
         map.put("associatedMessageType", associatedMessageType);
