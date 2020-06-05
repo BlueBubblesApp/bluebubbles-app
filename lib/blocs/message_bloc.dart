@@ -17,8 +17,12 @@ class MessageBloc {
   List<Message> _messageCache = <Message>[];
   List<Message> _allMessages = <Message>[];
 
+  Map<String, List<Message>> _reactions = new Map();
+
   List<Message> get messages =>
       _allMessages.length > 0 ? _allMessages : _messageCache;
+
+  Map<String, List<Message>> get reactions => _reactions;
 
   Chat _currentChat;
 
@@ -49,14 +53,17 @@ class MessageBloc {
       _messageCache.add(messages[i]);
     }
     _messageController.sink.add(messages);
+    await getReactions(0);
   }
 
   Future loadMessageChunk(int offset) async {
+    debugPrint("loading older messages");
     Completer completer = new Completer();
     if (_currentChat != null) {
       List<Message> messages =
           await Chat.getMessages(_currentChat, offset: offset);
       if (messages.length == 0) {
+        debugPrint("messages length is 0, fetching from server");
         Map<String, dynamic> params = Map();
         params["identifier"] = _currentChat.guid;
         params["limit"] = 100;
@@ -76,16 +83,37 @@ class MessageBloc {
           _allMessages.addAll(_messages);
           _allMessages.sort((a, b) => -a.dateCreated.compareTo(b.dateCreated));
           _messageController.sink.add(_allMessages);
+          completer.complete();
+          await getReactions(offset);
         });
       } else {
+        // debugPrint("loading more messages from sql " +);
         _allMessages.addAll(messages);
         _allMessages.sort((a, b) => -a.dateCreated.compareTo(b.dateCreated));
         _messageController.sink.add(_allMessages);
+        completer.complete();
+        await getReactions(offset);
       }
     } else {
       completer.completeError("chat not found");
     }
     return completer.future;
+  }
+
+  Future<void> getReactions(int offset) async {
+    List<Message> reactions = await Chat.getMessages(_currentChat,
+        reactionsOnly: true, offset: offset);
+    _reactions = new Map();
+    reactions.forEach((element) {
+      if (element.associatedMessageGuid != null) {
+        String guid = element.associatedMessageGuid
+            .substring(element.associatedMessageGuid.indexOf("/") + 1);
+
+        if (!_reactions.containsKey(guid)) _reactions[guid] = <Message>[];
+        _reactions[guid].add(element);
+      }
+    });
+    _messageController.sink.add(_allMessages);
   }
 
   void dispose() {
