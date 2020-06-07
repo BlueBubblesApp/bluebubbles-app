@@ -147,47 +147,69 @@ class SocketManager {
       _manager.socket.connect();
       _manager.socket.unSubscribesAll();
 
-      // Let us know when our device was added
+      /**
+       * Callback event for when the server successfully added a new FCM device
+       */
       _manager.socket.subscribe("fcm-device-id-added", (data) {
+        // TODO: Possibly turn this into a notification for the user?
+        // This could act as a "pseudo" security measure so they're alerted
+        // when a new device is registered
         debugPrint("fcm device added: " + data.toString());
       });
 
-      // Let us know when there is an error
+      /**
+       * If the server sends us an error it ran into, handle it
+       */
       _manager.socket.subscribe("error", (data) {
         debugPrint("An error occurred: " + data.toString());
       });
+
+      /**
+       * Handle new messages detected by the server
+       */
       _manager.socket.subscribe("new-message", (_data) async {
-        // debugPrint(data.toString());
-        debugPrint("new-message");
+        debugPrint("Client received new message");
         Map<String, dynamic> data = jsonDecode(_data);
         if (SocketManager().processedGUIDS.contains(data["guid"])) {
           return new Future.value("");
         } else {
           SocketManager().processedGUIDS.add(data["guid"]);
         }
+
+        // If there are no chats, there's nothing to associate the message to, so skip
         if (data["chats"].length == 0) return new Future.value("");
-        Chat chat = await Chat.findOne({"guid": data["chats"][0]["guid"]});
-        if (chat == null) {
-          debugPrint("could not find chat, returning");
-          return new Future.value("");
-        }
-        SocketManager().handleNewMessage(data, chat);
-        if (data["isFromMe"]) {
-          return new Future.value("");
-        }
 
-        // String message = data["text"].toString();
-
-        // await _showNotificationWithDefaultSound(0, title, message);
+        for (int i = 0; i < data["chats"].length; i++) {
+          Chat chat = Chat.fromMap(data["chats"][i]);
+          await chat.save();
+          SocketManager().handleNewMessage(data, chat);
+        }
 
         return new Future.value("");
       });
 
+      /**
+       * When the server detects a message timeout (aka, no match found),
+       * handle it by replacing the temp-guid with error-guid so we can do
+       * something about it (or at least just track it)
+       */
+      _manager.socket.subscribe("message-timeout", (_data) async {
+        debugPrint("Client received message timeout");
+        Map<String, dynamic> data = jsonDecode(_data);
+
+        Message message = await Message.findOne({"guid": data["tempGuid"]});
+        message.guid = message.guid.replaceAll("temp", "error");
+        await Message.replaceMessage(data["tempGuid"], message);
+        return new Future.value("");
+      });
+
+      /**
+       * When an updated message comes in, update it in the database.
+       * This may be when a read/delivered date has been changed.
+       */
       _manager.socket.subscribe("updated-message", (_data) async {
         debugPrint("updated-message");
         updateMessage(_data);
-        // Map<String, dynamic> data = jsonDecode(_data);
-        // debugPrint("updated message: " + data.toString());
       });
     } catch (e) {
       debugPrint("FAILED TO CONNECT");
@@ -242,42 +264,31 @@ class SocketManager {
 
   void handleNewMessage(Map<String, dynamic> data, Chat chat) async {
     Message message = new Message.fromMap(data);
-    if (message.isFromMe) {
-      debugPrint("new message from me");
-      await Future.delayed(const Duration(seconds: 5), () async {
-        Message existingMessage = await Message.findOne({"guid": message.guid});
-        if (existingMessage == null) {
-          await chat.save();
-          await chat.addMessage(message);
 
-          List<dynamic> attachments = data['attachments'];
-
-          attachments.forEach((attachmentItem) async {
-            Attachment file = Attachment.fromMap(attachmentItem);
-            await file.save(message);
-            if (SettingsManager().settings.autoDownload)
-              new AttachmentDownloader(file);
-          });
-          NewMessageManager().updateWithMessage(chat, message);
-        }
-      });
+    // Handle message differently depending on if there is a temp GUID match
+    if (data.containsKey("tempGuid")) {
+      debugPrint("Client received message match for ${data["guid"]}");
+      await Message.replaceMessage(data["tempGuid"], message);
     } else {
-      await chat.save();
+      debugPrint("Client received new message " + chat.guid);
+      message = new Message.fromMap(data);
       await chat.addMessage(message);
-      debugPrint("new message " + chat.guid);
-      List<dynamic> attachments = data['attachments'];
-
-      attachments.forEach((attachmentItem) async {
-        Attachment file = Attachment.fromMap(attachmentItem);
-        await file.save(message);
-        if (SettingsManager().settings.autoDownload)
-          new AttachmentDownloader(file);
-      });
-      if (!chatsWithNotifications.contains(chat.guid)) {
-        chatsWithNotifications.add(chat.guid);
-      }
-      NewMessageManager().updateWithMessage(chat, message);
     }
+
+    // Add any related attachments
+    List<dynamic> attachments = data.containsKey("attachments") ? data['attachments'] : [];
+    attachments.forEach((attachmentItem) async {
+      Attachment file = Attachment.fromMap(attachmentItem);
+      await file.save(message);
+      if (SettingsManager().settings.autoDownload)
+        new AttachmentDownloader(file);
+    });
+
+    if (!chatsWithNotifications.contains(chat.guid)) {
+      chatsWithNotifications.add(chat.guid);
+    }
+
+    NewMessageManager().updateWithMessage(chat, message);
   }
 
   void finishSetup() {
@@ -286,13 +297,13 @@ class SocketManager {
     // notify();
   }
 
-  void sendMessage(Chat chat, String text,
-      {List<Attachment> attachments = const []}) async {
+  void sendMessage(Chat chat, String text, {List<Attachment> attachments = const []}) async {
     debugPrint(chat.participants.toString());
     Map<String, dynamic> params = new Map();
     params["guid"] = chat.guid;
     params["message"] = text;
     String tempGuid = "temp-${randomString(8)}";
+    params["tempGuid"] = tempGuid;
 
     // Create the message
     Message sentMessage = Message(
@@ -317,15 +328,12 @@ class SocketManager {
       Map response = jsonDecode(data);
       debugPrint("message sent: " + response.toString());
 
-      // Find the message and update the message with the new GUID
-      if (response['status'] == 200) {
-        processedGUIDS.add(response['data']['guid']);
-        await Message.replaceMessage(
-            tempGuid, Message.fromMap(response['data']));
-      } else {
-        // If there is an error, replace the temp value with an error
+      // If there is an error, replace the temp value with an error
+      if (response['status'] != 200) {
         sentMessage.guid = sentMessage.guid.replaceAll("temp", "error");
         await Message.replaceMessage(tempGuid, sentMessage);
+        
+        // TODO: Display an error next to message that failed to send (in message list)
       }
     });
   }
