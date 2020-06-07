@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:bluebubble_messages/managers/contact_manager.dart';
+import 'package:bluebubble_messages/repository/models/attachment.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -144,6 +145,31 @@ class Chat {
     }
 
     return this;
+  }
+
+  static Future<List<Attachment>> getAttachments(Chat chat, {int offset = 0, int limit = 100}) async {
+    final Database db = await DBProvider.db.database;
+
+    String query = ("SELECT"
+        " attachment.ROWID AS ROWID,"
+        " attachment.guid AS guid,"
+        " attachment.uti AS uti,"
+        " attachment.mimeType AS mimeType,"
+        " attachment.totalBytes AS totalBytes,"
+        " attachment.transferName AS transferName"
+        " FROM attachment"
+        " JOIN message_attachment_join AS maj ON maj.attachment_id = attachment.ROWID"
+        " JOIN message ON maj.message_id = message.ROWID"
+        " JOIN chat_message_join AS cmj ON cmj.message_id = message.ROWID"
+        " JOIN chat ON chat.ROWID = cmj.chat_id"
+        " WHERE chat.ROWID = ?");
+
+    // Add pagination
+    query += " ORDER BY message.dateCreated DESC LIMIT $limit OFFSET $offset";
+
+    // Execute the query
+    var res = await db.rawQuery("$query;", [chat.id]);
+    return res == null ? [] : res.map((attachment) => Attachment.fromMap(attachment));
   }
 
   static Future<List<Message>> getMessages(Chat chat,
