@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:ui';
 
 import 'package:bluebubble_messages/helpers/attachment_downloader.dart';
 import 'package:bluebubble_messages/helpers/utils.dart';
@@ -7,6 +8,7 @@ import 'package:bluebubble_messages/managers/settings_manager.dart';
 import 'package:bluebubble_messages/repository/models/attachment.dart';
 import 'package:bluebubble_messages/socket_manager.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
 
 import '../../helpers/hex_color.dart';
@@ -42,18 +44,26 @@ class _MessageState extends State<MessageWidget> {
   final String dislike = "dislike";
   final String question = "question";
   final String emphasize = "emphasize";
+  final String laugh = "laugh";
   Map<String, List<Message>> reactions = new Map();
 
   @override
   void didChangeDependencies() async {
     super.didChangeDependencies();
-    // Handle handle = await widget.message.from.update();
-    // debugPrint("handle id is ${widget.message.from.address}");
+
     reactions[like] = [];
     reactions[love] = [];
     reactions[dislike] = [];
     reactions[question] = [];
     reactions[emphasize] = [];
+    reactions[laugh] = [];
+
+    widget.reactions.forEach((reaction) {
+      if (!reaction.isFromMe) {
+        debugPrint(reaction.handle.toString());
+      }
+      reactions[reaction.associatedMessageType].add(reaction);
+    });
   }
 
   @override
@@ -129,17 +139,19 @@ class _MessageState extends State<MessageWidget> {
           ],
         ));
       } else if (images[i] is Attachment) {
-        content.add(RaisedButton(
-          onPressed: () {
-            images[i] = new AttachmentDownloader(images[i]);
-            setState(() {});
-          },
-          color: HexColor('26262a'),
-          child: Text(
-            "Download",
-            style: TextStyle(color: Colors.white),
+        content.add(
+          RaisedButton(
+            onPressed: () {
+              images[i] = new AttachmentDownloader(images[i]);
+              setState(() {});
+            },
+            color: HexColor('26262a'),
+            child: Text(
+              "Download",
+              style: TextStyle(color: Colors.white),
+            ),
           ),
-        ));
+        );
       } else if (images[i] is AttachmentDownloader) {
         content.add(
           StreamBuilder(
@@ -170,12 +182,6 @@ class _MessageState extends State<MessageWidget> {
                   value: progress,
                 );
               }
-              // } else {
-              //   return Text(
-              //     "Error loading",
-              //     style: TextStyle(color: Colors.white),
-              //   );
-              // }
             },
           ),
         );
@@ -237,36 +243,44 @@ class _MessageState extends State<MessageWidget> {
       crossAxisAlignment: CrossAxisAlignment.end,
       children: <Widget>[
         _buildTimeStamp(),
-        Padding(
-          padding: EdgeInsets.only(bottom: showTail ? 10.0 : 3.0),
-          child: Stack(
-            alignment: AlignmentDirectional.bottomEnd,
-            children: <Widget>[
-              Stack(
-                alignment: AlignmentDirectional.bottomEnd,
-                children: stack,
-              ),
-              Container(
-                margin: EdgeInsets.symmetric(
-                  horizontal: 10,
+        // _buildReactions(),
+        _buildReactions(),
+        GestureDetector(
+          onLongPress: () {
+            Overlay.of(context).insert(_createOverlayEntry());
+          },
+          child: Padding(
+            padding: EdgeInsets.only(bottom: showTail ? 10.0 : 3.0),
+            child: Stack(
+              alignment: AlignmentDirectional.bottomEnd,
+              children: <Widget>[
+                Stack(
+                  alignment: AlignmentDirectional.bottomEnd,
+                  children: stack,
                 ),
-                constraints: BoxConstraints(
-                  maxWidth: MediaQuery.of(context).size.width * 3 / 4,
+                Container(
+                  margin: EdgeInsets.symmetric(
+                    horizontal: 10,
+                  ),
+                  constraints: BoxConstraints(
+                    maxWidth: MediaQuery.of(context).size.width * 3 / 4,
+                  ),
+                  padding: EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(20),
+                    color: Colors.blue,
+                  ),
+                  // color: Colors.blue,
+                  // height: 20,
+                  child: Column(
+                    children: _constructContent(),
+                  ),
                 ),
-                padding: EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20),
-                  color: Colors.blue,
-                ),
-                // color: Colors.blue,
-                // height: 20,
-                child: Column(
-                  children: _constructContent(),
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
+        _buildDelieveredReceipt()
       ],
     );
   }
@@ -308,8 +322,10 @@ class _MessageState extends State<MessageWidget> {
       contactItem = Padding(
         padding: EdgeInsets.only(left: 25.0, top: 5.0, bottom: 3.0),
         child: Text(
-          getContactTitle(
-              ContactManager().contacts, widget.message.handle.address),
+          widget.message.handle != null
+              ? getContactTitle(
+                  ContactManager().contacts, widget.message.handle.address)
+              : "",
           style: TextStyle(
             color: Colors.white,
             fontSize: 12,
@@ -323,34 +339,40 @@ class _MessageState extends State<MessageWidget> {
       children: <Widget>[
         _buildTimeStamp(),
         contactItem,
-        Padding(
-          padding: EdgeInsets.only(bottom: showTail ? 10.0 : 3.0),
-          child: Stack(
-            alignment: AlignmentDirectional.bottomStart,
-            children: <Widget>[
-              Stack(
-                alignment: AlignmentDirectional.bottomStart,
-                children: stack,
-              ),
-              Container(
-                margin: EdgeInsets.symmetric(
-                  horizontal: 10,
+        _buildReactions(),
+        GestureDetector(
+          onLongPress: () {
+            Overlay.of(context).insert(_createOverlayEntry());
+          },
+          child: Padding(
+            padding: EdgeInsets.only(bottom: showTail ? 10.0 : 3.0),
+            child: Stack(
+              alignment: AlignmentDirectional.bottomStart,
+              children: <Widget>[
+                Stack(
+                  alignment: AlignmentDirectional.bottomStart,
+                  children: stack,
                 ),
-                constraints: BoxConstraints(
-                  maxWidth: MediaQuery.of(context).size.width * 3 / 4,
+                Container(
+                  margin: EdgeInsets.symmetric(
+                    horizontal: 10,
+                  ),
+                  constraints: BoxConstraints(
+                    maxWidth: MediaQuery.of(context).size.width * 3 / 4,
+                  ),
+                  padding: EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(20),
+                    color: HexColor('26262a'),
+                  ),
+                  // color: Colors.blue,
+                  // height: 20,
+                  child: Column(
+                    children: _constructContent(),
+                  ),
                 ),
-                padding: EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20),
-                  color: HexColor('26262a'),
-                ),
-                // color: Colors.blue,
-                // height: 20,
-                child: Column(
-                  children: _constructContent(),
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ],
@@ -397,5 +419,162 @@ class _MessageState extends State<MessageWidget> {
     } else {
       return _buildReceivedMessage();
     }
+  }
+
+  Widget _buildDelieveredReceipt() {
+    if (!showTail) return Container();
+    if (widget.message.dateRead != null) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: <Widget>[
+            Text(
+              "Read",
+              style: TextStyle(
+                color: Colors.white,
+              ),
+            )
+          ],
+        ),
+      );
+    } else if (widget.message.dateDelivered != null) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: <Widget>[
+            Text(
+              "Delivered",
+              style: TextStyle(
+                color: Colors.white,
+              ),
+            )
+          ],
+        ),
+      );
+    } else {
+      return Container();
+    }
+  }
+
+  Widget _buildReactions() {
+    if (widget.reactions.length == 0) return Container();
+    Widget reactionIcon = Container();
+    reactions.keys.forEach((String key) {
+      if (reactions[key].length != 0) {
+        reactionIcon = Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: SvgPicture.asset(
+            'assets/reactions/$key-black.svg',
+            color: key == love ? Colors.pink : Colors.white,
+          ),
+        );
+      }
+    });
+    return Row(
+      mainAxisAlignment: widget.message.isFromMe
+          ? MainAxisAlignment.end
+          : MainAxisAlignment.start,
+      children: <Widget>[
+        Stack(
+          alignment: Alignment.bottomLeft,
+          children: <Widget>[
+            Container(
+              height: 30,
+              width: 30,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(100),
+                color: HexColor('26262a'),
+              ),
+              child: reactionIcon,
+            )
+          ],
+        ),
+      ],
+    );
+    // return Text("test");
+  }
+
+  OverlayEntry _createOverlayEntry() {
+    List<Widget> reactioners = <Widget>[];
+    reactions.keys.forEach(
+      (element) {
+        reactions[element].forEach(
+          (reaction) async {
+            if (reaction.handle != null) {
+              reactioners.add(
+                Text(
+                  getContactTitle(
+                      ContactManager().contacts, reaction.handle.address),
+                  style: TextStyle(
+                    color: Colors.white,
+                  ),
+                ),
+              );
+            }
+            // }
+          },
+        );
+      },
+    );
+
+    OverlayEntry entry;
+    entry = OverlayEntry(
+      builder: (context) => Scaffold(
+        backgroundColor: Colors.transparent,
+        body: Stack(
+          children: <Widget>[
+            Positioned.fill(
+              child: GestureDetector(
+                onTap: () {
+                  debugPrint("remove entry");
+                  entry.remove();
+                },
+                child: Container(
+                  color: Colors.black.withAlpha(200),
+                  child: Column(
+                    children: <Widget>[
+                      Spacer(
+                        flex: 3,
+                      ),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(20),
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                          child: Container(
+                            height: 120,
+                            width: MediaQuery.of(context).size.width * 9 / 5,
+                            color: HexColor('26262a').withAlpha(200),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: reactioners,
+                            ),
+                          ),
+                        ),
+                      ),
+                      Spacer(
+                        flex: 20,
+                      ),
+                    ],
+                  ),
+                  // child: Column(
+                  //   children: <Widget>[
+                  //     Spacer(
+                  //       flex: 1,
+                  //     ),
+                  //     Container(
+                  //       color: HexColor('26262a'),
+                  //     )
+                  //   ],
+                  // ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+    return entry;
   }
 }

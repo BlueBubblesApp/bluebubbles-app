@@ -3,12 +3,14 @@ import 'dart:convert';
 
 import 'package:bluebubble_messages/helpers/utils.dart';
 import 'package:bluebubble_messages/managers/contact_manager.dart';
+import 'package:bluebubble_messages/managers/life_cycle_manager.dart';
 import 'package:bluebubble_messages/managers/method_channel_interface.dart';
 import 'package:bluebubble_messages/managers/notification_manager.dart';
 import 'package:bluebubble_messages/managers/settings_manager.dart';
 import 'package:bluebubble_messages/repository/database.dart';
 import 'package:bluebubble_messages/repository/models/chat.dart';
 import 'package:bluebubble_messages/layouts/setup/setup_view.dart';
+import 'package:cupertino_back_gesture/cupertino_back_gesture.dart';
 import 'package:flutter/scheduler.dart' hide Priority;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
@@ -32,13 +34,25 @@ class Main extends StatelessWidget with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'BlueBubbles',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        splashFactory: InkRipple.splashFactory,
+    return BackGestureWidthTheme(
+      backGestureWidth: BackGestureWidth.fraction(1),
+      child: MaterialApp(
+        title: 'BlueBubbles',
+        theme: ThemeData(
+          primarySwatch: Colors.blue,
+          // accentColor: Colors.white,
+          splashFactory: InkRipple.splashFactory,
+          pageTransitionsTheme: PageTransitionsTheme(
+            builders: {
+              TargetPlatform.android:
+                  CupertinoPageTransitionsBuilderCustomBackGestureWidth(),
+              TargetPlatform.iOS:
+                  CupertinoPageTransitionsBuilderCustomBackGestureWidth(),
+            },
+          ),
+        ),
+        home: Home(),
       ),
-      home: Home(),
     );
   }
 }
@@ -73,9 +87,9 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.paused) {
-      SocketManager().closeSocket();
+      LifeCycleManager().close();
     } else if (state == AppLifecycleState.resumed) {
-      SocketManager().startSocketIO();
+      LifeCycleManager().opened();
     }
   }
 

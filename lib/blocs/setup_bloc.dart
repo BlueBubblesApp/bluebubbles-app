@@ -24,7 +24,8 @@ class SetupBloc {
 
   void startSync(Settings settings) {
     debugPrint(settings.toJson().toString());
-    SettingsManager().saveSettings(settings, true, () => onConnect());
+    SettingsManager().saveSettings(settings,
+        connectToSocket: true, connectCb: () => onConnect());
   }
 
   void onConnect() {
@@ -81,7 +82,7 @@ class SetupBloc {
     Settings _settingsCopy = SettingsManager().settings;
     _settingsCopy.finishedSetup = true;
     _finishedSetup = true;
-    SettingsManager().saveSettings(_settingsCopy, false);
+    SettingsManager().saveSettings(_settingsCopy, connectToSocket: false);
     SocketManager().finishSetup();
   }
 

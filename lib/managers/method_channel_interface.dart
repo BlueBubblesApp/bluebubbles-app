@@ -40,6 +40,7 @@ class MethodChannelInterface {
   }
 
   Future<dynamic> callHandler(call) async {
+    debugPrint("call handler: " + call.method);
     switch (call.method) {
       case "new-server":
         debugPrint("New Server: " + call.arguments.toString());
@@ -47,7 +48,8 @@ class MethodChannelInterface {
         SettingsManager().settings.serverAddress = call.arguments
             .toString()
             .substring(1, call.arguments.toString().length - 1);
-        SettingsManager().saveSettings(SettingsManager().settings, true);
+        SettingsManager().saveSettings(SettingsManager().settings,
+            connectToSocket: true, authorizeFCM: false);
         return new Future.value("");
       case "new-message":
         Map<String, dynamic> data = jsonDecode(call.arguments);
@@ -63,7 +65,7 @@ class MethodChannelInterface {
         message = await message.save();
         if (!message.isFromMe)
           NotificationManager().createNewNotification(
-              title, message.text, chat.guid, message.id);
+              title, message.text, chat.guid, message.id, chat.id);
 
         if (SocketManager().processedGUIDS.contains(data["guid"])) {
           debugPrint("contains guid");
@@ -77,6 +79,7 @@ class MethodChannelInterface {
         return new Future.value("");
       case "updated-message":
         debugPrint("update message");
+        SocketManager().updateMessage(jsonDecode(call.arguments));
         return new Future.value("");
       case "ChatOpen":
         debugPrint("open chat " + call.arguments.toString());
@@ -99,7 +102,7 @@ class MethodChannelInterface {
       String title = await chatTitle(openedChat);
 
       Navigator.of(_context).pushAndRemoveUntil(
-        CupertinoPageRoute(
+        MaterialPageRoute(
           builder: (context) => ConversationView(
             chat: openedChat,
             messageBloc: ChatBloc().tileVals[openedChat.guid]["bloc"],

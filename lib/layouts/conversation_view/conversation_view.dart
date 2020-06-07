@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:bluebubble_messages/helpers/utils.dart';
 import 'package:bluebubble_messages/blocs/message_bloc.dart';
+import 'package:bluebubble_messages/layouts/conversation_details/conversation_details.dart';
 import 'package:bluebubble_messages/layouts/conversation_view/messages_view.dart';
 import 'package:bluebubble_messages/layouts/conversation_view/text_field.dart';
 import 'package:bluebubble_messages/repository/models/handle.dart';
@@ -59,6 +60,21 @@ class _ConversationViewState extends State<ConversationView> {
         middle: Text(
           widget.title,
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.normal),
+        ),
+        trailing: GestureDetector(
+          child: Icon(
+            Icons.info,
+            color: Colors.blue,
+          ),
+          onTap: () async {
+            Chat chat = await widget.chat.getParticipants();
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                  builder: (context) => ConversationDetails(
+                        chat: chat,
+                      )),
+            );
+          },
         ),
         // leading: IconButton(
         //   icon: Icon(

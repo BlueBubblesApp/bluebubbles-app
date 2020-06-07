@@ -25,8 +25,10 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
+import android.service.notification.StatusBarNotification;
 import android.util.Log;
 
+import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
@@ -35,6 +37,12 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
+import com.google.firebase.database.ChildEventListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.iid.InstanceIdResult;
 import com.google.firebase.messaging.FirebaseMessaging;
@@ -48,6 +56,25 @@ public class MainActivity extends FlutterActivity {
     FirebaseApp app;
     public FlutterEngine engine;
     public Long callbackHandle;
+    private DatabaseReference db;
+
+
+    private ValueEventListener dbListener = new ValueEventListener() {
+        @Override
+        public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+            Log.d("firebase", "data changed");
+            String serverURL =  dataSnapshot.child("config").child("serverUrl").getValue().toString();
+            Log.d("firebase", "new server: " + serverURL);
+            if(engine != null) {
+                new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod("new-server", "[" + serverURL + "]");
+            }
+        }
+
+        @Override
+        public void onCancelled(@NonNull DatabaseError databaseError) {
+
+        }
+    };
 
 
     @Override
@@ -68,7 +95,6 @@ public class MainActivity extends FlutterActivity {
                                             .setGcmSenderId(call.argument("client_id"))
                                             .setApplicationId(call.argument("application_id"))
                                             .build());
-
                                 }
                                 FirebaseInstanceId.getInstance(app).getInstanceId()
                                         .addOnCompleteListener(new OnCompleteListener<InstanceIdResult>() {
@@ -85,6 +111,13 @@ public class MainActivity extends FlutterActivity {
                                                 }
                                             }
                                         });
+                                db = FirebaseDatabase.getInstance(app).getReference();
+                                try{
+                                    db.removeEventListener(dbListener);
+                                } catch(Exception e) {
+
+                                }
+                                db.addValueEventListener(dbListener);
                             } else if (call.method.equals("create-notif-channel")) {
                                 createNotificationChannel(call.argument("channel_name"), call.argument("channel_description"), call.argument("CHANNEL_ID"));
                                 result.success("");
@@ -111,8 +144,21 @@ public class MainActivity extends FlutterActivity {
                                         .addAction(dismissAction)
                                         .addAction(replyAction)
                                         .setGroup(call.argument("group"));
+//                                        .setGroup("messageGroup");
+
+                                NotificationCompat.Builder summaryBuilder = new NotificationCompat.Builder(this, call.argument("CHANNEL_ID"))
+                                        .setSmallIcon(R.mipmap.ic_launcher)
+                                        .setContentTitle("New messages")
+                                        .setGroup(call.argument("group"))
+//                                        .setGroup("messageGroup")
+                                        .setGroupSummary(true);
+
                                 NotificationManagerCompat notificationManager = NotificationManagerCompat.from(getContext());
+//                                NotificationManager manager = (NotificationManager) getApplicationContext().getSystemService(getApplicationContext().NOTIFICATION_SERVICE);
+//                                StatusBarNotification[] activeNotifications = manager.getActiveNotifications();
+
                                 notificationManager.notify(call.argument("notificationId"), builder.build());
+                                notificationManager.notify(call.argument("summaryId"), summaryBuilder.build());
                                 result.success("");
                             } else {
                                 result.notImplemented();
@@ -162,7 +208,6 @@ public class MainActivity extends FlutterActivity {
 
         @Override
         public void onServiceDisconnected(ComponentName name) {
-            backgroundService.isAlive = false;
             backgroundService = null;
 
             // Close the DB connection
@@ -185,8 +230,13 @@ public class MainActivity extends FlutterActivity {
     protected void onDestroy() {
         Log.d("MainActivity", "removed from memory");
 //        unregisterReceiver(mMessageReceiver);
+        if (backgroundService != null) {
+            backgroundService.isAlive = false;
+            Log.d("isAlive", "set isAlive to false");
+        }
         try {
             getApplicationContext().unbindService(mServerConn);
+            unregisterReceiver(mMessageReceiver);
         } catch (Exception e) {
             e.printStackTrace();
             Log.d("isolate", "unable to unbind service");

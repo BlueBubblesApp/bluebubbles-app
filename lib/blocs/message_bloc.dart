@@ -101,11 +101,12 @@ class MessageBloc {
   }
 
   Future<void> getReactions(int offset) async {
-    List<Message> reactions = await Chat.getMessages(_currentChat,
+    List<Message> reactionsResult = await Chat.getMessages(_currentChat,
         reactionsOnly: true, offset: offset);
     _reactions = new Map();
-    reactions.forEach((element) {
+    reactionsResult.forEach((element) {
       if (element.associatedMessageGuid != null) {
+        // debugPrint(element.handle.toString());
         String guid = element.associatedMessageGuid
             .substring(element.associatedMessageGuid.indexOf("/") + 1);
 
@@ -118,8 +119,5 @@ class MessageBloc {
 
   void dispose() {
     _allMessages = <Message>[];
-
-    // _messageController.close();
-    // Singleton().unsubscribe(_currentChat.guid);
   }
 }

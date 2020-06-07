@@ -17,14 +17,15 @@ class NotificationManager {
     });
   }
 
-  void createNewNotification(
-      String contentTitle, String contentText, String group, int id) {
+  void createNewNotification(String contentTitle, String contentText,
+      String group, int id, int summaryId) {
     MethodChannelInterface().platform.invokeMethod("new-message-notification", {
       "CHANNEL_ID": "com.bluebubbles.new_messages",
       "contentTitle": contentTitle,
       "contentText": contentText,
       "group": group,
       "notificationId": id,
+      "summaryId": summaryId,
     });
   }
 }

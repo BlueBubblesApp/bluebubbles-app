@@ -195,13 +195,22 @@ class SocketManager {
   }
 
   void closeSocket() {
-    _manager.socket.destroy();
+    if (_manager.socket != null) _manager.socket.destroy();
     _manager.socket = null;
   }
 
   Future<void> authFCM() async {
     if (SettingsManager().settings.fcmAuthData == null) {
       debugPrint("No FCM Auth data found. Skipping FCM authentication");
+      return;
+    } else if (token != null) {
+      debugPrint("already authorized fcm " + token);
+      if (_manager.socket != null) {
+        _manager.socket.sendMessage(
+            "add-fcm-device",
+            jsonEncode({"deviceId": token, "deviceName": "android-client"}),
+            () {});
+      }
       return;
     }
 
@@ -223,53 +232,51 @@ class SocketManager {
   }
 
   void updateMessage(Map<String, dynamic> data) async {
-    // Message updatedMessage = new Message.fromMap(data);
-    // updatedMessage =
-    //     await Message.replaceMessage(updatedMessage.guid, updatedMessage);
-    // updatedMessage.save();
-    // debugPrint("updated message with ROWID " + updatedMessage.id.toString());
+    Message updatedMessage = new Message.fromMap(data);
+    updatedMessage =
+        await Message.replaceMessage(updatedMessage.guid, updatedMessage);
+    updatedMessage.save();
+    NewMessageManager().updateWithMessage(null, null);
+    debugPrint("updated message with ROWID " + updatedMessage.id.toString());
   }
 
-  void handleNewMessage(Map<String, dynamic> data, Chat chat) {
+  void handleNewMessage(Map<String, dynamic> data, Chat chat) async {
     Message message = new Message.fromMap(data);
     if (message.isFromMe) {
-      Timer(Duration(seconds: 3), () {
-        if (!processedGUIDS.contains(message.guid)) {
-          chat.save().then((_chat) {
-            _chat.addMessage(message).then((value) {
-              // if (value == null) {
-              //   return;
-              // }
+      debugPrint("new message from me");
+      await Future.delayed(const Duration(seconds: 5), () async {
+        Message existingMessage = await Message.findOne({"guid": message.guid});
+        if (existingMessage == null) {
+          await chat.save();
+          await chat.addMessage(message);
 
-              debugPrint("new message " + message.text);
-              // Create the attachments
-              List<dynamic> attachments = data['attachments'];
+          List<dynamic> attachments = data['attachments'];
 
-              attachments.forEach((attachmentItem) {
-                Attachment file = Attachment.fromMap(attachmentItem);
-                file.save(message);
-              });
-              NewMessageManager().updateWithMessage(_chat, message);
-            });
+          attachments.forEach((attachmentItem) async {
+            Attachment file = Attachment.fromMap(attachmentItem);
+            await file.save(message);
+            if (SettingsManager().settings.autoDownload)
+              new AttachmentDownloader(file);
           });
+          NewMessageManager().updateWithMessage(chat, message);
         }
       });
     } else {
-      chat.addMessage(message).then((value) {
-        // if (value == null) return;
-        // Create the attachments
-        debugPrint("new message " + chat.guid);
-        List<dynamic> attachments = data['attachments'];
+      await chat.save();
+      await chat.addMessage(message);
+      debugPrint("new message " + chat.guid);
+      List<dynamic> attachments = data['attachments'];
 
-        attachments.forEach((attachmentItem) {
-          Attachment file = Attachment.fromMap(attachmentItem);
-          file.save(message);
-        });
-        if (!chatsWithNotifications.contains(chat.guid)) {
-          chatsWithNotifications.add(chat.guid);
-        }
-        NewMessageManager().updateWithMessage(chat, message);
+      attachments.forEach((attachmentItem) async {
+        Attachment file = Attachment.fromMap(attachmentItem);
+        await file.save(message);
+        if (SettingsManager().settings.autoDownload)
+          new AttachmentDownloader(file);
       });
+      if (!chatsWithNotifications.contains(chat.guid)) {
+        chatsWithNotifications.add(chat.guid);
+      }
+      NewMessageManager().updateWithMessage(chat, message);
     }
   }
 
