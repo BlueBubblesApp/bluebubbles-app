@@ -156,7 +156,7 @@ class _ConversationListState extends State<ConversationList> {
                               color: HexColor('26262a'),
                               onPressed: () {
                                 Navigator.of(context).push(
-                                  CupertinoPageRoute(
+                                  MaterialPageRoute(
                                     builder: (BuildContext context) {
                                       return SettingsPanel();
                                     },
@@ -185,7 +185,9 @@ class _ConversationListState extends State<ConversationList> {
                                 Navigator.of(context).push(
                                   MaterialPageRoute(
                                     builder: (BuildContext context) {
-                                      return NewChatCreator();
+                                      return NewChatCreator(
+                                        isCreator: true,
+                                      );
                                     },
                                   ),
                                 );

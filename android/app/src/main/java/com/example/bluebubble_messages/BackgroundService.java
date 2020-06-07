@@ -55,7 +55,7 @@ public class BackgroundService extends Service {
     public void onCreate() {
 //       startForegroundService()
         Log.d("isolate", "created background service");
-        
+
         DatabaseHelper helper = DatabaseHelper.getInstance(this);
         this.db = helper.getWritableDatabase();
 
@@ -63,7 +63,7 @@ public class BackgroundService extends Service {
     }
 
     public void saveMessage(String _data) {
-//        if (isAlive || this.db == null) return;
+        if (isAlive || this.db == null) return;
         Map<String, Object> data = null;
         try {
             JSONObject jObject = new JSONObject(_data);
@@ -75,7 +75,7 @@ public class BackgroundService extends Service {
 
         // Decode the message
         Message message = Message.fromMap(data, this);
-        
+
         // Iterate each chat and save the message
         List<Map<String, Object>> chats = (List<Map<String, Object>>) data.get("chats");
         for (int i = 0; i < chats.size(); i++) {
@@ -106,7 +106,7 @@ public class BackgroundService extends Service {
     private Map<String, Object> jsonToMap(JSONObject json) throws JSONException {
         Map<String, Object> retMap = new HashMap<String, Object>();
 
-        if(json != JSONObject.NULL) {
+        if (json != JSONObject.NULL) {
             retMap = this.toMap(json);
         }
         return retMap;
@@ -116,15 +116,13 @@ public class BackgroundService extends Service {
         Map<String, Object> map = new HashMap<String, Object>();
 
         Iterator<String> keysItr = object.keys();
-        while(keysItr.hasNext()) {
+        while (keysItr.hasNext()) {
             String key = keysItr.next();
             Object value = object.get(key);
 
-            if(value instanceof JSONArray) {
+            if (value instanceof JSONArray) {
                 value = this.toList((JSONArray) value);
-            }
-
-            else if(value instanceof JSONObject) {
+            } else if (value instanceof JSONObject) {
                 value = this.toMap((JSONObject) value);
             }
             map.put(key, value);
@@ -134,13 +132,11 @@ public class BackgroundService extends Service {
 
     private List<Object> toList(JSONArray array) throws JSONException {
         List<Object> list = new ArrayList<Object>();
-        for(int i = 0; i < array.length(); i++) {
+        for (int i = 0; i < array.length(); i++) {
             Object value = array.get(i);
-            if(value instanceof JSONArray) {
+            if (value instanceof JSONArray) {
                 value = toList((JSONArray) value);
-            }
-
-            else if(value instanceof JSONObject) {
+            } else if (value instanceof JSONObject) {
                 value = this.toMap((JSONObject) value);
             }
             list.add(value);

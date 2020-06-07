@@ -1,5 +1,6 @@
 import 'package:bluebubble_messages/blocs/message_bloc.dart';
 import 'package:bluebubble_messages/layouts/conversation_view/message_widget.dart';
+import 'package:bluebubble_messages/repository/models/handle.dart';
 import 'package:bluebubble_messages/repository/models/message.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -61,12 +62,9 @@ class _MessageViewState extends State<MessageView> {
             if (widget.messageBloc.reactions
                 .containsKey(_messages[index - 1].guid)) {
               reactions.addAll(
-                  widget.messageBloc.reactions[_messages[index - 1].guid]);
+                widget.messageBloc.reactions[_messages[index - 1].guid],
+              );
             }
-            // widget.messageBloc.reactions
-            //           .containsKey(_messages[index - 1].guid)
-            //       ? widget.messageBloc.reactions[_messages[index - 1]]
-            //       : null
 
             return MessageWidget(
               key: Key(_messages[index - 1].guid),

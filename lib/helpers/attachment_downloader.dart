@@ -5,6 +5,7 @@ import 'dart:io';
 
 import 'dart:typed_data';
 
+import 'package:bluebubble_messages/managers/life_cycle_manager.dart';
 import 'package:bluebubble_messages/managers/settings_manager.dart';
 import 'package:bluebubble_messages/repository/models/attachment.dart';
 import 'package:bluebubble_messages/socket_manager.dart';
@@ -103,10 +104,12 @@ class AttachmentDownloader {
 
       File file = await writeToFile(bytes, pathName);
       SocketManager().finishDownloader(attachment.guid);
+      LifeCycleManager().finishDownloader();
       _stream.sink.add(file);
     };
 
     SocketManager().addAttachmentDownloader(attachment.guid, this);
+    LifeCycleManager().startDownloader();
     SocketManager().disconnectCallback(() {
       _currentChunk = 0;
       _totalChunks = 0;

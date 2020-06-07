@@ -77,7 +77,7 @@ class _ConversationTileState extends State<ConversationTile> {
       child: InkWell(
         onTap: () async {
           Navigator.of(context).push(
-            CupertinoPageRoute(
+            MaterialPageRoute(
               builder: (BuildContext context) {
                 return ConversationView(
                   chat: widget.chat,

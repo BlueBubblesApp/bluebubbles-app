@@ -206,7 +206,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
     // TODO: implement dispose
     // if (_settingsCopy != Singleton().settings) {
     debugPrint("saving settings");
-    SettingsManager().saveSettings(_settingsCopy, true);
+    SettingsManager().saveSettings(_settingsCopy, connectToSocket: true);
     // }
     super.dispose();
   }

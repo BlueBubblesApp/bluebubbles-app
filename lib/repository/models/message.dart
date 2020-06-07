@@ -131,7 +131,8 @@ class Message {
             : null,
         itemType: json.containsKey("itemType") ? json["itemType"] : null,
         groupTitle: json.containsKey("groupTitle") ? json["groupTitle"] : null,
-        groupActionType: (json["groupActionType"] != null) ? json["groupActionType"] : 0,
+        groupActionType:
+            (json["groupActionType"] != null) ? json["groupActionType"] : 0,
         isExpired: (json["isExpired"] is bool)
             ? json['isExpired']
             : ((json['isExpired'] == 1) ? true : false),
