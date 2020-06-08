@@ -212,13 +212,17 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField> {
                               color: Colors.blue,
                               onPressed: () {
                                 if (pickedImages.length > 0) {
-                                  new AttachmentSender(
-                                    pickedImages.first,
-                                    widget.chat,
-                                    "temp-${randomString(8)}",
-                                    _controller.text,
-                                    "temp-${randomString(8)}",
-                                  );
+                                  for (int i = 0;
+                                      i < pickedImages.length;
+                                      i++) {
+                                    new AttachmentSender(
+                                      pickedImages[i],
+                                      widget.chat,
+                                      i == pickedImages.length - 1
+                                          ? _controller.text
+                                          : "",
+                                    );
+                                  }
                                 } else {
                                   SocketManager().sendMessage(
                                       widget.chat, _controller.text);

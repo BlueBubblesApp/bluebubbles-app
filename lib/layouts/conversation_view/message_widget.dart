@@ -46,6 +46,7 @@ class _MessageState extends State<MessageWidget> {
   final String emphasize = "emphasize";
   final String laugh = "laugh";
   Map<String, List<Message>> reactions = new Map();
+  Widget blurredImage;
 
   @override
   void didChangeDependencies() async {
@@ -78,11 +79,7 @@ class _MessageState extends State<MessageWidget> {
     // if (widget.message.hasAttachments) {
     Message.getAttachments(widget.message).then((data) {
       attachments = data;
-      if (widget.message.text != null) {
-        body = widget.message.text.substring(
-            attachments.length); //ensure that the "obj" text doesn't appear
-      }
-
+      body = "";
       if (attachments.length > 0) {
         for (int i = 0; i < attachments.length; i++) {
           String appDocPath = SettingsManager().appDocDir.path;
@@ -103,7 +100,6 @@ class _MessageState extends State<MessageWidget> {
         if (this.mounted) setState(() {});
       }
     });
-    // }
   }
 
   bool sameSender(Message first, Message second) {
@@ -139,17 +135,42 @@ class _MessageState extends State<MessageWidget> {
           ],
         ));
       } else if (images[i] is Attachment) {
+        // debugPrint(images[i].blurhash);
+        blurredImage = (images[i] as Attachment).blurhash != null
+            ? FutureBuilder(
+                future: blurHashDecode((images[i] as Attachment).blurhash),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.done &&
+                      snapshot.hasData) {
+                    return Image.memory(
+                      snapshot.data,
+                      width: 300,
+                      // height: 300,
+                      fit: BoxFit.fitWidth,
+                    );
+                  } else {
+                    return Container();
+                  }
+                },
+              )
+            : Container();
         content.add(
-          RaisedButton(
-            onPressed: () {
-              images[i] = new AttachmentDownloader(images[i]);
-              setState(() {});
-            },
-            color: HexColor('26262a'),
-            child: Text(
-              "Download",
-              style: TextStyle(color: Colors.white),
-            ),
+          Stack(
+            alignment: Alignment.center,
+            children: <Widget>[
+              blurredImage,
+              RaisedButton(
+                onPressed: () {
+                  images[i] = new AttachmentDownloader(images[i]);
+                  setState(() {});
+                },
+                color: HexColor('26262a').withAlpha(100),
+                child: Text(
+                  "Download",
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+            ],
           ),
         );
       } else if (images[i] is AttachmentDownloader) {
@@ -163,7 +184,6 @@ class _MessageState extends State<MessageWidget> {
                   style: TextStyle(color: Colors.white),
                 );
               }
-              // if (snapshot.hasData) {
               if (snapshot.data is File) {
                 return InkWell(
                   onTap: () {
@@ -178,8 +198,15 @@ class _MessageState extends State<MessageWidget> {
                 } else {
                   progress = images[i].progress;
                 }
-                return CircularProgressIndicator(
-                  value: progress,
+
+                return Stack(
+                  alignment: Alignment.center,
+                  children: <Widget>[
+                    blurredImage,
+                    CircularProgressIndicator(
+                      value: progress,
+                    ),
+                  ],
                 );
               }
             },
@@ -195,6 +222,7 @@ class _MessageState extends State<MessageWidget> {
       }
     }
     if (widget.message.text != null &&
+        widget.message.text.length > 0 &&
         widget.message.text.substring(attachments.length).length > 0) {
       content.add(
         Text(

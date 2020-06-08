@@ -40,7 +40,6 @@ class MethodChannelInterface {
   }
 
   Future<dynamic> callHandler(call) async {
-    debugPrint("call handler: " + call.method);
     switch (call.method) {
       case "new-server":
         debugPrint("New Server: " + call.arguments.toString());
@@ -68,7 +67,6 @@ class MethodChannelInterface {
               title, message.text, chat.guid, message.id, chat.id);
 
         if (SocketManager().processedGUIDS.contains(data["guid"])) {
-          debugPrint("contains guid");
           return;
         } else {
           SocketManager().processedGUIDS.add(data["guid"]);

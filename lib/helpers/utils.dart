@@ -1,8 +1,11 @@
 import 'dart:math';
+import 'dart:typed_data';
 
 import 'package:bluebubble_messages/managers/contact_manager.dart';
 import 'package:bluebubble_messages/socket_manager.dart';
+import 'package:blurhash/blurhash.dart';
 import 'package:contacts_service/contacts_service.dart';
+import 'package:flutter/services.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 DateTime parseDate(dynamic value) {
@@ -81,6 +84,16 @@ getInitials(String name, String delimeter) {
       return array[0][0].toUpperCase() +
           array[array.length - 1][0].toUpperCase();
   }
+}
+
+Future<Uint8List> blurHashDecode(String blurhash) async {
+  Uint8List imageDataBytes;
+  try {
+    imageDataBytes = await BlurHash.decode(blurhash, 20, 12);
+  } on PlatformException catch (e) {
+    print(e.message);
+  }
+  return imageDataBytes;
 }
 
 String randomString(int length) {

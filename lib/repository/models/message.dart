@@ -161,7 +161,6 @@ class Message {
 
     // Try to find an existing chat before saving it
     Message existing = await Message.findOne({"guid": this.guid});
-    debugPrint("EXISTING: " + existing.toString());
     if (existing != null) {
       this.id = existing.id;
     }
@@ -192,7 +191,8 @@ class Message {
     return this;
   }
 
-  static Future<Message> replaceMessage(String oldGuid, Message newMessage) async {
+  static Future<Message> replaceMessage(
+      String oldGuid, Message newMessage) async {
     final Database db = await DBProvider.db.database;
     Message existing = await Message.findOne({"guid": oldGuid});
     if (existing == null) {
@@ -207,7 +207,8 @@ class Message {
       params.remove("handle");
     }
 
-    await db.update("message", params, where: "ROWID = ?", whereArgs: [existing.id]);
+    await db.update("message", params,
+        where: "ROWID = ?", whereArgs: [existing.id]);
     return newMessage;
   }
 
@@ -253,7 +254,8 @@ class Message {
         " attachment.transferName AS transferName,"
         " attachment.totalBytes AS totalBytes,"
         " attachment.isSticker AS isSticker,"
-        " attachment.hideAttachment AS hideAttachment"
+        " attachment.hideAttachment AS hideAttachment,"
+        " attachment.blurhash AS blurhash"
         " FROM message"
         " JOIN attachment_message_join AS amj ON message.ROWID = amj.messageId"
         " JOIN attachment ON attachment.ROWID = amj.attachmentId"

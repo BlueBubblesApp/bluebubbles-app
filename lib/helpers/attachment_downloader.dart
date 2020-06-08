@@ -22,10 +22,13 @@ class AttachmentDownloader {
   String _guid = "";
   Function _cb;
   int _chunkSize = 1;
+  Attachment _attachment;
 
   double get progress => (_currentChunk) / _totalChunks;
+  Attachment get attachment => _attachment;
 
   AttachmentDownloader(Attachment attachment) {
+    _attachment = attachment;
     getImage(attachment);
   }
 

@@ -147,7 +147,8 @@ class Chat {
     return this;
   }
 
-  static Future<List<Attachment>> getAttachments(Chat chat, {int offset = 0, int limit = 100}) async {
+  static Future<List<Attachment>> getAttachments(Chat chat,
+      {int offset = 0, int limit = 100}) async {
     final Database db = await DBProvider.db.database;
 
     String query = ("SELECT"
@@ -156,7 +157,8 @@ class Chat {
         " attachment.uti AS uti,"
         " attachment.mimeType AS mimeType,"
         " attachment.totalBytes AS totalBytes,"
-        " attachment.transferName AS transferName"
+        " attachment.transferName AS transferName,"
+        " attachment.blurhash AS blurhash"
         " FROM attachment"
         " JOIN message_attachment_join AS maj ON maj.attachment_id = attachment.ROWID"
         " JOIN message ON maj.message_id = message.ROWID"
@@ -169,7 +171,9 @@ class Chat {
 
     // Execute the query
     var res = await db.rawQuery("$query;", [chat.id]);
-    return res == null ? [] : res.map((attachment) => Attachment.fromMap(attachment));
+    return res == null
+        ? []
+        : res.map((attachment) => Attachment.fromMap(attachment));
   }
 
   static Future<List<Message>> getMessages(Chat chat,

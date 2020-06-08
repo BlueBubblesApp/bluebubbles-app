@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:bluebubble_messages/repository/models/message.dart';
+import 'package:flutter/material.dart';
 import 'package:sqflite/sqflite.dart';
 
 import '../database.dart';

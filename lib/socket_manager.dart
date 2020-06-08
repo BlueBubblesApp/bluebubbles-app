@@ -209,7 +209,7 @@ class SocketManager {
        */
       _manager.socket.subscribe("updated-message", (_data) async {
         debugPrint("updated-message");
-        updateMessage(_data);
+        updateMessage(jsonDecode(_data));
       });
     } catch (e) {
       debugPrint("FAILED TO CONNECT");
@@ -273,17 +273,16 @@ class SocketManager {
       debugPrint("Client received new message " + chat.guid);
       message = new Message.fromMap(data);
       await chat.addMessage(message);
+      // Add any related attachments
+      List<dynamic> attachments =
+          data.containsKey("attachments") ? data['attachments'] : [];
+      attachments.forEach((attachmentItem) async {
+        Attachment file = Attachment.fromMap(attachmentItem);
+        await file.save(message);
+        if (SettingsManager().settings.autoDownload)
+          new AttachmentDownloader(file);
+      });
     }
-
-    // Add any related attachments
-    List<dynamic> attachments =
-        data.containsKey("attachments") ? data['attachments'] : [];
-    attachments.forEach((attachmentItem) async {
-      Attachment file = Attachment.fromMap(attachmentItem);
-      await file.save(message);
-      if (SettingsManager().settings.autoDownload)
-        new AttachmentDownloader(file);
-    });
 
     if (!chatsWithNotifications.contains(chat.guid)) {
       chatsWithNotifications.add(chat.guid);
