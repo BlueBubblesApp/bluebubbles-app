@@ -106,6 +106,7 @@ class AttachmentDownloader {
       SocketManager().finishDownloader(attachment.guid);
       LifeCycleManager().finishDownloader();
       _stream.sink.add(file);
+      // _stream.close();
     };
 
     SocketManager().addAttachmentDownloader(attachment.guid, this);

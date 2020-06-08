@@ -114,7 +114,8 @@ class DBProvider {
         "transferName INTEGER NOT NULL,"
         "totalBytes INTEGER NOT NULL,"
         "isSticker INTEGER DEFAULT 0,"
-        "hideAttachment INTEGER DEFAULT 0"
+        "hideAttachment INTEGER DEFAULT 0,"
+        "blurhash VARCHAR(64)"
         ");");
   }
 

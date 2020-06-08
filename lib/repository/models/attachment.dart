@@ -24,17 +24,20 @@ class Attachment {
   int totalBytes;
   bool isSticker;
   bool hideAttachment;
+  String blurhash;
 
-  Attachment(
-      {this.id,
-      this.guid,
-      this.uti,
-      this.transferState,
-      this.isOutgoing,
-      this.transferName,
-      this.totalBytes,
-      this.isSticker,
-      this.hideAttachment});
+  Attachment({
+    this.id,
+    this.guid,
+    this.uti,
+    this.transferState,
+    this.isOutgoing,
+    this.transferName,
+    this.totalBytes,
+    this.isSticker,
+    this.hideAttachment,
+    this.blurhash,
+  });
 
   factory Attachment.fromMap(Map<String, dynamic> json) {
     return new Attachment(
@@ -53,6 +56,7 @@ class Attachment {
       hideAttachment: (json["hideAttachment"] is bool)
           ? json['hideAttachment']
           : ((json['hideAttachment'] == 1) ? true : false),
+      blurhash: json.containsKey("blurhash") ? json["blurhash"] : null,
     );
   }
 
@@ -128,14 +132,15 @@ class Attachment {
   }
 
   Map<String, dynamic> toMap() => {
-    "ROWID": id,
-    "guid": guid,
-    "uti": uti,
-    "transferState": transferState,
-    "isOutgoing": isOutgoing ? 1 : 0,
-    "transferName": transferName,
-    "totalBytes": totalBytes,
-    "isSticker": isSticker ? 1 : 0,
-    "hideAttachment": hideAttachment ? 1 : 0
-  };
+        "ROWID": id,
+        "guid": guid,
+        "uti": uti,
+        "transferState": transferState,
+        "isOutgoing": isOutgoing ? 1 : 0,
+        "transferName": transferName,
+        "totalBytes": totalBytes,
+        "isSticker": isSticker ? 1 : 0,
+        "hideAttachment": hideAttachment ? 1 : 0,
+        "blurhash": blurhash,
+      };
 }

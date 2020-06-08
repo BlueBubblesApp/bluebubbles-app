@@ -276,7 +276,8 @@ class SocketManager {
     }
 
     // Add any related attachments
-    List<dynamic> attachments = data.containsKey("attachments") ? data['attachments'] : [];
+    List<dynamic> attachments =
+        data.containsKey("attachments") ? data['attachments'] : [];
     attachments.forEach((attachmentItem) async {
       Attachment file = Attachment.fromMap(attachmentItem);
       await file.save(message);
@@ -297,7 +298,8 @@ class SocketManager {
     // notify();
   }
 
-  void sendMessage(Chat chat, String text, {List<Attachment> attachments = const []}) async {
+  void sendMessage(Chat chat, String text,
+      {List<Attachment> attachments = const []}) async {
     debugPrint(chat.participants.toString());
     Map<String, dynamic> params = new Map();
     params["guid"] = chat.guid;
@@ -332,7 +334,7 @@ class SocketManager {
       if (response['status'] != 200) {
         sentMessage.guid = sentMessage.guid.replaceAll("temp", "error");
         await Message.replaceMessage(tempGuid, sentMessage);
-        
+
         // TODO: Display an error next to message that failed to send (in message list)
       }
     });

@@ -35,7 +35,7 @@ class Main extends StatelessWidget with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     return BackGestureWidthTheme(
-      backGestureWidth: BackGestureWidth.fraction(1),
+      backGestureWidth: BackGestureWidth.fraction(0.2),
       child: MaterialApp(
         title: 'BlueBubbles',
         theme: ThemeData(
