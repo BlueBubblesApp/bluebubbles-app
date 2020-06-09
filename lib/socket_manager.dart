@@ -400,6 +400,7 @@ class SocketManager {
     Map<String, dynamic> params = Map();
     params["identifier"] = chat.guid;
     params["limit"] = 100;
+    params["withBlurhash"] = true;
     SocketManager().socket.sendMessage("get-chat-messages", jsonEncode(params),
         (data) {
       List messages = jsonDecode(data)["data"];
