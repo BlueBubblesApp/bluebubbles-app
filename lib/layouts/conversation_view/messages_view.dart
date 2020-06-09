@@ -32,13 +32,9 @@ class _MessageViewState extends State<MessageView> {
           reverse: true,
           physics:
               AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-          itemCount: _messages.length + 2,
+          itemCount: _messages.length + 1,
           itemBuilder: (BuildContext context, int index) {
-            if (index == 0) {
-              return SizedBox(
-                height: 80,
-              );
-            } else if (index == _messages.length + 1) {
+            if (index == _messages.length + 1) {
               if (loader == null) {
                 loader = widget.messageBloc.loadMessageChunk(_messages.length);
                 loader.whenComplete(() => loader = null);
@@ -52,24 +48,24 @@ class _MessageViewState extends State<MessageView> {
 
             Message olderMessage;
             Message newerMessage;
-            if (index >= 0 && index < _messages.length) {
+            if (index + 1 >= 0 && index + 1 < _messages.length) {
               olderMessage = _messages[index];
             }
-            if (index - 2 >= 0 && index - 2 < _messages.length) {
-              newerMessage = _messages[index - 2];
+            if (index - 1 >= 0 && index - 1 < _messages.length) {
+              newerMessage = _messages[index - 1];
             }
             List<Message> reactions = <Message>[];
             if (widget.messageBloc.reactions
-                .containsKey(_messages[index - 1].guid)) {
+                .containsKey(_messages[index].guid)) {
               reactions.addAll(
                 widget.messageBloc.reactions[_messages[index - 1].guid],
               );
             }
 
             return MessageWidget(
-              key: Key(_messages[index - 1].guid),
-              fromSelf: _messages[index - 1].isFromMe,
-              message: _messages[index - 1],
+              key: Key(_messages[index].guid),
+              fromSelf: _messages[index].isFromMe,
+              message: _messages[index],
               olderMessage: olderMessage,
               newerMessage: newerMessage,
               reactions: reactions,

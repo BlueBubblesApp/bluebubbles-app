@@ -18,7 +18,9 @@ class LifeCycleManager {
   }
 
   finishDownloader() {
-    if (!_isAlive) {
+    if (!_isAlive &&
+        SocketManager().attachmentDownloaders.length == 0 &&
+        SocketManager().attachmentSenders.length == 0) {
       close();
     }
   }
@@ -30,7 +32,8 @@ class LifeCycleManager {
 
   close() {
     _isAlive = false;
-    if (SocketManager().attachmentDownloaders.length == 0) {
+    if (SocketManager().attachmentDownloaders.length == 0 &&
+        SocketManager().attachmentSenders.length == 0) {
       SocketManager().closeSocket();
     }
   }

@@ -43,7 +43,6 @@ class _ConversationViewState extends State<ConversationView> {
   void didChangeDependencies() async {
     super.didChangeDependencies();
     SocketManager().removeChatNotification(widget.chat);
-    Chat chatWithParticipants = await widget.chat.getParticipants();
   }
 
   @override
@@ -52,11 +51,7 @@ class _ConversationViewState extends State<ConversationView> {
       backgroundColor: Colors.black,
       extendBodyBehindAppBar: true,
       appBar: CupertinoNavigationBar(
-        // centerTitle: true,
-//        backgroundColor: Colors.transparent,
         backgroundColor: HexColor('26262a').withOpacity(0.5),
-        // elevation: 0,
-        // title: Text("Title"),
         middle: Text(
           widget.title,
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.normal),
@@ -70,30 +65,24 @@ class _ConversationViewState extends State<ConversationView> {
             Chat chat = await widget.chat.getParticipants();
             Navigator.of(context).push(
               MaterialPageRoute(
-                  builder: (context) => ConversationDetails(
-                        chat: chat,
-                      )),
+                builder: (context) => ConversationDetails(
+                  chat: chat,
+                ),
+              ),
             );
           },
         ),
-        // leading: IconButton(
-        //   icon: Icon(
-        //     Icons.arrow_back_ios,
-        //     color: Colors.blue,
-        //   ),
-        //   onPressed: () {
-        //     Navigator.of(context).pop();
-        //   },
-        // ),
       ),
-      //   ),
-      // ),
-      // )
-      body: Stack(
-        alignment: AlignmentDirectional.bottomCenter,
+      body: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
         children: <Widget>[
-          MessageView(
-            messageBloc: widget.messageBloc,
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 16.0),
+              child: MessageView(
+                messageBloc: widget.messageBloc,
+              ),
+            ),
           ),
           BlueBubblesTextField(
             chat: widget.chat,

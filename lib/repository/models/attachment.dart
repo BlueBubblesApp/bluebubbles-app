@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'dart:io';
+import 'package:bluebubble_messages/managers/settings_manager.dart';
 import 'package:bluebubble_messages/repository/models/message.dart';
 import 'package:flutter/material.dart';
 import 'package:sqflite/sqflite.dart';
@@ -91,6 +93,31 @@ class Attachment {
     }
 
     return this;
+  }
+
+  static Future<Attachment> replaceAttachment(
+      String oldGuid, Attachment newAttachment) async {
+    final Database db = await DBProvider.db.database;
+    Attachment existing = await Attachment.findOne({"guid": oldGuid});
+    if (existing == null) {
+      throw ("Old GUID does not exist!");
+    }
+
+    Map<String, dynamic> params = newAttachment.toMap();
+    if (params.containsKey("ROWID")) {
+      params.remove("ROWID");
+    }
+    if (params.containsKey("handle")) {
+      params.remove("handle");
+    }
+
+    await db.update("attachment", params,
+        where: "ROWID = ?", whereArgs: [existing.id]);
+    String appDocPath = SettingsManager().appDocDir.path;
+    String pathName = "$appDocPath/$oldGuid";
+    Directory directory = Directory(pathName);
+    await directory.rename("$appDocPath/${newAttachment.guid}");
+    return existing;
   }
 
   static Future<Attachment> findOne(Map<String, dynamic> filters) async {

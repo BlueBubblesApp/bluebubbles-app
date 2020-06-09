@@ -32,6 +32,7 @@ class AttachmentSender {
   String _attachmentName;
 
   double get progress => (_currentChunk) / _totalChunks;
+  String get guid => _attachmentGuid;
 
   AttachmentSender(
     File attachment,
@@ -77,9 +78,13 @@ class AttachmentSender {
           sendChunkRecursive(index + chunkSize, total, chunkSize, tempGuid);
         } else {
           debugPrint("no more to send");
+          SocketManager().finishSender(_chat.guid, _attachmentGuid);
+          LifeCycleManager().finishDownloader();
         }
       } else {
         debugPrint("failed to send");
+        SocketManager().finishSender(_chat.guid, _attachmentGuid);
+        LifeCycleManager().finishDownloader();
       }
     });
   }
@@ -126,13 +131,20 @@ class AttachmentSender {
     debugPrint("saved attachment with temp guid ${messageAttachment.guid}");
 
     await sentMessage.save();
+
     await messageAttachment.save(sentMessage);
     await _chat.save();
     await _chat.addMessage(sentMessage);
+    if (messageWithText != null) {
+      await messageWithText.save();
+      await _chat.save();
+      await _chat.addMessage(messageWithText);
+    }
 
     NewMessageManager().updateWithMessage(_chat, sentMessage);
     _totalChunks = numOfChunks;
     _chunkSize = chunkSize;
+    SocketManager().addAttachmentSender(_chat.guid, this);
     sendChunkRecursive(
         0,
         _totalChunks,

@@ -142,12 +142,22 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField> {
                         Image.file(
                           pickedImages[index],
                           height: 100,
+                          fit: BoxFit.fitHeight,
                         ),
                         Positioned.fill(
                             child: Material(
                           color: Colors.transparent,
                           child: InkWell(
-                            onTap: () {},
+                            onTap: () async {
+                              File image = pickedImages[index];
+                              for (int i = 0; i < pickedImages.length; i++) {
+                                if (pickedImages[i].path == image.path) {
+                                  pickedImages.removeAt(i);
+                                  setState(() {});
+                                  return;
+                                }
+                              }
+                            },
                           ),
                         ))
                       ],

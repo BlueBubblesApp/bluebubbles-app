@@ -16,6 +16,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:bluebubble_messages/helpers/message_helper.dart';
 
+import 'helpers/attachment_sender.dart';
 import 'managers/method_channel_interface.dart';
 import 'repository/models/attachment.dart';
 import 'repository/models/message.dart';
@@ -60,12 +61,27 @@ class SocketManager {
   Map<String, Function> subscribers = new Map();
 
   Map<String, AttachmentDownloader> attachmentDownloaders = Map();
+  Map<String, List<AttachmentSender>> attachmentSenders = Map();
   void addAttachmentDownloader(String guid, AttachmentDownloader downloader) {
     attachmentDownloaders[guid] = downloader;
   }
 
+  void addAttachmentSender(String guid, AttachmentSender sender) {
+    if (!attachmentSenders.containsKey(guid))
+      attachmentSenders[guid] = <AttachmentSender>[];
+    attachmentSenders[guid].add(sender);
+  }
+
   void finishDownloader(String guid) {
     attachmentDownloaders.remove(guid);
+  }
+
+  void finishSender(String chatGuid, String messageGuid) {
+    for (int i = attachmentSenders[chatGuid].length - 1; i >= 0; i--) {
+      if (attachmentSenders[chatGuid][i].guid == messageGuid) {
+        attachmentSenders[chatGuid].removeAt(i);
+      }
+    }
   }
 
   Map<String, Function> disconnectSubscribers = new Map();
@@ -269,6 +285,12 @@ class SocketManager {
     if (data.containsKey("tempGuid")) {
       debugPrint("Client received message match for ${data["guid"]}");
       await Message.replaceMessage(data["tempGuid"], message);
+      List<dynamic> attachments =
+          data.containsKey("attachments") ? data['attachments'] : [];
+      attachments.forEach((attachmentItem) async {
+        Attachment file = Attachment.fromMap(attachmentItem);
+        Attachment.replaceAttachment(data["tempGuid"], file);
+      });
     } else {
       debugPrint("Client received new message " + chat.guid);
       message = new Message.fromMap(data);
