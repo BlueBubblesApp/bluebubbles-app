@@ -21,6 +21,7 @@ class Attachment {
   int id;
   String guid;
   String uti;
+  String mimeType;
   String transferState;
   bool isOutgoing;
   String transferName;
@@ -33,6 +34,7 @@ class Attachment {
     this.id,
     this.guid,
     this.uti,
+    this.mimeType,
     this.transferState,
     this.isOutgoing,
     this.transferName,
@@ -47,6 +49,7 @@ class Attachment {
       id: json.containsKey("ROWID") ? json["ROWID"] : null,
       guid: json["guid"],
       uti: json["uti"],
+      mimeType: json["mimeType"],
       transferState: json['transferState'].toString(),
       isOutgoing: (json["isOutgoing"] is bool)
           ? json['isOutgoing']
@@ -163,6 +166,7 @@ class Attachment {
         "ROWID": id,
         "guid": guid,
         "uti": uti,
+        "mimeType": mimeType,
         "transferState": transferState,
         "isOutgoing": isOutgoing ? 1 : 0,
         "transferName": transferName,
