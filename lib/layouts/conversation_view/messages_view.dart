@@ -58,7 +58,7 @@ class _MessageViewState extends State<MessageView> {
             if (widget.messageBloc.reactions
                 .containsKey(_messages[index].guid)) {
               reactions.addAll(
-                widget.messageBloc.reactions[_messages[index - 1].guid],
+                widget.messageBloc.reactions[_messages[index].guid],
               );
             }
 

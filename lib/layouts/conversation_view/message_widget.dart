@@ -202,7 +202,7 @@ class _MessageState extends State<MessageWidget> {
                 return Stack(
                   alignment: Alignment.center,
                   children: <Widget>[
-                    blurredImage,
+                    blurredImage == null ? Container() : blurredImage,
                     CircularProgressIndicator(
                       value: progress,
                     ),
