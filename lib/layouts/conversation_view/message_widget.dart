@@ -12,6 +12,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
 
 import '../../helpers/hex_color.dart';
+import '../../helpers/utils.dart';
 import '../../repository/models/message.dart';
 
 class MessageWidget extends StatefulWidget {
@@ -85,6 +86,7 @@ class _MessageState extends State<MessageWidget> {
           String appDocPath = SettingsManager().appDocDir.path;
           String pathName =
               "$appDocPath/${attachments[i].guid}/${attachments[i].transferName}";
+
           if (FileSystemEntity.typeSync(pathName) !=
               FileSystemEntityType.notFound) {
             images.add(File(pathName));
@@ -120,6 +122,7 @@ class _MessageState extends State<MessageWidget> {
   List<Widget> _constructContent() {
     List<Widget> content = <Widget>[];
     for (int i = 0; i < images.length; i++) {
+      
       if (images[i] is File) {
         content.add(Stack(
           children: <Widget>[
@@ -135,7 +138,6 @@ class _MessageState extends State<MessageWidget> {
           ],
         ));
       } else if (images[i] is Attachment) {
-        // debugPrint(images[i].blurhash);
         blurredImage = (images[i] as Attachment).blurhash != null
             ? FutureBuilder(
                 future: blurHashDecode((images[i] as Attachment).blurhash),

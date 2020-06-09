@@ -68,6 +68,7 @@ class MessageBloc {
         params["identifier"] = _currentChat.guid;
         params["limit"] = 100;
         params["offset"] = offset;
+        params["withBlurhash"] = true;
 
         SocketManager()
             .socket

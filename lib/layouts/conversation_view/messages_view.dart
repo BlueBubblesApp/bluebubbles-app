@@ -34,7 +34,7 @@ class _MessageViewState extends State<MessageView> {
               AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
           itemCount: _messages.length + 1,
           itemBuilder: (BuildContext context, int index) {
-            if (index == _messages.length + 1) {
+            if (index == _messages.length) {
               if (loader == null) {
                 loader = widget.messageBloc.loadMessageChunk(_messages.length);
                 loader.whenComplete(() => loader = null);

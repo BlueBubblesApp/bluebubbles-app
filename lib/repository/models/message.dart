@@ -249,6 +249,7 @@ class Message {
         " attachment.ROWID AS ROWID,"
         " attachment.guid AS guid,"
         " attachment.uti AS uti,"
+        " attachment.mimeType AS mimeType,"
         " attachment.transferState AS transferState,"
         " attachment.isOutgoing AS isOutgoing,"
         " attachment.transferName AS transferName,"

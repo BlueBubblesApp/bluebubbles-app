@@ -109,13 +109,14 @@ class DBProvider {
         "ROWID INTEGER PRIMARY KEY AUTOINCREMENT,"
         "guid TEXT NOT NULL,"
         "uti TEXT NOT NULL,"
+        "mimeType TEXT NOT NULL,"
         "transferState INTEGER DEFAULT 0,"
         "isOutgoing INTEGER DEFAULT 0,"
         "transferName INTEGER NOT NULL,"
         "totalBytes INTEGER NOT NULL,"
         "isSticker INTEGER DEFAULT 0,"
         "hideAttachment INTEGER DEFAULT 0,"
-        "blurhash VARCHAR(64)"
+        "blurhash VARCHAR(64) DEFAULT NULL"
         ");");
   }
 
