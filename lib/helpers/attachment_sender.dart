@@ -104,6 +104,7 @@ class AttachmentSender {
       hideAttachment: false,
       uti: "public.jpg",
       transferName: _attachmentName,
+      mimeType: "image/jpeg",
     );
 
     Message sentMessage = Message(

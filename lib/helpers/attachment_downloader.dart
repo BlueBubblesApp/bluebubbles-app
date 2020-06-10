@@ -34,7 +34,7 @@ class AttachmentDownloader {
 
   resumeChunkingAfterDisconnect() {
     if (_guid != "" && _cb != null) {
-      debugPrint("restarting chunking");
+      debugPrint("restarting chunking " + _currentBytes.length.toString());
       getChunkRecursive(_guid, _currentChunk, _totalChunks, _currentBytes,
           _chunkSize * 1024, _cb);
     } else {
@@ -109,7 +109,7 @@ class AttachmentDownloader {
       SocketManager().finishDownloader(attachment.guid);
       LifeCycleManager().finishDownloader();
       _stream.sink.add(file);
-      // _stream.close();
+      _stream.close();
     };
 
     SocketManager().addAttachmentDownloader(attachment.guid, this);

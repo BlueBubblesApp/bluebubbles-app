@@ -299,9 +299,9 @@ class _SettingsSliderState extends State<SettingsSlider> {
             label: currentVal < 1000
                 ? "${(currentVal * 1024 / 1000).floor()}kb"
                 : "${(currentVal * 1024 * 0.000001).floor()}mb",
-            divisions: 20,
+            divisions: 30,
             min: 1,
-            max: 5000,
+            max: 3000,
           ),
         ),
         Divider(

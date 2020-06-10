@@ -8,6 +8,7 @@ import 'package:bluebubble_messages/repository/models/chat.dart';
 import 'package:bluebubble_messages/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:photo_manager/photo_manager.dart';
 
 class BlueBubblesTextField extends StatefulWidget {
@@ -262,11 +263,30 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField> {
                         physics: AlwaysScrollableScrollPhysics(
                             parent: BouncingScrollPhysics()),
                         scrollDirection: Axis.horizontal,
-                        itemCount: _imageWidgets.length,
+                        itemCount: _imageWidgets.length + 1,
                         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 2,
                         ),
                         itemBuilder: (BuildContext context, int index) {
+                          if (index == _imageWidgets.length) {
+                            return RaisedButton(
+                              onPressed: () async {
+                                PickedFile pickedImage = await ImagePicker()
+                                    .getImage(source: ImageSource.gallery);
+                                File image = File(pickedImage.path);
+                                pickedImages.add(image);
+                                setState(() {});
+                              },
+                              color: HexColor('26262a'),
+                              child: Text(
+                                "Pick Image",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            );
+                          }
                           return _imageWidgets[index];
                         },
                       ),

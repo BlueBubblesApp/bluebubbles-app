@@ -66,6 +66,7 @@ class _MessageState extends State<MessageWidget> {
       }
       reactions[reaction.associatedMessageType].add(reaction);
     });
+    setState(() {});
   }
 
   @override
@@ -122,7 +123,6 @@ class _MessageState extends State<MessageWidget> {
   List<Widget> _constructContent() {
     List<Widget> content = <Widget>[];
     for (int i = 0; i < images.length; i++) {
-      
       if (images[i] is File) {
         content.add(Stack(
           children: <Widget>[
