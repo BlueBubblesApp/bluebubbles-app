@@ -7,7 +7,8 @@ class Settings {
         guidAuthKey = json['guidAuthKey'],
         _finishedSetup = json['finishedSetup'],
         _chunkSize = json['chunkSize'],
-        _autoDownload = json['autoDownload'];
+        _autoDownload = json['autoDownload'],
+        _connected = json['connected'];
 
   var fcmAuthData;
   String guidAuthKey = "";
@@ -15,6 +16,7 @@ class Settings {
   bool _finishedSetup = false;
   int _chunkSize = 1;
   bool _autoDownload = true;
+  bool _connected = false;
 
   set finishedSetup(bool val) => _finishedSetup = val;
   bool get finishedSetup => _finishedSetup;
@@ -25,6 +27,9 @@ class Settings {
   set autoDownload(bool val) => _autoDownload = val;
   bool get autoDownload => _autoDownload;
 
+  set connected(bool val) => _connected = val;
+  bool get connected => _connected;
+
   Map<String, dynamic> toJson() => {
         'server_address': serverAddress,
         'fcm_auth_data': fcmAuthData,
@@ -32,5 +37,6 @@ class Settings {
         'finishedSetup': _finishedSetup,
         'chunkSize': _chunkSize,
         'autoDownload': _autoDownload != null ? _autoDownload : true,
+        'connected': _connected != null ? _connected : false
       };
 }
