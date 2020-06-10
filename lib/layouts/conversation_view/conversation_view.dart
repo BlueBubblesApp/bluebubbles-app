@@ -60,7 +60,7 @@ class _ConversationViewState extends State<ConversationView> {
       appBar: CustomCupertinoNavBar(
         backgroundColor: HexColor('26262a').withOpacity(0.5),
         // padding: EdgeInsetsDirectional.only(top: 10.0),
-        middle: Column(
+        middle: ListView(
           children: <Widget>[
             Container(height: 10.0),
             CircleAvatar(
@@ -88,6 +88,7 @@ class _ConversationViewState extends State<ConversationView> {
             Text(
               widget.title,
               style: TextStyle(color: Colors.white, fontWeight: FontWeight.normal),
+              textAlign: TextAlign.center,
             )
           ]
         ),

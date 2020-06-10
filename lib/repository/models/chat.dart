@@ -29,10 +29,20 @@ Future<String> chatTitle(Chat _chat) async {
           ContactManager().contacts, chat.participants[i].address.toString()));
     }
 
-    title = titles.join(', ');
+    if (titles.length == 1) {
+      title = titles[0];
+    } else if (titles.length <= 4) {
+      title = titles.join(", ");
+      int pos = title.lastIndexOf(", ");
+      title = "${title.substring(0, pos)} & ${title.substring(pos + 2)} others";
+    } else {
+      title = titles.sublist(0, 3).join(", ");
+      title = "$title & ${titles.length - 3} others";
+    }
   } else {
     title = _chat.displayName;
   }
+
   return title;
 }
 
