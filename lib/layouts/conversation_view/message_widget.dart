@@ -135,11 +135,14 @@ class _MessageState extends State<MessageWidget> {
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.done &&
               snapshot.hasData) {
-            return Image.memory(
-              snapshot.data,
-              width: 300,
-              // height: 300,
-              fit: BoxFit.fitWidth,
+            return ClipRRect(
+              borderRadius: BorderRadius.circular(8.0),
+              child: Image.memory(
+                snapshot.data,
+                width: 300,
+                // height: 300,
+                fit: BoxFit.fitWidth,
+              ),
             );
           } else {
             return Container();
@@ -152,7 +155,12 @@ class _MessageState extends State<MessageWidget> {
         content.add(Stack(
           children: <Widget>[
             // TODO: This will not always be an image. need to check mimetype
-            Image.file(chatAttachments[i]),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8.0),
+              child: Image.file(chatAttachments[i])
+            ),
+            
+            
             Positioned.fill(
               child: Material(
                 color: Colors.transparent,
@@ -203,7 +211,10 @@ class _MessageState extends State<MessageWidget> {
                   onTap: () {
                     debugPrint("tap");
                   },
-                  child: Image.file(snapshot.data),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8.0),
+                    child: Image.file(snapshot.data)
+                  )
                 );
               } else {
                 double progress = 0.0;
