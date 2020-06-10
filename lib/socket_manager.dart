@@ -109,15 +109,19 @@ class SocketManager {
           value();
           _manager.disconnectSubscribers.remove(key);
         });
+
+        SettingsManager().settings.connected = true;
         return;
       case "disconnect":
         _manager.disconnectSubscribers.values.forEach((f) {
           f();
         });
         debugPrint("disconnected");
+        SettingsManager().settings.connected = false;
         return;
       case "reconnect":
         debugPrint("RECONNECTED");
+        SettingsManager().settings.connected = true;
         return;
       default:
         return;

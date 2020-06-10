@@ -66,12 +66,7 @@ class _ConversationTileState extends State<ConversationTile> {
 
   @override
   Widget build(BuildContext context) {
-    String initials;
-    if (widget.title.contains(",")) {
-      initials = "";
-    } else {
-      initials = getInitials(widget.title, " ");
-    }
+    var initials = getInitials(widget.title, " ");
     return Material(
       color: Colors.black,
       child: InkWell(
@@ -123,7 +118,7 @@ class _ConversationTileState extends State<ConversationTile> {
                           ),
                           child: Container(
                             // child: Text("${widget.chat.title[0]}"),
-                            child: Text(initials),
+                            child: (initials is Icon) ? initials : Text(initials),
                             alignment: AlignmentDirectional.center,
                           ),
                         )

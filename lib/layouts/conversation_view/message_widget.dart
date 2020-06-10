@@ -38,7 +38,7 @@ class MessageWidget extends StatefulWidget {
 class _MessageState extends State<MessageWidget> {
   List<Attachment> attachments = <Attachment>[];
   String body;
-  List images = [];
+  List chatAttachments = [];
   bool showTail = true;
   final String like = "like";
   final String love = "love";
@@ -88,16 +88,18 @@ class _MessageState extends State<MessageWidget> {
           String pathName =
               "$appDocPath/${attachments[i].guid}/${attachments[i].transferName}";
 
-          if (FileSystemEntity.typeSync(pathName) !=
-              FileSystemEntityType.notFound) {
-            images.add(File(pathName));
-          } else if (SocketManager()
-              .attachmentDownloaders
-              .containsKey(attachments[i].guid)) {
-            images.add(
-                SocketManager().attachmentDownloaders[attachments[i].guid]);
+          /**
+           * Case 1: If the file exists (we can get the type), add the file to the chat's attachments
+           * Case 2: If the attachment is currently being downloaded, get the AttachmentDownloader object and add it to the chat's attachments
+           * Case 3: Otherwise, add the attachment, as is, meaning it needs to be downloaded
+           */
+
+          if (FileSystemEntity.typeSync(pathName) != FileSystemEntityType.notFound) {
+            chatAttachments.add(File(pathName));
+          } else if (SocketManager().attachmentDownloaders.containsKey(attachments[i].guid)) {
+            chatAttachments.add(SocketManager().attachmentDownloaders[attachments[i].guid]);
           } else {
-            images.add(attachments[i]);
+            chatAttachments.add(attachments[i]);
           }
         }
         if (this.mounted) setState(() {});
@@ -122,11 +124,43 @@ class _MessageState extends State<MessageWidget> {
 
   List<Widget> _constructContent() {
     List<Widget> content = <Widget>[];
-    for (int i = 0; i < images.length; i++) {
-      if (images[i] is File) {
+    for (int i = 0; i < chatAttachments.length; i++) {
+      // Pull the blurhash from the attachment, based on the class type
+      String blurhash = chatAttachments[i] is Attachment ? chatAttachments[i].blurhash : null;
+      blurhash = chatAttachments[i] is AttachmentDownloader ? chatAttachments[i].attachment.blurhash : null;
+
+      // Convert the placeholder to a Widget
+      Widget placeholder = (blurhash == null) ? Container() : FutureBuilder(
+        future: blurHashDecode(blurhash),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.done &&
+              snapshot.hasData) {
+            return ClipRRect(
+              borderRadius: BorderRadius.circular(8.0),
+              child: Image.memory(
+                snapshot.data,
+                width: 300,
+                // height: 300,
+                fit: BoxFit.fitWidth,
+              ),
+            );
+          } else {
+            return Container();
+          }
+        },
+      );
+
+      // If it's a file, it's already been downlaoded, so just display it
+      if (chatAttachments[i] is File) {
         content.add(Stack(
           children: <Widget>[
-            Image.file(images[i]),
+            // TODO: This will not always be an image. need to check mimetype
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8.0),
+              child: Image.file(chatAttachments[i])
+            ),
+            
+            
             Positioned.fill(
               child: Material(
                 color: Colors.transparent,
@@ -137,33 +171,17 @@ class _MessageState extends State<MessageWidget> {
             ),
           ],
         ));
-      } else if (images[i] is Attachment) {
-        blurredImage = (images[i] as Attachment).blurhash != null
-            ? FutureBuilder(
-                future: blurHashDecode((images[i] as Attachment).blurhash),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.done &&
-                      snapshot.hasData) {
-                    return Image.memory(
-                      snapshot.data,
-                      width: 300,
-                      // height: 300,
-                      fit: BoxFit.fitWidth,
-                    );
-                  } else {
-                    return Container();
-                  }
-                },
-              )
-            : Container();
+
+      // If it's an attachment, then it needs to be manually downloaded
+      } else if (chatAttachments[i] is Attachment) {
         content.add(
           Stack(
             alignment: Alignment.center,
             children: <Widget>[
-              blurredImage,
+              placeholder,
               RaisedButton(
                 onPressed: () {
-                  images[i] = new AttachmentDownloader(images[i]);
+                  chatAttachments[i] = new AttachmentDownloader(chatAttachments[i]);
                   setState(() {});
                 },
                 color: HexColor('26262a').withAlpha(100),
@@ -175,10 +193,12 @@ class _MessageState extends State<MessageWidget> {
             ],
           ),
         );
-      } else if (images[i] is AttachmentDownloader) {
+
+      // If it's an AttachmentDownloader, it is currently being downloaded
+      } else if (chatAttachments[i] is AttachmentDownloader) {
         content.add(
           StreamBuilder(
-            stream: images[i].stream,
+            stream: chatAttachments[i].stream,
             builder: (BuildContext context, AsyncSnapshot snapshot) {
               if (snapshot.hasError) {
                 return Text(
@@ -191,20 +211,23 @@ class _MessageState extends State<MessageWidget> {
                   onTap: () {
                     debugPrint("tap");
                   },
-                  child: Image.file(snapshot.data),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8.0),
+                    child: Image.file(snapshot.data)
+                  )
                 );
               } else {
                 double progress = 0.0;
                 if (snapshot.hasData) {
                   progress = snapshot.data["Progress"];
                 } else {
-                  progress = images[i].progress;
+                  progress = chatAttachments[i].progress;
                 }
 
                 return Stack(
                   alignment: Alignment.center,
                   children: <Widget>[
-                    blurredImage == null ? Container() : blurredImage,
+                    placeholder,
                     CircularProgressIndicator(
                       value: progress,
                     ),

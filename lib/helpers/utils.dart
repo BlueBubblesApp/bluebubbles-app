@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'dart:typed_data';
+import 'package:flutter/material.dart';
 
 import 'package:bluebubble_messages/managers/contact_manager.dart';
 import 'package:bluebubble_messages/socket_manager.dart';
@@ -72,24 +73,27 @@ Contact getContact(List<Contact> contacts, String id) {
 
 getInitials(String name, String delimeter) {
   List array = name.split(delimeter);
-  if (array[0].length < 1) return "";
+  if (name.contains(", ")) return Icon(Icons.people);
+  if (name.startsWith("+") || array[0].length < 1) return Icon(Icons.person);
 
   switch (array.length) {
     case 1:
       return array[0][0].toUpperCase();
-
       break;
     default:
       if (array.length - 1 < 0 || array[array.length - 1].length < 1) return "";
-      return array[0][0].toUpperCase() +
-          array[array.length - 1][0].toUpperCase();
+      String first = array[0][0].toUpperCase();
+      String last = array[array.length - 1][0].toUpperCase();
+      if (!last.contains(new RegExp('[A-Za-z]'))) last = array[1][0];
+      if (!last.contains(new RegExp('[A-Za-z]'))) last = "";
+      return first + last;
   }
 }
 
 Future<Uint8List> blurHashDecode(String blurhash) async {
   Uint8List imageDataBytes;
   try {
-    imageDataBytes = await BlurHash.decode(blurhash, 20, 12);
+    imageDataBytes = await BlurHash.decode(blurhash, 480, 320);
   } on PlatformException catch (e) {
     print(e.message);
   }

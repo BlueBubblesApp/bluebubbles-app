@@ -57,37 +57,13 @@ class _SettingsPanelState extends State<SettingsPanel> {
         physics: AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
         children: <Widget>[
           SettingsTile(
-            title: "Scan QR Code From Mac Server",
-            trailing: Icon(Icons.camera, color: HexColor('26262a')),
-            onTap: () async {
-              var fcmData;
-              try {
-                fcmData = jsonDecode(
-                  await Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (BuildContext context) {
-                        return QRCodeScanner();
-                      },
-                    ),
-                  ),
-                );
-              } catch (e) {
-                return;
-              }
-              if (fcmData != null) {
-                _settingsCopy.fcmAuthData = {
-                  "project_id": fcmData[2],
-                  "storage_bucket": fcmData[3],
-                  "api_key": fcmData[4],
-                  "firebase_url": fcmData[5],
-                  "client_id": fcmData[6],
-                  "application_id": fcmData[7],
-                };
-                _settingsCopy.guidAuthKey = fcmData[0];
-                _settingsCopy.serverAddress = fcmData[1];
-                // Singleton().saveSettings(_settingsCopy);
-              }
-            },
+            title: "Connection Status",
+            subTitle: _settingsCopy.connected ? "Connected -> Tap to Refresh" : "Disconnected -> Tap to Refresh",
+            trailing: _settingsCopy.connected ? Icon(Icons.fiber_manual_record, color: HexColor('32CD32')) : Icon(Icons.fiber_manual_record, color: HexColor('DC143C')),
+            onTap: () {
+              _settingsCopy.connected = SettingsManager().settings.connected;
+              setState(() {});
+            }
           ),
           SettingsTile(
             onTap: () {
@@ -151,9 +127,42 @@ class _SettingsPanelState extends State<SettingsPanel> {
                 },
               );
             },
-            title: "Current address",
+            title: "Connection Address",
             subTitle: _settingsCopy.serverAddress,
             trailing: Icon(Icons.edit, color: HexColor('26262a')),
+          ),
+          SettingsTile(
+            title: "Re-configure with MacOS Server",
+            trailing: Icon(Icons.camera, color: HexColor('26262a')),
+            onTap: () async {
+              var fcmData;
+              try {
+                fcmData = jsonDecode(
+                  await Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (BuildContext context) {
+                        return QRCodeScanner();
+                      },
+                    ),
+                  ),
+                );
+              } catch (e) {
+                return;
+              }
+              if (fcmData != null) {
+                _settingsCopy.fcmAuthData = {
+                  "project_id": fcmData[2],
+                  "storage_bucket": fcmData[3],
+                  "api_key": fcmData[4],
+                  "firebase_url": fcmData[5],
+                  "client_id": fcmData[6],
+                  "application_id": fcmData[7],
+                };
+                _settingsCopy.guidAuthKey = fcmData[0];
+                _settingsCopy.serverAddress = fcmData[1];
+                // Singleton().saveSettings(_settingsCopy);
+              }
+            },
           ),
           SettingsSlider(
             startingVal: _settingsCopy.chunkSize.toDouble(),
@@ -284,7 +293,7 @@ class _SettingsSliderState extends State<SettingsSlider> {
       children: <Widget>[
         ListTile(
           title: Text(
-            "Chunk Size",
+            "Attachment Chunk Size",
             style: TextStyle(color: Colors.white),
           ),
           subtitle: Slider(
