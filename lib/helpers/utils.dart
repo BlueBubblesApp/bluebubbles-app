@@ -73,9 +73,8 @@ Contact getContact(List<Contact> contacts, String id) {
 
 getInitials(String name, String delimeter) {
   List array = name.split(delimeter);
-  if (array[0].length < 1) return "";
-  debugPrint(name);
-  if (name.startsWith("+") || name.contains(", ")) return null;
+  if (name.contains(", ")) return Icon(Icons.people);
+  if (name.startsWith("+") || array[0].length < 1) return Icon(Icons.person);
 
   switch (array.length) {
     case 1:
