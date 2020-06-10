@@ -89,7 +89,7 @@ getInitials(String name, String delimeter) {
 Future<Uint8List> blurHashDecode(String blurhash) async {
   Uint8List imageDataBytes;
   try {
-    imageDataBytes = await BlurHash.decode(blurhash, 20, 12);
+    imageDataBytes = await BlurHash.decode(blurhash, 480, 320);
   } on PlatformException catch (e) {
     print(e.message);
   }
