@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'dart:typed_data';
+import 'package:flutter/material.dart';
 
 import 'package:bluebubble_messages/managers/contact_manager.dart';
 import 'package:bluebubble_messages/socket_manager.dart';
@@ -73,16 +74,20 @@ Contact getContact(List<Contact> contacts, String id) {
 getInitials(String name, String delimeter) {
   List array = name.split(delimeter);
   if (array[0].length < 1) return "";
+  debugPrint(name);
+  if (name.startsWith("+") || name.contains(", ")) return null;
 
   switch (array.length) {
     case 1:
       return array[0][0].toUpperCase();
-
       break;
     default:
       if (array.length - 1 < 0 || array[array.length - 1].length < 1) return "";
-      return array[0][0].toUpperCase() +
-          array[array.length - 1][0].toUpperCase();
+      String first = array[0][0].toUpperCase();
+      String last = array[array.length - 1][0].toUpperCase();
+      if (!last.contains(new RegExp('[A-Za-z]'))) last = array[1][0];
+      if (!last.contains(new RegExp('[A-Za-z]'))) last = "";
+      return first + last;
   }
 }
 

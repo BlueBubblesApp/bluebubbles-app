@@ -138,13 +138,13 @@ class _ConversationListState extends State<ConversationList> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: <Widget>[
                           Spacer(
-                            flex: 20,
+                            flex: 10,
                           ),
                           Container(
                             child: Text("Messages"),
                           ),
                           Spacer(
-                            flex: 15,
+                            flex: 25,
                           ),
                           ButtonTheme(
                             minWidth: 25,
@@ -203,7 +203,7 @@ class _ConversationListState extends State<ConversationList> {
                             ),
                           ),
                           Spacer(
-                            flex: 15,
+                            flex: 5,
                           ),
                         ],
                       ),
