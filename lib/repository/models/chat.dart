@@ -19,7 +19,7 @@ String chatToJson(Chat data) {
   return json.encode(dyn);
 }
 
-Future<String> chatTitle(Chat _chat) async {
+Future<String> getFullChatTitle(Chat _chat) async {
   String title = "";
   if (_chat.displayName == null || _chat.displayName == "") {
     Chat chat = await _chat.getParticipants();
@@ -44,6 +44,14 @@ Future<String> chatTitle(Chat _chat) async {
   }
 
   return title;
+}
+
+String getShortChatTitle(Chat _chat) {
+  if (_chat.participants.length == 1) {
+    return getContactTitle(ContactManager().contacts, _chat.participants[0].address.toString());
+  } else {
+    return "${_chat.participants.length} people";
+  }
 }
 
 class Chat {

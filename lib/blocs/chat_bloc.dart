@@ -53,9 +53,9 @@ class ChatBloc {
   Future<void> initTileVals(List<Chat> chats) async {
     for (int i = 0; i < chats.length; i++) {
       Chat chat = chats[i];
-      String title = await chatTitle(chat);
-      if (title.length - 2 > 0 && title.substring(title.length - 2) == ", ")
-        title = title.substring(0, title.length - 2);
+      String title = await getFullChatTitle(chat);
+      // if (title.length - 2 > 0 && title.substring(title.length - 2) == ", ")
+      //   title = title.substring(0, title.length - 2);
       MessageBloc messageBloc;
 
       if (!_tileVals.containsKey(chat.guid)) {
@@ -90,8 +90,7 @@ class ChatBloc {
             Map<String, dynamic> chatMap = _chatBloc._tileVals[chat.guid];
             chatMap["subtitle"] = subtitle;
             chatMap["date"] = date;
-            chatMap["actualDate"] =
-                lastMessage.dateCreated.millisecondsSinceEpoch;
+            chatMap["actualDate"] = lastMessage.dateCreated.millisecondsSinceEpoch;
             bool hasNotification = false;
 
             for (int i = 0;

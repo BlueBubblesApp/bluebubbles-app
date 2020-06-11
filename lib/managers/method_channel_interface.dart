@@ -59,7 +59,7 @@ class MethodChannelInterface {
           return;
         }
 
-        String title = await chatTitle(chat);
+        String title = await getFullChatTitle(chat);
         Message message = Message.fromMap(data);
         message = await message.save();
         if (!message.isFromMe)
@@ -97,7 +97,7 @@ class MethodChannelInterface {
   void openChat(String id) async {
     Chat openedChat = await Chat.findOne({"GUID": id});
     if (openedChat != null) {
-      String title = await chatTitle(openedChat);
+      String title = await getFullChatTitle(openedChat);
 
       Navigator.of(_context).pushAndRemoveUntil(
         MaterialPageRoute(

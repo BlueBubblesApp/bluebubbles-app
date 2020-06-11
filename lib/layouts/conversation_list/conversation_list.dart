@@ -138,7 +138,7 @@ class _ConversationListState extends State<ConversationList> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: <Widget>[
                           Spacer(
-                            flex: 10,
+                            flex: 5,
                           ),
                           Container(
                             child: Text("Messages"),
@@ -173,37 +173,8 @@ class _ConversationListState extends State<ConversationList> {
                               ),
                             ),
                           ),
-                          ButtonTheme(
-                            minWidth: 25,
-                            height: 25,
-                            child: RaisedButton(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: 0,
-                              ),
-                              color: Colors.blue,
-                              onPressed: () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (BuildContext context) {
-                                      return NewChatCreator(
-                                        isCreator: true,
-                                      );
-                                    },
-                                  ),
-                                );
-                              },
-                              child: Icon(
-                                Icons.message,
-                                color: Colors.white,
-                                size: 15,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(40),
-                              ),
-                            ),
-                          ),
                           Spacer(
-                            flex: 5,
+                            flex: 1,
                           ),
                         ],
                       ),
@@ -256,10 +227,22 @@ class _ConversationListState extends State<ConversationList> {
           ],
         ),
         floatingActionButton: FloatingActionButton(
-          onPressed: () async {
-            await ChatBloc().getChats();
-            await NewMessageManager().updateWithMessage(null, null);
-          },
+          child: Icon(
+            Icons.message,
+            color: Colors.white,
+            size: 25
+          ),
+          onPressed: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (BuildContext context) {
+                  return NewChatCreator(
+                    isCreator: true,
+                  );
+                },
+              ),
+            );
+          }
         ),
       ),
     );
