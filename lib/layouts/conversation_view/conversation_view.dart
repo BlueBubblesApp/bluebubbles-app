@@ -58,55 +58,65 @@ class _ConversationViewState extends State<ConversationView> {
       backgroundColor: Colors.black,
       extendBodyBehindAppBar: true,
       appBar: CustomCupertinoNavBar(
-        backgroundColor: HexColor('26262a').withOpacity(0.5),
-        // padding: EdgeInsetsDirectional.only(top: 10.0),
-        middle: Column(
+        backgroundColor: Colors.black.withOpacity(0.8),
+        border: Border(bottom: BorderSide(color: HexColor("26262a"), width: 1)),
+        middle: ListView(
           children: <Widget>[
             Container(height: 10.0),
-            CircleAvatar(
-              radius: 20,
-              child: contactImage == null ? Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: AlignmentDirectional.topStart,
-                      colors: [HexColor('a0a4af'), HexColor('848894')],
+            GestureDetector(
+              onTap: () async {
+                Chat chat = await widget.chat.getParticipants();
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => ConversationDetails(
+                      chat: chat,
                     ),
-                    borderRadius: BorderRadius.circular(30),
                   ),
-                  child: Container(
-                    // child: Text("${widget.chat.title[0]}"),
-                    child: (initials is Icon) ? initials : Text(initials),
-                    alignment: AlignmentDirectional.center,
+                );
+              },
+              child: CircleAvatar(
+                radius: 20,
+                child: contactImage == null ? Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: AlignmentDirectional.topStart,
+                        colors: [HexColor('a0a4af'), HexColor('848894')],
+                      ),
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                    child: Container(
+                      // child: Text("${widget.chat.title[0]}"),
+                      child: (initials is Icon) ? initials : Text(initials),
+                      alignment: AlignmentDirectional.center,
+                    ),
+                  ) : CircleAvatar(
+                    backgroundImage: contactImage,
                   ),
-                ) : CircleAvatar(
-                  backgroundImage: contactImage,
-                ),
+              ),
             ),
-            Container(height: 2.0),
-            Text(
-              widget.title,
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.normal),
+            Container(height: 3.0),
+            Container(
+              padding: EdgeInsets.only(left: 10),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  Text(
+                    getShortChatTitle(widget.chat),
+                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.normal, fontSize: 14)
+                  ),
+                  Container(width: 5),
+                  Text(
+                    ">",
+                    style: TextStyle(color: Colors.grey.withOpacity(0.8), fontWeight: FontWeight.normal, fontSize: 14)
+                  )
+                ],
+              )
             )
           ]
         ),
-        trailing: GestureDetector(
-          child: Icon(
-            Icons.info,
-            color: Colors.blue,
-          ),
-          onTap: () async {
-            Chat chat = await widget.chat.getParticipants();
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (context) => ConversationDetails(
-                  chat: chat,
-                ),
-              ),
-            );
-          },
-        ),
+        trailing: Container(width: 20)
       ),
       body: Column(
         mainAxisAlignment: MainAxisAlignment.end,
