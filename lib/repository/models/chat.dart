@@ -25,8 +25,9 @@ Future<String> getFullChatTitle(Chat _chat) async {
     Chat chat = await _chat.getParticipants();
     List<String> titles = [];
     for (int i = 0; i < chat.participants.length; i++) {
-      titles.add(getContactTitle(
-          ContactManager().contacts, chat.participants[i].address.toString()));
+      String name = getContactTitle(
+          ContactManager().contacts, chat.participants[i].address.toString());
+      titles.add(chat.participants.length > 1 ? name.split(" ")[0] : name);
     }
 
     if (titles.length == 1) {
@@ -48,7 +49,7 @@ Future<String> getFullChatTitle(Chat _chat) async {
 
 String getShortChatTitle(Chat _chat) {
   if (_chat.participants.length == 1) {
-    return getContactTitle(ContactManager().contacts, _chat.participants[0].address.toString());
+    return getContactTitle(ContactManager().contacts, _chat.participants[0].address);
   } else {
     return "${_chat.participants.length} people";
   }
