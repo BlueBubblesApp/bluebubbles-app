@@ -12,6 +12,8 @@ import 'package:bluebubble_messages/socket_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
+import 'package:mime_type/mime_type.dart';
+import 'package:path/path.dart';
 
 import '../../../helpers/hex_color.dart';
 import '../../../helpers/utils.dart';
@@ -154,6 +156,9 @@ class _MessageState extends State<MessageWidget> {
 
       // If it's a file, it's already been downlaoded, so just display it
       if (chatAttachments[i] is File) {
+        debugPrint(
+            "mimetype " + mime(basename((chatAttachments[i] as File).path)));
+
         content.add(Stack(
           children: <Widget>[
             // TODO: This will not always be an image. need to check mimetype
