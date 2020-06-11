@@ -298,7 +298,7 @@ class _NewChatCreatorState extends State<NewChatCreator> {
                               Map<String, dynamic> data = jsonDecode(_data);
                               Chat newChat = Chat.fromMap(data["data"]);
                               newChat = await newChat.save();
-                              String title = await chatTitle(newChat);
+                              String title = await getFullChatTitle(newChat);
                               await ChatBloc().getChats();
                               await NewMessageManager()
                                   .updateWithMessage(null, null);
