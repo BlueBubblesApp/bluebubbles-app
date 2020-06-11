@@ -24,7 +24,7 @@ import '../../helpers/utils.dart';
 class ConversationTile extends StatefulWidget {
   final Chat chat;
   final String title;
-  final String subtitle;
+  final dynamic subtitle;
   final String date;
   final bool hasNewMessage;
   final MessageBloc messageBloc;
@@ -46,7 +46,6 @@ class ConversationTile extends StatefulWidget {
 
 class _ConversationTileState extends State<ConversationTile> {
   String lastMessageTime = "";
-  String subtitle = "";
   List<Message> messages = <Message>[];
   ImageProvider contactImage;
 
@@ -88,6 +87,7 @@ class _ConversationTileState extends State<ConversationTile> {
             Padding(
               padding: const EdgeInsets.only(left: 16.0),
               child: ListTile(
+                contentPadding: EdgeInsets.only(left: 0),
                 title: Text(
                   widget.title,
                   style: TextStyle(
@@ -96,13 +96,15 @@ class _ConversationTileState extends State<ConversationTile> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                subtitle: Text(
-                  widget.subtitle != null ? widget.subtitle : "",
-                  style: TextStyle(
-                    color: HexColor('36363a'),
+                subtitle: widget.subtitle != null && !(widget.subtitle is String)
+                  ? widget.subtitle
+                  : Text(
+                    widget.subtitle != null ? widget.subtitle : "",
+                      style: TextStyle(
+                        color: HexColor('36363a'),
+                      ),
+                    maxLines: 1,
                   ),
-                  maxLines: 1,
-                ),
                 leading: CircleAvatar(
                   radius: 20,
                   child: contactImage == null
@@ -127,7 +129,7 @@ class _ConversationTileState extends State<ConversationTile> {
                         ),
                 ),
                 trailing: Container(
-                  width: 90,
+                  width: 70,
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.center,
