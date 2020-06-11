@@ -8,9 +8,11 @@ import 'package:bluebubble_messages/helpers/utils.dart';
 import 'package:bluebubble_messages/layouts/widgets/message_widget/received_message.dart';
 import 'package:bluebubble_messages/layouts/widgets/message_widget/sent_message.dart';
 import 'package:bluebubble_messages/managers/contact_manager.dart';
+import 'package:bluebubble_messages/managers/method_channel_interface.dart';
 import 'package:bluebubble_messages/managers/settings_manager.dart';
 import 'package:bluebubble_messages/repository/models/attachment.dart';
 import 'package:bluebubble_messages/socket_manager.dart';
+import 'package:contacts_service/contacts_service.dart';
 import 'package:flick_video_player/flick_video_player.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/plugin_api.dart';
@@ -85,6 +87,7 @@ class _MessageState extends State<MessageWidget> {
 
   void getAttachments() {
     // if (widget.message.hasAttachments) {
+    chatAttachments = [];
     Message.getAttachments(widget.message).then((data) {
       attachments = data;
       body = "";
@@ -313,6 +316,86 @@ class _MessageState extends State<MessageWidget> {
                     ],
                   ),
                 ],
+              ),
+            ),
+          );
+        } else if (attachments[i].mimeType == "text/vcard") {
+          String appleContact = chatAttachments[i].readAsStringSync();
+          Contact contact = AttachmentHelper.parseAppleContact(appleContact);
+          final initials = getInitials(contact.displayName, " ");
+          content.add(
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: SizedBox(
+                height: 60,
+                width: 250,
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () async {
+                      // await ContactsService.addContact(contact);
+                      MethodChannelInterface().invokeMethod("CreateContact", {
+                        "phone":
+                            contact.phones != null && contact.phones.length > 0
+                                ? contact.phones.first.value
+                                : "",
+                        "email":
+                            contact.emails != null && contact.emails.length > 0
+                                ? contact.emails.first.value
+                                : "",
+                        "displayName": contact.displayName
+                      });
+                    },
+                    child: Center(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: <Widget>[
+                          Text(
+                            contact.displayName,
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Spacer(
+                            flex: 1,
+                          ),
+                          Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: AlignmentDirectional.topStart,
+                                colors: [
+                                  HexColor('a0a4af'),
+                                  HexColor('848894')
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                            child: Container(
+                              // child: Text("${widget.chat.title[0]}"),
+                              child: (initials is Icon)
+                                  ? initials
+                                  : Text(
+                                      initials,
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                              alignment: AlignmentDirectional.center,
+                            ),
+                          ),
+                          Icon(
+                            Icons.arrow_forward_ios,
+                            color: Colors.white,
+                            size: 15,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
               ),
             ),
           );

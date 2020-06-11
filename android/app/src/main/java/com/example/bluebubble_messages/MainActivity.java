@@ -25,6 +25,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
+import android.provider.ContactsContract;
 import android.service.notification.StatusBarNotification;
 import android.util.Log;
 
@@ -159,6 +160,20 @@ public class MainActivity extends FlutterActivity {
 
                                 notificationManager.notify(call.argument("notificationId"), builder.build());
                                 notificationManager.notify(call.argument("summaryId"), summaryBuilder.build());
+                                result.success("");
+                            } else if(call.method.equals("CreateContact")) {
+
+                                Intent intent = new Intent(ContactsContract.Intents.Insert.ACTION);
+                                intent.setType(ContactsContract.RawContacts.CONTENT_TYPE);
+
+                                String email = call.argument("email");
+                                String phone = call.argument("phone");
+                                String displayName = call.argument("displayName");
+                                // Inserts an email address
+                                intent.putExtra(ContactsContract.Intents.Insert.EMAIL, email)
+                                        .putExtra(ContactsContract.Intents.Insert.PHONE, phone)
+                                .putExtra(ContactsContract.Intents.Insert.NAME, displayName);
+                                startActivity(intent);
                                 result.success("");
                             } else {
                                 result.notImplemented();
