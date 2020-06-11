@@ -11,7 +11,7 @@ import 'package:bluebubble_messages/socket_manager.dart';
 import 'package:contacts_service/contacts_service.dart';
 
 import '../../helpers/hex_color.dart';
-import 'package:flutter/cupertino.dart';
+
 import 'package:flutter/material.dart';
 import '../../repository/models/chat.dart';
 
@@ -57,7 +57,7 @@ class _ConversationViewState extends State<ConversationView> {
     return Scaffold(
       backgroundColor: Colors.black,
       extendBodyBehindAppBar: true,
-      appBar: CustomCupertinoNavBar(
+      appBar: CupertinoNavigationBar(
         backgroundColor: Colors.black.withOpacity(0.8),
         border: Border(bottom: BorderSide(color: HexColor("26262a"), width: 1)),
         middle: ListView(
