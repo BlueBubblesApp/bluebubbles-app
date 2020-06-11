@@ -12,6 +12,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:flutter_socket_io/flutter_socket_io.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:bluebubble_messages/helpers/message_helper.dart';
@@ -52,6 +53,9 @@ class SocketManager {
 
   SetupBloc setup = new SetupBloc();
   StreamController<bool> finishedSetup = StreamController<bool>();
+
+  StreamSubscription _intentDataStreamSubscription;
+  List<SharedMediaFile> _sharedFiles;
 
   //Socket io
   // SocketIOManager manager;
@@ -144,6 +148,21 @@ class SocketManager {
 
     // Recreate tables
     DBProvider.db.buildDatabase(db);
+  }
+
+  void initMediaReceiver() {
+    // For sharing images coming from outside the app while the app is in the memory
+    _intentDataStreamSubscription = ReceiveSharingIntent.getMediaStream()
+        .listen((List<SharedMediaFile> value) {
+      debugPrint("got shared mediafiles");
+    }, onError: (err) {
+      print("getIntentDataStream error: $err");
+    });
+
+    // For sharing images coming from outside the app while the app is closed
+    ReceiveSharingIntent.getInitialMedia().then((List<SharedMediaFile> value) {
+      debugPrint("got shared mediafiles");
+    });
   }
 
   startSocketIO([Function connectCb]) async {

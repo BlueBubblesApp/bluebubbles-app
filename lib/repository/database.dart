@@ -109,7 +109,7 @@ class DBProvider {
         "ROWID INTEGER PRIMARY KEY AUTOINCREMENT,"
         "guid TEXT NOT NULL,"
         "uti TEXT NOT NULL,"
-        "mimeType TEXT NOT NULL,"
+        "mimeType TEXT DEFAULT NULL,"
         "transferState INTEGER DEFAULT 0,"
         "isOutgoing INTEGER DEFAULT 0,"
         "transferName INTEGER NOT NULL,"

@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:ui';
 
+import 'package:assets_audio_player/assets_audio_player.dart';
 import 'package:bluebubble_messages/helpers/attachment_downloader.dart';
 import 'package:bluebubble_messages/helpers/utils.dart';
 import 'package:bluebubble_messages/layouts/widgets/message_widget/received_message.dart';
@@ -9,11 +10,13 @@ import 'package:bluebubble_messages/managers/contact_manager.dart';
 import 'package:bluebubble_messages/managers/settings_manager.dart';
 import 'package:bluebubble_messages/repository/models/attachment.dart';
 import 'package:bluebubble_messages/socket_manager.dart';
+import 'package:flick_video_player/flick_video_player.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
 import 'package:mime_type/mime_type.dart';
 import 'package:path/path.dart';
+import 'package:video_player/video_player.dart';
 
 import '../../../helpers/hex_color.dart';
 import '../../../helpers/utils.dart';
@@ -52,6 +55,9 @@ class _MessageState extends State<MessageWidget> {
   final String laugh = "laugh";
   Map<String, List<Message>> reactions = new Map();
   Widget blurredImage;
+  FlickManager _flickManager;
+  bool play = false;
+  double progress = 0.0;
 
   @override
   void didChangeDependencies() async {
@@ -65,12 +71,55 @@ class _MessageState extends State<MessageWidget> {
     reactions[laugh] = [];
 
     widget.reactions.forEach((reaction) {
-      if (!reaction.isFromMe) {
-        debugPrint(reaction.handle.toString());
-      }
       reactions[reaction.associatedMessageType].add(reaction);
     });
     setState(() {});
+  }
+
+  void getAttachments() {
+    // if (widget.message.hasAttachments) {
+    Message.getAttachments(widget.message).then((data) {
+      attachments = data;
+      body = "";
+      for (int i = 0; i < attachments.length; i++) {
+        String appDocPath = SettingsManager().appDocDir.path;
+        String pathName =
+            "$appDocPath/${attachments[i].guid}/${attachments[i].transferName}";
+
+        /**
+           * Case 1: If the file exists (we can get the type), add the file to the chat's attachments
+           * Case 2: If the attachment is currently being downloaded, get the AttachmentDownloader object and add it to the chat's attachments
+           * Case 3: Otherwise, add the attachment, as is, meaning it needs to be downloaded
+           */
+
+        if (FileSystemEntity.typeSync(pathName) !=
+            FileSystemEntityType.notFound) {
+          chatAttachments.add(File(pathName));
+          String mimeType = getMimeType(File(pathName));
+          if (mimeType == "video") {
+            _flickManager = FlickManager(
+                videoPlayerController:
+                    VideoPlayerController.file(File(pathName)));
+          }
+        } else if (SocketManager()
+            .attachmentDownloaders
+            .containsKey(attachments[i].guid)) {
+          chatAttachments
+              .add(SocketManager().attachmentDownloaders[attachments[i].guid]);
+        } else {
+          chatAttachments.add(attachments[i]);
+        }
+      }
+      if (this.mounted) setState(() {});
+    });
+    // }
+  }
+
+  String getMimeType(File attachment) {
+    String mimeType = mime(basename(attachment.path));
+    if (mimeType == null) return "alskdjfalj";
+    mimeType = mimeType.substring(0, mimeType.indexOf("/"));
+    return mimeType;
   }
 
   @override
@@ -81,37 +130,7 @@ class _MessageState extends State<MessageWidget> {
               threshold: 1) ||
           !sameSender(widget.message, widget.newerMessage);
     }
-
-    if (widget.message.hasAttachments) {
-      Message.getAttachments(widget.message).then((data) {
-        attachments = data;
-        body = "";
-        for (int i = 0; i < attachments.length; i++) {
-          String appDocPath = SettingsManager().appDocDir.path;
-          String pathName =
-              "$appDocPath/${attachments[i].guid}/${attachments[i].transferName}";
-
-          /**
-           * Case 1: If the file exists (we can get the type), add the file to the chat's attachments
-           * Case 2: If the attachment is currently being downloaded, get the AttachmentDownloader object and add it to the chat's attachments
-           * Case 3: Otherwise, add the attachment, as is, meaning it needs to be downloaded
-           */
-
-          if (FileSystemEntity.typeSync(pathName) !=
-              FileSystemEntityType.notFound) {
-            chatAttachments.add(File(pathName));
-          } else if (SocketManager()
-              .attachmentDownloaders
-              .containsKey(attachments[i].guid)) {
-            chatAttachments.add(
-                SocketManager().attachmentDownloaders[attachments[i].guid]);
-          } else {
-            chatAttachments.add(attachments[i]);
-          }
-        }
-        if (this.mounted) setState(() {});
-      });
-    }
+    getAttachments();
   }
 
   bool withinTimeThreshold(Message first, Message second, {threshold: 5}) {
@@ -155,26 +174,107 @@ class _MessageState extends State<MessageWidget> {
 
       // If it's a file, it's already been downlaoded, so just display it
       if (chatAttachments[i] is File) {
-        debugPrint(
-            "mimetype " + mime(basename((chatAttachments[i] as File).path)));
-
-        content.add(Stack(
-          children: <Widget>[
-            // TODO: This will not always be an image. need to check mimetype
-            ClipRRect(
-                borderRadius: BorderRadius.circular(8.0),
-                child: Image.file(chatAttachments[i])),
-
-            Positioned.fill(
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: () {},
+        String mimeType = attachments[i].mimeType;
+        mimeType = mimeType.substring(0, mimeType.indexOf("/"));
+        if (mimeType == "image") {
+          content.add(
+            Stack(
+              children: <Widget>[
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8.0),
+                  child: Image.file(chatAttachments[i]),
                 ),
+                Positioned.fill(
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () {},
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        } else if (mimeType == "video") {
+          content.add(
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8.0),
+              child: FlickVideoPlayer(
+                flickManager: _flickManager,
               ),
             ),
-          ],
-        ));
+          );
+        } else if (mimeType == "audio") {
+          //TODO fix this stuff
+          content.add(
+            AudioWidget.file(
+              child: Container(
+                height: 100,
+                width: 200,
+                child: Column(
+                  children: <Widget>[
+                    Center(
+                      child: Text(
+                        basename(chatAttachments[i].path),
+                        style: TextStyle(
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                    Spacer(
+                      flex: 1,
+                    ),
+                    Row(
+                      children: <Widget>[
+                        ButtonTheme(
+                          minWidth: 1,
+                          height: 30,
+                          child: RaisedButton(
+                            onPressed: () {
+                              setState(() {
+                                play = !play;
+                              });
+                            },
+                            child: Icon(
+                              play ? Icons.pause : Icons.play_arrow,
+                              size: 15,
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: Slider(
+                            value: progress,
+                            onChanged: (double value) {
+                              setState(() {
+                                progress = value;
+                              });
+                            },
+                          ),
+                        )
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              path: (chatAttachments[i] as File).path,
+              play: play,
+              onPositionChanged: (current, total) {
+                debugPrint("${current.inMilliseconds / total.inMilliseconds}");
+                setState(() {
+                  progress = current.inMilliseconds / total.inMilliseconds;
+                });
+              },
+              onFinished: () {
+                debugPrint("on finished");
+                setState(() {
+                  play = false;
+                });
+              },
+            ),
+          );
+        } else {
+          debugPrint(mimeType);
+        }
 
         // If it's an attachment, then it needs to be manually downloaded
       } else if (chatAttachments[i] is Attachment) {
@@ -212,13 +312,8 @@ class _MessageState extends State<MessageWidget> {
                 );
               }
               if (snapshot.data is File) {
-                return InkWell(
-                    onTap: () {
-                      debugPrint("tap");
-                    },
-                    child: ClipRRect(
-                        borderRadius: BorderRadius.circular(8.0),
-                        child: Image.file(snapshot.data)));
+                getAttachments();
+                return Container();
               } else {
                 double progress = 0.0;
                 if (snapshot.hasData) {
@@ -473,5 +568,11 @@ class _MessageState extends State<MessageWidget> {
       ),
     );
     return entry;
+  }
+
+  @override
+  void dispose() {
+    if (_flickManager != null) _flickManager.dispose();
+    super.dispose();
   }
 }
