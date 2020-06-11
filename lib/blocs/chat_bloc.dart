@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:bluebubble_messages/blocs/message_bloc.dart';
+import 'package:bluebubble_messages/managers/settings_manager.dart';
 import 'package:bluebubble_messages/repository/models/attachment.dart';
 import 'package:bluebubble_messages/repository/models/message.dart';
 import 'package:flutter/material.dart';
@@ -62,21 +64,43 @@ class ChatBloc {
         messageBloc = new MessageBloc(chat);
         messageBloc.stream.listen((List<Message> messages) async {
           if (messages.length > 0) {
-            String subtitle = "";
+            dynamic subtitle = "";
             String date = "";
 
             Message firstMessage = messages.first;
-            String text = firstMessage.text;
+            subtitle = firstMessage.text;
             if (firstMessage.hasAttachments) {
               List<Attachment> attachments =
                   await Message.getAttachments(firstMessage);
 
-              if (text.length == 0 && attachments.length > 0) {
-                text = "${attachments.length} attachments";
+              // When there is an attachment,the text length  1
+              if (subtitle.length == 1 && attachments.length > 0) {
+                String appDocPath = SettingsManager().appDocDir.path;
+                String pathName =
+                    "$appDocPath/${attachments[0].guid}/${attachments[0].transferName}";
+
+                if (FileSystemEntity.typeSync(pathName) !=
+                        FileSystemEntityType.notFound &&
+                    attachments[0].mimeType.startsWith("image/")) {
+
+                  // We need a row here so the parent honors our clipping
+                  subtitle = Container(
+                    padding: EdgeInsets.only(top: 2),
+                    child: Row(
+                      children: <Widget>[
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(4),
+                          child: Image.file(File(pathName), alignment: Alignment.centerLeft, height: 38),
+                        )
+                      ]
+                    )
+                  );
+                } else {
+                  subtitle = "${attachments.length} Attachment";
+                  if (attachments.length > 1) subtitle += "s";
+                }
               }
             }
-
-            subtitle = text;
 
             Message lastMessage = messages.first;
             if (lastMessage.dateCreated.isToday()) {
@@ -90,7 +114,8 @@ class ChatBloc {
             Map<String, dynamic> chatMap = _chatBloc._tileVals[chat.guid];
             chatMap["subtitle"] = subtitle;
             chatMap["date"] = date;
-            chatMap["actualDate"] = lastMessage.dateCreated.millisecondsSinceEpoch;
+            chatMap["actualDate"] =
+                lastMessage.dateCreated.millisecondsSinceEpoch;
             bool hasNotification = false;
 
             for (int i = 0;

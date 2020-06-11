@@ -499,7 +499,6 @@ class _MessageState extends State<MessageWidget> {
   }
 
   OverlayEntry _createOverlayEntry() {
-    debugPrint(widget.message.hasAttachments.toString());
     List<Widget> reactioners = <Widget>[];
     reactions.keys.forEach(
       (element) {
