@@ -297,7 +297,9 @@ class SocketManager {
       });
     } else {
       debugPrint("Client received new message " + chat.guid);
+
       message = new Message.fromMap(data);
+
       await chat.addMessage(message);
       // Add any related attachments
       List<dynamic> attachments =

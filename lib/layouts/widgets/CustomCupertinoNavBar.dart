@@ -30,7 +30,8 @@ class _HeroTag {
 
   // Let the Hero tag be described in tree dumps.
   @override
-  String toString() => 'Default Hero tag for Cupertino navigation bars with navigator $navigator';
+  String toString() =>
+      'Default Hero tag for Cupertino navigation bars with navigator $navigator';
 
   @override
   bool operator ==(Object other) {
@@ -40,8 +41,7 @@ class _HeroTag {
     if (other.runtimeType != runtimeType) {
       return false;
     }
-    return other is _HeroTag
-        && other.navigator == navigator;
+    return other is _HeroTag && other.navigator == navigator;
   }
 
   @override
@@ -67,35 +67,32 @@ class CustomCupertinoNavBar extends CupertinoNavigationBar {
     this.actionsForegroundColor,
     this.transitionBetweenRoutes = false,
     this.heroTag = _defaultHeroTag,
-  }) : assert(automaticallyImplyLeading != null),
-       assert(automaticallyImplyMiddle != null),
-       assert(transitionBetweenRoutes != null),
-       assert(
-         heroTag != null,
-         'heroTag cannot be null. Use transitionBetweenRoutes = false to '
-         'disable Hero transition on this navigation bar.'
-       ),
-       assert(
-         !transitionBetweenRoutes || identical(heroTag, _defaultHeroTag),
-         'Cannot specify a heroTag override if this navigation bar does not '
-         'transition due to transitionBetweenRoutes = false.'
-       ),
-       super(
-          key: key,
-          leading: leading,
-          automaticallyImplyLeading: automaticallyImplyLeading,
-          automaticallyImplyMiddle: automaticallyImplyMiddle,
-          previousPageTitle: previousPageTitle,
-          middle: middle,
-          trailing: trailing,
-          border: border,
-          backgroundColor: backgroundColor,
-          brightness: brightness,
-          padding: padding,
-          actionsForegroundColor: actionsForegroundColor,
-          transitionBetweenRoutes: transitionBetweenRoutes,
-          heroTag: heroTag
-        );
+  })  : assert(automaticallyImplyLeading != null),
+        assert(automaticallyImplyMiddle != null),
+        assert(transitionBetweenRoutes != null),
+        assert(
+            heroTag != null,
+            'heroTag cannot be null. Use transitionBetweenRoutes = false to '
+            'disable Hero transition on this navigation bar.'),
+        assert(
+            !transitionBetweenRoutes || identical(heroTag, _defaultHeroTag),
+            'Cannot specify a heroTag override if this navigation bar does not '
+            'transition due to transitionBetweenRoutes = false.'),
+        super(
+            key: key,
+            leading: leading,
+            automaticallyImplyLeading: automaticallyImplyLeading,
+            automaticallyImplyMiddle: automaticallyImplyMiddle,
+            previousPageTitle: previousPageTitle,
+            middle: middle,
+            trailing: trailing,
+            border: border,
+            backgroundColor: backgroundColor,
+            brightness: brightness,
+            padding: padding,
+            actionsForegroundColor: actionsForegroundColor,
+            transitionBetweenRoutes: transitionBetweenRoutes,
+            heroTag: heroTag);
 
   final Widget leading;
   final bool automaticallyImplyLeading;
@@ -108,10 +105,8 @@ class CustomCupertinoNavBar extends CupertinoNavigationBar {
   final EdgeInsetsDirectional padding;
   final Border border;
 
-  @Deprecated(
-    'Use CupertinoTheme and primaryColor to propagate color. '
-    'This feature was deprecated after v1.1.2.'
-  )
+  @Deprecated('Use CupertinoTheme and primaryColor to propagate color. '
+      'This feature was deprecated after v1.1.2.')
   final Color actionsForegroundColor;
   final bool transitionBetweenRoutes;
   final Object heroTag;

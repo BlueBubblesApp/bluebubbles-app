@@ -16,12 +16,12 @@ import 'package:flutter/material.dart';
 import '../../repository/models/chat.dart';
 
 class ConversationView extends StatefulWidget {
-  ConversationView({
-    Key key,
-    @required this.chat,
-    @required this.title,
-    @required this.messageBloc
-  }) : super(key: key);
+  ConversationView(
+      {Key key,
+      @required this.chat,
+      @required this.title,
+      @required this.messageBloc})
+      : super(key: key);
 
   // final data;
   final Chat chat;
@@ -60,37 +60,38 @@ class _ConversationViewState extends State<ConversationView> {
       appBar: CustomCupertinoNavBar(
         backgroundColor: HexColor('26262a').withOpacity(0.5),
         // padding: EdgeInsetsDirectional.only(top: 10.0),
-        middle: Column(
-          children: <Widget>[
-            Container(height: 10.0),
-            CircleAvatar(
-              radius: 20,
-              child: contactImage == null ? Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: AlignmentDirectional.topStart,
-                      colors: [HexColor('a0a4af'), HexColor('848894')],
+        middle: Column(children: <Widget>[
+          Container(height: 10.0),
+          CircleAvatar(
+            radius: 20,
+            child: contactImage == null
+                ? Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: AlignmentDirectional.topStart,
+                        colors: [HexColor('a0a4af'), HexColor('848894')],
+                      ),
+                      borderRadius: BorderRadius.circular(30),
                     ),
-                    borderRadius: BorderRadius.circular(30),
+                    child: Container(
+                      // child: Text("${widget.chat.title[0]}"),
+                      child: (initials is Icon) ? initials : Text(initials),
+                      alignment: AlignmentDirectional.center,
+                    ),
+                  )
+                : CircleAvatar(
+                    backgroundImage: contactImage,
                   ),
-                  child: Container(
-                    // child: Text("${widget.chat.title[0]}"),
-                    child: (initials is Icon) ? initials : Text(initials),
-                    alignment: AlignmentDirectional.center,
-                  ),
-                ) : CircleAvatar(
-                  backgroundImage: contactImage,
-                ),
-            ),
-            Container(height: 2.0),
-            Text(
-              widget.title,
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.normal),
-            )
-          ]
-        ),
+          ),
+          Container(height: 2.0),
+          Text(
+            widget.title,
+            style:
+                TextStyle(color: Colors.white, fontWeight: FontWeight.normal),
+          )
+        ]),
         trailing: GestureDetector(
           child: Icon(
             Icons.info,

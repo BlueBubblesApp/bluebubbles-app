@@ -3,6 +3,8 @@ import 'dart:ui';
 
 import 'package:bluebubble_messages/helpers/attachment_downloader.dart';
 import 'package:bluebubble_messages/helpers/utils.dart';
+import 'package:bluebubble_messages/layouts/widgets/message_widget/received_message.dart';
+import 'package:bluebubble_messages/layouts/widgets/message_widget/sent_message.dart';
 import 'package:bluebubble_messages/managers/contact_manager.dart';
 import 'package:bluebubble_messages/managers/settings_manager.dart';
 import 'package:bluebubble_messages/repository/models/attachment.dart';
@@ -11,9 +13,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
 
-import '../../helpers/hex_color.dart';
-import '../../helpers/utils.dart';
-import '../../repository/models/message.dart';
+import '../../../helpers/hex_color.dart';
+import '../../../helpers/utils.dart';
+import '../../../repository/models/message.dart';
 
 class MessageWidget extends StatefulWidget {
   MessageWidget({
@@ -94,10 +96,14 @@ class _MessageState extends State<MessageWidget> {
            * Case 3: Otherwise, add the attachment, as is, meaning it needs to be downloaded
            */
 
-          if (FileSystemEntity.typeSync(pathName) != FileSystemEntityType.notFound) {
+          if (FileSystemEntity.typeSync(pathName) !=
+              FileSystemEntityType.notFound) {
             chatAttachments.add(File(pathName));
-          } else if (SocketManager().attachmentDownloaders.containsKey(attachments[i].guid)) {
-            chatAttachments.add(SocketManager().attachmentDownloaders[attachments[i].guid]);
+          } else if (SocketManager()
+              .attachmentDownloaders
+              .containsKey(attachments[i].guid)) {
+            chatAttachments.add(
+                SocketManager().attachmentDownloaders[attachments[i].guid]);
           } else {
             chatAttachments.add(attachments[i]);
           }
@@ -107,48 +113,44 @@ class _MessageState extends State<MessageWidget> {
     });
   }
 
-  bool sameSender(Message first, Message second) {
-    return (first != null &&
-        second != null &&
-        (first.isFromMe && second.isFromMe ||
-            (!first.isFromMe &&
-                !second.isFromMe &&
-                first.handleId == second.handleId)));
-  }
-
   bool withinTimeThreshold(Message first, Message second, {threshold: 5}) {
     if (first == null || second == null) return false;
     return first.dateCreated.difference(second.dateCreated).inMinutes >
         threshold;
   }
 
-  List<Widget> _constructContent() {
+  List<Widget> _buildContent() {
     List<Widget> content = <Widget>[];
     for (int i = 0; i < chatAttachments.length; i++) {
       // Pull the blurhash from the attachment, based on the class type
-      String blurhash = chatAttachments[i] is Attachment ? chatAttachments[i].blurhash : null;
-      blurhash = chatAttachments[i] is AttachmentDownloader ? chatAttachments[i].attachment.blurhash : null;
+      String blurhash =
+          chatAttachments[i] is Attachment ? chatAttachments[i].blurhash : null;
+      blurhash = chatAttachments[i] is AttachmentDownloader
+          ? chatAttachments[i].attachment.blurhash
+          : null;
 
       // Convert the placeholder to a Widget
-      Widget placeholder = (blurhash == null) ? Container() : FutureBuilder(
-        future: blurHashDecode(blurhash),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.done &&
-              snapshot.hasData) {
-            return ClipRRect(
-              borderRadius: BorderRadius.circular(8.0),
-              child: Image.memory(
-                snapshot.data,
-                width: 300,
-                // height: 300,
-                fit: BoxFit.fitWidth,
-              ),
+      Widget placeholder = (blurhash == null)
+          ? Container()
+          : FutureBuilder(
+              future: blurHashDecode(blurhash),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.done &&
+                    snapshot.hasData) {
+                  return ClipRRect(
+                    borderRadius: BorderRadius.circular(8.0),
+                    child: Image.memory(
+                      snapshot.data,
+                      width: 300,
+                      // height: 300,
+                      fit: BoxFit.fitWidth,
+                    ),
+                  );
+                } else {
+                  return Container();
+                }
+              },
             );
-          } else {
-            return Container();
-          }
-        },
-      );
 
       // If it's a file, it's already been downlaoded, so just display it
       if (chatAttachments[i] is File) {
@@ -156,11 +158,9 @@ class _MessageState extends State<MessageWidget> {
           children: <Widget>[
             // TODO: This will not always be an image. need to check mimetype
             ClipRRect(
-              borderRadius: BorderRadius.circular(8.0),
-              child: Image.file(chatAttachments[i])
-            ),
-            
-            
+                borderRadius: BorderRadius.circular(8.0),
+                child: Image.file(chatAttachments[i])),
+
             Positioned.fill(
               child: Material(
                 color: Colors.transparent,
@@ -172,7 +172,7 @@ class _MessageState extends State<MessageWidget> {
           ],
         ));
 
-      // If it's an attachment, then it needs to be manually downloaded
+        // If it's an attachment, then it needs to be manually downloaded
       } else if (chatAttachments[i] is Attachment) {
         content.add(
           Stack(
@@ -181,7 +181,8 @@ class _MessageState extends State<MessageWidget> {
               placeholder,
               RaisedButton(
                 onPressed: () {
-                  chatAttachments[i] = new AttachmentDownloader(chatAttachments[i]);
+                  chatAttachments[i] =
+                      new AttachmentDownloader(chatAttachments[i]);
                   setState(() {});
                 },
                 color: HexColor('26262a').withAlpha(100),
@@ -194,7 +195,7 @@ class _MessageState extends State<MessageWidget> {
           ),
         );
 
-      // If it's an AttachmentDownloader, it is currently being downloaded
+        // If it's an AttachmentDownloader, it is currently being downloaded
       } else if (chatAttachments[i] is AttachmentDownloader) {
         content.add(
           StreamBuilder(
@@ -208,14 +209,12 @@ class _MessageState extends State<MessageWidget> {
               }
               if (snapshot.data is File) {
                 return InkWell(
-                  onTap: () {
-                    debugPrint("tap");
-                  },
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(8.0),
-                    child: Image.file(snapshot.data)
-                  )
-                );
+                    onTap: () {
+                      debugPrint("tap");
+                    },
+                    child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8.0),
+                        child: Image.file(snapshot.data)));
               } else {
                 double progress = 0.0;
                 if (snapshot.hasData) {
@@ -261,177 +260,6 @@ class _MessageState extends State<MessageWidget> {
     return content;
   }
 
-  Widget _buildSentMessage() {
-    List<Widget> tail = <Widget>[
-      Container(
-        margin: EdgeInsets.only(bottom: 1),
-        width: 20,
-        height: 15,
-        decoration: BoxDecoration(
-          color: Colors.blue,
-          borderRadius: BorderRadius.only(bottomLeft: Radius.circular(12)),
-        ),
-      ),
-      Container(
-        margin: EdgeInsets.only(bottom: 2),
-        height: 28,
-        width: 11,
-        decoration: BoxDecoration(
-            color: Colors.black,
-            borderRadius: BorderRadius.only(bottomLeft: Radius.circular(8))),
-      ),
-    ];
-
-    List<Widget> stack = <Widget>[
-      Container(
-        height: 30,
-        width: 6,
-        color: Colors.black,
-      ),
-    ];
-    if (showTail) {
-      stack.insertAll(0, tail);
-    }
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: <Widget>[
-        _buildTimeStamp(),
-        // _buildReactions(),
-        _buildReactions(),
-        GestureDetector(
-          onLongPress: () {
-            Overlay.of(context).insert(_createOverlayEntry());
-          },
-          child: Padding(
-            padding: EdgeInsets.only(bottom: showTail ? 10.0 : 3.0),
-            child: Stack(
-              alignment: AlignmentDirectional.bottomEnd,
-              children: <Widget>[
-                Stack(
-                  alignment: AlignmentDirectional.bottomEnd,
-                  children: stack,
-                ),
-                Container(
-                  margin: EdgeInsets.symmetric(
-                    horizontal: 10,
-                  ),
-                  constraints: BoxConstraints(
-                    maxWidth: MediaQuery.of(context).size.width * 3 / 4,
-                  ),
-                  padding: EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(20),
-                    color: Colors.blue,
-                  ),
-                  // color: Colors.blue,
-                  // height: 20,
-                  child: Column(
-                    children: _constructContent(),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        _buildDelieveredReceipt()
-      ],
-    );
-  }
-
-  Widget _buildReceivedMessage() {
-    List<Widget> tail = <Widget>[
-      Container(
-        margin: EdgeInsets.only(bottom: 1),
-        width: 20,
-        height: 15,
-        decoration: BoxDecoration(
-          color: HexColor('26262a'),
-          borderRadius: BorderRadius.only(bottomRight: Radius.circular(12)),
-        ),
-      ),
-      Container(
-        margin: EdgeInsets.only(bottom: 2),
-        height: 28,
-        width: 11,
-        decoration: BoxDecoration(
-            color: Colors.black,
-            borderRadius: BorderRadius.only(bottomRight: Radius.circular(8))),
-      ),
-    ];
-
-    List<Widget> stack = <Widget>[
-      Container(
-        height: 30,
-        width: 6,
-        color: Colors.black,
-      )
-    ];
-    if (showTail) {
-      stack.insertAll(0, tail);
-    }
-
-    Widget contactItem = new Container(width: 0, height: 0);
-    if (!sameSender(widget.message, widget.olderMessage)) {
-      contactItem = Padding(
-        padding: EdgeInsets.only(left: 25.0, top: 5.0, bottom: 3.0),
-        child: Text(
-          widget.message.handle != null
-              ? getContactTitle(
-                  ContactManager().contacts, widget.message.handle.address)
-              : "",
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 12,
-          ),
-        ),
-      );
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        _buildTimeStamp(),
-        contactItem,
-        _buildReactions(),
-        GestureDetector(
-          onLongPress: () {
-            Overlay.of(context).insert(_createOverlayEntry());
-          },
-          child: Padding(
-            padding: EdgeInsets.only(bottom: showTail ? 10.0 : 3.0),
-            child: Stack(
-              alignment: AlignmentDirectional.bottomStart,
-              children: <Widget>[
-                Stack(
-                  alignment: AlignmentDirectional.bottomStart,
-                  children: stack,
-                ),
-                Container(
-                  margin: EdgeInsets.symmetric(
-                    horizontal: 10,
-                  ),
-                  constraints: BoxConstraints(
-                    maxWidth: MediaQuery.of(context).size.width * 3 / 4,
-                  ),
-                  padding: EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(20),
-                    color: HexColor('26262a'),
-                  ),
-                  // color: Colors.blue,
-                  // height: 20,
-                  child: Column(
-                    children: _constructContent(),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
   Widget _buildTimeStamp() {
     if (widget.olderMessage != null &&
         withinTimeThreshold(widget.message, widget.olderMessage,
@@ -468,9 +296,24 @@ class _MessageState extends State<MessageWidget> {
   @override
   Widget build(BuildContext context) {
     if (widget.fromSelf) {
-      return _buildSentMessage();
+      return SentMessage(
+        content: _buildContent(),
+        deliveredReceipt: _buildDelieveredReceipt(),
+        message: widget.message,
+        olderMessage: widget.olderMessage,
+        overlayEntry: _createOverlayEntry(),
+        showTail: showTail,
+      );
     } else {
-      return _buildReceivedMessage();
+      return ReceivedMessage(
+        timeStamp: _buildTimeStamp(),
+        reactions: _buildReactions(),
+        content: _buildContent(),
+        showTail: showTail,
+        olderMessage: widget.olderMessage,
+        message: widget.message,
+        overlayEntry: _createOverlayEntry(),
+      );
     }
   }
 
@@ -513,43 +356,51 @@ class _MessageState extends State<MessageWidget> {
 
   Widget _buildReactions() {
     if (widget.reactions.length == 0) return Container();
-    Widget reactionIcon = Container();
+    List<Widget> reactionIcon = <Widget>[];
     reactions.keys.forEach((String key) {
       if (reactions[key].length != 0) {
-        reactionIcon = Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: SvgPicture.asset(
-            'assets/reactions/$key-black.svg',
-            color: key == love ? Colors.pink : Colors.white,
+        reactionIcon.add(
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: SvgPicture.asset(
+              'assets/reactions/$key-black.svg',
+              color: key == love ? Colors.pink : Colors.white,
+            ),
           ),
         );
       }
     });
-    return Row(
-      mainAxisAlignment: widget.message.isFromMe
-          ? MainAxisAlignment.end
-          : MainAxisAlignment.start,
+    return Stack(
+      alignment: widget.message.isFromMe
+          ? Alignment.bottomRight
+          : Alignment.bottomLeft,
       children: <Widget>[
-        Stack(
-          alignment: Alignment.bottomLeft,
-          children: <Widget>[
-            Container(
+        for (int i = 0; i < reactionIcon.length; i++)
+          Padding(
+            padding: EdgeInsets.fromLTRB(i.toDouble() * 20.0, 0, 0, 0),
+            child: Container(
               height: 30,
               width: 30,
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(100),
-                color: HexColor('26262a'),
-              ),
-              child: reactionIcon,
-            )
-          ],
-        ),
+                  borderRadius: BorderRadius.circular(100),
+                  color: HexColor('26262a'),
+                  boxShadow: [
+                    new BoxShadow(
+                      blurRadius: 5.0,
+                      offset:
+                          Offset(3.0 * (widget.message.isFromMe ? 1 : -1), 0.0),
+                      color: Colors.black,
+                    )
+                  ]),
+              child: reactionIcon[i],
+            ),
+          ),
       ],
     );
-    // return Text("test");
   }
 
   OverlayEntry _createOverlayEntry() {
+    debugPrint(widget.message.hasAttachments.toString());
     List<Widget> reactioners = <Widget>[];
     reactions.keys.forEach(
       (element) {
@@ -566,7 +417,6 @@ class _MessageState extends State<MessageWidget> {
                 ),
               );
             }
-            // }
           },
         );
       },
@@ -611,16 +461,6 @@ class _MessageState extends State<MessageWidget> {
                       ),
                     ],
                   ),
-                  // child: Column(
-                  //   children: <Widget>[
-                  //     Spacer(
-                  //       flex: 1,
-                  //     ),
-                  //     Container(
-                  //       color: HexColor('26262a'),
-                  //     )
-                  //   ],
-                  // ),
                 ),
               ),
             ),

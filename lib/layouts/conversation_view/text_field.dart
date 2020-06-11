@@ -263,7 +263,7 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField> {
                         physics: AlwaysScrollableScrollPhysics(
                             parent: BouncingScrollPhysics()),
                         scrollDirection: Axis.horizontal,
-                        itemCount: _imageWidgets.length + 1,
+                        itemCount: _imageWidgets.length + 2,
                         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 2,
                         ),
@@ -280,6 +280,24 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField> {
                               color: HexColor('26262a'),
                               child: Text(
                                 "Pick Image",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            );
+                          } else if (index == _imageWidgets.length + 1) {
+                            return RaisedButton(
+                              onPressed: () async {
+                                PickedFile pickedImage = await ImagePicker()
+                                    .getVideo(source: ImageSource.gallery);
+                                File image = File(pickedImage.path);
+                                pickedImages.add(image);
+                                setState(() {});
+                              },
+                              color: HexColor('26262a'),
+                              child: Text(
+                                "Pick Video",
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 12,

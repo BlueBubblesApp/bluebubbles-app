@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'dart:typed_data';
+import 'package:bluebubble_messages/repository/models/message.dart';
 import 'package:flutter/material.dart';
 
 import 'package:bluebubble_messages/managers/contact_manager.dart';
@@ -107,6 +108,15 @@ String randomString(int length) {
   });
 
   return new String.fromCharCodes(codeUnits);
+}
+
+bool sameSender(Message first, Message second) {
+  return (first != null &&
+      second != null &&
+      (first.isFromMe && second.isFromMe ||
+          (!first.isFromMe &&
+              !second.isFromMe &&
+              first.handleId == second.handleId)));
 }
 
 extension DateHelpers on DateTime {

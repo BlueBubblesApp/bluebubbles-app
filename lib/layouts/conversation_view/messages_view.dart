@@ -1,5 +1,5 @@
 import 'package:bluebubble_messages/blocs/message_bloc.dart';
-import 'package:bluebubble_messages/layouts/conversation_view/message_widget.dart';
+import 'package:bluebubble_messages/layouts/widgets/message_widget/message_widget.dart';
 import 'package:bluebubble_messages/repository/models/handle.dart';
 import 'package:bluebubble_messages/repository/models/message.dart';
 import 'package:flutter/cupertino.dart';
