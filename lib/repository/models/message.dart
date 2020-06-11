@@ -82,6 +82,8 @@ class Message {
       this.hasAttachments = false});
 
   factory Message.fromMap(Map<String, dynamic> json) {
+    bool hasAttachments = json.containsKey("attachments") ? ((json['attachments'] as List).length > 0 ? true : false) : false;
+    hasAttachments = json.containsKey("hasAttachments") ? (json["hasAttachments"] == 1 ? true : false) : false;
     return new Message(
         id: json.containsKey("ROWID") ? json["ROWID"] : null,
         guid: json["guid"],
@@ -151,9 +153,7 @@ class Message {
         handle: json.containsKey("handle")
             ? (json['handle'] != null ? Handle.fromMap(json['handle']) : null)
             : null,
-        hasAttachments: json.containsKey("attachments")
-            ? (((json['attachments'] as List).length > 0) ? true : false)
-            : false);
+        hasAttachments: hasAttachments);
   }
 
   Future<Message> save([bool updateIfAbsent = true]) async {

@@ -82,11 +82,10 @@ class _MessageState extends State<MessageWidget> {
           !sameSender(widget.message, widget.newerMessage);
     }
 
-    // if (widget.message.hasAttachments) {
-    Message.getAttachments(widget.message).then((data) {
-      attachments = data;
-      body = "";
-      if (attachments.length > 0) {
+    if (widget.message.hasAttachments) {
+      Message.getAttachments(widget.message).then((data) {
+        attachments = data;
+        body = "";
         for (int i = 0; i < attachments.length; i++) {
           String appDocPath = SettingsManager().appDocDir.path;
           String pathName =
@@ -111,8 +110,8 @@ class _MessageState extends State<MessageWidget> {
           }
         }
         if (this.mounted) setState(() {});
-      }
-    });
+      });
+    }
   }
 
   bool withinTimeThreshold(Message first, Message second, {threshold: 5}) {
