@@ -153,8 +153,12 @@ class SocketManager {
   void initMediaReceiver() {
     // For sharing images coming from outside the app while the app is in the memory
     _intentDataStreamSubscription = ReceiveSharingIntent.getMediaStream()
-        .listen((List<SharedMediaFile> value) {
+        .listen((List<SharedMediaFile> values) {
       debugPrint("got shared mediafiles");
+      List<File> attachments = <File>[];
+      values.forEach((element) {
+        attachments.add(File(element.path));
+      });
     }, onError: (err) {
       print("getIntentDataStream error: $err");
     });

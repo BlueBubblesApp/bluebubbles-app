@@ -3,6 +3,7 @@ import 'dart:ui';
 
 import 'package:assets_audio_player/assets_audio_player.dart';
 import 'package:bluebubble_messages/helpers/attachment_downloader.dart';
+import 'package:bluebubble_messages/helpers/attachment_helper.dart';
 import 'package:bluebubble_messages/helpers/utils.dart';
 import 'package:bluebubble_messages/layouts/widgets/message_widget/received_message.dart';
 import 'package:bluebubble_messages/layouts/widgets/message_widget/sent_message.dart';
@@ -12,10 +13,14 @@ import 'package:bluebubble_messages/repository/models/attachment.dart';
 import 'package:bluebubble_messages/socket_manager.dart';
 import 'package:flick_video_player/flick_video_player.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_map/plugin_api.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
+import 'package:latlong/latlong.dart';
 import 'package:mime_type/mime_type.dart';
 import 'package:path/path.dart';
+// import 'package:photo_manager/photo_manager.dart';
 import 'package:video_player/video_player.dart';
 
 import '../../../helpers/hex_color.dart';
@@ -55,7 +60,9 @@ class _MessageState extends State<MessageWidget> {
   final String laugh = "laugh";
   Map<String, List<Message>> reactions = new Map();
   Widget blurredImage;
+
   FlickManager _flickManager;
+
   bool play = false;
   double progress = 0.0;
 
@@ -270,6 +277,43 @@ class _MessageState extends State<MessageWidget> {
                   play = false;
                 });
               },
+            ),
+          );
+        } else if (attachments[i].mimeType == "text/x-vlocation") {
+          String _location = chatAttachments[i].readAsStringSync();
+          Map<String, dynamic> location =
+              AttachmentHelper.parseAppleLocation(_location);
+          debugPrint("location" + location.toString());
+          content.add(
+            SizedBox(
+              height: 200,
+              child: FlutterMap(
+                options: MapOptions(
+                  center: LatLng(location["longitude"], location["latitude"]),
+                  zoom: 14.0,
+                ),
+                layers: [
+                  new TileLayerOptions(
+                    urlTemplate:
+                        "http://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}",
+                    subdomains: ['0', '1', '2', '3'],
+                    tileSize: 256,
+                  ),
+                  new MarkerLayerOptions(
+                    markers: [
+                      new Marker(
+                        width: 40.0,
+                        height: 40.0,
+                        point: new LatLng(
+                            location["longitude"], location["latitude"]),
+                        builder: (ctx) => new Container(
+                          child: new FlutterLogo(),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           );
         } else {
@@ -499,7 +543,9 @@ class _MessageState extends State<MessageWidget> {
   }
 
   OverlayEntry _createOverlayEntry() {
-    debugPrint(widget.message.hasAttachments.toString());
+    attachments.forEach((element) {
+      debugPrint(element.mimeType);
+    });
     List<Widget> reactioners = <Widget>[];
     reactions.keys.forEach(
       (element) {
