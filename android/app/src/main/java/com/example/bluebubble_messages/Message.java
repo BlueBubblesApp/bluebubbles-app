@@ -26,7 +26,7 @@ class Message {
     String text;
     String subject;
     String country;
-    boolean error;
+    Integer error;
     Timestamp dateCreated;
     Timestamp dateRead;
     Timestamp dateDelivered;
@@ -68,7 +68,7 @@ class Message {
         message.text = (String) Utils.parseField(json, "text", "string");
         message.subject = (String) Utils.parseField(json, "subject", "string");
         message.country = (String) Utils.parseField(json, "country", "string");
-        message.error = (Boolean) Utils.parseField(json, "error", "boolean");
+        message.error = (Integer) Utils.parseField(json, "error", "integer");
         message.dateCreated = (Timestamp) Utils.parseField(json, "dateCreated", "timestamp");
         message.dateRead = (Timestamp) Utils.parseField(json, "dateRead", "timestamp");
         message.dateDelivered = (Timestamp) Utils.parseField(json, "dateDelivered", "timestamp");
@@ -173,7 +173,7 @@ class Message {
         map.put("text", text);
         map.put("subject", subject);
         map.put("country", country);
-        map.put("error", error ? 1 : 0);
+        map.put("error", error);
         map.put("dateCreated", (dateCreated == null) ? null : dateCreated.toInstant().toEpochMilli());
         map.put("dateRead", (dateRead == null) ? null : dateRead.toInstant().toEpochMilli());
         map.put("dateDelivered", (dateDelivered == null) ? null : dateDelivered.toInstant().toEpochMilli());

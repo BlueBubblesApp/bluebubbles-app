@@ -96,9 +96,7 @@ class Message {
         text: json["text"],
         subject: json.containsKey("subject") ? json["subject"] : null,
         country: json.containsKey("country") ? json["country"] : null,
-        error: (json["error"] is bool)
-            ? json['error']
-            : ((json['error'] == 1) ? true : false),
+        error: json.containsKey("error") ? json["error"] : 0,
         dateCreated: json.containsKey("dateCreated")
             ? parseDate(json["dateCreated"])
             : null,
@@ -336,7 +334,7 @@ class Message {
         "text": text,
         "subject": subject,
         "country": country,
-        "error": error ? 1 : 0,
+        "error": error,
         "dateCreated":
             (dateCreated == null) ? null : dateCreated.millisecondsSinceEpoch,
         "dateRead": (dateRead == null) ? null : dateRead.millisecondsSinceEpoch,
