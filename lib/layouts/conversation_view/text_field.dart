@@ -13,9 +13,13 @@ import 'package:photo_manager/photo_manager.dart';
 
 class BlueBubblesTextField extends StatefulWidget {
   final Chat chat;
+  final Function customSend;
+  final List<File> existingAttachments;
   BlueBubblesTextField({
     Key key,
     this.chat,
+    this.customSend,
+    this.existingAttachments,
   }) : super(key: key);
 
   @override
@@ -42,6 +46,9 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField> {
         setState(() {});
       }
     });
+    if (widget.existingAttachments != null) {
+      pickedImages.addAll(widget.existingAttachments);
+    }
   }
 
   @override
@@ -221,21 +228,26 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField> {
                               ),
                               color: Colors.blue,
                               onPressed: () {
-                                if (pickedImages.length > 0) {
-                                  for (int i = 0;
-                                      i < pickedImages.length;
-                                      i++) {
-                                    new AttachmentSender(
-                                      pickedImages[i],
-                                      widget.chat,
-                                      i == pickedImages.length - 1
-                                          ? _controller.text
-                                          : "",
-                                    );
-                                  }
+                                if (widget.customSend != null) {
+                                  widget.customSend(
+                                      pickedImages, _controller.text);
                                 } else {
-                                  SocketManager().sendMessage(
-                                      widget.chat, _controller.text);
+                                  if (pickedImages.length > 0) {
+                                    for (int i = 0;
+                                        i < pickedImages.length;
+                                        i++) {
+                                      new AttachmentSender(
+                                        pickedImages[i],
+                                        widget.chat,
+                                        i == pickedImages.length - 1
+                                            ? _controller.text
+                                            : "",
+                                      );
+                                    }
+                                  } else {
+                                    SocketManager().sendMessage(
+                                        widget.chat, _controller.text);
+                                  }
                                 }
                                 _controller.text = "";
                                 pickedImages = <File>[];

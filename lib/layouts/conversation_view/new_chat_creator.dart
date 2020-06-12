@@ -1,7 +1,9 @@
 import 'dart:convert';
+import 'dart:io';
 import 'dart:ui';
 
 import 'package:bluebubble_messages/blocs/chat_bloc.dart';
+import 'package:bluebubble_messages/helpers/attachment_sender.dart';
 import 'package:bluebubble_messages/helpers/hex_color.dart';
 import 'package:bluebubble_messages/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubble_messages/layouts/conversation_view/messages_view.dart';
@@ -9,6 +11,7 @@ import 'package:bluebubble_messages/layouts/conversation_view/text_field.dart';
 import 'package:bluebubble_messages/managers/contact_manager.dart';
 import 'package:bluebubble_messages/managers/new_message_manager.dart';
 import 'package:bluebubble_messages/repository/models/chat.dart';
+import 'package:bluebubble_messages/repository/models/handle.dart';
 import 'package:bluebubble_messages/socket_manager.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/cupertino.dart';
@@ -17,10 +20,12 @@ import 'package:flutter/material.dart';
 class NewChatCreator extends StatefulWidget {
   final bool isCreator;
   final Chat currentChat;
+  final List<File> attachments;
   NewChatCreator({
     Key key,
     this.isCreator,
     this.currentChat,
+    this.attachments,
   }) : super(key: key);
 
   @override
@@ -32,12 +37,12 @@ class _NewChatCreatorState extends State<NewChatCreator> {
   List<Contact> contacts = <Contact>[];
   List participants = [];
   String previousText = "";
+  Chat existingChat;
 
   @override
   void initState() {
     super.initState();
     _controller = TextEditingController();
-    // _controller.addListener();
   }
 
   void filterContacts(String searchQuery) {
@@ -82,6 +87,53 @@ class _NewChatCreatorState extends State<NewChatCreator> {
     return output;
   }
 
+  Future<void> tryFindExistingChat() async {
+    if (!widget.isCreator) return;
+    List<Chat> possibleChats = <Chat>[];
+    for (Chat _chat in ChatBloc().chats) {
+      Chat chat = await _chat.getParticipants();
+
+      List<String> addresses = <String>[];
+      participants.forEach((element) {
+        if (element is Contact) {
+          element.phones.forEach((element) {
+            addresses.add(cleansePhoneNumber(element.value));
+          });
+          element.emails.forEach((element) {
+            addresses.add(cleansePhoneNumber(element.value));
+          });
+        } else {
+          addresses.add(element);
+        }
+      });
+      int foundContacts = 0;
+      for (Handle handle in chat.participants) {
+        for (String address in addresses) {
+          if (address == cleansePhoneNumber(handle.address)) {
+            foundContacts++;
+            break;
+          }
+        }
+      }
+      if (foundContacts == participants.length) possibleChats.add(chat);
+    }
+    if (possibleChats.length > 1)
+      possibleChats.sort((a, b) {
+        return -ChatBloc()
+            .tileVals[a.guid]["actualDate"]
+            .compareTo(ChatBloc().tileVals[b.guid]["actualDate"]);
+      });
+    if (possibleChats.length > 0) {
+      setState(() {
+        existingChat = possibleChats.first;
+      });
+    } else {
+      setState(() {
+        existingChat = null;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -112,56 +164,67 @@ class _NewChatCreatorState extends State<NewChatCreator> {
       body: Stack(
         children: <Widget>[
           // MessageView(),
-          ListView.builder(
-            physics: AlwaysScrollableScrollPhysics(
-              parent: BouncingScrollPhysics(),
-            ),
-            itemCount: contacts.length,
-            itemBuilder: (BuildContext context, int index) {
-              if (contacts[index] == null) {
-                return Container(
-                  height: 60,
-                );
-              }
-              return ListTile(
-                onTap: () {
-                  if (_controller.text.contains(",")) {
-                    _controller.text = _controller.text
-                            .substring(0, _controller.text.lastIndexOf(",")) +
-                        ", " +
-                        contacts[index].displayName +
-                        ", ";
-                  } else {
-                    _controller.text = contacts[index].displayName + ", ";
-                  }
-                  _controller.selection = TextSelection(
-                    baseOffset: _controller.text.length,
-                    extentOffset: _controller.text.length,
-                  );
-                  previousText = _controller.text;
-                  participants.add(contacts[index]);
-                  contacts = [];
-                  setState(() {});
-                },
-                title: Text(
-                  contacts[index].displayName,
-                  style: TextStyle(
-                    color: Colors.white,
+          widget.isCreator &&
+                  _controller.text.length > 1 &&
+                  _controller.text.substring(_controller.text.length - 2) ==
+                      ", "
+              ? existingChat != null
+                  ? MessageView(
+                      messageBloc: ChatBloc().tileVals[existingChat.guid]
+                          ["bloc"],
+                    )
+                  : Container()
+              : ListView.builder(
+                  physics: AlwaysScrollableScrollPhysics(
+                    parent: BouncingScrollPhysics(),
                   ),
+                  itemCount: contacts.length,
+                  itemBuilder: (BuildContext context, int index) {
+                    if (contacts[index] == null) {
+                      return Container(
+                        height: 60,
+                      );
+                    }
+                    return ListTile(
+                      onTap: () {
+                        if (_controller.text.contains(",")) {
+                          _controller.text = _controller.text.substring(
+                                  0, _controller.text.lastIndexOf(",")) +
+                              ", " +
+                              contacts[index].displayName +
+                              ", ";
+                        } else {
+                          _controller.text = contacts[index].displayName + ", ";
+                        }
+                        _controller.selection = TextSelection(
+                          baseOffset: _controller.text.length,
+                          extentOffset: _controller.text.length,
+                        );
+                        previousText = _controller.text;
+                        participants.add(contacts[index]);
+                        contacts = [];
+                        setState(() {});
+                        tryFindExistingChat();
+                      },
+                      title: Text(
+                        contacts[index].displayName,
+                        style: TextStyle(
+                          color: Colors.white,
+                        ),
+                      ),
+                      subtitle: Text(
+                        contacts[index].phones.length > 0
+                            ? contacts[index].phones.first.value
+                            : contacts[index].emails.length > 0
+                                ? contacts[index].emails.first.value
+                                : "",
+                        style: TextStyle(
+                          color: Colors.white,
+                        ),
+                      ),
+                    );
+                  },
                 ),
-                subtitle: Text(
-                  contacts[index].phones.length > 0
-                      ? contacts[index].phones.first.value
-                      : contacts[index].emails.length > 0
-                          ? contacts[index].emails.first.value
-                          : "",
-                  style: TextStyle(
-                    color: Colors.white,
-                  ),
-                ),
-              );
-            },
-          ),
           Column(
             children: <Widget>[
               ClipRRect(
@@ -178,6 +241,12 @@ class _NewChatCreatorState extends State<NewChatCreator> {
                                   text.split(",")[text.split(",").length - 2]);
                               debugPrint("updated participants: " +
                                   participants.toString());
+                              _controller.text += " ";
+                              _controller.selection = TextSelection(
+                                baseOffset: _controller.text.length,
+                                extentOffset: _controller.text.length,
+                              );
+                              tryFindExistingChat();
                             } else if (previousText.length > 0 &&
                                 previousText
                                         .substring(previousText.length - 1) ==
@@ -197,10 +266,7 @@ class _NewChatCreatorState extends State<NewChatCreator> {
                                 baseOffset: _controller.text.length,
                                 extentOffset: _controller.text.length,
                               );
-                              debugPrint(
-                                  "removed participant " + newParticipantsText);
-                              debugPrint("updated participants: " +
-                                  participants.toString());
+                              tryFindExistingChat();
                             } else {
                               if (text.contains(",")) {
                                 debugPrint("searching " + text.split(",").last);
@@ -212,6 +278,7 @@ class _NewChatCreatorState extends State<NewChatCreator> {
                             }
                           }
                           previousText = text;
+                          setState(() {});
                         },
                         controller: _controller,
                         scrollPhysics: BouncingScrollPhysics(),
@@ -249,100 +316,119 @@ class _NewChatCreatorState extends State<NewChatCreator> {
               Spacer(
                 flex: 1,
               ),
-              // BlueBubblesTextField(),
-              ClipRRect(
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                  child: Container(
-                    height: 60,
-                    width: MediaQuery.of(context).size.width,
-                    child: RaisedButton(
-                      onPressed: () {
-                        if (_controller.text.length == 0) return;
-                        if (!_controller.text.endsWith(", ")) {
-                          participants.add(_controller.text.split(",").last);
-                        }
-                        Map<String, dynamic> params = new Map();
-                        List<String> _participants = <String>[];
-                        participants.forEach((e) {
-                          if (e is Contact) {
-                            if (e.phones.length > 0) {
-                              _participants.add(e.phones.first.value);
-                            } else if (e.emails.length > 0) {
-                              _participants.add(e.emails.first.value);
-                            }
-                          } else {
-                            _participants.add(e);
+              BlueBubblesTextField(
+                existingAttachments: widget.attachments,
+                customSend: (pickedImages, text) async {
+                  if (_controller.text.length == 0) return;
+                  if (!_controller.text.endsWith(", ")) {
+                    participants.add(_controller.text.split(",").last);
+                  }
+                  await tryFindExistingChat();
+                  if (existingChat != null) {
+                    if (pickedImages.length > 0) {
+                      for (int i = 0; i < pickedImages.length; i++) {
+                        new AttachmentSender(
+                          pickedImages[i],
+                          existingChat,
+                          i == pickedImages.length - 1 ? text : "",
+                        );
+                      }
+                    } else {
+                      SocketManager().sendMessage(existingChat, text);
+                    }
+                    String title = await getFullChatTitle(existingChat);
+                    Navigator.of(context).pushReplacement(
+                      MaterialPageRoute(
+                        builder: (context) => ConversationView(
+                          chat: existingChat,
+                          title: title,
+                          messageBloc: ChatBloc().tileVals[existingChat.guid]
+                              ["bloc"],
+                        ),
+                      ),
+                    );
+                    return;
+                  }
+                  Map<String, dynamic> params = new Map();
+                  List<String> _participants = <String>[];
+                  participants.forEach((e) {
+                    if (e is Contact) {
+                      if (e.phones.length > 0) {
+                        _participants.add(e.phones.first.value);
+                      } else if (e.emails.length > 0) {
+                        _participants.add(e.emails.first.value);
+                      }
+                    } else {
+                      _participants.add(e);
+                    }
+                  });
+                  showDialog(
+                    context: context,
+                    child: ClipRRect(
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                        child: SizedBox(
+                          height: 100,
+                          width: 100,
+                          child: CircularProgressIndicator(),
+                        ),
+                      ),
+                    ),
+                  );
+                  if (widget.isCreator) {
+                    params["participants"] = _participants;
+                    SocketManager().socket.sendMessage(
+                      "start-chat",
+                      jsonEncode(params),
+                      (_data) async {
+                        debugPrint(_data);
+                        Map<String, dynamic> data = jsonDecode(_data);
+                        Chat newChat = Chat.fromMap(data["data"]);
+                        newChat = await newChat.save();
+                        String title = await getFullChatTitle(newChat);
+                        await ChatBloc().getChats();
+                        await NewMessageManager().updateWithMessage(null, null);
+                        // await ChatBloc().getChats();
+                        if (pickedImages.length > 0) {
+                          for (int i = 0; i < pickedImages.length; i++) {
+                            new AttachmentSender(
+                              pickedImages[i],
+                              newChat,
+                              i == pickedImages.length - 1 ? text : "",
+                            );
                           }
-                        });
-                        showDialog(
-                          context: context,
-                          child: ClipRRect(
-                            child: BackdropFilter(
-                              filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                              child: SizedBox(
-                                height: 100,
-                                width: 100,
-                                child: CircularProgressIndicator(),
-                              ),
+                        } else {
+                          SocketManager().sendMessage(newChat, text);
+                        }
+
+                        Navigator.of(context, rootNavigator: true).pop();
+                        Navigator.of(context).pushReplacement(
+                          MaterialPageRoute(
+                            builder: (context) => ConversationView(
+                              chat: newChat,
+                              title: title,
+                              messageBloc: ChatBloc().tileVals[newChat.guid]
+                                  ["bloc"],
                             ),
                           ),
                         );
-                        if (widget.isCreator) {
-                          params["participants"] = _participants;
-                          SocketManager().socket.sendMessage(
-                            "start-chat",
-                            jsonEncode(params),
-                            (_data) async {
-                              debugPrint(_data);
-                              Map<String, dynamic> data = jsonDecode(_data);
-                              Chat newChat = Chat.fromMap(data["data"]);
-                              newChat = await newChat.save();
-                              String title = await getFullChatTitle(newChat);
-                              await ChatBloc().getChats();
-                              await NewMessageManager()
-                                  .updateWithMessage(null, null);
-                              // await ChatBloc().getChats();
-                              debugPrint("tile vals:" +
-                                  ChatBloc().tileVals[newChat.guid].toString());
-
-                              Navigator.of(context, rootNavigator: true).pop();
-                              Navigator.of(context).pushReplacement(
-                                MaterialPageRoute(
-                                  builder: (context) => ConversationView(
-                                    chat: newChat,
-                                    title: title,
-                                    messageBloc: ChatBloc()
-                                        .tileVals[newChat.guid]["bloc"],
-                                  ),
-                                ),
-                              );
-                            },
-                          );
-                        } else {
-                          for (int i = 0; i < _participants.length; i++) {
-                            params["identifier"] = widget.currentChat.guid;
-                            params["address"] = _participants[i];
-                            SocketManager().socket.sendMessage(
-                                "add-participant", jsonEncode(params), (_data) {
-                              Map<String, dynamic> response = jsonDecode(_data);
-                              debugPrint(
-                                  "added participant " + response.toString());
-                              if (i == _participants.length - 1) {
-                                Navigator.of(context).pop();
-                              }
-                            });
-                          }
-                        }
                       },
-                      color: HexColor('26262a').withOpacity(0.5),
-                      child: Text(
-                        "Create",
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                  ),
-                ),
+                    );
+                  } else {
+                    for (int i = 0; i < _participants.length; i++) {
+                      params["identifier"] = widget.currentChat.guid;
+                      params["address"] = _participants[i];
+                      SocketManager().socket.sendMessage(
+                          "add-participant", jsonEncode(params), (_data) {
+                        Map<String, dynamic> response = jsonDecode(_data);
+                        debugPrint("added participant " + response.toString());
+                        if (i == _participants.length - 1) {
+                          Navigator.of(context).pop();
+                        }
+                      });
+                    }
+                  }
+                },
               ),
             ],
           ),

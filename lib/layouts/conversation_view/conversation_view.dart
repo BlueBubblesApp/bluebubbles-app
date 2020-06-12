@@ -58,10 +58,10 @@ class _ConversationViewState extends State<ConversationView> {
       backgroundColor: Colors.black,
       extendBodyBehindAppBar: true,
       appBar: CupertinoNavigationBar(
-          backgroundColor: Colors.black.withOpacity(0.8),
-          border:
-              Border(bottom: BorderSide(color: HexColor("26262a"), width: 1)),
-          middle: ListView(children: <Widget>[
+        backgroundColor: Colors.black.withOpacity(0.8),
+        border: Border(bottom: BorderSide(color: HexColor("26262a"), width: 1)),
+        middle: ListView(
+          children: <Widget>[
             Container(height: 10.0),
             GestureDetector(
               onTap: () async {
@@ -100,25 +100,33 @@ class _ConversationViewState extends State<ConversationView> {
             ),
             Container(height: 3.0),
             Container(
-                padding: EdgeInsets.only(left: 10),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[
-                    Text(getShortChatTitle(widget.chat),
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.normal,
-                            fontSize: 14)),
-                    Container(width: 5),
-                    Text(">",
-                        style: TextStyle(
-                            color: Colors.grey.withOpacity(0.8),
-                            fontWeight: FontWeight.normal,
-                            fontSize: 14))
-                  ],
-                ))
-          ]),
-          trailing: Container(width: 20)),
+              padding: EdgeInsets.only(left: 10),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  Text(
+                    getShortChatTitle(widget.chat),
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.normal,
+                      fontSize: 14,
+                    ),
+                  ),
+                  Container(width: 5),
+                  Text(
+                    ">",
+                    style: TextStyle(
+                        color: Colors.grey.withOpacity(0.8),
+                        fontWeight: FontWeight.normal,
+                        fontSize: 14),
+                  )
+                ],
+              ),
+            )
+          ],
+        ),
+        trailing: Container(width: 20),
+      ),
       body: Column(
         mainAxisAlignment: MainAxisAlignment.end,
         children: <Widget>[

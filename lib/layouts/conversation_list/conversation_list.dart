@@ -227,23 +227,18 @@ class _ConversationListState extends State<ConversationList> {
           ],
         ),
         floatingActionButton: FloatingActionButton(
-          child: Icon(
-            Icons.message,
-            color: Colors.white,
-            size: 25
-          ),
-          onPressed: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (BuildContext context) {
-                  return NewChatCreator(
-                    isCreator: true,
-                  );
-                },
-              ),
-            );
-          }
-        ),
+            child: Icon(Icons.message, color: Colors.white, size: 25),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (BuildContext context) {
+                    return NewChatCreator(
+                      isCreator: true,
+                    );
+                  },
+                ),
+              );
+            }),
       ),
     );
   }

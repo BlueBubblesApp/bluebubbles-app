@@ -4,10 +4,13 @@ import 'dart:io';
 import 'package:bluebubble_messages/helpers/attachment_downloader.dart';
 import 'package:bluebubble_messages/blocs/setup_bloc.dart';
 import 'package:bluebubble_messages/helpers/utils.dart';
+import 'package:bluebubble_messages/layouts/conversation_view/new_chat_creator.dart';
+import 'package:bluebubble_messages/managers/navigator_manager.dart';
 import 'package:bluebubble_messages/managers/new_message_manager.dart';
 import 'package:bluebubble_messages/managers/settings_manager.dart';
 import 'package:bluebubble_messages/repository/database.dart';
 import 'package:flutter_socket_io/socket_io_manager.dart';
+import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter_socket_io/flutter_socket_io.dart';
 import 'package:flutter/material.dart';
@@ -53,9 +56,6 @@ class SocketManager {
 
   SetupBloc setup = new SetupBloc();
   StreamController<bool> finishedSetup = StreamController<bool>();
-
-  StreamSubscription _intentDataStreamSubscription;
-  List<SharedMediaFile> _sharedFiles;
 
   //Socket io
   // SocketIOManager manager;
@@ -148,25 +148,6 @@ class SocketManager {
 
     // Recreate tables
     DBProvider.db.buildDatabase(db);
-  }
-
-  void initMediaReceiver() {
-    // For sharing images coming from outside the app while the app is in the memory
-    _intentDataStreamSubscription = ReceiveSharingIntent.getMediaStream()
-        .listen((List<SharedMediaFile> values) {
-      debugPrint("got shared mediafiles");
-      List<File> attachments = <File>[];
-      values.forEach((element) {
-        attachments.add(File(element.path));
-      });
-    }, onError: (err) {
-      print("getIntentDataStream error: $err");
-    });
-
-    // For sharing images coming from outside the app while the app is closed
-    ReceiveSharingIntent.getInitialMedia().then((List<SharedMediaFile> value) {
-      debugPrint("got shared mediafiles");
-    });
   }
 
   startSocketIO([Function connectCb]) async {
