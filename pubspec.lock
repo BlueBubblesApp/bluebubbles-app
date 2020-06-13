@@ -760,6 +760,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.2.3"
+  simple_router:
+    dependency: "direct main"
+    description:
+      name: simple_router
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.1.0+1"
   sky_engine:
     dependency: transitive
     description: flutter
@@ -947,6 +954,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.1.3+1"
+  video_thumbnail:
+    dependency: "direct main"
+    description:
+      name: video_thumbnail
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.2.1"
   vm_service:
     dependency: transitive
     description:

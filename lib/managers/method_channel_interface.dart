@@ -1,10 +1,13 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'dart:ui';
 
 import 'package:bluebubble_messages/blocs/chat_bloc.dart';
 import 'package:bluebubble_messages/layouts/conversation_view/conversation_view.dart';
+import 'package:bluebubble_messages/layouts/conversation_view/new_chat_creator.dart';
 import 'package:bluebubble_messages/main.dart';
+import 'package:bluebubble_messages/managers/navigator_manager.dart';
 import 'package:bluebubble_messages/managers/notification_manager.dart';
 import 'package:bluebubble_messages/managers/settings_manager.dart';
 import 'package:bluebubble_messages/repository/database.dart';
@@ -90,6 +93,34 @@ class MethodChannelInterface {
       case "reply":
         debugPrint("replying with data " + call.arguments.toString());
         // SocketManager().sendMessage(chat, text)
+        return new Future.value("");
+      case "shareAttachments":
+        List<File> attachments = <File>[];
+        call.arguments.forEach((element) {
+          attachments.add(File(element));
+        });
+
+        NavigatorManager().navigatorKey.currentState.pushAndRemoveUntil(
+            MaterialPageRoute(
+              builder: (context) => NewChatCreator(
+                attachments: attachments,
+                isCreator: true,
+              ),
+            ),
+            (route) => route.isFirst);
+        return new Future.value("");
+
+      case "shareText":
+        String text = call.arguments;
+        debugPrint("got text " + text);
+        NavigatorManager().navigatorKey.currentState.pushAndRemoveUntil(
+            MaterialPageRoute(
+              builder: (context) => NewChatCreator(
+                existingText: text,
+                isCreator: true,
+              ),
+            ),
+            (route) => route.isFirst);
         return new Future.value("");
     }
   }

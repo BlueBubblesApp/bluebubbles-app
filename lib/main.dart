@@ -70,21 +70,14 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> with WidgetsBindingObserver {
-  StreamSubscription _intentDataStreamSubscription;
-  List<SharedMediaFile> _sharedFiles;
-  String _sharedText;
-
   @override
   void initState() {
     super.initState();
     SettingsManager().init();
     MethodChannelInterface().init(context);
-    initMediaReceiver();
-    _intentDataStreamSubscription = ReceiveSharingIntent.getMediaStream()
-        .listen((List<SharedMediaFile> values) {
-      debugPrint("got shared mediafiles");
+    ReceiveSharingIntent.getInitialMedia().then((List<SharedMediaFile> value) {
       List<File> attachments = <File>[];
-      values.forEach((element) {
+      value.forEach((element) {
         attachments.add(File(element.path));
       });
       Navigator.of(context).pushAndRemoveUntil(
@@ -95,10 +88,18 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
             ),
           ),
           (route) => route.isFirst);
-    }, onError: (err) {
-      debugPrint("getIntentDataStream error: $err");
     });
-    ReceiveSharingIntent.reset();
+    ReceiveSharingIntent.getInitialText().then((String text) {
+      debugPrint("got text " + text);
+      Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(
+            builder: (context) => NewChatCreator(
+              existingText: text,
+              isCreator: true,
+            ),
+          ),
+          (route) => route.isFirst);
+    });
     NotificationManager().createNotificationChannel();
     SchedulerBinding.instance
         .addPostFrameCallback((_) => SettingsManager().getSavedSettings());
@@ -108,39 +109,6 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    // _intentDataStreamSubscription.cancel();
-    super.dispose();
-  }
-
-  void initMediaReceiver() {
-    // For sharing images coming from outside the app while the app is closed
-    ReceiveSharingIntent.getInitialMedia().then((List<SharedMediaFile> values) {
-      debugPrint("got shared mediafiles from cold start");
-      List<File> attachments = <File>[];
-      values.forEach((element) {
-        attachments.add(File(element.path));
-      });
-      Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(
-            builder: (context) => NewChatCreator(
-              attachments: attachments,
-              isCreator: true,
-            ),
-          ),
-          (route) => route.isFirst);
-    });
-    // For sharing or opening urls/text coming from outside the app while the app is in the memory
-    _intentDataStreamSubscription =
-        ReceiveSharingIntent.getTextStream().listen((String value) {
-      debugPrint("shared text " + _sharedText);
-    }, onError: (err) {
-      debugPrint("getLinkStream error: $err");
-    });
-
-    // For sharing or opening urls/text coming from outside the app while the app is closed
-    ReceiveSharingIntent.getInitialText().then((String value) {
-      debugPrint("shared text " + _sharedText);
-    });
   }
 
   @override

@@ -21,11 +21,13 @@ class NewChatCreator extends StatefulWidget {
   final bool isCreator;
   final Chat currentChat;
   final List<File> attachments;
+  final String existingText;
   NewChatCreator({
     Key key,
     this.isCreator,
     this.currentChat,
     this.attachments,
+    this.existingText,
   }) : super(key: key);
 
   @override
@@ -318,6 +320,7 @@ class _NewChatCreatorState extends State<NewChatCreator> {
               ),
               BlueBubblesTextField(
                 existingAttachments: widget.attachments,
+                existingText: widget.existingText,
                 customSend: (pickedImages, text) async {
                   if (_controller.text.length == 0) return;
                   if (!_controller.text.endsWith(", ")) {

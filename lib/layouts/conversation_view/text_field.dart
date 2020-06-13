@@ -9,17 +9,21 @@ import 'package:bluebubble_messages/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:mime_type/mime_type.dart';
 import 'package:photo_manager/photo_manager.dart';
+import 'package:video_thumbnail/video_thumbnail.dart';
 
 class BlueBubblesTextField extends StatefulWidget {
   final Chat chat;
   final Function customSend;
   final List<File> existingAttachments;
+  final String existingText;
   BlueBubblesTextField({
     Key key,
     this.chat,
     this.customSend,
     this.existingAttachments,
+    this.existingText,
   }) : super(key: key);
 
   @override
@@ -39,6 +43,9 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField> {
     // TODO: implement initState
     super.initState();
     _controller = TextEditingController();
+    if (widget.existingText != null) {
+      _controller.text = widget.existingText;
+    }
     _focusNode = new FocusNode();
     _focusNode.addListener(() {
       if (_focusNode.hasFocus) {
@@ -146,11 +153,32 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField> {
                   itemBuilder: (context, int index) {
                     return Stack(
                       children: <Widget>[
-                        Image.file(
-                          pickedImages[index],
-                          height: 100,
-                          fit: BoxFit.fitHeight,
-                        ),
+                        mime(pickedImages[index].path).startsWith("video/")
+                            ? FutureBuilder(
+                                future: VideoThumbnail.thumbnailData(
+                                  video: pickedImages[index].path,
+                                  imageFormat: ImageFormat.PNG,
+                                  maxHeight: 100,
+                                  quality: 100,
+                                ),
+                                builder: (context, snapshot) {
+                                  if (snapshot.connectionState ==
+                                          ConnectionState.done &&
+                                      snapshot.hasData) {
+                                    return Image.memory(snapshot.data);
+                                  }
+                                  return SizedBox(
+                                    height: 100,
+                                    width: 100,
+                                    child: CircularProgressIndicator(),
+                                  );
+                                },
+                              )
+                            : Image.file(
+                                pickedImages[index],
+                                height: 100,
+                                fit: BoxFit.fitHeight,
+                              ),
                         Positioned.fill(
                             child: Material(
                           color: Colors.transparent,

@@ -21,11 +21,13 @@ import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.provider.ContactsContract;
+import android.provider.MediaStore;
 import android.service.notification.StatusBarNotification;
 import android.util.Log;
 
@@ -49,6 +51,8 @@ import com.google.firebase.iid.InstanceIdResult;
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.judemanutd.autostarter.AutoStartPermissionHelper;
+
+import java.util.ArrayList;
 
 
 public class MainActivity extends FlutterActivity {
@@ -201,16 +205,78 @@ public class MainActivity extends FlutterActivity {
     }
 
     protected void onNewIntent(Intent intent) {
-        if (intent == null || intent.getType() == null) return;
-        if (intent.getType().equals("NotificationOpen")) {
-            Log.d("Notifications", "tapped on notification by id " + intent.getExtras().getInt("id"));
-            new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod("ChatOpen", intent.getExtras().getString("chatGUID"));
-        } else if (intent.getType().equals("reply")) {
-        } else if (intent.getType().equals("markAsRead")) {
-            NotificationManagerCompat notificationManager = NotificationManagerCompat.from(getContext());
-            notificationManager.cancel(intent.getExtras().getInt("id"));
+        // Get intent, action and MIME type
+        String action = intent.getAction();
+        String type = intent.getType();
+
+        if (Intent.ACTION_SEND.equals(action) && type != null) {
+            if ("text/plain".equals(type)) {
+                handleSendText(intent); // Handle text being sent
+            } else if (type.startsWith("image/")) {
+                handleSendImage(intent); // Handle single image being sent
+            } else if(type.startsWith("video/")) {
+                handleSendImage(intent);
+            }
+        } else if (Intent.ACTION_SEND_MULTIPLE.equals(action) && type != null) {
+            if (type.startsWith("image/")) {
+                handleSendMultipleImages(intent); // Handle multiple images being sent
+            } else if(type.startsWith("video/")) {
+                handleSendMultipleImages(intent);
+            }
+        } else {
+            // Handle other intents, such as being started from the home screen
+            if (intent == null || intent.getType() == null) return;
+            if (intent.getType().equals("NotificationOpen")) {
+                Log.d("Notifications", "tapped on notification by id " + intent.getExtras().getInt("id"));
+                new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod("ChatOpen", intent.getExtras().getString("chatGUID"));
+            } else if (intent.getType().equals("reply")) {
+            } else if (intent.getType().equals("markAsRead")) {
+                NotificationManagerCompat notificationManager = NotificationManagerCompat.from(getContext());
+                notificationManager.cancel(intent.getExtras().getInt("id"));
+            }
+        }
+
+    }
+
+    void handleSendText(Intent intent) {
+        String sharedText = intent.getStringExtra(Intent.EXTRA_TEXT);
+        if (sharedText != null) {
+            new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod("shareText", sharedText);
+            // Update UI to reflect text being shared
         }
     }
+
+    void handleSendImage(Intent intent) {
+        ArrayList<String> imagePaths = new ArrayList<String>();
+        Uri imageUri = (Uri) intent.getParcelableExtra(Intent.EXTRA_STREAM);
+        if (imageUri != null) {
+            imagePaths.add(getRealPathFromURI(imageUri));
+            new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod("shareAttachments", imagePaths);
+            // Update UI to reflect image being shared
+        }
+    }
+
+    public String getRealPathFromURI(Uri contentUri)
+    {
+        String[] proj = { MediaStore.Audio.Media.DATA };
+        Cursor cursor = managedQuery(contentUri, proj, null, null, null);
+        int column_index = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA);
+        cursor.moveToFirst();
+        return cursor.getString(column_index);
+    }
+
+    void handleSendMultipleImages(Intent intent) {
+        ArrayList<Uri> imageUris = intent.getParcelableArrayListExtra(Intent.EXTRA_STREAM);
+        ArrayList<String> imagePaths = new ArrayList<String>();
+        if (imageUris != null) {
+            for(Uri imageUri : imageUris) {
+                imagePaths.add(getRealPathFromURI(imageUri));
+            }
+            new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod("shareAttachments", imagePaths);
+            // Update UI to reflect multiple images being shared
+        }
+    }
+
 
     BackgroundService backgroundService;
 
