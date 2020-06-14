@@ -49,7 +49,7 @@ class _MessageViewState extends State<MessageView> {
             Message olderMessage;
             Message newerMessage;
             if (index + 1 >= 0 && index + 1 < _messages.length) {
-              olderMessage = _messages[index];
+              olderMessage = _messages[index + 1];
             }
             if (index - 1 >= 0 && index - 1 < _messages.length) {
               newerMessage = _messages[index - 1];

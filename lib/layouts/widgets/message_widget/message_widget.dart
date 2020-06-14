@@ -127,7 +127,7 @@ class _MessageState extends State<MessageWidget> {
 
   String getMimeType(File attachment) {
     String mimeType = mime(basename(attachment.path));
-    if (mimeType == null) return "alskdjfalj";
+    if (mimeType == null) return "";
     mimeType = mimeType.substring(0, mimeType.indexOf("/"));
     return mimeType;
   }
