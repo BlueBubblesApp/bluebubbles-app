@@ -214,6 +214,31 @@ class SocketManager {
       });
 
       /**
+       * Handle errors sent by the server
+       */
+      _manager.socket.subscribe("message-send-error", (_data) async {
+        Map<String, dynamic> data = jsonDecode(_data);
+        Message message = Message.fromMap(data);
+
+        // If there are no chats, try to find it in the DB via the message
+        Chat chat;
+        if (data["chats"].length == 0) {
+          chat = await Message.getChat(message);
+        } else {
+          chat = Chat.fromMap(data['chats'][0]);
+        }
+
+        // Save the chat in-case is doesn't exist
+        if (chat != null) {
+          await chat.save();
+        }
+
+        // Lastly, save the message
+        await message.save();
+        return new Future.value("");
+      });
+
+      /**
        * When the server detects a message timeout (aka, no match found),
        * handle it by replacing the temp-guid with error-guid so we can do
        * something about it (or at least just track it)
@@ -223,7 +248,8 @@ class SocketManager {
         Map<String, dynamic> data = jsonDecode(_data);
 
         Message message = await Message.findOne({"guid": data["tempGuid"]});
-        message.guid = message.guid.replaceAll("temp", "error");
+        message.error = 1003;
+        message.guid = message.guid.replaceAll("temp", "error-Message Timeout");
         await Message.replaceMessage(data["tempGuid"], message);
         return new Future.value("");
       });
@@ -342,6 +368,8 @@ class SocketManager {
   /// - 1002 (app specific): Server error
 
   void sendMessage(Chat chat, String text, {List<Attachment> attachments = const []}) async {
+    if (text == null || text.trim().length == 0) return;
+
     Map<String, dynamic> params = new Map();
     params["guid"] = chat.guid;
     params["message"] = text;

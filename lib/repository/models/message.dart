@@ -231,6 +231,7 @@ class Message {
       "datePlayed": (this.datePlayed == null)
           ? null
           : this.datePlayed.millisecondsSinceEpoch,
+      "error": this.error
     };
 
     // If it already exists, update it
