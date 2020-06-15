@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:ui';
 
 import 'package:bluebubble_messages/helpers/utils.dart';
@@ -7,6 +8,8 @@ import 'package:bluebubble_messages/layouts/conversation_view/messages_view.dart
 import 'package:bluebubble_messages/layouts/conversation_view/text_field.dart';
 import 'package:bluebubble_messages/layouts/widgets/CustomCupertinoNavBar.dart';
 import 'package:bluebubble_messages/managers/contact_manager.dart';
+import 'package:bluebubble_messages/managers/notification_manager.dart';
+import 'package:bluebubble_messages/managers/settings_manager.dart';
 import 'package:bluebubble_messages/socket_manager.dart';
 import 'package:contacts_service/contacts_service.dart';
 
@@ -34,6 +37,26 @@ class ConversationView extends StatefulWidget {
 
 class _ConversationViewState extends State<ConversationView> {
   ImageProvider contactImage;
+
+  @override
+  void initState() {
+    super.initState();
+    NotificationManager().switchChat(widget.chat);
+  }
+
+  @override
+  void dispose() {
+    NotificationManager().leaveChat();
+
+    String appDocPath = SettingsManager().appDocDir.path;
+
+    String pathName = "$appDocPath/tempAssets";
+    Directory tempAssets = Directory(pathName);
+    if (tempAssets.existsSync()) {
+      tempAssets.delete(recursive: true);
+    }
+    super.dispose();
+  }
 
   @override
   void didChangeDependencies() async {

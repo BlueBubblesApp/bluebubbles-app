@@ -61,19 +61,18 @@ class MethodChannelInterface {
           debugPrint("could not find chat, returning");
           return;
         }
-
         String title = await getFullChatTitle(chat);
         Message message = Message.fromMap(data);
         message = await message.save();
-        if (!message.isFromMe)
-          NotificationManager().createNewNotification(
-              title, message.text, chat.guid, message.id, chat.id);
-
-        if (SocketManager().processedGUIDS.contains(data["guid"])) {
-          return;
-        } else {
-          SocketManager().processedGUIDS.add(data["guid"]);
+        if (!SocketManager().processedGUIDS["fcm"].contains(data["guid"])) {
+          if (!message.isFromMe && NotificationManager().chat != chat.guid)
+            NotificationManager().createNewNotification(
+                title, message.text, chat.guid, message.id, chat.id);
         }
+
+        if (SocketManager().processedGUIDS["socket"].contains(data["guid"]))
+          return;
+
         if (data["chats"].length == 0) return new Future.value("");
 
         SocketManager().handleNewMessage(data, chat);

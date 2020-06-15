@@ -47,6 +47,8 @@ dependencies:
   vcard_parser: ^0.1.6
   simple_router: ^0.1.0+1
   video_thumbnail: ^0.2.1
+  google_map_location_picker: ^3.3.2
+  camera: ^0.5.8+2
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.

@@ -185,7 +185,8 @@ class _MessageState extends State<MessageWidget> {
       // If it's a file, it's already been downlaoded, so just display it
       if (chatAttachments[i] is File) {
         String mimeType = attachments[i].mimeType;
-        mimeType = mimeType.substring(0, mimeType.indexOf("/"));
+        if (mimeType != null)
+          mimeType = mimeType.substring(0, mimeType.indexOf("/"));
         if (mimeType == "image") {
           content.add(
             Stack(
@@ -286,39 +287,42 @@ class _MessageState extends State<MessageWidget> {
           String _location = chatAttachments[i].readAsStringSync();
           Map<String, dynamic> location =
               AttachmentHelper.parseAppleLocation(_location);
-          debugPrint("location" + location.toString());
-          content.add(
-            SizedBox(
-              height: 200,
-              child: FlutterMap(
-                options: MapOptions(
-                  center: LatLng(location["longitude"], location["latitude"]),
-                  zoom: 14.0,
-                ),
-                layers: [
-                  new TileLayerOptions(
-                    urlTemplate:
-                        "http://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}",
-                    subdomains: ['0', '1', '2', '3'],
-                    tileSize: 256,
+          if (location["longitude"] != null &&
+              location["longitude"].abs() < 90 &&
+              location["latitude"] != null) {
+            content.add(
+              SizedBox(
+                height: 200,
+                child: FlutterMap(
+                  options: MapOptions(
+                    center: LatLng(location["longitude"], location["latitude"]),
+                    zoom: 14.0,
                   ),
-                  new MarkerLayerOptions(
-                    markers: [
-                      new Marker(
-                        width: 40.0,
-                        height: 40.0,
-                        point: new LatLng(
-                            location["longitude"], location["latitude"]),
-                        builder: (ctx) => new Container(
-                          child: new FlutterLogo(),
+                  layers: [
+                    new TileLayerOptions(
+                      urlTemplate:
+                          "http://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}",
+                      subdomains: ['0', '1', '2', '3'],
+                      tileSize: 256,
+                    ),
+                    new MarkerLayerOptions(
+                      markers: [
+                        new Marker(
+                          width: 40.0,
+                          height: 40.0,
+                          point: new LatLng(
+                              location["longitude"], location["latitude"]),
+                          builder: (ctx) => new Container(
+                            child: new FlutterLogo(),
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                ],
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ),
-          );
+            );
+          }
         } else if (attachments[i].mimeType == "text/vcard") {
           String appleContact = chatAttachments[i].readAsStringSync();
           Contact contact = AttachmentHelper.parseAppleContact(appleContact);
@@ -333,7 +337,6 @@ class _MessageState extends State<MessageWidget> {
                   color: Colors.transparent,
                   child: InkWell(
                     onTap: () async {
-                      // await ContactsService.addContact(contact);
                       MethodChannelInterface().invokeMethod("CreateContact", {
                         "phone":
                             contact.phones != null && contact.phones.length > 0

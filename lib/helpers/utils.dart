@@ -32,24 +32,46 @@ DateTime parseDate(dynamic value) {
 // }
 
 String getContactTitle(List<Contact> contacts, String id) {
-  if (contacts == null) return id;
+  if (contacts == null) return formatPhoneNumber(id);
   String contactTitle = id;
-  contacts.forEach((Contact contact) {
+  for (Contact contact in contacts) {
     contact.phones.forEach((Item item) {
       String formattedNumber = item.value.replaceAll(RegExp(r'[-() ]'), '');
       if (formattedNumber == id || "+1" + formattedNumber == id) {
         contactTitle = contact.displayName;
-        return contactTitle;
       }
     });
     contact.emails.forEach((Item item) {
       if (item.value == id) {
         contactTitle = contact.displayName;
-        return contactTitle;
       }
     });
-  });
+  }
+  if (contactTitle == id) {
+    return formatPhoneNumber(contactTitle);
+  }
   return contactTitle;
+}
+
+String formatPhoneNumber(String str) {
+  if (str.length < 10) return str;
+  String areaCode = "";
+
+  String numberWithoutAreaCode = str;
+
+  if (str.startsWith("+")) {
+    areaCode = "+1 ";
+    numberWithoutAreaCode = str.substring(2);
+  }
+
+  String formattedPhoneNumber = areaCode +
+      "(" +
+      numberWithoutAreaCode.substring(0, 3) +
+      ") " +
+      numberWithoutAreaCode.substring(3, 6) +
+      "-" +
+      numberWithoutAreaCode.substring(6, numberWithoutAreaCode.length);
+  return formattedPhoneNumber;
 }
 
 Contact getContact(List<Contact> contacts, String id) {

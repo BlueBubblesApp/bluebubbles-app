@@ -4,6 +4,7 @@ import 'dart:ui';
 
 import 'package:bluebubble_messages/helpers/attachment_sender.dart';
 import 'package:bluebubble_messages/helpers/hex_color.dart';
+import 'package:bluebubble_messages/layouts/conversation_view/camera_widget.dart';
 import 'package:bluebubble_messages/repository/models/chat.dart';
 import 'package:bluebubble_messages/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
@@ -92,8 +93,8 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField> {
                     Image.memory(
                       snapshot.data,
                       fit: BoxFit.cover,
-                      width: 100,
-                      height: 100,
+                      width: 150,
+                      height: 150,
                     ),
                     Positioned.fill(
                       child: Material(
@@ -106,7 +107,6 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField> {
                             }
                             pickedImages.add(image);
                             setState(() {});
-                            debugPrint(pickedImages.toString());
                           },
                         ),
                       ),
@@ -129,232 +129,237 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField> {
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      child: BackdropFilter(
-        filter: ImageFilter.blur(
-          sigmaX: 30,
-          sigmaY: 30,
-        ),
-        child: Container(
-          width: MediaQuery.of(context).size.width,
-          padding: EdgeInsets.all(5),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              ConstrainedBox(
-                constraints: BoxConstraints(
-                  maxHeight: pickedImages.length > 0 ? 100 : 0,
-                ),
-                child: GridView.builder(
-                  itemCount: pickedImages.length,
-                  scrollDirection: Axis.horizontal,
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 1),
-                  itemBuilder: (context, int index) {
-                    return Stack(
-                      children: <Widget>[
-                        mime(pickedImages[index].path).startsWith("video/")
-                            ? FutureBuilder(
-                                future: VideoThumbnail.thumbnailData(
-                                  video: pickedImages[index].path,
-                                  imageFormat: ImageFormat.PNG,
-                                  maxHeight: 100,
-                                  quality: 100,
-                                ),
-                                builder: (context, snapshot) {
-                                  if (snapshot.connectionState ==
-                                          ConnectionState.done &&
-                                      snapshot.hasData) {
-                                    return Image.memory(snapshot.data);
-                                  }
-                                  return SizedBox(
-                                    height: 100,
-                                    width: 100,
-                                    child: CircularProgressIndicator(),
-                                  );
-                                },
-                              )
-                            : Image.file(
-                                pickedImages[index],
-                                height: 100,
-                                fit: BoxFit.fitHeight,
-                              ),
-                        Positioned.fill(
-                            child: Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            onTap: () async {
-                              File image = pickedImages[index];
-                              for (int i = 0; i < pickedImages.length; i++) {
-                                if (pickedImages[i].path == image.path) {
-                                  pickedImages.removeAt(i);
-                                  setState(() {});
-                                  return;
-                                }
+    return Container(
+      width: MediaQuery.of(context).size.width,
+      padding: EdgeInsets.all(5),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: pickedImages.length > 0 ? 100 : 0,
+            ),
+            child: GridView.builder(
+              itemCount: pickedImages.length,
+              scrollDirection: Axis.horizontal,
+              gridDelegate:
+                  SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 1),
+              itemBuilder: (context, int index) {
+                return Stack(
+                  children: <Widget>[
+                    mime(pickedImages[index].path).startsWith("video/")
+                        ? FutureBuilder(
+                            future: VideoThumbnail.thumbnailData(
+                              video: pickedImages[index].path,
+                              imageFormat: ImageFormat.PNG,
+                              maxHeight: 100,
+                              quality: 100,
+                            ),
+                            builder: (context, snapshot) {
+                              if (snapshot.connectionState ==
+                                      ConnectionState.done &&
+                                  snapshot.hasData) {
+                                return Image.memory(snapshot.data);
                               }
+                              return SizedBox(
+                                height: 100,
+                                width: 100,
+                                child: CircularProgressIndicator(),
+                              );
                             },
+                          )
+                        : Image.file(
+                            pickedImages[index],
+                            height: 100,
+                            fit: BoxFit.fitHeight,
                           ),
-                        ))
-                      ],
-                    );
-                  },
-                ),
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: <Widget>[
-                  Flexible(
-                    child: GestureDetector(
-                      onTap: handleOpenImagePicker,
-                      child: Icon(
-                        Icons.camera_alt,
-                        color: HexColor('8e8e8e'),
-                        size: 30,
-                      ),
-                    ),
-                  ),
-                  Spacer(flex: 1),
-                  Flexible(
-                    flex: 15,
-                    child: Container(
-                      child: Stack(
-                        alignment: AlignmentDirectional.centerEnd,
-                        children: <Widget>[
-                          CupertinoTextField(
-                            // autofocus: true,
-                            focusNode: _focusNode,
-                            controller: _controller,
-                            scrollPhysics: BouncingScrollPhysics(),
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 15,
-                            ),
-                            keyboardType: TextInputType.multiline,
-                            maxLines: null,
-                            placeholder: "BlueBubbles",
-                            padding: EdgeInsets.only(
-                                left: 10, right: 40, top: 10, bottom: 10),
-                            placeholderStyle: TextStyle(
-                              color: Color.fromARGB(255, 100, 100, 100),
-                            ),
-                            autofocus: true,
-                            decoration: BoxDecoration(
-                              color: Colors.black,
-                              border: Border.all(
-                                color: HexColor('302f32'),
-                                width: 1,
-                              ),
-                              borderRadius: BorderRadius.circular(15),
-                            ),
-                          ),
-                          ButtonTheme(
-                            minWidth: 30,
-                            height: 30,
-                            child: RaisedButton(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: 0,
-                              ),
-                              color: Colors.blue,
-                              onPressed: () {
-                                if (widget.customSend != null) {
-                                  widget.customSend(
-                                      pickedImages, _controller.text);
-                                } else {
-                                  if (pickedImages.length > 0) {
-                                    for (int i = 0;
-                                        i < pickedImages.length;
-                                        i++) {
-                                      new AttachmentSender(
-                                        pickedImages[i],
-                                        widget.chat,
-                                        i == pickedImages.length - 1
-                                            ? _controller.text
-                                            : "",
-                                      );
-                                    }
-                                  } else {
-                                    SocketManager().sendMessage(
-                                        widget.chat, _controller.text);
-                                  }
-                                }
-                                _controller.text = "";
-                                pickedImages = <File>[];
-                                setState(() {});
-                              },
-                              child: Icon(
-                                Icons.arrow_upward,
-                                color: Colors.white,
-                                size: 20,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(40),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              showImagePicker
-                  ? SizedBox(
-                      child: GridView.builder(
-                        physics: AlwaysScrollableScrollPhysics(
-                            parent: BouncingScrollPhysics()),
-                        scrollDirection: Axis.horizontal,
-                        itemCount: _imageWidgets.length + 2,
-                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                        ),
-                        itemBuilder: (BuildContext context, int index) {
-                          if (index == _imageWidgets.length) {
-                            return RaisedButton(
-                              onPressed: () async {
-                                PickedFile pickedImage = await ImagePicker()
-                                    .getImage(source: ImageSource.gallery);
-                                File image = File(pickedImage.path);
-                                pickedImages.add(image);
-                                setState(() {});
-                              },
-                              color: HexColor('26262a'),
-                              child: Text(
-                                "Pick Image",
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            );
-                          } else if (index == _imageWidgets.length + 1) {
-                            return RaisedButton(
-                              onPressed: () async {
-                                PickedFile pickedImage = await ImagePicker()
-                                    .getVideo(source: ImageSource.gallery);
-                                File image = File(pickedImage.path);
-                                pickedImages.add(image);
-                                setState(() {});
-                              },
-                              color: HexColor('26262a'),
-                              child: Text(
-                                "Pick Video",
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            );
+                    Positioned.fill(
+                        child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () async {
+                          File image = pickedImages[index];
+                          for (int i = 0; i < pickedImages.length; i++) {
+                            if (pickedImages[i].path == image.path) {
+                              pickedImages.removeAt(i);
+                              setState(() {});
+                              return;
+                            }
                           }
-                          return _imageWidgets[index];
                         },
                       ),
-                      height: 200,
-                      // width: MediaQuery.of(context).size.width,
-                    )
-                  : Container(),
+                    ))
+                  ],
+                );
+              },
+            ),
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: <Widget>[
+              Flexible(
+                child: GestureDetector(
+                  onTap: handleOpenImagePicker,
+                  child: Icon(
+                    Icons.camera_alt,
+                    color: HexColor('8e8e8e'),
+                    size: 30,
+                  ),
+                ),
+              ),
+              Spacer(flex: 1),
+              Flexible(
+                flex: 15,
+                child: Container(
+                  child: Stack(
+                    alignment: AlignmentDirectional.centerEnd,
+                    children: <Widget>[
+                      CupertinoTextField(
+                        // autofocus: true,
+                        focusNode: _focusNode,
+                        autocorrect: true,
+                        controller: _controller,
+                        scrollPhysics: BouncingScrollPhysics(),
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 15,
+                        ),
+                        keyboardType: TextInputType.multiline,
+                        maxLines: null,
+                        placeholder: "BlueBubbles",
+                        padding: EdgeInsets.only(
+                            left: 10, right: 40, top: 10, bottom: 10),
+                        placeholderStyle: TextStyle(
+                          color: Color.fromARGB(255, 100, 100, 100),
+                        ),
+                        autofocus: true,
+                        decoration: BoxDecoration(
+                          color: Colors.black,
+                          border: Border.all(
+                            color: HexColor('302f32'),
+                            width: 1,
+                          ),
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                      ),
+                      ButtonTheme(
+                        minWidth: 30,
+                        height: 30,
+                        child: RaisedButton(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 0,
+                          ),
+                          color: Colors.blue,
+                          onPressed: () {
+                            if (widget.customSend != null) {
+                              widget.customSend(pickedImages, _controller.text);
+                            } else {
+                              if (pickedImages.length > 0) {
+                                for (int i = 0; i < pickedImages.length; i++) {
+                                  new AttachmentSender(
+                                    pickedImages[i],
+                                    widget.chat,
+                                    i == pickedImages.length - 1
+                                        ? _controller.text
+                                        : "",
+                                  );
+                                }
+                              } else {
+                                SocketManager()
+                                    .sendMessage(widget.chat, _controller.text);
+                              }
+                            }
+                            _controller.text = "";
+                            pickedImages = <File>[];
+                            setState(() {});
+                          },
+                          child: Icon(
+                            Icons.arrow_upward,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(40),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ],
           ),
-        ),
+          showImagePicker
+              ? SizedBox(
+                  child: Row(
+                    children: <Widget>[
+                      CameraWidget(
+                        addAttachment: (File attachment) {
+                          pickedImages.add(attachment);
+                          setState(() {});
+                        },
+                      ),
+                      Expanded(
+                        child: GridView.builder(
+                          physics: AlwaysScrollableScrollPhysics(
+                              parent: BouncingScrollPhysics()),
+                          scrollDirection: Axis.horizontal,
+                          itemCount: _imageWidgets.length + 2,
+                          gridDelegate:
+                              SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                          ),
+                          itemBuilder: (BuildContext context, int index) {
+                            if (index == _imageWidgets.length) {
+                              return RaisedButton(
+                                onPressed: () async {
+                                  PickedFile pickedImage =
+                                      await ImagePicker().getImage(
+                                    source: ImageSource.gallery,
+                                  );
+                                  File image = File(pickedImage.path);
+                                  pickedImages.add(image);
+                                  setState(() {});
+                                },
+                                color: HexColor('26262a'),
+                                child: Text(
+                                  "Pick Image",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              );
+                            } else if (index == _imageWidgets.length + 1) {
+                              return RaisedButton(
+                                onPressed: () async {
+                                  PickedFile pickedImage = await ImagePicker()
+                                      .getVideo(source: ImageSource.gallery);
+                                  File image = File(pickedImage.path);
+                                  pickedImages.add(image);
+                                  setState(() {});
+                                },
+                                color: HexColor('26262a'),
+                                child: Text(
+                                  "Pick Video",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              );
+                            }
+                            return _imageWidgets[index];
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  height: 300,
+                  // width: MediaQuery.of(context).size.width,
+                )
+              : Container(),
+        ],
       ),
     );
   }

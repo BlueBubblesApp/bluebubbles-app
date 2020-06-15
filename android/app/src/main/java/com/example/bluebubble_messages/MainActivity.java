@@ -21,10 +21,12 @@ import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.location.Location;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.os.PersistableBundle;
 import android.preference.PreferenceManager;
 import android.provider.ContactsContract;
 import android.provider.MediaStore;
@@ -32,11 +34,15 @@ import android.service.notification.StatusBarNotification;
 import android.util.Log;
 
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
@@ -53,6 +59,8 @@ import com.google.firebase.messaging.FirebaseMessagingService;
 import com.judemanutd.autostarter.AutoStartPermissionHelper;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 
 public class MainActivity extends FlutterActivity {
@@ -62,15 +70,16 @@ public class MainActivity extends FlutterActivity {
     public FlutterEngine engine;
     public Long callbackHandle;
     private DatabaseReference db;
+    private FusedLocationProviderClient fusedLocationClient;
 
 
     private ValueEventListener dbListener = new ValueEventListener() {
         @Override
         public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
             Log.d("firebase", "data changed");
-            String serverURL =  dataSnapshot.child("config").child("serverUrl").getValue().toString();
+            String serverURL = dataSnapshot.child("config").child("serverUrl").getValue().toString();
             Log.d("firebase", "new server: " + serverURL);
-            if(engine != null) {
+            if (engine != null) {
                 new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod("new-server", "[" + serverURL + "]");
             }
         }
@@ -81,7 +90,14 @@ public class MainActivity extends FlutterActivity {
         }
     };
 
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState, @Nullable PersistableBundle persistentState) {
+        super.onCreate(savedInstanceState, persistentState);
+    }
 
+
+
+    @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     public void configureFlutterEngine(@NonNull FlutterEngine flutterEngine) {
         GeneratedPluginRegistrant.registerWith(flutterEngine);
@@ -117,9 +133,9 @@ public class MainActivity extends FlutterActivity {
                                             }
                                         });
                                 db = FirebaseDatabase.getInstance(app).getReference();
-                                try{
+                                try {
                                     db.removeEventListener(dbListener);
-                                } catch(Exception e) {
+                                } catch (Exception e) {
 
                                 }
                                 db.addValueEventListener(dbListener);
@@ -155,6 +171,8 @@ public class MainActivity extends FlutterActivity {
                                         .setSmallIcon(R.mipmap.ic_launcher)
                                         .setContentTitle("New messages")
                                         .setGroup(call.argument("group"))
+                                        .setAutoCancel(true)
+                                        .setContentIntent(openIntent)
 //                                        .setGroup("messageGroup")
                                         .setGroupSummary(true);
 
@@ -165,7 +183,7 @@ public class MainActivity extends FlutterActivity {
                                 notificationManager.notify(call.argument("notificationId"), builder.build());
                                 notificationManager.notify(call.argument("summaryId"), summaryBuilder.build());
                                 result.success("");
-                            } else if(call.method.equals("CreateContact")) {
+                            } else if (call.method.equals("CreateContact")) {
 
                                 Intent intent = new Intent(ContactsContract.Intents.Insert.ACTION);
                                 intent.setType(ContactsContract.RawContacts.CONTENT_TYPE);
@@ -176,9 +194,41 @@ public class MainActivity extends FlutterActivity {
                                 // Inserts an email address
                                 intent.putExtra(ContactsContract.Intents.Insert.EMAIL, email)
                                         .putExtra(ContactsContract.Intents.Insert.PHONE, phone)
-                                .putExtra(ContactsContract.Intents.Insert.NAME, displayName);
+                                        .putExtra(ContactsContract.Intents.Insert.NAME, displayName);
                                 startActivity(intent);
                                 result.success("");
+                            } else if (call.method.equals("clear-chat-notifs")) {
+                                NotificationManager manager = (NotificationManager) getApplicationContext().getSystemService(getApplicationContext().NOTIFICATION_SERVICE);
+                                for (StatusBarNotification statusBarNotification : manager.getActiveNotifications()) {
+                                    if (statusBarNotification.getGroupKey().contains(call.argument("chatGuid"))) {
+                                        NotificationManagerCompat.from(getContext()).cancel(statusBarNotification.getId());
+                                    } else {
+                                        Log.d("notification clearing", statusBarNotification.getGroupKey());
+                                    }
+                                }
+                                result.success("");
+                            } else if (call.method.equals("get-last-location")) {
+                                if (fusedLocationClient == null)
+                                    fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+                                fusedLocationClient.getLastLocation()
+                                        .addOnSuccessListener(this, new OnSuccessListener<Location>() {
+                                            @Override
+                                            public void onSuccess(Location location) {
+                                                // Got last known location. In some rare situations this can be null.
+                                                if (location != null) {
+                                                    // Logic to handle location object
+                                                    Map<String, Double> latlng = new HashMap<String, Double>();
+                                                    latlng.put("longitude", location.getLongitude());
+                                                    latlng.put("latitude", location.getLatitude());
+                                                    Log.d("Location", "Location retreived " + latlng.toString());
+                                                    result.success(latlng);
+                                                } else {
+                                                    Log.d("Location", "unable to retreive location");
+                                                    result.success(null);
+                                                }
+                                            }
+                                        });
+
                             } else {
                                 result.notImplemented();
                             }
@@ -214,13 +264,13 @@ public class MainActivity extends FlutterActivity {
                 handleSendText(intent); // Handle text being sent
             } else if (type.startsWith("image/")) {
                 handleSendImage(intent); // Handle single image being sent
-            } else if(type.startsWith("video/")) {
+            } else if (type.startsWith("video/")) {
                 handleSendImage(intent);
             }
         } else if (Intent.ACTION_SEND_MULTIPLE.equals(action) && type != null) {
             if (type.startsWith("image/")) {
                 handleSendMultipleImages(intent); // Handle multiple images being sent
-            } else if(type.startsWith("video/")) {
+            } else if (type.startsWith("video/")) {
                 handleSendMultipleImages(intent);
             }
         } else {
@@ -256,9 +306,8 @@ public class MainActivity extends FlutterActivity {
         }
     }
 
-    public String getRealPathFromURI(Uri contentUri)
-    {
-        String[] proj = { MediaStore.Audio.Media.DATA };
+    public String getRealPathFromURI(Uri contentUri) {
+        String[] proj = {MediaStore.Audio.Media.DATA};
         Cursor cursor = managedQuery(contentUri, proj, null, null, null);
         int column_index = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA);
         cursor.moveToFirst();
@@ -269,7 +318,7 @@ public class MainActivity extends FlutterActivity {
         ArrayList<Uri> imageUris = intent.getParcelableArrayListExtra(Intent.EXTRA_STREAM);
         ArrayList<String> imagePaths = new ArrayList<String>();
         if (imageUris != null) {
-            for(Uri imageUri : imageUris) {
+            for (Uri imageUri : imageUris) {
                 imagePaths.add(getRealPathFromURI(imageUri));
             }
             new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod("shareAttachments", imagePaths);

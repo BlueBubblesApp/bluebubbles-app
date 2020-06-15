@@ -1,13 +1,27 @@
 import 'package:bluebubble_messages/managers/method_channel_interface.dart';
+import 'package:bluebubble_messages/repository/models/chat.dart';
 
 class NotificationManager {
   factory NotificationManager() {
     return _manager;
   }
 
+  String _currentChatGuid = "";
+  String get chat => _currentChatGuid;
+
   static final NotificationManager _manager = NotificationManager._internal();
 
   NotificationManager._internal();
+
+  void switchChat(Chat chat) {
+    _currentChatGuid = chat.guid;
+    MethodChannelInterface()
+        .invokeMethod("clear-chat-notifs", {"chatGuid": _currentChatGuid});
+  }
+
+  void leaveChat() {
+    _currentChatGuid = "";
+  }
 
   void createNotificationChannel() {
     MethodChannelInterface().invokeMethod("create-notif-channel", {

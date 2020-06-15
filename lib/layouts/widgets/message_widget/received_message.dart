@@ -81,11 +81,9 @@ class _ReceivedMessageState extends State<ReceivedMessage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        // _buildTimeStamp(),
         widget.timeStamp,
         contactItem,
         widget.reactions,
-        // _buildReactions(),
         GestureDetector(
           onLongPress: () {
             Overlay.of(context).insert(widget.overlayEntry);
