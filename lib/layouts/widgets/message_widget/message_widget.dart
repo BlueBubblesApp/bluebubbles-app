@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:ui';
 
+import 'package:android_intent/android_intent.dart';
 import 'package:assets_audio_player/assets_audio_player.dart';
 import 'package:bluebubble_messages/helpers/attachment_downloader.dart';
 import 'package:bluebubble_messages/helpers/attachment_helper.dart';
@@ -337,16 +338,23 @@ class _MessageState extends State<MessageWidget> {
                   color: Colors.transparent,
                   child: InkWell(
                     onTap: () async {
+                      // AndroidIntent intent = AndroidIntent(
+                      //   action: 'action_view',
+                      //   type: 'text/v-card',
+                      //   data: Uri.file(chatAttachments[i].path).toString(),
+                      // );
+                      // await intent.launch();
                       MethodChannelInterface().invokeMethod("CreateContact", {
-                        "phone":
-                            contact.phones != null && contact.phones.length > 0
-                                ? contact.phones.first.value
-                                : "",
-                        "email":
-                            contact.emails != null && contact.emails.length > 0
-                                ? contact.emails.first.value
-                                : "",
-                        "displayName": contact.displayName
+                        // "phone":
+                        //     contact.phones != null && contact.phones.length > 0
+                        //         ? contact.phones.first.value
+                        //         : "",
+                        // "email":
+                        //     contact.emails != null && contact.emails.length > 0
+                        //         ? contact.emails.first.value
+                        //         : "",
+                        // "displayName": contact.displayName
+                        "path": chatAttachments[i].path
                       });
                     },
                     child: Center(

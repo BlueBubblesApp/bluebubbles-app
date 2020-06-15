@@ -37,6 +37,7 @@ import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
+import androidx.core.content.FileProvider;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -58,6 +59,7 @@ import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.judemanutd.autostarter.AutoStartPermissionHelper;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -185,17 +187,25 @@ public class MainActivity extends FlutterActivity {
                                 result.success("");
                             } else if (call.method.equals("CreateContact")) {
 
-                                Intent intent = new Intent(ContactsContract.Intents.Insert.ACTION);
-                                intent.setType(ContactsContract.RawContacts.CONTENT_TYPE);
+//                                Intent intent = new Intent(ContactsContract.Intents.Insert.ACTION);
+//                                intent.setType(ContactsContract.RawContacts.CONTENT_TYPE);
+//
+//                                String email = call.argument("email");
+//                                String phone = call.argument("phone");
+//                                String displayName = call.argument("displayName");
+//                                // Inserts an email address
+//                                intent.putExtra(ContactsContract.Intents.Insert.EMAIL, email)
+//                                        .putExtra(ContactsContract.Intents.Insert.PHONE, phone)
+//                                        .putExtra(ContactsContract.Intents.Insert.NAME, displayName);
+//                                startActivity(intent);
 
-                                String email = call.argument("email");
-                                String phone = call.argument("phone");
-                                String displayName = call.argument("displayName");
-                                // Inserts an email address
-                                intent.putExtra(ContactsContract.Intents.Insert.EMAIL, email)
-                                        .putExtra(ContactsContract.Intents.Insert.PHONE, phone)
-                                        .putExtra(ContactsContract.Intents.Insert.NAME, displayName);
+                                Intent intent = new Intent(Intent.ACTION_VIEW);
+                                Uri data =FileProvider.getUriForFile(getApplicationContext(), "com.example.path_provider", new File((String) call.argument("path")));
+                                getApplicationContext().grantUriPermission(getApplicationContext().getPackageName(), data, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                                intent.setDataAndType(data, "text/x-vcard");
+                                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
                                 startActivity(intent);
+
                                 result.success("");
                             } else if (call.method.equals("clear-chat-notifs")) {
                                 NotificationManager manager = (NotificationManager) getApplicationContext().getSystemService(getApplicationContext().NOTIFICATION_SERVICE);

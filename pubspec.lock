@@ -16,7 +16,7 @@ packages:
     source: hosted
     version: "0.39.8"
   android_intent:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: android_intent
       url: "https://pub.dartlang.org"
