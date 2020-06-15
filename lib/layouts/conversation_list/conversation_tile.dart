@@ -87,7 +87,6 @@ class _ConversationTileState extends State<ConversationTile> {
             Padding(
               padding: const EdgeInsets.only(left: 16.0),
               child: ListTile(
-                contentPadding: EdgeInsets.only(left: 0),
                 title: Text(
                   widget.title,
                   style: TextStyle(
