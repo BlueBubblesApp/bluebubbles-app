@@ -93,7 +93,7 @@ class _ConversationTileState extends State<ConversationTile> {
                     color: Colors.white,
                   ),
                   maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                  overflow: TextOverflow.ellipsis
                 ),
                 subtitle: widget.subtitle != null && !(widget.subtitle is String)
                   ? widget.subtitle
@@ -128,7 +128,7 @@ class _ConversationTileState extends State<ConversationTile> {
                         ),
                 ),
                 trailing: Container(
-                  width: 70,
+                  width: 80,
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.center,

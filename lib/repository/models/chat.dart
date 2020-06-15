@@ -27,7 +27,13 @@ Future<String> getFullChatTitle(Chat _chat) async {
     for (int i = 0; i < chat.participants.length; i++) {
       String name = getContactTitle(
           ContactManager().contacts, chat.participants[i].address.toString());
-      name = chat.participants.length > 1 ? name.trim().split(" ")[0] : name.trim();
+      
+      if (chat.participants.length > 1 && !name.startsWith('+1')) {
+        name = name.trim().split(" ")[0];
+      } else {
+        name = name.trim();
+      }
+
       titles.add(name);
     }
 

@@ -4,16 +4,17 @@ import 'package:vcard_parser/vcard_parser.dart';
 
 class AttachmentHelper {
   static String createAppleLocation(double longitude, double latitude,
-      {iosVersion = "10.2"}) {
+      {iosVersion = "13.4.1"}) {
     List<String> lines = [
-      "BEING:VCARD",
-      "VERSION:2.0",
-      "PRODID:-//Apple Inc.//iOS $iosVersion//EN",
+      "BEGIN:VCARD",
+      "VERSION:3.0",
+      "PRODID:-//Apple Inc.//iPhone OS $iosVersion//EN",
       "N:;Current Location;;;",
       "FN:Current Location",
-      "item1.URL;type=pref:http://maps.apple.com/?ll=$longitude\,$latitude&q=$longitude\,$latitude",
+      "item1.URL;type=pref:http://maps.apple.com/?ll=$longitude\\,$latitude&q=$longitude\\,$latitude",
       "item1.X-ABLabel:map url",
       "END:VCARD"
+      ""
     ];
 
     return lines.join("\n");
