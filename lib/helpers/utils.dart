@@ -47,7 +47,7 @@ String getContactTitle(List<Contact> contacts, String id) {
       }
     });
   }
-  if (contactTitle == id) {
+  if (contactTitle == id && !contactTitle.contains("@")) {
     return formatPhoneNumber(contactTitle);
   }
   return contactTitle;

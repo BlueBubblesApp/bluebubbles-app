@@ -77,6 +77,17 @@ class _ConversationViewState extends State<ConversationView> {
   @override
   Widget build(BuildContext context) {
     var initials = getInitials(widget.title, " ");
+    Function openDetails = () async {
+      Chat chat = await widget.chat.getParticipants();
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => ConversationDetails(
+            chat: chat,
+          ),
+        ),
+      );
+    };
+
     return Scaffold(
       backgroundColor: Colors.black,
       extendBodyBehindAppBar: true,
@@ -87,16 +98,7 @@ class _ConversationViewState extends State<ConversationView> {
           children: <Widget>[
             Container(height: 10.0),
             GestureDetector(
-              onTap: () async {
-                Chat chat = await widget.chat.getParticipants();
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => ConversationDetails(
-                      chat: chat,
-                    ),
-                  ),
-                );
-              },
+              onTap: openDetails,
               child: CircleAvatar(
                 radius: 20,
                 child: contactImage == null
@@ -127,12 +129,15 @@ class _ConversationViewState extends State<ConversationView> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
-                  Text(
-                    getShortChatTitle(widget.chat),
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.normal,
-                      fontSize: 14,
+                  GestureDetector(
+                    onTap: openDetails,
+                    child:Text(
+                      getShortChatTitle(widget.chat),
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.normal,
+                        fontSize: 14,
+                      ),
                     ),
                   ),
                   Container(width: 5),

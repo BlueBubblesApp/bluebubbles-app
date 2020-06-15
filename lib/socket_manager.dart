@@ -214,6 +214,31 @@ class SocketManager {
       });
 
       /**
+       * Handle errors sent by the server
+       */
+      _manager.socket.subscribe("message-send-error", (_data) async {
+        Map<String, dynamic> data = jsonDecode(_data);
+        Message message = Message.fromMap(data);
+
+        // If there are no chats, try to find it in the DB via the message
+        Chat chat;
+        if (data["chats"].length == 0) {
+          chat = await Message.getChat(message);
+        } else {
+          chat = Chat.fromMap(data['chats'][0]);
+        }
+
+        // Save the chat in-case is doesn't exist
+        if (chat != null) {
+          await chat.save();
+        }
+
+        // Lastly, save the message
+        await message.save();
+        return new Future.value("");
+      });
+
+      /**
        * When the server detects a message timeout (aka, no match found),
        * handle it by replacing the temp-guid with error-guid so we can do
        * something about it (or at least just track it)
@@ -223,7 +248,8 @@ class SocketManager {
         Map<String, dynamic> data = jsonDecode(_data);
 
         Message message = await Message.findOne({"guid": data["tempGuid"]});
-        message.guid = message.guid.replaceAll("temp", "error");
+        message.error = 1003;
+        message.guid = message.guid.replaceAll("temp", "error-Message Timeout");
         await Message.replaceMessage(data["tempGuid"], message);
         return new Future.value("");
       });
@@ -280,11 +306,13 @@ class SocketManager {
 
   void updateMessage(Map<String, dynamic> data) async {
     Message updatedMessage = new Message.fromMap(data);
-    updatedMessage =
-        await Message.replaceMessage(updatedMessage.guid, updatedMessage);
-    updatedMessage.save();
+    updatedMessage = await Message.replaceMessage(updatedMessage.guid, updatedMessage);
+
+    if (updatedMessage != null) {
+      updatedMessage.save();
+    }
+
     NewMessageManager().updateWithMessage(null, null);
-    debugPrint("updated message with ROWID " + updatedMessage.id.toString());
   }
 
   void handleNewMessage(Map<String, dynamic> data, Chat chat) async {
@@ -331,9 +359,17 @@ class SocketManager {
     // notify();
   }
 
-  void sendMessage(Chat chat, String text,
-      {List<Attachment> attachments = const []}) async {
-    debugPrint(chat.participants.toString());
+  /// Message Error Codes
+  /// 
+  /// - 0: No error
+  /// - 4: Timeout
+  /// - 1000 (app specific): No connection to server
+  /// - 1001 (app specific): Bad request
+  /// - 1002 (app specific): Server error
+
+  void sendMessage(Chat chat, String text, {List<Attachment> attachments = const []}) async {
+    if (text == null || text.trim().length == 0) return;
+
     Map<String, dynamic> params = new Map();
     params["guid"] = chat.guid;
     params["message"] = text;
@@ -353,10 +389,17 @@ class SocketManager {
       // TODO: Do something here
     }
 
+    // If we aren't conneted to the socket, set the message error code
+    if (SettingsManager().settings.connected == false)
+      sentMessage.error = 1000;
+
     await sentMessage.save();
     await chat.save();
     await chat.addMessage(sentMessage);
     NewMessageManager().updateWithMessage(chat, sentMessage);
+
+    // If we aren't connected to the socket, return
+    if (SettingsManager().settings.connected == false) return;
 
     _manager.socket.sendMessage("send-message", jsonEncode(params),
         (data) async {
@@ -365,10 +408,59 @@ class SocketManager {
 
       // If there is an error, replace the temp value with an error
       if (response['status'] != 200) {
-        sentMessage.guid = sentMessage.guid.replaceAll("temp", "error");
+        sentMessage.guid = sentMessage.guid.replaceAll("temp", "error-${response['error']['message']}");
+        sentMessage.error = response['status'] == 400 ? 1001 : 1002;
         await Message.replaceMessage(tempGuid, sentMessage);
+        NewMessageManager().updateWithMessage(chat, null);
+      }
+    });
+  }
 
-        // TODO: Display an error next to message that failed to send (in message list)
+  void retryMessage(Message message) async {
+    // Don't allow us to retry an un-errored message
+    if (message.error == 0) return;
+
+    // Get message's chat
+    Chat chat = await Message.getChat(message);
+    if (chat == null) throw("Could not find chat!");
+
+    // Build request parameters
+    Map<String, dynamic> params = new Map();
+    params["guid"] = chat.guid;
+    params["message"] = message.text.trim();
+    String tempGuid = "temp-${randomString(8)}";
+    String oldGuid = message.guid;
+    params["tempGuid"] = tempGuid;
+
+    // Reset error, guid, and send date
+    message.error = 0;
+    message.guid = tempGuid;
+    message.dateCreated = DateTime.now();
+
+    // Add attachments
+    // TODO: Get Attachments from DB
+
+    // If we aren't conneted to the socket, set the message error code
+    if (SettingsManager().settings.connected == false)
+      message.error = 1000;
+
+    await Message.replaceMessage(oldGuid, message);
+    NewMessageManager().updateWithMessage(chat, null);
+
+    // If we aren't connected to the socket, return
+    if (SettingsManager().settings.connected == false) return;
+
+    _manager.socket.sendMessage("send-message", jsonEncode(params),
+        (data) async {
+      Map response = jsonDecode(data);
+      debugPrint("message sent: " + response.toString());
+
+      // If there is an error, replace the temp value with an error
+      if (response['status'] != 200) {
+        message.guid = message.guid.replaceAll("temp", "error-${response['error']['message']}");
+        message.error = response['status'] == 400 ? 1001 : 1002;
+        await Message.replaceMessage(tempGuid, message);
+        NewMessageManager().updateWithMessage(chat, null);
       }
     });
   }
