@@ -103,7 +103,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                     String fileName = "CL.loc.vcf";
                     String appDocPath = SettingsManager().appDocDir.path;
                     String pathName =
-                        "$appDocPath/${_attachmentGuid}/$fileName";
+                        "$appDocPath/attachments/${_attachmentGuid}/$fileName";
                     await new File(pathName).create(recursive: true);
 
                     File attachmentFile =

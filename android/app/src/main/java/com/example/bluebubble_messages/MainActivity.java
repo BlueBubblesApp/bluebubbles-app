@@ -98,7 +98,6 @@ public class MainActivity extends FlutterActivity {
     }
 
 
-
     @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     public void configureFlutterEngine(@NonNull FlutterEngine flutterEngine) {
@@ -200,7 +199,8 @@ public class MainActivity extends FlutterActivity {
 //                                startActivity(intent);
 
                                 Intent intent = new Intent(Intent.ACTION_VIEW);
-                                Uri data =FileProvider.getUriForFile(getApplicationContext(), "com.example.path_provider", new File((String) call.argument("path")));
+                                Log.d("filesDir", "filesDir is " + getFilesDir().getAbsolutePath() + (String) call.argument("path"));
+                                Uri data = FileProvider.getUriForFile(getApplicationContext(), "com.example.path_provider", new File(getFilesDir().getAbsolutePath() + (String) call.argument("path")));
                                 getApplicationContext().grantUriPermission(getApplicationContext().getPackageName(), data, Intent.FLAG_GRANT_READ_URI_PERMISSION);
                                 intent.setDataAndType(data, "text/x-vcard");
                                 intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);

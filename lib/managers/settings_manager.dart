@@ -22,7 +22,7 @@ class SettingsManager {
 
   void init() async {
     settings = new Settings();
-    appDocDir = await getApplicationDocumentsDirectory();
+    appDocDir = await getApplicationSupportDirectory();
   }
 
   void getSavedSettings() async {

@@ -100,7 +100,7 @@ class AttachmentDownloader {
 
       String fileName = attachment.transferName;
       String appDocPath = SettingsManager().appDocDir.path;
-      String pathName = "$appDocPath/${attachment.guid}/$fileName";
+      String pathName = "$appDocPath/attachments/${attachment.guid}/$fileName";
       debugPrint(
           "length of array is ${data.length} / ${attachment.totalBytes}");
       Uint8List bytes = Uint8List.fromList(data);

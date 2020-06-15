@@ -126,7 +126,8 @@ class AttachmentSender {
     }
 
     String appDocPath = SettingsManager().appDocDir.path;
-    String pathName = "$appDocPath/${messageAttachment.guid}/$_attachmentName";
+    String pathName =
+        "$appDocPath/attachments/${messageAttachment.guid}/$_attachmentName";
     File file = await new File(pathName).create(recursive: true);
     await file.writeAsBytes(Uint8List.fromList(_imageBytes));
     debugPrint("saved attachment with temp guid ${messageAttachment.guid}");

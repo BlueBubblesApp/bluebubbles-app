@@ -95,7 +95,7 @@ class _MessageState extends State<MessageWidget> {
       for (int i = 0; i < attachments.length; i++) {
         String appDocPath = SettingsManager().appDocDir.path;
         String pathName =
-            "$appDocPath/${attachments[i].guid}/${attachments[i].transferName}";
+            "$appDocPath/attachments/${attachments[i].guid}/${attachments[i].transferName}";
 
         /**
            * Case 1: If the file exists (we can get the type), add the file to the chat's attachments
@@ -354,7 +354,10 @@ class _MessageState extends State<MessageWidget> {
                         //         ? contact.emails.first.value
                         //         : "",
                         // "displayName": contact.displayName
-                        "path": chatAttachments[i].path
+                        "path": "/attachments/" +
+                            attachments[i].guid +
+                            "/" +
+                            basename((chatAttachments[i] as File).path)
                       });
                     },
                     child: Center(

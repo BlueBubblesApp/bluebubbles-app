@@ -77,24 +77,21 @@ class ChatBloc {
               if (subtitle.length == 1 && attachments.length > 0) {
                 String appDocPath = SettingsManager().appDocDir.path;
                 String pathName =
-                    "$appDocPath/${attachments[0].guid}/${attachments[0].transferName}";
+                    "$appDocPath/attachments/${attachments[0].guid}/${attachments[0].transferName}";
 
                 if (FileSystemEntity.typeSync(pathName) !=
                         FileSystemEntityType.notFound &&
                     attachments[0].mimeType.startsWith("image/")) {
-
                   // We need a row here so the parent honors our clipping
                   subtitle = Container(
-                    padding: EdgeInsets.only(top: 2),
-                    child: Row(
-                      children: <Widget>[
+                      padding: EdgeInsets.only(top: 2),
+                      child: Row(children: <Widget>[
                         ClipRRect(
                           borderRadius: BorderRadius.circular(4),
-                          child: Image.file(File(pathName), alignment: Alignment.centerLeft, height: 38),
+                          child: Image.file(File(pathName),
+                              alignment: Alignment.centerLeft, height: 38),
                         )
-                      ]
-                    )
-                  );
+                      ]));
                 } else {
                   subtitle = "${attachments.length} Attachment";
                   if (attachments.length > 1) subtitle += "s";

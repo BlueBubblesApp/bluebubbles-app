@@ -117,9 +117,9 @@ class Attachment {
     await db.update("attachment", params,
         where: "ROWID = ?", whereArgs: [existing.id]);
     String appDocPath = SettingsManager().appDocDir.path;
-    String pathName = "$appDocPath/$oldGuid";
+    String pathName = "$appDocPath/attachments/$oldGuid";
     Directory directory = Directory(pathName);
-    await directory.rename("$appDocPath/${newAttachment.guid}");
+    await directory.rename("$appDocPath/attachments/${newAttachment.guid}");
     return existing;
   }
 
