@@ -7,6 +7,7 @@ import 'package:bluebubble_messages/helpers/utils.dart';
 import 'package:bluebubble_messages/layouts/conversation_view/new_chat_creator.dart';
 import 'package:bluebubble_messages/managers/navigator_manager.dart';
 import 'package:bluebubble_messages/managers/new_message_manager.dart';
+import 'package:bluebubble_messages/managers/notification_manager.dart';
 import 'package:bluebubble_messages/managers/settings_manager.dart';
 import 'package:bluebubble_messages/repository/database.dart';
 import 'package:flutter_socket_io/socket_io_manager.dart';
@@ -52,7 +53,10 @@ class SocketManager {
     // notify();
   }
 
-  List<String> processedGUIDS = [];
+  Map<String, List<String>> processedGUIDS = {
+    "fcm": <String>[],
+    "socket": <String>[]
+  };
 
   SetupBloc setup = new SetupBloc();
   StreamController<bool> finishedSetup = StreamController<bool>();
@@ -194,12 +198,9 @@ class SocketManager {
       _manager.socket.subscribe("new-message", (_data) async {
         debugPrint("Client received new message");
         Map<String, dynamic> data = jsonDecode(_data);
-        if (SocketManager().processedGUIDS.contains(data["guid"])) {
-          return new Future.value("");
-        } else {
-          SocketManager().processedGUIDS.add(data["guid"]);
-        }
 
+        if (SocketManager().processedGUIDS["socket"].contains(data["guid"]))
+          return new Future.value("");
         // If there are no chats, there's nothing to associate the message to, so skip
         if (data["chats"].length == 0) return new Future.value("");
 
@@ -316,7 +317,8 @@ class SocketManager {
       });
     }
 
-    if (!chatsWithNotifications.contains(chat.guid)) {
+    if (!chatsWithNotifications.contains(chat.guid) &&
+        NotificationManager().chat != chat.guid) {
       chatsWithNotifications.add(chat.guid);
     }
 
@@ -376,6 +378,7 @@ class SocketManager {
     // 1 -> Delete all messages associated with a chat
     // 2 -> Delete all chat_message_join entries associated with a chat
     // 3 -> Run the resync
+    Completer completer = new Completer();
 
     final Database db = await DBProvider.db.database;
 
@@ -403,20 +406,20 @@ class SocketManager {
 
     await batch.commit(noResult: true);
 
-    // notify();
     NewMessageManager().updateWithMessage(chat, null);
 
     // 3 -> Run the resync
     Map<String, dynamic> params = Map();
     params["identifier"] = chat.guid;
     params["limit"] = 100;
-    params["withBlurhash"] = true;
+    params["withBlurhash"] = false;
     SocketManager().socket.sendMessage("get-chat-messages", jsonEncode(params),
         (data) {
       List messages = jsonDecode(data)["data"];
       MessageHelper.bulkAddMessages(chat, messages);
+      NewMessageManager().updateWithMessage(chat, null);
+      completer.complete();
     });
-
-    // TODO: Notify when done?
+    return completer.future;
   }
 }

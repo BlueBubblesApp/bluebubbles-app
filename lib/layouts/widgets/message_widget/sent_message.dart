@@ -2,6 +2,7 @@ import 'package:bluebubble_messages/helpers/hex_color.dart';
 import 'package:bluebubble_messages/helpers/utils.dart';
 import 'package:bluebubble_messages/managers/contact_manager.dart';
 import 'package:bluebubble_messages/repository/models/message.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class SentMessage extends StatefulWidget {
@@ -58,47 +59,60 @@ class _SentMessageState extends State<SentMessage> {
     if (widget.showTail) {
       stack.insertAll(0, tail);
     }
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.end,
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.end,
       children: <Widget>[
-        // _buildTimeStamp(),
-        // _buildReactions(),
-        GestureDetector(
-          onLongPress: () {
-            Overlay.of(context).insert(widget.overlayEntry);
-          },
-          child: Padding(
-            padding: EdgeInsets.only(bottom: widget.showTail ? 10.0 : 3.0),
-            child: Stack(
-              alignment: AlignmentDirectional.bottomEnd,
-              children: <Widget>[
-                Stack(
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: <Widget>[
+            GestureDetector(
+              onLongPress: () {
+                Overlay.of(context).insert(widget.overlayEntry);
+              },
+              child: Padding(
+                padding: EdgeInsets.only(bottom: widget.showTail ? 10.0 : 3.0),
+                child: Stack(
                   alignment: AlignmentDirectional.bottomEnd,
-                  children: stack,
+                  children: <Widget>[
+                    Stack(
+                      alignment: AlignmentDirectional.bottomEnd,
+                      children: stack,
+                    ),
+                    Container(
+                      margin: EdgeInsets.symmetric(
+                        horizontal: 10,
+                      ),
+                      constraints: BoxConstraints(
+                        maxWidth: MediaQuery.of(context).size.width * 3 / 4,
+                      ),
+                      padding: EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(20),
+                        color: Colors.blue,
+                      ),
+                      // color: Colors.blue,
+                      // height: 20,
+                      child: Column(
+                        children: widget.content,
+                      ),
+                    ),
+                  ],
                 ),
-                Container(
-                  margin: EdgeInsets.symmetric(
-                    horizontal: 10,
-                  ),
-                  constraints: BoxConstraints(
-                    maxWidth: MediaQuery.of(context).size.width * 3 / 4,
-                  ),
-                  padding: EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(20),
-                    color: Colors.blue,
-                  ),
-                  // color: Colors.blue,
-                  // height: 20,
-                  child: Column(
-                    children: widget.content,
-                  ),
-                ),
-              ],
+              ),
             ),
-          ),
+            widget.deliveredReceipt
+          ],
         ),
-        widget.deliveredReceipt
+        widget.message.guid.startsWith("error")
+            ? CupertinoButton(
+                padding: EdgeInsets.all(0),
+                onPressed: () {},
+                child: Icon(
+                  Icons.error,
+                  color: Colors.red,
+                ),
+              )
+            : Container(),
       ],
     );
   }

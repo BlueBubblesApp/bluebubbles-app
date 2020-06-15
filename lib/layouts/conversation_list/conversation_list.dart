@@ -2,9 +2,6 @@ import 'dart:ui';
 
 import 'package:bluebubble_messages/blocs/chat_bloc.dart';
 import 'package:bluebubble_messages/layouts/conversation_view/new_chat_creator.dart';
-import 'package:bluebubble_messages/managers/method_channel_interface.dart';
-import 'package:bluebubble_messages/managers/new_message_manager.dart';
-import 'package:bluebubble_messages/managers/notification_manager.dart';
 import 'package:bluebubble_messages/repository/models/chat.dart';
 
 import './conversation_tile.dart';
@@ -13,7 +10,6 @@ import 'package:flutter/material.dart';
 
 import '../../helpers/hex_color.dart';
 import '../settings/settings_panel.dart';
-import '../../socket_manager.dart';
 
 class ConversationList extends StatefulWidget {
   ConversationList({Key key}) : super(key: key);

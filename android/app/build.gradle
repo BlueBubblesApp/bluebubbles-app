@@ -68,6 +68,9 @@ dependencies {
     //for notifications
     implementation "com.android.support:support-compat:28.0.0"
 
+    //for location sending
+    implementation "com.google.android.gms:play-services-location:17.0.0"
+
 
     // Add the SDK for Firebase Cloud Messaging
     implementation 'com.google.firebase:firebase-messaging:20.1.5'
