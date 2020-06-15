@@ -1,21 +1,22 @@
+import 'dart:convert';
+import 'dart:ui';
+
 import 'package:bluebubble_messages/helpers/hex_color.dart';
-import 'package:bluebubble_messages/helpers/utils.dart';
-import 'package:bluebubble_messages/managers/contact_manager.dart';
+import 'package:bluebubble_messages/main.dart';
 import 'package:bluebubble_messages/repository/models/message.dart';
+import 'package:bluebubble_messages/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class SentMessage extends StatefulWidget {
   final bool showTail;
   final Message message;
-  final Message olderMessage;
   final OverlayEntry overlayEntry;
   final List<Widget> content;
   final Widget deliveredReceipt;
   SentMessage({
     Key key,
     @required this.showTail,
-    @required this.olderMessage,
     @required this.message,
     @required this.content,
     @required this.overlayEntry,
@@ -27,6 +28,77 @@ class SentMessage extends StatefulWidget {
 }
 
 class _SentMessageState extends State<SentMessage> {
+
+  OverlayEntry _createErrorPopup() {
+    OverlayEntry entry;
+    int errorCode = widget.message.error;
+    String errorText = widget.message.guid.split('-')[1];
+
+    entry = OverlayEntry(
+      builder: (context) => Scaffold(
+        backgroundColor: Colors.transparent,
+        body: Stack(
+          children: <Widget>[
+            Positioned.fill(
+              child: GestureDetector(
+                onTap: () => entry.remove(),
+                child: Container(
+                  color: Colors.black.withAlpha(200),
+                  child: Column(
+                    children: <Widget>[
+                      Spacer(
+                        flex: 3,
+                      ),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(20),
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                          child: Container(
+                            height: 120,
+                            width: MediaQuery.of(context).size.width * 9 / 5,
+                            color: HexColor('26262a').withAlpha(200),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: <Widget> [
+                                Column(
+                                  children: <Widget>[
+                                    Text("Error Code: ${errorCode.toString()}", style: TextStyle(color: Colors.white)),
+                                    Text("Error: $errorText", style: TextStyle(color: Colors.white))
+                                  ]
+                                ),
+                                CupertinoButton(
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: <Widget> [
+                                      Text("Retry"),
+                                      Container(width: 5.0),
+                                      Icon(Icons.refresh, color: Colors.white, size: 18)
+                                    ]
+                                  ),
+                                  color: Colors.black26,
+                                  onPressed: () async {
+                                    SocketManager().retryMessage(widget.message);
+                                    entry.remove();
+                                  }
+                                )
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    return entry;
+  }
+
   @override
   Widget build(BuildContext context) {
     List<Widget> tail = <Widget>[
@@ -59,61 +131,65 @@ class _SentMessageState extends State<SentMessage> {
     if (widget.showTail) {
       stack.insertAll(0, tail);
     }
+
+    List<Widget> messageWidget = [
+      Stack(
+        alignment: AlignmentDirectional.bottomEnd,
+        children: <Widget>[
+          Stack(
+            alignment: AlignmentDirectional.bottomEnd,
+            children: stack,
+          ),
+          GestureDetector(
+            onLongPress: () {
+              Overlay.of(context).insert(widget.overlayEntry);
+            },
+            child: Container(
+              margin: EdgeInsets.symmetric(
+                horizontal: 10,
+              ),
+              constraints: BoxConstraints(
+                maxWidth: MediaQuery.of(context).size.width * 3 / 4,
+              ),
+              padding: EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                color: Colors.blue,
+              ),
+              // color: Colors.blue,
+              // height: 20,
+              child: Column(
+                children: widget.content,
+              ),
+            ),
+          )
+        ],
+      )
+    ];
+
+    if (widget.message.error > 0)
+      messageWidget.add(GestureDetector(
+        onTap: () {
+          Overlay.of(context).insert(this._createErrorPopup());
+        },
+        child: Icon(Icons.error_outline, color: Colors.red)
+      ));
+
+    // Icon(Icons.accessible_forward, color: Colors.white),
     return Row(
       mainAxisAlignment: MainAxisAlignment.end,
       children: <Widget>[
         Column(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: <Widget>[
-            GestureDetector(
-              onLongPress: () {
-                Overlay.of(context).insert(widget.overlayEntry);
-              },
-              child: Padding(
-                padding: EdgeInsets.only(bottom: widget.showTail ? 10.0 : 3.0),
-                child: Stack(
-                  alignment: AlignmentDirectional.bottomEnd,
-                  children: <Widget>[
-                    Stack(
-                      alignment: AlignmentDirectional.bottomEnd,
-                      children: stack,
-                    ),
-                    Container(
-                      margin: EdgeInsets.symmetric(
-                        horizontal: 10,
-                      ),
-                      constraints: BoxConstraints(
-                        maxWidth: MediaQuery.of(context).size.width * 3 / 4,
-                      ),
-                      padding: EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(20),
-                        color: Colors.blue,
-                      ),
-                      // color: Colors.blue,
-                      // height: 20,
-                      child: Column(
-                        children: widget.content,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+            Padding(
+              padding: EdgeInsets.only(bottom: widget.showTail ? 10.0 : 3.0, right: (widget.message.error > 0 ? 10.0 : 0)),
+              child: Row(children: messageWidget),
             ),
             widget.deliveredReceipt
           ],
-        ),
-        widget.message.guid.startsWith("error")
-            ? CupertinoButton(
-                padding: EdgeInsets.all(0),
-                onPressed: () {},
-                child: Icon(
-                  Icons.error,
-                  color: Colors.red,
-                ),
-              )
-            : Container(),
-      ],
+        )
+      ]
     );
   }
 }

@@ -4,6 +4,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:sqflite/sqflite.dart';
 
 import '../database.dart';
+import 'chat.dart';
 import 'handle.dart';
 import '../../helpers/utils.dart';
 
@@ -194,12 +195,11 @@ class Message {
     return this;
   }
 
-  static Future<Message> replaceMessage(
-      String oldGuid, Message newMessage) async {
+  static Future<Message> replaceMessage(String oldGuid, Message newMessage) async {
     final Database db = await DBProvider.db.database;
     Message existing = await Message.findOne({"guid": oldGuid});
     if (existing == null) {
-      throw ("Old GUID does not exist!");
+      return null;
     }
 
     Map<String, dynamic> params = newMessage.toMap();
@@ -270,6 +270,27 @@ class Message {
         ? res.map((c) => Attachment.fromMap(c)).toList()
         : [];
   }
+
+  static Future<Chat> getChat(Message message) async {
+    final Database db = await DBProvider.db.database;
+
+    var res = await db.rawQuery(
+        "SELECT"
+        " chat.ROWID AS ROWID,"
+        " chat.guid AS guid,"
+        " chat.style AS style,"
+        " chat.chatIdentifier AS chatIdentifier,"
+        " chat.isArchived AS isArchived,"
+        " chat.displayName AS displayName"
+        " FROM chat"
+        " JOIN chat_message_join AS cmj ON chat.ROWID = cmj.chatId"
+        " JOIN message ON message.ROWID = cmj.messageId"
+        " WHERE message.ROWID = ?;",
+        [message.id]);
+
+    return (res.isNotEmpty) ? Chat.fromMap(res[0]) : null;
+  }
+
 
   Future<Handle> getHandle() async {
     final Database db = await DBProvider.db.database;

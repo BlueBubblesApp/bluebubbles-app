@@ -24,7 +24,7 @@ class AttachmentHelper {
     List<String> lines = appleLocation.split("\n");
     String url = lines[5];
     String query = url.split("&q=")[1];
-    debugPrint("parse apple location " + query);
+
     if (query.contains("\\")) {
       return {
         "longitude": double.tryParse((query.split("\\,")[0])),
