@@ -24,7 +24,7 @@ class Message {
   String text;
   String subject;
   String country;
-  bool error;
+  int error;
   DateTime dateCreated;
   DateTime dateRead;
   DateTime dateDelivered;
@@ -56,7 +56,7 @@ class Message {
       this.text,
       this.subject,
       this.country,
-      this.error = false,
+      this.error = 0,
       this.dateCreated,
       this.dateRead,
       this.dateDelivered,
