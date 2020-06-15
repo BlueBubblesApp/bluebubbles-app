@@ -226,7 +226,7 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField> {
                         ),
                         keyboardType: TextInputType.multiline,
                         maxLines: null,
-                        placeholder: "BlueBubbles",
+                        placeholder: "iMessage",
                         padding: EdgeInsets.only(
                             left: 10, right: 40, top: 10, bottom: 10),
                         placeholderStyle: TextStyle(
@@ -265,10 +265,10 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField> {
                                   );
                                 }
                               } else {
-                                SocketManager()
-                                    .sendMessage(widget.chat, _controller.text);
+                                SocketManager().sendMessage(widget.chat, _controller.text);
                               }
                             }
+
                             _controller.text = "";
                             pickedImages = <File>[];
                             setState(() {});

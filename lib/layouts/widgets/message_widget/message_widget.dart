@@ -402,8 +402,6 @@ class _MessageState extends State<MessageWidget> {
               ),
             ),
           );
-        } else {
-          debugPrint(mimeType);
         }
 
         // If it's an attachment, then it needs to be manually downloaded
@@ -529,7 +527,6 @@ class _MessageState extends State<MessageWidget> {
         content: _buildContent(),
         deliveredReceipt: _buildDelieveredReceipt(),
         message: widget.message,
-        olderMessage: widget.olderMessage,
         overlayEntry: _createOverlayEntry(),
         showTail: showTail,
       );
@@ -629,9 +626,6 @@ class _MessageState extends State<MessageWidget> {
   }
 
   OverlayEntry _createOverlayEntry() {
-    attachments.forEach((element) {
-      debugPrint(element.mimeType);
-    });
     List<Widget> reactioners = <Widget>[];
     reactions.keys.forEach(
       (element) {
