@@ -41,7 +41,6 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     _controller = TextEditingController();
     if (widget.existingText != null) {
@@ -61,7 +60,6 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField> {
 
   @override
   void dispose() {
-    // TODO: implement dispose
     _focusNode.dispose();
     _controller.dispose();
     super.dispose();
@@ -265,7 +263,8 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField> {
                                   );
                                 }
                               } else {
-                                SocketManager().sendMessage(widget.chat, _controller.text);
+                                SocketManager()
+                                    .sendMessage(widget.chat, _controller.text);
                               }
                             }
 

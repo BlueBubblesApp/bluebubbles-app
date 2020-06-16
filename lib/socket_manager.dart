@@ -104,21 +104,21 @@ class SocketManager {
     _manager.disconnectSubscribers.remove(guid);
   }
 
-  void socketStatusUpdate(data, [Function connectCB]) {
+  void socketStatusUpdate(data, [Function() connectCB]) {
     switch (data) {
       case "connect":
         debugPrint("CONNECTED");
         authFCM();
         // syncChats();
-        if (connectCB != null) {
-          connectCB();
-        }
+        // if (connectCB != null) {
+        // }
         _manager.disconnectSubscribers.forEach((key, value) {
           value();
           _manager.disconnectSubscribers.remove(key);
         });
 
         SettingsManager().settings.connected = true;
+        connectCB();
         return;
       case "disconnect":
         _manager.disconnectSubscribers.values.forEach((f) {
@@ -154,7 +154,7 @@ class SocketManager {
     DBProvider.db.buildDatabase(db);
   }
 
-  startSocketIO([Function connectCb]) async {
+  startSocketIO({Function connectCb}) async {
     if (connectCb == null && SettingsManager().settings.finishedSetup == false)
       return;
     // If we already have a socket connection, kill it
@@ -199,8 +199,11 @@ class SocketManager {
         debugPrint("Client received new message");
         Map<String, dynamic> data = jsonDecode(_data);
 
-        if (SocketManager().processedGUIDS["socket"].contains(data["guid"]))
+        if (SocketManager().processedGUIDS["socket"].contains(data["guid"])) {
           return new Future.value("");
+        } else {
+          SocketManager().processedGUIDS["socket"].add(data["guid"]);
+        }
         // If there are no chats, there's nothing to associate the message to, so skip
         if (data["chats"].length == 0) return new Future.value("");
 
@@ -306,7 +309,8 @@ class SocketManager {
 
   void updateMessage(Map<String, dynamic> data) async {
     Message updatedMessage = new Message.fromMap(data);
-    updatedMessage = await Message.replaceMessage(updatedMessage.guid, updatedMessage);
+    updatedMessage =
+        await Message.replaceMessage(updatedMessage.guid, updatedMessage);
 
     if (updatedMessage != null) {
       updatedMessage.save();
@@ -360,14 +364,15 @@ class SocketManager {
   }
 
   /// Message Error Codes
-  /// 
+  ///
   /// - 0: No error
   /// - 4: Timeout
   /// - 1000 (app specific): No connection to server
   /// - 1001 (app specific): Bad request
   /// - 1002 (app specific): Server error
 
-  void sendMessage(Chat chat, String text, {List<Attachment> attachments = const []}) async {
+  void sendMessage(Chat chat, String text,
+      {List<Attachment> attachments = const []}) async {
     if (text == null || text.trim().length == 0) return;
 
     Map<String, dynamic> params = new Map();
@@ -384,14 +389,8 @@ class SocketManager {
       hasAttachments: attachments.length > 0 ? true : false,
     );
 
-    // Add attachments
-    for (int i = 0; i < attachments.length; i++) {
-      // TODO: Do something here
-    }
-
     // If we aren't conneted to the socket, set the message error code
-    if (SettingsManager().settings.connected == false)
-      sentMessage.error = 1000;
+    if (SettingsManager().settings.connected == false) sentMessage.error = 1000;
 
     await sentMessage.save();
     await chat.save();
@@ -401,19 +400,38 @@ class SocketManager {
     // If we aren't connected to the socket, return
     if (SettingsManager().settings.connected == false) return;
 
-    _manager.socket.sendMessage("send-message", jsonEncode(params),
-        (data) async {
-      Map response = jsonDecode(data);
-      debugPrint("message sent: " + response.toString());
+    if (_manager.socket == null) {
+      _manager.startSocketIO(
+          connectCb: () => _manager.socket.sendMessage(
+                  "send-message", jsonEncode(params), (data) async {
+                Map response = jsonDecode(data);
+                debugPrint("message sent: " + response.toString());
 
-      // If there is an error, replace the temp value with an error
-      if (response['status'] != 200) {
-        sentMessage.guid = sentMessage.guid.replaceAll("temp", "error-${response['error']['message']}");
-        sentMessage.error = response['status'] == 400 ? 1001 : 1002;
-        await Message.replaceMessage(tempGuid, sentMessage);
-        NewMessageManager().updateWithMessage(chat, null);
-      }
-    });
+                // If there is an error, replace the temp value with an error
+                if (response['status'] != 200) {
+                  sentMessage.guid = sentMessage.guid.replaceAll(
+                      "temp", "error-${response['error']['message']}");
+                  sentMessage.error = response['status'] == 400 ? 1001 : 1002;
+                  await Message.replaceMessage(tempGuid, sentMessage);
+                  NewMessageManager().updateWithMessage(chat, null);
+                }
+              }));
+    } else {
+      _manager.socket.sendMessage("send-message", jsonEncode(params),
+          (data) async {
+        Map response = jsonDecode(data);
+        debugPrint("message sent: " + response.toString());
+
+        // If there is an error, replace the temp value with an error
+        if (response['status'] != 200) {
+          sentMessage.guid = sentMessage.guid
+              .replaceAll("temp", "error-${response['error']['message']}");
+          sentMessage.error = response['status'] == 400 ? 1001 : 1002;
+          await Message.replaceMessage(tempGuid, sentMessage);
+          NewMessageManager().updateWithMessage(chat, null);
+        }
+      });
+    }
   }
 
   void retryMessage(Message message) async {
@@ -422,7 +440,7 @@ class SocketManager {
 
     // Get message's chat
     Chat chat = await Message.getChat(message);
-    if (chat == null) throw("Could not find chat!");
+    if (chat == null) throw ("Could not find chat!");
 
     // Build request parameters
     Map<String, dynamic> params = new Map();
@@ -441,8 +459,7 @@ class SocketManager {
     // TODO: Get Attachments from DB
 
     // If we aren't conneted to the socket, set the message error code
-    if (SettingsManager().settings.connected == false)
-      message.error = 1000;
+    if (SettingsManager().settings.connected == false) message.error = 1000;
 
     await Message.replaceMessage(oldGuid, message);
     NewMessageManager().updateWithMessage(chat, null);
@@ -457,7 +474,8 @@ class SocketManager {
 
       // If there is an error, replace the temp value with an error
       if (response['status'] != 200) {
-        message.guid = message.guid.replaceAll("temp", "error-${response['error']['message']}");
+        message.guid = message.guid
+            .replaceAll("temp", "error-${response['error']['message']}");
         message.error = response['status'] == 400 ? 1001 : 1002;
         await Message.replaceMessage(tempGuid, message);
         NewMessageManager().updateWithMessage(chat, null);

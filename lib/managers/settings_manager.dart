@@ -49,7 +49,7 @@ class SettingsManager {
       await SocketManager().authFCM();
     }
     if (connectToSocket) {
-      SocketManager().startSocketIO(connectCb);
+      SocketManager().startSocketIO(connectCb: connectCb);
     }
   }
 }

@@ -66,10 +66,10 @@ import java.util.Map;
 
 
 public class MainActivity extends FlutterActivity {
-    private static final String CHANNEL = "samples.flutter.dev/fcm";
+    public static final String CHANNEL = "samples.flutter.dev/fcm";
     private static final String TAG = "MainActivity";
     FirebaseApp app;
-    public FlutterEngine engine;
+    static FlutterEngine engine;
     public Long callbackHandle;
     private DatabaseReference db;
     private FusedLocationProviderClient fusedLocationClient;
@@ -152,7 +152,11 @@ public class MainActivity extends FlutterActivity {
                                 NotificationCompat.Action dismissAction = new NotificationCompat.Action.Builder(0, "Mark As Read", dismissIntent).build();
 
                                 //for the quick reply
-                                PendingIntent replyIntent = PendingIntent.getBroadcast(this, call.argument("notificationId"), new Intent(this, ReplyReceiver.class).putExtra("id", (int) call.argument("notificationId")).setType("reply"), PendingIntent.FLAG_UPDATE_CURRENT);
+                                Intent intent = new Intent(this, ReplyReceiver.class)
+                                        .putExtra("id", (int) call.argument("notificationId"))
+                                        .putExtra("chatGuid", (String) call.argument("group"))
+                                        .setType("reply");
+                                PendingIntent replyIntent = PendingIntent.getBroadcast(this, call.argument("notificationId"), intent, PendingIntent.FLAG_UPDATE_CURRENT);
                                 androidx.core.app.RemoteInput replyInput = new androidx.core.app.RemoteInput.Builder("key_text_reply").setLabel("Reply").build();
                                 NotificationCompat.Action replyAction = new NotificationCompat.Action.Builder(0, "Reply", replyIntent).addRemoteInput(replyInput).build();
 
@@ -174,30 +178,14 @@ public class MainActivity extends FlutterActivity {
                                         .setGroup(call.argument("group"))
                                         .setAutoCancel(true)
                                         .setContentIntent(openIntent)
-//                                        .setGroup("messageGroup")
                                         .setGroupSummary(true);
 
                                 NotificationManagerCompat notificationManager = NotificationManagerCompat.from(getContext());
-//                                NotificationManager manager = (NotificationManager) getApplicationContext().getSystemService(getApplicationContext().NOTIFICATION_SERVICE);
-//                                StatusBarNotification[] activeNotifications = manager.getActiveNotifications();
 
                                 notificationManager.notify(call.argument("notificationId"), builder.build());
                                 notificationManager.notify(call.argument("summaryId"), summaryBuilder.build());
                                 result.success("");
                             } else if (call.method.equals("CreateContact")) {
-
-//                                Intent intent = new Intent(ContactsContract.Intents.Insert.ACTION);
-//                                intent.setType(ContactsContract.RawContacts.CONTENT_TYPE);
-//
-//                                String email = call.argument("email");
-//                                String phone = call.argument("phone");
-//                                String displayName = call.argument("displayName");
-//                                // Inserts an email address
-//                                intent.putExtra(ContactsContract.Intents.Insert.EMAIL, email)
-//                                        .putExtra(ContactsContract.Intents.Insert.PHONE, phone)
-//                                        .putExtra(ContactsContract.Intents.Insert.NAME, displayName);
-//                                startActivity(intent);
-
                                 Intent intent = new Intent(Intent.ACTION_VIEW);
                                 Log.d("filesDir", "filesDir is " + getFilesDir().getAbsolutePath() + (String) call.argument("path"));
                                 Uri data = FileProvider.getUriForFile(getApplicationContext(), "com.example.path_provider", new File(getFilesDir().getAbsolutePath() + (String) call.argument("path")));

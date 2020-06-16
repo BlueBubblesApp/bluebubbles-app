@@ -68,12 +68,26 @@ class MethodChannelInterface {
           if (!message.isFromMe && NotificationManager().chat != chat.guid)
             NotificationManager().createNewNotification(
                 title, message.text, chat.guid, message.id, chat.id);
+        } else {
+          SocketManager().processedGUIDS["fcm"].add(data["guid"]);
         }
 
-        if (SocketManager().processedGUIDS["socket"].contains(data["guid"]))
+        if (SocketManager().processedGUIDS["socket"].contains(data["guid"])) {
           return;
+        } else {
+          SocketManager().processedGUIDS["socket"].add(data["guid"]);
+        }
 
         if (data["chats"].length == 0) return new Future.value("");
+
+        // If there are no chats, there's nothing to associate the message to, so skip
+        if (data["chats"].length == 0) return new Future.value("");
+
+        for (int i = 0; i < data["chats"].length; i++) {
+          Chat chat = Chat.fromMap(data["chats"][i]);
+          await chat.save();
+          SocketManager().handleNewMessage(data, chat);
+        }
 
         SocketManager().handleNewMessage(data, chat);
         return new Future.value("");
@@ -91,7 +105,8 @@ class MethodChannelInterface {
         return new Future.value("");
       case "reply":
         debugPrint("replying with data " + call.arguments.toString());
-        // SocketManager().sendMessage(chat, text)
+        Chat chat = await Chat.findOne({"guid": call.arguments["chat"]});
+        SocketManager().sendMessage(chat, call.arguments["text"]);
         return new Future.value("");
       case "shareAttachments":
         List<File> attachments = <File>[];
