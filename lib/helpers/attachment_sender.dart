@@ -23,7 +23,7 @@ class AttachmentSender {
 
   int _currentChunk = 0;
   int _totalChunks = 0;
-  int _chunkSize = 1;
+  int _chunkSize = 512;
   Chat _chat;
   // String _tempGuid;
   String _attachmentGuid;
@@ -39,10 +39,12 @@ class AttachmentSender {
     Chat chat,
     String text,
   ) {
+    // Set default chunk size to what is set in the settings
+    _chunkSize = SettingsManager().settings.chunkSize * 1024;
     _chat = chat;
-    // _tempGuid = ;
     _attachmentGuid = "temp-${randomString(8)}";
     _text = text;
+
     sendAttachment(attachment);
   }
 
@@ -52,7 +54,7 @@ class AttachmentSender {
   //         _chunksize * 1024, _cb);
   // }
 
-  sendChunkRecursive(int index, int total, int chunkSize, String tempGuid) {
+  sendChunkRecursive(int index, int total, String tempGuid) {
     // if (index < ) {
     Map<String, dynamic> params = new Map();
     params["guid"] = _chat.guid;
@@ -61,11 +63,11 @@ class AttachmentSender {
     params["attachmentGuid"] = _attachmentGuid;
     params["attachmentChunkStart"] = index;
     List<int> chunk = <int>[];
-    for (int i = index; i < index + chunkSize; i++) {
+    for (int i = index; i < index + _chunkSize; i++) {
       if (i == _imageBytes.length) break;
       chunk.add(_imageBytes[i]);
     }
-    params["hasMore"] = index + chunkSize < _imageBytes.length;
+    params["hasMore"] = index + _chunkSize < _imageBytes.length;
     params["attachmentName"] = _attachmentName;
     params["attachmentData"] = base64Encode(chunk);
     debugPrint(chunk.length.toString() + "/" + _imageBytes.length.toString());
@@ -74,8 +76,8 @@ class AttachmentSender {
       Map<String, dynamic> response = jsonDecode(data);
       debugPrint(data.toString());
       if (response['status'] == 200) {
-        if (index + chunkSize < _imageBytes.length) {
-          sendChunkRecursive(index + chunkSize, total, chunkSize, tempGuid);
+        if (index + _chunkSize < _imageBytes.length) {
+          sendChunkRecursive(index + _chunkSize, total, tempGuid);
         } else {
           debugPrint("no more to send");
           SocketManager().finishSender(_chat.guid, _attachmentGuid);
@@ -93,8 +95,7 @@ class AttachmentSender {
     _attachmentName = basename(attachment.path);
     _imageBytes = await attachment.readAsBytes();
 
-    int chunkSize = SettingsManager().settings.chunkSize * 1024;
-    int numOfChunks = (_imageBytes.length / chunkSize).ceil();
+    int numOfChunks = (_imageBytes.length / _chunkSize).ceil();
 
     Attachment messageAttachment = Attachment(
       guid: _attachmentGuid,
@@ -145,12 +146,10 @@ class AttachmentSender {
 
     NewMessageManager().updateWithMessage(_chat, sentMessage);
     _totalChunks = numOfChunks;
-    _chunkSize = chunkSize;
     SocketManager().addAttachmentSender(_chat.guid, this);
     sendChunkRecursive(
         0,
         _totalChunks,
-        _chunkSize,
         messageWithText == null
             ? "temp-${randomString(8)}"
             : messageWithText.guid);

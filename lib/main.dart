@@ -76,10 +76,15 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     SettingsManager().init();
     MethodChannelInterface().init(context);
     ReceiveSharingIntent.getInitialMedia().then((List<SharedMediaFile> value) {
+      if (value == null) return;
+
       List<File> attachments = <File>[];
-      value.forEach((element) {
-        attachments.add(File(element.path));
-      });
+      if (value != null) {
+        value.forEach((element) {
+          attachments.add(File(element.path));
+        });
+      }
+
       Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(
             builder: (context) => NewChatCreator(
@@ -90,7 +95,8 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
           (route) => route.isFirst);
     });
     ReceiveSharingIntent.getInitialText().then((String text) {
-      debugPrint("got text " + text);
+      if (text == null) return;
+
       Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(
             builder: (context) => NewChatCreator(
@@ -100,6 +106,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
           ),
           (route) => route.isFirst);
     });
+
     NotificationManager().createNotificationChannel();
     SchedulerBinding.instance
         .addPostFrameCallback((_) => SettingsManager().getSavedSettings());

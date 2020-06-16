@@ -37,17 +37,16 @@ class SettingsManager {
     SocketManager().authFCM();
   }
 
-  void saveSettings(Settings settings,
-      {bool connectToSocket = false,
-      Function connectCb,
-      bool authorizeFCM = true}) async {
+  void saveSettings(Settings settings, {bool connectToSocket = false, Function connectCb, bool authorizeFCM = true}) async {
     if (_manager.sharedPreferences == null) {
       _manager.sharedPreferences = await SharedPreferences.getInstance();
     }
+
     _manager.sharedPreferences.setString('Settings', jsonEncode(settings));
     if (authorizeFCM) {
       await SocketManager().authFCM();
     }
+
     if (connectToSocket) {
       SocketManager().startSocketIO(connectCb: connectCb);
     }

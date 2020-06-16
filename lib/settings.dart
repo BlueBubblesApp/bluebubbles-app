@@ -14,7 +14,7 @@ class Settings {
   String guidAuthKey = "";
   String serverAddress = "";
   bool _finishedSetup = false;
-  int _chunkSize = 1;
+  int _chunkSize = 512;
   bool _autoDownload = true;
   bool _connected = false;
 
