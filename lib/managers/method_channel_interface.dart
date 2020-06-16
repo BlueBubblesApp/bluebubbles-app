@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 import 'dart:ui';
 
 import 'package:bluebubble_messages/blocs/chat_bloc.dart';
@@ -9,6 +10,7 @@ import 'package:bluebubble_messages/layouts/conversation_view/new_chat_creator.d
 import 'package:bluebubble_messages/main.dart';
 import 'package:bluebubble_messages/managers/navigator_manager.dart';
 import 'package:bluebubble_messages/managers/notification_manager.dart';
+import 'package:bluebubble_messages/managers/queue_manager.dart';
 import 'package:bluebubble_messages/managers/settings_manager.dart';
 import 'package:bluebubble_messages/repository/database.dart';
 import 'package:bluebubble_messages/repository/models/chat.dart';
@@ -56,44 +58,38 @@ class MethodChannelInterface {
       case "new-message":
         Map<String, dynamic> data = jsonDecode(call.arguments);
 
+        // If we don't have any chats, skip
+        if (data["chats"].length == 0) return new Future.value("");
+
+        // Find the chat by GUID
         Chat chat = await Chat.findOne({"guid": data["chats"][0]["guid"]});
         if (chat == null) {
           debugPrint("could not find chat, returning");
           return;
         }
+
+        // Get the chat title and message
         String title = await getFullChatTitle(chat);
         Message message = Message.fromMap(data);
-        message = await message.save();
-        if (!SocketManager().processedGUIDS["fcm"].contains(data["guid"])) {
-          if (!message.isFromMe && NotificationManager().chat != chat.guid)
-            NotificationManager().createNewNotification(
-                title, message.text, chat.guid, message.id, chat.id);
-        } else {
-          SocketManager().processedGUIDS["fcm"].add(data["guid"]);
-        }
 
-        if (SocketManager().processedGUIDS["socket"].contains(data["guid"])) {
+        // If we've already processed the GUID, skip it
+        if (SocketManager().processedGUIDS.contains(data["guid"])) {
           return;
-        } else {
-          SocketManager().processedGUIDS["socket"].add(data["guid"]);
         }
 
-        if (data["chats"].length == 0) return new Future.value("");
-
-        // If there are no chats, there's nothing to associate the message to, so skip
-        if (data["chats"].length == 0) return new Future.value("");
-
-        for (int i = 0; i < data["chats"].length; i++) {
-          Chat chat = Chat.fromMap(data["chats"][i]);
-          await chat.save();
-          SocketManager().handleNewMessage(data, chat);
+        // Save the GUID and create a notification for the message
+        SocketManager().processedGUIDS.add(data["guid"]);
+        if (!message.isFromMe && NotificationManager().chat != chat.guid) {
+          NotificationManager().createNewNotification(
+            title, message.text, chat.guid, Random().nextInt(999999), chat.id);
         }
 
-        SocketManager().handleNewMessage(data, chat);
+        debugPrint("Adding new/matched message to the queue");
+        QueueManager().addEvent(call.method, call.arguments);
         return new Future.value("");
       case "updated-message":
-        debugPrint("update message");
-        SocketManager().updateMessage(jsonDecode(call.arguments));
+        debugPrint("Adding updated message to the queue");
+        QueueManager().addEvent(call.method, call.arguments);
         return new Future.value("");
       case "ChatOpen":
         debugPrint("open chat " + call.arguments.toString());
