@@ -92,8 +92,10 @@ class _ConversationViewState extends State<ConversationView> {
       backgroundColor: Colors.black,
       extendBodyBehindAppBar: true,
       appBar: CupertinoNavigationBar(
-        backgroundColor: Colors.black,
-        border: Border(bottom: BorderSide(color: Colors.white.withOpacity(0.2), width: 0.2)),
+        backgroundColor: Colors.black.withAlpha(150),
+        border: Border(
+            bottom:
+                BorderSide(color: Colors.white.withOpacity(0.2), width: 0.2)),
         middle: ListView(
           children: <Widget>[
             Container(height: 10.0),
@@ -131,7 +133,7 @@ class _ConversationViewState extends State<ConversationView> {
                 children: <Widget>[
                   GestureDetector(
                     onTap: openDetails,
-                    child:Text(
+                    child: Text(
                       getShortChatTitle(widget.chat),
                       style: TextStyle(
                         color: Colors.white,
