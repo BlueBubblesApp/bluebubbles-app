@@ -18,42 +18,42 @@ class AttachmentDownloader {
 
   int _currentChunk = 0;
   int _totalChunks = 0;
+  int _chunkSize = 512;  // Default to 512kb
   List<int> _currentBytes = <int>[];
   String _guid = "";
   Function _cb;
-  int _chunkSize = 1;
   Attachment _attachment;
 
   double get progress => (_currentChunk) / _totalChunks;
   Attachment get attachment => _attachment;
 
   AttachmentDownloader(Attachment attachment) {
+    // Set default chunk size based on the current settings
+    _chunkSize = SettingsManager().settings.chunkSize * 1024;
     _attachment = attachment;
-    getImage(attachment);
+
+    fetchAttachment(attachment);
   }
 
   resumeChunkingAfterDisconnect() {
     if (_guid != "" && _cb != null) {
       debugPrint("restarting chunking " + _currentBytes.length.toString());
-      getChunkRecursive(_guid, _currentChunk, _totalChunks, _currentBytes,
-          _chunkSize * 1024, _cb);
+      getChunkRecursive(_guid, _currentChunk, _totalChunks, _currentBytes, _cb);
     } else {
       debugPrint("could not restart chunking");
     }
   }
 
-  getChunkRecursive(String guid, int index, int total, List<int> currentBytes,
-      int chunkSize, Function cb) {
+  getChunkRecursive(String guid, int index, int total, List<int> currentBytes, Function cb) {
     _currentBytes = currentBytes;
 
     if (index <= total) {
       Map<String, dynamic> params = new Map();
       params["identifier"] = guid;
-      params["start"] = index * chunkSize;
-      params["chunkSize"] = chunkSize;
+      params["start"] = index * _chunkSize;
+      params["chunkSize"] = _chunkSize;
       params["compress"] = false;
-      SocketManager().socket.sendMessage(
-          "get-attachment-chunk", jsonEncode(params), (chunk) async {
+      SocketManager().socket.sendMessage("get-attachment-chunk", jsonEncode(params), (chunk) async {
         Map<String, dynamic> attachmentResponse = jsonDecode(chunk);
         if (!attachmentResponse.containsKey("data") ||
             attachmentResponse["data"] == null) {
@@ -63,35 +63,37 @@ class AttachmentDownloader {
         Uint8List bytes = base64Decode(attachmentResponse["data"]);
         currentBytes.addAll(bytes.toList());
         if (index < total) {
-          debugPrint("${(index + 1) / total * 100}% of the image");
-          debugPrint("next start is ${index + 1} out of $total");
-          _stream.sink.add({"Progress": (index + 1) / total as double});
+          // Calculate some stats
+          double progress = (index + 1) / total;
+          String progressStr = (progress * 100).round().toString();
+          debugPrint("Progress: $progressStr% of the attachment");
+
+          // Update the progress in stream
+          _stream.sink.add({"Progress": progress});
           _currentBytes = currentBytes;
           _currentChunk = index + 1;
-          getChunkRecursive(
-              guid, index + 1, total, currentBytes, chunkSize, cb);
+
+          // Get the next chunk
+          getChunkRecursive(guid, index + 1, total, currentBytes, cb);
         } else {
-          debugPrint("finished getting image");
+          debugPrint("Finished fetching attachment");
           await cb(currentBytes);
         }
       });
     }
   }
 
-  void getImage(Attachment attachment) {
-    int chunkSize = SettingsManager().settings.chunkSize * 1024;
-    debugPrint("getting attachment");
-    int numOfChunks = (attachment.totalBytes / chunkSize).ceil();
-    debugPrint("num Of Chunks is $numOfChunks");
+  void fetchAttachment(Attachment attachment) {
+    int numOfChunks = (attachment.totalBytes / _chunkSize).ceil();
+    debugPrint("Fetching $numOfChunks attachment chunks");
     Stopwatch stopwatch = new Stopwatch();
     stopwatch.start();
 
     _guid = attachment.guid;
     _totalChunks = numOfChunks;
-    _chunkSize = chunkSize;
     _cb = (List<int> data) async {
       stopwatch.stop();
-      debugPrint("time elapsed is ${stopwatch.elapsedMilliseconds}");
+      debugPrint("Attachment downloaded in ${stopwatch.elapsedMilliseconds} ms");
 
       if (data.length == 0) {
         _stream.sink.addError("unable to load");
@@ -101,8 +103,6 @@ class AttachmentDownloader {
       String fileName = attachment.transferName;
       String appDocPath = SettingsManager().appDocDir.path;
       String pathName = "$appDocPath/attachments/${attachment.guid}/$fileName";
-      debugPrint(
-          "length of array is ${data.length} / ${attachment.totalBytes}");
       Uint8List bytes = Uint8List.fromList(data);
 
       File file = await writeToFile(bytes, pathName);
@@ -120,10 +120,10 @@ class AttachmentDownloader {
       _currentBytes = <int>[];
       _guid = "";
       _cb = null;
-      _chunkSize = 1;
-      getImage(attachment);
+      fetchAttachment(attachment);
     }, attachment.guid);
-    getChunkRecursive(attachment.guid, 0, numOfChunks, [], chunkSize, _cb);
+
+    getChunkRecursive(attachment.guid, 0, numOfChunks, [], _cb);
   }
 
   Future<File> writeToFile(Uint8List data, String path) async {

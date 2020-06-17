@@ -276,7 +276,7 @@ class SettingsSlider extends StatefulWidget {
 }
 
 class _SettingsSliderState extends State<SettingsSlider> {
-  double currentVal = 1;
+  double currentVal = 512;
   @override
   void initState() {
     // TODO: implement initState

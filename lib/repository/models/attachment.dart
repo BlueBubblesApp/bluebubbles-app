@@ -162,6 +162,20 @@ class Attachment {
     await db.delete("attachment");
   }
 
+  getFriendlySize({decimals: 2}) {
+    double size = (this.totalBytes / 1024000.0);
+    String postfix = "MB";
+    if (size < 1) {
+      size = size * 1024;
+      postfix = "KB";
+    } else if (size > 1024) {
+      size = size / 1024;
+      postfix = "GB";
+    }
+
+    return "${size.toStringAsFixed(decimals)} $postfix";
+  }
+
   Map<String, dynamic> toMap() => {
         "ROWID": id,
         "guid": guid,

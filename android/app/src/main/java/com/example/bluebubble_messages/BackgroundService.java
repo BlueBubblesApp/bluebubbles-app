@@ -73,22 +73,29 @@ public class BackgroundService extends Service {
             return;
         }
 
-        // Decode the message
-        Message message = Message.fromMap(data, this);
+        
+        try {
+            this.db.beginTransaction();
 
-        // Iterate each chat and save the message
-        List<Map<String, Object>> chats = (List<Map<String, Object>>) data.get("chats");
-        for (int i = 0; i < chats.size(); i++) {
-            Map<String, Object> chatMap = chats.get(i);
-            Chat chat = Chat.fromMap(chatMap, this);
+            // Decode the message
+            Message message = Message.fromMap(data, this);
 
-            chat.save(true);
-            chat.addMessage(message);
+            // Iterate each chat and save the message
+            List<Map<String, Object>> chats = (List<Map<String, Object>>) data.get("chats");
+            for (int i = 0; i < chats.size(); i++) {
+                Map<String, Object> chatMap = chats.get(i);
+                Chat chat = Chat.fromMap(chatMap, this);
+
+                chat.save(true);
+                chat.addMessage(message);
+            }
+
+            this.db.setTransactionSuccessful();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        } finally {
+            this.db.endTransaction();
         }
-
-        // Close the DB to commit the messages
-        Log.d("isolate", "Closing database to commit");
-        this.db.close();
     }
 
 

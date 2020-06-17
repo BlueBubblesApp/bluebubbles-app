@@ -8,6 +8,7 @@ import 'package:bluebubble_messages/layouts/conversation_view/new_chat_creator.d
 import 'package:bluebubble_messages/managers/navigator_manager.dart';
 import 'package:bluebubble_messages/managers/new_message_manager.dart';
 import 'package:bluebubble_messages/managers/notification_manager.dart';
+import 'package:bluebubble_messages/managers/queue_manager.dart';
 import 'package:bluebubble_messages/managers/settings_manager.dart';
 import 'package:bluebubble_messages/repository/database.dart';
 import 'package:flutter_socket_io/socket_io_manager.dart';
@@ -53,10 +54,7 @@ class SocketManager {
     // notify();
   }
 
-  Map<String, List<String>> processedGUIDS = {
-    "fcm": <String>[],
-    "socket": <String>[]
-  };
+  List<String> processedGUIDS = <String>[];
 
   SetupBloc setup = new SetupBloc();
   StreamController<bool> finishedSetup = StreamController<bool>();
@@ -199,20 +197,12 @@ class SocketManager {
         debugPrint("Client received new message");
         Map<String, dynamic> data = jsonDecode(_data);
 
-        if (SocketManager().processedGUIDS["socket"].contains(data["guid"])) {
+        if (SocketManager().processedGUIDS.contains(data["guid"])) {
           return new Future.value("");
-        } else {
-          SocketManager().processedGUIDS["socket"].add(data["guid"]);
-        }
-        // If there are no chats, there's nothing to associate the message to, so skip
-        if (data["chats"].length == 0) return new Future.value("");
-
-        for (int i = 0; i < data["chats"].length; i++) {
-          Chat chat = Chat.fromMap(data["chats"][i]);
-          await chat.save();
-          SocketManager().handleNewMessage(data, chat);
         }
 
+        SocketManager().processedGUIDS.add(data["guid"]);
+        QueueManager().addEvent("new-message", _data);
         return new Future.value("");
       });
 
@@ -262,8 +252,7 @@ class SocketManager {
        * This may be when a read/delivered date has been changed.
        */
       _manager.socket.subscribe("updated-message", (_data) async {
-        debugPrint("updated-message");
-        updateMessage(jsonDecode(_data));
+        QueueManager().addEvent("updated-message", _data);
       });
     } catch (e) {
       debugPrint("FAILED TO CONNECT");
@@ -307,20 +296,22 @@ class SocketManager {
     }
   }
 
-  void updateMessage(Map<String, dynamic> data) async {
+  Future<void> handleUpdatedMessage(Map<String, dynamic> data) async {
     Message updatedMessage = new Message.fromMap(data);
-    updatedMessage =
-        await Message.replaceMessage(updatedMessage.guid, updatedMessage);
+    updatedMessage = await Message.replaceMessage(updatedMessage.guid, updatedMessage);
 
-    if (updatedMessage != null) {
-      updatedMessage.save();
+    Chat chat;
+    if (data["chat"] == null && updatedMessage != null && updatedMessage.id != null) {
+      chat = await Message.getChat(updatedMessage);
+    } else if (data["chat"] != null) {
+      chat = Chat.fromMap(data["chat"][0]);
     }
 
-    NewMessageManager().updateWithMessage(null, null);
+    NewMessageManager().updateWithMessage(chat, updatedMessage);
   }
 
-  void handleNewMessage(Map<String, dynamic> data, Chat chat) async {
-    Message message = new Message.fromMap(data);
+  Future<void> handleNewMessage(Map<String, dynamic> data) async {
+    Message message = Message.fromMap(data);
 
     // Handle message differently depending on if there is a temp GUID match
     if (data.containsKey("tempGuid")) {
@@ -333,28 +324,33 @@ class SocketManager {
         Attachment.replaceAttachment(data["tempGuid"], file);
       });
     } else {
-      debugPrint("Client received new message " + chat.guid);
+      List<Chat> chats = MessageHelper.parseChats(data);
 
-      message = new Message.fromMap(data);
+      // Add the message to the chats
+      for (int i = 0; i < chats.length; i++) {
+        debugPrint("Client received new message " + chats[i].guid);
+        await chats[i].addMessage(message);
 
-      await chat.addMessage(message);
+        // Add notification metadata
+        if (!chatsWithNotifications.contains(chats[i].guid) && NotificationManager().chat != chats[i].guid) {
+          chatsWithNotifications.add(chats[i].guid);
+        }
+
+        // Update chats
+        NewMessageManager().updateWithMessage(chats[i], message);
+      }
+      
       // Add any related attachments
-      List<dynamic> attachments =
-          data.containsKey("attachments") ? data['attachments'] : [];
+      List<dynamic> attachments = data.containsKey("attachments") ? data['attachments'] : [];
       attachments.forEach((attachmentItem) async {
         Attachment file = Attachment.fromMap(attachmentItem);
         await file.save(message);
-        if (SettingsManager().settings.autoDownload)
+
+        if (SettingsManager().settings.autoDownload) {
           new AttachmentDownloader(file);
+        }
       });
     }
-
-    if (!chatsWithNotifications.contains(chat.guid) &&
-        NotificationManager().chat != chat.guid) {
-      chatsWithNotifications.add(chat.guid);
-    }
-
-    NewMessageManager().updateWithMessage(chat, message);
   }
 
   void finishSetup() {

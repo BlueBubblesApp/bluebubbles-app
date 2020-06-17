@@ -15,6 +15,7 @@ import 'package:bluebubble_messages/repository/models/attachment.dart';
 import 'package:bluebubble_messages/socket_manager.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:flick_video_player/flick_video_player.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/plugin_api.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -93,6 +94,8 @@ class _MessageState extends State<MessageWidget> {
       attachments = data;
       body = "";
       for (int i = 0; i < attachments.length; i++) {
+        if (attachments[i] == null) continue;
+
         String appDocPath = SettingsManager().appDocDir.path;
         String pathName =
             "$appDocPath/attachments/${attachments[i].guid}/${attachments[i].transferName}";
@@ -100,7 +103,8 @@ class _MessageState extends State<MessageWidget> {
         /**
            * Case 1: If the file exists (we can get the type), add the file to the chat's attachments
            * Case 2: If the attachment is currently being downloaded, get the AttachmentDownloader object and add it to the chat's attachments
-           * Case 3: Otherwise, add the attachment, as is, meaning it needs to be downloaded
+           * Case 3: If the attachment is a text-based one, automatically auto-download
+           * Case 4: Otherwise, add the attachment, as is, meaning it needs to be downloaded
            */
 
         if (FileSystemEntity.typeSync(pathName) !=
@@ -109,14 +113,18 @@ class _MessageState extends State<MessageWidget> {
           String mimeType = getMimeType(File(pathName));
           if (mimeType == "video") {
             _flickManager = FlickManager(
-                videoPlayerController:
-                    VideoPlayerController.file(File(pathName)));
+              autoPlay: false,
+              videoPlayerController:
+                  VideoPlayerController.file(File(pathName)));
           }
         } else if (SocketManager()
             .attachmentDownloaders
             .containsKey(attachments[i].guid)) {
           chatAttachments
               .add(SocketManager().attachmentDownloaders[attachments[i].guid]);
+        } else if (attachments[i].mimeType == null || attachments[i].mimeType.startsWith("text/")) {
+          AttachmentDownloader downloader = new AttachmentDownloader(attachments[i]);
+          chatAttachments.add(downloader);
         } else {
           chatAttachments.add(attachments[i]);
         }
@@ -188,7 +196,7 @@ class _MessageState extends State<MessageWidget> {
         String mimeType = attachments[i].mimeType;
         if (mimeType != null)
           mimeType = mimeType.substring(0, mimeType.indexOf("/"));
-        if (mimeType == "image") {
+        if (mimeType == null || mimeType == "image") {
           content.add(
             Stack(
               children: <Widget>[
@@ -388,7 +396,6 @@ class _MessageState extends State<MessageWidget> {
                               borderRadius: BorderRadius.circular(30),
                             ),
                             child: Container(
-                              // child: Text("${widget.chat.title[0]}"),
                               child: (initials is Icon)
                                   ? initials
                                   : Text(
@@ -421,17 +428,22 @@ class _MessageState extends State<MessageWidget> {
           Stack(
             alignment: Alignment.center,
             children: <Widget>[
-              placeholder,
-              RaisedButton(
+              CupertinoButton(
+                padding: EdgeInsets.only(left: 20, right: 20),
                 onPressed: () {
                   chatAttachments[i] =
                       new AttachmentDownloader(chatAttachments[i]);
                   setState(() {});
                 },
-                color: HexColor('26262a').withAlpha(100),
-                child: Text(
-                  "Download",
-                  style: TextStyle(color: Colors.white),
+                color: Colors.transparent,
+                child: Column(
+                  children: <Widget>[
+                    Text(chatAttachments[i].getFriendlySize(), style: TextStyle(fontSize: 12)),
+                    Icon(Icons.cloud_download, size: 28.0),
+                    (chatAttachments[i].mimeType != null)
+                      ? Text(chatAttachments[i].mimeType, style: TextStyle(fontSize: 12))
+                      : Container()
+                  ]
                 ),
               ),
             ],
@@ -465,9 +477,26 @@ class _MessageState extends State<MessageWidget> {
                   alignment: Alignment.center,
                   children: <Widget>[
                     placeholder,
-                    CircularProgressIndicator(
-                      value: progress,
-                    ),
+                    Padding(
+                        padding: EdgeInsets.all(5.0),
+                        child: Column(
+                          children: <Widget>[
+                            CircularProgressIndicator(
+                              value: progress,
+                              backgroundColor: Colors.grey,
+                              valueColor: AlwaysStoppedAnimation(Colors.white),
+                            ),
+                            (chatAttachments[i].attachment.mimeType != null)
+                              ? Container(height: 5.0)
+                              : Container(),
+                            (chatAttachments[i].attachment.mimeType != null)
+                              ? Text(
+                                chatAttachments[i].attachment.mimeType,
+                                style: TextStyle(fontSize: 12, color: Colors.white))
+                              : Container()
+                          ]
+                        ),
+                      )
                   ],
                 );
               }
@@ -488,14 +517,24 @@ class _MessageState extends State<MessageWidget> {
         widget.message.text.substring(attachments.length).length > 0) {
       content.add(
         Text(
-          widget.message.text.substring(attachments.length),
+          widget.message.text,
           style: TextStyle(
             color: Colors.white,
           ),
         ),
       );
     }
-    return content;
+
+    // Add spacing to items in a message
+    List<Widget> output = [];
+    for (int i = 0; i < content.length; i++) {
+      output.add(content[i]);
+      if (i != content.length - 1) {
+        output.add(Container(height: 5.0));
+      }
+    }
+
+    return output;
   }
 
   Widget _buildTimeStamp() {
