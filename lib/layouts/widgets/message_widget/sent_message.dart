@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:ui';
 
 import 'package:bluebubble_messages/helpers/hex_color.dart';
+import 'package:bluebubble_messages/helpers/utils.dart';
 import 'package:bluebubble_messages/main.dart';
 import 'package:bluebubble_messages/repository/models/message.dart';
 import 'package:bluebubble_messages/socket_manager.dart';
@@ -132,6 +133,8 @@ class _SentMessageState extends State<SentMessage> {
       stack.insertAll(0, tail);
     }
 
+    double bottomPadding = isEmptyString(widget.message.text) ? 0 : 10;
+    double otherPadding = !isEmptyString(widget.message.text) && widget.content.length > 0 && widget.content[0] is Text ? 10 : 0;
     List<Widget> messageWidget = [
       Stack(
         alignment: AlignmentDirectional.bottomEnd,
@@ -145,21 +148,29 @@ class _SentMessageState extends State<SentMessage> {
               Overlay.of(context).insert(widget.overlayEntry);
             },
             child: Container(
-              margin: EdgeInsets.symmetric(
-                horizontal: 10,
-              ),
+              margin: EdgeInsets.symmetric(horizontal: 10),
               constraints: BoxConstraints(
                 maxWidth: MediaQuery.of(context).size.width * 3 / 4,
               ),
-              padding: EdgeInsets.all(10),
+              padding: EdgeInsets.only(
+                top: otherPadding,
+                bottom: bottomPadding,
+                left: otherPadding,
+                right: otherPadding
+              ),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20),
                 color: Colors.blue,
               ),
               // color: Colors.blue,
               // height: 20,
-              child: Column(
-                children: widget.content,
+              child: ClipRRect(
+                borderRadius: (widget.content.length > 0 && widget.content[0] is Text)
+                  ? BorderRadius.circular(0)
+                  : BorderRadius.circular(20),
+                child: Column(
+                  children: widget.content,
+                ),
               ),
             ),
           )

@@ -94,7 +94,7 @@ class Message {
         id: json.containsKey("ROWID") ? json["ROWID"] : null,
         guid: json["guid"],
         handleId: (json["handleId"] != null) ? json["handleId"] : 0,
-        text: json["text"],
+        text: sanitizeString(json["text"]),
         subject: json.containsKey("subject") ? json["subject"] : null,
         country: json.containsKey("country") ? json["country"] : null,
         error: json.containsKey("error") ? json["error"] : 0,
@@ -247,6 +247,7 @@ class Message {
 
   static Future<List<Attachment>> getAttachments(Message message) async {
     final Database db = await DBProvider.db.database;
+    if (message.id == null) return [];
 
     var res = await db.rawQuery(
         "SELECT"
@@ -353,7 +354,7 @@ class Message {
         "ROWID": id,
         "guid": guid,
         "handleId": handleId,
-        "text": text,
+        "text": sanitizeString(text),
         "subject": subject,
         "country": country,
         "error": error,
