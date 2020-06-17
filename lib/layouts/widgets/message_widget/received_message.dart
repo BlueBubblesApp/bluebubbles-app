@@ -78,6 +78,8 @@ class _ReceivedMessageState extends State<ReceivedMessage> {
       );
     }
 
+    double bottomPadding = isEmptyString(widget.message.text) ? 0 : 10;
+    double otherPadding = !isEmptyString(widget.message.text) && widget.content.length > 0 && widget.content[0] is Text ? 10 : 0;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
@@ -104,13 +106,23 @@ class _ReceivedMessageState extends State<ReceivedMessage> {
                   constraints: BoxConstraints(
                     maxWidth: MediaQuery.of(context).size.width * 3 / 4,
                   ),
-                  padding: EdgeInsets.all(10),
+                  padding: EdgeInsets.only(
+                    top: otherPadding,
+                    bottom: bottomPadding,
+                    left: otherPadding,
+                    right: otherPadding
+                  ),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(20),
                     color: HexColor('26262a'),
                   ),
-                  child: Column(
-                    children: widget.content,
+                  child: ClipRRect(
+                    borderRadius: (widget.content.length > 0 && widget.content[0] is Text)
+                      ? BorderRadius.circular(0)
+                      : BorderRadius.circular(20),
+                    child: Column(
+                      children: widget.content,
+                    ),
                   ),
                 ),
               ],

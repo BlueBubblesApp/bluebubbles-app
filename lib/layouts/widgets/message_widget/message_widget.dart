@@ -168,6 +168,16 @@ class _MessageState extends State<MessageWidget> {
           ? chatAttachments[i].attachment.blurhash
           : null;
 
+      // Skip over unnecessary hyperlink images
+      if (
+        chatAttachments[i] is File &&
+        attachments[i].mimeType == null &&
+        i + 1 < attachments.length &&
+        attachments[i + 1].mimeType == null
+      ) { 
+        continue;
+      }
+
       // Convert the placeholder to a Widget
       Widget placeholder = (blurhash == null)
           ? Container()
@@ -196,14 +206,11 @@ class _MessageState extends State<MessageWidget> {
         String mimeType = attachments[i].mimeType;
         if (mimeType != null)
           mimeType = mimeType.substring(0, mimeType.indexOf("/"));
-        if (mimeType == null || mimeType == "image") {
+        if ((mimeType == null || mimeType == "image")) {
           content.add(
             Stack(
               children: <Widget>[
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(8.0),
-                  child: Image.file(chatAttachments[i]),
-                ),
+                Image.file(chatAttachments[i]),
                 Positioned.fill(
                   child: Material(
                     color: Colors.transparent,
@@ -429,7 +436,7 @@ class _MessageState extends State<MessageWidget> {
             alignment: Alignment.center,
             children: <Widget>[
               CupertinoButton(
-                padding: EdgeInsets.only(left: 20, right: 20),
+                padding: EdgeInsets.only(left: 20, right: 20, top: 10, bottom: 10),
                 onPressed: () {
                   chatAttachments[i] =
                       new AttachmentDownloader(chatAttachments[i]);
@@ -512,9 +519,20 @@ class _MessageState extends State<MessageWidget> {
         );
       }
     }
-    if (widget.message.text != null &&
-        widget.message.text.length > 0 &&
-        widget.message.text.substring(attachments.length).length > 0) {
+
+    if (!isEmptyString(widget.message.text) && attachments.length > 0) {
+      content.add(
+        Padding(
+          padding: EdgeInsets.only(left: 20, right: 10),
+          child: Text(
+            widget.message.text,
+            style: TextStyle(
+              color: Colors.white,
+            ),
+          ),
+        )
+      );
+    } else if (!isEmptyString(widget.message.text) && attachments.length == 0) {
       content.add(
         Text(
           widget.message.text,
@@ -530,7 +548,7 @@ class _MessageState extends State<MessageWidget> {
     for (int i = 0; i < content.length; i++) {
       output.add(content[i]);
       if (i != content.length - 1) {
-        output.add(Container(height: 5.0));
+        output.add(Container(height: 8.0));
       }
     }
 
@@ -573,8 +591,9 @@ class _MessageState extends State<MessageWidget> {
   @override
   Widget build(BuildContext context) {
     if (widget.fromSelf) {
+      List<Widget> content = _buildContent();
       return SentMessage(
-        content: _buildContent(),
+        content: content,
         deliveredReceipt: _buildDelieveredReceipt(),
         message: widget.message,
         overlayEntry: _createOverlayEntry(),

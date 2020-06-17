@@ -184,3 +184,16 @@ extension DateHelpers on DateTime {
         yesterday.year == this.year;
   }
 }
+
+String sanitizeString(String input) {
+  if (input == null) return "";
+  input = input.replaceAll(String.fromCharCode(65532), '');
+  input = input.trim();
+  return input;
+}
+
+bool isEmptyString(String input) {
+  if (input == null) return true;
+  input = sanitizeString(input);
+  return input.isEmpty;
+}
