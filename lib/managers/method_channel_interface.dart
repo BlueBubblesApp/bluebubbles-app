@@ -8,6 +8,7 @@ import 'package:bluebubble_messages/blocs/chat_bloc.dart';
 import 'package:bluebubble_messages/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubble_messages/layouts/conversation_view/new_chat_creator.dart';
 import 'package:bluebubble_messages/main.dart';
+import 'package:bluebubble_messages/managers/life_cycle_manager.dart';
 import 'package:bluebubble_messages/managers/navigator_manager.dart';
 import 'package:bluebubble_messages/managers/notification_manager.dart';
 import 'package:bluebubble_messages/managers/queue_manager.dart';
@@ -79,9 +80,11 @@ class MethodChannelInterface {
 
         // Save the GUID and create a notification for the message
         SocketManager().processedGUIDS.add(data["guid"]);
-        if (!message.isFromMe && NotificationManager().chat != chat.guid) {
-          NotificationManager().createNewNotification(
-            title, message.text, chat.guid, Random().nextInt(999999), chat.id);
+        if (!message.isFromMe &&
+            (NotificationManager().chat != chat.guid ||
+                !LifeCycleManager().isAlive)) {
+          NotificationManager().createNewNotification(title, message.text,
+              chat.guid, Random().nextInt(999999), chat.id);
         }
 
         debugPrint("Adding new/matched message to the queue");
