@@ -67,6 +67,8 @@ class SocketManager {
 
   Map<String, AttachmentDownloader> attachmentDownloaders = Map();
   Map<String, List<AttachmentSender>> attachmentSenders = Map();
+
+  Function connectCb;
   void addAttachmentDownloader(String guid, AttachmentDownloader downloader) {
     attachmentDownloaders[guid] = downloader;
   }
@@ -101,7 +103,7 @@ class SocketManager {
     _manager.disconnectSubscribers.remove(guid);
   }
 
-  void socketStatusUpdate(data, [Function() connectCB]) {
+  void socketStatusUpdate(data) {
     switch (data) {
       case "connect":
         debugPrint("CONNECTED");
@@ -115,7 +117,7 @@ class SocketManager {
         });
 
         SettingsManager().settings.connected = true;
-        connectCB();
+        if (connectCb != null) connectCb();
         return;
       case "disconnect":
         _manager.disconnectSubscribers.values.forEach((f) {
@@ -151,13 +153,14 @@ class SocketManager {
     DBProvider.db.buildDatabase(db);
   }
 
-  startSocketIO({Function connectCb}) async {
-    if (connectCb == null && SettingsManager().settings.finishedSetup == false)
+  startSocketIO({Function connectCB}) async {
+    if (connectCB == null && SettingsManager().settings.finishedSetup == false)
       return;
     // If we already have a socket connection, kill it
     if (_manager.socket != null) {
       _manager.socket.destroy();
     }
+    connectCb = connectCB;
 
     debugPrint(
         "Starting socket io with the server: ${SettingsManager().settings.serverAddress}");
@@ -167,7 +170,7 @@ class SocketManager {
       _manager.socket = SocketIOManager().createSocketIO(
           SettingsManager().settings.serverAddress, "/",
           query: "guid=${SettingsManager().settings.guidAuthKey}",
-          socketStatusCallback: (data) => socketStatusUpdate(data, connectCb));
+          socketStatusCallback: (data) => socketStatusUpdate(data));
       _manager.socket.init();
       _manager.socket.connect();
       _manager.socket.unSubscribesAll();
@@ -297,10 +300,13 @@ class SocketManager {
 
   Future<void> handleUpdatedMessage(Map<String, dynamic> data) async {
     Message updatedMessage = new Message.fromMap(data);
-    updatedMessage = await Message.replaceMessage(updatedMessage.guid, updatedMessage);
+    updatedMessage =
+        await Message.replaceMessage(updatedMessage.guid, updatedMessage);
 
     Chat chat;
-    if (data["chat"] == null && updatedMessage != null && updatedMessage.id != null) {
+    if (data["chat"] == null &&
+        updatedMessage != null &&
+        updatedMessage.id != null) {
       chat = await Message.getChat(updatedMessage);
     } else if (data["chat"] != null) {
       chat = Chat.fromMap(data["chat"][0]);
@@ -309,7 +315,10 @@ class SocketManager {
     NewMessageManager().updateWithMessage(chat, updatedMessage);
   }
 
-  Future<void> handleNewChat({Map<String, dynamic> chatData, Chat chat, bool checkIfExists = false}) async {
+  Future<void> handleNewChat(
+      {Map<String, dynamic> chatData,
+      Chat chat,
+      bool checkIfExists = false}) async {
     Chat currentChat;
     Chat newChat = chat;
     if (chatData != null && newChat == null) {
@@ -322,8 +331,7 @@ class SocketManager {
     }
 
     // Save the new chat only if current chat isn't found
-    if (currentChat == null)
-      await newChat.save();
+    if (currentChat == null) await newChat.save();
 
     // If we already have a chat, don't fetch the participants
     if (currentChat != null) return;
@@ -331,7 +339,8 @@ class SocketManager {
     Map<String, dynamic> params = Map();
     params["chatGuid"] = newChat.guid;
     params["withParticipants"] = true;
-    SocketManager().socket.sendMessage("get-chat", jsonEncode(params), (data) async {
+    SocketManager().socket.sendMessage("get-chat", jsonEncode(params),
+        (data) async {
       Map<String, dynamic> chatData = jsonDecode(data)["data"];
       if (chatData != null) {
         newChat = Chat.fromMap(chatData);
@@ -365,20 +374,23 @@ class SocketManager {
       // Add the message to the chats
       for (int i = 0; i < chats.length; i++) {
         debugPrint("Client received new message " + chats[i].guid);
-        await SocketManager().handleNewChat(chat: chats[i], checkIfExists: true);
+        await SocketManager()
+            .handleNewChat(chat: chats[i], checkIfExists: true);
         await chats[i].addMessage(message);
 
         // Add notification metadata
-        if (!chatsWithNotifications.contains(chats[i].guid) && NotificationManager().chat != chats[i].guid) {
+        if (!chatsWithNotifications.contains(chats[i].guid) &&
+            NotificationManager().chat != chats[i].guid) {
           chatsWithNotifications.add(chats[i].guid);
         }
 
         // Update chats
         NewMessageManager().updateWithMessage(chats[i], message);
       }
-      
+
       // Add any related attachments
-      List<dynamic> attachments = data.containsKey("attachments") ? data['attachments'] : [];
+      List<dynamic> attachments =
+          data.containsKey("attachments") ? data['attachments'] : [];
       attachments.forEach((attachmentItem) async {
         Attachment file = Attachment.fromMap(attachmentItem);
         await file.save(message);
@@ -435,7 +447,7 @@ class SocketManager {
 
     if (_manager.socket == null) {
       _manager.startSocketIO(
-          connectCb: () => _manager.socket.sendMessage(
+          connectCB: () => _manager.socket.sendMessage(
                   "send-message", jsonEncode(params), (data) async {
                 Map response = jsonDecode(data);
                 debugPrint("message sent: " + response.toString());
