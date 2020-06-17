@@ -96,11 +96,31 @@ Contact getContact(List<Contact> contacts, String id) {
 
 getInitials(String name, String delimeter) {
   List array = name.split(delimeter);
+  // If there is a comma, just return the "people" icon
   if (name.contains(", "))
     return Icon(
       Icons.people,
       color: Colors.white,
     );
+
+  // If there is an & character, it's 2 people, format accordingly
+  if (name.contains(' & ')){
+    List names = name.split(' & ');
+    String first = names[0].startsWith("+") ? null : names[0][0];
+    String second = names[1].startsWith("+") ? null : names[1][0];
+
+    // If either first or second name is null, return the people icon
+    if (first == null || second == null) {
+      return Icon(
+        Icons.people,
+        color: Colors.white,
+      );
+    } else {
+      return "$first&$second";
+    }
+  }
+
+  // If the name is a phone number, return the "person" icon
   if (name.startsWith("+") || array[0].length < 1)
     return Icon(
       Icons.person,
