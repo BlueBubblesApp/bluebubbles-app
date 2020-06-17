@@ -7,7 +7,12 @@ import 'package:flutter/material.dart';
 
 class MessageView extends StatefulWidget {
   final MessageBloc messageBloc;
-  MessageView({Key key, this.messageBloc}) : super(key: key);
+  final bool showHandle;
+  MessageView({
+    Key key,
+    this.messageBloc, 
+    this.showHandle
+  }) : super(key: key);
 
   @override
   _MessageViewState createState() => _MessageViewState();
@@ -69,6 +74,7 @@ class _MessageViewState extends State<MessageView> {
               olderMessage: olderMessage,
               newerMessage: newerMessage,
               reactions: reactions,
+              showHandle: widget.showHandle
             );
           },
         );

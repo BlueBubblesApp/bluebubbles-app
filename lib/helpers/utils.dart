@@ -101,6 +101,7 @@ getInitials(String name, String delimeter) {
     return Icon(
       Icons.people,
       color: Colors.white,
+      size: 30
     );
 
   // If there is an & character, it's 2 people, format accordingly
@@ -114,6 +115,7 @@ getInitials(String name, String delimeter) {
       return Icon(
         Icons.people,
         color: Colors.white,
+        size: 30
       );
     } else {
       return "$first&$second";
@@ -125,6 +127,7 @@ getInitials(String name, String delimeter) {
     return Icon(
       Icons.person,
       color: Colors.white,
+      size: 30
     );
 
   switch (array.length) {

@@ -92,8 +92,8 @@ class _ConversationViewState extends State<ConversationView> {
       backgroundColor: Colors.black,
       extendBodyBehindAppBar: true,
       appBar: CupertinoNavigationBar(
-        backgroundColor: Colors.black.withOpacity(0.8),
-        border: Border(bottom: BorderSide(color: HexColor("26262a"), width: 1)),
+        backgroundColor: Colors.black,
+        border: Border(bottom: BorderSide(color: Colors.white.withOpacity(0.2), width: 0.2)),
         middle: ListView(
           children: <Widget>[
             Container(height: 10.0),
@@ -163,6 +163,7 @@ class _ConversationViewState extends State<ConversationView> {
               padding: const EdgeInsets.only(bottom: 16.0),
               child: MessageView(
                 messageBloc: widget.messageBloc,
+                showHandle: widget.chat.participants.length > 1,
               ),
             ),
           ),

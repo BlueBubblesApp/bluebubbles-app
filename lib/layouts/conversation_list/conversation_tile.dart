@@ -85,70 +85,81 @@ class _ConversationTileState extends State<ConversationTile> {
         child: Stack(
           children: <Widget>[
             Padding(
-              padding: const EdgeInsets.only(left: 16.0),
-              child: ListTile(
-                title: Text(
-                  widget.title,
-                  style: TextStyle(
-                    color: Colors.white,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis
+              padding: const EdgeInsets.only(left: 35.0),
+              child: Container(
+                decoration: BoxDecoration(
+                  border: Border(
+                    top: BorderSide(
+                      color: Colors.white.withAlpha(40),
+                      width: 0.5
+                    )
+                  )
                 ),
-                subtitle: widget.subtitle != null && !(widget.subtitle is String)
-                  ? widget.subtitle
-                  : Text(
-                    widget.subtitle != null ? widget.subtitle : "",
-                      style: TextStyle(
-                        color: HexColor('36363a'),
-                      ),
+                child: ListTile(
+                  contentPadding: EdgeInsets.only(left: 0),
+                  title: Text(
+                    widget.title,
+                    style: TextStyle(
+                      color: Colors.white,
+                    ),
                     maxLines: 1,
+                    overflow: TextOverflow.ellipsis
                   ),
-                leading: CircleAvatar(
-                  radius: 20,
-                  child: contactImage == null
-                      ? Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: AlignmentDirectional.topStart,
-                              colors: [HexColor('a0a4af'), HexColor('848894')],
+                  subtitle: widget.subtitle != null && !(widget.subtitle is String)
+                    ? widget.subtitle
+                    : Text(
+                      widget.subtitle != null ? widget.subtitle : "",
+                        style: TextStyle(
+                          color: HexColor('36363a'),
+                        ),
+                      maxLines: 1,
+                    ),
+                  leading: CircleAvatar(
+                    radius: 20,
+                    child: contactImage == null
+                        ? Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: AlignmentDirectional.topStart,
+                                colors: [HexColor('a0a4af'), HexColor('848894')],
+                              ),
+                              borderRadius: BorderRadius.circular(30),
                             ),
-                            borderRadius: BorderRadius.circular(30),
+                            child: Container(
+                              // child: Text("${widget.chat.title[0]}"),
+                              child: (initials is Icon) ? initials : Text(initials),
+                              alignment: AlignmentDirectional.center,
+                            ),
+                          )
+                        : CircleAvatar(
+                            backgroundImage: contactImage,
                           ),
-                          child: Container(
-                            // child: Text("${widget.chat.title[0]}"),
-                            child: (initials is Icon) ? initials : Text(initials),
-                            alignment: AlignmentDirectional.center,
+                  ),
+                  trailing: Container(
+                    width: 80,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        Container(
+                          padding: EdgeInsets.only(right: 5),
+                          child: Text(
+                            widget.date,
+                            style: TextStyle(
+                              color: HexColor('36363a'),
+                              fontSize: 10,
+                            ),
                           ),
-                        )
-                      : CircleAvatar(
-                          backgroundImage: contactImage,
                         ),
-                ),
-                trailing: Container(
-                  width: 80,
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: <Widget>[
-                      Container(
-                        padding: EdgeInsets.only(right: 5),
-                        child: Text(
-                          widget.date,
-                          style: TextStyle(
-                            color: HexColor('36363a'),
-                            fontSize: 10,
-                          ),
+                        Icon(
+                          Icons.arrow_forward_ios,
+                          color: HexColor('36363a'),
+                          size: 15,
                         ),
-                      ),
-                      Icon(
-                        Icons.arrow_forward_ios,
-                        color: HexColor('36363a'),
-                        size: 15,
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -164,7 +175,7 @@ class _ConversationTileState extends State<ConversationTile> {
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(35),
                         color: widget.hasNewMessage
-                            ? Colors.blue
+                            ? Colors.blue[500].withOpacity(0.8)
                             : Colors.transparent,
                       ),
                       width: 15,

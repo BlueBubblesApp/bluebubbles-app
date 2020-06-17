@@ -39,6 +39,7 @@ class MessageWidget extends StatefulWidget {
     this.olderMessage,
     this.newerMessage,
     this.reactions,
+    this.showHandle
   }) : super(key: key);
 
   final fromSelf;
@@ -46,6 +47,7 @@ class MessageWidget extends StatefulWidget {
   final Message newerMessage;
   final Message olderMessage;
   final List<Message> reactions;
+  final bool showHandle;
 
   @override
   _MessageState createState() => _MessageState();
@@ -608,45 +610,36 @@ class _MessageState extends State<MessageWidget> {
         olderMessage: widget.olderMessage,
         message: widget.message,
         overlayEntry: _createOverlayEntry(),
+        showHandle: widget.showHandle
       );
     }
   }
 
   Widget _buildDelieveredReceipt() {
     if (!showTail) return Container();
-    if (widget.message.dateRead != null) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8.0),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: <Widget>[
-            Text(
-              "Read",
-              style: TextStyle(
-                color: Colors.white,
-              ),
-            )
-          ],
-        ),
-      );
-    } else if (widget.message.dateDelivered != null) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: <Widget>[
-            Text(
-              "Delivered",
-              style: TextStyle(
-                color: Colors.white,
-              ),
-            )
-          ],
-        ),
-      );
-    } else {
+    if (widget.message.dateRead == null && widget.message.dateDelivered == null)
       return Container();
-    }
+    
+    String text = "Delivered";
+    if (widget.message.dateRead != null)
+      text = "Read";
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: <Widget>[
+          Text(
+            text,
+            style: TextStyle(
+              color: Colors.white.withAlpha(80),
+              fontWeight: FontWeight.w500,
+              fontSize: 11
+            ),
+          )
+        ],
+      ),
+    );
   }
 
   Widget _buildReactions() {

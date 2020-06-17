@@ -108,7 +108,7 @@ class _SentMessageState extends State<SentMessage> {
         width: 20,
         height: 15,
         decoration: BoxDecoration(
-          color: Colors.blue,
+          color: Colors.blue[600],
           borderRadius: BorderRadius.only(bottomLeft: Radius.circular(12)),
         ),
       ),
@@ -133,8 +133,9 @@ class _SentMessageState extends State<SentMessage> {
       stack.insertAll(0, tail);
     }
 
-    double bottomPadding = isEmptyString(widget.message.text) ? 0 : 10;
-    double otherPadding = !isEmptyString(widget.message.text) && widget.content.length > 0 && widget.content[0] is Text ? 10 : 0;
+    double bottomPadding = isEmptyString(widget.message.text) ? 0 : 8;
+    double sidePadding = !isEmptyString(widget.message.text) && widget.content.length > 0 && widget.content[0] is Text ? 14 : 0;
+    double topPadding = !isEmptyString(widget.message.text) && widget.content.length > 0 && widget.content[0] is Text ? 8 : 0;
     List<Widget> messageWidget = [
       Stack(
         alignment: AlignmentDirectional.bottomEnd,
@@ -153,14 +154,14 @@ class _SentMessageState extends State<SentMessage> {
                 maxWidth: MediaQuery.of(context).size.width * 3 / 4,
               ),
               padding: EdgeInsets.only(
-                top: otherPadding,
+                top: topPadding,
                 bottom: bottomPadding,
-                left: otherPadding,
-                right: otherPadding
+                left: sidePadding,
+                right: sidePadding
               ),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20),
-                color: Colors.blue,
+                color: Colors.blue[600],
               ),
               // color: Colors.blue,
               // height: 20,

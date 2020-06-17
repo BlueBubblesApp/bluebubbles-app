@@ -1,6 +1,7 @@
 import 'package:bluebubble_messages/helpers/hex_color.dart';
 import 'package:bluebubble_messages/helpers/utils.dart';
 import 'package:bluebubble_messages/managers/contact_manager.dart';
+import 'package:bluebubble_messages/repository/models/chat.dart';
 import 'package:bluebubble_messages/repository/models/message.dart';
 import 'package:flutter/material.dart';
 
@@ -12,6 +13,8 @@ class ReceivedMessage extends StatefulWidget {
   final List<Widget> content;
   final Widget timeStamp;
   final Widget reactions;
+  final bool showHandle;
+
   ReceivedMessage({
     Key key,
     @required this.showTail,
@@ -21,6 +24,7 @@ class ReceivedMessage extends StatefulWidget {
     @required this.overlayEntry,
     @required this.timeStamp,
     @required this.reactions,
+    @required this.showHandle
   }) : super(key: key);
 
   @override
@@ -28,8 +32,14 @@ class ReceivedMessage extends StatefulWidget {
 }
 
 class _ReceivedMessageState extends State<ReceivedMessage> {
+
   @override
   Widget build(BuildContext context) {
+    String handle = "";
+    if (widget.message.handle != null && widget.showHandle) {
+      handle = getContactTitle(ContactManager().contacts, widget.message.handle.address);
+    }
+
     List<Widget> tail = <Widget>[
       Container(
         margin: EdgeInsets.only(bottom: 1),
@@ -66,10 +76,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> {
       contactItem = Padding(
         padding: EdgeInsets.only(left: 25.0, top: 5.0, bottom: 3.0),
         child: Text(
-          widget.message.handle != null
-              ? getContactTitle(
-                  ContactManager().contacts, widget.message.handle.address)
-              : "",
+          handle,
           style: TextStyle(
             color: Colors.white,
             fontSize: 12,
@@ -78,8 +85,9 @@ class _ReceivedMessageState extends State<ReceivedMessage> {
       );
     }
 
-    double bottomPadding = isEmptyString(widget.message.text) ? 0 : 10;
-    double otherPadding = !isEmptyString(widget.message.text) && widget.content.length > 0 && widget.content[0] is Text ? 10 : 0;
+    double bottomPadding = isEmptyString(widget.message.text) ? 0 : 8;
+    double sidePadding = !isEmptyString(widget.message.text) && widget.content.length > 0 && widget.content[0] is Text ? 14 : 0;
+    double topPadding = !isEmptyString(widget.message.text) && widget.content.length > 0 && widget.content[0] is Text ? 8 : 0;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
@@ -107,10 +115,10 @@ class _ReceivedMessageState extends State<ReceivedMessage> {
                     maxWidth: MediaQuery.of(context).size.width * 3 / 4,
                   ),
                   padding: EdgeInsets.only(
-                    top: otherPadding,
+                    top: topPadding,
                     bottom: bottomPadding,
-                    left: otherPadding,
-                    right: otherPadding
+                    left: sidePadding,
+                    right: sidePadding
                   ),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(20),

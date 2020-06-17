@@ -10,6 +10,7 @@ import 'package:bluebubble_messages/layouts/conversation_view/new_chat_creator.d
 import 'package:bluebubble_messages/main.dart';
 import 'package:bluebubble_messages/managers/life_cycle_manager.dart';
 import 'package:bluebubble_messages/managers/navigator_manager.dart';
+import 'package:bluebubble_messages/managers/new_message_manager.dart';
 import 'package:bluebubble_messages/managers/notification_manager.dart';
 import 'package:bluebubble_messages/managers/queue_manager.dart';
 import 'package:bluebubble_messages/managers/settings_manager.dart';
@@ -65,8 +66,7 @@ class MethodChannelInterface {
         // Find the chat by GUID
         Chat chat = await Chat.findOne({"guid": data["chats"][0]["guid"]});
         if (chat == null) {
-          debugPrint("could not find chat, returning");
-          return;
+          SocketManager().handleNewChat(chatData: data["chats"][0]);
         }
 
         // Get the chat title and message
