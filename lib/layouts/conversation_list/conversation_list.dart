@@ -70,7 +70,7 @@ class _ConversationListState extends State<ConversationList> {
         appBar: PreferredSize(
           preferredSize: Size(
             MediaQuery.of(context).size.width,
-            60,
+            40,
           ),
           child: ClipRRect(
             child: BackdropFilter(
@@ -114,7 +114,7 @@ class _ConversationListState extends State<ConversationList> {
               onStretchTrigger: () {
                 return null;
               },
-              expandedHeight: 120,
+              expandedHeight: 80,
               backgroundColor: Colors.transparent,
               pinned: false,
               flexibleSpace: FlexibleSpaceBar(
@@ -143,13 +143,13 @@ class _ConversationListState extends State<ConversationList> {
                             flex: 25,
                           ),
                           ButtonTheme(
-                            minWidth: 25,
-                            height: 25,
+                            minWidth: 20,
+                            height: 20,
                             child: RaisedButton(
                               padding: EdgeInsets.symmetric(
                                 horizontal: 0,
                               ),
-                              color: HexColor('26262a'),
+                              color: Colors.white.withOpacity(0.1),
                               onPressed: () {
                                 Navigator.of(context).push(
                                   MaterialPageRoute(
@@ -161,8 +161,8 @@ class _ConversationListState extends State<ConversationList> {
                               },
                               child: Icon(
                                 Icons.more_horiz,
-                                color: Colors.blue,
-                                size: 20,
+                                color: Colors.blue.withOpacity(0.75),
+                                size: 15,
                               ),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(40),
@@ -174,9 +174,6 @@ class _ConversationListState extends State<ConversationList> {
                           ),
                         ],
                       ),
-                    ),
-                    Divider(
-                      color: HexColor("26262a"),
                     ),
                   ],
                 ),

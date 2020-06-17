@@ -39,7 +39,5 @@ public class ReplyReceiver extends BroadcastReceiver {
         params.put("text", remoteInput.getString("key_text_reply"));
 
         new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod("reply", params);
-
-
     }
 }

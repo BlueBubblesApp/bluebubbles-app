@@ -108,7 +108,7 @@ class _SentMessageState extends State<SentMessage> {
         width: 20,
         height: 15,
         decoration: BoxDecoration(
-          color: Colors.blue,
+          color: Colors.blue[600],
           borderRadius: BorderRadius.only(bottomLeft: Radius.circular(12)),
         ),
       ),
@@ -160,7 +160,7 @@ class _SentMessageState extends State<SentMessage> {
               ),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20),
-                color: Colors.blue,
+                color: Colors.blue[600],
               ),
               // color: Colors.blue,
               // height: 20,

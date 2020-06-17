@@ -1,6 +1,7 @@
 import 'package:bluebubble_messages/helpers/hex_color.dart';
 import 'package:bluebubble_messages/helpers/utils.dart';
 import 'package:bluebubble_messages/managers/contact_manager.dart';
+import 'package:bluebubble_messages/repository/models/chat.dart';
 import 'package:bluebubble_messages/repository/models/message.dart';
 import 'package:flutter/material.dart';
 
@@ -12,6 +13,8 @@ class ReceivedMessage extends StatefulWidget {
   final List<Widget> content;
   final Widget timeStamp;
   final Widget reactions;
+  final bool showHandle;
+
   ReceivedMessage({
     Key key,
     @required this.showTail,
@@ -21,6 +24,7 @@ class ReceivedMessage extends StatefulWidget {
     @required this.overlayEntry,
     @required this.timeStamp,
     @required this.reactions,
+    @required this.showHandle
   }) : super(key: key);
 
   @override
@@ -28,8 +32,14 @@ class ReceivedMessage extends StatefulWidget {
 }
 
 class _ReceivedMessageState extends State<ReceivedMessage> {
+
   @override
   Widget build(BuildContext context) {
+    String handle = "";
+    if (widget.message.handle != null && widget.showHandle) {
+      handle = getContactTitle(ContactManager().contacts, widget.message.handle.address);
+    }
+
     List<Widget> tail = <Widget>[
       Container(
         margin: EdgeInsets.only(bottom: 1),
@@ -66,10 +76,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> {
       contactItem = Padding(
         padding: EdgeInsets.only(left: 25.0, top: 5.0, bottom: 3.0),
         child: Text(
-          widget.message.handle != null
-              ? getContactTitle(
-                  ContactManager().contacts, widget.message.handle.address)
-              : "",
+          handle,
           style: TextStyle(
             color: Colors.white,
             fontSize: 12,

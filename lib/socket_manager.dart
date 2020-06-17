@@ -44,7 +44,6 @@ class SocketManager {
 
   void removeChatNotification(Chat chat) {
     for (int i = 0; i < chatsWithNotifications.length; i++) {
-      debugPrint(i.toString());
       if (chatsWithNotifications[i] == chat.guid) {
         chatsWithNotifications.removeAt(i);
         break;
@@ -310,6 +309,33 @@ class SocketManager {
     NewMessageManager().updateWithMessage(chat, updatedMessage);
   }
 
+  Future<void> handleNewChat({Map<String, dynamic> chatData, Chat chat}) async {
+    Chat newChat = chat;
+    if (chatData != null && newChat == null) {
+      newChat = Chat.fromMap(chatData);
+    }
+
+    // Save the initial chat
+    await newChat.save();
+
+    Map<String, dynamic> params = Map();
+    params["chatGuid"] = newChat.guid;
+    params["withParticipants"] = true;
+    SocketManager().socket.sendMessage("get-chat", jsonEncode(params), (data) async {
+      Map<String, dynamic> chatData = jsonDecode(data)["data"];
+      if (chatData != null) {
+        newChat = Chat.fromMap(chatData);
+
+        // Resave the chat after we've got the participants
+        await newChat.save();
+
+        // Update the main view
+        ChatBloc().getChats();
+        NewMessageManager().updateWithMessage(null, null);
+      }
+    });
+  }
+
   Future<void> handleNewMessage(Map<String, dynamic> data) async {
     Message message = Message.fromMap(data);
 
@@ -329,6 +355,7 @@ class SocketManager {
       // Add the message to the chats
       for (int i = 0; i < chats.length; i++) {
         debugPrint("Client received new message " + chats[i].guid);
+        await SocketManager().handleNewChat(chat: chats[i]);
         await chats[i].addMessage(message);
 
         // Add notification metadata
