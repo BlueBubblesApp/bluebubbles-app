@@ -175,7 +175,7 @@ class _ConversationTileState extends State<ConversationTile> {
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(35),
                         color: widget.hasNewMessage
-                            ? Colors.blue
+                            ? Colors.blue[500].withOpacity(0.8)
                             : Colors.transparent,
                       ),
                       width: 15,

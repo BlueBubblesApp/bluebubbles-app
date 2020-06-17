@@ -309,14 +309,24 @@ class SocketManager {
     NewMessageManager().updateWithMessage(chat, updatedMessage);
   }
 
-  Future<void> handleNewChat({Map<String, dynamic> chatData, Chat chat}) async {
+  Future<void> handleNewChat({Map<String, dynamic> chatData, Chat chat, bool checkIfExists = false}) async {
+    Chat currentChat;
     Chat newChat = chat;
     if (chatData != null && newChat == null) {
       newChat = Chat.fromMap(chatData);
     }
 
-    // Save the initial chat
-    await newChat.save();
+    // If we are told to check if the chat exists, do it
+    if (checkIfExists) {
+      currentChat = await Chat.findOne({"guid": newChat.guid});
+    }
+
+    // Save the new chat only if current chat isn't found
+    if (currentChat == null)
+      await newChat.save();
+
+    // If we already have a chat, don't fetch the participants
+    if (currentChat != null) return;
 
     Map<String, dynamic> params = Map();
     params["chatGuid"] = newChat.guid;
@@ -330,7 +340,7 @@ class SocketManager {
         await newChat.save();
 
         // Update the main view
-        ChatBloc().getChats();
+        await ChatBloc().getChats();
         NewMessageManager().updateWithMessage(null, null);
       }
     });
@@ -355,7 +365,7 @@ class SocketManager {
       // Add the message to the chats
       for (int i = 0; i < chats.length; i++) {
         debugPrint("Client received new message " + chats[i].guid);
-        await SocketManager().handleNewChat(chat: chats[i]);
+        await SocketManager().handleNewChat(chat: chats[i], checkIfExists: true);
         await chats[i].addMessage(message);
 
         // Add notification metadata
