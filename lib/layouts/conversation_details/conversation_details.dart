@@ -87,13 +87,85 @@ class _ConversationDetailsState extends State<ConversationDetails> {
           ),
         ),
         extendBodyBehindAppBar: true,
-        body: ListView.builder(
+        body: CustomScrollView(
           physics:
               AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-          itemCount: chat.participants.length + 4,
-          itemBuilder: (BuildContext context, int index) {
-            if (index == 0) {
-              return InkWell(
+          slivers: <Widget>[
+            SliverToBoxAdapter(
+              child: Container(
+                height: 100,
+              ),
+            ),
+            SliverToBoxAdapter(
+              child: readOnly
+                  ? Container()
+                  : Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: TextField(
+                        readOnly: readOnly,
+                        controller: controller,
+                        style: TextStyle(color: Colors.white),
+                        autofocus: false,
+                        autocorrect: false,
+                        decoration: InputDecoration(
+                          labelText: "NAME",
+                          labelStyle: TextStyle(color: Colors.blue),
+                        ),
+                      ),
+                    ),
+            ),
+            SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (context, index) {
+                  return ContactTile(
+                    contact: getContact(ContactManager().contacts,
+                        chat.participants[index].address),
+                    handle: chat.participants[index],
+                    chat: chat,
+                    updateChat: (Chat newChat) {
+                      chat = newChat;
+                      setState(() {});
+                    },
+                  );
+                },
+                childCount: chat.participants.length,
+              ),
+            ),
+            SliverToBoxAdapter(
+              child: InkWell(
+                onTap: () async {
+                  Chat result = await Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => NewChatCreator(
+                        currentChat: chat,
+                        isCreator: false,
+                      ),
+                    ),
+                  );
+                  if (result != null) {
+                    chat = result;
+                    setState(() {});
+                  }
+                },
+                child: ListTile(
+                  title: Text(
+                    "Add Contact",
+                    style: TextStyle(
+                      color: Colors.blue,
+                    ),
+                  ),
+                  leading: Icon(
+                    Icons.add,
+                    color: Colors.blue,
+                  ),
+                ),
+              ),
+            ),
+            SliverPadding(
+              padding: EdgeInsets.symmetric(vertical: 20),
+            ),
+            SliverToBoxAdapter(
+              child: InkWell(
                 onTap: () async {
                   if (await Permission.locationWhenInUse.request().isGranted) {
                     final result = await MethodChannelInterface()
@@ -161,54 +233,10 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                     color: Colors.blue,
                   ),
                 ),
-              );
-            } else if (index == chat.participants.length + 1) {
-              return InkWell(
-                onTap: () async {
-                  Chat result = await Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => NewChatCreator(
-                        currentChat: chat,
-                        isCreator: false,
-                      ),
-                    ),
-                  );
-                  chat = result;
-                  setState(() {});
-                },
-                child: ListTile(
-                  title: Text(
-                    "Add Contact",
-                    style: TextStyle(
-                      color: Colors.blue,
-                    ),
-                  ),
-                  leading: Icon(
-                    Icons.add,
-                    color: Colors.blue,
-                  ),
-                ),
-              );
-            } else if (index == chat.participants.length + 2) {
-              if (readOnly) {
-                return Container();
-              }
-              return Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: TextField(
-                  readOnly: readOnly,
-                  controller: controller,
-                  style: TextStyle(color: Colors.white),
-                  autofocus: false,
-                  autocorrect: false,
-                  decoration: InputDecoration(
-                    labelText: "NAME",
-                    labelStyle: TextStyle(color: Colors.blue),
-                  ),
-                ),
-              );
-            } else if (index == chat.participants.length + 3) {
-              return InkWell(
+              ),
+            ),
+            SliverToBoxAdapter(
+              child: InkWell(
                 onTap: () async {
                   showDialog(
                     context: context,
@@ -237,19 +265,9 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                     color: Colors.blue,
                   ),
                 ),
-              );
-            }
-            return ContactTile(
-              contact: getContact(ContactManager().contacts,
-                  chat.participants[index - 1].address),
-              handle: chat.participants[index - 1],
-              chat: chat,
-              updateChat: (Chat newChat) {
-                chat = newChat;
-                setState(() {});
-              },
-            );
-          },
+              ),
+            )
+          ],
         ),
       ),
     );

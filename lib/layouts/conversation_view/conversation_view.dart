@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:ui';
 
+import 'package:bluebubble_messages/blocs/chat_bloc.dart';
 import 'package:bluebubble_messages/helpers/utils.dart';
 import 'package:bluebubble_messages/blocs/message_bloc.dart';
 import 'package:bluebubble_messages/layouts/conversation_details/conversation_details.dart';
@@ -37,11 +38,21 @@ class ConversationView extends StatefulWidget {
 
 class _ConversationViewState extends State<ConversationView> {
   ImageProvider contactImage;
+  Chat chat;
 
   @override
   void initState() {
     super.initState();
-    NotificationManager().switchChat(widget.chat);
+    chat = widget.chat;
+    NotificationManager().switchChat(chat);
+    ChatBloc().chatStream.listen((event) {
+      event.forEach((element) {
+        if (element.guid == chat.guid) {
+          chat = element;
+          setState(() {});
+        }
+      });
+    });
   }
 
   @override
@@ -61,12 +72,12 @@ class _ConversationViewState extends State<ConversationView> {
   @override
   void didChangeDependencies() async {
     super.didChangeDependencies();
-    SocketManager().removeChatNotification(widget.chat);
+    SocketManager().removeChatNotification(chat);
 
-    Chat chat = await widget.chat.getParticipants();
-    if (chat.participants.length == 1) {
+    Chat _chat = await chat.getParticipants();
+    if (_chat.participants.length == 1) {
       Contact contact = getContact(
-          ContactManager().contacts, chat.participants.first.address);
+          ContactManager().contacts, _chat.participants.first.address);
       if (contact != null && contact.avatar.length > 0) {
         contactImage = MemoryImage(contact.avatar);
         if (this.mounted) setState(() {});
@@ -78,11 +89,11 @@ class _ConversationViewState extends State<ConversationView> {
   Widget build(BuildContext context) {
     var initials = getInitials(widget.title, " ");
     Function openDetails = () async {
-      Chat chat = await widget.chat.getParticipants();
+      Chat _chat = await chat.getParticipants();
       Navigator.of(context).push(
         MaterialPageRoute(
           builder: (context) => ConversationDetails(
-            chat: chat,
+            chat: _chat,
           ),
         ),
       );
@@ -115,7 +126,7 @@ class _ConversationViewState extends State<ConversationView> {
                           borderRadius: BorderRadius.circular(30),
                         ),
                         child: Container(
-                          // child: Text("${widget.chat.title[0]}"),
+                          // child: Text("${chat.title[0]}"),
                           child: (initials is Icon) ? initials : Text(initials),
                           alignment: AlignmentDirectional.center,
                         ),
@@ -134,7 +145,7 @@ class _ConversationViewState extends State<ConversationView> {
                   GestureDetector(
                     onTap: openDetails,
                     child: Text(
-                      getShortChatTitle(widget.chat),
+                      getShortChatTitle(chat),
                       style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.normal,
@@ -165,12 +176,12 @@ class _ConversationViewState extends State<ConversationView> {
               padding: const EdgeInsets.only(bottom: 16.0),
               child: MessageView(
                 messageBloc: widget.messageBloc,
-                showHandle: widget.chat.participants.length > 1,
+                showHandle: chat.participants.length > 1,
               ),
             ),
           ),
           BlueBubblesTextField(
-            chat: widget.chat,
+            chat: chat,
           )
         ],
       ),

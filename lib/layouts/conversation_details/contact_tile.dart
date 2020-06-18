@@ -61,12 +61,14 @@ class _ContactTileState extends State<ContactTile> {
                   "removed participant participant " + response.toString());
               if (response["status"] == 200) {
                 Chat updatedChat = Chat.fromMap(response["data"]);
-                updatedChat.save();
+                await updatedChat.save(true);
                 await ChatBloc().getChats();
                 NewMessageManager().updateWithMessage(null, null);
-                Navigator.of(context).pop();
                 Chat chatWithParticipants = await updatedChat.getParticipants();
+                debugPrint(
+                    "updating chat with ${chatWithParticipants.participants.length} participants");
                 widget.updateChat(chatWithParticipants);
+                Navigator.of(context).pop();
               }
             });
           },
