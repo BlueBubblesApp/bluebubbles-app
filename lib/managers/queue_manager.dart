@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:bluebubble_messages/socket_manager.dart';
+import 'package:bluebubble_messages/action_handler.dart';
 import 'package:flutter/widgets.dart';
 
 class QueueManager {
@@ -40,9 +40,9 @@ class QueueManager {
 
   Future<void> handleEvent(String event, String jsonData) async {
     if (event == "update-message") {
-      await SocketManager().handleUpdatedMessage(jsonDecode(jsonData));
+      await ActionHandler.handleUpdatedMessage(jsonDecode(jsonData));
     } else if (event == "new-message") {
-      await SocketManager().handleNewMessage(jsonDecode(jsonData));
+      await ActionHandler.handleMessage(jsonDecode(jsonData));
     }
   }
 

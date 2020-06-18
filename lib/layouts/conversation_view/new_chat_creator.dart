@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:ui';
 
+import 'package:bluebubble_messages/action_handler.dart';
 import 'package:bluebubble_messages/blocs/chat_bloc.dart';
 import 'package:bluebubble_messages/helpers/attachment_sender.dart';
 import 'package:bluebubble_messages/helpers/hex_color.dart';
@@ -337,7 +338,7 @@ class _NewChatCreatorState extends State<NewChatCreator> {
                         );
                       }
                     } else {
-                      SocketManager().sendMessage(existingChat, text);
+                      ActionHandler.sendMessage(existingChat, text);
                     }
                     String title = await getFullChatTitle(existingChat);
                     Navigator.of(context).pushReplacement(
@@ -401,7 +402,7 @@ class _NewChatCreatorState extends State<NewChatCreator> {
                             );
                           }
                         } else {
-                          SocketManager().sendMessage(newChat, text);
+                          ActionHandler.sendMessage(newChat, text);
                         }
 
                         Navigator.of(context, rootNavigator: true).pop();

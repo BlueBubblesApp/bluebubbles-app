@@ -4,6 +4,7 @@ import 'dart:io';
 import 'dart:math';
 import 'dart:ui';
 
+import 'package:bluebubble_messages/action_handler.dart';
 import 'package:bluebubble_messages/blocs/chat_bloc.dart';
 import 'package:bluebubble_messages/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubble_messages/layouts/conversation_view/new_chat_creator.dart';
@@ -66,7 +67,7 @@ class MethodChannelInterface {
         // Find the chat by GUID
         Chat chat = await Chat.findOne({"guid": data["chats"][0]["guid"]});
         if (chat == null) {
-          SocketManager().handleNewChat(chatData: data["chats"][0]);
+          ActionHandler.handleChat(chatData: data["chats"][0]);
         }
 
         // Get the chat title and message
@@ -105,7 +106,7 @@ class MethodChannelInterface {
       case "reply":
         debugPrint("replying with data " + call.arguments.toString());
         Chat chat = await Chat.findOne({"guid": call.arguments["chat"]});
-        SocketManager().sendMessage(chat, call.arguments["text"]);
+        ActionHandler.sendMessage(chat, call.arguments["text"]);
         return new Future.value("");
       case "shareAttachments":
         List<File> attachments = <File>[];

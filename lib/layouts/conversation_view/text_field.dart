@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:ui';
 
+import 'package:bluebubble_messages/action_handler.dart';
 import 'package:bluebubble_messages/helpers/attachment_sender.dart';
 import 'package:bluebubble_messages/helpers/hex_color.dart';
 import 'package:bluebubble_messages/layouts/conversation_view/camera_widget.dart';
@@ -264,8 +265,7 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField> {
                                   );
                                 }
                               } else {
-                                SocketManager()
-                                    .sendMessage(widget.chat, _controller.text);
+                                ActionHandler.sendMessage(widget.chat, _controller.text);
                               }
                             }
 

@@ -66,7 +66,7 @@ class MessageBloc {
         debugPrint("messages length is 0, fetching from server");
         Map<String, dynamic> params = Map();
         params["identifier"] = _currentChat.guid;
-        params["limit"] = 100;
+        params["limit"] = 50;
         params["offset"] = offset;
         params["withBlurhash"] = true;
 

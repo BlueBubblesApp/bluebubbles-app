@@ -48,7 +48,7 @@ class SetupBloc {
 
     Map<String, dynamic> params = Map();
     params["identifier"] = chat.guid;
-    params["limit"] = 100;
+    params["limit"] = 50;
     SocketManager().socket.sendMessage("get-chat-messages", jsonEncode(params),
         (data) {
       receivedMessagesForChat(chat, data);
