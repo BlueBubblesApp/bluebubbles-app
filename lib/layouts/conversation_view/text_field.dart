@@ -214,6 +214,7 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField> {
                     children: <Widget>[
                       CupertinoTextField(
                         // autofocus: true,
+                        textCapitalization: TextCapitalization.sentences,
                         focusNode: _focusNode,
                         autocorrect: true,
                         controller: _controller,

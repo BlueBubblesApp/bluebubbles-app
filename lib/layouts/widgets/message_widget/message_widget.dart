@@ -24,7 +24,6 @@ import 'package:intl/intl.dart';
 import 'package:latlong/latlong.dart';
 import 'package:mime_type/mime_type.dart';
 import 'package:path/path.dart';
-// import 'package:photo_manager/photo_manager.dart';
 import 'package:video_player/video_player.dart';
 
 import '../../../helpers/hex_color.dart';
@@ -32,15 +31,15 @@ import '../../../helpers/utils.dart';
 import '../../../repository/models/message.dart';
 
 class MessageWidget extends StatefulWidget {
-  MessageWidget({
-    Key key,
-    this.fromSelf,
-    this.message,
-    this.olderMessage,
-    this.newerMessage,
-    this.reactions,
-    this.showHandle
-  }) : super(key: key);
+  MessageWidget(
+      {Key key,
+      this.fromSelf,
+      this.message,
+      this.olderMessage,
+      this.newerMessage,
+      this.reactions,
+      this.showHandle})
+      : super(key: key);
 
   final fromSelf;
   final Message message;
@@ -115,17 +114,19 @@ class _MessageState extends State<MessageWidget> {
           String mimeType = getMimeType(File(pathName));
           if (mimeType == "video") {
             _flickManager = FlickManager(
-              autoPlay: false,
-              videoPlayerController:
-                  VideoPlayerController.file(File(pathName)));
+                autoPlay: false,
+                videoPlayerController:
+                    VideoPlayerController.file(File(pathName)));
           }
         } else if (SocketManager()
             .attachmentDownloaders
             .containsKey(attachments[i].guid)) {
           chatAttachments
               .add(SocketManager().attachmentDownloaders[attachments[i].guid]);
-        } else if (attachments[i].mimeType == null || attachments[i].mimeType.startsWith("text/")) {
-          AttachmentDownloader downloader = new AttachmentDownloader(attachments[i]);
+        } else if (attachments[i].mimeType == null ||
+            attachments[i].mimeType.startsWith("text/")) {
+          AttachmentDownloader downloader =
+              new AttachmentDownloader(attachments[i]);
           chatAttachments.add(downloader);
         } else {
           chatAttachments.add(attachments[i]);
@@ -171,12 +172,10 @@ class _MessageState extends State<MessageWidget> {
           : null;
 
       // Skip over unnecessary hyperlink images
-      if (
-        chatAttachments[i] is File &&
-        attachments[i].mimeType == null &&
-        i + 1 < attachments.length &&
-        attachments[i + 1].mimeType == null
-      ) { 
+      if (chatAttachments[i] is File &&
+          attachments[i].mimeType == null &&
+          i + 1 < attachments.length &&
+          attachments[i + 1].mimeType == null) {
         continue;
       }
 
@@ -438,22 +437,23 @@ class _MessageState extends State<MessageWidget> {
             alignment: Alignment.center,
             children: <Widget>[
               CupertinoButton(
-                padding: EdgeInsets.only(left: 20, right: 20, top: 10, bottom: 10),
+                padding:
+                    EdgeInsets.only(left: 20, right: 20, top: 10, bottom: 10),
                 onPressed: () {
                   chatAttachments[i] =
                       new AttachmentDownloader(chatAttachments[i]);
                   setState(() {});
                 },
                 color: Colors.transparent,
-                child: Column(
-                  children: <Widget>[
-                    Text(chatAttachments[i].getFriendlySize(), style: TextStyle(fontSize: 12)),
-                    Icon(Icons.cloud_download, size: 28.0),
-                    (chatAttachments[i].mimeType != null)
-                      ? Text(chatAttachments[i].mimeType, style: TextStyle(fontSize: 12))
+                child: Column(children: <Widget>[
+                  Text(chatAttachments[i].getFriendlySize(),
+                      style: TextStyle(fontSize: 12)),
+                  Icon(Icons.cloud_download, size: 28.0),
+                  (chatAttachments[i].mimeType != null)
+                      ? Text(chatAttachments[i].mimeType,
+                          style: TextStyle(fontSize: 12))
                       : Container()
-                  ]
-                ),
+                ]),
               ),
             ],
           ),
@@ -487,25 +487,23 @@ class _MessageState extends State<MessageWidget> {
                   children: <Widget>[
                     placeholder,
                     Padding(
-                        padding: EdgeInsets.all(5.0),
-                        child: Column(
-                          children: <Widget>[
-                            CircularProgressIndicator(
-                              value: progress,
-                              backgroundColor: Colors.grey,
-                              valueColor: AlwaysStoppedAnimation(Colors.white),
-                            ),
-                            (chatAttachments[i].attachment.mimeType != null)
-                              ? Container(height: 5.0)
-                              : Container(),
-                            (chatAttachments[i].attachment.mimeType != null)
-                              ? Text(
-                                chatAttachments[i].attachment.mimeType,
-                                style: TextStyle(fontSize: 12, color: Colors.white))
-                              : Container()
-                          ]
+                      padding: EdgeInsets.all(5.0),
+                      child: Column(children: <Widget>[
+                        CircularProgressIndicator(
+                          value: progress,
+                          backgroundColor: Colors.grey,
+                          valueColor: AlwaysStoppedAnimation(Colors.white),
                         ),
-                      )
+                        (chatAttachments[i].attachment.mimeType != null)
+                            ? Container(height: 5.0)
+                            : Container(),
+                        (chatAttachments[i].attachment.mimeType != null)
+                            ? Text(chatAttachments[i].attachment.mimeType,
+                                style: TextStyle(
+                                    fontSize: 12, color: Colors.white))
+                            : Container()
+                      ]),
+                    )
                   ],
                 );
               }
@@ -523,17 +521,15 @@ class _MessageState extends State<MessageWidget> {
     }
 
     if (!isEmptyString(widget.message.text) && attachments.length > 0) {
-      content.add(
-        Padding(
-          padding: EdgeInsets.only(left: 20, right: 10),
-          child: Text(
-            widget.message.text,
-            style: TextStyle(
-              color: Colors.white,
-            ),
+      content.add(Padding(
+        padding: EdgeInsets.only(left: 20, right: 10),
+        child: Text(
+          widget.message.text,
+          style: TextStyle(
+            color: Colors.white,
           ),
-        )
-      );
+        ),
+      ));
     } else if (!isEmptyString(widget.message.text) && attachments.length == 0) {
       content.add(
         Text(
@@ -603,15 +599,14 @@ class _MessageState extends State<MessageWidget> {
       );
     } else {
       return ReceivedMessage(
-        timeStamp: _buildTimeStamp(),
-        reactions: _buildReactions(),
-        content: _buildContent(),
-        showTail: showTail,
-        olderMessage: widget.olderMessage,
-        message: widget.message,
-        overlayEntry: _createOverlayEntry(),
-        showHandle: widget.showHandle
-      );
+          timeStamp: _buildTimeStamp(),
+          reactions: _buildReactions(),
+          content: _buildContent(),
+          showTail: showTail,
+          olderMessage: widget.olderMessage,
+          message: widget.message,
+          overlayEntry: _createOverlayEntry(),
+          showHandle: widget.showHandle);
     }
   }
 
@@ -619,10 +614,9 @@ class _MessageState extends State<MessageWidget> {
     if (!showTail) return Container();
     if (widget.message.dateRead == null && widget.message.dateDelivered == null)
       return Container();
-    
+
     String text = "Delivered";
-    if (widget.message.dateRead != null)
-      text = "Read";
+    if (widget.message.dateRead != null) text = "Read";
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8.0),
@@ -632,10 +626,9 @@ class _MessageState extends State<MessageWidget> {
           Text(
             text,
             style: TextStyle(
-              color: Colors.white.withAlpha(80),
-              fontWeight: FontWeight.w500,
-              fontSize: 11
-            ),
+                color: Colors.white.withAlpha(80),
+                fontWeight: FontWeight.w500,
+                fontSize: 11),
           )
         ],
       ),

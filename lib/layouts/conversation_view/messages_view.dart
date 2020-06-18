@@ -8,11 +8,7 @@ import 'package:flutter/material.dart';
 class MessageView extends StatefulWidget {
   final MessageBloc messageBloc;
   final bool showHandle;
-  MessageView({
-    Key key,
-    this.messageBloc, 
-    this.showHandle
-  }) : super(key: key);
+  MessageView({Key key, this.messageBloc, this.showHandle}) : super(key: key);
 
   @override
   _MessageViewState createState() => _MessageViewState();
@@ -67,6 +63,10 @@ class _MessageViewState extends State<MessageView> {
               );
             }
 
+            if (index == 0) {
+              debugPrint("last message guid is " + _messages[0].guid);
+            }
+
             return MessageWidget(
               key: Key(_messages[index].guid),
               fromSelf: _messages[index].isFromMe,
@@ -74,7 +74,7 @@ class _MessageViewState extends State<MessageView> {
               olderMessage: olderMessage,
               newerMessage: newerMessage,
               reactions: reactions,
-              showHandle: widget.showHandle
+              showHandle: widget.showHandle,
             );
           },
         );

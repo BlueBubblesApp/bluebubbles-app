@@ -29,7 +29,6 @@ class SentMessage extends StatefulWidget {
 }
 
 class _SentMessageState extends State<SentMessage> {
-
   OverlayEntry _createErrorPopup() {
     OverlayEntry entry;
     int errorCode = widget.message.error;
@@ -60,28 +59,29 @@ class _SentMessageState extends State<SentMessage> {
                             color: HexColor('26262a').withAlpha(200),
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                              children: <Widget> [
-                                Column(
-                                  children: <Widget>[
-                                    Text("Error Code: ${errorCode.toString()}", style: TextStyle(color: Colors.white)),
-                                    Text("Error: $errorText", style: TextStyle(color: Colors.white))
-                                  ]
-                                ),
+                              children: <Widget>[
+                                Column(children: <Widget>[
+                                  Text("Error Code: ${errorCode.toString()}",
+                                      style: TextStyle(color: Colors.white)),
+                                  Text("Error: $errorText",
+                                      style: TextStyle(color: Colors.white))
+                                ]),
                                 CupertinoButton(
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: <Widget> [
-                                      Text("Retry"),
-                                      Container(width: 5.0),
-                                      Icon(Icons.refresh, color: Colors.white, size: 18)
-                                    ]
-                                  ),
-                                  color: Colors.black26,
-                                  onPressed: () async {
-                                    SocketManager().retryMessage(widget.message);
-                                    entry.remove();
-                                  }
-                                )
+                                    child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: <Widget>[
+                                          Text("Retry"),
+                                          Container(width: 5.0),
+                                          Icon(Icons.refresh,
+                                              color: Colors.white, size: 18)
+                                        ]),
+                                    color: Colors.black26,
+                                    onPressed: () async {
+                                      SocketManager()
+                                          .retryMessage(widget.message);
+                                      entry.remove();
+                                    })
                               ],
                             ),
                           ),
@@ -134,8 +134,16 @@ class _SentMessageState extends State<SentMessage> {
     }
 
     double bottomPadding = isEmptyString(widget.message.text) ? 0 : 8;
-    double sidePadding = !isEmptyString(widget.message.text) && widget.content.length > 0 && widget.content[0] is Text ? 14 : 0;
-    double topPadding = !isEmptyString(widget.message.text) && widget.content.length > 0 && widget.content[0] is Text ? 8 : 0;
+    double sidePadding = !isEmptyString(widget.message.text) &&
+            widget.content.length > 0 &&
+            widget.content[0] is Text
+        ? 14
+        : 0;
+    double topPadding = !isEmptyString(widget.message.text) &&
+            widget.content.length > 0 &&
+            widget.content[0] is Text
+        ? 8
+        : 0;
     List<Widget> messageWidget = [
       Stack(
         alignment: AlignmentDirectional.bottomEnd,
@@ -154,11 +162,10 @@ class _SentMessageState extends State<SentMessage> {
                 maxWidth: MediaQuery.of(context).size.width * 3 / 4,
               ),
               padding: EdgeInsets.only(
-                top: topPadding,
-                bottom: bottomPadding,
-                left: sidePadding,
-                right: sidePadding
-              ),
+                  top: topPadding,
+                  bottom: bottomPadding,
+                  left: sidePadding,
+                  right: sidePadding),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20),
                 color: Colors.blue[600],
@@ -166,9 +173,10 @@ class _SentMessageState extends State<SentMessage> {
               // color: Colors.blue,
               // height: 20,
               child: ClipRRect(
-                borderRadius: (widget.content.length > 0 && widget.content[0] is Text)
-                  ? BorderRadius.circular(0)
-                  : BorderRadius.circular(20),
+                borderRadius:
+                    (widget.content.length > 0 && widget.content[0] is Text)
+                        ? BorderRadius.circular(0)
+                        : BorderRadius.circular(20),
                 child: Column(
                   children: widget.content,
                 ),
@@ -181,27 +189,25 @@ class _SentMessageState extends State<SentMessage> {
 
     if (widget.message.error > 0)
       messageWidget.add(GestureDetector(
-        onTap: () {
-          Overlay.of(context).insert(this._createErrorPopup());
-        },
-        child: Icon(Icons.error_outline, color: Colors.red)
-      ));
+          onTap: () {
+            Overlay.of(context).insert(this._createErrorPopup());
+          },
+          child: Icon(Icons.error_outline, color: Colors.red)));
 
     // Icon(Icons.accessible_forward, color: Colors.white),
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.end,
-      children: <Widget>[
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: <Widget>[
-            Padding(
-              padding: EdgeInsets.only(bottom: widget.showTail ? 10.0 : 3.0, right: (widget.message.error > 0 ? 10.0 : 0)),
-              child: Row(children: messageWidget),
-            ),
-            widget.deliveredReceipt
-          ],
-        )
-      ]
-    );
+    return Row(mainAxisAlignment: MainAxisAlignment.end, children: <Widget>[
+      Column(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: <Widget>[
+          Padding(
+            padding: EdgeInsets.only(
+                bottom: widget.showTail ? 10.0 : 3.0,
+                right: (widget.message.error > 0 ? 10.0 : 0)),
+            child: Row(children: messageWidget),
+          ),
+          widget.deliveredReceipt
+        ],
+      )
+    ]);
   }
 }
