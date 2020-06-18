@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:ui';
 
+import 'package:bluebubble_messages/action_handler.dart';
 import 'package:bluebubble_messages/helpers/hex_color.dart';
 import 'package:bluebubble_messages/helpers/utils.dart';
 import 'package:bluebubble_messages/main.dart';
@@ -78,8 +79,7 @@ class _SentMessageState extends State<SentMessage> {
                                         ]),
                                     color: Colors.black26,
                                     onPressed: () async {
-                                      SocketManager()
-                                          .retryMessage(widget.message);
+                                      ActionHandler.retryMessage(widget.message);
                                       entry.remove();
                                     })
                               ],

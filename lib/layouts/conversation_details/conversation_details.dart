@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:ui';
 
+import 'package:bluebubble_messages/action_handler.dart';
 import 'package:bluebubble_messages/blocs/chat_bloc.dart';
 import 'package:bluebubble_messages/helpers/attachment_helper.dart';
 import 'package:bluebubble_messages/helpers/hex_color.dart';
@@ -211,13 +212,13 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                     child: BackdropFilter(
                       filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
                       child: SizedBox(
-                        height: 300,
-                        width: 300,
+                        height: 40,
+                        width: 40,
                         child: CircularProgressIndicator(),
                       ),
                     ),
                   );
-                  SocketManager().resyncChat(widget.chat).then((value) {
+                  ActionHandler.resyncChat(widget.chat).then((value) {
                     Navigator.of(context).pop();
                   });
                 },
