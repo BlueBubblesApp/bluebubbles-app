@@ -155,10 +155,59 @@ class _NewChatCreatorState extends State<NewChatCreator> {
           child: RaisedButton(
             color: Colors.transparent,
             onPressed: () {
-              Navigator.of(context).pop();
+              if (!widget.isCreator) {
+                showDialog(
+                  context: context,
+                  child: ClipRRect(
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                      child: SizedBox(
+                        height: 100,
+                        width: 100,
+                        child: CircularProgressIndicator(),
+                      ),
+                    ),
+                  ),
+                );
+                Map<String, dynamic> params = new Map();
+                List<String> _participants = <String>[];
+                participants.forEach((e) {
+                  if (e is Contact) {
+                    if (e.phones.length > 0) {
+                      _participants.add(e.phones.first.value);
+                    } else if (e.emails.length > 0) {
+                      _participants.add(e.emails.first.value);
+                    }
+                  } else {
+                    _participants.add(e);
+                  }
+                });
+                for (int i = 0; i < _participants.length; i++) {
+                  params["identifier"] = widget.currentChat.guid;
+                  params["address"] = _participants[i];
+                  SocketManager().socket.sendMessage(
+                      "add-participant", jsonEncode(params), (_data) async {
+                    Map<String, dynamic> response = jsonDecode(_data);
+                    debugPrint("added participant " + response.toString());
+                    if (i == _participants.length - 1 &&
+                        response["status"] == 200) {
+                      Chat updatedChat = Chat.fromMap(response["data"]);
+                      updatedChat.save();
+                      await ChatBloc().getChats();
+                      NewMessageManager().updateWithMessage(null, null);
+                      Navigator.of(context).pop();
+                      Chat chatWithParticipants =
+                          await updatedChat.getParticipants();
+                      Navigator.of(context).pop(chatWithParticipants);
+                    }
+                  });
+                }
+              } else {
+                Navigator.of(context).pop();
+              }
             },
             child: Text(
-              "Cancel",
+              widget.isCreator ? "Cancel" : "Done",
               style: TextStyle(color: Colors.blue),
             ),
           ),
@@ -319,121 +368,125 @@ class _NewChatCreatorState extends State<NewChatCreator> {
               Spacer(
                 flex: 1,
               ),
-              BlueBubblesTextField(
-                existingAttachments: widget.attachments,
-                existingText: widget.existingText,
-                customSend: (pickedImages, text) async {
-                  if (_controller.text.length == 0) return;
-                  if (!_controller.text.endsWith(", ")) {
-                    participants.add(_controller.text.split(",").last);
-                  }
-                  await tryFindExistingChat();
-                  if (existingChat != null) {
-                    if (pickedImages.length > 0) {
-                      for (int i = 0; i < pickedImages.length; i++) {
-                        new AttachmentSender(
-                          pickedImages[i],
-                          existingChat,
-                          i == pickedImages.length - 1 ? text : "",
-                        );
-                      }
-                    } else {
-                      ActionHandler.sendMessage(existingChat, text);
-                    }
-                    String title = await getFullChatTitle(existingChat);
-                    Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(
-                        builder: (context) => ConversationView(
-                          chat: existingChat,
-                          title: title,
-                          messageBloc: ChatBloc().tileVals[existingChat.guid]
-                              ["bloc"],
-                        ),
-                      ),
-                    );
-                    return;
-                  }
-                  Map<String, dynamic> params = new Map();
-                  List<String> _participants = <String>[];
-                  participants.forEach((e) {
-                    if (e is Contact) {
-                      if (e.phones.length > 0) {
-                        _participants.add(e.phones.first.value);
-                      } else if (e.emails.length > 0) {
-                        _participants.add(e.emails.first.value);
-                      }
-                    } else {
-                      _participants.add(e);
-                    }
-                  });
-                  showDialog(
-                    context: context,
-                    child: ClipRRect(
-                      child: BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                        child: SizedBox(
-                          height: 100,
-                          width: 100,
-                          child: CircularProgressIndicator(),
-                        ),
-                      ),
-                    ),
-                  );
-                  if (widget.isCreator) {
-                    params["participants"] = _participants;
-                    SocketManager().socket.sendMessage(
-                      "start-chat",
-                      jsonEncode(params),
-                      (_data) async {
-                        debugPrint(_data);
-                        Map<String, dynamic> data = jsonDecode(_data);
-                        Chat newChat = Chat.fromMap(data["data"]);
-                        newChat = await newChat.save();
-                        String title = await getFullChatTitle(newChat);
-                        await ChatBloc().getChats();
-                        await NewMessageManager().updateWithMessage(null, null);
-                        // await ChatBloc().getChats();
-                        if (pickedImages.length > 0) {
-                          for (int i = 0; i < pickedImages.length; i++) {
-                            new AttachmentSender(
-                              pickedImages[i],
-                              newChat,
-                              i == pickedImages.length - 1 ? text : "",
-                            );
-                          }
-                        } else {
-                          ActionHandler.sendMessage(newChat, text);
+              widget.isCreator
+                  ? BlueBubblesTextField(
+                      existingAttachments: widget.attachments,
+                      existingText: widget.existingText,
+                      customSend: (pickedImages, text) async {
+                        if (_controller.text.length == 0) return;
+                        if (!_controller.text.endsWith(", ")) {
+                          participants.add(_controller.text.split(",").last);
                         }
-
-                        Navigator.of(context, rootNavigator: true).pop();
-                        Navigator.of(context).pushReplacement(
-                          MaterialPageRoute(
-                            builder: (context) => ConversationView(
-                              chat: newChat,
-                              title: title,
-                              messageBloc: ChatBloc().tileVals[newChat.guid]
-                                  ["bloc"],
+                        await tryFindExistingChat();
+                        if (existingChat != null) {
+                          if (pickedImages.length > 0) {
+                            for (int i = 0; i < pickedImages.length; i++) {
+                              new AttachmentSender(
+                                pickedImages[i],
+                                existingChat,
+                                i == pickedImages.length - 1 ? text : "",
+                              );
+                            }
+                          } else {
+                            ActionHandler.sendMessage(existingChat, text);
+                          }
+                          String title = await getFullChatTitle(existingChat);
+                          Navigator.of(context).pushReplacement(
+                            MaterialPageRoute(
+                              builder: (context) => ConversationView(
+                                chat: existingChat,
+                                title: title,
+                                messageBloc: ChatBloc()
+                                    .tileVals[existingChat.guid]["bloc"],
+                              ),
+                            ),
+                          );
+                          return;
+                        }
+                        Map<String, dynamic> params = new Map();
+                        List<String> _participants = <String>[];
+                        participants.forEach((e) {
+                          if (e is Contact) {
+                            if (e.phones.length > 0) {
+                              _participants.add(e.phones.first.value);
+                            } else if (e.emails.length > 0) {
+                              _participants.add(e.emails.first.value);
+                            }
+                          } else {
+                            _participants.add(e);
+                          }
+                        });
+                        showDialog(
+                          context: context,
+                          child: ClipRRect(
+                            child: BackdropFilter(
+                              filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                              child: SizedBox(
+                                height: 100,
+                                width: 100,
+                                child: CircularProgressIndicator(),
+                              ),
                             ),
                           ),
                         );
-                      },
-                    );
-                  } else {
-                    for (int i = 0; i < _participants.length; i++) {
-                      params["identifier"] = widget.currentChat.guid;
-                      params["address"] = _participants[i];
-                      SocketManager().socket.sendMessage(
-                          "add-participant", jsonEncode(params), (_data) {
-                        Map<String, dynamic> response = jsonDecode(_data);
-                        debugPrint("added participant " + response.toString());
-                        if (i == _participants.length - 1) {
-                          Navigator.of(context).pop();
+                        if (widget.isCreator) {
+                          params["participants"] = _participants;
+                          SocketManager().socket.sendMessage(
+                            "start-chat",
+                            jsonEncode(params),
+                            (_data) async {
+                              debugPrint(_data);
+                              Map<String, dynamic> data = jsonDecode(_data);
+                              Chat newChat = Chat.fromMap(data["data"]);
+                              newChat = await newChat.save();
+                              String title = await getFullChatTitle(newChat);
+                              await ChatBloc().getChats();
+                              await NewMessageManager()
+                                  .updateWithMessage(null, null);
+                              // await ChatBloc().getChats();
+                              if (pickedImages.length > 0) {
+                                for (int i = 0; i < pickedImages.length; i++) {
+                                  new AttachmentSender(
+                                    pickedImages[i],
+                                    newChat,
+                                    i == pickedImages.length - 1 ? text : "",
+                                  );
+                                }
+                              } else {
+                                ActionHandler.sendMessage(newChat, text);
+                              }
+
+                              Navigator.of(context, rootNavigator: true).pop();
+                              Navigator.of(context).pushReplacement(
+                                MaterialPageRoute(
+                                  builder: (context) => ConversationView(
+                                    chat: newChat,
+                                    title: title,
+                                    messageBloc: ChatBloc()
+                                        .tileVals[newChat.guid]["bloc"],
+                                  ),
+                                ),
+                              );
+                            },
+                          );
+                        } else {
+                          for (int i = 0; i < _participants.length; i++) {
+                            params["identifier"] = widget.currentChat.guid;
+                            params["address"] = _participants[i];
+                            SocketManager().socket.sendMessage(
+                                "add-participant", jsonEncode(params), (_data) {
+                              Map<String, dynamic> response = jsonDecode(_data);
+                              debugPrint(
+                                  "added participant " + response.toString());
+                              if (i == _participants.length - 1) {
+                                Navigator.of(context).pop();
+                              }
+                            });
+                          }
                         }
-                      });
-                    }
-                  }
-                },
-              ),
+                      },
+                    )
+                  : Container(),
             ],
           ),
         ],

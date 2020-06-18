@@ -36,17 +36,19 @@ class ConversationDetails extends StatefulWidget {
 class _ConversationDetailsState extends State<ConversationDetails> {
   TextEditingController controller;
   bool readOnly = true;
+  Chat chat;
 
   @override
   void initState() {
     super.initState();
-    controller = new TextEditingController(text: widget.chat.displayName);
+    chat = widget.chat;
+    controller = new TextEditingController(text: chat.displayName);
   }
 
   @override
   void didChangeDependencies() async {
     super.didChangeDependencies();
-    readOnly = !((await widget.chat.getParticipants()).participants.length > 1);
+    readOnly = !((await chat.getParticipants()).participants.length > 1);
     debugPrint("updated readonly $readOnly");
     setState(() {});
   }
@@ -55,10 +57,10 @@ class _ConversationDetailsState extends State<ConversationDetails> {
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: () async {
-        if (widget.chat.displayName != controller.text &&
-            (await widget.chat.getParticipants()).participants.length > 1) {
+        if (chat.displayName != controller.text &&
+            (await chat.getParticipants()).participants.length > 1) {
           Map<String, dynamic> params = new Map();
-          params["identifier"] = widget.chat.guid;
+          params["identifier"] = chat.guid;
           params["newName"] = controller.text;
           SocketManager().socket.sendMessage("rename-group", jsonEncode(params),
               (data) async {
@@ -88,7 +90,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
         body: ListView.builder(
           physics:
               AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-          itemCount: widget.chat.participants.length + 4,
+          itemCount: chat.participants.length + 4,
           itemBuilder: (BuildContext context, int index) {
             if (index == 0) {
               return InkWell(
@@ -131,13 +133,12 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                     await sentMessage.save();
 
                     await messageAttachment.save(sentMessage);
-                    await widget.chat.save();
-                    await widget.chat.addMessage(sentMessage);
+                    await chat.save();
+                    await chat.addMessage(sentMessage);
 
-                    NewMessageManager()
-                        .updateWithMessage(widget.chat, sentMessage);
+                    NewMessageManager().updateWithMessage(chat, sentMessage);
                     Map<String, dynamic> params = new Map();
-                    params["guid"] = widget.chat.guid;
+                    params["guid"] = chat.guid;
                     // params["message"] = "current location";
                     params["attachmentGuid"] = _attachmentGuid;
                     params["attachmentName"] = fileName;
@@ -161,17 +162,19 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                   ),
                 ),
               );
-            } else if (index == widget.chat.participants.length + 1) {
+            } else if (index == chat.participants.length + 1) {
               return InkWell(
-                onTap: () {
-                  Navigator.of(context).push(
+                onTap: () async {
+                  Chat result = await Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (context) => NewChatCreator(
-                        currentChat: widget.chat,
+                        currentChat: chat,
                         isCreator: false,
                       ),
                     ),
                   );
+                  chat = result;
+                  setState(() {});
                 },
                 child: ListTile(
                   title: Text(
@@ -186,7 +189,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                   ),
                 ),
               );
-            } else if (index == widget.chat.participants.length + 2) {
+            } else if (index == chat.participants.length + 2) {
               if (readOnly) {
                 return Container();
               }
@@ -204,7 +207,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                   ),
                 ),
               );
-            } else if (index == widget.chat.participants.length + 3) {
+            } else if (index == chat.participants.length + 3) {
               return InkWell(
                 onTap: () async {
                   showDialog(
@@ -218,7 +221,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                       ),
                     ),
                   );
-                  ActionHandler.resyncChat(widget.chat).then((value) {
+                  ActionHandler.resyncChat(chat).then((value) {
                     Navigator.of(context).pop();
                   });
                 },
@@ -238,8 +241,13 @@ class _ConversationDetailsState extends State<ConversationDetails> {
             }
             return ContactTile(
               contact: getContact(ContactManager().contacts,
-                  widget.chat.participants[index - 1].address),
-              handle: widget.chat.participants[index - 1],
+                  chat.participants[index - 1].address),
+              handle: chat.participants[index - 1],
+              chat: chat,
+              updateChat: (Chat newChat) {
+                chat = newChat;
+                setState(() {});
+              },
             );
           },
         ),
