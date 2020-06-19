@@ -23,21 +23,22 @@ public class ReplyReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
 
-        Bundle remoteInput = RemoteInput.getResultsFromIntent(intent);
-        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
-        notificationManager.cancel(intent.getExtras().getInt("id"));
-        Log.d("Notifications", "replied to notification " + remoteInput.getString("key_text_reply"));
-//        Intent sendMessageIntent = new Intent(context, MainActivity.class);
-//        sendMessageIntent.setAction("Reply");
-//        sendMessageIntent.setType("reply");
-//        sendMessageIntent.putExtra("text", remoteInput.getString("key_text_reply"));
-//        sendMessageIntent.putExtra("id", intent.getExtras().getInt("id"));
-//
-        Map<String, Object> params = new HashMap<>();
+        if(intent.getType().equals("reply")) {
+            Bundle remoteInput = RemoteInput.getResultsFromIntent(intent);
+            NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
+            notificationManager.cancel(intent.getExtras().getInt("id"));
+            Map<String, Object> params = new HashMap<>();
 
-        params.put("chat", intent.getExtras().getString("chatGuid"));
-        params.put("text", remoteInput.getString("key_text_reply"));
+            params.put("chat", intent.getExtras().getString("chatGuid"));
+            params.put("text", remoteInput.getString("key_text_reply"));
 
-        new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod("reply", params);
+            new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod("reply", params);
+        } else if(intent.getType().equals("markAsRead")){
+            Map<String, Object> params = new HashMap<>();
+            params.put("chat", intent.getExtras().getString("chatGuid"));
+            NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
+            notificationManager.cancel(intent.getExtras().getInt("id"));
+            new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod("markAsRead", params);
+        }
     }
 }

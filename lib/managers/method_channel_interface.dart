@@ -108,6 +108,10 @@ class MethodChannelInterface {
         Chat chat = await Chat.findOne({"guid": call.arguments["chat"]});
         ActionHandler.sendMessage(chat, call.arguments["text"]);
         return new Future.value("");
+      case "markAsRead":
+        Chat chat = await Chat.findOne({"guid": call.arguments["chat"]});
+        SocketManager().removeChatNotification(chat);
+        return new Future.value("");
       case "shareAttachments":
         List<File> attachments = <File>[];
         call.arguments.forEach((element) {

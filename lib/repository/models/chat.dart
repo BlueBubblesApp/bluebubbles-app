@@ -28,7 +28,7 @@ Future<String> getFullChatTitle(Chat _chat) async {
     for (int i = 0; i < chat.participants.length; i++) {
       String name = getContactTitle(
           ContactManager().contacts, chat.participants[i].address.toString());
-      
+
       if (chat.participants.length > 1 && !name.startsWith('+1')) {
         name = name.trim().split(" ")[0];
       } else {
@@ -60,7 +60,8 @@ Future<String> getFullChatTitle(Chat _chat) async {
 
 String getShortChatTitle(Chat _chat) {
   if (_chat.participants.length == 1) {
-    return getContactTitle(ContactManager().contacts, _chat.participants[0].address);
+    return getContactTitle(
+        ContactManager().contacts, _chat.participants[0].address);
   } else {
     return "${_chat.participants.length} people";
   }
@@ -191,10 +192,10 @@ class Chat {
         " attachment.transferName AS transferName,"
         " attachment.blurhash AS blurhash"
         " FROM attachment"
-        " JOIN message_attachment_join AS maj ON maj.attachment_id = attachment.ROWID"
-        " JOIN message ON maj.message_id = message.ROWID"
-        " JOIN chat_message_join AS cmj ON cmj.message_id = message.ROWID"
-        " JOIN chat ON chat.ROWID = cmj.chat_id"
+        " JOIN attachment_message_join AS amj ON amj.attachmentId = attachment.ROWID"
+        " JOIN message ON amj.messageId = message.ROWID"
+        " JOIN chat_message_join AS cmj ON cmj.messageId = message.ROWID"
+        " JOIN chat ON chat.ROWID = cmj.chatId"
         " WHERE chat.ROWID = ?");
 
     // Add pagination
@@ -204,7 +205,7 @@ class Chat {
     var res = await db.rawQuery("$query;", [chat.id]);
     return res == null
         ? []
-        : res.map((attachment) => Attachment.fromMap(attachment));
+        : res.map((attachment) => Attachment.fromMap(attachment)).toList();
   }
 
   static Future<List<Message>> getMessages(Chat chat,

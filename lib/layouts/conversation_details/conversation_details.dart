@@ -37,12 +37,17 @@ class _ConversationDetailsState extends State<ConversationDetails> {
   TextEditingController controller;
   bool readOnly = true;
   Chat chat;
+  List<Attachment> attachmentsForChat = <Attachment>[];
 
   @override
   void initState() {
     super.initState();
     chat = widget.chat;
     controller = new TextEditingController(text: chat.displayName);
+    Chat.getAttachments(chat).then((value) {
+      attachmentsForChat = value;
+      setState(() {});
+    });
   }
 
   @override
@@ -126,40 +131,43 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                       chat = newChat;
                       setState(() {});
                     },
+                    canBeRemoved: chat.participants.length > 1,
                   );
                 },
                 childCount: chat.participants.length,
               ),
             ),
             SliverToBoxAdapter(
-              child: InkWell(
-                onTap: () async {
-                  Chat result = await Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => NewChatCreator(
-                        currentChat: chat,
-                        isCreator: false,
+              child: chat.participants.length > 0
+                  ? InkWell(
+                      onTap: () async {
+                        Chat result = await Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => NewChatCreator(
+                              currentChat: chat,
+                              isCreator: false,
+                            ),
+                          ),
+                        );
+                        if (result != null) {
+                          chat = result;
+                          setState(() {});
+                        }
+                      },
+                      child: ListTile(
+                        title: Text(
+                          "Add Contact",
+                          style: TextStyle(
+                            color: Colors.blue,
+                          ),
+                        ),
+                        leading: Icon(
+                          Icons.add,
+                          color: Colors.blue,
+                        ),
                       ),
-                    ),
-                  );
-                  if (result != null) {
-                    chat = result;
-                    setState(() {});
-                  }
-                },
-                child: ListTile(
-                  title: Text(
-                    "Add Contact",
-                    style: TextStyle(
-                      color: Colors.blue,
-                    ),
-                  ),
-                  leading: Icon(
-                    Icons.add,
-                    color: Colors.blue,
-                  ),
-                ),
-              ),
+                    )
+                  : Container(),
             ),
             SliverPadding(
               padding: EdgeInsets.symmetric(vertical: 20),
@@ -211,7 +219,6 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                     NewMessageManager().updateWithMessage(chat, sentMessage);
                     Map<String, dynamic> params = new Map();
                     params["guid"] = chat.guid;
-                    // params["message"] = "current location";
                     params["attachmentGuid"] = _attachmentGuid;
                     params["attachmentName"] = fileName;
                     params["attachment"] = base64Encode(bytes);
@@ -265,6 +272,49 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                     color: Colors.blue,
                   ),
                 ),
+              ),
+            ),
+            SliverGrid(
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+              ),
+              delegate: SliverChildBuilderDelegate(
+                (context, int index) {
+                  Attachment attachment = attachmentsForChat[index];
+                  if (attachment.mimeType.startsWith("image")) {
+                    return SizedBox(
+                      width: MediaQuery.of(context).size.width / 2,
+                      child: Stack(
+                        children: <Widget>[
+                          SizedBox(
+                            child: Image.file(
+                              new File(
+                                "${SettingsManager().appDocDir.path}/attachments/${attachment.guid}/${attachment.transferName}",
+                              ),
+                              fit: BoxFit.cover,
+                              alignment: Alignment.center,
+                            ),
+                            width: MediaQuery.of(context).size.width / 2,
+                          ),
+                          Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: () {},
+                            ),
+                          )
+                        ],
+                      ),
+                    );
+                  } else {
+                    return Container(
+                      child: Text(
+                        attachment.transferName,
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    );
+                  }
+                },
+                childCount: attachmentsForChat.length,
               ),
             )
           ],

@@ -50,7 +50,6 @@ class SocketManager {
       }
     }
     NewMessageManager().updateWithMessage(chat, null);
-    // notify();
   }
 
   List<String> processedGUIDS = <String>[];

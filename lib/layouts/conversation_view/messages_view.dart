@@ -18,6 +18,12 @@ class _MessageViewState extends State<MessageView> {
   Future loader;
 
   @override
+  void initState() {
+    super.initState();
+    debugPrint(widget.messageBloc.attachments.keys.toString());
+  }
+
+  @override
   Widget build(BuildContext context) {
     return StreamBuilder(
       stream: widget.messageBloc.stream,
@@ -75,6 +81,7 @@ class _MessageViewState extends State<MessageView> {
               newerMessage: newerMessage,
               reactions: reactions,
               showHandle: widget.showHandle,
+              bloc: widget.messageBloc,
             );
           },
         );
