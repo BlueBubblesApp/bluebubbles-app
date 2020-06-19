@@ -51,17 +51,45 @@ class MessageBloc {
     getMessages(chat);
     NewMessageManager().stream.listen((Map<String, Message> event) {
       if (event.containsKey(_currentChat.guid)) {
+        //if there even is a chat specified in the newmessagemanager update
         if (event[_currentChat.guid] == null) {
+          //if no message is specified in the newmessagemanager update
           getMessages(chat);
         } else {
-          _messageCache.add(event[_currentChat.guid]);
-          _messageController.sink.add(_messageCache);
-          getMessages(chat);
+          //if there is a specific message to insert
+          insert(event[_currentChat.guid]);
+          // _messageController.sink.add(_messageCache);
+          // getMessages(chat);
         }
       } else if (event.keys.first == null) {
+        //if there is no chat specified in the newmessagemanager update
         getMessages(_currentChat);
       }
     });
+  }
+
+  void insert(Message message) {
+    if (_allMessages.length == 0) {
+      //if messagebloc is in the background and we are only relying on the cache
+      for (int i = 0; i < _messageCache.length; i++) {
+        //if _messageCache[i] dateCreated is earlier than the new message, insert at that index
+        if (_messageCache[i].dateCreated.compareTo(message.dateCreated) < 0) {
+          _messageCache.insert(i, message);
+          break;
+        }
+      }
+      _messageController.sink.add(_messageCache);
+    } else {
+      //if messagebloc is currently active, as in the conversation view is open
+      for (int i = 0; i < _allMessages.length; i++) {
+        //if _allMessages[i] dateCreated is earlier than the new message, insert at that index
+        if (_allMessages[i].dateCreated.compareTo(message.dateCreated) < 0) {
+          _allMessages.insert(i, message);
+          break;
+        }
+      }
+      _messageController.sink.add(_allMessages);
+    }
   }
 
   void getMessages(Chat chat) async {
@@ -77,7 +105,6 @@ class MessageBloc {
       List<Widget> attachmentsForMessage = await getAttachments(messages[i]);
       if (attachmentsForMessage.length > 0) {
         _attachments[messages[i].guid] = attachmentsForMessage;
-        debugPrint("adding attachments for message " + messages[i].guid);
       }
       if (i == messages.length - 1) {
         _messageController.sink.add(messages);
@@ -533,7 +560,6 @@ class MessageBloc {
                 await getAttachments(messages[i]);
             if (attachmentsForMessage.length > 0) {
               _attachments[messages[i].guid] = attachmentsForMessage;
-              debugPrint("adding attachments for message " + messages[i].guid);
             }
             if (i == messages.length - 1) {
               _messageController.sink.add(_allMessages);
@@ -552,7 +578,6 @@ class MessageBloc {
               await getAttachments(messages[i]);
           if (attachmentsForMessage.length > 0) {
             _attachments[messages[i].guid] = attachmentsForMessage;
-            debugPrint("adding attachments for message " + messages[i].guid);
           }
           if (i == messages.length - 1) {
             _messageController.sink.add(_allMessages);

@@ -27,9 +27,9 @@ class ChatBloc {
       _tileValController.stream;
 
   List<Chat> _chats;
-  List<Chat> get chats => _chatBloc._chats;
+  List<Chat> get chats => _chats;
   Map<String, Map<String, dynamic>> _tileVals = new Map();
-  Map<String, Map<String, dynamic>> get tileVals => _chatBloc._tileVals;
+  Map<String, Map<String, dynamic>> get tileVals => _tileVals;
 
   factory ChatBloc() {
     return _chatBloc;
@@ -42,122 +42,134 @@ class ChatBloc {
   Future<List<Chat>> getChats() async {
     //sink is a way of adding data reactively to the stream
     //by registering a new event
-    _chatBloc._chats = await Chat.find();
-    await _chatBloc.initTileVals(_chatBloc._chats);
-    // _chatBloc._chats.sort((a, b) {
-    //   return -_chatBloc.tileVals[a.guid]["actualDate"]
-    //       .compareTo(_chatBloc.tileVals[b.guid]["actualDate"]);
-    // });
-    _chatBloc._chatController.sink.add(_chatBloc._chats);
-    return _chatBloc._chats;
+    _chats = await Chat.find();
+    await initTileVals(_chats);
+    _chatController.sink.add(_chats);
+    return _chats;
+  }
+
+  Future<List<Chat>> moveChatToTop(Chat chat) async {
+    for (int i = 0; i < _chats.length; i++)
+      if (_chats[i].guid == chat.guid) {
+        _chats.removeAt(i);
+        break;
+      }
+
+    _chats.insert(0, chat);
+    await initTileValsForChat(chat);
+    _chatController.sink.add(_chats);
   }
 
   Future<void> initTileVals(List<Chat> chats) async {
     for (int i = 0; i < chats.length; i++) {
       Chat chat = chats[i];
-      String title = await getFullChatTitle(chat);
-      // if (title.length - 2 > 0 && title.substring(title.length - 2) == ", ")
-      //   title = title.substring(0, title.length - 2);
-      MessageBloc messageBloc;
-
-      if (!_tileVals.containsKey(chat.guid)) {
-        messageBloc = new MessageBloc(chat);
-        messageBloc.stream.listen((List<Message> messages) async {
-          if (messages.length > 0) {
-            dynamic subtitle = "";
-            String date = "";
-
-            Message firstMessage = messages.first;
-            subtitle = firstMessage.text;
-            if (firstMessage.hasAttachments) {
-              List<Attachment> attachments =
-                  await Message.getAttachments(firstMessage);
-
-              // When there is an attachment,the text length  1
-              if (subtitle.length == 1 && attachments.length > 0) {
-                String appDocPath = SettingsManager().appDocDir.path;
-                String pathName =
-                    "$appDocPath/attachments/${attachments[0].guid}/${attachments[0].transferName}";
-
-                if (FileSystemEntity.typeSync(pathName) !=
-                        FileSystemEntityType.notFound &&
-                    attachments[0].mimeType.startsWith("image/")) {
-                  // We need a row here so the parent honors our clipping
-                  subtitle = Container(
-                      padding: EdgeInsets.only(top: 2),
-                      child: Row(children: <Widget>[
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(4),
-                          child: Image.file(File(pathName),
-                              alignment: Alignment.centerLeft, height: 38),
-                        )
-                      ]));
-                } else {
-                  subtitle = "${attachments.length} Attachment";
-                  if (attachments.length > 1) subtitle += "s";
-                }
-              }
-            }
-
-            Message lastMessage = messages.first;
-            if (lastMessage.dateCreated.isToday()) {
-              date = new DateFormat.jm().format(lastMessage.dateCreated);
-            } else if (lastMessage.dateCreated.isYesterday()) {
-              date = "Yesterday";
-            } else {
-              date =
-                  "${lastMessage.dateCreated.month.toString()}/${lastMessage.dateCreated.day.toString()}/${lastMessage.dateCreated.year.toString()}";
-            }
-            Map<String, dynamic> chatMap = _chatBloc._tileVals[chat.guid];
-            chatMap["subtitle"] = subtitle;
-            chatMap["date"] = date;
-            chatMap["actualDate"] =
-                lastMessage.dateCreated.millisecondsSinceEpoch;
-            bool hasNotification = false;
-
-            for (int i = 0;
-                i < SocketManager().chatsWithNotifications.length;
-                i++) {
-              if (SocketManager().chatsWithNotifications[i] == chat.guid) {
-                hasNotification = true;
-              }
-            }
-            chatMap["hasNotification"] = hasNotification;
-            _chatBloc.updateTileVals(chat, chatMap);
-            _chatBloc._tileValController.add(_chatBloc._tileVals);
-          }
-        });
-      } else {
-        messageBloc = _chatBloc._tileVals[chat.guid]["bloc"];
-      }
-
-      bool hasNotification = false;
-
-      for (int i = 0; i < SocketManager().chatsWithNotifications.length; i++) {
-        if (SocketManager().chatsWithNotifications[i] == chat.guid) {
-          hasNotification = true;
-          break;
-        }
-      }
-
-      Map<String, dynamic> chatMap = {
-        "title": title,
-        "subtitle": "",
-        "date": "",
-        "bloc": messageBloc,
-        "actualDate": 0,
-        "hasNotification": hasNotification,
-      };
-      _chatBloc.updateTileVals(chat, chatMap);
+      await initTileValsForChat(chat);
     }
-    _chatBloc._tileValController.sink.add(_tileVals);
+    _tileValController.sink.add(_tileVals);
+  }
+
+  Future<void> initTileValsForChat(Chat chat) async {
+    String title = await getFullChatTitle(chat);
+    // if (title.length - 2 > 0 && title.substring(title.length - 2) == ", ")
+    //   title = title.substring(0, title.length - 2);
+    MessageBloc messageBloc;
+
+    if (!_tileVals.containsKey(chat.guid)) {
+      messageBloc = new MessageBloc(chat);
+      messageBloc.stream.listen((List<Message> messages) async {
+        if (messages.length > 0) {
+          dynamic subtitle = "";
+          String date = "";
+
+          Message firstMessage = messages.first;
+          subtitle = firstMessage.text;
+          if (firstMessage.hasAttachments) {
+            List<Attachment> attachments =
+                await Message.getAttachments(firstMessage);
+
+            // When there is an attachment,the text length  1
+            if (subtitle.length == 1 && attachments.length > 0) {
+              String appDocPath = SettingsManager().appDocDir.path;
+              String pathName =
+                  "$appDocPath/attachments/${attachments[0].guid}/${attachments[0].transferName}";
+
+              if (FileSystemEntity.typeSync(pathName) !=
+                      FileSystemEntityType.notFound &&
+                  attachments[0].mimeType.startsWith("image/")) {
+                // We need a row here so the parent honors our clipping
+                subtitle = Container(
+                    padding: EdgeInsets.only(top: 2),
+                    child: Row(children: <Widget>[
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: Image.file(File(pathName),
+                            alignment: Alignment.centerLeft, height: 38),
+                      )
+                    ]));
+              } else {
+                subtitle = "${attachments.length} Attachment";
+                if (attachments.length > 1) subtitle += "s";
+              }
+            }
+          }
+
+          Message lastMessage = messages.first;
+          if (lastMessage.dateCreated.isToday()) {
+            date = new DateFormat.jm().format(lastMessage.dateCreated);
+          } else if (lastMessage.dateCreated.isYesterday()) {
+            date = "Yesterday";
+          } else {
+            date =
+                "${lastMessage.dateCreated.month.toString()}/${lastMessage.dateCreated.day.toString()}/${lastMessage.dateCreated.year.toString()}";
+          }
+          Map<String, dynamic> chatMap = _tileVals[chat.guid];
+          chatMap["subtitle"] = subtitle;
+          chatMap["date"] = date;
+          chatMap["actualDate"] =
+              lastMessage.dateCreated.millisecondsSinceEpoch;
+          bool hasNotification = false;
+
+          for (int i = 0;
+              i < SocketManager().chatsWithNotifications.length;
+              i++) {
+            if (SocketManager().chatsWithNotifications[i] == chat.guid) {
+              hasNotification = true;
+            }
+          }
+          chatMap["hasNotification"] = hasNotification;
+          updateTileVals(chat, chatMap);
+          _tileValController.add(_tileVals);
+        }
+      });
+    } else {
+      messageBloc = _tileVals[chat.guid]["bloc"];
+    }
+
+    bool hasNotification = false;
+
+    for (int i = 0; i < SocketManager().chatsWithNotifications.length; i++) {
+      if (SocketManager().chatsWithNotifications[i] == chat.guid) {
+        hasNotification = true;
+        break;
+      }
+    }
+
+    Map<String, dynamic> chatMap = {
+      "title": title,
+      "subtitle": "",
+      "date": "",
+      "bloc": messageBloc,
+      "actualDate": 0,
+      "hasNotification": hasNotification,
+    };
+    updateTileVals(chat, chatMap);
   }
 
   void updateTileVals(Chat chat, Map<String, dynamic> chatMap) {
-    if (_chatBloc._tileVals.containsKey(chat.guid)) {
-      _chatBloc._tileVals.remove(chat.guid);
+    if (_tileVals.containsKey(chat.guid)) {
+      _tileVals.remove(chat.guid);
     }
-    _chatBloc._tileVals[chat.guid] = chatMap;
+    _tileVals[chat.guid] = chatMap;
   }
 
   addChat(Chat chat) async {

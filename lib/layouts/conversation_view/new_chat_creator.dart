@@ -193,8 +193,9 @@ class _NewChatCreatorState extends State<NewChatCreator> {
                         response["status"] == 200) {
                       Chat updatedChat = Chat.fromMap(response["data"]);
                       updatedChat.save();
-                      await ChatBloc().getChats();
-                      NewMessageManager().updateWithMessage(null, null);
+                      // await ChatBloc().getChats();
+                      // NewMessageManager().updateWithMessage(null, null);
+                      await ChatBloc().moveChatToTop(updatedChat);
                       Navigator.of(context).pop();
                       Chat chatWithParticipants =
                           await updatedChat.getParticipants();
@@ -224,6 +225,7 @@ class _NewChatCreatorState extends State<NewChatCreator> {
                   ? MessageView(
                       messageBloc: ChatBloc().tileVals[existingChat.guid]
                           ["bloc"],
+                      showHandle: existingChat.participants.length > 1,
                     )
                   : Container()
               : ListView.builder(
@@ -429,61 +431,47 @@ class _NewChatCreatorState extends State<NewChatCreator> {
                             ),
                           ),
                         );
-                        if (widget.isCreator) {
-                          params["participants"] = _participants;
-                          SocketManager().socket.sendMessage(
-                            "start-chat",
-                            jsonEncode(params),
-                            (_data) async {
-                              debugPrint(_data);
-                              Map<String, dynamic> data = jsonDecode(_data);
-                              Chat newChat = Chat.fromMap(data["data"]);
-                              newChat = await newChat.save();
-                              String title = await getFullChatTitle(newChat);
-                              await ChatBloc().getChats();
-                              await NewMessageManager()
-                                  .updateWithMessage(null, null);
-                              // await ChatBloc().getChats();
-                              if (pickedImages.length > 0) {
-                                for (int i = 0; i < pickedImages.length; i++) {
-                                  new AttachmentSender(
-                                    pickedImages[i],
-                                    newChat,
-                                    i == pickedImages.length - 1 ? text : "",
-                                  );
-                                }
-                              } else {
-                                ActionHandler.sendMessage(newChat, text);
+                        params["participants"] = _participants;
+                        SocketManager().socket.sendMessage(
+                          "start-chat",
+                          jsonEncode(params),
+                          (_data) async {
+                            debugPrint(_data);
+                            Map<String, dynamic> data = jsonDecode(_data);
+                            Chat newChat = Chat.fromMap(data["data"]);
+                            newChat = await newChat.save();
+                            newChat = await newChat.getParticipants();
+                            String title = await getFullChatTitle(newChat);
+                            // await ChatBloc().getChats();
+                            // await NewMessageManager()
+                            //     .updateWithMessage(null, null);
+                            await ChatBloc().moveChatToTop(newChat);
+                            // await ChatBloc().getChats();
+                            if (pickedImages.length > 0) {
+                              for (int i = 0; i < pickedImages.length; i++) {
+                                new AttachmentSender(
+                                  pickedImages[i],
+                                  newChat,
+                                  i == pickedImages.length - 1 ? text : "",
+                                );
                               }
+                            } else {
+                              ActionHandler.sendMessage(newChat, text);
+                            }
 
-                              Navigator.of(context, rootNavigator: true).pop();
-                              Navigator.of(context).pushReplacement(
-                                MaterialPageRoute(
-                                  builder: (context) => ConversationView(
-                                    chat: newChat,
-                                    title: title,
-                                    messageBloc: ChatBloc()
-                                        .tileVals[newChat.guid]["bloc"],
-                                  ),
+                            Navigator.of(context, rootNavigator: true).pop();
+                            Navigator.of(context).pushReplacement(
+                              MaterialPageRoute(
+                                builder: (context) => ConversationView(
+                                  chat: newChat,
+                                  title: title,
+                                  messageBloc: ChatBloc().tileVals[newChat.guid]
+                                      ["bloc"],
                                 ),
-                              );
-                            },
-                          );
-                        } else {
-                          for (int i = 0; i < _participants.length; i++) {
-                            params["identifier"] = widget.currentChat.guid;
-                            params["address"] = _participants[i];
-                            SocketManager().socket.sendMessage(
-                                "add-participant", jsonEncode(params), (_data) {
-                              Map<String, dynamic> response = jsonDecode(_data);
-                              debugPrint(
-                                  "added participant " + response.toString());
-                              if (i == _participants.length - 1) {
-                                Navigator.of(context).pop();
-                              }
-                            });
-                          }
-                        }
+                              ),
+                            );
+                          },
+                        );
                       },
                     )
                   : Container(),

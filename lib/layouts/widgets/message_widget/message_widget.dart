@@ -54,7 +54,8 @@ class MessageWidget extends StatefulWidget {
   _MessageState createState() => _MessageState();
 }
 
-class _MessageState extends State<MessageWidget> {
+class _MessageState extends State<MessageWidget>
+    with AutomaticKeepAliveClientMixin {
   // List<Attachment> attachments = <Attachment>[];
   String body;
   bool showTail = true;
@@ -194,14 +195,15 @@ class _MessageState extends State<MessageWidget> {
       );
     } else {
       return ReceivedMessage(
-          timeStamp: _buildTimeStamp(),
-          reactions: _buildReactions(),
-          content: _buildContent(),
-          showTail: showTail,
-          olderMessage: widget.olderMessage,
-          message: widget.message,
-          overlayEntry: _createOverlayEntry(),
-          showHandle: widget.showHandle);
+        timeStamp: _buildTimeStamp(),
+        reactions: _buildReactions(),
+        content: _buildContent(),
+        showTail: showTail,
+        olderMessage: widget.olderMessage,
+        message: widget.message,
+        overlayEntry: _createOverlayEntry(),
+        showHandle: widget.showHandle,
+      );
     }
   }
 
@@ -351,4 +353,8 @@ class _MessageState extends State<MessageWidget> {
     if (_flickManager != null) _flickManager.dispose();
     super.dispose();
   }
+
+  @override
+  bool get wantKeepAlive =>
+      widget.bloc.attachments.containsKey(widget.message.guid);
 }

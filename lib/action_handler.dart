@@ -21,10 +21,9 @@ import 'package:sqflite/sqflite.dart';
 /// be telling the server to do something, or asking the server for
 /// information
 class ActionHandler {
-
   /// Tells the server to create a [text] in the [chat], along with
   /// any [attachments] that go with the message
-  /// 
+  ///
   /// ```dart
   /// sendMessage(chatObject, 'Hello world!')
   /// ```
@@ -47,7 +46,8 @@ class ActionHandler {
     );
 
     // If we aren't conneted to the socket, set the message error code
-    if (SettingsManager().settings.connected == false) sentMessage.error = MessageError.NO_CONNECTION.code;
+    if (SettingsManager().settings.connected == false)
+      sentMessage.error = MessageError.NO_CONNECTION.code;
 
     await sentMessage.save();
     await chat.save();
@@ -59,7 +59,8 @@ class ActionHandler {
 
     if (SocketManager().socket == null) {
       SocketManager().startSocketIO(
-          connectCB: () => ActionHandler.sendMessage(chat, text, attachments: attachments));
+          connectCB: () =>
+              ActionHandler.sendMessage(chat, text, attachments: attachments));
     } else {
       SocketManager().socket.sendMessage("send-message", jsonEncode(params),
           (data) async {
@@ -68,13 +69,14 @@ class ActionHandler {
 
         // If there is an error, replace the temp value with an error
         if (response['status'] != 200) {
-          sentMessage.guid = sentMessage.guid.replaceAll("temp", "error-${response['error']['message']}");
+          sentMessage.guid = sentMessage.guid
+              .replaceAll("temp", "error-${response['error']['message']}");
           sentMessage.error = response['status'] == 400
-            ? MessageError.BAD_REQUEST.code
-            : MessageError.SERVER_ERROR.code;
+              ? MessageError.BAD_REQUEST.code
+              : MessageError.SERVER_ERROR.code;
 
           await Message.replaceMessage(tempGuid, sentMessage);
-          NewMessageManager().updateWithMessage(chat, null);
+          NewMessageManager().updateWithMessage(chat, sentMessage);
         }
       });
     }
@@ -82,7 +84,7 @@ class ActionHandler {
 
   /// Try to resents a [message] that has errored during the
   /// previous attempts to send the message
-  /// 
+  ///
   /// ```dart
   /// retryMessage(messageObject)
   /// ```
@@ -114,7 +116,7 @@ class ActionHandler {
     if (SettingsManager().settings.connected == false) message.error = 1000;
 
     await Message.replaceMessage(oldGuid, message);
-    NewMessageManager().updateWithMessage(chat, null);
+    NewMessageManager().updateWithMessage(chat, message);
 
     // If we aren't connected to the socket, return
     if (SettingsManager().settings.connected == false) return;
@@ -130,14 +132,14 @@ class ActionHandler {
             .replaceAll("temp", "error-${response['error']['message']}");
         message.error = response['status'] == 400 ? 1001 : 1002;
         await Message.replaceMessage(tempGuid, message);
-        NewMessageManager().updateWithMessage(chat, null);
+        NewMessageManager().updateWithMessage(chat, message);
       }
     });
   }
 
   /// Resyncs a [chat] by removing all currently saved messages
   /// for the given [chat], then redownloads its' messages from the server
-  /// 
+  ///
   /// ```dart
   /// resyncChat(chatObj)
   /// ```
@@ -174,7 +176,7 @@ class ActionHandler {
   /// Handles the ingestion of a 'updated-message' event. It takes the
   /// input [data] and uses that data to update an already existing
   /// message within the database
-  /// 
+  ///
   /// ```dart
   /// handleUpdatedMessage(JsonMap)
   /// ```
@@ -200,15 +202,14 @@ class ActionHandler {
   /// as a [chat] object or JSON [chatData]. Lastly, the user can
   /// tell the function if they want it to check for the existance
   /// of the chat using the [checkifExists] parameter.
-  /// 
+  ///
   /// ```dart
   /// handleChat(chat: chatObject, checkIfExists: true)
   /// ```
-  static Future<void> handleChat({
-    Map<String, dynamic> chatData,
-    Chat chat,
-    bool checkIfExists = false
-  }) async {
+  static Future<void> handleChat(
+      {Map<String, dynamic> chatData,
+      Chat chat,
+      bool checkIfExists = false}) async {
     Chat currentChat;
     Chat newChat = chat;
     if (chatData != null && newChat == null) {
@@ -239,8 +240,9 @@ class ActionHandler {
         await newChat.save();
 
         // Update the main view
-        await ChatBloc().getChats();
-        NewMessageManager().updateWithMessage(null, null);
+        // await ChatBloc().getChats();
+        await ChatBloc().moveChatToTop(newChat);
+        // NewMessageManager().updateWithMessage(null, null);
       }
     });
   }
@@ -250,7 +252,7 @@ class ActionHandler {
   /// a new message or a "matched" message. This function will handle
   /// the ingestion of said message JSON [data], according to what is
   /// passed to it.
-  /// 
+  ///
   /// ```dart
   /// handleMessage(JsonMap)
   /// ```
@@ -277,10 +279,8 @@ class ActionHandler {
         await chats[i].addMessage(message);
 
         // Add notification metadata
-        if (
-          !SocketManager().chatsWithNotifications.contains(chats[i].guid) &&
-          NotificationManager().chat != chats[i].guid)
-        {
+        if (!SocketManager().chatsWithNotifications.contains(chats[i].guid) &&
+            NotificationManager().chat != chats[i].guid) {
           SocketManager().chatsWithNotifications.add(chats[i].guid);
         }
 

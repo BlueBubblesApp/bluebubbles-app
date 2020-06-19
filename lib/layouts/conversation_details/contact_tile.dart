@@ -122,8 +122,9 @@ class _ContactTileState extends State<ContactTile> {
                     if (response["status"] == 200) {
                       Chat updatedChat = Chat.fromMap(response["data"]);
                       await updatedChat.save(true);
-                      await ChatBloc().getChats();
-                      NewMessageManager().updateWithMessage(null, null);
+                      ChatBloc().moveChatToTop(updatedChat);
+                      // await ChatBloc().getChats();
+                      // NewMessageManager().updateWithMessage(null, null);
                       Chat chatWithParticipants =
                           await updatedChat.getParticipants();
                       debugPrint(

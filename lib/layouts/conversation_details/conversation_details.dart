@@ -72,8 +72,9 @@ class _ConversationDetailsState extends State<ConversationDetails> {
             if (jsonDecode(data)["status"] == 200) {
               Chat updatedChat = Chat.fromMap(jsonDecode(data)["data"]);
               await updatedChat.save();
-              await ChatBloc().getChats();
-              NewMessageManager().updateWithMessage(null, null);
+              // await ChatBloc().getChats();
+              // NewMessageManager().updateWithMessage(null, null);
+              await ChatBloc().moveChatToTop(updatedChat);
             }
             debugPrint("renamed group chat " + jsonDecode(data).toString());
           });
