@@ -20,7 +20,6 @@ class _MessageViewState extends State<MessageView> {
   @override
   void initState() {
     super.initState();
-    debugPrint(widget.messageBloc.attachments.keys.toString());
   }
 
   @override

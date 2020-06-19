@@ -116,7 +116,9 @@ class DBProvider {
         "totalBytes INTEGER NOT NULL,"
         "isSticker INTEGER DEFAULT 0,"
         "hideAttachment INTEGER DEFAULT 0,"
-        "blurhash VARCHAR(64) DEFAULT NULL"
+        "blurhash VARCHAR(64) DEFAULT NULL,"
+        "height INTEGER DEFAULT NULL,"
+        "width INTEGER DEFAULT NULL"
         ");");
   }
 

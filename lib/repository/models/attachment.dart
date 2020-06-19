@@ -29,6 +29,8 @@ class Attachment {
   bool isSticker;
   bool hideAttachment;
   String blurhash;
+  int height;
+  int width;
 
   Attachment({
     this.id,
@@ -42,6 +44,8 @@ class Attachment {
     this.isSticker,
     this.hideAttachment,
     this.blurhash,
+    this.height,
+    this.width,
   });
 
   factory Attachment.fromMap(Map<String, dynamic> json) {
@@ -63,6 +67,8 @@ class Attachment {
           ? json['hideAttachment']
           : ((json['hideAttachment'] == 1) ? true : false),
       blurhash: json.containsKey("blurhash") ? json["blurhash"] : null,
+      height: json.containsKey("height") ? json["height"] : null,
+      width: json.containsKey("width") ? json["width"] : null,
     );
   }
 
@@ -188,5 +194,7 @@ class Attachment {
         "isSticker": isSticker ? 1 : 0,
         "hideAttachment": hideAttachment ? 1 : 0,
         "blurhash": blurhash,
+        "height": height,
+        "width": width,
       };
 }

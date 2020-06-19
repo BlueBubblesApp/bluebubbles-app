@@ -14,6 +14,8 @@ import 'package:bluebubble_messages/repository/models/chat.dart';
 import 'package:bluebubble_messages/repository/models/message.dart';
 import 'package:bluebubble_messages/socket_manager.dart';
 import 'package:flutter/material.dart';
+import 'package:image_size_getter/image_size_getter.dart';
+import 'package:mime_type/mime_type.dart';
 import 'package:path/path.dart';
 
 class AttachmentSender {
@@ -105,7 +107,13 @@ class AttachmentSender {
       hideAttachment: false,
       uti: "public.jpg",
       transferName: _attachmentName,
-      mimeType: "image/jpeg",
+      mimeType: mime(_attachmentName),
+      width: mime(_attachmentName).startsWith("image")
+          ? ImageSizGetter.getSize(attachment).width
+          : null,
+      height: mime(_attachmentName).startsWith("image")
+          ? ImageSizGetter.getSize(attachment).height
+          : null,
     );
 
     Message sentMessage = Message(

@@ -57,6 +57,7 @@ class _ConversationViewState extends State<ConversationView> {
 
   @override
   void dispose() {
+    widget.messageBloc.dispose();
     NotificationManager().leaveChat();
 
     String appDocPath = SettingsManager().appDocDir.path;

@@ -51,6 +51,7 @@ dependencies:
   camera: ^0.5.8+2
   android_intent: ^0.3.7+2
   flutter_slidable: ^0.5.4
+  image_size_getter: ^0.1.1
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.

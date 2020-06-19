@@ -7,6 +7,11 @@ import 'package:bluebubble_messages/blocs/message_bloc.dart';
 import 'package:bluebubble_messages/helpers/attachment_downloader.dart';
 import 'package:bluebubble_messages/helpers/attachment_helper.dart';
 import 'package:bluebubble_messages/helpers/utils.dart';
+import 'package:bluebubble_messages/layouts/widgets/message_widget/message_content/media_players/audio_player_widget.dart';
+import 'package:bluebubble_messages/layouts/widgets/message_widget/message_content/media_players/contact_widget.dart';
+import 'package:bluebubble_messages/layouts/widgets/message_widget/message_content/media_players/image_widget.dart';
+import 'package:bluebubble_messages/layouts/widgets/message_widget/message_content/media_players/loaction_widget.dart';
+import 'package:bluebubble_messages/layouts/widgets/message_widget/message_content/media_players/video_widget.dart';
 import 'package:bluebubble_messages/layouts/widgets/message_widget/received_message.dart';
 import 'package:bluebubble_messages/layouts/widgets/message_widget/sent_message.dart';
 import 'package:bluebubble_messages/managers/contact_manager.dart';
@@ -22,6 +27,7 @@ import 'package:flutter_map/plugin_api.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
+import 'package:latlong/latlong.dart';
 import 'package:mime_type/mime_type.dart';
 import 'package:path/path.dart';
 import 'package:video_player/video_player.dart';
@@ -54,10 +60,10 @@ class MessageWidget extends StatefulWidget {
   _MessageState createState() => _MessageState();
 }
 
-class _MessageState extends State<MessageWidget>
-    with AutomaticKeepAliveClientMixin {
-  // List<Attachment> attachments = <Attachment>[];
+class _MessageState extends State<MessageWidget> {
+  List<Attachment> attachments = <Attachment>[];
   String body;
+  List chatAttachments = [];
   bool showTail = true;
   final String like = "like";
   final String love = "love";
@@ -67,11 +73,6 @@ class _MessageState extends State<MessageWidget>
   final String laugh = "laugh";
   Map<String, List<Message>> reactions = new Map();
   Widget blurredImage;
-
-  FlickManager _flickManager;
-
-  bool play = false;
-  double progress = 0.0;
 
   @override
   void didChangeDependencies() async {
@@ -90,6 +91,55 @@ class _MessageState extends State<MessageWidget>
     setState(() {});
   }
 
+  void getAttachments() {
+    chatAttachments = [];
+    Message.getAttachments(widget.message).then((value) {
+      attachments = value;
+      body = "";
+      for (int i = 0; i < attachments.length; i++) {
+        if (attachments[i] == null) continue;
+
+        String appDocPath = SettingsManager().appDocDir.path;
+        String pathName =
+            "$appDocPath/attachments/${attachments[i].guid}/${attachments[i].transferName}";
+
+        /**
+           * Case 1: If the file exists (we can get the type), add the file to the chat's attachments
+           * Case 2: If the attachment is currently being downloaded, get the AttachmentDownloader object and add it to the chat's attachments
+           * Case 3: If the attachment is a text-based one, automatically auto-download
+           * Case 4: Otherwise, add the attachment, as is, meaning it needs to be downloaded
+           */
+
+        if (FileSystemEntity.typeSync(pathName) !=
+            FileSystemEntityType.notFound) {
+          chatAttachments.add(File(pathName));
+          String mimeType = getMimeType(File(pathName));
+          if (mimeType == "video") {}
+        } else if (SocketManager()
+            .attachmentDownloaders
+            .containsKey(attachments[i].guid)) {
+          chatAttachments
+              .add(SocketManager().attachmentDownloaders[attachments[i].guid]);
+        } else if (attachments[i].mimeType == null ||
+            attachments[i].mimeType.startsWith("text/")) {
+          AttachmentDownloader downloader =
+              new AttachmentDownloader(attachments[i]);
+          chatAttachments.add(downloader);
+        } else {
+          chatAttachments.add(attachments[i]);
+        }
+      }
+      if (this.mounted) setState(() {});
+    });
+  }
+
+  String getMimeType(File attachment) {
+    String mimeType = mime(basename(attachment.path));
+    if (mimeType == null) return "";
+    mimeType = mimeType.substring(0, mimeType.indexOf("/"));
+    return mimeType;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -98,6 +148,7 @@ class _MessageState extends State<MessageWidget>
               threshold: 1) ||
           !sameSender(widget.message, widget.newerMessage);
     }
+    getAttachments();
   }
 
   bool withinTimeThreshold(Message first, Message second, {threshold: 5}) {
@@ -108,14 +159,182 @@ class _MessageState extends State<MessageWidget>
 
   List<Widget> _buildContent() {
     List<Widget> content = <Widget>[];
+    for (int i = 0; i < chatAttachments.length; i++) {
+      // Pull the blurhash from the attachment, based on the class type
+      String blurhash =
+          chatAttachments[i] is Attachment ? chatAttachments[i].blurhash : null;
+      blurhash = chatAttachments[i] is AttachmentDownloader
+          ? chatAttachments[i].attachment.blurhash
+          : null;
 
-    if (widget.bloc.attachments.containsKey(widget.message.guid)) {
-      debugPrint("contains key");
-      content.addAll(widget.bloc.attachments[widget.message.guid]);
+      // Skip over unnecessary hyperlink images
+      if (chatAttachments[i] is File &&
+          attachments[i].mimeType == null &&
+          i + 1 < attachments.length &&
+          attachments[i + 1].mimeType == null) {
+        continue;
+      }
+
+      // Convert the placeholder to a Widget
+      Widget placeholder = (blurhash == null)
+          ? Container()
+          : FutureBuilder(
+              future: blurHashDecode(blurhash),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.done &&
+                    snapshot.hasData) {
+                  return ClipRRect(
+                    borderRadius: BorderRadius.circular(8.0),
+                    child: Image.memory(
+                      snapshot.data,
+                      width: 300,
+                      // height: 300,
+                      fit: BoxFit.fitWidth,
+                    ),
+                  );
+                } else {
+                  return Container();
+                }
+              },
+            );
+
+      // If it's a file, it's already been downlaoded, so just display it
+      if (chatAttachments[i] is File) {
+        String mimeType = attachments[i].mimeType;
+        if (mimeType != null)
+          mimeType = mimeType.substring(0, mimeType.indexOf("/"));
+        if ((mimeType == null || mimeType == "image")) {
+          content.add(
+            ImageWidget(
+              attachment: attachments[i],
+              file: chatAttachments[i],
+            ),
+          );
+        } else if (mimeType == "video") {
+          content.add(
+            VideoWidget(
+              attachment: attachments[i],
+              file: chatAttachments[i],
+            ),
+          );
+        } else if (mimeType == "audio") {
+          //TODO fix this stuff
+          content.add(
+            AudioPlayerWiget(
+              attachment: attachments[i],
+              file: chatAttachments[i],
+            ),
+          );
+        } else if (attachments[i].mimeType == "text/x-vlocation") {
+          content.add(
+            LocationWidget(
+              file: chatAttachments[i],
+              attachment: attachments[i],
+            ),
+          );
+        } else if (attachments[i].mimeType == "text/vcard") {
+          content.add(
+            ContactWidget(
+              file: chatAttachments[i],
+              attachment: attachments[i],
+            ),
+          );
+        }
+
+        // If it's an attachment, then it needs to be manually downloaded
+      } else if (chatAttachments[i] is Attachment) {
+        content.add(
+          Stack(
+            alignment: Alignment.center,
+            children: <Widget>[
+              CupertinoButton(
+                padding:
+                    EdgeInsets.only(left: 20, right: 20, top: 10, bottom: 10),
+                onPressed: () {
+                  chatAttachments[i] =
+                      new AttachmentDownloader(chatAttachments[i]);
+                  setState(() {});
+                },
+                color: Colors.transparent,
+                child: Column(children: <Widget>[
+                  Text(chatAttachments[i].getFriendlySize(),
+                      style: TextStyle(fontSize: 12)),
+                  Icon(Icons.cloud_download, size: 28.0),
+                  (chatAttachments[i].mimeType != null)
+                      ? Text(chatAttachments[i].mimeType,
+                          style: TextStyle(fontSize: 12))
+                      : Container()
+                ]),
+              ),
+            ],
+          ),
+        );
+
+        // If it's an AttachmentDownloader, it is currently being downloaded
+      } else if (chatAttachments[i] is AttachmentDownloader) {
+        content.add(
+          StreamBuilder(
+            stream: chatAttachments[i].stream,
+            builder: (BuildContext context, AsyncSnapshot snapshot) {
+              if (snapshot.hasError) {
+                return Text(
+                  "Error loading",
+                  style: TextStyle(color: Colors.white),
+                );
+              }
+              if (snapshot.data is File) {
+                getAttachments();
+                return Container();
+              } else {
+                double progress = 0.0;
+                if (snapshot.hasData) {
+                  progress = snapshot.data["Progress"];
+                } else {
+                  progress = chatAttachments[i].progress;
+                }
+
+                return Stack(
+                  alignment: Alignment.center,
+                  children: <Widget>[
+                    placeholder,
+                    Padding(
+                      padding: EdgeInsets.all(5.0),
+                      child: Column(children: <Widget>[
+                        CircularProgressIndicator(
+                          value: progress,
+                          backgroundColor: Colors.grey,
+                          valueColor: AlwaysStoppedAnimation(Colors.white),
+                        ),
+                        ((chatAttachments[i] as AttachmentDownloader)
+                                    .attachment
+                                    .mimeType !=
+                                null)
+                            ? Container(height: 5.0)
+                            : Container(),
+                        (chatAttachments[i].file.mimeType != null)
+                            ? Text(chatAttachments[i].file.mimeType,
+                                style: TextStyle(
+                                    fontSize: 12, color: Colors.white))
+                            : Container()
+                      ]),
+                    )
+                  ],
+                );
+              }
+            },
+          ),
+        );
+      } else {
+        content.add(
+          Text(
+            "Error loading",
+            style: TextStyle(color: Colors.white),
+          ),
+        );
+      }
     }
 
-    if (!isEmptyString(widget.message.text) &&
-        widget.bloc.attachments.containsKey(widget.message.guid)) {
+    if (!isEmptyString(widget.message.text) && attachments.length > 0) {
       content.add(Padding(
         padding: EdgeInsets.only(left: 20, right: 10),
         child: Text(
@@ -125,8 +344,7 @@ class _MessageState extends State<MessageWidget>
           ),
         ),
       ));
-    } else if (!isEmptyString(widget.message.text) &&
-        !widget.bloc.attachments.containsKey(widget.message.guid)) {
+    } else if (!isEmptyString(widget.message.text) && attachments.length == 0) {
       content.add(
         Text(
           widget.message.text,
@@ -195,15 +413,14 @@ class _MessageState extends State<MessageWidget>
       );
     } else {
       return ReceivedMessage(
-        timeStamp: _buildTimeStamp(),
-        reactions: _buildReactions(),
-        content: _buildContent(),
-        showTail: showTail,
-        olderMessage: widget.olderMessage,
-        message: widget.message,
-        overlayEntry: _createOverlayEntry(),
-        showHandle: widget.showHandle,
-      );
+          timeStamp: _buildTimeStamp(),
+          reactions: _buildReactions(),
+          content: _buildContent(),
+          showTail: showTail,
+          olderMessage: widget.olderMessage,
+          message: widget.message,
+          overlayEntry: _createOverlayEntry(),
+          showHandle: widget.showHandle);
     }
   }
 
@@ -347,14 +564,4 @@ class _MessageState extends State<MessageWidget>
     );
     return entry;
   }
-
-  @override
-  void dispose() {
-    if (_flickManager != null) _flickManager.dispose();
-    super.dispose();
-  }
-
-  @override
-  bool get wantKeepAlive =>
-      widget.bloc.attachments.containsKey(widget.message.guid);
 }
