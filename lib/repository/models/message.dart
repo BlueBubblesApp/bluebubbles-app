@@ -85,7 +85,7 @@ class Message {
   factory Message.fromMap(Map<String, dynamic> json) {
     bool hasAttachments = false;
     if (json.containsKey("hasAttachments")) {
-      hasAttachments = json["hasAttachments"] == 1 ? true : false; 
+      hasAttachments = json["hasAttachments"] == 1 ? true : false;
     } else if (json.containsKey("attachments")) {
       hasAttachments = (json['attachments'] as List).length > 0 ? true : false;
     }
@@ -195,7 +195,8 @@ class Message {
     return this;
   }
 
-  static Future<Message> replaceMessage(String oldGuid, Message newMessage) async {
+  static Future<Message> replaceMessage(
+      String oldGuid, Message newMessage) async {
     final Database db = await DBProvider.db.database;
     Message existing = await Message.findOne({"guid": oldGuid});
     if (existing == null) {
@@ -261,7 +262,9 @@ class Message {
         " attachment.totalBytes AS totalBytes,"
         " attachment.isSticker AS isSticker,"
         " attachment.hideAttachment AS hideAttachment,"
-        " attachment.blurhash AS blurhash"
+        " attachment.blurhash AS blurhash,"
+        " attachment.width AS width,"
+        " attachment.height AS height"
         " FROM message"
         " JOIN attachment_message_join AS amj ON message.ROWID = amj.messageId"
         " JOIN attachment ON attachment.ROWID = amj.attachmentId"
@@ -292,7 +295,6 @@ class Message {
 
     return (res.isNotEmpty) ? Chat.fromMap(res[0]) : null;
   }
-
 
   Future<Handle> getHandle() async {
     final Database db = await DBProvider.db.database;

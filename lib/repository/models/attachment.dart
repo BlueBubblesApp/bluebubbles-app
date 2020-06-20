@@ -67,8 +67,8 @@ class Attachment {
           ? json['hideAttachment']
           : ((json['hideAttachment'] == 1) ? true : false),
       blurhash: json.containsKey("blurhash") ? json["blurhash"] : null,
-      height: json.containsKey("height") ? json["height"] : null,
-      width: json.containsKey("width") ? json["width"] : null,
+      height: json.containsKey("height") ? json["height"] : 0,
+      width: json.containsKey("width") ? json["width"] : 0,
     );
   }
 

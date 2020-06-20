@@ -60,7 +60,8 @@ class MessageWidget extends StatefulWidget {
   _MessageState createState() => _MessageState();
 }
 
-class _MessageState extends State<MessageWidget> {
+class _MessageState extends State<MessageWidget>
+    with AutomaticKeepAliveClientMixin {
   List<Attachment> attachments = <Attachment>[];
   String body;
   List chatAttachments = [];
@@ -161,11 +162,11 @@ class _MessageState extends State<MessageWidget> {
     List<Widget> content = <Widget>[];
     for (int i = 0; i < chatAttachments.length; i++) {
       // Pull the blurhash from the attachment, based on the class type
-      String blurhash =
-          chatAttachments[i] is Attachment ? chatAttachments[i].blurhash : null;
-      blurhash = chatAttachments[i] is AttachmentDownloader
+      String blurhash = chatAttachments[i] is AttachmentDownloader
           ? chatAttachments[i].attachment.blurhash
-          : null;
+          : chatAttachments[i] is Attachment
+              ? chatAttachments[i].blurhash
+              : null;
 
       // Skip over unnecessary hyperlink images
       if (chatAttachments[i] is File &&
@@ -185,11 +186,14 @@ class _MessageState extends State<MessageWidget> {
                     snapshot.hasData) {
                   return ClipRRect(
                     borderRadius: BorderRadius.circular(8.0),
-                    child: Image.memory(
-                      snapshot.data,
-                      width: 300,
-                      // height: 300,
-                      fit: BoxFit.fitWidth,
+                    child: AspectRatio(
+                      aspectRatio: attachments[i].width / attachments[i].height,
+                      child: Image.memory(
+                        snapshot.data,
+                        width: 300,
+                        // height: 300,
+                        fit: BoxFit.fill,
+                      ),
                     ),
                   );
                 } else {
@@ -247,6 +251,7 @@ class _MessageState extends State<MessageWidget> {
           Stack(
             alignment: Alignment.center,
             children: <Widget>[
+              placeholder,
               CupertinoButton(
                 padding:
                     EdgeInsets.only(left: 20, right: 20, top: 10, bottom: 10),
@@ -256,15 +261,21 @@ class _MessageState extends State<MessageWidget> {
                   setState(() {});
                 },
                 color: Colors.transparent,
-                child: Column(children: <Widget>[
-                  Text(chatAttachments[i].getFriendlySize(),
-                      style: TextStyle(fontSize: 12)),
-                  Icon(Icons.cloud_download, size: 28.0),
-                  (chatAttachments[i].mimeType != null)
-                      ? Text(chatAttachments[i].mimeType,
-                          style: TextStyle(fontSize: 12))
-                      : Container()
-                ]),
+                child: Column(
+                  children: <Widget>[
+                    Text(
+                      chatAttachments[i].getFriendlySize(),
+                      style: TextStyle(fontSize: 12),
+                    ),
+                    Icon(Icons.cloud_download, size: 28.0),
+                    (chatAttachments[i].mimeType != null)
+                        ? Text(
+                            chatAttachments[i].mimeType,
+                            style: TextStyle(fontSize: 12),
+                          )
+                        : Container()
+                  ],
+                ),
               ),
             ],
           ),
@@ -299,24 +310,26 @@ class _MessageState extends State<MessageWidget> {
                     placeholder,
                     Padding(
                       padding: EdgeInsets.all(5.0),
-                      child: Column(children: <Widget>[
-                        CircularProgressIndicator(
-                          value: progress,
-                          backgroundColor: Colors.grey,
-                          valueColor: AlwaysStoppedAnimation(Colors.white),
-                        ),
-                        ((chatAttachments[i] as AttachmentDownloader)
-                                    .attachment
-                                    .mimeType !=
-                                null)
-                            ? Container(height: 5.0)
-                            : Container(),
-                        (chatAttachments[i].file.mimeType != null)
-                            ? Text(chatAttachments[i].file.mimeType,
-                                style: TextStyle(
-                                    fontSize: 12, color: Colors.white))
-                            : Container()
-                      ]),
+                      child: Column(
+                        children: <Widget>[
+                          CircularProgressIndicator(
+                            value: progress,
+                            backgroundColor: Colors.grey,
+                            valueColor: AlwaysStoppedAnimation(Colors.white),
+                          ),
+                          ((chatAttachments[i] as AttachmentDownloader)
+                                      .attachment
+                                      .mimeType !=
+                                  null)
+                              ? Container(height: 5.0)
+                              : Container(),
+                          (chatAttachments[i].attachment.mimeType != null)
+                              ? Text(chatAttachments[i].attachment.mimeType,
+                                  style: TextStyle(
+                                      fontSize: 12, color: Colors.white))
+                              : Container()
+                        ],
+                      ),
                     )
                   ],
                 );
@@ -564,4 +577,7 @@ class _MessageState extends State<MessageWidget> {
     );
     return entry;
   }
+
+  @override
+  bool get wantKeepAlive => true;
 }
