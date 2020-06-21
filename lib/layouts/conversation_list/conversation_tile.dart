@@ -71,7 +71,7 @@ class _ConversationTileState extends State<ConversationTile> {
       child: InkWell(
         onTap: () async {
           Navigator.of(context).push(
-            MaterialPageRoute(
+            CupertinoPageRoute(
               builder: (BuildContext context) {
                 return ConversationView(
                   chat: widget.chat,
@@ -88,32 +88,27 @@ class _ConversationTileState extends State<ConversationTile> {
               padding: const EdgeInsets.only(left: 35.0),
               child: Container(
                 decoration: BoxDecoration(
-                  border: Border(
-                    top: BorderSide(
-                      color: Colors.white.withAlpha(40),
-                      width: 0.5
-                    )
-                  )
-                ),
+                    border: Border(
+                        top: BorderSide(
+                            color: Colors.white.withAlpha(40), width: 0.5))),
                 child: ListTile(
                   contentPadding: EdgeInsets.only(left: 0),
-                  title: Text(
-                    widget.title,
-                    style: TextStyle(
-                      color: Colors.white,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis
-                  ),
-                  subtitle: widget.subtitle != null && !(widget.subtitle is String)
-                    ? widget.subtitle
-                    : Text(
-                      widget.subtitle != null ? widget.subtitle : "",
-                        style: TextStyle(
-                          color: HexColor('36363a'),
-                        ),
+                  title: Text(widget.title,
+                      style: TextStyle(
+                        color: Colors.white,
+                      ),
                       maxLines: 1,
-                    ),
+                      overflow: TextOverflow.ellipsis),
+                  subtitle:
+                      widget.subtitle != null && !(widget.subtitle is String)
+                          ? widget.subtitle
+                          : Text(
+                              widget.subtitle != null ? widget.subtitle : "",
+                              style: TextStyle(
+                                color: HexColor('36363a'),
+                              ),
+                              maxLines: 1,
+                            ),
                   leading: CircleAvatar(
                     radius: 20,
                     child: contactImage == null
@@ -123,13 +118,18 @@ class _ConversationTileState extends State<ConversationTile> {
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
                                 begin: AlignmentDirectional.topStart,
-                                colors: [HexColor('a0a4af'), HexColor('848894')],
+                                colors: [
+                                  HexColor('a0a4af'),
+                                  HexColor('848894')
+                                ],
                               ),
                               borderRadius: BorderRadius.circular(30),
                             ),
                             child: Container(
                               // child: Text("${widget.chat.title[0]}"),
-                              child: (initials is Icon) ? initials : Text(initials),
+                              child: (initials is Icon)
+                                  ? initials
+                                  : Text(initials),
                               alignment: AlignmentDirectional.center,
                             ),
                           )

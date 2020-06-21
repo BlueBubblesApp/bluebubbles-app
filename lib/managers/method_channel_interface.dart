@@ -119,7 +119,7 @@ class MethodChannelInterface {
         });
 
         NavigatorManager().navigatorKey.currentState.pushAndRemoveUntil(
-            MaterialPageRoute(
+            CupertinoPageRoute(
               builder: (context) => NewChatCreator(
                 attachments: attachments,
                 isCreator: true,
@@ -132,7 +132,7 @@ class MethodChannelInterface {
         String text = call.arguments;
         debugPrint("got text " + text);
         NavigatorManager().navigatorKey.currentState.pushAndRemoveUntil(
-            MaterialPageRoute(
+            CupertinoPageRoute(
               builder: (context) => NewChatCreator(
                 existingText: text,
                 isCreator: true,
@@ -149,7 +149,7 @@ class MethodChannelInterface {
       String title = await getFullChatTitle(openedChat);
 
       Navigator.of(_context).pushAndRemoveUntil(
-        MaterialPageRoute(
+        CupertinoPageRoute(
           builder: (context) => ConversationView(
             chat: openedChat,
             messageBloc: ChatBloc().tileVals[openedChat.guid]["bloc"],

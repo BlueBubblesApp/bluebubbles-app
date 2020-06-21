@@ -143,7 +143,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                   ? InkWell(
                       onTap: () async {
                         Chat result = await Navigator.of(context).push(
-                          MaterialPageRoute(
+                          CupertinoPageRoute(
                             builder: (context) => NewChatCreator(
                               currentChat: chat,
                               isCreator: false,

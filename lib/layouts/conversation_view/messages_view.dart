@@ -68,10 +68,6 @@ class _MessageViewState extends State<MessageView> {
               );
             }
 
-            if (index == 0) {
-              debugPrint("last message guid is " + _messages[0].guid);
-            }
-
             return MessageWidget(
               key: Key(_messages[index].guid),
               fromSelf: _messages[index].isFromMe,

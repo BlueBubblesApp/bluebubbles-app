@@ -39,7 +39,7 @@ class QueueManager {
   }
 
   Future<void> handleEvent(String event, String jsonData) async {
-    if (event == "update-message") {
+    if (event == "updated-message") {
       await ActionHandler.handleUpdatedMessage(jsonDecode(jsonData));
     } else if (event == "new-message") {
       await ActionHandler.handleMessage(jsonDecode(jsonData));
@@ -47,10 +47,7 @@ class QueueManager {
   }
 
   addEvent(String event, String message) {
-    this.queue.add({
-      "event": event,
-      "message": message
-    });
+    this.queue.add({"event": event, "message": message});
   }
 
   flush() {

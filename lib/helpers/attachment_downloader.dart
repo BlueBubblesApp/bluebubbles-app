@@ -18,7 +18,7 @@ class AttachmentDownloader {
 
   int _currentChunk = 0;
   int _totalChunks = 0;
-  int _chunkSize = 512;  // Default to 512kb
+  int _chunkSize = 512; // Default to 512kb
   List<int> _currentBytes = <int>[];
   String _guid = "";
   Function _cb;
@@ -44,7 +44,8 @@ class AttachmentDownloader {
     }
   }
 
-  getChunkRecursive(String guid, int index, int total, List<int> currentBytes, Function cb) {
+  getChunkRecursive(
+      String guid, int index, int total, List<int> currentBytes, Function cb) {
     _currentBytes = currentBytes;
 
     if (index <= total) {
@@ -53,7 +54,8 @@ class AttachmentDownloader {
       params["start"] = index * _chunkSize;
       params["chunkSize"] = _chunkSize;
       params["compress"] = false;
-      SocketManager().socket.sendMessage("get-attachment-chunk", jsonEncode(params), (chunk) async {
+      SocketManager().socket.sendMessage(
+          "get-attachment-chunk", jsonEncode(params), (chunk) async {
         Map<String, dynamic> attachmentResponse = jsonDecode(chunk);
         if (!attachmentResponse.containsKey("data") ||
             attachmentResponse["data"] == null) {
@@ -93,7 +95,8 @@ class AttachmentDownloader {
     _totalChunks = numOfChunks;
     _cb = (List<int> data) async {
       stopwatch.stop();
-      debugPrint("Attachment downloaded in ${stopwatch.elapsedMilliseconds} ms");
+      debugPrint(
+          "Attachment downloaded in ${stopwatch.elapsedMilliseconds} ms");
 
       if (data.length == 0) {
         _stream.sink.addError("unable to load");

@@ -57,14 +57,17 @@ class _SettingsPanelState extends State<SettingsPanel> {
         physics: AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
         children: <Widget>[
           SettingsTile(
-            title: "Connection Status",
-            subTitle: _settingsCopy.connected ? "Connected -> Tap to Refresh" : "Disconnected -> Tap to Refresh",
-            trailing: _settingsCopy.connected ? Icon(Icons.fiber_manual_record, color: HexColor('32CD32')) : Icon(Icons.fiber_manual_record, color: HexColor('DC143C')),
-            onTap: () {
-              _settingsCopy.connected = SettingsManager().settings.connected;
-              setState(() {});
-            }
-          ),
+              title: "Connection Status",
+              subTitle: _settingsCopy.connected
+                  ? "Connected -> Tap to Refresh"
+                  : "Disconnected -> Tap to Refresh",
+              trailing: _settingsCopy.connected
+                  ? Icon(Icons.fiber_manual_record, color: HexColor('32CD32'))
+                  : Icon(Icons.fiber_manual_record, color: HexColor('DC143C')),
+              onTap: () {
+                _settingsCopy.connected = SettingsManager().settings.connected;
+                setState(() {});
+              }),
           SettingsTile(
             onTap: () {
               showDialog(
@@ -139,7 +142,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
               try {
                 fcmData = jsonDecode(
                   await Navigator.of(context).push(
-                    MaterialPageRoute(
+                    CupertinoPageRoute(
                       builder: (BuildContext context) {
                         return QRCodeScanner();
                       },

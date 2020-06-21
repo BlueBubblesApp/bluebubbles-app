@@ -46,12 +46,16 @@ class _ContactWidgetState extends State<ContactWidget> {
           color: Colors.transparent,
           child: InkWell(
             onTap: () async {
-              MethodChannelInterface().invokeMethod("CreateContact", {
-                "path": "/attachments/" +
-                    widget.attachment.guid +
-                    "/" +
-                    basename(widget.file.path)
-              });
+              MethodChannelInterface().invokeMethod(
+                "open_file",
+                {
+                  "path": "/attachments/" +
+                      widget.attachment.guid +
+                      "/" +
+                      basename(widget.file.path),
+                  "mimeType": "text/x-vcard",
+                },
+              );
             },
             child: Center(
               child: Row(

@@ -7,6 +7,7 @@ import 'package:bluebubble_messages/managers/settings_manager.dart';
 import 'package:bluebubble_messages/settings.dart';
 import 'package:bluebubble_messages/socket_manager.dart';
 import 'package:contacts_service/contacts_service.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -194,7 +195,7 @@ class _SetupViewState extends State<SetupView> {
                 try {
                   fcmData = jsonDecode(
                     await Navigator.of(context).push(
-                      MaterialPageRoute(
+                      CupertinoPageRoute(
                         builder: (BuildContext context) {
                           return QRCodeScanner();
                         },

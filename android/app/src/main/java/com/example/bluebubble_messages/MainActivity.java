@@ -185,12 +185,12 @@ public class MainActivity extends FlutterActivity {
                                 notificationManager.notify(call.argument("notificationId"), builder.build());
                                 notificationManager.notify(call.argument("summaryId"), summaryBuilder.build());
                                 result.success("");
-                            } else if (call.method.equals("CreateContact")) {
+                            } else if (call.method.equals("open_file")) {
                                 Intent intent = new Intent(Intent.ACTION_VIEW);
                                 Log.d("filesDir", "filesDir is " + getFilesDir().getAbsolutePath() + (String) call.argument("path"));
                                 Uri data = FileProvider.getUriForFile(getApplicationContext(), "com.example.path_provider", new File(getFilesDir().getAbsolutePath() + (String) call.argument("path")));
                                 getApplicationContext().grantUriPermission(getApplicationContext().getPackageName(), data, Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                                intent.setDataAndType(data, "text/x-vcard");
+                                intent.setDataAndType(data, (String) call.argument("mimeType"));
                                 intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
                                 startActivity(intent);
 

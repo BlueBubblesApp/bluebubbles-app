@@ -79,7 +79,8 @@ class _SentMessageState extends State<SentMessage> {
                                         ]),
                                     color: Colors.black26,
                                     onPressed: () async {
-                                      ActionHandler.retryMessage(widget.message);
+                                      ActionHandler.retryMessage(
+                                          widget.message);
                                       entry.remove();
                                     })
                               ],
@@ -154,6 +155,8 @@ class _SentMessageState extends State<SentMessage> {
           ),
           GestureDetector(
             onLongPress: () {
+              debugPrint(
+                  "message data is " + widget.message.toMap().toString());
               Overlay.of(context).insert(widget.overlayEntry);
             },
             child: Container(

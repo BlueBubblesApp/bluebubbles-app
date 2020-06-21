@@ -13,6 +13,7 @@ import 'package:bluebubble_messages/managers/notification_manager.dart';
 import 'package:bluebubble_messages/managers/settings_manager.dart';
 import 'package:bluebubble_messages/socket_manager.dart';
 import 'package:contacts_service/contacts_service.dart';
+import 'package:flutter/cupertino.dart' as Cupertino;
 
 import '../../helpers/hex_color.dart';
 
@@ -92,7 +93,7 @@ class _ConversationViewState extends State<ConversationView> {
     Function openDetails = () async {
       Chat _chat = await chat.getParticipants();
       Navigator.of(context).push(
-        MaterialPageRoute(
+        Cupertino.CupertinoPageRoute(
           builder: (context) => ConversationDetails(
             chat: _chat,
           ),

@@ -11,6 +11,7 @@ import 'package:bluebubble_messages/layouts/widgets/message_widget/message_conte
 import 'package:bluebubble_messages/layouts/widgets/message_widget/message_content/media_players/contact_widget.dart';
 import 'package:bluebubble_messages/layouts/widgets/message_widget/message_content/media_players/image_widget.dart';
 import 'package:bluebubble_messages/layouts/widgets/message_widget/message_content/media_players/loaction_widget.dart';
+import 'package:bluebubble_messages/layouts/widgets/message_widget/message_content/media_players/regular_file_opener.dart';
 import 'package:bluebubble_messages/layouts/widgets/message_widget/message_content/media_players/video_widget.dart';
 import 'package:bluebubble_messages/layouts/widgets/message_widget/received_message.dart';
 import 'package:bluebubble_messages/layouts/widgets/message_widget/sent_message.dart';
@@ -239,6 +240,13 @@ class _MessageState extends State<MessageWidget>
         } else if (attachments[i].mimeType == "text/vcard") {
           content.add(
             ContactWidget(
+              file: chatAttachments[i],
+              attachment: attachments[i],
+            ),
+          );
+        } else {
+          content.add(
+            RegularFileOpener(
               file: chatAttachments[i],
               attachment: attachments[i],
             ),

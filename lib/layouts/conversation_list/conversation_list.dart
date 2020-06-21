@@ -152,7 +152,7 @@ class _ConversationListState extends State<ConversationList> {
                               color: Colors.white.withOpacity(0.1),
                               onPressed: () {
                                 Navigator.of(context).push(
-                                  MaterialPageRoute(
+                                  CupertinoPageRoute(
                                     builder: (BuildContext context) {
                                       return SettingsPanel();
                                     },
@@ -223,7 +223,7 @@ class _ConversationListState extends State<ConversationList> {
             child: Icon(Icons.message, color: Colors.white, size: 25),
             onPressed: () {
               Navigator.of(context).push(
-                MaterialPageRoute(
+                CupertinoPageRoute(
                   builder: (BuildContext context) {
                     return NewChatCreator(
                       isCreator: true,
