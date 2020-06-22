@@ -20,6 +20,21 @@ class _ImageViewerState extends State<ImageViewer> {
   double left = 0;
   double top = 0;
   int duration = 0;
+  double _scale = 1;
+  double _previousScale = null;
+  PhotoViewController controller;
+
+  @override
+  void initState() {
+    super.initState();
+    controller = new PhotoViewController();
+  }
+
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -36,6 +51,7 @@ class _ImageViewerState extends State<ImageViewer> {
               height: MediaQuery.of(context).size.height,
               width: MediaQuery.of(context).size.width,
               child: PhotoView(
+                controller: controller,
                 heroAttributes: PhotoViewHeroAttributes(
                   tag: widget.tag,
                 ),

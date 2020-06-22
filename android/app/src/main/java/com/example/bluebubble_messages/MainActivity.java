@@ -73,6 +73,7 @@ public class MainActivity extends FlutterActivity {
     public Long callbackHandle;
     private DatabaseReference db;
     private FusedLocationProviderClient fusedLocationClient;
+    private Intent startingIntent;
 
 
     private ValueEventListener dbListener = new ValueEventListener() {
@@ -227,6 +228,8 @@ public class MainActivity extends FlutterActivity {
                                             }
                                         });
 
+                            } else if (call.method.equals("get-starting-intent")) {
+                                result.success(startingIntent);
                             } else {
                                 result.notImplemented();
                             }
@@ -256,8 +259,9 @@ public class MainActivity extends FlutterActivity {
         // Get intent, action and MIME type
         String action = intent.getAction();
         String type = intent.getType();
+        if (type == null) return;
 
-        if (Intent.ACTION_SEND.equals(action) && type != null) {
+        if (Intent.ACTION_SEND.equals(action)) {
             if ("text/plain".equals(type)) {
                 handleSendText(intent); // Handle text being sent
             } else if (type.startsWith("image/")) {
@@ -272,15 +276,10 @@ public class MainActivity extends FlutterActivity {
                 handleSendMultipleImages(intent);
             }
         } else {
-            // Handle other intents, such as being started from the home screen
-            if (intent == null || intent.getType() == null) return;
-            if (intent.getType().equals("NotificationOpen")) {
+            if (type.equals("NotificationOpen")) {
                 Log.d("Notifications", "tapped on notification by id " + intent.getExtras().getInt("id"));
+                startingIntent = intent;
                 new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod("ChatOpen", intent.getExtras().getString("chatGUID"));
-            } else if (intent.getType().equals("reply")) {
-            } else if (intent.getType().equals("markAsRead")) {
-                NotificationManagerCompat notificationManager = NotificationManagerCompat.from(getContext());
-                notificationManager.cancel(intent.getExtras().getInt("id"));
             }
         }
 

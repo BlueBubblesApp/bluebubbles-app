@@ -107,6 +107,10 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
           (route) => route.isFirst);
     });
 
+    MethodChannelInterface().invokeMethod("get-starting-intent").then((value) {
+      debugPrint("starting intent " + value.toString());
+    });
+
     NotificationManager().createNotificationChannel();
     SchedulerBinding.instance
         .addPostFrameCallback((_) => SettingsManager().getSavedSettings());
