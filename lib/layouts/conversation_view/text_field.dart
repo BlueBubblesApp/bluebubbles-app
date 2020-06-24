@@ -18,6 +18,7 @@ import 'package:video_thumbnail/video_thumbnail.dart';
 class BlueBubblesTextField extends StatefulWidget {
   final Chat chat;
   final Function customSend;
+  final Function onSend;
   final List<File> existingAttachments;
   final String existingText;
   BlueBubblesTextField({
@@ -26,6 +27,7 @@ class BlueBubblesTextField extends StatefulWidget {
     this.customSend,
     this.existingAttachments,
     this.existingText,
+    this.onSend,
   }) : super(key: key);
 
   @override
@@ -39,6 +41,8 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField> {
   bool showImagePicker = false;
   List<File> pickedImages = <File>[];
   List<Widget> _imageWidgets = <Widget>[];
+  static final GlobalKey<FormFieldState<String>> _searchFormKey =
+      GlobalKey<FormFieldState<String>>();
 
   @override
   void initState() {
@@ -215,6 +219,7 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField> {
                     children: <Widget>[
                       CupertinoTextField(
                         // autofocus: true,
+                        key: _searchFormKey,
                         textCapitalization: TextCapitalization.sentences,
                         focusNode: _focusNode,
                         autocorrect: true,
@@ -265,7 +270,12 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField> {
                                   );
                                 }
                               } else {
-                                ActionHandler.sendMessage(widget.chat, _controller.text);
+                                ActionHandler.sendMessage(
+                                    widget.chat, _controller.text);
+                              }
+
+                              if (widget.onSend != null) {
+                                widget.onSend(_controller.text);
                               }
                             }
 

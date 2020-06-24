@@ -8,9 +8,14 @@ import 'package:bluebubble_messages/layouts/conversation_details/conversation_de
 import 'package:bluebubble_messages/layouts/conversation_view/messages_view.dart';
 import 'package:bluebubble_messages/layouts/conversation_view/text_field.dart';
 import 'package:bluebubble_messages/layouts/widgets/CustomCupertinoNavBar.dart';
+import 'package:bluebubble_messages/layouts/widgets/animated_offset_builder.dart';
+import 'package:bluebubble_messages/layouts/widgets/message_widget/message_widget.dart';
+import 'package:bluebubble_messages/layouts/widgets/message_widget/sent_message.dart';
+import 'package:bluebubble_messages/layouts/widgets/send_widget.dart';
 import 'package:bluebubble_messages/managers/contact_manager.dart';
 import 'package:bluebubble_messages/managers/notification_manager.dart';
 import 'package:bluebubble_messages/managers/settings_manager.dart';
+import 'package:bluebubble_messages/repository/models/message.dart';
 import 'package:bluebubble_messages/socket_manager.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/cupertino.dart' as Cupertino;
@@ -40,6 +45,8 @@ class ConversationView extends StatefulWidget {
 class _ConversationViewState extends State<ConversationView> {
   ImageProvider contactImage;
   Chat chat;
+  OverlayEntry entry;
+  LayerLink layerLink = LayerLink();
 
   @override
   void initState() {
@@ -110,6 +117,7 @@ class _ConversationViewState extends State<ConversationView> {
             bottom:
                 BorderSide(color: Colors.white.withOpacity(0.2), width: 0.2)),
         middle: ListView(
+          physics: Cupertino.NeverScrollableScrollPhysics(),
           children: <Widget>[
             Container(height: 10.0),
             GestureDetector(
@@ -179,11 +187,26 @@ class _ConversationViewState extends State<ConversationView> {
               child: MessageView(
                 messageBloc: widget.messageBloc,
                 showHandle: chat.participants.length > 1,
+                layerLink: layerLink,
               ),
             ),
           ),
           BlueBubblesTextField(
             chat: chat,
+            onSend: (String text) async {
+              // if (entry != null) entry.remove();
+              // entry = _createOverlayEntry(text);
+              // Overlay.of(context).insert(entry);
+              Navigator.of(context).push(
+                PageRouteBuilder(
+                  opaque: false,
+                  pageBuilder: (_, __, ___) => SendWidget(
+                    text: text,
+                    tag: "first",
+                  ),
+                ),
+              );
+            },
           )
         ],
       ),

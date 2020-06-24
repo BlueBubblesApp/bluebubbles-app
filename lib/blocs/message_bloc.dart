@@ -27,9 +27,9 @@ import 'package:latlong/latlong.dart';
 import '../socket_manager.dart';
 
 class MessageBloc {
-  final _messageController = StreamController<List<Message>>.broadcast();
+  final _messageController = StreamController<Map<String, dynamic>>.broadcast();
 
-  Stream<List<Message>> get stream => _messageController.stream;
+  Stream<Map<String, dynamic>> get stream => _messageController.stream;
 
   List<Message> _allMessages = <Message>[];
 
@@ -43,45 +43,49 @@ class MessageBloc {
 
   MessageBloc(Chat chat) {
     _currentChat = chat;
-    getMessages(chat);
+    getMessages();
     NewMessageManager().stream.listen((Map<String, Message> event) {
       if (event.containsKey(_currentChat.guid)) {
         //if there even is a chat specified in the newmessagemanager update
         if (event[_currentChat.guid] == null) {
           //if no message is specified in the newmessagemanager update
-          getMessages(chat);
+          getMessages();
         } else {
           //if there is a specific message to insert
           insert(event[_currentChat.guid]);
         }
       } else if (event.keys.first == null) {
         //if there is no chat specified in the newmessagemanager update
-        getMessages(_currentChat);
+        getMessages();
       }
     });
   }
 
   void insert(Message message) {
+    int index = 0;
     if (_allMessages.length == 0) {
       _allMessages.add(message);
-      _messageController.sink.add(_allMessages);
+      _messageController.sink
+          .add({"messages": _allMessages, "insert": message, "index": index});
       return;
     }
     for (int i = 0; i < _allMessages.length; i++) {
       //if _allMessages[i] dateCreated is earlier than the new message, insert at that index
       if (_allMessages[i].dateCreated.compareTo(message.dateCreated) < 0) {
         _allMessages.insert(i, message);
+        index = i;
         break;
       }
     }
-    _messageController.sink.add(_allMessages);
+    _messageController.sink
+        .add({"messages": _allMessages, "insert": message, "index": index});
   }
 
-  void getMessages(Chat chat) async {
-    List<Message> messages = await Chat.getMessages(chat);
+  void getMessages() async {
+    List<Message> messages = await Chat.getMessages(_currentChat);
     messages.sort((a, b) => -a.dateCreated.compareTo(b.dateCreated));
     _allMessages = messages;
-    _messageController.sink.add(messages);
+    _messageController.sink.add({"messages": _allMessages, "insert": null});
     await getReactions(0);
   }
 
@@ -112,7 +116,8 @@ class MessageBloc {
               await MessageHelper.bulkAddMessages(_currentChat, messages);
           _allMessages.addAll(_messages);
           _allMessages.sort((a, b) => -a.dateCreated.compareTo(b.dateCreated));
-          _messageController.sink.add(_allMessages);
+          _messageController.sink
+              .add({"messages": _allMessages, "insert": null});
           completer.complete();
           await getReactions(offset);
         });
@@ -120,7 +125,7 @@ class MessageBloc {
         // debugPrint("loading more messages from sql " +);
         _allMessages.addAll(messages);
         _allMessages.sort((a, b) => -a.dateCreated.compareTo(b.dateCreated));
-        _messageController.sink.add(_allMessages);
+        _messageController.sink.add({"messages": _allMessages, "insert": null});
         completer.complete();
         await getReactions(offset);
       }
@@ -144,7 +149,7 @@ class MessageBloc {
         _reactions[guid].add(element);
       }
     });
-    _messageController.sink.add(_allMessages);
+    _messageController.sink.add({"messages": _allMessages, "insert": null});
   }
 
   void dispose() {

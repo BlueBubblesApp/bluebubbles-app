@@ -46,7 +46,7 @@ class MessageWidget extends StatefulWidget {
     this.newerMessage,
     this.reactions,
     this.showHandle,
-    this.bloc,
+    this.customContent,
   }) : super(key: key);
 
   final fromSelf;
@@ -55,7 +55,8 @@ class MessageWidget extends StatefulWidget {
   final Message olderMessage;
   final List<Message> reactions;
   final bool showHandle;
-  final MessageBloc bloc;
+
+  final List<Widget> customContent;
 
   @override
   _MessageState createState() => _MessageState();
@@ -94,6 +95,7 @@ class _MessageState extends State<MessageWidget>
   }
 
   void getAttachments() {
+    if (widget.customContent != null) return;
     chatAttachments = [];
     Message.getAttachments(widget.message).then((value) {
       attachments = value;
@@ -160,6 +162,9 @@ class _MessageState extends State<MessageWidget>
   }
 
   List<Widget> _buildContent() {
+    if (widget.customContent != null) {
+      return widget.customContent;
+    }
     List<Widget> content = <Widget>[];
     for (int i = 0; i < chatAttachments.length; i++) {
       // Pull the blurhash from the attachment, based on the class type
@@ -356,15 +361,17 @@ class _MessageState extends State<MessageWidget>
     }
 
     if (!isEmptyString(widget.message.text) && attachments.length > 0) {
-      content.add(Padding(
-        padding: EdgeInsets.only(left: 20, right: 10),
-        child: Text(
-          widget.message.text,
-          style: TextStyle(
-            color: Colors.white,
+      content.add(
+        Padding(
+          padding: EdgeInsets.only(left: 20, right: 10),
+          child: Text(
+            widget.message.text,
+            style: TextStyle(
+              color: Colors.white,
+            ),
           ),
         ),
-      ));
+      );
     } else if (!isEmptyString(widget.message.text) && attachments.length == 0) {
       content.add(
         Text(
@@ -427,10 +434,13 @@ class _MessageState extends State<MessageWidget>
       List<Widget> content = _buildContent();
       return SentMessage(
         content: content,
-        deliveredReceipt: _buildDelieveredReceipt(),
+        deliveredReceipt: widget.customContent != null
+            ? Container()
+            : _buildDelieveredReceipt(),
         message: widget.message,
         overlayEntry: _createOverlayEntry(),
         showTail: showTail,
+        limited: widget.customContent == null,
       );
     } else {
       return ReceivedMessage(

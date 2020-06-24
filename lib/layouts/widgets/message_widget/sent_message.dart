@@ -16,6 +16,9 @@ class SentMessage extends StatefulWidget {
   final OverlayEntry overlayEntry;
   final List<Widget> content;
   final Widget deliveredReceipt;
+
+  final String substituteText;
+  final bool limited;
   SentMessage({
     Key key,
     @required this.showTail,
@@ -23,6 +26,8 @@ class SentMessage extends StatefulWidget {
     @required this.content,
     @required this.overlayEntry,
     @required this.deliveredReceipt,
+    this.substituteText,
+    this.limited,
   }) : super(key: key);
 
   @override
@@ -32,8 +37,9 @@ class SentMessage extends StatefulWidget {
 class _SentMessageState extends State<SentMessage> {
   OverlayEntry _createErrorPopup() {
     OverlayEntry entry;
-    int errorCode = widget.message.error;
-    String errorText = widget.message.guid.split('-')[1];
+    int errorCode = widget.message != null ? widget.message.error : 0;
+    String errorText =
+        widget.message != null ? widget.message.guid.split('-')[1] : "";
 
     entry = OverlayEntry(
       builder: (context) => Scaffold(
@@ -79,8 +85,9 @@ class _SentMessageState extends State<SentMessage> {
                                         ]),
                                     color: Colors.black26,
                                     onPressed: () async {
-                                      ActionHandler.retryMessage(
-                                          widget.message);
+                                      if (widget.message != null)
+                                        ActionHandler.retryMessage(
+                                            widget.message);
                                       entry.remove();
                                     })
                               ],
@@ -134,13 +141,21 @@ class _SentMessageState extends State<SentMessage> {
       stack.insertAll(0, tail);
     }
 
-    double bottomPadding = isEmptyString(widget.message.text) ? 0 : 8;
-    double sidePadding = !isEmptyString(widget.message.text) &&
+    double bottomPadding = isEmptyString(widget.message != null
+            ? widget.message.text
+            : widget.substituteText)
+        ? 0
+        : 8;
+    double sidePadding = !isEmptyString(widget.message != null
+                ? widget.message.text
+                : widget.substituteText) &&
             widget.content.length > 0 &&
             widget.content[0] is Text
         ? 14
         : 0;
-    double topPadding = !isEmptyString(widget.message.text) &&
+    double topPadding = !isEmptyString(widget.message != null
+                ? widget.message.text
+                : widget.substituteText) &&
             widget.content.length > 0 &&
             widget.content[0] is Text
         ? 8
@@ -155,14 +170,15 @@ class _SentMessageState extends State<SentMessage> {
           ),
           GestureDetector(
             onLongPress: () {
-              debugPrint(
-                  "message data is " + widget.message.toMap().toString());
-              Overlay.of(context).insert(widget.overlayEntry);
+              if (widget.overlayEntry != null)
+                Overlay.of(context).insert(widget.overlayEntry);
             },
             child: Container(
               margin: EdgeInsets.symmetric(horizontal: 10),
               constraints: BoxConstraints(
-                maxWidth: MediaQuery.of(context).size.width * 3 / 4,
+                maxWidth: widget.limited != null && !widget.limited
+                    ? MediaQuery.of(context).size.width
+                    : MediaQuery.of(context).size.width * 3 / 4,
               ),
               padding: EdgeInsets.only(
                   top: topPadding,
@@ -190,27 +206,35 @@ class _SentMessageState extends State<SentMessage> {
       )
     ];
 
-    if (widget.message.error > 0)
-      messageWidget.add(GestureDetector(
+    if (widget.message != null && widget.message.error > 0)
+      messageWidget.add(
+        GestureDetector(
           onTap: () {
             Overlay.of(context).insert(this._createErrorPopup());
           },
-          child: Icon(Icons.error_outline, color: Colors.red)));
+          child: Icon(Icons.error_outline, color: Colors.red),
+        ),
+      );
 
     // Icon(Icons.accessible_forward, color: Colors.white),
-    return Row(mainAxisAlignment: MainAxisAlignment.end, children: <Widget>[
-      Column(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: <Widget>[
-          Padding(
-            padding: EdgeInsets.only(
-                bottom: widget.showTail ? 10.0 : 3.0,
-                right: (widget.message.error > 0 ? 10.0 : 0)),
-            child: Row(children: messageWidget),
-          ),
-          widget.deliveredReceipt
-        ],
-      )
-    ]);
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: <Widget>[
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: <Widget>[
+            Padding(
+              padding: EdgeInsets.only(
+                  bottom: widget.showTail ? 10.0 : 3.0,
+                  right: (widget.message != null && widget.message.error > 0
+                      ? 10.0
+                      : 0)),
+              child: Row(children: messageWidget),
+            ),
+            widget.deliveredReceipt
+          ],
+        ),
+      ],
+    );
   }
 }

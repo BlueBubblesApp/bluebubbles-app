@@ -15,29 +15,29 @@ class ReceivedMessage extends StatefulWidget {
   final Widget reactions;
   final bool showHandle;
 
-  ReceivedMessage({
-    Key key,
-    @required this.showTail,
-    @required this.olderMessage,
-    @required this.message,
-    @required this.content,
-    @required this.overlayEntry,
-    @required this.timeStamp,
-    @required this.reactions,
-    @required this.showHandle
-  }) : super(key: key);
+  ReceivedMessage(
+      {Key key,
+      @required this.showTail,
+      @required this.olderMessage,
+      @required this.message,
+      @required this.content,
+      @required this.overlayEntry,
+      @required this.timeStamp,
+      @required this.reactions,
+      @required this.showHandle})
+      : super(key: key);
 
   @override
   _ReceivedMessageState createState() => _ReceivedMessageState();
 }
 
 class _ReceivedMessageState extends State<ReceivedMessage> {
-
   @override
   Widget build(BuildContext context) {
     String handle = "";
     if (widget.message.handle != null && widget.showHandle) {
-      handle = getContactTitle(ContactManager().contacts, widget.message.handle.address);
+      handle = getContactTitle(
+          ContactManager().contacts, widget.message.handle.address);
     }
 
     List<Widget> tail = <Widget>[
@@ -86,8 +86,16 @@ class _ReceivedMessageState extends State<ReceivedMessage> {
     }
 
     double bottomPadding = isEmptyString(widget.message.text) ? 0 : 8;
-    double sidePadding = !isEmptyString(widget.message.text) && widget.content.length > 0 && widget.content[0] is Text ? 14 : 0;
-    double topPadding = !isEmptyString(widget.message.text) && widget.content.length > 0 && widget.content[0] is Text ? 8 : 0;
+    double sidePadding = !isEmptyString(widget.message.text) &&
+            widget.content.length > 0 &&
+            widget.content[0] is Text
+        ? 14
+        : 0;
+    double topPadding = !isEmptyString(widget.message.text) &&
+            widget.content.length > 0 &&
+            widget.content[0] is Text
+        ? 8
+        : 0;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
@@ -115,19 +123,19 @@ class _ReceivedMessageState extends State<ReceivedMessage> {
                     maxWidth: MediaQuery.of(context).size.width * 3 / 4,
                   ),
                   padding: EdgeInsets.only(
-                    top: topPadding,
-                    bottom: bottomPadding,
-                    left: sidePadding,
-                    right: sidePadding
-                  ),
+                      top: topPadding,
+                      bottom: bottomPadding,
+                      left: sidePadding,
+                      right: sidePadding),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(20),
                     color: HexColor('26262a'),
                   ),
                   child: ClipRRect(
-                    borderRadius: (widget.content.length > 0 && widget.content[0] is Text)
-                      ? BorderRadius.circular(0)
-                      : BorderRadius.circular(20),
+                    borderRadius:
+                        (widget.content.length > 0 && widget.content[0] is Text)
+                            ? BorderRadius.circular(0)
+                            : BorderRadius.circular(20),
                     child: Column(
                       children: widget.content,
                     ),
