@@ -347,6 +347,17 @@ class Message {
     return (res.isNotEmpty) ? res.map((c) => Message.fromMap(c)).toList() : [];
   }
 
+  static Future<void> delete(Map<String, dynamic> where) async {
+    final Database db = await DBProvider.db.database;
+
+    List<String> whereParams = [];
+    where.keys.forEach((filter) => whereParams.add('$filter = ?'));
+    List<dynamic> whereArgs = [];
+    where.values.forEach((filter) => whereArgs.add(filter));
+
+    await db.delete("message", where: whereParams.join(" AND "), whereArgs: whereArgs);
+  }
+
   static flush() async {
     final Database db = await DBProvider.db.database;
     await db.delete("message");

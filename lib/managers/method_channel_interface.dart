@@ -2,20 +2,17 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
-import 'dart:ui';
 
 import 'package:bluebubble_messages/action_handler.dart';
 import 'package:bluebubble_messages/blocs/chat_bloc.dart';
+import 'package:bluebubble_messages/blocs/message_bloc.dart';
 import 'package:bluebubble_messages/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubble_messages/layouts/conversation_view/new_chat_creator.dart';
-import 'package:bluebubble_messages/main.dart';
 import 'package:bluebubble_messages/managers/life_cycle_manager.dart';
 import 'package:bluebubble_messages/managers/navigator_manager.dart';
-import 'package:bluebubble_messages/managers/new_message_manager.dart';
 import 'package:bluebubble_messages/managers/notification_manager.dart';
 import 'package:bluebubble_messages/managers/queue_manager.dart';
 import 'package:bluebubble_messages/managers/settings_manager.dart';
-import 'package:bluebubble_messages/repository/database.dart';
 import 'package:bluebubble_messages/repository/models/chat.dart';
 import 'package:bluebubble_messages/repository/models/message.dart';
 import 'package:bluebubble_messages/socket_manager.dart';
@@ -147,12 +144,13 @@ class MethodChannelInterface {
     Chat openedChat = await Chat.findOne({"GUID": id});
     if (openedChat != null) {
       String title = await getFullChatTitle(openedChat);
+      MessageBloc messageBloc = new MessageBloc(openedChat);
 
       Navigator.of(_context).pushAndRemoveUntil(
         CupertinoPageRoute(
           builder: (context) => ConversationView(
             chat: openedChat,
-            messageBloc: ChatBloc().tileVals[openedChat.guid]["bloc"],
+            messageBloc: messageBloc,
             title: title,
           ),
         ),

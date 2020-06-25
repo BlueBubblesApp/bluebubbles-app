@@ -264,16 +264,26 @@ class ActionHandler {
     // Handle message differently depending on if there is a temp GUID match
     if (data.containsKey("tempGuid")) {
       debugPrint("Client received message match for ${data["guid"]}");
-      await Message.replaceMessage(data["tempGuid"], message);
-      List<dynamic> attachments =
-          data.containsKey("attachments") ? data['attachments'] : [];
-      attachments.forEach((attachmentItem) async {
-        Attachment file = Attachment.fromMap(attachmentItem);
-        Attachment.replaceAttachment(data["tempGuid"], file);
-      });
-      List<Chat> chats = MessageHelper.parseChats(data);
-      NewMessageManager()
-          .updateSpecificMessage(chats[0], data["tempGuid"], message);
+
+      // Check if the GUID exists
+      Message existing = await Message.findOne({'guid': data['guid']});
+
+      // If the GUID exists already, delete the temporary entry
+      // Otherwise, replace the temp message
+      if (existing != null) {
+        debugPrint("Message already exists for match. Removing temporary entry.");
+        await Message.delete({'guid': data['tempGuid']});
+      } else {
+        await Message.replaceMessage(data["tempGuid"], message);
+        List<dynamic> attachments =
+            data.containsKey("attachments") ? data['attachments'] : [];
+        attachments.forEach((attachmentItem) async {
+          Attachment file = Attachment.fromMap(attachmentItem);
+          Attachment.replaceAttachment(data["tempGuid"], file);
+        });
+      }
+
+      
     } else {
       List<Chat> chats = MessageHelper.parseChats(data);
 

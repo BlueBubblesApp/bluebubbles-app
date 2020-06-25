@@ -111,7 +111,6 @@ class MessageBloc {
 
   void getMessages() async {
     List<Message> messages = await Chat.getMessages(_currentChat);
-    messages.sort((a, b) => -a.dateCreated.compareTo(b.dateCreated));
     messages.forEach((element) {
       _allMessages.addAll({element.guid: element});
     });
@@ -129,7 +128,7 @@ class MessageBloc {
         debugPrint("messages length is 0, fetching from server");
         Map<String, dynamic> params = Map();
         params["identifier"] = _currentChat.guid;
-        params["limit"] = 50;
+        params["limit"] = 25;
         params["offset"] = offset;
         params["withBlurhash"] = true;
 
