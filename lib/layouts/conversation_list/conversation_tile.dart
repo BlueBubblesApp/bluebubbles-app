@@ -27,15 +27,13 @@ class ConversationTile extends StatefulWidget {
   final dynamic subtitle;
   final String date;
   final bool hasNewMessage;
-  final MessageBloc messageBloc;
   ConversationTile({
     Key key,
     this.chat,
     this.title,
     this.subtitle,
     this.date,
-    this.hasNewMessage,
-    this.messageBloc,
+    this.hasNewMessage
   }) : super(key: key);
 
   // final Chat chat;
@@ -70,13 +68,14 @@ class _ConversationTileState extends State<ConversationTile> {
       color: Colors.black,
       child: InkWell(
         onTap: () async {
+          MessageBloc messageBloc = new MessageBloc(widget.chat);
           Navigator.of(context).push(
             CupertinoPageRoute(
               builder: (BuildContext context) {
                 return ConversationView(
                   chat: widget.chat,
                   title: widget.title,
-                  messageBloc: widget.messageBloc,
+                  messageBloc: messageBloc
                 );
               },
             ),

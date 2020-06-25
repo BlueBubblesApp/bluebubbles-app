@@ -202,9 +202,7 @@ class _ConversationListState extends State<ConversationList> {
                               ["subtitle"],
                           date: snapshot.data[_chats[index].guid]["date"],
                           hasNewMessage: snapshot.data[_chats[index].guid]
-                              ["hasNotification"],
-                          messageBloc: snapshot.data[_chats[index].guid]
-                              ["bloc"],
+                              ["hasNotification"]
                         );
                       },
                       childCount: _chats.length,

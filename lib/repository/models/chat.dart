@@ -179,7 +179,7 @@ class Chat {
   }
 
   static Future<List<Attachment>> getAttachments(Chat chat,
-      {int offset = 0, int limit = 50}) async {
+      {int offset = 0, int limit = 25}) async {
     final Database db = await DBProvider.db.database;
     if (chat.id == null) return [];
 
@@ -209,7 +209,7 @@ class Chat {
   }
 
   static Future<List<Message>> getMessages(Chat chat,
-      {bool reactionsOnly = false, int offset = 0, int limit = 50}) async {
+      {bool reactionsOnly = false, int offset = 0, int limit = 25}) async {
     final Database db = await DBProvider.db.database;
     if (chat.id == null) return [];
 
