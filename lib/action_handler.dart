@@ -27,7 +27,7 @@ class ActionHandler {
   /// ```dart
   /// sendMessage(chatObject, 'Hello world!')
   /// ```
-  static void sendMessage(Chat chat, String text,
+  static Future<void> sendMessage(Chat chat, String text,
       {List<Attachment> attachments = const []}) async {
     if (text == null || text.trim().length == 0) return;
 
@@ -44,6 +44,7 @@ class ActionHandler {
       dateCreated: DateTime.now(),
       hasAttachments: attachments.length > 0 ? true : false,
     );
+    NewMessageManager().updateWithMessage(chat, sentMessage);
 
     // If we aren't conneted to the socket, set the message error code
     if (SettingsManager().settings.connected == false)
@@ -52,7 +53,6 @@ class ActionHandler {
     await sentMessage.save();
     await chat.save();
     await chat.addMessage(sentMessage);
-    NewMessageManager().updateWithMessage(chat, sentMessage);
 
     // If we aren't connected to the socket, return
     if (SettingsManager().settings.connected == false) return;
@@ -186,15 +186,17 @@ class ActionHandler {
         await Message.replaceMessage(updatedMessage.guid, updatedMessage);
 
     Chat chat;
-    if (data["chat"] == null &&
+    debugPrint("handle updated message ");
+    if (data["chats"] == null &&
         updatedMessage != null &&
         updatedMessage.id != null) {
       chat = await Message.getChat(updatedMessage);
-    } else if (data["chat"] != null) {
-      chat = Chat.fromMap(data["chat"][0]);
+    } else if (data["chats"] != null) {
+      chat = Chat.fromMap(data["chats"][0]);
     }
-
-    NewMessageManager().updateWithMessage(chat, updatedMessage);
+    if (updatedMessage != null)
+      NewMessageManager()
+          .updateSpecificMessage(chat, updatedMessage.guid, updatedMessage);
   }
 
   /// Handles the ingestion of an incoming chat. Chats come in
@@ -269,6 +271,9 @@ class ActionHandler {
         Attachment file = Attachment.fromMap(attachmentItem);
         Attachment.replaceAttachment(data["tempGuid"], file);
       });
+      List<Chat> chats = MessageHelper.parseChats(data);
+      NewMessageManager()
+          .updateSpecificMessage(chats[0], data["tempGuid"], message);
     } else {
       List<Chat> chats = MessageHelper.parseChats(data);
 

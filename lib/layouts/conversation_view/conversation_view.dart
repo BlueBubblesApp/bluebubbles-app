@@ -194,16 +194,14 @@ class _ConversationViewState extends State<ConversationView> {
           BlueBubblesTextField(
             chat: chat,
             onSend: (String text) async {
-              // if (entry != null) entry.remove();
-              // entry = _createOverlayEntry(text);
-              // Overlay.of(context).insert(entry);
               Navigator.of(context).push(
-                PageRouteBuilder(
-                  opaque: false,
-                  pageBuilder: (_, __, ___) => SendWidget(
-                    text: text,
-                    tag: "first",
-                  ),
+                SendPageBuilder(
+                  builder: (context) {
+                    return SendWidget(
+                      text: text,
+                      tag: "first",
+                    );
+                  },
                 ),
               );
             },

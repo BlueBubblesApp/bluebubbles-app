@@ -41,6 +41,9 @@ class _MessageViewState extends State<MessageView> {
               event.containsKey("index") ? event["index"] : 0,
               duration: animationDuration);
         }
+      } else if (event.containsKey("update") && event["update"] != null) {
+        _messages = event["messages"];
+        _listKey.currentState.setState(() {});
       } else {
         int originalMessageLength = _messages.length;
         _messages = event["messages"];
@@ -113,15 +116,31 @@ class _MessageViewState extends State<MessageView> {
 
             if (_messages[index].isFromMe) {
               if (index == 0) {
-                return Hero(
-                  tag: "first",
-                  child: Material(
-                    type: MaterialType.transparency,
-                    child: messageWidget,
+                return SlideTransition(
+                  position: animation.drive(
+                      Tween(begin: Offset(0.0, 1), end: Offset(0.0, 0.0))
+                          .chain(CurveTween(curve: Curves.easeInOut))),
+                  child: FadeTransition(
+                    opacity: animation,
+                    child: Hero(
+                      tag: "first",
+                      child: Material(
+                        type: MaterialType.transparency,
+                        child: messageWidget,
+                      ),
+                    ),
                   ),
                 );
               } else {
-                return messageWidget;
+                return SlideTransition(
+                  position: animation.drive(
+                      Tween(begin: Offset(0.0, 1), end: Offset(0.0, 0.0))
+                          .chain(CurveTween(curve: Curves.easeInOut))),
+                  child: FadeTransition(
+                    opacity: animation,
+                    child: messageWidget,
+                  ),
+                );
               }
             } else {
               return SlideTransition(

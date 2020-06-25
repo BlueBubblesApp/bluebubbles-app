@@ -177,7 +177,7 @@ class _SentMessageState extends State<SentMessage> {
               margin: EdgeInsets.symmetric(horizontal: 10),
               constraints: BoxConstraints(
                 maxWidth: widget.limited != null && !widget.limited
-                    ? MediaQuery.of(context).size.width
+                    ? MediaQuery.of(context).size.width * (3 / 4)
                     : MediaQuery.of(context).size.width * 3 / 4,
               ),
               padding: EdgeInsets.only(

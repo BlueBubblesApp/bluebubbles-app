@@ -44,15 +44,32 @@ class MessageBloc {
   MessageBloc(Chat chat) {
     _currentChat = chat;
     getMessages();
-    NewMessageManager().stream.listen((Map<String, Message> event) {
+    NewMessageManager().stream.listen((Map<String, dynamic> event) {
       if (event.containsKey(_currentChat.guid)) {
         //if there even is a chat specified in the newmessagemanager update
         if (event[_currentChat.guid] == null) {
           //if no message is specified in the newmessagemanager update
           getMessages();
         } else {
-          //if there is a specific message to insert
-          insert(event[_currentChat.guid]);
+          if (event.containsKey("oldGuid")) {
+            debugPrint("is an update " + event["oldGuid"]);
+            for (int i = 0; i < _allMessages.length; i++) {
+              if (_allMessages[i].guid == event["oldGuid"]) {
+                debugPrint("found existing message " + event["oldGuid"]);
+                _allMessages[i] = event[_currentChat.guid];
+                _messageController.sink.add({
+                  "messages": _allMessages,
+                  "update": event[_currentChat.guid],
+                  "index": null
+                });
+                return;
+              }
+            }
+          } else {
+            debugPrint("defaulting to insert " + event.toString());
+            //if there is a specific message to insert
+            insert(event[_currentChat.guid]);
+          }
         }
       } else if (event.keys.first == null) {
         //if there is no chat specified in the newmessagemanager update

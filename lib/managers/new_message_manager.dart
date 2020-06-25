@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:bluebubble_messages/repository/models/chat.dart';
 import 'package:bluebubble_messages/repository/models/message.dart';
+import 'package:flutter/material.dart';
 
 class NewMessageManager {
   factory NewMessageManager() {
@@ -12,10 +13,15 @@ class NewMessageManager {
 
   NewMessageManager._internal();
 
-  StreamController<Map<String, Message>> _stream =
-      new StreamController<Map<String, Message>>.broadcast();
+  StreamController<Map<String, dynamic>> _stream =
+      new StreamController<Map<String, dynamic>>.broadcast();
 
-  Stream<Map<String, Message>> get stream => _stream.stream;
+  Stream<Map<String, dynamic>> get stream => _stream.stream;
+
+  void updateSpecificMessage(Chat chat, String oldGuid, Message message) {
+    debugPrint("update specific message");
+    _stream.sink.add({chat.guid: message, "oldGuid": oldGuid});
+  }
 
   void updateWithMessage(Chat chat, Message message) {
     if (chat == null) {
