@@ -31,22 +31,22 @@ class _MessageViewState extends State<MessageView> {
   @override
   void initState() {
     super.initState();
-    _messages = widget.messageBloc.messages;
+    _messages = widget.messageBloc.messages.values.toList();
     debugPrint("initial messages is " + _messages.length.toString());
     widget.messageBloc.stream.listen((event) {
       if (event["insert"] != null) {
-        _messages = event["messages"];
+        _messages = event["messages"].values.toList();
         if (_listKey.currentState != null) {
           _listKey.currentState.insertItem(
               event.containsKey("index") ? event["index"] : 0,
               duration: animationDuration);
         }
       } else if (event.containsKey("update") && event["update"] != null) {
-        _messages = event["messages"];
+        _messages = event["messages"].values.toList();
         _listKey.currentState.setState(() {});
       } else {
         int originalMessageLength = _messages.length;
-        _messages = event["messages"];
+        _messages = event["messages"].values.toList();
 
         for (int i = originalMessageLength; i < _messages.length; i++) {
           if (_listKey.currentState != null)
