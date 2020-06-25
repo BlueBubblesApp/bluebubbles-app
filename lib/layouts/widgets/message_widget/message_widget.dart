@@ -529,21 +529,51 @@ class _MessageState extends State<MessageWidget>
     List<Widget> reactioners = <Widget>[];
     reactions.keys.forEach(
       (element) {
+        List<Widget> reactionGroup = <Widget>[];
+        List<String> names = [];
         reactions[element].forEach(
-          (reaction) async {
-            if (reaction.handle != null) {
-              reactioners.add(
-                Text(
-                  getContactTitle(
-                      ContactManager().contacts, reaction.handle.address),
-                  style: TextStyle(
-                    color: Colors.white,
-                  ),
-                ),
-              );
+          (message) async {
+            if (message.handle == null) return;
+
+            String name = "You";
+            if (!message.isFromMe) {
+              name = getContactTitle(ContactManager().contacts, message.handle.address);
             }
+
+            names.add(name);
           },
         );
+
+        if (reactions[element].length > 0) {
+          reactionGroup.add(
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: SvgPicture.asset(
+                'assets/reactions/$element-black.svg',
+                height: 24.0,
+                width: 24.0,
+                color: element == love ? Colors.pink : Colors.white,
+              ),
+            )
+          );
+
+          reactionGroup.add(
+            Text(
+              names.join(", "),
+              softWrap: true,
+              style: TextStyle(
+                color: Colors.white,
+              ),
+            ),
+          );
+
+          reactioners.add(
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: reactionGroup
+            )
+          );
+        }
       },
     );
 

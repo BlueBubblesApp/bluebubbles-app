@@ -23,20 +23,39 @@ class _SendWidgetState extends State<SendWidget> {
   void initState() {
     super.initState();
     // SystemChannels.textInput.invokeMethod('TextInput.show');
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    showHero = true;
-    setState(() {});
-    Future.delayed(Duration(milliseconds: 200), () {
+    Future.delayed(Duration(milliseconds: 50), () {
+      setState(() {
+        showHero = true;
+      });
+    });
+    Future.delayed(Duration(milliseconds: 60), () {
       Navigator.of(context).pop();
     });
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final Size size = (TextPainter(
+            text: TextSpan(
+                text: widget.text,
+                style: TextStyle(
+                  color: Colors.white,
+                )),
+            maxLines: 1,
+            textScaleFactor: MediaQuery.of(context).textScaleFactor,
+            textDirection: TextDirection.ltr)
+          ..layout())
+        .size;
+    double initialPadding =
+        (MediaQuery.of(context).size.width * (3 / 4) - size.width)
+            .clamp(14, MediaQuery.of(context).size.width * (3 / 4))
+            .toDouble();
+
     Widget messageWidget = MessageWidget(
       reactions: [],
       fromSelf: true,
@@ -44,18 +63,16 @@ class _SendWidgetState extends State<SendWidget> {
       newerMessage: null,
       olderMessage: null,
       customContent: <Widget>[
-        SizedBox(
-          width: MediaQuery.of(context).size.width * (5 / 6),
-          child: Padding(
-            padding: const EdgeInsets.only(left: 12, top: 8, bottom: 8),
-            child: Text(
-              widget.text,
-              style: TextStyle(
-                color: Colors.white,
-              ),
+        Padding(
+          padding: EdgeInsets.only(
+              left: 14, top: 8, bottom: 8.1, right: initialPadding),
+          child: Text(
+            widget.text,
+            style: TextStyle(
+              color: Colors.white,
             ),
           ),
-        ),
+        )
       ],
     );
 
@@ -82,6 +99,45 @@ class _SendWidgetState extends State<SendWidget> {
               children: <Widget>[
                 showHero
                     ? Hero(
+                        flightShuttleBuilder: (flightContext, _animation,
+                            flightDirection, fromHeroContext, toHeroContext) {
+                          Animation animation = _animation.drive(Tween<double>(
+                              end: initialPadding,
+                              begin:
+                                  14 > initialPadding ? initialPadding : 14));
+                          return Material(
+                            type: MaterialType.transparency,
+                            child: MessageWidget(
+                              reactions: [],
+                              fromSelf: true,
+                              showHandle: false,
+                              newerMessage: null,
+                              olderMessage: null,
+                              customContent: <Widget>[
+                                AnimatedBuilder(
+                                  animation: animation,
+                                  builder: (context, child) {
+                                    return Padding(
+                                      padding: EdgeInsets.only(
+                                        left: 14,
+                                        top: 8,
+                                        bottom: 8.1,
+                                        right: animation.value,
+                                      ),
+                                      child: child,
+                                    );
+                                  },
+                                  child: Text(
+                                    widget.text,
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
                         tag: widget.tag,
                         child: Material(
                           type: MaterialType.transparency,
@@ -98,4 +154,39 @@ class _SendWidgetState extends State<SendWidget> {
       ),
     );
   }
+}
+
+class SendPageBuilder extends PageRoute<void> {
+  SendPageBuilder({
+    @required this.builder,
+    RouteSettings settings,
+  })  : assert(builder != null),
+        super(settings: settings, fullscreenDialog: false);
+
+  final WidgetBuilder builder;
+
+  @override
+  bool get opaque => false;
+
+  @override
+  Color get barrierColor => null;
+
+  @override
+  String get barrierLabel => null;
+
+  @override
+  Widget buildPage(BuildContext context, Animation<double> animation,
+      Animation<double> secondaryAnimation) {
+    final result = builder(context);
+    return result;
+  }
+
+  @override
+  bool get maintainState => false;
+
+  @override
+  Duration get transitionDuration => Duration(milliseconds: 0);
+
+  @override
+  Duration get reverseTransitionDuration => Duration(milliseconds: 500);
 }
