@@ -57,7 +57,7 @@ class _ConversationViewState extends State<ConversationView> {
       event.forEach((element) {
         if (element.guid == chat.guid) {
           chat = element;
-          setState(() {});
+          if (this.mounted) setState(() {});
         }
       });
     });

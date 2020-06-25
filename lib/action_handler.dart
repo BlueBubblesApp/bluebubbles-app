@@ -260,6 +260,7 @@ class ActionHandler {
   /// ```
   static Future<void> handleMessage(Map<String, dynamic> data) async {
     Message message = Message.fromMap(data);
+    List<Chat> chats = MessageHelper.parseChats(data);
 
     // Handle message differently depending on if there is a temp GUID match
     if (data.containsKey("tempGuid")) {
@@ -271,7 +272,8 @@ class ActionHandler {
       // If the GUID exists already, delete the temporary entry
       // Otherwise, replace the temp message
       if (existing != null) {
-        debugPrint("Message already exists for match. Removing temporary entry.");
+        debugPrint(
+            "Message already exists for match. Removing temporary entry.");
         await Message.delete({'guid': data['tempGuid']});
       } else {
         await Message.replaceMessage(data["tempGuid"], message);
@@ -282,11 +284,9 @@ class ActionHandler {
           Attachment.replaceAttachment(data["tempGuid"], file);
         });
       }
-
-      
+      NewMessageManager()
+          .updateSpecificMessage(chats.first, data['tempGuid'], message);
     } else {
-      List<Chat> chats = MessageHelper.parseChats(data);
-
       // Add the message to the chats
       for (int i = 0; i < chats.length; i++) {
         debugPrint("Client received new message " + chats[i].guid);

@@ -180,5 +180,5 @@ class SendPageBuilder extends PageRoute<void> {
   Duration get transitionDuration => Duration(milliseconds: 0);
 
   @override
-  Duration get reverseTransitionDuration => Duration(milliseconds: 5000);
+  Duration get reverseTransitionDuration => Duration(milliseconds: 500);
 }

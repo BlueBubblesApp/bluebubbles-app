@@ -49,7 +49,7 @@ class SocketManager {
         break;
       }
     }
-    // NewMessageManager().updateWithMessage(chat, null);
+    NewMessageManager().updateWithMessage(chat, null);
   }
 
   List<String> processedGUIDS = <String>[];
