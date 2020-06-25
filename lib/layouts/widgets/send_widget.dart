@@ -17,17 +17,17 @@ class SendWidget extends StatefulWidget {
 }
 
 class _SendWidgetState extends State<SendWidget> {
-  bool showHero = false;
+  bool showHero = true;
 
   @override
   void initState() {
     super.initState();
     // SystemChannels.textInput.invokeMethod('TextInput.show');
-    Future.delayed(Duration(milliseconds: 50), () {
-      setState(() {
-        showHero = true;
-      });
-    });
+    // Future.delayed(Duration(milliseconds: 50), () {
+    //   setState(() {
+    //     showHero = true;
+    //   });
+    // });
     Future.delayed(Duration(milliseconds: 60), () {
       Navigator.of(context).pop();
     });
@@ -40,22 +40,6 @@ class _SendWidgetState extends State<SendWidget> {
 
   @override
   Widget build(BuildContext context) {
-    final Size size = (TextPainter(
-            text: TextSpan(
-                text: widget.text,
-                style: TextStyle(
-                  color: Colors.white,
-                )),
-            maxLines: 1,
-            textScaleFactor: MediaQuery.of(context).textScaleFactor,
-            textDirection: TextDirection.ltr)
-          ..layout())
-        .size;
-    double initialPadding =
-        (MediaQuery.of(context).size.width * (3 / 4) - size.width)
-            .clamp(14, MediaQuery.of(context).size.width * (3 / 4))
-            .toDouble();
-
     Widget messageWidget = MessageWidget(
       reactions: [],
       fromSelf: true,
@@ -63,13 +47,17 @@ class _SendWidgetState extends State<SendWidget> {
       newerMessage: null,
       olderMessage: null,
       customContent: <Widget>[
-        Padding(
-          padding: EdgeInsets.only(
-              left: 14, top: 8, bottom: 8.1, right: initialPadding),
-          child: Text(
-            widget.text,
-            style: TextStyle(
-              color: Colors.white,
+        Container(
+          constraints: BoxConstraints(
+            minWidth: MediaQuery.of(context).size.width * 5 / 6,
+          ),
+          child: Padding(
+            padding: EdgeInsets.only(left: 14, top: 8, bottom: 8, right: 14),
+            child: Text(
+              widget.text,
+              style: TextStyle(
+                color: Colors.white,
+              ),
             ),
           ),
         )
@@ -102,9 +90,8 @@ class _SendWidgetState extends State<SendWidget> {
                         flightShuttleBuilder: (flightContext, _animation,
                             flightDirection, fromHeroContext, toHeroContext) {
                           Animation animation = _animation.drive(Tween<double>(
-                              end: initialPadding,
-                              begin:
-                                  14 > initialPadding ? initialPadding : 14));
+                              end: MediaQuery.of(context).size.width * 5 / 6,
+                              begin: 0));
                           return Material(
                             type: MaterialType.transparency,
                             child: MessageWidget(
@@ -117,14 +104,19 @@ class _SendWidgetState extends State<SendWidget> {
                                 AnimatedBuilder(
                                   animation: animation,
                                   builder: (context, child) {
-                                    return Padding(
-                                      padding: EdgeInsets.only(
-                                        left: 14,
-                                        top: 8,
-                                        bottom: 8.1,
-                                        right: animation.value,
+                                    return Container(
+                                      constraints: BoxConstraints(
+                                        minWidth: animation.value,
                                       ),
-                                      child: child,
+                                      child: Padding(
+                                        child: child,
+                                        padding: EdgeInsets.only(
+                                          left: 14,
+                                          top: 8,
+                                          bottom: 7.9,
+                                          right: 14,
+                                        ),
+                                      ),
                                     );
                                   },
                                   child: Text(
@@ -188,5 +180,5 @@ class SendPageBuilder extends PageRoute<void> {
   Duration get transitionDuration => Duration(milliseconds: 0);
 
   @override
-  Duration get reverseTransitionDuration => Duration(milliseconds: 500);
+  Duration get reverseTransitionDuration => Duration(milliseconds: 5000);
 }

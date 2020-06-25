@@ -77,7 +77,7 @@ class ChatBloc {
     if (!_tileVals.containsKey(chat.guid)) {
       messageBloc = new MessageBloc(chat);
       messageBloc.stream.listen((Map<String, dynamic> data) async {
-        List<Message> messages = data["messages"];
+        List<Message> messages = data["messages"].values.toList();
         if (messages.length > 0) {
           dynamic subtitle = "";
           String date = "";

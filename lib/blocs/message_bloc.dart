@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:collection';
 import 'dart:convert';
 import 'dart:io';
 
@@ -31,11 +32,12 @@ class MessageBloc {
 
   Stream<Map<String, dynamic>> get stream => _messageController.stream;
 
-  List<Message> _allMessages = <Message>[];
+  // List<Message> _allMessages = <Message>[];
+  LinkedHashMap<String, Message> _allMessages = new LinkedHashMap();
 
   Map<String, List<Message>> _reactions = new Map();
 
-  List<Message> get messages => _allMessages;
+  LinkedHashMap<String, Message> get messages => _allMessages;
 
   Map<String, List<Message>> get reactions => _reactions;
 
@@ -53,17 +55,14 @@ class MessageBloc {
         } else {
           if (event.containsKey("oldGuid")) {
             debugPrint("is an update " + event["oldGuid"]);
-            for (int i = 0; i < _allMessages.length; i++) {
-              if (_allMessages[i].guid == event["oldGuid"]) {
-                debugPrint("found existing message " + event["oldGuid"]);
-                _allMessages[i] = event[_currentChat.guid];
-                _messageController.sink.add({
-                  "messages": _allMessages,
-                  "update": event[_currentChat.guid],
-                  "index": null
-                });
-                return;
-              }
+            if (_allMessages.containsKey(event["oldGuid"])) {
+              _allMessages.update(
+                  event["oldGuid"], (value) => event[_currentChat.guid]);
+              _messageController.sink.add({
+                "messages": _allMessages,
+                "update": event[_currentChat.guid],
+                "index": null
+              });
             }
           } else {
             debugPrint("defaulting to insert " + event.toString());
@@ -81,15 +80,17 @@ class MessageBloc {
   void insert(Message message) {
     int index = 0;
     if (_allMessages.length == 0) {
-      _allMessages.add(message);
+      _allMessages.addAll({message.guid: message});
       _messageController.sink
           .add({"messages": _allMessages, "insert": message, "index": index});
       return;
     }
-    for (int i = 0; i < _allMessages.length; i++) {
+    List<Message> messages = _allMessages.values.toList();
+    for (int i = 0; i < messages.length; i++) {
       //if _allMessages[i] dateCreated is earlier than the new message, insert at that index
-      if (_allMessages[i].dateCreated.compareTo(message.dateCreated) < 0) {
-        _allMessages.insert(i, message);
+      if (messages[i].dateCreated.compareTo(message.dateCreated) < 0) {
+        _allMessages =
+            linkedHashMapInsert(_allMessages, index, message.guid, message);
         index = i;
         break;
       }
@@ -98,10 +99,22 @@ class MessageBloc {
         .add({"messages": _allMessages, "insert": message, "index": index});
   }
 
+  LinkedHashMap linkedHashMapInsert(map, int index, key, value) {
+    List keys = map.keys.toList();
+    List values = map.values.toList();
+    keys.insert(index, key);
+    values.insert(index, value);
+    debugPrint("insert into hashmap");
+    return LinkedHashMap<String, Message>.from(
+        LinkedHashMap.fromIterables(keys, values));
+  }
+
   void getMessages() async {
     List<Message> messages = await Chat.getMessages(_currentChat);
     messages.sort((a, b) => -a.dateCreated.compareTo(b.dateCreated));
-    _allMessages = messages;
+    messages.forEach((element) {
+      _allMessages.addAll({element.guid: element});
+    });
     _messageController.sink.add({"messages": _allMessages, "insert": null});
     await getReactions(0);
   }
@@ -131,8 +144,10 @@ class MessageBloc {
           debugPrint("got messages");
           List<Message> _messages =
               await MessageHelper.bulkAddMessages(_currentChat, messages);
-          _allMessages.addAll(_messages);
-          _allMessages.sort((a, b) => -a.dateCreated.compareTo(b.dateCreated));
+          _messages.forEach((element) {
+            _allMessages.addAll({element.guid: element});
+          });
+          // _allMessages.sort((a, b) => -a.dateCreated.compareTo(b.dateCreated));
           _messageController.sink
               .add({"messages": _allMessages, "insert": null});
           completer.complete();
@@ -140,8 +155,10 @@ class MessageBloc {
         });
       } else {
         // debugPrint("loading more messages from sql " +);
-        _allMessages.addAll(messages);
-        _allMessages.sort((a, b) => -a.dateCreated.compareTo(b.dateCreated));
+        messages.forEach((element) {
+          _allMessages.addAll({element.guid: element});
+        });
+        // _allMessages.sort((a, b) => -a.dateCreated.compareTo(b.dateCreated));
         _messageController.sink.add({"messages": _allMessages, "insert": null});
         completer.complete();
         await getReactions(offset);
@@ -170,7 +187,7 @@ class MessageBloc {
   }
 
   void dispose() {
-    _allMessages = <Message>[];
+    _allMessages = new LinkedHashMap();
     debugPrint("disposed all messages");
   }
 }
