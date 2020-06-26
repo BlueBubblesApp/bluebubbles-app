@@ -47,6 +47,7 @@ class MessageWidget extends StatefulWidget {
     this.reactions,
     this.showHandle,
     this.customContent,
+    this.shouldFadeIn,
   }) : super(key: key);
 
   final fromSelf;
@@ -55,6 +56,7 @@ class MessageWidget extends StatefulWidget {
   final Message olderMessage;
   final List<Message> reactions;
   final bool showHandle;
+  final bool shouldFadeIn;
 
   final List<Widget> customContent;
 
@@ -441,6 +443,7 @@ class _MessageState extends State<MessageWidget>
         overlayEntry: _createOverlayEntry(),
         showTail: showTail,
         limited: widget.customContent == null,
+        shouldFadeIn: widget.shouldFadeIn,
       );
     } else {
       return ReceivedMessage(
@@ -508,16 +511,17 @@ class _MessageState extends State<MessageWidget>
               height: 30,
               width: 30,
               decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(100),
-                  color: HexColor('26262a'),
-                  boxShadow: [
-                    new BoxShadow(
-                      blurRadius: 5.0,
-                      offset:
-                          Offset(3.0 * (widget.message.isFromMe ? 1 : -1), 0.0),
-                      color: Colors.black,
-                    )
-                  ]),
+                borderRadius: BorderRadius.circular(100),
+                color: HexColor('26262a'),
+                boxShadow: [
+                  new BoxShadow(
+                    blurRadius: 5.0,
+                    offset:
+                        Offset(3.0 * (widget.message.isFromMe ? 1 : -1), 0.0),
+                    color: Colors.black,
+                  )
+                ],
+              ),
               child: reactionIcon[i],
             ),
           ),
@@ -537,7 +541,8 @@ class _MessageState extends State<MessageWidget>
 
             String name = "You";
             if (!message.isFromMe) {
-              name = getContactTitle(ContactManager().contacts, message.handle.address);
+              name = getContactTitle(
+                  ContactManager().contacts, message.handle.address);
             }
 
             names.add(name);
@@ -545,17 +550,15 @@ class _MessageState extends State<MessageWidget>
         );
 
         if (reactions[element].length > 0) {
-          reactionGroup.add(
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: SvgPicture.asset(
-                'assets/reactions/$element-black.svg',
-                height: 24.0,
-                width: 24.0,
-                color: element == love ? Colors.pink : Colors.white,
-              ),
-            )
-          );
+          reactionGroup.add(Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: SvgPicture.asset(
+              'assets/reactions/$element-black.svg',
+              height: 24.0,
+              width: 24.0,
+              color: element == love ? Colors.pink : Colors.white,
+            ),
+          ));
 
           reactionGroup.add(
             Text(
@@ -567,12 +570,9 @@ class _MessageState extends State<MessageWidget>
             ),
           );
 
-          reactioners.add(
-            Column(
+          reactioners.add(Column(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: reactionGroup
-            )
-          );
+              children: reactionGroup));
         }
       },
     );

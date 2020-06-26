@@ -43,6 +43,8 @@ class QueueManager {
       await ActionHandler.handleUpdatedMessage(jsonDecode(jsonData));
     } else if (event == "new-message") {
       await ActionHandler.handleMessage(jsonDecode(jsonData));
+    } else if (event == "new-notification") {
+      ActionHandler.createNotification(jsonDecode(jsonData));
     }
   }
 

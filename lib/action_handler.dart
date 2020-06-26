@@ -44,7 +44,8 @@ class ActionHandler {
       dateCreated: DateTime.now(),
       hasAttachments: attachments.length > 0 ? true : false,
     );
-    NewMessageManager().updateWithMessage(chat, sentMessage);
+    NewMessageManager()
+        .updateWithMessage(chat, sentMessage, sentFromThisClient: true);
 
     // If we aren't conneted to the socket, set the message error code
     if (SettingsManager().settings.connected == false)
@@ -314,6 +315,20 @@ class ActionHandler {
           new AttachmentDownloader(file);
         }
       });
+    }
+  }
+
+  static void createNotification(Map<String, dynamic> notification) {
+    if (!NotificationManager()
+        .processedNotifications
+        .contains(notification["guid"])) {
+      NotificationManager().createNewNotification(
+          notification["contentTitle"],
+          notification["contentText"],
+          notification["group"],
+          notification["id"],
+          notification["summaryId"]);
+      NotificationManager().processedNotifications.add(notification["guid"]);
     }
   }
 }

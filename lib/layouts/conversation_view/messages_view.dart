@@ -4,6 +4,7 @@ import 'package:bluebubble_messages/repository/models/handle.dart';
 import 'package:bluebubble_messages/repository/models/message.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:bluebubble_messages/layouts/widgets/send_widget.dart';
 
 class MessageView extends StatefulWidget {
   final MessageBloc messageBloc;
@@ -27,6 +28,7 @@ class _MessageViewState extends State<MessageView> {
       GlobalKey<SliverAnimatedListState>();
   final Duration animationDuration = Duration(milliseconds: 400);
   OverlayEntry entry;
+  List<String> sentMessages = <String>[];
 
   @override
   void initState() {
@@ -35,6 +37,24 @@ class _MessageViewState extends State<MessageView> {
     debugPrint("initial messages is " + _messages.length.toString());
     widget.messageBloc.stream.listen((event) {
       if (event["insert"] != null) {
+        if (event["sentFromThisClient"]) {
+          sentMessages.add(event["insert"].guid);
+          Future.delayed(Duration(milliseconds: 500), () {
+            sentMessages
+                .removeWhere((element) => element == event["insert"].guid);
+            _listKey.currentState.setState(() {});
+          });
+          Navigator.of(context).push(
+            SendPageBuilder(
+              builder: (context) {
+                return SendWidget(
+                  text: event["insert"].text,
+                  tag: "first",
+                );
+              },
+            ),
+          );
+        }
         _messages = event["messages"].values.toList();
         if (_listKey.currentState != null) {
           _listKey.currentState.insertItem(
@@ -72,7 +92,7 @@ class _MessageViewState extends State<MessageView> {
       physics: AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
       slivers: <Widget>[
         SliverAnimatedList(
-          initialItemCount: _messages.length,
+          initialItemCount: _messages.length + 1,
           key: _listKey,
           itemBuilder:
               (BuildContext context, int index, Animation<double> animation) {
@@ -112,6 +132,7 @@ class _MessageViewState extends State<MessageView> {
               newerMessage: newerMessage,
               reactions: reactions,
               showHandle: widget.showHandle,
+              shouldFadeIn: sentMessages.contains(_messages[index].guid),
             );
 
             if (_messages[index].isFromMe) {

@@ -71,6 +71,21 @@ class MethodChannelInterface {
         String title = await getFullChatTitle(chat);
         Message message = Message.fromMap(data);
 
+        if (!message.isFromMe &&
+            (NotificationManager().chat != chat.guid ||
+                !LifeCycleManager().isAlive)) {
+          QueueManager().addEvent(
+              "new-notification",
+              jsonEncode({
+                "guid": message.guid,
+                "contentTitle": title,
+                "contentText": message.text,
+                "group": chat.guid,
+                "id": Random().nextInt(9999),
+                "summaryId": chat.id
+              }));
+        }
+
         // If we've already processed the GUID, skip it
         if (SocketManager().processedGUIDS.contains(data["guid"])) {
           return;
@@ -78,12 +93,6 @@ class MethodChannelInterface {
 
         // Save the GUID and create a notification for the message
         SocketManager().processedGUIDS.add(data["guid"]);
-        if (!message.isFromMe &&
-            (NotificationManager().chat != chat.guid ||
-                !LifeCycleManager().isAlive)) {
-          NotificationManager().createNewNotification(title, message.text,
-              chat.guid, Random().nextInt(999999), chat.id);
-        }
 
         debugPrint("Adding new/matched message to the queue");
         QueueManager().addEvent(call.method, call.arguments);

@@ -36,6 +36,7 @@ class AttachmentDownloader {
   }
 
   resumeChunkingAfterDisconnect() {
+    if (_stream.isClosed) return;
     if (_guid != "" && _cb != null) {
       debugPrint("restarting chunking " + _currentBytes.length.toString());
       getChunkRecursive(_guid, _currentChunk, _totalChunks, _currentBytes, _cb);

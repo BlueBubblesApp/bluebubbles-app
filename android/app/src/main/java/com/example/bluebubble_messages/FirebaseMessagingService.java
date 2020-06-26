@@ -64,6 +64,7 @@ public class FirebaseMessagingService extends com.google.firebase.messaging.Fire
     public void onMessageReceived(RemoteMessage remoteMessage) {
         // Check if message contains a data payload.
         if (remoteMessage.getData().size() > 0 && !remoteMessage.getData().get("type").equals("new-server")) {
+            Log.d("notification", "on message received");
             Intent intent = new Intent("MyData");
             intent.putExtra("type", remoteMessage.getData().get("type"));
             intent.putExtra("data", remoteMessage.getData().get("data"));

@@ -1,29 +1,13 @@
 import 'dart:async';
 import 'dart:collection';
 import 'dart:convert';
-import 'dart:io';
 
-import 'package:assets_audio_player/assets_audio_player.dart';
-import 'package:bluebubble_messages/helpers/attachment_downloader.dart';
-import 'package:bluebubble_messages/helpers/attachment_helper.dart';
-import 'package:bluebubble_messages/helpers/hex_color.dart';
 import 'package:bluebubble_messages/helpers/message_helper.dart';
-import 'package:bluebubble_messages/helpers/utils.dart';
-import 'package:bluebubble_messages/managers/method_channel_interface.dart';
 import 'package:bluebubble_messages/managers/new_message_manager.dart';
-import 'package:bluebubble_messages/managers/settings_manager.dart';
-import 'package:bluebubble_messages/repository/models/attachment.dart';
 import 'package:bluebubble_messages/repository/models/chat.dart';
 import 'package:bluebubble_messages/repository/models/message.dart';
-import 'package:contacts_service/contacts_service.dart';
-import 'package:flick_video_player/flick_video_player.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
-import 'package:mime_type/mime_type.dart';
-import 'package:path/path.dart';
-import 'package:video_player/video_player.dart';
-import 'package:latlong/latlong.dart';
 
 import '../socket_manager.dart';
 
@@ -65,9 +49,11 @@ class MessageBloc {
               });
             }
           } else {
-            debugPrint("defaulting to insert " + event.toString());
             //if there is a specific message to insert
-            insert(event[_currentChat.guid]);
+            insert(event[_currentChat.guid],
+                sentFromThisClient: event.containsKey("sentFromThisClient")
+                    ? event["sentFromThisClient"]
+                    : false);
           }
         }
       } else if (event.keys.first == null) {
@@ -77,12 +63,16 @@ class MessageBloc {
     });
   }
 
-  void insert(Message message) {
+  void insert(Message message, {bool sentFromThisClient = false}) {
     int index = 0;
     if (_allMessages.length == 0) {
       _allMessages.addAll({message.guid: message});
-      _messageController.sink
-          .add({"messages": _allMessages, "insert": message, "index": index});
+      _messageController.sink.add({
+        "messages": _allMessages,
+        "insert": message,
+        "index": index,
+        "sentFromThisClient": sentFromThisClient
+      });
       return;
     }
     List<Message> messages = _allMessages.values.toList();
@@ -95,8 +85,12 @@ class MessageBloc {
         break;
       }
     }
-    _messageController.sink
-        .add({"messages": _allMessages, "insert": message, "index": index});
+    _messageController.sink.add({
+      "messages": _allMessages,
+      "insert": message,
+      "index": index,
+      "sentFromThisClient": sentFromThisClient
+    });
   }
 
   LinkedHashMap linkedHashMapInsert(map, int index, key, value) {
@@ -188,5 +182,6 @@ class MessageBloc {
   void dispose() {
     _allMessages = new LinkedHashMap();
     debugPrint("disposed all messages");
+    _messageController.close();
   }
 }

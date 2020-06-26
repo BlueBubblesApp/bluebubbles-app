@@ -193,18 +193,7 @@ class _ConversationViewState extends State<ConversationView> {
           ),
           BlueBubblesTextField(
             chat: chat,
-            onSend: (String text) async {
-              Navigator.of(context).push(
-                SendPageBuilder(
-                  builder: (context) {
-                    return SendWidget(
-                      text: text,
-                      tag: "first",
-                    );
-                  },
-                ),
-              );
-            },
+            onSend: (String text) async {},
           )
         ],
       ),

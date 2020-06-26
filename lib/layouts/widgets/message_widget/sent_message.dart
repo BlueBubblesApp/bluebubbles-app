@@ -16,6 +16,7 @@ class SentMessage extends StatefulWidget {
   final OverlayEntry overlayEntry;
   final List<Widget> content;
   final Widget deliveredReceipt;
+  final bool shouldFadeIn;
 
   final String substituteText;
   final bool limited;
@@ -28,13 +29,28 @@ class SentMessage extends StatefulWidget {
     @required this.deliveredReceipt,
     this.substituteText,
     this.limited,
+    this.shouldFadeIn,
   }) : super(key: key);
 
   @override
   _SentMessageState createState() => _SentMessageState();
 }
 
-class _SentMessageState extends State<SentMessage> {
+class _SentMessageState extends State<SentMessage>
+    with AutomaticKeepAliveClientMixin {
+  bool _visible = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _visible = !widget.shouldFadeIn;
+    // Future.delayed(Duration(milliseconds: 100), () {
+    //   setState(() {
+    //     _visible = true;
+    //   });
+    // });
+  }
+
   OverlayEntry _createErrorPopup() {
     OverlayEntry entry;
     int errorCode = widget.message != null ? widget.message.error : 0;
@@ -177,7 +193,7 @@ class _SentMessageState extends State<SentMessage> {
               margin: EdgeInsets.symmetric(horizontal: 10),
               constraints: BoxConstraints(
                 maxWidth: widget.limited != null && !widget.limited
-                    ? MediaQuery.of(context).size.width * (3 / 4)
+                    ? MediaQuery.of(context).size.width * (5 / 6)
                     : MediaQuery.of(context).size.width * 3 / 4,
               ),
               padding: EdgeInsets.only(
@@ -217,24 +233,31 @@ class _SentMessageState extends State<SentMessage> {
       );
 
     // Icon(Icons.accessible_forward, color: Colors.white),
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.end,
-      children: <Widget>[
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: <Widget>[
-            Padding(
-              padding: EdgeInsets.only(
-                  bottom: widget.showTail ? 10.0 : 3.0,
-                  right: (widget.message != null && widget.message.error > 0
-                      ? 10.0
-                      : 0)),
-              child: Row(children: messageWidget),
-            ),
-            widget.deliveredReceipt
-          ],
-        ),
-      ],
+    return AnimatedOpacity(
+      opacity: _visible ? 1.0 : 0.0,
+      duration: Duration(milliseconds: widget.shouldFadeIn ? 200 : 0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: <Widget>[
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: <Widget>[
+              Padding(
+                padding: EdgeInsets.only(
+                    bottom: widget.showTail ? 10.0 : 3.0,
+                    right: (widget.message != null && widget.message.error > 0
+                        ? 10.0
+                        : 0)),
+                child: Row(children: messageWidget),
+              ),
+              widget.deliveredReceipt
+            ],
+          ),
+        ],
+      ),
     );
   }
+
+  @override
+  bool get wantKeepAlive => true;
 }

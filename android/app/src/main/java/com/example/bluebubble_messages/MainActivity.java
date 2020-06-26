@@ -347,7 +347,6 @@ public class MainActivity extends FlutterActivity {
     protected void onStart() {
         super.onStart();
         LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver, new IntentFilter("MyData"));
-        registerReceiver(replyReceiver, new IntentFilter("Reply"));
         getApplicationContext().bindService(new Intent(getApplicationContext(), BackgroundService.class), mServerConn, Context.BIND_AUTO_CREATE);
         Intent serviceIntent = new Intent(getApplicationContext(), BackgroundService.class);
         startService(serviceIntent);
@@ -378,18 +377,9 @@ public class MainActivity extends FlutterActivity {
     private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if (intent.getType() != null && intent.getType().equals("reply")) {
-                new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod("reply", intent.getExtras());
-            } else {
+            Log.d("notification", "on receive");
                 new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod(intent.getExtras().getString("type"), intent.getExtras().getString("data"));
-            }
         }
     };
 
-    private BroadcastReceiver replyReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            Log.d("Notification", "reply");
-        }
-    };
 }

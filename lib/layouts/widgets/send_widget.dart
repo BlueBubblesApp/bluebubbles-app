@@ -46,6 +46,7 @@ class _SendWidgetState extends State<SendWidget> {
       showHandle: false,
       newerMessage: null,
       olderMessage: null,
+      shouldFadeIn: false,
       customContent: <Widget>[
         Container(
           constraints: BoxConstraints(
@@ -100,6 +101,7 @@ class _SendWidgetState extends State<SendWidget> {
                               showHandle: false,
                               newerMessage: null,
                               olderMessage: null,
+                              shouldFadeIn: false,
                               customContent: <Widget>[
                                 AnimatedBuilder(
                                   animation: animation,

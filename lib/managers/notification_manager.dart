@@ -13,6 +13,8 @@ class NotificationManager {
 
   NotificationManager._internal();
 
+  List<String> processedNotifications = <String>[];
+
   void switchChat(Chat chat) {
     _currentChatGuid = chat.guid;
     MethodChannelInterface()

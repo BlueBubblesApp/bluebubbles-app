@@ -23,11 +23,13 @@ class NewMessageManager {
     _stream.sink.add({chat.guid: message, "oldGuid": oldGuid});
   }
 
-  void updateWithMessage(Chat chat, Message message) {
+  void updateWithMessage(Chat chat, Message message,
+      {bool sentFromThisClient = false}) {
     if (chat == null) {
       _stream.sink.add({null: message});
     } else {
-      _stream.sink.add({chat.guid: message});
+      _stream.sink
+          .add({chat.guid: message, "sentFromThisClient": sentFromThisClient});
     }
   }
 }
