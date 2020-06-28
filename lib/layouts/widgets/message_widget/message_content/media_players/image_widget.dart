@@ -19,15 +19,17 @@ class _ImageWidgetState extends State<ImageWidget> {
   Widget build(BuildContext context) {
     return Stack(
       children: <Widget>[
-        Hero(
-          child: Image.file(widget.file),
-          tag: widget.attachment.guid,
-        ),
+        // Hero(
+        //   child: Image.file(widget.file),
+        //   tag: widget.attachment.guid,
+        // ),
+        Image.file(widget.file),
         Positioned.fill(
           child: Material(
             color: Colors.transparent,
             child: InkWell(
               onTap: () {
+                debugPrint(widget.file.path);
                 Navigator.of(context).push(
                   MaterialPageRoute(
                     builder: (context) => ImageViewer(

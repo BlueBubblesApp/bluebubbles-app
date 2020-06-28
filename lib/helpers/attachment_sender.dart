@@ -19,11 +19,10 @@ import 'package:mime_type/mime_type.dart';
 import 'package:path/path.dart';
 
 class AttachmentSender {
-  final _stream = StreamController<dynamic>.broadcast();
+  final _stream = StreamController<double>.broadcast();
 
-  Stream<dynamic> get stream => _stream.stream;
+  Stream<double> get stream => _stream.stream;
 
-  int _currentChunk = 0;
   int _totalChunks = 0;
   int _chunkSize = 512;
   Chat _chat;
@@ -33,7 +32,6 @@ class AttachmentSender {
   String _text;
   String _attachmentName;
 
-  double get progress => (_currentChunk) / _totalChunks;
   String get guid => _attachmentGuid;
 
   AttachmentSender(
@@ -79,16 +77,19 @@ class AttachmentSender {
       debugPrint(data.toString());
       if (response['status'] == 200) {
         if (index + _chunkSize < _imageBytes.length) {
+          if (!_stream.isClosed) _stream.sink.add(index / _imageBytes.length);
           sendChunkRecursive(index + _chunkSize, total, tempGuid);
         } else {
+          if (!_stream.isClosed) _stream.sink.add(index / _imageBytes.length);
           debugPrint("no more to send");
-          SocketManager().finishSender(_chat.guid, _attachmentGuid);
+          SocketManager().finishSender(_attachmentGuid);
           LifeCycleManager().finishDownloader();
         }
       } else {
         debugPrint("failed to send");
-        SocketManager().finishSender(_chat.guid, _attachmentGuid);
+        SocketManager().finishSender(_attachmentGuid);
         LifeCycleManager().finishDownloader();
+        _stream.close();
       }
     });
   }
@@ -154,7 +155,7 @@ class AttachmentSender {
 
     NewMessageManager().updateWithMessage(_chat, sentMessage);
     _totalChunks = numOfChunks;
-    SocketManager().addAttachmentSender(_chat.guid, this);
+    SocketManager().addAttachmentSender(this);
     sendChunkRecursive(
         0,
         _totalChunks,

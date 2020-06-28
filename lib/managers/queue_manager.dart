@@ -2,7 +2,9 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:bluebubble_messages/action_handler.dart';
+import 'package:bluebubble_messages/managers/ConsoleOutput.dart';
 import 'package:flutter/widgets.dart';
+import 'package:logger/logger.dart';
 
 class QueueManager {
   factory QueueManager() {
@@ -15,10 +17,15 @@ class QueueManager {
 
   List<Map<String, String>> queue;
   Timer timer;
+  Logger logger;
 
   void init() async {
     this.flush();
     this.start();
+    logger = Logger(
+      printer: PrettyPrinter(printTime: true),
+      output: CustomConsoleOutput(),
+    );
   }
 
   Future<void> start() async {
@@ -42,6 +49,7 @@ class QueueManager {
     if (event == "updated-message") {
       await ActionHandler.handleUpdatedMessage(jsonDecode(jsonData));
     } else if (event == "new-message") {
+      logger.log(Level.debug, jsonData);
       await ActionHandler.handleMessage(jsonDecode(jsonData));
     } else if (event == "new-notification") {
       ActionHandler.createNotification(jsonDecode(jsonData));

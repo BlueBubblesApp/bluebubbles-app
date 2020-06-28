@@ -1,6 +1,9 @@
 import 'dart:convert';
+import 'package:bluebubble_messages/managers/queue_manager.dart';
+import 'package:bluebubble_messages/managers/settings_manager.dart';
 import 'package:bluebubble_messages/repository/models/attachment.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:logger/logger.dart';
 import 'package:sqflite/sqflite.dart';
 
 import '../database.dart';
@@ -174,6 +177,8 @@ class Message {
       await this.handle.save();
       this.handleId = this.handle.id;
     }
+    QueueManager().logger.log(Level.info,
+        "this.handle == null ${this.handle == null}, this.handleId = ${this.handleId}");
 
     // If it already exists, update it
     if (existing == null) {
@@ -355,7 +360,8 @@ class Message {
     List<dynamic> whereArgs = [];
     where.values.forEach((filter) => whereArgs.add(filter));
 
-    await db.delete("message", where: whereParams.join(" AND "), whereArgs: whereArgs);
+    await db.delete("message",
+        where: whereParams.join(" AND "), whereArgs: whereArgs);
   }
 
   static flush() async {

@@ -36,6 +36,7 @@ class _RegularFileOpenerState extends State<RegularFileOpener> {
               color: Colors.white,
             ),
             onPressed: () {
+              debugPrint(widget.file.path);
               MethodChannelInterface().invokeMethod(
                 "open_file",
                 {

@@ -65,29 +65,28 @@ class SocketManager {
   Map<String, Function> subscribers = new Map();
 
   Map<String, AttachmentDownloader> attachmentDownloaders = Map();
-  Map<String, List<AttachmentSender>> attachmentSenders = Map();
+  Map<String, AttachmentSender> attachmentSenders = Map();
+  StreamController _attachmentSenderCompleter =
+      StreamController<String>.broadcast();
+  Stream<String> get attachmentSenderCompleter =>
+      _attachmentSenderCompleter.stream;
 
   Function connectCb;
   void addAttachmentDownloader(String guid, AttachmentDownloader downloader) {
     attachmentDownloaders[guid] = downloader;
   }
 
-  void addAttachmentSender(String guid, AttachmentSender sender) {
-    if (!attachmentSenders.containsKey(guid))
-      attachmentSenders[guid] = <AttachmentSender>[];
-    attachmentSenders[guid].add(sender);
+  void addAttachmentSender(AttachmentSender sender) {
+    attachmentSenders[sender.guid] = sender;
   }
 
   void finishDownloader(String guid) {
     attachmentDownloaders.remove(guid);
   }
 
-  void finishSender(String chatGuid, String messageGuid) {
-    for (int i = attachmentSenders[chatGuid].length - 1; i >= 0; i--) {
-      if (attachmentSenders[chatGuid][i].guid == messageGuid) {
-        attachmentSenders[chatGuid].removeAt(i);
-      }
-    }
+  void finishSender(String attachmentGuid) {
+    attachmentSenders.remove(attachmentGuid);
+    _attachmentSenderCompleter.sink.add(attachmentGuid);
   }
 
   Map<String, Function> disconnectSubscribers = new Map();

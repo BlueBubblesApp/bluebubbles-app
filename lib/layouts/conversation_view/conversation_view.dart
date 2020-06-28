@@ -173,7 +173,16 @@ class _ConversationViewState extends State<ConversationView> {
                   )
                 ],
               ),
-            )
+            ),
+            // SocketManager().attachmentSenders.containsKey(widget.chat.guid) ?
+            // StreamBuilder(
+            //   builder: (context, snapshot) {
+            //     return LinearProgressIndicator(
+            //       value: ,
+            //     );
+            //   },
+            //   stream: SocketManager().attachmentSenders[widget.chat][],
+            // ) : Container(),
           ],
         ),
         trailing: Container(width: 20),

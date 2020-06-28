@@ -104,6 +104,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> {
         widget.reactions,
         GestureDetector(
           onLongPress: () {
+            debugPrint(widget.message.handleId.toString());
             Overlay.of(context).insert(widget.overlayEntry);
           },
           child: Padding(

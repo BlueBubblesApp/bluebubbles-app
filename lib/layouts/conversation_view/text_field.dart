@@ -8,6 +8,7 @@ import 'package:bluebubble_messages/helpers/hex_color.dart';
 import 'package:bluebubble_messages/layouts/conversation_view/camera_widget.dart';
 import 'package:bluebubble_messages/repository/models/chat.dart';
 import 'package:bluebubble_messages/socket_manager.dart';
+import 'package:file_picker_cross/file_picker_cross.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -343,10 +344,10 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField> {
                             } else if (index == _imageWidgets.length + 1) {
                               return RaisedButton(
                                 onPressed: () async {
-                                  PickedFile pickedImage = await ImagePicker()
-                                      .getVideo(source: ImageSource.gallery);
-                                  File image = File(pickedImage.path);
-                                  pickedImages.add(image);
+                                  FilePickerCross filePicker =
+                                      FilePickerCross();
+                                  await filePicker.pick();
+                                  pickedImages.add(File(filePicker.path));
                                   setState(() {});
                                 },
                                 color: HexColor('26262a'),

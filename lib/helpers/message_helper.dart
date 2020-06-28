@@ -25,7 +25,8 @@ class MessageHelper {
   static List<Chat> parseChats(Map<String, dynamic> data) {
     List<Chat> chats = [];
 
-    if (data.containsKey("chats") && data["chats"] != null || data["chats"].length > 0) {
+    if (data.containsKey("chats") && data["chats"] != null ||
+        data["chats"].length > 0) {
       for (int i = 0; i < data["chats"].length; i++) {
         Chat chat = Chat.fromMap(data["chats"][i]);
         chats.add(chat);

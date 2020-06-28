@@ -53,161 +53,180 @@ class _SettingsPanelState extends State<SettingsPanel> {
           ),
         ),
       ),
-      body: ListView(
+      body: CustomScrollView(
         physics: AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-        children: <Widget>[
-          SettingsTile(
-              title: "Connection Status",
-              subTitle: _settingsCopy.connected
-                  ? "Connected -> Tap to Refresh"
-                  : "Disconnected -> Tap to Refresh",
-              trailing: _settingsCopy.connected
-                  ? Icon(Icons.fiber_manual_record, color: HexColor('32CD32'))
-                  : Icon(Icons.fiber_manual_record, color: HexColor('DC143C')),
-              onTap: () {
-                _settingsCopy.connected = SettingsManager().settings.connected;
-                setState(() {});
-              }),
-          SettingsTile(
-            onTap: () {
-              showDialog(
-                context: context,
-                builder: (BuildContext context) {
-                  TextEditingController _controller = TextEditingController(
-                    text: "https://.ngrok.io",
-                  );
-                  _controller.selection =
-                      TextSelection.fromPosition(TextPosition(offset: 8));
+        slivers: <Widget>[
+          SliverPadding(
+            padding: EdgeInsets.only(top: 130),
+          ),
+          SliverList(
+            delegate: SliverChildListDelegate(
+              <Widget>[
+                SettingsTile(
+                    title: "Connection Status",
+                    subTitle: _settingsCopy.connected
+                        ? "Connected -> Tap to Refresh"
+                        : "Disconnected -> Tap to Refresh",
+                    trailing: _settingsCopy.connected
+                        ? Icon(Icons.fiber_manual_record,
+                            color: HexColor('32CD32'))
+                        : Icon(Icons.fiber_manual_record,
+                            color: HexColor('DC143C')),
+                    onTap: () {
+                      _settingsCopy.connected =
+                          SettingsManager().settings.connected;
+                      setState(() {});
+                    }),
+                SettingsTile(
+                  onTap: () {
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        TextEditingController _controller =
+                            TextEditingController(
+                          text: "https://.ngrok.io",
+                        );
+                        _controller.selection =
+                            TextSelection.fromPosition(TextPosition(offset: 8));
 
-                  return AlertDialog(
-                    title: Text(
-                      "Server address:",
-                      style: TextStyle(
-                        color: Colors.white,
-                      ),
-                    ),
-                    content: Container(
-                      child: TextField(
-                        autofocus: true,
-                        controller: _controller,
-                        // autofocus: true,
-                        scrollPhysics: BouncingScrollPhysics(),
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 15,
-                        ),
-                        keyboardType: TextInputType.multiline,
-                        maxLines: null,
-                        decoration: InputDecoration(
-                          contentPadding: EdgeInsets.only(top: 5, bottom: 5),
-                          // border: InputBorder.none,
-                          // border: OutlineInputBorder(),
-                          // hintText: 'https://<some-id>.ngrok.com',
-                          hintStyle: TextStyle(
-                            color: Color.fromARGB(255, 100, 100, 100),
+                        return AlertDialog(
+                          title: Text(
+                            "Server address:",
+                            style: TextStyle(
+                              color: Colors.white,
+                            ),
+                          ),
+                          content: Container(
+                            child: TextField(
+                              autofocus: true,
+                              controller: _controller,
+                              // autofocus: true,
+                              scrollPhysics: BouncingScrollPhysics(),
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 15,
+                              ),
+                              keyboardType: TextInputType.multiline,
+                              maxLines: null,
+                              decoration: InputDecoration(
+                                contentPadding:
+                                    EdgeInsets.only(top: 5, bottom: 5),
+                                // border: InputBorder.none,
+                                // border: OutlineInputBorder(),
+                                // hintText: 'https://<some-id>.ngrok.com',
+                                hintStyle: TextStyle(
+                                  color: Color.fromARGB(255, 100, 100, 100),
+                                ),
+                              ),
+                            ),
+                          ),
+                          backgroundColor: HexColor('26262a'),
+                          actions: <Widget>[
+                            FlatButton(
+                              child: Text("Ok"),
+                              onPressed: () {
+                                _settingsCopy.serverAddress = _controller.text;
+                                // Singleton().saveSettings(_settingsCopy);
+                                Navigator.of(context).pop();
+                              },
+                            ),
+                            FlatButton(
+                              child: Text("Cancel"),
+                              onPressed: () {
+                                Navigator.of(context).pop();
+                              },
+                            ),
+                          ],
+                        );
+                      },
+                    );
+                  },
+                  title: "Connection Address",
+                  subTitle: _settingsCopy.serverAddress,
+                  trailing: Icon(Icons.edit, color: HexColor('26262a')),
+                ),
+                SettingsTile(
+                  title: "Re-configure with MacOS Server",
+                  trailing: Icon(Icons.camera, color: HexColor('26262a')),
+                  onTap: () async {
+                    var fcmData;
+                    try {
+                      fcmData = jsonDecode(
+                        await Navigator.of(context).push(
+                          CupertinoPageRoute(
+                            builder: (BuildContext context) {
+                              return QRCodeScanner();
+                            },
                           ),
                         ),
-                      ),
-                    ),
-                    backgroundColor: HexColor('26262a'),
-                    actions: <Widget>[
-                      FlatButton(
-                        child: Text("Ok"),
-                        onPressed: () {
-                          _settingsCopy.serverAddress = _controller.text;
-                          // Singleton().saveSettings(_settingsCopy);
-                          Navigator.of(context).pop();
-                        },
-                      ),
-                      FlatButton(
-                        child: Text("Cancel"),
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                        },
-                      ),
-                    ],
-                  );
-                },
-              );
-            },
-            title: "Connection Address",
-            subTitle: _settingsCopy.serverAddress,
-            trailing: Icon(Icons.edit, color: HexColor('26262a')),
-          ),
-          SettingsTile(
-            title: "Re-configure with MacOS Server",
-            trailing: Icon(Icons.camera, color: HexColor('26262a')),
-            onTap: () async {
-              var fcmData;
-              try {
-                fcmData = jsonDecode(
-                  await Navigator.of(context).push(
-                    CupertinoPageRoute(
+                      );
+                    } catch (e) {
+                      return;
+                    }
+                    if (fcmData != null) {
+                      _settingsCopy.fcmAuthData = {
+                        "project_id": fcmData[2],
+                        "storage_bucket": fcmData[3],
+                        "api_key": fcmData[4],
+                        "firebase_url": fcmData[5],
+                        "client_id": fcmData[6],
+                        "application_id": fcmData[7],
+                      };
+                      _settingsCopy.guidAuthKey = fcmData[0];
+                      _settingsCopy.serverAddress = fcmData[1];
+                      // Singleton().saveSettings(_settingsCopy);
+                    }
+                  },
+                ),
+                SettingsSlider(
+                  startingVal: _settingsCopy.chunkSize.toDouble(),
+                  update: (int val) {
+                    _settingsCopy.chunkSize = val;
+                  },
+                ),
+                SettingsTile(
+                  onTap: () {
+                    showDialog(
+                      context: context,
                       builder: (BuildContext context) {
-                        return QRCodeScanner();
+                        return AlertDialog(
+                          title: Text(
+                            "Are you sure?",
+                            style: TextStyle(
+                              color: Colors.white,
+                            ),
+                          ),
+                          backgroundColor: HexColor('26262a'),
+                          actions: <Widget>[
+                            FlatButton(
+                              child: Text("Yes"),
+                              onPressed: () {
+                                // SocketManager().deleteDB().then((value) {
+                                //   SocketManager().notify();
+                                // });
+                              },
+                            ),
+                            FlatButton(
+                              child: Text("Cancel"),
+                              onPressed: () {
+                                Navigator.of(context).pop();
+                              },
+                            ),
+                          ],
+                        );
                       },
-                    ),
-                  ),
-                );
-              } catch (e) {
-                return;
-              }
-              if (fcmData != null) {
-                _settingsCopy.fcmAuthData = {
-                  "project_id": fcmData[2],
-                  "storage_bucket": fcmData[3],
-                  "api_key": fcmData[4],
-                  "firebase_url": fcmData[5],
-                  "client_id": fcmData[6],
-                  "application_id": fcmData[7],
-                };
-                _settingsCopy.guidAuthKey = fcmData[0];
-                _settingsCopy.serverAddress = fcmData[1];
-                // Singleton().saveSettings(_settingsCopy);
-              }
-            },
+                    );
+                  },
+                  title: "Reset DB",
+                ),
+              ],
+            ),
           ),
-          SettingsSlider(
-            startingVal: _settingsCopy.chunkSize.toDouble(),
-            update: (int val) {
-              _settingsCopy.chunkSize = val;
-            },
-          ),
-          SettingsTile(
-            onTap: () {
-              showDialog(
-                context: context,
-                builder: (BuildContext context) {
-                  return AlertDialog(
-                    title: Text(
-                      "Are you sure?",
-                      style: TextStyle(
-                        color: Colors.white,
-                      ),
-                    ),
-                    backgroundColor: HexColor('26262a'),
-                    actions: <Widget>[
-                      FlatButton(
-                        child: Text("Yes"),
-                        onPressed: () {
-                          // SocketManager().deleteDB().then((value) {
-                          //   SocketManager().notify();
-                          // });
-                        },
-                      ),
-                      FlatButton(
-                        child: Text("Cancel"),
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                        },
-                      ),
-                    ],
-                  );
-                },
-              );
-            },
-            title: "Reset DB",
-          ),
+          SliverList(
+            delegate: SliverChildListDelegate(
+              <Widget>[],
+            ),
+          )
         ],
       ),
     );

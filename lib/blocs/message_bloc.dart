@@ -31,6 +31,7 @@ class MessageBloc {
     _currentChat = chat;
     getMessages();
     NewMessageManager().stream.listen((Map<String, dynamic> event) {
+      if (_messageController.isClosed) return;
       if (event.containsKey(_currentChat.guid)) {
         //if there even is a chat specified in the newmessagemanager update
         if (event[_currentChat.guid] == null) {
@@ -42,11 +43,12 @@ class MessageBloc {
             if (_allMessages.containsKey(event["oldGuid"])) {
               _allMessages.update(
                   event["oldGuid"], (value) => event[_currentChat.guid]);
-              _messageController.sink.add({
-                "messages": _allMessages,
-                "update": event[_currentChat.guid],
-                "index": null
-              });
+              if (!_messageController.isClosed)
+                _messageController.sink.add({
+                  "messages": _allMessages,
+                  "update": event[_currentChat.guid],
+                  "index": null
+                });
             }
           } else {
             //if there is a specific message to insert
@@ -67,12 +69,13 @@ class MessageBloc {
     int index = 0;
     if (_allMessages.length == 0) {
       _allMessages.addAll({message.guid: message});
-      _messageController.sink.add({
-        "messages": _allMessages,
-        "insert": message,
-        "index": index,
-        "sentFromThisClient": sentFromThisClient
-      });
+      if (!_messageController.isClosed)
+        _messageController.sink.add({
+          "messages": _allMessages,
+          "insert": message,
+          "index": index,
+          "sentFromThisClient": sentFromThisClient
+        });
       return;
     }
     List<Message> messages = _allMessages.values.toList();
@@ -85,12 +88,13 @@ class MessageBloc {
         break;
       }
     }
-    _messageController.sink.add({
-      "messages": _allMessages,
-      "insert": message,
-      "index": index,
-      "sentFromThisClient": sentFromThisClient
-    });
+    if (!_messageController.isClosed)
+      _messageController.sink.add({
+        "messages": _allMessages,
+        "insert": message,
+        "index": index,
+        "sentFromThisClient": sentFromThisClient
+      });
   }
 
   LinkedHashMap linkedHashMapInsert(map, int index, key, value) {
@@ -108,7 +112,8 @@ class MessageBloc {
     messages.forEach((element) {
       _allMessages.addAll({element.guid: element});
     });
-    _messageController.sink.add({"messages": _allMessages, "insert": null});
+    if (!_messageController.isClosed)
+      _messageController.sink.add({"messages": _allMessages, "insert": null});
     await getReactions(0);
   }
 
@@ -141,8 +146,9 @@ class MessageBloc {
             _allMessages.addAll({element.guid: element});
           });
           // _allMessages.sort((a, b) => -a.dateCreated.compareTo(b.dateCreated));
-          _messageController.sink
-              .add({"messages": _allMessages, "insert": null});
+          if (!_messageController.isClosed)
+            _messageController.sink
+                .add({"messages": _allMessages, "insert": null});
           completer.complete();
           await getReactions(offset);
         });
@@ -152,7 +158,9 @@ class MessageBloc {
           _allMessages.addAll({element.guid: element});
         });
         // _allMessages.sort((a, b) => -a.dateCreated.compareTo(b.dateCreated));
-        _messageController.sink.add({"messages": _allMessages, "insert": null});
+        if (!_messageController.isClosed)
+          _messageController.sink
+              .add({"messages": _allMessages, "insert": null});
         completer.complete();
         await getReactions(offset);
       }
@@ -176,7 +184,8 @@ class MessageBloc {
         _reactions[guid].add(element);
       }
     });
-    _messageController.sink.add({"messages": _allMessages, "insert": null});
+    if (!_messageController.isClosed)
+      _messageController.sink.add({"messages": _allMessages, "insert": null});
   }
 
   void dispose() {

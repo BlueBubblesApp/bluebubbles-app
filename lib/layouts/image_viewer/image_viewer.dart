@@ -59,27 +59,28 @@ class _ImageViewerState extends State<ImageViewer> {
               ),
             ),
           ),
-          GestureDetector(
-            onPanUpdate: (details) {
-              debugPrint(details.delta.dx.toString());
-              setState(() {
-                left += details.delta.dx;
-                top += details.delta.dy;
-              });
-            },
-            onPanEnd: (details) {
-              if (left.abs() > MediaQuery.of(context).size.width / 7 ||
-                  top.abs() > MediaQuery.of(context).size.height / 7) {
-                Navigator.of(context).pop();
-              } else {
-                setState(() {
-                  top = 0;
-                  left = 0;
-                  duration = 200;
-                });
-              }
-            },
-          ),
+          // GestureDetector(
+          //   behavior: HitTestBehavior.translucent,
+          //   onPanUpdate: (details) {
+          //     debugPrint(details.delta.dx.toString());
+          //     setState(() {
+          //       left += details.delta.dx;
+          //       top += details.delta.dy;
+          //     });
+          //   },
+          //   onPanEnd: (details) {
+          //     if (left.abs() > MediaQuery.of(context).size.width / 7 ||
+          //         top.abs() > MediaQuery.of(context).size.height / 7) {
+          //       Navigator.of(context).pop();
+          //     } else {
+          //       setState(() {
+          //         top = 0;
+          //         left = 0;
+          //         duration = 200;
+          //       });
+          //     }
+          //   },
+          // ),
         ],
       ),
     );

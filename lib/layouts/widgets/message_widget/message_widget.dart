@@ -13,6 +13,7 @@ import 'package:bluebubble_messages/layouts/widgets/message_widget/message_conte
 import 'package:bluebubble_messages/layouts/widgets/message_widget/message_content/media_players/loaction_widget.dart';
 import 'package:bluebubble_messages/layouts/widgets/message_widget/message_content/media_players/regular_file_opener.dart';
 import 'package:bluebubble_messages/layouts/widgets/message_widget/message_content/media_players/video_widget.dart';
+import 'package:bluebubble_messages/layouts/widgets/message_widget/message_content/media_file.dart';
 import 'package:bluebubble_messages/layouts/widgets/message_widget/received_message.dart';
 import 'package:bluebubble_messages/layouts/widgets/message_widget/sent_message.dart';
 import 'package:bluebubble_messages/managers/contact_manager.dart';
@@ -24,13 +25,16 @@ import 'package:contacts_service/contacts_service.dart';
 import 'package:flick_video_player/flick_video_player.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_linkify/flutter_linkify.dart';
 import 'package:flutter_map/plugin_api.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
 import 'package:latlong/latlong.dart';
+import 'package:link_previewer/link_previewer.dart';
 import 'package:mime_type/mime_type.dart';
 import 'package:path/path.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:video_player/video_player.dart';
 
 import '../../../helpers/hex_color.dart';
@@ -78,6 +82,7 @@ class _MessageState extends State<MessageWidget>
   final String laugh = "laugh";
   Map<String, List<Message>> reactions = new Map();
   Widget blurredImage;
+  bool _hasLinks = false;
 
   @override
   void didChangeDependencies() async {
@@ -100,7 +105,14 @@ class _MessageState extends State<MessageWidget>
     if (widget.customContent != null) return;
     chatAttachments = [];
     Message.getAttachments(widget.message).then((value) {
-      attachments = value;
+      attachments = [];
+      for (Attachment attachment in value) {
+        if (attachment.mimeType != null) {
+          attachments.add(attachment);
+        } else {
+          _hasLinks = true;
+        }
+      }
       body = "";
       for (int i = 0; i < attachments.length; i++) {
         if (attachments[i] == null) continue;
@@ -163,7 +175,7 @@ class _MessageState extends State<MessageWidget>
         threshold;
   }
 
-  List<Widget> _buildContent() {
+  List<Widget> _buildContent(BuildContext context) {
     if (widget.customContent != null) {
       return widget.customContent;
     }
@@ -215,47 +227,65 @@ class _MessageState extends State<MessageWidget>
         String mimeType = attachments[i].mimeType;
         if (mimeType != null)
           mimeType = mimeType.substring(0, mimeType.indexOf("/"));
-        if ((mimeType == null || mimeType == "image")) {
+        if (mimeType == null || mimeType == "image") {
           content.add(
-            ImageWidget(
+            MediaFile(
+              child: ImageWidget(
+                attachment: attachments[i],
+                file: chatAttachments[i],
+              ),
               attachment: attachments[i],
-              file: chatAttachments[i],
             ),
           );
         } else if (mimeType == "video") {
           content.add(
-            VideoWidget(
+            MediaFile(
               attachment: attachments[i],
-              file: chatAttachments[i],
+              child: VideoWidget(
+                attachment: attachments[i],
+                file: chatAttachments[i],
+              ),
             ),
           );
         } else if (mimeType == "audio") {
           //TODO fix this stuff
           content.add(
-            AudioPlayerWiget(
+            MediaFile(
               attachment: attachments[i],
-              file: chatAttachments[i],
+              child: AudioPlayerWiget(
+                attachment: attachments[i],
+                file: chatAttachments[i],
+              ),
             ),
           );
         } else if (attachments[i].mimeType == "text/x-vlocation") {
           content.add(
-            LocationWidget(
-              file: chatAttachments[i],
+            MediaFile(
               attachment: attachments[i],
+              child: LocationWidget(
+                file: chatAttachments[i],
+                attachment: attachments[i],
+              ),
             ),
           );
         } else if (attachments[i].mimeType == "text/vcard") {
           content.add(
-            ContactWidget(
-              file: chatAttachments[i],
+            MediaFile(
               attachment: attachments[i],
+              child: ContactWidget(
+                file: chatAttachments[i],
+                attachment: attachments[i],
+              ),
             ),
           );
         } else {
           content.add(
-            RegularFileOpener(
-              file: chatAttachments[i],
+            MediaFile(
               attachment: attachments[i],
+              child: RegularFileOpener(
+                file: chatAttachments[i],
+                attachment: attachments[i],
+              ),
             ),
           );
         }
@@ -362,7 +392,17 @@ class _MessageState extends State<MessageWidget>
       }
     }
 
-    if (!isEmptyString(widget.message.text) && attachments.length > 0) {
+    if (_hasLinks) {
+      String link = widget.message.text;
+      if (!Uri.parse(widget.message.text).isAbsolute) {
+        link = "https://" + widget.message.text;
+      }
+      content.add(
+        LinkPreviewer(
+          link: link,
+        ),
+      );
+    } else if (!isEmptyString(widget.message.text) && attachments.length > 0) {
       content.add(
         Padding(
           padding: EdgeInsets.only(left: 20, right: 10),
@@ -433,7 +473,7 @@ class _MessageState extends State<MessageWidget>
   @override
   Widget build(BuildContext context) {
     if (widget.fromSelf) {
-      List<Widget> content = _buildContent();
+      List<Widget> content = _buildContent(context);
       return SentMessage(
         content: content,
         deliveredReceipt: widget.customContent != null
@@ -449,7 +489,7 @@ class _MessageState extends State<MessageWidget>
       return ReceivedMessage(
           timeStamp: _buildTimeStamp(),
           reactions: _buildReactions(),
-          content: _buildContent(),
+          content: _buildContent(context),
           showTail: showTail,
           olderMessage: widget.olderMessage,
           message: widget.message,
@@ -474,9 +514,10 @@ class _MessageState extends State<MessageWidget>
           Text(
             text,
             style: TextStyle(
-                color: Colors.white.withAlpha(80),
-                fontWeight: FontWeight.w500,
-                fontSize: 11),
+              color: Colors.white.withAlpha(80),
+              fontWeight: FontWeight.w500,
+              fontSize: 11,
+            ),
           )
         ],
       ),
@@ -499,34 +540,35 @@ class _MessageState extends State<MessageWidget>
         );
       }
     });
-    return Stack(
-      alignment: widget.message.isFromMe
-          ? Alignment.bottomRight
-          : Alignment.bottomLeft,
-      children: <Widget>[
-        for (int i = 0; i < reactionIcon.length; i++)
-          Padding(
-            padding: EdgeInsets.fromLTRB(i.toDouble() * 20.0, 0, 0, 0),
-            child: Container(
-              height: 30,
-              width: 30,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(100),
-                color: HexColor('26262a'),
-                boxShadow: [
-                  new BoxShadow(
-                    blurRadius: 5.0,
-                    offset:
-                        Offset(3.0 * (widget.message.isFromMe ? 1 : -1), 0.0),
-                    color: Colors.black,
-                  )
-                ],
-              ),
-              child: reactionIcon[i],
-            ),
-          ),
-      ],
-    );
+    // return Stack(
+    //   alignment: widget.message.isFromMe
+    //       ? Alignment.bottomRight
+    //       : Alignment.bottomLeft,
+    //   children: <Widget>[
+    //     for (int i = 0; i < reactionIcon.length; i++)
+    //       Padding(
+    //         padding: EdgeInsets.fromLTRB(i.toDouble() * 20.0, 0, 0, 0),
+    //         child: Container(
+    //           height: 30,
+    //           width: 30,
+    //           decoration: BoxDecoration(
+    //             borderRadius: BorderRadius.circular(100),
+    //             color: HexColor('26262a'),
+    //             boxShadow: [
+    //               new BoxShadow(
+    //                 blurRadius: 5.0,
+    //                 offset:
+    //                     Offset(3.0 * (widget.message.isFromMe ? 1 : -1), 0.0),
+    //                 color: Colors.black,
+    //               )
+    //             ],
+    //           ),
+    //           child: reactionIcon[i],
+    //         ),
+    //       ),
+    //   ],
+    // );
+    return Container();
   }
 
   OverlayEntry _createOverlayEntry() {

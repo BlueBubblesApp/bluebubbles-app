@@ -22,12 +22,6 @@ class _SendWidgetState extends State<SendWidget> {
   @override
   void initState() {
     super.initState();
-    // SystemChannels.textInput.invokeMethod('TextInput.show');
-    // Future.delayed(Duration(milliseconds: 50), () {
-    //   setState(() {
-    //     showHero = true;
-    //   });
-    // });
     Future.delayed(Duration(milliseconds: 60), () {
       Navigator.of(context).pop();
     });

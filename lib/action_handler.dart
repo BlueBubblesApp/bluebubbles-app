@@ -292,6 +292,7 @@ class ActionHandler {
       for (int i = 0; i < chats.length; i++) {
         debugPrint("Client received new message " + chats[i].guid);
         await ActionHandler.handleChat(chat: chats[i], checkIfExists: true);
+        await message.save();
         await chats[i].addMessage(message);
 
         // Add notification metadata
@@ -311,7 +312,7 @@ class ActionHandler {
         Attachment file = Attachment.fromMap(attachmentItem);
         await file.save(message);
 
-        if (SettingsManager().settings.autoDownload) {
+        if (SettingsManager().settings.autoDownload && file.mimeType != null) {
           new AttachmentDownloader(file);
         }
       });

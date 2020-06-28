@@ -232,7 +232,6 @@ class _SentMessageState extends State<SentMessage>
         ),
       );
 
-    // Icon(Icons.accessible_forward, color: Colors.white),
     return AnimatedOpacity(
       opacity: _visible ? 1.0 : 0.0,
       duration: Duration(milliseconds: widget.shouldFadeIn ? 200 : 0),

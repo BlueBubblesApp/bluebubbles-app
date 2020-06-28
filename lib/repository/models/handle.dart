@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'package:bluebubble_messages/managers/queue_manager.dart';
+import 'package:logger/logger.dart';
 import 'package:sqflite/sqflite.dart';
 
 import '../database.dart';
@@ -43,6 +45,8 @@ class Handle {
 
     // Try to find an existing chat before saving it
     Handle existing = await Handle.findOne({"address": this.address});
+    QueueManager().logger.log(Level.info,
+        "existing == null ${existing == null}, existing: ${existing != null ? existing.toMap().toString() : null}");
     if (existing != null) {
       this.id = existing.id;
     }
@@ -69,11 +73,15 @@ class Handle {
 
     // If it already exists, update it
     if (this.id != null) {
-      await db.update("handle", {
-        "address": this.address,
-        "country": this.country,
-        "uncanonicalizedId": this.uncanonicalizedId
-      }, where: "ROWID = ?", whereArgs: [this.id]);
+      await db.update(
+          "handle",
+          {
+            "address": this.address,
+            "country": this.country,
+            "uncanonicalizedId": this.uncanonicalizedId
+          },
+          where: "ROWID = ?",
+          whereArgs: [this.id]);
     } else {
       await this.save(false);
     }
@@ -137,9 +145,9 @@ class Handle {
   }
 
   Map<String, dynamic> toMap() => {
-    "ROWID": id,
-    "address": address,
-    "country": country,
-    "uncanonicalizedId": uncanonicalizedId,
-  };
+        "ROWID": id,
+        "address": address,
+        "country": country,
+        "uncanonicalizedId": uncanonicalizedId,
+      };
 }

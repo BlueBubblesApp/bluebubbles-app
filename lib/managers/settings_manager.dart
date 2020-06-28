@@ -19,10 +19,14 @@ class SettingsManager {
   //settings
   Settings settings;
   SharedPreferences sharedPreferences;
+  File debugFile;
 
   void init() async {
     settings = new Settings();
     appDocDir = await getApplicationSupportDirectory();
+    new File(SettingsManager().appDocDir.path + "/debug.txt")
+        .create()
+        .then((value) => debugFile = value);
   }
 
   void getSavedSettings() async {

@@ -59,7 +59,9 @@ class _MessageViewState extends State<MessageView> {
         if (_listKey.currentState != null) {
           _listKey.currentState.insertItem(
               event.containsKey("index") ? event["index"] : 0,
-              duration: animationDuration);
+              duration: event["sentFromThisClient"]
+                  ? Duration(milliseconds: 500)
+                  : animationDuration);
         }
       } else if (event.containsKey("update") && event["update"] != null) {
         _messages = event["messages"].values.toList();
@@ -135,9 +137,12 @@ class _MessageViewState extends State<MessageView> {
               shouldFadeIn: sentMessages.contains(_messages[index].guid),
             );
 
-            if (_messages[index].isFromMe) {
-              if (index == 0) {
-                return SlideTransition(
+            if (index == 0) {
+              return SizeTransition(
+                axis: Axis.vertical,
+                sizeFactor: animation.drive(Tween(begin: 0.0, end: 1.0)
+                    .chain(CurveTween(curve: Curves.easeInOut))),
+                child: SlideTransition(
                   position: animation.drive(
                       Tween(begin: Offset(0.0, 1), end: Offset(0.0, 0.0))
                           .chain(CurveTween(curve: Curves.easeInOut))),
@@ -151,9 +156,14 @@ class _MessageViewState extends State<MessageView> {
                       ),
                     ),
                   ),
-                );
-              } else {
-                return SlideTransition(
+                ),
+              );
+            } else {
+              return SizeTransition(
+                axis: Axis.vertical,
+                sizeFactor: animation.drive(Tween(begin: 0.0, end: 1.0)
+                    .chain(CurveTween(curve: Curves.easeInOut))),
+                child: SlideTransition(
                   position: animation.drive(
                       Tween(begin: Offset(0.0, 1), end: Offset(0.0, 0.0))
                           .chain(CurveTween(curve: Curves.easeInOut))),
@@ -161,16 +171,6 @@ class _MessageViewState extends State<MessageView> {
                     opacity: animation,
                     child: messageWidget,
                   ),
-                );
-              }
-            } else {
-              return SlideTransition(
-                position: animation.drive(
-                    Tween(begin: Offset(0.0, 1), end: Offset(0.0, 0.0))
-                        .chain(CurveTween(curve: Curves.easeInOut))),
-                child: FadeTransition(
-                  opacity: animation,
-                  child: messageWidget,
                 ),
               );
             }
@@ -178,64 +178,6 @@ class _MessageViewState extends State<MessageView> {
         ),
       ],
     );
-    // return StreamBuilder(
-    //   stream: widget.messageBloc.stream,
-    //   builder: (BuildContext context, AsyncSnapshot<List<Message>> snapshot) {
-    //     List<Message> _messages = <Message>[];
-    //     if (snapshot.hasData) {
-    //       _messages = snapshot.data;
-    //     } else {
-    //       _messages = widget.messageBloc.messages;
-    //     }
-
-    //     return ListView.builder(
-    //       reverse: true,
-    //       physics:
-    //           AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-    //       itemCount: _messages.length + 1,
-    //       itemBuilder: (BuildContext context, int index) {
-    //         if (index == _messages.length) {
-    //           if (loader == null) {
-    //             loader = widget.messageBloc.loadMessageChunk(_messages.length);
-    //             loader.whenComplete(() => loader = null);
-    //           }
-    //           return NewMessageLoader(
-    //             messageBloc: widget.messageBloc,
-    //             offset: _messages.length,
-    //             loader: loader,
-    //           );
-    //         }
-
-    //         Message olderMessage;
-    //         Message newerMessage;
-    //         if (index + 1 >= 0 && index + 1 < _messages.length) {
-    //           olderMessage = _messages[index + 1];
-    //         }
-    //         if (index - 1 >= 0 && index - 1 < _messages.length) {
-    //           newerMessage = _messages[index - 1];
-    //         }
-    //         List<Message> reactions = <Message>[];
-    //         if (widget.messageBloc.reactions
-    //             .containsKey(_messages[index].guid)) {
-    //           reactions.addAll(
-    //             widget.messageBloc.reactions[_messages[index].guid],
-    //           );
-    //         }
-
-    //         return MessageWidget(
-    //           key: Key(_messages[index].guid),
-    //           fromSelf: _messages[index].isFromMe,
-    //           message: _messages[index],
-    //           olderMessage: olderMessage,
-    //           newerMessage: newerMessage,
-    //           reactions: reactions,
-    //           showHandle: widget.showHandle,
-    //           bloc: widget.messageBloc,
-    //         );
-    //       },
-    //     );
-    //   },
-    // );
   }
 }
 
