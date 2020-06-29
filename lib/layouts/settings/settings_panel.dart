@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:ui';
 
 // import 'package:bluebubble_messages/qr_code_scanner.dart';
+import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubble_messages/managers/settings_manager.dart';
 import 'package:bluebubble_messages/settings.dart';
 import 'package:bluebubble_messages/socket_manager.dart';
@@ -213,11 +214,9 @@ class _SettingsPanelState extends State<SettingsPanel> {
                   title: "Reset DB",
                 ),
                 SettingsOptions(
-                  onChanged: (BrightnessSetting val) {
-                    _settingsCopy.brightnessSetting = val;
-                    SettingsManager().setTheme(_settingsCopy);
+                  onChanged: (AdaptiveThemeMode val) {
+                    AdaptiveTheme.of(context).setThemeMode(val);
                   },
-                  initialVal: _settingsCopy.brightnessSetting,
                 )
               ],
             ),
@@ -285,21 +284,20 @@ class SettingsTile extends StatelessWidget {
 }
 
 class SettingsOptions extends StatefulWidget {
-  SettingsOptions({Key key, this.onChanged, this.initialVal}) : super(key: key);
-  final Function(BrightnessSetting) onChanged;
-  final BrightnessSetting initialVal;
+  SettingsOptions({Key key, this.onChanged}) : super(key: key);
+  final Function(AdaptiveThemeMode) onChanged;
 
   @override
   _SettingsOptionsState createState() => _SettingsOptionsState();
 }
 
 class _SettingsOptionsState extends State<SettingsOptions> {
-  BrightnessSetting initialVal;
+  AdaptiveThemeMode initialVal;
 
   @override
   void initState() {
     super.initState();
-    initialVal = widget.initialVal;
+    initialVal = AdaptiveTheme.of(context).mode;
   }
 
   @override
@@ -313,17 +311,17 @@ class _SettingsOptionsState extends State<SettingsOptions> {
           color: Theme.of(context).textTheme.bodyText1.color,
         ),
         value: initialVal,
-        items: BrightnessSetting.values
-            .map<DropdownMenuItem<BrightnessSetting>>((e) {
+        items: AdaptiveThemeMode.values
+            .map<DropdownMenuItem<AdaptiveThemeMode>>((e) {
           return DropdownMenuItem(
             value: e,
             child: Text(
-              Settings.brightnessSettingToString(e),
+              e.toString().split(".").last,
               style: Theme.of(context).textTheme.bodyText1,
             ),
           );
         }).toList(),
-        onChanged: (BrightnessSetting val) {
+        onChanged: (AdaptiveThemeMode val) {
           widget.onChanged(val);
           setState(() {
             initialVal = val;

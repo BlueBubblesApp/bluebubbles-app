@@ -23,8 +23,6 @@ class SettingsManager {
   SharedPreferences sharedPreferences;
   File debugFile;
 
-  BuildContext _context;
-
   void init() async {
     settings = new Settings();
     appDocDir = await getApplicationSupportDirectory();
@@ -40,10 +38,6 @@ class SettingsManager {
       Map resultMap = jsonDecode(result);
       _manager.settings = Settings.fromJson(resultMap);
     }
-
-    _context = context;
-
-    setTheme(_manager.settings);
 
     SocketManager().finishedSetup.sink.add(_manager.settings.finishedSetup);
     SocketManager().startSocketIO();
@@ -63,20 +57,9 @@ class SettingsManager {
       await SocketManager().authFCM();
     }
     _manager.settings = settings;
-    setTheme(_manager.settings);
 
     if (connectToSocket) {
       SocketManager().startSocketIO(connectCB: connectCb);
-    }
-  }
-
-  void setTheme(Settings settings) {
-    if (settings.brightnessSetting == BrightnessSetting.auto_system) {
-      AdaptiveTheme.of(_context).setSystem();
-    } else if (settings.brightnessSetting == BrightnessSetting.dark) {
-      AdaptiveTheme.of(_context).setDark();
-    } else {
-      AdaptiveTheme.of(_context).setLight();
     }
   }
 }
