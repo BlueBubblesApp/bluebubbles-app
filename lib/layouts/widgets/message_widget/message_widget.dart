@@ -310,13 +310,13 @@ class _MessageState extends State<MessageWidget>
                   children: <Widget>[
                     Text(
                       chatAttachments[i].getFriendlySize(),
-                      style: TextStyle(fontSize: 12),
+                      style: Theme.of(context).textTheme.bodyText1,
                     ),
                     Icon(Icons.cloud_download, size: 28.0),
                     (chatAttachments[i].mimeType != null)
                         ? Text(
                             chatAttachments[i].mimeType,
-                            style: TextStyle(fontSize: 12),
+                            style: Theme.of(context).textTheme.bodyText1,
                           )
                         : Container()
                   ],
@@ -335,7 +335,7 @@ class _MessageState extends State<MessageWidget>
               if (snapshot.hasError) {
                 return Text(
                   "Error loading",
-                  style: TextStyle(color: Colors.white),
+                  style: Theme.of(context).textTheme.bodyText1,
                 );
               }
               if (snapshot.data is File) {
@@ -369,9 +369,10 @@ class _MessageState extends State<MessageWidget>
                               ? Container(height: 5.0)
                               : Container(),
                           (chatAttachments[i].attachment.mimeType != null)
-                              ? Text(chatAttachments[i].attachment.mimeType,
-                                  style: TextStyle(
-                                      fontSize: 12, color: Colors.white))
+                              ? Text(
+                                  chatAttachments[i].attachment.mimeType,
+                                  style: Theme.of(context).textTheme.bodyText1,
+                                )
                               : Container()
                         ],
                       ),
@@ -386,7 +387,7 @@ class _MessageState extends State<MessageWidget>
         content.add(
           Text(
             "Error loading",
-            style: TextStyle(color: Colors.white),
+            style: Theme.of(context).textTheme.bodyText1,
           ),
         );
       }
@@ -408,9 +409,9 @@ class _MessageState extends State<MessageWidget>
           padding: EdgeInsets.only(left: 20, right: 10),
           child: Text(
             widget.message.text,
-            style: TextStyle(
-              color: Colors.white,
-            ),
+            style: widget.message.isFromMe
+                ? Theme.of(context).textTheme.bodyText2
+                : Theme.of(context).textTheme.bodyText1,
           ),
         ),
       );
@@ -418,9 +419,9 @@ class _MessageState extends State<MessageWidget>
       content.add(
         Text(
           widget.message.text,
-          style: TextStyle(
-            color: Colors.white,
-          ),
+          style: widget.message.isFromMe
+              ? Theme.of(context).textTheme.bodyText2
+              : Theme.of(context).textTheme.bodyText1,
         ),
       );
     }
@@ -437,7 +438,7 @@ class _MessageState extends State<MessageWidget>
     return output;
   }
 
-  Widget _buildTimeStamp() {
+  Widget _buildTimeStamp(BuildContext context) {
     if (widget.olderMessage != null &&
         withinTimeThreshold(widget.message, widget.olderMessage,
             threshold: 30)) {
@@ -459,9 +460,7 @@ class _MessageState extends State<MessageWidget>
           children: <Widget>[
             Text(
               "$date, $time",
-              style: TextStyle(
-                color: Colors.white,
-              ),
+              style: Theme.of(context).textTheme.bodyText1,
             )
           ],
         ),
@@ -478,27 +477,28 @@ class _MessageState extends State<MessageWidget>
         content: content,
         deliveredReceipt: widget.customContent != null
             ? Container()
-            : _buildDelieveredReceipt(),
+            : _buildDelieveredReceipt(context),
         message: widget.message,
-        overlayEntry: _createOverlayEntry(),
+        overlayEntry: _createOverlayEntry(context),
         showTail: showTail,
         limited: widget.customContent == null,
         shouldFadeIn: widget.shouldFadeIn,
       );
     } else {
       return ReceivedMessage(
-          timeStamp: _buildTimeStamp(),
-          reactions: _buildReactions(),
-          content: _buildContent(context),
-          showTail: showTail,
-          olderMessage: widget.olderMessage,
-          message: widget.message,
-          overlayEntry: _createOverlayEntry(),
-          showHandle: widget.showHandle);
+        timeStamp: _buildTimeStamp(context),
+        reactions: _buildReactions(),
+        content: _buildContent(context),
+        showTail: showTail,
+        olderMessage: widget.olderMessage,
+        message: widget.message,
+        overlayEntry: _createOverlayEntry(context),
+        showHandle: widget.showHandle,
+      );
     }
   }
 
-  Widget _buildDelieveredReceipt() {
+  Widget _buildDelieveredReceipt(BuildContext context) {
     if (!showTail) return Container();
     if (widget.message.dateRead == null && widget.message.dateDelivered == null)
       return Container();
@@ -513,11 +513,7 @@ class _MessageState extends State<MessageWidget>
         children: <Widget>[
           Text(
             text,
-            style: TextStyle(
-              color: Colors.white.withAlpha(80),
-              fontWeight: FontWeight.w500,
-              fontSize: 11,
-            ),
+            style: Theme.of(context).textTheme.subtitle2,
           )
         ],
       ),
@@ -571,7 +567,7 @@ class _MessageState extends State<MessageWidget>
     return Container();
   }
 
-  OverlayEntry _createOverlayEntry() {
+  OverlayEntry _createOverlayEntry(BuildContext context) {
     List<Widget> reactioners = <Widget>[];
     reactions.keys.forEach(
       (element) {
@@ -606,9 +602,7 @@ class _MessageState extends State<MessageWidget>
             Text(
               names.join(", "),
               softWrap: true,
-              style: TextStyle(
-                color: Colors.white,
-              ),
+              style: Theme.of(context).textTheme.bodyText1,
             ),
           );
 

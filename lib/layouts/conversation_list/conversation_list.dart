@@ -47,9 +47,9 @@ class _ConversationListState extends State<ConversationList> {
                     _theme = Colors.transparent;
                   })
                 : {}
-            : _theme != HexColor('26262a').withOpacity(0.5)
+            : _theme != Theme.of(context).accentColor.withOpacity(0.5)
                 ? setState(() {
-                    _theme = HexColor('26262a').withOpacity(0.5);
+                    _theme = Theme.of(context).accentColor.withOpacity(0.5);
                   })
                 : {},
       );
@@ -81,6 +81,7 @@ class _ConversationListState extends State<ConversationList> {
                     : CrossFadeState.showSecond,
                 duration: Duration(milliseconds: 250),
                 secondChild: AppBar(
+                  elevation: 0,
                   backgroundColor: _theme,
                   centerTitle: true,
                   title: Row(
@@ -88,21 +89,20 @@ class _ConversationListState extends State<ConversationList> {
                     children: <Widget>[
                       Text(
                         "Messages",
-                        style: TextStyle(
-                          color: Colors.white,
-                        ),
+                        style: Theme.of(context).textTheme.bodyText1,
                       ),
                     ],
                   ),
                 ),
                 firstChild: AppBar(
+                  elevation: 0,
                   backgroundColor: Colors.transparent,
                 ),
               ),
             ),
           ),
         ),
-        backgroundColor: Colors.black,
+        backgroundColor: Theme.of(context).backgroundColor,
         extendBodyBehindAppBar: true,
         body: CustomScrollView(
           controller: _scrollController,
@@ -137,7 +137,10 @@ class _ConversationListState extends State<ConversationList> {
                             flex: 5,
                           ),
                           Container(
-                            child: Text("Messages"),
+                            child: Text(
+                              "Messages",
+                              style: Theme.of(context).textTheme.headline1,
+                            ),
                           ),
                           Spacer(
                             flex: 25,
@@ -145,11 +148,11 @@ class _ConversationListState extends State<ConversationList> {
                           ButtonTheme(
                             minWidth: 20,
                             height: 20,
-                            child: RaisedButton(
+                            child: FlatButton(
                               padding: EdgeInsets.symmetric(
                                 horizontal: 0,
                               ),
-                              color: Colors.white.withOpacity(0.1),
+                              color: Theme.of(context).accentColor,
                               onPressed: () {
                                 Navigator.of(context).push(
                                   CupertinoPageRoute(
@@ -195,15 +198,14 @@ class _ConversationListState extends State<ConversationList> {
                         if (!snapshot.data.containsKey(_chats[index].guid))
                           return Container();
                         return ConversationTile(
-                          key: Key(_chats[index].guid.toString()),
-                          chat: _chats[index],
-                          title: snapshot.data[_chats[index].guid]["title"],
-                          subtitle: snapshot.data[_chats[index].guid]
-                              ["subtitle"],
-                          date: snapshot.data[_chats[index].guid]["date"],
-                          hasNewMessage: snapshot.data[_chats[index].guid]
-                              ["hasNotification"]
-                        );
+                            key: Key(_chats[index].guid.toString()),
+                            chat: _chats[index],
+                            title: snapshot.data[_chats[index].guid]["title"],
+                            subtitle: snapshot.data[_chats[index].guid]
+                                ["subtitle"],
+                            date: snapshot.data[_chats[index].guid]["date"],
+                            hasNewMessage: snapshot.data[_chats[index].guid]
+                                ["hasNotification"]);
                       },
                       childCount: _chats.length,
                     ),
@@ -218,6 +220,7 @@ class _ConversationListState extends State<ConversationList> {
           ],
         ),
         floatingActionButton: FloatingActionButton(
+            backgroundColor: Colors.blue,
             child: Icon(Icons.message, color: Colors.white, size: 25),
             onPressed: () {
               Navigator.of(context).push(

@@ -35,19 +35,20 @@ class _SettingsPanelState extends State<SettingsPanel> {
   Widget build(BuildContext context) {
     return Scaffold(
       extendBodyBehindAppBar: true,
-      backgroundColor: Colors.black,
+      backgroundColor: Theme.of(context).backgroundColor,
       appBar: PreferredSize(
         preferredSize: Size(MediaQuery.of(context).size.width, 80),
         child: ClipRRect(
           child: BackdropFilter(
             child: AppBar(
+              elevation: 0,
               leading: IconButton(
                 icon: Icon(Icons.arrow_back_ios),
                 onPressed: () {
                   Navigator.of(context).pop();
                 },
               ),
-              backgroundColor: HexColor('26262a').withOpacity(0.5),
+              backgroundColor: Theme.of(context).accentColor.withOpacity(0.5),
             ),
             filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
           ),
@@ -92,9 +93,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                         return AlertDialog(
                           title: Text(
                             "Server address:",
-                            style: TextStyle(
-                              color: Colors.white,
-                            ),
+                            style: Theme.of(context).textTheme.bodyText1,
                           ),
                           content: Container(
                             child: TextField(
@@ -102,10 +101,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                               controller: _controller,
                               // autofocus: true,
                               scrollPhysics: BouncingScrollPhysics(),
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 15,
-                              ),
+                              style: Theme.of(context).textTheme.bodyText1,
                               keyboardType: TextInputType.multiline,
                               maxLines: null,
                               decoration: InputDecoration(
@@ -114,9 +110,8 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                 // border: InputBorder.none,
                                 // border: OutlineInputBorder(),
                                 // hintText: 'https://<some-id>.ngrok.com',
-                                hintStyle: TextStyle(
-                                  color: Color.fromARGB(255, 100, 100, 100),
-                                ),
+                                hintStyle:
+                                    Theme.of(context).textTheme.subtitle1,
                               ),
                             ),
                           ),
@@ -192,9 +187,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                         return AlertDialog(
                           title: Text(
                             "Are you sure?",
-                            style: TextStyle(
-                              color: Colors.white,
-                            ),
+                            style: Theme.of(context).textTheme.bodyText1,
                           ),
                           backgroundColor: HexColor('26262a'),
                           actions: <Widget>[
@@ -219,6 +212,13 @@ class _SettingsPanelState extends State<SettingsPanel> {
                   },
                   title: "Reset DB",
                 ),
+                SettingsOptions(
+                  onChanged: (BrightnessSetting val) {
+                    _settingsCopy.brightnessSetting = val;
+                    SettingsManager().setTheme(_settingsCopy);
+                  },
+                  initialVal: _settingsCopy.brightnessSetting,
+                )
               ],
             ),
           ),
@@ -234,7 +234,6 @@ class _SettingsPanelState extends State<SettingsPanel> {
 
   @override
   void dispose() {
-    // TODO: implement dispose
     // if (_settingsCopy != Singleton().settings) {
     debugPrint("saving settings");
     SettingsManager().saveSettings(_settingsCopy, connectToSocket: true);
@@ -256,7 +255,7 @@ class SettingsTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.black,
+      color: Theme.of(context).backgroundColor,
       child: InkWell(
         onTap: this.onTap,
         child: Column(
@@ -264,24 +263,72 @@ class SettingsTile extends StatelessWidget {
             ListTile(
               title: Text(
                 this.title,
-                style: TextStyle(color: Colors.white),
+                style: Theme.of(context).textTheme.bodyText1,
               ),
               trailing: this.trailing,
               subtitle: subTitle != null
                   ? Text(
                       subTitle,
-                      style: TextStyle(
-                        color: HexColor('26262a'),
-                      ),
+                      style: Theme.of(context).textTheme.subtitle1,
                     )
                   : null,
             ),
             Divider(
-              color: HexColor('26262a').withOpacity(0.5),
+              color: Theme.of(context).accentColor.withOpacity(0.5),
               thickness: 1,
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class SettingsOptions extends StatefulWidget {
+  SettingsOptions({Key key, this.onChanged, this.initialVal}) : super(key: key);
+  final Function(BrightnessSetting) onChanged;
+  final BrightnessSetting initialVal;
+
+  @override
+  _SettingsOptionsState createState() => _SettingsOptionsState();
+}
+
+class _SettingsOptionsState extends State<SettingsOptions> {
+  BrightnessSetting initialVal;
+
+  @override
+  void initState() {
+    super.initState();
+    initialVal = widget.initialVal;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: DropdownButton(
+        dropdownColor: Theme.of(context).accentColor,
+        icon: Icon(
+          Icons.arrow_drop_down,
+          color: Theme.of(context).textTheme.bodyText1.color,
+        ),
+        value: initialVal,
+        items: BrightnessSetting.values
+            .map<DropdownMenuItem<BrightnessSetting>>((e) {
+          return DropdownMenuItem(
+            value: e,
+            child: Text(
+              Settings.brightnessSettingToString(e),
+              style: Theme.of(context).textTheme.bodyText1,
+            ),
+          );
+        }).toList(),
+        onChanged: (BrightnessSetting val) {
+          widget.onChanged(val);
+          setState(() {
+            initialVal = val;
+          });
+        },
       ),
     );
   }
@@ -316,7 +363,7 @@ class _SettingsSliderState extends State<SettingsSlider> {
         ListTile(
           title: Text(
             "Attachment Chunk Size",
-            style: TextStyle(color: Colors.white),
+            style: Theme.of(context).textTheme.bodyText1,
           ),
           subtitle: Slider(
             value: currentVal,
@@ -336,7 +383,7 @@ class _SettingsSliderState extends State<SettingsSlider> {
           ),
         ),
         Divider(
-          color: HexColor('26262a').withOpacity(0.5),
+          color: Theme.of(context).accentColor.withOpacity(0.5),
           thickness: 1,
         ),
       ],

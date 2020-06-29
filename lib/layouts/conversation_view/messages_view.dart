@@ -216,7 +216,7 @@ class _NewMessageLoaderState extends State<NewMessageLoader> {
               padding: const EdgeInsets.all(8.0),
               child: Text(
                 "Loading more messages...",
-                style: TextStyle(color: Colors.white, fontSize: 10),
+                style: Theme.of(context).textTheme.subtitle2,
               ),
             ),
             Padding(

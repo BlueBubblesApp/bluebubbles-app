@@ -78,7 +78,7 @@ class _ConversationTileState extends State<ConversationTile> {
         )
       ],
       child: Material(
-        color: Colors.black,
+        color: Theme.of(context).backgroundColor,
         child: InkWell(
           onTap: () {
             MessageBloc messageBloc = new MessageBloc(widget.chat);
@@ -106,9 +106,7 @@ class _ConversationTileState extends State<ConversationTile> {
                   child: ListTile(
                     contentPadding: EdgeInsets.only(left: 0),
                     title: Text(widget.title,
-                        style: TextStyle(
-                          color: Colors.white,
-                        ),
+                        style: Theme.of(context).textTheme.bodyText1,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis),
                     subtitle:
@@ -116,9 +114,7 @@ class _ConversationTileState extends State<ConversationTile> {
                             ? widget.subtitle
                             : Text(
                                 widget.subtitle != null ? widget.subtitle : "",
-                                style: TextStyle(
-                                  color: HexColor('36363a'),
-                                ),
+                                style: Theme.of(context).textTheme.subtitle1,
                                 maxLines: 1,
                               ),
                     leading: CircleAvatar(
@@ -159,15 +155,12 @@ class _ConversationTileState extends State<ConversationTile> {
                             padding: EdgeInsets.only(right: 5),
                             child: Text(
                               widget.date,
-                              style: TextStyle(
-                                color: HexColor('36363a'),
-                                fontSize: 10,
-                              ),
+                              style: Theme.of(context).textTheme.subtitle2,
                             ),
                           ),
                           Icon(
                             Icons.arrow_forward_ios,
-                            color: HexColor('36363a'),
+                            color: Theme.of(context).textTheme.subtitle1.color,
                             size: 15,
                           ),
                         ],

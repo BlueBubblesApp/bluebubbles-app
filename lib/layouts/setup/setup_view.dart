@@ -58,7 +58,7 @@ class _SetupViewState extends State<SetupView> {
             children: <Widget>[
               Text(
                 "${currentPage}/6",
-                style: TextStyle(color: Colors.white),
+                style: Theme.of(context).textTheme.bodyText1,
               ),
             ],
           ),
@@ -77,11 +77,11 @@ class _SetupViewState extends State<SetupView> {
           children: <Widget>[
             Text(
               "Welcome to BlueBubbles",
-              style: TextStyle(color: Colors.white),
+              style: Theme.of(context).textTheme.bodyText1,
             ),
             Text(
               "Let's get started",
-              style: TextStyle(color: Colors.white),
+              style: Theme.of(context).textTheme.bodyText1,
             ),
             RaisedButton(
               color: Colors.grey,
@@ -110,9 +110,7 @@ class _SetupViewState extends State<SetupView> {
         children: <Widget>[
           Text(
             "BlueBubbles needs to access contacts, cause its a messaging app, what do you expect?",
-            style: TextStyle(
-              color: Colors.white,
-            ),
+            style: Theme.of(context).textTheme.bodyText1,
             textAlign: TextAlign.center,
           ),
           RaisedButton(
@@ -143,9 +141,7 @@ class _SetupViewState extends State<SetupView> {
           children: <Widget>[
             Text(
               "Next download the BlueBubbles Server app on your Mac and install. Follow the setup process",
-              style: TextStyle(
-                color: Colors.white,
-              ),
+              style: Theme.of(context).textTheme.bodyText1,
               textAlign: TextAlign.center,
             ),
             RaisedButton(
@@ -176,16 +172,12 @@ class _SetupViewState extends State<SetupView> {
           children: <Widget>[
             Text(
               "BlueBubbles tries to make the setup process as easy as possible",
-              style: TextStyle(
-                color: Colors.white,
-              ),
+              style: Theme.of(context).textTheme.bodyText1,
               textAlign: TextAlign.center,
             ),
             Text(
               "As such, we need to retreive some Firebase authentication data from the server. This is done through a QR Code present in the settings of the Mac Server",
-              style: TextStyle(
-                color: Colors.white,
-              ),
+              style: Theme.of(context).textTheme.bodyText1,
               textAlign: TextAlign.center,
             ),
             RaisedButton(
@@ -225,9 +217,7 @@ class _SetupViewState extends State<SetupView> {
               },
               child: Text(
                 "Scan QR Code",
-                style: TextStyle(
-                  color: Colors.white,
-                ),
+                style: Theme.of(context).textTheme.bodyText1,
                 textAlign: TextAlign.center,
               ),
             ),
@@ -246,16 +236,12 @@ class _SetupViewState extends State<SetupView> {
           children: <Widget>[
             Text(
               "For the final step, BlueBubbles will download all of the messages from your Mac's iMessage database.",
-              style: TextStyle(
-                color: Colors.white,
-              ),
+              style: Theme.of(context).textTheme.bodyText1,
               textAlign: TextAlign.center,
             ),
             Text(
               "This may take a while, so please be patient and do not exit out of the app or let your phone fall asleep",
-              style: TextStyle(
-                color: Colors.white,
-              ),
+              style: Theme.of(context).textTheme.bodyText1,
               textAlign: TextAlign.center,
             ),
             RaisedButton(
@@ -275,9 +261,7 @@ class _SetupViewState extends State<SetupView> {
               },
               child: Text(
                 "Begin Sync",
-                style: TextStyle(
-                  color: Colors.white,
-                ),
+                style: Theme.of(context).textTheme.bodyText1,
                 textAlign: TextAlign.center,
               ),
             ),
@@ -306,9 +290,7 @@ class _SetupViewState extends State<SetupView> {
                   ),
                   Text(
                     "${(progress * 100).floor()}%",
-                    style: TextStyle(
-                      color: Colors.white,
-                    ),
+                    style: Theme.of(context).textTheme.bodyText1,
                   ),
                   Spacer(
                     flex: 5,
@@ -342,9 +324,7 @@ class _SetupViewState extends State<SetupView> {
                   ),
                   Text(
                     progress == 0.0 ? "Starting setup" : "Finishing setup",
-                    style: TextStyle(
-                      color: Colors.white,
-                    ),
+                    style: Theme.of(context).textTheme.bodyText1,
                   ),
                   Spacer(
                     flex: 5,

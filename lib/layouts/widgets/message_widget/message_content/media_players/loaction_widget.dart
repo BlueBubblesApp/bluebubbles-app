@@ -67,7 +67,7 @@ class _LocationWidgetState extends State<LocationWidget> {
       return Container(
         child: Text(
           "Could not load location",
-          style: TextStyle(color: Colors.white),
+          style: Theme.of(context).textTheme.bodyText1,
         ),
       );
     }

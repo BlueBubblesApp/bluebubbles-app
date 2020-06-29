@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:adaptive_theme/adaptive_theme.dart';
+import 'package:bluebubble_messages/helpers/hex_color.dart';
 import 'package:bluebubble_messages/helpers/utils.dart';
 import 'package:bluebubble_messages/managers/contact_manager.dart';
 import 'package:bluebubble_messages/managers/life_cycle_manager.dart';
@@ -40,23 +42,81 @@ class Main extends StatelessWidget with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'BlueBubbles',
-      theme: ThemeData(
+    return AdaptiveTheme(
+      light: ThemeData(
         primarySwatch: Colors.blue,
-        // accentColor: Colors.white,
         splashFactory: InkRipple.splashFactory,
-        // pageTransitionsTheme: PageTransitionsTheme(
-        //   builders: {
-        //     TargetPlatform.android:
-        //         CupertinoPageTransitionsBuilderCustomBackGestureWidth(),
-        //     TargetPlatform.iOS:
-        //         CupertinoPageTransitionsBuilderCustomBackGestureWidth(),
-        //   },
-        // ),
+        textTheme: TextTheme(
+          headline1: TextStyle(
+            color: Colors.black,
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+          ),
+          headline2: TextStyle(
+            color: Colors.black,
+            fontWeight: FontWeight.normal,
+            fontSize: 14,
+          ),
+          bodyText1: TextStyle(
+            color: Colors.black,
+          ),
+          bodyText2: TextStyle(
+            color: Colors.white,
+          ),
+          subtitle1: TextStyle(
+            color: HexColor('9a9a9f'),
+            fontSize: 13,
+          ),
+          subtitle2: TextStyle(
+            color: HexColor('9a9a9f'),
+            fontSize: 9,
+          ),
+        ),
+        accentColor: HexColor('e5e5ea'),
+        dividerColor: HexColor('e5e5ea').withOpacity(0.5),
+        backgroundColor: Colors.white,
       ),
-      navigatorKey: NavigatorManager().navigatorKey,
-      home: Home(),
+      dark: ThemeData(
+        primarySwatch: Colors.blue,
+        splashFactory: InkRipple.splashFactory,
+        textTheme: TextTheme(
+          headline1: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.normal,
+            fontSize: 18,
+          ),
+          headline2: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.normal,
+            fontSize: 14,
+          ),
+          bodyText1: TextStyle(
+            color: Colors.white,
+          ),
+          bodyText2: TextStyle(
+            color: Colors.white,
+          ),
+          subtitle1: TextStyle(
+            color: HexColor('36363a'),
+            fontSize: 13,
+          ),
+          subtitle2: TextStyle(
+            color: HexColor('36363a'),
+            fontSize: 9,
+          ),
+        ),
+        accentColor: HexColor('26262a'),
+        dividerColor: HexColor('26262a').withOpacity(0.5),
+        backgroundColor: Colors.black,
+      ),
+      initial: AdaptiveThemeMode.system,
+      builder: (theme, darkTheme) => MaterialApp(
+        title: 'BlueBubbles',
+        theme: theme,
+        darkTheme: darkTheme,
+        navigatorKey: NavigatorManager().navigatorKey,
+        home: Home(),
+      ),
     );
   }
 }
@@ -112,14 +172,15 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     });
 
     NotificationManager().createNotificationChannel();
-    SchedulerBinding.instance
-        .addPostFrameCallback((_) => SettingsManager().getSavedSettings());
+    SchedulerBinding.instance.addPostFrameCallback(
+        (_) => SettingsManager().getSavedSettings(context));
     WidgetsBinding.instance.addObserver(this);
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
   }
 
   @override

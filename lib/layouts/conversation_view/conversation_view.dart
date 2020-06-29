@@ -109,10 +109,10 @@ class _ConversationViewState extends State<ConversationView> {
     };
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Theme.of(context).backgroundColor,
       extendBodyBehindAppBar: true,
       appBar: CupertinoNavigationBar(
-        backgroundColor: Colors.black.withAlpha(150),
+        backgroundColor: Theme.of(context).backgroundColor.withAlpha(150),
         border: Border(
             bottom:
                 BorderSide(color: Colors.white.withOpacity(0.2), width: 0.2)),
@@ -156,33 +156,17 @@ class _ConversationViewState extends State<ConversationView> {
                     onTap: openDetails,
                     child: Text(
                       getShortChatTitle(chat),
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.normal,
-                        fontSize: 14,
-                      ),
+                      style: Theme.of(context).textTheme.headline2,
                     ),
                   ),
                   Container(width: 5),
                   Text(
                     ">",
-                    style: TextStyle(
-                        color: Colors.grey.withOpacity(0.8),
-                        fontWeight: FontWeight.normal,
-                        fontSize: 14),
+                    style: Theme.of(context).textTheme.subtitle1,
                   )
                 ],
               ),
             ),
-            // SocketManager().attachmentSenders.containsKey(widget.chat.guid) ?
-            // StreamBuilder(
-            //   builder: (context, snapshot) {
-            //     return LinearProgressIndicator(
-            //       value: ,
-            //     );
-            //   },
-            //   stream: SocketManager().attachmentSenders[widget.chat][],
-            // ) : Container(),
           ],
         ),
         trailing: Container(width: 20),

@@ -66,7 +66,7 @@ class _SentMessageState extends State<SentMessage>
               child: GestureDetector(
                 onTap: () => entry.remove(),
                 child: Container(
-                  color: Colors.black.withAlpha(200),
+                  color: Theme.of(context).backgroundColor.withAlpha(200),
                   child: Column(
                     children: <Widget>[
                       Spacer(
@@ -85,9 +85,12 @@ class _SentMessageState extends State<SentMessage>
                               children: <Widget>[
                                 Column(children: <Widget>[
                                   Text("Error Code: ${errorCode.toString()}",
-                                      style: TextStyle(color: Colors.white)),
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyText1),
                                   Text("Error: $errorText",
-                                      style: TextStyle(color: Colors.white))
+                                      style:
+                                          Theme.of(context).textTheme.bodyText1)
                                 ]),
                                 CupertinoButton(
                                     child: Row(
@@ -141,7 +144,7 @@ class _SentMessageState extends State<SentMessage>
         height: 28,
         width: 11,
         decoration: BoxDecoration(
-            color: Colors.black,
+            color: Theme.of(context).backgroundColor,
             borderRadius: BorderRadius.only(bottomLeft: Radius.circular(8))),
       ),
     ];
@@ -150,7 +153,7 @@ class _SentMessageState extends State<SentMessage>
       Container(
         height: 30,
         width: 6,
-        color: Colors.black,
+        color: Theme.of(context).backgroundColor,
       ),
     ];
     if (widget.showTail) {

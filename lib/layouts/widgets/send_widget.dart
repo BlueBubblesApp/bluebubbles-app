@@ -50,9 +50,7 @@ class _SendWidgetState extends State<SendWidget> {
             padding: EdgeInsets.only(left: 14, top: 8, bottom: 8, right: 14),
             child: Text(
               widget.text,
-              style: TextStyle(
-                color: Colors.white,
-              ),
+              style: Theme.of(context).textTheme.bodyText1,
             ),
           ),
         )
@@ -117,9 +115,8 @@ class _SendWidgetState extends State<SendWidget> {
                                   },
                                   child: Text(
                                     widget.text,
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                    ),
+                                    style:
+                                        Theme.of(context).textTheme.bodyText1,
                                   ),
                                 ),
                               ],

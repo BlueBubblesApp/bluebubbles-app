@@ -63,10 +63,7 @@ class _ContactWidgetState extends State<ContactWidget> {
                 children: <Widget>[
                   Text(
                     contact.displayName,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: Theme.of(context).textTheme.bodyText1,
                   ),
                   Spacer(
                     flex: 1,
@@ -86,9 +83,7 @@ class _ContactWidgetState extends State<ContactWidget> {
                           ? initials
                           : Text(
                               initials,
-                              style: TextStyle(
-                                color: Colors.white,
-                              ),
+                              style: Theme.of(context).textTheme.bodyText1,
                             ),
                       alignment: AlignmentDirectional.center,
                     ),

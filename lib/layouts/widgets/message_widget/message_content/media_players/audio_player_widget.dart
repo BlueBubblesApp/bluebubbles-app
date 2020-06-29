@@ -34,9 +34,7 @@ class _AudioPlayerWigetState extends State<AudioPlayerWiget> {
             Center(
               child: Text(
                 basename(widget.file.path),
-                style: TextStyle(
-                  color: Colors.white,
-                ),
+                style: Theme.of(context).textTheme.bodyText1,
               ),
             ),
             Spacer(

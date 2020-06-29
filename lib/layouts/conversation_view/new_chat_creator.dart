@@ -140,19 +140,18 @@ class _NewChatCreatorState extends State<NewChatCreator> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Theme.of(context).backgroundColor,
       appBar: CupertinoNavigationBar(
-        backgroundColor: HexColor('26262a').withOpacity(0.5),
+        backgroundColor: Theme.of(context).accentColor.withOpacity(0.5),
         middle: Container(
           child: Text(
             "New Message",
-            style:
-                TextStyle(color: Colors.white, fontWeight: FontWeight.normal),
+            style: Theme.of(context).textTheme.headline2,
           ),
         ),
         leading: Container(),
         trailing: Container(
-          child: RaisedButton(
+          child: FlatButton(
             color: Colors.transparent,
             onPressed: () {
               if (!widget.isCreator) {
@@ -262,9 +261,7 @@ class _NewChatCreatorState extends State<NewChatCreator> {
                       },
                       title: Text(
                         contacts[index].displayName,
-                        style: TextStyle(
-                          color: Colors.white,
-                        ),
+                        style: Theme.of(context).textTheme.bodyText1,
                       ),
                       subtitle: Text(
                         contacts[index].phones.length > 0
@@ -272,9 +269,7 @@ class _NewChatCreatorState extends State<NewChatCreator> {
                             : contacts[index].emails.length > 0
                                 ? contacts[index].emails.first.value
                                 : "",
-                        style: TextStyle(
-                          color: Colors.white,
-                        ),
+                        style: Theme.of(context).textTheme.subtitle1,
                       ),
                     );
                   },
@@ -336,10 +331,7 @@ class _NewChatCreatorState extends State<NewChatCreator> {
                         },
                         controller: _controller,
                         scrollPhysics: BouncingScrollPhysics(),
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 15,
-                        ),
+                        style: Theme.of(context).textTheme.bodyText1,
                         keyboardType: TextInputType.multiline,
                         maxLines: null,
                         padding: EdgeInsets.only(
@@ -355,13 +347,8 @@ class _NewChatCreatorState extends State<NewChatCreator> {
                           left: 10,
                           top: 18,
                         ),
-                        child: Text(
-                          "To: ",
-                          style: TextStyle(
-                            color: Color.fromARGB(255, 100, 100, 100),
-                            fontSize: 17,
-                          ),
-                        ),
+                        child: Text("To: ",
+                            style: Theme.of(context).textTheme.subtitle1),
                       ),
                     ],
                   ),

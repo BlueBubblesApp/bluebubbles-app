@@ -46,7 +46,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> {
         width: 20,
         height: 15,
         decoration: BoxDecoration(
-          color: HexColor('26262a'),
+          color: Theme.of(context).accentColor,
           borderRadius: BorderRadius.only(bottomRight: Radius.circular(12)),
         ),
       ),
@@ -55,7 +55,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> {
         height: 28,
         width: 11,
         decoration: BoxDecoration(
-            color: Colors.black,
+            color: Theme.of(context).backgroundColor,
             borderRadius: BorderRadius.only(bottomRight: Radius.circular(8))),
       ),
     ];
@@ -64,7 +64,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> {
       Container(
         height: 30,
         width: 6,
-        color: Colors.black,
+        color: Theme.of(context).backgroundColor,
       )
     ];
     if (widget.showTail) {
@@ -77,10 +77,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> {
         padding: EdgeInsets.only(left: 25.0, top: 5.0, bottom: 3.0),
         child: Text(
           handle,
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 12,
-          ),
+          style: Theme.of(context).textTheme.bodyText1,
         ),
       );
     }
@@ -130,7 +127,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> {
                       right: sidePadding),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(20),
-                    color: HexColor('26262a'),
+                    color: Theme.of(context).accentColor,
                   ),
                   child: ClipRRect(
                     borderRadius:

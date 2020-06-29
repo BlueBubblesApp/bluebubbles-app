@@ -49,7 +49,7 @@ class _ContactTileState extends State<ContactTile> {
           widget.contact != null
               ? widget.contact.displayName
               : widget.handle.address,
-          style: TextStyle(color: Colors.white),
+          style: Theme.of(context).textTheme.bodyText1,
         ),
         trailing: SizedBox(
           width: MediaQuery.of(context).size.width / 3,
@@ -58,9 +58,9 @@ class _ContactTileState extends State<ContactTile> {
             children: <Widget>[
               ButtonTheme(
                 minWidth: 1,
-                child: RaisedButton(
+                child: FlatButton(
                   shape: CircleBorder(),
-                  color: HexColor('26262a'),
+                  color: Theme.of(context).accentColor,
                   onPressed: () async {
                     if (widget.contact != null &&
                         widget.contact.phones.length > 0) {

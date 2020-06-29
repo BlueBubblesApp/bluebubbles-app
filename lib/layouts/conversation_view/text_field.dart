@@ -226,23 +226,18 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField> {
                         autocorrect: true,
                         controller: _controller,
                         scrollPhysics: BouncingScrollPhysics(),
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 15,
-                        ),
+                        style: Theme.of(context).textTheme.bodyText1,
                         keyboardType: TextInputType.multiline,
                         maxLines: null,
                         placeholder: "iMessage",
                         padding: EdgeInsets.only(
                             left: 10, right: 40, top: 10, bottom: 10),
-                        placeholderStyle: TextStyle(
-                          color: Color.fromARGB(255, 100, 100, 100),
-                        ),
+                        placeholderStyle: Theme.of(context).textTheme.subtitle1,
                         autofocus: true,
                         decoration: BoxDecoration(
-                          color: Colors.black,
+                          color: Theme.of(context).backgroundColor,
                           border: Border.all(
-                            color: HexColor('302f32'),
+                            color: Theme.of(context).dividerColor,
                             width: 1,
                           ),
                           borderRadius: BorderRadius.circular(15),
@@ -302,70 +297,145 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField> {
           ),
           showImagePicker
               ? SizedBox(
-                  child: Row(
-                    children: <Widget>[
-                      CameraWidget(
-                        addAttachment: (File attachment) {
-                          pickedImages.add(attachment);
-                          setState(() {});
-                        },
-                      ),
-                      Expanded(
-                        child: GridView.builder(
-                          physics: AlwaysScrollableScrollPhysics(
-                              parent: BouncingScrollPhysics()),
-                          scrollDirection: Axis.horizontal,
-                          itemCount: _imageWidgets.length + 2,
-                          gridDelegate:
-                              SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
+                  // child: Row(
+                  //   children: <Widget>[
+                  //     Expanded(
+                  child: CustomScrollView(
+                    physics: AlwaysScrollableScrollPhysics(
+                        parent: BouncingScrollPhysics()),
+                    scrollDirection: Axis.horizontal,
+                    slivers: <Widget>[
+                      // SliverGrid(
+                      //   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      //     crossAxisCount: 2,
+                      //   ),
+                      //   delegate: SliverChildBuilderDelegate(
+                      //     (context, index) {
+                      //       if (index == 0) {
+                      //         return ;
+                      //       } else if (index == 1) {
+                      //         return ;
+                      //       }
+                      //     },
+                      //     childCount: 2,
+                      //   ),
+                      // ),
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 10),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: <Widget>[
+                              SizedBox(
+                                width: 80,
+                                height: 120,
+                                child: RaisedButton(
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(18),
+                                  ),
+                                  onPressed: () async {
+                                    PickedFile pickedImage =
+                                        await ImagePicker().getImage(
+                                      source: ImageSource.gallery,
+                                    );
+                                    File image = File(pickedImage.path);
+                                    pickedImages.add(image);
+                                    setState(() {});
+                                  },
+                                  color: HexColor('26262a'),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: <Widget>[
+                                      Padding(
+                                        padding: const EdgeInsets.all(8.0),
+                                        child: Icon(
+                                          Icons.photo_library,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                      Text(
+                                        "Images",
+                                        style: TextStyle(
+                                          color: Theme.of(context)
+                                              .textTheme
+                                              .bodyText1
+                                              .color,
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              SizedBox(
+                                width: 80,
+                                height: 120,
+                                child: RaisedButton(
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(18),
+                                  ),
+                                  onPressed: () async {
+                                    FilePickerCross filePicker =
+                                        FilePickerCross();
+                                    await filePicker.pick();
+                                    pickedImages.add(File(filePicker.path));
+                                    setState(() {});
+                                  },
+                                  color: HexColor('26262a'),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: <Widget>[
+                                      Padding(
+                                        padding: const EdgeInsets.all(8.0),
+                                        child: Icon(
+                                          Icons.video_library,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                      Text(
+                                        "Videos",
+                                        style: TextStyle(
+                                          color: Theme.of(context)
+                                              .textTheme
+                                              .bodyText1
+                                              .color,
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              )
+                            ],
                           ),
-                          itemBuilder: (BuildContext context, int index) {
-                            if (index == _imageWidgets.length) {
-                              return RaisedButton(
-                                onPressed: () async {
-                                  PickedFile pickedImage =
-                                      await ImagePicker().getImage(
-                                    source: ImageSource.gallery,
-                                  );
-                                  File image = File(pickedImage.path);
-                                  pickedImages.add(image);
-                                  setState(() {});
-                                },
-                                color: HexColor('26262a'),
-                                child: Text(
-                                  "Pick Image",
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              );
-                            } else if (index == _imageWidgets.length + 1) {
-                              return RaisedButton(
-                                onPressed: () async {
-                                  FilePickerCross filePicker =
-                                      FilePickerCross();
-                                  await filePicker.pick();
-                                  pickedImages.add(File(filePicker.path));
-                                  setState(() {});
-                                },
-                                color: HexColor('26262a'),
-                                child: Text(
-                                  "Pick Video",
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              );
-                            }
+                        ),
+                      ),
+                      SliverToBoxAdapter(
+                        child: CameraWidget(
+                          addAttachment: (File attachment) {
+                            pickedImages.add(attachment);
+                            setState(() {});
+                          },
+                        ),
+                      ),
+                      SliverGrid(
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                        ),
+                        delegate: SliverChildBuilderDelegate(
+                          (context, index) {
                             return _imageWidgets[index];
                           },
+                          childCount: _imageWidgets.length,
                         ),
                       ),
                     ],
                   ),
+                  // GridView.builder(
+                  //   itemCount: _imageWidgets.length + 2,
+                  //   itemBuilder: (BuildContext context, int index) {
+                  //   },
+                  // ),
                   height: 300,
                   // width: MediaQuery.of(context).size.width,
                 )

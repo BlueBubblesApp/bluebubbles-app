@@ -83,7 +83,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
         return true;
       },
       child: Scaffold(
-        backgroundColor: Colors.black,
+        backgroundColor: Theme.of(context).backgroundColor,
         appBar: CupertinoNavigationBar(
           backgroundColor: HexColor('26262a').withOpacity(0.5),
           middle: Text(
@@ -110,7 +110,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                       child: TextField(
                         readOnly: readOnly,
                         controller: controller,
-                        style: TextStyle(color: Colors.white),
+                        style: Theme.of(context).textTheme.bodyText1,
                         autofocus: false,
                         autocorrect: false,
                         decoration: InputDecoration(
@@ -310,7 +310,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                     return Container(
                       child: Text(
                         attachment.transferName,
-                        style: TextStyle(color: Colors.white),
+                        style: Theme.of(context).textTheme.bodyText1,
                       ),
                     );
                   }
