@@ -14,6 +14,7 @@ import 'package:bluebubble_messages/layouts/widgets/message_widget/message_conte
 import 'package:bluebubble_messages/layouts/widgets/message_widget/message_content/media_players/regular_file_opener.dart';
 import 'package:bluebubble_messages/layouts/widgets/message_widget/message_content/media_players/video_widget.dart';
 import 'package:bluebubble_messages/layouts/widgets/message_widget/message_content/media_file.dart';
+import 'package:bluebubble_messages/layouts/widgets/message_widget/message_content/message_content.dart';
 import 'package:bluebubble_messages/layouts/widgets/message_widget/received_message.dart';
 import 'package:bluebubble_messages/layouts/widgets/message_widget/sent_message.dart';
 import 'package:bluebubble_messages/managers/contact_manager.dart';
@@ -52,6 +53,8 @@ class MessageWidget extends StatefulWidget {
     this.showHandle,
     this.customContent,
     this.shouldFadeIn,
+    this.isFirstSentMessage,
+    this.attachments,
   }) : super(key: key);
 
   final fromSelf;
@@ -61,6 +64,8 @@ class MessageWidget extends StatefulWidget {
   final List<Message> reactions;
   final bool showHandle;
   final bool shouldFadeIn;
+  final bool isFirstSentMessage;
+  final Widget attachments;
 
   final List<Widget> customContent;
 
@@ -71,8 +76,6 @@ class MessageWidget extends StatefulWidget {
 class _MessageState extends State<MessageWidget>
     with AutomaticKeepAliveClientMixin {
   List<Attachment> attachments = <Attachment>[];
-  String body;
-  List chatAttachments = [];
   bool showTail = true;
   final String like = "like";
   final String love = "love";
@@ -82,7 +85,6 @@ class _MessageState extends State<MessageWidget>
   final String laugh = "laugh";
   Map<String, List<Message>> reactions = new Map();
   Widget blurredImage;
-  bool _hasLinks = false;
 
   @override
   void didChangeDependencies() async {
@@ -101,63 +103,6 @@ class _MessageState extends State<MessageWidget>
     setState(() {});
   }
 
-  void getAttachments() {
-    if (widget.customContent != null) return;
-    chatAttachments = [];
-    Message.getAttachments(widget.message).then((value) {
-      attachments = [];
-      for (Attachment attachment in value) {
-        if (attachment.mimeType != null) {
-          attachments.add(attachment);
-        } else {
-          _hasLinks = true;
-        }
-      }
-      body = "";
-      for (int i = 0; i < attachments.length; i++) {
-        if (attachments[i] == null) continue;
-
-        String appDocPath = SettingsManager().appDocDir.path;
-        String pathName =
-            "$appDocPath/attachments/${attachments[i].guid}/${attachments[i].transferName}";
-
-        /**
-           * Case 1: If the file exists (we can get the type), add the file to the chat's attachments
-           * Case 2: If the attachment is currently being downloaded, get the AttachmentDownloader object and add it to the chat's attachments
-           * Case 3: If the attachment is a text-based one, automatically auto-download
-           * Case 4: Otherwise, add the attachment, as is, meaning it needs to be downloaded
-           */
-
-        if (FileSystemEntity.typeSync(pathName) !=
-            FileSystemEntityType.notFound) {
-          chatAttachments.add(File(pathName));
-          String mimeType = getMimeType(File(pathName));
-          if (mimeType == "video") {}
-        } else if (SocketManager()
-            .attachmentDownloaders
-            .containsKey(attachments[i].guid)) {
-          chatAttachments
-              .add(SocketManager().attachmentDownloaders[attachments[i].guid]);
-        } else if (attachments[i].mimeType == null ||
-            attachments[i].mimeType.startsWith("text/")) {
-          AttachmentDownloader downloader =
-              new AttachmentDownloader(attachments[i]);
-          chatAttachments.add(downloader);
-        } else {
-          chatAttachments.add(attachments[i]);
-        }
-      }
-      if (this.mounted) setState(() {});
-    });
-  }
-
-  String getMimeType(File attachment) {
-    String mimeType = mime(basename(attachment.path));
-    if (mimeType == null) return "";
-    mimeType = mimeType.substring(0, mimeType.indexOf("/"));
-    return mimeType;
-  }
-
   @override
   void initState() {
     super.initState();
@@ -166,284 +111,20 @@ class _MessageState extends State<MessageWidget>
               threshold: 1) ||
           !sameSender(widget.message, widget.newerMessage);
     }
-    getAttachments();
   }
 
   bool withinTimeThreshold(Message first, Message second, {threshold: 5}) {
     if (first == null || second == null) return false;
-    return first.dateCreated.difference(second.dateCreated).inMinutes >
+    return second.dateCreated.difference(first.dateCreated).inMinutes.abs() >
         threshold;
-  }
-
-  List<Widget> _buildContent(BuildContext context) {
-    if (widget.customContent != null) {
-      return widget.customContent;
-    }
-    List<Widget> content = <Widget>[];
-    for (int i = 0; i < chatAttachments.length; i++) {
-      // Pull the blurhash from the attachment, based on the class type
-      String blurhash = chatAttachments[i] is AttachmentDownloader
-          ? chatAttachments[i].attachment.blurhash
-          : chatAttachments[i] is Attachment
-              ? chatAttachments[i].blurhash
-              : null;
-
-      // Skip over unnecessary hyperlink images
-      if (chatAttachments[i] is File &&
-          attachments[i].mimeType == null &&
-          i + 1 < attachments.length &&
-          attachments[i + 1].mimeType == null) {
-        continue;
-      }
-
-      // Convert the placeholder to a Widget
-      Widget placeholder = (blurhash == null)
-          ? Container()
-          : FutureBuilder(
-              future: blurHashDecode(blurhash),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.done &&
-                    snapshot.hasData) {
-                  return ClipRRect(
-                    borderRadius: BorderRadius.circular(8.0),
-                    child: AspectRatio(
-                      aspectRatio: attachments[i].width / attachments[i].height,
-                      child: Image.memory(
-                        snapshot.data,
-                        width: 300,
-                        // height: 300,
-                        fit: BoxFit.fill,
-                      ),
-                    ),
-                  );
-                } else {
-                  return Container();
-                }
-              },
-            );
-
-      // If it's a file, it's already been downlaoded, so just display it
-      if (chatAttachments[i] is File) {
-        String mimeType = attachments[i].mimeType;
-        if (mimeType != null)
-          mimeType = mimeType.substring(0, mimeType.indexOf("/"));
-        if (mimeType == null || mimeType == "image") {
-          content.add(
-            MediaFile(
-              child: ImageWidget(
-                attachment: attachments[i],
-                file: chatAttachments[i],
-              ),
-              attachment: attachments[i],
-            ),
-          );
-        } else if (mimeType == "video") {
-          content.add(
-            MediaFile(
-              attachment: attachments[i],
-              child: VideoWidget(
-                attachment: attachments[i],
-                file: chatAttachments[i],
-              ),
-            ),
-          );
-        } else if (mimeType == "audio") {
-          //TODO fix this stuff
-          content.add(
-            MediaFile(
-              attachment: attachments[i],
-              child: AudioPlayerWiget(
-                attachment: attachments[i],
-                file: chatAttachments[i],
-              ),
-            ),
-          );
-        } else if (attachments[i].mimeType == "text/x-vlocation") {
-          content.add(
-            MediaFile(
-              attachment: attachments[i],
-              child: LocationWidget(
-                file: chatAttachments[i],
-                attachment: attachments[i],
-              ),
-            ),
-          );
-        } else if (attachments[i].mimeType == "text/vcard") {
-          content.add(
-            MediaFile(
-              attachment: attachments[i],
-              child: ContactWidget(
-                file: chatAttachments[i],
-                attachment: attachments[i],
-              ),
-            ),
-          );
-        } else {
-          content.add(
-            MediaFile(
-              attachment: attachments[i],
-              child: RegularFileOpener(
-                file: chatAttachments[i],
-                attachment: attachments[i],
-              ),
-            ),
-          );
-        }
-
-        // If it's an attachment, then it needs to be manually downloaded
-      } else if (chatAttachments[i] is Attachment) {
-        content.add(
-          Stack(
-            alignment: Alignment.center,
-            children: <Widget>[
-              placeholder,
-              CupertinoButton(
-                padding:
-                    EdgeInsets.only(left: 20, right: 20, top: 10, bottom: 10),
-                onPressed: () {
-                  chatAttachments[i] =
-                      new AttachmentDownloader(chatAttachments[i]);
-                  setState(() {});
-                },
-                color: Colors.transparent,
-                child: Column(
-                  children: <Widget>[
-                    Text(
-                      chatAttachments[i].getFriendlySize(),
-                      style: Theme.of(context).textTheme.bodyText1,
-                    ),
-                    Icon(Icons.cloud_download, size: 28.0),
-                    (chatAttachments[i].mimeType != null)
-                        ? Text(
-                            chatAttachments[i].mimeType,
-                            style: Theme.of(context).textTheme.bodyText1,
-                          )
-                        : Container()
-                  ],
-                ),
-              ),
-            ],
-          ),
-        );
-
-        // If it's an AttachmentDownloader, it is currently being downloaded
-      } else if (chatAttachments[i] is AttachmentDownloader) {
-        content.add(
-          StreamBuilder(
-            stream: chatAttachments[i].stream,
-            builder: (BuildContext context, AsyncSnapshot snapshot) {
-              if (snapshot.hasError) {
-                return Text(
-                  "Error loading",
-                  style: Theme.of(context).textTheme.bodyText1,
-                );
-              }
-              if (snapshot.data is File) {
-                getAttachments();
-                return Container();
-              } else {
-                double progress = 0.0;
-                if (snapshot.hasData) {
-                  progress = snapshot.data["Progress"];
-                } else {
-                  progress = chatAttachments[i].progress;
-                }
-
-                return Stack(
-                  alignment: Alignment.center,
-                  children: <Widget>[
-                    placeholder,
-                    Padding(
-                      padding: EdgeInsets.all(5.0),
-                      child: Column(
-                        children: <Widget>[
-                          CircularProgressIndicator(
-                            value: progress,
-                            backgroundColor: Colors.grey,
-                            valueColor: AlwaysStoppedAnimation(Colors.white),
-                          ),
-                          ((chatAttachments[i] as AttachmentDownloader)
-                                      .attachment
-                                      .mimeType !=
-                                  null)
-                              ? Container(height: 5.0)
-                              : Container(),
-                          (chatAttachments[i].attachment.mimeType != null)
-                              ? Text(
-                                  chatAttachments[i].attachment.mimeType,
-                                  style: Theme.of(context).textTheme.bodyText1,
-                                )
-                              : Container()
-                        ],
-                      ),
-                    )
-                  ],
-                );
-              }
-            },
-          ),
-        );
-      } else {
-        content.add(
-          Text(
-            "Error loading",
-            style: Theme.of(context).textTheme.bodyText1,
-          ),
-        );
-      }
-    }
-
-    if (_hasLinks) {
-      String link = widget.message.text;
-      if (!Uri.parse(widget.message.text).isAbsolute) {
-        link = "https://" + widget.message.text;
-      }
-      content.add(
-        LinkPreviewer(
-          link: link,
-        ),
-      );
-    } else if (!isEmptyString(widget.message.text) && attachments.length > 0) {
-      content.add(
-        Padding(
-          padding: EdgeInsets.only(left: 20, right: 10),
-          child: Text(
-            widget.message.text,
-            style: widget.message.isFromMe
-                ? Theme.of(context).textTheme.bodyText2
-                : Theme.of(context).textTheme.bodyText1,
-          ),
-        ),
-      );
-    } else if (!isEmptyString(widget.message.text) && attachments.length == 0) {
-      content.add(
-        Text(
-          widget.message.text,
-          style: widget.message.isFromMe
-              ? Theme.of(context).textTheme.bodyText2
-              : Theme.of(context).textTheme.bodyText1,
-        ),
-      );
-    }
-
-    // Add spacing to items in a message
-    List<Widget> output = [];
-    for (int i = 0; i < content.length; i++) {
-      output.add(content[i]);
-      if (i != content.length - 1) {
-        output.add(Container(height: 8.0));
-      }
-    }
-
-    return output;
   }
 
   Widget _buildTimeStamp(BuildContext context) {
     if (widget.olderMessage != null &&
-        withinTimeThreshold(widget.message, widget.olderMessage,
+        withinTimeThreshold(widget.message, widget.newerMessage,
             threshold: 30)) {
-      DateTime timeOfolderMessage = widget.olderMessage.dateCreated;
-      String time = new DateFormat.jm().format(timeOfolderMessage);
+      DateTime timeOfnewerMessage = widget.newerMessage.dateCreated;
+      String time = new DateFormat.jm().format(timeOfnewerMessage);
       String date;
       if (widget.olderMessage.dateCreated.isToday()) {
         date = "Today";
@@ -451,7 +132,7 @@ class _MessageState extends State<MessageWidget>
         date = "Yesterday";
       } else {
         date =
-            "${timeOfolderMessage.month.toString()}/${timeOfolderMessage.day.toString()}/${timeOfolderMessage.year.toString()}";
+            "${timeOfnewerMessage.month.toString()}/${timeOfnewerMessage.day.toString()}/${timeOfnewerMessage.year.toString()}";
       }
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 14.0),
@@ -471,53 +152,35 @@ class _MessageState extends State<MessageWidget>
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     if (widget.fromSelf) {
-      List<Widget> content = _buildContent(context);
       return SentMessage(
-        content: content,
-        deliveredReceipt: widget.customContent != null
-            ? Container()
-            : _buildDelieveredReceipt(context),
+        timeStamp: _buildTimeStamp(context),
         message: widget.message,
+        showDeliveredReceipt:
+            widget.customContent == null && widget.isFirstSentMessage,
         overlayEntry: _createOverlayEntry(context),
         showTail: showTail,
         limited: widget.customContent == null,
         shouldFadeIn: widget.shouldFadeIn,
+        customContent: widget.customContent,
+        isFromMe: widget.fromSelf,
+        attachments: widget.attachments,
       );
     } else {
       return ReceivedMessage(
         timeStamp: _buildTimeStamp(context),
         reactions: _buildReactions(),
-        content: _buildContent(context),
         showTail: showTail,
         olderMessage: widget.olderMessage,
         message: widget.message,
         overlayEntry: _createOverlayEntry(context),
         showHandle: widget.showHandle,
+        customContent: widget.customContent,
+        isFromMe: widget.fromSelf,
+        attachments: widget.attachments,
       );
     }
-  }
-
-  Widget _buildDelieveredReceipt(BuildContext context) {
-    if (!showTail) return Container();
-    if (widget.message.dateRead == null && widget.message.dateDelivered == null)
-      return Container();
-
-    String text = "Delivered";
-    if (widget.message.dateRead != null) text = "Read";
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: <Widget>[
-          Text(
-            text,
-            style: Theme.of(context).textTheme.subtitle2,
-          )
-        ],
-      ),
-    );
   }
 
   Widget _buildReactions() {

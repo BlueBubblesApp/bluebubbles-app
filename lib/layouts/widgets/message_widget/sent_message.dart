@@ -4,6 +4,8 @@ import 'dart:ui';
 import 'package:bluebubble_messages/action_handler.dart';
 import 'package:bluebubble_messages/helpers/hex_color.dart';
 import 'package:bluebubble_messages/helpers/utils.dart';
+import 'package:bluebubble_messages/layouts/widgets/message_widget/message_content/delivered_receipt.dart';
+import 'package:bluebubble_messages/layouts/widgets/message_widget/message_content/message_content.dart';
 import 'package:bluebubble_messages/main.dart';
 import 'package:bluebubble_messages/repository/models/message.dart';
 import 'package:bluebubble_messages/socket_manager.dart';
@@ -14,9 +16,12 @@ class SentMessage extends StatefulWidget {
   final bool showTail;
   final Message message;
   final OverlayEntry overlayEntry;
-  final List<Widget> content;
-  final Widget deliveredReceipt;
   final bool shouldFadeIn;
+  final Widget timeStamp;
+  final bool showDeliveredReceipt;
+  final List<Widget> customContent;
+  final bool isFromMe;
+  final Widget attachments;
 
   final String substituteText;
   final bool limited;
@@ -24,9 +29,12 @@ class SentMessage extends StatefulWidget {
     Key key,
     @required this.showTail,
     @required this.message,
-    @required this.content,
     @required this.overlayEntry,
-    @required this.deliveredReceipt,
+    @required this.timeStamp,
+    @required this.showDeliveredReceipt,
+    @required this.customContent,
+    @required this.isFromMe,
+    @required this.attachments,
     this.substituteText,
     this.limited,
     this.shouldFadeIn,
@@ -129,6 +137,7 @@ class _SentMessageState extends State<SentMessage>
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     List<Widget> tail = <Widget>[
       Container(
         margin: EdgeInsets.only(bottom: 1),
@@ -160,25 +169,6 @@ class _SentMessageState extends State<SentMessage>
       stack.insertAll(0, tail);
     }
 
-    double bottomPadding = isEmptyString(widget.message != null
-            ? widget.message.text
-            : widget.substituteText)
-        ? 0
-        : 8;
-    double sidePadding = !isEmptyString(widget.message != null
-                ? widget.message.text
-                : widget.substituteText) &&
-            widget.content.length > 0 &&
-            widget.content[0] is Text
-        ? 14
-        : 0;
-    double topPadding = !isEmptyString(widget.message != null
-                ? widget.message.text
-                : widget.substituteText) &&
-            widget.content.length > 0 &&
-            widget.content[0] is Text
-        ? 8
-        : 0;
     List<Widget> messageWidget = [
       Stack(
         alignment: AlignmentDirectional.bottomEnd,
@@ -193,42 +183,33 @@ class _SentMessageState extends State<SentMessage>
                 Overlay.of(context).insert(widget.overlayEntry);
             },
             child: Container(
-              margin: EdgeInsets.symmetric(horizontal: 10),
-              constraints: BoxConstraints(
-                maxWidth: widget.limited != null && !widget.limited
-                    ? MediaQuery.of(context).size.width * (5 / 6)
-                    : MediaQuery.of(context).size.width * 3 / 4,
+              margin: EdgeInsets.symmetric(
+                horizontal: 10,
               ),
-              padding: EdgeInsets.only(
-                  top: topPadding,
-                  bottom: bottomPadding,
-                  left: sidePadding,
-                  right: sidePadding),
+              constraints: BoxConstraints(
+                maxWidth: MediaQuery.of(context).size.width * 3 / 4,
+              ),
+              padding: EdgeInsets.symmetric(
+                vertical: 8,
+                horizontal: 14,
+              ),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20),
-                color: Colors.blue[600],
+                color: !widget.isFromMe
+                    ? Theme.of(context).accentColor
+                    : Colors.blue,
               ),
-              // color: Colors.blue,
-              // height: 20,
-              child: ClipRRect(
-                borderRadius:
-                    (widget.content.length > 0 && widget.content[0] is Text)
-                        ? BorderRadius.circular(0)
-                        : BorderRadius.circular(20),
-                child: Column(
-                  children: widget.content,
-                ),
-              ),
+              child: Text(widget.message.text),
             ),
-          )
+          ),
         ],
       )
     ];
 
     if (widget.message != null && widget.message.error > 0)
       messageWidget.add(
-        GestureDetector(
-          onTap: () {
+        CupertinoButton(
+          onPressed: () {
             Overlay.of(context).insert(this._createErrorPopup());
           },
           child: Icon(Icons.error_outline, color: Colors.red),
@@ -238,23 +219,32 @@ class _SentMessageState extends State<SentMessage>
     return AnimatedOpacity(
       opacity: _visible ? 1.0 : 0.0,
       duration: Duration(milliseconds: widget.shouldFadeIn ? 200 : 0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
+      child: Column(
         children: <Widget>[
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
+          widget.attachments,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
             children: <Widget>[
-              Padding(
-                padding: EdgeInsets.only(
-                    bottom: widget.showTail ? 10.0 : 3.0,
-                    right: (widget.message != null && widget.message.error > 0
-                        ? 10.0
-                        : 0)),
-                child: Row(children: messageWidget),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: <Widget>[
+                  Padding(
+                    padding: EdgeInsets.only(
+                        bottom: widget.showTail ? 10.0 : 3.0,
+                        right:
+                            (widget.message != null && widget.message.error > 0
+                                ? 10.0
+                                : 0)),
+                    child: Row(children: messageWidget),
+                  ),
+                  widget.showDeliveredReceipt
+                      ? DeliveredReceipt(message: widget.message)
+                      : Container(),
+                ],
               ),
-              widget.deliveredReceipt
             ],
           ),
+          widget.timeStamp,
         ],
       ),
     );

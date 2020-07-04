@@ -217,6 +217,13 @@ class _SettingsPanelState extends State<SettingsPanel> {
                   onChanged: (AdaptiveThemeMode val) {
                     AdaptiveTheme.of(context).setThemeMode(val);
                   },
+                ),
+                SettingsSwitch(
+                  onChanged: (bool val) {
+                    _settingsCopy.autoDownload = val;
+                  },
+                  initialVal: _settingsCopy.autoDownload,
+                  title: "Auto Download",
                 )
               ],
             ),
@@ -279,6 +286,51 @@ class SettingsTile extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class SettingsSwitch extends StatefulWidget {
+  SettingsSwitch({
+    Key key,
+    this.initialVal,
+    this.onChanged,
+    this.title,
+  }) : super(key: key);
+  final bool initialVal;
+  final Function(bool) onChanged;
+  final String title;
+
+  @override
+  _SettingsSwitchState createState() => _SettingsSwitchState();
+}
+
+class _SettingsSwitchState extends State<SettingsSwitch> {
+  bool _value;
+
+  @override
+  void initState() {
+    super.initState();
+    _value = widget.initialVal;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SwitchListTile(
+      title: Text(
+        widget.title,
+        style: Theme.of(context).textTheme.bodyText1,
+      ),
+      value: _value,
+      activeColor: Colors.blue,
+      inactiveTrackColor: Theme.of(context).accentColor.withOpacity(0.6),
+      inactiveThumbColor: Theme.of(context).accentColor,
+      onChanged: (bool val) {
+        widget.onChanged(val);
+        setState(() {
+          _value = val;
+        });
+      },
     );
   }
 }

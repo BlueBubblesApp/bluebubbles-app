@@ -27,6 +27,17 @@ class MessageBloc {
 
   Chat _currentChat;
 
+  Chat get currentChat => _currentChat;
+
+  String get firstSentMessage {
+    for (Message message in _allMessages.values) {
+      if (message.isFromMe) {
+        return message.guid;
+      }
+    }
+    return "no sent message found";
+  }
+
   MessageBloc(Chat chat) {
     _currentChat = chat;
     getMessages();

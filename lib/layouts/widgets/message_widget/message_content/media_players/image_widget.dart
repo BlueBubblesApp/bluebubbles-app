@@ -19,11 +19,9 @@ class _ImageWidgetState extends State<ImageWidget> {
   Widget build(BuildContext context) {
     return Stack(
       children: <Widget>[
-        // Hero(
-        //   child: Image.file(widget.file),
-        //   tag: widget.attachment.guid,
-        // ),
-        Image.file(widget.file),
+        Container(
+          child: Image.file(widget.file),
+        ),
         Positioned.fill(
           child: Material(
             color: Colors.transparent,

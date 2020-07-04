@@ -36,11 +36,11 @@ class _SendWidgetState extends State<SendWidget> {
   Widget build(BuildContext context) {
     Widget messageWidget = MessageWidget(
       reactions: [],
-      fromSelf: true,
       showHandle: false,
       newerMessage: null,
       olderMessage: null,
       shouldFadeIn: false,
+      fromSelf: true,
       customContent: <Widget>[
         Container(
           constraints: BoxConstraints(

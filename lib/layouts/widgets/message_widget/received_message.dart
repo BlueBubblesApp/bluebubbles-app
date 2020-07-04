@@ -1,5 +1,6 @@
 import 'package:bluebubble_messages/helpers/hex_color.dart';
 import 'package:bluebubble_messages/helpers/utils.dart';
+import 'package:bluebubble_messages/layouts/widgets/message_widget/message_content/message_content.dart';
 import 'package:bluebubble_messages/managers/contact_manager.dart';
 import 'package:bluebubble_messages/repository/models/chat.dart';
 import 'package:bluebubble_messages/repository/models/message.dart';
@@ -10,30 +11,36 @@ class ReceivedMessage extends StatefulWidget {
   final Message message;
   final Message olderMessage;
   final OverlayEntry overlayEntry;
-  final List<Widget> content;
   final Widget timeStamp;
   final Widget reactions;
   final bool showHandle;
+  final List<Widget> customContent;
+  final bool isFromMe;
+  final Widget attachments;
 
-  ReceivedMessage(
-      {Key key,
-      @required this.showTail,
-      @required this.olderMessage,
-      @required this.message,
-      @required this.content,
-      @required this.overlayEntry,
-      @required this.timeStamp,
-      @required this.reactions,
-      @required this.showHandle})
-      : super(key: key);
+  ReceivedMessage({
+    Key key,
+    @required this.showTail,
+    @required this.olderMessage,
+    @required this.message,
+    @required this.overlayEntry,
+    @required this.timeStamp,
+    @required this.reactions,
+    @required this.showHandle,
+    @required this.customContent,
+    @required this.isFromMe,
+    @required this.attachments,
+  }) : super(key: key);
 
   @override
   _ReceivedMessageState createState() => _ReceivedMessageState();
 }
 
-class _ReceivedMessageState extends State<ReceivedMessage> {
+class _ReceivedMessageState extends State<ReceivedMessage>
+    with AutomaticKeepAliveClientMixin {
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     String handle = "";
     if (widget.message.handle != null && widget.showHandle) {
       handle = getContactTitle(
@@ -82,23 +89,12 @@ class _ReceivedMessageState extends State<ReceivedMessage> {
       );
     }
 
-    double bottomPadding = isEmptyString(widget.message.text) ? 0 : 8;
-    double sidePadding = !isEmptyString(widget.message.text) &&
-            widget.content.length > 0 &&
-            widget.content[0] is Text
-        ? 14
-        : 0;
-    double topPadding = !isEmptyString(widget.message.text) &&
-            widget.content.length > 0 &&
-            widget.content[0] is Text
-        ? 8
-        : 0;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        widget.timeStamp,
         contactItem,
         widget.reactions,
+        widget.attachments,
         GestureDetector(
           onLongPress: () {
             debugPrint(widget.message.handleId.toString());
@@ -109,41 +105,47 @@ class _ReceivedMessageState extends State<ReceivedMessage> {
             child: Stack(
               alignment: AlignmentDirectional.bottomStart,
               children: <Widget>[
-                Stack(
-                  alignment: AlignmentDirectional.bottomStart,
-                  children: stack,
-                ),
-                Container(
-                  margin: EdgeInsets.symmetric(
-                    horizontal: 10,
-                  ),
-                  constraints: BoxConstraints(
-                    maxWidth: MediaQuery.of(context).size.width * 3 / 4,
-                  ),
-                  padding: EdgeInsets.only(
-                      top: topPadding,
-                      bottom: bottomPadding,
-                      left: sidePadding,
-                      right: sidePadding),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(20),
-                    color: Theme.of(context).accentColor,
-                  ),
-                  child: ClipRRect(
-                    borderRadius:
-                        (widget.content.length > 0 && widget.content[0] is Text)
-                            ? BorderRadius.circular(0)
-                            : BorderRadius.circular(20),
-                    child: Column(
-                      children: widget.content,
-                    ),
-                  ),
-                ),
+                !isEmptyString(widget.message.text)
+                    ? Stack(
+                        alignment: AlignmentDirectional.bottomStart,
+                        children: stack,
+                      )
+                    : Container(),
+                !isEmptyString(widget.message.text)
+                    ? Container(
+                        margin: EdgeInsets.symmetric(
+                          horizontal: 10,
+                        ),
+                        constraints: BoxConstraints(
+                          maxWidth: MediaQuery.of(context).size.width * 3 / 4,
+                        ),
+                        padding: EdgeInsets.symmetric(
+                          vertical: 8,
+                          horizontal: 14,
+                        ),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(20),
+                          color: !widget.isFromMe
+                              ? Theme.of(context).accentColor
+                              : Colors.blue,
+                        ),
+                        child: Text(widget.message.text),
+                      )
+                    : Container(),
+                // MessageContent(
+                //   customContent: widget.customContent,
+                //   message: widget.message,
+                //   isFromMe: widget.isFromMe,
+                // ),
               ],
             ),
           ),
         ),
+        widget.timeStamp,
       ],
     );
   }
+
+  @override
+  bool get wantKeepAlive => true;
 }

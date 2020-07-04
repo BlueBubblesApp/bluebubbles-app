@@ -1,6 +1,7 @@
 import 'package:bluebubble_messages/repository/models/chat.dart';
 import 'package:bluebubble_messages/repository/models/message.dart';
 import 'package:bluebubble_messages/repository/models/attachment.dart';
+import 'package:flutter/material.dart';
 
 class MessageHelper {
   static Future<List<Message>> bulkAddMessages(
@@ -8,14 +9,17 @@ class MessageHelper {
     List<Message> _messages = <Message>[];
     messages.forEach((item) {
       Message message = Message.fromMap(item);
-      _messages.add(message);
-      chat.addMessage(message).then((value) {
-        // Create the attachments
-        List<dynamic> attachments = item['attachments'];
+      message.save().then((_message) {
+        _messages.add(_message);
+        chat.addMessage(message).then((value) {
+          // Create the attachments
+          List<dynamic> attachments = item['attachments'];
 
-        attachments.forEach((attachmentItem) {
-          Attachment file = Attachment.fromMap(attachmentItem);
-          file.save(message);
+          attachments.forEach((attachmentItem) {
+            Attachment file = Attachment.fromMap(attachmentItem);
+            file.save(_message);
+            debugPrint("attachment " + file.guid);
+          });
         });
       });
     });

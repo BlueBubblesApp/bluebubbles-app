@@ -4,8 +4,10 @@ import 'dart:ui';
 
 import 'package:bluebubble_messages/action_handler.dart';
 import 'package:bluebubble_messages/blocs/chat_bloc.dart';
+import 'package:bluebubble_messages/blocs/message_bloc.dart';
 import 'package:bluebubble_messages/helpers/attachment_sender.dart';
 import 'package:bluebubble_messages/helpers/hex_color.dart';
+import 'package:bluebubble_messages/helpers/utils.dart';
 import 'package:bluebubble_messages/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubble_messages/layouts/conversation_view/messages_view.dart';
 import 'package:bluebubble_messages/layouts/conversation_view/text_field.dart';
@@ -13,6 +15,7 @@ import 'package:bluebubble_messages/managers/contact_manager.dart';
 import 'package:bluebubble_messages/managers/new_message_manager.dart';
 import 'package:bluebubble_messages/repository/models/chat.dart';
 import 'package:bluebubble_messages/repository/models/handle.dart';
+import 'package:bluebubble_messages/repository/models/message.dart';
 import 'package:bluebubble_messages/socket_manager.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/cupertino.dart';
@@ -41,6 +44,7 @@ class _NewChatCreatorState extends State<NewChatCreator> {
   List participants = [];
   String previousText = "";
   Chat existingChat;
+  MessageBloc existingMessageBloc;
 
   @override
   void initState() {
@@ -129,7 +133,16 @@ class _NewChatCreatorState extends State<NewChatCreator> {
     if (possibleChats.length > 0) {
       setState(() {
         existingChat = possibleChats.first;
+        if (existingMessageBloc != null) {
+          existingMessageBloc.dispose();
+        }
+        existingChat.getParticipants().then((value) => debugPrint(
+            getContactTitle(
+                ContactManager().contacts, value.participants.first.address)));
+        existingMessageBloc = MessageBloc(existingChat);
+        existingMessageBloc.getMessages();
       });
+      // existingMessageBloc.getMessages();
     } else {
       setState(() {
         existingChat = null;
@@ -222,8 +235,7 @@ class _NewChatCreatorState extends State<NewChatCreator> {
                       ", "
               ? existingChat != null
                   ? MessageView(
-                      messageBloc: ChatBloc().tileVals[existingChat.guid]
-                          ["bloc"],
+                      messageBloc: existingMessageBloc,
                       showHandle: existingChat.participants.length > 1,
                     )
                   : Container()
@@ -385,8 +397,7 @@ class _NewChatCreatorState extends State<NewChatCreator> {
                               builder: (context) => ConversationView(
                                 chat: existingChat,
                                 title: title,
-                                messageBloc: ChatBloc()
-                                    .tileVals[existingChat.guid]["bloc"],
+                                messageBloc: MessageBloc(existingChat),
                               ),
                             ),
                           );
@@ -452,8 +463,7 @@ class _NewChatCreatorState extends State<NewChatCreator> {
                                 builder: (context) => ConversationView(
                                   chat: newChat,
                                   title: title,
-                                  messageBloc: ChatBloc().tileVals[newChat.guid]
-                                      ["bloc"],
+                                  messageBloc: MessageBloc(newChat),
                                 ),
                               ),
                             );
@@ -470,7 +480,6 @@ class _NewChatCreatorState extends State<NewChatCreator> {
   }
 }
 
-//TODO update everything so that it is more organized
 class Participant {
   String _displayName = "";
   Contact _contact;

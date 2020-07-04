@@ -92,6 +92,7 @@ class Message {
     } else if (json.containsKey("attachments")) {
       hasAttachments = (json['attachments'] as List).length > 0 ? true : false;
     }
+    // debugPrint("hasAttachments = $hasAttachments, json: ${json.toString()}");
 
     return new Message(
         id: json.containsKey("ROWID") ? json["ROWID"] : null,
@@ -179,6 +180,10 @@ class Message {
     }
     QueueManager().logger.log(Level.info,
         "this.handle == null ${this.handle == null}, this.handleId = ${this.handleId}");
+
+    QueueManager()
+        .logger
+        .log(Level.info, "existing == null ${existing == null}");
 
     // If it already exists, update it
     if (existing == null) {
