@@ -10,7 +10,8 @@ class DeliveredReceipt extends StatefulWidget {
   _DeliveredReceiptState createState() => _DeliveredReceiptState();
 }
 
-class _DeliveredReceiptState extends State<DeliveredReceipt> {
+class _DeliveredReceiptState extends State<DeliveredReceipt>
+    with SingleTickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     if (widget.message.dateRead == null && widget.message.dateDelivered == null)

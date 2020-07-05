@@ -9,7 +9,6 @@ import 'package:bluebubble_messages/layouts/conversation_view/new_chat_creator.d
 import 'package:bluebubble_messages/managers/navigator_manager.dart';
 import 'package:bluebubble_messages/managers/new_message_manager.dart';
 import 'package:bluebubble_messages/managers/notification_manager.dart';
-import 'package:bluebubble_messages/managers/queue_manager.dart';
 import 'package:bluebubble_messages/managers/settings_manager.dart';
 import 'package:bluebubble_messages/repository/database.dart';
 import 'package:flutter_socket_io/socket_io_manager.dart';

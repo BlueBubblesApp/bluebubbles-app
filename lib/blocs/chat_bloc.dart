@@ -27,10 +27,19 @@ class ChatBloc {
   Stream<Map<String, Map<String, dynamic>>> get tileStream =>
       _tileValController.stream;
 
+  final _archivedChatController = StreamController<List<Chat>>.broadcast();
+  Stream<List<Chat>> get archivedChatStream => _archivedChatController.stream;
+
   List<Chat> _chats;
   List<Chat> get chats => _chats;
   Map<String, Map<String, dynamic>> _tileVals = new Map();
   Map<String, Map<String, dynamic>> get tileVals => _tileVals;
+
+  Map<String, Map<String, dynamic>> _archivedTileVals = new Map();
+  Map<String, Map<String, dynamic>> get archivedTiles => _archivedTileVals;
+
+  List<Chat> _archivedChats;
+  List<Chat> get archivedChats => _archivedChats;
 
   factory ChatBloc() {
     return _chatBloc;
@@ -43,7 +52,8 @@ class ChatBloc {
   Future<List<Chat>> getChats() async {
     //sink is a way of adding data reactively to the stream
     //by registering a new event
-    _chats = await Chat.find();
+    _chats = await Chat.find({"isArchived": 0});
+    _archivedChats = await Chat.find({"isArchived": 1});
     await initTileVals(_chats);
     NewMessageManager().stream.listen((event) async {
       debugPrint("updating chat tiles " + event.toString());
@@ -51,8 +61,10 @@ class ChatBloc {
         //if there even is a chat specified in the newmessagemanager update
         for (int i = 0; i < _chats.length; i++) {
           if (_chats[i].guid == event.keys.first) {
-            await initTileValsForChat(_chats[i],
-                latestMessage: event.values.first);
+            await initTileValsForChat(
+              _chats[i],
+              latestMessage: event.values.first,
+            );
           }
         }
       } else {
@@ -61,6 +73,7 @@ class ChatBloc {
       _chatController.sink.add(_chats);
     });
     _chatController.sink.add(_chats);
+    await initTileVals(_archivedChats, customMap: _archivedTileVals);
     return _chats;
   }
 
@@ -77,19 +90,20 @@ class ChatBloc {
     return _chats;
   }
 
-  Future<void> initTileVals(List<Chat> chats) async {
+  Future<void> initTileVals(List<Chat> chats,
+      {Map<String, Map<String, dynamic>> customMap}) async {
     for (int i = 0; i < chats.length; i++) {
       Chat chat = chats[i];
-      await initTileValsForChat(chat);
+      await initTileValsForChat(chat, customMap: customMap);
     }
 
-    _tileValController.sink.add(_tileVals);
+    if (customMap == null) _tileValController.sink.add(_tileVals);
   }
 
-  Future<void> initTileValsForChat(Chat chat, {Message latestMessage}) async {
+  Future<void> initTileValsForChat(Chat chat,
+      {Message latestMessage,
+      Map<String, Map<String, dynamic>> customMap}) async {
     String title = await getFullChatTitle(chat);
-
-    // if (!_tileVals.containsKey(chat.guid)) {
 
     Message firstMessage = latestMessage;
     if (latestMessage == null) {
@@ -141,7 +155,9 @@ class ChatBloc {
       }
     }
 
-    Map<String, dynamic> chatMap = _tileVals[chat.guid] ?? {};
+    Map<String, dynamic> chatMap = customMap != null
+        ? customMap[chat.guid] ?? {}
+        : _tileVals[chat.guid] ?? {};
     chatMap["title"] = title;
     chatMap["subtitle"] = subtitle;
     chatMap["date"] = date;
@@ -159,16 +175,37 @@ class ChatBloc {
 
     chatMap["hasNotification"] = hasNotification;
 
-    updateTileVals(chat, chatMap);
-    _tileValController.sink.add(_tileVals);
-    // }
+    updateTileVals(chat, chatMap, customMap != null ? customMap : _tileVals);
+    if (customMap != null) _tileValController.sink.add(_tileVals);
   }
 
-  void updateTileVals(Chat chat, Map<String, dynamic> chatMap) {
-    if (_tileVals.containsKey(chat.guid)) {
-      _tileVals.remove(chat.guid);
+  void archiveChat(Chat chat) async {
+    chats.removeWhere((element) => element.guid == chat.guid);
+    archivedChats.add(chat);
+    initTileValsForChat(chat, customMap: _archivedTileVals);
+    if (_tileVals.containsKey(chat.guid)) _tileVals.remove(chat.guid);
+    _tileValController.sink.add(_tileVals);
+    chat.isArchived = true;
+    await chat.save();
+  }
+
+  void unArchiveChat(Chat chat) async {
+    archivedChats.removeWhere((element) => element.guid == chat.guid);
+    if (_archivedTileVals.containsKey(chat.guid))
+      _archivedTileVals.remove(chat.guid);
+    _archivedChatController.sink.add(archivedChats);
+    chats.add(chat);
+    await initTileValsForChat(chat);
+    chat.isArchived = false;
+    await chat.save();
+  }
+
+  void updateTileVals(Chat chat, Map<String, dynamic> chatMap,
+      Map<String, Map<String, dynamic>> map) {
+    if (map.containsKey(chat.guid)) {
+      map.remove(chat.guid);
     }
-    _tileVals[chat.guid] = chatMap;
+    map[chat.guid] = chatMap;
   }
 
   addChat(Chat chat) async {

@@ -12,7 +12,8 @@ import '../../helpers/hex_color.dart';
 import '../settings/settings_panel.dart';
 
 class ConversationList extends StatefulWidget {
-  ConversationList({Key key}) : super(key: key);
+  ConversationList({Key key, this.showArchivedChats}) : super(key: key);
+  final bool showArchivedChats;
 
   @override
   _ConversationListState createState() => _ConversationListState();
@@ -34,10 +35,19 @@ class _ConversationListState extends State<ConversationList> {
   @override
   void initState() {
     super.initState();
-    ChatBloc().chatStream.listen((List<Chat> chats) {
-      _chats = chats;
-    });
-    ChatBloc().getChats();
+    if (!widget.showArchivedChats) {
+      ChatBloc().chatStream.listen((List<Chat> chats) {
+        _chats = chats;
+      });
+      ChatBloc().getChats();
+    } else {
+      ChatBloc().archivedChatStream.listen((List<Chat> chats) {
+        _chats = chats;
+        setState(() {});
+      });
+      _chats = ChatBloc().archivedChats;
+      debugPrint(_chats.toString());
+    }
 
     _scrollController = ScrollController()
       ..addListener(
@@ -64,7 +74,11 @@ class _ConversationListState extends State<ConversationList> {
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: () async {
-        return false;
+        if (widget.showArchivedChats) {
+          return true;
+        } else {
+          return false;
+        }
       },
       child: Scaffold(
         appBar: PreferredSize(
@@ -88,7 +102,7 @@ class _ConversationListState extends State<ConversationList> {
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: <Widget>[
                       Text(
-                        "Messages",
+                        widget.showArchivedChats ? "ArchivedChats" : "Messages",
                         style: Theme.of(context).textTheme.bodyText1,
                       ),
                     ],
@@ -138,40 +152,88 @@ class _ConversationListState extends State<ConversationList> {
                           ),
                           Container(
                             child: Text(
-                              "Messages",
+                              widget.showArchivedChats
+                                  ? "ArchivedChats"
+                                  : "Messages",
                               style: Theme.of(context).textTheme.headline1,
                             ),
                           ),
                           Spacer(
                             flex: 25,
                           ),
-                          ButtonTheme(
-                            minWidth: 20,
-                            height: 20,
-                            child: FlatButton(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: 0,
-                              ),
-                              color: Theme.of(context).accentColor,
-                              onPressed: () {
-                                Navigator.of(context).push(
-                                  CupertinoPageRoute(
-                                    builder: (BuildContext context) {
-                                      return SettingsPanel();
-                                    },
+                          // ButtonTheme(
+                          //   minWidth: 20,
+                          //   height: 20,
+                          //   child: FlatButton(
+                          //     padding: EdgeInsets.symmetric(
+                          //       horizontal: 0,
+                          //     ),
+                          //     color: Theme.of(context).accentColor,
+                          //     onPressed: () {
+
+                          //       Navigator.of(context).push(
+                          //         CupertinoPageRoute(
+                          //           builder: (BuildContext context) {
+                          //             return SettingsPanel();
+                          //           },
+                          //         ),
+                          //       );
+                          //     },
+                          //     child: Icon(
+                          //       Icons.more_horiz,
+                          //       color: Colors.blue.withOpacity(0.75),
+                          //       size: 15,
+                          //     ),
+                          //     shape: RoundedRectangleBorder(
+                          //       borderRadius: BorderRadius.circular(40),
+                          //     ),
+                          //   ),
+                          // ),
+                          !widget.showArchivedChats
+                              ? PopupMenuButton(
+                                  // shape: RoundedRectangleBorder(
+                                  //   borderRadius: BorderRadius.circular(40),
+                                  // ),
+                                  color: Theme.of(context).accentColor,
+                                  itemBuilder: (context) {
+                                    return <PopupMenuItem>[
+                                      new PopupMenuItem(
+                                        child: GestureDetector(
+                                          onTap: () {
+                                            Navigator.of(context).push(
+                                              CupertinoPageRoute(
+                                                builder: (context) =>
+                                                    ConversationList(
+                                                  showArchivedChats: true,
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                          child: Text(
+                                            'Archived',
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodyText1,
+                                          ),
+                                        ),
+                                      )
+                                    ];
+                                  },
+                                  child: Container(
+                                    width: 20,
+                                    height: 20,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(40),
+                                      color: Theme.of(context).accentColor,
+                                    ),
+                                    child: Icon(
+                                      Icons.more_horiz,
+                                      color: Colors.blue.withOpacity(0.75),
+                                      size: 15,
+                                    ),
                                   ),
-                                );
-                              },
-                              child: Icon(
-                                Icons.more_horiz,
-                                color: Colors.blue.withOpacity(0.75),
-                                size: 15,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(40),
-                              ),
-                            ),
-                          ),
+                                )
+                              : Container(),
                           Spacer(
                             flex: 1,
                           ),
@@ -186,26 +248,32 @@ class _ConversationListState extends State<ConversationList> {
               stream: ChatBloc().tileStream,
               builder: (BuildContext context,
                   AsyncSnapshot<Map<String, Map<String, dynamic>>> snapshot) {
-                if (snapshot.hasData) {
+                if (snapshot.hasData || widget.showArchivedChats) {
                   // debugPrint(snapshot.data.toString());
-                  _chats.sort((a, b) {
-                    return -snapshot.data[a.guid]["actualDate"]
-                        .compareTo(snapshot.data[b.guid]["actualDate"]);
-                  });
+
+                  if (snapshot.hasData)
+                    _chats.sort((a, b) {
+                      return -snapshot.data[a.guid]["actualDate"]
+                          .compareTo(snapshot.data[b.guid]["actualDate"]);
+                    });
+
                   return SliverList(
                     delegate: SliverChildBuilderDelegate(
                       (context, index) {
-                        if (!snapshot.data.containsKey(_chats[index].guid))
+                        Map<String, dynamic> _data = !widget.showArchivedChats
+                            ? snapshot.data[_chats[index].guid]
+                            : ChatBloc().archivedTiles[_chats[index].guid];
+                        if (!widget.showArchivedChats &&
+                            !snapshot.data.containsKey(_chats[index].guid))
                           return Container();
                         return ConversationTile(
-                            key: Key(_chats[index].guid.toString()),
-                            chat: _chats[index],
-                            title: snapshot.data[_chats[index].guid]["title"],
-                            subtitle: snapshot.data[_chats[index].guid]
-                                ["subtitle"],
-                            date: snapshot.data[_chats[index].guid]["date"],
-                            hasNewMessage: snapshot.data[_chats[index].guid]
-                                ["hasNotification"]);
+                          key: Key(_chats[index].guid.toString()),
+                          chat: _chats[index],
+                          title: _data["title"],
+                          subtitle: _data["subtitle"],
+                          date: _data["date"],
+                          hasNewMessage: _data["hasNotification"],
+                        );
                       },
                       childCount: _chats.length,
                     ),

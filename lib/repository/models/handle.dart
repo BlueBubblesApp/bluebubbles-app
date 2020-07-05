@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:bluebubble_messages/managers/queue_manager.dart';
 import 'package:logger/logger.dart';
 import 'package:sqflite/sqflite.dart';
 

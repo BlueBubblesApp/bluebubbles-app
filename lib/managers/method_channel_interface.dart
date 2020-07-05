@@ -6,12 +6,12 @@ import 'dart:math';
 import 'package:bluebubble_messages/action_handler.dart';
 import 'package:bluebubble_messages/blocs/chat_bloc.dart';
 import 'package:bluebubble_messages/blocs/message_bloc.dart';
+import 'package:bluebubble_messages/helpers/utils.dart';
 import 'package:bluebubble_messages/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubble_messages/layouts/conversation_view/new_chat_creator.dart';
 import 'package:bluebubble_messages/managers/life_cycle_manager.dart';
 import 'package:bluebubble_messages/managers/navigator_manager.dart';
 import 'package:bluebubble_messages/managers/notification_manager.dart';
-import 'package:bluebubble_messages/managers/queue_manager.dart';
 import 'package:bluebubble_messages/managers/settings_manager.dart';
 import 'package:bluebubble_messages/repository/models/chat.dart';
 import 'package:bluebubble_messages/repository/models/message.dart';
@@ -74,14 +74,15 @@ class MethodChannelInterface {
 
         if (!message.isFromMe &&
             (NotificationManager().chat != chat.guid ||
-                !LifeCycleManager().isAlive)) {
+                !LifeCycleManager().isAlive) &&
+            (!message.hasAttachments || !isEmptyString(message.text))) {
           ActionHandler.createNotification({
             "guid": message.guid,
             "contentTitle": title,
             "contentText": message.text,
             "group": chat.guid,
             "id": Random().nextInt(9999),
-            "summaryId": chat.id
+            "summaryId": chat.id,
           });
         }
 
@@ -95,7 +96,7 @@ class MethodChannelInterface {
 
         debugPrint("Adding new/matched message to the queue");
         // QueueManager().addEvent(call.method, call.arguments);
-        ActionHandler.handleMessage(data);
+        ActionHandler.handleMessage(data, createAttachmentNotification: true);
         return new Future.value("");
       case "updated-message":
         debugPrint("Adding updated message to the queue");

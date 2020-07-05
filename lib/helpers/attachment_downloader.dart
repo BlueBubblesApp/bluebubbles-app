@@ -5,9 +5,13 @@ import 'dart:io';
 
 import 'dart:typed_data';
 
+import 'package:bluebubble_messages/action_handler.dart';
 import 'package:bluebubble_messages/managers/life_cycle_manager.dart';
+import 'package:bluebubble_messages/managers/notification_manager.dart';
 import 'package:bluebubble_messages/managers/settings_manager.dart';
 import 'package:bluebubble_messages/repository/models/attachment.dart';
+import 'package:bluebubble_messages/repository/models/chat.dart';
+import 'package:bluebubble_messages/repository/models/message.dart';
 import 'package:bluebubble_messages/socket_manager.dart';
 import 'package:flutter/material.dart';
 
@@ -23,14 +27,21 @@ class AttachmentDownloader {
   String _guid = "";
   Function _cb;
   Attachment _attachment;
+  Message _message;
+  String _title;
+  Chat _chat;
+  bool _createNotification;
 
   double get progress => (_currentChunk) / _totalChunks;
   Attachment get attachment => _attachment;
 
-  AttachmentDownloader(Attachment attachment) {
+  AttachmentDownloader(Attachment attachment, Message message,
+      {bool createNotification = false}) {
     // Set default chunk size based on the current settings
     _chunkSize = SettingsManager().settings.chunkSize * 1024;
     _attachment = attachment;
+    _message = message;
+    _createNotification = createNotification;
 
     fetchAttachment(attachment);
   }
@@ -68,6 +79,7 @@ class AttachmentDownloader {
         if (index < total) {
           // Calculate some stats
           double progress = (index + 1) / total;
+          updateProgressNotif(progress);
           String progressStr = (progress * 100).round().toString();
           debugPrint("Progress: $progressStr% of the attachment");
 
@@ -86,7 +98,14 @@ class AttachmentDownloader {
     }
   }
 
-  void fetchAttachment(Attachment attachment) {
+  void updateProgressNotif(double _progress) {
+    NotificationManager().updateProgressNotification(
+      _attachment.id,
+      _progress,
+    );
+  }
+
+  void fetchAttachment(Attachment attachment) async {
     int numOfChunks = (attachment.totalBytes / _chunkSize).ceil();
     debugPrint("Fetching $numOfChunks attachment chunks");
     Stopwatch stopwatch = new Stopwatch();
@@ -94,6 +113,18 @@ class AttachmentDownloader {
 
     _guid = attachment.guid;
     _totalChunks = numOfChunks;
+
+    _chat = await Message.getChat(_message);
+    _title = await getFullChatTitle(_chat);
+    NotificationManager().createProgressNotification(
+      _title,
+      "Downloading Attachment",
+      _chat.guid,
+      _attachment.id,
+      _chat.id,
+      0.0,
+    );
+
     _cb = (List<int> data) async {
       stopwatch.stop();
       debugPrint(
@@ -111,9 +142,12 @@ class AttachmentDownloader {
 
       File file = await writeToFile(bytes, pathName);
       SocketManager().finishDownloader(attachment.guid);
+      SocketManager().unSubscribeDisconnectCallback(attachment.guid);
       LifeCycleManager().finishDownloader();
       _stream.sink.add(file);
       _stream.close();
+      NotificationManager().finishProgressWithAttachment(
+          "Finished Downloading", _attachment.id, _attachment);
     };
 
     SocketManager().addAttachmentDownloader(attachment.guid, this);

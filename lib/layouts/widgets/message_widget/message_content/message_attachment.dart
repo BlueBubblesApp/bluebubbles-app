@@ -10,6 +10,7 @@ import 'package:bluebubble_messages/layouts/widgets/message_widget/message_conte
 import 'package:bluebubble_messages/layouts/widgets/message_widget/message_content/media_players/regular_file_opener.dart';
 import 'package:bluebubble_messages/layouts/widgets/message_widget/message_content/media_players/video_widget.dart';
 import 'package:bluebubble_messages/repository/models/attachment.dart';
+import 'package:bluebubble_messages/repository/models/message.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -19,10 +20,12 @@ class MessageAttachment extends StatefulWidget {
     @required this.content,
     @required this.attachment,
     @required this.updateAttachment,
+    @required this.message,
   }) : super(key: key);
   final content;
   final Attachment attachment;
   final Function() updateAttachment;
+  final Message message;
 
   @override
   _MessageAttachmentState createState() => _MessageAttachmentState();
@@ -155,7 +158,7 @@ class _MessageAttachmentState extends State<MessageAttachment>
           CupertinoButton(
             padding: EdgeInsets.only(left: 20, right: 20, top: 10, bottom: 10),
             onPressed: () {
-              content = new AttachmentDownloader(content);
+              content = new AttachmentDownloader(content, widget.message);
               widget.updateAttachment();
               setState(() {});
             },
@@ -184,7 +187,7 @@ class _MessageAttachmentState extends State<MessageAttachment>
       (content as AttachmentDownloader).stream.listen((event) {
         if (event is File) {
           content = event;
-          setState(() {});
+          if (this.mounted) setState(() {});
         }
       });
       return StreamBuilder(

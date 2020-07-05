@@ -5,6 +5,16 @@ import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
 
+enum Tables {
+  chat,
+  handle,
+  message,
+  attachment,
+  chat_handle_join,
+  chat_message_join,
+  attachment_message_join
+}
+
 class DBProvider {
   DBProvider._();
   static final DBProvider db = DBProvider._();
@@ -27,16 +37,47 @@ class DBProvider {
     _path = join(documentsDirectory.path, "chat.db");
     return await openDatabase(_path, version: 1, onOpen: (Database db) async {
       debugPrint("Database Opened");
-      var chatTable = await db.rawQuery(
-          "SELECT * FROM sqlite_master WHERE name ='chat' and type='table'; ");
-      if (chatTable.length == 0) {
-        debugPrint("building db tables");
-        DBProvider.db.buildDatabase(db);
-      }
+      await checkTableExistenceAndCreate(db);
     }, onCreate: (Database db, int version) async {
       debugPrint("creating database");
       await this.buildDatabase(db);
     });
+  }
+
+  Future<void> checkTableExistenceAndCreate(Database db) async {
+    //this is to ensure that all tables are created on start
+    //this will allow us to also add more tables and make it so that users will not have to
+    for (Tables tableName in Tables.values) {
+      var table = await db.rawQuery(
+          "SELECT * FROM sqlite_master WHERE name ='${tableName.toString().split(".").last}' and type='table'; ");
+      if (table.length == 0) {
+        switch (tableName) {
+          case Tables.chat:
+            await createChatTable(db);
+            break;
+          case Tables.handle:
+            await createHandleTable(db);
+            break;
+          case Tables.message:
+            await createMessageTable(db);
+            break;
+          case Tables.attachment:
+            await createAttachmentTable(db);
+            break;
+          case Tables.chat_handle_join:
+            await createChatHandleJoinTable(db);
+            break;
+          case Tables.chat_message_join:
+            await createChatMessageJoinTable(db);
+            break;
+          case Tables.attachment_message_join:
+            await createAttachmentMessageJoinTable(db);
+            break;
+        }
+        debugPrint(
+            "creating missing table " + tableName.toString().split(".").last);
+      }
+    }
   }
 
   Future<void> buildDatabase(Database db) async {
@@ -65,7 +106,7 @@ class DBProvider {
         "style INTEGER NOT NULL,"
         "chatIdentifier TEXT NOT NULL,"
         "isArchived INTEGER DEFAULT 0,"
-        "displayName TEXT DEFAULT NULL"
+        "displayName TEXT DEFAULT NULL,"
         ");");
   }
 

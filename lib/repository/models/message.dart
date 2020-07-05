@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:bluebubble_messages/managers/queue_manager.dart';
 import 'package:bluebubble_messages/managers/settings_manager.dart';
 import 'package:bluebubble_messages/repository/models/attachment.dart';
 import 'package:flutter/cupertino.dart';

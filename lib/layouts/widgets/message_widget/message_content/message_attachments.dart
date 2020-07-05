@@ -55,7 +55,8 @@ class _MessageAttachmentsState extends State<MessageAttachments>
           SocketManager().attachmentDownloaders[attachment.guid];
     } else if (attachment.mimeType == null ||
         attachment.mimeType.startsWith("text/")) {
-      AttachmentDownloader downloader = new AttachmentDownloader(attachment);
+      AttachmentDownloader downloader =
+          new AttachmentDownloader(attachment, widget.message);
       _attachments[attachment.guid] = downloader;
     } else {
       _attachments[attachment.guid] = attachment;
@@ -101,6 +102,7 @@ class _MessageAttachmentsState extends State<MessageAttachments>
     for (Attachment attachment in attachments) {
       content.add(
         MessageAttachment(
+          message: widget.message,
           attachment: attachment,
           content: _attachments[attachment.guid],
           updateAttachment: () {

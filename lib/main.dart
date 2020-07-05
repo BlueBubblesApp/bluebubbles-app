@@ -10,7 +10,6 @@ import 'package:bluebubble_messages/managers/life_cycle_manager.dart';
 import 'package:bluebubble_messages/managers/method_channel_interface.dart';
 import 'package:bluebubble_messages/managers/navigator_manager.dart';
 import 'package:bluebubble_messages/managers/notification_manager.dart';
-import 'package:bluebubble_messages/managers/queue_manager.dart';
 import 'package:bluebubble_messages/managers/settings_manager.dart';
 import 'package:bluebubble_messages/repository/database.dart';
 import 'package:bluebubble_messages/repository/models/chat.dart';
@@ -206,7 +205,9 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
           if (snapshot.hasData) {
             if (snapshot.data) {
               ContactManager().getContacts();
-              return ConversationList();
+              return ConversationList(
+                showArchivedChats: false,
+              );
             } else {
               return SetupView();
             }

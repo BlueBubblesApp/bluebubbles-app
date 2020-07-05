@@ -260,7 +260,8 @@ class ActionHandler {
   /// ```dart
   /// handleMessage(JsonMap)
   /// ```
-  static Future<void> handleMessage(Map<String, dynamic> data) async {
+  static Future<void> handleMessage(Map<String, dynamic> data,
+      {bool createAttachmentNotification = false}) async {
     Message message = Message.fromMap(data);
     List<Chat> chats = MessageHelper.parseChats(data);
 
@@ -314,7 +315,9 @@ class ActionHandler {
         await file.save(message);
 
         if (SettingsManager().settings.autoDownload && file.mimeType != null) {
-          new AttachmentDownloader(file);
+          new AttachmentDownloader(file, message,
+              createNotification:
+                  createAttachmentNotification && file.mimeType != null);
         }
       });
     }

@@ -44,7 +44,8 @@ class SentMessage extends StatefulWidget {
   _SentMessageState createState() => _SentMessageState();
 }
 
-class _SentMessageState extends State<SentMessage> {
+class _SentMessageState extends State<SentMessage>
+    with SingleTickerProviderStateMixin {
   bool _visible = false;
 
   @override
@@ -246,9 +247,14 @@ class _SentMessageState extends State<SentMessage> {
                     ),
                     child: Row(children: messageWidget),
                   ),
-                  widget.showDeliveredReceipt
-                      ? DeliveredReceipt(message: widget.message)
-                      : Container(),
+                  AnimatedSize(
+                    vsync: this,
+                    duration: Duration(milliseconds: 100),
+                    curve: Curves.easeInOut,
+                    child: widget.showDeliveredReceipt
+                        ? DeliveredReceipt(message: widget.message)
+                        : Container(),
+                  ),
                 ],
               ),
             ],

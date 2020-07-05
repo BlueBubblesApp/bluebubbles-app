@@ -1,10 +1,10 @@
 import 'dart:async';
 
+import 'package:bluebubble_messages/blocs/chat_bloc.dart';
 import 'package:bluebubble_messages/blocs/message_bloc.dart';
 import 'package:bluebubble_messages/helpers/utils.dart';
 import 'package:bluebubble_messages/managers/contact_manager.dart';
 import 'package:bluebubble_messages/repository/models/message.dart';
-import 'package:bluebubble_messages/socket_manager.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 
@@ -16,11 +16,6 @@ import '../conversation_view/conversation_view.dart';
 import '../../repository/models/chat.dart';
 
 import '../../helpers/utils.dart';
-
-// import 'SQL/Models/Chats.dart';
-// import 'SQL/Models/Messages.dart';
-// import 'SQL/Repositories/RepoService.dart';
-// import 'conversation_view.dart';
 
 class ConversationTile extends StatefulWidget {
   final Chat chat;
@@ -75,6 +70,18 @@ class _ConversationTileState extends State<ConversationTile> {
           onTap: () {
             //TODO add dnd
           },
+        ),
+        IconSlideAction(
+          caption: widget.chat.isArchived ? 'UnArchive' : 'Archive',
+          color: widget.chat.isArchived ? Colors.blue : Colors.red,
+          icon: widget.chat.isArchived ? Icons.replay : Icons.delete,
+          onTap: () {
+            if (widget.chat.isArchived) {
+              ChatBloc().unArchiveChat(widget.chat);
+            } else {
+              ChatBloc().archiveChat(widget.chat);
+            }
+          },
         )
       ],
       child: Material(
@@ -82,6 +89,7 @@ class _ConversationTileState extends State<ConversationTile> {
         child: InkWell(
           onTap: () {
             MessageBloc messageBloc = new MessageBloc(widget.chat);
+            debugPrint(widget.chat.isArchived.toString());
             Navigator.of(context).push(
               CupertinoPageRoute(
                 builder: (BuildContext context) {
