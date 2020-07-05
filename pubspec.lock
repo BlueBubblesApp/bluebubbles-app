@@ -382,6 +382,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.0.8"
+  flutter_screen_lock:
+    dependency: "direct main"
+    description:
+      name: flutter_screen_lock
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "1.1.2"
   flutter_slidable:
     dependency: "direct main"
     description:

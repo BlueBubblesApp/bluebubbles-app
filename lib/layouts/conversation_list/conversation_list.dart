@@ -161,34 +161,6 @@ class _ConversationListState extends State<ConversationList> {
                           Spacer(
                             flex: 25,
                           ),
-                          // ButtonTheme(
-                          //   minWidth: 20,
-                          //   height: 20,
-                          //   child: FlatButton(
-                          //     padding: EdgeInsets.symmetric(
-                          //       horizontal: 0,
-                          //     ),
-                          //     color: Theme.of(context).accentColor,
-                          //     onPressed: () {
-
-                          //       Navigator.of(context).push(
-                          //         CupertinoPageRoute(
-                          //           builder: (BuildContext context) {
-                          //             return SettingsPanel();
-                          //           },
-                          //         ),
-                          //       );
-                          //     },
-                          //     child: Icon(
-                          //       Icons.more_horiz,
-                          //       color: Colors.blue.withOpacity(0.75),
-                          //       size: 15,
-                          //     ),
-                          //     shape: RoundedRectangleBorder(
-                          //       borderRadius: BorderRadius.circular(40),
-                          //     ),
-                          //   ),
-                          // ),
                           !widget.showArchivedChats
                               ? PopupMenuButton(
                                   // shape: RoundedRectangleBorder(
@@ -197,7 +169,7 @@ class _ConversationListState extends State<ConversationList> {
                                   color: Theme.of(context).accentColor,
                                   itemBuilder: (context) {
                                     return <PopupMenuItem>[
-                                      new PopupMenuItem(
+                                      PopupMenuItem(
                                         child: GestureDetector(
                                           onTap: () {
                                             Navigator.of(context).push(
@@ -216,7 +188,27 @@ class _ConversationListState extends State<ConversationList> {
                                                 .bodyText1,
                                           ),
                                         ),
-                                      )
+                                      ),
+                                      PopupMenuItem(
+                                        child: GestureDetector(
+                                          onTap: () {
+                                            Navigator.of(context).push(
+                                              CupertinoPageRoute(
+                                                builder:
+                                                    (BuildContext context) {
+                                                  return SettingsPanel();
+                                                },
+                                              ),
+                                            );
+                                          },
+                                          child: Text(
+                                            'Settings',
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodyText1,
+                                          ),
+                                        ),
+                                      ),
                                     ];
                                   },
                                   child: Container(
