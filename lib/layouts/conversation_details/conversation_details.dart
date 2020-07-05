@@ -9,6 +9,7 @@ import 'package:bluebubble_messages/helpers/hex_color.dart';
 import 'package:bluebubble_messages/helpers/utils.dart';
 import 'package:bluebubble_messages/layouts/conversation_details/contact_tile.dart';
 import 'package:bluebubble_messages/layouts/conversation_view/new_chat_creator.dart';
+import 'package:bluebubble_messages/layouts/image_viewer/image_viewer.dart';
 import 'package:bluebubble_messages/managers/contact_manager.dart';
 import 'package:bluebubble_messages/managers/method_channel_interface.dart';
 import 'package:bluebubble_messages/managers/new_message_manager.dart';
@@ -139,7 +140,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
               ),
             ),
             SliverToBoxAdapter(
-              child: chat.participants.length > 0
+              child: chat.participants.length > 1
                   ? InkWell(
                       onTap: () async {
                         Chat result = await Navigator.of(context).push(
@@ -282,25 +283,51 @@ class _ConversationDetailsState extends State<ConversationDetails> {
               delegate: SliverChildBuilderDelegate(
                 (context, int index) {
                   Attachment attachment = attachmentsForChat[index];
-                  if (attachment.mimeType.startsWith("image")) {
+                  if (attachment.mimeType != null &&
+                      attachment.mimeType.startsWith("image")) {
+                    File file = new File(
+                      "${SettingsManager().appDocDir.path}/attachments/${attachment.guid}/${attachment.transferName}",
+                    );
+                    if (!file.existsSync() && attachment.blurhash != null) {
+                      return FutureBuilder(
+                        builder: (context, snapshot) {
+                          if (snapshot.hasData) {
+                            return Image.memory(snapshot.data);
+                          } else {
+                            return Container();
+                          }
+                        },
+                        future: blurHashDecode(attachment.blurhash),
+                      );
+                    }
                     return SizedBox(
                       width: MediaQuery.of(context).size.width / 2,
                       child: Stack(
                         children: <Widget>[
                           SizedBox(
-                            child: Image.file(
-                              new File(
-                                "${SettingsManager().appDocDir.path}/attachments/${attachment.guid}/${attachment.transferName}",
+                            child: Hero(
+                              tag: attachment.guid,
+                              child: Image.file(
+                                file,
+                                fit: BoxFit.cover,
+                                alignment: Alignment.center,
                               ),
-                              fit: BoxFit.cover,
-                              alignment: Alignment.center,
                             ),
                             width: MediaQuery.of(context).size.width / 2,
                           ),
                           Material(
                             color: Colors.transparent,
                             child: InkWell(
-                              onTap: () {},
+                              onTap: () {
+                                Navigator.of(context).push(
+                                  CupertinoPageRoute(
+                                    builder: (context) => ImageViewer(
+                                      file: file,
+                                      tag: attachment.guid,
+                                    ),
+                                  ),
+                                );
+                              },
                             ),
                           )
                         ],

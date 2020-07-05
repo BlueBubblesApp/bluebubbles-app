@@ -133,7 +133,8 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     SettingsManager().init();
-    QueueManager().init();
+    LifeCycleManager().opened();
+    // QueueManager().init();
     MethodChannelInterface().init(context);
     ReceiveSharingIntent.getInitialMedia().then((List<SharedMediaFile> value) {
       if (value == null) return;
@@ -169,6 +170,9 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
 
     MethodChannelInterface().invokeMethod("get-starting-intent").then((value) {
       debugPrint("starting intent " + value.toString());
+      if (value != null) {
+        MethodChannelInterface().openChat(value.toString());
+      }
     });
 
     NotificationManager().createNotificationChannel();

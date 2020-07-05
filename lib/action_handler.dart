@@ -59,9 +59,10 @@ class ActionHandler {
     if (SettingsManager().settings.connected == false) return;
 
     if (SocketManager().socket == null) {
-      SocketManager().startSocketIO(
-          connectCB: () =>
-              ActionHandler.sendMessage(chat, text, attachments: attachments));
+      SocketManager().startSocketIO(connectCB: () {
+        ActionHandler.sendMessage(chat, text, attachments: attachments);
+        SocketManager().closeSocket();
+      });
     } else {
       SocketManager().socket.sendMessage("send-message", jsonEncode(params),
           (data) async {

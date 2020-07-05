@@ -6,6 +6,7 @@ import 'package:bluebubble_messages/action_handler.dart';
 import 'package:bluebubble_messages/helpers/attachment_sender.dart';
 import 'package:bluebubble_messages/helpers/hex_color.dart';
 import 'package:bluebubble_messages/layouts/conversation_view/camera_widget.dart';
+import 'package:bluebubble_messages/layouts/image_viewer/image_viewer.dart';
 import 'package:bluebubble_messages/repository/models/chat.dart';
 import 'package:bluebubble_messages/socket_manager.dart';
 import 'package:file_picker_cross/file_picker_cross.dart';
@@ -172,125 +173,158 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField> {
                               );
                             },
                           )
-                        : Image.file(
-                            pickedImages[index],
-                            height: 100,
-                            fit: BoxFit.fitHeight,
+                        : Hero(
+                            tag: pickedImages[index].path,
+                            child: Image.file(
+                              pickedImages[index],
+                              height: 100,
+                              fit: BoxFit.fitHeight,
+                            ),
                           ),
                     Positioned.fill(
-                        child: Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        onTap: () async {
-                          File image = pickedImages[index];
-                          for (int i = 0; i < pickedImages.length; i++) {
-                            if (pickedImages[i].path == image.path) {
-                              pickedImages.removeAt(i);
-                              setState(() {});
-                              return;
-                            }
-                          }
-                        },
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () async {
+                            Navigator.of(context).push(
+                              CupertinoPageRoute(
+                                builder: (context) => ImageViewer(
+                                  file: pickedImages[index],
+                                  tag: pickedImages[index].path,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
                       ),
-                    ))
+                    ),
+                    Align(
+                      alignment: Alignment.topRight,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(80),
+                          color: Colors.black,
+                        ),
+                        width: 20,
+                        height: 20,
+                        child: GestureDetector(
+                          onTap: () {
+                            File image = pickedImages[index];
+                            for (int i = 0; i < pickedImages.length; i++) {
+                              if (pickedImages[i].path == image.path) {
+                                pickedImages.removeAt(i);
+                                setState(() {});
+                                return;
+                              }
+                            }
+                          },
+                          child: Icon(
+                            Icons.close,
+                            color: Colors.white,
+                            size: 10,
+                          ),
+                        ),
+                      ),
+                    )
                   ],
                 );
               },
             ),
           ),
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            mainAxisAlignment: MainAxisAlignment.end,
             children: <Widget>[
-              Flexible(
-                child: GestureDetector(
-                  onTap: handleOpenImagePicker,
-                  child: Icon(
-                    Icons.camera_alt,
-                    color: HexColor('8e8e8e'),
-                    size: 30,
-                  ),
+              Spacer(
+                flex: 1,
+              ),
+              GestureDetector(
+                onTap: handleOpenImagePicker,
+                child: Icon(
+                  Icons.camera_alt,
+                  color: HexColor('8e8e8e'),
+                  size: 30,
                 ),
               ),
-              Spacer(flex: 1),
-              Flexible(
-                flex: 15,
-                child: Container(
-                  child: Stack(
-                    alignment: AlignmentDirectional.centerEnd,
-                    children: <Widget>[
-                      CupertinoTextField(
-                        // autofocus: true,
-                        key: _searchFormKey,
-                        textCapitalization: TextCapitalization.sentences,
-                        focusNode: _focusNode,
-                        autocorrect: true,
-                        controller: _controller,
-                        scrollPhysics: BouncingScrollPhysics(),
-                        style: Theme.of(context).textTheme.bodyText1,
-                        keyboardType: TextInputType.multiline,
-                        maxLines: null,
-                        placeholder: "iMessage",
-                        padding: EdgeInsets.only(
-                            left: 10, right: 40, top: 10, bottom: 10),
-                        placeholderStyle: Theme.of(context).textTheme.subtitle1,
-                        autofocus: true,
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).backgroundColor,
-                          border: Border.all(
-                            color: Theme.of(context).dividerColor,
-                            width: 1,
-                          ),
-                          borderRadius: BorderRadius.circular(15),
+              Spacer(
+                flex: 1,
+              ),
+              Container(
+                width: MediaQuery.of(context).size.width * 3.5 / 4.5,
+                child: Stack(
+                  alignment: AlignmentDirectional.centerEnd,
+                  children: <Widget>[
+                    CupertinoTextField(
+                      // autofocus: true,
+                      key: _searchFormKey,
+                      textCapitalization: TextCapitalization.sentences,
+                      focusNode: _focusNode,
+                      autocorrect: true,
+                      controller: _controller,
+                      scrollPhysics: BouncingScrollPhysics(),
+                      style: Theme.of(context).textTheme.bodyText1,
+                      keyboardType: TextInputType.multiline,
+                      maxLines: null,
+                      placeholder: "iMessage",
+                      padding: EdgeInsets.only(
+                          left: 10, right: 40, top: 10, bottom: 10),
+                      placeholderStyle: Theme.of(context).textTheme.subtitle1,
+                      autofocus: true,
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).backgroundColor,
+                        border: Border.all(
+                          color: Theme.of(context).dividerColor,
+                          width: 1,
                         ),
+                        borderRadius: BorderRadius.circular(15),
                       ),
-                      ButtonTheme(
-                        minWidth: 30,
-                        height: 30,
-                        child: RaisedButton(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 0,
-                          ),
-                          color: Colors.blue,
-                          onPressed: () {
-                            if (widget.customSend != null) {
-                              widget.customSend(pickedImages, _controller.text);
+                    ),
+                    ButtonTheme(
+                      minWidth: 30,
+                      height: 30,
+                      child: RaisedButton(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 0,
+                        ),
+                        color: Colors.blue,
+                        onPressed: () {
+                          if (widget.customSend != null) {
+                            widget.customSend(pickedImages, _controller.text);
+                          } else {
+                            if (pickedImages.length > 0) {
+                              for (int i = 0; i < pickedImages.length; i++) {
+                                new AttachmentSender(
+                                  pickedImages[i],
+                                  widget.chat,
+                                  i == pickedImages.length - 1
+                                      ? _controller.text
+                                      : "",
+                                );
+                              }
                             } else {
-                              if (pickedImages.length > 0) {
-                                for (int i = 0; i < pickedImages.length; i++) {
-                                  new AttachmentSender(
-                                    pickedImages[i],
-                                    widget.chat,
-                                    i == pickedImages.length - 1
-                                        ? _controller.text
-                                        : "",
-                                  );
-                                }
-                              } else {
-                                ActionHandler.sendMessage(
-                                    widget.chat, _controller.text);
-                              }
-
-                              if (widget.onSend != null) {
-                                widget.onSend(_controller.text);
-                              }
+                              ActionHandler.sendMessage(
+                                  widget.chat, _controller.text);
                             }
 
-                            _controller.text = "";
-                            pickedImages = <File>[];
-                            setState(() {});
-                          },
-                          child: Icon(
-                            Icons.arrow_upward,
-                            color: Colors.white,
-                            size: 20,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(40),
-                          ),
+                            if (widget.onSend != null) {
+                              widget.onSend(_controller.text);
+                            }
+                          }
+
+                          _controller.text = "";
+                          pickedImages = <File>[];
+                          setState(() {});
+                        },
+                        child: Icon(
+                          Icons.arrow_upward,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(40),
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ],

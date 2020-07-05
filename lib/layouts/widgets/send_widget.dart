@@ -17,8 +17,6 @@ class SendWidget extends StatefulWidget {
 }
 
 class _SendWidgetState extends State<SendWidget> {
-  bool showHero = true;
-
   @override
   void initState() {
     super.initState();
@@ -44,14 +42,11 @@ class _SendWidgetState extends State<SendWidget> {
       customContent: <Widget>[
         Container(
           constraints: BoxConstraints(
-            minWidth: MediaQuery.of(context).size.width * 5 / 6,
+            minWidth: MediaQuery.of(context).size.width * 3 / 4,
           ),
-          child: Padding(
-            padding: EdgeInsets.only(left: 14, top: 8, bottom: 8, right: 14),
-            child: Text(
-              widget.text,
-              style: Theme.of(context).textTheme.bodyText1,
-            ),
+          child: Text(
+            widget.text,
+            style: Theme.of(context).textTheme.bodyText1,
           ),
         )
       ],
@@ -78,60 +73,60 @@ class _SendWidgetState extends State<SendWidget> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.end,
               children: <Widget>[
-                showHero
-                    ? Hero(
-                        flightShuttleBuilder: (flightContext, _animation,
-                            flightDirection, fromHeroContext, toHeroContext) {
-                          Animation animation = _animation.drive(Tween<double>(
-                              end: MediaQuery.of(context).size.width * 5 / 6,
-                              begin: 0));
-                          return Material(
-                            type: MaterialType.transparency,
-                            child: MessageWidget(
-                              reactions: [],
-                              fromSelf: true,
-                              showHandle: false,
-                              newerMessage: null,
-                              olderMessage: null,
-                              shouldFadeIn: false,
-                              customContent: <Widget>[
-                                AnimatedBuilder(
-                                  animation: animation,
-                                  builder: (context, child) {
-                                    return Container(
-                                      constraints: BoxConstraints(
-                                        minWidth: animation.value,
-                                      ),
-                                      child: Padding(
-                                        child: child,
-                                        padding: EdgeInsets.only(
-                                          left: 14,
-                                          top: 8,
-                                          bottom: 7.9,
-                                          right: 14,
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                  child: Text(
-                                    widget.text,
-                                    style:
-                                        Theme.of(context).textTheme.bodyText1,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                        },
-                        tag: widget.tag,
-                        child: Material(
-                          type: MaterialType.transparency,
-                          // color: Colors.transparent,
-                          // elevation: 0.0,
-                          child: messageWidget,
+                Hero(
+                  flightShuttleBuilder: (flightContext, _animation,
+                      flightDirection, fromHeroContext, toHeroContext) {
+                    Animation animation = _animation.drive(
+                      Tween<double>(
+                        end: MediaQuery.of(context).size.width * 3 / 4,
+                        begin: 0,
+                      ),
+                    );
+                    return Material(
+                      type: MaterialType.transparency,
+                      child: FadeTransition(
+                        opacity: _animation.drive(
+                          Tween<double>(end: 0, begin: 1),
                         ),
-                      )
-                    : messageWidget,
+                        child: MessageWidget(
+                          reactions: [],
+                          fromSelf: true,
+                          showHandle: false,
+                          newerMessage: null,
+                          olderMessage: null,
+                          shouldFadeIn: false,
+                          customContent: <Widget>[
+                            AnimatedBuilder(
+                              animation: animation,
+                              builder: (context, child) {
+                                return Container(
+                                  constraints: BoxConstraints(
+                                    minWidth: animation.value,
+                                  ),
+                                  child: child,
+                                );
+                              },
+                              child: Text(
+                                widget.text,
+                                style: Theme.of(context).textTheme.bodyText1,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                  tag: widget.tag,
+                  child: Material(
+                    type: MaterialType.transparency,
+                    // color: Colors.transparent,
+                    // elevation: 0.0,
+                    child: Opacity(
+                      child: messageWidget,
+                      opacity: 0,
+                    ),
+                  ),
+                )
               ],
             ),
           ),

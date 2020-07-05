@@ -45,8 +45,6 @@ class Handle {
 
     // Try to find an existing chat before saving it
     Handle existing = await Handle.findOne({"address": this.address});
-    QueueManager().logger.log(Level.info,
-        "existing == null ${existing == null}, existing: ${existing != null ? existing.toMap().toString() : null}");
     if (existing != null) {
       this.id = existing.id;
     }

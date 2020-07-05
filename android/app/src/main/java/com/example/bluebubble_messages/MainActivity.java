@@ -73,7 +73,8 @@ public class MainActivity extends FlutterActivity {
     public Long callbackHandle;
     private DatabaseReference db;
     private FusedLocationProviderClient fusedLocationClient;
-    private Intent startingIntent;
+//    private Intent startingIntent;
+    private String startingChat;
 
 
     private ValueEventListener dbListener = new ValueEventListener() {
@@ -229,7 +230,7 @@ public class MainActivity extends FlutterActivity {
                                         });
 
                             } else if (call.method.equals("get-starting-intent")) {
-                                result.success(startingIntent);
+                                result.success(getIntent().getStringExtra("chatGUID"));
                             } else {
                                 result.notImplemented();
                             }
@@ -278,7 +279,10 @@ public class MainActivity extends FlutterActivity {
         } else {
             if (type.equals("NotificationOpen")) {
                 Log.d("Notifications", "tapped on notification by id " + intent.getExtras().getInt("id"));
-                startingIntent = intent;
+//                startingIntent = intent;
+                startingChat = intent.getStringExtra("chatGUID");
+
+
                 new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod("ChatOpen", intent.getExtras().getString("chatGUID"));
             }
         }

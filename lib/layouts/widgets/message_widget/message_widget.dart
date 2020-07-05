@@ -73,8 +73,7 @@ class MessageWidget extends StatefulWidget {
   _MessageState createState() => _MessageState();
 }
 
-class _MessageState extends State<MessageWidget>
-    with AutomaticKeepAliveClientMixin {
+class _MessageState extends State<MessageWidget> {
   List<Attachment> attachments = <Attachment>[];
   bool showTail = true;
   final String like = "like";
@@ -152,7 +151,6 @@ class _MessageState extends State<MessageWidget>
 
   @override
   Widget build(BuildContext context) {
-    super.build(context);
     if (widget.fromSelf) {
       return SentMessage(
         timeStamp: _buildTimeStamp(context),
@@ -324,7 +322,4 @@ class _MessageState extends State<MessageWidget>
     );
     return entry;
   }
-
-  @override
-  bool get wantKeepAlive => true;
 }

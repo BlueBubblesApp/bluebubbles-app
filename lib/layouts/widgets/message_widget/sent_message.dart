@@ -44,8 +44,7 @@ class SentMessage extends StatefulWidget {
   _SentMessageState createState() => _SentMessageState();
 }
 
-class _SentMessageState extends State<SentMessage>
-    with AutomaticKeepAliveClientMixin {
+class _SentMessageState extends State<SentMessage> {
   bool _visible = false;
 
   @override
@@ -91,15 +90,19 @@ class _SentMessageState extends State<SentMessage>
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                               children: <Widget>[
-                                Column(children: <Widget>[
-                                  Text("Error Code: ${errorCode.toString()}",
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodyText1),
-                                  Text("Error: $errorText",
+                                Column(
+                                  children: <Widget>[
+                                    Text("Error Code: ${errorCode.toString()}",
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodyText1),
+                                    Text(
+                                      "Error: $errorText",
                                       style:
-                                          Theme.of(context).textTheme.bodyText1)
-                                ]),
+                                          Theme.of(context).textTheme.bodyText1,
+                                    )
+                                  ],
+                                ),
                                 CupertinoButton(
                                     child: Row(
                                         mainAxisAlignment:
@@ -137,7 +140,6 @@ class _SentMessageState extends State<SentMessage>
 
   @override
   Widget build(BuildContext context) {
-    super.build(context);
     List<Widget> tail = <Widget>[
       Container(
         margin: EdgeInsets.only(bottom: 1),
@@ -199,7 +201,14 @@ class _SentMessageState extends State<SentMessage>
                     ? Theme.of(context).accentColor
                     : Colors.blue,
               ),
-              child: Text(widget.message.text),
+              child: widget.customContent == null
+                  ? Text(
+                      widget.message.text,
+                      style: Theme.of(context).textTheme.bodyText2,
+                    )
+                  : Column(
+                      children: widget.customContent,
+                    ),
             ),
           ),
         ],
@@ -221,7 +230,7 @@ class _SentMessageState extends State<SentMessage>
       duration: Duration(milliseconds: widget.shouldFadeIn ? 200 : 0),
       child: Column(
         children: <Widget>[
-          widget.attachments,
+          widget.attachments != null ? widget.attachments : Container(),
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: <Widget>[
@@ -230,11 +239,11 @@ class _SentMessageState extends State<SentMessage>
                 children: <Widget>[
                   Padding(
                     padding: EdgeInsets.only(
-                        bottom: widget.showTail ? 10.0 : 3.0,
-                        right:
-                            (widget.message != null && widget.message.error > 0
-                                ? 10.0
-                                : 0)),
+                      bottom: widget.showTail ? 10.0 : 3.0,
+                      right: (widget.message != null && widget.message.error > 0
+                          ? 10.0
+                          : 0),
+                    ),
                     child: Row(children: messageWidget),
                   ),
                   widget.showDeliveredReceipt
@@ -249,7 +258,4 @@ class _SentMessageState extends State<SentMessage>
       ),
     );
   }
-
-  @override
-  bool get wantKeepAlive => true;
 }

@@ -11,7 +11,9 @@ import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Binder;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
 import android.os.SystemClock;
 import android.preference.PreferenceManager;
 import android.util.Log;
@@ -22,6 +24,12 @@ import androidx.work.WorkManager;
 
 import com.google.firebase.messaging.RemoteMessage;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.Map;
+
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 import io.flutter.view.FlutterCallbackInformation;
@@ -29,10 +37,14 @@ import io.flutter.view.FlutterMain;
 import io.flutter.view.FlutterNativeView;
 import io.flutter.view.FlutterRunArguments;
 
+import static com.example.bluebubble_messages.MainActivity.CHANNEL;
+import static com.example.bluebubble_messages.MainActivity.engine;
+
 public class FirebaseMessagingService extends com.google.firebase.messaging.FirebaseMessagingService {
     private static final String TAG = "MyFirebaseMsgService";
     private LocalBroadcastManager broadcaster;
     private BackgroundService backgroundService;
+    ArrayList<String> processedGuids = new ArrayList<String>();
 
     protected ServiceConnection mServerConn = new ServiceConnection() {
         @Override
@@ -63,12 +75,29 @@ public class FirebaseMessagingService extends com.google.firebase.messaging.Fire
     @Override
     public void onMessageReceived(RemoteMessage remoteMessage) {
         // Check if message contains a data payload.
+
+        JSONObject jObject = null;
+        Map<String, Object> data = null;
+        try {
+            jObject = new JSONObject(remoteMessage.getData().get("data"));
+            data = (Map<String, Object>) BackgroundService.jsonToMap(jObject);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        if(data == null) return;
         if (remoteMessage.getData().size() > 0 && !remoteMessage.getData().get("type").equals("new-server")) {
-            Log.d("notification", "on message received");
+            if( processedGuids.contains(data.get("guid"))) return;
+            processedGuids.add((String) data.get("guid"));
+            Log.d("notification", "on message received " + processedGuids.toString());
             Intent intent = new Intent("MyData");
             intent.putExtra("type", remoteMessage.getData().get("type"));
             intent.putExtra("data", remoteMessage.getData().get("data"));
-            broadcaster.sendBroadcast(intent);
+            new Handler(Looper.getMainLooper()).post(new Runnable() {
+                @Override
+                public void run() {
+                    new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod(intent.getExtras().getString("type"), intent.getExtras().getString("data"));
+                }
+            });
             if(backgroundService != null) {
                 backgroundService.saveMessage(remoteMessage.getData().get("data"));
             } else {

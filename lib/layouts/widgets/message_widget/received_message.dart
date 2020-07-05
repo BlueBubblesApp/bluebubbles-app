@@ -36,11 +36,9 @@ class ReceivedMessage extends StatefulWidget {
   _ReceivedMessageState createState() => _ReceivedMessageState();
 }
 
-class _ReceivedMessageState extends State<ReceivedMessage>
-    with AutomaticKeepAliveClientMixin {
+class _ReceivedMessageState extends State<ReceivedMessage> {
   @override
   Widget build(BuildContext context) {
-    super.build(context);
     String handle = "";
     if (widget.message.handle != null && widget.showHandle) {
       handle = getContactTitle(
@@ -129,14 +127,12 @@ class _ReceivedMessageState extends State<ReceivedMessage>
                               ? Theme.of(context).accentColor
                               : Colors.blue,
                         ),
-                        child: Text(widget.message.text),
+                        child: Text(
+                          widget.message.text,
+                          style: Theme.of(context).textTheme.bodyText1,
+                        ),
                       )
                     : Container(),
-                // MessageContent(
-                //   customContent: widget.customContent,
-                //   message: widget.message,
-                //   isFromMe: widget.isFromMe,
-                // ),
               ],
             ),
           ),
@@ -145,7 +141,4 @@ class _ReceivedMessageState extends State<ReceivedMessage>
       ],
     );
   }
-
-  @override
-  bool get wantKeepAlive => true;
 }

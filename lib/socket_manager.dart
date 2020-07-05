@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'package:bluebubble_messages/action_handler.dart';
 import 'package:bluebubble_messages/helpers/attachment_downloader.dart';
 import 'package:bluebubble_messages/blocs/setup_bloc.dart';
 import 'package:bluebubble_messages/helpers/utils.dart';
@@ -202,7 +203,8 @@ class SocketManager {
         }
 
         SocketManager().processedGUIDS.add(data["guid"]);
-        QueueManager().addEvent("new-message", _data);
+        // QueueManager().addEvent("new-message", _data);
+        ActionHandler.handleMessage(data);
         return new Future.value("");
       });
 
@@ -252,7 +254,8 @@ class SocketManager {
        * This may be when a read/delivered date has been changed.
        */
       _manager.socket.subscribe("updated-message", (_data) async {
-        QueueManager().addEvent("updated-message", _data);
+        // QueueManager().addEvent("updated-message", _data);
+        ActionHandler.handleUpdatedMessage(jsonDecode(_data));
       });
     } catch (e) {
       debugPrint("FAILED TO CONNECT");

@@ -1,11 +1,7 @@
 import 'package:bluebubble_messages/blocs/message_bloc.dart';
-import 'package:bluebubble_messages/helpers/utils.dart';
 import 'package:bluebubble_messages/layouts/widgets/message_widget/message_content/message_attachments.dart';
 import 'package:bluebubble_messages/layouts/widgets/message_widget/message_widget.dart';
 import 'package:bluebubble_messages/layouts/widgets/message_widget/new_message_loader.dart';
-import 'package:bluebubble_messages/managers/contact_manager.dart';
-import 'package:bluebubble_messages/repository/models/attachment.dart';
-import 'package:bluebubble_messages/repository/models/handle.dart';
 import 'package:bluebubble_messages/repository/models/message.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -74,7 +70,7 @@ class _MessageViewState extends State<MessageView> {
       } else if (event.containsKey("update") && event["update"] != null) {
         _messages = event["messages"].values.toList();
         setState(() {});
-        // _listKey.currentState.setState(() {});
+        _listKey.currentState.setState(() {});
       } else {
         int originalMessageLength = _messages.length;
         _messages = event["messages"].values.toList();
@@ -83,8 +79,8 @@ class _MessageViewState extends State<MessageView> {
           if (_listKey.currentState != null)
             _listKey.currentState.insertItem(i, duration: animationDuration);
         }
-        // if (_listKey.currentState != null)
-        //   _listKey.currentState.setState(() {});
+        if (_listKey.currentState != null)
+          _listKey.currentState.setState(() {});
         _messages.forEach((element) => getAttachmentsForMessage(element));
       }
     });
@@ -119,7 +115,7 @@ class _MessageViewState extends State<MessageView> {
           itemBuilder:
               (BuildContext context, int index, Animation<double> animation) {
             if (index == _messages.length) {
-              // debugPrint("reached top of messages");
+              debugPrint("reached top of messages");
               if (loader == null) {
                 loader = widget.messageBloc.loadMessageChunk(_messages.length);
                 loader.whenComplete(() => loader = null);

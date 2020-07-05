@@ -178,12 +178,12 @@ class Message {
       await this.handle.save();
       this.handleId = this.handle.id;
     }
-    QueueManager().logger.log(Level.info,
-        "this.handle == null ${this.handle == null}, this.handleId = ${this.handleId}");
+    // QueueManager().logger.log(Level.info,
+    //     "this.handle == null ${this.handle == null}, this.handleId = ${this.handleId}");
 
-    QueueManager()
-        .logger
-        .log(Level.info, "existing == null ${existing == null}");
+    // QueueManager()
+    //     .logger
+    //     .log(Level.info, "existing == null ${existing == null}");
 
     // If it already exists, update it
     if (existing == null) {
@@ -219,6 +219,10 @@ class Message {
     }
     if (params.containsKey("handle")) {
       params.remove("handle");
+    }
+
+    if (existing.toMap().containsKey("handleId")) {
+      params["handleId"] = existing.toMap()["handleId"];
     }
 
     await db.update("message", params,

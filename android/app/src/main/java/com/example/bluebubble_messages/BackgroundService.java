@@ -67,7 +67,7 @@ public class BackgroundService extends Service {
         Map<String, Object> data = null;
         try {
             JSONObject jObject = new JSONObject(_data);
-            data = (Map<String, Object>) this.jsonToMap(jObject);
+            data = (Map<String, Object>) jsonToMap(jObject);
         } catch (JSONException e) {
             e.printStackTrace();
             return;
@@ -110,16 +110,16 @@ public class BackgroundService extends Service {
         return mBinder;
     }
 
-    private Map<String, Object> jsonToMap(JSONObject json) throws JSONException {
+    public static Map<String, Object> jsonToMap(JSONObject json) throws JSONException {
         Map<String, Object> retMap = new HashMap<String, Object>();
 
         if (json != JSONObject.NULL) {
-            retMap = this.toMap(json);
+            retMap = toMap(json);
         }
         return retMap;
     }
 
-    private Map<String, Object> toMap(JSONObject object) throws JSONException {
+    public static Map<String, Object> toMap(JSONObject object) throws JSONException {
         Map<String, Object> map = new HashMap<String, Object>();
 
         Iterator<String> keysItr = object.keys();
@@ -128,23 +128,23 @@ public class BackgroundService extends Service {
             Object value = object.get(key);
 
             if (value instanceof JSONArray) {
-                value = this.toList((JSONArray) value);
+                value = toList((JSONArray) value);
             } else if (value instanceof JSONObject) {
-                value = this.toMap((JSONObject) value);
+                value = toMap((JSONObject) value);
             }
             map.put(key, value);
         }
         return map;
     }
 
-    private List<Object> toList(JSONArray array) throws JSONException {
+    public static List<Object> toList(JSONArray array) throws JSONException {
         List<Object> list = new ArrayList<Object>();
         for (int i = 0; i < array.length(); i++) {
             Object value = array.get(i);
             if (value instanceof JSONArray) {
                 value = toList((JSONArray) value);
             } else if (value instanceof JSONObject) {
-                value = this.toMap((JSONObject) value);
+                value = toMap((JSONObject) value);
             }
             list.add(value);
         }

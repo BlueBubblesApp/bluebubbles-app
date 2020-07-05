@@ -70,20 +70,19 @@ class MethodChannelInterface {
         // Get the chat title and message
         String title = await getFullChatTitle(chat);
         Message message = Message.fromMap(data);
+        debugPrint("new-message from method channel interface " + message.guid);
 
         if (!message.isFromMe &&
             (NotificationManager().chat != chat.guid ||
                 !LifeCycleManager().isAlive)) {
-          QueueManager().addEvent(
-              "new-notification",
-              jsonEncode({
-                "guid": message.guid,
-                "contentTitle": title,
-                "contentText": message.text,
-                "group": chat.guid,
-                "id": Random().nextInt(9999),
-                "summaryId": chat.id
-              }));
+          ActionHandler.createNotification({
+            "guid": message.guid,
+            "contentTitle": title,
+            "contentText": message.text,
+            "group": chat.guid,
+            "id": Random().nextInt(9999),
+            "summaryId": chat.id
+          });
         }
 
         // If we've already processed the GUID, skip it
@@ -95,11 +94,13 @@ class MethodChannelInterface {
         SocketManager().processedGUIDS.add(data["guid"]);
 
         debugPrint("Adding new/matched message to the queue");
-        QueueManager().addEvent(call.method, call.arguments);
+        // QueueManager().addEvent(call.method, call.arguments);
+        ActionHandler.handleMessage(data);
         return new Future.value("");
       case "updated-message":
         debugPrint("Adding updated message to the queue");
-        QueueManager().addEvent(call.method, call.arguments);
+        // QueueManager().addEvent(call.method, call.arguments);
+        ActionHandler.handleUpdatedMessage(jsonDecode(call.arguments));
         return new Future.value("");
       case "ChatOpen":
         debugPrint("open chat " + call.arguments.toString());
@@ -152,6 +153,7 @@ class MethodChannelInterface {
   void openChat(String id) async {
     Chat openedChat = await Chat.findOne({"GUID": id});
     if (openedChat != null) {
+      await openedChat.getParticipants();
       String title = await getFullChatTitle(openedChat);
       MessageBloc messageBloc = new MessageBloc(openedChat);
 

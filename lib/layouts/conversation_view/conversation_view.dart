@@ -53,14 +53,17 @@ class _ConversationViewState extends State<ConversationView> {
     super.initState();
     chat = widget.chat;
     NotificationManager().switchChat(chat);
-    ChatBloc().chatStream.listen((event) {
-      event.forEach((element) {
-        if (element.guid == chat.guid) {
-          chat = element;
-          if (this.mounted) setState(() {});
-        }
-      });
-    });
+    widget.chat.getParticipants().then((value) => setState(() {
+          chat = value;
+        }));
+    // ChatBloc().chatStream.listen((event) {
+    //   event.forEach((element) {
+    //     if (element.guid == chat.guid) {
+    //       chat = element;
+    //       if (this.mounted) setState(() {});
+    //     }
+    //   });
+    // });
   }
 
   @override
