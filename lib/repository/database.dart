@@ -106,7 +106,9 @@ class DBProvider {
         "style INTEGER NOT NULL,"
         "chatIdentifier TEXT NOT NULL,"
         "isArchived INTEGER DEFAULT 0,"
-        "displayName TEXT DEFAULT NULL,"
+        "isMuted INTEGER DEFAULT 0,"
+        "hasUnreadMessage INTEGER DEFAULT 0,"
+        "displayName TEXT DEFAULT NULL"
         ");");
   }
 

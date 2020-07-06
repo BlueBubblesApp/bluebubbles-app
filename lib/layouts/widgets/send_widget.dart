@@ -86,7 +86,7 @@ class _SendWidgetState extends State<SendWidget> {
                       type: MaterialType.transparency,
                       child: FadeTransition(
                         opacity: _animation.drive(
-                          Tween<double>(end: 0, begin: 1),
+                          Tween<double>(end: 0, begin: 10),
                         ),
                         child: MessageWidget(
                           reactions: [],

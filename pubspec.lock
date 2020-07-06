@@ -368,6 +368,13 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  flutter_lock_screen:
+    dependency: "direct main"
+    description:
+      name: flutter_lock_screen
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "1.0.6"
   flutter_map:
     dependency: "direct main"
     description:
@@ -382,13 +389,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.0.8"
-  flutter_screen_lock:
-    dependency: "direct main"
-    description:
-      name: flutter_screen_lock
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "1.1.2"
   flutter_slidable:
     dependency: "direct main"
     description:
@@ -590,6 +590,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.1.6"
+  local_auth:
+    dependency: "direct main"
+    description:
+      name: local_auth
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.6.2+3"
   location_permissions:
     dependency: transitive
     description:

@@ -73,17 +73,22 @@ class Chat {
   int style;
   String chatIdentifier;
   bool isArchived;
+  bool isMuted;
+  bool hasUnreadMessage;
   String displayName;
   List<Handle> participants;
 
-  Chat(
-      {this.id,
-      this.guid,
-      this.style,
-      this.chatIdentifier,
-      this.isArchived,
-      this.displayName,
-      this.participants});
+  Chat({
+    this.id,
+    this.guid,
+    this.style,
+    this.chatIdentifier,
+    this.isArchived,
+    this.isMuted,
+    this.hasUnreadMessage,
+    this.displayName,
+    this.participants,
+  });
 
   factory Chat.fromMap(Map<String, dynamic> json) {
     List<Handle> participants = [];
@@ -101,18 +106,34 @@ class Chat {
       isArchived: (json["isArchived"] is bool)
           ? json['isArchived']
           : ((json['isArchived'] == 1) ? true : false),
+      isMuted: json.containsKey("isMuted")
+          ? (json["isMuted"] is bool)
+              ? json['isMuted']
+              : ((json['isMuted'] == 1) ? true : false)
+          : false,
+      hasUnreadMessage: json.containsKey("hasUnreadMessage")
+          ? (json["hasUnreadMessage"] is bool)
+              ? json['hasUnreadMessage']
+              : ((json['hasUnreadMessage'] == 1) ? true : false)
+          : false,
       displayName: json.containsKey("displayName") ? json["displayName"] : null,
       participants: participants,
     );
   }
 
-  Future<Chat> save([bool updateIfAbsent = true]) async {
+  Future<Chat> save(
+      {bool updateIfAbsent = true, bool updateLocalVals = false}) async {
     final Database db = await DBProvider.db.database;
 
     // Try to find an existing chat before saving it
     Chat existing = await Chat.findOne({"guid": this.guid});
     if (existing != null) {
       this.id = existing.id;
+      if (!updateLocalVals) {
+        this.isMuted = existing.isMuted;
+        this.isArchived = existing.isArchived;
+        this.hasUnreadMessage = existing.hasUnreadMessage;
+      }
     }
 
     // If it already exists, update it
@@ -125,9 +146,11 @@ class Chat {
       if (map.containsKey("participants")) {
         map.remove("participants");
       }
+      debugPrint("saving chat " + map.toString());
 
       this.id = await db.insert("chat", map);
     } else if (updateIfAbsent) {
+      debugPrint("updating because absent and set ismuted to $isMuted");
       await this.update();
     }
 
@@ -142,7 +165,10 @@ class Chat {
   Future<Chat> update() async {
     final Database db = await DBProvider.db.database;
 
-    Map<String, dynamic> params = {"isArchived": this.isArchived ? 1 : 0};
+    Map<String, dynamic> params = {
+      "isArchived": this.isArchived ? 1 : 0,
+      "isMuted": this.isMuted ? 1 : 0
+    };
 
     // Add display name if it's been updated
     if (this.displayName != null) {
@@ -153,7 +179,7 @@ class Chat {
     if (this.id != null) {
       await db.update("chat", params, where: "ROWID = ?", whereArgs: [this.id]);
     } else {
-      await this.save(false);
+      await this.save(updateIfAbsent: false);
     }
 
     return this;
@@ -381,7 +407,9 @@ class Chat {
         "style": style,
         "chatIdentifier": chatIdentifier,
         "isArchived": isArchived ? 1 : 0,
+        "isMuted": isMuted ? 1 : 0,
         "displayName": displayName,
-        "participants": participants.map((item) => item.toMap())
+        "participants": participants.map((item) => item.toMap()),
+        "hasUnreadMessage": hasUnreadMessage ? 1 : 0,
       };
 }

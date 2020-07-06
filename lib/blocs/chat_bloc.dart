@@ -65,6 +65,7 @@ class ChatBloc {
               _chats[i],
               latestMessage: event.values.first,
             );
+            debugPrint("initing tile vals for chat");
           }
         }
       } else {
@@ -186,7 +187,7 @@ class ChatBloc {
     if (_tileVals.containsKey(chat.guid)) _tileVals.remove(chat.guid);
     _tileValController.sink.add(_tileVals);
     chat.isArchived = true;
-    await chat.save();
+    await chat.save(updateLocalVals: true);
   }
 
   void unArchiveChat(Chat chat) async {
@@ -197,7 +198,7 @@ class ChatBloc {
     chats.add(chat);
     await initTileValsForChat(chat);
     chat.isArchived = false;
-    await chat.save();
+    await chat.save(updateLocalVals: true);
   }
 
   void updateTileVals(Chat chat, Map<String, dynamic> chatMap,
@@ -208,15 +209,18 @@ class ChatBloc {
     map[chat.guid] = chatMap;
   }
 
+  void updateChat(Chat chat) {
+    for (int i = 0; i < _chats.length; i++) {
+      Chat _chat = _chats[i];
+      if (_chat.guid == chat.guid) {
+        _chats[i] = chat;
+      }
+    }
+  }
+
   addChat(Chat chat) async {
     // Create the chat in the database
     await chat.save();
-    getChats();
-  }
-
-  udpateChat(Chat chat) async {
-    // Create the chat in the database
-    await chat.update();
     getChats();
   }
 

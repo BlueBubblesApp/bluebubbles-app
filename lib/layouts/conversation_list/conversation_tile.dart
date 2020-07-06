@@ -7,6 +7,7 @@ import 'package:bluebubble_messages/managers/contact_manager.dart';
 import 'package:bluebubble_messages/repository/models/message.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../helpers/hex_color.dart';
 import 'package:flutter/cupertino.dart';
@@ -64,11 +65,15 @@ class _ConversationTileState extends State<ConversationTile> {
       actionPane: SlidableStrechActionPane(),
       secondaryActions: <Widget>[
         IconSlideAction(
-          caption: 'Silence',
+          caption: widget.chat.isMuted ? 'Show Alerts' : 'Hide Alerts',
           color: Colors.purple[700],
-          icon: Icons.notifications_off,
-          onTap: () {
-            //TODO add dnd
+          icon: widget.chat.isMuted
+              ? Icons.notifications_active
+              : Icons.notifications_off,
+          onTap: () async {
+            widget.chat.isMuted = !widget.chat.isMuted;
+            await widget.chat.save(updateLocalVals: true);
+            setState(() {});
           },
         ),
         IconSlideAction(
@@ -184,16 +189,25 @@ class _ConversationTileState extends State<ConversationTile> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: <Widget>[
-                      Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(35),
-                          color: widget.hasNewMessage
-                              ? Colors.blue[500].withOpacity(0.8)
-                              : Colors.transparent,
-                        ),
-                        width: 15,
-                        height: 15,
-                      ),
+                      !widget.chat.isMuted
+                          ? Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(35),
+                                color: widget.hasNewMessage
+                                    ? Colors.blue[500].withOpacity(0.8)
+                                    : Colors.transparent,
+                              ),
+                              width: 15,
+                              height: 15,
+                            )
+                          : SvgPicture.asset(
+                              "assets/icon/moon.svg",
+                              color: widget.hasNewMessage
+                                  ? Colors.blue[500].withOpacity(0.8)
+                                  : Theme.of(context).textTheme.subtitle1.color,
+                              width: 15,
+                              height: 15,
+                            ),
                     ],
                   ),
                 ),

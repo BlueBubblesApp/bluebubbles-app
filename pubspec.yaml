@@ -59,7 +59,8 @@ dependencies:
   url_launcher: ^5.4.11
   file_picker_cross: ^2.1.0
   adaptive_theme: ^0.1.1
-  flutter_screen_lock: ^1.1.2
+  flutter_lock_screen: ^1.0.6
+  local_auth: ^0.6.2+3
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -101,6 +102,7 @@ flutter:
     - assets/reactions/laugh-black.svg
     - assets/reactions/question-black.svg
     - assets/reactions/love-black.svg
+    - assets/icon/moon.svg
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware.
   # For details regarding adding assets from package dependencies, see

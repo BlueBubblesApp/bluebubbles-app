@@ -63,6 +63,7 @@ class MethodChannelInterface {
 
         // Find the chat by GUID
         Chat chat = await Chat.findOne({"guid": data["chats"][0]["guid"]});
+        debugPrint("found chat for new message " + chat.toMap().toString());
         if (chat == null) {
           ActionHandler.handleChat(chatData: data["chats"][0]);
         }
@@ -70,12 +71,12 @@ class MethodChannelInterface {
         // Get the chat title and message
         String title = await getFullChatTitle(chat);
         Message message = Message.fromMap(data);
-        debugPrint("new-message from method channel interface " + message.guid);
 
         if (!message.isFromMe &&
             (NotificationManager().chat != chat.guid ||
                 !LifeCycleManager().isAlive) &&
-            (!message.hasAttachments || !isEmptyString(message.text))) {
+            (!message.hasAttachments || !isEmptyString(message.text)) &&
+            !chat.isMuted) {
           ActionHandler.createNotification({
             "guid": message.guid,
             "contentTitle": title,
@@ -96,7 +97,8 @@ class MethodChannelInterface {
 
         debugPrint("Adding new/matched message to the queue");
         // QueueManager().addEvent(call.method, call.arguments);
-        ActionHandler.handleMessage(data, createAttachmentNotification: true);
+        ActionHandler.handleMessage(data,
+            createAttachmentNotification: !chat.isMuted);
         return new Future.value("");
       case "updated-message":
         debugPrint("Adding updated message to the queue");
