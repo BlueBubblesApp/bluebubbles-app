@@ -17,7 +17,7 @@ class SentMessage extends StatefulWidget {
   final Message message;
   final OverlayEntry overlayEntry;
   final bool shouldFadeIn;
-  final Widget timeStamp;
+  final Map<String, String> timeStamp;
   final bool showDeliveredReceipt;
   final List<Widget> customContent;
   final bool isFromMe;
@@ -259,7 +259,26 @@ class _SentMessageState extends State<SentMessage>
               ),
             ],
           ),
-          widget.timeStamp,
+          widget.timeStamp != null
+              ? RichText(
+                  text: TextSpan(
+                    style: Theme.of(context)
+                        .textTheme
+                        .subtitle2
+                        .apply(fontSizeDelta: 1.7),
+                    children: [
+                      TextSpan(
+                        text: "${widget.timeStamp["date"]}, ",
+                        style: Theme.of(context)
+                            .textTheme
+                            .subtitle2
+                            .apply(fontSizeDelta: 1.7, fontWeightDelta: 10),
+                      ),
+                      TextSpan(text: "${widget.timeStamp["time"]}")
+                    ],
+                  ),
+                )
+              : Container(),
         ],
       ),
     );

@@ -52,14 +52,27 @@ class MessageBloc {
           if (event.containsKey("oldGuid")) {
             debugPrint("is an update " + event["oldGuid"]);
             if (_allMessages.containsKey(event["oldGuid"])) {
-              _allMessages.update(
-                  event["oldGuid"], (value) => event[_currentChat.guid]);
+              List<Message> values = _allMessages.values.toList();
+              List<String> keys = _allMessages.keys.toList();
+              for (int i = 0; i < keys.length; i++) {
+                if (keys[i] == event["oldGuid"]) {
+                  keys[i] = (event[_currentChat.guid] as Message).guid;
+                  values[i] = event[_currentChat.guid];
+                  break;
+                }
+              }
+              _allMessages = LinkedHashMap<String, Message>.from(
+                  LinkedHashMap.fromIterables(keys, values));
+              debugPrint("_allMessages updated, now contains " +
+                  event[_currentChat.guid].guid);
               if (!_messageController.isClosed)
                 _messageController.sink.add({
                   "messages": _allMessages,
                   "update": event[_currentChat.guid],
                   "index": null
                 });
+            } else {
+              debugPrint("could not find existing message");
             }
           } else {
             //if there is a specific message to insert
@@ -141,6 +154,9 @@ class MessageBloc {
         params["limit"] = 25;
         params["offset"] = offset;
         params["withBlurhash"] = true;
+        params["where"] = [
+          {"statement": "message.service = 'iMessage'", "args": null}
+        ];
 
         SocketManager()
             .socket

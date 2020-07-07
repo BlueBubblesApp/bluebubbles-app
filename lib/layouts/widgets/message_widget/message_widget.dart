@@ -7,6 +7,7 @@ import 'package:bluebubble_messages/blocs/message_bloc.dart';
 import 'package:bluebubble_messages/helpers/attachment_downloader.dart';
 import 'package:bluebubble_messages/helpers/attachment_helper.dart';
 import 'package:bluebubble_messages/helpers/utils.dart';
+import 'package:bluebubble_messages/layouts/widgets/message_widget/group_event.dart';
 import 'package:bluebubble_messages/layouts/widgets/message_widget/message_content/media_players/audio_player_widget.dart';
 import 'package:bluebubble_messages/layouts/widgets/message_widget/message_content/media_players/contact_widget.dart';
 import 'package:bluebubble_messages/layouts/widgets/message_widget/message_content/media_players/image_widget.dart';
@@ -118,40 +119,38 @@ class _MessageState extends State<MessageWidget> {
         threshold;
   }
 
-  Widget _buildTimeStamp(BuildContext context) {
-    if (widget.olderMessage != null &&
+  Map<String, String> _buildTimeStamp(BuildContext context) {
+    if (widget.newerMessage != null &&
+        (!isEmptyString(widget.message.text) ||
+            widget.message.hasAttachments) &&
         withinTimeThreshold(widget.message, widget.newerMessage,
             threshold: 30)) {
       DateTime timeOfnewerMessage = widget.newerMessage.dateCreated;
       String time = new DateFormat.jm().format(timeOfnewerMessage);
       String date;
-      if (widget.olderMessage.dateCreated.isToday()) {
+      if (widget.newerMessage.dateCreated.isToday()) {
         date = "Today";
-      } else if (widget.olderMessage.dateCreated.isYesterday()) {
+      } else if (widget.newerMessage.dateCreated.isYesterday()) {
         date = "Yesterday";
       } else {
         date =
             "${timeOfnewerMessage.month.toString()}/${timeOfnewerMessage.day.toString()}/${timeOfnewerMessage.year.toString()}";
       }
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 14.0),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Text(
-              "$date, $time",
-              style: Theme.of(context).textTheme.bodyText1,
-            )
-          ],
-        ),
-      );
+      return {"date": date, "time": time};
+    } else {
+      return null;
     }
-    return Container();
   }
 
   @override
   Widget build(BuildContext context) {
-    if (widget.fromSelf) {
+    if (widget.message != null &&
+        isEmptyString(widget.message.text) &&
+        !widget.message.hasAttachments) {
+      return GroupEvent(
+        message: widget.message,
+      );
+    } else if (widget.fromSelf) {
       return SentMessage(
         timeStamp: _buildTimeStamp(context),
         message: widget.message,
@@ -184,19 +183,21 @@ class _MessageState extends State<MessageWidget> {
   Widget _buildReactions() {
     if (widget.reactions.length == 0) return Container();
     List<Widget> reactionIcon = <Widget>[];
-    reactions.keys.forEach((String key) {
-      if (reactions[key].length != 0) {
-        reactionIcon.add(
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: SvgPicture.asset(
-              'assets/reactions/$key-black.svg',
-              color: key == love ? Colors.pink : Colors.white,
+    reactions.keys.forEach(
+      (String key) {
+        if (reactions[key].length != 0) {
+          reactionIcon.add(
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: SvgPicture.asset(
+                'assets/reactions/$key-black.svg',
+                color: key == love ? Colors.pink : Colors.white,
+              ),
             ),
-          ),
-        );
-      }
-    });
+          );
+        }
+      },
+    );
     // return Stack(
     //   alignment: widget.message.isFromMe
     //       ? Alignment.bottomRight

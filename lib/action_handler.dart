@@ -184,6 +184,12 @@ class ActionHandler {
   /// ```
   static Future<void> handleUpdatedMessage(Map<String, dynamic> data) async {
     Message updatedMessage = new Message.fromMap(data);
+
+    if (updatedMessage.isFromMe) {
+      debugPrint("is from me so awaiting");
+      await Future.delayed(Duration(milliseconds: 1000));
+      debugPrint("okay im done");
+    }
     updatedMessage =
         await Message.replaceMessage(updatedMessage.guid, updatedMessage);
 
@@ -196,6 +202,7 @@ class ActionHandler {
     } else if (data["chats"] != null) {
       chat = Chat.fromMap(data["chats"][0]);
     }
+
     if (updatedMessage != null)
       NewMessageManager()
           .updateSpecificMessage(chat, updatedMessage.guid, updatedMessage);
@@ -279,6 +286,8 @@ class ActionHandler {
             "Message already exists for match. Removing temporary entry.");
         await Message.delete({'guid': data['tempGuid']});
       } else {
+        NewMessageManager()
+            .updateSpecificMessage(chats.first, data['tempGuid'], message);
         await Message.replaceMessage(data["tempGuid"], message);
         List<dynamic> attachments =
             data.containsKey("attachments") ? data['attachments'] : [];
@@ -287,8 +296,6 @@ class ActionHandler {
           Attachment.replaceAttachment(data["tempGuid"], file);
         });
       }
-      NewMessageManager()
-          .updateSpecificMessage(chats.first, data['tempGuid'], message);
     } else {
       // Add the message to the chats
       for (int i = 0; i < chats.length; i++) {

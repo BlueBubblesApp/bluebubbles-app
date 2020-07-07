@@ -11,7 +11,7 @@ class ReceivedMessage extends StatefulWidget {
   final Message message;
   final Message olderMessage;
   final OverlayEntry overlayEntry;
-  final Widget timeStamp;
+  final Map<String, String> timeStamp;
   final Widget reactions;
   final bool showHandle;
   final List<Widget> customContent;
@@ -137,7 +137,34 @@ class _ReceivedMessageState extends State<ReceivedMessage> {
             ),
           ),
         ),
-        widget.timeStamp,
+        widget.timeStamp != null
+            ? Padding(
+                padding: const EdgeInsets.symmetric(vertical: 14.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    RichText(
+                      text: TextSpan(
+                        style: Theme.of(context)
+                            .textTheme
+                            .subtitle2
+                            .apply(fontSizeDelta: 1.7),
+                        children: [
+                          TextSpan(
+                            text: "${widget.timeStamp["date"]}, ",
+                            style: Theme.of(context)
+                                .textTheme
+                                .subtitle2
+                                .apply(fontSizeDelta: 1.7, fontWeightDelta: 10),
+                          ),
+                          TextSpan(text: "${widget.timeStamp["time"]}")
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            : Container()
       ],
     );
   }

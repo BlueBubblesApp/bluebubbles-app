@@ -46,7 +46,7 @@ class _SendWidgetState extends State<SendWidget> {
           ),
           child: Text(
             widget.text,
-            style: Theme.of(context).textTheme.bodyText1,
+            style: Theme.of(context).textTheme.bodyText2,
           ),
         )
       ],
@@ -108,7 +108,7 @@ class _SendWidgetState extends State<SendWidget> {
                               },
                               child: Text(
                                 widget.text,
-                                style: Theme.of(context).textTheme.bodyText1,
+                                style: Theme.of(context).textTheme.bodyText2,
                               ),
                             ),
                           ],

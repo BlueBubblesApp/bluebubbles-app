@@ -204,12 +204,15 @@ class Message {
     return this;
   }
 
-  static Future<Message> replaceMessage(
-      String oldGuid, Message newMessage) async {
+  static Future<Message> replaceMessage(String oldGuid, Message newMessage,
+      {bool awaitNewMessageEvent = true}) async {
     final Database db = await DBProvider.db.database;
     Message existing = await Message.findOne({"guid": oldGuid});
     if (existing == null) {
-      return null;
+      if (awaitNewMessageEvent)
+        await Future.delayed(Duration(milliseconds: 500));
+      return replaceMessage(oldGuid, newMessage, awaitNewMessageEvent: false);
+      // return null;
     }
 
     Map<String, dynamic> params = newMessage.toMap();

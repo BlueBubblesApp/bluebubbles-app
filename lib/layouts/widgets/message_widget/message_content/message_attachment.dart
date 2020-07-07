@@ -43,6 +43,11 @@ class _MessageAttachmentState extends State<MessageAttachment>
   void initState() {
     super.initState();
     content = widget.content;
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
 
     // Pull the blurhash from the attachment, based on the class type
     int width;
@@ -77,7 +82,6 @@ class _MessageAttachmentState extends State<MessageAttachment>
               ),
             ),
           );
-    if (blurhash != null) debugPrint(blurhash);
   }
 
   @override

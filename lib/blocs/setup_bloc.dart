@@ -50,6 +50,9 @@ class SetupBloc {
     params["identifier"] = chat.guid;
     params["limit"] = 25;
     params["withBlurhash"] = true;
+    params["where"] = [
+      {"statement": "message.service = 'iMessage'", "args": null}
+    ];
     SocketManager().socket.sendMessage("get-chat-messages", jsonEncode(params),
         (data) {
       receivedMessagesForChat(chat, data);
