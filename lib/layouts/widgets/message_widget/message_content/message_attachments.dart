@@ -24,7 +24,7 @@ class MessageAttachments extends StatefulWidget {
 }
 
 class _MessageAttachmentsState extends State<MessageAttachments>
-    with TickerProviderStateMixin, AutomaticKeepAliveClientMixin {
+    with TickerProviderStateMixin {
   Map<String, dynamic> _attachments = new Map();
 
   @override
@@ -68,7 +68,6 @@ class _MessageAttachmentsState extends State<MessageAttachments>
 
   @override
   Widget build(BuildContext context) {
-    super.build(context);
     return Row(
       mainAxisAlignment: widget.message.isFromMe
           ? MainAxisAlignment.end
@@ -108,7 +107,4 @@ class _MessageAttachmentsState extends State<MessageAttachments>
     mimeType = mimeType.substring(0, mimeType.indexOf("/"));
     return mimeType;
   }
-
-  @override
-  bool get wantKeepAlive => true;
 }

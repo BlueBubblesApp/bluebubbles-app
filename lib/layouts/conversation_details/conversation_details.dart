@@ -292,6 +292,8 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                     if (!file.existsSync() && attachment.blurhash != null) {
                       return BlurHash(
                         hash: attachment.blurhash,
+                        decodingWidth: attachment.width ~/ 200,
+                        decodingHeight: attachment.height ~/ 200,
                       );
                     }
                     return SizedBox(

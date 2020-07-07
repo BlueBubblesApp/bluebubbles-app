@@ -71,11 +71,13 @@ class _MessageAttachmentState extends State<MessageAttachment>
                 aspectRatio: widget.attachment.width / widget.attachment.height,
                 child: BlurHash(
                   hash: blurhash,
-                  imageFit: BoxFit.fill,
+                  decodingWidth: widget.attachment.width ~/ 200,
+                  decodingHeight: widget.attachment.height ~/ 200,
                 ),
               ),
             ),
           );
+    if (blurhash != null) debugPrint(blurhash);
   }
 
   @override

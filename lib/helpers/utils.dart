@@ -1,8 +1,10 @@
-import 'dart:isolate';
+import 'dart:convert';
 import 'dart:math';
 import 'dart:typed_data';
-import 'package:bluebubble_messages/managers/settings_manager.dart';
 import 'package:bluebubble_messages/repository/models/message.dart';
+import 'package:blurhash_flutter/blurhash.dart';
+// import 'package:blurhash_dart/blurhash_dart.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'package:bluebubble_messages/managers/contact_manager.dart';
@@ -125,6 +127,21 @@ getInitials(String name, String delimeter) {
       if (!last.contains(new RegExp('[A-Za-z]'))) last = "";
       return first + last;
   }
+}
+
+Future<Uint8List> blurHashDecode(String blurhash, int width, int height) async {
+  List<int> result = await compute(blurHashDecodeCompute,
+      jsonEncode({"hash": blurhash, "width": width, "height": height}));
+  return Uint8List.fromList(result);
+}
+
+List<int> blurHashDecodeCompute(String data) {
+  Map<String, dynamic> map = jsonDecode(data);
+  Uint8List imageDataBytes = Decoder.decode(
+      map["hash"],
+      ((map["width"] / 200) as double).toInt(),
+      ((map["height"] / 200) as double).toInt());
+  return imageDataBytes.toList();
 }
 
 String randomString(int length) {
