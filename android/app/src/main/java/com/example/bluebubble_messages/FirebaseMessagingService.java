@@ -82,7 +82,9 @@ public class FirebaseMessagingService extends com.google.firebase.messaging.Fire
             new Handler(Looper.getMainLooper()).post(new Runnable() {
                 @Override
                 public void run() {
-                    new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod(intent.getExtras().getString("type"), intent.getExtras().getString("data"));
+                    if(engine != null) {
+                        new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod(intent.getExtras().getString("type"), intent.getExtras().getString("data"));
+                    }
                 }
             });
             if(backgroundService != null) {

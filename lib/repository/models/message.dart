@@ -226,6 +226,9 @@ class Message {
     if (existing.toMap().containsKey("handleId")) {
       params["handleId"] = existing.toMap()["handleId"];
     }
+    if (existing.toMap().containsKey("hasAttachments")) {
+      params["hasAttachments"] = existing.toMap()["hasAttachments"];
+    }
 
     await db.update("message", params,
         where: "ROWID = ?", whereArgs: [existing.id]);
