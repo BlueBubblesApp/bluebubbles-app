@@ -14,8 +14,10 @@ class MessageAttachments extends StatefulWidget {
   MessageAttachments({
     Key key,
     @required this.message,
+    @required this.attachments,
   }) : super(key: key);
   final Message message;
+  final List<Attachment> attachments;
 
   @override
   _MessageAttachmentsState createState() => _MessageAttachmentsState();
@@ -24,14 +26,15 @@ class MessageAttachments extends StatefulWidget {
 class _MessageAttachmentsState extends State<MessageAttachments>
     with TickerProviderStateMixin, AutomaticKeepAliveClientMixin {
   Map<String, dynamic> _attachments = new Map();
-  List<Attachment> attachments = <Attachment>[];
-  Future<List<Attachment>> getAttachmentsFuture;
-  Widget attachmentsWidget;
 
   @override
   void initState() {
     super.initState();
-    getAttachmentsFuture = Message.getAttachments(widget.message);
+    // getAttachmentsFuture = Message.getAttachments(widget.message);
+    for (Attachment attachment in widget.attachments) {
+      initForAttachment(attachment);
+    }
+    debugPrint("initing state");
   }
 
   void initForAttachment(Attachment attachment) {
@@ -66,40 +69,24 @@ class _MessageAttachmentsState extends State<MessageAttachments>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-
-    return attachmentsWidget == null
-        ? FutureBuilder(
-            builder: (context, AsyncSnapshot<List<Attachment>> snapshot) {
-              if (snapshot.hasData) {
-                attachments = snapshot.data;
-                for (Attachment attachment in attachments) {
-                  initForAttachment(attachment);
-                }
-                attachmentsWidget = Row(
-                  mainAxisAlignment: widget.message.isFromMe
-                      ? MainAxisAlignment.end
-                      : MainAxisAlignment.start,
-                  children: <Widget>[
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 10.0),
-                      child: Column(
-                        children: _buildAttachments(),
-                      ),
-                    ),
-                  ],
-                );
-              }
-
-              return snapshot.hasData ? attachmentsWidget : Container();
-            },
-            future: getAttachmentsFuture,
-          )
-        : attachmentsWidget;
+    return Row(
+      mainAxisAlignment: widget.message.isFromMe
+          ? MainAxisAlignment.end
+          : MainAxisAlignment.start,
+      children: <Widget>[
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: 10.0),
+          child: Column(
+            children: _buildAttachments(),
+          ),
+        ),
+      ],
+    );
   }
 
   List<Widget> _buildAttachments() {
     List<Widget> content = <Widget>[];
-    for (Attachment attachment in attachments) {
+    for (Attachment attachment in widget.attachments) {
       content.add(
         MessageAttachment(
           message: widget.message,
@@ -123,6 +110,5 @@ class _MessageAttachmentsState extends State<MessageAttachments>
   }
 
   @override
-  // TODO: implement wantKeepAlive
   bool get wantKeepAlive => true;
 }

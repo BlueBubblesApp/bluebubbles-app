@@ -2,6 +2,7 @@ import 'package:bluebubble_messages/managers/method_channel_interface.dart';
 import 'package:bluebubble_messages/managers/settings_manager.dart';
 import 'package:bluebubble_messages/repository/models/attachment.dart';
 import 'package:bluebubble_messages/repository/models/chat.dart';
+import 'package:bluebubble_messages/repository/models/handle.dart';
 import 'package:flutter/material.dart';
 
 class NotificationManager {
@@ -37,7 +38,20 @@ class NotificationManager {
   }
 
   void createNewNotification(String contentTitle, String contentText,
-      String group, int id, int summaryId) {
+      String group, int id, int summaryId,
+      {Handle handle}) {
+    String address;
+
+    if (handle != null) {
+      //if the address is an email
+      if (handle.address.contains("@")) {
+        address = "mailto:${handle.address}";
+        //if the address is a phone
+      } else {
+        address = "tel:${handle.address}";
+      }
+    }
+    debugPrint("person " + address);
     MethodChannelInterface().platform.invokeMethod("new-message-notification", {
       "CHANNEL_ID": "com.bluebubbles.new_messages",
       "contentTitle": contentTitle,
@@ -45,6 +59,7 @@ class NotificationManager {
       "group": group,
       "notificationId": id,
       "summaryId": summaryId,
+      "address": address,
     });
   }
 

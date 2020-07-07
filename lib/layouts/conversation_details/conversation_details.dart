@@ -20,6 +20,7 @@ import 'package:bluebubble_messages/repository/models/message.dart';
 import 'package:bluebubble_messages/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_blurhash/flutter_blurhash.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class ConversationDetails extends StatefulWidget {
@@ -289,15 +290,8 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                       "${SettingsManager().appDocDir.path}/attachments/${attachment.guid}/${attachment.transferName}",
                     );
                     if (!file.existsSync() && attachment.blurhash != null) {
-                      return FutureBuilder(
-                        builder: (context, snapshot) {
-                          if (snapshot.hasData) {
-                            return Image.memory(snapshot.data);
-                          } else {
-                            return Container();
-                          }
-                        },
-                        future: blurHashDecode(attachment.blurhash),
+                      return BlurHash(
+                        hash: attachment.blurhash,
                       );
                     }
                     return SizedBox(

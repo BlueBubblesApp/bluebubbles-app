@@ -2,6 +2,7 @@ import 'package:bluebubble_messages/blocs/message_bloc.dart';
 import 'package:bluebubble_messages/layouts/widgets/message_widget/message_content/message_attachments.dart';
 import 'package:bluebubble_messages/layouts/widgets/message_widget/message_widget.dart';
 import 'package:bluebubble_messages/layouts/widgets/message_widget/new_message_loader.dart';
+import 'package:bluebubble_messages/repository/models/attachment.dart';
 import 'package:bluebubble_messages/repository/models/message.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -31,6 +32,8 @@ class _MessageViewState extends State<MessageView> {
   OverlayEntry entry;
   List<String> sentMessages = <String>[];
   Map<String, Widget> attachments = Map();
+  Map<String, Future<List<Attachment>>> attachmentFutures = Map();
+  Map<String, List<Attachment>> attachmentResults = Map();
 
   @override
   void initState() {
@@ -90,9 +93,24 @@ class _MessageViewState extends State<MessageView> {
   void getAttachmentsForMessage(Message message) {
     if (attachments.containsKey(message.guid)) return;
     if (message.hasAttachments) {
-      debugPrint("getting attachments for message " + message.guid);
-      attachments[message.guid] = MessageAttachments(
-        message: message,
+      attachmentFutures[message.guid] = Message.getAttachments(message);
+      attachments[message.guid] = FutureBuilder(
+        builder: (context, snapshot) {
+          if (snapshot.hasData || attachmentResults.containsKey(message.guid)) {
+            if (!attachmentResults.containsKey(message.guid)) {
+              attachmentResults[message.guid] = snapshot.data;
+            }
+            return MessageAttachments(
+              attachments: snapshot.hasData
+                  ? snapshot.data
+                  : attachmentResults[message.guid],
+              message: message,
+            );
+          } else {
+            return Container();
+          }
+        },
+        future: attachmentFutures[message.guid],
       );
     }
   }
@@ -198,6 +216,9 @@ class _MessageViewState extends State<MessageView> {
               );
             }
           },
+        ),
+        SliverPadding(
+          padding: EdgeInsets.all(70),
         ),
       ],
     );

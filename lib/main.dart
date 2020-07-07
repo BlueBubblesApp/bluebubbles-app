@@ -183,6 +183,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+
     super.dispose();
   }
 

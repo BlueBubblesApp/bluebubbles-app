@@ -176,6 +176,9 @@ public class MainActivity extends FlutterActivity {
                                         .addAction(replyAction)
                                         .setGroup(call.argument("group"));
 //                                        .setGroup("messageGroup");
+                                if(call.argument("address") != null)  {
+                                    builder.addPerson(call.argument("address"));
+                                }
 
                                 NotificationCompat.Builder summaryBuilder = new NotificationCompat.Builder(this, call.argument("CHANNEL_ID"))
                                         .setSmallIcon(R.mipmap.ic_launcher)

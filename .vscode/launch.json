@@ -5,11 +5,17 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "BlueBubblesProfile",
+            "type": "dart",
+            "request": "launch",
+            "program": "lib/main.dart",
+            "flutterMode": "profile"
+        },
+        {
             "type": "dart",
             "name": "BlueBubbles",
             "request": "launch",
-            "program": "lib/main.dart"
-            // "mainClass": "${file}"
+            "program": "lib/main.dart",
         }
     ]
 }

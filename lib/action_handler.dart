@@ -328,11 +328,13 @@ class ActionHandler {
         .processedNotifications
         .contains(notification["guid"])) {
       NotificationManager().createNewNotification(
-          notification["contentTitle"],
-          notification["contentText"],
-          notification["group"],
-          notification["id"],
-          notification["summaryId"]);
+        notification["contentTitle"],
+        notification["contentText"],
+        notification["group"],
+        notification["id"],
+        notification["summaryId"],
+        handle: notification["handle"],
+      );
       NotificationManager().processedNotifications.add(notification["guid"]);
     }
   }

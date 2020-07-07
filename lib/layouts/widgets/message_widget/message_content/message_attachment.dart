@@ -13,6 +13,7 @@ import 'package:bluebubble_messages/repository/models/attachment.dart';
 import 'package:bluebubble_messages/repository/models/message.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_blurhash/flutter_blurhash.dart';
 
 class MessageAttachment extends StatefulWidget {
   MessageAttachment({
@@ -44,40 +45,37 @@ class _MessageAttachmentState extends State<MessageAttachment>
     content = widget.content;
 
     // Pull the blurhash from the attachment, based on the class type
-    blurhash = content is AttachmentDownloader
-        ? content.attachment.blurhash
-        : content is Attachment ? content.blurhash : null;
+    int width;
+    int height;
+    String blurhash;
 
-    placeHolder = (blurhash == null)
+    if (content is AttachmentDownloader) {
+      blurhash = (content as AttachmentDownloader).attachment.blurhash;
+      width = (content as AttachmentDownloader).attachment.width;
+      height = (content as AttachmentDownloader).attachment.height;
+    } else if (content is Attachment) {
+      blurhash = (content as Attachment).blurhash;
+      width = (content as Attachment).width;
+      height = (content as Attachment).height;
+    }
+
+    placeHolder = (blurhash == null || width == null || height == null)
         ? Container()
-        : FutureBuilder(
-            future: blurHashDecode(blurhash),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.done &&
-                  snapshot.hasData) {
-                return Container(
-                  constraints: BoxConstraints(
-                    maxWidth: MediaQuery.of(context).size.width * 3 / 4,
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(8.0),
-                    child: AspectRatio(
-                      aspectRatio:
-                          widget.attachment.width / widget.attachment.height,
-                      child: Image.memory(
-                        snapshot.data,
-                        width: 300,
-                        fit: BoxFit.fill,
-                      ),
-                    ),
-                  ),
-                );
-              } else {
-                return Container();
-              }
-            },
+        : Container(
+            constraints: BoxConstraints(
+              maxWidth: MediaQuery.of(context).size.width * 3 / 4,
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8.0),
+              child: AspectRatio(
+                aspectRatio: widget.attachment.width / widget.attachment.height,
+                child: BlurHash(
+                  hash: blurhash,
+                  imageFit: BoxFit.fill,
+                ),
+              ),
+            ),
           );
-    if (blurhash != null) debugPrint(blurhash);
   }
 
   @override

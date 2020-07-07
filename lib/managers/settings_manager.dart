@@ -1,7 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:isolate';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
+import 'package:bluebubble_messages/helpers/utils.dart';
 import 'package:bluebubble_messages/settings.dart';
 import 'package:bluebubble_messages/socket_manager.dart';
 import 'package:flutter/cupertino.dart';

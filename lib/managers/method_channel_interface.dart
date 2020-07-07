@@ -84,6 +84,7 @@ class MethodChannelInterface {
             "group": chat.guid,
             "id": Random().nextInt(9999),
             "summaryId": chat.id,
+            "handle": message.handle,
           });
         }
 

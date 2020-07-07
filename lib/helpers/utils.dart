@@ -1,11 +1,12 @@
+import 'dart:isolate';
 import 'dart:math';
 import 'dart:typed_data';
+import 'package:bluebubble_messages/managers/settings_manager.dart';
 import 'package:bluebubble_messages/repository/models/message.dart';
 import 'package:flutter/material.dart';
 
 import 'package:bluebubble_messages/managers/contact_manager.dart';
 import 'package:bluebubble_messages/socket_manager.dart';
-import 'package:blurhash/blurhash.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/services.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -15,21 +16,6 @@ DateTime parseDate(dynamic value) {
   if (value is int) return DateTime.fromMillisecondsSinceEpoch(value);
   if (value is DateTime) return value;
 }
-
-// String getInitials(name) {
-//   List<String> names = name.split(" ");
-//   String initials = "";
-//   int numWords = 2;
-
-//   if (numWords == names.length) {
-//     numWords = 1;
-//   }
-//   for (var i = 0; i < numWords; i++) {
-//     initials += '${names[i][0]}';
-//   }
-//   debugPrint("initials are: " + initials);
-//   return initials;
-// }
 
 String getContactTitle(List<Contact> contacts, String id) {
   if (contacts == null) return formatPhoneNumber(id);
@@ -139,16 +125,6 @@ getInitials(String name, String delimeter) {
       if (!last.contains(new RegExp('[A-Za-z]'))) last = "";
       return first + last;
   }
-}
-
-Future<Uint8List> blurHashDecode(String blurhash) async {
-  Uint8List imageDataBytes;
-  try {
-    imageDataBytes = await BlurHash.decode(blurhash, 480, 320);
-  } on PlatformException catch (e) {
-    print(e.message);
-  }
-  return imageDataBytes;
 }
 
 String randomString(int length) {
