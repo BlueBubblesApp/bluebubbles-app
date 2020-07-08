@@ -315,16 +315,12 @@ class ActionHandler {
             NotificationManager().chat != chats[i].guid) {
           SocketManager().chatsWithNotifications.add(chats[i].guid);
         }
-
-        // Update chats
-        if (!isHeadless)
-          NewMessageManager().updateWithMessage(chats[i], message);
       }
 
       // Add any related attachments
       List<dynamic> attachments =
           data.containsKey("attachments") ? data['attachments'] : [];
-      attachments.forEach((attachmentItem) async {
+      for (var attachmentItem in attachments) {
         Attachment file = Attachment.fromMap(attachmentItem);
         await file.save(message);
 
@@ -335,6 +331,11 @@ class ActionHandler {
               createNotification:
                   createAttachmentNotification && file.mimeType != null);
         }
+      }
+      chats.forEach((element) {
+        // Update chats
+        if (!isHeadless)
+          NewMessageManager().updateWithMessage(element, message);
       });
     }
   }

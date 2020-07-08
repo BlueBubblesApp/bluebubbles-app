@@ -93,7 +93,6 @@ class _MessageAttachmentsState extends State<MessageAttachments>
           content: _attachments[attachment.guid],
           updateAttachment: () {
             initForAttachment(attachment);
-            // setState(() {});
           },
         ),
       );

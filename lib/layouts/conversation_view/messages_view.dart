@@ -104,11 +104,11 @@ class _MessageViewState extends State<MessageView> {
           if (snapshot.hasData || attachmentResults.containsKey(message.guid)) {
             if (!attachmentResults.containsKey(message.guid)) {
               attachmentResults[message.guid] = snapshot.data;
+              debugPrint(
+                  "got ${attachmentResults[message.guid].length} attachments");
             }
             return MessageAttachments(
-              attachments: snapshot.hasData
-                  ? snapshot.data
-                  : attachmentResults[message.guid],
+              attachments: attachmentResults[message.guid],
               message: message,
             );
           } else {
