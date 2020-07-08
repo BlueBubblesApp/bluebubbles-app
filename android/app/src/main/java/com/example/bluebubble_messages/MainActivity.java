@@ -78,6 +78,8 @@ public class MainActivity extends FlutterActivity {
     //    private Intent startingIntent;
     private String startingChat;
     Map<Integer, NotificationCompat.Builder> progressBars = new HashMap<>();
+    public static String BACKGROUND_SERVICE_SHARED_PREF = "BACKGROUND_SERVICE_SHARED_PREF ";
+    public static String BACKGROUND_HANDLE_SHARED_PREF_KEY = "BACKGROUND_HANDLE_SHARED_PREF_KEY";
 
 
     private ValueEventListener dbListener = new ValueEventListener() {
@@ -337,6 +339,14 @@ public class MainActivity extends FlutterActivity {
 
                             } else if (call.method.equals("get-starting-intent")) {
                                 result.success(getIntent().getStringExtra("chatGUID"));
+
+                            } else if(call.method.equals("initialize-background-handle")) {
+                                Long callbackHandle = (Long) call.argument("handle") ;
+                                getApplicationContext().getSharedPreferences(BACKGROUND_SERVICE_SHARED_PREF, Context.MODE_PRIVATE)
+                                        .edit()
+                                        .putLong(BACKGROUND_HANDLE_SHARED_PREF_KEY, callbackHandle)
+                                        .apply();
+                                result.success("");
                             } else {
                                 result.notImplemented();
                             }
@@ -346,7 +356,7 @@ public class MainActivity extends FlutterActivity {
 
 
     //for notifications
-    private void createNotificationChannel(String channel_name, String channel_description, String CHANNEL_ID) {
+    public void createNotificationChannel(String channel_name, String channel_description, String CHANNEL_ID) {
         // Create the NotificationChannel, but only on API 26+ because
         // the NotificationChannel class is new and not in the support library
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -440,16 +450,12 @@ public class MainActivity extends FlutterActivity {
         @Override
         public void onServiceConnected(ComponentName name, IBinder binder) {
             backgroundService = ((BackgroundService.LocalBinder) binder).getService();
-            backgroundService.isAlive = true;
+            backgroundService.setAlive(true);
         }
 
         @Override
         public void onServiceDisconnected(ComponentName name) {
             backgroundService = null;
-
-            // Close the DB connection
-            DatabaseHelper helper = DatabaseHelper.getInstance(getContext());
-            helper.close();
         }
     };
 
@@ -467,7 +473,7 @@ public class MainActivity extends FlutterActivity {
         Log.d("MainActivity", "removed from memory");
 //        unregisterReceiver(mMessageReceiver);
         if (backgroundService != null) {
-            backgroundService.isAlive = false;
+            backgroundService.setAlive(false);
             Log.d("isAlive", "set isAlive to false");
         }
         try {
@@ -478,9 +484,6 @@ public class MainActivity extends FlutterActivity {
             Log.d("isolate", "unable to unbind service");
 
         }
-//        if(backgroundService != null) {
-//            backgroundService.unbindService(mServerConn);
-//        }
         super.onDestroy();
     }
 

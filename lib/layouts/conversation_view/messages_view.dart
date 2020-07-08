@@ -40,6 +40,8 @@ class _MessageViewState extends State<MessageView> {
     super.initState();
     widget.messageBloc.stream.listen((event) {
       if (event["insert"] != null) {
+        getAttachmentsForMessage(event["insert"]);
+        debugPrint(attachments.containsKey(event["insert"].guid).toString());
         if (event["sentFromThisClient"]) {
           sentMessages.add(event["insert"].guid);
           Future.delayed(Duration(milliseconds: 500), () {
@@ -59,8 +61,6 @@ class _MessageViewState extends State<MessageView> {
           );
         }
 
-        getAttachmentsForMessage(event["insert"]);
-
         _messages = event["messages"].values.toList();
         if (_listKey.currentState != null) {
           _listKey.currentState.insertItem(
@@ -76,17 +76,18 @@ class _MessageViewState extends State<MessageView> {
       } else {
         int originalMessageLength = _messages.length;
         _messages = event["messages"].values.toList();
+        _messages.forEach((element) => getAttachmentsForMessage(element));
         initializedList = true;
         if (_listKey == null) _listKey = GlobalKey<SliverAnimatedListState>();
 
         for (int i = originalMessageLength; i < _messages.length; i++) {
           if (_listKey.currentState != null)
-            _listKey.currentState.insertItem(i, duration: animationDuration);
+            _listKey.currentState
+                .insertItem(i, duration: Duration(milliseconds: 0));
         }
         // if (_listKey.currentState != null)
         //   _listKey.currentState.setState(() {});
         setState(() {});
-        _messages.forEach((element) => getAttachmentsForMessage(element));
       }
     });
 
@@ -96,6 +97,7 @@ class _MessageViewState extends State<MessageView> {
   void getAttachmentsForMessage(Message message) {
     if (attachments.containsKey(message.guid)) return;
     if (message.hasAttachments) {
+      debugPrint("getting attachments for new insert");
       attachmentFutures[message.guid] = Message.getAttachments(message);
       attachments[message.guid] = FutureBuilder(
         builder: (context, snapshot) {
@@ -115,6 +117,7 @@ class _MessageViewState extends State<MessageView> {
         },
         future: attachmentFutures[message.guid],
       );
+      setState(() {});
     }
   }
 
@@ -165,6 +168,10 @@ class _MessageViewState extends State<MessageView> {
                     reactions.addAll(
                       widget.messageBloc.reactions[_messages[index].guid],
                     );
+                  }
+                  if (index == 0) {
+                    debugPrint("contains attachment in the message list " +
+                        attachments.containsKey(_messages[0].guid).toString());
                   }
 
                   Widget messageWidget = MessageWidget(

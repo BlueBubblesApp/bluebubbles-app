@@ -106,11 +106,6 @@ class _MessageState extends State<MessageWidget> {
   @override
   void initState() {
     super.initState();
-    if (widget.newerMessage != null) {
-      showTail = withinTimeThreshold(widget.message, widget.newerMessage,
-              threshold: 1) ||
-          !sameSender(widget.message, widget.newerMessage);
-    }
   }
 
   bool withinTimeThreshold(Message first, Message second, {threshold: 5}) {
@@ -144,6 +139,15 @@ class _MessageState extends State<MessageWidget> {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.newerMessage != null) {
+      showTail = withinTimeThreshold(widget.message, widget.newerMessage,
+              threshold: 1) ||
+          !sameSender(widget.message, widget.newerMessage) ||
+          (widget.message.isFromMe &&
+              widget.newerMessage.isFromMe &&
+              widget.message.dateDelivered != null &&
+              widget.newerMessage.dateDelivered == null);
+    }
     if (widget.message != null &&
         isEmptyString(widget.message.text) &&
         !widget.message.hasAttachments) {

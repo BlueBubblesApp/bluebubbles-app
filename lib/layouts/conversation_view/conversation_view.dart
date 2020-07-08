@@ -179,7 +179,7 @@ class _ConversationViewState extends State<ConversationView> {
               padding: const EdgeInsets.only(bottom: 16.0),
               child: MessageView(
                 messageBloc: widget.messageBloc,
-                showHandle: true,
+                showHandle: true, //chat.participants.length > 1,
                 layerLink: layerLink,
               ),
             ),

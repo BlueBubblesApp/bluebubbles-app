@@ -21,8 +21,8 @@ DateTime parseDate(dynamic value) {
 }
 
 String getContactTitle(int id, String address) {
-  if (ContactManager().handleToContact.containsKey(id))
-    return ContactManager().handleToContact[id].displayName;
+  if (ContactManager().handleToContact.containsKey(address))
+    return ContactManager().handleToContact[address].displayName;
   String contactTitle = address;
   if (contactTitle == address && !contactTitle.contains("@")) {
     return formatPhoneNumber(contactTitle);
@@ -148,7 +148,7 @@ bool sameSender(Message first, Message second) {
       (first.isFromMe && second.isFromMe ||
           (!first.isFromMe &&
               !second.isFromMe &&
-              first.handleId == second.handleId)));
+              first.handle.address == second.handle.address)));
 }
 
 extension DateHelpers on DateTime {

@@ -42,8 +42,6 @@ class _ReceivedMessageState extends State<ReceivedMessage> {
   Widget build(BuildContext context) {
     String handle = "";
     if (widget.message.handle != null && widget.showHandle) {
-      debugPrint(
-          "retreiving handle with id " + widget.message.handle.id.toString());
       handle = getContactTitle(
           widget.message.handleId, widget.message.handle.address);
     }

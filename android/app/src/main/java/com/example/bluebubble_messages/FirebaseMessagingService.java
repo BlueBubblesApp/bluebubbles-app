@@ -23,6 +23,8 @@ import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkManager;
 
 import com.google.firebase.messaging.RemoteMessage;
+import com.itsclicking.clickapp.fluttersocketio.FlutterSocketIoPlugin;
+import com.tekartik.sqflite.SqflitePlugin;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -32,6 +34,8 @@ import java.util.Map;
 
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
+import io.flutter.plugin.common.PluginRegistry;
+import io.flutter.plugins.pathprovider.PathProviderPlugin;
 import io.flutter.view.FlutterCallbackInformation;
 import io.flutter.view.FlutterMain;
 import io.flutter.view.FlutterNativeView;
@@ -82,15 +86,14 @@ public class FirebaseMessagingService extends com.google.firebase.messaging.Fire
             new Handler(Looper.getMainLooper()).post(new Runnable() {
                 @Override
                 public void run() {
-                    if(engine != null) {
+                    if (engine != null) {
                         new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod(intent.getExtras().getString("type"), intent.getExtras().getString("data"));
                     }
                 }
             });
-            if(backgroundService != null) {
-                backgroundService.saveMessage(remoteMessage.getData().get("data"));
-            } else {
-                Log.d("isolate", "could not find background service");
+            if (!backgroundService.isAlive()) {
+
+                backgroundService.invokeMethod(intent.getExtras().getString("type"), intent.getExtras().getString("data"));
             }
         }
     }

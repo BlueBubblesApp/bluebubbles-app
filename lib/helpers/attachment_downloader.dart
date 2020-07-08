@@ -99,10 +99,12 @@ class AttachmentDownloader {
   }
 
   void updateProgressNotif(double _progress) {
-    NotificationManager().updateProgressNotification(
-      _attachment.id,
-      _progress,
-    );
+    if (_createNotification && _attachment.mimeType != null) {
+      NotificationManager().updateProgressNotification(
+        _attachment.id,
+        _progress,
+      );
+    }
   }
 
   void fetchAttachment(Attachment attachment) async {
@@ -116,14 +118,16 @@ class AttachmentDownloader {
 
     _chat = await Message.getChat(_message);
     _title = await getFullChatTitle(_chat);
-    NotificationManager().createProgressNotification(
-      _title,
-      "Downloading Attachment",
-      _chat.guid,
-      _attachment.id,
-      _chat.id,
-      0.0,
-    );
+    if (_createNotification && _attachment.mimeType != null) {
+      NotificationManager().createProgressNotification(
+        _title,
+        "Downloading Attachment",
+        _chat.guid,
+        _attachment.id,
+        _chat.id,
+        0.0,
+      );
+    }
 
     _cb = (List<int> data) async {
       stopwatch.stop();

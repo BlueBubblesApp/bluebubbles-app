@@ -49,8 +49,8 @@ class SocketManager {
         break;
       }
     }
-    ChatBloc().initTileValsForChat(chat);
-    // NewMessageManager().updateWithMessage(chat, null);
+    // ChatBloc().initTileValsForChat(chat);
+    NewMessageManager().updateWithMessage(chat, null);
   }
 
   List<String> processedGUIDS = <String>[];

@@ -1,0 +1,100 @@
+Date : 2020-07-08 11:14:44
+Directory : /home/brandon/Desktop/Dev/bluebubble_android_app/lib
+Total : 60 files,  10192 codes, 1069 comments, 1149 blanks, all 12410 lines
+
+Languages
++----------+------------+------------+------------+------------+------------+
+| language | files      | code       | comment    | blank      | total      |
++----------+------------+------------+------------+------------+------------+
+| Dart     |         60 |     10,192 |      1,069 |      1,149 |     12,410 |
++----------+------------+------------+------------+------------+------------+
+
+Directories
++--------------------------------------------------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| path                                                                                                                                       | files      | code       | comment    | blank      | total      |
++--------------------------------------------------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| .                                                                                                                                          |         60 |     10,192 |      1,069 |      1,149 |     12,410 |
+| blocs                                                                                                                                      |          3 |        463 |         32 |         71 |        566 |
+| helpers                                                                                                                                    |          7 |        570 |         19 |         92 |        681 |
+| layouts                                                                                                                                    |         32 |      6,766 |        812 |        598 |      8,176 |
+| layouts/conversation_details                                                                                                               |          2 |        466 |          3 |         23 |        492 |
+| layouts/conversation_list                                                                                                                  |          2 |        514 |          7 |         27 |        548 |
+| layouts/conversation_view                                                                                                                  |          5 |      1,433 |         24 |         70 |      1,527 |
+| layouts/image_viewer                                                                                                                       |          1 |         59 |         22 |          8 |         89 |
+| layouts/settings                                                                                                                           |          1 |        398 |         15 |         30 |        443 |
+| layouts/setup                                                                                                                              |          2 |        371 |          2 |         20 |        393 |
+| layouts/widgets                                                                                                                            |         19 |      3,525 |        739 |        420 |      4,684 |
+| layouts/widgets/message_widget                                                                                                             |         16 |      1,631 |        170 |        149 |      1,950 |
+| layouts/widgets/message_widget/message_content                                                                                             |         11 |        791 |        134 |         92 |      1,017 |
+| layouts/widgets/message_widget/message_content/media_players                                                                               |          6 |        383 |          0 |         38 |        421 |
+| managers                                                                                                                                   |          9 |        517 |         36 |         94 |        647 |
+| repository                                                                                                                                 |          5 |      1,177 |         46 |        175 |      1,398 |
+| repository/models                                                                                                                          |          4 |        996 |         43 |        156 |      1,195 |
++--------------------------------------------------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+
+Files
++--------------------------------------------------------------------------------------------------------------------------------------------+----------+------------+------------+------------+------------+
+| filename                                                                                                                                   | language | code       | comment    | blank      | total      |
++--------------------------------------------------------------------------------------------------------------------------------------------+----------+------------+------------+------------+------------+
+| /home/brandon/Desktop/Dev/bluebubble_android_app/lib/action_handler.dart                                                                   | Dart     |        232 |         80 |         46 |        358 |
+| /home/brandon/Desktop/Dev/bluebubble_android_app/lib/blocs/chat_bloc.dart                                                                  | Dart     |        196 |         13 |         35 |        244 |
+| /home/brandon/Desktop/Dev/bluebubble_android_app/lib/blocs/message_bloc.dart                                                               | Dart     |        193 |         11 |         21 |        225 |
+| /home/brandon/Desktop/Dev/bluebubble_android_app/lib/blocs/setup_bloc.dart                                                                 | Dart     |         74 |          8 |         15 |         97 |
+| /home/brandon/Desktop/Dev/bluebubble_android_app/lib/helpers/attachment_downloader.dart                                                    | Dart     |        145 |          4 |         27 |        176 |
+| /home/brandon/Desktop/Dev/bluebubble_android_app/lib/helpers/attachment_helper.dart                                                        | Dart     |         71 |          1 |          8 |         80 |
+| /home/brandon/Desktop/Dev/bluebubble_android_app/lib/helpers/attachment_sender.dart                                                        | Dart     |        137 |          8 |         22 |        167 |
+| /home/brandon/Desktop/Dev/bluebubble_android_app/lib/helpers/contstants.dart                                                               | Dart     |         17 |          0 |          2 |         19 |
+| /home/brandon/Desktop/Dev/bluebubble_android_app/lib/helpers/hex_color.dart                                                                | Dart     |         11 |          0 |          3 |         14 |
+| /home/brandon/Desktop/Dev/bluebubble_android_app/lib/helpers/message_helper.dart                                                           | Dart     |         36 |          1 |          6 |         43 |
+| /home/brandon/Desktop/Dev/bluebubble_android_app/lib/helpers/utils.dart                                                                    | Dart     |        153 |          5 |         24 |        182 |
+| /home/brandon/Desktop/Dev/bluebubble_android_app/lib/layouts/conversation_details/contact_tile.dart                                        | Dart     |        135 |          0 |          7 |        142 |
+| /home/brandon/Desktop/Dev/bluebubble_android_app/lib/layouts/conversation_details/conversation_details.dart                                | Dart     |        331 |          3 |         16 |        350 |
+| /home/brandon/Desktop/Dev/bluebubble_android_app/lib/layouts/conversation_list/conversation_list.dart                                      | Dart     |        288 |          5 |         15 |        308 |
+| /home/brandon/Desktop/Dev/bluebubble_android_app/lib/layouts/conversation_list/conversation_tile.dart                                      | Dart     |        226 |          2 |         12 |        240 |
+| /home/brandon/Desktop/Dev/bluebubble_android_app/lib/layouts/conversation_view/camera_widget.dart                                          | Dart     |         95 |          0 |         11 |        106 |
+| /home/brandon/Desktop/Dev/bluebubble_android_app/lib/layouts/conversation_view/conversation_view.dart                                      | Dart     |        169 |         11 |         16 |        196 |
+| /home/brandon/Desktop/Dev/bluebubble_android_app/lib/layouts/conversation_view/messages_view.dart                                          | Dart     |        223 |          3 |         14 |        240 |
+| /home/brandon/Desktop/Dev/bluebubble_android_app/lib/layouts/conversation_view/new_chat_creator.dart                                       | Dart     |        478 |          9 |         17 |        504 |
+| /home/brandon/Desktop/Dev/bluebubble_android_app/lib/layouts/conversation_view/text_field.dart                                             | Dart     |        468 |          1 |         12 |        481 |
+| /home/brandon/Desktop/Dev/bluebubble_android_app/lib/layouts/image_viewer/image_viewer.dart                                                | Dart     |         59 |         22 |          8 |         89 |
+| /home/brandon/Desktop/Dev/bluebubble_android_app/lib/layouts/settings/settings_panel.dart                                                  | Dart     |        398 |         15 |         30 |        443 |
+| /home/brandon/Desktop/Dev/bluebubble_android_app/lib/layouts/setup/qr_code_scanner.dart                                                    | Dart     |         35 |          0 |          7 |         42 |
+| /home/brandon/Desktop/Dev/bluebubble_android_app/lib/layouts/setup/setup_view.dart                                                         | Dart     |        336 |          2 |         13 |        351 |
+| /home/brandon/Desktop/Dev/bluebubble_android_app/lib/layouts/widgets/CustomCupertinoNavBar.dart                                            | Dart     |      1,629 |        527 |        232 |      2,388 |
+| /home/brandon/Desktop/Dev/bluebubble_android_app/lib/layouts/widgets/animated_offset_builder.dart                                          | Dart     |        110 |         40 |         23 |        173 |
+| /home/brandon/Desktop/Dev/bluebubble_android_app/lib/layouts/widgets/message_widget/group_event.dart                                       | Dart     |         86 |          0 |          5 |         91 |
+| /home/brandon/Desktop/Dev/bluebubble_android_app/lib/layouts/widgets/message_widget/message_content/delivered_receipt.dart                 | Dart     |         30 |          0 |          7 |         37 |
+| /home/brandon/Desktop/Dev/bluebubble_android_app/lib/layouts/widgets/message_widget/message_content/media_file.dart                        | Dart     |         48 |          0 |          6 |         54 |
+| /home/brandon/Desktop/Dev/bluebubble_android_app/lib/layouts/widgets/message_widget/message_content/media_players/audio_player_widget.dart | Dart     |         85 |          0 |          7 |         92 |
+| /home/brandon/Desktop/Dev/bluebubble_android_app/lib/layouts/widgets/message_widget/message_content/media_players/contact_widget.dart      | Dart     |         97 |          0 |          8 |        105 |
+| /home/brandon/Desktop/Dev/bluebubble_android_app/lib/layouts/widgets/message_widget/message_content/media_players/image_widget.dart        | Dart     |         42 |          0 |          5 |         47 |
+| /home/brandon/Desktop/Dev/bluebubble_android_app/lib/layouts/widgets/message_widget/message_content/media_players/loaction_widget.dart     | Dart     |         70 |          0 |          6 |         76 |
+| /home/brandon/Desktop/Dev/bluebubble_android_app/lib/layouts/widgets/message_widget/message_content/media_players/regular_file_opener.dart | Dart     |         53 |          0 |          5 |         58 |
+| /home/brandon/Desktop/Dev/bluebubble_android_app/lib/layouts/widgets/message_widget/message_content/media_players/video_widget.dart        | Dart     |         36 |          0 |          7 |         43 |
+| /home/brandon/Desktop/Dev/bluebubble_android_app/lib/layouts/widgets/message_widget/message_content/message_attachment.dart                | Dart     |        239 |          8 |         16 |        263 |
+| /home/brandon/Desktop/Dev/bluebubble_android_app/lib/layouts/widgets/message_widget/message_content/message_attachments.dart               | Dart     |         91 |          8 |         12 |        111 |
+| /home/brandon/Desktop/Dev/bluebubble_android_app/lib/layouts/widgets/message_widget/message_content/message_content.dart                   | Dart     |          0 |        118 |         13 |        131 |
+| /home/brandon/Desktop/Dev/bluebubble_android_app/lib/layouts/widgets/message_widget/message_widget.dart                                    | Dart     |        272 |         31 |         23 |        326 |
+| /home/brandon/Desktop/Dev/bluebubble_android_app/lib/layouts/widgets/message_widget/new_message_loader.dart                                | Dart     |         51 |          0 |          5 |         56 |
+| /home/brandon/Desktop/Dev/bluebubble_android_app/lib/layouts/widgets/message_widget/received_message.dart                                  | Dart     |        164 |          0 |          9 |        173 |
+| /home/brandon/Desktop/Dev/bluebubble_android_app/lib/layouts/widgets/message_widget/sent_message.dart                                      | Dart     |        267 |          5 |         15 |        287 |
+| /home/brandon/Desktop/Dev/bluebubble_android_app/lib/layouts/widgets/send_widget.dart                                                      | Dart     |        155 |          2 |         16 |        173 |
+| /home/brandon/Desktop/Dev/bluebubble_android_app/lib/main.dart                                                                             | Dart     |        205 |          2 |         19 |        226 |
+| /home/brandon/Desktop/Dev/bluebubble_android_app/lib/managers/ConsoleOutput.dart                                                           | Dart     |         14 |          2 |          3 |         19 |
+| /home/brandon/Desktop/Dev/bluebubble_android_app/lib/managers/background_isolate.dart                                                      | Dart     |         85 |         22 |         12 |        119 |
+| /home/brandon/Desktop/Dev/bluebubble_android_app/lib/managers/contact_manager.dart                                                         | Dart     |         49 |          1 |          7 |         57 |
+| /home/brandon/Desktop/Dev/bluebubble_android_app/lib/managers/life_cycle_manager.dart                                                      | Dart     |         36 |          0 |         10 |         46 |
+| /home/brandon/Desktop/Dev/bluebubble_android_app/lib/managers/method_channel_interface.dart                                                | Dart     |        149 |          8 |         22 |        179 |
+| /home/brandon/Desktop/Dev/bluebubble_android_app/lib/managers/navigator_manager.dart                                                       | Dart     |         10 |          0 |          4 |         14 |
+| /home/brandon/Desktop/Dev/bluebubble_android_app/lib/managers/new_message_manager.dart                                                     | Dart     |         27 |          0 |          9 |         36 |
+| /home/brandon/Desktop/Dev/bluebubble_android_app/lib/managers/notification_manager.dart                                                    | Dart     |         92 |          2 |         15 |        109 |
+| /home/brandon/Desktop/Dev/bluebubble_android_app/lib/managers/settings_manager.dart                                                        | Dart     |         55 |          1 |         12 |         68 |
+| /home/brandon/Desktop/Dev/bluebubble_android_app/lib/repository/database.dart                                                              | Dart     |        181 |          3 |         19 |        203 |
+| /home/brandon/Desktop/Dev/bluebubble_android_app/lib/repository/models/attachment.dart                                                     | Dart     |        168 |          7 |         26 |        201 |
+| /home/brandon/Desktop/Dev/bluebubble_android_app/lib/repository/models/chat.dart                                                           | Dart     |        336 |         20 |         60 |        416 |
+| /home/brandon/Desktop/Dev/bluebubble_android_app/lib/repository/models/handle.dart                                                         | Dart     |        123 |          4 |         26 |        153 |
+| /home/brandon/Desktop/Dev/bluebubble_android_app/lib/repository/models/message.dart                                                        | Dart     |        369 |         12 |         44 |        425 |
+| /home/brandon/Desktop/Dev/bluebubble_android_app/lib/settings.dart                                                                         | Dart     |         41 |          0 |          9 |         50 |
+| /home/brandon/Desktop/Dev/bluebubble_android_app/lib/socket_manager.dart                                                                   | Dart     |        221 |         42 |         45 |        308 |
+| Total                                                                                                                                      |          |     10,192 |      1,069 |      1,149 |     12,410 |
++--------------------------------------------------------------------------------------------------------------------------------------------+----------+------------+------------+------------+------------+

@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubble_messages/helpers/hex_color.dart';
 import 'package:bluebubble_messages/helpers/utils.dart';
+import 'package:bluebubble_messages/managers/background_isolate.dart';
 import 'package:bluebubble_messages/managers/contact_manager.dart';
 import 'package:bluebubble_messages/managers/life_cycle_manager.dart';
 import 'package:bluebubble_messages/managers/method_channel_interface.dart';
@@ -58,17 +59,21 @@ class Main extends StatelessWidget with WidgetsBindingObserver {
           ),
           bodyText1: TextStyle(
             color: Colors.black,
+            fontWeight: FontWeight.normal,
           ),
           bodyText2: TextStyle(
             color: Colors.white,
+            fontWeight: FontWeight.normal,
           ),
           subtitle1: TextStyle(
             color: HexColor('9a9a9f'),
             fontSize: 13,
+            fontWeight: FontWeight.normal,
           ),
           subtitle2: TextStyle(
             color: HexColor('9a9a9f'),
             fontSize: 9,
+            fontWeight: FontWeight.normal,
           ),
         ),
         accentColor: HexColor('e5e5ea'),
@@ -91,17 +96,21 @@ class Main extends StatelessWidget with WidgetsBindingObserver {
           ),
           bodyText1: TextStyle(
             color: Colors.white,
+            fontWeight: FontWeight.normal,
           ),
           bodyText2: TextStyle(
             color: Colors.white,
+            fontWeight: FontWeight.normal,
           ),
           subtitle1: TextStyle(
             color: HexColor('36363a'),
             fontSize: 13,
+            fontWeight: FontWeight.normal,
           ),
           subtitle2: TextStyle(
             color: HexColor('36363a'),
             fontSize: 9,
+            fontWeight: FontWeight.normal,
           ),
         ),
         accentColor: HexColor('26262a'),
@@ -134,6 +143,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     super.initState();
     SettingsManager().init();
     LifeCycleManager().opened();
+    BackgroundIsolateInterface.initialize();
     // QueueManager().init();
     MethodChannelInterface().init(context);
     ReceiveSharingIntent.getInitialMedia().then((List<SharedMediaFile> value) {

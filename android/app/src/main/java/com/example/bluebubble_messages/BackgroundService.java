@@ -21,6 +21,10 @@ import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
+import com.baseflow.permissionhandler.PermissionHandlerPlugin;
+import com.itsclicking.clickapp.fluttersocketio.FlutterSocketIoPlugin;
+import com.tekartik.sqflite.SqflitePlugin;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -31,8 +35,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.ArrayList;
 
+import flutter.plugins.contactsservice.contactsservice.ContactsServicePlugin;
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
+import io.flutter.plugin.common.PluginRegistry;
+import io.flutter.plugins.pathprovider.PathProviderPlugin;
 import io.flutter.view.FlutterCallbackInformation;
 import io.flutter.view.FlutterMain;
 import io.flutter.view.FlutterNativeView;
@@ -40,9 +47,135 @@ import io.flutter.view.FlutterRunArguments;
 
 public class BackgroundService extends Service {
     // static boolean isRunning = false;
-    public boolean isAlive = false;
+    private boolean isAlive = false;
+    private FlutterNativeView backgroundView;
+    private MethodChannel backgroundChannel;
+
+    public boolean isAlive() {
+        return isAlive;
+    }
+
+    public void setAlive(boolean val) {
+        isAlive = val;
+        if (!val) {
+            initHeadlessThread();
+        } else {
+            destroyHeadlessThread();
+        }
+    }
+
+    public void invokeMethod(String method, Object arguments) {
+        if (backgroundChannel == null) {
+            return;
+        }
+        new Handler(Looper.getMainLooper()).post(new Runnable() {
+            @Override
+            public void run() {
+                backgroundChannel.invokeMethod(method, arguments);
+            }
+        });
+    }
+
+    private void initHeadlessThread() {
+        if (backgroundView == null) {
+
+            Long callbackHandle = getApplicationContext().getSharedPreferences(MainActivity.BACKGROUND_SERVICE_SHARED_PREF, Context.MODE_PRIVATE).getLong(MainActivity.BACKGROUND_HANDLE_SHARED_PREF_KEY, 0);
+            FlutterCallbackInformation callbackInformation = FlutterCallbackInformation.lookupCallbackInformation(callbackHandle);
+
+            new Handler(Looper.getMainLooper()).post(new Runnable() {
+                @Override
+                public void run() {
+                    backgroundView = new FlutterNativeView(getApplicationContext(), true);
+                    PluginRegistry registry = backgroundView.getPluginRegistry();
+                    SqflitePlugin.registerWith(registry.registrarFor("com.tekartik.sqflite.SqflitePlugin"));
+                    PathProviderPlugin.registerWith(registry.registrarFor("plugins.flutter.io/path_provider"));
+                    FlutterSocketIoPlugin.registerWith(registry.registrarFor("flutter_socket_io"));
+                    PermissionHandlerPlugin.registerWith(registry.registrarFor("flutter.baseflow.com/permissions/methods"));
+                    ContactsServicePlugin.registerWith(registry.registrarFor("github.com/clovisnicolas/flutter_contacts"));
+
+
+                    FlutterRunArguments args = new FlutterRunArguments();
+                    args.bundlePath = FlutterMain.findAppBundlePath();
+                    args.entrypoint = callbackInformation.callbackName;
+                    args.libraryPath = callbackInformation.callbackLibraryPath;
+
+                    backgroundView.runFromBundle(args);
+                    backgroundChannel = new MethodChannel(backgroundView, "background_isolate");
+
+                    backgroundChannel.setMethodCallHandler((call, result) -> {
+                        if (call.method.equals("initialized")) {
+                            Log.d("background_isolate", "initialized isolate");
+//                                        backgroundChannel.invokeMethod("initializeDB", "");
+                        } else if (call.method.equals("new-message-notification")) {
+                            Log.d("background_isolate", "creating notification android side");
+                            //occurs when clicking on the notification
+                            PendingIntent openIntent = PendingIntent.getActivity(getApplicationContext(), call.argument("notificationId"), new Intent(getApplicationContext(), MainActivity.class).putExtra("id", (int) call.argument("notificationId")).putExtra("chatGUID", (String) call.argument("group")).setType("NotificationOpen"), Intent.FILL_IN_ACTION);
+
+                            //for the dismiss button
+                            PendingIntent dismissIntent = PendingIntent.getBroadcast(getApplicationContext(), call.argument("notificationId"), new Intent(getApplicationContext(), ReplyReceiver.class).putExtra("id", (int) call.argument("notificationId")).putExtra("chatGuid", (String) call.argument("group")).setType("markAsRead"), PendingIntent.FLAG_UPDATE_CURRENT);
+                            NotificationCompat.Action dismissAction = new NotificationCompat.Action.Builder(0, "Mark As Read", dismissIntent).build();
+
+//                            //for the quick reply
+//                            Intent intent = new Intent(getApplicationContext(), ReplyReceiver.class)
+//                                    .putExtra("id", (int) call.argument("notificationId"))
+//                                    .putExtra("chatGuid", (String) call.argument("group"))
+//                                    .setType("reply");
+//                            PendingIntent replyIntent = PendingIntent.getBroadcast(getApplicationContext(), call.argument("notificationId"), intent, PendingIntent.FLAG_UPDATE_CURRENT);
+//                            androidx.core.app.RemoteInput replyInput = new androidx.core.app.RemoteInput.Builder("key_text_reply").setLabel("Reply").build();
+//                            NotificationCompat.Action replyAction = new NotificationCompat.Action.Builder(0, "Reply", replyIntent).addRemoteInput(replyInput).build();
+
+                            //actual notification
+                            NotificationCompat.Builder builder = new NotificationCompat.Builder(getApplicationContext(), call.argument("CHANNEL_ID"))
+                                    .setSmallIcon(R.mipmap.ic_launcher)
+                                    .setContentTitle(call.argument("contentTitle"))
+                                    .setContentText(call.argument("contentText"))
+                                    .setAutoCancel(true)
+                                    .setContentIntent(openIntent)
+                                    .addAction(dismissAction)
+//                                    .addAction(replyAction)
+                                    .setGroup(call.argument("group"));
+//                                        .setGroup("messageGroup");
+                            if (call.argument("address") != null) {
+                                builder.addPerson(call.argument("address"));
+                            }
+
+                            NotificationCompat.Builder summaryBuilder = new NotificationCompat.Builder(getApplicationContext(), call.argument("CHANNEL_ID"))
+                                    .setSmallIcon(R.mipmap.ic_launcher)
+                                    .setContentTitle("New messages")
+                                    .setGroup(call.argument("group"))
+                                    .setAutoCancel(true)
+                                    .setContentIntent(openIntent)
+                                    .setGroupSummary(true);
+
+                            NotificationManagerCompat notificationManager = NotificationManagerCompat.from(getApplicationContext());
+
+                            notificationManager.notify(call.argument("notificationId"), builder.build());
+                            notificationManager.notify(call.argument("summaryId"), summaryBuilder.build());
+                            result.success("");
+                        }
+                    });
+                }
+            });
+        }
+    }
+
+    private void destroyHeadlessThread() {
+        if(backgroundView == null) return;
+        new Handler(Looper.getMainLooper()).post(new Runnable() {
+            @Override
+            public void run() {
+                if (backgroundView != null) {
+                    try {
+                        backgroundView.destroy();
+                    } catch (Exception e) {
+
+                    }
+                }
+            }
+        });
+    }
+
     public LocalBroadcastManager broadcaster;
-    private SQLiteDatabase db;
 
     public class LocalBinder extends Binder {
         BackgroundService getService() {
@@ -56,46 +189,8 @@ public class BackgroundService extends Service {
 //       startForegroundService()
         Log.d("isolate", "created background service");
 
-        DatabaseHelper helper = DatabaseHelper.getInstance(this);
-        this.db = helper.getWritableDatabase();
 
         broadcaster = LocalBroadcastManager.getInstance(this);
-    }
-
-    public void saveMessage(String _data) {
-        if (isAlive || this.db == null) return;
-        Map<String, Object> data = null;
-        try {
-            JSONObject jObject = new JSONObject(_data);
-            data = (Map<String, Object>) jsonToMap(jObject);
-        } catch (JSONException e) {
-            e.printStackTrace();
-            return;
-        }
-
-        
-        try {
-            this.db.beginTransaction();
-
-            // Decode the message
-            Message message = Message.fromMap(data, this);
-
-            // Iterate each chat and save the message
-            List<Map<String, Object>> chats = (List<Map<String, Object>>) data.get("chats");
-            for (int i = 0; i < chats.size(); i++) {
-                Map<String, Object> chatMap = chats.get(i);
-                Chat chat = Chat.fromMap(chatMap, this);
-
-                chat.save(true);
-                chat.addMessage(message);
-            }
-
-            this.db.setTransactionSuccessful();
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        } finally {
-            this.db.endTransaction();
-        }
     }
 
 
@@ -110,46 +205,6 @@ public class BackgroundService extends Service {
         return mBinder;
     }
 
-    public static Map<String, Object> jsonToMap(JSONObject json) throws JSONException {
-        Map<String, Object> retMap = new HashMap<String, Object>();
-
-        if (json != JSONObject.NULL) {
-            retMap = toMap(json);
-        }
-        return retMap;
-    }
-
-    public static Map<String, Object> toMap(JSONObject object) throws JSONException {
-        Map<String, Object> map = new HashMap<String, Object>();
-
-        Iterator<String> keysItr = object.keys();
-        while (keysItr.hasNext()) {
-            String key = keysItr.next();
-            Object value = object.get(key);
-
-            if (value instanceof JSONArray) {
-                value = toList((JSONArray) value);
-            } else if (value instanceof JSONObject) {
-                value = toMap((JSONObject) value);
-            }
-            map.put(key, value);
-        }
-        return map;
-    }
-
-    public static List<Object> toList(JSONArray array) throws JSONException {
-        List<Object> list = new ArrayList<Object>();
-        for (int i = 0; i < array.length(); i++) {
-            Object value = array.get(i);
-            if (value instanceof JSONArray) {
-                value = toList((JSONArray) value);
-            } else if (value instanceof JSONObject) {
-                value = toMap((JSONObject) value);
-            }
-            list.add(value);
-        }
-        return list;
-    }
 
     private final IBinder mBinder = new LocalBinder();
 }

@@ -220,7 +220,8 @@ class ActionHandler {
   static Future<void> handleChat(
       {Map<String, dynamic> chatData,
       Chat chat,
-      bool checkIfExists = false}) async {
+      bool checkIfExists = false,
+      bool isHeadless = false}) async {
     Chat currentChat;
     Chat newChat = chat;
     if (chatData != null && newChat == null) {
@@ -237,6 +238,7 @@ class ActionHandler {
 
     // If we already have a chat, don't fetch the participants
     if (currentChat != null) return;
+    if (isHeadless) return;
 
     Map<String, dynamic> params = Map();
     params["chatGuid"] = newChat.guid;
@@ -268,7 +270,8 @@ class ActionHandler {
   /// handleMessage(JsonMap)
   /// ```
   static Future<void> handleMessage(Map<String, dynamic> data,
-      {bool createAttachmentNotification = false}) async {
+      {bool createAttachmentNotification = false,
+      bool isHeadless = false}) async {
     Message message = Message.fromMap(data);
     List<Chat> chats = MessageHelper.parseChats(data);
 
@@ -286,8 +289,9 @@ class ActionHandler {
             "Message already exists for match. Removing temporary entry.");
         await Message.delete({'guid': data['tempGuid']});
       } else {
-        NewMessageManager()
-            .updateSpecificMessage(chats.first, data['tempGuid'], message);
+        if (!isHeadless)
+          NewMessageManager()
+              .updateSpecificMessage(chats.first, data['tempGuid'], message);
         await Message.replaceMessage(data["tempGuid"], message);
         List<dynamic> attachments =
             data.containsKey("attachments") ? data['attachments'] : [];
@@ -300,18 +304,21 @@ class ActionHandler {
       // Add the message to the chats
       for (int i = 0; i < chats.length; i++) {
         debugPrint("Client received new message " + chats[i].guid);
-        await ActionHandler.handleChat(chat: chats[i], checkIfExists: true);
+        await ActionHandler.handleChat(
+            chat: chats[i], checkIfExists: true, isHeadless: isHeadless);
         await message.save();
         await chats[i].addMessage(message);
 
         // Add notification metadata
-        if (!SocketManager().chatsWithNotifications.contains(chats[i].guid) &&
+        if (!isHeadless &&
+            !SocketManager().chatsWithNotifications.contains(chats[i].guid) &&
             NotificationManager().chat != chats[i].guid) {
           SocketManager().chatsWithNotifications.add(chats[i].guid);
         }
 
         // Update chats
-        NewMessageManager().updateWithMessage(chats[i], message);
+        if (!isHeadless)
+          NewMessageManager().updateWithMessage(chats[i], message);
       }
 
       // Add any related attachments
@@ -321,7 +328,9 @@ class ActionHandler {
         Attachment file = Attachment.fromMap(attachmentItem);
         await file.save(message);
 
-        if (SettingsManager().settings.autoDownload && file.mimeType != null) {
+        if (!isHeadless &&
+            SettingsManager().settings.autoDownload &&
+            file.mimeType != null) {
           new AttachmentDownloader(file, message,
               createNotification:
                   createAttachmentNotification && file.mimeType != null);

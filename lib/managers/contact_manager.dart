@@ -12,11 +12,11 @@ class ContactManager {
 
   ContactManager._internal();
   List<Contact> contacts = <Contact>[];
-  Map<int, Contact> handleToContact = new Map();
+  Map<String, Contact> handleToContact = new Map();
 
-  void getContacts() async {
+  Future<void> getContacts({bool headless = false}) async {
     if (contacts.length > 0) return;
-    if (await Permission.contacts.request().isGranted) {
+    if (headless || await Permission.contacts.request().isGranted) {
       var contacts =
           (await ContactsService.getContacts(withThumbnails: false)).toList();
       _manager.contacts = contacts;
@@ -32,12 +32,12 @@ class ContactManager {
                 item.value.replaceAll(RegExp(r'[-() ]'), '');
             if (formattedNumber == handle.address ||
                 "+1" + formattedNumber == handle.address) {
-              handleToContact[handle.id] = contact;
+              handleToContact[handle.address] = contact;
             }
           });
           contact.emails.forEach((Item item) {
             if (item.value == handle.address) {
-              handleToContact[handle.id] = contact;
+              handleToContact[handle.address] = contact;
             }
           });
         }
