@@ -275,7 +275,7 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                         keyboardType: TextInputType.multiline,
                         maxLines: 14,
                         minLines: 1,
-                        placeholder: "iMessage",
+                        placeholder: "BlueBubbles",
                         padding: EdgeInsets.only(
                             left: 10, right: 40, top: 10, bottom: 10),
                         placeholderStyle: Theme.of(context).textTheme.subtitle1,

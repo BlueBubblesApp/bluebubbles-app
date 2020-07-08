@@ -235,7 +235,7 @@ class _SetupViewState extends State<SetupView> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             Text(
-              "For the final step, BlueBubbles will download all of the messages from your Mac's iMessage database.",
+              "For the final step, BlueBubbles will download all of the messages from your Mac's Message database.",
               style: Theme.of(context).textTheme.bodyText1,
               textAlign: TextAlign.center,
             ),

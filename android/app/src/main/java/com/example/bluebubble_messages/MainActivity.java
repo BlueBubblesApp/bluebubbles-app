@@ -471,7 +471,6 @@ public class MainActivity extends FlutterActivity {
     @Override
     protected void onDestroy() {
         Log.d("MainActivity", "removed from memory");
-//        unregisterReceiver(mMessageReceiver);
         if (backgroundService != null) {
             backgroundService.setAlive(false);
             Log.d("isAlive", "set isAlive to false");
