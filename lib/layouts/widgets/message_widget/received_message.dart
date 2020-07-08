@@ -3,6 +3,7 @@ import 'package:bluebubble_messages/helpers/utils.dart';
 import 'package:bluebubble_messages/layouts/widgets/message_widget/message_content/message_content.dart';
 import 'package:bluebubble_messages/managers/contact_manager.dart';
 import 'package:bluebubble_messages/repository/models/chat.dart';
+import 'package:bluebubble_messages/repository/models/handle.dart';
 import 'package:bluebubble_messages/repository/models/message.dart';
 import 'package:flutter/material.dart';
 
@@ -41,8 +42,10 @@ class _ReceivedMessageState extends State<ReceivedMessage> {
   Widget build(BuildContext context) {
     String handle = "";
     if (widget.message.handle != null && widget.showHandle) {
+      debugPrint(
+          "retreiving handle with id " + widget.message.handle.id.toString());
       handle = getContactTitle(
-          ContactManager().contacts, widget.message.handle.address);
+          widget.message.handleId, widget.message.handle.address);
     }
 
     List<Widget> tail = <Widget>[

@@ -97,9 +97,9 @@ class _MessageState extends State<MessageWidget> {
     reactions[emphasize] = [];
     reactions[laugh] = [];
 
-    widget.reactions.forEach((reaction) {
-      reactions[reaction.associatedMessageType].add(reaction);
-    });
+    // widget.reactions.forEach((reaction) {
+    //   reactions[reaction.associatedMessageType].add(reaction);
+    // });
     setState(() {});
   }
 
@@ -241,8 +241,7 @@ class _MessageState extends State<MessageWidget> {
 
             String name = "You";
             if (!message.isFromMe) {
-              name = getContactTitle(
-                  ContactManager().contacts, message.handle.address);
+              name = getContactTitle(message.handleId, message.handle.address);
             }
 
             names.add(name);

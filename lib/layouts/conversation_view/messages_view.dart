@@ -26,19 +26,18 @@ class MessageView extends StatefulWidget {
 class _MessageViewState extends State<MessageView> {
   Future loader;
   List<Message> _messages = <Message>[];
-  final GlobalKey<SliverAnimatedListState> _listKey =
-      GlobalKey<SliverAnimatedListState>();
+  GlobalKey<SliverAnimatedListState> _listKey;
   final Duration animationDuration = Duration(milliseconds: 400);
   OverlayEntry entry;
   List<String> sentMessages = <String>[];
   Map<String, Widget> attachments = Map();
   Map<String, Future<List<Attachment>>> attachmentFutures = Map();
   Map<String, List<Attachment>> attachmentResults = Map();
+  bool initializedList = false;
 
   @override
   void initState() {
     super.initState();
-    _messages = widget.messageBloc.messages.values.toList();
     widget.messageBloc.stream.listen((event) {
       if (event["insert"] != null) {
         if (event["sentFromThisClient"]) {
@@ -77,16 +76,20 @@ class _MessageViewState extends State<MessageView> {
       } else {
         int originalMessageLength = _messages.length;
         _messages = event["messages"].values.toList();
+        initializedList = true;
+        if (_listKey == null) _listKey = GlobalKey<SliverAnimatedListState>();
 
         for (int i = originalMessageLength; i < _messages.length; i++) {
           if (_listKey.currentState != null)
             _listKey.currentState.insertItem(i, duration: animationDuration);
         }
-        if (_listKey.currentState != null)
-          _listKey.currentState.setState(() {});
+        // if (_listKey.currentState != null)
+        //   _listKey.currentState.setState(() {});
+        setState(() {});
         _messages.forEach((element) => getAttachmentsForMessage(element));
       }
     });
+
     widget.messageBloc.getMessages();
   }
 
@@ -127,96 +130,99 @@ class _MessageViewState extends State<MessageView> {
       reverse: true,
       physics: AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
       slivers: <Widget>[
-        SliverAnimatedList(
-          initialItemCount: _messages.length + 1,
-          key: _listKey,
-          itemBuilder:
-              (BuildContext context, int index, Animation<double> animation) {
-            if (index == _messages.length) {
-              debugPrint("reached top of messages");
-              if (loader == null) {
-                loader = widget.messageBloc.loadMessageChunk(_messages.length);
-                loader.whenComplete(() => loader = null);
-              }
-              return NewMessageLoader(
-                messageBloc: widget.messageBloc,
-                offset: _messages.length,
-                loader: loader,
-              );
-              // return Container();
-            }
+        _listKey != null
+            ? SliverAnimatedList(
+                initialItemCount: _messages.length + 1,
+                key: _listKey,
+                itemBuilder: (BuildContext context, int index,
+                    Animation<double> animation) {
+                  if (index == _messages.length) {
+                    debugPrint("reached top of messages");
+                    if (loader == null) {
+                      loader =
+                          widget.messageBloc.loadMessageChunk(_messages.length);
+                      loader.whenComplete(() => loader = null);
+                    }
+                    return NewMessageLoader(
+                      messageBloc: widget.messageBloc,
+                      offset: _messages.length,
+                      loader: loader,
+                    );
+                    // return Container();
+                  }
 
-            Message olderMessage;
-            Message newerMessage;
-            if (index + 1 >= 0 && index + 1 < _messages.length) {
-              olderMessage = _messages[index + 1];
-            }
-            if (index - 1 >= 0 && index - 1 < _messages.length) {
-              newerMessage = _messages[index - 1];
-            }
-            List<Message> reactions = <Message>[];
-            if (widget.messageBloc.reactions
-                .containsKey(_messages[index].guid)) {
-              reactions.addAll(
-                widget.messageBloc.reactions[_messages[index].guid],
-              );
-            }
+                  Message olderMessage;
+                  Message newerMessage;
+                  if (index + 1 >= 0 && index + 1 < _messages.length) {
+                    olderMessage = _messages[index + 1];
+                  }
+                  if (index - 1 >= 0 && index - 1 < _messages.length) {
+                    newerMessage = _messages[index - 1];
+                  }
+                  List<Message> reactions = <Message>[];
+                  if (widget.messageBloc.reactions
+                      .containsKey(_messages[index].guid)) {
+                    reactions.addAll(
+                      widget.messageBloc.reactions[_messages[index].guid],
+                    );
+                  }
 
-            Widget messageWidget = MessageWidget(
-              key: Key(_messages[index].guid),
-              fromSelf: _messages[index].isFromMe,
-              message: _messages[index],
-              olderMessage: olderMessage,
-              newerMessage: newerMessage,
-              reactions: reactions,
-              showHandle: widget.showHandle,
-              shouldFadeIn: sentMessages.contains(_messages[index].guid),
-              isFirstSentMessage:
-                  widget.messageBloc.firstSentMessage == _messages[index].guid,
-              attachments: attachments.containsKey(_messages[index].guid)
-                  ? attachments[_messages[index].guid]
-                  : Container(),
-            );
+                  Widget messageWidget = MessageWidget(
+                    key: Key(_messages[index].guid),
+                    fromSelf: _messages[index].isFromMe,
+                    message: _messages[index],
+                    olderMessage: olderMessage,
+                    newerMessage: newerMessage,
+                    reactions: reactions,
+                    showHandle: widget.showHandle,
+                    shouldFadeIn: sentMessages.contains(_messages[index].guid),
+                    isFirstSentMessage: widget.messageBloc.firstSentMessage ==
+                        _messages[index].guid,
+                    attachments: attachments.containsKey(_messages[index].guid)
+                        ? attachments[_messages[index].guid]
+                        : Container(),
+                  );
 
-            if (index == 0) {
-              return SizeTransition(
-                axis: Axis.vertical,
-                sizeFactor: animation.drive(Tween(begin: 0.0, end: 1.0)
-                    .chain(CurveTween(curve: Curves.easeInOut))),
-                child: SlideTransition(
-                  position: animation.drive(
-                      Tween(begin: Offset(0.0, 1), end: Offset(0.0, 0.0))
+                  if (index == 0) {
+                    return SizeTransition(
+                      axis: Axis.vertical,
+                      sizeFactor: animation.drive(Tween(begin: 0.0, end: 1.0)
                           .chain(CurveTween(curve: Curves.easeInOut))),
-                  child: FadeTransition(
-                    opacity: animation,
-                    child: Hero(
-                      tag: "first",
-                      child: Material(
-                        type: MaterialType.transparency,
-                        child: messageWidget,
+                      child: SlideTransition(
+                        position: animation.drive(
+                            Tween(begin: Offset(0.0, 1), end: Offset(0.0, 0.0))
+                                .chain(CurveTween(curve: Curves.easeInOut))),
+                        child: FadeTransition(
+                          opacity: animation,
+                          child: Hero(
+                            tag: "first",
+                            child: Material(
+                              type: MaterialType.transparency,
+                              child: messageWidget,
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
-                ),
-              );
-            } else {
-              return SizeTransition(
-                axis: Axis.vertical,
-                sizeFactor: animation.drive(Tween(begin: 0.0, end: 1.0)
-                    .chain(CurveTween(curve: Curves.easeInOut))),
-                child: SlideTransition(
-                  position: animation.drive(
-                      Tween(begin: Offset(0.0, 1), end: Offset(0.0, 0.0))
+                    );
+                  } else {
+                    return SizeTransition(
+                      axis: Axis.vertical,
+                      sizeFactor: animation.drive(Tween(begin: 0.0, end: 1.0)
                           .chain(CurveTween(curve: Curves.easeInOut))),
-                  child: FadeTransition(
-                    opacity: animation,
-                    child: messageWidget,
-                  ),
-                ),
-              );
-            }
-          },
-        ),
+                      child: SlideTransition(
+                        position: animation.drive(
+                            Tween(begin: Offset(0.0, 1), end: Offset(0.0, 0.0))
+                                .chain(CurveTween(curve: Curves.easeInOut))),
+                        child: FadeTransition(
+                          opacity: animation,
+                          child: messageWidget,
+                        ),
+                      ),
+                    );
+                  }
+                },
+              )
+            : SliverToBoxAdapter(child: Container()),
         SliverPadding(
           padding: EdgeInsets.all(70),
         ),

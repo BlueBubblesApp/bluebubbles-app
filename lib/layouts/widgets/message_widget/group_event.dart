@@ -52,10 +52,8 @@ class _GroupEventState extends State<GroupEvent> {
                         .apply(fontSizeDelta: 1.5),
                     children: <TextSpan>[
                       TextSpan(
-                        text: getContactTitle(
-                          ContactManager().contacts,
-                          widget.message.handle.address,
-                        ),
+                        text: getContactTitle(widget.message.handleId,
+                            widget.message.handle.address),
                         style: Theme.of(context)
                             .textTheme
                             .subtitle2

@@ -53,9 +53,6 @@ class _ConversationViewState extends State<ConversationView> {
     super.initState();
     chat = widget.chat;
     NotificationManager().switchChat(chat);
-    widget.chat.getParticipants().then((value) => setState(() {
-          chat = value;
-        }));
     // ChatBloc().chatStream.listen((event) {
     //   event.forEach((element) {
     //     if (element.guid == chat.guid) {
@@ -86,10 +83,10 @@ class _ConversationViewState extends State<ConversationView> {
     super.didChangeDependencies();
     SocketManager().removeChatNotification(chat);
 
-    Chat _chat = await chat.getParticipants();
-    if (_chat.participants.length == 1) {
+    // Chat _chat = await chat.getParticipants();
+    if (chat.participants.length == 1) {
       Contact contact = getContact(
-          ContactManager().contacts, _chat.participants.first.address);
+          ContactManager().contacts, chat.participants.first.address);
       if (contact != null && contact.avatar.length > 0) {
         contactImage = MemoryImage(contact.avatar);
         if (this.mounted) setState(() {});
@@ -182,7 +179,7 @@ class _ConversationViewState extends State<ConversationView> {
               padding: const EdgeInsets.only(bottom: 16.0),
               child: MessageView(
                 messageBloc: widget.messageBloc,
-                showHandle: chat.participants.length > 1,
+                showHandle: true,
                 layerLink: layerLink,
               ),
             ),

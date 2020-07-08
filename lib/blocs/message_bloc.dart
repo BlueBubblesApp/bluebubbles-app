@@ -40,7 +40,7 @@ class MessageBloc {
 
   MessageBloc(Chat chat) {
     _currentChat = chat;
-    getMessages();
+    // getMessages();
     NewMessageManager().stream.listen((Map<String, dynamic> event) {
       if (_messageController.isClosed) return;
       if (event.containsKey(_currentChat.guid)) {
@@ -131,14 +131,15 @@ class MessageBloc {
         LinkedHashMap.fromIterables(keys, values));
   }
 
-  void getMessages() async {
+  Future<LinkedHashMap<String, Message>> getMessages() async {
     List<Message> messages = await Chat.getMessages(_currentChat);
     messages.forEach((element) {
       _allMessages.addAll({element.guid: element});
     });
     if (!_messageController.isClosed)
       _messageController.sink.add({"messages": _allMessages, "insert": null});
-    await getReactions(0);
+    getReactions(0);
+    return _allMessages;
   }
 
   Future loadMessageChunk(int offset) async {

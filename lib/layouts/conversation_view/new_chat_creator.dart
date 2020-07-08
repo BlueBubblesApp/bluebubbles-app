@@ -136,9 +136,6 @@ class _NewChatCreatorState extends State<NewChatCreator> {
         if (existingMessageBloc != null) {
           existingMessageBloc.dispose();
         }
-        existingChat.getParticipants().then((value) => debugPrint(
-            getContactTitle(
-                ContactManager().contacts, value.participants.first.address)));
         existingMessageBloc = MessageBloc(existingChat);
         existingMessageBloc.getMessages();
       });

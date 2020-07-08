@@ -44,6 +44,8 @@ class _ConversationTileState extends State<ConversationTile> {
   List<Message> messages = <Message>[];
   ImageProvider contactImage;
 
+  bool isPressed = false;
+
   @override
   Future<void> didChangeDependencies() async {
     super.didChangeDependencies();
@@ -90,11 +92,17 @@ class _ConversationTileState extends State<ConversationTile> {
         )
       ],
       child: Material(
-        color: Theme.of(context).backgroundColor,
-        child: InkWell(
-          onTap: () {
+        color: !isPressed
+            ? Theme.of(context).backgroundColor
+            : Theme.of(context).buttonColor,
+        child: GestureDetector(
+          onTapDown: (details) {
+            setState(() {
+              isPressed = true;
+            });
+          },
+          onTapUp: (details) {
             MessageBloc messageBloc = new MessageBloc(widget.chat);
-            debugPrint(widget.chat.isArchived.toString());
             Navigator.of(context).push(
               CupertinoPageRoute(
                 builder: (BuildContext context) {
@@ -106,6 +114,16 @@ class _ConversationTileState extends State<ConversationTile> {
                 },
               ),
             );
+            Future.delayed(Duration(milliseconds: 200), () {
+              setState(() {
+                isPressed = false;
+              });
+            });
+          },
+          onTapCancel: () {
+            setState(() {
+              isPressed = false;
+            });
           },
           child: Stack(
             children: <Widget>[

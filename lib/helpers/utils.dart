@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:math';
 import 'dart:typed_data';
+import 'package:bluebubble_messages/repository/models/handle.dart';
 import 'package:bluebubble_messages/repository/models/message.dart';
 import 'package:blurhash_flutter/blurhash.dart';
 // import 'package:blurhash_dart/blurhash_dart.dart';
@@ -19,23 +20,11 @@ DateTime parseDate(dynamic value) {
   if (value is DateTime) return value;
 }
 
-String getContactTitle(List<Contact> contacts, String id) {
-  if (contacts == null) return formatPhoneNumber(id);
-  String contactTitle = id;
-  for (Contact contact in contacts) {
-    contact.phones.forEach((Item item) {
-      String formattedNumber = item.value.replaceAll(RegExp(r'[-() ]'), '');
-      if (formattedNumber == id || "+1" + formattedNumber == id) {
-        contactTitle = contact.displayName;
-      }
-    });
-    contact.emails.forEach((Item item) {
-      if (item.value == id) {
-        contactTitle = contact.displayName;
-      }
-    });
-  }
-  if (contactTitle == id && !contactTitle.contains("@")) {
+String getContactTitle(int id, String address) {
+  if (ContactManager().handleToContact.containsKey(id))
+    return ContactManager().handleToContact[id].displayName;
+  String contactTitle = address;
+  if (contactTitle == address && !contactTitle.contains("@")) {
     return formatPhoneNumber(contactTitle);
   }
   return contactTitle;

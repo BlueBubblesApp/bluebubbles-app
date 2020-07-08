@@ -103,7 +103,8 @@ class Handle {
     return Handle.fromMap(res.elementAt(0));
   }
 
-  static Future<List<Handle>> find(Map<String, dynamic> filters) async {
+  static Future<List<Handle>> find(
+      [Map<String, dynamic> filters = const {}]) async {
     final Database db = await DBProvider.db.database;
 
     List<String> whereParams = [];
@@ -111,7 +112,8 @@ class Handle {
     List<dynamic> whereArgs = [];
     filters.values.forEach((filter) => whereArgs.add(filter));
     var res = await db.query("handle",
-        where: whereParams.join(" AND "), whereArgs: whereArgs);
+        where: (whereParams.length > 0) ? whereParams.join(" AND ") : null,
+        whereArgs: (whereArgs.length > 0) ? whereArgs : null);
 
     return (res.isNotEmpty) ? res.map((c) => Handle.fromMap(c)).toList() : [];
   }
