@@ -12,6 +12,8 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Binder;
@@ -40,6 +42,7 @@ import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.iid.InstanceIdResult;
 import com.itsclicking.clickapp.fluttersocketio.FlutterSocketIoPlugin;
+import com.itsclicking.clickapp.fluttersocketio.SocketIOManager;
 import com.tekartik.sqflite.SqflitePlugin;
 
 import org.json.JSONArray;
@@ -71,11 +74,13 @@ public class BackgroundService extends Service {
     // static boolean isRunning = false;
     private boolean isAlive = false;
     public static boolean backgroundServiceActive = false;
-    private FlutterNativeView backgroundView;
-    public static MethodChannel backgroundChannel;
+    public FlutterNativeView backgroundView;
+    public MethodChannel backgroundChannel;
     public static FirebaseApp app;
 
     public static DatabaseReference db;
+
+    private Map<Integer, NotificationCompat.Builder> progressBars = new HashMap<>();
 
     public boolean isAlive() {
         return isAlive;
@@ -84,8 +89,10 @@ public class BackgroundService extends Service {
     public void setAlive(boolean val) {
         isAlive = val;
         if (!val) {
+            SocketIOManager.getInstance().destroyAllSockets();
             initHeadlessThread();
         } else {
+            Log.d("headless", "destroying headless thread");
             destroyHeadlessThread();
         }
     }
@@ -103,7 +110,7 @@ public class BackgroundService extends Service {
     }
 
     public void requestFirebaseAuth() {
-        if(backgroundView != null && backgroundChannel != null) {
+        if (backgroundView != null && backgroundChannel != null) {
             backgroundChannel.invokeMethod("requestFCMAuth", "");
         }
     }
@@ -115,115 +122,215 @@ public class BackgroundService extends Service {
             Long callbackHandle = getApplicationContext().getSharedPreferences(MainActivity.BACKGROUND_SERVICE_SHARED_PREF, Context.MODE_PRIVATE).getLong(MainActivity.BACKGROUND_HANDLE_SHARED_PREF_KEY, 0);
             FlutterCallbackInformation callbackInformation = FlutterCallbackInformation.lookupCallbackInformation(callbackHandle);
 
-            new Handler(Looper.getMainLooper()).post(new Runnable() {
-                @Override
-                public void run() {
-                    backgroundView = new FlutterNativeView(getApplicationContext(), true);
-                    PluginRegistry registry = backgroundView.getPluginRegistry();
-                    SqflitePlugin.registerWith(registry.registrarFor("com.tekartik.sqflite.SqflitePlugin"));
-                    PathProviderPlugin.registerWith(registry.registrarFor("plugins.flutter.io/path_provider"));
-                    FlutterSocketIoPlugin.registerWith(registry.registrarFor("flutter_socket_io"));
-                    PermissionHandlerPlugin.registerWith(registry.registrarFor("flutter.baseflow.com/permissions/methods"));
-                    ContactsServicePlugin.registerWith(registry.registrarFor("github.com/clovisnicolas/flutter_contacts"));
-                    SharedPreferencesPlugin.registerWith(registry.registrarFor("plugins.flutter.io/shared_preferences"));
+//            new Handler(Looper.getMainLooper()).post(new Runnable() {
+//                @Override
+//                public void run() {
+            backgroundView = new FlutterNativeView(getApplicationContext(), true);
+            PluginRegistry registry = backgroundView.getPluginRegistry();
+            SqflitePlugin.registerWith(registry.registrarFor("com.tekartik.sqflite.SqflitePlugin"));
+            PathProviderPlugin.registerWith(registry.registrarFor("plugins.flutter.io/path_provider"));
+            FlutterSocketIoPlugin.registerWith(registry.registrarFor("flutter_socket_io"));
+            PermissionHandlerPlugin.registerWith(registry.registrarFor("flutter.baseflow.com/permissions/methods"));
+            ContactsServicePlugin.registerWith(registry.registrarFor("github.com/clovisnicolas/flutter_contacts"));
+            SharedPreferencesPlugin.registerWith(registry.registrarFor("plugins.flutter.io/shared_preferences"));
 
 
-                    FlutterRunArguments args = new FlutterRunArguments();
-                    args.bundlePath = FlutterMain.findAppBundlePath();
-                    args.entrypoint = callbackInformation.callbackName;
-                    args.libraryPath = callbackInformation.callbackLibraryPath;
+            FlutterRunArguments args = new FlutterRunArguments();
+            args.bundlePath = FlutterMain.findAppBundlePath();
+            args.entrypoint = callbackInformation.callbackName;
+            args.libraryPath = callbackInformation.callbackLibraryPath;
 
-                    backgroundView.runFromBundle(args);
-                    backgroundChannel = new MethodChannel(backgroundView, "background_isolate");
+            backgroundView.runFromBundle(args);
+            backgroundChannel = new MethodChannel(backgroundView, "background_isolate");
 
-                    backgroundChannel.setMethodCallHandler((call, result) -> {
-                        if (call.method.equals("auth")) {
-                            if (!isNetworkAvailable())
-                                result.error("no_internet", "No internet, retry in 10 seconds", "");
-                            if (app == null) {
-                                app = FirebaseApp.initializeApp(getApplicationContext(), new FirebaseOptions.Builder()
-                                        .setProjectId(call.argument("project_id"))
-                                        .setStorageBucket(call.argument("storage_bucket"))
-                                        .setApiKey(call.argument("api_key"))
-                                        .setDatabaseUrl(call.argument("firebase_url"))
-                                        .setGcmSenderId(call.argument("client_id"))
-                                        .setApplicationId(call.argument("application_id"))
-                                        .build());
-                            }
-                            if(app == null) {
-                                result.error("could_not_initialize", "Failed to initialize, app == null", "");
-                            }
-                            FirebaseInstanceId.getInstance(app).getInstanceId()
-                                    .addOnCompleteListener(new OnCompleteListener<InstanceIdResult>() {
-                                        @Override
-                                        public void onComplete(@NonNull Task<InstanceIdResult> task) {
-                                            if (!task.isSuccessful()) {
-                                                Log.d("FCM", "getInstanceId failed", task.getException());
-                                                result.error("failed", "getInstanceId failed", task.getException());
-                                            } else {
+            backgroundChannel.setMethodCallHandler((call, result) -> {
+                if (call.method.equals("auth")) {
+                    if (!isNetworkAvailable())
+                        result.error("no_internet", "No internet, retry in 10 seconds", "");
+                    if (app == null) {
+                        app = FirebaseApp.initializeApp(getApplicationContext(), new FirebaseOptions.Builder()
+                                .setProjectId(call.argument("project_id"))
+                                .setStorageBucket(call.argument("storage_bucket"))
+                                .setApiKey(call.argument("api_key"))
+                                .setDatabaseUrl(call.argument("firebase_url"))
+                                .setGcmSenderId(call.argument("client_id"))
+                                .setApplicationId(call.argument("application_id"))
+                                .build());
+                    }
+                    if (app == null) {
+                        result.error("could_not_initialize", "Failed to initialize, app == null", "");
+                    }
+                    FirebaseInstanceId.getInstance(app).getInstanceId()
+                            .addOnCompleteListener(new OnCompleteListener<InstanceIdResult>() {
+                                @Override
+                                public void onComplete(@NonNull Task<InstanceIdResult> task) {
+                                    if (!task.isSuccessful()) {
+                                        Log.d("FCM", "getInstanceId failed", task.getException());
+                                        result.error("failed", "getInstanceId failed", task.getException());
+                                    } else {
 
-                                                String token = task.getResult().getToken();
-                                                Log.d("FCM", "token: " + token);
-                                                result.success(token);
-                                            }
-                                        }
-                                    });
-                            db = FirebaseDatabase.getInstance(app).getReference();
-                            try {
-                                db.removeEventListener(dbListener);
-                            } catch (Exception e) {
+                                        String token = task.getResult().getToken();
+                                        Log.d("FCM", "token: " + token);
+                                        result.success(token);
+                                    }
+                                }
+                            });
+                    db = FirebaseDatabase.getInstance(app).getReference();
+                    try {
+                        db.removeEventListener(dbListener);
+                    } catch (Exception e) {
 
-                            }
-                            db.addValueEventListener(dbListener);
-                        } else if (call.method.equals("new-message-notification")) {
-                            Log.d("background_isolate", "creating notification android side");
-                            //occurs when clicking on the notification
-                            PendingIntent openIntent = PendingIntent.getActivity(getApplicationContext(), call.argument("notificationId"), new Intent(getApplicationContext(), MainActivity.class).putExtra("id", (int) call.argument("notificationId")).putExtra("chatGUID", (String) call.argument("group")).setType("NotificationOpen"), Intent.FILL_IN_ACTION);
+                    }
+                    db.addValueEventListener(dbListener);
+                } else if (call.method.equals("new-message-notification")) {
+                    Log.d("background_isolate", "creating notification android side");
+                    //occurs when clicking on the notification
+                    PendingIntent openIntent = PendingIntent.getActivity(getApplicationContext(), call.argument("notificationId"), new Intent(getApplicationContext(), MainActivity.class).putExtra("id", (int) call.argument("notificationId")).putExtra("chatGUID", (String) call.argument("group")).setType("NotificationOpen"), Intent.FILL_IN_ACTION);
 
-                            //for the dismiss button
-                            PendingIntent dismissIntent = PendingIntent.getBroadcast(getApplicationContext(), call.argument("notificationId"), new Intent(getApplicationContext(), ReplyReceiver.class).putExtra("id", (int) call.argument("notificationId")).putExtra("chatGuid", (String) call.argument("group")).setType("markAsRead"), PendingIntent.FLAG_UPDATE_CURRENT);
-                            NotificationCompat.Action dismissAction = new NotificationCompat.Action.Builder(0, "Mark As Read", dismissIntent).build();
+                    //for the dismiss button
+                    PendingIntent dismissIntent = PendingIntent.getBroadcast(getApplicationContext(), call.argument("notificationId"), new Intent(getApplicationContext(), ReplyReceiver.class).putExtra("id", (int) call.argument("notificationId")).putExtra("chatGuid", (String) call.argument("group")).setType("markAsRead"), PendingIntent.FLAG_UPDATE_CURRENT);
+                    NotificationCompat.Action dismissAction = new NotificationCompat.Action.Builder(0, "Mark As Read", dismissIntent).build();
 
-//                            //for the quick reply
-//                            Intent intent = new Intent(getApplicationContext(), ReplyReceiver.class)
-//                                    .putExtra("id", (int) call.argument("notificationId"))
-//                                    .putExtra("chatGuid", (String) call.argument("group"))
-//                                    .setType("reply");
-//                            PendingIntent replyIntent = PendingIntent.getBroadcast(getApplicationContext(), call.argument("notificationId"), intent, PendingIntent.FLAG_UPDATE_CURRENT);
-//                            androidx.core.app.RemoteInput replyInput = new androidx.core.app.RemoteInput.Builder("key_text_reply").setLabel("Reply").build();
-//                            NotificationCompat.Action replyAction = new NotificationCompat.Action.Builder(0, "Reply", replyIntent).addRemoteInput(replyInput).build();
+                    //for the quick reply
+                    Intent intent = new Intent(getApplicationContext(), ReplyReceiver.class)
+                            .putExtra("id", (int) call.argument("notificationId"))
+                            .putExtra("chatGuid", (String) call.argument("group"))
+                            .setType("reply");
+                    PendingIntent replyIntent = PendingIntent.getBroadcast(getApplicationContext(), call.argument("notificationId"), intent, PendingIntent.FLAG_UPDATE_CURRENT);
+                    androidx.core.app.RemoteInput replyInput = new androidx.core.app.RemoteInput.Builder("key_text_reply").setLabel("Reply").build();
+                    NotificationCompat.Action replyAction = new NotificationCompat.Action.Builder(0, "Reply", replyIntent).addRemoteInput(replyInput).build();
 
-                            //actual notification
-                            NotificationCompat.Builder builder = new NotificationCompat.Builder(getApplicationContext(), call.argument("CHANNEL_ID"))
-                                    .setSmallIcon(R.mipmap.ic_launcher)
-                                    .setContentTitle(call.argument("contentTitle"))
-                                    .setContentText(call.argument("contentText"))
-                                    .setAutoCancel(true)
-                                    .setContentIntent(openIntent)
-                                    .addAction(dismissAction)
-//                                    .addAction(replyAction)
-                                    .setGroup(call.argument("group"));
+                    //actual notification
+                    NotificationCompat.Builder builder = new NotificationCompat.Builder(getApplicationContext(), call.argument("CHANNEL_ID"))
+                            .setSmallIcon(R.mipmap.ic_launcher)
+                            .setContentTitle(call.argument("contentTitle"))
+                            .setContentText(call.argument("contentText"))
+                            .setAutoCancel(true)
+                            .setContentIntent(openIntent)
+                            .addAction(dismissAction)
+                            .addAction(replyAction)
+                            .setGroup(call.argument("group"));
 //                                        .setGroup("messageGroup");
-                            if (call.argument("address") != null) {
-                                builder.addPerson(call.argument("address"));
-                            }
+                    if (call.argument("address") != null) {
+                        builder.addPerson(call.argument("address"));
+                    }
 
-                            NotificationCompat.Builder summaryBuilder = new NotificationCompat.Builder(getApplicationContext(), call.argument("CHANNEL_ID"))
-                                    .setSmallIcon(R.mipmap.ic_launcher)
-                                    .setContentTitle("New messages")
-                                    .setGroup(call.argument("group"))
-                                    .setAutoCancel(true)
-                                    .setContentIntent(openIntent)
-                                    .setGroupSummary(true);
+                    NotificationCompat.Builder summaryBuilder = new NotificationCompat.Builder(getApplicationContext(), call.argument("CHANNEL_ID"))
+                            .setSmallIcon(R.mipmap.ic_launcher)
+                            .setContentTitle("New messages")
+                            .setGroup(call.argument("group"))
+                            .setAutoCancel(true)
+                            .setContentIntent(openIntent)
+                            .setGroupSummary(true);
 
-                            NotificationManagerCompat notificationManager = NotificationManagerCompat.from(getApplicationContext());
+                    NotificationManagerCompat notificationManager = NotificationManagerCompat.from(getApplicationContext());
 
-                            notificationManager.notify(call.argument("notificationId"), builder.build());
-                            notificationManager.notify(call.argument("summaryId"), summaryBuilder.build());
-                            result.success("");
-                        }
-                    });
+                    notificationManager.notify(call.argument("notificationId"), builder.build());
+                    notificationManager.notify(call.argument("summaryId"), summaryBuilder.build());
+                    result.success("");
+                } else if (call.method.equals("create-attachment-download-notification")) {
+//                                MethodChannelInterface()
+//                                        .platform
+//                                        .invokeMethod("attachment-download-notification", {
+//                                                "CHANNEL_ID": "com.bluebubbles.new_messages",
+//                                        "contentTitle": contentTitle,
+//                                        "contentText": contentText,
+//                                        "group": group,
+//                                        "notificationId": id,
+//                                        "summaryId": summaryId,
+//                                        "progress": progress,
+//                                 });
+
+                    //occurs when clicking on the notification
+                    PendingIntent openIntent = PendingIntent.getActivity(getApplicationContext(), call.argument("notificationId"), new Intent(this, MainActivity.class).putExtra("id", (int) call.argument("notificationId")).putExtra("chatGUID", (String) call.argument("group")).setType("NotificationOpen"), Intent.FILL_IN_ACTION);
+
+
+                    //for the dismiss button
+                    PendingIntent dismissIntent = PendingIntent.getBroadcast(this, call.argument("notificationId"), new Intent(this, ReplyReceiver.class).putExtra("id", (int) call.argument("notificationId")).putExtra("chatGuid", (String) call.argument("group")).setType("markAsRead"), PendingIntent.FLAG_UPDATE_CURRENT);
+                    NotificationCompat.Action dismissAction = new NotificationCompat.Action.Builder(0, "Mark As Read", dismissIntent).build();
+
+                    //for the quick reply
+                    Intent intent = new Intent(this, ReplyReceiver.class)
+                            .putExtra("id", (int) call.argument("notificationId"))
+                            .putExtra("chatGuid", (String) call.argument("group"))
+                            .setType("reply");
+                    PendingIntent replyIntent = PendingIntent.getBroadcast(this, call.argument("notificationId"), intent, PendingIntent.FLAG_UPDATE_CURRENT);
+                    androidx.core.app.RemoteInput replyInput = new androidx.core.app.RemoteInput.Builder("key_text_reply").setLabel("Reply").build();
+                    NotificationCompat.Action replyAction = new NotificationCompat.Action.Builder(0, "Reply", replyIntent).addRemoteInput(replyInput).build();
+
+                    //actual notification
+                    NotificationCompat.Builder builder = new NotificationCompat.Builder(this, call.argument("CHANNEL_ID"))
+                            .setSmallIcon(R.mipmap.ic_launcher)
+                            .setContentTitle(call.argument("contentTitle"))
+                            .setContentText(call.argument("contentText"))
+                            .setAutoCancel(true)
+                            .setContentIntent(openIntent)
+                            .setProgress(100, call.argument("progress"), false)
+                            .addAction(dismissAction)
+                            .addAction(replyAction)
+                            .setOnlyAlertOnce(true)
+                            .setGroup(call.argument("group"));
+
+
+                    NotificationCompat.Builder summaryBuilder = new NotificationCompat.Builder(this, call.argument("CHANNEL_ID"))
+                            .setSmallIcon(R.mipmap.ic_launcher)
+                            .setContentTitle("New messages")
+                            .setGroup(call.argument("group"))
+                            .setAutoCancel(true)
+                            .setContentIntent(openIntent)
+                            .setGroupSummary(true);
+
+                    NotificationManagerCompat notificationManager = NotificationManagerCompat.from(getApplicationContext());
+
+                    notificationManager.notify(call.argument("notificationId"), builder.build());
+                    notificationManager.notify(call.argument("summaryId"), summaryBuilder.build());
+                    progressBars.put(call.argument("notificationId"), builder);
+                    result.success("");
+                } else if (call.method.equals("update-attachment-download-notification")) {
+                    NotificationCompat.Builder builder = progressBars.get(call.argument("notificationId"));
+                    if (builder == null) return;
+                    builder.setProgress(100, call.argument("progress"), false);
+
+                    NotificationManagerCompat notificationManager = NotificationManagerCompat.from(getApplicationContext());
+                    notificationManager.notify(call.argument("notificationId"), builder.build());
+
+                    result.success("");
+                } else if (call.method.equals("finish-attachment-download")) {
+//                                void finishProgressWithAttachment(
+//                                        String contentText, int id, Attachment attachment) {
+//                                    String path;
+//                                    if (attachment.mimeType != null && attachment.mimeType.startsWith("image/"))
+//                                        path =
+//                                                "/attachments/${attachment.guid}/${attachment.transferName}";
+//
+//                                    MethodChannelInterface()
+//                                            .platform
+//                                            .invokeMethod("finish-attachment-download", {
+//                                                    "CHANNEL_ID": "com.bluebubbles.new_messages",
+//                                            "contentText": contentText,
+//                                            "notificationId": id,
+//                                            "path": path,
+//                                    });
+//                                }
+                    NotificationCompat.Builder builder = progressBars.get(call.argument("notificationId"));
+                    if (builder == null) return;
+                    progressBars.remove(call.argument("notificationId"));
+                    builder.setProgress(0, 0, false);
+                    if (call.argument("path") != null) {
+                        Bitmap image = BitmapFactory.decodeFile(getFilesDir().getAbsolutePath() + call.argument("path"));
+                        Log.d("notificationAttachment", "found file with path " + getFilesDir().getAbsolutePath() + call.argument("path"));
+                        builder.setStyle(new NotificationCompat.BigPictureStyle().bigPicture(image).bigLargeIcon(null));
+                        builder.setLargeIcon(image);
+                    }
+                    builder.setContentText(call.argument("contentText"));
+
+                    NotificationManagerCompat notificationManager = NotificationManagerCompat.from(getApplicationContext());
+                    notificationManager.notify(call.argument("notificationId"), builder.build());
+
+                    result.success("");
                 }
+//                    });
+//                }
             });
         }
     }
@@ -247,18 +354,20 @@ public class BackgroundService extends Service {
 
     private void destroyHeadlessThread() {
         if (backgroundView == null) return;
-        new Handler(Looper.getMainLooper()).post(new Runnable() {
-            @Override
-            public void run() {
-                if (backgroundView != null) {
-                    try {
-                        backgroundView.destroy();
-                    } catch (Exception e) {
+//        new Handler(Looper.getMainLooper()).post(new Runnable() {
+//            @Override
+//            public void run() {
+        if (backgroundView != null) {
+            try {
+                backgroundView.destroy();
+                backgroundView = null;
+                backgroundChannel = null;
+            } catch (Exception e) {
 
-                    }
-                }
             }
-        });
+        }
+//            }
+//        });
     }
 
     public LocalBroadcastManager broadcaster;
@@ -288,33 +397,37 @@ public class BackgroundService extends Service {
     }
 
 
-
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.i("LocalService", "Received start id " + startId + ": " + intent);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            CharSequence name = "Background Service";
+            String description = "Persistent notification showing that bluebubbles is running in the background";
+            int importance = NotificationManager.IMPORTANCE_LOW;
+            NotificationChannel channel = new NotificationChannel("background_notification_channel", name, importance);
+            channel.setDescription(description);
+            channel.setShowBadge(false);
+            // Register the channel with the system; you can't change the importance
+            // or other notification behaviors after this
+            NotificationManager notificationManager = getSystemService(NotificationManager.class);
+            notificationManager.createNotificationChannel(channel);
+        }
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(getApplicationContext(), "background_notification_channel")
+                .setSmallIcon(R.mipmap.ic_launcher)
+                .setContentTitle("BlueBubbles Service")
+                .setContentText("BlueBubbles is running in the background");
+
+
+        startForeground(startId, builder.build());
         if (intent != null && intent.getExtras() != null && intent.getExtras().getBoolean("fromBackground")) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                CharSequence name = "startup";
-                String description = "for testing";
-                int importance = NotificationManager.IMPORTANCE_HIGH;
-                NotificationChannel channel = new NotificationChannel("someChannel", name, importance);
-                channel.setDescription(description);
-                // Register the channel with the system; you can't change the importance
-                // or other notification behaviors after this
-                NotificationManager notificationManager = getSystemService(NotificationManager.class);
-                notificationManager.createNotificationChannel(channel);
-            }
-            NotificationCompat.Builder builder = new NotificationCompat.Builder(getApplicationContext(), "someChannel")
-                    .setSmallIcon(R.mipmap.ic_launcher)
-                    .setContentTitle("BlueBubbles Service")
-                    .setContentText("BlueBubbles is running in the background");
-
-
-            startForeground(new Random().nextInt(), builder.build());
             initHeadlessThread();
+            isAlive = false;
 
         } else {
+            Log.d("headless", "destroying headless thread");
             destroyHeadlessThread();
+            isAlive = true;
         }
         return START_STICKY;
     }

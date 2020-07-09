@@ -140,7 +140,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> {
         ),
         widget.timeStamp != null
             ? Padding(
-                padding: const EdgeInsets.symmetric(vertical: 14.0),
+                padding: const EdgeInsets.all(14.0),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: <Widget>[

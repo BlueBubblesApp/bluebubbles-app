@@ -99,7 +99,7 @@ public class FirebaseMessagingService extends com.google.firebase.messaging.Fire
                     }
                 }
             });
-            if (backgroundService != null && !backgroundService.isAlive()) {
+            if (backgroundService.backgroundChannel != null) {
                 backgroundService.invokeMethod(intent.getExtras().getString("type"), intent.getExtras().getString("data"));
             }
         }

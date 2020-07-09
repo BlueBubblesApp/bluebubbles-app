@@ -4,6 +4,7 @@ import 'dart:math';
 import 'dart:ui';
 
 import 'package:bluebubble_messages/action_handler.dart';
+import 'package:bluebubble_messages/blocs/chat_bloc.dart';
 import 'package:bluebubble_messages/helpers/utils.dart';
 import 'package:bluebubble_messages/managers/contact_manager.dart';
 import 'package:bluebubble_messages/managers/method_channel_interface.dart';
@@ -32,7 +33,14 @@ callbackHandler() async {
   await DBProvider.db.initDB();
   await ContactManager().getContacts(headless: true);
   SettingsManager().init();
-  await SettingsManager().getSavedSettings(startSocketIO: false);
+  MethodChannelInterface().init(null, channel: _backgroundChannel);
+  SocketManager().connectCb = () {
+    debugPrint("connectCb");
+    resyncChats();
+    SocketManager().closeSocket();
+  };
+  await SettingsManager().getSavedSettings();
+  // SocketManager().startSocketIO();
   _backgroundChannel.setMethodCallHandler((call) async {
     debugPrint("call " + call.method);
     if (call.method == "new-message") {
@@ -73,6 +81,16 @@ callbackHandler() async {
           createAttachmentNotification: !chat.isMuted, isHeadless: true);
     } else if (call.method == "updated-message") {
       ActionHandler.handleUpdatedMessage(jsonDecode(call.arguments));
+    } else if (call.method == "reply") {
+      debugPrint("replying with data " + call.arguments.toString());
+      Chat chat = await Chat.findOne({"guid": call.arguments["chat"]});
+      // SocketManager().startSocketIO(connectCB: () {
+      //   debugPrint("replying with data " + call.arguments.toString());
+      // });
+      ActionHandler.sendMessage(chat, call.arguments["text"]);
+    } else if (call.method == "markAsRead") {
+      Chat chat = await Chat.findOne({"guid": call.arguments["chat"]});
+      SocketManager().removeChatNotification(chat);
     }
   });
   fcmAuth(_backgroundChannel);
@@ -94,6 +112,10 @@ void fcmAuth(MethodChannel channel) async {
       debugPrint("some weird ass error " + e.details);
     }
   }
+}
+
+void resyncChats() async {
+  List<Chat> chats = await ChatBloc().getChats();
 }
 
 createNewMessage(String contentTitle, String contentText, String group, int id,

@@ -143,9 +143,9 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     super.initState();
     SettingsManager().init();
     LifeCycleManager().opened();
-    BackgroundIsolateInterface.initialize();
     // QueueManager().init();
     MethodChannelInterface().init(context);
+    BackgroundIsolateInterface.initialize();
     ReceiveSharingIntent.getInitialMedia().then((List<SharedMediaFile> value) {
       if (value == null) return;
 

@@ -258,22 +258,25 @@ class _SentMessageState extends State<SentMessage>
             ],
           ),
           widget.timeStamp != null
-              ? RichText(
-                  text: TextSpan(
-                    style: Theme.of(context)
-                        .textTheme
-                        .subtitle2
-                        .apply(fontSizeDelta: 1.7),
-                    children: [
-                      TextSpan(
-                        text: "${widget.timeStamp["date"]}, ",
-                        style: Theme.of(context)
-                            .textTheme
-                            .subtitle2
-                            .apply(fontSizeDelta: 1.7, fontWeightDelta: 10),
-                      ),
-                      TextSpan(text: "${widget.timeStamp["time"]}")
-                    ],
+              ? Padding(
+                  padding: const EdgeInsets.all(14.0),
+                  child: RichText(
+                    text: TextSpan(
+                      style: Theme.of(context)
+                          .textTheme
+                          .subtitle2
+                          .apply(fontSizeDelta: 1.7),
+                      children: [
+                        TextSpan(
+                          text: "${widget.timeStamp["date"]}, ",
+                          style: Theme.of(context)
+                              .textTheme
+                              .subtitle2
+                              .apply(fontSizeDelta: 1.7, fontWeightDelta: 10),
+                        ),
+                        TextSpan(text: "${widget.timeStamp["time"]}")
+                      ],
+                    ),
                   ),
                 )
               : Container(),

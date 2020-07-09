@@ -39,6 +39,7 @@ import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
+import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
@@ -465,13 +466,18 @@ public class MainActivity extends FlutterActivity {
         getApplicationContext().bindService(new Intent(getApplicationContext(), BackgroundService.class), mServerConn, Context.BIND_AUTO_CREATE);
         Intent serviceIntent = new Intent(getApplicationContext(), BackgroundService.class);
         serviceIntent.putExtra("fromBackground", false);
-        startService(serviceIntent);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(serviceIntent);
+        } else {
+            startService(serviceIntent);
+        }
+//        startService(serviceIntent);
     }
 
     @Override
     protected void onDestroy() {
         Log.d("MainActivity", "removed from memory");
-        if (backgroundService != null) {
+        if (backgroundService != null && backgroundService.isAlive()) {
             backgroundService.setAlive(false);
             Log.d("isAlive", "set isAlive to false");
         }

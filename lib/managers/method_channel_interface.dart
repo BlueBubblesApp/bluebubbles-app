@@ -31,13 +31,19 @@ class MethodChannelInterface {
   MethodChannelInterface._internal();
 
   //interface with native code
-  final platform = const MethodChannel('samples.flutter.dev/fcm');
+  MethodChannel platform;
 
   BuildContext _context;
 
-  void init(BuildContext context) {
-    platform.setMethodCallHandler(callHandler);
-    _context = context;
+  void init(BuildContext context, {MethodChannel channel}) {
+    //this happens if it is a headless thread
+    if (channel != null) {
+      platform = channel;
+    } else {
+      platform = MethodChannel('samples.flutter.dev/fcm');
+      platform.setMethodCallHandler(callHandler);
+      _context = context;
+    }
   }
 
   Future invokeMethod(String method, [dynamic arguments]) async {
@@ -155,6 +161,7 @@ class MethodChannelInterface {
   }
 
   void openChat(String id) async {
+    if (_context == null) return;
     Chat openedChat = await Chat.findOne({"GUID": id});
     if (openedChat != null) {
       await openedChat.getParticipants();

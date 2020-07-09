@@ -159,7 +159,7 @@ class SocketManager {
     if (_manager.socket != null) {
       _manager.socket.destroy();
     }
-    connectCb = connectCB;
+    if (connectCB != null) connectCb = connectCB;
 
     debugPrint(
         "Starting socket io with the server: ${SettingsManager().settings.serverAddress}");

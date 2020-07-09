@@ -33,7 +33,7 @@ class SettingsManager {
         .then((value) => debugFile = value);
   }
 
-  Future<void> getSavedSettings({bool startSocketIO = true}) async {
+  Future<void> getSavedSettings({bool headless = false}) async {
     _manager.sharedPreferences = await SharedPreferences.getInstance();
     var result = _manager.sharedPreferences.getString('Settings');
     if (result != null) {
@@ -42,7 +42,7 @@ class SettingsManager {
     }
 
     SocketManager().finishedSetup.sink.add(_manager.settings.finishedSetup);
-    if (startSocketIO) {
+    if (!headless) {
       SocketManager().startSocketIO();
       SocketManager().authFCM();
     }

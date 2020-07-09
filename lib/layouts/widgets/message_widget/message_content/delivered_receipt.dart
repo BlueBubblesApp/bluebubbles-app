@@ -22,9 +22,11 @@ class _DeliveredReceiptState extends State<DeliveredReceipt>
   void didChangeDependencies() async {
     super.didChangeDependencies();
     await Future.delayed(Duration(milliseconds: 100));
-    setState(() {
-      showReceipt = widget.showDeliveredReceipt;
-    });
+    if (this.mounted) {
+      setState(() {
+        showReceipt = widget.showDeliveredReceipt;
+      });
+    }
   }
 
   @override

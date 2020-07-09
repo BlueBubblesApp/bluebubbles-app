@@ -28,7 +28,8 @@ class ActionHandler {
   /// sendMessage(chatObject, 'Hello world!')
   /// ```
   static Future<void> sendMessage(Chat chat, String text,
-      {List<Attachment> attachments = const []}) async {
+      {List<Attachment> attachments = const [],
+      bool closeOnFinish = false}) async {
     if (text == null || text.trim().length == 0) return;
 
     Map<String, dynamic> params = new Map();
@@ -44,28 +45,35 @@ class ActionHandler {
       dateCreated: DateTime.now(),
       hasAttachments: attachments.length > 0 ? true : false,
     );
-    NewMessageManager()
-        .updateWithMessage(chat, sentMessage, sentFromThisClient: true);
 
     // If we aren't conneted to the socket, set the message error code
     if (SettingsManager().settings.connected == false)
       sentMessage.error = MessageError.NO_CONNECTION.code;
 
-    await sentMessage.save();
-    await chat.save();
-    await chat.addMessage(sentMessage);
+    if (!closeOnFinish) {
+      NewMessageManager()
+          .updateWithMessage(chat, sentMessage, sentFromThisClient: true);
+      await sentMessage.save();
+      await chat.save();
+      await chat.addMessage(sentMessage);
+    }
 
     // If we aren't connected to the socket, return
     if (SettingsManager().settings.connected == false) return;
 
     if (SocketManager().socket == null) {
       SocketManager().startSocketIO(connectCB: () {
-        ActionHandler.sendMessage(chat, text, attachments: attachments);
-        SocketManager().closeSocket();
+        ActionHandler.sendMessage(chat, text,
+            attachments: attachments, closeOnFinish: true);
       });
     } else {
       SocketManager().socket.sendMessage("send-message", jsonEncode(params),
           (data) async {
+        if (closeOnFinish &&
+            SocketManager().attachmentDownloaders.length == 0 &&
+            SocketManager().attachmentSenders.length == 0) {
+          SocketManager().closeSocket();
+        }
         Map response = jsonDecode(data);
         debugPrint("message sent: " + response.toString());
 
@@ -325,9 +333,7 @@ class ActionHandler {
         Attachment file = Attachment.fromMap(attachmentItem);
         await file.save(message);
 
-        if (!isHeadless &&
-            SettingsManager().settings.autoDownload &&
-            file.mimeType != null) {
+        if (SettingsManager().settings.autoDownload && file.mimeType != null) {
           new AttachmentDownloader(file, message,
               createNotification:
                   createAttachmentNotification && file.mimeType != null);
