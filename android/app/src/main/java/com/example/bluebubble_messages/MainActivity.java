@@ -66,21 +66,26 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.example.bluebubble_messages.BackgroundService.app;
+import static com.example.bluebubble_messages.BackgroundService.db;
+
 
 public class MainActivity extends FlutterActivity {
     public static final String CHANNEL = "samples.flutter.dev/fcm";
     private static final String TAG = "MainActivity";
-    FirebaseApp app;
     static FlutterEngine engine;
-    public Long callbackHandle;
-    private DatabaseReference db;
     private FusedLocationProviderClient fusedLocationClient;
-    //    private Intent startingIntent;
     private String startingChat;
     Map<Integer, NotificationCompat.Builder> progressBars = new HashMap<>();
     public static String BACKGROUND_SERVICE_SHARED_PREF = "BACKGROUND_SERVICE_SHARED_PREF ";
     public static String BACKGROUND_HANDLE_SHARED_PREF_KEY = "BACKGROUND_HANDLE_SHARED_PREF_KEY";
 
+
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState, @Nullable PersistableBundle persistentState) {
+        super.onCreate(savedInstanceState, persistentState);
+    }
 
     private ValueEventListener dbListener = new ValueEventListener() {
         @Override
@@ -99,12 +104,6 @@ public class MainActivity extends FlutterActivity {
         }
     };
 
-    @Override
-    public void onCreate(@Nullable Bundle savedInstanceState, @Nullable PersistableBundle persistentState) {
-        super.onCreate(savedInstanceState, persistentState);
-    }
-
-
     @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     public void configureFlutterEngine(@NonNull FlutterEngine flutterEngine) {
@@ -115,7 +114,7 @@ public class MainActivity extends FlutterActivity {
                 .setMethodCallHandler(
                         (call, result) -> {
                             if (call.method.equals("auth")) {
-                                if (app == null) {
+                                if (app == null ) {
                                     app = FirebaseApp.initializeApp(getContext(), new FirebaseOptions.Builder()
                                             .setProjectId(call.argument("project_id"))
                                             .setStorageBucket(call.argument("storage_bucket"))
@@ -465,6 +464,7 @@ public class MainActivity extends FlutterActivity {
         LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver, new IntentFilter("MyData"));
         getApplicationContext().bindService(new Intent(getApplicationContext(), BackgroundService.class), mServerConn, Context.BIND_AUTO_CREATE);
         Intent serviceIntent = new Intent(getApplicationContext(), BackgroundService.class);
+        serviceIntent.putExtra("fromBackground", false);
         startService(serviceIntent);
     }
 
@@ -477,7 +477,7 @@ public class MainActivity extends FlutterActivity {
         }
         try {
             getApplicationContext().unbindService(mServerConn);
-            unregisterReceiver(mMessageReceiver);
+            LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiver);
         } catch (Exception e) {
             e.printStackTrace();
             Log.d("isolate", "unable to unbind service");

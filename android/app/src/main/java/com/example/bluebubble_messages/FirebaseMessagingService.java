@@ -11,6 +11,7 @@ import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Binder;
+import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
@@ -22,7 +23,11 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkManager;
 
+import com.google.firebase.FirebaseApp;
+import com.google.firebase.FirebaseOptions;
 import com.google.firebase.messaging.RemoteMessage;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.itsclicking.clickapp.fluttersocketio.FlutterSocketIoPlugin;
 import com.tekartik.sqflite.SqflitePlugin;
 
@@ -30,6 +35,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 import io.flutter.plugin.common.MethodCall;
@@ -67,7 +74,8 @@ public class FirebaseMessagingService extends com.google.firebase.messaging.Fire
     public void onCreate() {
         Log.d("isolate", "firebase service spawned");
         broadcaster = LocalBroadcastManager.getInstance(this);
-        getApplicationContext().bindService(new Intent(getApplicationContext(), BackgroundService.class), mServerConn, Context.BIND_AUTO_CREATE);
+        Intent intent = new Intent(getApplicationContext(), BackgroundService.class);
+        getApplicationContext().bindService(intent, mServerConn, Context.BIND_AUTO_CREATE);
     }
 
     @Override
@@ -91,8 +99,7 @@ public class FirebaseMessagingService extends com.google.firebase.messaging.Fire
                     }
                 }
             });
-            if (!backgroundService.isAlive()) {
-
+            if (backgroundService != null && !backgroundService.isAlive()) {
                 backgroundService.invokeMethod(intent.getExtras().getString("type"), intent.getExtras().getString("data"));
             }
         }

@@ -15,6 +15,8 @@
     <uses-permission android:name="android.permission.CALL_PHONE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"></uses-permission>
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
     <!--    <uses-permission android:name="android.permission.REQUEST_COMPANION_RUN_IN_BACKGROUND"/>-->
     <!--    <uses-permission android:name="android.permission.REQUEST_COMPANION_USE_DATA_IN_BACKGROUND"/>-->
     <application
@@ -23,9 +25,11 @@
         android:label="BlueBubbles"
         android:usesCleartextTraffic="true">
 
-        <receiver android:name=".autostart">
+        <receiver android:name=".Autostart">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON"/>
             </intent-filter>
         </receiver>
         <receiver android:name=".ReplyReceiver"></receiver>
@@ -46,15 +50,19 @@
         <service
             android:name=".FirebaseMessagingService"
             android:exported="false"
-            android:stopWithTask="false">
+            android:stopWithTask="false"
+            android:directBootAware="true">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON"/>
             </intent-filter>
         </service>
         <service
             android:name=".BackgroundService"
             android:enabled="true"
-            android:stopWithTask="false" />
+            android:stopWithTask="false"
+            android:directBootAware="true"/>
 
         <provider
             android:name="com.google.firebase.provider.FirebaseInitProvider"

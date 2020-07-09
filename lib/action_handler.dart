@@ -182,7 +182,8 @@ class ActionHandler {
   /// ```dart
   /// handleUpdatedMessage(JsonMap)
   /// ```
-  static Future<void> handleUpdatedMessage(Map<String, dynamic> data) async {
+  static Future<void> handleUpdatedMessage(Map<String, dynamic> data,
+      {bool headless = false}) async {
     Message updatedMessage = new Message.fromMap(data);
 
     if (updatedMessage.isFromMe) {
@@ -203,7 +204,7 @@ class ActionHandler {
       chat = Chat.fromMap(data["chats"][0]);
     }
 
-    if (updatedMessage != null)
+    if (!headless && updatedMessage != null)
       NewMessageManager()
           .updateSpecificMessage(chat, updatedMessage.guid, updatedMessage);
   }

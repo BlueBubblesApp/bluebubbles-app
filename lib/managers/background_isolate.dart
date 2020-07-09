@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 import 'dart:ui';
@@ -6,10 +7,12 @@ import 'package:bluebubble_messages/action_handler.dart';
 import 'package:bluebubble_messages/helpers/utils.dart';
 import 'package:bluebubble_messages/managers/contact_manager.dart';
 import 'package:bluebubble_messages/managers/method_channel_interface.dart';
+import 'package:bluebubble_messages/managers/settings_manager.dart';
 import 'package:bluebubble_messages/repository/database.dart';
 import 'package:bluebubble_messages/repository/models/chat.dart';
 import 'package:bluebubble_messages/repository/models/handle.dart';
 import 'package:bluebubble_messages/repository/models/message.dart';
+import 'package:bluebubble_messages/socket_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -28,6 +31,8 @@ callbackHandler() async {
   WidgetsFlutterBinding.ensureInitialized();
   await DBProvider.db.initDB();
   await ContactManager().getContacts(headless: true);
+  SettingsManager().init();
+  await SettingsManager().getSavedSettings(startSocketIO: false);
   _backgroundChannel.setMethodCallHandler((call) async {
     debugPrint("call " + call.method);
     if (call.method == "new-message") {
@@ -66,9 +71,29 @@ callbackHandler() async {
 
       ActionHandler.handleMessage(data,
           createAttachmentNotification: !chat.isMuted, isHeadless: true);
+    } else if (call.method == "updated-message") {
+      ActionHandler.handleUpdatedMessage(jsonDecode(call.arguments));
     }
   });
-  _backgroundChannel.invokeMethod("initialized");
+  fcmAuth(_backgroundChannel);
+}
+
+void fcmAuth(MethodChannel channel) async {
+  debugPrint("authenticating auth fcm with data " +
+      SettingsManager().settings.fcmAuthData.toString());
+  try {
+    String result = await channel.invokeMethod(
+        "auth", SettingsManager().settings.fcmAuthData);
+    SocketManager().token = result;
+  } on PlatformException catch (e) {
+    if (e.code != "failed") {
+      debugPrint("error authorizing firebase: " + e.code);
+      await Future.delayed(Duration(seconds: 10));
+      fcmAuth(channel);
+    } else {
+      debugPrint("some weird ass error " + e.details);
+    }
+  }
 }
 
 createNewMessage(String contentTitle, String contentText, String group, int id,

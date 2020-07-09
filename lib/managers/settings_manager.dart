@@ -33,7 +33,7 @@ class SettingsManager {
         .then((value) => debugFile = value);
   }
 
-  void getSavedSettings(BuildContext context) async {
+  Future<void> getSavedSettings({bool startSocketIO = true}) async {
     _manager.sharedPreferences = await SharedPreferences.getInstance();
     var result = _manager.sharedPreferences.getString('Settings');
     if (result != null) {
@@ -42,8 +42,10 @@ class SettingsManager {
     }
 
     SocketManager().finishedSetup.sink.add(_manager.settings.finishedSetup);
-    SocketManager().startSocketIO();
-    SocketManager().authFCM();
+    if (startSocketIO) {
+      SocketManager().startSocketIO();
+      SocketManager().authFCM();
+    }
   }
 
   void saveSettings(Settings settings,

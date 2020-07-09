@@ -77,4 +77,8 @@ dependencies {
     implementation 'com.google.firebase:firebase-analytics:17.2.1'
     implementation 'com.google.firebase:firebase-database:19.2.0'
     implementation 'androidx.work:work-runtime:2.1.0'
+    implementation 'com.google.firebase:firebase-messaging-directboot:20.2.0'
+
+    //for json string to map
+    implementation 'com.google.code.gson:gson:2.8.6'
 }

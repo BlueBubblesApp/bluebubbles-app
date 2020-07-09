@@ -186,8 +186,8 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     });
 
     NotificationManager().createNotificationChannel();
-    SchedulerBinding.instance.addPostFrameCallback(
-        (_) => SettingsManager().getSavedSettings(context));
+    SchedulerBinding.instance
+        .addPostFrameCallback((_) => SettingsManager().getSavedSettings());
     WidgetsBinding.instance.addObserver(this);
   }
 
