@@ -11,12 +11,10 @@ import 'package:bluebubble_messages/layouts/widgets/send_widget.dart';
 class MessageView extends StatefulWidget {
   final MessageBloc messageBloc;
   final bool showHandle;
-  final LayerLink layerLink;
   MessageView({
     Key key,
     this.messageBloc,
     this.showHandle,
-    this.layerLink,
   }) : super(key: key);
 
   @override
@@ -71,7 +69,7 @@ class _MessageViewState extends State<MessageView> {
         }
       } else if (event.containsKey("update") && event["update"] != null) {
         _messages = event["messages"].values.toList();
-        setState(() {});
+        if (this.mounted) setState(() {});
         _listKey.currentState.setState(() {});
       } else {
         int originalMessageLength = _messages.length;
@@ -87,7 +85,7 @@ class _MessageViewState extends State<MessageView> {
         }
         // if (_listKey.currentState != null)
         //   _listKey.currentState.setState(() {});
-        setState(() {});
+        if (this.mounted) setState(() {});
       }
     });
 

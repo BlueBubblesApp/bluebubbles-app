@@ -89,8 +89,8 @@ class _NewChatCreatorState extends State<NewChatCreator> {
     output = output.replaceAll(")", "");
     output = output.replaceAll("+", "");
     output = output.replaceAll(" ", "");
-    output = output.replaceAll(".", "");
-    output = output.replaceAll("@", "");
+    // output = output.replaceAll(".", "");
+    // output = output.replaceAll("@", "");
     return output;
   }
 
@@ -104,41 +104,54 @@ class _NewChatCreatorState extends State<NewChatCreator> {
       participants.forEach((element) {
         if (element is Contact) {
           element.phones.forEach((element) {
-            addresses.add(cleansePhoneNumber(element.value));
+            if (!addresses.contains(cleansePhoneNumber(element.value)))
+              addresses.add(cleansePhoneNumber(element.value));
           });
           element.emails.forEach((element) {
-            addresses.add(cleansePhoneNumber(element.value));
+            if (!addresses.contains(cleansePhoneNumber(element.value)))
+              addresses.add(cleansePhoneNumber(element.value));
           });
         } else {
           addresses.add(element);
         }
       });
+      debugPrint(addresses.toString());
       int foundContacts = 0;
       for (Handle handle in chat.participants) {
         for (String address in addresses) {
-          if (address == cleansePhoneNumber(handle.address)) {
+          if (cleansePhoneNumber(handle.address).contains(address)) {
             foundContacts++;
             break;
           }
         }
       }
-      if (foundContacts == participants.length) possibleChats.add(chat);
+      if (foundContacts == participants.length &&
+          chat.participants.length == participants.length)
+        possibleChats.add(chat);
     }
-    if (possibleChats.length > 1)
+    if (possibleChats.length > 1) {
       possibleChats.sort((a, b) {
         return -ChatBloc()
             .tileVals[a.guid]["actualDate"]
             .compareTo(ChatBloc().tileVals[b.guid]["actualDate"]);
       });
-    if (possibleChats.length > 0) {
-      setState(() {
-        existingChat = possibleChats.first;
-        if (existingMessageBloc != null) {
-          existingMessageBloc.dispose();
-        }
-        existingMessageBloc = MessageBloc(existingChat);
-        existingMessageBloc.getMessages();
+      possibleChats.forEach((element) {
+        String toPrint = "Chat: ";
+        element.participants.forEach((element) {
+          toPrint += element.address + ", ";
+        });
+        debugPrint(toPrint);
       });
+    }
+    if (possibleChats.length > 0) {
+      existingChat = possibleChats.first;
+      if (existingMessageBloc != null) {
+        existingMessageBloc.dispose();
+      }
+      existingMessageBloc = new MessageBloc(existingChat);
+      await existingMessageBloc.getMessages();
+      // debugPrint(existingMessageBloc.messages.values.first.text);
+      setState(() {});
       // existingMessageBloc.getMessages();
     } else {
       setState(() {
@@ -232,6 +245,7 @@ class _NewChatCreatorState extends State<NewChatCreator> {
                       ", "
               ? existingChat != null
                   ? MessageView(
+                      key: Key(existingChat.guid),
                       messageBloc: existingMessageBloc,
                       showHandle: existingChat.participants.length > 1,
                     )
@@ -386,7 +400,7 @@ class _NewChatCreatorState extends State<NewChatCreator> {
                               );
                             }
                           } else {
-                            ActionHandler.sendMessage(existingChat, text);
+                            await ActionHandler.sendMessage(existingChat, text);
                           }
                           String title = await getFullChatTitle(existingChat);
                           Navigator.of(context).pushReplacement(
@@ -394,7 +408,7 @@ class _NewChatCreatorState extends State<NewChatCreator> {
                               builder: (context) => ConversationView(
                                 chat: existingChat,
                                 title: title,
-                                messageBloc: MessageBloc(existingChat),
+                                messageBloc: existingMessageBloc,
                               ),
                             ),
                           );
