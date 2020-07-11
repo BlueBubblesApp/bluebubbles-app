@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:bluebubble_messages/blocs/chat_bloc.dart';
 import 'package:bluebubble_messages/blocs/message_bloc.dart';
 import 'package:bluebubble_messages/helpers/utils.dart';
+import 'package:bluebubble_messages/layouts/widgets/contact_avatar_widget.dart';
 import 'package:bluebubble_messages/managers/contact_manager.dart';
 import 'package:bluebubble_messages/repository/models/message.dart';
 import 'package:contacts_service/contacts_service.dart';
@@ -148,33 +149,9 @@ class _ConversationTileState extends State<ConversationTile> {
                                 style: Theme.of(context).textTheme.subtitle1,
                                 maxLines: 1,
                               ),
-                    leading: CircleAvatar(
-                      radius: 20,
-                      child: contactImage == null
-                          ? Container(
-                              width: 40,
-                              height: 40,
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  begin: AlignmentDirectional.topStart,
-                                  colors: [
-                                    HexColor('a0a4af'),
-                                    HexColor('848894')
-                                  ],
-                                ),
-                                borderRadius: BorderRadius.circular(30),
-                              ),
-                              child: Container(
-                                // child: Text("${widget.chat.title[0]}"),
-                                child: (initials is Icon)
-                                    ? initials
-                                    : Text(initials),
-                                alignment: AlignmentDirectional.center,
-                              ),
-                            )
-                          : CircleAvatar(
-                              backgroundImage: contactImage,
-                            ),
+                    leading: ContactAvatarWidget(
+                      contactImage: contactImage,
+                      initials: initials,
                     ),
                     trailing: Container(
                       width: 80,

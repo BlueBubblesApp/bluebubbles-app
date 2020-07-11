@@ -1,5 +1,6 @@
 import 'package:bluebubble_messages/helpers/hex_color.dart';
 import 'package:bluebubble_messages/helpers/utils.dart';
+import 'package:bluebubble_messages/layouts/widgets/message_widget/message_details_popup.dart';
 import 'package:bluebubble_messages/layouts/widgets/message_widget/reactions.dart';
 import 'package:bluebubble_messages/managers/contact_manager.dart';
 import 'package:bluebubble_messages/managers/method_channel_interface.dart';
@@ -195,8 +196,20 @@ class _ReceivedMessageState extends State<ReceivedMessage> {
     }
 
     return GestureDetector(
-      onLongPress: () {
-        // Overlay.of(context).insert(widget.overlayEntry);
+      behavior: HitTestBehavior.translucent,
+      onLongPress: () async {
+        Scrollable.ensureVisible(
+          context,
+          alignmentPolicy: ScrollPositionAlignmentPolicy.keepVisibleAtStart,
+          duration: Duration(milliseconds: 250),
+          curve: Curves.easeInOut,
+        );
+        List<Message> reactions = [];
+        if (widget.message.hasReactions) {
+          reactions = await widget.message.getReactions();
+        }
+
+        Overlay.of(context).insert(_createMessageDetailsPopup(reactions));
       },
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -274,5 +287,16 @@ class _ReceivedMessageState extends State<ReceivedMessage> {
         ],
       ),
     );
+  }
+
+  OverlayEntry _createMessageDetailsPopup(List<Message> reactions) {
+    OverlayEntry entry;
+    entry = OverlayEntry(
+      builder: (context) => MessageDetailsPopup(
+        entry: entry,
+        reactions: reactions,
+      ),
+    );
+    return entry;
   }
 }

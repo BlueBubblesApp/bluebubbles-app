@@ -9,6 +9,7 @@ import 'package:bluebubble_messages/layouts/conversation_view/messages_view.dart
 import 'package:bluebubble_messages/layouts/conversation_view/text_field.dart';
 import 'package:bluebubble_messages/layouts/widgets/CustomCupertinoNavBar.dart';
 import 'package:bluebubble_messages/layouts/widgets/animated_offset_builder.dart';
+import 'package:bluebubble_messages/layouts/widgets/contact_avatar_widget.dart';
 import 'package:bluebubble_messages/layouts/widgets/message_widget/message_widget.dart';
 import 'package:bluebubble_messages/layouts/widgets/message_widget/sent_message.dart';
 import 'package:bluebubble_messages/layouts/widgets/send_widget.dart';
@@ -124,26 +125,10 @@ class _ConversationViewState extends State<ConversationView> {
               onTap: openDetails,
               child: CircleAvatar(
                 radius: 20,
-                child: contactImage == null
-                    ? Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: AlignmentDirectional.topStart,
-                            colors: [HexColor('a0a4af'), HexColor('848894')],
-                          ),
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                        child: Container(
-                          // child: Text("${chat.title[0]}"),
-                          child: (initials is Icon) ? initials : Text(initials),
-                          alignment: AlignmentDirectional.center,
-                        ),
-                      )
-                    : CircleAvatar(
-                        backgroundImage: contactImage,
-                      ),
+                child: ContactAvatarWidget(
+                  contactImage: contactImage,
+                  initials: initials,
+                ),
               ),
             ),
             Container(height: 3.0),

@@ -6,6 +6,7 @@ import 'package:bluebubble_messages/action_handler.dart';
 import 'package:bluebubble_messages/helpers/hex_color.dart';
 import 'package:bluebubble_messages/helpers/utils.dart';
 import 'package:bluebubble_messages/layouts/widgets/message_widget/message_content/delivered_receipt.dart';
+import 'package:bluebubble_messages/layouts/widgets/message_widget/message_details_popup.dart';
 import 'package:bluebubble_messages/layouts/widgets/message_widget/reactions.dart';
 import 'package:bluebubble_messages/main.dart';
 import 'package:bluebubble_messages/managers/method_channel_interface.dart';
@@ -209,21 +210,22 @@ class _SentMessageState extends State<SentMessage>
             if (exp.hasMatch(text)) {
               textSpans.add(
                 TextSpan(
-                    text: text,
-                    recognizer: new TapGestureRecognizer()
-                      ..onTap = () async {
-                        String url = text;
-                        if (!url.startsWith("http://") &&
-                            !url.startsWith("https://")) {
-                          url = "http://" + url;
-                        }
-                        debugPrint("opening url " + url);
-                        MethodChannelInterface()
-                            .invokeMethod("open-link", {"link": url});
-                      },
-                    style: Theme.of(context).textTheme.bodyText2.apply(
-                          decoration: TextDecoration.underline,
-                        )),
+                  text: text,
+                  recognizer: new TapGestureRecognizer()
+                    ..onTap = () async {
+                      String url = text;
+                      if (!url.startsWith("http://") &&
+                          !url.startsWith("https://")) {
+                        url = "http://" + url;
+                      }
+                      debugPrint("opening url " + url);
+                      MethodChannelInterface()
+                          .invokeMethod("open-link", {"link": url});
+                    },
+                  style: Theme.of(context).textTheme.bodyText2.apply(
+                        decoration: TextDecoration.underline,
+                      ),
+                ),
               );
             } else {
               textSpans.add(
@@ -393,52 +395,11 @@ class _SentMessageState extends State<SentMessage>
   }
 
   OverlayEntry _createMessageDetailsPopup(List<Message> reactions) {
-    reactions.forEach((element) {});
-
     OverlayEntry entry;
     entry = OverlayEntry(
-      builder: (context) => Scaffold(
-        backgroundColor: Colors.transparent,
-        body: Stack(
-          children: <Widget>[
-            Positioned.fill(
-              child: GestureDetector(
-                onTap: () {
-                  debugPrint("remove entry");
-                  entry.remove();
-                },
-                child: Container(
-                  color: Colors.black.withAlpha(200),
-                  child: Column(
-                    children: <Widget>[
-                      Spacer(
-                        flex: 3,
-                      ),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(20),
-                        child: BackdropFilter(
-                          filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                          child: Container(
-                            height: 120,
-                            width: MediaQuery.of(context).size.width * 9 / 5,
-                            color: HexColor('26262a').withAlpha(200),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                              // children: reactioners,
-                            ),
-                          ),
-                        ),
-                      ),
-                      Spacer(
-                        flex: 20,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
+      builder: (context) => MessageDetailsPopup(
+        entry: entry,
+        reactions: reactions,
       ),
     );
     return entry;

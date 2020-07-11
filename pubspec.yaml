@@ -62,6 +62,7 @@ dependencies:
   local_auth: ^0.6.2+3
   flutter_blurhash: ^0.5.0
   blurhash_flutter: ^0.1.0
+  sprung: ^1.1.0+11
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
