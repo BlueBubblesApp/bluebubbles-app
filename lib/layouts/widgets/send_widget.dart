@@ -106,9 +106,15 @@ class _SendWidgetState extends State<SendWidget> {
                                   child: child,
                                 );
                               },
-                              child: Text(
-                                widget.text,
-                                style: Theme.of(context).textTheme.bodyText2,
+                              child: RichText(
+                                text: TextSpan(
+                                  children: [
+                                    TextSpan(
+                                      text: widget.text,
+                                    )
+                                  ],
+                                  style: Theme.of(context).textTheme.bodyText2,
+                                ),
                               ),
                             ),
                           ],

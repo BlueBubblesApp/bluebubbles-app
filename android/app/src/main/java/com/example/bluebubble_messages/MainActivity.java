@@ -305,6 +305,9 @@ public class MainActivity extends FlutterActivity {
                                 startActivity(intent);
 
                                 result.success("");
+                            } else if(call.method.equals("open-link")) {
+                                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(call.argument("link"))));
+                                result.success("");
                             } else if (call.method.equals("clear-chat-notifs")) {
                                 NotificationManager manager = (NotificationManager) getApplicationContext().getSystemService(getApplicationContext().NOTIFICATION_SERVICE);
                                 for (StatusBarNotification statusBarNotification : manager.getActiveNotifications()) {

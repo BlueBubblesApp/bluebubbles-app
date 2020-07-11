@@ -71,8 +71,8 @@ class _ReactionsState extends State<Reactions> {
               );
               return Stack(
                 alignment: widget.message.isFromMe
-                    ? Alignment.bottomLeft
-                    : Alignment.bottomRight,
+                    ? Alignment.bottomRight
+                    : Alignment.bottomLeft,
                 children: <Widget>[
                   for (int i = 0; i < reactionIcon.keys.toList().length; i++)
                     Padding(

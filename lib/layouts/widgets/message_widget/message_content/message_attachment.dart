@@ -43,6 +43,15 @@ class _MessageAttachmentState extends State<MessageAttachment>
   void initState() {
     super.initState();
     content = widget.content;
+    if (content is AttachmentDownloader) {
+      (content as AttachmentDownloader).stream.listen((event) {
+        if (event is File) {
+          setState(() {
+            content = event;
+          });
+        }
+      });
+    }
   }
 
   @override
@@ -107,7 +116,7 @@ class _MessageAttachmentState extends State<MessageAttachment>
       String mimeType = widget.attachment.mimeType;
       if (mimeType != null)
         mimeType = mimeType.substring(0, mimeType.indexOf("/"));
-      if (mimeType == null || mimeType == "image") {
+      if (mimeType == "image") {
         return MediaFile(
           child: ImageWidget(
             attachment: widget.attachment,
@@ -145,6 +154,8 @@ class _MessageAttachmentState extends State<MessageAttachment>
           attachment: widget.attachment,
           child: ContactWidget(file: content, attachment: widget.attachment),
         );
+      } else if (widget.attachment.mimeType == null) {
+        return Container();
       } else {
         return MediaFile(
           attachment: widget.attachment,

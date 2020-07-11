@@ -1,3 +1,4 @@
+import 'dart:collection';
 import 'dart:convert';
 import 'dart:ui';
 
@@ -5,13 +6,15 @@ import 'package:bluebubble_messages/action_handler.dart';
 import 'package:bluebubble_messages/helpers/hex_color.dart';
 import 'package:bluebubble_messages/helpers/utils.dart';
 import 'package:bluebubble_messages/layouts/widgets/message_widget/message_content/delivered_receipt.dart';
-import 'package:bluebubble_messages/layouts/widgets/message_widget/message_content/message_content.dart';
 import 'package:bluebubble_messages/layouts/widgets/message_widget/reactions.dart';
 import 'package:bluebubble_messages/main.dart';
+import 'package:bluebubble_messages/managers/method_channel_interface.dart';
 import 'package:bluebubble_messages/repository/models/message.dart';
 import 'package:bluebubble_messages/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class SentMessage extends StatefulWidget {
   final bool showTail;
@@ -174,6 +177,72 @@ class _SentMessageState extends State<SentMessage>
       stack.insertAll(0, tail);
     }
 
+    List<InlineSpan> textSpans = <InlineSpan>[];
+
+    if (widget.message != null && !isEmptyString(widget.message.text)) {
+      RegExp exp =
+          new RegExp(r'(?:(?:https?|ftp):\/\/)?[\w/\-?=%.]+\.[\w/\-?=%]+');
+      List<RegExpMatch> matches = exp.allMatches(widget.message.text).toList();
+
+      List<int> linkIndexMatches = <int>[];
+      matches.forEach((match) {
+        linkIndexMatches.add(match.start);
+        linkIndexMatches.add(match.end);
+      });
+      if (linkIndexMatches.length > 0) {
+        for (int i = 0; i < linkIndexMatches.length + 1; i++) {
+          if (i == 0) {
+            textSpans.add(
+              TextSpan(
+                  text: widget.message.text.substring(0, linkIndexMatches[i])),
+            );
+          } else if (i == linkIndexMatches.length && i - 1 >= 0) {
+            textSpans.add(
+              TextSpan(
+                text: widget.message.text.substring(
+                    linkIndexMatches[i - 1], widget.message.text.length),
+              ),
+            );
+          } else if (i - 1 >= 0) {
+            String text = widget.message.text
+                .substring(linkIndexMatches[i - 1], linkIndexMatches[i]);
+            if (exp.hasMatch(text)) {
+              textSpans.add(
+                TextSpan(
+                    text: text,
+                    recognizer: new TapGestureRecognizer()
+                      ..onTap = () async {
+                        String url = text;
+                        if (!url.startsWith("http://") &&
+                            !url.startsWith("https://")) {
+                          url = "http://" + url;
+                        }
+                        debugPrint("opening url " + url);
+                        MethodChannelInterface()
+                            .invokeMethod("open-link", {"link": url});
+                      },
+                    style: Theme.of(context).textTheme.bodyText2.apply(
+                          decoration: TextDecoration.underline,
+                        )),
+              );
+            } else {
+              textSpans.add(
+                TextSpan(
+                  text: text,
+                ),
+              );
+            }
+          }
+        }
+      } else {
+        textSpans.add(
+          TextSpan(
+            text: widget.message.text,
+          ),
+        );
+      }
+    }
+
     List<Widget> messageWidget = [
       widget.message == null || !isEmptyString(widget.message.text)
           ? Stack(
@@ -201,9 +270,11 @@ class _SentMessageState extends State<SentMessage>
                         : Colors.blue,
                   ),
                   child: widget.customContent == null
-                      ? Text(
-                          widget.message.text,
-                          style: Theme.of(context).textTheme.bodyText2,
+                      ? RichText(
+                          text: TextSpan(
+                            children: textSpans,
+                            style: Theme.of(context).textTheme.bodyText2,
+                          ),
                         )
                       : Column(
                           children: widget.customContent,
@@ -225,6 +296,7 @@ class _SentMessageState extends State<SentMessage>
       );
 
     return GestureDetector(
+      behavior: HitTestBehavior.translucent,
       onLongPress: () async {
         Scrollable.ensureVisible(
           context,

@@ -30,7 +30,7 @@ class LifeCycleManager {
   }
 
   finishDownloader() {
-    SocketManager().closeSocket();
+    if (!_isAlive) SocketManager().closeSocket();
   }
 
   opened() {

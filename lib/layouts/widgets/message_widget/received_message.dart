@@ -1,12 +1,14 @@
 import 'package:bluebubble_messages/helpers/hex_color.dart';
 import 'package:bluebubble_messages/helpers/utils.dart';
-import 'package:bluebubble_messages/layouts/widgets/message_widget/message_content/message_content.dart';
 import 'package:bluebubble_messages/layouts/widgets/message_widget/reactions.dart';
 import 'package:bluebubble_messages/managers/contact_manager.dart';
+import 'package:bluebubble_messages/managers/method_channel_interface.dart';
 import 'package:bluebubble_messages/repository/models/chat.dart';
 import 'package:bluebubble_messages/repository/models/handle.dart';
 import 'package:bluebubble_messages/repository/models/message.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ReceivedMessage extends StatefulWidget {
   final bool showTail;
@@ -76,6 +78,78 @@ class _ReceivedMessageState extends State<ReceivedMessage> {
       stack.insertAll(0, tail);
     }
 
+    List<InlineSpan> textSpans = <InlineSpan>[];
+
+    if (widget.message != null && !isEmptyString(widget.message.text)) {
+      RegExp exp =
+          new RegExp(r'(?:(?:https?|ftp):\/\/)?[\w/\-?=%.]+\.[\w/\-?=%]+');
+      List<RegExpMatch> matches = exp.allMatches(widget.message.text).toList();
+
+      List<int> linkIndexMatches = <int>[];
+      matches.forEach((match) {
+        linkIndexMatches.add(match.start);
+        linkIndexMatches.add(match.end);
+      });
+      if (linkIndexMatches.length > 0) {
+        for (int i = 0; i < linkIndexMatches.length + 1; i++) {
+          if (i == 0) {
+            textSpans.add(
+              TextSpan(
+                  text: widget.message.text.substring(0, linkIndexMatches[i])),
+            );
+          } else if (i == linkIndexMatches.length && i - 1 >= 0) {
+            textSpans.add(
+              TextSpan(
+                text: widget.message.text.substring(
+                    linkIndexMatches[i - 1], widget.message.text.length),
+              ),
+            );
+          } else if (i - 1 >= 0) {
+            String text = widget.message.text
+                .substring(linkIndexMatches[i - 1], linkIndexMatches[i]);
+            if (exp.hasMatch(text)) {
+              textSpans.add(
+                TextSpan(
+                  text: text,
+                  recognizer: new TapGestureRecognizer()
+                    ..onTap = () async {
+                      String url = text;
+                      if (!url.startsWith("http://") ||
+                          !url.startsWith("https://")) {
+                        url = "http://" + url;
+                      }
+                      MethodChannelInterface()
+                          .invokeMethod("open-link", {"link": url});
+
+                      // if (await canLaunch(url)) {
+                      //   await launch(url);
+                      // } else {
+                      //   throw 'Could not launch $url';
+                      // }
+                    },
+                  style: Theme.of(context).textTheme.bodyText1.apply(
+                        decoration: TextDecoration.underline,
+                      ),
+                ),
+              );
+            } else {
+              textSpans.add(
+                TextSpan(
+                  text: text,
+                ),
+              );
+            }
+          }
+        }
+      } else {
+        textSpans.add(
+          TextSpan(
+            text: widget.message.text,
+          ),
+        );
+      }
+    }
+
     List<Widget> messageWidget = [
       widget.message == null || !isEmptyString(widget.message.text)
           ? Stack(
@@ -99,10 +173,11 @@ class _ReceivedMessageState extends State<ReceivedMessage> {
                     decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(20),
                         color: Theme.of(context).accentColor),
-                    child: Text(
-                      widget.message.text,
+                    child: RichText(
+                        text: TextSpan(
+                      children: textSpans,
                       style: Theme.of(context).textTheme.bodyText1,
-                    )),
+                    ))),
               ],
             )
           : Container()
