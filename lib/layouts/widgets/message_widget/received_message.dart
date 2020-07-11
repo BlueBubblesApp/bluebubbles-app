@@ -1,6 +1,7 @@
 import 'package:bluebubble_messages/helpers/hex_color.dart';
 import 'package:bluebubble_messages/helpers/utils.dart';
 import 'package:bluebubble_messages/layouts/widgets/message_widget/message_content/message_content.dart';
+import 'package:bluebubble_messages/layouts/widgets/message_widget/reactions.dart';
 import 'package:bluebubble_messages/managers/contact_manager.dart';
 import 'package:bluebubble_messages/repository/models/chat.dart';
 import 'package:bluebubble_messages/repository/models/handle.dart';
@@ -11,9 +12,8 @@ class ReceivedMessage extends StatefulWidget {
   final bool showTail;
   final Message message;
   final Message olderMessage;
-  final OverlayEntry overlayEntry;
+  // final OverlayEntry overlayEntry;
   final Map<String, String> timeStamp;
-  final Widget reactions;
   final bool showHandle;
   final List<Widget> customContent;
   final bool isFromMe;
@@ -24,9 +24,8 @@ class ReceivedMessage extends StatefulWidget {
     @required this.showTail,
     @required this.olderMessage,
     @required this.message,
-    @required this.overlayEntry,
+    // @required this.overlayEntry,
     @required this.timeStamp,
-    @required this.reactions,
     @required this.showHandle,
     @required this.customContent,
     @required this.isFromMe,
@@ -77,6 +76,38 @@ class _ReceivedMessageState extends State<ReceivedMessage> {
       stack.insertAll(0, tail);
     }
 
+    List<Widget> messageWidget = [
+      widget.message == null || !isEmptyString(widget.message.text)
+          ? Stack(
+              alignment: AlignmentDirectional.bottomStart,
+              children: <Widget>[
+                Stack(
+                  alignment: AlignmentDirectional.bottomStart,
+                  children: stack,
+                ),
+                Container(
+                    margin: EdgeInsets.symmetric(
+                      horizontal: 10,
+                    ),
+                    constraints: BoxConstraints(
+                      maxWidth: MediaQuery.of(context).size.width * 3 / 4,
+                    ),
+                    padding: EdgeInsets.symmetric(
+                      vertical: 8,
+                      horizontal: 14,
+                    ),
+                    decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(20),
+                        color: Theme.of(context).accentColor),
+                    child: Text(
+                      widget.message.text,
+                      style: Theme.of(context).textTheme.bodyText1,
+                    )),
+              ],
+            )
+          : Container()
+    ];
+
     Widget contactItem = new Container(width: 0, height: 0);
     if (!sameSender(widget.message, widget.olderMessage)) {
       contactItem = Padding(
@@ -88,85 +119,85 @@ class _ReceivedMessageState extends State<ReceivedMessage> {
       );
     }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        contactItem,
-        widget.reactions,
-        widget.attachments,
-        GestureDetector(
-          onLongPress: () {
-            debugPrint(widget.message.handleId.toString());
-            Overlay.of(context).insert(widget.overlayEntry);
-          },
-          child: Padding(
-            padding: EdgeInsets.only(bottom: widget.showTail ? 10.0 : 3.0),
-            child: Stack(
-              alignment: AlignmentDirectional.bottomStart,
-              children: <Widget>[
-                !isEmptyString(widget.message.text)
-                    ? Stack(
-                        alignment: AlignmentDirectional.bottomStart,
-                        children: stack,
-                      )
-                    : Container(),
-                !isEmptyString(widget.message.text)
-                    ? Container(
-                        margin: EdgeInsets.symmetric(
-                          horizontal: 10,
-                        ),
-                        constraints: BoxConstraints(
-                          maxWidth: MediaQuery.of(context).size.width * 3 / 4,
-                        ),
-                        padding: EdgeInsets.symmetric(
-                          vertical: 8,
-                          horizontal: 14,
-                        ),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(20),
-                          color: !widget.isFromMe
-                              ? Theme.of(context).accentColor
-                              : Colors.blue,
-                        ),
-                        child: Text(
-                          widget.message.text,
-                          style: Theme.of(context).textTheme.bodyText1,
-                        ),
-                      )
-                    : Container(),
-              ],
-            ),
-          ),
-        ),
-        widget.timeStamp != null
-            ? Padding(
-                padding: const EdgeInsets.all(14.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+    return GestureDetector(
+      onLongPress: () {
+        // Overlay.of(context).insert(widget.overlayEntry);
+      },
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          contactItem,
+          widget.attachments,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: <Widget>[
+              Padding(
+                padding: EdgeInsets.only(bottom: widget.showTail ? 10.0 : 3.0),
+                child: Stack(
+                  alignment: Alignment.topRight,
                   children: <Widget>[
-                    RichText(
-                      text: TextSpan(
-                        style: Theme.of(context)
-                            .textTheme
-                            .subtitle2
-                            .apply(fontSizeDelta: 1.7),
-                        children: [
-                          TextSpan(
-                            text: "${widget.timeStamp["date"]}, ",
-                            style: Theme.of(context)
-                                .textTheme
-                                .subtitle2
-                                .apply(fontSizeDelta: 1.7, fontWeightDelta: 10),
-                          ),
-                          TextSpan(text: "${widget.timeStamp["time"]}")
-                        ],
+                    AnimatedPadding(
+                      duration: Duration(milliseconds: 250),
+                      curve: Curves.easeInOut,
+                      padding: EdgeInsets.only(
+                        right: widget.message != null &&
+                                widget.message.hasReactions &&
+                                !widget.message.hasAttachments
+                            ? 6.0
+                            : 0.0,
+                        top: widget.message != null &&
+                                widget.message.hasReactions &&
+                                !widget.message.hasAttachments
+                            ? 14.0
+                            : 0.0,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: messageWidget,
                       ),
                     ),
+                    !widget.message.hasAttachments
+                        ? Reactions(
+                            message: widget.message,
+                          )
+                        : Container(),
                   ],
                 ),
-              )
-            : Container()
-      ],
+              ),
+            ],
+          ),
+          widget.timeStamp != null
+              ? Padding(
+                  padding: const EdgeInsets.all(14.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      RichText(
+                        text: TextSpan(
+                          style: Theme.of(context)
+                              .textTheme
+                              .subtitle2
+                              .apply(fontSizeDelta: 1.7),
+                          children: [
+                            TextSpan(
+                              text: "${widget.timeStamp["date"]}, ",
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .subtitle2
+                                  .apply(
+                                      fontSizeDelta: 1.7, fontWeightDelta: 10),
+                            ),
+                            TextSpan(text: "${widget.timeStamp["time"]}")
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              : Container()
+        ],
+      ),
     );
   }
 }

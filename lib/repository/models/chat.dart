@@ -239,7 +239,7 @@ class Chat {
     final Database db = await DBProvider.db.database;
     if (chat.id == null) return [];
 
-    String reactionQualifier = reactionsOnly ? "IS NOT" : "IS";
+    // String reactionQualifier = reactionsOnly ? "IS NOT" : "IS";
     String query = ("SELECT"
         " message.ROWID AS ROWID,"
         " message.guid AS guid,"
@@ -268,6 +268,7 @@ class Chat {
         " message.expressiveSendStyleId AS texexpressiveSendStyleIdt,"
         " message.timeExpressiveSendStyleId AS timeExpressiveSendStyleId,"
         " message.hasAttachments AS hasAttachments,"
+        " message.hasReactions AS hasReactions,"
         " handle.ROWID AS handleId,"
         " handle.address AS handleAddress,"
         " handle.country AS handleCountry,"
@@ -276,7 +277,7 @@ class Chat {
         " JOIN chat_message_join AS cmj ON message.ROWID = cmj.messageId"
         " JOIN chat ON cmj.chatId = chat.ROWID"
         " LEFT OUTER JOIN handle ON handle.ROWID = message.handleId"
-        " WHERE chat.ROWID = ? AND message.associatedMessageType $reactionQualifier NULL");
+        " WHERE chat.ROWID = ?");
 
     // Add pagination
     query += " ORDER BY message.dateCreated DESC LIMIT $limit OFFSET $offset";

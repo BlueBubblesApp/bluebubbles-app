@@ -10,22 +10,27 @@ class LifeCycleManager {
 
   static final LifeCycleManager _manager = LifeCycleManager._internal();
 
-  LifeCycleManager._internal();
-
   bool _isAlive = false;
 
   bool get isAlive => _isAlive;
 
+  LifeCycleManager._internal() {
+    SocketManager().socketProcessUpdater.listen((event) {
+      debugPrint("updated socket process");
+      if (event.length == 0 && !_isAlive) {
+        SocketManager().closeSocket();
+      }
+    });
+  }
+
   startDownloader() {
-    opened();
+    if (SocketManager().socket == null) {
+      SocketManager().startSocketIO();
+    }
   }
 
   finishDownloader() {
-    if (!_isAlive &&
-        SocketManager().attachmentDownloaders.length == 0 &&
-        SocketManager().attachmentSenders.length == 0) {
-      close();
-    }
+    SocketManager().closeSocket();
   }
 
   opened() {
@@ -36,9 +41,7 @@ class LifeCycleManager {
   close() {
     _isAlive = false;
     debugPrint("finished setup ${SettingsManager().settings.finishedSetup}");
-    if (SocketManager().attachmentDownloaders.length == 0 &&
-        SocketManager().attachmentSenders.length == 0 &&
-        SettingsManager().settings.finishedSetup) {
+    if (SettingsManager().settings.finishedSetup) {
       SocketManager().closeSocket();
     }
   }

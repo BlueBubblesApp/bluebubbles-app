@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:bluebubble_messages/helpers/attachment_downloader.dart';
 import 'package:bluebubble_messages/layouts/widgets/message_widget/message_content/message_attachment.dart';
+import 'package:bluebubble_messages/layouts/widgets/message_widget/reactions.dart';
 import 'package:bluebubble_messages/managers/settings_manager.dart';
 import 'package:bluebubble_messages/repository/models/attachment.dart';
 import 'package:bluebubble_messages/repository/models/message.dart';
@@ -73,11 +74,30 @@ class _MessageAttachmentsState extends State<MessageAttachments>
           ? MainAxisAlignment.end
           : MainAxisAlignment.start,
       children: <Widget>[
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: 10.0),
-          child: Column(
-            children: _buildAttachments(),
-          ),
+        Stack(
+          alignment:
+              widget.message.isFromMe ? Alignment.topLeft : Alignment.topRight,
+          children: <Widget>[
+            Padding(
+              padding:
+                  widget.message.hasReactions && widget.message.hasAttachments
+                      ? EdgeInsets.only(
+                          right: !widget.message.isFromMe ? 16.0 : 10.0,
+                          bottom: 10.0,
+                          left: widget.message.isFromMe ? 16.0 : 10.0,
+                          top: 24.0,
+                        )
+                      : EdgeInsets.symmetric(horizontal: 10.0),
+              child: Column(
+                children: _buildAttachments(),
+              ),
+            ),
+            widget.message.hasReactions
+                ? Reactions(
+                    message: widget.message,
+                  )
+                : Container(),
+          ],
         ),
       ],
     );

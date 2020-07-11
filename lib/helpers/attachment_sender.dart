@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'dart:io';
+import 'dart:math';
 
 import 'dart:typed_data';
 
@@ -31,6 +32,7 @@ class AttachmentSender {
   List<int> _imageBytes;
   String _text;
   String _attachmentName;
+  int _socketProcessId;
 
   String get guid => _attachmentGuid;
 
@@ -44,6 +46,7 @@ class AttachmentSender {
     _chat = chat;
     _attachmentGuid = "temp-${randomString(8)}";
     _text = text;
+    _socketProcessId = SocketManager().addSocketProcess();
 
     sendAttachment(attachment);
   }
@@ -83,6 +86,7 @@ class AttachmentSender {
           if (!_stream.isClosed) _stream.sink.add(index / _imageBytes.length);
           debugPrint("no more to send");
           SocketManager().finishSender(_attachmentGuid);
+          SocketManager().socketProcesses.remove(_socketProcessId);
           LifeCycleManager().finishDownloader();
         }
       } else {

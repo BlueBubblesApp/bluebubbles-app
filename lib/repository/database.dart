@@ -143,6 +143,7 @@ class DBProvider {
         "expressiveSendStyleId TEXT DEFAULT NULL,"
         "timeExpressiveSendStyleId INTEGER DEFAULT 0,"
         "hasAttachments INTEGER DEFAULT 0,"
+        "hasReactions INTEGER DEFAULT 0,"
         "FOREIGN KEY(handleId) REFERENCES handle(ROWID)"
         ");");
   }

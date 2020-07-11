@@ -16,14 +16,11 @@ class MessageBloc {
 
   Stream<Map<String, dynamic>> get stream => _messageController.stream;
 
-  // List<Message> _allMessages = <Message>[];
   LinkedHashMap<String, Message> _allMessages = new LinkedHashMap();
 
-  Map<String, List<Message>> _reactions = new Map();
+  int _reactions = 0;
 
   LinkedHashMap<String, Message> get messages => _allMessages;
-
-  Map<String, List<Message>> get reactions => _reactions;
 
   Chat _currentChat;
 
@@ -40,7 +37,6 @@ class MessageBloc {
 
   MessageBloc(Chat chat) {
     _currentChat = chat;
-    // getMessages();
     NewMessageManager().stream.listen((Map<String, dynamic> event) {
       if (_messageController.isClosed) return;
       if (event.containsKey(_currentChat.guid)) {
@@ -90,6 +86,17 @@ class MessageBloc {
   }
 
   void insert(Message message, {bool sentFromThisClient = false}) {
+    if (message.associatedMessageGuid != null) {
+      if (_allMessages.containsKey(message.associatedMessageGuid)) {
+        _allMessages[message.associatedMessageGuid].hasReactions = true;
+        _messageController.sink.add({
+          "messages": _allMessages,
+          "update": _allMessages[message.associatedMessageGuid],
+        });
+      }
+      return;
+    }
+
     int index = 0;
     if (_allMessages.length == 0) {
       _allMessages.addAll({message.guid: message});
@@ -134,26 +141,27 @@ class MessageBloc {
   Future<LinkedHashMap<String, Message>> getMessages() async {
     List<Message> messages = await Chat.getMessages(_currentChat);
     messages.forEach((element) {
-      _allMessages.addAll({element.guid: element});
+      if (element.associatedMessageGuid == null) {
+        _allMessages.addAll({element.guid: element});
+      } else {
+        _reactions++;
+      }
     });
     if (!_messageController.isClosed)
       _messageController.sink.add({"messages": _allMessages, "insert": null});
-    getReactions(0);
     return _allMessages;
   }
 
   Future loadMessageChunk(int offset) async {
-    debugPrint("loading older messages");
     Completer completer = new Completer();
     if (_currentChat != null) {
       List<Message> messages =
-          await Chat.getMessages(_currentChat, offset: offset);
+          await Chat.getMessages(_currentChat, offset: offset + _reactions);
       if (messages.length == 0) {
-        debugPrint("messages length is 0, fetching from server");
         Map<String, dynamic> params = Map();
         params["identifier"] = _currentChat.guid;
         params["limit"] = 25;
-        params["offset"] = offset;
+        params["offset"] = offset + _reactions;
         params["withBlurhash"] = true;
         params["where"] = [
           {"statement": "message.service = 'iMessage'", "args": null}
@@ -171,49 +179,39 @@ class MessageBloc {
           List<Message> _messages =
               await MessageHelper.bulkAddMessages(_currentChat, messages);
           _messages.forEach((element) {
-            _allMessages.addAll({element.guid: element});
+            if (element.associatedMessageGuid == null) {
+              _allMessages.addAll({element.guid: element});
+            } else {
+              _reactions++;
+            }
           });
-          // _allMessages.sort((a, b) => -a.dateCreated.compareTo(b.dateCreated));
-          if (!_messageController.isClosed)
+          if (!_messageController.isClosed) {
             _messageController.sink
                 .add({"messages": _allMessages, "insert": null});
-          completer.complete();
-          await getReactions(offset);
+            completer.complete();
+          } else {
+            debugPrint("message controller closed");
+          }
         });
       } else {
-        // debugPrint("loading more messages from sql " +);
         messages.forEach((element) {
-          _allMessages.addAll({element.guid: element});
+          if (element.associatedMessageGuid == null) {
+            _allMessages.addAll({element.guid: element});
+          } else {
+            _reactions++;
+          }
         });
-        // _allMessages.sort((a, b) => -a.dateCreated.compareTo(b.dateCreated));
-        if (!_messageController.isClosed)
+        if (!_messageController.isClosed) {
           _messageController.sink
               .add({"messages": _allMessages, "insert": null});
-        completer.complete();
-        await getReactions(offset);
+          completer.complete();
+        }
       }
     } else {
+      debugPrint("failed to load ");
       completer.completeError("chat not found");
     }
     return completer.future;
-  }
-
-  Future<void> getReactions(int offset) async {
-    List<Message> reactionsResult = await Chat.getMessages(_currentChat,
-        reactionsOnly: true, offset: offset);
-    _reactions = new Map();
-    reactionsResult.forEach((element) {
-      if (element.associatedMessageGuid != null) {
-        // debugPrint(element.handle.toString());
-        String guid = element.associatedMessageGuid
-            .substring(element.associatedMessageGuid.indexOf("/") + 1);
-
-        if (!_reactions.containsKey(guid)) _reactions[guid] = <Message>[];
-        _reactions[guid].add(element);
-      }
-    });
-    if (!_messageController.isClosed)
-      _messageController.sink.add({"messages": _allMessages, "insert": null});
   }
 
   void dispose() {

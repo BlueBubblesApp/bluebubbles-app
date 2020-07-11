@@ -5,8 +5,10 @@ import 'dart:ui';
 
 import 'package:bluebubble_messages/action_handler.dart';
 import 'package:bluebubble_messages/blocs/chat_bloc.dart';
+import 'package:bluebubble_messages/helpers/message_helper.dart';
 import 'package:bluebubble_messages/helpers/utils.dart';
 import 'package:bluebubble_messages/managers/contact_manager.dart';
+import 'package:bluebubble_messages/managers/life_cycle_manager.dart';
 import 'package:bluebubble_messages/managers/method_channel_interface.dart';
 import 'package:bluebubble_messages/managers/settings_manager.dart';
 import 'package:bluebubble_messages/repository/database.dart';
@@ -34,10 +36,10 @@ callbackHandler() async {
   await ContactManager().getContacts(headless: true);
   SettingsManager().init();
   MethodChannelInterface().init(null, channel: _backgroundChannel);
+  LifeCycleManager().close();
   SocketManager().connectCb = () {
     debugPrint("connectCb");
-    resyncChats();
-    SocketManager().closeSocket();
+    resyncChats(_backgroundChannel);
   };
   await SettingsManager().getSavedSettings();
   // SocketManager().startSocketIO();
@@ -51,7 +53,6 @@ callbackHandler() async {
 
       // Find the chat by GUID
       Chat chat = await Chat.findOne({"guid": data["chats"][0]["guid"]});
-      debugPrint("found chat for new message " + chat.toMap().toString());
       if (chat == null) {
         ActionHandler.handleChat(chatData: data["chats"][0], isHeadless: true);
       }
@@ -114,8 +115,78 @@ void fcmAuth(MethodChannel channel) async {
   }
 }
 
-void resyncChats() async {
-  List<Chat> chats = await ChatBloc().getChats();
+void resyncChats(MethodChannel channel) async {
+  int _socketProcess = SocketManager().addSocketProcess();
+  debugPrint("starting resync");
+  SocketManager().socket.sendMessage("get-chats", '{}', (data) {
+    receivedChats(data, () {
+      SocketManager().removeFromSocketProcess(_socketProcess);
+      // SocketManager().closeSocket();
+      debugPrint("finished getting chats");
+    }, channel);
+  });
+  // List<Chat> chats = await ChatBloc().getChats();
+}
+
+void receivedChats(data, Function completeCB, MethodChannel channel) async {
+  debugPrint("got chats");
+  List chats = jsonDecode(data)["data"];
+  getChatMessagesRecursive(chats, 0, completeCB, channel);
+}
+
+void getChatMessagesRecursive(
+    List chats, int index, Function completeCB, MethodChannel channel) async {
+  Chat chat = Chat.fromMap(chats[index]);
+  await chat.save();
+  List<Message> messages = await Chat.getMessages(chat, limit: 1, offset: 0);
+
+  Map<String, dynamic> params = Map();
+  params["identifier"] = chat.guid;
+  params["withBlurhash"] = true;
+  params["where"] = [
+    {"statement": "message.service = 'iMessage'", "args": null}
+  ];
+  if (messages.length != 0) {
+    params["after"] = messages.first.dateCreated.millisecondsSinceEpoch + 10;
+    params["limit"] = 500;
+    debugPrint("after is " + params["after"].toString());
+  } else {
+    params["limit"] = 25;
+  }
+  SocketManager().socket.sendMessage("get-chat-messages", jsonEncode(params),
+      (data) {
+    receivedMessagesForChat(chat, data, channel);
+    if (index + 1 < chats.length) {
+      getChatMessagesRecursive(chats, index + 1, completeCB, channel);
+    } else {
+      completeCB();
+    }
+  });
+}
+
+void receivedMessagesForChat(Chat chat, data, MethodChannel channel) async {
+  List messages = jsonDecode(data)["data"];
+  debugPrint("got messages " + messages.length.toString() + ", " + chat.guid);
+
+  MessageHelper.bulkAddMessages(chat, messages);
+  // for (var _message in messages) {
+  //   Message message = Message.fromMap(_message);
+  //   String title = await getFullChatTitle(chat);
+
+  //   if (!message.isFromMe && !chat.isMuted) {
+  //     createNewMessage(
+  //       title,
+  //       !isEmptyString(message.text)
+  //           ? message.text
+  //           : message.hasAttachments ? "Attachments" : "Something went wrong",
+  //       chat.guid,
+  //       Random().nextInt(9999),
+  //       chat.id,
+  //       channel,
+  //       handle: message.handle,
+  //     );
+  //   }
+  // }
 }
 
 createNewMessage(String contentTitle, String contentText, String group, int id,
@@ -132,7 +203,7 @@ createNewMessage(String contentTitle, String contentText, String group, int id,
       address = "tel:${handle.address}";
     }
   }
-  debugPrint("person " + address);
+  // debugPrint("person " + address);
   channel.invokeMethod("new-message-notification", {
     "CHANNEL_ID": "com.bluebubbles.new_messages",
     "contentTitle": contentTitle,

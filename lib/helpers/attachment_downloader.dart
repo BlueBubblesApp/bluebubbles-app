@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'dart:io';
+import 'dart:math';
 
 import 'dart:typed_data';
 
@@ -31,6 +32,7 @@ class AttachmentDownloader {
   String _title;
   Chat _chat;
   bool _createNotification;
+  int _socketProcessId;
 
   double get progress => (_currentChunk) / _totalChunks;
   Attachment get attachment => _attachment;
@@ -42,6 +44,7 @@ class AttachmentDownloader {
     _attachment = attachment;
     _message = message;
     _createNotification = createNotification;
+    _socketProcessId = SocketManager().addSocketProcess();
 
     fetchAttachment(attachment);
   }
@@ -150,6 +153,7 @@ class AttachmentDownloader {
       LifeCycleManager().finishDownloader();
       _stream.sink.add(file);
       _stream.close();
+      SocketManager().socketProcesses.remove(_socketProcessId);
       NotificationManager().finishProgressWithAttachment(
           "Finished Downloading", _attachment.id, _attachment);
     };

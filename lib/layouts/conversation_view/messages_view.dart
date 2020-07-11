@@ -21,7 +21,8 @@ class MessageView extends StatefulWidget {
   _MessageViewState createState() => _MessageViewState();
 }
 
-class _MessageViewState extends State<MessageView> {
+class _MessageViewState extends State<MessageView>
+    with TickerProviderStateMixin {
   Future loader;
   List<Message> _messages = <Message>[];
   GlobalKey<SliverAnimatedListState> _listKey;
@@ -39,7 +40,7 @@ class _MessageViewState extends State<MessageView> {
     widget.messageBloc.stream.listen((event) {
       if (event["insert"] != null) {
         getAttachmentsForMessage(event["insert"]);
-        debugPrint(attachments.containsKey(event["insert"].guid).toString());
+        // debugPrint(attachments.containsKey(event["insert"].guid).toString());
         if (event["sentFromThisClient"]) {
           sentMessages.add(event["insert"].guid);
           Future.delayed(Duration(milliseconds: 500), () {
@@ -83,8 +84,8 @@ class _MessageViewState extends State<MessageView> {
             _listKey.currentState
                 .insertItem(i, duration: Duration(milliseconds: 0));
         }
-        // if (_listKey.currentState != null)
-        //   _listKey.currentState.setState(() {});
+        if (_listKey.currentState != null)
+          _listKey.currentState.setState(() {});
         if (this.mounted) setState(() {});
       }
     });
@@ -97,25 +98,31 @@ class _MessageViewState extends State<MessageView> {
     if (message.hasAttachments) {
       debugPrint("getting attachments for new insert");
       attachmentFutures[message.guid] = Message.getAttachments(message);
-      attachments[message.guid] = FutureBuilder(
-        builder: (context, snapshot) {
-          if (snapshot.hasData || attachmentResults.containsKey(message.guid)) {
-            if (!attachmentResults.containsKey(message.guid)) {
-              attachmentResults[message.guid] = snapshot.data;
-              debugPrint(
-                  "got ${attachmentResults[message.guid].length} attachments");
+      attachments[message.guid] = AnimatedSize(
+        duration: Duration(milliseconds: 500),
+        curve: Curves.easeInOut,
+        vsync: this,
+        child: FutureBuilder(
+          builder: (context, snapshot) {
+            if (snapshot.hasData ||
+                attachmentResults.containsKey(message.guid)) {
+              if (!attachmentResults.containsKey(message.guid)) {
+                attachmentResults[message.guid] = snapshot.data;
+                debugPrint(
+                    "got ${attachmentResults[message.guid].length} attachments");
+              }
+              return MessageAttachments(
+                attachments: attachmentResults[message.guid],
+                message: message,
+              );
+            } else {
+              return Container();
             }
-            return MessageAttachments(
-              attachments: attachmentResults[message.guid],
-              message: message,
-            );
-          } else {
-            return Container();
-          }
-        },
-        future: attachmentFutures[message.guid],
+          },
+          future: attachmentFutures[message.guid],
+        ),
       );
-      setState(() {});
+      // setState(() {});
     }
   }
 
@@ -138,18 +145,18 @@ class _MessageViewState extends State<MessageView> {
                 itemBuilder: (BuildContext context, int index,
                     Animation<double> animation) {
                   if (index == _messages.length) {
-                    debugPrint("reached top of messages");
                     if (loader == null) {
                       loader =
                           widget.messageBloc.loadMessageChunk(_messages.length);
-                      loader.whenComplete(() => loader = null);
+                      loader.then((val) {
+                        loader = null;
+                      });
                     }
                     return NewMessageLoader(
                       messageBloc: widget.messageBloc,
                       offset: _messages.length,
                       loader: loader,
                     );
-                    // return Container();
                   }
 
                   Message olderMessage;
@@ -160,17 +167,6 @@ class _MessageViewState extends State<MessageView> {
                   if (index - 1 >= 0 && index - 1 < _messages.length) {
                     newerMessage = _messages[index - 1];
                   }
-                  List<Message> reactions = <Message>[];
-                  if (widget.messageBloc.reactions
-                      .containsKey(_messages[index].guid)) {
-                    reactions.addAll(
-                      widget.messageBloc.reactions[_messages[index].guid],
-                    );
-                  }
-                  if (index == 0) {
-                    debugPrint("contains attachment in the message list " +
-                        attachments.containsKey(_messages[0].guid).toString());
-                  }
 
                   Widget messageWidget = MessageWidget(
                     key: Key(_messages[index].guid),
@@ -178,7 +174,6 @@ class _MessageViewState extends State<MessageView> {
                     message: _messages[index],
                     olderMessage: olderMessage,
                     newerMessage: newerMessage,
-                    reactions: reactions,
                     showHandle: widget.showHandle,
                     shouldFadeIn: sentMessages.contains(_messages[index].guid),
                     isFirstSentMessage: widget.messageBloc.firstSentMessage ==

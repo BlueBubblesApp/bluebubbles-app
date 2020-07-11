@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:bluebubble_messages/helpers/message_helper.dart';
 import 'package:bluebubble_messages/managers/settings_manager.dart';
@@ -19,11 +20,13 @@ class SetupBloc {
   Stream<double> get stream => _stream.stream;
   double get progress => _progress;
   bool get finishedSetup => false;
+  int _socketProcess;
 
   SetupBloc();
 
   void startSync(Settings settings) {
     debugPrint(settings.toJson().toString());
+    _socketProcess = SocketManager().addSocketProcess();
     SettingsManager().saveSettings(settings,
         connectToSocket: true, connectCb: () => onConnect());
   }
@@ -87,6 +90,7 @@ class SetupBloc {
     _settingsCopy.finishedSetup = true;
     _finishedSetup = true;
     SettingsManager().saveSettings(_settingsCopy, connectToSocket: false);
+    SocketManager().socketProcesses.remove(_socketProcess);
     SocketManager().finishSetup();
   }
 

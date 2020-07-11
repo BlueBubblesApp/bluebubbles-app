@@ -69,7 +69,6 @@ class MethodChannelInterface {
 
         // Find the chat by GUID
         Chat chat = await Chat.findOne({"guid": data["chats"][0]["guid"]});
-        debugPrint("found chat for new message " + chat.toMap().toString());
         if (chat == null) {
           ActionHandler.handleChat(chatData: data["chats"][0]);
         }

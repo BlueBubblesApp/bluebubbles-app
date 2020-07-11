@@ -50,7 +50,6 @@ class MessageWidget extends StatefulWidget {
     this.message,
     this.olderMessage,
     this.newerMessage,
-    this.reactions,
     this.showHandle,
     this.customContent,
     this.shouldFadeIn,
@@ -62,7 +61,6 @@ class MessageWidget extends StatefulWidget {
   final Message message;
   final Message newerMessage;
   final Message olderMessage;
-  final List<Message> reactions;
   final bool showHandle;
   final bool shouldFadeIn;
   final bool isFirstSentMessage;
@@ -77,29 +75,12 @@ class MessageWidget extends StatefulWidget {
 class _MessageState extends State<MessageWidget> {
   List<Attachment> attachments = <Attachment>[];
   bool showTail = true;
-  final String like = "like";
-  final String love = "love";
-  final String dislike = "dislike";
-  final String question = "question";
-  final String emphasize = "emphasize";
-  final String laugh = "laugh";
-  Map<String, List<Message>> reactions = new Map();
   Widget blurredImage;
 
   @override
   void didChangeDependencies() async {
     super.didChangeDependencies();
 
-    reactions[like] = [];
-    reactions[love] = [];
-    reactions[dislike] = [];
-    reactions[question] = [];
-    reactions[emphasize] = [];
-    reactions[laugh] = [];
-
-    // widget.reactions.forEach((reaction) {
-    //   reactions[reaction.associatedMessageType].add(reaction);
-    // });
     setState(() {});
   }
 
@@ -160,7 +141,7 @@ class _MessageState extends State<MessageWidget> {
         message: widget.message,
         showDeliveredReceipt:
             widget.customContent == null && widget.isFirstSentMessage,
-        overlayEntry: _createOverlayEntry(context),
+        // overlayEntry: _createOverlayEntry(context),
         showTail: showTail,
         limited: widget.customContent == null,
         shouldFadeIn: widget.shouldFadeIn,
@@ -171,159 +152,15 @@ class _MessageState extends State<MessageWidget> {
     } else {
       return ReceivedMessage(
         timeStamp: _buildTimeStamp(context),
-        reactions: _buildReactions(),
         showTail: showTail,
         olderMessage: widget.olderMessage,
         message: widget.message,
-        overlayEntry: _createOverlayEntry(context),
+        // overlayEntry: _createOverlayEntry(context),
         showHandle: widget.showHandle,
         customContent: widget.customContent,
         isFromMe: widget.fromSelf,
         attachments: widget.attachments,
       );
     }
-  }
-
-  Widget _buildReactions() {
-    if (widget.reactions.length == 0) return Container();
-    List<Widget> reactionIcon = <Widget>[];
-    reactions.keys.forEach(
-      (String key) {
-        if (reactions[key].length != 0) {
-          reactionIcon.add(
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: SvgPicture.asset(
-                'assets/reactions/$key-black.svg',
-                color: key == love ? Colors.pink : Colors.white,
-              ),
-            ),
-          );
-        }
-      },
-    );
-    // return Stack(
-    //   alignment: widget.message.isFromMe
-    //       ? Alignment.bottomRight
-    //       : Alignment.bottomLeft,
-    //   children: <Widget>[
-    //     for (int i = 0; i < reactionIcon.length; i++)
-    //       Padding(
-    //         padding: EdgeInsets.fromLTRB(i.toDouble() * 20.0, 0, 0, 0),
-    //         child: Container(
-    //           height: 30,
-    //           width: 30,
-    //           decoration: BoxDecoration(
-    //             borderRadius: BorderRadius.circular(100),
-    //             color: HexColor('26262a'),
-    //             boxShadow: [
-    //               new BoxShadow(
-    //                 blurRadius: 5.0,
-    //                 offset:
-    //                     Offset(3.0 * (widget.message.isFromMe ? 1 : -1), 0.0),
-    //                 color: Colors.black,
-    //               )
-    //             ],
-    //           ),
-    //           child: reactionIcon[i],
-    //         ),
-    //       ),
-    //   ],
-    // );
-    return Container();
-  }
-
-  OverlayEntry _createOverlayEntry(BuildContext context) {
-    List<Widget> reactioners = <Widget>[];
-    reactions.keys.forEach(
-      (element) {
-        List<Widget> reactionGroup = <Widget>[];
-        List<String> names = [];
-        reactions[element].forEach(
-          (message) async {
-            if (message.handle == null) return;
-
-            String name = "You";
-            if (!message.isFromMe) {
-              name = getContactTitle(message.handleId, message.handle.address);
-            }
-
-            names.add(name);
-          },
-        );
-
-        if (reactions[element].length > 0) {
-          reactionGroup.add(Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: SvgPicture.asset(
-              'assets/reactions/$element-black.svg',
-              height: 24.0,
-              width: 24.0,
-              color: element == love ? Colors.pink : Colors.white,
-            ),
-          ));
-
-          reactionGroup.add(
-            Text(
-              names.join(", "),
-              softWrap: true,
-              style: Theme.of(context).textTheme.bodyText1,
-            ),
-          );
-
-          reactioners.add(Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: reactionGroup));
-        }
-      },
-    );
-
-    OverlayEntry entry;
-    entry = OverlayEntry(
-      builder: (context) => Scaffold(
-        backgroundColor: Colors.transparent,
-        body: Stack(
-          children: <Widget>[
-            Positioned.fill(
-              child: GestureDetector(
-                onTap: () {
-                  debugPrint("remove entry");
-                  entry.remove();
-                },
-                child: Container(
-                  color: Colors.black.withAlpha(200),
-                  child: Column(
-                    children: <Widget>[
-                      Spacer(
-                        flex: 3,
-                      ),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(20),
-                        child: BackdropFilter(
-                          filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                          child: Container(
-                            height: 120,
-                            width: MediaQuery.of(context).size.width * 9 / 5,
-                            color: HexColor('26262a').withAlpha(200),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                              children: reactioners,
-                            ),
-                          ),
-                        ),
-                      ),
-                      Spacer(
-                        flex: 20,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-    return entry;
   }
 }

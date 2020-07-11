@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 import 'dart:ui';
 
 import 'package:bluebubble_messages/action_handler.dart';
@@ -69,8 +70,10 @@ class _ConversationDetailsState extends State<ConversationDetails> {
           Map<String, dynamic> params = new Map();
           params["identifier"] = chat.guid;
           params["newName"] = controller.text;
+          int _socketProcess = SocketManager().addSocketProcess();
           SocketManager().socket.sendMessage("rename-group", jsonEncode(params),
               (data) async {
+            SocketManager().socketProcesses.remove(_socketProcess);
             if (jsonDecode(data)["status"] == 200) {
               Chat updatedChat = Chat.fromMap(jsonDecode(data)["data"]);
               await updatedChat.save();
@@ -225,8 +228,10 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                     params["attachmentGuid"] = _attachmentGuid;
                     params["attachmentName"] = fileName;
                     params["attachment"] = base64Encode(bytes);
+                    int _socketProcess = SocketManager().addSocketProcess();
                     SocketManager().socket.sendMessage(
                         "send-message", jsonEncode(params), (data) {
+                      SocketManager().socketProcesses.remove(_socketProcess);
                       debugPrint("sent " + jsonDecode(data).toString());
                     });
                   }

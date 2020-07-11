@@ -33,7 +33,7 @@ class _SendWidgetState extends State<SendWidget> {
   @override
   Widget build(BuildContext context) {
     Widget messageWidget = MessageWidget(
-      reactions: [],
+      // reactions: [],
       showHandle: false,
       newerMessage: null,
       olderMessage: null,
@@ -89,7 +89,7 @@ class _SendWidgetState extends State<SendWidget> {
                           Tween<double>(end: 0, begin: 10),
                         ),
                         child: MessageWidget(
-                          reactions: [],
+                          // reactions: [],
                           fromSelf: true,
                           showHandle: false,
                           newerMessage: null,

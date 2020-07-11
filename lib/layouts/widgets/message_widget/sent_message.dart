@@ -6,6 +6,7 @@ import 'package:bluebubble_messages/helpers/hex_color.dart';
 import 'package:bluebubble_messages/helpers/utils.dart';
 import 'package:bluebubble_messages/layouts/widgets/message_widget/message_content/delivered_receipt.dart';
 import 'package:bluebubble_messages/layouts/widgets/message_widget/message_content/message_content.dart';
+import 'package:bluebubble_messages/layouts/widgets/message_widget/reactions.dart';
 import 'package:bluebubble_messages/main.dart';
 import 'package:bluebubble_messages/repository/models/message.dart';
 import 'package:bluebubble_messages/socket_manager.dart';
@@ -15,7 +16,7 @@ import 'package:flutter/material.dart';
 class SentMessage extends StatefulWidget {
   final bool showTail;
   final Message message;
-  final OverlayEntry overlayEntry;
+  // final OverlayEntry overlayEntry;
   final bool shouldFadeIn;
   final Map<String, String> timeStamp;
   final bool showDeliveredReceipt;
@@ -29,7 +30,7 @@ class SentMessage extends StatefulWidget {
     Key key,
     @required this.showTail,
     @required this.message,
-    @required this.overlayEntry,
+    // @required this.overlayEntry,
     @required this.timeStamp,
     @required this.showDeliveredReceipt,
     @required this.customContent,
@@ -64,6 +65,7 @@ class _SentMessageState extends State<SentMessage>
     int errorCode = widget.message != null ? widget.message.error : 0;
     String errorText =
         widget.message != null ? widget.message.guid.split('-')[1] : "";
+    debugPrint(errorText);
 
     entry = OverlayEntry(
       builder: (context) => Scaffold(
@@ -173,47 +175,43 @@ class _SentMessageState extends State<SentMessage>
     }
 
     List<Widget> messageWidget = [
-      Stack(
-        alignment: AlignmentDirectional.bottomEnd,
-        children: <Widget>[
-          Stack(
-            alignment: AlignmentDirectional.bottomEnd,
-            children: stack,
-          ),
-          GestureDetector(
-            onLongPress: () {
-              if (widget.overlayEntry != null)
-                Overlay.of(context).insert(widget.overlayEntry);
-            },
-            child: Container(
-              margin: EdgeInsets.symmetric(
-                horizontal: 10,
-              ),
-              constraints: BoxConstraints(
-                maxWidth: MediaQuery.of(context).size.width * 3 / 4,
-              ),
-              padding: EdgeInsets.symmetric(
-                vertical: 8,
-                horizontal: 14,
-              ),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
-                color: !widget.isFromMe
-                    ? Theme.of(context).accentColor
-                    : Colors.blue,
-              ),
-              child: widget.customContent == null
-                  ? Text(
-                      widget.message.text,
-                      style: Theme.of(context).textTheme.bodyText2,
-                    )
-                  : Column(
-                      children: widget.customContent,
-                    ),
-            ),
-          ),
-        ],
-      )
+      widget.message == null || !isEmptyString(widget.message.text)
+          ? Stack(
+              alignment: AlignmentDirectional.bottomEnd,
+              children: <Widget>[
+                Stack(
+                  alignment: AlignmentDirectional.bottomEnd,
+                  children: stack,
+                ),
+                Container(
+                  margin: EdgeInsets.symmetric(
+                    horizontal: 10,
+                  ),
+                  constraints: BoxConstraints(
+                    maxWidth: MediaQuery.of(context).size.width * 3 / 4,
+                  ),
+                  padding: EdgeInsets.symmetric(
+                    vertical: 8,
+                    horizontal: 14,
+                  ),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(20),
+                    color: !widget.isFromMe
+                        ? Theme.of(context).accentColor
+                        : Colors.blue,
+                  ),
+                  child: widget.customContent == null
+                      ? Text(
+                          widget.message.text,
+                          style: Theme.of(context).textTheme.bodyText2,
+                        )
+                      : Column(
+                          children: widget.customContent,
+                        ),
+                ),
+              ],
+            )
+          : Container()
     ];
 
     if (widget.message != null && widget.message.error > 0)
@@ -226,62 +224,151 @@ class _SentMessageState extends State<SentMessage>
         ),
       );
 
-    return AnimatedOpacity(
-      opacity: _visible ? 1.0 : 0.0,
-      duration: Duration(milliseconds: widget.shouldFadeIn ? 200 : 0),
-      child: Column(
-        children: <Widget>[
-          widget.attachments != null ? widget.attachments : Container(),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: <Widget>[
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: <Widget>[
-                  AnimatedPadding(
-                    curve: Curves.easeInOut,
-                    duration: Duration(milliseconds: 200),
-                    padding: EdgeInsets.only(
-                      bottom: widget.showTail ? 10.0 : 3.0,
-                      right: (widget.message != null && widget.message.error > 0
-                          ? 10.0
-                          : 0),
-                    ),
-                    child: Row(children: messageWidget),
+    return GestureDetector(
+      onLongPress: () async {
+        Scrollable.ensureVisible(
+          context,
+          alignmentPolicy: ScrollPositionAlignmentPolicy.keepVisibleAtStart,
+          duration: Duration(milliseconds: 250),
+          curve: Curves.easeInOut,
+        );
+        List<Message> reactions = [];
+        if (widget.message.hasReactions) {
+          reactions = await widget.message.getReactions();
+        }
+        // if (widget.overlayEntry != null)
+        Overlay.of(context).insert(_createMessageDetailsPopup(reactions));
+      },
+      child: AnimatedOpacity(
+        opacity: _visible ? 1.0 : 0.0,
+        duration: Duration(milliseconds: widget.shouldFadeIn ? 200 : 0),
+        child: Column(
+          children: <Widget>[
+            widget.attachments != null ? widget.attachments : Container(),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: <Widget>[
+                AnimatedPadding(
+                  curve: Curves.easeInOut,
+                  duration: Duration(milliseconds: 200),
+                  padding: EdgeInsets.only(
+                    bottom: widget.showTail ? 10.0 : 3.0,
+                    right: (widget.message != null && widget.message.error > 0
+                        ? 10.0
+                        : 0),
                   ),
-                  DeliveredReceipt(
-                    message: widget.message,
-                    showDeliveredReceipt: widget.showDeliveredReceipt,
-                  ),
-                ],
-              ),
-            ],
-          ),
-          widget.timeStamp != null
-              ? Padding(
-                  padding: const EdgeInsets.all(14.0),
-                  child: RichText(
-                    text: TextSpan(
-                      style: Theme.of(context)
-                          .textTheme
-                          .subtitle2
-                          .apply(fontSizeDelta: 1.7),
-                      children: [
-                        TextSpan(
-                          text: "${widget.timeStamp["date"]}, ",
-                          style: Theme.of(context)
-                              .textTheme
-                              .subtitle2
-                              .apply(fontSizeDelta: 1.7, fontWeightDelta: 10),
+                  child: Stack(
+                    alignment: Alignment.topLeft,
+                    children: <Widget>[
+                      AnimatedPadding(
+                        duration: Duration(milliseconds: 250),
+                        curve: Curves.easeInOut,
+                        padding: EdgeInsets.only(
+                          left: widget.message != null &&
+                                  widget.message.hasReactions &&
+                                  !widget.message.hasAttachments
+                              ? 6.0
+                              : 0.0,
+                          top: widget.message != null &&
+                                  widget.message.hasReactions &&
+                                  !widget.message.hasAttachments
+                              ? 14.0
+                              : 0.0,
                         ),
-                        TextSpan(text: "${widget.timeStamp["time"]}")
-                      ],
-                    ),
+                        child: Row(children: messageWidget),
+                      ),
+                      widget.message != null && !widget.message.hasAttachments
+                          ? Reactions(
+                              message: widget.message,
+                            )
+                          : Container(),
+                    ],
                   ),
-                )
-              : Container(),
-        ],
+                ),
+              ],
+            ),
+            DeliveredReceipt(
+              message: widget.message,
+              showDeliveredReceipt: widget.showDeliveredReceipt,
+            ),
+            widget.timeStamp != null
+                ? Padding(
+                    padding: const EdgeInsets.all(14.0),
+                    child: RichText(
+                      text: TextSpan(
+                        style: Theme.of(context)
+                            .textTheme
+                            .subtitle2
+                            .apply(fontSizeDelta: 1.7),
+                        children: [
+                          TextSpan(
+                            text: "${widget.timeStamp["date"]}, ",
+                            style: Theme.of(context)
+                                .textTheme
+                                .subtitle2
+                                .apply(fontSizeDelta: 1.7, fontWeightDelta: 10),
+                          ),
+                          TextSpan(text: "${widget.timeStamp["time"]}")
+                        ],
+                      ),
+                    ),
+                  )
+                : Container(),
+          ],
+        ),
       ),
     );
+  }
+
+  OverlayEntry _createMessageDetailsPopup(List<Message> reactions) {
+    reactions.forEach((element) {});
+
+    OverlayEntry entry;
+    entry = OverlayEntry(
+      builder: (context) => Scaffold(
+        backgroundColor: Colors.transparent,
+        body: Stack(
+          children: <Widget>[
+            Positioned.fill(
+              child: GestureDetector(
+                onTap: () {
+                  debugPrint("remove entry");
+                  entry.remove();
+                },
+                child: Container(
+                  color: Colors.black.withAlpha(200),
+                  child: Column(
+                    children: <Widget>[
+                      Spacer(
+                        flex: 3,
+                      ),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(20),
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                          child: Container(
+                            height: 120,
+                            width: MediaQuery.of(context).size.width * 9 / 5,
+                            color: HexColor('26262a').withAlpha(200),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              // children: reactioners,
+                            ),
+                          ),
+                        ),
+                      ),
+                      Spacer(
+                        flex: 20,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+    return entry;
   }
 }

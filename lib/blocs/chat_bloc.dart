@@ -65,7 +65,6 @@ class ChatBloc {
               _chats[i],
               latestMessage: event.values.first,
             );
-            debugPrint("initing tile vals for chat");
           }
         }
       } else {

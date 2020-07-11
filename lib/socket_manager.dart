@@ -1,11 +1,13 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 import 'package:bluebubble_messages/action_handler.dart';
 import 'package:bluebubble_messages/helpers/attachment_downloader.dart';
 import 'package:bluebubble_messages/blocs/setup_bloc.dart';
 import 'package:bluebubble_messages/helpers/utils.dart';
 import 'package:bluebubble_messages/layouts/conversation_view/new_chat_creator.dart';
+import 'package:bluebubble_messages/managers/life_cycle_manager.dart';
 import 'package:bluebubble_messages/managers/navigator_manager.dart';
 import 'package:bluebubble_messages/managers/new_message_manager.dart';
 import 'package:bluebubble_messages/managers/notification_manager.dart';
@@ -67,6 +69,28 @@ class SocketManager {
 
   Map<String, AttachmentDownloader> attachmentDownloaders = Map();
   Map<String, AttachmentSender> attachmentSenders = Map();
+  List<int> socketProcesses = [];
+
+  int addSocketProcess() {
+    int processId = Random().nextInt(10000);
+    socketProcesses.add(processId);
+    _socketProcessUpdater.sink.add(socketProcesses);
+    return processId;
+  }
+
+  void removeFromSocketProcess(int processId) {
+    socketProcesses.remove(processId);
+    _socketProcessUpdater.sink.add(socketProcesses);
+    // if (!LifeCycleManager().isAlive) {
+    //   closeSocket();
+    // }
+  }
+
+  StreamController _socketProcessUpdater =
+      StreamController<List<int>>.broadcast();
+
+  Stream<List<int>> get socketProcessUpdater => _socketProcessUpdater.stream;
+
   StreamController _attachmentSenderCompleter =
       StreamController<String>.broadcast();
   Stream<String> get attachmentSenderCompleter =>
@@ -262,7 +286,8 @@ class SocketManager {
     }
   }
 
-  void closeSocket() {
+  void closeSocket({bool force = false}) {
+    if (!force && _manager.socketProcesses.length != 0) return;
     if (_manager.socket != null) _manager.socket.destroy();
     _manager.socket = null;
   }

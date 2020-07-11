@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:bluebubble_messages/blocs/chat_bloc.dart';
 import 'package:bluebubble_messages/helpers/attachment_downloader.dart';
@@ -67,8 +68,10 @@ class ActionHandler {
             attachments: attachments, closeOnFinish: true);
       });
     } else {
+      int _socketProcess = SocketManager().addSocketProcess();
       SocketManager().socket.sendMessage("send-message", jsonEncode(params),
           (data) async {
+        SocketManager().socketProcesses.remove(_socketProcess);
         if (closeOnFinish &&
             SocketManager().attachmentDownloaders.length == 0 &&
             SocketManager().attachmentSenders.length == 0) {
@@ -131,8 +134,10 @@ class ActionHandler {
     // If we aren't connected to the socket, return
     if (SettingsManager().settings.connected == false) return;
 
+    int _socketProcess = SocketManager().addSocketProcess();
     SocketManager().socket.sendMessage("send-message", jsonEncode(params),
         (data) async {
+      SocketManager().socketProcesses.remove(_socketProcess);
       Map response = jsonDecode(data);
       debugPrint("message sent: " + response.toString());
 
@@ -201,6 +206,8 @@ class ActionHandler {
     }
     updatedMessage =
         await Message.replaceMessage(updatedMessage.guid, updatedMessage);
+    debugPrint(
+        "updated message with data " + updatedMessage.toMap().toString());
 
     Chat chat;
     debugPrint("handle updated message ");
@@ -230,7 +237,18 @@ class ActionHandler {
       {Map<String, dynamic> chatData,
       Chat chat,
       bool checkIfExists = false,
-      bool isHeadless = false}) async {
+      bool isHeadless = false,
+      bool closeSocketOnFinish = false}) async {
+    if (!closeSocketOnFinish && SocketManager().socket == null) {
+      SocketManager().startSocketIO(connectCB: () {
+        handleChat(
+            chatData: chatData,
+            chat: chat,
+            checkIfExists: checkIfExists,
+            isHeadless: isHeadless,
+            closeSocketOnFinish: true);
+      });
+    }
     Chat currentChat;
     Chat newChat = chat;
     if (chatData != null && newChat == null) {
@@ -243,23 +261,38 @@ class ActionHandler {
     }
 
     // Save the new chat only if current chat isn't found
-    if (currentChat == null) await newChat.save();
+    if (currentChat == null) {
+      debugPrint("current chat == null, saving");
+      await newChat.save();
+    }
 
     // If we already have a chat, don't fetch the participants
-    if (currentChat != null) return;
-    if (isHeadless) return;
+    if (currentChat != null) {
+      debugPrint("currentChat != null, returning");
+      return;
+    }
+    // if (isHeadless) return;
 
     Map<String, dynamic> params = Map();
     params["chatGuid"] = newChat.guid;
     params["withParticipants"] = true;
+    int _socketProcess = SocketManager().addSocketProcess();
     SocketManager().socket.sendMessage("get-chat", jsonEncode(params),
         (data) async {
+      SocketManager().socketProcesses.remove(_socketProcess);
+      if (closeSocketOnFinish &&
+          SocketManager().attachmentDownloaders.length == 0 &&
+          SocketManager().attachmentSenders.length == 0) {
+        SocketManager().closeSocket();
+      }
       Map<String, dynamic> chatData = jsonDecode(data)["data"];
       if (chatData != null) {
+        debugPrint("got chat data " + chatData.toString());
         newChat = Chat.fromMap(chatData);
 
         // Resave the chat after we've got the participants
         await newChat.save();
+        debugPrint("saved chat " + newChat.toMap().toString());
 
         // Update the main view
         // await ChatBloc().getChats();

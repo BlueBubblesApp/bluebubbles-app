@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math';
 import 'dart:ui';
 
 import 'package:bluebubble_messages/blocs/chat_bloc.dart';
@@ -114,8 +115,10 @@ class _ContactTileState extends State<ContactTile> {
                   Map<String, dynamic> params = new Map();
                   params["identifier"] = widget.chat.guid;
                   params["address"] = widget.handle.address;
+                  int _socketProcess = SocketManager().addSocketProcess();
                   SocketManager().socket.sendMessage(
                       "remove-participant", jsonEncode(params), (_data) async {
+                    SocketManager().socketProcesses.remove(_socketProcess);
                     Map<String, dynamic> response = jsonDecode(_data);
                     debugPrint("removed participant participant " +
                         response.toString());

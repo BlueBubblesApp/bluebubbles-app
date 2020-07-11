@@ -51,38 +51,41 @@ class Message {
   DateTime timeExpressiveSendStyleId;
   Handle handle;
   bool hasAttachments;
+  bool hasReactions;
 
-  Message(
-      {this.id,
-      this.guid,
-      this.handleId,
-      this.text,
-      this.subject,
-      this.country,
-      this.error = 0,
-      this.dateCreated,
-      this.dateRead,
-      this.dateDelivered,
-      this.isFromMe = true,
-      this.isDelayed = false,
-      this.isAutoReply = false,
-      this.isSystemMessage = false,
-      this.isServiceMessage = false,
-      this.isForward = false,
-      this.isArchived = false,
-      this.cacheRoomnames,
-      this.isAudioMessage = false,
-      this.datePlayed,
-      this.itemType = 0,
-      this.groupTitle,
-      this.groupActionType = 0,
-      this.isExpired = false,
-      this.associatedMessageGuid,
-      this.associatedMessageType,
-      this.expressiveSendStyleId,
-      this.timeExpressiveSendStyleId,
-      this.handle,
-      this.hasAttachments = false});
+  Message({
+    this.id,
+    this.guid,
+    this.handleId,
+    this.text,
+    this.subject,
+    this.country,
+    this.error = 0,
+    this.dateCreated,
+    this.dateRead,
+    this.dateDelivered,
+    this.isFromMe = true,
+    this.isDelayed = false,
+    this.isAutoReply = false,
+    this.isSystemMessage = false,
+    this.isServiceMessage = false,
+    this.isForward = false,
+    this.isArchived = false,
+    this.cacheRoomnames,
+    this.isAudioMessage = false,
+    this.datePlayed,
+    this.itemType = 0,
+    this.groupTitle,
+    this.groupActionType = 0,
+    this.isExpired = false,
+    this.associatedMessageGuid,
+    this.associatedMessageType,
+    this.expressiveSendStyleId,
+    this.timeExpressiveSendStyleId,
+    this.handle,
+    this.hasAttachments = false,
+    this.hasReactions = false,
+  });
 
   factory Message.fromMap(Map<String, dynamic> json) {
     bool hasAttachments = false;
@@ -94,78 +97,80 @@ class Message {
     // debugPrint("hasAttachments = $hasAttachments, json: ${json.toString()}");
 
     return new Message(
-        id: json.containsKey("ROWID") ? json["ROWID"] : null,
-        guid: json["guid"],
-        handleId: (json["handleId"] != null) ? json["handleId"] : 0,
-        text: sanitizeString(json["text"]),
-        subject: json.containsKey("subject") ? json["subject"] : null,
-        country: json.containsKey("country") ? json["country"] : null,
-        error: json.containsKey("error") ? json["error"] : 0,
-        dateCreated: json.containsKey("dateCreated")
-            ? parseDate(json["dateCreated"])
-            : null,
-        dateRead:
-            json.containsKey("dateRead") ? parseDate(json["dateRead"]) : null,
-        dateDelivered: json.containsKey("dateDelivered")
-            ? parseDate(json["dateDelivered"])
-            : null,
-        isFromMe: (json["isFromMe"] is bool)
-            ? json['isFromMe']
-            : ((json['isFromMe'] == 1) ? true : false),
-        isDelayed: (json["isDelayed"] is bool)
-            ? json['isDelayed']
-            : ((json['isDelayed'] == 1) ? true : false),
-        isAutoReply: (json["isAutoReply"] is bool)
-            ? json['isAutoReply']
-            : ((json['isAutoReply'] == 1) ? true : false),
-        isSystemMessage: (json["isSystemMessage"] is bool)
-            ? json['isSystemMessage']
-            : ((json['isSystemMessage'] == 1) ? true : false),
-        isServiceMessage: (json["isServiceMessage"] is bool)
-            ? json['isServiceMessage']
-            : ((json['isServiceMessage'] == 1) ? true : false),
-        isForward: (json["isForward"] is bool)
-            ? json['isForward']
-            : ((json['isForward'] == 1) ? true : false),
-        isArchived: (json["isArchived"] is bool)
-            ? json['isArchived']
-            : ((json['isArchived'] == 1) ? true : false),
-        cacheRoomnames:
-            json.containsKey("cacheRoomnames") ? json["cacheRoomnames"] : null,
-        isAudioMessage: (json["isAudioMessage"] is bool)
-            ? json['isAudioMessage']
-            : ((json['isAudioMessage'] == 1) ? true : false),
-        datePlayed: json.containsKey("datePlayed")
-            ? parseDate(json["datePlayed"])
-            : null,
-        itemType: json.containsKey("itemType") ? json["itemType"] : null,
-        groupTitle: json.containsKey("groupTitle") ? json["groupTitle"] : null,
-        groupActionType:
-            (json["groupActionType"] != null) ? json["groupActionType"] : 0,
-        isExpired: (json["isExpired"] is bool)
-            ? json['isExpired']
-            : ((json['isExpired'] == 1) ? true : false),
-        associatedMessageGuid: json.containsKey("associatedMessageGuid")
-            ? json["associatedMessageGuid"]
-            : null,
-        associatedMessageType: json.containsKey("associatedMessageType")
-            ? json["associatedMessageType"]
-            : null,
-        expressiveSendStyleId: json.containsKey("expressiveSendStyleId")
-            ? json["expressiveSendStyleId"]
-            : null,
-        timeExpressiveSendStyleId: json.containsKey("timeExpressiveSendStyleId")
-            ? parseDate(json["timeExpressiveSendStyleId"])
-            : null,
-        handle: json.containsKey("handle")
-            ? (json['handle'] != null ? Handle.fromMap(json['handle']) : null)
-            : null,
-        hasAttachments: hasAttachments);
+      id: json.containsKey("ROWID") ? json["ROWID"] : null,
+      guid: json["guid"],
+      handleId: (json["handleId"] != null) ? json["handleId"] : 0,
+      text: sanitizeString(json["text"]),
+      subject: json.containsKey("subject") ? json["subject"] : null,
+      country: json.containsKey("country") ? json["country"] : null,
+      error: json.containsKey("error") ? json["error"] : 0,
+      dateCreated: json.containsKey("dateCreated")
+          ? parseDate(json["dateCreated"])
+          : null,
+      dateRead:
+          json.containsKey("dateRead") ? parseDate(json["dateRead"]) : null,
+      dateDelivered: json.containsKey("dateDelivered")
+          ? parseDate(json["dateDelivered"])
+          : null,
+      isFromMe: (json["isFromMe"] is bool)
+          ? json['isFromMe']
+          : ((json['isFromMe'] == 1) ? true : false),
+      isDelayed: (json["isDelayed"] is bool)
+          ? json['isDelayed']
+          : ((json['isDelayed'] == 1) ? true : false),
+      isAutoReply: (json["isAutoReply"] is bool)
+          ? json['isAutoReply']
+          : ((json['isAutoReply'] == 1) ? true : false),
+      isSystemMessage: (json["isSystemMessage"] is bool)
+          ? json['isSystemMessage']
+          : ((json['isSystemMessage'] == 1) ? true : false),
+      isServiceMessage: (json["isServiceMessage"] is bool)
+          ? json['isServiceMessage']
+          : ((json['isServiceMessage'] == 1) ? true : false),
+      isForward: (json["isForward"] is bool)
+          ? json['isForward']
+          : ((json['isForward'] == 1) ? true : false),
+      isArchived: (json["isArchived"] is bool)
+          ? json['isArchived']
+          : ((json['isArchived'] == 1) ? true : false),
+      cacheRoomnames:
+          json.containsKey("cacheRoomnames") ? json["cacheRoomnames"] : null,
+      isAudioMessage: (json["isAudioMessage"] is bool)
+          ? json['isAudioMessage']
+          : ((json['isAudioMessage'] == 1) ? true : false),
+      datePlayed:
+          json.containsKey("datePlayed") ? parseDate(json["datePlayed"]) : null,
+      itemType: json.containsKey("itemType") ? json["itemType"] : null,
+      groupTitle: json.containsKey("groupTitle") ? json["groupTitle"] : null,
+      groupActionType:
+          (json["groupActionType"] != null) ? json["groupActionType"] : 0,
+      isExpired: (json["isExpired"] is bool)
+          ? json['isExpired']
+          : ((json['isExpired'] == 1) ? true : false),
+      associatedMessageGuid: json.containsKey("associatedMessageGuid")
+          ? json["associatedMessageGuid"]
+          : null,
+      associatedMessageType: json.containsKey("associatedMessageType")
+          ? json["associatedMessageType"]
+          : null,
+      expressiveSendStyleId: json.containsKey("expressiveSendStyleId")
+          ? json["expressiveSendStyleId"]
+          : null,
+      timeExpressiveSendStyleId: json.containsKey("timeExpressiveSendStyleId")
+          ? parseDate(json["timeExpressiveSendStyleId"])
+          : null,
+      handle: json.containsKey("handle")
+          ? (json['handle'] != null ? Handle.fromMap(json['handle']) : null)
+          : null,
+      hasAttachments: hasAttachments,
+      hasReactions: json.containsKey('hasReactions')
+          ? ((json['hasReactions'] == 1) ? true : false)
+          : false,
+    );
   }
 
   Future<Message> save([bool updateIfAbsent = true]) async {
     final Database db = await DBProvider.db.database;
-
     // Try to find an existing chat before saving it
     Message existing = await Message.findOne({"guid": this.guid});
     if (existing != null) {
@@ -183,6 +188,24 @@ class Message {
     // QueueManager()
     //     .logger
     //     .log(Level.info, "existing == null ${existing == null}");
+    if (this.associatedMessageType != null &&
+        this.associatedMessageGuid != null) {
+      Message associatedMessage = await Message.findOne(
+          {"guid": this.associatedMessageGuid.substring(4)});
+      if (associatedMessage != null) {
+        associatedMessage.hasReactions = true;
+        await associatedMessage.save();
+        debugPrint("found message for reaction ${associatedMessage.guid}");
+      }
+    } else if (!this.hasReactions) {
+      Message reaction = await Message.findOne(
+          {"associatedMessageGuid": "%" + this.guid + "%"},
+          includeString: true);
+      if (reaction != null) {
+        this.hasReactions = true;
+        debugPrint("found reaction for message ${reaction.id}");
+      }
+    }
 
     // If it already exists, update it
     if (existing == null) {
@@ -225,9 +248,17 @@ class Message {
 
     if (existing.toMap().containsKey("handleId")) {
       params["handleId"] = existing.toMap()["handleId"];
+      newMessage.handleId = existing.handleId;
     }
-    if (existing.toMap().containsKey("hasAttachments")) {
-      params["hasAttachments"] = existing.toMap()["hasAttachments"];
+    if (existing.hasAttachments) {
+      params["hasAttachments"] = existing.hasAttachments ? 1 : 0;
+      debugPrint(
+          "updaing message with hasAtachments ${params["hasAttachments"]}");
+      newMessage.hasAttachments = existing.hasAttachments;
+    }
+    if (existing.toMap().containsKey("hasReactions")) {
+      params["hasReactions"] = existing.toMap()["hasReactions"];
+      newMessage.hasReactions = existing.hasReactions;
     }
 
     await db.update("message", params,
@@ -251,7 +282,8 @@ class Message {
       "datePlayed": (this.datePlayed == null)
           ? null
           : this.datePlayed.millisecondsSinceEpoch,
-      "error": this.error
+      "error": this.error,
+      "hasReactions": this.hasReactions ? 1 : 0,
     };
 
     // If it already exists, update it
@@ -315,6 +347,24 @@ class Message {
     return (res.isNotEmpty) ? Chat.fromMap(res[0]) : null;
   }
 
+  Future<List<Message>> getReactions() async {
+    List<Message> res = await Message.find(
+        {"associatedMessageGuid": "%" + this.guid + "%"}, true);
+    res.sort((a, b) => b.dateCreated.compareTo(a.dateCreated));
+    debugPrint("found reactions " + res.length.toString());
+    List<int> alreadyTrackedHandleIds = [];
+    Map<int, Message> reactions = new Map();
+    for (Message reaction in res) {
+      if (!reactions.containsKey(reaction.handleId) &&
+          !alreadyTrackedHandleIds.contains(reaction.handleId) &&
+          !reaction.associatedMessageType.startsWith("-")) {
+        reactions[reaction.handleId] = reaction;
+      }
+      alreadyTrackedHandleIds.add(reaction.handleId);
+    }
+    return reactions.values.toList();
+  }
+
   Future<Handle> getHandle() async {
     final Database db = await DBProvider.db.database;
 
@@ -334,11 +384,13 @@ class Message {
     return this.handle;
   }
 
-  static Future<Message> findOne(Map<String, dynamic> filters) async {
+  static Future<Message> findOne(Map<String, dynamic> filters,
+      {bool includeString = false}) async {
     final Database db = await DBProvider.db.database;
 
     List<String> whereParams = [];
-    filters.keys.forEach((filter) => whereParams.add('$filter = ?'));
+    filters.keys.forEach((filter) =>
+        whereParams.add(includeString ? '$filter LIKE ?' : '$filter = ?'));
     List<dynamic> whereArgs = [];
     filters.values.forEach((filter) => whereArgs.add(filter));
     var res = await db.query("message",
@@ -352,11 +404,13 @@ class Message {
   }
 
   static Future<List<Message>> find(
-      [Map<String, dynamic> filters = const {}]) async {
+      [Map<String, dynamic> filters = const {},
+      bool includeString = false]) async {
     final Database db = await DBProvider.db.database;
 
     List<String> whereParams = [];
-    filters.keys.forEach((filter) => whereParams.add('$filter = ?'));
+    filters.keys.forEach((filter) =>
+        whereParams.add(includeString ? '$filter LIKE ?' : '$filter = ?'));
     List<dynamic> whereArgs = [];
     filters.values.forEach((filter) => whereArgs.add(filter));
 
@@ -419,6 +473,7 @@ class Message {
             ? null
             : timeExpressiveSendStyleId.millisecondsSinceEpoch,
         "handle": (handle != null) ? handle.toMap() : null,
-        "hasAttachments": hasAttachments ? 1 : 0
+        "hasAttachments": hasAttachments ? 1 : 0,
+        "hasReactions": hasReactions ? 1 : 0
       };
 }
