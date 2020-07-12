@@ -20,27 +20,24 @@ class SetupBloc {
   Stream<double> get stream => _stream.stream;
   double get progress => _progress;
   bool get finishedSetup => false;
-  int _socketProcess;
 
   SetupBloc();
 
   void startSync(Settings settings) {
     debugPrint(settings.toJson().toString());
-    _socketProcess = SocketManager().addSocketProcess();
-    SettingsManager().saveSettings(settings,
-        connectToSocket: true, connectCb: () => onConnect());
-  }
-
-  void onConnect() {
-    debugPrint("connected");
-    SocketManager().socket.sendMessage("get-chats", '{}', (data) {
+    SettingsManager().saveSettings(settings, connectToSocket: false);
+    SocketManager().sendMessage("get-chats", {}, (data) {
       receivedChats(data);
     });
   }
 
+  // void onConnect() {
+  //   debugPrint("connected");
+  // }
+
   void receivedChats(data) async {
     debugPrint("got chats");
-    chats = jsonDecode(data)["data"];
+    chats = data["data"];
     getChatMessagesRecursive(chats, 0);
     _stream.sink.add(_progress);
   }
@@ -56,8 +53,7 @@ class SetupBloc {
     params["where"] = [
       {"statement": "message.service = 'iMessage'", "args": null}
     ];
-    SocketManager().socket.sendMessage("get-chat-messages", jsonEncode(params),
-        (data) {
+    SocketManager().sendMessage("get-chat-messages", params, (data) {
       receivedMessagesForChat(chat, data);
       if (index + 1 < chats.length) {
         _currentIndex = index + 1;
@@ -76,9 +72,9 @@ class SetupBloc {
     // }
   }
 
-  void receivedMessagesForChat(Chat chat, data) async {
+  void receivedMessagesForChat(Chat chat, Map<String, dynamic> data) async {
     debugPrint("got messages");
-    List messages = jsonDecode(data)["data"];
+    List messages = data["data"];
     MessageHelper.bulkAddMessages(chat, messages);
 
     _progress = (_currentIndex + 1) / chats.length;
@@ -90,7 +86,6 @@ class SetupBloc {
     _settingsCopy.finishedSetup = true;
     _finishedSetup = true;
     SettingsManager().saveSettings(_settingsCopy, connectToSocket: false);
-    SocketManager().socketProcesses.remove(_socketProcess);
     SocketManager().finishSetup();
   }
 

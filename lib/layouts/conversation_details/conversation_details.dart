@@ -70,18 +70,15 @@ class _ConversationDetailsState extends State<ConversationDetails> {
           Map<String, dynamic> params = new Map();
           params["identifier"] = chat.guid;
           params["newName"] = controller.text;
-          int _socketProcess = SocketManager().addSocketProcess();
-          SocketManager().socket.sendMessage("rename-group", jsonEncode(params),
-              (data) async {
-            SocketManager().socketProcesses.remove(_socketProcess);
-            if (jsonDecode(data)["status"] == 200) {
-              Chat updatedChat = Chat.fromMap(jsonDecode(data)["data"]);
+          SocketManager().sendMessage("rename-group", params, (data) async {
+            if (data["status"] == 200) {
+              Chat updatedChat = Chat.fromMap(data["data"]);
               await updatedChat.save();
               // await ChatBloc().getChats();
               // NewMessageManager().updateWithMessage(null, null);
               await ChatBloc().moveChatToTop(updatedChat);
             }
-            debugPrint("renamed group chat " + jsonDecode(data).toString());
+            debugPrint("renamed group chat " + data.toString());
           });
           // debugPrint("renaming");
         }
@@ -228,11 +225,8 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                     params["attachmentGuid"] = _attachmentGuid;
                     params["attachmentName"] = fileName;
                     params["attachment"] = base64Encode(bytes);
-                    int _socketProcess = SocketManager().addSocketProcess();
-                    SocketManager().socket.sendMessage(
-                        "send-message", jsonEncode(params), (data) {
-                      SocketManager().socketProcesses.remove(_socketProcess);
-                      debugPrint("sent " + jsonDecode(data).toString());
+                    SocketManager().sendMessage("send-message", params, (data) {
+                      debugPrint("sent " + data.toString());
                     });
                   }
                 },

@@ -207,9 +207,9 @@ class _NewChatCreatorState extends State<NewChatCreator> {
                 for (int i = 0; i < _participants.length; i++) {
                   params["identifier"] = widget.currentChat.guid;
                   params["address"] = _participants[i];
-                  SocketManager().socket.sendMessage(
-                      "add-participant", jsonEncode(params), (_data) async {
-                    Map<String, dynamic> response = jsonDecode(_data);
+                  SocketManager().sendMessage("add-participant", params,
+                      (_data) async {
+                    Map<String, dynamic> response = _data;
                     debugPrint("added participant " + response.toString());
                     if (i == _participants.length - 1 &&
                         response["status"] == 200) {
@@ -441,12 +441,10 @@ class _NewChatCreatorState extends State<NewChatCreator> {
                           ),
                         );
                         params["participants"] = _participants;
-                        SocketManager().socket.sendMessage(
+                        SocketManager().sendMessage(
                           "start-chat",
-                          jsonEncode(params),
-                          (_data) async {
-                            debugPrint(_data);
-                            Map<String, dynamic> data = jsonDecode(_data);
+                          params,
+                          (data) async {
                             Chat newChat = Chat.fromMap(data["data"]);
                             newChat = await newChat.save();
                             newChat = await newChat.getParticipants();

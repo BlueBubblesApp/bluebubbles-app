@@ -33,6 +33,13 @@ import './blocs/chat_bloc.dart';
 import './repository/models/chat.dart';
 import './repository/models/handle.dart';
 
+enum SocketState {
+  CONNECTED,
+  DISCONNECTED,
+  ERROR,
+  CONNECTING,
+}
+
 class SocketManager {
   factory SocketManager() {
     return _manager;
@@ -69,22 +76,40 @@ class SocketManager {
 
   Map<String, AttachmentDownloader> attachmentDownloaders = Map();
   Map<String, AttachmentSender> attachmentSenders = Map();
-  List<int> socketProcesses = [];
+  Map<int, Function> socketProcesses = new Map();
 
-  int addSocketProcess() {
+  SocketState state = SocketState.DISCONNECTED;
+
+  int _addSocketProcess(Function() cb) {
     int processId = Random().nextInt(10000);
-    socketProcesses.add(processId);
-    _socketProcessUpdater.sink.add(socketProcesses);
+    socketProcesses[processId] = cb;
+    // _socketProcessUpdater.sink.add(socketProcesses.keys.toList());
+    Future.delayed(Duration(milliseconds: Random().nextInt(100)), () {
+      if (state == SocketState.DISCONNECTED) {
+        _manager.startSocketIO();
+      } else if (state == SocketState.CONNECTED) {
+        cb();
+      }
+      // debugPrint("connecting " + state.toString());
+    });
     return processId;
   }
 
-  void removeFromSocketProcess(int processId) {
-    socketProcesses.remove(processId);
-    _socketProcessUpdater.sink.add(socketProcesses);
-    // if (!LifeCycleManager().isAlive) {
-    //   closeSocket();
-    // }
+  void _finishSocketProcess(int processId) {
+    Future.delayed(Duration(milliseconds: Random().nextInt(100)), () {
+      socketProcesses.remove(processId);
+    });
+
+    _socketProcessUpdater.sink.add(socketProcesses.keys.toList());
   }
+
+  // void removeFromSocketProcess(int processId) {
+  //   socketProcesses.remove(processId);
+  //   _socketProcessUpdater.sink.add(socketProcesses);
+  //   // if (!LifeCycleManager().isAlive) {
+  //   //   closeSocket();
+  //   // }
+  // }
 
   StreamController _socketProcessUpdater =
       StreamController<List<int>>.broadcast();
@@ -96,7 +121,7 @@ class SocketManager {
   Stream<String> get attachmentSenderCompleter =>
       _attachmentSenderCompleter.stream;
 
-  Function connectCb;
+  // Function connectCb;
   void addAttachmentDownloader(String guid, AttachmentDownloader downloader) {
     attachmentDownloaders[guid] = downloader;
   }
@@ -127,6 +152,7 @@ class SocketManager {
   }
 
   void socketStatusUpdate(data) {
+    debugPrint("socketStatusUpdate " + data);
     switch (data) {
       case "connect":
         debugPrint("CONNECTED");
@@ -139,19 +165,44 @@ class SocketManager {
           _manager.disconnectSubscribers.remove(key);
         });
 
-        SettingsManager().settings.connected = true;
-        if (connectCb != null) connectCb();
+        // SettingsManager().settings.connected = true;
+        state = SocketState.CONNECTED;
+        _manager.socketProcesses.values.forEach((element) {
+          element();
+        });
+        // if (connectCb != null) connectCb();
+        return;
+      case "connect_error":
+        debugPrint("CONNECT ERROR");
+        if (state != SocketState.ERROR) {
+          state = SocketState.ERROR;
+          Timer(Duration(seconds: 20), () {
+            debugPrint("UNABLE TO CONNECT");
+            // NotificationManager().createNotificationChannel();
+            // NotificationManager().createNewNotification(
+            //     "Unable To Connect To Server",
+            //     "We were unable to connect to your server, are you online?",
+            //     "Socket_io",
+            //     404,
+            //     404);
+          });
+        }
         return;
       case "disconnect":
         _manager.disconnectSubscribers.values.forEach((f) {
           f();
         });
         debugPrint("disconnected");
-        SettingsManager().settings.connected = false;
+        state = SocketState.DISCONNECTED;
+        // SettingsManager().settings.connected = false;
         return;
       case "reconnect":
         debugPrint("RECONNECTED");
+        state = SocketState.CONNECTING;
         SettingsManager().settings.connected = true;
+        _manager.socketProcesses.values.forEach((element) {
+          element();
+        });
         return;
       default:
         return;
@@ -176,14 +227,20 @@ class SocketManager {
     DBProvider.db.buildDatabase(db);
   }
 
-  startSocketIO({Function connectCB}) async {
-    if (connectCB == null && SettingsManager().settings.finishedSetup == false)
+  startSocketIO() async {
+    if (state == SocketState.CONNECTING || state == SocketState.CONNECTED) {
+      debugPrint("already connected");
       return;
+    }
+    // debugPrint("already connecting, but whatever");
+    // state = SocketState.CONNECTING;
+    // if (connectCB == null && SettingsManager().settings.finishedSetup == false)
+    //   return;
     // If we already have a socket connection, kill it
     if (_manager.socket != null) {
       _manager.socket.destroy();
     }
-    if (connectCB != null) connectCb = connectCB;
+    // if (connectCB != null) connectCb = connectCB;
 
     debugPrint(
         "Starting socket io with the server: ${SettingsManager().settings.serverAddress}");
@@ -288,8 +345,12 @@ class SocketManager {
 
   void closeSocket({bool force = false}) {
     if (!force && _manager.socketProcesses.length != 0) return;
-    if (_manager.socket != null) _manager.socket.destroy();
+    if (_manager.socket != null) {
+      _manager.socket.disconnect();
+      _manager.socket.destroy();
+    }
     _manager.socket = null;
+    state = SocketState.DISCONNECTED;
   }
 
   Future<void> authFCM() async {
@@ -299,10 +360,8 @@ class SocketManager {
     } else if (token != null) {
       debugPrint("already authorized fcm " + token);
       if (_manager.socket != null) {
-        _manager.socket.sendMessage(
-            "add-fcm-device",
-            jsonEncode({"deviceId": token, "deviceName": "android-client"}),
-            () {});
+        _manager.sendMessage("add-fcm-device",
+            {"deviceId": token, "deviceName": "android-client"}, (data) {});
       }
       return;
     }
@@ -312,16 +371,31 @@ class SocketManager {
           .invokeMethod('auth', SettingsManager().settings.fcmAuthData);
       token = result;
       if (_manager.socket != null) {
-        _manager.socket.sendMessage(
-            "add-fcm-device",
-            jsonEncode({"deviceId": token, "deviceName": "android-client"}),
-            () {});
+        _manager.sendMessage("add-fcm-device",
+            {"deviceId": token, "deviceName": "android-client"}, (data) {});
         debugPrint(token);
       }
     } on PlatformException catch (e) {
       token = "Failed to get token: " + e.toString();
       debugPrint(token);
     }
+  }
+
+  Future<Map<String, dynamic>> sendMessage(String event,
+      Map<String, dynamic> message, Function(Map<String, dynamic>) cb) {
+    Completer<Map<String, dynamic>> completer = Completer();
+    int _processId = 0;
+    Function socketCB = () {
+      _manager.socket.sendMessage(event, jsonEncode(message), (String data) {
+        completer.complete(jsonDecode(data));
+        cb(jsonDecode(data));
+        _manager._finishSocketProcess(_processId);
+      });
+    };
+    debugPrint("send message " + state.toString());
+    _processId = _manager._addSocketProcess(socketCB);
+
+    return completer.future;
   }
 
   void finishSetup() {

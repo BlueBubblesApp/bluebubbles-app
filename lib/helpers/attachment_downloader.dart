@@ -44,20 +44,19 @@ class AttachmentDownloader {
     _attachment = attachment;
     _message = message;
     _createNotification = createNotification;
-    _socketProcessId = SocketManager().addSocketProcess();
 
     fetchAttachment(attachment);
   }
 
-  resumeChunkingAfterDisconnect() {
-    if (_stream.isClosed) return;
-    if (_guid != "" && _cb != null) {
-      debugPrint("restarting chunking " + _currentBytes.length.toString());
-      getChunkRecursive(_guid, _currentChunk, _totalChunks, _currentBytes, _cb);
-    } else {
-      debugPrint("could not restart chunking");
-    }
-  }
+  // resumeChunkingAfterDisconnect() {
+  //   if (_stream.isClosed) return;
+  //   if (_guid != "" && _cb != null) {
+  //     debugPrint("restarting chunking " + _currentBytes.length.toString());
+  //     getChunkRecursive(_guid, _currentChunk, _totalChunks, _currentBytes, _cb);
+  //   } else {
+  //     debugPrint("could not restart chunking");
+  //   }
+  // }
 
   getChunkRecursive(
       String guid, int index, int total, List<int> currentBytes, Function cb) {
@@ -69,9 +68,8 @@ class AttachmentDownloader {
       params["start"] = index * _chunkSize;
       params["chunkSize"] = _chunkSize;
       params["compress"] = false;
-      SocketManager().socket.sendMessage(
-          "get-attachment-chunk", jsonEncode(params), (chunk) async {
-        Map<String, dynamic> attachmentResponse = jsonDecode(chunk);
+      SocketManager().sendMessage("get-attachment-chunk", params,
+          (attachmentResponse) async {
         if (!attachmentResponse.containsKey("data") ||
             attachmentResponse["data"] == null) {
           await cb(currentBytes);
@@ -149,7 +147,7 @@ class AttachmentDownloader {
 
       File file = await writeToFile(bytes, pathName);
       SocketManager().finishDownloader(attachment.guid);
-      SocketManager().unSubscribeDisconnectCallback(attachment.guid);
+      // SocketManager().unSubscribeDisconnectCallback(attachment.guid);
       LifeCycleManager().finishDownloader();
       _stream.sink.add(file);
       _stream.close();
@@ -160,14 +158,14 @@ class AttachmentDownloader {
 
     SocketManager().addAttachmentDownloader(attachment.guid, this);
     LifeCycleManager().startDownloader();
-    SocketManager().disconnectCallback(() {
-      _currentChunk = 0;
-      _totalChunks = 0;
-      _currentBytes = <int>[];
-      _guid = "";
-      _cb = null;
-      fetchAttachment(attachment);
-    }, attachment.guid);
+    // SocketManager().disconnectCallback(() {
+    //   _currentChunk = 0;
+    //   _totalChunks = 0;
+    //   _currentBytes = <int>[];
+    //   _guid = "";
+    //   _cb = null;
+    //   fetchAttachment(attachment);
+    // }, attachment.guid);
 
     getChunkRecursive(attachment.guid, 0, numOfChunks, [], _cb);
   }

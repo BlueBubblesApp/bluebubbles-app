@@ -73,7 +73,11 @@ class _MessageAttachmentState extends State<MessageAttachment>
       height = (content as Attachment).height;
     }
 
-    placeHolder = (blurhash == null || width == null || height == null)
+    placeHolder = (blurhash == null ||
+            width == null ||
+            height == null ||
+            width == 0 ||
+            height == 0)
         ? Container()
         : Container(
             constraints: BoxConstraints(

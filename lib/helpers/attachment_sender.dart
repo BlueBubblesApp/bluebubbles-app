@@ -32,7 +32,6 @@ class AttachmentSender {
   List<int> _imageBytes;
   String _text;
   String _attachmentName;
-  int _socketProcessId;
 
   String get guid => _attachmentGuid;
 
@@ -46,7 +45,6 @@ class AttachmentSender {
     _chat = chat;
     _attachmentGuid = "temp-${randomString(8)}";
     _text = text;
-    _socketProcessId = SocketManager().addSocketProcess();
 
     sendAttachment(attachment);
   }
@@ -74,9 +72,8 @@ class AttachmentSender {
     params["attachmentName"] = _attachmentName;
     params["attachmentData"] = base64Encode(chunk);
     debugPrint(chunk.length.toString() + "/" + _imageBytes.length.toString());
-    SocketManager().socket.sendMessage("send-message-chunk", jsonEncode(params),
-        (data) {
-      Map<String, dynamic> response = jsonDecode(data);
+    SocketManager().sendMessage("send-message-chunk", params, (data) {
+      Map<String, dynamic> response = data;
       debugPrint(data.toString());
       if (response['status'] == 200) {
         if (index + _chunkSize < _imageBytes.length) {
@@ -86,7 +83,6 @@ class AttachmentSender {
           if (!_stream.isClosed) _stream.sink.add(index / _imageBytes.length);
           debugPrint("no more to send");
           SocketManager().finishSender(_attachmentGuid);
-          SocketManager().socketProcesses.remove(_socketProcessId);
           LifeCycleManager().finishDownloader();
         }
       } else {
@@ -97,6 +93,7 @@ class AttachmentSender {
       }
     });
   }
+  //{"identifier":"160E8D64-0A22-400D-93BE-7D4C19346F1F","start":1048576,"chunkSize":524288,"compress":false}
 
   Future<void> sendAttachment(File attachment) async {
     _attachmentName = basename(attachment.path);

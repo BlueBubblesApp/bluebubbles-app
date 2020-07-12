@@ -16,7 +16,7 @@ class LifeCycleManager {
 
   LifeCycleManager._internal() {
     SocketManager().socketProcessUpdater.listen((event) {
-      debugPrint("updated socket process");
+      debugPrint("updated socket process " + event.toString());
       if (event.length == 0 && !_isAlive) {
         SocketManager().closeSocket();
       }
@@ -35,7 +35,7 @@ class LifeCycleManager {
 
   opened() {
     _isAlive = true;
-    if (SocketManager().socket == null) SocketManager().startSocketIO();
+    SocketManager().startSocketIO();
   }
 
   close() {

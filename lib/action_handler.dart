@@ -59,40 +59,28 @@ class ActionHandler {
       await chat.addMessage(sentMessage);
     }
 
-    // If we aren't connected to the socket, return
-    if (SettingsManager().settings.connected == false) return;
+    // // If we aren't connected to the socket, return
+    // if (SettingsManager().settings.connected == false) return;
+    SocketManager().sendMessage("send-message", params, (response) async {
+      // if (closeOnFinish &&
+      //     SocketManager().attachmentDownloaders.length == 0 &&
+      //     SocketManager().attachmentSenders.length == 0) {
+      //   SocketManager().closeSocket();
+      // }
+      debugPrint("message sent: " + response.toString());
 
-    if (SocketManager().socket == null) {
-      SocketManager().startSocketIO(connectCB: () {
-        ActionHandler.sendMessage(chat, text,
-            attachments: attachments, closeOnFinish: true);
-      });
-    } else {
-      int _socketProcess = SocketManager().addSocketProcess();
-      SocketManager().socket.sendMessage("send-message", jsonEncode(params),
-          (data) async {
-        SocketManager().socketProcesses.remove(_socketProcess);
-        if (closeOnFinish &&
-            SocketManager().attachmentDownloaders.length == 0 &&
-            SocketManager().attachmentSenders.length == 0) {
-          SocketManager().closeSocket();
-        }
-        Map response = jsonDecode(data);
-        debugPrint("message sent: " + response.toString());
+      // If there is an error, replace the temp value with an error
+      if (response['status'] != 200) {
+        sentMessage.guid = sentMessage.guid
+            .replaceAll("temp", "error-${response['error']['message']}");
+        sentMessage.error = response['status'] == 400
+            ? MessageError.BAD_REQUEST.code
+            : MessageError.SERVER_ERROR.code;
 
-        // If there is an error, replace the temp value with an error
-        if (response['status'] != 200) {
-          sentMessage.guid = sentMessage.guid
-              .replaceAll("temp", "error-${response['error']['message']}");
-          sentMessage.error = response['status'] == 400
-              ? MessageError.BAD_REQUEST.code
-              : MessageError.SERVER_ERROR.code;
-
-          await Message.replaceMessage(tempGuid, sentMessage);
-          NewMessageManager().updateWithMessage(chat, sentMessage);
-        }
-      });
-    }
+        await Message.replaceMessage(tempGuid, sentMessage);
+        NewMessageManager().updateWithMessage(chat, sentMessage);
+      }
+    });
   }
 
   /// Try to resents a [message] that has errored during the
@@ -134,11 +122,7 @@ class ActionHandler {
     // If we aren't connected to the socket, return
     if (SettingsManager().settings.connected == false) return;
 
-    int _socketProcess = SocketManager().addSocketProcess();
-    SocketManager().socket.sendMessage("send-message", jsonEncode(params),
-        (data) async {
-      SocketManager().socketProcesses.remove(_socketProcess);
-      Map response = jsonDecode(data);
+    SocketManager().sendMessage("send-message", params, (response) async {
       debugPrint("message sent: " + response.toString());
 
       // If there is an error, replace the temp value with an error
@@ -237,18 +221,7 @@ class ActionHandler {
       {Map<String, dynamic> chatData,
       Chat chat,
       bool checkIfExists = false,
-      bool isHeadless = false,
-      bool closeSocketOnFinish = false}) async {
-    if (!closeSocketOnFinish && SocketManager().socket == null) {
-      SocketManager().startSocketIO(connectCB: () {
-        handleChat(
-            chatData: chatData,
-            chat: chat,
-            checkIfExists: checkIfExists,
-            isHeadless: isHeadless,
-            closeSocketOnFinish: true);
-      });
-    }
+      bool isHeadless = false}) async {
     Chat currentChat;
     Chat newChat = chat;
     if (chatData != null && newChat == null) {
@@ -276,16 +249,13 @@ class ActionHandler {
     Map<String, dynamic> params = Map();
     params["chatGuid"] = newChat.guid;
     params["withParticipants"] = true;
-    int _socketProcess = SocketManager().addSocketProcess();
-    SocketManager().socket.sendMessage("get-chat", jsonEncode(params),
-        (data) async {
-      SocketManager().socketProcesses.remove(_socketProcess);
-      if (closeSocketOnFinish &&
-          SocketManager().attachmentDownloaders.length == 0 &&
-          SocketManager().attachmentSenders.length == 0) {
-        SocketManager().closeSocket();
-      }
-      Map<String, dynamic> chatData = jsonDecode(data)["data"];
+    SocketManager().sendMessage("get-chat", params, (data) async {
+      // if (closeSocketOnFinish &&
+      //     SocketManager().attachmentDownloaders.length == 0 &&
+      //     SocketManager().attachmentSenders.length == 0) {
+      //   SocketManager().closeSocket();
+      // }
+      Map<String, dynamic> chatData = data["data"];
       if (chatData != null) {
         debugPrint("got chat data " + chatData.toString());
         newChat = Chat.fromMap(chatData);

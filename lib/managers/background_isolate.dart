@@ -37,11 +37,13 @@ callbackHandler() async {
   SettingsManager().init();
   MethodChannelInterface().init(null, channel: _backgroundChannel);
   LifeCycleManager().close();
-  SocketManager().connectCb = () {
-    debugPrint("connectCb");
-    resyncChats(_backgroundChannel);
-  };
-  await SettingsManager().getSavedSettings();
+  // SocketManager().connectCb = () {
+  //   debugPrint("connectCb");
+  //   resyncChats(_backgroundChannel);
+  // };
+  await SettingsManager().getSavedSettings(headless: true);
+  SocketManager().authFCM();
+  resyncChats(_backgroundChannel);
   // SocketManager().startSocketIO();
   _backgroundChannel.setMethodCallHandler((call) async {
     debugPrint("call " + call.method);
@@ -116,11 +118,9 @@ void fcmAuth(MethodChannel channel) async {
 }
 
 void resyncChats(MethodChannel channel) async {
-  int _socketProcess = SocketManager().addSocketProcess();
   debugPrint("starting resync");
-  SocketManager().socket.sendMessage("get-chats", '{}', (data) {
+  SocketManager().sendMessage("get-chats", {}, (data) {
     receivedChats(data, () {
-      SocketManager().removeFromSocketProcess(_socketProcess);
       // SocketManager().closeSocket();
       debugPrint("finished getting chats");
     }, channel);
@@ -130,7 +130,7 @@ void resyncChats(MethodChannel channel) async {
 
 void receivedChats(data, Function completeCB, MethodChannel channel) async {
   debugPrint("got chats");
-  List chats = jsonDecode(data)["data"];
+  List chats = data["data"];
   getChatMessagesRecursive(chats, 0, completeCB, channel);
 }
 
@@ -153,8 +153,7 @@ void getChatMessagesRecursive(
   } else {
     params["limit"] = 25;
   }
-  SocketManager().socket.sendMessage("get-chat-messages", jsonEncode(params),
-      (data) {
+  SocketManager().sendMessage("get-chat-messages", params, (data) {
     receivedMessagesForChat(chat, data, channel);
     if (index + 1 < chats.length) {
       getChatMessagesRecursive(chats, index + 1, completeCB, channel);
@@ -164,9 +163,9 @@ void getChatMessagesRecursive(
   });
 }
 
-void receivedMessagesForChat(Chat chat, data, MethodChannel channel) async {
-  List messages = jsonDecode(data)["data"];
-  debugPrint("got messages " + messages.length.toString() + ", " + chat.guid);
+void receivedMessagesForChat(
+    Chat chat, Map<String, dynamic> data, MethodChannel channel) async {
+  List messages = data["data"];
 
   MessageHelper.bulkAddMessages(chat, messages);
   // for (var _message in messages) {
