@@ -117,6 +117,7 @@ class Main extends StatelessWidget with WidgetsBindingObserver {
         dividerColor: HexColor('26262a').withOpacity(0.5),
         buttonColor: HexColor("666666"),
         backgroundColor: Colors.black,
+        splashColor: Colors.white,
       ),
       initial: AdaptiveThemeMode.system,
       builder: (theme, darkTheme) => MaterialApp(

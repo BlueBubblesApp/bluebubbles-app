@@ -63,7 +63,7 @@ class _ReactionsState extends State<Reactions> {
                     reactionIcon[Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: SvgPicture.asset(
-                        'assets/reactions/laugh-black.svg',
+                        'assets/reactions/$key-black.svg',
                         color: key == love ? Colors.pink : Colors.white,
                       ),
                     )] = reactions[key].last;

@@ -300,12 +300,12 @@ class _SentMessageState extends State<SentMessage>
     return GestureDetector(
       behavior: HitTestBehavior.translucent,
       onLongPress: () async {
-        Scrollable.ensureVisible(
-          context,
-          alignmentPolicy: ScrollPositionAlignmentPolicy.keepVisibleAtStart,
-          duration: Duration(milliseconds: 250),
-          curve: Curves.easeInOut,
-        );
+        // Scrollable.ensureVisible(
+        //   context,
+        //   // alignmentPolicy: ScrollPositionAlignmentPolicy.keepVisibleAtStart,
+        //   duration: Duration(milliseconds: 250),
+        //   curve: Curves.easeInOut,
+        // );
         List<Message> reactions = [];
         if (widget.message.hasReactions) {
           reactions = await widget.message.getReactions();
@@ -400,6 +400,7 @@ class _SentMessageState extends State<SentMessage>
       builder: (context) => MessageDetailsPopup(
         entry: entry,
         reactions: reactions,
+        message: widget.message,
       ),
     );
     return entry;
