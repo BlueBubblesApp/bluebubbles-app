@@ -47,10 +47,6 @@ class ActionHandler {
       hasAttachments: attachments.length > 0 ? true : false,
     );
 
-    // If we aren't conneted to the socket, set the message error code
-    if (SettingsManager().settings.connected == false)
-      sentMessage.error = MessageError.NO_CONNECTION.code;
-
     if (!closeOnFinish) {
       NewMessageManager()
           .updateWithMessage(chat, sentMessage, sentFromThisClient: true);
@@ -114,13 +110,9 @@ class ActionHandler {
     // TODO: Get Attachments from DB
 
     // If we aren't conneted to the socket, set the message error code
-    if (SettingsManager().settings.connected == false) message.error = 1000;
 
     await Message.replaceMessage(oldGuid, message);
     NewMessageManager().updateWithMessage(chat, message);
-
-    // If we aren't connected to the socket, return
-    if (SettingsManager().settings.connected == false) return;
 
     SocketManager().sendMessage("send-message", params, (response) async {
       debugPrint("message sent: " + response.toString());

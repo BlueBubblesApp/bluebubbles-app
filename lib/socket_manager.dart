@@ -78,7 +78,20 @@ class SocketManager {
   Map<String, AttachmentSender> attachmentSenders = Map();
   Map<int, Function> socketProcesses = new Map();
 
-  SocketState state = SocketState.DISCONNECTED;
+  SocketState _state = SocketState.DISCONNECTED;
+
+  StreamController<SocketState> _connectionStateStream =
+      StreamController<SocketState>.broadcast();
+
+  Stream<SocketState> get connectionStateStream =>
+      _connectionStateStream.stream;
+
+  SocketState get state => _state;
+
+  set state(SocketState val) {
+    _state = val;
+    _connectionStateStream.sink.add(_state);
+  }
 
   int _addSocketProcess(Function() cb) {
     int processId = Random().nextInt(10000);
@@ -165,7 +178,6 @@ class SocketManager {
           _manager.disconnectSubscribers.remove(key);
         });
 
-        // SettingsManager().settings.connected = true;
         state = SocketState.CONNECTED;
         _manager.socketProcesses.values.forEach((element) {
           element();
@@ -194,12 +206,10 @@ class SocketManager {
         });
         debugPrint("disconnected");
         state = SocketState.DISCONNECTED;
-        // SettingsManager().settings.connected = false;
         return;
       case "reconnect":
         debugPrint("RECONNECTED");
         state = SocketState.CONNECTING;
-        SettingsManager().settings.connected = true;
         _manager.socketProcesses.values.forEach((element) {
           element();
         });
@@ -227,8 +237,9 @@ class SocketManager {
     DBProvider.db.buildDatabase(db);
   }
 
-  startSocketIO() async {
-    if (state == SocketState.CONNECTING || state == SocketState.CONNECTED) {
+  startSocketIO({bool forceNewConnection = false}) async {
+    if ((state == SocketState.CONNECTING || state == SocketState.CONNECTED) &&
+        !forceNewConnection) {
       debugPrint("already connected");
       return;
     }

@@ -25,6 +25,7 @@ class SettingsPanel extends StatefulWidget {
 
 class _SettingsPanelState extends State<SettingsPanel> {
   Settings _settingsCopy;
+  bool needToReconnect = false;
 
   @override
   void initState() {
@@ -64,20 +65,42 @@ class _SettingsPanelState extends State<SettingsPanel> {
           SliverList(
             delegate: SliverChildListDelegate(
               <Widget>[
-                SettingsTile(
-                    title: "Connection Status",
-                    subTitle: _settingsCopy.connected
-                        ? "Connected -> Tap to Refresh"
-                        : "Disconnected -> Tap to Refresh",
-                    trailing: _settingsCopy.connected
-                        ? Icon(Icons.fiber_manual_record,
-                            color: HexColor('32CD32'))
-                        : Icon(Icons.fiber_manual_record,
-                            color: HexColor('DC143C')),
-                    onTap: () {
-                      _settingsCopy.connected =
-                          SettingsManager().settings.connected;
-                      setState(() {});
+                StreamBuilder(
+                    stream: SocketManager().connectionStateStream,
+                    builder: (context, AsyncSnapshot<SocketState> snapshot) {
+                      SocketState connectionStatus;
+                      if (snapshot.hasData) {
+                        connectionStatus = snapshot.data;
+                      } else {
+                        connectionStatus = SocketManager().state;
+                      }
+                      String subtitle;
+
+                      switch (connectionStatus) {
+                        case SocketState.CONNECTED:
+                          subtitle = "Connected";
+                          break;
+                        case SocketState.DISCONNECTED:
+                          subtitle = "Disconnected";
+                          break;
+                        case SocketState.ERROR:
+                          subtitle = "Error";
+                          break;
+                        case SocketState.CONNECTING:
+                          subtitle = "Connecting...";
+                          break;
+                      }
+
+                      return SettingsTile(
+                        title: "Connection Status",
+                        subTitle: subtitle,
+                        trailing: connectionStatus == SocketState.CONNECTED ||
+                                connectionStatus == SocketState.CONNECTING
+                            ? Icon(Icons.fiber_manual_record,
+                                color: HexColor('32CD32'))
+                            : Icon(Icons.fiber_manual_record,
+                                color: HexColor('DC143C')),
+                      );
                     }),
                 SettingsTile(
                   onTap: () {
@@ -122,6 +145,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                               child: Text("Ok"),
                               onPressed: () {
                                 _settingsCopy.serverAddress = _controller.text;
+                                needToReconnect = true;
                                 // Singleton().saveSettings(_settingsCopy);
                                 Navigator.of(context).pop();
                               },
@@ -170,6 +194,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                       };
                       _settingsCopy.guidAuthKey = fcmData[0];
                       _settingsCopy.serverAddress = fcmData[1];
+                      needToReconnect = true;
                       // Singleton().saveSettings(_settingsCopy);
                     }
                   },
@@ -242,7 +267,8 @@ class _SettingsPanelState extends State<SettingsPanel> {
   void dispose() {
     // if (_settingsCopy != Singleton().settings) {
     debugPrint("saving settings");
-    SettingsManager().saveSettings(_settingsCopy, connectToSocket: true);
+    SettingsManager()
+        .saveSettings(_settingsCopy, connectToSocket: needToReconnect);
     // }
     super.dispose();
   }
