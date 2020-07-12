@@ -148,7 +148,9 @@ bool sameSender(Message first, Message second) {
       (first.isFromMe && second.isFromMe ||
           (!first.isFromMe &&
               !second.isFromMe &&
-              first.handle.address == second.handle.address)));
+              (first.handle != null &&
+                  second.handle != null &&
+                  first.handle.address == second.handle.address))));
 }
 
 extension DateHelpers on DateTime {
