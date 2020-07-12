@@ -7,6 +7,7 @@ import 'package:bluebubble_messages/repository/models/message.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:bluebubble_messages/layouts/widgets/send_widget.dart';
+import 'package:metadata_fetch/metadata_fetch.dart';
 
 class MessageView extends StatefulWidget {
   final MessageBloc messageBloc;
@@ -31,7 +32,7 @@ class _MessageViewState extends State<MessageView>
   List<String> sentMessages = <String>[];
   Map<String, Widget> attachments = Map();
   Map<String, Future<List<Attachment>>> attachmentFutures = Map();
-  Map<String, List<Attachment>> attachmentResults = Map();
+  Map<String, Map<String, dynamic>> attachmentResults = Map();
   bool initializedList = false;
 
   @override
@@ -107,13 +108,22 @@ class _MessageViewState extends State<MessageView>
             if (snapshot.hasData ||
                 attachmentResults.containsKey(message.guid)) {
               if (!attachmentResults.containsKey(message.guid)) {
-                attachmentResults[message.guid] = snapshot.data;
-                debugPrint(
-                    "got ${attachmentResults[message.guid].length} attachments");
+                attachmentResults[message.guid] = {
+                  "attachments": snapshot.data
+                };
+                // debugPrint(
+                //     "got ${attachmentResults[message.guid].length} attachments");
               }
               return MessageAttachments(
-                attachments: attachmentResults[message.guid],
+                attachments: attachmentResults[message.guid]["attachments"],
                 message: message,
+                existingMetaData:
+                    attachmentResults[message.guid].containsKey("urlMetaData")
+                        ? attachmentResults[message.guid]["urlMetaData"]
+                        : null,
+                onFinishURLs: (Metadata data) {
+                  attachmentResults[message.guid]["urlMetaData"] = data;
+                },
               );
             } else {
               return Container();

@@ -201,6 +201,7 @@ class _MessageAttachmentState extends State<MessageAttachment>
 
       // If it's an AttachmentDownloader, it is currently being downloaded
     } else if (content is AttachmentDownloader) {
+      if (widget.attachment.mimeType == null) return Container();
       (content as AttachmentDownloader).stream.listen((event) {
         if (event is File) {
           content = event;

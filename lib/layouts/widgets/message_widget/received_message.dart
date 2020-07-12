@@ -115,10 +115,12 @@ class _ReceivedMessageState extends State<ReceivedMessage> {
                   recognizer: new TapGestureRecognizer()
                     ..onTap = () async {
                       String url = text;
-                      if (!url.startsWith("http://") ||
+                      if (!url.startsWith("http://") &&
                           !url.startsWith("https://")) {
                         url = "http://" + url;
                       }
+                      debugPrint(
+                          "open url " + text.startsWith("http://").toString());
                       MethodChannelInterface()
                           .invokeMethod("open-link", {"link": url});
 

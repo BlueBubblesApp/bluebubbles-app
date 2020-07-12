@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:bluebubble_messages/helpers/attachment_downloader.dart';
+import 'package:bluebubble_messages/layouts/widgets/message_widget/message_content/media_players/url_preview_widget.dart';
 import 'package:bluebubble_messages/layouts/widgets/message_widget/message_content/message_attachment.dart';
 import 'package:bluebubble_messages/layouts/widgets/message_widget/reactions.dart';
 import 'package:bluebubble_messages/managers/settings_manager.dart';
@@ -8,6 +9,7 @@ import 'package:bluebubble_messages/repository/models/attachment.dart';
 import 'package:bluebubble_messages/repository/models/message.dart';
 import 'package:bluebubble_messages/socket_manager.dart';
 import 'package:flutter/material.dart';
+import 'package:metadata_fetch/metadata_fetch.dart';
 import 'package:mime_type/mime_type.dart';
 import 'package:path/path.dart';
 
@@ -16,9 +18,13 @@ class MessageAttachments extends StatefulWidget {
     Key key,
     @required this.message,
     @required this.attachments,
+    @required this.onFinishURLs,
+    this.existingMetaData,
   }) : super(key: key);
   final Message message;
   final List<Attachment> attachments;
+  final Function(Metadata) onFinishURLs;
+  final Metadata existingMetaData;
 
   @override
   _MessageAttachmentsState createState() => _MessageAttachmentsState();
@@ -105,18 +111,34 @@ class _MessageAttachmentsState extends State<MessageAttachments>
 
   List<Widget> _buildAttachments() {
     List<Widget> content = <Widget>[];
+    List<Attachment> nullMimeTypeAttachments = <Attachment>[];
+
     for (Attachment attachment in widget.attachments) {
+      if (attachment.mimeType == null) {
+        nullMimeTypeAttachments.add(attachment);
+      } else {
+        content.add(
+          MessageAttachment(
+            message: widget.message,
+            attachment: attachment,
+            content: _attachments[attachment.guid],
+            updateAttachment: () {
+              initForAttachment(attachment);
+            },
+          ),
+        );
+      }
+    }
+    if (nullMimeTypeAttachments.length != 0)
       content.add(
-        MessageAttachment(
+        UrlPreviewWidget(
+          linkPreviews: nullMimeTypeAttachments,
           message: widget.message,
-          attachment: attachment,
-          content: _attachments[attachment.guid],
-          updateAttachment: () {
-            initForAttachment(attachment);
-          },
+          onFinish: widget.onFinishURLs,
+          existingMetaData: widget.existingMetaData,
         ),
       );
-    }
+
     return content;
   }
 

@@ -86,6 +86,7 @@ class _MessageState extends State<MessageWidget> {
   @override
   void initState() {
     super.initState();
+    debugPrint("message widget init state");
   }
 
   bool withinTimeThreshold(Message first, Message second, {threshold: 5}) {
