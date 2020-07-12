@@ -147,13 +147,18 @@ class _SentMessageState extends State<SentMessage>
 
   @override
   Widget build(BuildContext context) {
+    Color blueColor =
+        widget.message == null || widget.message.guid.startsWith("temp")
+            ? darken(Colors.blue[600], 0.2)
+            : Colors.blue[600];
+
     List<Widget> tail = <Widget>[
       Container(
         margin: EdgeInsets.only(bottom: 1),
         width: 20,
         height: 15,
         decoration: BoxDecoration(
-          color: Colors.blue[600],
+          color: blueColor,
           borderRadius: BorderRadius.only(bottomLeft: Radius.circular(12)),
         ),
       ),
@@ -223,6 +228,7 @@ class _SentMessageState extends State<SentMessage>
                           .invokeMethod("open-link", {"link": url});
                     },
                   style: Theme.of(context).textTheme.bodyText2.apply(
+                        color: Colors.white,
                         decoration: TextDecoration.underline,
                       ),
                 ),
@@ -267,15 +273,15 @@ class _SentMessageState extends State<SentMessage>
                   ),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(20),
-                    color: !widget.isFromMe
-                        ? Theme.of(context).accentColor
-                        : Colors.blue,
+                    color: blueColor,
                   ),
                   child: widget.customContent == null
                       ? RichText(
                           text: TextSpan(
                             children: textSpans,
-                            style: Theme.of(context).textTheme.bodyText2,
+                            style: Theme.of(context).textTheme.bodyText2.apply(
+                                  color: Colors.white,
+                                ),
                           ),
                         )
                       : Column(
