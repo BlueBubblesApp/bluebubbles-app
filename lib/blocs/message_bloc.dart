@@ -88,7 +88,11 @@ class MessageBloc {
   void insert(Message message, {bool sentFromThisClient = false}) {
     if (message.associatedMessageGuid != null) {
       if (_allMessages.containsKey(message.associatedMessageGuid)) {
-        _allMessages[message.associatedMessageGuid].hasReactions = true;
+        Message messageWithReaction =
+            _allMessages[message.associatedMessageGuid];
+        messageWithReaction.hasReactions = true;
+        _allMessages.update(
+            message.associatedMessageGuid, (value) => messageWithReaction);
         _messageController.sink.add({
           "messages": _allMessages,
           "update": _allMessages[message.associatedMessageGuid],

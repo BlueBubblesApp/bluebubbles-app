@@ -94,7 +94,6 @@ class Message {
     } else if (json.containsKey("attachments")) {
       hasAttachments = (json['attachments'] as List).length > 0 ? true : false;
     }
-    // debugPrint("hasAttachments = $hasAttachments, json: ${json.toString()}");
 
     return new Message(
       id: json.containsKey("ROWID") ? json["ROWID"] : null,
@@ -147,8 +146,9 @@ class Message {
       isExpired: (json["isExpired"] is bool)
           ? json['isExpired']
           : ((json['isExpired'] == 1) ? true : false),
-      associatedMessageGuid: json.containsKey("associatedMessageGuid")
-          ? json["associatedMessageGuid"]
+      associatedMessageGuid: json.containsKey("associatedMessageGuid") &&
+              json["associatedMessageGuid"] != null
+          ? (json["associatedMessageGuid"] as String).substring(4)
           : null,
       associatedMessageType: json.containsKey("associatedMessageType")
           ? json["associatedMessageType"]
@@ -190,17 +190,16 @@ class Message {
     //     .log(Level.info, "existing == null ${existing == null}");
     if (this.associatedMessageType != null &&
         this.associatedMessageGuid != null) {
-      Message associatedMessage = await Message.findOne(
-          {"guid": this.associatedMessageGuid.substring(4)});
+      Message associatedMessage =
+          await Message.findOne({"guid": this.associatedMessageGuid});
       if (associatedMessage != null) {
         associatedMessage.hasReactions = true;
         await associatedMessage.save();
         debugPrint("found message for reaction ${associatedMessage.guid}");
       }
     } else if (!this.hasReactions) {
-      Message reaction = await Message.findOne(
-          {"associatedMessageGuid": "%" + this.guid + "%"},
-          includeString: true);
+      Message reaction =
+          await Message.findOne({"associatedMessageGuid": this.guid});
       if (reaction != null) {
         this.hasReactions = true;
         debugPrint("found reaction for message ${reaction.id}");
@@ -252,8 +251,6 @@ class Message {
     }
     if (existing.hasAttachments) {
       params["hasAttachments"] = existing.hasAttachments ? 1 : 0;
-      debugPrint(
-          "updaing message with hasAtachments ${params["hasAttachments"]}");
       newMessage.hasAttachments = existing.hasAttachments;
     }
     if (existing.toMap().containsKey("hasReactions")) {
@@ -348,10 +345,9 @@ class Message {
   }
 
   Future<List<Message>> getReactions() async {
-    List<Message> res = await Message.find(
-        {"associatedMessageGuid": "%" + this.guid + "%"}, true);
+    List<Message> res =
+        await Message.find({"associatedMessageGuid": this.guid});
     res.sort((a, b) => b.dateCreated.compareTo(a.dateCreated));
-    debugPrint("found reactions " + res.length.toString());
     List<int> alreadyTrackedHandleIds = [];
     Map<int, Message> reactions = new Map();
     for (Message reaction in res) {
@@ -384,13 +380,11 @@ class Message {
     return this.handle;
   }
 
-  static Future<Message> findOne(Map<String, dynamic> filters,
-      {bool includeString = false}) async {
+  static Future<Message> findOne(Map<String, dynamic> filters) async {
     final Database db = await DBProvider.db.database;
 
     List<String> whereParams = [];
-    filters.keys.forEach((filter) =>
-        whereParams.add(includeString ? '$filter LIKE ?' : '$filter = ?'));
+    filters.keys.forEach((filter) => whereParams.add('$filter = ?'));
     List<dynamic> whereArgs = [];
     filters.values.forEach((filter) => whereArgs.add(filter));
     var res = await db.query("message",
@@ -404,13 +398,11 @@ class Message {
   }
 
   static Future<List<Message>> find(
-      [Map<String, dynamic> filters = const {},
-      bool includeString = false]) async {
+      [Map<String, dynamic> filters = const {}]) async {
     final Database db = await DBProvider.db.database;
 
     List<String> whereParams = [];
-    filters.keys.forEach((filter) =>
-        whereParams.add(includeString ? '$filter LIKE ?' : '$filter = ?'));
+    filters.keys.forEach((filter) => whereParams.add('$filter = ?'));
     List<dynamic> whereArgs = [];
     filters.values.forEach((filter) => whereArgs.add(filter));
 

@@ -52,7 +52,6 @@ class _MessageDetailsPopupState extends State<MessageDetailsPopup>
           Positioned.fill(
             child: GestureDetector(
               onTap: () {
-                debugPrint("remove entry");
                 widget.entry.remove();
               },
               child: Container(

@@ -23,15 +23,18 @@ class _ReactionsState extends State<Reactions> {
   final String emphasize = "emphasize";
   final String laugh = "laugh";
 
-  @override
-  void initState() {
-    super.initState();
-    if (widget.message != null && widget.message.hasReactions)
-      reactionRetreivalFuture = widget.message.getReactions();
-  }
+  // @override
+  // void initState() {
+  //   super.initState();
+  //   if (widget.message != null && widget.message.hasReactions)
+  //     reactionRetreivalFuture = widget.message.getReactions();
+  // }
 
   @override
   Widget build(BuildContext context) {
+    if (widget.message != null && widget.message.hasReactions)
+      reactionRetreivalFuture = widget.message.getReactions();
+
     return reactionRetreivalFuture != null
         ? FutureBuilder(
             future: reactionRetreivalFuture,
@@ -52,8 +55,6 @@ class _ReactionsState extends State<Reactions> {
               reactions.values.forEach((element) {
                 element.sort((a, b) => a.dateCreated.compareTo(b.dateCreated));
               });
-              debugPrint(
-                  "completed future with data " + snapshot.data.toString());
 
               Map<Widget, Message> reactionIcon = new Map();
               reactions.keys.forEach(
@@ -62,7 +63,7 @@ class _ReactionsState extends State<Reactions> {
                     reactionIcon[Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: SvgPicture.asset(
-                        'assets/reactions/$key-black.svg',
+                        'assets/reactions/laugh-black.svg',
                         color: key == love ? Colors.pink : Colors.white,
                       ),
                     )] = reactions[key].last;
