@@ -95,6 +95,7 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.done) {
                 return Stack(
+                  alignment: Alignment.bottomRight,
                   children: <Widget>[
                     Image.memory(
                       snapshot.data,
@@ -117,6 +118,12 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                         ),
                       ),
                     ),
+                    element.type == AssetType.video
+                        ? Icon(
+                            Icons.play_arrow,
+                            color: Colors.white,
+                          )
+                        : Container(),
                   ],
                 );
               } else {
@@ -169,7 +176,10 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                                 if (snapshot.connectionState ==
                                         ConnectionState.done &&
                                     snapshot.hasData) {
-                                  return Image.memory(snapshot.data);
+                                  return Image.memory(
+                                    snapshot.data,
+                                    fit: BoxFit.fill,
+                                  );
                                 }
                                 return SizedBox(
                                   height: 100,
@@ -203,6 +213,15 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                           ),
                         ),
                       ),
+                      mime(pickedImages[index].path).startsWith("video/")
+                          ? Align(
+                              alignment: Alignment.bottomRight,
+                              child: Icon(
+                                Icons.play_arrow,
+                                color: Colors.white,
+                              ),
+                            )
+                          : Container(),
                       Align(
                         alignment: Alignment.topRight,
                         child: Container(

@@ -46,9 +46,10 @@ class _MessageAttachmentState extends State<MessageAttachment>
     if (content is AttachmentDownloader) {
       (content as AttachmentDownloader).stream.listen((event) {
         if (event is File) {
-          setState(() {
-            content = event;
-          });
+          if (this.mounted)
+            setState(() {
+              content = event;
+            });
         }
       });
     }

@@ -87,7 +87,7 @@ class _NewChatCreatorState extends State<NewChatCreator> {
     String output = input.replaceAll("-", "");
     output = output.replaceAll("(", "");
     output = output.replaceAll(")", "");
-    output = output.replaceAll("+", "");
+    // output = output.replaceAll("+", "");
     output = output.replaceAll(" ", "");
     // output = output.replaceAll(".", "");
     // output = output.replaceAll("@", "");
@@ -206,7 +206,7 @@ class _NewChatCreatorState extends State<NewChatCreator> {
                 });
                 for (int i = 0; i < _participants.length; i++) {
                   params["identifier"] = widget.currentChat.guid;
-                  params["address"] = _participants[i];
+                  params["address"] = cleansePhoneNumber(_participants[i]);
                   SocketManager().sendMessage("add-participant", params,
                       (_data) async {
                     Map<String, dynamic> response = _data;

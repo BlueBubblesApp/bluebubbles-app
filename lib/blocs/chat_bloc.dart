@@ -120,7 +120,7 @@ class ChatBloc {
             await Message.getAttachments(firstMessage);
 
         // When there is an attachment,the text length  1
-        if (subtitle.length == 1 && attachments.length > 0) {
+        if (subtitle.length == 0 && attachments.length > 0) {
           String appDocPath = SettingsManager().appDocDir.path;
           String pathName =
               "$appDocPath/attachments/${attachments[0].guid}/${attachments[0].transferName}";
