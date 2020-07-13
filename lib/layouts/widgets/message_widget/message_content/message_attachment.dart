@@ -79,7 +79,11 @@ class _MessageAttachmentState extends State<MessageAttachment>
             height == null ||
             width == 0 ||
             height == 0)
-        ? Container()
+        ? Container(
+            height: 150,
+            width: 200,
+            color: Theme.of(context).accentColor,
+          )
         : Container(
             constraints: BoxConstraints(
               maxWidth: MediaQuery.of(context).size.width * 3 / 4,

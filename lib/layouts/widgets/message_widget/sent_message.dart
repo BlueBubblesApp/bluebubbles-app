@@ -27,6 +27,7 @@ class SentMessage extends StatefulWidget {
   final List<Widget> customContent;
   final bool isFromMe;
   final Widget attachments;
+  final bool showHero;
 
   final String substituteText;
   final bool limited;
@@ -43,6 +44,7 @@ class SentMessage extends StatefulWidget {
     this.substituteText,
     this.limited,
     this.shouldFadeIn,
+    this.showHero,
   }) : super(key: key);
 
   @override
@@ -51,13 +53,13 @@ class SentMessage extends StatefulWidget {
 
 class _SentMessageState extends State<SentMessage>
     with TickerProviderStateMixin {
-  bool _visible = false;
+  // bool _visible = false;
 
   @override
   void initState() {
     super.initState();
-    _visible = !widget.shouldFadeIn;
-    // Future.delayed(Duration(milliseconds: 100), () {
+    // _visible = !widget.shouldFadeIn;
+    // Future.delayed(Duration(milliseconds: 50), () {
     //   setState(() {
     //     _visible = true;
     //   });
@@ -152,37 +154,6 @@ class _SentMessageState extends State<SentMessage>
             ? darken(Colors.blue[600], 0.2)
             : Colors.blue[600];
 
-    List<Widget> tail = <Widget>[
-      Container(
-        margin: EdgeInsets.only(bottom: 1),
-        width: 20,
-        height: 15,
-        decoration: BoxDecoration(
-          color: blueColor,
-          borderRadius: BorderRadius.only(bottomLeft: Radius.circular(12)),
-        ),
-      ),
-      Container(
-        margin: EdgeInsets.only(bottom: 2),
-        height: 28,
-        width: 11,
-        decoration: BoxDecoration(
-            color: Theme.of(context).backgroundColor,
-            borderRadius: BorderRadius.only(bottomLeft: Radius.circular(8))),
-      ),
-    ];
-
-    List<Widget> stack = <Widget>[
-      Container(
-        height: 30,
-        width: 6,
-        color: Theme.of(context).backgroundColor,
-      ),
-    ];
-    if (widget.showTail) {
-      stack.insertAll(0, tail);
-    }
-
     List<InlineSpan> textSpans = <InlineSpan>[];
 
     if (widget.message != null && !isEmptyString(widget.message.text)) {
@@ -251,58 +222,6 @@ class _SentMessageState extends State<SentMessage>
       }
     }
 
-    List<Widget> messageWidget = [
-      widget.message == null || !isEmptyString(widget.message.text)
-          ? Stack(
-              alignment: AlignmentDirectional.bottomEnd,
-              children: <Widget>[
-                Stack(
-                  alignment: AlignmentDirectional.bottomEnd,
-                  children: stack,
-                ),
-                Container(
-                  margin: EdgeInsets.symmetric(
-                    horizontal: 10,
-                  ),
-                  constraints: BoxConstraints(
-                    maxWidth: MediaQuery.of(context).size.width * 3 / 4,
-                  ),
-                  padding: EdgeInsets.symmetric(
-                    vertical: 8,
-                    horizontal: 14,
-                  ),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(20),
-                    color: blueColor,
-                  ),
-                  child: widget.customContent == null
-                      ? RichText(
-                          text: TextSpan(
-                            children: textSpans,
-                            style: Theme.of(context).textTheme.bodyText2.apply(
-                                  color: Colors.white,
-                                ),
-                          ),
-                        )
-                      : Column(
-                          children: widget.customContent,
-                        ),
-                ),
-              ],
-            )
-          : Container()
-    ];
-
-    if (widget.message != null && widget.message.error > 0)
-      messageWidget.add(
-        CupertinoButton(
-          onPressed: () {
-            Overlay.of(context).insert(this._createErrorPopup());
-          },
-          child: Icon(Icons.error_outline, color: Colors.red),
-        ),
-      );
-
     return GestureDetector(
       behavior: HitTestBehavior.translucent,
       onLongPress: () async {
@@ -320,7 +239,7 @@ class _SentMessageState extends State<SentMessage>
         Overlay.of(context).insert(_createMessageDetailsPopup(reactions));
       },
       child: AnimatedOpacity(
-        opacity: _visible ? 1.0 : 0.0,
+        opacity: 1.0, //_visible ? 1.0 : 0.0,
         duration: Duration(milliseconds: widget.shouldFadeIn ? 200 : 0),
         child: Column(
           children: <Widget>[
@@ -355,7 +274,29 @@ class _SentMessageState extends State<SentMessage>
                               ? 14.0
                               : 0.0,
                         ),
-                        child: Row(children: messageWidget),
+                        child: widget.showHero
+                            ? Hero(
+                                tag: "first",
+                                child: Material(
+                                  type: MaterialType.transparency,
+                                  child: ActualSentMessage(
+                                    blueColor: blueColor,
+                                    createErrorPopup: this._createErrorPopup,
+                                    customContent: widget.customContent,
+                                    message: widget.message,
+                                    showTail: widget.showTail,
+                                    textSpans: textSpans,
+                                  ),
+                                ),
+                              )
+                            : ActualSentMessage(
+                                blueColor: blueColor,
+                                createErrorPopup: this._createErrorPopup,
+                                customContent: widget.customContent,
+                                message: widget.message,
+                                showTail: widget.showTail,
+                                textSpans: textSpans,
+                              ),
                       ),
                       widget.message != null && !widget.message.hasAttachments
                           ? Reactions(
@@ -410,5 +351,116 @@ class _SentMessageState extends State<SentMessage>
       ),
     );
     return entry;
+  }
+}
+
+class ActualSentMessage extends StatefulWidget {
+  ActualSentMessage({
+    Key key,
+    @required this.blueColor,
+    @required this.showTail,
+    @required this.message,
+    @required this.customContent,
+    @required this.textSpans,
+    @required this.createErrorPopup,
+  }) : super(key: key);
+  final Color blueColor;
+  final bool showTail;
+  final Message message;
+  final List<Widget> customContent;
+  final List<InlineSpan> textSpans;
+  final Function() createErrorPopup;
+
+  @override
+  _ActualSentMessageState createState() => _ActualSentMessageState();
+}
+
+class _ActualSentMessageState extends State<ActualSentMessage> {
+  @override
+  Widget build(BuildContext context) {
+    List<Widget> tail = <Widget>[
+      Container(
+        margin: EdgeInsets.only(bottom: 1),
+        width: 20,
+        height: 15,
+        decoration: BoxDecoration(
+          color: widget.blueColor,
+          borderRadius: BorderRadius.only(bottomLeft: Radius.circular(12)),
+        ),
+      ),
+      Container(
+        margin: EdgeInsets.only(bottom: 2),
+        height: 28,
+        width: 11,
+        decoration: BoxDecoration(
+            color: Theme.of(context).backgroundColor,
+            borderRadius: BorderRadius.only(bottomLeft: Radius.circular(8))),
+      ),
+    ];
+
+    List<Widget> stack = <Widget>[
+      Container(
+        height: 30,
+        width: 6,
+        color: Theme.of(context).backgroundColor,
+      ),
+    ];
+    if (widget.showTail) {
+      stack.insertAll(0, tail);
+    }
+
+    List<Widget> messageWidget = [
+      widget.message == null || !isEmptyString(widget.message.text)
+          ? Stack(
+              alignment: AlignmentDirectional.bottomEnd,
+              children: <Widget>[
+                Stack(
+                  alignment: AlignmentDirectional.bottomEnd,
+                  children: stack,
+                ),
+                Container(
+                  margin: EdgeInsets.symmetric(
+                    horizontal: 10,
+                  ),
+                  constraints: BoxConstraints(
+                    maxWidth: MediaQuery.of(context).size.width * 3 / 4,
+                  ),
+                  padding: EdgeInsets.symmetric(
+                    vertical: 8,
+                    horizontal: 14,
+                  ),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(20),
+                    color: widget.blueColor,
+                  ),
+                  child: widget.customContent == null
+                      ? RichText(
+                          text: TextSpan(
+                            children: widget.textSpans,
+                            style: Theme.of(context).textTheme.bodyText2.apply(
+                                  color: Colors.white,
+                                ),
+                          ),
+                        )
+                      : widget.customContent.first,
+                ),
+              ],
+            )
+          : Container()
+    ];
+
+    if (widget.message != null && widget.message.error > 0)
+      messageWidget.add(
+        CupertinoButton(
+          onPressed: () {
+            Overlay.of(context).insert(widget.createErrorPopup());
+          },
+          child: Icon(Icons.error_outline, color: Colors.red),
+        ),
+      );
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: messageWidget,
+    );
   }
 }

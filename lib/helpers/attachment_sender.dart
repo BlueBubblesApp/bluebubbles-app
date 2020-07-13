@@ -6,6 +6,7 @@ import 'dart:math';
 
 import 'dart:typed_data';
 
+import 'package:bluebubble_messages/helpers/contstants.dart';
 import 'package:bluebubble_messages/helpers/utils.dart';
 import 'package:bluebubble_messages/managers/life_cycle_manager.dart';
 import 'package:bluebubble_messages/managers/new_message_manager.dart';
@@ -32,6 +33,9 @@ class AttachmentSender {
   List<int> _imageBytes;
   String _text;
   String _attachmentName;
+  Attachment messageAttachment;
+  Message sentMessage;
+  Message messageWithText;
 
   String get guid => _attachmentGuid;
 
@@ -72,7 +76,7 @@ class AttachmentSender {
     params["attachmentName"] = _attachmentName;
     params["attachmentData"] = base64Encode(chunk);
     debugPrint(chunk.length.toString() + "/" + _imageBytes.length.toString());
-    SocketManager().sendMessage("send-message-chunk", params, (data) {
+    SocketManager().sendMessage("send-message-chunk", params, (data) async {
       Map<String, dynamic> response = data;
       debugPrint(data.toString());
       if (response['status'] == 200) {
@@ -87,10 +91,30 @@ class AttachmentSender {
         }
       } else {
         debugPrint("failed to send");
-        sendChunkRecursive(index, total, tempGuid);
-        // SocketManager().finishSender(_attachmentGuid);
-        // LifeCycleManager().finishDownloader();
-        // _stream.close();
+        String tempGuid = sentMessage.guid;
+        sentMessage.guid = sentMessage.guid
+            .replaceAll("temp", "error-${response['error']['message']}");
+        sentMessage.error = response['status'] == 400
+            ? MessageError.BAD_REQUEST.code
+            : MessageError.SERVER_ERROR.code;
+
+        await Message.replaceMessage(tempGuid, sentMessage);
+        NewMessageManager().updateWithMessage(_chat, sentMessage);
+        if (messageWithText != null) {
+          tempGuid = messageWithText.guid;
+          messageWithText.guid = messageWithText.guid
+              .replaceAll("temp", "error-${response['error']['message']}");
+          messageWithText.error = response['status'] == 400
+              ? MessageError.BAD_REQUEST.code
+              : MessageError.SERVER_ERROR.code;
+
+          await Message.replaceMessage(tempGuid, sentMessage);
+          NewMessageManager().updateWithMessage(_chat, sentMessage);
+        }
+        // sendChunkRecursive(index, total, tempGuid);
+        SocketManager().finishSender(_attachmentGuid);
+        LifeCycleManager().finishDownloader();
+        _stream.close();
       }
     });
   }
@@ -102,7 +126,7 @@ class AttachmentSender {
 
     int numOfChunks = (_imageBytes.length / _chunkSize).ceil();
 
-    Attachment messageAttachment = Attachment(
+    messageAttachment = Attachment(
       guid: _attachmentGuid,
       totalBytes: _imageBytes.length,
       isOutgoing: true,
@@ -119,14 +143,14 @@ class AttachmentSender {
           : null,
     );
 
-    Message sentMessage = Message(
+    sentMessage = Message(
       guid: _attachmentGuid,
       text: "",
       dateCreated: DateTime.now(),
       hasAttachments: true,
     );
 
-    Message messageWithText;
+    messageWithText;
 
     if (_text != "") {
       messageWithText = Message(

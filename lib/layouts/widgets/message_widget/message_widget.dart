@@ -53,6 +53,7 @@ class MessageWidget extends StatefulWidget {
     this.shouldFadeIn,
     this.isFirstSentMessage,
     this.attachments,
+    this.showHero,
   }) : super(key: key);
 
   final fromSelf;
@@ -63,6 +64,7 @@ class MessageWidget extends StatefulWidget {
   final bool shouldFadeIn;
   final bool isFirstSentMessage;
   final Widget attachments;
+  final bool showHero;
 
   final List<Widget> customContent;
 
@@ -147,6 +149,7 @@ class _MessageState extends State<MessageWidget> {
         customContent: widget.customContent,
         isFromMe: widget.fromSelf,
         attachments: widget.attachments,
+        showHero: widget.showHero,
       );
     } else {
       return ReceivedMessage(

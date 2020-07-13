@@ -1,3 +1,4 @@
+import 'package:bluebubble_messages/helpers/hex_color.dart';
 import 'package:bluebubble_messages/layouts/widgets/message_widget/message_widget.dart';
 import 'package:bluebubble_messages/layouts/widgets/message_widget/sent_message.dart';
 import 'package:flutter/material.dart';
@@ -32,13 +33,9 @@ class _SendWidgetState extends State<SendWidget> {
 
   @override
   Widget build(BuildContext context) {
-    Widget messageWidget = MessageWidget(
-      // reactions: [],
-      showHandle: false,
-      newerMessage: null,
-      olderMessage: null,
-      shouldFadeIn: false,
-      fromSelf: true,
+    Widget messageWidget = ActualSentMessage(
+      blueColor: darken(Colors.blue[600], 0.2),
+      createErrorPopup: () {},
       customContent: <Widget>[
         Container(
           constraints: BoxConstraints(
@@ -50,6 +47,9 @@ class _SendWidgetState extends State<SendWidget> {
           ),
         )
       ],
+      message: null,
+      showTail: true,
+      textSpans: <InlineSpan>[],
     );
 
     return Scaffold(
@@ -69,7 +69,7 @@ class _SendWidgetState extends State<SendWidget> {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.only(bottom: 2, right: 4),
+            padding: const EdgeInsets.only(bottom: 10, right: 4),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.end,
               children: <Widget>[
@@ -88,13 +88,9 @@ class _SendWidgetState extends State<SendWidget> {
                         opacity: _animation.drive(
                           Tween<double>(end: 0, begin: 10),
                         ),
-                        child: MessageWidget(
-                          // reactions: [],
-                          fromSelf: true,
-                          showHandle: false,
-                          newerMessage: null,
-                          olderMessage: null,
-                          shouldFadeIn: false,
+                        child: ActualSentMessage(
+                          blueColor: darken(Colors.blue[600], 0.2),
+                          createErrorPopup: () {},
                           customContent: <Widget>[
                             AnimatedBuilder(
                               animation: animation,
@@ -118,7 +114,41 @@ class _SendWidgetState extends State<SendWidget> {
                               ),
                             ),
                           ],
+                          message: null,
+                          showTail: true,
+                          textSpans: <InlineSpan>[],
                         ),
+                        // MessageWidget(
+                        //   // reactions: [],
+                        //   fromSelf: true,
+                        //   showHandle: false,
+                        //   newerMessage: null,
+                        //   olderMessage: null,
+                        //   shouldFadeIn: false,
+                        //   customContent: <Widget>[
+                        //     AnimatedBuilder(
+                        //       animation: animation,
+                        //       builder: (context, child) {
+                        //         return Container(
+                        //           constraints: BoxConstraints(
+                        //             minWidth: animation.value,
+                        //           ),
+                        //           child: child,
+                        //         );
+                        //       },
+                        //       child: RichText(
+                        //         text: TextSpan(
+                        //           children: [
+                        //             TextSpan(
+                        //               text: widget.text,
+                        //             )
+                        //           ],
+                        //           style: Theme.of(context).textTheme.bodyText2,
+                        //         ),
+                        //       ),
+                        //     ),
+                        //   ],
+                        // ),
                       ),
                     );
                   },

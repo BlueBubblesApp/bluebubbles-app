@@ -191,45 +191,40 @@ class _MessageViewState extends State<MessageView>
                     attachments: attachments.containsKey(_messages[index].guid)
                         ? attachments[_messages[index].guid]
                         : Container(),
+                    showHero: index == 0,
                   );
 
-                  if (index == 0) {
-                    return SizeTransition(
-                      axis: Axis.vertical,
-                      sizeFactor: animation.drive(Tween(begin: 0.0, end: 1.0)
-                          .chain(CurveTween(curve: Curves.easeInOut))),
-                      child: SlideTransition(
-                        position: animation.drive(
-                            Tween(begin: Offset(0.0, 1), end: Offset(0.0, 0.0))
-                                .chain(CurveTween(curve: Curves.easeInOut))),
-                        child: FadeTransition(
-                          opacity: animation,
-                          child: Hero(
-                            tag: "first",
-                            child: Material(
-                              type: MaterialType.transparency,
-                              child: messageWidget,
-                            ),
-                          ),
-                        ),
+                  // if (index == 0) {
+                  //   return SizeTransition(
+                  //     axis: Axis.vertical,
+                  //     sizeFactor: animation.drive(Tween(begin: 0.0, end: 1.0)
+                  //         .chain(CurveTween(curve: Curves.easeInOut))),
+                  //     child: SlideTransition(
+                  //       position: animation.drive(
+                  //           Tween(begin: Offset(0.0, 1), end: Offset(0.0, 0.0))
+                  //               .chain(CurveTween(curve: Curves.easeInOut))),
+                  //       child: FadeTransition(
+                  //         opacity: animation,
+                  //         child: messageWidget,
+                  //       ),
+                  //     ),
+                  //   );
+                  // } else {
+                  return SizeTransition(
+                    axis: Axis.vertical,
+                    sizeFactor: animation.drive(Tween(begin: 0.0, end: 1.0)
+                        .chain(CurveTween(curve: Curves.easeInOut))),
+                    child: SlideTransition(
+                      position: animation.drive(
+                          Tween(begin: Offset(0.0, 1), end: Offset(0.0, 0.0))
+                              .chain(CurveTween(curve: Curves.easeInOut))),
+                      child: FadeTransition(
+                        opacity: animation,
+                        child: messageWidget,
                       ),
-                    );
-                  } else {
-                    return SizeTransition(
-                      axis: Axis.vertical,
-                      sizeFactor: animation.drive(Tween(begin: 0.0, end: 1.0)
-                          .chain(CurveTween(curve: Curves.easeInOut))),
-                      child: SlideTransition(
-                        position: animation.drive(
-                            Tween(begin: Offset(0.0, 1), end: Offset(0.0, 0.0))
-                                .chain(CurveTween(curve: Curves.easeInOut))),
-                        child: FadeTransition(
-                          opacity: animation,
-                          child: messageWidget,
-                        ),
-                      ),
-                    );
-                  }
+                    ),
+                  );
+                  // }
                 },
               )
             : SliverToBoxAdapter(child: Container()),
