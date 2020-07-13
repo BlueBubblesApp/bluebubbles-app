@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:bluebubble_messages/blocs/message_bloc.dart';
+import 'package:bluebubble_messages/managers/contact_manager.dart';
 import 'package:bluebubble_messages/managers/new_message_manager.dart';
 import 'package:bluebubble_messages/managers/settings_manager.dart';
 import 'package:bluebubble_messages/repository/models/attachment.dart';
@@ -52,6 +53,7 @@ class ChatBloc {
   Future<List<Chat>> getChats() async {
     //sink is a way of adding data reactively to the stream
     //by registering a new event
+    await ContactManager().getContacts();
     _chats = await Chat.find({"isArchived": 0});
     _archivedChats = await Chat.find({"isArchived": 1});
     await initTileVals(_chats);

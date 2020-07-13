@@ -87,9 +87,10 @@ class AttachmentSender {
         }
       } else {
         debugPrint("failed to send");
-        SocketManager().finishSender(_attachmentGuid);
-        LifeCycleManager().finishDownloader();
-        _stream.close();
+        sendChunkRecursive(index, total, tempGuid);
+        // SocketManager().finishSender(_attachmentGuid);
+        // LifeCycleManager().finishDownloader();
+        // _stream.close();
       }
     });
   }
