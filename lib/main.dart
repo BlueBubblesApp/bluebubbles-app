@@ -23,6 +23,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 
 import './layouts/conversation_list/conversation_list.dart';
@@ -147,12 +148,16 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     // QueueManager().init();
     MethodChannelInterface().init(context);
     BackgroundIsolateInterface.initialize();
-    ReceiveSharingIntent.getInitialMedia().then((List<SharedMediaFile> value) {
+    ReceiveSharingIntent.getInitialMedia()
+        .then((List<SharedMediaFile> value) async {
       if (value == null) return;
+
+      if (!await Permission.storage.request().isGranted) return;
 
       List<File> attachments = <File>[];
       if (value != null) {
         value.forEach((element) {
+          debugPrint("${element.path}");
           attachments.add(File(element.path));
         });
       }

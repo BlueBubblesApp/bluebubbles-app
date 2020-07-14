@@ -84,7 +84,6 @@ public class MainActivity extends FlutterActivity {
     public static String BACKGROUND_HANDLE_SHARED_PREF_KEY = "BACKGROUND_HANDLE_SHARED_PREF_KEY";
 
 
-
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState, @Nullable PersistableBundle persistentState) {
         super.onCreate(savedInstanceState, persistentState);
@@ -117,7 +116,7 @@ public class MainActivity extends FlutterActivity {
                 .setMethodCallHandler(
                         (call, result) -> {
                             if (call.method.equals("auth")) {
-                                if (app == null ) {
+                                if (app == null) {
                                     app = FirebaseApp.initializeApp(getContext(), new FirebaseOptions.Builder()
                                             .setProjectId(call.argument("project_id"))
                                             .setStorageBucket(call.argument("storage_bucket"))
@@ -180,7 +179,7 @@ public class MainActivity extends FlutterActivity {
                                         .addAction(replyAction)
                                         .setGroup(call.argument("group"));
 //                                        .setGroup("messageGroup");
-                                if(call.argument("address") != null)  {
+                                if (call.argument("address") != null) {
                                     builder.addPerson(call.argument("address"));
                                 }
 
@@ -264,7 +263,7 @@ public class MainActivity extends FlutterActivity {
                                 notificationManager.notify(call.argument("notificationId"), builder.build());
 
                                 result.success("");
-                            } else if(call.method.equals("finish-attachment-download")) {
+                            } else if (call.method.equals("finish-attachment-download")) {
 //                                void finishProgressWithAttachment(
 //                                        String contentText, int id, Attachment attachment) {
 //                                    String path;
@@ -285,7 +284,7 @@ public class MainActivity extends FlutterActivity {
                                 if (builder == null) return;
                                 progressBars.remove(call.argument("notificationId"));
                                 builder.setProgress(0, 0, false);
-                                if(call.argument("path") != null) {
+                                if (call.argument("path") != null) {
                                     Bitmap image = BitmapFactory.decodeFile(getFilesDir().getAbsolutePath() + call.argument("path"));
                                     Log.d("notificationAttachment", "found file with path " + getFilesDir().getAbsolutePath() + call.argument("path"));
                                     builder.setStyle(new NotificationCompat.BigPictureStyle().bigPicture(image).bigLargeIcon(null));
@@ -307,7 +306,7 @@ public class MainActivity extends FlutterActivity {
                                 startActivity(intent);
 
                                 result.success("");
-                            } else if(call.method.equals("open-link")) {
+                            } else if (call.method.equals("open-link")) {
                                 startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(call.argument("link"))));
                                 result.success("");
                             } else if (call.method.equals("clear-chat-notifs")) {
@@ -342,7 +341,7 @@ public class MainActivity extends FlutterActivity {
                                             }
                                         });
 
-                            } else if(call.method.equals("save-image-to-album")) {
+                            } else if (call.method.equals("save-image-to-album")) {
 //                                File storageDir = new File(
 //                                        Environment.getExternalStoragePublicDirectory(
 //                                                Environment.DIRECTORY_PICTURES
@@ -359,8 +358,15 @@ public class MainActivity extends FlutterActivity {
                             } else if (call.method.equals("get-starting-intent")) {
                                 result.success(getIntent().getStringExtra("chatGUID"));
 
-                            } else if(call.method.equals("initialize-background-handle")) {
-                                Long callbackHandle = (Long) call.argument("handle") ;
+                            } else if (call.method.equals("initialize-background-handle")) {
+                                Log.d("handle", "initialize background handle: " + call.argument("handle").getClass().toString());
+                                Long callbackHandle;
+                                if (call.argument("handle").getClass() == Long.class) {
+                                    callbackHandle = call.argument("handle");
+                                } else {
+                                    callbackHandle = Long.valueOf(call.argument("handle"));
+                                }
+
                                 getApplicationContext().getSharedPreferences(BACKGROUND_SERVICE_SHARED_PREF, Context.MODE_PRIVATE)
                                         .edit()
                                         .putLong(BACKGROUND_HANDLE_SHARED_PREF_KEY, callbackHandle)

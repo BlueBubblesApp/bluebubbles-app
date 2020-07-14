@@ -19,6 +19,7 @@ import 'package:bluebubble_messages/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class MethodChannelInterface {
   factory MethodChannelInterface() {
@@ -133,6 +134,7 @@ class MethodChannelInterface {
         call.arguments.forEach((element) {
           attachments.add(File(element));
         });
+        if (!await Permission.storage.request().isGranted) return;
 
         NavigatorManager().navigatorKey.currentState.pushAndRemoveUntil(
             CupertinoPageRoute(

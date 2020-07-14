@@ -20,7 +20,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 abstract class BackgroundIsolateInterface {
-  static Future<void> initialize() {
+  static void initialize() {
     CallbackHandle callbackHandle =
         PluginUtilities.getCallbackHandle(callbackHandler);
     MethodChannelInterface().invokeMethod("initialize-background-handle",
