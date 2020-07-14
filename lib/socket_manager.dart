@@ -103,17 +103,15 @@ class SocketManager {
       } else if (state == SocketState.CONNECTED) {
         cb();
       }
-      // debugPrint("connecting " + state.toString());
     });
     return processId;
   }
 
   void _finishSocketProcess(int processId) {
+    socketProcesses.remove(processId);
     Future.delayed(Duration(milliseconds: Random().nextInt(100)), () {
-      socketProcesses.remove(processId);
+      _socketProcessUpdater.sink.add(socketProcesses.keys.toList());
     });
-
-    _socketProcessUpdater.sink.add(socketProcesses.keys.toList());
   }
 
   // void removeFromSocketProcess(int processId) {

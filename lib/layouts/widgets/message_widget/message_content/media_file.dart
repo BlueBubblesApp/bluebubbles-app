@@ -37,6 +37,8 @@ class _MediaFileState extends State<MediaFile> {
           StreamBuilder(
             builder: (context, AsyncSnapshot<double> snapshot) {
               return CircularProgressIndicator(
+                backgroundColor: Colors.grey,
+                valueColor: AlwaysStoppedAnimation(Colors.white),
                 value: snapshot.hasData ? snapshot.data : 0.0,
               );
             },

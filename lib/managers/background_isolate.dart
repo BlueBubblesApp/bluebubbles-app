@@ -36,7 +36,7 @@ callbackHandler() async {
   await ContactManager().getContacts(headless: true);
   SettingsManager().init();
   MethodChannelInterface().init(null, channel: _backgroundChannel);
-  LifeCycleManager().close();
+  LifeCycleManager().opened();
   // SocketManager().connectCb = () {
   //   debugPrint("connectCb");
   //   resyncChats(_backgroundChannel);
@@ -123,6 +123,7 @@ void resyncChats(MethodChannel channel) async {
     receivedChats(data, () {
       // SocketManager().closeSocket();
       debugPrint("finished getting chats");
+      LifeCycleManager().close();
     }, channel);
   });
   // List<Chat> chats = await ChatBloc().getChats();

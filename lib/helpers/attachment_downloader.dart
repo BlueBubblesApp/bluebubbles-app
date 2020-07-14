@@ -62,41 +62,41 @@ class AttachmentDownloader {
       String guid, int index, int total, List<int> currentBytes, Function cb) {
     _currentBytes = currentBytes;
 
-    if (index <= total) {
-      Map<String, dynamic> params = new Map();
-      params["identifier"] = guid;
-      params["start"] = index * _chunkSize;
-      params["chunkSize"] = _chunkSize;
-      params["compress"] = false;
-      SocketManager().sendMessage("get-attachment-chunk", params,
-          (attachmentResponse) async {
-        if (!attachmentResponse.containsKey("data") ||
-            attachmentResponse["data"] == null) {
-          await cb(currentBytes);
-        }
+    // if (index <= total) {
+    Map<String, dynamic> params = new Map();
+    params["identifier"] = guid;
+    params["start"] = index * _chunkSize;
+    params["chunkSize"] = _chunkSize;
+    params["compress"] = false;
+    SocketManager().sendMessage("get-attachment-chunk", params,
+        (attachmentResponse) async {
+      if (!attachmentResponse.containsKey("data") ||
+          attachmentResponse["data"] == null) {
+        await cb(currentBytes);
+      }
 
-        Uint8List bytes = base64Decode(attachmentResponse["data"]);
-        currentBytes.addAll(bytes.toList());
-        if (index < total) {
-          // Calculate some stats
-          double progress = (index + 1) / total;
-          updateProgressNotif(progress);
-          String progressStr = (progress * 100).round().toString();
-          debugPrint("Progress: $progressStr% of the attachment");
+      Uint8List bytes = base64Decode(attachmentResponse["data"]);
+      currentBytes.addAll(bytes.toList());
+      if (bytes.length == _chunkSize) {
+        // Calculate some stats
+        double progress = ((index + 1) / total).clamp(0, 1).toDouble();
+        updateProgressNotif(progress);
+        String progressStr = (progress * 100).round().toString();
+        debugPrint("Progress: $progressStr% of the attachment");
 
-          // Update the progress in stream
-          _stream.sink.add({"Progress": progress});
-          _currentBytes = currentBytes;
-          _currentChunk = index + 1;
+        // Update the progress in stream
+        _stream.sink.add({"Progress": progress});
+        _currentBytes = currentBytes;
+        _currentChunk = index + 1;
 
-          // Get the next chunk
-          getChunkRecursive(guid, index + 1, total, currentBytes, cb);
-        } else {
-          debugPrint("Finished fetching attachment");
-          await cb(currentBytes);
-        }
-      });
-    }
+        // Get the next chunk
+        getChunkRecursive(guid, index + 1, total, currentBytes, cb);
+      } else {
+        debugPrint("Finished fetching attachment");
+        await cb(currentBytes);
+      }
+    });
+    // }
   }
 
   void updateProgressNotif(double _progress) {

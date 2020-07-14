@@ -79,10 +79,13 @@ class _MessageAttachmentState extends State<MessageAttachment>
             height == null ||
             width == 0 ||
             height == 0)
-        ? Container(
-            height: 150,
-            width: 200,
-            color: Theme.of(context).accentColor,
+        ? ClipRRect(
+            borderRadius: BorderRadius.circular(8.0),
+            child: Container(
+              height: 150,
+              width: 200,
+              color: Theme.of(context).accentColor,
+            ),
           )
         : Container(
             constraints: BoxConstraints(
@@ -242,28 +245,32 @@ class _MessageAttachmentState extends State<MessageAttachment>
               alignment: Alignment.center,
               children: <Widget>[
                 placeHolder,
-                Padding(
-                  padding: EdgeInsets.all(5.0),
-                  child: Column(
-                    children: <Widget>[
-                      CircularProgressIndicator(
-                        value: progress,
-                        backgroundColor: Colors.grey,
-                        valueColor: AlwaysStoppedAnimation(Colors.white),
-                      ),
-                      ((content as AttachmentDownloader).attachment.mimeType !=
-                              null)
-                          ? Container(height: 5.0)
-                          : Container(),
-                      (content.attachment.mimeType != null)
-                          ? Text(
-                              content.attachment.mimeType,
-                              style: Theme.of(context).textTheme.bodyText1,
-                            )
-                          : Container()
-                    ],
-                  ),
-                )
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    Column(
+                      children: <Widget>[
+                        CircularProgressIndicator(
+                          value: progress,
+                          backgroundColor: Colors.grey,
+                          valueColor: AlwaysStoppedAnimation(Colors.white),
+                        ),
+                        ((content as AttachmentDownloader)
+                                    .attachment
+                                    .mimeType !=
+                                null)
+                            ? Container(height: 5.0)
+                            : Container(),
+                        (content.attachment.mimeType != null)
+                            ? Text(
+                                content.attachment.mimeType,
+                                style: Theme.of(context).textTheme.bodyText1,
+                              )
+                            : Container()
+                      ],
+                    ),
+                  ],
+                ),
               ],
             );
           }

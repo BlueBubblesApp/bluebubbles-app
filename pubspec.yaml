@@ -99,7 +99,7 @@ flutter:
     - assets/reactions/dislike-white.svg
     - assets/reactions/like-white.svg
     - assets/reactions/emphasize-white.svg
-    - assets/reactions/laugh-white.svg
+    # - assets/reactions/laugh-white.svg
     - assets/reactions/question-white.svg
     - assets/reactions/love-white.svg
     - assets/reactions/dislike-black.svg

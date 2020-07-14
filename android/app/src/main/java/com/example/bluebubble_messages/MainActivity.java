@@ -363,6 +363,8 @@ public class MainActivity extends FlutterActivity {
                                 Long callbackHandle;
                                 if (call.argument("handle").getClass() == Long.class) {
                                     callbackHandle = call.argument("handle");
+                                } else if(call.argument("handle").getClass() == Integer.class) {
+                                    callbackHandle = Long.valueOf(((Integer) call.argument("handle")).longValue());
                                 } else {
                                     callbackHandle = Long.valueOf(call.argument("handle"));
                                 }
