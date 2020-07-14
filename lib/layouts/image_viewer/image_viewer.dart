@@ -1,5 +1,8 @@
+import 'dart:async';
 import 'dart:io';
 
+import 'package:bluebubble_messages/managers/method_channel_interface.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:photo_view/photo_view.dart';
 
@@ -17,12 +20,10 @@ class ImageViewer extends StatefulWidget {
 }
 
 class _ImageViewerState extends State<ImageViewer> {
-  double left = 0;
   double top = 0;
   int duration = 0;
-  double _scale = 1;
-  double _previousScale = null;
   PhotoViewController controller;
+  bool showOverlay = false;
 
   @override
   void initState() {
@@ -40,17 +41,14 @@ class _ImageViewerState extends State<ImageViewer> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      body: Stack(
-        children: <Widget>[
-          AnimatedPositioned(
-            onEnd: () => duration = 0,
-            left: left,
-            top: top,
-            duration: Duration(milliseconds: duration),
-            child: SizedBox(
-              height: MediaQuery.of(context).size.height,
-              width: MediaQuery.of(context).size.width,
+      body: GestureDetector(
+        onTap: () {},
+        child: Stack(
+          children: <Widget>[
+            PhotoViewGestureDetectorScope(
               child: PhotoView(
+                minScale: PhotoViewComputedScale.contained,
+                maxScale: PhotoViewComputedScale.contained * 13,
                 controller: controller,
                 heroAttributes: PhotoViewHeroAttributes(
                   tag: widget.tag,
@@ -58,31 +56,27 @@ class _ImageViewerState extends State<ImageViewer> {
                 imageProvider: FileImage(widget.file),
               ),
             ),
-          ),
-          // GestureDetector(
-          //   behavior: HitTestBehavior.translucent,
-          //   onPanUpdate: (details) {
-          //     debugPrint(details.delta.dx.toString());
-          //     setState(() {
-          //       left += details.delta.dx;
-          //       top += details.delta.dy;
-          //     });
-          //   },
-          //   onPanEnd: (details) {
-          //     if (left.abs() > MediaQuery.of(context).size.width / 7 ||
-          //         top.abs() > MediaQuery.of(context).size.height / 7) {
-          //       Navigator.of(context).pop();
-          //     } else {
-          //       setState(() {
-          //         top = 0;
-          //         left = 0;
-          //         duration = 200;
-          //       });
-          //     }
-          //   },
-          // ),
-        ],
+            Padding(
+              padding: EdgeInsets.only(top: 50.0, right: 10),
+              child: Align(
+                alignment: Alignment.topRight,
+                child: CupertinoButton(
+                  onPressed: () {
+                    debugPrint("path " + widget.file.path);
+                    MethodChannelInterface().invokeMethod(
+                        "save-image-to-album", {"path": widget.file.path});
+                  },
+                  child: Icon(
+                    Icons.file_download,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            )
+          ],
+        ),
       ),
+      // ),
     );
   }
 }

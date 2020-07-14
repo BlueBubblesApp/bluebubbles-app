@@ -38,6 +38,12 @@ class _VideoViewerState extends State<VideoViewer> {
   }
 
   @override
+  void dispose() {
+    videoProgressStream.close();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).backgroundColor,

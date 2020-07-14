@@ -14,6 +14,7 @@ import android.app.PendingIntent;
 import android.app.RemoteInput;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -27,6 +28,7 @@ import android.location.Location;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.IBinder;
 import android.os.PersistableBundle;
 import android.preference.PreferenceManager;
@@ -340,6 +342,20 @@ public class MainActivity extends FlutterActivity {
                                             }
                                         });
 
+                            } else if(call.method.equals("save-image-to-album")) {
+//                                File storageDir = new File(
+//                                        Environment.getExternalStoragePublicDirectory(
+//                                                Environment.DIRECTORY_PICTURES
+//                                        ),
+//
+//
+//                                );
+                                Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+                                File f = new File((String) call.argument("path"));
+                                Uri contentUri = Uri.fromFile(f);
+                                mediaScanIntent.setData(contentUri);
+                                this.sendBroadcast(mediaScanIntent);
+                                result.success("");
                             } else if (call.method.equals("get-starting-intent")) {
                                 result.success(getIntent().getStringExtra("chatGUID"));
 
