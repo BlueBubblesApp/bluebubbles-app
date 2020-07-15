@@ -144,13 +144,17 @@ class MessageBloc {
 
   Future<LinkedHashMap<String, Message>> getMessages() async {
     List<Message> messages = await Chat.getMessages(_currentChat);
-    messages.forEach((element) {
-      if (element.associatedMessageGuid == null) {
-        _allMessages.addAll({element.guid: element});
-      } else {
-        _reactions++;
-      }
-    });
+    if (messages.length == 0) {
+      _allMessages = new LinkedHashMap();
+    } else {
+      messages.forEach((element) {
+        if (element.associatedMessageGuid == null) {
+          _allMessages.addAll({element.guid: element});
+        } else {
+          _reactions++;
+        }
+      });
+    }
     if (!_messageController.isClosed)
       _messageController.sink.add({"messages": _allMessages, "insert": null});
     return _allMessages;

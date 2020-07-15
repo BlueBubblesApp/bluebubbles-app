@@ -9,16 +9,17 @@ class MessageHelper {
     List<Message> _messages = <Message>[];
     messages.forEach((item) {
       Message message = Message.fromMap(item);
-      message.save().then((_message) {
-        _messages.add(_message);
+      message.save().then((_) {
+        _messages.add(message);
         chat.addMessage(message).then((value) {
           // Create the attachments
           List<dynamic> attachments = item['attachments'];
 
-          attachments.forEach((attachmentItem) {
+          attachments.forEach((attachmentItem) async {
             Attachment file = Attachment.fromMap(attachmentItem);
-            file.save(_message);
-            debugPrint("attachment " + file.guid);
+            await file.save(message);
+            debugPrint("attachment id " + file.id.toString());
+            debugPrint("message id " + message.id.toString());
           });
         });
       });

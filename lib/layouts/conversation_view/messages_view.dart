@@ -80,10 +80,19 @@ class _MessageViewState extends State<MessageView>
         initializedList = true;
         if (_listKey == null) _listKey = GlobalKey<SliverAnimatedListState>();
 
-        for (int i = originalMessageLength; i < _messages.length; i++) {
-          if (_listKey.currentState != null)
-            _listKey.currentState
-                .insertItem(i, duration: Duration(milliseconds: 0));
+        if (originalMessageLength < _messages.length) {
+          for (int i = originalMessageLength; i < _messages.length; i++) {
+            if (_listKey.currentState != null)
+              _listKey.currentState
+                  .insertItem(i, duration: Duration(milliseconds: 0));
+          }
+        } else if (originalMessageLength > _messages.length) {
+          for (int i = originalMessageLength; i >= _messages.length; i--) {
+            if (_listKey.currentState != null)
+              _listKey.currentState.removeItem(
+                  i, (context, animation) => Container(),
+                  duration: Duration(milliseconds: 0));
+          }
         }
         if (_listKey.currentState != null)
           _listKey.currentState.setState(() {});
@@ -111,8 +120,6 @@ class _MessageViewState extends State<MessageView>
                 attachmentResults[message.guid] = {
                   "attachments": snapshot.data
                 };
-                // debugPrint(
-                //     "got ${attachmentResults[message.guid].length} attachments");
               }
               return MessageAttachments(
                 attachments: attachmentResults[message.guid]["attachments"],
@@ -194,22 +201,6 @@ class _MessageViewState extends State<MessageView>
                     showHero: index == 0,
                   );
 
-                  // if (index == 0) {
-                  //   return SizeTransition(
-                  //     axis: Axis.vertical,
-                  //     sizeFactor: animation.drive(Tween(begin: 0.0, end: 1.0)
-                  //         .chain(CurveTween(curve: Curves.easeInOut))),
-                  //     child: SlideTransition(
-                  //       position: animation.drive(
-                  //           Tween(begin: Offset(0.0, 1), end: Offset(0.0, 0.0))
-                  //               .chain(CurveTween(curve: Curves.easeInOut))),
-                  //       child: FadeTransition(
-                  //         opacity: animation,
-                  //         child: messageWidget,
-                  //       ),
-                  //     ),
-                  //   );
-                  // } else {
                   return SizeTransition(
                     axis: Axis.vertical,
                     sizeFactor: animation.drive(Tween(begin: 0.0, end: 1.0)
@@ -224,7 +215,6 @@ class _MessageViewState extends State<MessageView>
                       ),
                     ),
                   );
-                  // }
                 },
               )
             : SliverToBoxAdapter(child: Container()),

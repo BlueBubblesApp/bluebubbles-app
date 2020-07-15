@@ -151,10 +151,27 @@ class ActionHandler {
 
     Batch batch = db.batch();
     for (int i = 0; i < items.length; i++) {
-      // 1 -> Delete all messages associated with a chat
+      //find all attachments associated with a message
+      var attachments = await db.rawQuery(
+          "SELECT"
+          " attachmentId,"
+          " messageId"
+          " FROM attachment_message_join"
+          " WHERE messageId = ?",
+          [items[i]["messageId"]]);
+      //1 -> delete all attachments associated with a message
+      for (int j = 0; j < attachments.length; j++) {
+        batch.delete("attachment",
+            where: "ROWID = ?", whereArgs: [attachments[j]["attachmentId"]]);
+
+        batch.delete("attachment_message_join",
+            where: "ROWID = ?", whereArgs: [items[j]["ROWID"]]);
+      }
+
+      // 2 -> Delete all messages associated with a chat
       batch.delete("message",
           where: "ROWID = ?", whereArgs: [items[i]["messageId"]]);
-      // 2 -> Delete all chat_message_join entries associated with a chat
+      // 3 -> Delete all chat_message_join entries associated with a chat
       batch.delete("chat_message_join",
           where: "ROWID = ?", whereArgs: [items[i]["ROWID"]]);
     }
