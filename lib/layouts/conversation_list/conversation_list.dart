@@ -168,46 +168,44 @@ class _ConversationListState extends State<ConversationList> {
                                   //   borderRadius: BorderRadius.circular(40),
                                   // ),
                                   color: Theme.of(context).accentColor,
+                                  onSelected: (value) {
+                                    if (value == 0) {
+                                      Navigator.of(context).push(
+                                        CupertinoPageRoute(
+                                          builder: (context) =>
+                                              ConversationList(
+                                            showArchivedChats: true,
+                                          ),
+                                        ),
+                                      );
+                                    } else if (value == 1) {
+                                      Navigator.of(context).push(
+                                        CupertinoPageRoute(
+                                          builder: (BuildContext context) {
+                                            return SettingsPanel();
+                                          },
+                                        ),
+                                      );
+                                    }
+                                  },
                                   itemBuilder: (context) {
                                     return <PopupMenuItem>[
                                       PopupMenuItem(
-                                        child: GestureDetector(
-                                          onTap: () {
-                                            Navigator.of(context).push(
-                                              CupertinoPageRoute(
-                                                builder: (context) =>
-                                                    ConversationList(
-                                                  showArchivedChats: true,
-                                                ),
-                                              ),
-                                            );
-                                          },
-                                          child: Text(
-                                            'Archived',
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .bodyText1,
-                                          ),
+                                        value: 0,
+                                        child: Text(
+                                          'Archived',
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodyText1,
                                         ),
                                       ),
                                       PopupMenuItem(
-                                        child: GestureDetector(
-                                          onTap: () {
-                                            Navigator.of(context).push(
-                                              CupertinoPageRoute(
-                                                builder:
-                                                    (BuildContext context) {
-                                                  return SettingsPanel();
-                                                },
-                                              ),
-                                            );
-                                          },
-                                          child: Text(
-                                            'Settings',
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .bodyText1,
-                                          ),
+                                        value: 1,
+                                        child: Text(
+                                          'Settings',
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodyText1,
                                         ),
                                       ),
                                     ];
