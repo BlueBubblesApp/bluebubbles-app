@@ -39,6 +39,7 @@ class _MessageDetailsPopupState extends State<MessageDetailsPopup>
   void didChangeDependencies() async {
     super.didChangeDependencies();
     for (Message reaction in widget.reactions) {
+      if (reaction.isFromMe) continue;
       await reaction.getHandle();
       reactionWidgets.add(
         ReactionDetailWidget(

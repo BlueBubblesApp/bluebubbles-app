@@ -222,7 +222,7 @@ class Chat {
         " JOIN message ON amj.messageId = message.ROWID"
         " JOIN chat_message_join AS cmj ON cmj.messageId = message.ROWID"
         " JOIN chat ON chat.ROWID = cmj.chatId"
-        " WHERE chat.ROWID = ?");
+        " WHERE chat.ROWID = ? AND attachment.mimeType IS NOT NULL");
 
     // Add pagination
     query += " ORDER BY message.dateCreated DESC LIMIT $limit OFFSET $offset";
@@ -250,6 +250,7 @@ class Chat {
         " message.error AS error,"
         " message.dateCreated AS dateCreated,"
         " message.dateDelivered AS dateDelivered,"
+        " message.dateRead AS dateRead,"
         " message.isFromMe AS isFromMe,"
         " message.isDelayed AS isDelayed,"
         " message.isAutoReply AS isAutoReply,"
