@@ -123,7 +123,9 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
                                             bottom: 8.0,
                                           ),
                                           child: Text(
-                                            data.title,
+                                            data.title != null
+                                                ? data.title
+                                                : "",
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .bodyText1

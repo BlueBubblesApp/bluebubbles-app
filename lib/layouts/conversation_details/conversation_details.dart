@@ -5,9 +5,11 @@ import 'dart:ui';
 
 import 'package:bluebubble_messages/action_handler.dart';
 import 'package:bluebubble_messages/blocs/chat_bloc.dart';
+import 'package:bluebubble_messages/helpers/attachment_downloader.dart';
 import 'package:bluebubble_messages/helpers/attachment_helper.dart';
 import 'package:bluebubble_messages/helpers/hex_color.dart';
 import 'package:bluebubble_messages/helpers/utils.dart';
+import 'package:bluebubble_messages/layouts/conversation_details/attachment_details_card.dart';
 import 'package:bluebubble_messages/layouts/conversation_details/contact_tile.dart';
 import 'package:bluebubble_messages/layouts/conversation_view/new_chat_creator.dart';
 import 'package:bluebubble_messages/layouts/image_viewer/image_viewer.dart';
@@ -312,119 +314,8 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                       border: Border.all(
                           color: Theme.of(context).accentColor, width: 3),
                     ),
-                    child: Builder(
-                      builder: (context) {
-                        Attachment attachment = attachmentsForChat[index];
-                        if (attachment.mimeType.startsWith("image")) {
-                          File file = new File(
-                            "${SettingsManager().appDocDir.path}/attachments/${attachment.guid}/${attachment.transferName}",
-                          );
-                          if (!file.existsSync()) {
-                            return Stack(
-                              alignment: Alignment.center,
-                              children: <Widget>[
-                                attachment.blurhash != null
-                                    ? BlurHash(
-                                        hash: attachment.blurhash,
-                                        decodingWidth: (attachment.width)
-                                            .clamp(1, double.infinity)
-                                            .toInt(),
-                                        decodingHeight: (attachment.height)
-                                            .clamp(1, double.infinity)
-                                            .toInt(),
-                                      )
-                                    : Container(
-                                        color: Theme.of(context).accentColor,
-                                      ),
-                                Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: <Widget>[
-                                    CupertinoButton(
-                                      padding: EdgeInsets.only(
-                                          left: 20,
-                                          right: 20,
-                                          top: 10,
-                                          bottom: 10),
-                                      onPressed: () {
-                                        // content = new AttachmentDownloader(content, widget.message);
-                                        // widget.updateAttachment();
-                                        // setState(() {});
-                                      },
-                                      color: Colors.transparent,
-                                      child: Column(
-                                        children: <Widget>[
-                                          Text(
-                                            attachment.getFriendlySize(),
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .bodyText1,
-                                          ),
-                                          Icon(Icons.cloud_download,
-                                              size: 28.0),
-                                          (attachment.mimeType != null)
-                                              ? Text(
-                                                  attachment.mimeType,
-                                                  style: Theme.of(context)
-                                                      .textTheme
-                                                      .bodyText1,
-                                                )
-                                              : Container()
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            );
-                          }
-                          return SizedBox(
-                            width: MediaQuery.of(context).size.width / 2,
-                            child: Stack(
-                              children: <Widget>[
-                                SizedBox(
-                                  child: Hero(
-                                    tag: attachment.guid,
-                                    child: Image.file(
-                                      file,
-                                      fit: BoxFit.cover,
-                                      alignment: Alignment.center,
-                                    ),
-                                  ),
-                                  width: MediaQuery.of(context).size.width / 2,
-                                  height: MediaQuery.of(context).size.width / 2,
-                                ),
-                                Material(
-                                  color: Colors.transparent,
-                                  child: InkWell(
-                                    onTap: () {
-                                      Navigator.of(context).push(
-                                        CupertinoPageRoute(
-                                          builder: (context) => ImageViewer(
-                                            file: file,
-                                            tag: attachment.guid,
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                )
-                              ],
-                            ),
-                          );
-                        } else {
-                          return Center(
-                            child: CupertinoButton(
-                              onPressed: () {},
-                              child: Container(
-                                child: Text(
-                                  attachment.transferName,
-                                  style: Theme.of(context).textTheme.bodyText1,
-                                ),
-                              ),
-                            ),
-                          );
-                        }
-                      },
+                    child: AttachmentDetailsCard(
+                      attachment: attachmentsForChat[index],
                     ),
                   );
                 },

@@ -117,9 +117,11 @@ class AttachmentDownloader {
     _guid = attachment.guid;
     _totalChunks = numOfChunks;
 
-    _chat = await Message.getChat(_message);
-    _title = await getFullChatTitle(_chat);
-    if (_createNotification && _attachment.mimeType != null) {
+    if (_createNotification &&
+        _attachment.mimeType != null &&
+        _message != null) {
+      _chat = await Message.getChat(_message);
+      _title = await getFullChatTitle(_chat);
       NotificationManager().createProgressNotification(
         _title,
         "Downloading Attachment",
