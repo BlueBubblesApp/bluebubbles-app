@@ -179,55 +179,93 @@ class _ConversationDetailsState extends State<ConversationDetails> {
               child: InkWell(
                 onTap: () async {
                   if (await Permission.locationWhenInUse.request().isGranted) {
-                    final result = await MethodChannelInterface()
-                        .invokeMethod("get-last-location");
-                    String vcfString = AttachmentHelper.createAppleLocation(
-                        result["latitude"], result["longitude"]);
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        backgroundColor: Theme.of(context).accentColor,
+                        title: Text(
+                          "Send Current Location?",
+                          style: Theme.of(context).textTheme.headline1,
+                        ),
+                        actions: <Widget>[
+                          FlatButton(
+                            color: Colors.blue[600],
+                            child: Text(
+                              "Send",
+                              style: Theme.of(context).textTheme.bodyText1,
+                            ),
+                            onPressed: () async {
+                              final result = await MethodChannelInterface()
+                                  .invokeMethod("get-last-location");
+                              String vcfString =
+                                  AttachmentHelper.createAppleLocation(
+                                      result["latitude"], result["longitude"]);
 
-                    String _attachmentGuid = "temp-${randomString(8)}";
+                              String _attachmentGuid =
+                                  "temp-${randomString(8)}";
 
-                    String fileName = "CL.loc.vcf";
-                    String appDocPath = SettingsManager().appDocDir.path;
-                    String pathName =
-                        "$appDocPath/attachments/${_attachmentGuid}/$fileName";
-                    await new File(pathName).create(recursive: true);
+                              String fileName = "CL.loc.vcf";
+                              String appDocPath =
+                                  SettingsManager().appDocDir.path;
+                              String pathName =
+                                  "$appDocPath/attachments/${_attachmentGuid}/$fileName";
+                              await new File(pathName).create(recursive: true);
 
-                    File attachmentFile =
-                        await new File(pathName).writeAsString(vcfString);
+                              File attachmentFile = await new File(pathName)
+                                  .writeAsString(vcfString);
 
-                    List<int> bytes = await attachmentFile.readAsBytes();
-                    Attachment messageAttachment = Attachment(
-                      guid: _attachmentGuid,
-                      totalBytes: bytes.length,
-                      isOutgoing: true,
-                      isSticker: false,
-                      hideAttachment: false,
-                      uti: "public.jpg",
-                      transferName: fileName,
-                      mimeType: "text/vcf",
+                              List<int> bytes =
+                                  await attachmentFile.readAsBytes();
+                              Attachment messageAttachment = Attachment(
+                                guid: _attachmentGuid,
+                                totalBytes: bytes.length,
+                                isOutgoing: true,
+                                isSticker: false,
+                                hideAttachment: false,
+                                uti: "public.jpg",
+                                transferName: fileName,
+                                mimeType: "text/vcf",
+                              );
+
+                              Message sentMessage = Message(
+                                guid: _attachmentGuid,
+                                text: "",
+                                dateCreated: DateTime.now(),
+                                hasAttachments: true,
+                              );
+                              await sentMessage.save();
+
+                              await messageAttachment.save(sentMessage);
+                              await chat.save();
+                              await chat.addMessage(sentMessage);
+
+                              NewMessageManager()
+                                  .updateWithMessage(chat, sentMessage);
+                              Map<String, dynamic> params = new Map();
+                              params["guid"] = chat.guid;
+                              params["attachmentGuid"] = _attachmentGuid;
+                              params["attachmentName"] = fileName;
+                              params["attachment"] = base64Encode(bytes);
+                              SocketManager()
+                                  .sendMessage("send-message", params, (data) {
+                                debugPrint("sent " + data.toString());
+                              });
+                              Navigator.of(context).pop();
+                            },
+                          ),
+                          FlatButton(
+                            child: Text(
+                              "Cancel",
+                              style: Theme.of(context).textTheme.bodyText1,
+                            ),
+                            color: Colors.red,
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                            },
+                          ),
+                        ],
+                      ),
                     );
-
-                    Message sentMessage = Message(
-                      guid: _attachmentGuid,
-                      text: "",
-                      dateCreated: DateTime.now(),
-                      hasAttachments: true,
-                    );
-                    await sentMessage.save();
-
-                    await messageAttachment.save(sentMessage);
-                    await chat.save();
-                    await chat.addMessage(sentMessage);
-
-                    NewMessageManager().updateWithMessage(chat, sentMessage);
-                    Map<String, dynamic> params = new Map();
-                    params["guid"] = chat.guid;
-                    params["attachmentGuid"] = _attachmentGuid;
-                    params["attachmentName"] = fileName;
-                    params["attachment"] = base64Encode(bytes);
-                    SocketManager().sendMessage("send-message", params, (data) {
-                      debugPrint("sent " + data.toString());
-                    });
                   }
                 },
                 child: ListTile(
@@ -247,20 +285,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
             SliverToBoxAdapter(
               child: InkWell(
                 onTap: () async {
-                  showDialog(
-                    context: context,
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                      child: SizedBox(
-                        height: 40,
-                        width: 40,
-                        child: CircularProgressIndicator(),
-                      ),
-                    ),
-                  );
-                  ActionHandler.resyncChat(chat).then((value) {
-                    Navigator.of(context).pop();
-                  });
+                  ActionHandler.resyncChat(chat).then((value) {});
                 },
                 child: ListTile(
                   title: Text(
@@ -282,60 +307,126 @@ class _ConversationDetailsState extends State<ConversationDetails> {
               ),
               delegate: SliverChildBuilderDelegate(
                 (context, int index) {
-                  Attachment attachment = attachmentsForChat[index];
-                  if (attachment.mimeType != null &&
-                      attachment.mimeType.startsWith("image")) {
-                    File file = new File(
-                      "${SettingsManager().appDocDir.path}/attachments/${attachment.guid}/${attachment.transferName}",
-                    );
-                    if (!file.existsSync() && attachment.blurhash != null) {
-                      return BlurHash(
-                        hash: attachment.blurhash,
-                        decodingWidth: attachment.width ~/ 200,
-                        decodingHeight: attachment.height ~/ 200,
-                      );
-                    }
-                    return SizedBox(
-                      width: MediaQuery.of(context).size.width / 2,
-                      child: Stack(
-                        children: <Widget>[
-                          SizedBox(
-                            child: Hero(
-                              tag: attachment.guid,
-                              child: Image.file(
-                                file,
-                                fit: BoxFit.cover,
-                                alignment: Alignment.center,
-                              ),
-                            ),
+                  return Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                          color: Theme.of(context).accentColor, width: 3),
+                    ),
+                    child: Builder(
+                      builder: (context) {
+                        Attachment attachment = attachmentsForChat[index];
+                        if (attachment.mimeType.startsWith("image")) {
+                          File file = new File(
+                            "${SettingsManager().appDocDir.path}/attachments/${attachment.guid}/${attachment.transferName}",
+                          );
+                          if (!file.existsSync()) {
+                            return Stack(
+                              alignment: Alignment.center,
+                              children: <Widget>[
+                                attachment.blurhash != null
+                                    ? BlurHash(
+                                        hash: attachment.blurhash,
+                                        decodingWidth: (attachment.width)
+                                            .clamp(1, double.infinity)
+                                            .toInt(),
+                                        decodingHeight: (attachment.height)
+                                            .clamp(1, double.infinity)
+                                            .toInt(),
+                                      )
+                                    : Container(
+                                        color: Theme.of(context).accentColor,
+                                      ),
+                                Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: <Widget>[
+                                    CupertinoButton(
+                                      padding: EdgeInsets.only(
+                                          left: 20,
+                                          right: 20,
+                                          top: 10,
+                                          bottom: 10),
+                                      onPressed: () {
+                                        // content = new AttachmentDownloader(content, widget.message);
+                                        // widget.updateAttachment();
+                                        // setState(() {});
+                                      },
+                                      color: Colors.transparent,
+                                      child: Column(
+                                        children: <Widget>[
+                                          Text(
+                                            attachment.getFriendlySize(),
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodyText1,
+                                          ),
+                                          Icon(Icons.cloud_download,
+                                              size: 28.0),
+                                          (attachment.mimeType != null)
+                                              ? Text(
+                                                  attachment.mimeType,
+                                                  style: Theme.of(context)
+                                                      .textTheme
+                                                      .bodyText1,
+                                                )
+                                              : Container()
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            );
+                          }
+                          return SizedBox(
                             width: MediaQuery.of(context).size.width / 2,
-                          ),
-                          Material(
-                            color: Colors.transparent,
-                            child: InkWell(
-                              onTap: () {
-                                Navigator.of(context).push(
-                                  CupertinoPageRoute(
-                                    builder: (context) => ImageViewer(
-                                      file: file,
-                                      tag: attachment.guid,
+                            child: Stack(
+                              children: <Widget>[
+                                SizedBox(
+                                  child: Hero(
+                                    tag: attachment.guid,
+                                    child: Image.file(
+                                      file,
+                                      fit: BoxFit.cover,
+                                      alignment: Alignment.center,
                                     ),
                                   ),
-                                );
-                              },
+                                  width: MediaQuery.of(context).size.width / 2,
+                                  height: MediaQuery.of(context).size.width / 2,
+                                ),
+                                Material(
+                                  color: Colors.transparent,
+                                  child: InkWell(
+                                    onTap: () {
+                                      Navigator.of(context).push(
+                                        CupertinoPageRoute(
+                                          builder: (context) => ImageViewer(
+                                            file: file,
+                                            tag: attachment.guid,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                )
+                              ],
                             ),
-                          )
-                        ],
-                      ),
-                    );
-                  } else {
-                    return Container(
-                      child: Text(
-                        attachment.transferName,
-                        style: Theme.of(context).textTheme.bodyText1,
-                      ),
-                    );
-                  }
+                          );
+                        } else {
+                          return Center(
+                            child: CupertinoButton(
+                              onPressed: () {},
+                              child: Container(
+                                child: Text(
+                                  attachment.transferName,
+                                  style: Theme.of(context).textTheme.bodyText1,
+                                ),
+                              ),
+                            ),
+                          );
+                        }
+                      },
+                    ),
+                  );
                 },
                 childCount: attachmentsForChat.length,
               ),
