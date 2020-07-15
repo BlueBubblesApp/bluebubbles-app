@@ -87,6 +87,7 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
                           left: 20, right: 20, top: 10, bottom: 10),
                       onPressed: () {
                         new AttachmentDownloader(attachment, null);
+                        subscribeToDownloadStream();
                         setState(() {});
                       },
                       color: Colors.transparent,
