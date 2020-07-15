@@ -1,7 +1,10 @@
+import 'dart:async';
 import 'dart:convert';
 
+import 'package:bluebubble_messages/helpers/hex_color.dart';
 import 'package:bluebubble_messages/helpers/utils.dart';
 import 'package:bluebubble_messages/layouts/setup/qr_code_scanner.dart';
+import 'package:bluebubble_messages/layouts/setup/welcome_page.dart';
 import 'package:bluebubble_messages/managers/contact_manager.dart';
 import 'package:bluebubble_messages/managers/settings_manager.dart';
 import 'package:bluebubble_messages/settings.dart';
@@ -25,7 +28,6 @@ class _SetupViewState extends State<SetupView> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     _settingsCopy = SettingsManager().settings;
   }
@@ -44,7 +46,9 @@ class _SetupViewState extends State<SetupView> {
               AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
           controller: controller,
           children: <Widget>[
-            _getStartedPage(),
+            WelcomePage(
+              controller: controller,
+            ),
             _requestContacts(),
             _setupMacApp(),
             _scanQRCode(),
@@ -67,44 +71,9 @@ class _SetupViewState extends State<SetupView> {
     );
   }
 
-  Widget _getStartedPage() {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: Center(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Text(
-              "Welcome to BlueBubbles",
-              style: Theme.of(context).textTheme.bodyText1,
-            ),
-            Text(
-              "Let's get started",
-              style: Theme.of(context).textTheme.bodyText1,
-            ),
-            RaisedButton(
-              color: Colors.grey,
-              onPressed: () {
-                controller.nextPage(
-                  duration: Duration(milliseconds: 300),
-                  curve: Curves.easeInOut,
-                );
-              },
-              child: Icon(
-                Icons.arrow_forward,
-                color: Colors.white,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _requestContacts() {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Theme.of(context).accentColor,
       body: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
@@ -114,7 +83,7 @@ class _SetupViewState extends State<SetupView> {
             textAlign: TextAlign.center,
           ),
           RaisedButton(
-            color: Colors.grey,
+            color: Colors.blue,
             onPressed: () {
               ContactManager().getContacts();
               controller.nextPage(
@@ -134,7 +103,7 @@ class _SetupViewState extends State<SetupView> {
 
   Widget _setupMacApp() {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Theme.of(context).accentColor,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -145,7 +114,7 @@ class _SetupViewState extends State<SetupView> {
               textAlign: TextAlign.center,
             ),
             RaisedButton(
-              color: Colors.grey,
+              color: Colors.blue,
               onPressed: () {
                 controller.nextPage(
                   duration: Duration(milliseconds: 300),
@@ -165,7 +134,7 @@ class _SetupViewState extends State<SetupView> {
 
   Widget _scanQRCode() {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Theme.of(context).accentColor,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -181,7 +150,7 @@ class _SetupViewState extends State<SetupView> {
               textAlign: TextAlign.center,
             ),
             RaisedButton(
-              color: Colors.grey,
+              color: Colors.blue,
               onPressed: () async {
                 var fcmData;
                 try {
@@ -208,10 +177,81 @@ class _SetupViewState extends State<SetupView> {
                   };
                   _settingsCopy.guidAuthKey = fcmData[0];
                   _settingsCopy.serverAddress = fcmData[1];
-                  controller.nextPage(
-                    duration: Duration(milliseconds: 300),
-                    curve: Curves.easeInOut,
+                  SettingsManager().saveSettings(
+                    _settingsCopy,
+                    connectToSocket: false,
+                    authorizeFCM: false,
                   );
+                  showDialog(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      backgroundColor: Theme.of(context).backgroundColor,
+                      title: Text(
+                        "Connecting",
+                        style: Theme.of(context).textTheme.bodyText1,
+                      ),
+                      content: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: <Widget>[
+                          Container(
+                            // height: 70,
+                            // color: Colors.black,
+                            child: CircularProgressIndicator(
+                              valueColor:
+                                  AlwaysStoppedAnimation<Color>(Colors.blue),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                  if (SocketManager().state == SocketState.CONNECTED) {
+                    Navigator.of(context).pop();
+                    controller.nextPage(
+                      duration: Duration(milliseconds: 300),
+                      curve: Curves.easeInOut,
+                    );
+                  }
+
+                  SocketManager().startSocketIO();
+
+                  StreamSubscription connectionStateSubscription;
+                  connectionStateSubscription =
+                      SocketManager().connectionStateStream.listen((event) {
+                    if (event == SocketState.CONNECTED) {
+                      Navigator.of(context).pop();
+                      controller.nextPage(
+                        duration: Duration(milliseconds: 300),
+                        curve: Curves.easeInOut,
+                      );
+                      connectionStateSubscription.cancel();
+                    } else if (event == SocketState.ERROR ||
+                        event == SocketState.DISCONNECTED) {
+                      Navigator.of(context).pop();
+                      showDialog(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          backgroundColor: Theme.of(context).backgroundColor,
+                          title: Text(
+                            "An error occurred trying to connect to the socket",
+                            style: Theme.of(context).textTheme.bodyText1,
+                          ),
+                          actions: <Widget>[
+                            FlatButton(
+                              child: Text("Ok",
+                                  style: Theme.of(context).textTheme.bodyText1),
+                              onPressed: () {
+                                Navigator.of(context).pop();
+                              },
+                            )
+                          ],
+                        ),
+                      );
+                      connectionStateSubscription.cancel();
+                    }
+                  });
+
                   // Singleton().saveSettings(_settingsCopy);
                 }
               },
@@ -229,7 +269,7 @@ class _SetupViewState extends State<SetupView> {
 
   Widget _prepareToSyncMessages() {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Theme.of(context).accentColor,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -272,79 +312,83 @@ class _SetupViewState extends State<SetupView> {
   }
 
   Widget _inSyncSetup() {
-    return StreamBuilder(
-      stream: SocketManager().setup.stream,
-      builder: (BuildContext context, AsyncSnapshot<double> snapshot) {
-        double progress = SocketManager().setup.progress;
-        if (snapshot.hasData) {
-          progress = snapshot.data;
-          return Center(
-            child: Padding(
-              padding: EdgeInsets.symmetric(
-                  horizontal: MediaQuery.of(context).size.width / 4),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  Spacer(
-                    flex: 100,
-                  ),
-                  Text(
-                    "${(progress * 100).floor()}%",
-                    style: Theme.of(context).textTheme.bodyText1,
-                  ),
-                  Spacer(
-                    flex: 5,
-                  ),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(20),
-                    child: LinearProgressIndicator(
-                      value:
-                          progress != 1.0 && progress != 0.0 ? progress : null,
-                      backgroundColor: Colors.white,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+    return Scaffold(
+      backgroundColor: Theme.of(context).accentColor,
+      body: StreamBuilder(
+        stream: SocketManager().setup.stream,
+        builder: (BuildContext context, AsyncSnapshot<double> snapshot) {
+          double progress = SocketManager().setup.progress;
+          if (snapshot.hasData) {
+            progress = snapshot.data;
+            return Center(
+              child: Padding(
+                padding: EdgeInsets.symmetric(
+                    horizontal: MediaQuery.of(context).size.width / 4),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    Spacer(
+                      flex: 100,
                     ),
-                  ),
-                  Spacer(
-                    flex: 100,
-                  ),
-                ],
-              ),
-            ),
-          );
-        } else {
-          return Center(
-            child: Padding(
-              padding: EdgeInsets.symmetric(
-                  horizontal: MediaQuery.of(context).size.width / 4),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  Spacer(
-                    flex: 100,
-                  ),
-                  Text(
-                    progress == 0.0 ? "Starting setup" : "Finishing setup",
-                    style: Theme.of(context).textTheme.bodyText1,
-                  ),
-                  Spacer(
-                    flex: 5,
-                  ),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(20),
-                    child: LinearProgressIndicator(
-                      backgroundColor: Colors.white,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                    Text(
+                      "${(progress * 100).floor()}%",
+                      style: Theme.of(context).textTheme.bodyText1,
                     ),
-                  ),
-                  Spacer(
-                    flex: 100,
-                  ),
-                ],
+                    Spacer(
+                      flex: 5,
+                    ),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(20),
+                      child: LinearProgressIndicator(
+                        value: progress != 1.0 && progress != 0.0
+                            ? progress
+                            : null,
+                        backgroundColor: Colors.white,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                      ),
+                    ),
+                    Spacer(
+                      flex: 100,
+                    ),
+                  ],
+                ),
               ),
-            ),
-          );
-        }
-      },
+            );
+          } else {
+            return Center(
+              child: Padding(
+                padding: EdgeInsets.symmetric(
+                    horizontal: MediaQuery.of(context).size.width / 4),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    Spacer(
+                      flex: 100,
+                    ),
+                    Text(
+                      progress == 0.0 ? "Starting setup" : "Finishing setup",
+                      style: Theme.of(context).textTheme.bodyText1,
+                    ),
+                    Spacer(
+                      flex: 5,
+                    ),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(20),
+                      child: LinearProgressIndicator(
+                        backgroundColor: Colors.white,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                      ),
+                    ),
+                    Spacer(
+                      flex: 100,
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+        },
+      ),
     );
   }
 }

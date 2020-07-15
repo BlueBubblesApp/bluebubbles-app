@@ -18,8 +18,6 @@ class MessageHelper {
           attachments.forEach((attachmentItem) async {
             Attachment file = Attachment.fromMap(attachmentItem);
             await file.save(message);
-            debugPrint("attachment id " + file.id.toString());
-            debugPrint("message id " + message.id.toString());
           });
         });
       });

@@ -39,9 +39,9 @@ class LifeCycleManager {
   }
 
   close() {
-    _isAlive = false;
     debugPrint("finished setup ${SettingsManager().settings.finishedSetup}");
     if (SettingsManager().settings.finishedSetup) {
+      _isAlive = false;
       SocketManager().closeSocket();
     }
   }

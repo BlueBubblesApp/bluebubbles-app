@@ -25,15 +25,10 @@ class SetupBloc {
 
   void startSync(Settings settings) {
     debugPrint(settings.toJson().toString());
-    SettingsManager().saveSettings(settings, connectToSocket: false);
     SocketManager().sendMessage("get-chats", {}, (data) {
       receivedChats(data);
     });
   }
-
-  // void onConnect() {
-  //   debugPrint("connected");
-  // }
 
   void receivedChats(data) async {
     debugPrint("got chats");
@@ -62,18 +57,9 @@ class SetupBloc {
         finishSetup();
       }
     });
-    // if (i == chats.length - 1) {
-    //   Settings _settings = _singleton.settings;
-    //   _settings.finishedSetup = true;
-    //   _singleton.saveSettings(_singleton.settings);
-    //   List<Chat> _chats = await Chat.find();
-    //   _singleton.chats = _chats;
-    //   notify();
-    // }
   }
 
   void receivedMessagesForChat(Chat chat, Map<String, dynamic> data) async {
-    debugPrint("got messages");
     List messages = data["data"];
     MessageHelper.bulkAddMessages(chat, messages);
 
