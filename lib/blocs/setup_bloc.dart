@@ -74,7 +74,6 @@ class SetupBloc {
     _finishedSetup = true;
     ContactManager().contacts = [];
     await ContactManager().getContacts();
-    debugPrint("contacts " + ContactManager().handleToContact.toString());
     SettingsManager().saveSettings(_settingsCopy, connectToSocket: false);
     SocketManager().finishSetup();
   }

@@ -59,6 +59,7 @@ class ChatBloc {
     await initTileVals(_chats);
     NewMessageManager().stream.listen((event) async {
       debugPrint("updating chat tiles " + event.toString());
+      if (event.containsKey("oldGuid") && event["oldGuid"] != null) return;
       if (event.keys.first != null) {
         //if there even is a chat specified in the newmessagemanager update
         for (int i = 0; i < _chats.length; i++) {

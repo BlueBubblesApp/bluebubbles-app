@@ -65,7 +65,8 @@ class MessageBloc {
                 _messageController.sink.add({
                   "messages": _allMessages,
                   "update": event[_currentChat.guid],
-                  "index": null
+                  "index": null,
+                  "oldGuid": event["oldGuid"]
                 });
             } else {
               debugPrint("could not find existing message");

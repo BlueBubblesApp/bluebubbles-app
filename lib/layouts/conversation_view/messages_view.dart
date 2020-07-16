@@ -70,6 +70,19 @@ class _MessageViewState extends State<MessageView>
                   : animationDuration);
         }
       } else if (event.containsKey("update") && event["update"] != null) {
+        if (event.containsKey("oldGuid") &&
+            event["oldGuid"] != null &&
+            event["oldGuid"] != (event["update"] as Message).guid) {
+          if (attachments.containsKey(event["oldGuid"]))
+            attachments[(event["update"] as Message).guid] =
+                attachments.remove(event["oldGuid"]);
+          if (attachmentFutures.containsKey(event["oldGuid"]))
+            attachmentFutures[(event["update"] as Message).guid] =
+                attachmentFutures.remove(event["oldGuid"]);
+          if (attachments.containsKey(event["oldGuid"]))
+            attachmentFutures[(event["update"] as Message).guid] =
+                attachmentFutures.remove(event["oldGuid"]);
+        }
         _messages = event["messages"].values.toList();
         if (this.mounted) setState(() {});
         _listKey.currentState.setState(() {});
