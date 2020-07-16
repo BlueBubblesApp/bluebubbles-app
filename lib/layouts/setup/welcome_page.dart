@@ -77,23 +77,6 @@ class _WelcomePageState extends State<WelcomePage>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: HexColor('26262a'),
-      // body: Center(
-      //   child: Column(
-      //     crossAxisAlignment: CrossAxisAlignment.center,
-      //     mainAxisAlignment: MainAxisAlignment.center,
-      //     children: <Widget>[
-      //       Text(
-      //         "Welcome to BlueBubbles",
-      //         style: Theme.of(context).textTheme.bodyText1,
-      //       ),
-      //       Text(
-      //         "",
-      //         style: Theme.of(context).textTheme.bodyText1,
-      //       ),
-      //       ,
-      //     ],
-      //   ),
-      // ),
       body: Padding(
         padding: const EdgeInsets.symmetric(vertical: 80.0, horizontal: 24.0),
         child: Stack(

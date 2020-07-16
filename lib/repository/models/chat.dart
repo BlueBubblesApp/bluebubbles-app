@@ -150,7 +150,6 @@ class Chat {
 
       this.id = await db.insert("chat", map);
     } else if (updateIfAbsent) {
-      debugPrint("updating because absent and set ismuted to $isMuted");
       await this.update();
     }
 

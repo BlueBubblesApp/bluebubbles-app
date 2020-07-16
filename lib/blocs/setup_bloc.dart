@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:math';
 
 import 'package:bluebubble_messages/helpers/message_helper.dart';
+import 'package:bluebubble_messages/managers/contact_manager.dart';
 import 'package:bluebubble_messages/managers/settings_manager.dart';
 import 'package:bluebubble_messages/repository/models/chat.dart';
 import 'package:bluebubble_messages/settings.dart';
@@ -67,10 +68,13 @@ class SetupBloc {
     _stream.sink.add(_progress);
   }
 
-  void finishSetup() {
+  void finishSetup() async {
     Settings _settingsCopy = SettingsManager().settings;
     _settingsCopy.finishedSetup = true;
     _finishedSetup = true;
+    ContactManager().contacts = [];
+    await ContactManager().getContacts();
+    debugPrint("contacts " + ContactManager().handleToContact.toString());
     SettingsManager().saveSettings(_settingsCopy, connectToSocket: false);
     SocketManager().finishSetup();
   }
