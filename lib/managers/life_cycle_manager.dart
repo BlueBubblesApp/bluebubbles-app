@@ -1,4 +1,5 @@
 import 'package:bluebubble_messages/blocs/setup_bloc.dart';
+import 'package:bluebubble_messages/managers/notification_manager.dart';
 import 'package:bluebubble_messages/managers/settings_manager.dart';
 import 'package:bluebubble_messages/socket_manager.dart';
 import 'package:flutter/material.dart';
@@ -34,6 +35,9 @@ class LifeCycleManager {
   }
 
   opened() {
+    if (!_isAlive && NotificationManager().chat != null) {
+      NotificationManager().switchChat(NotificationManager().chat);
+    }
     _isAlive = true;
     SocketManager().startSocketIO();
   }

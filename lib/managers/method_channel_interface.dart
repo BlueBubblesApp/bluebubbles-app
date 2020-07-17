@@ -79,7 +79,7 @@ class MethodChannelInterface {
         Message message = Message.fromMap(data);
 
         if (!message.isFromMe &&
-            (NotificationManager().chat != chat.guid ||
+            (NotificationManager().chatGuid != chat.guid ||
                 !LifeCycleManager().isAlive) &&
             (!message.hasAttachments || !isEmptyString(message.text)) &&
             !chat.isMuted) {
@@ -168,6 +168,7 @@ class MethodChannelInterface {
       await openedChat.getParticipants();
       String title = await getFullChatTitle(openedChat);
       MessageBloc messageBloc = new MessageBloc(openedChat);
+      NotificationManager().switchChat(openedChat);
 
       Navigator.of(_context).pushAndRemoveUntil(
         CupertinoPageRoute(

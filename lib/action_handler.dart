@@ -333,7 +333,7 @@ class ActionHandler {
         // Add notification metadata
         if (!isHeadless &&
             !SocketManager().chatsWithNotifications.contains(chats[i].guid) &&
-            NotificationManager().chat != chats[i].guid) {
+            NotificationManager().chatGuid != chats[i].guid) {
           SocketManager().chatsWithNotifications.add(chats[i].guid);
         }
       }

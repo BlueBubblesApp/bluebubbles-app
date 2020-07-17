@@ -10,8 +10,9 @@ class NotificationManager {
     return _manager;
   }
 
-  String _currentChatGuid = "";
-  String get chat => _currentChatGuid;
+  Chat _currentChat;
+  Chat get chat => _currentChat;
+  String get chatGuid => _currentChat != null ? _currentChat.guid : null;
 
   static final NotificationManager _manager = NotificationManager._internal();
 
@@ -20,13 +21,14 @@ class NotificationManager {
   List<String> processedNotifications = <String>[];
 
   void switchChat(Chat chat) {
-    _currentChatGuid = chat.guid;
+    if (chat == null) return;
+    _currentChat = chat;
     MethodChannelInterface()
-        .invokeMethod("clear-chat-notifs", {"chatGuid": _currentChatGuid});
+        .invokeMethod("clear-chat-notifs", {"chatGuid": _currentChat.guid});
   }
 
   void leaveChat() {
-    _currentChatGuid = "";
+    _currentChat = null;
   }
 
   void createNotificationChannel() {
