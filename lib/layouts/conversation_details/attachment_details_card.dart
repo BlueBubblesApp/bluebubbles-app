@@ -65,17 +65,19 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
       return Stack(
         alignment: Alignment.center,
         children: <Widget>[
-          attachment.blurhash != null
-              ? BlurHash(
-                  hash: attachment.blurhash,
-                  decodingWidth:
-                      (attachment.width).clamp(1, double.infinity).toInt(),
-                  decodingHeight:
-                      (attachment.height).clamp(1, double.infinity).toInt(),
-                )
-              : Container(
-                  color: Theme.of(context).accentColor,
-                ),
+          // attachment.blurhash != null
+          //     ? BlurHash(
+          //         hash: attachment.blurhash,
+          //         decodingWidth:
+          //             (attachment.width).clamp(1, double.infinity).toInt(),
+          //         decodingHeight:
+          //             (attachment.height).clamp(1, double.infinity).toInt(),
+          //         imageFit: BoxFit.fill,
+          //       )
+          //     :
+          Container(
+            color: Theme.of(context).accentColor,
+          ),
           Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[

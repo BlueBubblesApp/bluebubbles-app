@@ -77,37 +77,38 @@ class _MessageAttachmentState extends State<MessageAttachment>
       height = (content as Attachment).height;
     }
 
-    placeHolder = (blurhash == null ||
-            width == null ||
-            height == null ||
-            width == 0 ||
-            height == 0)
-        ? ClipRRect(
-            borderRadius: BorderRadius.circular(8.0),
-            child: Container(
-              height: 150,
-              width: 200,
-              color: Theme.of(context).accentColor,
-            ),
-          )
-        : Container(
-            constraints: BoxConstraints(
-              maxWidth: MediaQuery.of(context).size.width * 3 / 4,
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(8.0),
-              child: AspectRatio(
-                aspectRatio: widget.attachment.width / widget.attachment.height,
-                child: BlurHash(
-                  hash: blurhash,
-                  decodingWidth: (widget.attachment.width ~/ 200)
-                      .clamp(1, double.infinity),
-                  decodingHeight: (widget.attachment.height ~/ 200)
-                      .clamp(1, double.infinity),
-                ),
-              ),
-            ),
-          );
+    placeHolder = ClipRRect(
+      borderRadius: BorderRadius.circular(8.0),
+      child: Container(
+        height: 150,
+        width: 200,
+        color: Theme.of(context).accentColor,
+      ),
+    );
+    // (blurhash == null ||
+    //         width == null ||
+    //         height == null ||
+    //         width == 0 ||
+    //         height == 0)
+    //     ?
+    // : Container(
+    //     constraints: BoxConstraints(
+    //       maxWidth: MediaQuery.of(context).size.width * 3 / 4,
+    //     ),
+    //     child: ClipRRect(
+    //       borderRadius: BorderRadius.circular(8.0),
+    //       child: AspectRatio(
+    //         aspectRatio: widget.attachment.width / widget.attachment.height,
+    //         child: BlurHash(
+    //           hash: blurhash,
+    //           decodingWidth: (widget.attachment.width ~/ 200)
+    //               .clamp(1, double.infinity),
+    //           decodingHeight: (widget.attachment.height ~/ 200)
+    //               .clamp(1, double.infinity),
+    //         ),
+    //       ),
+    //     ),
+    //   );
   }
 
   @override
