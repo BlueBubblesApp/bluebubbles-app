@@ -3,22 +3,25 @@ import 'dart:io';
 
 import 'package:bluebubble_messages/helpers/hex_color.dart';
 import 'package:bluebubble_messages/layouts/image_viewer/video_viewer.dart';
+import 'package:bluebubble_messages/layouts/widgets/message_widget/message_content/message_attachments.dart';
 import 'package:bluebubble_messages/repository/models/attachment.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
 class VideoWidget extends StatefulWidget {
-  VideoWidget({Key key, this.file, this.attachment}) : super(key: key);
+  VideoWidget({Key key, this.file, this.attachment, this.savedAttachmentData})
+      : super(key: key);
   final File file;
   final Attachment attachment;
+  final SavedAttachmentData savedAttachmentData;
 
   @override
   _VideoWidgetState createState() => _VideoWidgetState();
 }
 
 class _VideoWidgetState extends State<VideoWidget> {
-  VideoPlayerController _controller;
+  // VideoPlayerController widget.savedAttachmentData.controller;
 
   bool showPlayPauseOverlay = true;
   Timer hideOverlayTimer;
@@ -27,13 +30,17 @@ class _VideoWidgetState extends State<VideoWidget> {
   void initState() {
     super.initState();
     debugPrint("height ${widget.attachment.width}");
-    _controller = VideoPlayerController.file(widget.file)
-      ..initialize().then((value) {
-        // _controller.play();
-        setState(() {});
-      });
-    showPlayPauseOverlay = !_controller.value.isPlaying;
-    _controller.setLooping(true);
+    if (widget.savedAttachmentData.controller == null) {
+      widget.savedAttachmentData.controller =
+          VideoPlayerController.file(widget.file)
+            ..initialize().then((value) {
+              // widget.savedAttachmentData.controller.play();
+              setState(() {});
+            });
+    }
+    showPlayPauseOverlay =
+        !widget.savedAttachmentData.controller.value.isPlaying;
+    widget.savedAttachmentData.controller.setLooping(true);
   }
 
   @override
@@ -42,8 +49,8 @@ class _VideoWidgetState extends State<VideoWidget> {
       borderRadius: BorderRadius.circular(8.0),
       child: GestureDetector(
         onTap: () {
-          if (_controller.value.isPlaying) {
-            _controller.pause();
+          if (widget.savedAttachmentData.controller.value.isPlaying) {
+            widget.savedAttachmentData.controller.pause();
             setState(() {
               showPlayPauseOverlay = true;
             });
@@ -51,24 +58,25 @@ class _VideoWidgetState extends State<VideoWidget> {
             Navigator.of(context).push(
               CupertinoPageRoute(
                 builder: (context) => VideoViewer(
-                  controller: _controller,
+                  controller: widget.savedAttachmentData.controller,
                   heroTag: widget.attachment.guid,
                 ),
               ),
             );
           }
         },
-        child: _controller.value.aspectRatio != null
+        child: widget.savedAttachmentData.controller.value.aspectRatio != null
             ? Hero(
                 tag: widget.attachment.guid,
                 child: Stack(
                   alignment: Alignment.center,
                   children: <Widget>[
                     AspectRatio(
-                      aspectRatio: _controller.value.aspectRatio,
+                      aspectRatio: widget
+                          .savedAttachmentData.controller.value.aspectRatio,
                       child: Stack(
                         children: <Widget>[
-                          VideoPlayer(_controller),
+                          VideoPlayer(widget.savedAttachmentData.controller),
                         ],
                       ),
                     ),
@@ -81,7 +89,8 @@ class _VideoWidgetState extends State<VideoWidget> {
                           borderRadius: BorderRadius.circular(40),
                         ),
                         padding: EdgeInsets.all(10),
-                        child: _controller.value.isPlaying
+                        child: widget
+                                .savedAttachmentData.controller.value.isPlaying
                             ? GestureDetector(
                                 child: Icon(
                                   Icons.pause,
@@ -89,7 +98,7 @@ class _VideoWidgetState extends State<VideoWidget> {
                                   size: 45,
                                 ),
                                 onTap: () {
-                                  _controller.pause();
+                                  widget.savedAttachmentData.controller.pause();
                                   setState(() {
                                     showPlayPauseOverlay = true;
                                   });
@@ -102,7 +111,7 @@ class _VideoWidgetState extends State<VideoWidget> {
                                   size: 45,
                                 ),
                                 onTap: () {
-                                  _controller.play();
+                                  widget.savedAttachmentData.controller.play();
                                   setState(() {
                                     showPlayPauseOverlay = false;
                                   });
@@ -116,11 +125,5 @@ class _VideoWidgetState extends State<VideoWidget> {
             : Container(),
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
   }
 }

@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:bluebubble_messages/helpers/utils.dart';
+import 'package:bluebubble_messages/layouts/widgets/message_widget/message_content/message_attachments.dart';
 import 'package:bluebubble_messages/managers/method_channel_interface.dart';
 import 'package:bluebubble_messages/managers/settings_manager.dart';
 import 'package:bluebubble_messages/repository/models/attachment.dart';
@@ -15,13 +16,15 @@ class UrlPreviewWidget extends StatefulWidget {
     Key key,
     @required this.linkPreviews,
     @required this.message,
-    @required this.onFinish,
-    this.existingMetaData,
+    // @required this.onFinish,
+    // this.existingMetaData,
+    @required this.savedAttachmentData,
   }) : super(key: key);
   final List<Attachment> linkPreviews;
   final Message message;
-  final Function(Metadata) onFinish;
-  final Metadata existingMetaData;
+  final SavedAttachmentData savedAttachmentData;
+  // final Function(Metadata) onFinish;
+  // final Metadata existingMetaData;
 
   @override
   _UrlPreviewWidgetState createState() => _UrlPreviewWidgetState();
@@ -36,7 +39,8 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
   @override
   void initState() {
     super.initState();
-    if (widget.existingMetaData != null) data = widget.existingMetaData;
+    if (widget.savedAttachmentData.urlMetaData != null)
+      data = widget.savedAttachmentData.urlMetaData;
     for (Attachment preview in widget.linkPreviews) {
       if (SocketManager().attachmentSenders.containsKey(preview.guid)) {}
     }
@@ -71,7 +75,7 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
         url = "http://" + widget.message.text;
       }
       data = await extract(url);
-      widget.onFinish(data);
+      widget.savedAttachmentData.urlMetaData = data;
       if (this.mounted)
         setState(() {
           isFetching = false;

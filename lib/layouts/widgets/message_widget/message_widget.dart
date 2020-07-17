@@ -15,6 +15,8 @@ import 'package:bluebubble_messages/layouts/widgets/message_widget/message_conte
 import 'package:bluebubble_messages/layouts/widgets/message_widget/message_content/media_players/regular_file_opener.dart';
 import 'package:bluebubble_messages/layouts/widgets/message_widget/message_content/media_players/video_widget.dart';
 import 'package:bluebubble_messages/layouts/widgets/message_widget/message_content/media_file.dart';
+import 'package:bluebubble_messages/layouts/widgets/message_widget/message_content/message_attachment.dart';
+import 'package:bluebubble_messages/layouts/widgets/message_widget/message_content/message_attachments.dart';
 import 'package:bluebubble_messages/layouts/widgets/message_widget/received_message.dart';
 import 'package:bluebubble_messages/layouts/widgets/message_widget/sent_message.dart';
 import 'package:bluebubble_messages/managers/contact_manager.dart';
@@ -52,8 +54,8 @@ class MessageWidget extends StatefulWidget {
     this.customContent,
     this.shouldFadeIn,
     this.isFirstSentMessage,
-    this.attachments,
     this.showHero,
+    this.savedAttachmentData,
   }) : super(key: key);
 
   final fromSelf;
@@ -63,8 +65,8 @@ class MessageWidget extends StatefulWidget {
   final bool showHandle;
   final bool shouldFadeIn;
   final bool isFirstSentMessage;
-  final Widget attachments;
   final bool showHero;
+  final SavedAttachmentData savedAttachmentData;
 
   final List<Widget> customContent;
 
@@ -148,7 +150,11 @@ class _MessageState extends State<MessageWidget> {
         shouldFadeIn: widget.shouldFadeIn,
         customContent: widget.customContent,
         isFromMe: widget.fromSelf,
-        attachments: widget.attachments,
+        attachments: widget.savedAttachmentData != null
+            ? MessageAttachments(
+                message: widget.message,
+                savedAttachmentData: widget.savedAttachmentData)
+            : Container(),
         showHero: widget.showHero,
       );
     } else {
@@ -161,7 +167,11 @@ class _MessageState extends State<MessageWidget> {
         showHandle: widget.showHandle,
         customContent: widget.customContent,
         isFromMe: widget.fromSelf,
-        attachments: widget.attachments,
+        attachments: widget.savedAttachmentData != null
+            ? MessageAttachments(
+                message: widget.message,
+                savedAttachmentData: widget.savedAttachmentData)
+            : Container(),
       );
     }
   }

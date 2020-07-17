@@ -9,6 +9,7 @@ import 'package:bluebubble_messages/layouts/widgets/message_widget/message_conte
 import 'package:bluebubble_messages/layouts/widgets/message_widget/message_content/media_players/loaction_widget.dart';
 import 'package:bluebubble_messages/layouts/widgets/message_widget/message_content/media_players/regular_file_opener.dart';
 import 'package:bluebubble_messages/layouts/widgets/message_widget/message_content/media_players/video_widget.dart';
+import 'package:bluebubble_messages/layouts/widgets/message_widget/message_content/message_attachments.dart';
 import 'package:bluebubble_messages/repository/models/attachment.dart';
 import 'package:bluebubble_messages/repository/models/message.dart';
 import 'package:flutter/cupertino.dart';
@@ -22,11 +23,13 @@ class MessageAttachment extends StatefulWidget {
     @required this.attachment,
     @required this.updateAttachment,
     @required this.message,
+    @required this.savedAttachmentData,
   }) : super(key: key);
   final content;
   final Attachment attachment;
   final Function() updateAttachment;
   final Message message;
+  final SavedAttachmentData savedAttachmentData;
 
   @override
   _MessageAttachmentState createState() => _MessageAttachmentState();
@@ -142,6 +145,7 @@ class _MessageAttachmentState extends State<MessageAttachment>
           child: VideoWidget(
             attachment: widget.attachment,
             file: content,
+            savedAttachmentData: widget.savedAttachmentData,
           ),
         );
       } else if (mimeType == "audio") {

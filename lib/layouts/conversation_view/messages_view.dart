@@ -30,9 +30,9 @@ class _MessageViewState extends State<MessageView>
   final Duration animationDuration = Duration(milliseconds: 400);
   OverlayEntry entry;
   List<String> sentMessages = <String>[];
-  Map<String, Widget> attachments = Map();
-  Map<String, Future<List<Attachment>>> attachmentFutures = Map();
-  Map<String, Map<String, dynamic>> attachmentResults = Map();
+  Map<String, SavedAttachmentData> attachments = Map();
+  // Map<String, Future<List<Attachment>>> attachmentFutures = Map();
+  // Map<String, Map<String, dynamic>> attachmentResults = Map();
   bool initializedList = false;
 
   @override
@@ -76,12 +76,6 @@ class _MessageViewState extends State<MessageView>
           if (attachments.containsKey(event["oldGuid"]))
             attachments[(event["update"] as Message).guid] =
                 attachments.remove(event["oldGuid"]);
-          if (attachmentFutures.containsKey(event["oldGuid"]))
-            attachmentFutures[(event["update"] as Message).guid] =
-                attachmentFutures.remove(event["oldGuid"]);
-          if (attachments.containsKey(event["oldGuid"]))
-            attachmentFutures[(event["update"] as Message).guid] =
-                attachmentFutures.remove(event["oldGuid"]);
         }
         _messages = event["messages"].values.toList();
         if (this.mounted) setState(() {});
@@ -119,46 +113,16 @@ class _MessageViewState extends State<MessageView>
   void getAttachmentsForMessage(Message message) {
     if (attachments.containsKey(message.guid)) return;
     if (message.hasAttachments) {
-      debugPrint("getting attachments for new insert");
-      attachmentFutures[message.guid] = Message.getAttachments(message);
-      attachments[message.guid] = AnimatedSize(
-        duration: Duration(milliseconds: 500),
-        curve: Curves.easeInOut,
-        vsync: this,
-        child: FutureBuilder(
-          builder: (context, snapshot) {
-            if (snapshot.hasData ||
-                attachmentResults.containsKey(message.guid)) {
-              if (!attachmentResults.containsKey(message.guid)) {
-                attachmentResults[message.guid] = {
-                  "attachments": snapshot.data
-                };
-              }
-              return MessageAttachments(
-                attachments: attachmentResults[message.guid]["attachments"],
-                message: message,
-                existingMetaData:
-                    attachmentResults[message.guid].containsKey("urlMetaData")
-                        ? attachmentResults[message.guid]["urlMetaData"]
-                        : null,
-                onFinishURLs: (Metadata data) {
-                  attachmentResults[message.guid]["urlMetaData"] = data;
-                },
-              );
-            } else {
-              return Container();
-            }
-          },
-          future: attachmentFutures[message.guid],
-        ),
-      );
-      // setState(() {});
+      attachments[message.guid] = new SavedAttachmentData();
     }
   }
 
   @override
   void dispose() {
     if (entry != null) entry.remove();
+    attachments.values.forEach((element) {
+      element.dispose();
+    });
     super.dispose();
   }
 
@@ -198,22 +162,6 @@ class _MessageViewState extends State<MessageView>
                     newerMessage = _messages[index - 1];
                   }
 
-                  Widget messageWidget = MessageWidget(
-                    key: Key(_messages[index].guid),
-                    fromSelf: _messages[index].isFromMe,
-                    message: _messages[index],
-                    olderMessage: olderMessage,
-                    newerMessage: newerMessage,
-                    showHandle: widget.showHandle,
-                    shouldFadeIn: sentMessages.contains(_messages[index].guid),
-                    isFirstSentMessage: widget.messageBloc.firstSentMessage ==
-                        _messages[index].guid,
-                    attachments: attachments.containsKey(_messages[index].guid)
-                        ? attachments[_messages[index].guid]
-                        : Container(),
-                    showHero: index == 0,
-                  );
-
                   return SizeTransition(
                     axis: Axis.vertical,
                     sizeFactor: animation.drive(Tween(begin: 0.0, end: 1.0)
@@ -224,7 +172,24 @@ class _MessageViewState extends State<MessageView>
                               .chain(CurveTween(curve: Curves.easeInOut))),
                       child: FadeTransition(
                         opacity: animation,
-                        child: messageWidget,
+                        child: MessageWidget(
+                          key: Key(_messages[index].guid),
+                          fromSelf: _messages[index].isFromMe,
+                          message: _messages[index],
+                          olderMessage: olderMessage,
+                          newerMessage: newerMessage,
+                          showHandle: widget.showHandle,
+                          shouldFadeIn:
+                              sentMessages.contains(_messages[index].guid),
+                          isFirstSentMessage:
+                              widget.messageBloc.firstSentMessage ==
+                                  _messages[index].guid,
+                          savedAttachmentData:
+                              attachments.containsKey(_messages[index].guid)
+                                  ? attachments[_messages[index].guid]
+                                  : null,
+                          showHero: index == 0,
+                        ),
                       ),
                     ),
                   );

@@ -12,19 +12,27 @@ import 'package:flutter/material.dart';
 import 'package:metadata_fetch/metadata_fetch.dart';
 import 'package:mime_type/mime_type.dart';
 import 'package:path/path.dart';
+import 'package:video_player/video_player.dart';
+
+class SavedAttachmentData {
+  List<Attachment> attachments = [];
+  Metadata urlMetaData;
+  VideoPlayerController controller;
+  Future<List<Attachment>> attachmentsFuture;
+
+  void dispose() {
+    if (controller != null) controller.dispose();
+  }
+}
 
 class MessageAttachments extends StatefulWidget {
   MessageAttachments({
     Key key,
     @required this.message,
-    @required this.attachments,
-    @required this.onFinishURLs,
-    this.existingMetaData,
+    @required this.savedAttachmentData,
   }) : super(key: key);
   final Message message;
-  final List<Attachment> attachments;
-  final Function(Metadata) onFinishURLs;
-  final Metadata existingMetaData;
+  final SavedAttachmentData savedAttachmentData;
 
   @override
   _MessageAttachmentsState createState() => _MessageAttachmentsState();
@@ -38,9 +46,6 @@ class _MessageAttachmentsState extends State<MessageAttachments>
   void initState() {
     super.initState();
     // getAttachmentsFuture = Message.getAttachments(widget.message);
-    for (Attachment attachment in widget.attachments) {
-      initForAttachment(attachment);
-    }
     debugPrint("initing state");
   }
 
@@ -75,37 +80,64 @@ class _MessageAttachmentsState extends State<MessageAttachments>
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: widget.message.isFromMe
-          ? MainAxisAlignment.end
-          : MainAxisAlignment.start,
-      children: <Widget>[
-        Stack(
-          alignment:
-              widget.message.isFromMe ? Alignment.topLeft : Alignment.topRight,
-          children: <Widget>[
-            Padding(
-              padding:
-                  widget.message.hasReactions && widget.message.hasAttachments
-                      ? EdgeInsets.only(
-                          right: !widget.message.isFromMe ? 16.0 : 10.0,
-                          bottom: 10.0,
-                          left: widget.message.isFromMe ? 16.0 : 10.0,
-                          top: 24.0,
-                        )
-                      : EdgeInsets.symmetric(horizontal: 10.0),
-              child: Column(
-                children: _buildAttachments(),
-              ),
-            ),
-            widget.message.hasReactions
-                ? Reactions(
-                    message: widget.message,
-                  )
-                : Container(),
-          ],
-        ),
-      ],
+    if (widget.savedAttachmentData.attachmentsFuture == null) {
+      widget.savedAttachmentData.attachmentsFuture =
+          Message.getAttachments(widget.message);
+    }
+    return AnimatedSize(
+      duration: Duration(milliseconds: 500),
+      curve: Curves.easeInOut,
+      vsync: this,
+      child: FutureBuilder(
+        builder: (context, snapshot) {
+          if (snapshot.hasData ||
+              widget.savedAttachmentData.attachments.length > 0) {
+            if (widget.savedAttachmentData.attachments.length == 0)
+              widget.savedAttachmentData.attachments = snapshot.data;
+
+            for (Attachment attachment
+                in widget.savedAttachmentData.attachments) {
+              initForAttachment(attachment);
+            }
+            return Row(
+              mainAxisAlignment: widget.message.isFromMe
+                  ? MainAxisAlignment.end
+                  : MainAxisAlignment.start,
+              children: <Widget>[
+                Stack(
+                  alignment: widget.message.isFromMe
+                      ? Alignment.topLeft
+                      : Alignment.topRight,
+                  children: <Widget>[
+                    Padding(
+                      padding: widget.message.hasReactions &&
+                              widget.message.hasAttachments
+                          ? EdgeInsets.only(
+                              right: !widget.message.isFromMe ? 16.0 : 10.0,
+                              bottom: 10.0,
+                              left: widget.message.isFromMe ? 16.0 : 10.0,
+                              top: 24.0,
+                            )
+                          : EdgeInsets.symmetric(horizontal: 10.0),
+                      child: Column(
+                        children: _buildAttachments(),
+                      ),
+                    ),
+                    widget.message.hasReactions
+                        ? Reactions(
+                            message: widget.message,
+                          )
+                        : Container(),
+                  ],
+                ),
+              ],
+            );
+          } else {
+            return Container();
+          }
+        },
+        future: widget.savedAttachmentData.attachmentsFuture,
+      ),
     );
   }
 
@@ -113,7 +145,7 @@ class _MessageAttachmentsState extends State<MessageAttachments>
     List<Widget> content = <Widget>[];
     List<Attachment> nullMimeTypeAttachments = <Attachment>[];
 
-    for (Attachment attachment in widget.attachments) {
+    for (Attachment attachment in widget.savedAttachmentData.attachments) {
       if (attachment.mimeType == null) {
         nullMimeTypeAttachments.add(attachment);
       } else {
@@ -125,6 +157,7 @@ class _MessageAttachmentsState extends State<MessageAttachments>
             updateAttachment: () {
               initForAttachment(attachment);
             },
+            savedAttachmentData: widget.savedAttachmentData,
           ),
         );
       }
@@ -134,8 +167,7 @@ class _MessageAttachmentsState extends State<MessageAttachments>
         UrlPreviewWidget(
           linkPreviews: nullMimeTypeAttachments,
           message: widget.message,
-          onFinish: widget.onFinishURLs,
-          existingMetaData: widget.existingMetaData,
+          savedAttachmentData: widget.savedAttachmentData,
         ),
       );
 
