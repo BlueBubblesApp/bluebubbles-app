@@ -226,7 +226,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                                 hideAttachment: false,
                                 uti: "public.jpg",
                                 transferName: fileName,
-                                mimeType: "text/vcf",
+                                mimeType: "text/x-vlocation",
                               );
 
                               Message sentMessage = Message(

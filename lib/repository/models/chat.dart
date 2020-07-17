@@ -166,7 +166,8 @@ class Chat {
 
     Map<String, dynamic> params = {
       "isArchived": this.isArchived ? 1 : 0,
-      "isMuted": this.isMuted ? 1 : 0
+      "isMuted": this.isMuted ? 1 : 0,
+      "hasUnreadMessage": this.hasUnreadMessage ? 1 : 0
     };
 
     // Add display name if it's been updated
