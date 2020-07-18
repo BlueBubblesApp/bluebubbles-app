@@ -18,6 +18,10 @@ class NewMessageManager {
 
   Stream<Map<String, dynamic>> get stream => _stream.stream;
 
+  void deleteSpecificMessage(Chat chat, String guid) {
+    _stream.sink.add({chat.guid: null, "remove": guid});
+  }
+
   void updateSpecificMessage(Chat chat, String oldGuid, Message message) {
     _stream.sink.add({chat.guid: message, "oldGuid": oldGuid});
   }

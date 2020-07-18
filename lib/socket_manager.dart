@@ -288,12 +288,8 @@ class SocketManager {
       _manager.socket.subscribe("new-message", (_data) async {
         debugPrint("Client received new message");
         Map<String, dynamic> data = jsonDecode(_data);
+        // debugPrint("");
 
-        if (SocketManager().processedGUIDS.contains(data["guid"])) {
-          return new Future.value("");
-        }
-
-        SocketManager().processedGUIDS.add(data["guid"]);
         // QueueManager().addEvent("new-message", _data);
         ActionHandler.handleMessage(data);
         return new Future.value("");

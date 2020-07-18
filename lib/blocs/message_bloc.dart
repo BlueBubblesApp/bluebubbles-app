@@ -42,8 +42,23 @@ class MessageBloc {
       if (event.containsKey(_currentChat.guid)) {
         //if there even is a chat specified in the newmessagemanager update
         if (event[_currentChat.guid] == null) {
-          //if no message is specified in the newmessagemanager update
-          getMessages();
+          if (event.containsKey("remove") && event["remove"] != null) {
+            if (_allMessages.containsKey(event["remove"])) {
+              _allMessages.remove(event["remove"]);
+              if (!_messageController.isClosed)
+                _messageController.sink.add({
+                  "messages": _allMessages,
+                  "update": event[_currentChat.guid],
+                  "index": null,
+                  "remove": event["remove"]
+                });
+            } else {
+              debugPrint("could not remove message that does not exist");
+            }
+          } else {
+            //if no message is specified in the newmessagemanager update
+            getMessages();
+          }
         } else {
           if (event.containsKey("oldGuid")) {
             if (_allMessages.containsKey(event["oldGuid"])) {

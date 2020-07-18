@@ -94,16 +94,6 @@ class MethodChannelInterface {
           });
         }
 
-        // If we've already processed the GUID, skip it
-        if (SocketManager().processedGUIDS.contains(data["guid"])) {
-          return;
-        }
-
-        // Save the GUID and create a notification for the message
-        SocketManager().processedGUIDS.add(data["guid"]);
-
-        debugPrint("Adding new/matched message to the queue");
-        // QueueManager().addEvent(call.method, call.arguments);
         ActionHandler.handleMessage(data,
             createAttachmentNotification: !chat.isMuted);
         return new Future.value("");

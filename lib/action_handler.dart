@@ -290,6 +290,7 @@ class ActionHandler {
       bool isHeadless = false}) async {
     Message message = Message.fromMap(data);
     List<Chat> chats = MessageHelper.parseChats(data);
+    debugPrint("handle message " + data.toString());
 
     // Handle message differently depending on if there is a temp GUID match
     if (data.containsKey("tempGuid")) {
@@ -304,6 +305,8 @@ class ActionHandler {
         debugPrint(
             "Message already exists for match. Removing temporary entry.");
         await Message.delete({'guid': data['tempGuid']});
+        NewMessageManager()
+            .deleteSpecificMessage(chats.first, data['tempGuid']);
       } else {
         await Message.replaceMessage(data["tempGuid"], message);
         List<dynamic> attachments =
@@ -317,6 +320,9 @@ class ActionHandler {
               .updateSpecificMessage(chats.first, data['tempGuid'], message);
       }
     } else {
+      if (SocketManager().processedGUIDS.contains(data["guid"])) return;
+
+      SocketManager().processedGUIDS.add(data["guid"]);
       // Add the message to the chats
       for (int i = 0; i < chats.length; i++) {
         debugPrint("Client received new message " + chats[i].guid);

@@ -70,7 +70,6 @@ class _MessageViewState extends State<MessageView>
                   : animationDuration);
         }
       } else if (event.containsKey("update") && event["update"] != null) {
-        _messages = event["messages"].values.toList();
         if (event.containsKey("oldGuid") &&
             event["oldGuid"] != null &&
             event["oldGuid"] != (event["update"] as Message).guid) {
@@ -82,6 +81,14 @@ class _MessageViewState extends State<MessageView>
             SavedAttachmentData data = attachments.remove(event["oldGuid"]);
             data.attachments = updatedAttachments;
             attachments[(event["update"] as Message).guid] = data;
+          }
+        } else if (event.containsKey("remove") && event["remove"] != null) {
+          for (int i = 0; i < _messages.length; i++) {
+            if (_messages[i].guid == event["remove"]) {
+              _messages = event["messages"].values.toList();
+              _listKey.currentState
+                  .removeItem(i, (context, animation) => Container());
+            }
           }
         }
         if (this.mounted) setState(() {});

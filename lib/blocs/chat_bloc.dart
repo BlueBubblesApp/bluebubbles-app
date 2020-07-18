@@ -58,7 +58,8 @@ class ChatBloc {
     _archivedChats = await Chat.find({"isArchived": 1});
     await initTileVals(_chats);
     NewMessageManager().stream.listen((event) async {
-      if (event.containsKey("oldGuid") && event["oldGuid"] != null) return;
+      if ((event.containsKey("oldGuid") && event["oldGuid"] != null) ||
+          event.containsKey("remove")) return;
       if (event.keys.first != null) {
         //if there even is a chat specified in the newmessagemanager update
         for (int i = 0; i < _chats.length; i++) {
