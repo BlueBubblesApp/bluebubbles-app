@@ -79,19 +79,6 @@ class _MessageState extends State<MessageWidget> {
   bool showTail = true;
   Widget blurredImage;
 
-  @override
-  void didChangeDependencies() async {
-    super.didChangeDependencies();
-
-    setState(() {});
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    debugPrint("message widget init state");
-  }
-
   bool withinTimeThreshold(Message first, Message second, {threshold: 5}) {
     if (first == null || second == null) return false;
     return second.dateCreated.difference(first.dateCreated).inMinutes.abs() >

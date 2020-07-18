@@ -108,8 +108,6 @@ class MethodChannelInterface {
             createAttachmentNotification: !chat.isMuted);
         return new Future.value("");
       case "updated-message":
-        debugPrint("Adding updated message to the queue");
-        // QueueManager().addEvent(call.method, call.arguments);
         ActionHandler.handleUpdatedMessage(jsonDecode(call.arguments));
         return new Future.value("");
       case "ChatOpen":

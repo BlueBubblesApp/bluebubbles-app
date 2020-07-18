@@ -193,17 +193,12 @@ class ActionHandler {
     Message updatedMessage = new Message.fromMap(data);
 
     if (updatedMessage.isFromMe) {
-      debugPrint("is from me so awaiting");
       await Future.delayed(Duration(milliseconds: 1000));
-      debugPrint("okay im done");
     }
     updatedMessage =
         await Message.replaceMessage(updatedMessage.guid, updatedMessage);
-    debugPrint(
-        "updated message with data " + updatedMessage.toMap().toString());
 
     Chat chat;
-    debugPrint("handle updated message ");
     if (data["chats"] == null &&
         updatedMessage != null &&
         updatedMessage.id != null) {
@@ -310,16 +305,16 @@ class ActionHandler {
             "Message already exists for match. Removing temporary entry.");
         await Message.delete({'guid': data['tempGuid']});
       } else {
-        if (!isHeadless)
-          NewMessageManager()
-              .updateSpecificMessage(chats.first, data['tempGuid'], message);
         await Message.replaceMessage(data["tempGuid"], message);
         List<dynamic> attachments =
             data.containsKey("attachments") ? data['attachments'] : [];
-        attachments.forEach((attachmentItem) async {
+        for (dynamic attachmentItem in attachments) {
           Attachment file = Attachment.fromMap(attachmentItem);
-          Attachment.replaceAttachment(data["tempGuid"], file);
-        });
+          await Attachment.replaceAttachment(data["tempGuid"], file);
+        }
+        if (!isHeadless)
+          NewMessageManager()
+              .updateSpecificMessage(chats.first, data['tempGuid'], message);
       }
     } else {
       // Add the message to the chats

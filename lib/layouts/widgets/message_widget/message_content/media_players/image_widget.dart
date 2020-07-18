@@ -1,14 +1,17 @@
 import 'dart:io';
 
 import 'package:bluebubble_messages/layouts/image_viewer/image_viewer.dart';
+import 'package:bluebubble_messages/layouts/widgets/message_widget/message_content/message_attachments.dart';
 import 'package:bluebubble_messages/repository/models/attachment.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class ImageWidget extends StatefulWidget {
-  ImageWidget({Key key, this.file, this.attachment}) : super(key: key);
+  ImageWidget({Key key, this.file, this.attachment, this.savedAttachmentData})
+      : super(key: key);
   final File file;
   final Attachment attachment;
+  final SavedAttachmentData savedAttachmentData;
 
   @override
   _ImageWidgetState createState() => _ImageWidgetState();
@@ -16,13 +19,24 @@ class ImageWidget extends StatefulWidget {
 
 class _ImageWidgetState extends State<ImageWidget> {
   @override
+  void didChangeDependencies() async {
+    super.didChangeDependencies();
+    if (widget.savedAttachmentData.imageData == null) {
+      widget.savedAttachmentData.imageData = await widget.file.readAsBytes();
+      setState(() {});
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Stack(
       children: <Widget>[
-        Hero(
-          tag: widget.attachment.guid,
-          child: Image.file(widget.file),
-        ),
+        widget.savedAttachmentData.imageData == null
+            ? Container()
+            : Hero(
+                tag: widget.attachment.guid,
+                child: Image.memory(widget.savedAttachmentData.imageData),
+              ),
         Positioned.fill(
           child: Material(
             color: Colors.transparent,
@@ -33,6 +47,7 @@ class _ImageWidgetState extends State<ImageWidget> {
                   MaterialPageRoute(
                     builder: (context) => ImageViewer(
                       file: widget.file,
+                      bytes: widget.savedAttachmentData.imageData,
                       tag: widget.attachment.guid,
                     ),
                   ),

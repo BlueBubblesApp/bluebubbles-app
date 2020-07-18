@@ -135,6 +135,7 @@ class _MessageAttachmentState extends State<MessageAttachment>
       if (mimeType == "image") {
         return MediaFile(
           child: ImageWidget(
+            savedAttachmentData: widget.savedAttachmentData,
             attachment: widget.attachment,
             file: content,
           ),

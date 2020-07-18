@@ -19,7 +19,6 @@ class NewMessageManager {
   Stream<Map<String, dynamic>> get stream => _stream.stream;
 
   void updateSpecificMessage(Chat chat, String oldGuid, Message message) {
-    debugPrint("update specific message");
     _stream.sink.add({chat.guid: message, "oldGuid": oldGuid});
   }
 

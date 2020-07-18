@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:bluebubble_messages/helpers/attachment_downloader.dart';
 import 'package:bluebubble_messages/layouts/widgets/message_widget/message_content/media_players/url_preview_widget.dart';
@@ -19,6 +20,7 @@ class SavedAttachmentData {
   Metadata urlMetaData;
   VideoPlayerController controller;
   Future<List<Attachment>> attachmentsFuture;
+  Uint8List imageData;
 
   void dispose() {
     if (controller != null) controller.dispose();
@@ -45,8 +47,11 @@ class _MessageAttachmentsState extends State<MessageAttachments>
   @override
   void initState() {
     super.initState();
-    // getAttachmentsFuture = Message.getAttachments(widget.message);
-    debugPrint("initing state");
+    if (widget.savedAttachmentData.attachments.length > 0) {
+      for (Attachment attachment in widget.savedAttachmentData.attachments) {
+        initForAttachment(attachment);
+      }
+    }
   }
 
   void initForAttachment(Attachment attachment) {
@@ -80,7 +85,8 @@ class _MessageAttachmentsState extends State<MessageAttachments>
 
   @override
   Widget build(BuildContext context) {
-    if (widget.savedAttachmentData.attachmentsFuture == null) {
+    if (widget.savedAttachmentData.attachmentsFuture == null &&
+        widget.savedAttachmentData.attachments.length == 0) {
       widget.savedAttachmentData.attachmentsFuture =
           Message.getAttachments(widget.message);
     }
@@ -99,45 +105,50 @@ class _MessageAttachmentsState extends State<MessageAttachments>
                 in widget.savedAttachmentData.attachments) {
               initForAttachment(attachment);
             }
-            return Row(
-              mainAxisAlignment: widget.message.isFromMe
-                  ? MainAxisAlignment.end
-                  : MainAxisAlignment.start,
-              children: <Widget>[
-                Stack(
-                  alignment: widget.message.isFromMe
-                      ? Alignment.topLeft
-                      : Alignment.topRight,
-                  children: <Widget>[
-                    Padding(
-                      padding: widget.message.hasReactions &&
-                              widget.message.hasAttachments
-                          ? EdgeInsets.only(
-                              right: !widget.message.isFromMe ? 16.0 : 10.0,
-                              bottom: 10.0,
-                              left: widget.message.isFromMe ? 16.0 : 10.0,
-                              top: 24.0,
-                            )
-                          : EdgeInsets.symmetric(horizontal: 10.0),
-                      child: Column(
-                        children: _buildAttachments(),
-                      ),
-                    ),
-                    widget.message.hasReactions
-                        ? Reactions(
-                            message: widget.message,
-                          )
-                        : Container(),
-                  ],
-                ),
-              ],
-            );
+            return _buildActualWidget();
           } else {
+            debugPrint("putting place holder " +
+                widget.savedAttachmentData.attachments.length.toString());
             return Container();
           }
         },
         future: widget.savedAttachmentData.attachmentsFuture,
       ),
+    );
+  }
+
+  Widget _buildActualWidget() {
+    return Row(
+      mainAxisAlignment: widget.message.isFromMe
+          ? MainAxisAlignment.end
+          : MainAxisAlignment.start,
+      children: <Widget>[
+        Stack(
+          alignment:
+              widget.message.isFromMe ? Alignment.topLeft : Alignment.topRight,
+          children: <Widget>[
+            Padding(
+              padding:
+                  widget.message.hasReactions && widget.message.hasAttachments
+                      ? EdgeInsets.only(
+                          right: !widget.message.isFromMe ? 16.0 : 10.0,
+                          bottom: 10.0,
+                          left: widget.message.isFromMe ? 16.0 : 10.0,
+                          top: 24.0,
+                        )
+                      : EdgeInsets.symmetric(horizontal: 10.0),
+              child: Column(
+                children: _buildAttachments(),
+              ),
+            ),
+            widget.message.hasReactions
+                ? Reactions(
+                    message: widget.message,
+                  )
+                : Container(),
+          ],
+        ),
+      ],
     );
   }
 

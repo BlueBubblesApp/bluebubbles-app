@@ -38,7 +38,7 @@ class _MessageViewState extends State<MessageView>
   @override
   void initState() {
     super.initState();
-    widget.messageBloc.stream.listen((event) {
+    widget.messageBloc.stream.listen((event) async {
       if (event["insert"] != null) {
         getAttachmentsForMessage(event["insert"]);
         // debugPrint(attachments.containsKey(event["insert"].guid).toString());
@@ -70,14 +70,20 @@ class _MessageViewState extends State<MessageView>
                   : animationDuration);
         }
       } else if (event.containsKey("update") && event["update"] != null) {
+        _messages = event["messages"].values.toList();
         if (event.containsKey("oldGuid") &&
             event["oldGuid"] != null &&
             event["oldGuid"] != (event["update"] as Message).guid) {
-          if (attachments.containsKey(event["oldGuid"]))
-            attachments[(event["update"] as Message).guid] =
-                attachments.remove(event["oldGuid"]);
+          if (attachments.containsKey(event["oldGuid"])) {
+            Message messageWithROWID = await Message.findOne(
+                {"guid": (event["update"] as Message).guid});
+            List<Attachment> updatedAttachments =
+                await Message.getAttachments(messageWithROWID);
+            SavedAttachmentData data = attachments.remove(event["oldGuid"]);
+            data.attachments = updatedAttachments;
+            attachments[(event["update"] as Message).guid] = data;
+          }
         }
-        _messages = event["messages"].values.toList();
         if (this.mounted) setState(() {});
         _listKey.currentState.setState(() {});
       } else {

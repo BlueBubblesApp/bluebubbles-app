@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:bluebubble_messages/managers/method_channel_interface.dart';
 import 'package:flutter/cupertino.dart';
@@ -11,9 +12,11 @@ class ImageViewer extends StatefulWidget {
     Key key,
     this.tag,
     this.file,
+    this.bytes,
   }) : super(key: key);
   final String tag;
   final File file;
+  final Uint8List bytes;
 
   @override
   _ImageViewerState createState() => _ImageViewerState();
@@ -53,7 +56,7 @@ class _ImageViewerState extends State<ImageViewer> {
                 heroAttributes: PhotoViewHeroAttributes(
                   tag: widget.tag,
                 ),
-                imageProvider: FileImage(widget.file),
+                imageProvider: MemoryImage(widget.bytes),
               ),
             ),
             Padding(

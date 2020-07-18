@@ -46,7 +46,6 @@ class MessageBloc {
           getMessages();
         } else {
           if (event.containsKey("oldGuid")) {
-            debugPrint("is an update " + event["oldGuid"]);
             if (_allMessages.containsKey(event["oldGuid"])) {
               List<Message> values = _allMessages.values.toList();
               List<String> keys = _allMessages.keys.toList();
@@ -59,8 +58,6 @@ class MessageBloc {
               }
               _allMessages = LinkedHashMap<String, Message>.from(
                   LinkedHashMap.fromIterables(keys, values));
-              debugPrint("_allMessages updated, now contains " +
-                  event[_currentChat.guid].guid);
               if (!_messageController.isClosed)
                 _messageController.sink.add({
                   "messages": _allMessages,
