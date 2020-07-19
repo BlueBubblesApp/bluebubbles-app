@@ -22,12 +22,19 @@ class SetupBloc {
   double get progress => _progress;
   bool get finishedSetup => false;
 
+  Function onConnectionError;
+
   SetupBloc();
 
-  void startSync(Settings settings) {
+  void startSync(Settings settings, Function _onConnectionError) {
+    onConnectionError = _onConnectionError;
     debugPrint(settings.toJson().toString());
     SocketManager().sendMessage("get-chats", {}, (data) {
-      receivedChats(data);
+      if (data['status'] == 200) {
+        receivedChats(data);
+      } else {
+        onConnectionError();
+      }
     });
   }
 
@@ -50,6 +57,10 @@ class SetupBloc {
       {"statement": "message.service = 'iMessage'", "args": null}
     ];
     SocketManager().sendMessage("get-chat-messages", params, (data) {
+      if (data['status'] != 200) {
+        onConnectionError();
+        return;
+      }
       receivedMessagesForChat(chat, data);
       if (index + 1 < chats.length) {
         _currentIndex = index + 1;

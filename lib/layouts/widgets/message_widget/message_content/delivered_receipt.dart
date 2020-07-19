@@ -68,7 +68,10 @@ class _DeliveredReceiptState extends State<DeliveredReceipt>
                 children: <Widget>[
                   Text(
                     text,
-                    style: Theme.of(context).textTheme.subtitle2,
+                    style: Theme.of(context)
+                        .textTheme
+                        .subtitle2
+                        .apply(fontSizeDelta: 2),
                   )
                 ],
               ),

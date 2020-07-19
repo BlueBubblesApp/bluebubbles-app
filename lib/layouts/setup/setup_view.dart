@@ -292,7 +292,30 @@ class _SetupViewState extends State<SetupView> {
                       duration: Duration(milliseconds: 3),
                       curve: Curves.easeInOut);
                 } else {
-                  SocketManager().setup.startSync(_settingsCopy);
+                  SocketManager().setup.startSync(_settingsCopy, () {
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        backgroundColor: Theme.of(context).backgroundColor,
+                        title: Text(
+                          "The socket connection failed, please check the server",
+                          style: Theme.of(context).textTheme.bodyText1,
+                        ),
+                        actions: <Widget>[
+                          FlatButton(
+                            child: Text("Ok",
+                                style: Theme.of(context).textTheme.bodyText1),
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                            },
+                          )
+                        ],
+                      ),
+                    );
+                    controller.animateToPage(3,
+                        duration: Duration(milliseconds: 500),
+                        curve: Curves.easeInOut);
+                  });
                   controller.nextPage(
                     duration: Duration(milliseconds: 300),
                     curve: Curves.easeInOut,

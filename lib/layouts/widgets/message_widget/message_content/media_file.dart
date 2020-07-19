@@ -36,6 +36,12 @@ class _MediaFileState extends State<MediaFile> {
           widget.child,
           StreamBuilder(
             builder: (context, AsyncSnapshot<double> snapshot) {
+              if (snapshot.hasError) {
+                return Text(
+                  "Unable to send",
+                  style: Theme.of(context).textTheme.bodyText1,
+                );
+              }
               return CircularProgressIndicator(
                 backgroundColor: Colors.grey,
                 valueColor: AlwaysStoppedAnimation(Colors.white),

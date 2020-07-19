@@ -48,13 +48,12 @@ class SettingsManager {
     }
   }
 
-  void saveSettings(Settings settings,
+  Future<void> saveSettings(Settings settings,
       {bool connectToSocket = false, bool authorizeFCM = true}) async {
+    debugPrint("saving to settings");
     if (_manager.sharedPreferences == null) {
       _manager.sharedPreferences = await SharedPreferences.getInstance();
     }
-
-    _manager.sharedPreferences.setString('Settings', jsonEncode(settings));
     if (authorizeFCM) {
       await SocketManager().authFCM();
     }

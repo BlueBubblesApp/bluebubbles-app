@@ -1,8 +1,10 @@
 import 'dart:convert';
+import 'dart:io';
 import 'dart:math';
 
 import 'package:bluebubble_messages/blocs/chat_bloc.dart';
 import 'package:bluebubble_messages/helpers/attachment_downloader.dart';
+import 'package:bluebubble_messages/helpers/attachment_sender.dart';
 import 'package:bluebubble_messages/helpers/contstants.dart';
 import 'package:bluebubble_messages/helpers/message_helper.dart';
 import 'package:bluebubble_messages/helpers/utils.dart';
@@ -74,7 +76,7 @@ class ActionHandler {
             : MessageError.SERVER_ERROR.code;
 
         await Message.replaceMessage(tempGuid, sentMessage);
-        NewMessageManager().updateWithMessage(chat, sentMessage);
+        NewMessageManager().updateSpecificMessage(chat, tempGuid, sentMessage);
       }
     });
   }
@@ -93,6 +95,23 @@ class ActionHandler {
     Chat chat = await Message.getChat(message);
     if (chat == null) throw ("Could not find chat!");
 
+    if (message.hasAttachments) {
+      List<Attachment> attachments = await Message.getAttachments(message);
+
+      for (int i = 0; i < attachments.length; i++) {
+        String appDocPath = SettingsManager().appDocDir.path;
+        String pathName =
+            "$appDocPath/attachments/${attachments[i].guid}/${attachments[i].transferName}";
+        File file = File(pathName);
+        new AttachmentSender(
+          file,
+          chat,
+          i == attachments.length - 1 ? message.text : "",
+        );
+      }
+      return;
+    }
+
     // Build request parameters
     Map<String, dynamic> params = new Map();
     params["guid"] = chat.guid;
@@ -106,11 +125,7 @@ class ActionHandler {
     message.guid = tempGuid;
     message.dateCreated = DateTime.now();
 
-    // Add attachments
-    // TODO: Get Attachments from DB
-
     // If we aren't conneted to the socket, set the message error code
-
     await Message.replaceMessage(oldGuid, message);
     NewMessageManager().updateWithMessage(chat, message);
 
@@ -259,6 +274,8 @@ class ActionHandler {
       //     SocketManager().attachmentSenders.length == 0) {
       //   SocketManager().closeSocket();
       // }
+      if (data['status'] != 200) return;
+
       Map<String, dynamic> chatData = data["data"];
       if (chatData != null) {
         debugPrint("got chat data " + chatData.toString());
@@ -294,8 +311,6 @@ class ActionHandler {
 
     // Handle message differently depending on if there is a temp GUID match
     if (data.containsKey("tempGuid")) {
-      debugPrint("Client received message match for ${data["guid"]}");
-
       // Check if the GUID exists
       Message existing = await Message.findOne({'guid': data['guid']});
 
@@ -315,6 +330,7 @@ class ActionHandler {
           Attachment file = Attachment.fromMap(attachmentItem);
           await Attachment.replaceAttachment(data["tempGuid"], file);
         }
+        debugPrint("Client received message match for ${data["guid"]}");
         if (!isHeadless)
           NewMessageManager()
               .updateSpecificMessage(chats.first, data['tempGuid'], message);
@@ -360,19 +376,19 @@ class ActionHandler {
     }
   }
 
-  static void createNotification(Map<String, dynamic> notification) {
-    if (!NotificationManager()
-        .processedNotifications
-        .contains(notification["guid"])) {
-      NotificationManager().createNewNotification(
-        notification["contentTitle"],
-        notification["contentText"],
-        notification["group"],
-        notification["id"],
-        notification["summaryId"],
-        handle: notification["handle"],
-      );
-      NotificationManager().processedNotifications.add(notification["guid"]);
-    }
-  }
+  // static void createNotification(Map<String, dynamic> notification) {
+  //   if (!NotificationManager()
+  //       .processedNotifications
+  //       .contains(notification["guid"])) {
+  //     NotificationManager().createNewNotification(
+  //       notification["contentTitle"],
+  //       notification["contentText"],
+  //       notification["group"],
+  //       notification["id"],
+  //       notification["summaryId"],
+  //       handle: notification["handle"],
+  //     );
+  //     NotificationManager().processedNotifications.add(notification["guid"]);
+  //   }
+  // }
 }

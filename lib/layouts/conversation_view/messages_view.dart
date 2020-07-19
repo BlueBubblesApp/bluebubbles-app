@@ -91,6 +91,7 @@ class _MessageViewState extends State<MessageView>
             }
           }
         }
+        _messages = event["messages"].values.toList();
         if (this.mounted) setState(() {});
         _listKey.currentState.setState(() {});
       } else {

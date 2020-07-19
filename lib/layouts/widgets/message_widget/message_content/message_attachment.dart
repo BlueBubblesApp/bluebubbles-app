@@ -225,6 +225,9 @@ class _MessageAttachmentState extends State<MessageAttachment>
           content = event;
           if (this.mounted) setState(() {});
         }
+      }, onError: (error) {
+        content = widget.attachment;
+        if (this.mounted) setState(() {});
       });
       return StreamBuilder(
         stream: content.stream,

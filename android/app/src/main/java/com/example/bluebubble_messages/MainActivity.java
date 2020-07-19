@@ -7,10 +7,12 @@ import io.flutter.embedding.engine.FlutterEngine;
 import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugins.GeneratedPluginRegistrant;
 
+import android.annotation.SuppressLint;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.app.Person;
 import android.app.RemoteInput;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -68,6 +70,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import static com.example.bluebubble_messages.BackgroundService.app;
 import static com.example.bluebubble_messages.BackgroundService.db;
@@ -106,6 +109,7 @@ public class MainActivity extends FlutterActivity {
         }
     };
 
+    @SuppressLint("RestrictedApi")
     @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     public void configureFlutterEngine(@NonNull FlutterEngine flutterEngine) {
@@ -152,19 +156,72 @@ public class MainActivity extends FlutterActivity {
                                 createNotificationChannel(call.argument("channel_name"), call.argument("channel_description"), call.argument("CHANNEL_ID"));
                                 result.success("");
                             } else if (call.method.equals("new-message-notification")) {
+
+                                NotificationCompat.MessagingStyle style = null;
+                                NotificationManager notificationManager = (NotificationManager) getApplicationContext().getSystemService(getApplicationContext().NOTIFICATION_SERVICE);
+                                int existingNotificationId = 0;
+                                for (StatusBarNotification notification : notificationManager.getActiveNotifications()) {
+                                    String chatGuid = notification.getNotification().extras.getString("chatGuid");
+
+                                    if (chatGuid != null && chatGuid.equals(call.argument("group"))) {
+                                        existingNotificationId = notification.getId();
+                                        style = NotificationCompat.MessagingStyle.extractMessagingStyleFromNotification(notification.getNotification());
+                                        break;
+                                    }
+                                }
+
+                                if (style == null) {
+
+                                    style = new NotificationCompat.MessagingStyle(androidx.core.app.Person.fromAndroidPerson(new Person.Builder().setName("some user").build()));
+                                    style.setConversationTitle(call.argument("contentTitle"));
+                                    style.setGroupConversation(call.argument("groupConversation"));
+                                }
+                                Long timestamp = null;
+                                if (call.argument("timeStamp").getClass() == Long.class) {
+                                    timestamp = call.argument("timeStamp");
+                                } else if (call.argument("timeStamp").getClass() == Integer.class) {
+                                    timestamp = Long.valueOf(((Integer) call.argument("timeStamp")).longValue());
+                                } else {
+                                    timestamp = Long.valueOf(call.argument("timeStamp"));
+                                }
+                                style.addMessage(new NotificationCompat.MessagingStyle.Message(
+                                        call.argument("contentText"),
+                                        timestamp,
+                                        androidx.core.app.Person.fromAndroidPerson(new Person.Builder().setUri(call.argument("address")).setName(call.argument("name")).build())));
+                                Bundle extras = new Bundle();
+                                extras.putCharSequence("chatGuid", call.argument("group"));
+
+                                if (existingNotificationId != 0) {
+                                    existingNotificationId = call.argument("notificationId");
+                                }
+
                                 //occurs when clicking on the notification
-                                PendingIntent openIntent = PendingIntent.getActivity(MainActivity.this, call.argument("notificationId"), new Intent(this, MainActivity.class).putExtra("id", (int) call.argument("notificationId")).putExtra("chatGUID", (String) call.argument("group")).setType("NotificationOpen"), Intent.FILL_IN_ACTION);
+                                PendingIntent openIntent = PendingIntent.getActivity(
+                                        MainActivity.this,
+                                        existingNotificationId,
+                                        new Intent(this, MainActivity.class)
+                                                .putExtra("id", existingNotificationId)
+                                                .putExtra("chatGUID",
+                                                        (String) call.argument("group")).setType("NotificationOpen"),
+                                        Intent.FILL_IN_ACTION);
 
                                 //for the dismiss button
-                                PendingIntent dismissIntent = PendingIntent.getBroadcast(this, call.argument("notificationId"), new Intent(this, ReplyReceiver.class).putExtra("id", (int) call.argument("notificationId")).putExtra("chatGuid", (String) call.argument("group")).setType("markAsRead"), PendingIntent.FLAG_UPDATE_CURRENT);
+                                PendingIntent dismissIntent = PendingIntent.getBroadcast(
+                                        this,
+                                        existingNotificationId,
+                                        new Intent(this, ReplyReceiver.class)
+                                                .putExtra("id", existingNotificationId)
+                                                .putExtra("chatGuid",
+                                                        (String) call.argument("group")).setType("markAsRead"),
+                                        PendingIntent.FLAG_UPDATE_CURRENT);
                                 NotificationCompat.Action dismissAction = new NotificationCompat.Action.Builder(0, "Mark As Read", dismissIntent).build();
 
                                 //for the quick reply
                                 Intent intent = new Intent(this, ReplyReceiver.class)
-                                        .putExtra("id", (int) call.argument("notificationId"))
+                                        .putExtra("id", existingNotificationId)
                                         .putExtra("chatGuid", (String) call.argument("group"))
                                         .setType("reply");
-                                PendingIntent replyIntent = PendingIntent.getBroadcast(this, call.argument("notificationId"), intent, PendingIntent.FLAG_UPDATE_CURRENT);
+                                PendingIntent replyIntent = PendingIntent.getBroadcast(this, existingNotificationId, intent, PendingIntent.FLAG_UPDATE_CURRENT);
                                 androidx.core.app.RemoteInput replyInput = new androidx.core.app.RemoteInput.Builder("key_text_reply").setLabel("Reply").build();
                                 NotificationCompat.Action replyAction = new NotificationCompat.Action.Builder(0, "Reply", replyIntent).addRemoteInput(replyInput).build();
 
@@ -177,24 +234,23 @@ public class MainActivity extends FlutterActivity {
                                         .setContentIntent(openIntent)
                                         .addAction(dismissAction)
                                         .addAction(replyAction)
-                                        .setGroup(call.argument("group"));
+                                        .setStyle(style)
+                                        .addExtras(extras);
+//                                        .setGroup("new-messages");
 //                                        .setGroup("messageGroup");
-                                if (call.argument("address") != null) {
-                                    builder.addPerson(call.argument("address"));
-                                }
+//                                NotificationCompat.Builder summaryBuilder = new NotificationCompat.Builder(this, call.argument("CHANNEL_ID"))
+//                                        .setSmallIcon(R.mipmap.ic_launcher)
+//                                        .setContentTitle("New messages")
+//                                        .setGroup(call.argument("new-messages"))
+//                                        .setAutoCancel(true)
+//                                        .setContentIntent(openIntent)
+//                                        .setGroupSummary(true);
 
-                                NotificationCompat.Builder summaryBuilder = new NotificationCompat.Builder(this, call.argument("CHANNEL_ID"))
-                                        .setSmallIcon(R.mipmap.ic_launcher)
-                                        .setContentTitle("New messages")
-                                        .setGroup(call.argument("group"))
-                                        .setAutoCancel(true)
-                                        .setContentIntent(openIntent)
-                                        .setGroupSummary(true);
+                                NotificationManagerCompat notificationManagerCompat = NotificationManagerCompat.from(getContext());
 
-                                NotificationManagerCompat notificationManager = NotificationManagerCompat.from(getContext());
-
-                                notificationManager.notify(call.argument("notificationId"), builder.build());
-                                notificationManager.notify(call.argument("summaryId"), summaryBuilder.build());
+                                notificationManagerCompat.notify(existingNotificationId, builder.build());
+                                Log.d("here", "here");
+//                                notificationManagerCompat.notify(call.argument("summaryId"), summaryBuilder.build());
                                 result.success("");
                             } else if (call.method.equals("create-attachment-download-notification")) {
 //                                MethodChannelInterface()
@@ -312,7 +368,7 @@ public class MainActivity extends FlutterActivity {
                             } else if (call.method.equals("clear-chat-notifs")) {
                                 NotificationManager manager = (NotificationManager) getApplicationContext().getSystemService(getApplicationContext().NOTIFICATION_SERVICE);
                                 for (StatusBarNotification statusBarNotification : manager.getActiveNotifications()) {
-                                    if (statusBarNotification.getGroupKey().contains(call.argument("chatGuid"))) {
+                                    if (statusBarNotification.getNotification().extras.getString("chatGuid").contains(Objects.requireNonNull(call.argument("chatGuid")))) {
                                         NotificationManagerCompat.from(getContext()).cancel(statusBarNotification.getId());
                                     } else {
                                         Log.d("notification clearing", statusBarNotification.getGroupKey());
@@ -363,7 +419,7 @@ public class MainActivity extends FlutterActivity {
                                 Long callbackHandle;
                                 if (call.argument("handle").getClass() == Long.class) {
                                     callbackHandle = call.argument("handle");
-                                } else if(call.argument("handle").getClass() == Integer.class) {
+                                } else if (call.argument("handle").getClass() == Integer.class) {
                                     callbackHandle = Long.valueOf(((Integer) call.argument("handle")).longValue());
                                 } else {
                                     callbackHandle = Long.valueOf(call.argument("handle"));

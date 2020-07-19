@@ -70,6 +70,10 @@ class AttachmentDownloader {
     params["compress"] = false;
     SocketManager().sendMessage("get-attachment-chunk", params,
         (attachmentResponse) async {
+      if (attachmentResponse['status'] != 200) {
+        cb(null);
+        return;
+      }
       if (!attachmentResponse.containsKey("data") ||
           attachmentResponse["data"] == null) {
         await cb(currentBytes);
@@ -137,8 +141,13 @@ class AttachmentDownloader {
       debugPrint(
           "Attachment downloaded in ${stopwatch.elapsedMilliseconds} ms");
 
-      if (data.length == 0) {
+      if (data == null || data.length == 0) {
+        SocketManager().finishDownloader(attachment.guid);
+        LifeCycleManager().finishDownloader();
+        NotificationManager().finishProgressWithAttachment(
+            "Failed to download", _attachment.id, _attachment);
         _stream.sink.addError("unable to load");
+        _stream.close();
         return;
       }
 

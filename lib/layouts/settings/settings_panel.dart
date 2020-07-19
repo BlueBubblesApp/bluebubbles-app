@@ -7,7 +7,6 @@ import 'package:bluebubble_messages/managers/settings_manager.dart';
 import 'package:bluebubble_messages/settings.dart';
 import 'package:bluebubble_messages/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
-
 import '../../helpers/hex_color.dart';
 import 'package:flutter/material.dart';
 
@@ -88,6 +87,9 @@ class _SettingsPanelState extends State<SettingsPanel> {
                           break;
                         case SocketState.CONNECTING:
                           subtitle = "Connecting...";
+                          break;
+                        case SocketState.FAILED:
+                          subtitle = "Failed to connect";
                           break;
                       }
 

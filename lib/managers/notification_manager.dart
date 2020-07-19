@@ -39,8 +39,15 @@ class NotificationManager {
     });
   }
 
-  void createNewNotification(String contentTitle, String contentText,
-      String group, int id, int summaryId,
+  void createNewNotification(
+      String contentTitle,
+      String contentText,
+      String group,
+      int id,
+      int summaryId,
+      int timeStamp,
+      String senderName,
+      bool groupConversation,
       {Handle handle}) {
     String address;
 
@@ -62,6 +69,9 @@ class NotificationManager {
       "notificationId": id,
       "summaryId": summaryId,
       "address": address,
+      "timeStamp": timeStamp,
+      "name": senderName,
+      "groupConversation": groupConversation,
     });
   }
 

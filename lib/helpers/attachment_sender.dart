@@ -114,6 +114,7 @@ class AttachmentSender {
         // sendChunkRecursive(index, total, tempGuid);
         SocketManager().finishSender(_attachmentGuid);
         LifeCycleManager().finishDownloader();
+        _stream.sink.addError("failed to send");
         _stream.close();
       }
     });

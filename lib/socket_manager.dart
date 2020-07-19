@@ -5,6 +5,7 @@ import 'dart:math';
 import 'package:bluebubble_messages/action_handler.dart';
 import 'package:bluebubble_messages/helpers/attachment_downloader.dart';
 import 'package:bluebubble_messages/blocs/setup_bloc.dart';
+import 'package:bluebubble_messages/helpers/contstants.dart';
 import 'package:bluebubble_messages/helpers/utils.dart';
 import 'package:bluebubble_messages/layouts/conversation_view/new_chat_creator.dart';
 import 'package:bluebubble_messages/managers/life_cycle_manager.dart';
@@ -38,6 +39,7 @@ enum SocketState {
   DISCONNECTED,
   ERROR,
   CONNECTING,
+  FAILED,
 }
 
 class SocketManager {
@@ -98,7 +100,7 @@ class SocketManager {
     socketProcesses[processId] = cb;
     // _socketProcessUpdater.sink.add(socketProcesses.keys.toList());
     Future.delayed(Duration(milliseconds: Random().nextInt(100)), () {
-      if (state == SocketState.DISCONNECTED) {
+      if (state == SocketState.DISCONNECTED || state == SocketState.FAILED) {
         _manager.startSocketIO();
       } else if (state == SocketState.CONNECTED) {
         cb();
@@ -184,11 +186,20 @@ class SocketManager {
         return;
       case "connect_error":
         debugPrint("CONNECT ERROR");
-        if (state != SocketState.ERROR) {
+        if (state != SocketState.ERROR && state != SocketState.FAILED) {
           state = SocketState.ERROR;
-          startSocketIO();
+          // startSocketIO();
           Timer(Duration(seconds: 20), () {
             debugPrint("UNABLE TO CONNECT");
+            state = SocketState.FAILED;
+            List processes = socketProcesses.values.toList();
+            processes.forEach((value) {
+              value(true);
+            });
+            if (!LifeCycleManager().isAlive) {
+              closeSocket(force: true);
+            }
+            // socket.destroy();
             // NotificationManager().createNotificationChannel();
             // NotificationManager().createNewNotification(
             //     "Unable To Connect To Server",
@@ -200,6 +211,7 @@ class SocketManager {
         }
         return;
       case "disconnect":
+        if (state == SocketState.FAILED) return;
         _manager.disconnectSubscribers.values.forEach((f) {
           f();
         });
@@ -242,15 +254,23 @@ class SocketManager {
       debugPrint("already connected");
       return;
     }
-    // debugPrint("already connecting, but whatever");
-    // state = SocketState.CONNECTING;
-    // if (connectCB == null && SettingsManager().settings.finishedSetup == false)
+    if (state == SocketState.FAILED) {
+      state = SocketState.CONNECTING;
+    }
+
+    // if ((state == SocketState.FAILED && socketProcesses.length > 0) &&
+    //     !forceNewConnection) {
+    //   debugPrint(
+    //       "not reconnecting with socket processes still active and connection failed");
     //   return;
+    // } else {
+    //   state = SocketState.CONNECTING;
+    // }
+
     // If we already have a socket connection, kill it
     if (_manager.socket != null) {
       _manager.socket.destroy();
     }
-    // if (connectCB != null) connectCb = connectCB;
 
     debugPrint(
         "Starting socket io with the server: ${SettingsManager().settings.serverAddress}");
@@ -391,12 +411,24 @@ class SocketManager {
       Map<String, dynamic> message, Function(Map<String, dynamic>) cb) {
     Completer<Map<String, dynamic>> completer = Completer();
     int _processId = 0;
-    Function socketCB = () {
-      _manager.socket.sendMessage(event, jsonEncode(message), (String data) {
-        completer.complete(jsonDecode(data));
-        cb(jsonDecode(data));
+    Function socketCB = ([bool finishWithError = false]) {
+      if (finishWithError) {
+        cb({
+          'status': MessageError.NO_CONNECTION,
+          'error': {'message': 'Failed to Connect'}
+        });
+        completer.complete({
+          'status': MessageError.NO_CONNECTION,
+          'error': {'message': 'Failed to Connect'}
+        });
         _manager._finishSocketProcess(_processId);
-      });
+      } else {
+        _manager.socket.sendMessage(event, jsonEncode(message), (String data) {
+          cb(jsonDecode(data));
+          completer.complete(jsonDecode(data));
+          _manager._finishSocketProcess(_processId);
+        });
+      }
     };
     debugPrint("send message " + state.toString());
     _processId = _manager._addSocketProcess(socketCB);

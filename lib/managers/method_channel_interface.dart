@@ -59,8 +59,9 @@ class MethodChannelInterface {
         SettingsManager().settings.serverAddress = call.arguments
             .toString()
             .substring(1, call.arguments.toString().length - 1);
-        SettingsManager().saveSettings(SettingsManager().settings,
-            connectToSocket: true, authorizeFCM: false);
+        await SettingsManager().saveSettings(SettingsManager().settings,
+            connectToSocket: false, authorizeFCM: false);
+        SocketManager().startSocketIO(forceNewConnection: true);
         return new Future.value("");
       case "new-message":
         Map<String, dynamic> data = jsonDecode(call.arguments);
@@ -72,6 +73,8 @@ class MethodChannelInterface {
         Chat chat = await Chat.findOne({"guid": data["chats"][0]["guid"]});
         if (chat == null) {
           ActionHandler.handleChat(chatData: data["chats"][0]);
+        } else {
+          await chat.getParticipants();
         }
 
         // Get the chat title and message
@@ -82,16 +85,22 @@ class MethodChannelInterface {
             (NotificationManager().chatGuid != chat.guid ||
                 !LifeCycleManager().isAlive) &&
             (!message.hasAttachments || !isEmptyString(message.text)) &&
-            !chat.isMuted) {
-          ActionHandler.createNotification({
-            "guid": message.guid,
-            "contentTitle": title,
-            "contentText": message.text,
-            "group": chat.guid,
-            "id": Random().nextInt(9999),
-            "summaryId": chat.id,
-            "handle": message.handle,
-          });
+            !chat.isMuted &&
+            !NotificationManager()
+                .processedNotifications
+                .contains(message.guid)) {
+          NotificationManager().createNewNotification(
+            title,
+            message.text,
+            chat.guid,
+            Random().nextInt(9998) + 1,
+            chat.id,
+            message.dateCreated.millisecondsSinceEpoch,
+            getContactTitle(message.handle.id, message.handle.address),
+            chat.participants.length > 1,
+            handle: message.handle,
+          );
+          NotificationManager().processedNotifications.add(message.guid);
         }
 
         ActionHandler.handleMessage(data,
