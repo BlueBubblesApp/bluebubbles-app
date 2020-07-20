@@ -49,11 +49,15 @@ class Attachment {
   });
 
   factory Attachment.fromMap(Map<String, dynamic> json) {
+    String mimeType = json["mimeType"];
+    if ((json['transferName'] as String).endsWith(".caf")) {
+      mimeType = "audio/caf";
+    }
     return new Attachment(
       id: json.containsKey("ROWID") ? json["ROWID"] : null,
       guid: json["guid"],
       uti: json["uti"],
-      mimeType: json["mimeType"],
+      mimeType: mimeType,
       transferState: json['transferState'].toString(),
       isOutgoing: (json["isOutgoing"] is bool)
           ? json['isOutgoing']

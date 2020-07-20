@@ -20,10 +20,10 @@ class ContactManager {
     // if (contacts.length > 0) return;
     if (headless || await Permission.contacts.request().isGranted) {
       var contacts =
-          (await ContactsService.getContacts(withThumbnails: false)).toList();
+          (await ContactsService.getContacts(withThumbnails: true)).toList();
       _manager.contacts = contacts;
       // Lazy load thumbnails after rendering initial contacts.
-      await getAvatars(contacts);
+      // getAvatars(contacts);
 
       List<Handle> handles = await Handle.find({});
       for (Handle handle in handles) {
@@ -49,9 +49,10 @@ class ContactManager {
 
   Future<void> getAvatars(List<Contact> _contacts) async {
     for (final Contact contact in _contacts) {
-      Uint8List avatar = await ContactsService.getAvatar(contact);
-      if (avatar == null) return; // Don't redraw if no change.
-      contact.avatar = avatar;
+      ContactsService.getAvatar(contact).then((avatar) {
+        if (avatar == null) return; // Don't redraw if no change.
+        contact.avatar = avatar;
+      });
     }
   }
 }

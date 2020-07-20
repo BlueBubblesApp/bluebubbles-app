@@ -6,6 +6,7 @@ import 'package:bluebubble_messages/managers/method_channel_interface.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:photo_view/photo_view.dart';
+import 'package:save_in_gallery/save_in_gallery.dart';
 
 class ImageViewer extends StatefulWidget {
   ImageViewer({
@@ -65,9 +66,11 @@ class _ImageViewerState extends State<ImageViewer> {
                 alignment: Alignment.topRight,
                 child: CupertinoButton(
                   onPressed: () {
-                    debugPrint("path " + widget.file.path);
-                    MethodChannelInterface().invokeMethod(
-                        "save-image-to-album", {"path": widget.file.path});
+                    // debugPrint("path " + widget.file.path);
+                    // MethodChannelInterface().invokeMethod(
+                    //     "save-image-to-album", {"path": widget.file.path});
+                    ImageSaver().saveImage(
+                        imageBytes: widget.bytes, directoryName: "BlueBubbles");
                   },
                   child: Icon(
                     Icons.file_download,

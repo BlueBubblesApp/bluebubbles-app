@@ -1,37 +1,37 @@
 # Summary
 
-Date : 2020-07-08 11:14:44
+Date : 2020-07-19 21:08:45
 
 Directory /home/brandon/Desktop/Dev/bluebubble_android_app/lib
 
-Total : 60 files,  10192 codes, 1069 comments, 1149 blanks, all 12410 lines
+Total : 67 files,  12218 codes, 1166 comments, 1258 blanks, all 14642 lines
 
 [details](details.md)
 
 ## Languages
 | language | files | code | comment | blank | total |
 | :--- | ---: | ---: | ---: | ---: | ---: |
-| Dart | 60 | 10,192 | 1,069 | 1,149 | 12,410 |
+| Dart | 67 | 12,218 | 1,166 | 1,258 | 14,642 |
 
 ## Directories
 | path | files | code | comment | blank | total |
 | :--- | ---: | ---: | ---: | ---: | ---: |
-| . | 60 | 10,192 | 1,069 | 1,149 | 12,410 |
-| blocs | 3 | 463 | 32 | 71 | 566 |
-| helpers | 7 | 570 | 19 | 92 | 681 |
-| layouts | 32 | 6,766 | 812 | 598 | 8,176 |
-| layouts/conversation_details | 2 | 466 | 3 | 23 | 492 |
-| layouts/conversation_list | 2 | 514 | 7 | 27 | 548 |
-| layouts/conversation_view | 5 | 1,433 | 24 | 70 | 1,527 |
-| layouts/image_viewer | 1 | 59 | 22 | 8 | 89 |
-| layouts/settings | 1 | 398 | 15 | 30 | 443 |
-| layouts/setup | 2 | 371 | 2 | 20 | 393 |
-| layouts/widgets | 19 | 3,525 | 739 | 420 | 4,684 |
-| layouts/widgets/message_widget | 16 | 1,631 | 170 | 149 | 1,950 |
-| layouts/widgets/message_widget/message_content | 11 | 791 | 134 | 92 | 1,017 |
-| layouts/widgets/message_widget/message_content/media_players | 6 | 383 | 0 | 38 | 421 |
-| managers | 9 | 517 | 36 | 94 | 647 |
-| repository | 5 | 1,177 | 46 | 175 | 1,398 |
-| repository/models | 4 | 996 | 43 | 156 | 1,195 |
+| . | 67 | 12,218 | 1,166 | 1,258 | 14,642 |
+| blocs | 3 | 499 | 18 | 69 | 586 |
+| helpers | 7 | 575 | 68 | 97 | 740 |
+| layouts | 39 | 8,462 | 767 | 679 | 9,908 |
+| layouts/conversation_details | 3 | 645 | 13 | 34 | 692 |
+| layouts/conversation_list | 2 | 490 | 5 | 27 | 522 |
+| layouts/conversation_view | 5 | 1,409 | 31 | 69 | 1,509 |
+| layouts/image_viewer | 2 | 259 | 5 | 20 | 284 |
+| layouts/settings | 1 | 425 | 15 | 31 | 471 |
+| layouts/setup | 3 | 556 | 4 | 37 | 597 |
+| layouts/widgets | 23 | 4,678 | 694 | 461 | 5,833 |
+| layouts/widgets/message_widget | 19 | 2,737 | 94 | 186 | 3,017 |
+| layouts/widgets/message_widget/message_content | 11 | 1,202 | 45 | 100 | 1,347 |
+| layouts/widgets/message_widget/message_content/media_players | 7 | 648 | 7 | 52 | 707 |
+| managers | 9 | 614 | 90 | 104 | 808 |
+| repository | 5 | 1,235 | 46 | 176 | 1,457 |
+| repository/models | 4 | 1,053 | 43 | 157 | 1,253 |
 
 [details](details.md)

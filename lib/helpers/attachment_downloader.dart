@@ -44,6 +44,12 @@ class AttachmentDownloader {
     _attachment = attachment;
     _message = message;
     _createNotification = createNotification;
+    String appDocPath = SettingsManager().appDocDir.path;
+    String pathName =
+        "$appDocPath/attachments/${attachment.guid}/${attachment.transferName}";
+    if (File(pathName).existsSync()) {
+      return;
+    }
 
     fetchAttachment(attachment);
   }
@@ -99,7 +105,7 @@ class AttachmentDownloader {
         debugPrint("Finished fetching attachment");
         await cb(currentBytes);
       }
-    });
+    }, reason: "Attachment downloader " + attachment.guid);
     // }
   }
 

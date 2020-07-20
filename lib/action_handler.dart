@@ -362,7 +362,9 @@ class ActionHandler {
         Attachment file = Attachment.fromMap(attachmentItem);
         await file.save(message);
 
-        if (SettingsManager().settings.autoDownload && file.mimeType != null) {
+        if (SettingsManager().settings.autoDownload &&
+            file.mimeType != null &&
+            !SocketManager().attachmentDownloaders.containsKey(file.guid)) {
           new AttachmentDownloader(file, message,
               createNotification:
                   createAttachmentNotification && file.mimeType != null);
