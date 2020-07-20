@@ -30,17 +30,19 @@ class _VideoWidgetState extends State<VideoWidget> {
   void initState() {
     super.initState();
     debugPrint("height ${widget.attachment.width}");
-    if (widget.savedAttachmentData.controller == null) {
-      widget.savedAttachmentData.controller =
+    if (!widget.savedAttachmentData.controllers
+        .containsKey(widget.attachment.guid)) {
+      widget.savedAttachmentData.controllers[widget.attachment.guid] =
           VideoPlayerController.file(widget.file)
             ..initialize().then((value) {
-              // widget.savedAttachmentData.controller.play();
+              // widget.savedAttachmentData.controllers[widget.attachment.guid].play();
               setState(() {});
             });
     }
-    showPlayPauseOverlay =
-        !widget.savedAttachmentData.controller.value.isPlaying;
-    widget.savedAttachmentData.controller.setLooping(true);
+    showPlayPauseOverlay = !widget.savedAttachmentData
+        .controllers[widget.attachment.guid].value.isPlaying;
+    widget.savedAttachmentData.controllers[widget.attachment.guid]
+        .setLooping(true);
   }
 
   @override
@@ -49,8 +51,10 @@ class _VideoWidgetState extends State<VideoWidget> {
       borderRadius: BorderRadius.circular(8.0),
       child: GestureDetector(
         onTap: () {
-          if (widget.savedAttachmentData.controller.value.isPlaying) {
-            widget.savedAttachmentData.controller.pause();
+          if (widget.savedAttachmentData.controllers[widget.attachment.guid]
+              .value.isPlaying) {
+            widget.savedAttachmentData.controllers[widget.attachment.guid]
+                .pause();
             setState(() {
               showPlayPauseOverlay = true;
             });
@@ -58,14 +62,17 @@ class _VideoWidgetState extends State<VideoWidget> {
             Navigator.of(context).push(
               CupertinoPageRoute(
                 builder: (context) => VideoViewer(
-                  controller: widget.savedAttachmentData.controller,
+                  controller: widget
+                      .savedAttachmentData.controllers[widget.attachment.guid],
                   heroTag: widget.attachment.guid,
                 ),
               ),
             );
           }
         },
-        child: widget.savedAttachmentData.controller.value.aspectRatio != null
+        child: widget.savedAttachmentData.controllers[widget.attachment.guid]
+                    .value.aspectRatio !=
+                null
             ? Hero(
                 tag: widget.attachment.guid,
                 child: Stack(
@@ -73,10 +80,16 @@ class _VideoWidgetState extends State<VideoWidget> {
                   children: <Widget>[
                     AspectRatio(
                       aspectRatio: widget
-                          .savedAttachmentData.controller.value.aspectRatio,
+                          .savedAttachmentData
+                          .controllers[widget.attachment.guid]
+                          .value
+                          .aspectRatio,
                       child: Stack(
                         children: <Widget>[
-                          VideoPlayer(widget.savedAttachmentData.controller),
+                          VideoPlayer(
+                            widget.savedAttachmentData
+                                .controllers[widget.attachment.guid],
+                          ),
                         ],
                       ),
                     ),
@@ -90,7 +103,10 @@ class _VideoWidgetState extends State<VideoWidget> {
                         ),
                         padding: EdgeInsets.all(10),
                         child: widget
-                                .savedAttachmentData.controller.value.isPlaying
+                                .savedAttachmentData
+                                .controllers[widget.attachment.guid]
+                                .value
+                                .isPlaying
                             ? GestureDetector(
                                 child: Icon(
                                   Icons.pause,
@@ -98,7 +114,9 @@ class _VideoWidgetState extends State<VideoWidget> {
                                   size: 45,
                                 ),
                                 onTap: () {
-                                  widget.savedAttachmentData.controller.pause();
+                                  widget.savedAttachmentData
+                                      .controllers[widget.attachment.guid]
+                                      .pause();
                                   setState(() {
                                     showPlayPauseOverlay = true;
                                   });
@@ -111,7 +129,9 @@ class _VideoWidgetState extends State<VideoWidget> {
                                   size: 45,
                                 ),
                                 onTap: () {
-                                  widget.savedAttachmentData.controller.play();
+                                  widget.savedAttachmentData
+                                      .controllers[widget.attachment.guid]
+                                      .play();
                                   setState(() {
                                     showPlayPauseOverlay = false;
                                   });

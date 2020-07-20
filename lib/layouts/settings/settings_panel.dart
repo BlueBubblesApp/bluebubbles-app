@@ -3,6 +3,7 @@ import 'dart:ui';
 
 // import 'package:bluebubble_messages/qr_code_scanner.dart';
 import 'package:adaptive_theme/adaptive_theme.dart';
+import 'package:bluebubble_messages/layouts/theming/theming_panel.dart';
 import 'package:bluebubble_messages/managers/settings_manager.dart';
 import 'package:bluebubble_messages/settings.dart';
 import 'package:bluebubble_messages/socket_manager.dart';
@@ -50,6 +51,10 @@ class _SettingsPanelState extends State<SettingsPanel> {
                 },
               ),
               backgroundColor: Theme.of(context).accentColor.withOpacity(0.5),
+              title: Text(
+                "Settings",
+                style: Theme.of(context).textTheme.headline1,
+              ),
             ),
             filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
           ),
@@ -240,18 +245,30 @@ class _SettingsPanelState extends State<SettingsPanel> {
                   },
                   title: "Reset DB",
                 ),
-                SettingsOptions(
-                  onChanged: (AdaptiveThemeMode val) {
-                    AdaptiveTheme.of(context).setThemeMode(val);
-                  },
-                ),
                 SettingsSwitch(
                   onChanged: (bool val) {
                     _settingsCopy.autoDownload = val;
                   },
                   initialVal: _settingsCopy.autoDownload,
                   title: "Auto Download",
-                )
+                ),
+                SettingsOptions(
+                  onChanged: (AdaptiveThemeMode val) {
+                    AdaptiveTheme.of(context).setThemeMode(val);
+                  },
+                ),
+                SettingsTile(
+                  title: "Theming",
+                  trailing:
+                      Icon(Icons.arrow_forward_ios, color: HexColor('26262a')),
+                  onTap: () async {
+                    Navigator.of(context).push(
+                      CupertinoPageRoute(
+                        builder: (context) => ThemingPanel(),
+                      ),
+                    );
+                  },
+                ),
               ],
             ),
           ),

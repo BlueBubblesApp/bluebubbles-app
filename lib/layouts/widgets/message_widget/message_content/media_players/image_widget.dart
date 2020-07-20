@@ -21,8 +21,10 @@ class _ImageWidgetState extends State<ImageWidget> {
   @override
   void didChangeDependencies() async {
     super.didChangeDependencies();
-    if (widget.savedAttachmentData.imageData == null) {
-      widget.savedAttachmentData.imageData = await widget.file.readAsBytes();
+    if (!widget.savedAttachmentData.imageData
+        .containsKey(widget.attachment.guid)) {
+      widget.savedAttachmentData.imageData[widget.attachment.guid] =
+          await widget.file.readAsBytes();
       setState(() {});
     }
   }
@@ -31,11 +33,12 @@ class _ImageWidgetState extends State<ImageWidget> {
   Widget build(BuildContext context) {
     return Stack(
       children: <Widget>[
-        widget.savedAttachmentData.imageData == null
+        widget.savedAttachmentData.imageData[widget.attachment.guid] == null
             ? Container()
             : Hero(
                 tag: widget.attachment.guid,
-                child: Image.memory(widget.savedAttachmentData.imageData),
+                child: Image.memory(widget
+                    .savedAttachmentData.imageData[widget.attachment.guid]),
               ),
         Positioned.fill(
           child: Material(
@@ -47,7 +50,8 @@ class _ImageWidgetState extends State<ImageWidget> {
                   MaterialPageRoute(
                     builder: (context) => ImageViewer(
                       file: widget.file,
-                      bytes: widget.savedAttachmentData.imageData,
+                      bytes: widget.savedAttachmentData
+                          .imageData[widget.attachment.guid],
                       tag: widget.attachment.guid,
                     ),
                   ),

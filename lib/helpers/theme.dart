@@ -1,0 +1,3 @@
+class Theme {
+  Theme();
+}

@@ -17,13 +17,15 @@ import 'package:video_player/video_player.dart';
 
 class SavedAttachmentData {
   List<Attachment> attachments = [];
-  Metadata urlMetaData;
-  VideoPlayerController controller;
+  Map<String, Metadata> urlMetaData = {};
+  Map<String, VideoPlayerController> controllers = {};
   Future<List<Attachment>> attachmentsFuture;
-  Uint8List imageData;
+  Map<String, Uint8List> imageData = {};
 
   void dispose() {
-    if (controller != null) controller.dispose();
+    controllers.values.forEach((element) {
+      element.dispose();
+    });
   }
 }
 

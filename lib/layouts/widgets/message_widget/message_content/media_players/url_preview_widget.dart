@@ -40,10 +40,8 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
   void initState() {
     super.initState();
     if (widget.savedAttachmentData.urlMetaData != null)
-      data = widget.savedAttachmentData.urlMetaData;
-    for (Attachment preview in widget.linkPreviews) {
-      if (SocketManager().attachmentSenders.containsKey(preview.guid)) {}
-    }
+      data = widget.savedAttachmentData
+          .urlMetaData[widget.message.guid + "-url-preview"];
   }
 
   bool attachmentSaved(Attachment attachment) {
@@ -75,7 +73,8 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
         url = "http://" + widget.message.text;
       }
       data = await extract(url);
-      widget.savedAttachmentData.urlMetaData = data;
+      widget.savedAttachmentData
+          .urlMetaData[widget.message.guid + "-url-preview"] = data;
       if (this.mounted)
         setState(() {
           isFetching = false;
