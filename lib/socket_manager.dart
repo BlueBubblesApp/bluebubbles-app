@@ -170,6 +170,7 @@ class SocketManager {
       case "connect":
         debugPrint("CONNECTED");
         authFCM();
+        NotificationManager().clearSocketWarning();
         // syncChats();
         // if (connectCB != null) {
         // }
@@ -189,8 +190,9 @@ class SocketManager {
         if (state != SocketState.ERROR && state != SocketState.FAILED) {
           state = SocketState.ERROR;
           // startSocketIO();
-          Timer(Duration(seconds: 20), () {
+          Timer(Duration(seconds: 10), () {
             debugPrint("UNABLE TO CONNECT");
+            NotificationManager().createSocketWarningNotification();
             state = SocketState.FAILED;
             List processes = socketProcesses.values.toList();
             processes.forEach((value) {

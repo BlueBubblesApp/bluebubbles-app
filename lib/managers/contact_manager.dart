@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:bluebubble_messages/repository/models/handle.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/cupertino.dart';
@@ -15,13 +17,13 @@ class ContactManager {
   Map<String, Contact> handleToContact = new Map();
 
   Future<void> getContacts({bool headless = false}) async {
-    if (contacts.length > 0) return;
+    // if (contacts.length > 0) return;
     if (headless || await Permission.contacts.request().isGranted) {
       var contacts =
           (await ContactsService.getContacts(withThumbnails: false)).toList();
       _manager.contacts = contacts;
       // Lazy load thumbnails after rendering initial contacts.
-      getAvatars(contacts);
+      await getAvatars(contacts);
 
       List<Handle> handles = await Handle.find({});
       for (Handle handle in handles) {
@@ -45,12 +47,11 @@ class ContactManager {
     }
   }
 
-  void getAvatars(List<Contact> _contacts) {
+  Future<void> getAvatars(List<Contact> _contacts) async {
     for (final Contact contact in _contacts) {
-      ContactsService.getAvatar(contact).then((avatar) {
-        if (avatar == null) return; // Don't redraw if no change.
-        contact.avatar = avatar;
-      });
+      Uint8List avatar = await ContactsService.getAvatar(contact);
+      if (avatar == null) return; // Don't redraw if no change.
+      contact.avatar = avatar;
     }
   }
 }

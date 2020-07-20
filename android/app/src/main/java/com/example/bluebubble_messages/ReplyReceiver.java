@@ -2,6 +2,7 @@ package com.example.bluebubble_messages;
 
 import android.app.Notification;
 import android.app.NotificationManager;
+import android.app.Person;
 import android.app.RemoteInput;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -40,7 +41,7 @@ public class ReplyReceiver extends BroadcastReceiver {
                 if (notification.getId() == intent.getExtras().getInt("id")) {
                     Notification.Builder builder = Notification.Builder.recoverBuilder(context, notification.getNotification());
                     Notification.MessagingStyle style = (Notification.MessagingStyle) builder.getStyle();
-                    style.addMessage(new Notification.MessagingStyle.Message(remoteInput.getString("key_text_reply"), System.currentTimeMillis() / 1000, "You"));
+                    style.addMessage(new Notification.MessagingStyle.Message(remoteInput.getString("key_text_reply"), System.currentTimeMillis() / 1000,  "You"));
                     builder.setStyle(style);
                     notificationManagerCompat.notify(notification.getId(), builder.build());
 

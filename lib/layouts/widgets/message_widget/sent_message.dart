@@ -451,8 +451,18 @@ class _ActualSentMessageState extends State<ActualSentMessage> {
 
     if (widget.message != null && widget.message.error > 0)
       messageWidget.add(
-        CupertinoButton(
-          onPressed: () {
+        // ButtonTheme(
+        //   minWidth: 1,
+        //   height: 1,
+        //   child: CupertinoButton(
+        //     onPressed: () {
+        //       Overlay.of(context).insert(widget.createErrorPopup());
+        //     },
+        //     child: Icon(Icons.error_outline, color: Colors.red),
+        //   ),
+        // ),
+        GestureDetector(
+          onTap: () {
             Overlay.of(context).insert(widget.createErrorPopup());
           },
           child: Icon(Icons.error_outline, color: Colors.red),

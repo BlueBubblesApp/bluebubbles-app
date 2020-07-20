@@ -50,10 +50,13 @@ class SettingsManager {
 
   Future<void> saveSettings(Settings settings,
       {bool connectToSocket = false, bool authorizeFCM = true}) async {
-    debugPrint("saving to settings");
     if (_manager.sharedPreferences == null) {
       _manager.sharedPreferences = await SharedPreferences.getInstance();
     }
+    debugPrint("saving to settings " + settings.toJson().toString());
+    await _manager.sharedPreferences
+        .setString('Settings', jsonEncode(settings.toJson()));
+
     if (authorizeFCM) {
       await SocketManager().authFCM();
     }

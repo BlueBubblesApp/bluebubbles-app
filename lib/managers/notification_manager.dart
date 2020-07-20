@@ -1,8 +1,11 @@
+import 'dart:typed_data';
+
 import 'package:bluebubble_messages/managers/method_channel_interface.dart';
 import 'package:bluebubble_messages/managers/settings_manager.dart';
 import 'package:bluebubble_messages/repository/models/attachment.dart';
 import 'package:bluebubble_messages/repository/models/chat.dart';
 import 'package:bluebubble_messages/repository/models/handle.dart';
+import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/material.dart';
 
 class NotificationManager {
@@ -48,19 +51,24 @@ class NotificationManager {
       int timeStamp,
       String senderName,
       bool groupConversation,
-      {Handle handle}) {
-    String address;
+      {Handle handle,
+      Contact contact}) {
+    String address = handle.address;
 
-    if (handle != null) {
-      //if the address is an email
-      if (handle.address.contains("@")) {
-        address = "mailto:${handle.address}";
-        //if the address is a phone
-      } else {
-        address = "tel:${handle.address}";
-      }
+    // if (handle != null) {
+    //   //if the address is an email
+    //   if (handle.address.contains("@")) {
+    //     address = "mailto:${handle.address}";
+    //     //if the address is a phone
+    //   } else {
+    //     address = "tel:${handle.address}";
+    //   }
+    // }
+    Uint8List contactIcon;
+    if (contact != null) {
+      if (contact.avatar.length > 0) contactIcon = contact.avatar;
     }
-    debugPrint("person " + address);
+    debugPrint("contactIcon " + contactIcon.toString());
     MethodChannelInterface().platform.invokeMethod("new-message-notification", {
       "CHANNEL_ID": "com.bluebubbles.new_messages",
       "contentTitle": contentTitle,
@@ -72,49 +80,62 @@ class NotificationManager {
       "timeStamp": timeStamp,
       "name": senderName,
       "groupConversation": groupConversation,
+      "contactIcon": contactIcon,
     });
   }
 
-  void updateProgressNotification(int id, double progress) {
-    debugPrint(
-        "updating progress notif with progress ${(progress * 100).floor()}");
+  void createSocketWarningNotification() {
     MethodChannelInterface()
         .platform
-        .invokeMethod("update-attachment-download-notification", {
+        .invokeMethod("create-socket-issue-warning", {
       "CHANNEL_ID": "com.bluebubbles.new_messages",
-      "notificationId": id,
-      "progress": (progress * 100).floor(),
     });
   }
 
-  void createProgressNotification(String contentTitle, String contentText,
-      String group, int id, int summaryId, double progress) {
-    MethodChannelInterface()
-        .platform
-        .invokeMethod("create-attachment-download-notification", {
-      "CHANNEL_ID": "com.bluebubbles.new_messages",
-      "contentTitle": contentTitle,
-      "contentText": contentText,
-      "group": group,
-      "notificationId": id,
-      "summaryId": summaryId,
-      "progress": (progress * 100).floor(),
-    });
+  void clearSocketWarning() {
+    MethodChannelInterface().platform.invokeMethod("clear-socket-issue");
   }
 
-  void finishProgressWithAttachment(
-      String contentText, int id, Attachment attachment) {
-    String path;
-    if (attachment.mimeType != null && attachment.mimeType.startsWith("image/"))
-      path = "/attachments/${attachment.guid}/${attachment.transferName}";
+  // void updateProgressNotification(int id, double progress) {
+  //   debugPrint(
+  //       "updating progress notif with progress ${(progress * 100).floor()}");
+  //   MethodChannelInterface()
+  //       .platform
+  //       .invokeMethod("update-attachment-download-notification", {
+  //     "CHANNEL_ID": "com.bluebubbles.new_messages",
+  //     "notificationId": id,
+  //     "progress": (progress * 100).floor(),
+  //   });
+  // }
 
-    MethodChannelInterface()
-        .platform
-        .invokeMethod("finish-attachment-download", {
-      "CHANNEL_ID": "com.bluebubbles.new_messages",
-      "contentText": contentText,
-      "notificationId": id,
-      "path": path,
-    });
-  }
+  // void createProgressNotification(String contentTitle, String contentText,
+  //     String group, int id, int summaryId, double progress) {
+  //   MethodChannelInterface()
+  //       .platform
+  //       .invokeMethod("create-attachment-download-notification", {
+  //     "CHANNEL_ID": "com.bluebubbles.new_messages",
+  //     "contentTitle": contentTitle,
+  //     "contentText": contentText,
+  //     "group": group,
+  //     "notificationId": id,
+  //     "summaryId": summaryId,
+  //     "progress": (progress * 100).floor(),
+  //   });
+  // }
+
+  // void finishProgressWithAttachment(
+  //     String contentText, int id, Attachment attachment) {
+  //   String path;
+  //   if (attachment.mimeType != null && attachment.mimeType.startsWith("image/"))
+  //     path = "/attachments/${attachment.guid}/${attachment.transferName}";
+
+  //   MethodChannelInterface()
+  //       .platform
+  //       .invokeMethod("finish-attachment-download", {
+  //     "CHANNEL_ID": "com.bluebubbles.new_messages",
+  //     "contentText": contentText,
+  //     "notificationId": id,
+  //     "path": path,
+  //   });
+  // }
 }

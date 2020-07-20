@@ -16,6 +16,8 @@ import android.app.Person;
 import android.app.RemoteInput;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
+import android.content.ContentResolver;
+import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
@@ -26,6 +28,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.drawable.Icon;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Build;
@@ -66,6 +69,7 @@ import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.judemanutd.autostarter.AutoStartPermissionHelper;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -176,7 +180,7 @@ public class MainActivity extends FlutterActivity {
                                     style.setConversationTitle(call.argument("contentTitle"));
                                     style.setGroupConversation(call.argument("groupConversation"));
                                 }
-                                Long timestamp = null;
+                                Long timestamp;
                                 if (call.argument("timeStamp").getClass() == Long.class) {
                                     timestamp = call.argument("timeStamp");
                                 } else if (call.argument("timeStamp").getClass() == Integer.class) {
@@ -184,14 +188,24 @@ public class MainActivity extends FlutterActivity {
                                 } else {
                                     timestamp = Long.valueOf(call.argument("timeStamp"));
                                 }
+                                Icon icon = null;
+                                if(call.argument("contactIcon") != null) {
+                                    Bitmap bmp = BitmapFactory.decodeByteArray((byte[]) call.argument("contactIcon"), 0, ((byte[]) call.argument("contactIcon")).length);
+                                    icon = Icon.createWithBitmap(bmp);
+                                }
+                                Person.Builder person = new Person.Builder().setName(call.argument("name"));
+                                if(icon != null) {
+                                   person.setIcon(icon) ;
+                                }
                                 style.addMessage(new NotificationCompat.MessagingStyle.Message(
                                         call.argument("contentText"),
                                         timestamp,
-                                        androidx.core.app.Person.fromAndroidPerson(new Person.Builder().setUri(call.argument("address")).setName(call.argument("name")).build())));
+                                        androidx.core.app.Person.fromAndroidPerson(person.build())
+                                ));
                                 Bundle extras = new Bundle();
                                 extras.putCharSequence("chatGuid", call.argument("group"));
 
-                                if (existingNotificationId != 0) {
+                                if (existingNotificationId == 0) {
                                     existingNotificationId = call.argument("notificationId");
                                 }
 
@@ -252,107 +266,19 @@ public class MainActivity extends FlutterActivity {
                                 Log.d("here", "here");
 //                                notificationManagerCompat.notify(call.argument("summaryId"), summaryBuilder.build());
                                 result.success("");
-                            } else if (call.method.equals("create-attachment-download-notification")) {
-//                                MethodChannelInterface()
-//                                        .platform
-//                                        .invokeMethod("attachment-download-notification", {
-//                                                "CHANNEL_ID": "com.bluebubbles.new_messages",
-//                                        "contentTitle": contentTitle,
-//                                        "contentText": contentText,
-//                                        "group": group,
-//                                        "notificationId": id,
-//                                        "summaryId": summaryId,
-//                                        "progress": progress,
-//                                 });
-
-                                //occurs when clicking on the notification
-                                PendingIntent openIntent = PendingIntent.getActivity(MainActivity.this, call.argument("notificationId"), new Intent(this, MainActivity.class).putExtra("id", (int) call.argument("notificationId")).putExtra("chatGUID", (String) call.argument("group")).setType("NotificationOpen"), Intent.FILL_IN_ACTION);
-
-
-                                //for the dismiss button
-                                PendingIntent dismissIntent = PendingIntent.getBroadcast(this, call.argument("notificationId"), new Intent(this, ReplyReceiver.class).putExtra("id", (int) call.argument("notificationId")).putExtra("chatGuid", (String) call.argument("group")).setType("markAsRead"), PendingIntent.FLAG_UPDATE_CURRENT);
-                                NotificationCompat.Action dismissAction = new NotificationCompat.Action.Builder(0, "Mark As Read", dismissIntent).build();
-
-                                //for the quick reply
-                                Intent intent = new Intent(this, ReplyReceiver.class)
-                                        .putExtra("id", (int) call.argument("notificationId"))
-                                        .putExtra("chatGuid", (String) call.argument("group"))
-                                        .setType("reply");
-                                PendingIntent replyIntent = PendingIntent.getBroadcast(this, call.argument("notificationId"), intent, PendingIntent.FLAG_UPDATE_CURRENT);
-                                androidx.core.app.RemoteInput replyInput = new androidx.core.app.RemoteInput.Builder("key_text_reply").setLabel("Reply").build();
-                                NotificationCompat.Action replyAction = new NotificationCompat.Action.Builder(0, "Reply", replyIntent).addRemoteInput(replyInput).build();
-
-                                //actual notification
+                            } else if(call.method.equals("create-socket-issue-warning")) {
                                 NotificationCompat.Builder builder = new NotificationCompat.Builder(this, call.argument("CHANNEL_ID"))
                                         .setSmallIcon(R.mipmap.ic_launcher)
-                                        .setContentTitle(call.argument("contentTitle"))
-                                        .setContentText(call.argument("contentText"))
-                                        .setAutoCancel(true)
-                                        .setContentIntent(openIntent)
-                                        .setProgress(100, call.argument("progress"), false)
-                                        .addAction(dismissAction)
-                                        .addAction(replyAction)
-                                        .setOnlyAlertOnce(true)
-                                        .setGroup(call.argument("group"));
-
-
-                                NotificationCompat.Builder summaryBuilder = new NotificationCompat.Builder(this, call.argument("CHANNEL_ID"))
-                                        .setSmallIcon(R.mipmap.ic_launcher)
-                                        .setContentTitle("New messages")
-                                        .setGroup(call.argument("group"))
-                                        .setAutoCancel(true)
-                                        .setContentIntent(openIntent)
-                                        .setGroupSummary(true);
-
-                                NotificationManagerCompat notificationManager = NotificationManagerCompat.from(getContext());
-
-                                notificationManager.notify(call.argument("notificationId"), builder.build());
-                                notificationManager.notify(call.argument("summaryId"), summaryBuilder.build());
-                                progressBars.put(call.argument("notificationId"), builder);
+                                        .setContentTitle("Could not connect")
+                                        .setContentText("Your server may be offline")
+                                        .setAutoCancel(true);
+                                NotificationManagerCompat notificationManagerCompat = NotificationManagerCompat.from(getContext());
+                                notificationManagerCompat.notify(1000, builder.build());
                                 result.success("");
-                            } else if (call.method.equals("update-attachment-download-notification")) {
-                                NotificationCompat.Builder builder = progressBars.get(call.argument("notificationId"));
-                                if (builder == null) return;
-                                builder.setProgress(100, call.argument("progress"), false);
-
-                                NotificationManagerCompat notificationManager = NotificationManagerCompat.from(getContext());
-                                notificationManager.notify(call.argument("notificationId"), builder.build());
-
-                                result.success("");
-                            } else if (call.method.equals("finish-attachment-download")) {
-//                                void finishProgressWithAttachment(
-//                                        String contentText, int id, Attachment attachment) {
-//                                    String path;
-//                                    if (attachment.mimeType != null && attachment.mimeType.startsWith("image/"))
-//                                        path =
-//                                                "/attachments/${attachment.guid}/${attachment.transferName}";
-//
-//                                    MethodChannelInterface()
-//                                            .platform
-//                                            .invokeMethod("finish-attachment-download", {
-//                                                    "CHANNEL_ID": "com.bluebubbles.new_messages",
-//                                            "contentText": contentText,
-//                                            "notificationId": id,
-//                                            "path": path,
-//                                    });
-//                                }
-                                NotificationCompat.Builder builder = progressBars.get(call.argument("notificationId"));
-                                if (builder == null) return;
-                                progressBars.remove(call.argument("notificationId"));
-                                builder.setProgress(0, 0, false);
-                                if (call.argument("path") != null) {
-                                    Bitmap image = BitmapFactory.decodeFile(getFilesDir().getAbsolutePath() + call.argument("path"));
-                                    Log.d("notificationAttachment", "found file with path " + getFilesDir().getAbsolutePath() + call.argument("path"));
-                                    builder.setStyle(new NotificationCompat.BigPictureStyle().bigPicture(image).bigLargeIcon(null));
-                                    builder.setLargeIcon(image);
-                                }
-                                builder.setContentText(call.argument("contentText"));
-
-                                NotificationManagerCompat notificationManager = NotificationManagerCompat.from(getContext());
-                                notificationManager.notify(call.argument("notificationId"), builder.build());
-
-                                result.success("");
-                            } else if (call.method.equals("open_file")) {
+                            } else if(call.method.equals("clear-socket-issue")) {
+                                NotificationManagerCompat notificationManagerCompat = NotificationManagerCompat.from(getContext());
+                                notificationManagerCompat.cancel(1000);
+                            }  else if (call.method.equals("open_file")) {
                                 Intent intent = new Intent(Intent.ACTION_VIEW);
                                 Log.d("filesDir", "filesDir is " + getFilesDir().getAbsolutePath() + (String) call.argument("path"));
                                 Uri data = FileProvider.getUriForFile(getApplicationContext(), "com.example.path_provider", new File(getFilesDir().getAbsolutePath() + (String) call.argument("path")));
@@ -368,7 +294,7 @@ public class MainActivity extends FlutterActivity {
                             } else if (call.method.equals("clear-chat-notifs")) {
                                 NotificationManager manager = (NotificationManager) getApplicationContext().getSystemService(getApplicationContext().NOTIFICATION_SERVICE);
                                 for (StatusBarNotification statusBarNotification : manager.getActiveNotifications()) {
-                                    if (statusBarNotification.getNotification().extras.getString("chatGuid").contains(Objects.requireNonNull(call.argument("chatGuid")))) {
+                                    if (statusBarNotification.getNotification().extras.getString("chatGuid") != null && statusBarNotification.getNotification().extras.getString("chatGuid").contains(Objects.requireNonNull(call.argument("chatGuid")))) {
                                         NotificationManagerCompat.from(getContext()).cancel(statusBarNotification.getId());
                                     } else {
                                         Log.d("notification clearing", statusBarNotification.getGroupKey());
@@ -438,6 +364,8 @@ public class MainActivity extends FlutterActivity {
     }
 
 
+
+
     //for notifications
     public void createNotificationChannel(String channel_name, String channel_description, String CHANNEL_ID) {
         // Create the NotificationChannel, but only on API 26+ because
@@ -487,6 +415,8 @@ public class MainActivity extends FlutterActivity {
         }
 
     }
+
+
 
     void handleSendText(Intent intent) {
         String sharedText = intent.getStringExtra(Intent.EXTRA_TEXT);

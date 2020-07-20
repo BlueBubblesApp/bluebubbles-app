@@ -177,7 +177,7 @@ class _SetupViewState extends State<SetupView> {
                   };
                   _settingsCopy.guidAuthKey = fcmData[0];
                   _settingsCopy.serverAddress = fcmData[1];
-                  SettingsManager().saveSettings(
+                  await SettingsManager().saveSettings(
                     _settingsCopy,
                     connectToSocket: false,
                     authorizeFCM: false,

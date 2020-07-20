@@ -95,6 +95,18 @@ class Message {
       hasAttachments = (json['attachments'] as List).length > 0 ? true : false;
     }
 
+    String associatedMessageGuid;
+    if (json.containsKey("associatedMessageGuid") &&
+        json["associatedMessageGuid"] != null) {
+      if ((json["associatedMessageGuid"] as String).contains("/")) {
+        associatedMessageGuid =
+            (json["associatedMessageGuid"] as String).split("/").last;
+      } else {
+        associatedMessageGuid =
+            (json["associatedMessageGuid"] as String).split(":").last;
+      }
+    }
+
     return new Message(
       id: json.containsKey("ROWID") ? json["ROWID"] : null,
       guid: json["guid"],
@@ -146,10 +158,7 @@ class Message {
       isExpired: (json["isExpired"] is bool)
           ? json['isExpired']
           : ((json['isExpired'] == 1) ? true : false),
-      associatedMessageGuid: json.containsKey("associatedMessageGuid") &&
-              json["associatedMessageGuid"] != null
-          ? (json["associatedMessageGuid"] as String).substring(4)
-          : null,
+      associatedMessageGuid: associatedMessageGuid,
       associatedMessageType: json.containsKey("associatedMessageType")
           ? json["associatedMessageType"]
           : null,

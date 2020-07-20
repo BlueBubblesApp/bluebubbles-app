@@ -9,10 +9,12 @@ import 'package:bluebubble_messages/blocs/message_bloc.dart';
 import 'package:bluebubble_messages/helpers/utils.dart';
 import 'package:bluebubble_messages/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubble_messages/layouts/conversation_view/new_chat_creator.dart';
+import 'package:bluebubble_messages/managers/contact_manager.dart';
 import 'package:bluebubble_messages/managers/life_cycle_manager.dart';
 import 'package:bluebubble_messages/managers/navigator_manager.dart';
 import 'package:bluebubble_messages/managers/notification_manager.dart';
 import 'package:bluebubble_messages/managers/settings_manager.dart';
+import 'package:bluebubble_messages/repository/models/attachment.dart';
 import 'package:bluebubble_messages/repository/models/chat.dart';
 import 'package:bluebubble_messages/repository/models/message.dart';
 import 'package:bluebubble_messages/socket_manager.dart';
@@ -84,22 +86,30 @@ class MethodChannelInterface {
         if (!message.isFromMe &&
             (NotificationManager().chatGuid != chat.guid ||
                 !LifeCycleManager().isAlive) &&
-            (!message.hasAttachments || !isEmptyString(message.text)) &&
             !chat.isMuted &&
             !NotificationManager()
                 .processedNotifications
                 .contains(message.guid)) {
+          String text = message.text;
+          if ((data['attachments'] as List<dynamic>).length > 0) {
+            text = (data['attachments'] as List<dynamic>).length.toString() +
+                " attachment" +
+                ((data['attachments'] as List<dynamic>).length > 1 ? "s" : "");
+          }
           NotificationManager().createNewNotification(
-            title,
-            message.text,
-            chat.guid,
-            Random().nextInt(9998) + 1,
-            chat.id,
-            message.dateCreated.millisecondsSinceEpoch,
-            getContactTitle(message.handle.id, message.handle.address),
-            chat.participants.length > 1,
-            handle: message.handle,
-          );
+              title,
+              text,
+              chat.guid,
+              Random().nextInt(9998) + 1,
+              chat.id,
+              message.dateCreated.millisecondsSinceEpoch,
+              getContactTitle(message.handle.id, message.handle.address),
+              chat.participants.length > 1,
+              handle: message.handle,
+              contact: getContact(
+                ContactManager().contacts,
+                message.handle.address,
+              ));
           NotificationManager().processedNotifications.add(message.guid);
         }
 

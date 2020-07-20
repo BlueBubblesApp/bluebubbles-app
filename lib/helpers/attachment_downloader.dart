@@ -84,7 +84,7 @@ class AttachmentDownloader {
       if (bytes.length == _chunkSize) {
         // Calculate some stats
         double progress = ((index + 1) / total).clamp(0, 1).toDouble();
-        updateProgressNotif(progress);
+        // updateProgressNotif(progress);
         String progressStr = (progress * 100).round().toString();
         debugPrint("Progress: $progressStr% of the attachment");
 
@@ -103,16 +103,20 @@ class AttachmentDownloader {
     // }
   }
 
-  void updateProgressNotif(double _progress) {
-    if (_createNotification && _attachment.mimeType != null) {
-      NotificationManager().updateProgressNotification(
-        _attachment.id,
-        _progress,
-      );
-    }
-  }
+  // void updateProgressNotif(double _progress) {
+  //   if (_createNotification && _attachment.mimeType != null) {
+  //     NotificationManager().updateProgressNotification(
+  //       _attachment.id,
+  //       _progress,
+  //     );
+  //   }
+  // }
 
   void fetchAttachment(Attachment attachment) async {
+    if (SocketManager().attachmentDownloaders.containsKey(attachment.guid)) {
+      _stream.close();
+      return;
+    }
     int numOfChunks = (attachment.totalBytes / _chunkSize).ceil();
     debugPrint("Fetching $numOfChunks attachment chunks");
     Stopwatch stopwatch = new Stopwatch();
@@ -121,20 +125,20 @@ class AttachmentDownloader {
     _guid = attachment.guid;
     _totalChunks = numOfChunks;
 
-    if (_createNotification &&
-        _attachment.mimeType != null &&
-        _message != null) {
-      _chat = await Message.getChat(_message);
-      _title = await getFullChatTitle(_chat);
-      NotificationManager().createProgressNotification(
-        _title,
-        "Downloading Attachment",
-        _chat.guid,
-        _attachment.id,
-        _chat.id,
-        0.0,
-      );
-    }
+    // if (_createNotification &&
+    //     _attachment.mimeType != null &&
+    //     _message != null) {
+    //   _chat = await Message.getChat(_message);
+    //   _title = await getFullChatTitle(_chat);
+    //   NotificationManager().createProgressNotification(
+    //     _title,
+    //     "Downloading Attachment",
+    //     _chat.guid,
+    //     _attachment.id,
+    //     _chat.id,
+    //     0.0,
+    //   );
+    // }
 
     _cb = (List<int> data) async {
       stopwatch.stop();
@@ -144,8 +148,8 @@ class AttachmentDownloader {
       if (data == null || data.length == 0) {
         SocketManager().finishDownloader(attachment.guid);
         LifeCycleManager().finishDownloader();
-        NotificationManager().finishProgressWithAttachment(
-            "Failed to download", _attachment.id, _attachment);
+        // NotificationManager().finishProgressWithAttachment(
+        //     "Failed to download", _attachment.id, _attachment);
         _stream.sink.addError("unable to load");
         _stream.close();
         return;
@@ -163,8 +167,8 @@ class AttachmentDownloader {
       _stream.sink.add(file);
       _stream.close();
       SocketManager().socketProcesses.remove(_socketProcessId);
-      NotificationManager().finishProgressWithAttachment(
-          "Finished Downloading", _attachment.id, _attachment);
+      // NotificationManager().finishProgressWithAttachment(
+      //     "Finished Downloading", _attachment.id, _attachment);
     };
 
     SocketManager().addAttachmentDownloader(attachment.guid, this);
