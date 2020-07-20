@@ -166,7 +166,6 @@ class AttachmentDownloader {
       LifeCycleManager().finishDownloader();
       _stream.sink.add(file);
       _stream.close();
-      SocketManager().socketProcesses.remove(_socketProcessId);
       // NotificationManager().finishProgressWithAttachment(
       //     "Finished Downloading", _attachment.id, _attachment);
     };

@@ -198,6 +198,7 @@ class SocketManager {
             processes.forEach((value) {
               value(true);
             });
+            socketProcesses = new Map();
             if (!LifeCycleManager().isAlive) {
               closeSocket(force: true);
             }
@@ -372,7 +373,10 @@ class SocketManager {
   }
 
   void closeSocket({bool force = false}) {
-    if (!force && _manager.socketProcesses.length != 0) return;
+    if (!force && _manager.socketProcesses.length != 0) {
+      debugPrint("won't close " + socketProcesses.toString());
+      return;
+    }
     if (_manager.socket != null) {
       _manager.socket.disconnect();
       _manager.socket.destroy();
@@ -389,7 +393,8 @@ class SocketManager {
       debugPrint("already authorized fcm " + token);
       if (_manager.socket != null) {
         _manager.sendMessage("add-fcm-device",
-            {"deviceId": token, "deviceName": "android-client"}, (data) {});
+            {"deviceId": token, "deviceName": "android-client"}, (data) {},
+            reason: "authfcm", awaitResponse: false);
       }
       return;
     }
@@ -400,7 +405,8 @@ class SocketManager {
       token = result;
       if (_manager.socket != null) {
         _manager.sendMessage("add-fcm-device",
-            {"deviceId": token, "deviceName": "android-client"}, (data) {});
+            {"deviceId": token, "deviceName": "android-client"}, (data) {},
+            reason: "authfcm", awaitResponse: false);
         debugPrint(token);
       }
     } on PlatformException catch (e) {
@@ -410,7 +416,8 @@ class SocketManager {
   }
 
   Future<Map<String, dynamic>> sendMessage(String event,
-      Map<String, dynamic> message, Function(Map<String, dynamic>) cb) {
+      Map<String, dynamic> message, Function(Map<String, dynamic>) cb,
+      {String reason, bool awaitResponse = true}) {
     Completer<Map<String, dynamic>> completer = Completer();
     int _processId = 0;
     Function socketCB = ([bool finishWithError = false]) {
@@ -423,17 +430,25 @@ class SocketManager {
           'status': MessageError.NO_CONNECTION,
           'error': {'message': 'Failed to Connect'}
         });
-        _manager._finishSocketProcess(_processId);
+        if (awaitResponse) _manager._finishSocketProcess(_processId);
       } else {
         _manager.socket.sendMessage(event, jsonEncode(message), (String data) {
           cb(jsonDecode(data));
           completer.complete(jsonDecode(data));
-          _manager._finishSocketProcess(_processId);
+          if (awaitResponse) _manager._finishSocketProcess(_processId);
+          if (reason != null)
+            debugPrint("finished process with id " +
+                _processId.toString() +
+                " because $reason");
         });
       }
     };
     debugPrint("send message " + state.toString());
-    _processId = _manager._addSocketProcess(socketCB);
+    if (awaitResponse) _processId = _manager._addSocketProcess(socketCB);
+    if (reason != null)
+      debugPrint("added process with id " +
+          _processId.toString() +
+          " because $reason");
 
     return completer.future;
   }
