@@ -151,8 +151,6 @@ class AttachmentSender {
       hasAttachments: true,
     );
 
-    messageWithText;
-
     if (_text != "") {
       messageWithText = Message(
         guid: "temp-${randomString(8)}",
@@ -174,13 +172,14 @@ class AttachmentSender {
     await messageAttachment.save(sentMessage);
     await _chat.save();
     await _chat.addMessage(sentMessage);
+    NewMessageManager().updateWithMessage(_chat, sentMessage);
     if (messageWithText != null) {
       await messageWithText.save();
       await _chat.save();
       await _chat.addMessage(messageWithText);
+      NewMessageManager().updateWithMessage(_chat, messageWithText);
     }
 
-    NewMessageManager().updateWithMessage(_chat, sentMessage);
     _totalChunks = numOfChunks;
     SocketManager().addAttachmentSender(this);
     sendChunkRecursive(

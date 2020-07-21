@@ -307,7 +307,6 @@ class ActionHandler {
       bool isHeadless = false}) async {
     Message message = Message.fromMap(data);
     List<Chat> chats = MessageHelper.parseChats(data);
-    debugPrint("handle message " + data.toString());
 
     // Handle message differently depending on if there is a temp GUID match
     if (data.containsKey("tempGuid")) {
@@ -323,7 +322,14 @@ class ActionHandler {
         NewMessageManager()
             .deleteSpecificMessage(chats.first, data['tempGuid']);
       } else {
-        await Message.replaceMessage(data["tempGuid"], message);
+        Message newMessage =
+            await Message.replaceMessage(data["tempGuid"], message);
+        debugPrint(
+            "(handle message) handle message ${newMessage.text}, ${newMessage.guid} " +
+                data["dateCreated"].toString());
+        debugPrint(
+            "(handle message) after saving ${newMessage.text}, ${newMessage.guid} " +
+                newMessage.dateCreated.millisecondsSinceEpoch.toString());
         List<dynamic> attachments =
             data.containsKey("attachments") ? data['attachments'] : [];
         for (dynamic attachmentItem in attachments) {
@@ -345,6 +351,12 @@ class ActionHandler {
         await ActionHandler.handleChat(
             chat: chats[i], checkIfExists: true, isHeadless: isHeadless);
         await message.save();
+        debugPrint(
+            "(handle message) handle message ${message.text}, ${message.guid} " +
+                data["dateCreated"].toString());
+        debugPrint(
+            "(handle message) after saving ${message.text}, ${message.guid} " +
+                message.dateCreated.millisecondsSinceEpoch.toString());
         await chats[i].addMessage(message);
 
         // Add notification metadata

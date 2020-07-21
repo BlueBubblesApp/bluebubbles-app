@@ -83,7 +83,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> {
 
     if (widget.message != null && !isEmptyString(widget.message.text)) {
       RegExp exp =
-          new RegExp(r'(?:(?:https?|ftp):\/\/)?[\w/\-?=%.]+\.[\w/\-?=%@]+');
+          new RegExp(r'(?:(?:https?|ftp):\/\/)?[\w/\-?=%.]+\.[\w/\-?=%@&]+');
       List<RegExpMatch> matches = exp.allMatches(widget.message.text).toList();
 
       List<int> linkIndexMatches = <int>[];
