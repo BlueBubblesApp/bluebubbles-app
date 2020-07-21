@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:bluebubble_messages/repository/models/handle.dart';
@@ -12,6 +13,10 @@ class ContactManager {
 
   static final ContactManager _manager = ContactManager._internal();
 
+  StreamController<List<Contact>> _stream = new StreamController.broadcast();
+
+  Stream<List<Contact>> get stream => _stream.stream;
+
   ContactManager._internal();
   List<Contact> contacts = <Contact>[];
   Map<String, Contact> handleToContact = new Map();
@@ -20,10 +25,10 @@ class ContactManager {
     // if (contacts.length > 0) return;
     if (headless || await Permission.contacts.request().isGranted) {
       var contacts =
-          (await ContactsService.getContacts(withThumbnails: true)).toList();
+          (await ContactsService.getContacts(withThumbnails: false)).toList();
       _manager.contacts = contacts;
       // Lazy load thumbnails after rendering initial contacts.
-      // getAvatars(contacts);
+      getAvatars();
 
       List<Handle> handles = await Handle.find({});
       for (Handle handle in handles) {
@@ -47,12 +52,15 @@ class ContactManager {
     }
   }
 
-  Future<void> getAvatars(List<Contact> _contacts) async {
-    for (final Contact contact in _contacts) {
-      ContactsService.getAvatar(contact).then((avatar) {
-        if (avatar == null) return; // Don't redraw if no change.
-        contact.avatar = avatar;
-      });
+  Future<void> getAvatars() async {
+    for (int i = 0; i < contacts.length; i++) {
+      final avatar = await ContactsService.getAvatar(contacts[i]);
+      if (avatar != null) {
+        contacts[i].avatar = avatar;
+      }
+      if (i == contacts.length - 1) {
+        _stream.sink.add(contacts);
+      }
     }
   }
 }

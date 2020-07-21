@@ -50,6 +50,14 @@ class _ConversationTileState extends State<ConversationTile> {
   @override
   Future<void> didChangeDependencies() async {
     super.didChangeDependencies();
+    getAvatars();
+    ContactManager().stream.listen((event) {
+      getAvatars();
+    });
+  }
+
+  Future<void> getAvatars() async {
+    if (contactImage != null) return;
     Chat chat = await widget.chat.getParticipants();
     if (chat.participants.length == 1) {
       Contact contact = getContact(
