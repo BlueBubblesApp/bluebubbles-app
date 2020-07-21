@@ -55,38 +55,38 @@ ThemeData nordDarkTheme = ThemeData(
   splashFactory: InkRipple.splashFactory,
   textTheme: TextTheme(
     headline1: TextStyle(
-      color: HexColor('eceff4'),
+      color: HexColor('ECEFF4'),
       fontWeight: FontWeight.normal,
       fontSize: 18,
     ),
     headline2: TextStyle(
-      color: HexColor('eceff4'),
+      color: HexColor('E5E9F0'),
       fontWeight: FontWeight.normal,
       fontSize: 14,
     ),
     bodyText1: TextStyle(
-      color: HexColor('eceff4'),
+      color: HexColor('ECEFF4'),
       fontWeight: FontWeight.normal,
     ),
     bodyText2: TextStyle(
-      color: HexColor('eceff4'),
+      color: HexColor('E5E9F0'),
       fontWeight: FontWeight.normal,
     ),
     subtitle1: TextStyle(
-      color: HexColor('757575'),
+      color: HexColor('D8DEE9'),
       fontSize: 13,
       fontWeight: FontWeight.normal,
     ),
     subtitle2: TextStyle(
-      color: HexColor('757575'),
+      color: HexColor('D8DEE9'),
       fontSize: 9,
       fontWeight: FontWeight.normal,
     ),
   ),
-  accentColor: HexColor('2a2a2a'),
-  dividerColor: HexColor('4c4c4c'),
-  buttonColor: HexColor("666666"),
-  backgroundColor: HexColor('2e3440'),
+  accentColor: HexColor('4C566A'),
+  dividerColor: HexColor('4C566A'),
+  buttonColor: HexColor("4C566A"),
+  backgroundColor: HexColor('2E3440'),
   splashColor: Colors.white.withOpacity(0.35),
 );
 
