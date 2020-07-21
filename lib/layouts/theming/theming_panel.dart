@@ -1,5 +1,7 @@
 import 'dart:ui';
 
+import 'package:adaptive_theme/adaptive_theme.dart';
+import 'package:bluebubble_messages/layouts/theming/theming_color_options_list.dart';
 import 'package:bluebubble_messages/layouts/theming/theming_color_selector.dart';
 import 'package:flutter/material.dart';
 
@@ -11,6 +13,18 @@ class ThemingPanel extends StatefulWidget {
 }
 
 class _ThemingPanelState extends State<ThemingPanel> {
+  PageController controller;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (AdaptiveTheme.of(context).mode.isDark) {
+      controller = PageController(initialPage: 1);
+    } else {
+      controller = PageController();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -39,24 +53,15 @@ class _ThemingPanelState extends State<ThemingPanel> {
           ),
         ),
       ),
-      body: CustomScrollView(
+      body: PageView(
         physics: AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-        slivers: <Widget>[
-          SliverPadding(
-            padding: EdgeInsets.all(100),
+        controller: controller,
+        children: <Widget>[
+          ThemingColorOptionsList(
+            isDarkMode: false,
           ),
-          SliverGrid(
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              crossAxisSpacing: 50,
-              mainAxisSpacing: 50,
-            ),
-            delegate: SliverChildBuilderDelegate(
-              (context, index) {
-                return ThemingColorSelector();
-              },
-              childCount: 8,
-            ),
+          ThemingColorOptionsList(
+            isDarkMode: true,
           )
         ],
       ),

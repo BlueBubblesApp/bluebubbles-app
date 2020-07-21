@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 enum MessageError {
   NO_ERROR,
   TIMEOUT,
@@ -16,4 +18,16 @@ extension MessageErrorExtension on MessageError {
   };
 
   int get code => codes[this];
+}
+
+enum ThemeColors {
+  Headline1,
+  Headline2,
+  Bodytext1,
+  BodyText2,
+  Subtitle1,
+  Subtitle2,
+  AccentColor,
+  DividerColor,
+  BackgroundColor
 }

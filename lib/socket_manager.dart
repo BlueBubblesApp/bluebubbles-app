@@ -444,7 +444,11 @@ class SocketManager {
       }
     };
     debugPrint("send message " + state.toString());
-    if (awaitResponse) _processId = _manager._addSocketProcess(socketCB);
+    if (awaitResponse) {
+      _processId = _manager._addSocketProcess(socketCB);
+    } else {
+      socketCB();
+    }
     if (reason != null)
       debugPrint("added process with id " +
           _processId.toString() +
