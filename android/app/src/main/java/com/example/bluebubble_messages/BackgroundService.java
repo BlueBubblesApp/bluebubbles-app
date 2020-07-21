@@ -25,6 +25,7 @@ import android.util.Log;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
@@ -86,6 +87,7 @@ public class BackgroundService extends Service {
         return isAlive;
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.M)
     public void setAlive(boolean val) {
         isAlive = val;
         if (!val) {
@@ -115,6 +117,7 @@ public class BackgroundService extends Service {
         }
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.M)
     private void initHeadlessThread() {
         if (backgroundView == null) {
             FlutterMain.ensureInitializationComplete(getApplicationContext(), null);
@@ -143,195 +146,8 @@ public class BackgroundService extends Service {
             backgroundView.runFromBundle(args);
             backgroundChannel = new MethodChannel(backgroundView, "background_isolate");
 
-            backgroundChannel.setMethodCallHandler((call, result) -> {
-                if (call.method.equals("auth")) {
-                    if (!isNetworkAvailable())
-                        result.error("no_internet", "No internet, retry in 10 seconds", "");
-                    if (app == null) {
-                        app = FirebaseApp.initializeApp(getApplicationContext(), new FirebaseOptions.Builder()
-                                .setProjectId(call.argument("project_id"))
-                                .setStorageBucket(call.argument("storage_bucket"))
-                                .setApiKey(call.argument("api_key"))
-                                .setDatabaseUrl(call.argument("firebase_url"))
-                                .setGcmSenderId(call.argument("client_id"))
-                                .setApplicationId(call.argument("application_id"))
-                                .build());
-                    }
-                    if (app == null) {
-                        result.error("could_not_initialize", "Failed to initialize, app == null", "");
-                    }
-                    FirebaseInstanceId.getInstance(app).getInstanceId()
-                            .addOnCompleteListener(new OnCompleteListener<InstanceIdResult>() {
-                                @Override
-                                public void onComplete(@NonNull Task<InstanceIdResult> task) {
-                                    if (!task.isSuccessful()) {
-                                        Log.d("FCM", "getInstanceId failed", task.getException());
-                                        result.error("failed", "getInstanceId failed", task.getException());
-                                    } else {
-
-                                        String token = task.getResult().getToken();
-                                        Log.d("FCM", "token: " + token);
-                                        result.success(token);
-                                    }
-                                }
-                            });
-                    db = FirebaseDatabase.getInstance(app).getReference();
-                    try {
-                        db.removeEventListener(dbListener);
-                    } catch (Exception e) {
-
-                    }
-                    db.addValueEventListener(dbListener);
-                } else if (call.method.equals("new-message-notification")) {
-                    Log.d("background_isolate", "creating notification android side");
-                    //occurs when clicking on the notification
-                    PendingIntent openIntent = PendingIntent.getActivity(getApplicationContext(), call.argument("notificationId"), new Intent(getApplicationContext(), MainActivity.class).putExtra("id", (int) call.argument("notificationId")).putExtra("chatGUID", (String) call.argument("group")).setType("NotificationOpen"), Intent.FILL_IN_ACTION);
-
-                    //for the dismiss button
-                    PendingIntent dismissIntent = PendingIntent.getBroadcast(getApplicationContext(), call.argument("notificationId"), new Intent(getApplicationContext(), ReplyReceiver.class).putExtra("id", (int) call.argument("notificationId")).putExtra("chatGuid", (String) call.argument("group")).setType("markAsRead"), PendingIntent.FLAG_UPDATE_CURRENT);
-                    NotificationCompat.Action dismissAction = new NotificationCompat.Action.Builder(0, "Mark As Read", dismissIntent).build();
-
-                    //for the quick reply
-                    Intent intent = new Intent(getApplicationContext(), ReplyReceiver.class)
-                            .putExtra("id", (int) call.argument("notificationId"))
-                            .putExtra("chatGuid", (String) call.argument("group"))
-                            .setType("reply");
-                    PendingIntent replyIntent = PendingIntent.getBroadcast(getApplicationContext(), call.argument("notificationId"), intent, PendingIntent.FLAG_UPDATE_CURRENT);
-                    androidx.core.app.RemoteInput replyInput = new androidx.core.app.RemoteInput.Builder("key_text_reply").setLabel("Reply").build();
-                    NotificationCompat.Action replyAction = new NotificationCompat.Action.Builder(0, "Reply", replyIntent).addRemoteInput(replyInput).build();
-
-                    //actual notification
-                    NotificationCompat.Builder builder = new NotificationCompat.Builder(getApplicationContext(), call.argument("CHANNEL_ID"))
-                            .setSmallIcon(R.mipmap.ic_launcher)
-                            .setContentTitle(call.argument("contentTitle"))
-                            .setContentText(call.argument("contentText"))
-                            .setAutoCancel(true)
-                            .setContentIntent(openIntent)
-                            .addAction(dismissAction)
-                            .addAction(replyAction)
-                            .setGroup(call.argument("group"));
-//                                        .setGroup("messageGroup");
-                    if (call.argument("address") != null) {
-                        builder.addPerson(call.argument("address"));
-                    }
-
-                    NotificationCompat.Builder summaryBuilder = new NotificationCompat.Builder(getApplicationContext(), call.argument("CHANNEL_ID"))
-                            .setSmallIcon(R.mipmap.ic_launcher)
-                            .setContentTitle("New messages")
-                            .setGroup(call.argument("group"))
-                            .setAutoCancel(true)
-                            .setContentIntent(openIntent)
-                            .setGroupSummary(true);
-
-                    NotificationManagerCompat notificationManager = NotificationManagerCompat.from(getApplicationContext());
-
-                    notificationManager.notify(call.argument("notificationId"), builder.build());
-                    notificationManager.notify(call.argument("summaryId"), summaryBuilder.build());
-                    result.success("");
-                } else if (call.method.equals("create-attachment-download-notification")) {
-//                                MethodChannelInterface()
-//                                        .platform
-//                                        .invokeMethod("attachment-download-notification", {
-//                                                "CHANNEL_ID": "com.bluebubbles.new_messages",
-//                                        "contentTitle": contentTitle,
-//                                        "contentText": contentText,
-//                                        "group": group,
-//                                        "notificationId": id,
-//                                        "summaryId": summaryId,
-//                                        "progress": progress,
-//                                 });
-
-                    //occurs when clicking on the notification
-                    PendingIntent openIntent = PendingIntent.getActivity(getApplicationContext(), call.argument("notificationId"), new Intent(this, MainActivity.class).putExtra("id", (int) call.argument("notificationId")).putExtra("chatGUID", (String) call.argument("group")).setType("NotificationOpen"), Intent.FILL_IN_ACTION);
-
-
-                    //for the dismiss button
-                    PendingIntent dismissIntent = PendingIntent.getBroadcast(this, call.argument("notificationId"), new Intent(this, ReplyReceiver.class).putExtra("id", (int) call.argument("notificationId")).putExtra("chatGuid", (String) call.argument("group")).setType("markAsRead"), PendingIntent.FLAG_UPDATE_CURRENT);
-                    NotificationCompat.Action dismissAction = new NotificationCompat.Action.Builder(0, "Mark As Read", dismissIntent).build();
-
-                    //for the quick reply
-                    Intent intent = new Intent(this, ReplyReceiver.class)
-                            .putExtra("id", (int) call.argument("notificationId"))
-                            .putExtra("chatGuid", (String) call.argument("group"))
-                            .setType("reply");
-                    PendingIntent replyIntent = PendingIntent.getBroadcast(this, call.argument("notificationId"), intent, PendingIntent.FLAG_UPDATE_CURRENT);
-                    androidx.core.app.RemoteInput replyInput = new androidx.core.app.RemoteInput.Builder("key_text_reply").setLabel("Reply").build();
-                    NotificationCompat.Action replyAction = new NotificationCompat.Action.Builder(0, "Reply", replyIntent).addRemoteInput(replyInput).build();
-
-                    //actual notification
-                    NotificationCompat.Builder builder = new NotificationCompat.Builder(this, call.argument("CHANNEL_ID"))
-                            .setSmallIcon(R.mipmap.ic_launcher)
-                            .setContentTitle(call.argument("contentTitle"))
-                            .setContentText(call.argument("contentText"))
-                            .setAutoCancel(true)
-                            .setContentIntent(openIntent)
-                            .setProgress(100, call.argument("progress"), false)
-                            .addAction(dismissAction)
-                            .addAction(replyAction)
-                            .setOnlyAlertOnce(true)
-                            .setGroup(call.argument("group"));
-
-
-                    NotificationCompat.Builder summaryBuilder = new NotificationCompat.Builder(this, call.argument("CHANNEL_ID"))
-                            .setSmallIcon(R.mipmap.ic_launcher)
-                            .setContentTitle("New messages")
-                            .setGroup(call.argument("group"))
-                            .setAutoCancel(true)
-                            .setContentIntent(openIntent)
-                            .setGroupSummary(true);
-
-                    NotificationManagerCompat notificationManager = NotificationManagerCompat.from(getApplicationContext());
-
-                    notificationManager.notify(call.argument("notificationId"), builder.build());
-                    notificationManager.notify(call.argument("summaryId"), summaryBuilder.build());
-                    progressBars.put(call.argument("notificationId"), builder);
-                    result.success("");
-                } else if (call.method.equals("update-attachment-download-notification")) {
-                    NotificationCompat.Builder builder = progressBars.get(call.argument("notificationId"));
-                    if (builder == null) return;
-                    builder.setProgress(100, call.argument("progress"), false);
-
-                    NotificationManagerCompat notificationManager = NotificationManagerCompat.from(getApplicationContext());
-                    notificationManager.notify(call.argument("notificationId"), builder.build());
-
-                    result.success("");
-                } else if (call.method.equals("finish-attachment-download")) {
-//                                void finishProgressWithAttachment(
-//                                        String contentText, int id, Attachment attachment) {
-//                                    String path;
-//                                    if (attachment.mimeType != null && attachment.mimeType.startsWith("image/"))
-//                                        path =
-//                                                "/attachments/${attachment.guid}/${attachment.transferName}";
-//
-//                                    MethodChannelInterface()
-//                                            .platform
-//                                            .invokeMethod("finish-attachment-download", {
-//                                                    "CHANNEL_ID": "com.bluebubbles.new_messages",
-//                                            "contentText": contentText,
-//                                            "notificationId": id,
-//                                            "path": path,
-//                                    });
-//                                }
-                    NotificationCompat.Builder builder = progressBars.get(call.argument("notificationId"));
-                    if (builder == null) return;
-                    progressBars.remove(call.argument("notificationId"));
-                    builder.setProgress(0, 0, false);
-                    if (call.argument("path") != null) {
-                        Bitmap image = BitmapFactory.decodeFile(getFilesDir().getAbsolutePath() + call.argument("path"));
-                        Log.d("notificationAttachment", "found file with path " + getFilesDir().getAbsolutePath() + call.argument("path"));
-                        builder.setStyle(new NotificationCompat.BigPictureStyle().bigPicture(image).bigLargeIcon(null));
-                        builder.setLargeIcon(image);
-                    }
-                    builder.setContentText(call.argument("contentText"));
-
-                    NotificationManagerCompat notificationManager = NotificationManagerCompat.from(getApplicationContext());
-                    notificationManager.notify(call.argument("notificationId"), builder.build());
-
-                    result.success("");
-                }
-//                    });
-//                }
-            });
+            backgroundChannel.setMethodCallHandler((call, result) -> MainActivity.methodCallHandler(call, result, getApplicationContext(), dbListener, null)
+            );
         }
     }
 
@@ -397,6 +213,7 @@ public class BackgroundService extends Service {
     }
 
 
+    @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.i("LocalService", "Received start id " + startId + ": " + intent);
@@ -442,10 +259,4 @@ public class BackgroundService extends Service {
 
     private final IBinder mBinder = new LocalBinder();
 
-    private boolean isNetworkAvailable() {
-        ConnectivityManager connectivityManager
-                = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
-        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
-    }
 }

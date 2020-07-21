@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubble_messages/helpers/hex_color.dart';
+import 'package:bluebubble_messages/helpers/themes.dart';
 import 'package:bluebubble_messages/helpers/utils.dart';
 import 'package:bluebubble_messages/managers/background_isolate.dart';
 import 'package:bluebubble_messages/managers/contact_manager.dart';
@@ -44,82 +45,8 @@ class Main extends StatelessWidget with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     return AdaptiveTheme(
-      light: ThemeData(
-        primarySwatch: Colors.blue,
-        splashFactory: InkRipple.splashFactory,
-        textTheme: TextTheme(
-          headline1: TextStyle(
-            color: Colors.black,
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
-          ),
-          headline2: TextStyle(
-            color: Colors.black,
-            fontWeight: FontWeight.normal,
-            fontSize: 14,
-          ),
-          bodyText1: TextStyle(
-            color: Colors.black,
-            fontWeight: FontWeight.normal,
-          ),
-          bodyText2: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.normal,
-          ),
-          subtitle1: TextStyle(
-            color: HexColor('9a9a9f'),
-            fontSize: 13,
-            fontWeight: FontWeight.normal,
-          ),
-          subtitle2: TextStyle(
-            color: HexColor('9a9a9f'),
-            fontSize: 9,
-            fontWeight: FontWeight.normal,
-          ),
-        ),
-        accentColor: HexColor('e5e5ea'),
-        dividerColor: HexColor('e5e5ea').withOpacity(0.5),
-        backgroundColor: Colors.white,
-      ),
-      dark: ThemeData(
-        primarySwatch: Colors.blue,
-        splashFactory: InkRipple.splashFactory,
-        textTheme: TextTheme(
-          headline1: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.normal,
-            fontSize: 18,
-          ),
-          headline2: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.normal,
-            fontSize: 14,
-          ),
-          bodyText1: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.normal,
-          ),
-          bodyText2: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.normal,
-          ),
-          subtitle1: TextStyle(
-            color: HexColor('36363a'),
-            fontSize: 13,
-            fontWeight: FontWeight.normal,
-          ),
-          subtitle2: TextStyle(
-            color: HexColor('46464a'),
-            fontSize: 9,
-            fontWeight: FontWeight.normal,
-          ),
-        ),
-        accentColor: HexColor('26262a'),
-        dividerColor: HexColor('27272a'),
-        buttonColor: HexColor("666666"),
-        backgroundColor: Colors.black,
-        splashColor: Colors.white.withOpacity(0.35),
-      ),
+      light: whiteLightTheme,
+      dark: oledDarkTheme,
       initial: AdaptiveThemeMode.system,
       builder: (theme, darkTheme) => MaterialApp(
         title: 'BlueBubbles',
@@ -143,9 +70,9 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
-    SettingsManager().init();
     LifeCycleManager().opened();
     // QueueManager().init();
+    SettingsManager().init();
     MethodChannelInterface().init(context);
     BackgroundIsolateInterface.initialize();
     ReceiveSharingIntent.getInitialMedia()
@@ -192,8 +119,8 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     });
 
     NotificationManager().createNotificationChannel();
-    SchedulerBinding.instance
-        .addPostFrameCallback((_) => SettingsManager().getSavedSettings());
+    SchedulerBinding.instance.addPostFrameCallback(
+        (_) => SettingsManager().getSavedSettings(context: context));
     WidgetsBinding.instance.addObserver(this);
   }
 

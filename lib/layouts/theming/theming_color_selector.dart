@@ -1,6 +1,7 @@
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubble_messages/helpers/contstants.dart';
 import 'package:bluebubble_messages/layouts/theming/theming_color_picker_popup.dart';
+import 'package:bluebubble_messages/managers/settings_manager.dart';
 import 'package:flutter/material.dart';
 
 class ThemingColorSelector extends StatefulWidget {
@@ -17,9 +18,9 @@ class _ThemingColorSelectorState extends State<ThemingColorSelector> {
   Color getColorForTitle(bool isDarkMode, ThemeColors title) {
     ThemeData theme;
     if (isDarkMode) {
-      theme = AdaptiveTheme.of(context).darkTheme;
+      theme = SettingsManager().settings.darkTheme;
     } else {
-      theme = AdaptiveTheme.of(context).theme;
+      theme = SettingsManager().settings.lightTheme;
     }
     switch (title) {
       case ThemeColors.Headline1:
@@ -101,27 +102,23 @@ class _ThemingColorSelectorState extends State<ThemingColorSelector> {
             builder: (context) => ThemingColorPickerPopup(
               initialColor:
                   getColorForTitle(widget.isDarkMode, widget.colorTitle),
-              onSet: (Color color) {
+              onSet: (Color color) async {
                 if (widget.isDarkMode) {
-                  AdaptiveTheme.of(context).setTheme(
-                    light: AdaptiveTheme.of(context).theme,
-                    dark: themeDataForTitle(
-                      widget.colorTitle,
-                      AdaptiveTheme.of(context).darkTheme,
-                      color,
-                    ),
-                    isDefault: true,
+                  SettingsManager().settings.setOneColorOfDarkTheme(
+                      widget.colorTitle, color, context);
+                  await SettingsManager().saveSettings(
+                    SettingsManager().settings,
+                    context: context,
                   );
+                  AdaptiveTheme.of(context).reassemble();
                 } else {
-                  AdaptiveTheme.of(context).setTheme(
-                    light: themeDataForTitle(
-                      widget.colorTitle,
-                      AdaptiveTheme.of(context).theme,
-                      color,
-                    ),
-                    dark: AdaptiveTheme.of(context).darkTheme,
-                    isDefault: true,
+                  SettingsManager().settings.setOneColorOfLightTheme(
+                      widget.colorTitle, color, context);
+                  await SettingsManager().saveSettings(
+                    SettingsManager().settings,
+                    context: context,
                   );
+                  AdaptiveTheme.of(context).reassemble();
                 }
               },
             ),

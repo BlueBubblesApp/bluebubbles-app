@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
+import 'dart:typed_data';
 import 'dart:ui';
 
 import 'package:bluebubble_messages/action_handler.dart';
@@ -16,6 +17,7 @@ import 'package:bluebubble_messages/repository/models/chat.dart';
 import 'package:bluebubble_messages/repository/models/handle.dart';
 import 'package:bluebubble_messages/repository/models/message.dart';
 import 'package:bluebubble_messages/socket_manager.dart';
+import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -62,22 +64,40 @@ callbackHandler() async {
       String title = await getFullChatTitle(chat);
       Message message = Message.fromMap(data);
 
-      if (!message.isFromMe &&
-          !chat.isMuted &&
-          ((isEmptyString(message.text) && !message.hasAttachments) ||
-              !isEmptyString(message.text))) {
+      if (!message.isFromMe && !chat.isMuted) {
         debugPrint("creating notification");
-        createNewMessage(
-          title,
-          !isEmptyString(message.text)
-              ? message.text
-              : message.hasAttachments ? "Attachments" : "Something went wrong",
-          chat.guid,
-          Random().nextInt(9999),
-          chat.id,
-          _backgroundChannel,
-          handle: message.handle,
-        );
+
+        // createNewMessage(
+        //   title,
+        //   !isEmptyString(message.text)
+        //       ? message.text
+        //       : message.hasAttachments ? "Attachments" : "Something went wrong",
+        //   chat.guid,
+        //   Random().nextInt(9999),
+        //   chat.id,
+        //   _backgroundChannel,
+        //   handle: message.handle,
+        // );
+        String text = message.text;
+        if ((data['attachments'] as List<dynamic>).length > 0) {
+          text = (data['attachments'] as List<dynamic>).length.toString() +
+              " attachment" +
+              ((data['attachments'] as List<dynamic>).length > 1 ? "s" : "");
+        }
+        createNewNotification(
+            title,
+            text,
+            chat.guid,
+            Random().nextInt(9998) + 1,
+            chat.id,
+            message.dateCreated.millisecondsSinceEpoch,
+            getContactTitle(message.handle.id, message.handle.address),
+            chat.participants.length > 1,
+            handle: message.handle,
+            contact: getContact(
+              ContactManager().contacts,
+              message.handle.address,
+            ));
       }
 
       ActionHandler.handleMessage(data,
@@ -189,22 +209,25 @@ void receivedMessagesForChat(
   // }
 }
 
-createNewMessage(String contentTitle, String contentText, String group, int id,
-    int summaryId, MethodChannel channel,
-    {Handle handle}) {
-  String address;
+void createNewNotification(
+    String contentTitle,
+    String contentText,
+    String group,
+    int id,
+    int summaryId,
+    int timeStamp,
+    String senderName,
+    bool groupConversation,
+    {Handle handle,
+    Contact contact}) {
+  String address = handle.address;
 
-  if (handle != null) {
-    //if the address is an email
-    if (handle.address.contains("@")) {
-      address = "mailto:${handle.address}";
-      //if the address is a phone
-    } else {
-      address = "tel:${handle.address}";
-    }
+  Uint8List contactIcon;
+  if (contact != null) {
+    if (contact.avatar.length > 0) contactIcon = contact.avatar;
   }
-  // debugPrint("person " + address);
-  channel.invokeMethod("new-message-notification", {
+  debugPrint("contactIcon " + contactIcon.toString());
+  MethodChannelInterface().platform.invokeMethod("new-message-notification", {
     "CHANNEL_ID": "com.bluebubbles.new_messages",
     "contentTitle": contentTitle,
     "contentText": contentText,
@@ -212,5 +235,9 @@ createNewMessage(String contentTitle, String contentText, String group, int id,
     "notificationId": id,
     "summaryId": summaryId,
     "address": address,
+    "timeStamp": timeStamp,
+    "name": senderName,
+    "groupConversation": groupConversation,
+    "contactIcon": contactIcon,
   });
 }
