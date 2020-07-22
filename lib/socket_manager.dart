@@ -95,7 +95,7 @@ class SocketManager {
     _connectionStateStream.sink.add(_state);
   }
 
-  int _addSocketProcess(Function() cb) {
+  int addSocketProcess(Function() cb) {
     int processId = Random().nextInt(10000);
     socketProcesses[processId] = cb;
     // _socketProcessUpdater.sink.add(socketProcesses.keys.toList());
@@ -109,7 +109,7 @@ class SocketManager {
     return processId;
   }
 
-  void _finishSocketProcess(int processId) {
+  void finishSocketProcess(int processId) {
     socketProcesses.remove(processId);
     Future.delayed(Duration(milliseconds: Random().nextInt(100)), () {
       _socketProcessUpdater.sink.add(socketProcesses.keys.toList());
@@ -183,6 +183,9 @@ class SocketManager {
         _manager.socketProcesses.values.forEach((element) {
           element();
         });
+        if (SettingsManager().settings.finishedSetup)
+          setup.startSync(SettingsManager().settings, () {},
+              isMiniResync: true);
         // if (connectCb != null) connectCb();
         return;
       case "connect_error":
@@ -430,12 +433,12 @@ class SocketManager {
           'status': MessageError.NO_CONNECTION,
           'error': {'message': 'Failed to Connect'}
         });
-        if (awaitResponse) _manager._finishSocketProcess(_processId);
+        if (awaitResponse) _manager.finishSocketProcess(_processId);
       } else {
         _manager.socket.sendMessage(event, jsonEncode(message), (String data) {
           cb(jsonDecode(data));
           completer.complete(jsonDecode(data));
-          if (awaitResponse) _manager._finishSocketProcess(_processId);
+          if (awaitResponse) _manager.finishSocketProcess(_processId);
           if (reason != null)
             debugPrint("finished process with id " +
                 _processId.toString() +
@@ -445,7 +448,7 @@ class SocketManager {
     };
     debugPrint("send message " + state.toString());
     if (awaitResponse) {
-      _processId = _manager._addSocketProcess(socketCB);
+      _processId = _manager.addSocketProcess(socketCB);
     } else {
       socketCB();
     }
