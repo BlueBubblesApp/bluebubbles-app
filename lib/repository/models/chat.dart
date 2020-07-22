@@ -242,6 +242,7 @@ class Chat {
     // String reactionQualifier = reactionsOnly ? "IS NOT" : "IS";
     String query = ("SELECT"
         " message.ROWID AS ROWID,"
+        " message.originalROWID AS originalROWID,"
         " message.guid AS guid,"
         " message.handleId AS handleId,"
         " message.text AS text,"
@@ -282,7 +283,7 @@ class Chat {
 
     // Add pagination
     query +=
-        " ORDER BY message.dateCreated DESC, message.ROWID DESC LIMIT $limit OFFSET $offset";
+        " ORDER BY COALESCE(message.originalROWID, message.ROWID) DESC LIMIT $limit OFFSET $offset";
 
     // Execute the query
     var res = await db.rawQuery("$query;", [chat.id]);

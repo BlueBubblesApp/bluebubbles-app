@@ -22,6 +22,7 @@ String messageToJson(Message data) {
 
 class Message {
   int id;
+  int originalROWID;
   String guid;
   int handleId;
   String text;
@@ -55,6 +56,7 @@ class Message {
 
   Message({
     this.id,
+    this.originalROWID,
     this.guid,
     this.handleId,
     this.text,
@@ -109,6 +111,8 @@ class Message {
 
     return new Message(
       id: json.containsKey("ROWID") ? json["ROWID"] : null,
+      originalROWID:
+          json.containsKey("originalROWID") ? json["originalROWID"] : null,
       guid: json["guid"],
       handleId: (json["handleId"] != null) ? json["handleId"] : 0,
       text: sanitizeString(json["text"]),
@@ -440,6 +444,7 @@ class Message {
 
   Map<String, dynamic> toMap() => {
         "ROWID": id,
+        "originalROWID": originalROWID,
         "guid": guid,
         "handleId": handleId,
         "text": sanitizeString(text),

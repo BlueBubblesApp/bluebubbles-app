@@ -186,6 +186,9 @@ class MethodChannelInterface {
         ),
         (route) => route.isFirst,
       );
+      Future.delayed(Duration(milliseconds: 500), () {
+        NotificationManager().switchChat(openedChat);
+      });
     } else {
       debugPrint("could not find chat");
     }

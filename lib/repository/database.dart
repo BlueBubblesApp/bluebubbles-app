@@ -115,6 +115,7 @@ class DBProvider {
   createMessageTable(Database db) async {
     await db.execute("CREATE TABLE message ("
         "ROWID INTEGER PRIMARY KEY AUTOINCREMENT,"
+        "originalROWID INTEGER DEFAULT NULL,"
         "handleId INTEGER NOT NULL,"
         "guid TEXT NOT NULL,"
         "text TEXT,"
