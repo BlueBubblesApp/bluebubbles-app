@@ -59,7 +59,7 @@ class _ContactTileState extends State<ContactTile> {
   }
 
   Widget _buildContactTile() {
-    var initials = getInitials(widget.contact.displayName, " ");
+    var initials = getInitials(widget.contact?.displayName ?? "", " ");
     return InkWell(
       onTap: () async {
         if (widget.contact == null) {
