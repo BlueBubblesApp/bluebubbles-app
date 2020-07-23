@@ -62,17 +62,19 @@ class MessageBloc {
         } else {
           if (event.containsKey("oldGuid")) {
             if (_allMessages.containsKey(event["oldGuid"])) {
-              List<Message> values = _allMessages.values.toList();
-              List<String> keys = _allMessages.keys.toList();
-              for (int i = 0; i < keys.length; i++) {
-                if (keys[i] == event["oldGuid"]) {
-                  keys[i] = (event[_currentChat.guid] as Message).guid;
-                  values[i] = event[_currentChat.guid];
-                  break;
-                }
-              }
-              _allMessages = LinkedHashMap<String, Message>.from(
-                  LinkedHashMap.fromIterables(keys, values));
+              // List<Message> values = _allMessages.values.toList();
+              // List<String> keys = _allMessages.keys.toList();
+              // for (int i = 0; i < keys.length; i++) {
+              //   if (keys[i] == event["oldGuid"]) {
+              //     keys[i] = (event[_currentChat.guid] as Message).guid;
+              //     values[i] = event[_currentChat.guid];
+              //     break;
+              //   }
+              // }
+              _allMessages.remove(event["oldGuid"]);
+              insert(event[_currentChat.guid]);
+              // _allMessages = LinkedHashMap<String, Message>.from(
+              //     LinkedHashMap.fromIterables(keys, values));
               if (!_messageController.isClosed)
                 _messageController.sink.add({
                   "messages": _allMessages,
@@ -129,10 +131,17 @@ class MessageBloc {
     List<Message> messages = _allMessages.values.toList();
     for (int i = 0; i < messages.length; i++) {
       //if _allMessages[i] dateCreated is earlier than the new message, insert at that index
-      if (messages[i].dateCreated.compareTo(message.dateCreated) < 0) {
+      if ((messages[i].originalROWID != null &&
+              message.originalROWID != null &&
+              message.originalROWID > messages[i].originalROWID) ||
+          ((messages[i].originalROWID == null ||
+                  message.originalROWID == null) &&
+              messages[i].dateCreated.compareTo(message.dateCreated) < 0)) {
         _allMessages =
-            linkedHashMapInsert(_allMessages, index, message.guid, message);
+            linkedHashMapInsert(_allMessages, i, message.guid, message);
         index = i;
+        debugPrint("insert at " + index.toString());
+
         break;
       }
     }
