@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:bluebubble_messages/managers/new_message_manager.dart';
 import 'package:bluebubble_messages/managers/settings_manager.dart';
 import 'package:bluebubble_messages/repository/models/attachment.dart';
 import 'package:flutter/cupertino.dart';
@@ -240,13 +241,25 @@ class Message {
   }
 
   static Future<Message> replaceMessage(String oldGuid, Message newMessage,
-      {bool awaitNewMessageEvent = true}) async {
+      {bool awaitNewMessageEvent = true, Chat chat}) async {
     final Database db = await DBProvider.db.database;
     Message existing = await Message.findOne({"guid": oldGuid});
     if (existing == null) {
-      if (awaitNewMessageEvent)
+      if (awaitNewMessageEvent) {
         await Future.delayed(Duration(milliseconds: 500));
-      return replaceMessage(oldGuid, newMessage, awaitNewMessageEvent: false);
+        return replaceMessage(oldGuid, newMessage,
+            awaitNewMessageEvent: false, chat: chat);
+      } else {
+        if (chat != null) {
+          debugPrint("adding message to chat");
+          await newMessage.save();
+          await chat.save();
+          await chat.addMessage(newMessage);
+          NewMessageManager()
+              .updateWithMessage(chat, newMessage, sentFromThisClient: false);
+          return newMessage;
+        }
+      }
       // return null;
     }
 

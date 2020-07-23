@@ -324,8 +324,9 @@ class ActionHandler {
         NewMessageManager()
             .deleteSpecificMessage(chats.first, data['tempGuid']);
       } else {
-        Message newMessage =
-            await Message.replaceMessage(data["tempGuid"], message);
+        Message newMessage = await Message.replaceMessage(
+            data["tempGuid"], message,
+            chat: chats.first);
         debugPrint(
             "(handle message) handle message ${newMessage.text}, ${newMessage.guid} " +
                 data["dateCreated"].toString());
@@ -397,7 +398,8 @@ class ActionHandler {
         // Add notification metadata
         if (!isHeadless &&
             !SocketManager().chatsWithNotifications.contains(chats[i].guid) &&
-            NotificationManager().chatGuid != chats[i].guid) {
+            NotificationManager().chatGuid != chats[i].guid &&
+            !message.isFromMe) {
           SocketManager().chatsWithNotifications.add(chats[i].guid);
         }
       }

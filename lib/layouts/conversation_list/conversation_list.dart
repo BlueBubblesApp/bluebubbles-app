@@ -38,7 +38,7 @@ class _ConversationListState extends State<ConversationList> {
     if (!widget.showArchivedChats) {
       ChatBloc().chatStream.listen((List<Chat> chats) {
         _chats = chats;
-        setState(() {});
+        if (this.mounted) setState(() {});
       });
       ChatBloc().getChats();
     } else {

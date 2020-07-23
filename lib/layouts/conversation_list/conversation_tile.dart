@@ -25,13 +25,15 @@ class ConversationTile extends StatefulWidget {
   final dynamic subtitle;
   final String date;
   final bool hasNewMessage;
+  final bool replaceOnTap;
   ConversationTile(
       {Key key,
       this.chat,
       this.title,
       this.subtitle,
       this.date,
-      this.hasNewMessage})
+      this.hasNewMessage,
+      this.replaceOnTap})
       : super(key: key);
 
   // final Chat chat;
@@ -112,17 +114,32 @@ class _ConversationTileState extends State<ConversationTile> {
           },
           onTapUp: (details) {
             MessageBloc messageBloc = new MessageBloc(widget.chat);
-            Navigator.of(context).push(
-              CupertinoPageRoute(
-                builder: (BuildContext context) {
-                  return ConversationView(
-                    chat: widget.chat,
-                    title: widget.title,
-                    messageBloc: messageBloc,
-                  );
-                },
-              ),
-            );
+            if (widget.replaceOnTap != null && widget.replaceOnTap) {
+              Navigator.of(context).pushAndRemoveUntil(
+                CupertinoPageRoute(
+                  builder: (BuildContext context) {
+                    return ConversationView(
+                      chat: widget.chat,
+                      title: widget.title,
+                      messageBloc: messageBloc,
+                    );
+                  },
+                ),
+                (route) => route.isFirst,
+              );
+            } else {
+              Navigator.of(context).push(
+                CupertinoPageRoute(
+                  builder: (BuildContext context) {
+                    return ConversationView(
+                      chat: widget.chat,
+                      title: widget.title,
+                      messageBloc: messageBloc,
+                    );
+                  },
+                ),
+              );
+            }
             Future.delayed(Duration(milliseconds: 200), () {
               setState(() {
                 isPressed = false;

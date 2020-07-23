@@ -312,7 +312,6 @@ class SocketManager {
        * Handle new messages detected by the server
        */
       _manager.socket.subscribe("new-message", (_data) async {
-        debugPrint("Client received new message");
         Map<String, dynamic> data = jsonDecode(_data);
         // debugPrint("");
 
