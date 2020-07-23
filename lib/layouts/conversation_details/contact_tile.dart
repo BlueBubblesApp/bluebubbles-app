@@ -4,6 +4,8 @@ import 'dart:ui';
 
 import 'package:bluebubble_messages/blocs/chat_bloc.dart';
 import 'package:bluebubble_messages/helpers/hex_color.dart';
+import 'package:bluebubble_messages/helpers/utils.dart';
+import 'package:bluebubble_messages/layouts/widgets/contact_avatar_widget.dart';
 import 'package:bluebubble_messages/managers/contact_manager.dart';
 import 'package:bluebubble_messages/managers/new_message_manager.dart';
 import 'package:bluebubble_messages/repository/models/chat.dart';
@@ -36,7 +38,28 @@ class ContactTile extends StatefulWidget {
 }
 
 class _ContactTileState extends State<ContactTile> {
+  ImageProvider contactImage;
+
+  @override
+  Future<void> didChangeDependencies() async {
+    super.didChangeDependencies();
+    getAvatar(widget);
+    ContactManager().stream.listen((event) {
+      getAvatar(widget);
+    });
+  }
+
+  Future<void> getAvatar(ContactTile widget) async {
+    if (contactImage != null) return;
+
+    if (widget.contact != null && widget.contact.avatar.length > 0) {
+      contactImage = MemoryImage(widget.contact.avatar);
+      if (this.mounted) setState(() {});
+    }
+  }
+
   Widget _buildContactTile() {
+    var initials = getInitials(widget.contact?.displayName ?? "", " ");
     return InkWell(
       onTap: () async {
         if (widget.contact == null) {
@@ -51,6 +74,10 @@ class _ContactTileState extends State<ContactTile> {
               ? widget.contact.displayName
               : widget.handle.address,
           style: Theme.of(context).textTheme.bodyText1,
+        ),
+        leading: ContactAvatarWidget(
+          contactImage: contactImage,
+          initials: initials,
         ),
         trailing: SizedBox(
           width: MediaQuery.of(context).size.width / 3,

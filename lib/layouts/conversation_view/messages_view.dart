@@ -120,8 +120,15 @@ class _MessageViewState extends State<MessageView>
         if (this.mounted) setState(() {});
       }
     });
+  }
 
-    widget.messageBloc.getMessages();
+  @override
+  void didChangeDependencies() async {
+    super.didChangeDependencies();
+    if (_messages.length == 0) {
+      widget.messageBloc.getMessages();
+      setState(() {});
+    }
   }
 
   void getAttachmentsForMessage(Message message) {
@@ -152,7 +159,8 @@ class _MessageViewState extends State<MessageView>
                 key: _listKey,
                 itemBuilder: (BuildContext context, int index,
                     Animation<double> animation) {
-                  if (index == _messages.length) {
+
+                  if (index >= _messages.length) {
                     if (loader == null) {
                       loader =
                           widget.messageBloc.loadMessageChunk(_messages.length);
