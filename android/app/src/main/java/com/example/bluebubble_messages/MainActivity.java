@@ -254,7 +254,7 @@ public class MainActivity extends FlutterActivity {
 
             //actual notification
             NotificationCompat.Builder builder = new NotificationCompat.Builder(context, call.argument("CHANNEL_ID"))
-                    .setSmallIcon(R.mipmap.ic_launcher)
+                    .setSmallIcon(R.mipmap.ic_stat_icon)
                     .setContentTitle(call.argument("contentTitle"))
                     .setContentText(call.argument("contentText"))
                     .setAutoCancel(true)
@@ -262,7 +262,8 @@ public class MainActivity extends FlutterActivity {
                     .addAction(dismissAction)
                     .addAction(replyAction)
                     .setStyle(style)
-                    .addExtras(extras);
+                    .addExtras(extras)
+                    .setColor(4888294);
 //                                        .setGroup("new-messages");
 //                                        .setGroup("messageGroup");
 //                                NotificationCompat.Builder summaryBuilder = new NotificationCompat.Builder(this, call.argument("CHANNEL_ID"))
@@ -281,9 +282,10 @@ public class MainActivity extends FlutterActivity {
             result.success("");
         } else if (call.method.equals("create-socket-issue-warning")) {
             NotificationCompat.Builder builder = new NotificationCompat.Builder(context, call.argument("CHANNEL_ID"))
-                    .setSmallIcon(R.mipmap.ic_launcher)
+                    .setSmallIcon(R.mipmap.ic_stat_icon)
                     .setContentTitle("Could not connect")
                     .setContentText("Your server may be offline")
+                    .setColor(4888294)
                     .setAutoCancel(true);
             NotificationManagerCompat notificationManagerCompat = NotificationManagerCompat.from(context);
             notificationManagerCompat.notify(1000, builder.build());

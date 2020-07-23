@@ -231,7 +231,7 @@ public class BackgroundService extends Service {
             notificationManager.createNotificationChannel(channel);
         }
         NotificationCompat.Builder builder = new NotificationCompat.Builder(getApplicationContext(), "background_notification_channel")
-                .setSmallIcon(R.mipmap.ic_launcher)
+                .setSmallIcon(R.mipmap.ic_stat_icon)
                 .setContentTitle("BlueBubbles Service")
                 .setContentText("BlueBubbles is running in the background");
 

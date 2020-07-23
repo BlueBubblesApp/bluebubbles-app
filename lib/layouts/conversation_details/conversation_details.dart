@@ -290,7 +290,8 @@ class _ConversationDetailsState extends State<ConversationDetails> {
             SliverToBoxAdapter(
               child: InkWell(
                 onTap: () async {
-                  ActionHandler.resyncChat(chat, widget.messageBloc).then((value) {});
+                  await ActionHandler.resyncChat(chat, widget.messageBloc).then((value) {});
+                  setState(() {});
                 },
                 child: ListTile(
                   title: Text(
