@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:bluebubble_messages/blocs/chat_bloc.dart';
+import 'package:bluebubble_messages/blocs/message_bloc.dart';
 import 'package:bluebubble_messages/helpers/attachment_downloader.dart';
 import 'package:bluebubble_messages/helpers/attachment_sender.dart';
 import 'package:bluebubble_messages/helpers/contstants.dart';
@@ -151,7 +152,7 @@ class ActionHandler {
   /// ```dart
   /// resyncChat(chatObj)
   /// ```
-  static Future<void> resyncChat(Chat chat) async {
+  static Future<void> resyncChat(Chat chat, MessageBloc messageBloc) async {
     final Database db = await DBProvider.db.database;
 
     // Fetch messages associated with the chat
@@ -196,6 +197,10 @@ class ActionHandler {
     // Commit the deletes, then refresh the chats
     await batch.commit(noResult: true);
     NewMessageManager().updateWithMessage(chat, null);
+
+    // Now, let's re-fetch the messages for the chat
+    await messageBloc.loadMessageChunk(0);
+    ChatBloc().getChats();
   }
 
   /// Handles the ingestion of a 'updated-message' event. It takes the
