@@ -4,8 +4,10 @@ import androidx.annotation.NonNull;
 
 import io.flutter.embedding.android.FlutterActivity;
 import io.flutter.embedding.engine.FlutterEngine;
+import io.flutter.embedding.engine.plugins.shim.ShimPluginRegistry;
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
+import io.flutter.plugin.common.PluginRegistry;
 import io.flutter.plugins.GeneratedPluginRegistrant;
 
 import android.annotation.SuppressLint;
@@ -54,6 +56,7 @@ import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
+import com.bricktheworld.giftextfield.GiftextfieldPlugin;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -153,12 +156,21 @@ public class MainActivity extends FlutterActivity {
                         public void onComplete(@NonNull Task<InstanceIdResult> task) {
                             if (!task.isSuccessful()) {
                                 Log.d("FCM", "getInstanceId failed", task.getException());
-                                result.error("Failed to authenticate", "getInstanceId failed", task.getException());
+                                try {
+
+                                    result.error("Failed to authenticate", "getInstanceId failed", task.getException());
+                                } catch (IllegalStateException e) {
+
+                                }
                             } else {
 
                                 String token = task.getResult().getToken();
                                 Log.d("FCM", "token: " + token);
-                                result.success(token);
+                                try {
+                                    result.success(token);
+                                } catch (IllegalStateException e) {
+
+                                }
                             }
                         }
                     });

@@ -4,6 +4,8 @@ import android.app.Activity;
 
 import androidx.annotation.CallSuper;
 
+import com.bricktheworld.giftextfield.GiftextfieldPlugin;
+
 import io.flutter.app.FlutterApplication;
 import io.flutter.plugin.common.PluginRegistry;
 import io.flutter.view.FlutterMain;

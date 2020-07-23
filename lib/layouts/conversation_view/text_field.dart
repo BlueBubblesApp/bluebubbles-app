@@ -17,6 +17,8 @@ import 'package:mime_type/mime_type.dart';
 import 'package:photo_manager/photo_manager.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
 
+import 'package:giftextfield/giftextfield.dart';
+
 class BlueBubblesTextField extends StatefulWidget {
   final Chat chat;
   final Function customSend;
@@ -258,23 +260,30 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
           ),
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: <Widget>[
-              Spacer(
-                flex: 1,
-              ),
-              CupertinoButton(
-                onPressed: handleOpenImagePicker,
-                child: Icon(
-                  Icons.camera_alt,
-                  color: HexColor('8e8e8e'),
-                  size: 30,
+              // Spacer(
+              //   flex: 1,
+              // ),
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 6.0, vertical: 8.0),
+                child: SizedBox(
+                  width: 30,
+                  height: 30,
+                  child: GestureDetector(
+                    onTap: handleOpenImagePicker,
+                    child: Icon(Icons.camera_alt,
+                        color: HexColor('8e8e8e'), size: 22),
+                  ),
                 ),
               ),
-              Spacer(
-                flex: 1,
-              ),
+
+              // Spacer(
+              //   flex: 1,
+              // ),
               Container(
-                width: MediaQuery.of(context).size.width * 3.5 / 4.5,
+                width: MediaQuery.of(context).size.width * 3 / 4 + 50,
                 child: Stack(
                   alignment: AlignmentDirectional.centerEnd,
                   children: <Widget>[
@@ -290,13 +299,16 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                         autocorrect: true,
                         controller: _controller,
                         scrollPhysics: BouncingScrollPhysics(),
-                        style: Theme.of(context).textTheme.bodyText1,
+                        style: Theme.of(context)
+                            .textTheme
+                            .bodyText2
+                            .apply(color: Colors.white, fontSizeDelta: -0.25),
                         keyboardType: TextInputType.multiline,
                         maxLines: 14,
                         minLines: 1,
                         placeholder: "BlueBubbles",
                         padding: EdgeInsets.only(
-                            left: 10, right: 40, top: 10, bottom: 10),
+                            left: 10, top: 10, right: 40, bottom: 10),
                         placeholderStyle: Theme.of(context).textTheme.subtitle1,
                         autofocus: true,
                         decoration: BoxDecoration(

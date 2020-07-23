@@ -38,15 +38,15 @@ callbackHandler() async {
   await ContactManager().getContacts(headless: true);
   SettingsManager().init();
   MethodChannelInterface().init(null, channel: _backgroundChannel);
-  LifeCycleManager().opened();
+  // LifeCycleManager().opened();
+  LifeCycleManager().close();
   // SocketManager().connectCb = () {
   //   debugPrint("connectCb");
   //   resyncChats(_backgroundChannel);
   // };
   await SettingsManager().getSavedSettings(headless: true);
   SocketManager().authFCM();
-  resyncChats(_backgroundChannel);
-  // SocketManager().startSocketIO();
+  SocketManager().startSocketIO();
   _backgroundChannel.setMethodCallHandler((call) async {
     debugPrint("call " + call.method);
     if (call.method == "new-message") {
@@ -135,78 +135,6 @@ void fcmAuth(MethodChannel channel) async {
       debugPrint("some weird ass error " + e.details);
     }
   }
-}
-
-void resyncChats(MethodChannel channel) async {
-  debugPrint("starting resync");
-  SocketManager().sendMessage("get-chats", {}, (data) {
-    receivedChats(data, () {
-      // SocketManager().closeSocket();
-      debugPrint("finished getting chats");
-      LifeCycleManager().close();
-    }, channel);
-  });
-  // List<Chat> chats = await ChatBloc().getChats();
-}
-
-void receivedChats(data, Function completeCB, MethodChannel channel) async {
-  debugPrint("got chats");
-  List chats = data["data"];
-  getChatMessagesRecursive(chats, 0, completeCB, channel);
-}
-
-void getChatMessagesRecursive(
-    List chats, int index, Function completeCB, MethodChannel channel) async {
-  Chat chat = Chat.fromMap(chats[index]);
-  await chat.save();
-  List<Message> messages = await Chat.getMessages(chat, limit: 1, offset: 0);
-
-  Map<String, dynamic> params = Map();
-  params["identifier"] = chat.guid;
-  params["withBlurhash"] = true;
-  params["where"] = [
-    {"statement": "message.service = 'iMessage'", "args": null}
-  ];
-  if (messages.length != 0) {
-    params["after"] = messages.first.dateCreated.millisecondsSinceEpoch + 10;
-    params["limit"] = 500;
-    debugPrint("after is " + params["after"].toString());
-  } else {
-    params["limit"] = 25;
-  }
-  SocketManager().sendMessage("get-chat-messages", params, (data) {
-    receivedMessagesForChat(chat, data, channel);
-    if (index + 1 < chats.length) {
-      getChatMessagesRecursive(chats, index + 1, completeCB, channel);
-    } else {
-      completeCB();
-    }
-  });
-}
-
-void receivedMessagesForChat(
-    Chat chat, Map<String, dynamic> data, MethodChannel channel) async {
-  List messages = data["data"];
-
-  MessageHelper.bulkAddMessages(chat, messages);
-  // for (var _message in messages) {
-  //   Message message = Message.fromMap(_message);
-  //   String title = await getFullChatTitle(chat);
-
-  //   if (!message.isFromMe && !chat.isMuted) {
-  //     createNewMessage(
-  //       title,
-  //       !isEmptyString(message.text)
-  //           ? message.text
-  //           : message.hasAttachments ? "Attachments" : "Something went wrong",
-  //       chat.guid,
-  //       Random().nextInt(9999),
-  //       chat.id,
-  //       channel,
-  //       handle: message.handle,
-  //     );
-  //   }
-  // }
 }
 
 void createNewNotification(

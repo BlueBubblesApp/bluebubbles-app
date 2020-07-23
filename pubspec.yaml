@@ -68,6 +68,8 @@ dependencies:
   matrix_gesture_detector: ^0.1.0
   save_in_gallery: ^0.1.3
   flutter_colorpicker: ^0.3.4
+  giftextfield:
+    path: packages/gif_text_field
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.

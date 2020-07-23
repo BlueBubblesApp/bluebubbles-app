@@ -72,7 +72,7 @@ class MessageBloc {
               //   }
               // }
               _allMessages.remove(event["oldGuid"]);
-              insert(event[_currentChat.guid]);
+              insert(event[_currentChat.guid], addToSink: false);
               // _allMessages = LinkedHashMap<String, Message>.from(
               //     LinkedHashMap.fromIterables(keys, values));
               if (!_messageController.isClosed)
@@ -100,7 +100,8 @@ class MessageBloc {
     });
   }
 
-  void insert(Message message, {bool sentFromThisClient = false}) {
+  void insert(Message message,
+      {bool sentFromThisClient = false, bool addToSink = true}) {
     if (message.associatedMessageGuid != null) {
       if (_allMessages.containsKey(message.associatedMessageGuid)) {
         Message messageWithReaction =
@@ -108,10 +109,11 @@ class MessageBloc {
         messageWithReaction.hasReactions = true;
         _allMessages.update(
             message.associatedMessageGuid, (value) => messageWithReaction);
-        _messageController.sink.add({
-          "messages": _allMessages,
-          "update": _allMessages[message.associatedMessageGuid],
-        });
+        if (addToSink)
+          _messageController.sink.add({
+            "messages": _allMessages,
+            "update": _allMessages[message.associatedMessageGuid],
+          });
       }
       return;
     }
@@ -119,7 +121,7 @@ class MessageBloc {
     int index = 0;
     if (_allMessages.length == 0) {
       _allMessages.addAll({message.guid: message});
-      if (!_messageController.isClosed)
+      if (!_messageController.isClosed && addToSink)
         _messageController.sink.add({
           "messages": _allMessages,
           "insert": message,
@@ -145,7 +147,7 @@ class MessageBloc {
         break;
       }
     }
-    if (!_messageController.isClosed)
+    if (!_messageController.isClosed && addToSink)
       _messageController.sink.add({
         "messages": _allMessages,
         "insert": message,

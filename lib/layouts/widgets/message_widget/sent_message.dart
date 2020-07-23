@@ -363,6 +363,7 @@ class ActualSentMessage extends StatefulWidget {
     @required this.customContent,
     @required this.textSpans,
     @required this.createErrorPopup,
+    this.constrained,
   }) : super(key: key);
   final Color blueColor;
   final bool showTail;
@@ -370,6 +371,7 @@ class ActualSentMessage extends StatefulWidget {
   final List<Widget> customContent;
   final List<InlineSpan> textSpans;
   final Function() createErrorPopup;
+  final bool constrained;
 
   @override
   _ActualSentMessageState createState() => _ActualSentMessageState();
@@ -423,7 +425,9 @@ class _ActualSentMessageState extends State<ActualSentMessage> {
                     horizontal: 10,
                   ),
                   constraints: BoxConstraints(
-                    maxWidth: MediaQuery.of(context).size.width * 3 / 4,
+                    maxWidth: widget.constrained == null
+                        ? MediaQuery.of(context).size.width * 3 / 4
+                        : MediaQuery.of(context).size.width * 3 / 4 + 37,
                   ),
                   padding: EdgeInsets.symmetric(
                     vertical: 8,
@@ -434,12 +438,15 @@ class _ActualSentMessageState extends State<ActualSentMessage> {
                     color: widget.blueColor,
                   ),
                   child: widget.customContent == null
-                      ? RichText(
-                          text: TextSpan(
-                            children: widget.textSpans,
-                            style: Theme.of(context).textTheme.bodyText2.apply(
-                                  color: Colors.white,
-                                ),
+                      ? Container(
+                          child: RichText(
+                            text: TextSpan(
+                              children: widget.textSpans,
+                              style:
+                                  Theme.of(context).textTheme.bodyText2.apply(
+                                        color: Colors.white,
+                                      ),
+                            ),
                           ),
                         )
                       : widget.customContent.first,

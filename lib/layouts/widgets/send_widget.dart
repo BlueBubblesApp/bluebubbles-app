@@ -36,14 +36,34 @@ class _SendWidgetState extends State<SendWidget> {
     Widget messageWidget = ActualSentMessage(
       blueColor: darken(Colors.blue[600], 0.2),
       createErrorPopup: () {},
+      constrained: false,
       customContent: <Widget>[
         Container(
           constraints: BoxConstraints(
-            minWidth: MediaQuery.of(context).size.width * 3 / 4,
+            minWidth: MediaQuery.of(context).size.width * 3 / 4 + 37,
+            // maxWidth: MediaQuery.of(context).size.width * 3 / 4 + 37,
           ),
-          child: Text(
-            widget.text,
-            style: Theme.of(context).textTheme.bodyText2,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: <Widget>[
+              Container(
+                constraints: BoxConstraints(
+                  maxWidth: MediaQuery.of(context).size.width * 3 / 4 - 30,
+                ),
+                child: RichText(
+                  text: TextSpan(
+                    text: widget.text,
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodyText2
+                        .apply(color: Colors.white),
+                  ),
+                ),
+              ),
+              // Padding(
+              //   padding: EdgeInsets.only(right: 37),
+              // ),
+            ],
           ),
         )
       ],
@@ -69,7 +89,7 @@ class _SendWidgetState extends State<SendWidget> {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.only(bottom: 10, right: 4),
+            padding: const EdgeInsets.only(bottom: 12, right: 4),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.end,
               children: <Widget>[
@@ -78,7 +98,7 @@ class _SendWidgetState extends State<SendWidget> {
                       flightDirection, fromHeroContext, toHeroContext) {
                     Animation animation = _animation.drive(
                       Tween<double>(
-                        end: MediaQuery.of(context).size.width * 3 / 4,
+                        end: MediaQuery.of(context).size.width * 3 / 4 + 37,
                         begin: 0,
                       ),
                     );
@@ -91,64 +111,47 @@ class _SendWidgetState extends State<SendWidget> {
                         child: ActualSentMessage(
                           blueColor: darken(Colors.blue[600], 0.2),
                           createErrorPopup: () {},
+                          constrained: false,
                           customContent: <Widget>[
                             AnimatedBuilder(
-                              animation: animation,
-                              builder: (context, child) {
-                                return Container(
-                                  constraints: BoxConstraints(
-                                    minWidth: animation.value,
-                                  ),
-                                  child: child,
-                                );
-                              },
-                              child: RichText(
-                                text: TextSpan(
-                                  children: [
-                                    TextSpan(
-                                      text: widget.text,
-                                    )
+                                animation: animation,
+                                builder: (context, child) {
+                                  return Container(
+                                    constraints: BoxConstraints(
+                                      minWidth: animation.value,
+                                    ),
+                                    child: child,
+                                  );
+                                },
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: <Widget>[
+                                    Container(
+                                      constraints: BoxConstraints(
+                                        maxWidth:
+                                            MediaQuery.of(context).size.width *
+                                                    3 /
+                                                    4 -
+                                                30,
+                                      ),
+                                      child: RichText(
+                                        text: TextSpan(
+                                          text: widget.text,
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodyText2
+                                              .apply(color: Colors.white),
+                                        ),
+                                      ),
+                                    ),
                                   ],
-                                  style: Theme.of(context).textTheme.bodyText2,
-                                ),
-                              ),
-                            ),
+                                )),
                           ],
                           message: null,
                           showTail: true,
                           textSpans: <InlineSpan>[],
                         ),
-                        // MessageWidget(
-                        //   // reactions: [],
-                        //   fromSelf: true,
-                        //   showHandle: false,
-                        //   newerMessage: null,
-                        //   olderMessage: null,
-                        //   shouldFadeIn: false,
-                        //   customContent: <Widget>[
-                        //     AnimatedBuilder(
-                        //       animation: animation,
-                        //       builder: (context, child) {
-                        //         return Container(
-                        //           constraints: BoxConstraints(
-                        //             minWidth: animation.value,
-                        //           ),
-                        //           child: child,
-                        //         );
-                        //       },
-                        //       child: RichText(
-                        //         text: TextSpan(
-                        //           children: [
-                        //             TextSpan(
-                        //               text: widget.text,
-                        //             )
-                        //           ],
-                        //           style: Theme.of(context).textTheme.bodyText2,
-                        //         ),
-                        //       ),
-                        //     ),
-                        //   ],
-                        // ),
                       ),
                     );
                   },
