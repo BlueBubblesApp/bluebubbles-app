@@ -5,6 +5,7 @@ import 'dart:ui';
 
 import 'package:bluebubble_messages/action_handler.dart';
 import 'package:bluebubble_messages/blocs/chat_bloc.dart';
+import 'package:bluebubble_messages/blocs/message_bloc.dart';
 import 'package:bluebubble_messages/helpers/attachment_downloader.dart';
 import 'package:bluebubble_messages/helpers/attachment_helper.dart';
 import 'package:bluebubble_messages/helpers/hex_color.dart';
@@ -28,10 +29,12 @@ import 'package:permission_handler/permission_handler.dart';
 
 class ConversationDetails extends StatefulWidget {
   final Chat chat;
+  final MessageBloc messageBloc;
 
   ConversationDetails({
     Key key,
     this.chat,
+    this.messageBloc
   }) : super(key: key);
 
   @override
@@ -287,7 +290,8 @@ class _ConversationDetailsState extends State<ConversationDetails> {
             SliverToBoxAdapter(
               child: InkWell(
                 onTap: () async {
-                  ActionHandler.resyncChat(chat).then((value) {});
+                  await ActionHandler.resyncChat(chat, widget.messageBloc).then((value) {});
+                  setState(() {});
                 },
                 child: ListTile(
                   title: Text(

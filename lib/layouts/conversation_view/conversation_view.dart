@@ -104,6 +104,7 @@ class _ConversationViewState extends State<ConversationView> {
         Cupertino.CupertinoPageRoute(
           builder: (context) => ConversationDetails(
             chat: _chat,
+            messageBloc: widget.messageBloc
           ),
         ),
       );

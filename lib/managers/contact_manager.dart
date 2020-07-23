@@ -37,8 +37,10 @@ class ContactManager {
           contact.phones.forEach((Item item) {
             String formattedNumber =
                 item.value.replaceAll(RegExp(r'[-() ]'), '');
+            
             if (formattedNumber == handle.address ||
-                "+1" + formattedNumber == handle.address) {
+                "+1" + formattedNumber == handle.address ||
+                "+" + formattedNumber == handle.address) {
               handleToContact[handle.address] = contact;
             }
           });
