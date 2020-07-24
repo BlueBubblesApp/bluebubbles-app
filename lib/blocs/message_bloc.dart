@@ -142,7 +142,12 @@ class MessageBloc {
         _allMessages =
             linkedHashMapInsert(_allMessages, i, message.guid, message);
         index = i;
-        debugPrint("insert at " + index.toString());
+        debugPrint("insert at " +
+            index.toString() +
+            ", " +
+            message.originalROWID.toString() +
+            ", " +
+            messages[i].originalROWID.toString());
 
         break;
       }

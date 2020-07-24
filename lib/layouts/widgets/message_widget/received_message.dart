@@ -9,12 +9,14 @@ import 'package:bluebubble_messages/repository/models/handle.dart';
 import 'package:bluebubble_messages/repository/models/message.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class ReceivedMessage extends StatefulWidget {
   final bool showTail;
   final Message message;
   final Message olderMessage;
+  final double offset;
   // final OverlayEntry overlayEntry;
   final Map<String, String> timeStamp;
   final bool showHandle;
@@ -33,6 +35,7 @@ class ReceivedMessage extends StatefulWidget {
     @required this.customContent,
     @required this.isFromMe,
     @required this.attachments,
+    this.offset,
   }) : super(key: key);
 
   @override
@@ -220,7 +223,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> {
           contactItem,
           widget.attachments,
           Row(
-            mainAxisAlignment: MainAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: <Widget>[
               Padding(
                 padding: EdgeInsets.only(bottom: widget.showTail ? 10.0 : 3.0),
@@ -256,6 +259,18 @@ class _ReceivedMessageState extends State<ReceivedMessage> {
                   ],
                 ),
               ),
+              AnimatedContainer(
+                width: (-widget.offset).clamp(0, 70).toDouble(),
+                duration: Duration(milliseconds: widget.offset == 0 ? 150 : 0),
+                child: Text(
+                  DateFormat('h:ma')
+                      .format(widget.message.dateCreated)
+                      .toLowerCase(),
+                  style: Theme.of(context).textTheme.subtitle1,
+                  overflow: TextOverflow.clip,
+                  maxLines: 1,
+                ),
+              )
             ],
           ),
           widget.timeStamp != null

@@ -56,6 +56,7 @@ class MessageWidget extends StatefulWidget {
     this.isFirstSentMessage,
     this.showHero,
     this.savedAttachmentData,
+    this.offset,
   }) : super(key: key);
 
   final fromSelf;
@@ -67,6 +68,7 @@ class MessageWidget extends StatefulWidget {
   final bool isFirstSentMessage;
   final bool showHero;
   final SavedAttachmentData savedAttachmentData;
+  final double offset;
 
   final List<Widget> customContent;
 
@@ -127,6 +129,7 @@ class _MessageState extends State<MessageWidget> {
       );
     } else if (widget.fromSelf) {
       return SentMessage(
+        offset: widget.offset,
         timeStamp: _buildTimeStamp(context),
         message: widget.message,
         showDeliveredReceipt:
@@ -146,6 +149,7 @@ class _MessageState extends State<MessageWidget> {
       );
     } else {
       return ReceivedMessage(
+        offset: widget.offset,
         timeStamp: _buildTimeStamp(context),
         showTail: showTail,
         olderMessage: widget.olderMessage,

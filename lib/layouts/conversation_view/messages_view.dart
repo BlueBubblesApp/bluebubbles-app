@@ -34,6 +34,7 @@ class _MessageViewState extends State<MessageView>
   // Map<String, Future<List<Attachment>>> attachmentFutures = Map();
   // Map<String, Map<String, dynamic>> attachmentResults = Map();
   bool initializedList = false;
+  double timeStampOffset = 0;
 
   @override
   void initState() {
@@ -149,79 +150,98 @@ class _MessageViewState extends State<MessageView>
 
   @override
   Widget build(BuildContext context) {
-    return CustomScrollView(
-      reverse: true,
-      physics: AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-      slivers: <Widget>[
-        _listKey != null
-            ? SliverAnimatedList(
-                initialItemCount: _messages.length + 1,
-                key: _listKey,
-                itemBuilder: (BuildContext context, int index,
-                    Animation<double> animation) {
-
-                  if (index >= _messages.length) {
-                    if (loader == null) {
-                      loader =
-                          widget.messageBloc.loadMessageChunk(_messages.length);
-                      loader.then((val) {
-                        loader = null;
-                      });
+    return GestureDetector(
+      behavior: HitTestBehavior.deferToChild,
+      onHorizontalDragStart: (details) {},
+      onHorizontalDragUpdate: (details) {
+        setState(() {
+          timeStampOffset += details.delta.dx * 0.3;
+        });
+      },
+      onHorizontalDragEnd: (details) {
+        setState(() {
+          timeStampOffset = 0;
+        });
+      },
+      onHorizontalDragCancel: () {
+        setState(() {
+          timeStampOffset = 0;
+        });
+      },
+      child: CustomScrollView(
+        reverse: true,
+        physics: AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+        slivers: <Widget>[
+          _listKey != null
+              ? SliverAnimatedList(
+                  initialItemCount: _messages.length + 1,
+                  key: _listKey,
+                  itemBuilder: (BuildContext context, int index,
+                      Animation<double> animation) {
+                    if (index >= _messages.length) {
+                      if (loader == null) {
+                        loader = widget.messageBloc
+                            .loadMessageChunk(_messages.length);
+                        loader.then((val) {
+                          loader = null;
+                        });
+                      }
+                      return NewMessageLoader(
+                        messageBloc: widget.messageBloc,
+                        offset: _messages.length,
+                        loader: loader,
+                      );
                     }
-                    return NewMessageLoader(
-                      messageBloc: widget.messageBloc,
-                      offset: _messages.length,
-                      loader: loader,
-                    );
-                  }
 
-                  Message olderMessage;
-                  Message newerMessage;
-                  if (index + 1 >= 0 && index + 1 < _messages.length) {
-                    olderMessage = _messages[index + 1];
-                  }
-                  if (index - 1 >= 0 && index - 1 < _messages.length) {
-                    newerMessage = _messages[index - 1];
-                  }
+                    Message olderMessage;
+                    Message newerMessage;
+                    if (index + 1 >= 0 && index + 1 < _messages.length) {
+                      olderMessage = _messages[index + 1];
+                    }
+                    if (index - 1 >= 0 && index - 1 < _messages.length) {
+                      newerMessage = _messages[index - 1];
+                    }
 
-                  return SizeTransition(
-                    axis: Axis.vertical,
-                    sizeFactor: animation.drive(Tween(begin: 0.0, end: 1.0)
-                        .chain(CurveTween(curve: Curves.easeInOut))),
-                    child: SlideTransition(
-                      position: animation.drive(
-                          Tween(begin: Offset(0.0, 1), end: Offset(0.0, 0.0))
-                              .chain(CurveTween(curve: Curves.easeInOut))),
-                      child: FadeTransition(
-                        opacity: animation,
-                        child: MessageWidget(
-                          key: Key(_messages[index].guid),
-                          fromSelf: _messages[index].isFromMe,
-                          message: _messages[index],
-                          olderMessage: olderMessage,
-                          newerMessage: newerMessage,
-                          showHandle: widget.showHandle,
-                          shouldFadeIn:
-                              sentMessages.contains(_messages[index].guid),
-                          isFirstSentMessage:
-                              widget.messageBloc.firstSentMessage ==
-                                  _messages[index].guid,
-                          savedAttachmentData:
-                              attachments.containsKey(_messages[index].guid)
-                                  ? attachments[_messages[index].guid]
-                                  : null,
-                          showHero: index == 0,
+                    return SizeTransition(
+                      axis: Axis.vertical,
+                      sizeFactor: animation.drive(Tween(begin: 0.0, end: 1.0)
+                          .chain(CurveTween(curve: Curves.easeInOut))),
+                      child: SlideTransition(
+                        position: animation.drive(
+                            Tween(begin: Offset(0.0, 1), end: Offset(0.0, 0.0))
+                                .chain(CurveTween(curve: Curves.easeInOut))),
+                        child: FadeTransition(
+                          opacity: animation,
+                          child: MessageWidget(
+                            key: Key(_messages[index].guid),
+                            offset: timeStampOffset,
+                            fromSelf: _messages[index].isFromMe,
+                            message: _messages[index],
+                            olderMessage: olderMessage,
+                            newerMessage: newerMessage,
+                            showHandle: widget.showHandle,
+                            shouldFadeIn:
+                                sentMessages.contains(_messages[index].guid),
+                            isFirstSentMessage:
+                                widget.messageBloc.firstSentMessage ==
+                                    _messages[index].guid,
+                            savedAttachmentData:
+                                attachments.containsKey(_messages[index].guid)
+                                    ? attachments[_messages[index].guid]
+                                    : null,
+                            showHero: index == 0,
+                          ),
                         ),
                       ),
-                    ),
-                  );
-                },
-              )
-            : SliverToBoxAdapter(child: Container()),
-        SliverPadding(
-          padding: EdgeInsets.all(70),
-        ),
-      ],
+                    );
+                  },
+                )
+              : SliverToBoxAdapter(child: Container()),
+          SliverPadding(
+            padding: EdgeInsets.all(70),
+          ),
+        ],
+      ),
     );
   }
 }

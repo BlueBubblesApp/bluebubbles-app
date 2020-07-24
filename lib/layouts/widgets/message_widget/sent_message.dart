@@ -15,6 +15,7 @@ import 'package:bluebubble_messages/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class SentMessage extends StatefulWidget {
@@ -28,6 +29,7 @@ class SentMessage extends StatefulWidget {
   final bool isFromMe;
   final Widget attachments;
   final bool showHero;
+  final double offset;
 
   final String substituteText;
   final bool limited;
@@ -45,6 +47,7 @@ class SentMessage extends StatefulWidget {
     this.limited,
     this.shouldFadeIn,
     this.showHero,
+    this.offset,
   }) : super(key: key);
 
   @override
@@ -306,6 +309,19 @@ class _SentMessageState extends State<SentMessage>
                     ],
                   ),
                 ),
+                AnimatedContainer(
+                  width: (-widget.offset).clamp(0, 70).toDouble(),
+                  duration:
+                      Duration(milliseconds: widget.offset == 0 ? 150 : 0),
+                  child: Text(
+                    DateFormat('h:ma')
+                        .format(widget.message.dateCreated)
+                        .toLowerCase(),
+                    style: Theme.of(context).textTheme.subtitle1,
+                    overflow: TextOverflow.clip,
+                    maxLines: 1,
+                  ),
+                )
               ],
             ),
             DeliveredReceipt(
