@@ -36,6 +36,7 @@ class AttachmentSender {
   Attachment messageAttachment;
   Message sentMessage;
   Message messageWithText;
+  double progress = 0.0;
 
   String get guid => _attachmentGuid;
 
@@ -81,10 +82,12 @@ class AttachmentSender {
       debugPrint(data.toString());
       if (response['status'] == 200) {
         if (index + _chunkSize < _imageBytes.length) {
-          if (!_stream.isClosed) _stream.sink.add(index / _imageBytes.length);
+          progress = index / _imageBytes.length;
+          if (!_stream.isClosed) _stream.sink.add(progress);
           sendChunkRecursive(index + _chunkSize, total, tempGuid);
         } else {
-          if (!_stream.isClosed) _stream.sink.add(index / _imageBytes.length);
+          progress = index / _imageBytes.length;
+          if (!_stream.isClosed) _stream.sink.add(progress);
           debugPrint("no more to send");
           SocketManager().finishSender(_attachmentGuid);
           LifeCycleManager().finishDownloader();

@@ -51,9 +51,20 @@ class _NewChatCreatorState extends State<NewChatCreator> {
   @override
   void initState() {
     super.initState();
-    conversations = ChatBloc().chats;
-    conversations.forEach((element) {
-      element.getParticipants();
+    if (ChatBloc().chats != null) {
+      conversations = ChatBloc().chats;
+      conversations.forEach((element) {
+        element.getParticipants();
+      });
+    }
+    ChatBloc().chatStream.listen((event) {
+      if (conversations.length == 0 && this.mounted && event != null) {
+        conversations = event;
+        conversations.forEach((element) {
+          element.getParticipants();
+        });
+        setState(() {});
+      }
     });
     _controller = TextEditingController();
   }

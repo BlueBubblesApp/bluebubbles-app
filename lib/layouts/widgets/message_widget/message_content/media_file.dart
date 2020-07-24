@@ -45,7 +45,11 @@ class _MediaFileState extends State<MediaFile> {
               return CircularProgressIndicator(
                 backgroundColor: Colors.grey,
                 valueColor: AlwaysStoppedAnimation(Colors.white),
-                value: snapshot.hasData ? snapshot.data : 0.0,
+                value: snapshot.hasData
+                    ? snapshot.data
+                    : SocketManager()
+                        .attachmentSenders[widget.attachment.guid]
+                        .progress,
               );
             },
             stream: SocketManager()
