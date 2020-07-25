@@ -356,6 +356,14 @@ class ActionHandler {
       // Add the message to the chats
       for (int i = 0; i < chats.length; i++) {
         debugPrint("Client received new message " + chats[i].guid);
+        List<String> processedNotificationsCopy = [];
+        processedNotificationsCopy
+            .addAll(NotificationManager().processedNotifications);
+        if (!NotificationManager()
+            .processedNotifications
+            .contains(message.guid)) {
+          NotificationManager().processedNotifications.add(message.guid);
+        }
         await ActionHandler.handleChat(
             chat: chats[i], checkIfExists: true, isHeadless: isHeadless);
         Message existing = await Message.findOne({"guid": message.guid});
@@ -363,9 +371,7 @@ class ActionHandler {
             (NotificationManager().chatGuid != chats[i].guid ||
                 !LifeCycleManager().isAlive) &&
             !chats[i].isMuted &&
-            !NotificationManager()
-                .processedNotifications
-                .contains(message.guid) &&
+            !processedNotificationsCopy.contains(message.guid) &&
             existing == null) {
           String text = message.text;
           if ((data['attachments'] as List<dynamic>).length > 0) {
@@ -389,7 +395,6 @@ class ActionHandler {
                 ContactManager().contacts,
                 message.handle.address,
               ));
-          NotificationManager().processedNotifications.add(message.guid);
         }
         await message.save();
         debugPrint(

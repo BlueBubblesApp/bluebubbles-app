@@ -200,7 +200,7 @@ class MessageBloc {
         params["identifier"] = _currentChat.guid;
         params["limit"] = 25;
         params["offset"] = offset + _reactions;
-        params["withBlurhash"] = true;
+        params["withBlurhash"] = false;
         params["where"] = [
           {"statement": "message.service = 'iMessage'", "args": null}
         ];
