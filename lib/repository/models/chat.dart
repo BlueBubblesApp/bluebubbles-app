@@ -241,7 +241,6 @@ class Chat {
 
     // String reactionQualifier = reactionsOnly ? "IS NOT" : "IS";
     String query = ("SELECT"
-        " IFNULL(message.originalROWID, message.dateCreated) AS sortVal,"
         " message.ROWID AS ROWID,"
         " message.originalROWID AS originalROWID,"
         " message.guid AS guid,"
@@ -283,10 +282,13 @@ class Chat {
         " WHERE chat.ROWID = ?");
 
     // Add pagination
-    query += " ORDER BY sortVal DESC LIMIT $limit OFFSET $offset";
+    String pagination =
+        " ORDER BY message.originalROWID DESC LIMIT $limit OFFSET $offset;";
 
     // Execute the query
-    var res = await db.rawQuery("$query;", [chat.id]);
+    var res = await db.rawQuery(
+        "$query" + " AND message.originalROWID IS NOT NULL" + pagination,
+        [chat.id]);
 
     // Add the from/handle data to the messages
     List<Message> output = [];
@@ -307,6 +309,31 @@ class Chat {
       }
 
       output.add(msg);
+    }
+
+    var res2 = await db
+        .rawQuery("$query" + " AND message.originalROWID IS NULL;", [chat.id]);
+    for (int i = 0; i < res2.length; i++) {
+      Message msg = Message.fromMap(res2[i]);
+
+      // If the handle is not null, load the handle data
+      // The handle is null if the message.handleId is 0
+      // the handleId is 0 when isFromMe is true and the chat is a group chat
+      if (res2[i].containsKey('handleAddress') &&
+          res2[i]['handleAddress'] != null) {
+        msg.handle = Handle.fromMap({
+          'id': res2[i]['handleId'],
+          'address': res2[i]['handleAddress'],
+          'country': res2[i]['handleCountry'],
+          'uncanonicalizedId': res2[i]['handleUncanonicalizedId']
+        });
+      }
+      for (int j = 0; j < output.length; j++) {
+        if (output[j].id < msg.id) {
+          output.insert(j, msg);
+          break;
+        }
+      }
     }
     return output;
   }

@@ -71,6 +71,7 @@ class NotificationManager {
     debugPrint("contactIcon " + contactIcon.toString());
     MethodChannelInterface().platform.invokeMethod("new-message-notification", {
       "CHANNEL_ID": "com.bluebubbles.new_messages",
+      "CHANNEL_NAME": "New Messages",
       "contentTitle": contentTitle,
       "contentText": contentText,
       "group": group,

@@ -126,6 +126,7 @@ class _SendWidgetState extends State<SendWidget> {
                                 child: Row(
                                   mainAxisAlignment:
                                       MainAxisAlignment.spaceBetween,
+                                  mainAxisSize: MainAxisSize.min,
                                   children: <Widget>[
                                     Container(
                                       constraints: BoxConstraints(

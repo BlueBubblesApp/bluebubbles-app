@@ -121,7 +121,7 @@ public class MainActivity extends FlutterActivity {
     };
 
     @SuppressLint("RestrictedApi")
-    @RequiresApi(api = Build.VERSION_CODES.M)
+    @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     public void configureFlutterEngine(@NonNull FlutterEngine flutterEngine) {
         GeneratedPluginRegistrant.registerWith(flutterEngine);
@@ -132,7 +132,7 @@ public class MainActivity extends FlutterActivity {
     }
 
     @SuppressLint("RestrictedApi")
-    @RequiresApi(api = Build.VERSION_CODES.M)
+    @RequiresApi(api = Build.VERSION_CODES.O)
     public static void methodCallHandler(MethodCall call, MethodChannel.Result result, Context context, ValueEventListener dbListener, FusedLocationProviderClient fusedLocationClient) {
         if (call.method.equals("auth")) {
             if (!isNetworkAvailable(context))
@@ -259,6 +259,8 @@ public class MainActivity extends FlutterActivity {
             Intent intent = new Intent(context, ReplyReceiver.class)
                     .putExtra("id", existingNotificationId)
                     .putExtra("chatGuid", (String) call.argument("group"))
+                    .putExtra("channelName", (String) call.argument("CHANNEL_NAME"))
+                    .putExtra("channelID", (String) call.argument("CHANNEL_ID"))
                     .setType("reply");
             PendingIntent replyIntent = PendingIntent.getBroadcast(context, existingNotificationId, intent, PendingIntent.FLAG_UPDATE_CURRENT);
             androidx.core.app.RemoteInput replyInput = new androidx.core.app.RemoteInput.Builder("key_text_reply").setLabel("Reply").build();

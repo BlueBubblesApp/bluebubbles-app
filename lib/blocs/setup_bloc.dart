@@ -33,7 +33,8 @@ class SetupBloc {
   void startSync(Settings settings, Function _onConnectionError,
       {bool isMiniResync = false}) {
     if (isSyncing) return;
-    processId = SocketManager().addSocketProcess(() {});
+    processId =
+        SocketManager().addSocketProcess(([bool finishWithError = false]) {});
     onConnectionError = _onConnectionError;
     debugPrint(settings.toJson().toString());
     _isMiniResync = isMiniResync;
