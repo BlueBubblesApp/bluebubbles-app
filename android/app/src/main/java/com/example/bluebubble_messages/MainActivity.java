@@ -331,27 +331,29 @@ public class MainActivity extends FlutterActivity {
             }
             result.success("");
         } else if (call.method.equals("get-last-location")) {
+            // If we don't have the location client, let's get it
             if (fusedLocationClient == null)
                 fusedLocationClient = LocationServices.getFusedLocationProviderClient(context);
+            
+            // Fetch the last location
             fusedLocationClient.getLastLocation()
-                    .addOnSuccessListener((Activity) context, new OnSuccessListener<Location>() {
-                        @Override
-                        public void onSuccess(Location location) {
-                            // Got last known location. In some rare situations this can be null.
-                            if (location != null) {
-                                // Logic to handle location object
-                                Map<String, Double> latlng = new HashMap<String, Double>();
-                                latlng.put("longitude", location.getLongitude());
-                                latlng.put("latitude", location.getLatitude());
-                                Log.d("Location", "Location retreived " + latlng.toString());
-                                result.success(latlng);
-                            } else {
-                                Log.d("Location", "unable to retreive location");
-                                result.success(null);
-                            }
+                .addOnSuccessListener((Activity) context, new OnSuccessListener<Location>() {
+                    @Override
+                    public void onSuccess(Location location) {
+                        // Got last known location. In some rare situations this can be null.
+                        if (location != null) {
+                            // Logic to handle location object
+                            Map<String, Double> latlng = new HashMap<String, Double>();
+                            latlng.put("longitude", location.getLongitude());
+                            latlng.put("latitude", location.getLatitude());
+                            Log.d("Location", "Location retreived " + latlng.toString());
+                            result.success(latlng);
+                        } else {
+                            Log.d("Location", "unable to retreive location");
+                            result.success(null);
                         }
-                    });
-
+                    }
+                });
         } else if (call.method.equals("save-image-to-album")) {
 //                                File storageDir = new File(
 //                                        Environment.getExternalStoragePublicDirectory(
@@ -385,6 +387,21 @@ public class MainActivity extends FlutterActivity {
                     .putLong(BACKGROUND_HANDLE_SHARED_PREF_KEY, callbackHandle)
                     .apply();
             result.success("");
+        } else if (call.method.equals("get-server-url")) {
+            // Get the server URL from Firebase
+            DatabaseReference database = FirebaseDatabase.getInstance(app).getReference();
+            database.child("config").child("serverUrl").addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    String url = (String) dataSnapshot.getValue();
+                    result.success(url);
+                }
+
+                @Override
+                public void onCancelled(DatabaseError  databaseError) {
+                    result.success(null);
+                }
+            });
         } else {
             result.notImplemented();
         }
