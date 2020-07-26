@@ -4,6 +4,7 @@ import 'dart:ui';
 // import 'package:bluebubble_messages/qr_code_scanner.dart';
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubble_messages/layouts/theming/theming_panel.dart';
+import 'package:bluebubble_messages/managers/method_channel_interface.dart';
 import 'package:bluebubble_messages/managers/settings_manager.dart';
 import 'package:bluebubble_messages/settings.dart';
 import 'package:bluebubble_messages/socket_manager.dart';
@@ -31,6 +32,20 @@ class _SettingsPanelState extends State<SettingsPanel> {
   void initState() {
     super.initState();
     _settingsCopy = SettingsManager().settings;
+  }
+
+  void refreshConnection(SocketState connection) async {
+    if ([SocketState.CONNECTED, SocketState.CONNECTING].contains(connection)) return;
+    
+    // Get the server URL
+    String url = await MethodChannelInterface().invokeMethod("get-server-url");
+
+    // Set the server URL 
+    _settingsCopy.serverAddress = url;
+    await SettingsManager().saveSettings(_settingsCopy, connectToSocket: true);
+
+    // Refresh the state data
+    setState(() {});
   }
 
   @override
@@ -85,22 +100,23 @@ class _SettingsPanelState extends State<SettingsPanel> {
                           subtitle = "Connected";
                           break;
                         case SocketState.DISCONNECTED:
-                          subtitle = "Disconnected";
+                          subtitle = "Disconnected (Tap to retry)";
                           break;
                         case SocketState.ERROR:
-                          subtitle = "Error";
+                          subtitle = "Error (Tap to retry)";
                           break;
                         case SocketState.CONNECTING:
                           subtitle = "Connecting...";
                           break;
                         case SocketState.FAILED:
-                          subtitle = "Failed to connect";
+                          subtitle = "Failed to connect (Tap to retry)";
                           break;
                       }
 
                       return SettingsTile(
                         title: "Connection Status",
                         subTitle: subtitle,
+                        onTap: () => this.refreshConnection(connectionStatus),
                         trailing: connectionStatus == SocketState.CONNECTED ||
                                 connectionStatus == SocketState.CONNECTING
                             ? Icon(Icons.fiber_manual_record,
