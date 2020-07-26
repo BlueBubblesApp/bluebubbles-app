@@ -417,6 +417,8 @@ class _NewChatCreatorState extends State<NewChatCreator> {
                               ChatBloc().tileVals[conversations[index].guid];
 
                           return ConversationTile(
+                            existingAttachments: widget.attachments,
+                            existingText: widget.existingText,
                             chat: conversations[index],
                             title: _data["title"],
                             subtitle: _data["subtitle"],

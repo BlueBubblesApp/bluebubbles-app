@@ -27,12 +27,16 @@ import 'package:flutter/material.dart';
 import '../../repository/models/chat.dart';
 
 class ConversationView extends StatefulWidget {
-  ConversationView(
-      {Key key,
-      @required this.chat,
-      @required this.title,
-      @required this.messageBloc})
-      : super(key: key);
+  final List<File> existingAttachments;
+  final String existingText;
+  ConversationView({
+    Key key,
+    @required this.chat,
+    @required this.title,
+    @required this.messageBloc,
+    this.existingAttachments,
+    this.existingText,
+  }) : super(key: key);
 
   // final data;
   final Chat chat;
@@ -102,10 +106,8 @@ class _ConversationViewState extends State<ConversationView> {
       Chat _chat = await chat.getParticipants();
       Navigator.of(context).push(
         Cupertino.CupertinoPageRoute(
-          builder: (context) => ConversationDetails(
-            chat: _chat,
-            messageBloc: widget.messageBloc
-          ),
+          builder: (context) =>
+              ConversationDetails(chat: _chat, messageBloc: widget.messageBloc),
         ),
       );
     };
@@ -171,6 +173,8 @@ class _ConversationViewState extends State<ConversationView> {
           ),
           BlueBubblesTextField(
             chat: chat,
+            existingAttachments: widget.existingAttachments,
+            existingText: widget.existingText,
             onSend: (String text) async {},
           )
         ],

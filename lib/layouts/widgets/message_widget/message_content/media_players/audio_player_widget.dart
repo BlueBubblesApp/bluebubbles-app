@@ -20,72 +20,127 @@ class AudioPlayerWiget extends StatefulWidget {
 }
 
 class _AudioPlayerWigetState extends State<AudioPlayerWiget> {
-  bool play = false;
   double progress = 0.0;
+  AssetsAudioPlayer player = AssetsAudioPlayer();
+
+  @override
+  void initState() {
+    super.initState();
+    player.open(Audio.file(widget.file.path), autoStart: false);
+    player.playlistFinished.listen((event) {
+      player.pause();
+    });
+  }
+
+  @override
+  void dispose() {
+    player.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return AudioWidget.file(
-      child: Container(
-        height: 100,
-        width: 200,
-        child: Column(
-          children: <Widget>[
-            Center(
-              child: Text(
-                basename(widget.file.path),
-                style: Theme.of(context).textTheme.bodyText1,
+    return Container(
+      height: 40,
+      width: 200,
+      color: Theme.of(context).accentColor,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: <Widget>[
+          GestureDetector(
+            onTap: () {
+              player.playOrPause();
+            },
+            child: Padding(
+              padding: const EdgeInsets.only(left: 8.0),
+              child: Stack(
+                alignment: Alignment.center,
+                children: <Widget>[
+                  StreamBuilder(
+                      stream: player.isPlaying,
+                      builder: (context, AsyncSnapshot<bool> snapshot) {
+                        return Icon(
+                          snapshot.data ? Icons.pause : Icons.play_arrow,
+                          color: Colors.blue,
+                        );
+                      }),
+                  Container(
+                    width: 27,
+                    height: 27,
+                    padding: EdgeInsets.all(1),
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        width: 1,
+                        color: Colors.blue,
+                        style: BorderStyle.solid,
+                      ),
+                      borderRadius: BorderRadius.circular(27),
+                    ),
+                    child: StreamBuilder(
+                        stream: player.currentPosition,
+                        builder: (context, AsyncSnapshot<Duration> snapshot) {
+                          debugPrint("update duration " +
+                              snapshot.data.inSeconds.toString());
+                          return CircularProgressIndicator(
+                            strokeWidth: snapshot.data.inMilliseconds /
+                                player.current.value.audio.duration
+                                    .inMilliseconds,
+                            value: progress,
+                            backgroundColor: Colors.transparent,
+                            valueColor:
+                                AlwaysStoppedAnimation<Color>(Colors.blue),
+                          );
+                        }),
+                  )
+                ],
               ),
             ),
-            Spacer(
-              flex: 1,
-            ),
-            Row(
-              children: <Widget>[
-                ButtonTheme(
-                  minWidth: 1,
-                  height: 30,
-                  child: RaisedButton(
-                    onPressed: () {
-                      setState(() {
-                        play = !play;
-                      });
-                    },
-                    child: Icon(
-                      play ? Icons.pause : Icons.play_arrow,
-                      size: 15,
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: Slider(
-                    value: progress,
-                    onChanged: (double value) {
-                      setState(() {
-                        progress = value;
-                      });
-                    },
-                  ),
-                )
-              ],
-            ),
-          ],
-        ),
+          )
+        ],
       ),
-      path: widget.file.path,
-      play: play,
-      onPositionChanged: (current, total) {
-        debugPrint("${current.inMilliseconds / total.inMilliseconds}");
-        setState(() {
-          progress = current.inMilliseconds / total.inMilliseconds;
-        });
-      },
-      onFinished: () {
-        debugPrint("on finished");
-        setState(() {
-          play = false;
-        });
-      },
+
+      // Column(
+      //   children: <Widget>[
+      //     Center(
+      //       child: Text(
+      //         basename(widget.file.path),
+      //         style: Theme.of(context).textTheme.bodyText1,
+      //       ),
+      //     ),
+      //     Spacer(
+      //       flex: 1,
+      //     ),
+      //     Row(
+      //       children: <Widget>[
+      //         ButtonTheme(
+      //           minWidth: 1,
+      //           height: 30,
+      //           child: RaisedButton(
+      //             onPressed: () {
+      //               setState(() {
+      //                 play = !play;
+      //               });
+      //             },
+      //             child: Icon(
+      //               play ? Icons.pause : Icons.play_arrow,
+      //               size: 15,
+      //             ),
+      //           ),
+      //         ),
+      //         Expanded(
+      //           child: Slider(
+      //             value: progress,
+      //             onChanged: (double value) {
+      //               setState(() {
+      //                 progress = value;
+      //               });
+      //             },
+      //           ),
+      //         )
+      //       ],
+      //     ),
+      //   ],
+      // ),
     );
   }
 }

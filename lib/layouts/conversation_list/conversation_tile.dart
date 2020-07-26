@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:bluebubble_messages/blocs/chat_bloc.dart';
 import 'package:bluebubble_messages/blocs/message_bloc.dart';
@@ -26,6 +27,9 @@ class ConversationTile extends StatefulWidget {
   final String date;
   final bool hasNewMessage;
   final bool replaceOnTap;
+  final List<File> existingAttachments;
+  final String existingText;
+
   ConversationTile(
       {Key key,
       this.chat,
@@ -33,7 +37,9 @@ class ConversationTile extends StatefulWidget {
       this.subtitle,
       this.date,
       this.hasNewMessage,
-      this.replaceOnTap})
+      this.replaceOnTap,
+      this.existingAttachments,
+      this.existingText})
       : super(key: key);
 
   // final Chat chat;
@@ -122,6 +128,8 @@ class _ConversationTileState extends State<ConversationTile> {
                       chat: widget.chat,
                       title: widget.title,
                       messageBloc: messageBloc,
+                      existingAttachments: widget.existingAttachments,
+                      existingText: widget.existingText,
                     );
                   },
                 ),
@@ -135,6 +143,8 @@ class _ConversationTileState extends State<ConversationTile> {
                       chat: widget.chat,
                       title: widget.title,
                       messageBloc: messageBloc,
+                      existingAttachments: widget.existingAttachments,
+                      existingText: widget.existingText,
                     );
                   },
                 ),
