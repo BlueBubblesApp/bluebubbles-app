@@ -36,9 +36,11 @@ class _SettingsPanelState extends State<SettingsPanel> {
 
   void refreshConnection(SocketState connection) async {
     if ([SocketState.CONNECTED, SocketState.CONNECTING].contains(connection)) return;
+    debugPrint("Fetching new server URL from Firebase");
     
     // Get the server URL
     String url = await MethodChannelInterface().invokeMethod("get-server-url");
+    debugPrint("New server URL: $url");
 
     // Set the server URL 
     _settingsCopy.serverAddress = url;

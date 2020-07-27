@@ -106,9 +106,9 @@ public class MainActivity extends FlutterActivity {
     private ValueEventListener dbListener = new ValueEventListener() {
         @Override
         public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-            Log.d("firebase", "data changed");
+            Log.d("FirebaseDB", "Firebase Database updated. Syncing...");
             String serverURL = dataSnapshot.child("config").child("serverUrl").getValue().toString();
-            Log.d("firebase", "new server: " + serverURL);
+            Log.d("FirebaseDB", "Current server URL: " + serverURL);
             if (engine != null) {
                 new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod("new-server", "[" + serverURL + "]");
             }
@@ -291,7 +291,6 @@ public class MainActivity extends FlutterActivity {
             NotificationManagerCompat notificationManagerCompat = NotificationManagerCompat.from(context);
 
             notificationManagerCompat.notify(existingNotificationId, builder.build());
-            Log.d("here", "here");
 //                                notificationManagerCompat.notify(call.argument("summaryId"), summaryBuilder.build());
             result.success("");
         } else if (call.method.equals("create-socket-issue-warning")) {
@@ -389,11 +388,11 @@ public class MainActivity extends FlutterActivity {
             result.success("");
         } else if (call.method.equals("get-server-url")) {
             // Get the server URL from Firebase
-            DatabaseReference database = FirebaseDatabase.getInstance(app).getReference();
-            database.child("config").child("serverUrl").addListenerForSingleValueEvent(new ValueEventListener() {
+            DatabaseReference database = FirebaseDatabase.getInstance(app).getReference("config");
+            ValueEventListener listener = new ValueEventListener() {
                 @Override
                 public void onDataChange(DataSnapshot dataSnapshot) {
-                    String url = (String) dataSnapshot.getValue();
+                    String url = (String) dataSnapshot.child("serverUrl").getValue();
                     result.success(url);
                 }
 
@@ -401,7 +400,9 @@ public class MainActivity extends FlutterActivity {
                 public void onCancelled(DatabaseError  databaseError) {
                     result.success(null);
                 }
-            });
+            };
+
+            database.addListenerForSingleValueEvent(listener);
         } else {
             result.notImplemented();
         }
