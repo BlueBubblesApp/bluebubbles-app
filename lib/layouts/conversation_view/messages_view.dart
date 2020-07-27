@@ -42,7 +42,6 @@ class _MessageViewState extends State<MessageView>
     widget.messageBloc.stream.listen((event) async {
       if (event["insert"] != null) {
         getAttachmentsForMessage(event["insert"]);
-        // debugPrint(attachments.containsKey(event["insert"].guid).toString());
         if (event["sentFromThisClient"]) {
           sentMessages.add(event["insert"].guid);
           Future.delayed(Duration(milliseconds: 500), () {

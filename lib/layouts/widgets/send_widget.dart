@@ -2,6 +2,7 @@ import 'package:bluebubble_messages/helpers/hex_color.dart';
 import 'package:bluebubble_messages/layouts/widgets/message_widget/message_widget.dart';
 import 'package:bluebubble_messages/layouts/widgets/message_widget/sent_message.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 
 class SendWidget extends StatefulWidget {
@@ -21,9 +22,12 @@ class _SendWidgetState extends State<SendWidget> {
   @override
   void initState() {
     super.initState();
-    Future.delayed(Duration(milliseconds: 60), () {
-      Navigator.of(context).pop();
-    });
+    // Future.delayed(Duration(milliseconds: 60), () {
+    //   Navigator.of(context).pop();
+    // });
+
+    SchedulerBinding.instance
+        .addPostFrameCallback((_) => Navigator.of(context).pop());
   }
 
   @override

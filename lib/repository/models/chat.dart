@@ -242,6 +242,19 @@ class Chat {
     // String reactionQualifier = reactionsOnly ? "IS NOT" : "IS";
     String query = ("SELECT"
         " message.ROWID AS ROWID,"
+        " '[' || GROUP_CONCAT( '\"' || attachment.ROWID || '\"') || ']' AS attachmentId,"
+        " '[' || GROUP_CONCAT( '\"' || attachment.guid || '\"') || ']' AS attachmentGuid,"
+        "	'[' || GROUP_CONCAT( '\"' || attachment.blurhash || '\"') || ']' AS attachmentBlurhash,"
+        " '[' || GROUP_CONCAT( '\"' || attachment.height || '\"') || ']' AS attachmentHeight,"
+        " '[' || GROUP_CONCAT( '\"' || attachment.width || '\"') || ']' AS attachmentWidth,"
+        " '[' || GROUP_CONCAT( '\"' || attachment.hideAttachment || '\"') || ']' AS attachmentHideAttachment,"
+        " '[' || GROUP_CONCAT( '\"' || attachment.isOutgoing || '\"') || ']' AS attachmentIsOutgoing,"
+        " '[' || GROUP_CONCAT( '\"' || attachment.isSticker || '\"') || ']' AS attachmentIsSticker,"
+        " '[' || GROUP_CONCAT( '\"' || attachment.mimeType || '\"') || ']' AS attachmentMimeType,"
+        " '[' || GROUP_CONCAT( '\"' || attachment.totalBytes || '\"') || ']' AS attachmentTotalBytes,"
+        " '[' || GROUP_CONCAT( '\"' || attachment.transferName || '\"') || ']' AS attachmentTransferName,"
+        " '[' || GROUP_CONCAT( '\"' || attachment.transferState || '\"') || ']' AS attachmentTransferState,"
+        " '[' || GROUP_CONCAT( '\"' || attachment.uti || '\"') || ']' AS attachmentUti,"
         " message.originalROWID AS originalROWID,"
         " message.guid AS guid,"
         " message.handleId AS handleId,"
@@ -278,6 +291,8 @@ class Chat {
         " FROM message"
         " JOIN chat_message_join AS cmj ON message.ROWID = cmj.messageId"
         " JOIN chat ON cmj.chatId = chat.ROWID"
+        " LEFT JOIN attachment_message_join ON attachment_message_join.messageId = message.ROWID "
+        " LEFT JOIN attachment ON attachment.ROWID = attachment_message_join.attachmentId"
         " LEFT OUTER JOIN handle ON handle.ROWID = message.handleId"
         " WHERE chat.ROWID = ?");
 
@@ -287,7 +302,9 @@ class Chat {
 
     // Execute the query
     var res = await db.rawQuery(
-        "$query" + " AND message.originalROWID IS NOT NULL" + pagination,
+        "$query" +
+            " AND message.originalROWID IS NOT NULL GROUP BY message.ROWID" +
+            pagination,
         [chat.id]);
 
     // Add the from/handle data to the messages
@@ -311,8 +328,9 @@ class Chat {
       output.add(msg);
     }
 
-    var res2 = await db
-        .rawQuery("$query" + " AND message.originalROWID IS NULL;", [chat.id]);
+    var res2 = await db.rawQuery(
+        "$query" + " AND message.originalROWID IS NULL GROUP BY message.ROWID;",
+        [chat.id]);
     for (int i = 0; i < res2.length; i++) {
       Message msg = Message.fromMap(res2[i]);
 

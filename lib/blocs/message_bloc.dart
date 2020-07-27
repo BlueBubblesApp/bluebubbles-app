@@ -186,7 +186,6 @@ class MessageBloc {
     }
     if (!_messageController.isClosed)
       _messageController.sink.add({"messages": _allMessages, "insert": null});
-    debugPrint(_allMessages.values.toList()[9].id.toString());
     return _allMessages;
   }
 

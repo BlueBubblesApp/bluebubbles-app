@@ -92,30 +92,23 @@ class _MessageAttachmentsState extends State<MessageAttachments>
       widget.savedAttachmentData.attachmentsFuture =
           Message.getAttachments(widget.message);
     }
-    return AnimatedSize(
-      duration: Duration(milliseconds: 500),
-      curve: Curves.easeInOut,
-      vsync: this,
-      child: FutureBuilder(
-        builder: (context, snapshot) {
-          if (snapshot.hasData ||
-              widget.savedAttachmentData.attachments.length > 0) {
-            if (widget.savedAttachmentData.attachments.length == 0)
-              widget.savedAttachmentData.attachments = snapshot.data;
+    return FutureBuilder(
+      builder: (context, snapshot) {
+        if (snapshot.hasData ||
+            widget.savedAttachmentData.attachments.length > 0) {
+          if (widget.savedAttachmentData.attachments.length == 0)
+            widget.savedAttachmentData.attachments = snapshot.data;
 
-            for (Attachment attachment
-                in widget.savedAttachmentData.attachments) {
-              initForAttachment(attachment);
-            }
-            return _buildActualWidget();
-          } else {
-            debugPrint("putting place holder " +
-                widget.savedAttachmentData.attachments.length.toString());
-            return Container();
+          for (Attachment attachment
+              in widget.savedAttachmentData.attachments) {
+            initForAttachment(attachment);
           }
-        },
-        future: widget.savedAttachmentData.attachmentsFuture,
-      ),
+          return _buildActualWidget();
+        } else {
+          return Container();
+        }
+      },
+      future: widget.savedAttachmentData.attachmentsFuture,
     );
   }
 
