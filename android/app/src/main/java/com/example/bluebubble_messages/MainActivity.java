@@ -107,7 +107,7 @@ public class MainActivity extends FlutterActivity {
         @Override
         public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
             Log.d("FirebaseDB", "Firebase Database updated. Syncing...");
-            String serverURL = dataSnapshot.child("config").child("serverUrl").getValue().toString();
+            String serverURL = dataSnapshot.child("serverUrl").getValue().toString();
             Log.d("FirebaseDB", "Current server URL: " + serverURL);
             if (engine != null) {
                 new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod("new-server", "[" + serverURL + "]");
@@ -174,12 +174,17 @@ public class MainActivity extends FlutterActivity {
                             }
                         }
                     });
-            db = FirebaseDatabase.getInstance(app).getReference();
+
+            // Get the config database reference
+            db = FirebaseDatabase.getInstance(app).getReference("config");
             try {
+                // Remove any previous listeners
                 db.removeEventListener(dbListener);
             } catch (Exception e) {
-
+                // Don't do anything
             }
+            
+            // Re-add the listener
             db.addValueEventListener(dbListener);
         } else if (call.method.equals("create-notif-channel")) {
             createNotificationChannel(call.argument("channel_name"), call.argument("channel_description"), call.argument("CHANNEL_ID"), context);
