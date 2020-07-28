@@ -31,6 +31,13 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.Rect;
+import android.graphics.RectF;
+import android.graphics.Canvas;
+import android.graphics.PorterDuffXfermode;
+import android.graphics.PorterDuff;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.Icon;
 import android.location.Location;
@@ -221,7 +228,7 @@ public class MainActivity extends FlutterActivity {
             Icon icon = null;
             if (call.argument("contactIcon") != null) {
                 Bitmap bmp = BitmapFactory.decodeByteArray((byte[]) call.argument("contactIcon"), 0, ((byte[]) call.argument("contactIcon")).length);
-                icon = Icon.createWithBitmap(bmp);
+                icon = Icon.createWithBitmap(MainActivity.getCircleBitmap(bmp));
             }
             Person.Builder person = new Person.Builder().setName(call.argument("name"));
             if (icon != null) {
@@ -567,5 +574,28 @@ public class MainActivity extends FlutterActivity {
                 = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
         return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+    }
+
+    private static Bitmap getCircleBitmap(Bitmap bitmap) {
+        final Bitmap output = Bitmap.createBitmap(bitmap.getWidth(),
+                bitmap.getHeight(), Bitmap.Config.ARGB_8888);
+        final Canvas canvas = new Canvas(output);
+    
+        final int color = Color.RED;
+        final Paint paint = new Paint();
+        final Rect rect = new Rect(0, 0, bitmap.getWidth(), bitmap.getHeight());
+        final RectF rectF = new RectF(rect);
+    
+        paint.setAntiAlias(true);
+        canvas.drawARGB(0, 0, 0, 0);
+        paint.setColor(color);
+        canvas.drawOval(rectF, paint);
+    
+        paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_IN));
+        canvas.drawBitmap(bitmap, rect, rect, paint);
+    
+        bitmap.recycle();
+    
+        return output;
     }
 }
