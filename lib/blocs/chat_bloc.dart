@@ -51,12 +51,27 @@ class ChatBloc {
   ChatBloc._internal();
 
   Future<List<Chat>> getChats() async {
+    var now = DateTime.now().millisecondsSinceEpoch;
     //sink is a way of adding data reactively to the stream
     //by registering a new event
     await ContactManager().getContacts();
+    var later = DateTime.now().millisecondsSinceEpoch;
+
+    debugPrint("Contact fetch took ${later - now} ms");
+
+    now = DateTime.now().millisecondsSinceEpoch;
     _chats = await Chat.find({"isArchived": 0});
     _archivedChats = await Chat.find({"isArchived": 1});
+    later = DateTime.now().millisecondsSinceEpoch;
+
+    debugPrint("Chat fetch took ${later - now} ms");
+
+    now = DateTime.now().millisecondsSinceEpoch;
     await initTileVals(_chats);
+    later = DateTime.now().millisecondsSinceEpoch;
+
+    debugPrint("InitTiles took ${later - now} ms");
+
     NewMessageManager().stream.listen((event) async {
       if ((event.containsKey("oldGuid") && event["oldGuid"] != null) ||
           event.containsKey("remove")) return;
@@ -75,8 +90,13 @@ class ChatBloc {
       }
       _chatController.sink.add(_chats);
     });
+
+    now = DateTime.now().millisecondsSinceEpoch;
     _chatController.sink.add(_chats);
     await initTileVals(_archivedChats, customMap: _archivedTileVals);
+    later = DateTime.now().millisecondsSinceEpoch;
+
+    debugPrint("Second InitTiles took ${later - now} ms");
     return _chats;
   }
 

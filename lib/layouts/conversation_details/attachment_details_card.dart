@@ -48,7 +48,7 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
           .attachmentDownloaders[widget.attachment.guid]
           .stream
           .listen((event) {
-        if (event is File) {
+        if (event is File && this.mounted) {
           setState(() {});
         }
       });
@@ -90,7 +90,7 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
                       onPressed: () {
                         new AttachmentDownloader(attachment, null);
                         subscribeToDownloadStream();
-                        setState(() {});
+                        if (this.mounted) setState(() {});
                       },
                       color: Colors.transparent,
                       child: Column(

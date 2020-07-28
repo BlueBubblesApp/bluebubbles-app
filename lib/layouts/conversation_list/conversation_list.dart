@@ -8,7 +8,6 @@ import './conversation_tile.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-import '../../helpers/hex_color.dart';
 import '../settings/settings_panel.dart';
 
 class ConversationList extends StatefulWidget {
@@ -32,9 +31,24 @@ class _ConversationListState extends State<ConversationList> {
     });
   }
 
+  void scrollListener() {
+    return !_isAppBarExpanded
+      ? _theme != Colors.transparent
+          ? setState(() {
+              _theme = Colors.transparent;
+            })
+          : {}
+      : _theme != Theme.of(context).accentColor.withOpacity(0.5)
+          ? setState(() {
+              _theme = Theme.of(context).accentColor.withOpacity(0.5);
+            })
+          : {};
+  }
+
   @override
   void initState() {
     super.initState();
+
     if (!widget.showArchivedChats) {
       ChatBloc().chatStream.listen((List<Chat> chats) {
         _chats = chats;
@@ -44,30 +58,16 @@ class _ConversationListState extends State<ConversationList> {
     } else {
       ChatBloc().archivedChatStream.listen((List<Chat> chats) {
         _chats = chats;
-        setState(() {});
+        if (this.mounted) setState(() {});
       });
       _chats = ChatBloc().archivedChats;
-      debugPrint(_chats.toString());
     }
 
-    _scrollController = ScrollController()
-      ..addListener(
-        () => !_isAppBarExpanded
-            ? _theme != Colors.transparent
-                ? setState(() {
-                    _theme = Colors.transparent;
-                  })
-                : {}
-            : _theme != Theme.of(context).accentColor.withOpacity(0.5)
-                ? setState(() {
-                    _theme = Theme.of(context).accentColor.withOpacity(0.5);
-                  })
-                : {},
-      );
+    _scrollController = ScrollController()..addListener(scrollListener);
   }
 
   bool get _isAppBarExpanded {
-    return _scrollController.hasClients &&
+    return _scrollController != null && _scrollController.hasClients &&
         _scrollController.offset > (125 - kToolbarHeight);
   }
 
@@ -298,7 +298,10 @@ class _ConversationListState extends State<ConversationList> {
 
   @override
   void dispose() {
-    debugPrint("disposed");
     super.dispose();
+
+    // Remove the scroll listener from the state
+    if (_scrollController != null)
+      _scrollController.removeListener(scrollListener);
   }
 }

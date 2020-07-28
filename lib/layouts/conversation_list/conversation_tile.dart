@@ -58,9 +58,9 @@ class _ConversationTileState extends State<ConversationTile> {
   @override
   Future<void> didChangeDependencies() async {
     super.didChangeDependencies();
-    getAvatars();
+    // getAvatars();
     ContactManager().stream.listen((event) {
-      getAvatars();
+      // getAvatars();
     });
   }
 
@@ -92,7 +92,7 @@ class _ConversationTileState extends State<ConversationTile> {
           onTap: () async {
             widget.chat.isMuted = !widget.chat.isMuted;
             await widget.chat.save(updateLocalVals: true);
-            setState(() {});
+            if (this.mounted) setState(() {});
           },
         ),
         IconSlideAction(
@@ -151,7 +151,7 @@ class _ConversationTileState extends State<ConversationTile> {
               );
             }
             Future.delayed(Duration(milliseconds: 200), () {
-              setState(() {
+              if (this.mounted) setState(() {
                 isPressed = false;
               });
             });

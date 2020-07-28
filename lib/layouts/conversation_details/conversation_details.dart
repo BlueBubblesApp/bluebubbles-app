@@ -54,7 +54,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
     controller = new TextEditingController(text: chat.displayName);
     Chat.getAttachments(chat).then((value) {
       attachmentsForChat = value;
-      setState(() {});
+     if (this.mounted) setState(() {});
     });
   }
 
@@ -63,7 +63,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
     super.didChangeDependencies();
     readOnly = !((await chat.getParticipants()).participants.length > 1);
     debugPrint("updated readonly $readOnly");
-    setState(() {});
+    if (this.mounted) setState(() {});
   }
 
   @override
@@ -137,7 +137,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                     chat: chat,
                     updateChat: (Chat newChat) {
                       chat = newChat;
-                      setState(() {});
+                      if (this.mounted) setState(() {});
                     },
                     canBeRemoved: chat.participants.length > 1,
                   );
@@ -157,7 +157,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                             ),
                           ),
                         );
-                        if (result != null) {
+                        if (result != null && this.mounted) {
                           chat = result;
                           setState(() {});
                         }
@@ -291,7 +291,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
               child: InkWell(
                 onTap: () async {
                   await ActionHandler.resyncChat(chat, widget.messageBloc).then((value) {});
-                  setState(() {});
+                  if (this.mounted) setState(() {});
                 },
                 child: ListTile(
                   title: Text(

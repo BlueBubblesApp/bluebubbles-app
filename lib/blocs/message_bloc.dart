@@ -212,7 +212,7 @@ class MessageBloc {
             completer.complete();
             return;
           }
-          debugPrint("got messages");
+
           List<Message> _messages =
               await MessageHelper.bulkAddMessages(_currentChat, messages);
           _messages.forEach((element) {

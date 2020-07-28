@@ -327,7 +327,6 @@ class Chat {
 
       output.add(msg);
     }
-    debugPrint("got messages");
 
     var res2 = await db.rawQuery(
         "$query" + " AND message.originalROWID IS NULL GROUP BY message.ROWID;",
@@ -354,7 +353,7 @@ class Chat {
         }
       }
     }
-    debugPrint("got unsentMessages");
+  
     return output;
   }
 

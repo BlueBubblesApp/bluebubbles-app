@@ -1,36 +1,25 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 import 'dart:math';
 import 'package:bluebubble_messages/action_handler.dart';
 import 'package:bluebubble_messages/helpers/attachment_downloader.dart';
 import 'package:bluebubble_messages/blocs/setup_bloc.dart';
 import 'package:bluebubble_messages/helpers/contstants.dart';
-import 'package:bluebubble_messages/helpers/utils.dart';
-import 'package:bluebubble_messages/layouts/conversation_view/new_chat_creator.dart';
 import 'package:bluebubble_messages/managers/life_cycle_manager.dart';
-import 'package:bluebubble_messages/managers/navigator_manager.dart';
 import 'package:bluebubble_messages/managers/new_message_manager.dart';
 import 'package:bluebubble_messages/managers/notification_manager.dart';
 import 'package:bluebubble_messages/managers/settings_manager.dart';
 import 'package:bluebubble_messages/repository/database.dart';
 import 'package:flutter_socket_io/socket_io_manager.dart';
-import 'package:path/path.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:flutter_socket_io/flutter_socket_io.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:receive_sharing_intent/receive_sharing_intent.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
-import 'package:bluebubble_messages/helpers/message_helper.dart';
 
 import 'helpers/attachment_sender.dart';
 import 'managers/method_channel_interface.dart';
 import 'repository/models/attachment.dart';
 import 'repository/models/message.dart';
-import 'settings.dart';
-import './blocs/chat_bloc.dart';
 import './repository/models/chat.dart';
 import './repository/models/handle.dart';
 
@@ -165,10 +154,8 @@ class SocketManager {
   }
 
   void socketStatusUpdate(data) {
-    debugPrint("socketStatusUpdate " + data);
     switch (data) {
       case "connect":
-        debugPrint("CONNECTED");
         authFCM();
         NotificationManager().clearSocketWarning();
         // syncChats();
@@ -280,7 +267,7 @@ class SocketManager {
     }
 
     debugPrint(
-        "Starting socket io with the server: ${SettingsManager().settings.serverAddress}");
+        "Starting socket io with the server: ${SettingsManager().settings?.serverAddress}");
 
     try {
       // Create a new socket connection
@@ -446,7 +433,7 @@ class SocketManager {
         });
       }
     };
-    debugPrint("send message " + state.toString());
+
     if (awaitResponse) {
       _processId = _manager.addSocketProcess(socketCB);
     } else {
