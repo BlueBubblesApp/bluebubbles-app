@@ -103,7 +103,7 @@ class _ConversationListState extends State<ConversationList> {
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: <Widget>[
                       Text(
-                        widget.showArchivedChats ? "ArchivedChats" : "Messages",
+                        widget.showArchivedChats ? "Archive" : "Messages",
                         style: Theme.of(context).textTheme.bodyText1,
                       ),
                     ],
@@ -125,6 +125,7 @@ class _ConversationListState extends State<ConversationList> {
               AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
           slivers: <Widget>[
             SliverAppBar(
+              leading: new Container(),
               stretch: true,
               onStretchTrigger: () {
                 return null;
@@ -154,7 +155,7 @@ class _ConversationListState extends State<ConversationList> {
                           Container(
                             child: Text(
                               widget.showArchivedChats
-                                  ? "ArchivedChats"
+                                  ? "Archive"
                                   : "Messages",
                               style: Theme.of(context).textTheme.headline1,
                             ),
