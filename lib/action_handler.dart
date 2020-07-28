@@ -123,12 +123,18 @@ class ActionHandler {
     params["tempGuid"] = tempGuid;
 
     // Reset error, guid, and send date
+    message.id = null;
     message.error = 0;
     message.guid = tempGuid;
     message.dateCreated = DateTime.now();
 
-    // If we aren't conneted to the socket, set the message error code
-    await Message.replaceMessage(oldGuid, message);
+    // Delete the old message
+    Map<String, dynamic> msgOpts = {'guid': oldGuid};
+    await Message.delete(msgOpts);
+    NewMessageManager().deleteSpecificMessage(chat, oldGuid);
+
+    // Add the new message
+    await chat.addMessage(message);
     NewMessageManager().updateWithMessage(chat, message);
 
     SocketManager().sendMessage("send-message", params, (response) async {
@@ -309,6 +315,8 @@ class ActionHandler {
       bool isHeadless = false}) async {
     Message message = Message.fromMap(data);
     List<Chat> chats = MessageHelper.parseChats(data);
+
+
 
     // Handle message differently depending on if there is a temp GUID match
     if (data.containsKey("tempGuid")) {
