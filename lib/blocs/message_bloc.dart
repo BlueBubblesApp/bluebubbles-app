@@ -253,7 +253,6 @@ class MessageBloc {
 
   void dispose() {
     _allMessages = new LinkedHashMap();
-    debugPrint("disposed all messages");
     _messageController.close();
   }
 }

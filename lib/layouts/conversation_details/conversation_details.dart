@@ -131,8 +131,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
               delegate: SliverChildBuilderDelegate(
                 (context, index) {
                   return ContactTile(
-                    contact: getContact(ContactManager().contacts,
-                        chat.participants[index].address),
+                    contact: getContact(chat.participants[index].address),
                     handle: chat.participants[index],
                     chat: chat,
                     updateChat: (Chat newChat) {

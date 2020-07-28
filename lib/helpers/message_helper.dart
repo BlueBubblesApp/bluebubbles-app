@@ -8,7 +8,6 @@ import 'package:bluebubble_messages/repository/models/chat.dart';
 import 'package:bluebubble_messages/repository/models/message.dart';
 import 'package:bluebubble_messages/repository/models/attachment.dart';
 import 'package:bluebubble_messages/socket_manager.dart';
-import 'package:flutter/material.dart';
 
 class MessageHelper {
   static Future<List<Message>> bulkAddMessages(
@@ -40,19 +39,17 @@ class MessageHelper {
                       : "");
             }
             NotificationManager().createNewNotification(
-                title,
-                text,
-                chat.guid,
-                Random().nextInt(9998) + 1,
-                chat.id,
-                message.dateCreated.millisecondsSinceEpoch,
-                getContactTitle(message.handle.id, message.handle.address),
-                chat.participants.length > 1,
-                handle: message.handle,
-                contact: getContact(
-                  ContactManager().contacts,
-                  message.handle.address,
-                ));
+              title,
+              text,
+              chat.guid,
+              Random().nextInt(9998) + 1,
+              chat.id,
+              message.dateCreated.millisecondsSinceEpoch,
+              getContactTitle(message.handle.id, message.handle.address),
+              chat.participants.length > 1,
+              handle: message.handle,
+              contact: getContact(message.handle.address)
+            );
             NotificationManager().processedNotifications.add(message.guid);
             if (!SocketManager().chatsWithNotifications.contains(chat.guid) &&
                 NotificationManager().chatGuid != chat.guid) {

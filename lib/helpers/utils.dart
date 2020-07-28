@@ -60,23 +60,38 @@ String formatPhoneNumber(String str) {
   return formattedPhoneNumber;
 }
 
-Contact getContact(List<Contact> contacts, String id) {
+bool sameAddress(String address1, String address2) {
+  String formattedNumber = address1.replaceAll(RegExp(r'[-() ]'), '');
+
+  return formattedNumber == address2 ||
+      "+1" + formattedNumber == address2 ||
+      "+" + formattedNumber == address2;
+}
+
+Contact getContact(String id) {
   Contact contact;
-  contacts.forEach((Contact _contact) {
-    _contact.phones.forEach((Item item) {
-      String formattedNumber = item.value.replaceAll(RegExp(r'[-() ]'), '');
-      if (formattedNumber == id || "+1" + formattedNumber == id) {
-        contact = _contact;
-        return contact;
+
+  for (Contact c in ContactManager().contacts) {
+    // Get a phone number match
+    for (Item item in c.phones) {
+      if (sameAddress(item.value, id)) {
+        contact = c;
+        break;
       }
-    });
-    _contact.emails.forEach((Item item) {
+    }
+
+    // Get an email match
+    for (Item item in c.emails) {
       if (item.value == id) {
-        contact = _contact;
-        return contact;
+        contact = c;
+        break;
       }
-    });
-  });
+    }
+
+    // If we have a match, break out of the loop
+    if (contact != null) break;
+  }
+
   return contact;
 }
 

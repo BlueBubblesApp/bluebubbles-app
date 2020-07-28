@@ -382,19 +382,17 @@ class ActionHandler {
           await chats[i].save();
           String title = await getFullChatTitle(chats[i]);
           NotificationManager().createNewNotification(
-              title,
-              text,
-              chats[i].guid,
-              Random().nextInt(9998) + 1,
-              chats[i].id,
-              message.dateCreated.millisecondsSinceEpoch,
-              getContactTitle(message.handle.id, message.handle.address),
-              chats[i].participants.length > 1,
-              handle: message.handle,
-              contact: getContact(
-                ContactManager().contacts,
-                message.handle.address,
-              ));
+            title,
+            text,
+            chats[i].guid,
+            Random().nextInt(9998) + 1,
+            chats[i].id,
+            message.dateCreated.millisecondsSinceEpoch,
+            getContactTitle(message.handle.id, message.handle.address),
+            chats[i].participants.length > 1,
+            handle: message.handle,
+            contact: getContact(message.handle.address)
+          );
         }
         await message.save();
         debugPrint(
