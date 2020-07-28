@@ -68,7 +68,6 @@ class ActionHandler {
       //     SocketManager().attachmentSenders.length == 0) {
       //   SocketManager().closeSocket();
       // }
-      debugPrint("message sent: " + response.toString());
 
       // If there is an error, replace the temp value with an error
       if (response['status'] != 200) {
@@ -133,7 +132,6 @@ class ActionHandler {
     NewMessageManager().updateWithMessage(chat, message);
 
     SocketManager().sendMessage("send-message", params, (response) async {
-      debugPrint("message sent: " + response.toString());
 
       // If there is an error, replace the temp value with an error
       if (response['status'] != 200) {
@@ -266,10 +264,7 @@ class ActionHandler {
     }
 
     // If we already have a chat, don't fetch the participants
-    if (currentChat != null) {
-      debugPrint("currentChat != null, returning");
-      return;
-    }
+    if (currentChat != null) return;
     // if (isHeadless) return;
 
     Map<String, dynamic> params = Map();
@@ -329,15 +324,9 @@ class ActionHandler {
         NewMessageManager()
             .deleteSpecificMessage(chats.first, data['tempGuid']);
       } else {
-        Message newMessage = await Message.replaceMessage(
+        await Message.replaceMessage(
             data["tempGuid"], message,
             chat: chats.first);
-        debugPrint(
-            "(handle message) handle message ${newMessage.text}, ${newMessage.guid} " +
-                data["dateCreated"].toString());
-        debugPrint(
-            "(handle message) after saving ${newMessage.text}, ${newMessage.guid} " +
-                newMessage.dateCreated.millisecondsSinceEpoch.toString());
         List<dynamic> attachments =
             data.containsKey("attachments") ? data['attachments'] : [];
         for (dynamic attachmentItem in attachments) {

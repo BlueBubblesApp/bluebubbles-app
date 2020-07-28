@@ -142,12 +142,6 @@ class MessageBloc {
         _allMessages =
             linkedHashMapInsert(_allMessages, i, message.guid, message);
         index = i;
-        debugPrint("insert at " +
-            index.toString() +
-            ", " +
-            message.originalROWID.toString() +
-            ", " +
-            messages[i].originalROWID.toString());
 
         break;
       }
@@ -166,7 +160,7 @@ class MessageBloc {
     List values = map.values.toList();
     keys.insert(index, key);
     values.insert(index, value);
-    debugPrint("insert into hashmap");
+
     return LinkedHashMap<String, Message>.from(
         LinkedHashMap.fromIterables(keys, values));
   }
