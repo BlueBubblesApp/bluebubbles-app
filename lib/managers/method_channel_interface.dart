@@ -44,9 +44,10 @@ class MethodChannelInterface {
       platform = channel;
     } else {
       platform = MethodChannel('samples.flutter.dev/fcm');
-      platform.setMethodCallHandler(callHandler);
       _context = context;
     }
+
+    platform.setMethodCallHandler(callHandler);
   }
 
   Future invokeMethod(String method, [dynamic arguments]) async {
@@ -67,52 +68,6 @@ class MethodChannelInterface {
         return new Future.value("");
       case "new-message":
         Map<String, dynamic> data = jsonDecode(call.arguments);
-
-        // // If we don't have any chats, skip
-        // if (data["chats"].length == 0) return new Future.value("");
-
-        // // Find the chat by GUID
-        // Chat chat = await Chat.findOne({"guid": data["chats"][0]["guid"]});
-        // if (chat == null) {
-        //   ActionHandler.handleChat(chatData: data["chats"][0]);
-        // } else {
-        //   await chat.getParticipants();
-        // }
-
-        // // Get the chat title and message
-        // String title = await getFullChatTitle(chat);
-        // Message message = Message.fromMap(data);
-
-        // if (!message.isFromMe &&
-        //     (NotificationManager().chatGuid != chat.guid ||
-        //         !LifeCycleManager().isAlive) &&
-        //     !chat.isMuted &&
-        //     !NotificationManager()
-        //         .processedNotifications
-        //         .contains(message.guid)) {
-        //   String text = message.text;
-        //   if ((data['attachments'] as List<dynamic>).length > 0) {
-        //     text = (data['attachments'] as List<dynamic>).length.toString() +
-        //         " attachment" +
-        //         ((data['attachments'] as List<dynamic>).length > 1 ? "s" : "");
-        //   }
-        //   NotificationManager().createNewNotification(
-        //       title,
-        //       text,
-        //       chat.guid,
-        //       Random().nextInt(9998) + 1,
-        //       chat.id,
-        //       message.dateCreated.millisecondsSinceEpoch,
-        //       getContactTitle(message.handle.id, message.handle.address),
-        //       chat.participants.length > 1,
-        //       handle: message.handle,
-        //       contact: getContact(
-        //         ContactManager().contacts,
-        //         message.handle.address,
-        //       ));
-        //   NotificationManager().processedNotifications.add(message.guid);
-        // }
-
         ActionHandler.handleMessage(data);
         return new Future.value("");
       case "updated-message":

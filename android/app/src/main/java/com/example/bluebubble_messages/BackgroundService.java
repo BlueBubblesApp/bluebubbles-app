@@ -154,9 +154,9 @@ public class BackgroundService extends Service {
     private ValueEventListener dbListener = new ValueEventListener() {
         @Override
         public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-            Log.d("firebase", "data changed");
+            Log.d("FirebaseDB", "Firebase Database updated. Syncing...");
             String serverURL = dataSnapshot.child("config").child("serverUrl").getValue().toString();
-            Log.d("firebase", "new server: " + serverURL);
+            Log.d("FirebaseDB", "Current server URL: " + serverURL);
             if (engine == null && backgroundChannel != null) {
                 backgroundChannel.invokeMethod("new-server", "[" + serverURL + "]");
             }
