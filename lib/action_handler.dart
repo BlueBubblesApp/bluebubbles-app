@@ -9,6 +9,7 @@ import 'package:bluebubble_messages/helpers/attachment_sender.dart';
 import 'package:bluebubble_messages/helpers/contstants.dart';
 import 'package:bluebubble_messages/helpers/message_helper.dart';
 import 'package:bluebubble_messages/helpers/utils.dart';
+import 'package:bluebubble_messages/layouts/widgets/message_widget/group_event.dart';
 import 'package:bluebubble_messages/managers/contact_manager.dart';
 import 'package:bluebubble_messages/managers/life_cycle_manager.dart';
 import 'package:bluebubble_messages/managers/new_message_manager.dart';
@@ -326,17 +327,11 @@ class ActionHandler {
       // If the GUID exists already, delete the temporary entry
       // Otherwise, replace the temp message
       if (existing != null) {
-        debugPrint(
-            "Message already exists for match. Removing temporary entry.");
         await Message.delete({'guid': data['tempGuid']});
-        NewMessageManager()
-            .deleteSpecificMessage(chats.first, data['tempGuid']);
+        NewMessageManager().deleteSpecificMessage(chats.first, data['tempGuid']);
       } else {
-        await Message.replaceMessage(
-            data["tempGuid"], message,
-            chat: chats.first);
-        List<dynamic> attachments =
-            data.containsKey("attachments") ? data['attachments'] : [];
+        await Message.replaceMessage(data["tempGuid"], message, chat: chats.first);
+        List<dynamic> attachments = data.containsKey("attachments") ? data['attachments'] : [];
         for (dynamic attachmentItem in attachments) {
           Attachment file = Attachment.fromMap(attachmentItem);
           await Attachment.replaceAttachment(data["tempGuid"], file);
@@ -364,7 +359,7 @@ class ActionHandler {
         await ActionHandler.handleChat(
             chat: chats[i], checkIfExists: true, isHeadless: isHeadless);
         Message existing = await Message.findOne({"guid": message.guid});
-        if (!message.isFromMe &&
+        if (!message.isFromMe && message.handle != null &&
             (NotificationManager().chatGuid != chats[i].guid ||
                 !LifeCycleManager().isAlive) &&
             !chats[i].isMuted &&
@@ -407,6 +402,11 @@ class ActionHandler {
             !message.isFromMe) {
           SocketManager().chatsWithNotifications.add(chats[i].guid);
         }
+
+        if (message.itemType == ItemTypes.nameChanged.index) {
+          chats[i] = await chats[i].changeName(message.groupTitle);
+          ChatBloc().updateChat(chats[i]);
+        }
       }
 
       // Add any related attachments
@@ -424,6 +424,7 @@ class ActionHandler {
                   createAttachmentNotification && file.mimeType != null);
         }
       }
+
       chats.forEach((element) {
         // Update chats
         if (!isHeadless)

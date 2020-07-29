@@ -22,7 +22,7 @@ class MessageHelper {
           await chat.save();
           String title = await getFullChatTitle(chat);
 
-          if (!message.isFromMe &&
+          if (!message.isFromMe && message.handle != null &&
               (NotificationManager().chatGuid != chat.guid ||
                   !LifeCycleManager().isAlive) &&
               !chat.isMuted &&
@@ -37,6 +37,7 @@ class MessageHelper {
                       ? "s"
                       : "");
             }
+
             NotificationManager().createNewNotification(
               title,
               text,

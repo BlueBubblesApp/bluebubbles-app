@@ -242,6 +242,12 @@ class SocketManager {
     DBProvider.db.buildDatabase(db);
   }
 
+  Future<String> handleNewMessage(_data) async {
+    Map<String, dynamic> data = jsonDecode(_data);
+        ActionHandler.handleMessage(data);
+        return new Future.value("");
+  }
+
   startSocketIO({bool forceNewConnection = false}) async {
     if ((state == SocketState.CONNECTING || state == SocketState.CONNECTED) &&
         !forceNewConnection) {
@@ -299,14 +305,11 @@ class SocketManager {
       /**
        * Handle new messages detected by the server
        */
-      _manager.socket.subscribe("new-message", (_data) async {
-        Map<String, dynamic> data = jsonDecode(_data);
-        // debugPrint("");
-
-        // QueueManager().addEvent("new-message", _data);
-        ActionHandler.handleMessage(data);
-        return new Future.value("");
-      });
+      _manager.socket.subscribe("new-message", handleNewMessage);
+      _manager.socket.subscribe("group-name-change", handleNewMessage);
+      _manager.socket.subscribe("participant-removed", handleNewMessage);
+      _manager.socket.subscribe("participant-added", handleNewMessage);
+      _manager.socket.subscribe("participant-left", handleNewMessage);
 
       /**
        * Handle errors sent by the server
