@@ -1,7 +1,6 @@
 import 'dart:math';
 
 import 'package:bluebubble_messages/helpers/utils.dart';
-import 'package:bluebubble_messages/managers/contact_manager.dart';
 import 'package:bluebubble_messages/managers/life_cycle_manager.dart';
 import 'package:bluebubble_messages/managers/notification_manager.dart';
 import 'package:bluebubble_messages/repository/models/chat.dart';

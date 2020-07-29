@@ -143,7 +143,7 @@ class _ConversationListState extends State<ConversationList> {
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: <Widget>[
                     Container(
-                      height: 20,
+                      height: 20
                     ),
                     Container(
                       child: Row(

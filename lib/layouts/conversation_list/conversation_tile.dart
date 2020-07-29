@@ -49,8 +49,6 @@ class ConversationTile extends StatefulWidget {
 }
 
 class _ConversationTileState extends State<ConversationTile> {
-  String lastMessageTime = "";
-  List<Message> messages = <Message>[];
   ImageProvider contactImage;
 
   bool isPressed = false;

@@ -138,6 +138,9 @@ class ChatBloc {
 
     if (firstMessage != null) {
       subtitle = firstMessage.text;
+      if (firstMessage.itemType != 0)
+        subtitle = getGroupEventText(firstMessage);
+
       if (firstMessage.hasAttachments) {
         List<Attachment> attachments =
             await Message.getAttachments(firstMessage);
