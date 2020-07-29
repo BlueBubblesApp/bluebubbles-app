@@ -9,6 +9,7 @@ import 'package:bluebubble_messages/helpers/attachment_sender.dart';
 import 'package:bluebubble_messages/helpers/contstants.dart';
 import 'package:bluebubble_messages/helpers/message_helper.dart';
 import 'package:bluebubble_messages/helpers/utils.dart';
+import 'package:bluebubble_messages/layouts/widgets/message_widget/group_event.dart';
 import 'package:bluebubble_messages/managers/contact_manager.dart';
 import 'package:bluebubble_messages/managers/life_cycle_manager.dart';
 import 'package:bluebubble_messages/managers/new_message_manager.dart';
@@ -68,7 +69,6 @@ class ActionHandler {
       //     SocketManager().attachmentSenders.length == 0) {
       //   SocketManager().closeSocket();
       // }
-      debugPrint("message sent: " + response.toString());
 
       // If there is an error, replace the temp value with an error
       if (response['status'] != 200) {
@@ -124,16 +124,21 @@ class ActionHandler {
     params["tempGuid"] = tempGuid;
 
     // Reset error, guid, and send date
+    message.id = null;
     message.error = 0;
     message.guid = tempGuid;
     message.dateCreated = DateTime.now();
 
-    // If we aren't conneted to the socket, set the message error code
-    await Message.replaceMessage(oldGuid, message);
+    // Delete the old message
+    Map<String, dynamic> msgOpts = {'guid': oldGuid};
+    await Message.delete(msgOpts);
+    NewMessageManager().deleteSpecificMessage(chat, oldGuid);
+
+    // Add the new message
+    await chat.addMessage(message);
     NewMessageManager().updateWithMessage(chat, message);
 
     SocketManager().sendMessage("send-message", params, (response) async {
-      debugPrint("message sent: " + response.toString());
 
       // If there is an error, replace the temp value with an error
       if (response['status'] != 200) {
@@ -266,10 +271,7 @@ class ActionHandler {
     }
 
     // If we already have a chat, don't fetch the participants
-    if (currentChat != null) {
-      debugPrint("currentChat != null, returning");
-      return;
-    }
+    if (currentChat != null) return;
     // if (isHeadless) return;
 
     Map<String, dynamic> params = Map();
@@ -315,6 +317,8 @@ class ActionHandler {
     Message message = Message.fromMap(data);
     List<Chat> chats = MessageHelper.parseChats(data);
 
+
+
     // Handle message differently depending on if there is a temp GUID match
     if (data.containsKey("tempGuid")) {
       // Check if the GUID exists
@@ -323,23 +327,11 @@ class ActionHandler {
       // If the GUID exists already, delete the temporary entry
       // Otherwise, replace the temp message
       if (existing != null) {
-        debugPrint(
-            "Message already exists for match. Removing temporary entry.");
         await Message.delete({'guid': data['tempGuid']});
-        NewMessageManager()
-            .deleteSpecificMessage(chats.first, data['tempGuid']);
+        NewMessageManager().deleteSpecificMessage(chats.first, data['tempGuid']);
       } else {
-        Message newMessage = await Message.replaceMessage(
-            data["tempGuid"], message,
-            chat: chats.first);
-        debugPrint(
-            "(handle message) handle message ${newMessage.text}, ${newMessage.guid} " +
-                data["dateCreated"].toString());
-        debugPrint(
-            "(handle message) after saving ${newMessage.text}, ${newMessage.guid} " +
-                newMessage.dateCreated.millisecondsSinceEpoch.toString());
-        List<dynamic> attachments =
-            data.containsKey("attachments") ? data['attachments'] : [];
+        await Message.replaceMessage(data["tempGuid"], message, chat: chats.first);
+        List<dynamic> attachments = data.containsKey("attachments") ? data['attachments'] : [];
         for (dynamic attachmentItem in attachments) {
           Attachment file = Attachment.fromMap(attachmentItem);
           await Attachment.replaceAttachment(data["tempGuid"], file);
@@ -367,7 +359,7 @@ class ActionHandler {
         await ActionHandler.handleChat(
             chat: chats[i], checkIfExists: true, isHeadless: isHeadless);
         Message existing = await Message.findOne({"guid": message.guid});
-        if (!message.isFromMe &&
+        if (!message.isFromMe && message.handle != null &&
             (NotificationManager().chatGuid != chats[i].guid ||
                 !LifeCycleManager().isAlive) &&
             !chats[i].isMuted &&
@@ -382,19 +374,17 @@ class ActionHandler {
           await chats[i].save();
           String title = await getFullChatTitle(chats[i]);
           NotificationManager().createNewNotification(
-              title,
-              text,
-              chats[i].guid,
-              Random().nextInt(9998) + 1,
-              chats[i].id,
-              message.dateCreated.millisecondsSinceEpoch,
-              getContactTitle(message.handle.id, message.handle.address),
-              chats[i].participants.length > 1,
-              handle: message.handle,
-              contact: getContact(
-                ContactManager().contacts,
-                message.handle.address,
-              ));
+            title,
+            text,
+            chats[i].guid,
+            Random().nextInt(9998) + 1,
+            chats[i].id,
+            message.dateCreated.millisecondsSinceEpoch,
+            getContactTitle(message.handle.id, message.handle.address),
+            chats[i].participants.length > 1,
+            handle: message.handle,
+            contact: getContact(message.handle.address)
+          );
         }
         await message.save();
         debugPrint(
@@ -411,6 +401,11 @@ class ActionHandler {
             NotificationManager().chatGuid != chats[i].guid &&
             !message.isFromMe) {
           SocketManager().chatsWithNotifications.add(chats[i].guid);
+        }
+
+        if (message.itemType == ItemTypes.nameChanged.index) {
+          chats[i] = await chats[i].changeName(message.groupTitle);
+          ChatBloc().updateChat(chats[i]);
         }
       }
 
@@ -429,6 +424,7 @@ class ActionHandler {
                   createAttachmentNotification && file.mimeType != null);
         }
       }
+
       chats.forEach((element) {
         // Update chats
         if (!isHeadless)

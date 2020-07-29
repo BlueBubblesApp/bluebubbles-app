@@ -161,6 +161,13 @@ class Chat {
     return this;
   }
 
+  Future<Chat> changeName(String name) async {
+    final Database db = await DBProvider.db.database;
+    await db.update("chat", {'displayName': name}, where: "ROWID = ?", whereArgs: [this.id]);
+    this.displayName = name;
+    return this;
+  }
+
   Future<Chat> update() async {
     final Database db = await DBProvider.db.database;
 
@@ -327,7 +334,6 @@ class Chat {
 
       output.add(msg);
     }
-    debugPrint("got messages");
 
     var res2 = await db.rawQuery(
         "$query" + " AND message.originalROWID IS NULL GROUP BY message.ROWID;",
@@ -354,7 +360,7 @@ class Chat {
         }
       }
     }
-    debugPrint("got unsentMessages");
+  
     return output;
   }
 

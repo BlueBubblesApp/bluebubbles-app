@@ -31,8 +31,7 @@ class _ReactionDetailWidgetState extends State<ReactionDetailWidget> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    Contact contact =
-        getContact(ContactManager().contacts, widget.handle.address);
+    Contact contact = getContact(widget.handle.address);
     if (contact != null && contact.avatar.length > 0) {
       contactImage = MemoryImage(contact.avatar);
       if (this.mounted) setState(() {});

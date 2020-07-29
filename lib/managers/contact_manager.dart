@@ -1,9 +1,8 @@
 import 'dart:async';
-import 'dart:typed_data';
 
+import 'package:bluebubble_messages/helpers/utils.dart';
 import 'package:bluebubble_messages/repository/models/handle.dart';
 import 'package:contacts_service/contacts_service.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class ContactManager {
@@ -22,34 +21,28 @@ class ContactManager {
   Map<String, Contact> handleToContact = new Map();
 
   Future<void> getContacts({bool headless = false}) async {
-    // if (contacts.length > 0) return;
-    if (headless || await Permission.contacts.request().isGranted) {
-      var contacts =
-          (await ContactsService.getContacts(withThumbnails: false)).toList();
-      _manager.contacts = contacts;
-      // Lazy load thumbnails after rendering initial contacts.
-      getAvatars();
+    bool hasPermission = await Permission.contacts.request().isGranted;
+    if (!headless && !hasPermission) return;
 
-      List<Handle> handles = await Handle.find({});
-      for (Handle handle in handles) {
-        if (handleToContact.containsKey(handle.id)) continue;
-        for (Contact contact in contacts) {
-          contact.phones.forEach((Item item) {
-            String formattedNumber =
-                item.value.replaceAll(RegExp(r'[-() ]'), '');
-            
-            if (formattedNumber == handle.address ||
-                "+1" + formattedNumber == handle.address ||
-                "+" + formattedNumber == handle.address) {
-              handleToContact[handle.address] = contact;
-            }
-          });
-          contact.emails.forEach((Item item) {
-            if (item.value == handle.address) {
-              handleToContact[handle.address] = contact;
-            }
-          });
-        }
+    // Fetch the current list of contacts
+    contacts = (await ContactsService.getContacts(withThumbnails: false)).toList();
+
+    // Lazy load thumbnails after rendering initial contacts.
+    getAvatars();
+
+    // Match handles to contacts
+    List<Handle> handles = await Handle.find({});
+    for (Handle handle in handles) {
+      // If we already have a "match", skip
+      if (handleToContact.containsKey(handle.address)) continue;
+
+      // Find a contact match
+      Contact contactMatch = getContact(handle.address);
+
+      // If we have a match, add it to the mapping, then break out
+      // of the loop so we don't "over-process" more than we need
+      if (contactMatch != null) {
+        handleToContact[handle.address] = contactMatch;
       }
     }
   }
@@ -57,12 +50,10 @@ class ContactManager {
   Future<void> getAvatars() async {
     for (int i = 0; i < contacts.length; i++) {
       final avatar = await ContactsService.getAvatar(contacts[i]);
-      if (avatar != null) {
-        contacts[i].avatar = avatar;
-      }
-      if (i == contacts.length - 1) {
-        _stream.sink.add(contacts);
-      }
+      if (avatar == null) continue;
+
+      contacts[i].avatar = avatar;
+      _stream.sink.add([contacts[i]]);
     }
   }
 }

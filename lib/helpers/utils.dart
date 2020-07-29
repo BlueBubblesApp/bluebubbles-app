@@ -1,18 +1,14 @@
 import 'dart:convert';
 import 'dart:math';
 import 'dart:typed_data';
-import 'package:bluebubble_messages/repository/models/handle.dart';
+import 'package:bluebubble_messages/layouts/widgets/message_widget/group_event.dart';
 import 'package:bluebubble_messages/repository/models/message.dart';
 import 'package:blurhash_flutter/blurhash.dart';
-// import 'package:blurhash_dart/blurhash_dart.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'package:bluebubble_messages/managers/contact_manager.dart';
-import 'package:bluebubble_messages/socket_manager.dart';
 import 'package:contacts_service/contacts_service.dart';
-import 'package:flutter/services.dart';
-import 'package:permission_handler/permission_handler.dart';
 
 DateTime parseDate(dynamic value) {
   if (value == null) return null;
@@ -60,23 +56,38 @@ String formatPhoneNumber(String str) {
   return formattedPhoneNumber;
 }
 
-Contact getContact(List<Contact> contacts, String id) {
+bool sameAddress(String address1, String address2) {
+  String formattedNumber = address1.replaceAll(RegExp(r'[-() ]'), '');
+
+  return formattedNumber == address2 ||
+      "+1" + formattedNumber == address2 ||
+      "+" + formattedNumber == address2;
+}
+
+Contact getContact(String id) {
   Contact contact;
-  contacts.forEach((Contact _contact) {
-    _contact.phones.forEach((Item item) {
-      String formattedNumber = item.value.replaceAll(RegExp(r'[-() ]'), '');
-      if (formattedNumber == id || "+1" + formattedNumber == id) {
-        contact = _contact;
-        return contact;
+
+  for (Contact c in ContactManager().contacts) {
+    // Get a phone number match
+    for (Item item in c.phones) {
+      if (sameAddress(item.value, id)) {
+        contact = c;
+        break;
       }
-    });
-    _contact.emails.forEach((Item item) {
+    }
+
+    // Get an email match
+    for (Item item in c.emails) {
       if (item.value == id) {
-        contact = _contact;
-        return contact;
+        contact = c;
+        break;
       }
-    });
-  });
+    }
+
+    // If we have a match, break out of the loop
+    if (contact != null) break;
+  }
+
   return contact;
 }
 
@@ -96,7 +107,7 @@ getInitials(String name, String delimeter) {
     if (first == null || second == null) {
       return Icon(Icons.people, color: Colors.white, size: 30);
     } else {
-      return "$first&$second";
+      return "${first.toUpperCase()}&${second.toUpperCase()}";
     }
   }
 
@@ -181,3 +192,22 @@ bool isEmptyString(String input) {
   input = sanitizeString(input);
   return input.isEmpty;
 }
+
+String getGroupEventText(Message message) {
+    String text = "Unknown group event";
+    String handle = "You";
+    if (message.handleId != null && message.handle != null)
+      handle = getContactTitle(message.handleId, message.handle.address);
+
+    if (message.itemType == ItemTypes.participantRemoved.index) {
+      text = "$handle removed someone from the conversation";
+    } else if (message.itemType == ItemTypes.participantAdded.index) {
+      text = "$handle added someone to the conversation";
+    } else if (message.itemType == ItemTypes.participantLeft.index) {
+      text = "$handle left the conversation";
+    } else if (message.itemType == ItemTypes.nameChanged.index) {
+      text = "$handle renamed the conversation to \"${message.groupTitle}\"";
+    }
+
+    return text;
+  }

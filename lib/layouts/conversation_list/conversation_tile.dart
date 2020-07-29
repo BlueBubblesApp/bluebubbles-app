@@ -49,8 +49,6 @@ class ConversationTile extends StatefulWidget {
 }
 
 class _ConversationTileState extends State<ConversationTile> {
-  String lastMessageTime = "";
-  List<Message> messages = <Message>[];
   ImageProvider contactImage;
 
   bool isPressed = false;
@@ -68,8 +66,7 @@ class _ConversationTileState extends State<ConversationTile> {
     if (contactImage != null) return;
     Chat chat = await widget.chat.getParticipants();
     if (chat.participants.length == 1) {
-      Contact contact = getContact(
-          ContactManager().contacts, chat.participants.first.address);
+      Contact contact = getContact(chat.participants.first.address);
       if (contact != null && contact.avatar.length > 0) {
         contactImage = MemoryImage(contact.avatar);
         if (this.mounted) setState(() {});
@@ -92,7 +89,7 @@ class _ConversationTileState extends State<ConversationTile> {
           onTap: () async {
             widget.chat.isMuted = !widget.chat.isMuted;
             await widget.chat.save(updateLocalVals: true);
-            setState(() {});
+            if (this.mounted) setState(() {});
           },
         ),
         IconSlideAction(
@@ -151,7 +148,7 @@ class _ConversationTileState extends State<ConversationTile> {
               );
             }
             Future.delayed(Duration(milliseconds: 200), () {
-              setState(() {
+              if (this.mounted) setState(() {
                 isPressed = false;
               });
             });

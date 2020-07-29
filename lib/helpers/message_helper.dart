@@ -1,14 +1,12 @@
 import 'dart:math';
 
 import 'package:bluebubble_messages/helpers/utils.dart';
-import 'package:bluebubble_messages/managers/contact_manager.dart';
 import 'package:bluebubble_messages/managers/life_cycle_manager.dart';
 import 'package:bluebubble_messages/managers/notification_manager.dart';
 import 'package:bluebubble_messages/repository/models/chat.dart';
 import 'package:bluebubble_messages/repository/models/message.dart';
 import 'package:bluebubble_messages/repository/models/attachment.dart';
 import 'package:bluebubble_messages/socket_manager.dart';
-import 'package:flutter/material.dart';
 
 class MessageHelper {
   static Future<List<Message>> bulkAddMessages(
@@ -24,7 +22,7 @@ class MessageHelper {
           await chat.save();
           String title = await getFullChatTitle(chat);
 
-          if (!message.isFromMe &&
+          if (!message.isFromMe && message.handle != null &&
               (NotificationManager().chatGuid != chat.guid ||
                   !LifeCycleManager().isAlive) &&
               !chat.isMuted &&
@@ -39,20 +37,19 @@ class MessageHelper {
                       ? "s"
                       : "");
             }
+
             NotificationManager().createNewNotification(
-                title,
-                text,
-                chat.guid,
-                Random().nextInt(9998) + 1,
-                chat.id,
-                message.dateCreated.millisecondsSinceEpoch,
-                getContactTitle(message.handle.id, message.handle.address),
-                chat.participants.length > 1,
-                handle: message.handle,
-                contact: getContact(
-                  ContactManager().contacts,
-                  message.handle.address,
-                ));
+              title,
+              text,
+              chat.guid,
+              Random().nextInt(9998) + 1,
+              chat.id,
+              message.dateCreated.millisecondsSinceEpoch,
+              getContactTitle(message.handle.id, message.handle.address),
+              chat.participants.length > 1,
+              handle: message.handle,
+              contact: getContact(message.handle.address)
+            );
             NotificationManager().processedNotifications.add(message.guid);
             if (!SocketManager().chatsWithNotifications.contains(chat.guid) &&
                 NotificationManager().chatGuid != chat.guid) {
