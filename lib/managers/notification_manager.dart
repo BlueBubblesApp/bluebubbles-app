@@ -68,7 +68,7 @@ class NotificationManager {
     if (contact != null) {
       if (contact.avatar.length > 0) contactIcon = contact.avatar;
     }
-    debugPrint("contactIcon " + contactIcon.toString());
+
     MethodChannelInterface().platform.invokeMethod("new-message-notification", {
       "CHANNEL_ID": "com.bluebubbles.new_messages",
       "CHANNEL_NAME": "New Messages",

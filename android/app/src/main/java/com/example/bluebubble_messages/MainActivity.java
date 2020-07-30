@@ -31,6 +31,13 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.Rect;
+import android.graphics.RectF;
+import android.graphics.Canvas;
+import android.graphics.PorterDuffXfermode;
+import android.graphics.PorterDuff;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.Icon;
 import android.location.Location;
@@ -106,9 +113,9 @@ public class MainActivity extends FlutterActivity {
     private ValueEventListener dbListener = new ValueEventListener() {
         @Override
         public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-            Log.d("firebase", "data changed");
-            String serverURL = dataSnapshot.child("config").child("serverUrl").getValue().toString();
-            Log.d("firebase", "new server: " + serverURL);
+            Log.d("FirebaseDB", "Firebase Database updated. Syncing...");
+            String serverURL = dataSnapshot.child("serverUrl").getValue().toString();
+            Log.d("FirebaseDB", "Current server URL: " + serverURL);
             if (engine != null) {
                 new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod("new-server", "[" + serverURL + "]");
             }
@@ -174,12 +181,17 @@ public class MainActivity extends FlutterActivity {
                             }
                         }
                     });
-            db = FirebaseDatabase.getInstance(app).getReference();
+
+            // Get the config database reference
+            db = FirebaseDatabase.getInstance(app).getReference("config");
             try {
+                // Remove any previous listeners
                 db.removeEventListener(dbListener);
             } catch (Exception e) {
-
+                // Don't do anything
             }
+            
+            // Re-add the listener
             db.addValueEventListener(dbListener);
         } else if (call.method.equals("create-notif-channel")) {
             createNotificationChannel(call.argument("channel_name"), call.argument("channel_description"), call.argument("CHANNEL_ID"), context);
@@ -216,7 +228,7 @@ public class MainActivity extends FlutterActivity {
             Icon icon = null;
             if (call.argument("contactIcon") != null) {
                 Bitmap bmp = BitmapFactory.decodeByteArray((byte[]) call.argument("contactIcon"), 0, ((byte[]) call.argument("contactIcon")).length);
-                icon = Icon.createWithBitmap(bmp);
+                icon = Icon.createWithBitmap(MainActivity.getCircleBitmap(bmp));
             }
             Person.Builder person = new Person.Builder().setName(call.argument("name"));
             if (icon != null) {
@@ -291,7 +303,6 @@ public class MainActivity extends FlutterActivity {
             NotificationManagerCompat notificationManagerCompat = NotificationManagerCompat.from(context);
 
             notificationManagerCompat.notify(existingNotificationId, builder.build());
-            Log.d("here", "here");
 //                                notificationManagerCompat.notify(call.argument("summaryId"), summaryBuilder.build());
             result.success("");
         } else if (call.method.equals("create-socket-issue-warning")) {
@@ -389,11 +400,11 @@ public class MainActivity extends FlutterActivity {
             result.success("");
         } else if (call.method.equals("get-server-url")) {
             // Get the server URL from Firebase
-            DatabaseReference database = FirebaseDatabase.getInstance(app).getReference();
-            database.child("config").child("serverUrl").addListenerForSingleValueEvent(new ValueEventListener() {
+            DatabaseReference database = FirebaseDatabase.getInstance(app).getReference("config");
+            ValueEventListener listener = new ValueEventListener() {
                 @Override
                 public void onDataChange(DataSnapshot dataSnapshot) {
-                    String url = (String) dataSnapshot.getValue();
+                    String url = (String) dataSnapshot.child("serverUrl").getValue();
                     result.success(url);
                 }
 
@@ -401,7 +412,9 @@ public class MainActivity extends FlutterActivity {
                 public void onCancelled(DatabaseError  databaseError) {
                     result.success(null);
                 }
-            });
+            };
+
+            database.addListenerForSingleValueEvent(listener);
         } else {
             result.notImplemented();
         }
@@ -561,5 +574,28 @@ public class MainActivity extends FlutterActivity {
                 = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
         return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+    }
+
+    private static Bitmap getCircleBitmap(Bitmap bitmap) {
+        final Bitmap output = Bitmap.createBitmap(bitmap.getWidth(),
+                bitmap.getHeight(), Bitmap.Config.ARGB_8888);
+        final Canvas canvas = new Canvas(output);
+    
+        final int color = Color.RED;
+        final Paint paint = new Paint();
+        final Rect rect = new Rect(0, 0, bitmap.getWidth(), bitmap.getHeight());
+        final RectF rectF = new RectF(rect);
+    
+        paint.setAntiAlias(true);
+        canvas.drawARGB(0, 0, 0, 0);
+        paint.setColor(color);
+        canvas.drawOval(rectF, paint);
+    
+        paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_IN));
+        canvas.drawBitmap(bitmap, rect, rect, paint);
+    
+        bitmap.recycle();
+    
+        return output;
     }
 }

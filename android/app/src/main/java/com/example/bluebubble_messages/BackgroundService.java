@@ -157,7 +157,7 @@ public class BackgroundService extends Service {
             Log.d("firebase", "data changed");
             if (dataSnapshot.child("config").child("serverUrl").getValue() == null) return;
             String serverURL = dataSnapshot.child("config").child("serverUrl").getValue().toString();
-            Log.d("firebase", "new server: " + serverURL);
+            Log.d("FirebaseDB", "Current server URL: " + serverURL);
             if (engine == null && backgroundChannel != null) {
                 backgroundChannel.invokeMethod("new-server", "[" + serverURL + "]");
             }

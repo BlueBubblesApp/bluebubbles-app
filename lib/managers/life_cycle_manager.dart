@@ -1,4 +1,3 @@
-import 'package:bluebubble_messages/blocs/setup_bloc.dart';
 import 'package:bluebubble_messages/managers/notification_manager.dart';
 import 'package:bluebubble_messages/managers/settings_manager.dart';
 import 'package:bluebubble_messages/socket_manager.dart';
@@ -17,7 +16,6 @@ class LifeCycleManager {
 
   LifeCycleManager._internal() {
     SocketManager().socketProcessUpdater.listen((event) {
-      debugPrint("updated socket process " + event.toString());
       if (event.length == 0 && !_isAlive) {
         SocketManager().closeSocket();
       }

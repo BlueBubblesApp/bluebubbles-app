@@ -341,7 +341,7 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                             color: Theme.of(context).dividerColor,
                             width: 1.5,
                           ),
-                          borderRadius: BorderRadius.circular(15),
+                          borderRadius: BorderRadius.circular(20),
                         ),
                       ),
                     ),

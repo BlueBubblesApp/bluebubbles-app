@@ -92,8 +92,7 @@ class _ConversationViewState extends State<ConversationView> {
 
     // Chat _chat = await chat.getParticipants();
     if (chat.participants.length == 1) {
-      Contact contact = getContact(
-          ContactManager().contacts, chat.participants.first.address);
+      Contact contact = getContact(chat.participants.first.address);
       if (contact != null && contact.avatar.length > 0) {
         contactImage = MemoryImage(contact.avatar);
         if (this.mounted) setState(() {});

@@ -1,18 +1,15 @@
-import 'dart:convert';
-import 'dart:math';
 import 'dart:ui';
 
 import 'package:bluebubble_messages/blocs/chat_bloc.dart';
-import 'package:bluebubble_messages/helpers/hex_color.dart';
 import 'package:bluebubble_messages/helpers/utils.dart';
 import 'package:bluebubble_messages/layouts/widgets/contact_avatar_widget.dart';
 import 'package:bluebubble_messages/managers/contact_manager.dart';
-import 'package:bluebubble_messages/managers/new_message_manager.dart';
 import 'package:bluebubble_messages/repository/models/chat.dart';
 import 'package:bluebubble_messages/repository/models/handle.dart';
 import 'package:bluebubble_messages/socket_manager.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:intent/intent.dart' as android_intent;
 import 'package:intent/action.dart' as android_action;
@@ -61,6 +58,11 @@ class _ContactTileState extends State<ContactTile> {
   Widget _buildContactTile() {
     var initials = getInitials(widget.contact?.displayName ?? "", " ");
     return InkWell(
+      onLongPress: () {
+        Clipboard.setData(new ClipboardData(text: widget.handle.address));
+        final snackBar = SnackBar(content: Text("Address copied to clipboard"));
+        Scaffold.of(context).showSnackBar(snackBar);
+      },
       onTap: () async {
         if (widget.contact == null) {
           await ContactsService.openContactForm();
