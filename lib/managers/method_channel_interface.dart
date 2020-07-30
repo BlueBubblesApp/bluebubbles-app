@@ -42,7 +42,7 @@ class MethodChannelInterface {
     //this happens if it is a headless thread
     if (channel != null) {
       platform = channel;
-      platform.setMethodCallHandler(callHandler);
+      // platform.setMethodCallHandler(callHandler);
     } else {
       platform = MethodChannel('samples.flutter.dev/fcm');
       _context = context;
