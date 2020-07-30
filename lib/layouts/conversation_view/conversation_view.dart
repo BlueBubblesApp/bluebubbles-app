@@ -77,9 +77,11 @@ class _ConversationViewState extends State<ConversationView> {
 
     String pathName = "$appDocPath/tempAssets";
     Directory tempAssets = Directory(pathName);
-    if (tempAssets.existsSync()) {
-      tempAssets.delete(recursive: true);
-    }
+    tempAssets.exists().then((value) {
+      if (value) {
+        tempAssets.delete(recursive: true);
+      }
+    });
     super.dispose();
   }
 

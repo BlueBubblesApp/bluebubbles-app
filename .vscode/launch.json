@@ -1,21 +1,31 @@
 {
-    // Use IntelliSense to learn about possible attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
-    "version": "0.2.0",
-    "configurations": [
-        {
-            "name": "BlueBubblesProfile",
-            "type": "dart",
-            "request": "launch",
-            "program": "lib/main.dart",
-            "flutterMode": "profile"
-        },
-        {
-            "type": "dart",
-            "name": "BlueBubbles",
-            "request": "launch",
-            "program": "lib/main.dart",
-        }
-    ]
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "BlueBubblesProfile",
+      "type": "dart",
+      "request": "launch",
+      "program": "lib/main.dart",
+      "flutterMode": "profile",
+      "args": [
+        "--local-engine-src-path",
+        "/home/brandon/Desktop/VMware Shared Folder/engine/src/",
+        "--local-engine=android_debug_unopt"
+      ]
+    },
+    {
+      "type": "dart",
+      "name": "BlueBubbles",
+      "request": "launch",
+      "program": "lib/main.dart",
+      "args": [
+        "--local-engine-src-path",
+        "/home/brandon/Desktop/VMware Shared Folder/engine/src/",
+        "--local-engine=android_debug_unopt"
+      ]
+    }
+  ]
 }

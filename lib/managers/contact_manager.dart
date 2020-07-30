@@ -23,7 +23,9 @@ class ContactManager {
 
   Future<void> getContacts({bool headless = false}) async {
     // if (contacts.length > 0) return;
-    if (headless || await Permission.contacts.request().isGranted) {
+    debugPrint("getting contacts, headless is " + headless.toString());
+    if (headless ||
+        (!headless && await Permission.contacts.request().isGranted)) {
       var contacts =
           (await ContactsService.getContacts(withThumbnails: false)).toList();
       _manager.contacts = contacts;
@@ -37,7 +39,7 @@ class ContactManager {
           contact.phones.forEach((Item item) {
             String formattedNumber =
                 item.value.replaceAll(RegExp(r'[-() ]'), '');
-            
+
             if (formattedNumber == handle.address ||
                 "+1" + formattedNumber == handle.address ||
                 "+" + formattedNumber == handle.address) {

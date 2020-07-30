@@ -155,6 +155,7 @@ public class BackgroundService extends Service {
         @Override
         public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
             Log.d("firebase", "data changed");
+            if (dataSnapshot.child("config").child("serverUrl").getValue() == null) return;
             String serverURL = dataSnapshot.child("config").child("serverUrl").getValue().toString();
             Log.d("firebase", "new server: " + serverURL);
             if (engine == null && backgroundChannel != null) {

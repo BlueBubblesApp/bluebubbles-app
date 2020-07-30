@@ -7,10 +7,12 @@ import 'package:bluebubble_messages/helpers/attachment_sender.dart';
 import 'package:bluebubble_messages/helpers/hex_color.dart';
 import 'package:bluebubble_messages/layouts/conversation_view/camera_widget.dart';
 import 'package:bluebubble_messages/layouts/image_viewer/image_viewer.dart';
+import 'package:bluebubble_messages/managers/settings_manager.dart';
 import 'package:bluebubble_messages/repository/models/chat.dart';
 import 'package:bluebubble_messages/socket_manager.dart';
 import 'package:file_picker_cross/file_picker_cross.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mime_type/mime_type.dart';
@@ -140,6 +142,21 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
       });
       setState(() {});
     }
+  }
+
+  Future<File> _downloadFile(String url, String filename) async {
+    HttpClient httpClient = HttpClient();
+    var request = await httpClient.getUrl(Uri.parse(url));
+    var response = await request.close();
+    var bytes = await consolidateHttpClientResponseBytes(response);
+    String dir = SettingsManager().appDocDir.path;
+    Directory tempAssets = Directory("$dir/tempAssets");
+    if (!await tempAssets.exists()) {
+      await tempAssets.create();
+    }
+    File file = new File('$dir/tempAssets/$filename');
+    await file.writeAsBytes(bytes);
+    return file;
   }
 
   @override
@@ -294,6 +311,13 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                       child: CupertinoTextField(
                         // autofocus: true,
                         key: _searchFormKey,
+                        onContentCommited: (String url) async {
+                          debugPrint("got attachment " + url);
+                          File file =
+                              await _downloadFile(url, url.split("/").last);
+                          pickedImages.add(file);
+                          setState(() {});
+                        },
                         textCapitalization: TextCapitalization.sentences,
                         focusNode: _focusNode,
                         autocorrect: true,
