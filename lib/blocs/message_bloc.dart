@@ -199,10 +199,8 @@ class MessageBloc {
           {"statement": "message.service = 'iMessage'", "args": null}
         ];
 
-        SocketManager()
-            .socket
-            .sendMessage("get-chat-messages", jsonEncode(params), (data) async {
-          List messages = jsonDecode(data)["data"];
+        SocketManager().sendMessage("get-chat-messages", params, (data) async {
+          List messages = data["data"];
           if (messages.length == 0) {
             completer.complete();
             return;
