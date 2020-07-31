@@ -51,6 +51,7 @@ class ChatBloc {
   ChatBloc._internal();
 
   Future<List<Chat>> getChats() async {
+    debugPrint("get chats");
     var now = DateTime.now().millisecondsSinceEpoch;
     //sink is a way of adding data reactively to the stream
     //by registering a new event
@@ -93,6 +94,10 @@ class ChatBloc {
 
     now = DateTime.now().millisecondsSinceEpoch;
     _chatController.sink.add(_chats);
+    _chats.sort((a, b) {
+      return -_tileVals[a.guid]["actualDate"]
+          .compareTo(_tileVals[b.guid]["actualDate"]);
+    });
     await initTileVals(_archivedChats, customMap: _archivedTileVals);
     later = DateTime.now().millisecondsSinceEpoch;
 

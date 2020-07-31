@@ -200,6 +200,10 @@ class MessageBloc {
         ];
 
         SocketManager().sendMessage("get-chat-messages", params, (data) async {
+          if (data['status'] != 200) {
+            completer.complete();
+            return;
+          }
           List messages = data["data"];
           if (messages.length == 0) {
             completer.complete();

@@ -240,11 +240,7 @@ class _ConversationListState extends State<ConversationList> {
                 if (snapshot.hasData || widget.showArchivedChats) {
                   // debugPrint(snapshot.data.toString());
 
-                  if (snapshot.hasData)
-                    _chats.sort((a, b) {
-                      return -snapshot.data[a.guid]["actualDate"]
-                          .compareTo(snapshot.data[b.guid]["actualDate"]);
-                    });
+                  // if (snapshot.hasData)
 
                   return SliverList(
                     delegate: SliverChildBuilderDelegate(

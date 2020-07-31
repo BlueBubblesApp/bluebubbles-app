@@ -484,14 +484,25 @@ class _NewChatCreatorState extends State<NewChatCreator> {
                     });
                     showDialog(
                       context: context,
-                      child: ClipRRect(
-                        child: BackdropFilter(
-                          filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                          child: SizedBox(
-                            height: 100,
-                            width: 100,
-                            child: CircularProgressIndicator(),
-                          ),
+                      child: AlertDialog(
+                        backgroundColor: Theme.of(context).backgroundColor,
+                        title: Text(
+                          "Creating a new chat...",
+                          style: Theme.of(context).textTheme.bodyText1,
+                        ),
+                        content: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: <Widget>[
+                            Container(
+                              // height: 70,
+                              // color: Colors.black,
+                              child: CircularProgressIndicator(
+                                valueColor:
+                                    AlwaysStoppedAnimation<Color>(Colors.blue),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     );
@@ -500,15 +511,41 @@ class _NewChatCreatorState extends State<NewChatCreator> {
                       "start-chat",
                       params,
                       (data) async {
+                        if (data['status'] != 200) {
+                          Navigator.of(context).pop();
+                          showDialog(
+                            context: context,
+                            child: AlertDialog(
+                              backgroundColor:
+                                  Theme.of(context).backgroundColor,
+                              title: Text(
+                                "Could not create",
+                                style: Theme.of(context).textTheme.bodyText1,
+                              ),
+                              content: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: <Widget>[
+                                  Container(
+                                    // height: 70,
+                                    // color: Colors.black,
+                                    child: CircularProgressIndicator(
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                          Colors.blue),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                          return;
+                        }
                         Chat newChat = Chat.fromMap(data["data"]);
-                        newChat = await newChat.save();
-                        newChat = await newChat.getParticipants();
+                        await newChat.save();
                         String title = await getFullChatTitle(newChat);
-                        // await ChatBloc().getChats();
-                        // await NewMessageManager()
-                        //     .updateWithMessage(null, null);
+
                         await ChatBloc().moveChatToTop(newChat);
-                        // await ChatBloc().getChats();
+
                         if (pickedImages.length > 0) {
                           for (int i = 0; i < pickedImages.length; i++) {
                             new AttachmentSender(
@@ -518,9 +555,8 @@ class _NewChatCreatorState extends State<NewChatCreator> {
                             );
                           }
                         } else {
-                          ActionHandler.sendMessage(newChat, text);
+                          await ActionHandler.sendMessage(newChat, text);
                         }
-
                         Navigator.of(context, rootNavigator: true).pop();
                         Navigator.of(context).pushReplacement(
                           CupertinoPageRoute(
