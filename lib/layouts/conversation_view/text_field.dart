@@ -74,6 +74,13 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
   void dispose() {
     _focusNode.dispose();
     _controller.dispose();
+    String dir = SettingsManager().appDocDir.path;
+    Directory tempAssets = Directory("$dir/tempAssets");
+    tempAssets.exists().then((value) {
+      if (value) {
+        tempAssets.delete();
+      }
+    });
     super.dispose();
   }
 

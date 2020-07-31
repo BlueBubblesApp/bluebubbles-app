@@ -20,10 +20,10 @@ import 'package:bluebubble_messages/repository/models/message.dart';
 import 'package:bluebubble_messages/socket_manager.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/cupertino.dart' as Cupertino;
+import 'package:flutter/material.dart';
 
 import '../../helpers/hex_color.dart';
 
-import 'package:flutter/material.dart';
 import '../../repository/models/chat.dart';
 
 class ConversationView extends StatefulWidget {

@@ -65,6 +65,7 @@ class _VideoWidgetState extends State<VideoWidget> {
                   controller: widget
                       .savedAttachmentData.controllers[widget.attachment.guid],
                   heroTag: widget.attachment.guid,
+                  file: widget.file,
                 ),
               ),
             );

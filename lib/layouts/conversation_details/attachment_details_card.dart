@@ -188,6 +188,7 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
                     builder: (context) => VideoViewer(
                       controller: _controller,
                       heroTag: widget.attachment.guid,
+                      file: file,
                     ),
                   ),
                 );

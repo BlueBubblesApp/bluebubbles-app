@@ -33,16 +33,16 @@ class _ConversationListState extends State<ConversationList> {
 
   void scrollListener() {
     return !_isAppBarExpanded
-      ? _theme != Colors.transparent
-          ? setState(() {
-              _theme = Colors.transparent;
-            })
-          : {}
-      : _theme != Theme.of(context).accentColor.withOpacity(0.5)
-          ? setState(() {
-              _theme = Theme.of(context).accentColor.withOpacity(0.5);
-            })
-          : {};
+        ? _theme != Colors.transparent
+            ? setState(() {
+                _theme = Colors.transparent;
+              })
+            : {}
+        : _theme != Theme.of(context).accentColor.withOpacity(0.5)
+            ? setState(() {
+                _theme = Theme.of(context).accentColor.withOpacity(0.5);
+              })
+            : {};
   }
 
   @override
@@ -67,7 +67,8 @@ class _ConversationListState extends State<ConversationList> {
   }
 
   bool get _isAppBarExpanded {
-    return _scrollController != null && _scrollController.hasClients &&
+    return _scrollController != null &&
+        _scrollController.hasClients &&
         _scrollController.offset > (125 - kToolbarHeight);
   }
 
@@ -142,9 +143,7 @@ class _ConversationListState extends State<ConversationList> {
                 title: Column(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: <Widget>[
-                    Container(
-                      height: 20
-                    ),
+                    Container(height: 20),
                     Container(
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -154,9 +153,7 @@ class _ConversationListState extends State<ConversationList> {
                           ),
                           Container(
                             child: Text(
-                              widget.showArchivedChats
-                                  ? "Archive"
-                                  : "Messages",
+                              widget.showArchivedChats ? "Archive" : "Messages",
                               style: Theme.of(context).textTheme.headline1,
                             ),
                           ),

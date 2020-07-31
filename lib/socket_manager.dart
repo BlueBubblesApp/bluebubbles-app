@@ -244,8 +244,8 @@ class SocketManager {
 
   Future<String> handleNewMessage(_data) async {
     Map<String, dynamic> data = jsonDecode(_data);
-        ActionHandler.handleMessage(data);
-        return new Future.value("");
+    ActionHandler.handleMessage(data);
+    return new Future.value("");
   }
 
   startSocketIO({bool forceNewConnection = false}) async {

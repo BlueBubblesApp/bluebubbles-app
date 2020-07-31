@@ -25,6 +25,8 @@
         android:usesCleartextTraffic="true"
         tools:ignore="HardcodedDebugMode">
 
+        <meta-data android:name="io.sentry.dsn" android:value="https://3123d4f0d82d405190cb599d0e904adc@o373132.ingest.sentry.io/5372783" />
+
         <receiver android:name=".Autostart">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />

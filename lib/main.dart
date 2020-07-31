@@ -26,17 +26,67 @@ import 'package:flutter/services.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
+import 'package:sentry/sentry.dart';
 
 import './layouts/conversation_list/conversation_list.dart';
 import 'layouts/conversation_view/new_chat_creator.dart';
 import 'settings.dart';
 import 'socket_manager.dart';
 
-// void main() => runApp(Main());
-void main() async {
+final SentryClient _sentry = SentryClient(
+    dsn:
+        "https://3123d4f0d82d405190cb599d0e904adc@o373132.ingest.sentry.io/5372783");
+
+bool get isInDebugMode {
+  // Assume you're in production mode.
+  bool inDebugMode = false;
+
+  // Assert expressions are only evaluated during development. They are ignored
+  // in production. Therefore, this code only sets `inDebugMode` to true
+  // in a development environment.
+  assert(inDebugMode = true);
+
+  return inDebugMode;
+}
+
+Future<Null> _reportError(dynamic error, dynamic stackTrace) async {
+  // Print the exception to the console.
+  debugPrint('Caught error: $error');
+  if (isInDebugMode) {
+    // Print the full stacktrace in debug mode.
+    debugPrint(stackTrace);
+  } else {
+    // Send the Exception and Stacktrace to Sentry in Production mode.
+    _sentry.captureException(
+      exception: error,
+      stackTrace: stackTrace,
+    );
+  }
+}
+
+Future<Null> main() async {
+  // This captures errors reported by the Flutter framework.
+  FlutterError.onError = (FlutterErrorDetails details) async {
+    if (isInDebugMode) {
+      // In development mode simply print to console.
+      FlutterError.dumpErrorToConsole(details);
+    } else {
+      // In production mode report to the application zone to report to
+      // Sentry.
+      Zone.current.handleUncaughtError(details.exception, details.stack);
+    }
+  };
+
   WidgetsFlutterBinding.ensureInitialized();
   await DBProvider.db.initDB();
-  initializeDateFormatting('fr_FR', null).then((_) => runApp(Main()));
+  await initializeDateFormatting('fr_FR', null);
+  runZonedGuarded<Future<Null>>(() async {
+    runApp(Main());
+  }, (Object error, StackTrace stackTrace) async {
+    // Whenever an error occurs, call the `_reportError` function. This sends
+    // Dart errors to the dev console or Sentry depending on the environment.
+    await _reportError(error, stackTrace);
+  });
 }
 
 class Main extends StatelessWidget with WidgetsBindingObserver {

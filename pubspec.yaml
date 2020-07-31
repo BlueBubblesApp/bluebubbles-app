@@ -71,6 +71,7 @@ dependencies:
   giftextfield:
     path: packages/gif_text_field
   image_gallery_saver: ^1.5.0
+  sentry: ^3.0.1
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
