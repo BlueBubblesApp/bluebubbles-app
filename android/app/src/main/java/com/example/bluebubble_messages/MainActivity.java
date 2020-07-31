@@ -214,7 +214,7 @@ public class MainActivity extends FlutterActivity {
 
             if (style == null) {
 
-                style = new NotificationCompat.MessagingStyle(androidx.core.app.Person.fromAndroidPerson(new Person.Builder().setName("some user").build()));
+                style = new NotificationCompat.MessagingStyle(androidx.core.app.Person.fromAndroidPerson(new Person.Builder().setName("You").build()));
                 style.setConversationTitle(call.argument("contentTitle"));
                 style.setGroupConversation(call.argument("groupConversation"));
             }
