@@ -62,7 +62,7 @@ class _MessageViewState extends State<MessageView>
         }
 
         _messages = event["messages"].values.toList();
-        if (_listKey.currentState != null) {
+        if (_listKey != null && _listKey.currentState != null) {
           _listKey.currentState.insertItem(
               event.containsKey("index") ? event["index"] : 0,
               duration: event["sentFromThisClient"]
@@ -103,19 +103,19 @@ class _MessageViewState extends State<MessageView>
 
         if (originalMessageLength < _messages.length) {
           for (int i = originalMessageLength; i < _messages.length; i++) {
-            if (_listKey.currentState != null)
+            if (_listKey != null && _listKey.currentState != null)
               _listKey.currentState
                   .insertItem(i, duration: Duration(milliseconds: 0));
           }
         } else if (originalMessageLength > _messages.length) {
           for (int i = originalMessageLength; i >= _messages.length; i--) {
-            if (_listKey.currentState != null)
+            if (_listKey != null && _listKey.currentState != null)
               _listKey.currentState.removeItem(
                   i, (context, animation) => Container(),
                   duration: Duration(milliseconds: 0));
           }
         }
-        if (_listKey.currentState != null)
+        if (_listKey != null && _listKey.currentState != null)
           _listKey.currentState.setState(() {});
         if (this.mounted) setState(() {});
       }

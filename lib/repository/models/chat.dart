@@ -299,8 +299,8 @@ class Chat {
         " FROM message"
         " JOIN chat_message_join AS cmj ON message.ROWID = cmj.messageId"
         " JOIN chat ON cmj.chatId = chat.ROWID"
-        " LEFT JOIN attachment_message_join ON attachment_message_join.messageId = message.ROWID "
-        " LEFT JOIN attachment ON attachment.ROWID = attachment_message_join.attachmentId"
+        // " LEFT JOIN attachment_message_join ON attachment_message_join.messageId = message.ROWID "
+        // " LEFT JOIN attachment ON attachment.ROWID = attachment_message_join.attachmentId"
         " LEFT OUTER JOIN handle ON handle.ROWID = message.handleId"
         " WHERE chat.ROWID = ?");
 

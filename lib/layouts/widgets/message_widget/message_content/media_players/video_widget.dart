@@ -36,7 +36,7 @@ class _VideoWidgetState extends State<VideoWidget> {
           VideoPlayerController.file(widget.file)
             ..initialize().then((value) {
               // widget.savedAttachmentData.controllers[widget.attachment.guid].play();
-              setState(() {});
+              if (this.mounted) setState(() {});
             });
     }
     showPlayPauseOverlay = !widget.savedAttachmentData

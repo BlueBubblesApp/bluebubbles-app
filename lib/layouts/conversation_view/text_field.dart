@@ -78,7 +78,7 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
     Directory tempAssets = Directory("$dir/tempAssets");
     tempAssets.exists().then((value) {
       if (value) {
-        tempAssets.delete();
+        tempAssets.delete(recursive: true);
       }
     });
     super.dispose();

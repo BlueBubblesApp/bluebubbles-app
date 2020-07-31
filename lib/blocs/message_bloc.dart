@@ -167,6 +167,7 @@ class MessageBloc {
 
   Future<LinkedHashMap<String, Message>> getMessages() async {
     List<Message> messages = await Chat.getMessages(_currentChat);
+
     if (messages.length == 0) {
       _allMessages = new LinkedHashMap();
     } else {

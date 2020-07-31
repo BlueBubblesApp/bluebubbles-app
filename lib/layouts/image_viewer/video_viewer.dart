@@ -34,7 +34,8 @@ class _VideoViewerState extends State<VideoViewer> {
       if (this.mounted && widget.controller.value.isPlaying) {
         Duration duration = await widget.controller.position;
         if (widget.controller.value.duration != null) {
-          videoProgressStream.sink.add(duration.inMilliseconds.toDouble());
+          if (!videoProgressStream.isClosed)
+            videoProgressStream.sink.add(duration.inMilliseconds.toDouble());
         }
       }
     });

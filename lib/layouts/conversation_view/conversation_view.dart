@@ -70,18 +70,19 @@ class _ConversationViewState extends State<ConversationView> {
 
   @override
   void dispose() {
+    debugPrint("dispose");
     widget.messageBloc.dispose();
     NotificationManager().leaveChat();
 
-    String appDocPath = SettingsManager().appDocDir.path;
+    // String appDocPath = SettingsManager().appDocDir.path;
 
-    String pathName = "$appDocPath/tempAssets";
-    Directory tempAssets = Directory(pathName);
-    tempAssets.exists().then((value) {
-      if (value) {
-        tempAssets.delete(recursive: true);
-      }
-    });
+    // String pathName = "$appDocPath/tempAssets";
+    // Directory tempAssets = Directory(pathName);
+    // tempAssets.exists().then((value) {
+    //   if (value) {
+    //     tempAssets.delete(recursive: true);
+    //   }
+    // });
     super.dispose();
   }
 

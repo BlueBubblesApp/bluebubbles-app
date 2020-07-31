@@ -9,23 +9,13 @@
       "type": "dart",
       "request": "launch",
       "program": "lib/main.dart",
-      "flutterMode": "profile",
-      "args": [
-        "--local-engine-src-path",
-        "/home/brandon/Desktop/VMware Shared Folder/engine/src/",
-        "--local-engine=android_debug_unopt"
-      ]
+      "flutterMode": "profile"
     },
     {
       "type": "dart",
       "name": "BlueBubbles",
       "request": "launch",
-      "program": "lib/main.dart",
-      "args": [
-        "--local-engine-src-path",
-        "/home/brandon/Desktop/VMware Shared Folder/engine/src/",
-        "--local-engine=android_debug_unopt"
-      ]
+      "program": "lib/main.dart"
     }
   ]
 }
