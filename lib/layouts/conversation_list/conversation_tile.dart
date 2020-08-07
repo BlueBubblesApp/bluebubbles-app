@@ -52,6 +52,7 @@ class _ConversationTileState extends State<ConversationTile> {
   ImageProvider contactImage;
 
   bool isPressed = false;
+  bool checkedForAvatars = false;
 
   @override
   Future<void> didChangeDependencies() async {
@@ -63,8 +64,14 @@ class _ConversationTileState extends State<ConversationTile> {
   }
 
   Future<void> getAvatars() async {
+    if (checkedForAvatars) return;
+    debugPrint("getting avatars");
     if (contactImage != null) return;
-    Chat chat = await widget.chat.getParticipants();
+    if (widget.chat.id == null) widget.chat.save();
+    Chat chat = widget.chat;
+    if (widget.chat.participants == null ||
+        widget.chat.participants.length == 0)
+      chat = await widget.chat.getParticipants();
     if (chat.participants.length == 1) {
       Contact contact = getContact(chat.participants.first.address);
       if (contact != null && contact.avatar.length > 0) {
@@ -72,6 +79,7 @@ class _ConversationTileState extends State<ConversationTile> {
         if (this.mounted) setState(() {});
       }
     }
+    checkedForAvatars = true;
   }
 
   @override
@@ -148,9 +156,10 @@ class _ConversationTileState extends State<ConversationTile> {
               );
             }
             Future.delayed(Duration(milliseconds: 200), () {
-              if (this.mounted) setState(() {
-                isPressed = false;
-              });
+              if (this.mounted)
+                setState(() {
+                  isPressed = false;
+                });
             });
           },
           onTapCancel: () {

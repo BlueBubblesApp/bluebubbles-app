@@ -27,6 +27,7 @@ class BlueBubblesTextField extends StatefulWidget {
   final Function onSend;
   final List<File> existingAttachments;
   final String existingText;
+  final Function saveText;
   BlueBubblesTextField({
     Key key,
     this.chat,
@@ -34,6 +35,7 @@ class BlueBubblesTextField extends StatefulWidget {
     this.existingAttachments,
     this.existingText,
     this.onSend,
+    this.saveText,
   }) : super(key: key);
 
   @override

@@ -181,7 +181,7 @@ class SocketManager {
           state = SocketState.ERROR;
           // startSocketIO();
           Timer(Duration(seconds: 10), () {
-            if (state == SocketState.CONNECTED) return;
+            if (state != SocketState.ERROR) return;
             debugPrint("UNABLE TO CONNECT");
             NotificationManager().createSocketWarningNotification();
             state = SocketState.FAILED;

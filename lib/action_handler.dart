@@ -139,7 +139,6 @@ class ActionHandler {
     NewMessageManager().updateWithMessage(chat, message);
 
     SocketManager().sendMessage("send-message", params, (response) async {
-
       // If there is an error, replace the temp value with an error
       if (response['status'] != 200) {
         message.guid = message.guid
@@ -316,8 +315,9 @@ class ActionHandler {
       bool isHeadless = false}) async {
     Message message = Message.fromMap(data);
     List<Chat> chats = MessageHelper.parseChats(data);
-
-
+    // chats.forEach((element) {
+    //   ChatBloc().moveChatToTop(element);
+    // });
 
     // Handle message differently depending on if there is a temp GUID match
     if (data.containsKey("tempGuid")) {
@@ -328,10 +328,13 @@ class ActionHandler {
       // Otherwise, replace the temp message
       if (existing != null) {
         await Message.delete({'guid': data['tempGuid']});
-        NewMessageManager().deleteSpecificMessage(chats.first, data['tempGuid']);
+        NewMessageManager()
+            .deleteSpecificMessage(chats.first, data['tempGuid']);
       } else {
-        await Message.replaceMessage(data["tempGuid"], message, chat: chats.first);
-        List<dynamic> attachments = data.containsKey("attachments") ? data['attachments'] : [];
+        await Message.replaceMessage(data["tempGuid"], message,
+            chat: chats.first);
+        List<dynamic> attachments =
+            data.containsKey("attachments") ? data['attachments'] : [];
         for (dynamic attachmentItem in attachments) {
           Attachment file = Attachment.fromMap(attachmentItem);
           await Attachment.replaceAttachment(data["tempGuid"], file);
@@ -359,7 +362,8 @@ class ActionHandler {
         await ActionHandler.handleChat(
             chat: chats[i], checkIfExists: true, isHeadless: isHeadless);
         Message existing = await Message.findOne({"guid": message.guid});
-        if (!message.isFromMe && message.handle != null &&
+        if (!message.isFromMe &&
+            message.handle != null &&
             (NotificationManager().chatGuid != chats[i].guid ||
                 !LifeCycleManager().isAlive) &&
             !chats[i].isMuted &&
@@ -374,17 +378,16 @@ class ActionHandler {
           await chats[i].save();
           String title = await getFullChatTitle(chats[i]);
           NotificationManager().createNewNotification(
-            title,
-            text,
-            chats[i].guid,
-            Random().nextInt(9998) + 1,
-            chats[i].id,
-            message.dateCreated.millisecondsSinceEpoch,
-            getContactTitle(message.handle.id, message.handle.address),
-            chats[i].participants.length > 1,
-            handle: message.handle,
-            contact: getContact(message.handle.address)
-          );
+              title,
+              text,
+              chats[i].guid,
+              Random().nextInt(9998) + 1,
+              chats[i].id,
+              message.dateCreated.millisecondsSinceEpoch,
+              getContactTitle(message.handle.id, message.handle.address),
+              chats[i].participants.length > 1,
+              handle: message.handle,
+              contact: getContact(message.handle.address));
         }
         await message.save();
         debugPrint(
