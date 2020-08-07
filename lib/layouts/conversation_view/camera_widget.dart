@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math';
 
 import 'package:bluebubble_messages/helpers/utils.dart';
 import 'package:bluebubble_messages/managers/settings_manager.dart';
@@ -44,14 +45,22 @@ class _CameraWidgetState extends State<CameraWidget> {
   Widget build(BuildContext context) {
     if (controller == null) return Container();
     return AspectRatio(
-      aspectRatio: controller.value.aspectRatio,
+      aspectRatio: MediaQuery.of(context).orientation == Orientation.portrait
+          ? controller.value.aspectRatio
+          : 1 / controller.value.aspectRatio,
       child: Stack(
         alignment: Alignment.topRight,
         children: <Widget>[
           Stack(
             alignment: Alignment.bottomCenter,
             children: <Widget>[
-              CameraPreview(controller),
+              RotatedBox(
+                child: CameraPreview(controller),
+                quarterTurns:
+                    MediaQuery.of(context).orientation == Orientation.portrait
+                        ? 0
+                        : 3,
+              ),
               Padding(
                 padding: EdgeInsets.only(
                     bottom: MediaQuery.of(context).size.height / 30),
