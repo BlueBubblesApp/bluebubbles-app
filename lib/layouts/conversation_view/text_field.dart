@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:ui';
 
 import 'package:bluebubble_messages/action_handler.dart';
+import 'package:bluebubble_messages/blocs/text_field_bloc.dart';
 import 'package:bluebubble_messages/helpers/attachment_sender.dart';
 import 'package:bluebubble_messages/helpers/hex_color.dart';
 import 'package:bluebubble_messages/layouts/conversation_view/camera_widget.dart';
@@ -56,7 +57,7 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
   @override
   void initState() {
     super.initState();
-    _controller = TextEditingController();
+    _controller = TextFieldBloc().getTextField(widget.chat.guid);
     if (widget.existingText != null) {
       _controller.text = widget.existingText;
     }
@@ -75,7 +76,6 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
   @override
   void dispose() {
     _focusNode.dispose();
-    _controller.dispose();
     String dir = SettingsManager().appDocDir.path;
     Directory tempAssets = Directory("$dir/tempAssets");
     tempAssets.exists().then((value) {
