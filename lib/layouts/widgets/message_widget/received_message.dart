@@ -85,8 +85,8 @@ class _ReceivedMessageState extends State<ReceivedMessage> {
     List<InlineSpan> textSpans = <InlineSpan>[];
 
     if (widget.message != null && !isEmptyString(widget.message.text)) {
-      RegExp exp =
-          new RegExp(r'((https?:\/\/)|(www\.))[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}([-a-zA-Z0-9\/()@:%_.~#?&=\*\[\]]{0,})\b');
+      RegExp exp = new RegExp(
+          r'((https?:\/\/)|(www\.))[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}([-a-zA-Z0-9\/()@:%_.~#?&=\*\[\]]{0,})\b');
       List<RegExpMatch> matches = exp.allMatches(widget.message.text).toList();
 
       List<int> linkIndexMatches = <int>[];
@@ -263,7 +263,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> {
                 width: (-widget.offset).clamp(0, 70).toDouble(),
                 duration: Duration(milliseconds: widget.offset == 0 ? 150 : 0),
                 child: Text(
-                  DateFormat('h:ma')
+                  DateFormat('h:mm a')
                       .format(widget.message.dateCreated)
                       .toLowerCase(),
                   style: Theme.of(context).textTheme.subtitle1,

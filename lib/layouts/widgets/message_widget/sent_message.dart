@@ -314,7 +314,7 @@ class _SentMessageState extends State<SentMessage>
                   duration:
                       Duration(milliseconds: widget.offset == 0 ? 150 : 0),
                   child: Text(
-                    DateFormat('h:ma')
+                    DateFormat('h:mm a')
                         .format(widget.message.dateCreated)
                         .toLowerCase(),
                     style: Theme.of(context).textTheme.subtitle1,
