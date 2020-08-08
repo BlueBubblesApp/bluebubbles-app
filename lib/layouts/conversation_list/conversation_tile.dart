@@ -65,7 +65,6 @@ class _ConversationTileState extends State<ConversationTile> {
 
   Future<void> getAvatars() async {
     if (checkedForAvatars) return;
-    debugPrint("getting avatars");
     if (contactImage != null) return;
     if (widget.chat.id == null) widget.chat.save();
     Chat chat = widget.chat;

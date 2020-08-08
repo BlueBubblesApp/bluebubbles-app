@@ -57,7 +57,9 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
   @override
   void initState() {
     super.initState();
-    _controller = TextFieldBloc().getTextField(widget.chat.guid);
+    _controller = widget.chat != null
+        ? TextFieldBloc().getTextField(widget.chat.guid)
+        : new TextEditingController();
     if (widget.existingText != null) {
       _controller.text = widget.existingText;
     }
@@ -76,6 +78,7 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
   @override
   void dispose() {
     _focusNode.dispose();
+    if (widget.chat == null) _controller.dispose();
     String dir = SettingsManager().appDocDir.path;
     Directory tempAssets = Directory("$dir/tempAssets");
     tempAssets.exists().then((value) {

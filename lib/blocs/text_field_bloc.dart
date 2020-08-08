@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:bluebubble_messages/layouts/conversation_view/new_chat_creator.dart';
 import 'package:flutter/cupertino.dart';
 
 class TextFieldBloc {
