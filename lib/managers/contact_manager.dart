@@ -1,7 +1,7 @@
 import 'dart:async';
 
-import 'package:bluebubble_messages/helpers/utils.dart';
-import 'package:bluebubble_messages/repository/models/handle.dart';
+import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -57,5 +57,9 @@ class ContactManager {
       contacts[i].avatar = avatar;
       _stream.sink.add([contacts[i]]);
     }
+  }
+
+  dispose() {
+    _stream.close();
   }
 }

@@ -1,4 +1,4 @@
-package com.example.bluebubble_messages;
+package com.bluebubbles.messaging;
 
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -25,8 +25,8 @@ import java.util.Map;
 import io.flutter.plugin.common.MethodChannel;
 
 import static android.content.Context.NOTIFICATION_SERVICE;
-import static com.example.bluebubble_messages.MainActivity.CHANNEL;
-import static com.example.bluebubble_messages.MainActivity.engine;
+import static com.bluebubbles.messaging.MainActivity.CHANNEL;
+import static com.bluebubbles.messaging.MainActivity.engine;
 
 public class ReplyReceiver extends BroadcastReceiver {
 

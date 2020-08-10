@@ -1,10 +1,10 @@
-package com.example.bluebubble_messages;
+package com.bluebubbles.messaging;
 
 import android.app.Activity;
 
 import androidx.annotation.CallSuper;
 
-import com.bricktheworld.giftextfield.GiftextfieldPlugin;
+import com.bluebubbles.giftextfield.GiftextfieldPlugin;
 
 import io.flutter.app.FlutterApplication;
 import io.flutter.plugin.common.PluginRegistry;

@@ -1,16 +1,12 @@
-import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui';
-
-import 'package:bluebubble_messages/managers/method_channel_interface.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:photo_view/photo_view.dart';
-import 'package:save_in_gallery/save_in_gallery.dart';
 
 class ImageViewer extends StatefulWidget {
   ImageViewer({
@@ -61,7 +57,18 @@ class _ImageViewerState extends State<ImageViewer> {
                 heroAttributes: PhotoViewHeroAttributes(
                   tag: widget.tag,
                 ),
-                imageProvider: MemoryImage(widget.bytes),
+                imageProvider: FileImage(widget.file),
+                loadingBuilder: (BuildContext context, ImageChunkEvent ev) {
+                  return PhotoView(
+                    minScale: PhotoViewComputedScale.contained,
+                    maxScale: PhotoViewComputedScale.contained * 13,
+                    controller: controller,
+                    heroAttributes: PhotoViewHeroAttributes(
+                      tag: widget.tag,
+                    ),
+                    imageProvider: MemoryImage(widget.bytes)
+                  );
+                }
               ),
             ),
             Padding(

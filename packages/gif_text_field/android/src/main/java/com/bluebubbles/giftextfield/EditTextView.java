@@ -1,4 +1,4 @@
-package com.bricktheworld.giftextfield;
+package com.bluebubbles.giftextfield;
 
 import android.content.Context;
 import android.text.Editable;

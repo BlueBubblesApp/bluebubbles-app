@@ -1,13 +1,12 @@
-import 'package:bluebubble_messages/blocs/message_bloc.dart';
-import 'package:bluebubble_messages/layouts/widgets/message_widget/message_content/message_attachments.dart';
-import 'package:bluebubble_messages/layouts/widgets/message_widget/message_widget.dart';
-import 'package:bluebubble_messages/layouts/widgets/message_widget/new_message_loader.dart';
-import 'package:bluebubble_messages/repository/models/attachment.dart';
-import 'package:bluebubble_messages/repository/models/message.dart';
+import 'package:bluebubbles/blocs/message_bloc.dart';
+import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_attachments.dart';
+import 'package:bluebubbles/layouts/widgets/message_widget/message_widget.dart';
+import 'package:bluebubbles/layouts/widgets/message_widget/new_message_loader.dart';
+import 'package:bluebubbles/repository/models/attachment.dart';
+import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:bluebubble_messages/layouts/widgets/send_widget.dart';
-import 'package:metadata_fetch/metadata_fetch.dart';
+import 'package:bluebubbles/layouts/widgets/send_widget.dart';
 
 class MessageView extends StatefulWidget {
   final MessageBloc messageBloc;

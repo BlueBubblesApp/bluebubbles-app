@@ -1,20 +1,18 @@
 import 'dart:io';
 
-import 'package:bluebubble_messages/helpers/attachment_downloader.dart';
-import 'package:bluebubble_messages/helpers/utils.dart';
-import 'package:bluebubble_messages/layouts/widgets/message_widget/message_content/media_file.dart';
-import 'package:bluebubble_messages/layouts/widgets/message_widget/message_content/media_players/audio_player_widget.dart';
-import 'package:bluebubble_messages/layouts/widgets/message_widget/message_content/media_players/contact_widget.dart';
-import 'package:bluebubble_messages/layouts/widgets/message_widget/message_content/media_players/image_widget.dart';
-import 'package:bluebubble_messages/layouts/widgets/message_widget/message_content/media_players/loaction_widget.dart';
-import 'package:bluebubble_messages/layouts/widgets/message_widget/message_content/media_players/regular_file_opener.dart';
-import 'package:bluebubble_messages/layouts/widgets/message_widget/message_content/media_players/video_widget.dart';
-import 'package:bluebubble_messages/layouts/widgets/message_widget/message_content/message_attachments.dart';
-import 'package:bluebubble_messages/repository/models/attachment.dart';
-import 'package:bluebubble_messages/repository/models/message.dart';
+import 'package:bluebubbles/helpers/attachment_downloader.dart';
+import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_file.dart';
+import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/audio_player_widget.dart';
+import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/contact_widget.dart';
+import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/image_widget.dart';
+import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/loaction_widget.dart';
+import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/regular_file_opener.dart';
+import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/video_widget.dart';
+import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_attachments.dart';
+import 'package:bluebubbles/repository/models/attachment.dart';
+import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_blurhash/flutter_blurhash.dart';
 
 class MessageAttachment extends StatefulWidget {
   MessageAttachment({
@@ -151,7 +149,7 @@ class _MessageAttachmentState extends State<MessageAttachment>
           ),
         );
       } else if (mimeType == "audio") {
-        //TODO fix this stuff
+        // TODO: fix this stuff
         return MediaFile(
           attachment: widget.attachment,
           child: AudioPlayerWiget(

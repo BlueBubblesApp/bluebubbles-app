@@ -1,8 +1,7 @@
-import 'package:bluebubble_messages/helpers/utils.dart';
-import 'package:bluebubble_messages/layouts/widgets/contact_avatar_widget.dart';
-import 'package:bluebubble_messages/managers/contact_manager.dart';
-import 'package:bluebubble_messages/repository/models/handle.dart';
-import 'package:bluebubble_messages/repository/models/message.dart';
+import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
+import 'package:bluebubbles/repository/models/handle.dart';
+import 'package:bluebubbles/repository/models/message.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';

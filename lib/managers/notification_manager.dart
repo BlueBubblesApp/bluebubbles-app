@@ -1,12 +1,9 @@
 import 'dart:typed_data';
 
-import 'package:bluebubble_messages/managers/method_channel_interface.dart';
-import 'package:bluebubble_messages/managers/settings_manager.dart';
-import 'package:bluebubble_messages/repository/models/attachment.dart';
-import 'package:bluebubble_messages/repository/models/chat.dart';
-import 'package:bluebubble_messages/repository/models/handle.dart';
+import 'package:bluebubbles/managers/method_channel_interface.dart';
+import 'package:bluebubbles/repository/models/chat.dart';
+import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:contacts_service/contacts_service.dart';
-import 'package:flutter/material.dart';
 
 class NotificationManager {
   factory NotificationManager() {
@@ -38,7 +35,7 @@ class NotificationManager {
     MethodChannelInterface().invokeMethod("create-notif-channel", {
       "channel_name": "New Messages",
       "channel_description": "For new messages retreived",
-      "CHANNEL_ID": "com.bluebubbles.new_messages"
+      "CHANNEL_ID": "com.bluebubbles..new_messages"
     });
   }
 
@@ -70,7 +67,7 @@ class NotificationManager {
     }
 
     MethodChannelInterface().platform.invokeMethod("new-message-notification", {
-      "CHANNEL_ID": "com.bluebubbles.new_messages",
+      "CHANNEL_ID": "com.bluebubbles..new_messages",
       "CHANNEL_NAME": "New Messages",
       "contentTitle": contentTitle,
       "contentText": contentText,
@@ -89,7 +86,7 @@ class NotificationManager {
     MethodChannelInterface()
         .platform
         .invokeMethod("create-socket-issue-warning", {
-      "CHANNEL_ID": "com.bluebubbles.new_messages",
+      "CHANNEL_ID": "com.bluebubbles..new_messages",
     });
   }
 
@@ -103,7 +100,7 @@ class NotificationManager {
   //   MethodChannelInterface()
   //       .platform
   //       .invokeMethod("update-attachment-download-notification", {
-  //     "CHANNEL_ID": "com.bluebubbles.new_messages",
+  //     "CHANNEL_ID": "com.bluebubbles..new_messages",
   //     "notificationId": id,
   //     "progress": (progress * 100).floor(),
   //   });
@@ -114,7 +111,7 @@ class NotificationManager {
   //   MethodChannelInterface()
   //       .platform
   //       .invokeMethod("create-attachment-download-notification", {
-  //     "CHANNEL_ID": "com.bluebubbles.new_messages",
+  //     "CHANNEL_ID": "com.bluebubbles..new_messages",
   //     "contentTitle": contentTitle,
   //     "contentText": contentText,
   //     "group": group,
@@ -133,7 +130,7 @@ class NotificationManager {
   //   MethodChannelInterface()
   //       .platform
   //       .invokeMethod("finish-attachment-download", {
-  //     "CHANNEL_ID": "com.bluebubbles.new_messages",
+  //     "CHANNEL_ID": "com.bluebubbles..new_messages",
   //     "contentText": contentText,
   //     "notificationId": id,
   //     "path": path,

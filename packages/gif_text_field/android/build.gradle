@@ -1,4 +1,4 @@
-group 'com.bricktheworld.giftextfield'
+group 'com.bluebubbles.giftextfield'
 version '1.0'
 
 buildscript {

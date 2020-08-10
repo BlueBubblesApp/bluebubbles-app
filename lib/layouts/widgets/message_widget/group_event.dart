@@ -1,5 +1,5 @@
-import 'package:bluebubble_messages/helpers/utils.dart';
-import 'package:bluebubble_messages/repository/models/message.dart';
+import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/material.dart';
 
 enum ItemTypes {

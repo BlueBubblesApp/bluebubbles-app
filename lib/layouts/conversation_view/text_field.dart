@@ -2,15 +2,14 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:ui';
 
-import 'package:bluebubble_messages/action_handler.dart';
-import 'package:bluebubble_messages/blocs/text_field_bloc.dart';
-import 'package:bluebubble_messages/helpers/attachment_sender.dart';
-import 'package:bluebubble_messages/helpers/hex_color.dart';
-import 'package:bluebubble_messages/layouts/conversation_view/camera_widget.dart';
-import 'package:bluebubble_messages/layouts/image_viewer/image_viewer.dart';
-import 'package:bluebubble_messages/managers/settings_manager.dart';
-import 'package:bluebubble_messages/repository/models/chat.dart';
-import 'package:bluebubble_messages/socket_manager.dart';
+import 'package:bluebubbles/action_handler.dart';
+import 'package:bluebubbles/blocs/text_field_bloc.dart';
+import 'package:bluebubbles/helpers/attachment_sender.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/layouts/conversation_view/camera_widget.dart';
+import 'package:bluebubbles/layouts/image_viewer/image_viewer.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:file_picker_cross/file_picker_cross.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
@@ -20,7 +19,6 @@ import 'package:mime_type/mime_type.dart';
 import 'package:photo_manager/photo_manager.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
 
-import 'package:giftextfield/giftextfield.dart';
 
 class BlueBubblesTextField extends StatefulWidget {
   final Chat chat;

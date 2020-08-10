@@ -1,13 +1,13 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:bluebubble_messages/blocs/message_bloc.dart';
-import 'package:bluebubble_messages/managers/contact_manager.dart';
-import 'package:bluebubble_messages/managers/new_message_manager.dart';
-import 'package:bluebubble_messages/managers/settings_manager.dart';
-import 'package:bluebubble_messages/repository/models/attachment.dart';
-import 'package:bluebubble_messages/repository/models/message.dart';
+import 'package:bluebubbles/managers/contact_manager.dart';
+import 'package:bluebubbles/managers/new_message_manager.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/repository/models/attachment.dart';
+import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:intl/intl.dart';
 
 import '../socket_manager.dart';
@@ -165,8 +165,11 @@ class ChatBloc {
                 child: Row(children: <Widget>[
                   ClipRRect(
                     borderRadius: BorderRadius.circular(4),
-                    child: Image.file(File(pathName),
-                        alignment: Alignment.centerLeft, height: 38),
+                    child: Image.memory(
+                      await FlutterImageCompress.compressWithFile(pathName, quality: 25),
+                      alignment: Alignment.centerLeft,
+                      height: 38
+                    )
                   )
                 ]));
           } else {
@@ -268,6 +271,8 @@ class ChatBloc {
   }
 
   dispose() {
-    // _chatController.close();
+    _chatController.close();
+    _tileValController.close();
+    _archivedChatController.close();
   }
 }

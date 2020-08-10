@@ -1,8 +1,3 @@
-import 'dart:ui';
-
-import 'package:bluebubble_messages/helpers/hex_color.dart';
-import 'package:flutter/material.dart';
-
 enum MessageError {
   NO_ERROR,
   TIMEOUT,

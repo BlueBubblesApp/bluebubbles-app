@@ -1,11 +1,9 @@
 import 'dart:convert';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
-import 'package:bluebubble_messages/helpers/contstants.dart';
-import 'package:bluebubble_messages/helpers/themes.dart';
+import 'package:bluebubbles/helpers/contstants.dart';
+import 'package:bluebubbles/helpers/themes.dart';
 import 'package:flutter/material.dart';
-
-import 'helpers/hex_color.dart';
 
 class Settings {
   Settings();
@@ -17,10 +15,10 @@ class Settings {
             json.containsKey('fcm_auth_data') ? json['fcm_auth_data'] : null,
         guidAuthKey =
             json.containsKey('guidAuthKey') ? json['guidAuthKey'] : "",
-        _finishedSetup =
+        finishedSetup =
             json.containsKey('finishedSetup') ? json['finishedSetup'] : false,
-        _chunkSize = json.containsKey('chunkSize') ? json['chunkSize'] : 512,
-        _autoDownload =
+        chunkSize = json.containsKey('chunkSize') ? json['chunkSize'] : 512,
+        autoDownload =
             json.containsKey('autoDownload') ? json['autoDownload'] : true,
         _darkColorTheme = json.containsKey('darkColorTheme')
             ? jsonDecode(json['darkColorTheme'])
@@ -32,20 +30,11 @@ class Settings {
   var fcmAuthData;
   String guidAuthKey = "";
   String serverAddress = "";
-  bool _finishedSetup = false;
-  int _chunkSize = 512;
-  bool _autoDownload = true;
+  bool finishedSetup = false;
+  int chunkSize = 512;
+  bool autoDownload = true;
   Map<String, dynamic> _lightColorTheme = {};
   Map<String, dynamic> _darkColorTheme = {};
-
-  set finishedSetup(bool val) => _finishedSetup = val;
-  bool get finishedSetup => _finishedSetup;
-
-  set chunkSize(int val) => _chunkSize = val;
-  int get chunkSize => _chunkSize;
-
-  set autoDownload(bool val) => _autoDownload = val;
-  bool get autoDownload => _autoDownload;
 
   void setOneColorOfDarkTheme(
       ThemeColors theme, Color color, BuildContext context) {
@@ -202,9 +191,9 @@ class Settings {
         'server_address': serverAddress,
         'fcm_auth_data': fcmAuthData,
         'guidAuthKey': guidAuthKey,
-        'finishedSetup': _finishedSetup,
-        'chunkSize': _chunkSize,
-        'autoDownload': _autoDownload != null ? _autoDownload : true,
+        'finishedSetup': finishedSetup,
+        'chunkSize': chunkSize,
+        'autoDownload': autoDownload != null ? autoDownload : true,
         'darkColorTheme': jsonEncode(_darkColorTheme),
         'lightColorTheme': jsonEncode(_lightColorTheme),
       };

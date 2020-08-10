@@ -1,12 +1,12 @@
 import 'dart:ui';
 
-import 'package:bluebubble_messages/blocs/chat_bloc.dart';
-import 'package:bluebubble_messages/helpers/utils.dart';
-import 'package:bluebubble_messages/layouts/widgets/contact_avatar_widget.dart';
-import 'package:bluebubble_messages/managers/contact_manager.dart';
-import 'package:bluebubble_messages/repository/models/chat.dart';
-import 'package:bluebubble_messages/repository/models/handle.dart';
-import 'package:bluebubble_messages/socket_manager.dart';
+import 'package:bluebubbles/blocs/chat_bloc.dart';
+import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
+import 'package:bluebubbles/managers/contact_manager.dart';
+import 'package:bluebubbles/repository/models/chat.dart';
+import 'package:bluebubbles/repository/models/handle.dart';
+import 'package:bluebubbles/socket_manager.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';

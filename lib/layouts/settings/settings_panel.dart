@@ -1,13 +1,13 @@
 import 'dart:convert';
 import 'dart:ui';
 
-// import 'package:bluebubble_messages/qr_code_scanner.dart';
+// import 'package:bluebubbles/qr_code_scanner.dart';
 import 'package:adaptive_theme/adaptive_theme.dart';
-import 'package:bluebubble_messages/layouts/theming/theming_panel.dart';
-import 'package:bluebubble_messages/managers/method_channel_interface.dart';
-import 'package:bluebubble_messages/managers/settings_manager.dart';
-import 'package:bluebubble_messages/settings.dart';
-import 'package:bluebubble_messages/socket_manager.dart';
+import 'package:bluebubbles/layouts/theming/theming_panel.dart';
+import 'package:bluebubbles/managers/method_channel_interface.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/settings.dart';
+import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import '../../helpers/hex_color.dart';
 import 'package:flutter/material.dart';

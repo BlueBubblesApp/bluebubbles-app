@@ -1,4 +1,4 @@
-import 'package:bluebubble_messages/helpers/hex_color.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:flutter/material.dart';
 
 class ContactAvatarWidget extends StatefulWidget {

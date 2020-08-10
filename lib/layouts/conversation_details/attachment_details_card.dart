@@ -1,19 +1,17 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:bluebubble_messages/helpers/attachment_downloader.dart';
-import 'package:bluebubble_messages/layouts/image_viewer/image_viewer.dart';
-import 'package:bluebubble_messages/layouts/image_viewer/video_viewer.dart';
-import 'package:bluebubble_messages/layouts/widgets/message_widget/message_content/media_players/regular_file_opener.dart';
-import 'package:bluebubble_messages/managers/settings_manager.dart';
-import 'package:bluebubble_messages/repository/models/attachment.dart';
-import 'package:bluebubble_messages/socket_manager.dart';
+import 'package:bluebubbles/helpers/attachment_downloader.dart';
+import 'package:bluebubbles/layouts/image_viewer/image_viewer.dart';
+import 'package:bluebubbles/layouts/image_viewer/video_viewer.dart';
+import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/regular_file_opener.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/repository/models/attachment.dart';
+import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_blurhash/flutter_blurhash.dart';
 import 'package:path/path.dart';
 import 'package:video_player/video_player.dart';
-import 'package:video_thumbnail/video_thumbnail.dart';
 
 class AttachmentDetailsCard extends StatefulWidget {
   AttachmentDetailsCard({Key key, this.attachment}) : super(key: key);

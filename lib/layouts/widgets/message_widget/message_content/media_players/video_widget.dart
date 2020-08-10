@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:bluebubble_messages/helpers/hex_color.dart';
-import 'package:bluebubble_messages/layouts/image_viewer/video_viewer.dart';
-import 'package:bluebubble_messages/layouts/widgets/message_widget/message_content/message_attachments.dart';
-import 'package:bluebubble_messages/repository/models/attachment.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/layouts/image_viewer/video_viewer.dart';
+import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_attachments.dart';
+import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';

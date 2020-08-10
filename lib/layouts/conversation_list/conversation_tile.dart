@@ -1,17 +1,16 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:bluebubble_messages/blocs/chat_bloc.dart';
-import 'package:bluebubble_messages/blocs/message_bloc.dart';
-import 'package:bluebubble_messages/helpers/utils.dart';
-import 'package:bluebubble_messages/layouts/widgets/contact_avatar_widget.dart';
-import 'package:bluebubble_messages/managers/contact_manager.dart';
-import 'package:bluebubble_messages/repository/models/message.dart';
+import 'package:bluebubbles/blocs/chat_bloc.dart';
+import 'package:bluebubbles/blocs/message_bloc.dart';
+import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
+import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:contacts_service/contacts_service.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
-import '../../helpers/hex_color.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -74,7 +73,8 @@ class _ConversationTileState extends State<ConversationTile> {
     if (chat.participants.length == 1) {
       Contact contact = getContact(chat.participants.first.address);
       if (contact != null && contact.avatar.length > 0) {
-        contactImage = MemoryImage(contact.avatar);
+        contactImage = MemoryImage(
+          await FlutterImageCompress.compressWithList(contact.avatar, quality: 50));
         if (this.mounted) setState(() {});
       }
     }

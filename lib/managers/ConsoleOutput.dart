@@ -1,7 +1,6 @@
 import 'dart:io';
 
-import 'package:bluebubble_messages/managers/settings_manager.dart';
-import 'package:flutter/material.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:logger/logger.dart';
 
 class CustomConsoleOutput extends LogOutput {

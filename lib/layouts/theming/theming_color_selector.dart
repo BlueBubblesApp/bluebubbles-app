@@ -1,7 +1,7 @@
 import 'package:adaptive_theme/adaptive_theme.dart';
-import 'package:bluebubble_messages/helpers/contstants.dart';
-import 'package:bluebubble_messages/layouts/theming/theming_color_picker_popup.dart';
-import 'package:bluebubble_messages/managers/settings_manager.dart';
+import 'package:bluebubbles/helpers/contstants.dart';
+import 'package:bluebubbles/layouts/theming/theming_color_picker_popup.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/material.dart';
 
 class ThemingColorSelector extends StatefulWidget {
@@ -42,6 +42,9 @@ class _ThemingColorSelectorState extends State<ThemingColorSelector> {
       case ThemeColors.BackgroundColor:
         return theme.backgroundColor;
     }
+
+    // Default to the headline color :shrug:
+    return theme.textTheme.headline1.color;
   }
 
   ThemeData themeDataForTitle(ThemeColors title, ThemeData data, Color newVal) {
@@ -89,6 +92,8 @@ class _ThemingColorSelectorState extends State<ThemingColorSelector> {
       case ThemeColors.BackgroundColor:
         return data.copyWith(backgroundColor: newVal);
     }
+
+    return data;
   }
 
   @override

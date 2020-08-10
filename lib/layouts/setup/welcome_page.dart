@@ -1,5 +1,4 @@
-import 'package:bluebubble_messages/helpers/hex_color.dart';
-import 'package:bluebubble_messages/layouts/widgets/animated_offset_builder.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:permission_handler/permission_handler.dart';

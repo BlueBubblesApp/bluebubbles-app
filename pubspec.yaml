@@ -1,4 +1,4 @@
-name: bluebubble_messages
+name: bluebubbles
 description: Send iMessages on Android using BlueBubbles!
 
 # The following defines the version and build number for your application.
@@ -33,7 +33,7 @@ dependencies:
   intl: ^0.16.1
   overlay_container: ^0.0.4+1
   cupertino_back_gesture: ^0.0.3
-  flutter_svg: ^0.17.4
+  flutter_svg: ^0.18.0
   intent: ^1.3.4
   photo_manager: ^0.5.3+1
   image_picker: ^0.6.7+2
@@ -72,6 +72,7 @@ dependencies:
     path: packages/gif_text_field
   image_gallery_saver: ^1.5.0
   sentry: ^3.0.1
+  flutter_image_compress: ^0.7.0
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.

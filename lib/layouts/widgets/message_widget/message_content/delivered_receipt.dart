@@ -1,7 +1,7 @@
-import 'package:bluebubble_messages/repository/models/message.dart';
+import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:bluebubble_messages/helpers/utils.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 
 class DeliveredReceipt extends StatefulWidget {
   DeliveredReceipt({

@@ -1,8 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:bluebubble_messages/managers/settings_manager.dart';
-import 'package:bluebubble_messages/repository/models/message.dart';
-import 'package:flutter/material.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/repository/models/message.dart';
 import 'package:sqflite/sqflite.dart';
 
 import '../database.dart';

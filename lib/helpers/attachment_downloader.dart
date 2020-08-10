@@ -2,18 +2,15 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'dart:io';
-import 'dart:math';
 
 import 'dart:typed_data';
 
-import 'package:bluebubble_messages/action_handler.dart';
-import 'package:bluebubble_messages/managers/life_cycle_manager.dart';
-import 'package:bluebubble_messages/managers/notification_manager.dart';
-import 'package:bluebubble_messages/managers/settings_manager.dart';
-import 'package:bluebubble_messages/repository/models/attachment.dart';
-import 'package:bluebubble_messages/repository/models/chat.dart';
-import 'package:bluebubble_messages/repository/models/message.dart';
-import 'package:bluebubble_messages/socket_manager.dart';
+import 'package:bluebubbles/managers/life_cycle_manager.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/repository/models/attachment.dart';
+import 'package:bluebubbles/repository/models/chat.dart';
+import 'package:bluebubbles/repository/models/message.dart';
+import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/material.dart';
 
 class AttachmentDownloader {
@@ -161,19 +158,30 @@ class AttachmentDownloader {
         return;
       }
 
+      File file;
       String fileName = attachment.transferName;
       String appDocPath = SettingsManager().appDocDir.path;
       String pathName = "$appDocPath/attachments/${attachment.guid}/$fileName";
-      Uint8List bytes = Uint8List.fromList(data);
 
-      File file = await writeToFile(bytes, pathName);
+      // If there is data, save it to a file
+      if (data != null && data.length > 0) {
+        Uint8List bytes = Uint8List.fromList(data);
+        file = await writeToFile(bytes, pathName);
+      }
+      
+      // Finish the downloader
       SocketManager().finishDownloader(attachment.guid);
-      // SocketManager().unSubscribeDisconnectCallback(attachment.guid);
       LifeCycleManager().finishDownloader();
-      _stream.sink.add(file);
+
+      // Add attachment to sink based on if we got data
+      if (data == null || data.length == 0) {
+        _stream.sink.addError("unable to load");
+      } else if (file != null) {
+        _stream.sink.add(file);
+      }
+
+      // Close the stream
       _stream.close();
-      // NotificationManager().finishProgressWithAttachment(
-      //     "Finished Downloading", _attachment.id, _attachment);
     };
 
     SocketManager().addAttachmentDownloader(attachment.guid, this);

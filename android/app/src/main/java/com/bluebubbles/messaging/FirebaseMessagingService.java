@@ -1,4 +1,4 @@
-package com.example.bluebubble_messages;
+package com.bluebubbles.messaging;
 
 import android.app.AlarmManager;
 import android.app.PendingIntent;
@@ -48,8 +48,8 @@ import io.flutter.view.FlutterMain;
 import io.flutter.view.FlutterNativeView;
 import io.flutter.view.FlutterRunArguments;
 
-import static com.example.bluebubble_messages.MainActivity.CHANNEL;
-import static com.example.bluebubble_messages.MainActivity.engine;
+import static com.bluebubbles.messaging.MainActivity.CHANNEL;
+import static com.bluebubbles.messaging.MainActivity.engine;
 
 public class FirebaseMessagingService extends com.google.firebase.messaging.FirebaseMessagingService {
     private static final String TAG = "MyFirebaseMsgService";

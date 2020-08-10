@@ -1,18 +1,14 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:bluebubble_messages/helpers/hex_color.dart';
-import 'package:bluebubble_messages/helpers/utils.dart';
-import 'package:bluebubble_messages/layouts/setup/qr_code_scanner.dart';
-import 'package:bluebubble_messages/layouts/setup/welcome_page.dart';
-import 'package:bluebubble_messages/managers/contact_manager.dart';
-import 'package:bluebubble_messages/managers/settings_manager.dart';
-import 'package:bluebubble_messages/settings.dart';
-import 'package:bluebubble_messages/socket_manager.dart';
-import 'package:contacts_service/contacts_service.dart';
+import 'package:bluebubbles/layouts/setup/qr_code_scanner.dart';
+import 'package:bluebubbles/layouts/setup/welcome_page.dart';
+import 'package:bluebubbles/managers/contact_manager.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/settings.dart';
+import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:permission_handler/permission_handler.dart';
 
 class SetupView extends StatefulWidget {
   SetupView({Key key}) : super(key: key);
@@ -61,7 +57,7 @@ class _SetupViewState extends State<SetupView> {
             mainAxisAlignment: MainAxisAlignment.end,
             children: <Widget>[
               Text(
-                "${currentPage}/6",
+                "$currentPage/6",
                 style: Theme.of(context).textTheme.bodyText1,
               ),
             ],

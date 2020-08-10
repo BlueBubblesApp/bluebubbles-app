@@ -1,23 +1,15 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:math';
-import 'dart:typed_data';
 import 'dart:ui';
 
-import 'package:bluebubble_messages/action_handler.dart';
-import 'package:bluebubble_messages/blocs/chat_bloc.dart';
-import 'package:bluebubble_messages/helpers/message_helper.dart';
-import 'package:bluebubble_messages/helpers/utils.dart';
-import 'package:bluebubble_messages/managers/contact_manager.dart';
-import 'package:bluebubble_messages/managers/life_cycle_manager.dart';
-import 'package:bluebubble_messages/managers/method_channel_interface.dart';
-import 'package:bluebubble_messages/managers/settings_manager.dart';
-import 'package:bluebubble_messages/repository/database.dart';
-import 'package:bluebubble_messages/repository/models/chat.dart';
-import 'package:bluebubble_messages/repository/models/handle.dart';
-import 'package:bluebubble_messages/repository/models/message.dart';
-import 'package:bluebubble_messages/socket_manager.dart';
-import 'package:contacts_service/contacts_service.dart';
+import 'package:bluebubbles/action_handler.dart';
+import 'package:bluebubbles/managers/contact_manager.dart';
+import 'package:bluebubbles/managers/life_cycle_manager.dart';
+import 'package:bluebubbles/managers/method_channel_interface.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/repository/database.dart';
+import 'package:bluebubbles/repository/models/chat.dart';
+import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -155,7 +147,7 @@ void fcmAuth(MethodChannel channel) async {
 //   }
 //   debugPrint("contactIcon " + contactIcon.toString());
 //   MethodChannelInterface().platform.invokeMethod("new-message-notification", {
-//     "CHANNEL_ID": "com.bluebubbles.new_messages",
+//     "CHANNEL_ID": "com.bluebubbles..new_messages",
 //     "contentTitle": contentTitle,
 //     "contentText": contentText,
 //     "group": group,

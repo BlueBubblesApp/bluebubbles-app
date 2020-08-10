@@ -1,8 +1,5 @@
 import 'dart:io';
-import 'dart:math';
-
-import 'package:bluebubble_messages/helpers/utils.dart';
-import 'package:bluebubble_messages/managers/settings_manager.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 

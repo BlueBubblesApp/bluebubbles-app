@@ -1,30 +1,25 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:math';
 import 'dart:ui';
 
-import 'package:bluebubble_messages/action_handler.dart';
-import 'package:bluebubble_messages/blocs/chat_bloc.dart';
-import 'package:bluebubble_messages/blocs/message_bloc.dart';
-import 'package:bluebubble_messages/helpers/attachment_downloader.dart';
-import 'package:bluebubble_messages/helpers/attachment_helper.dart';
-import 'package:bluebubble_messages/helpers/hex_color.dart';
-import 'package:bluebubble_messages/helpers/utils.dart';
-import 'package:bluebubble_messages/layouts/conversation_details/attachment_details_card.dart';
-import 'package:bluebubble_messages/layouts/conversation_details/contact_tile.dart';
-import 'package:bluebubble_messages/layouts/conversation_view/new_chat_creator.dart';
-import 'package:bluebubble_messages/layouts/image_viewer/image_viewer.dart';
-import 'package:bluebubble_messages/managers/contact_manager.dart';
-import 'package:bluebubble_messages/managers/method_channel_interface.dart';
-import 'package:bluebubble_messages/managers/new_message_manager.dart';
-import 'package:bluebubble_messages/managers/settings_manager.dart';
-import 'package:bluebubble_messages/repository/models/attachment.dart';
-import 'package:bluebubble_messages/repository/models/chat.dart';
-import 'package:bluebubble_messages/repository/models/message.dart';
-import 'package:bluebubble_messages/socket_manager.dart';
+import 'package:bluebubbles/action_handler.dart';
+import 'package:bluebubbles/blocs/chat_bloc.dart';
+import 'package:bluebubbles/blocs/message_bloc.dart';
+import 'package:bluebubbles/helpers/attachment_helper.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/layouts/conversation_details/attachment_details_card.dart';
+import 'package:bluebubbles/layouts/conversation_details/contact_tile.dart';
+import 'package:bluebubbles/layouts/conversation_view/new_chat_creator.dart';
+import 'package:bluebubbles/managers/method_channel_interface.dart';
+import 'package:bluebubbles/managers/new_message_manager.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/repository/models/attachment.dart';
+import 'package:bluebubbles/repository/models/chat.dart';
+import 'package:bluebubbles/repository/models/message.dart';
+import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_blurhash/flutter_blurhash.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class ConversationDetails extends StatefulWidget {
@@ -212,7 +207,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                               String appDocPath =
                                   SettingsManager().appDocDir.path;
                               String pathName =
-                                  "$appDocPath/attachments/${_attachmentGuid}/$fileName";
+                                  "$appDocPath/attachments/$_attachmentGuid/$fileName";
                               await new File(pathName).create(recursive: true);
 
                               File attachmentFile = await new File(pathName)

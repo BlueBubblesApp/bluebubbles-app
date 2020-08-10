@@ -1,4 +1,4 @@
-package com.example.bluebubble_messages;
+package com.bluebubbles.messaging;
 
 
 import android.content.BroadcastReceiver;

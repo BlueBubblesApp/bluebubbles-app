@@ -1,12 +1,12 @@
 import 'dart:math';
 
-import 'package:bluebubble_messages/helpers/utils.dart';
-import 'package:bluebubble_messages/managers/life_cycle_manager.dart';
-import 'package:bluebubble_messages/managers/notification_manager.dart';
-import 'package:bluebubble_messages/repository/models/chat.dart';
-import 'package:bluebubble_messages/repository/models/message.dart';
-import 'package:bluebubble_messages/repository/models/attachment.dart';
-import 'package:bluebubble_messages/socket_manager.dart';
+import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/managers/life_cycle_manager.dart';
+import 'package:bluebubbles/managers/notification_manager.dart';
+import 'package:bluebubbles/repository/models/chat.dart';
+import 'package:bluebubbles/repository/models/message.dart';
+import 'package:bluebubbles/repository/models/attachment.dart';
+import 'package:bluebubbles/socket_manager.dart';
 
 class MessageHelper {
   static Future<List<Message>> bulkAddMessages(

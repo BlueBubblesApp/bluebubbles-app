@@ -2,19 +2,18 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'dart:io';
-import 'dart:math';
 
 import 'dart:typed_data';
 
-import 'package:bluebubble_messages/helpers/contstants.dart';
-import 'package:bluebubble_messages/helpers/utils.dart';
-import 'package:bluebubble_messages/managers/life_cycle_manager.dart';
-import 'package:bluebubble_messages/managers/new_message_manager.dart';
-import 'package:bluebubble_messages/managers/settings_manager.dart';
-import 'package:bluebubble_messages/repository/models/attachment.dart';
-import 'package:bluebubble_messages/repository/models/chat.dart';
-import 'package:bluebubble_messages/repository/models/message.dart';
-import 'package:bluebubble_messages/socket_manager.dart';
+import 'package:bluebubbles/helpers/contstants.dart';
+import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/managers/life_cycle_manager.dart';
+import 'package:bluebubbles/managers/new_message_manager.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/repository/models/attachment.dart';
+import 'package:bluebubbles/repository/models/chat.dart';
+import 'package:bluebubbles/repository/models/message.dart';
+import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:image_size_getter/image_size_getter.dart';
 import 'package:mime_type/mime_type.dart';

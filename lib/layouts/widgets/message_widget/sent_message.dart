@@ -1,22 +1,17 @@
-import 'dart:collection';
-import 'dart:convert';
 import 'dart:ui';
 
-import 'package:bluebubble_messages/action_handler.dart';
-import 'package:bluebubble_messages/helpers/hex_color.dart';
-import 'package:bluebubble_messages/helpers/utils.dart';
-import 'package:bluebubble_messages/layouts/widgets/message_widget/message_content/delivered_receipt.dart';
-import 'package:bluebubble_messages/layouts/widgets/message_widget/message_details_popup.dart';
-import 'package:bluebubble_messages/layouts/widgets/message_widget/reactions.dart';
-import 'package:bluebubble_messages/main.dart';
-import 'package:bluebubble_messages/managers/method_channel_interface.dart';
-import 'package:bluebubble_messages/repository/models/message.dart';
-import 'package:bluebubble_messages/socket_manager.dart';
+import 'package:bluebubbles/action_handler.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/layouts/widgets/message_widget/message_content/delivered_receipt.dart';
+import 'package:bluebubbles/layouts/widgets/message_widget/message_details_popup.dart';
+import 'package:bluebubbles/layouts/widgets/message_widget/reactions.dart';
+import 'package:bluebubbles/managers/method_channel_interface.dart';
+import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class SentMessage extends StatefulWidget {
   final bool showTail;
