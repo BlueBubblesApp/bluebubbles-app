@@ -1,28 +1,17 @@
 import 'dart:io';
-import 'dart:ui';
-
-import 'package:bluebubble_messages/blocs/chat_bloc.dart';
-import 'package:bluebubble_messages/helpers/utils.dart';
-import 'package:bluebubble_messages/blocs/message_bloc.dart';
-import 'package:bluebubble_messages/layouts/conversation_details/conversation_details.dart';
-import 'package:bluebubble_messages/layouts/conversation_view/messages_view.dart';
-import 'package:bluebubble_messages/layouts/conversation_view/text_field.dart';
-import 'package:bluebubble_messages/layouts/widgets/CustomCupertinoNavBar.dart';
-import 'package:bluebubble_messages/layouts/widgets/animated_offset_builder.dart';
-import 'package:bluebubble_messages/layouts/widgets/contact_avatar_widget.dart';
-import 'package:bluebubble_messages/layouts/widgets/message_widget/message_widget.dart';
-import 'package:bluebubble_messages/layouts/widgets/message_widget/sent_message.dart';
-import 'package:bluebubble_messages/layouts/widgets/send_widget.dart';
-import 'package:bluebubble_messages/managers/contact_manager.dart';
-import 'package:bluebubble_messages/managers/notification_manager.dart';
-import 'package:bluebubble_messages/managers/settings_manager.dart';
-import 'package:bluebubble_messages/repository/models/message.dart';
-import 'package:bluebubble_messages/socket_manager.dart';
+import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/blocs/message_bloc.dart';
+import 'package:bluebubbles/layouts/conversation_details/conversation_details.dart';
+import 'package:bluebubbles/layouts/conversation_view/messages_view.dart';
+import 'package:bluebubbles/layouts/conversation_view/text_field.dart';
+import 'package:bluebubbles/layouts/widgets/CustomCupertinoNavBar.dart';
+import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
+import 'package:bluebubbles/managers/notification_manager.dart';
+import 'package:bluebubbles/socket_manager.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/cupertino.dart' as Cupertino;
 import 'package:flutter/material.dart';
 
-import '../../helpers/hex_color.dart';
 
 import '../../repository/models/chat.dart';
 

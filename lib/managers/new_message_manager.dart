@@ -1,8 +1,7 @@
 import 'dart:async';
 
-import 'package:bluebubble_messages/repository/models/chat.dart';
-import 'package:bluebubble_messages/repository/models/message.dart';
-import 'package:flutter/material.dart';
+import 'package:bluebubbles/repository/models/chat.dart';
+import 'package:bluebubbles/repository/models/message.dart';
 
 class NewMessageManager {
   factory NewMessageManager() {
@@ -34,5 +33,9 @@ class NewMessageManager {
       _stream.sink
           .add({chat.guid: message, "sentFromThisClient": sentFromThisClient});
     }
+  }
+
+  dispose() {
+    _stream.close();
   }
 }

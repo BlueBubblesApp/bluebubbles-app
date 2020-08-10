@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:logger/logger.dart';
 import 'package:sqflite/sqflite.dart';
 
 import '../database.dart';

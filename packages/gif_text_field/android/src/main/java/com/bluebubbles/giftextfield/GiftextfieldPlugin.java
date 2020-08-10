@@ -1,4 +1,4 @@
-package com.bricktheworld.giftextfield;
+package com.bluebubbles.giftextfield;
 
 import io.flutter.embedding.engine.plugins.FlutterPlugin;
 import io.flutter.plugin.common.MethodCall;

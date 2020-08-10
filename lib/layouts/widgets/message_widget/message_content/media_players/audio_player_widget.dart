@@ -1,9 +1,8 @@
 import 'dart:io';
 
 import 'package:assets_audio_player/assets_audio_player.dart';
-import 'package:bluebubble_messages/repository/models/attachment.dart';
+import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:flutter/material.dart';
-import 'package:path/path.dart';
 
 class AudioPlayerWiget extends StatefulWidget {
   AudioPlayerWiget({

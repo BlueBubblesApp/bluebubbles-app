@@ -1,8 +1,8 @@
 import 'dart:ui';
 
-import 'package:bluebubble_messages/blocs/chat_bloc.dart';
-import 'package:bluebubble_messages/layouts/conversation_view/new_chat_creator.dart';
-import 'package:bluebubble_messages/repository/models/chat.dart';
+import 'package:bluebubbles/blocs/chat_bloc.dart';
+import 'package:bluebubbles/layouts/conversation_view/new_chat_creator.dart';
+import 'package:bluebubbles/repository/models/chat.dart';
 
 import './conversation_tile.dart';
 import 'package:flutter/cupertino.dart';

@@ -1,4 +1,4 @@
-package com.example.bluebubble_messages;
+package com.bluebubbles.messaging;
 
 import androidx.annotation.NonNull;
 
@@ -64,7 +64,7 @@ import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
-import com.bricktheworld.giftextfield.GiftextfieldPlugin;
+import com.bluebubbles.giftextfield.GiftextfieldPlugin;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -91,8 +91,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-import static com.example.bluebubble_messages.BackgroundService.app;
-import static com.example.bluebubble_messages.BackgroundService.db;
+import static com.bluebubbles.messaging.BackgroundService.app;
+import static com.bluebubbles.messaging.BackgroundService.db;
 
 
 public class MainActivity extends FlutterActivity {

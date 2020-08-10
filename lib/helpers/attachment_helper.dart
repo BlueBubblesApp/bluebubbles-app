@@ -1,3 +1,5 @@
+import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/material.dart';
 import 'package:vcard_parser/vcard_parser.dart';
@@ -75,5 +77,20 @@ class AttachmentHelper {
 
     return contact;
     // return ;
+  }
+
+  static String getPreviewPath(Attachment attachment) {
+    String fileName = attachment.transferName;
+    String appDocPath = SettingsManager().appDocDir.path;
+    String pathName = "$appDocPath/attachments/${attachment.guid}/$fileName";
+
+    // If the file is an image, compress it for the preview
+    if ((attachment.mimeType ?? "").startsWith("image/")) {
+      String fn = fileName.split(".").sublist(0, fileName.length - 1).join("") + "prev";
+      String ext = fileName.split(".").last;
+      pathName = "$appDocPath/attachments/${attachment.guid}/$fn.$ext";
+    }
+
+    return pathName;
   }
 }

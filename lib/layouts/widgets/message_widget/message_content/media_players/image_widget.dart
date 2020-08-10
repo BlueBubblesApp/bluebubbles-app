@@ -1,10 +1,11 @@
 import 'dart:io';
 
-import 'package:bluebubble_messages/layouts/image_viewer/image_viewer.dart';
-import 'package:bluebubble_messages/layouts/widgets/message_widget/message_content/message_attachments.dart';
-import 'package:bluebubble_messages/repository/models/attachment.dart';
+import 'package:bluebubbles/layouts/image_viewer/image_viewer.dart';
+import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_attachments.dart';
+import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 
 class ImageWidget extends StatefulWidget {
   ImageWidget({Key key, this.file, this.attachment, this.savedAttachmentData})
@@ -23,9 +24,22 @@ class _ImageWidgetState extends State<ImageWidget> {
     super.didChangeDependencies();
     if (!widget.savedAttachmentData.imageData
         .containsKey(widget.attachment.guid)) {
-      widget.savedAttachmentData.imageData[widget.attachment.guid] =
+
+      // If it's an image, compress the image when loading it
+      if ((widget.attachment.mimeType ?? "").startsWith("image/")) {
+        widget.savedAttachmentData.imageData[widget.attachment.guid] =
+          await FlutterImageCompress.compressWithFile(
+            widget.file.absolute.path,
+            quality: 75 // This is arbitrary
+          );
+
+      // All other attachments can be held in memory as bytes
+      } else {
+        widget.savedAttachmentData.imageData[widget.attachment.guid] =
           await widget.file.readAsBytes();
-      setState(() {});
+      }
+
+      if (this.mounted) setState(() {});
     }
   }
 

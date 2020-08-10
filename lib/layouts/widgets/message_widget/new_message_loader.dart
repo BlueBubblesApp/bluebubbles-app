@@ -1,4 +1,4 @@
-import 'package:bluebubble_messages/blocs/message_bloc.dart';
+import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 

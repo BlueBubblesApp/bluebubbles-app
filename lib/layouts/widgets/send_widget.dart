@@ -1,9 +1,7 @@
-import 'package:bluebubble_messages/helpers/hex_color.dart';
-import 'package:bluebubble_messages/layouts/widgets/message_widget/message_widget.dart';
-import 'package:bluebubble_messages/layouts/widgets/message_widget/sent_message.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/layouts/widgets/message_widget/sent_message.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
-import 'package:flutter/services.dart';
 
 class SendWidget extends StatefulWidget {
   SendWidget({

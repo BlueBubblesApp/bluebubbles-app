@@ -1,7 +1,7 @@
 import 'dart:io';
 
-import 'package:bluebubble_messages/helpers/attachment_helper.dart';
-import 'package:bluebubble_messages/repository/models/attachment.dart';
+import 'package:bluebubbles/helpers/attachment_helper.dart';
+import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong/latlong.dart';

@@ -1,19 +1,20 @@
 import 'dart:convert';
 import 'dart:math';
 import 'dart:typed_data';
-import 'package:bluebubble_messages/layouts/widgets/message_widget/group_event.dart';
-import 'package:bluebubble_messages/repository/models/message.dart';
+import 'package:bluebubbles/layouts/widgets/message_widget/group_event.dart';
+import 'package:bluebubbles/repository/models/message.dart';
 import 'package:blurhash_flutter/blurhash.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
-import 'package:bluebubble_messages/managers/contact_manager.dart';
+import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:contacts_service/contacts_service.dart';
 
 DateTime parseDate(dynamic value) {
   if (value == null) return null;
   if (value is int) return DateTime.fromMillisecondsSinceEpoch(value);
   if (value is DateTime) return value;
+  return null;
 }
 
 String getContactTitle(int id, String address) {

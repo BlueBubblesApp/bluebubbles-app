@@ -1,7 +1,7 @@
-import 'package:bluebubble_messages/helpers/contstants.dart';
-import 'package:bluebubble_messages/helpers/themes.dart';
-import 'package:bluebubble_messages/layouts/theming/theming_color_selector.dart';
-import 'package:bluebubble_messages/managers/settings_manager.dart';
+import 'package:bluebubbles/helpers/contstants.dart';
+import 'package:bluebubbles/helpers/themes.dart';
+import 'package:bluebubbles/layouts/theming/theming_color_selector.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/material.dart';
 
 class ThemingColorOptionsList extends StatefulWidget {

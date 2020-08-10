@@ -1,4 +1,4 @@
-package com.example.bluebubble_messages;
+package com.bluebubbles.messaging;
 
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -68,8 +68,8 @@ import io.flutter.view.FlutterMain;
 import io.flutter.view.FlutterNativeView;
 import io.flutter.view.FlutterRunArguments;
 
-import static com.example.bluebubble_messages.MainActivity.CHANNEL;
-import static com.example.bluebubble_messages.MainActivity.engine;
+import static com.bluebubbles.messaging.MainActivity.CHANNEL;
+import static com.bluebubbles.messaging.MainActivity.engine;
 
 public class BackgroundService extends Service {
     // static boolean isRunning = false;
@@ -259,5 +259,4 @@ public class BackgroundService extends Service {
 
 
     private final IBinder mBinder = new LocalBinder();
-
 }

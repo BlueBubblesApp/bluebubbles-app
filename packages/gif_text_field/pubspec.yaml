@@ -28,7 +28,7 @@ flutter:
   plugin:
     platforms:
       android:
-        package: com.bricktheworld.giftextfield
+        package: com.bluebubbles.giftextfield
         pluginClass: GiftextfieldPlugin
       ios:
         pluginClass: GiftextfieldPlugin

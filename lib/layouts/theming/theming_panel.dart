@@ -1,8 +1,7 @@
 import 'dart:ui';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
-import 'package:bluebubble_messages/layouts/theming/theming_color_options_list.dart';
-import 'package:bluebubble_messages/layouts/theming/theming_color_selector.dart';
+import 'package:bluebubbles/layouts/theming/theming_color_options_list.dart';
 import 'package:flutter/material.dart';
 
 class ThemingPanel extends StatefulWidget {
