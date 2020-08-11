@@ -55,12 +55,14 @@ class ActionHandler {
     bool shouldSplit = linkMatch != null && text.endsWith(linkMsg);
 
     // Create the main message
-    messages.add(Message(
+    Message mainMsg = Message(
       guid: "temp-${randomString(8)}",
       text: (!shouldSplit) ? text : text.substring(0, linkMatch.start),
       dateCreated: DateTime.now(),
       hasAttachments: attachments.length > 0 ? true : false,
-    ));
+    );
+
+    if (mainMsg.text.trim().length > 0) messages.add(mainMsg);
 
     // If there is a link, build the link message
     if (shouldSplit) {
