@@ -12,20 +12,49 @@ class MessageHelper {
   static Future<List<Message>> bulkAddMessages(
       Chat chat, List<dynamic> messages,
       {bool notifyForNewMessage = false}) async {
+
+    // Create master list for all the messages and a chat cache
     List<Message> _messages = <Message>[];
+    Map<String, Chat> chats = <String, Chat>{};
+
+    // Add the chat in the cache and save it if it hasn't been saved yet
+    if (chat != null) {
+      chats[chat.guid] = chat;
+      if (chat.id == null) {
+        await chat.save();
+      }
+    }
+
+    // Iterate over each message to parse it
     messages.forEach((item) async {
+      // Pull the chats out of the message, if there isnt a default
+      Chat msgChat = chat;
+      if (msgChat == null) {
+        List<Chat> msgChats = parseChats(item);
+        msgChat = msgChats.length > 0 ? msgChats[0] : null;
+
+        // If there is a cached chat, get it. Otherwise, save the new one
+        if (msgChat != null && chats.containsKey(msgChat.guid)) {
+          msgChat = chats[msgChat.guid];
+        } else if (msgChat != null) {
+          await msgChat.save();
+          chats[msgChat.guid] = msgChat;
+        }
+      }
+      
+      // If we can't get a chat from the data, skip the message
+      if (msgChat == null) return;
+
       Message message = Message.fromMap(item);
       if (notifyForNewMessage) {
         Message existingMessage = await Message.findOne({"guid": message.guid});
         if (existingMessage == null) {
-          // Get the chat title and message
-          await chat.save();
-          String title = await getFullChatTitle(chat);
+          String title = await getFullChatTitle(msgChat);
 
           if (!message.isFromMe && message.handle != null &&
-              (NotificationManager().chatGuid != chat.guid ||
+              (NotificationManager().chatGuid != msgChat.guid ||
                   !LifeCycleManager().isAlive) &&
-              !chat.isMuted &&
+              !msgChat.isMuted &&
               !NotificationManager()
                   .processedNotifications
                   .contains(message.guid)) {
@@ -41,26 +70,28 @@ class MessageHelper {
             NotificationManager().createNewNotification(
               title,
               text,
-              chat.guid,
+              msgChat.guid,
               Random().nextInt(9998) + 1,
-              chat.id,
+              msgChat.id,
               message.dateCreated.millisecondsSinceEpoch,
               getContactTitle(message.handle.id, message.handle.address),
-              chat.participants.length > 1,
+              msgChat.participants.length > 1,
               handle: message.handle,
               contact: getContact(message.handle.address)
             );
             NotificationManager().processedNotifications.add(message.guid);
-            if (!SocketManager().chatsWithNotifications.contains(chat.guid) &&
-                NotificationManager().chatGuid != chat.guid) {
-              SocketManager().chatsWithNotifications.add(chat.guid);
+            if (!SocketManager().chatsWithNotifications.contains(msgChat.guid) &&
+                NotificationManager().chatGuid != msgChat.guid) {
+              SocketManager().chatsWithNotifications.add(msgChat.guid);
             }
           }
         }
       }
+
+      // Save the message
       message.save().then((_) {
         _messages.add(message);
-        chat.addMessage(message).then((value) {
+        msgChat.addMessage(message).then((value) {
           // Create the attachments
           List<dynamic> attachments = item['attachments'];
 
@@ -71,6 +102,8 @@ class MessageHelper {
         });
       });
     });
+
+    // Return all the synced messages
     return _messages;
   }
 

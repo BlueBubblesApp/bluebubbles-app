@@ -59,7 +59,6 @@ class _ImageWidgetState extends State<ImageWidget> {
             color: Colors.transparent,
             child: InkWell(
               onTap: () {
-                debugPrint(widget.file.path);
                 Navigator.of(context).push(
                   MaterialPageRoute(
                     builder: (context) => ImageViewer(
