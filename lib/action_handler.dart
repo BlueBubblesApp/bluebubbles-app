@@ -37,49 +37,75 @@ class ActionHandler {
       bool closeOnFinish = false}) async {
     if (text == null || text.trim().length == 0) return;
 
-    Map<String, dynamic> params = new Map();
-    params["guid"] = chat.guid;
-    params["message"] = text;
-    String tempGuid = "temp-${randomString(8)}";
-    params["tempGuid"] = tempGuid;
+    List<Message> messages = <Message>[];
 
-    // Create the message
-    Message sentMessage = Message(
-      guid: tempGuid,
-      text: text,
+    // Check for URLs
+    RegExpMatch linkMatch;
+    String linkMsg;
+    RegExp exp = new RegExp(
+          r'((https?:\/\/)|(www\.))[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}([-a-zA-Z0-9\/()@:%_.~#?&=\*\[\]]{0,})\b');
+    List<RegExpMatch> matches = exp.allMatches(text).toList();
+
+    // Get the last match (if it exists)
+    if (matches.length > 0) {
+      linkMatch = matches.last;
+      linkMsg = text.substring(linkMatch.start, linkMatch.end);
+    }
+
+    bool shouldSplit = linkMatch != null && text.endsWith(linkMsg);
+
+    // Create the main message
+    Message mainMsg = Message(
+      guid: "temp-${randomString(8)}",
+      text: (!shouldSplit) ? text : text.substring(0, linkMatch.start),
       dateCreated: DateTime.now(),
       hasAttachments: attachments.length > 0 ? true : false,
     );
 
-    if (!closeOnFinish) {
-      NewMessageManager()
-          .updateWithMessage(chat, sentMessage, sentFromThisClient: true);
-      await sentMessage.save();
-      await chat.save();
-      await chat.addMessage(sentMessage);
+    if (mainMsg.text.trim().length > 0) messages.add(mainMsg);
+
+    // If there is a link, build the link message
+    if (shouldSplit) {
+      messages.add(Message(
+        guid: "temp-${randomString(8)}",
+        text: text.substring(linkMatch.start, linkMatch.end),
+        dateCreated: DateTime.now(),
+        hasAttachments: false,
+      ));
     }
 
-    // // If we aren't connected to the socket, return
-    // if (SettingsManager().settings.connected == false) return;
-    SocketManager().sendMessage("send-message", params, (response) async {
-      // if (closeOnFinish &&
-      //     SocketManager().attachmentDownloaders.length == 0 &&
-      //     SocketManager().attachmentSenders.length == 0) {
-      //   SocketManager().closeSocket();
-      // }
+    await chat.save();
+    for (Message msg in messages) {
+      Map<String, dynamic> params = new Map();
+      params["guid"] = chat.guid;
+      params["message"] = msg.text;
+      params["tempGuid"] = msg.guid;
 
-      // If there is an error, replace the temp value with an error
-      if (response['status'] != 200) {
-        sentMessage.guid = sentMessage.guid
-            .replaceAll("temp", "error-${response['error']['message']}");
-        sentMessage.error = response['status'] == 400
-            ? MessageError.BAD_REQUEST.code
-            : MessageError.SERVER_ERROR.code;
-
-        await Message.replaceMessage(tempGuid, sentMessage);
-        NewMessageManager().updateSpecificMessage(chat, tempGuid, sentMessage);
+      if (!closeOnFinish) {
+        NewMessageManager()
+            .updateWithMessage(chat, msg, sentFromThisClient: true);
+        await msg.save();
+        await chat.addMessage(msg);
       }
-    });
+
+      // // If we aren't connected to the socket, return
+      // if (SettingsManager().settings.connected == false) return;
+      SocketManager().sendMessage("send-message", params, (response) async {
+        String tempGuid = msg.guid;
+
+        // If there is an error, replace the temp value with an error
+        if (response['status'] != 200) {
+          msg.guid = msg.guid
+              .replaceAll("temp", "error-${response['error']['message']}");
+          msg.error = response['status'] == 400
+              ? MessageError.BAD_REQUEST.code
+              : MessageError.SERVER_ERROR.code;
+
+          await Message.replaceMessage(tempGuid, msg);
+          NewMessageManager().updateSpecificMessage(chat, tempGuid, msg);
+        }
+      });
+    }
   }
 
   /// Try to resents a [message] that has errored during the

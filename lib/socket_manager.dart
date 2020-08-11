@@ -171,8 +171,10 @@ class SocketManager {
           element();
         });
         if (SettingsManager().settings.finishedSetup)
-          setup.startSync(SettingsManager().settings, () {},
-              isMiniResync: true);
+          setup.startIncrementalSync(SettingsManager().settings, (String err) {
+            debugPrint("(SYNC) Error performing incremental sync. Not saving last sync date.");
+            debugPrint(err);
+          });
         // if (connectCb != null) connectCb();
         return;
       case "connect_error":

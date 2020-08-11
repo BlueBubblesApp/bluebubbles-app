@@ -20,6 +20,8 @@ class Settings {
         chunkSize = json.containsKey('chunkSize') ? json['chunkSize'] : 512,
         autoDownload =
             json.containsKey('autoDownload') ? json['autoDownload'] : true,
+        lastIncrementalSync =
+            json.containsKey('lastIncrementalSync') ? json['lastIncrementalSync'] : 0,
         _darkColorTheme = json.containsKey('darkColorTheme')
             ? jsonDecode(json['darkColorTheme'])
             : {},
@@ -33,6 +35,7 @@ class Settings {
   bool finishedSetup = false;
   int chunkSize = 512;
   bool autoDownload = true;
+  int lastIncrementalSync = 0;
   Map<String, dynamic> _lightColorTheme = {};
   Map<String, dynamic> _darkColorTheme = {};
 
@@ -193,6 +196,7 @@ class Settings {
         'guidAuthKey': guidAuthKey,
         'finishedSetup': finishedSetup,
         'chunkSize': chunkSize,
+        'lastIncrementalSync': lastIncrementalSync,
         'autoDownload': autoDownload != null ? autoDownload : true,
         'darkColorTheme': jsonEncode(_darkColorTheme),
         'lightColorTheme': jsonEncode(_lightColorTheme),
