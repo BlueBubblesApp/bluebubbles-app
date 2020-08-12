@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:math';
 import 'dart:typed_data';
 import 'package:bluebubbles/layouts/widgets/message_widget/group_event.dart';
+import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:blurhash_flutter/blurhash.dart';
 import 'package:flutter/foundation.dart';
@@ -9,6 +10,7 @@ import 'package:flutter/material.dart';
 
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:contacts_service/contacts_service.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 
 DateTime parseDate(dynamic value) {
   if (value == null) return null;
@@ -195,20 +197,48 @@ bool isEmptyString(String input) {
 }
 
 String getGroupEventText(Message message) {
-    String text = "Unknown group event";
-    String handle = "You";
-    if (message.handleId != null && message.handle != null)
-      handle = getContactTitle(message.handleId, message.handle.address);
+  String text = "Unknown group event";
+  String handle = "You";
+  if (message.handleId != null && message.handle != null)
+    handle = getContactTitle(message.handleId, message.handle.address);
 
-    if (message.itemType == ItemTypes.participantRemoved.index) {
-      text = "$handle removed someone from the conversation";
-    } else if (message.itemType == ItemTypes.participantAdded.index) {
-      text = "$handle added someone to the conversation";
-    } else if (message.itemType == ItemTypes.participantLeft.index) {
-      text = "$handle left the conversation";
-    } else if (message.itemType == ItemTypes.nameChanged.index) {
-      text = "$handle renamed the conversation to \"${message.groupTitle}\"";
-    }
-
-    return text;
+  if (message.itemType == ItemTypes.participantRemoved.index) {
+    text = "$handle removed someone from the conversation";
+  } else if (message.itemType == ItemTypes.participantAdded.index) {
+    text = "$handle added someone to the conversation";
+  } else if (message.itemType == ItemTypes.participantLeft.index) {
+    text = "$handle left the conversation";
+  } else if (message.itemType == ItemTypes.nameChanged.index) {
+    text = "$handle renamed the conversation to \"${message.groupTitle}\"";
   }
+
+  return text;
+}
+
+Future<MemoryImage> loadAvatar(Chat chat, List<String> addresses) async {
+  // If the chat hasn't been saved, save it
+  if (chat.id == null) await chat.save();
+
+  // If there are no participants, get them
+  if (chat.participants == null || chat.participants.length == 0) {
+    chat = await chat.getParticipants();
+  }
+
+  // If there are no participants, return
+  if (chat.participants == null || chat.participants.length != 1) return null;
+  String address = chat.participants.first.address;
+
+  if (addresses == null) addresses = [address];
+
+  // See if the update contains the current conversation
+  int matchIdx = addresses.indexOf(address);
+  if (matchIdx == -1) return null;
+
+  // Get the contact
+  Contact contact = ContactManager().getCachedContact(addresses[matchIdx]);
+  if (contact == null || contact.avatar.length == 0) return null;
+
+  // Set the contact image
+  return MemoryImage(
+      await FlutterImageCompress.compressWithList(contact.avatar, quality: 50));
+}

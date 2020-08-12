@@ -145,7 +145,6 @@ class Chat {
       if (map.containsKey("participants")) {
         map.remove("participants");
       }
-      debugPrint("saving chat " + map.toString());
 
       this.id = await db.insert("chat", map);
     } else if (updateIfAbsent) {

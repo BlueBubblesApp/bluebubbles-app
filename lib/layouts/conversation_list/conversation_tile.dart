@@ -48,37 +48,35 @@ class ConversationTile extends StatefulWidget {
 }
 
 class _ConversationTileState extends State<ConversationTile> {
-  ImageProvider contactImage;
+  MemoryImage contactImage;
 
   bool isPressed = false;
-  bool checkedForAvatars = false;
 
   @override
-  Future<void> didChangeDependencies() async {
-    super.didChangeDependencies();
-    getAvatars();
-    ContactManager().stream.listen((event) {
-      getAvatars();
+  void initState() {
+    super.initState();
+
+    fetchAvatar(null);
+    ContactManager().stream.listen((List<String> addresses) {
+      fetchAvatar(addresses);
     });
   }
 
-  Future<void> getAvatars() async {
-    if (checkedForAvatars) return;
-    if (contactImage != null) return;
-    if (widget.chat.id == null) widget.chat.save();
-    Chat chat = widget.chat;
-    if (widget.chat.participants == null ||
-        widget.chat.participants.length == 0)
-      chat = await widget.chat.getParticipants();
-    if (chat.participants.length == 1) {
-      Contact contact = getContact(chat.participants.first.address);
-      if (contact != null && contact.avatar.length > 0) {
-        contactImage = MemoryImage(
-          await FlutterImageCompress.compressWithList(contact.avatar, quality: 50));
-        if (this.mounted) setState(() {});
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    fetchAvatar(null);
+  }
+
+  void fetchAvatar(List<String> addresses) {
+    loadAvatar(widget.chat, addresses).then((MemoryImage image) {
+      if (image != null) {
+        if (contactImage == null || contactImage.bytes.length != image.bytes.length) {
+          contactImage = image;
+          if (this.mounted) setState(() {}); 
+        }
       }
-    }
-    checkedForAvatars = true;
+    });
   }
 
   @override
