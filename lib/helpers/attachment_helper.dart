@@ -76,7 +76,6 @@ class AttachmentHelper {
     contact.phones = phones;
 
     return contact;
-    // return ;
   }
 
   static String getPreviewPath(Attachment attachment) {
@@ -92,5 +91,11 @@ class AttachmentHelper {
     }
 
     return pathName;
+  }
+
+  static bool canCompress(Attachment attachment) {
+    String mime = attachment.mimeType ?? "";
+    List<String> blacklist = ["image/gif"];
+    return mime.startsWith("image/") && !blacklist.contains(mime);
   }
 }

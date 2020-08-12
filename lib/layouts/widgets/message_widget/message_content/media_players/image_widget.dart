@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:bluebubbles/layouts/image_viewer/image_viewer.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_attachments.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
+import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
@@ -26,7 +27,7 @@ class _ImageWidgetState extends State<ImageWidget> {
         .containsKey(widget.attachment.guid)) {
 
       // If it's an image, compress the image when loading it
-      if ((widget.attachment.mimeType ?? "").startsWith("image/")) {
+      if (AttachmentHelper.canCompress(widget.attachment)) {
         widget.savedAttachmentData.imageData[widget.attachment.guid] =
           await FlutterImageCompress.compressWithFile(
             widget.file.absolute.path,
