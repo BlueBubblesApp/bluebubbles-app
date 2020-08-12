@@ -262,14 +262,12 @@ class Message {
       if (associatedMessage != null) {
         associatedMessage.hasReactions = true;
         await associatedMessage.save();
-        debugPrint("found message for reaction ${associatedMessage.guid}");
       }
     } else if (!this.hasReactions) {
       Message reaction =
           await Message.findOne({"associatedMessageGuid": this.guid});
       if (reaction != null) {
         this.hasReactions = true;
-        debugPrint("found reaction for message ${reaction.id}");
       }
     }
 

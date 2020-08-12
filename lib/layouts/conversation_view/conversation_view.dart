@@ -6,6 +6,7 @@ import 'package:bluebubbles/layouts/conversation_view/messages_view.dart';
 import 'package:bluebubbles/layouts/conversation_view/text_field.dart';
 import 'package:bluebubbles/layouts/widgets/CustomCupertinoNavBar.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
+import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:contacts_service/contacts_service.dart';
@@ -37,7 +38,7 @@ class ConversationView extends StatefulWidget {
 }
 
 class _ConversationViewState extends State<ConversationView> {
-  ImageProvider contactImage;
+  MemoryImage contactImage;
   Chat chat;
   OverlayEntry entry;
   LayerLink layerLink = LayerLink();
@@ -47,31 +48,28 @@ class _ConversationViewState extends State<ConversationView> {
     super.initState();
     chat = widget.chat;
     NotificationManager().switchChat(chat);
-    // ChatBloc().chatStream.listen((event) {
-    //   event.forEach((element) {
-    //     if (element.guid == chat.guid) {
-    //       chat = element;
-    //       if (this.mounted) setState(() {});
-    //     }
-    //   });
-    // });
+    
+    fetchAvatar(null);
+    ContactManager().stream.listen((List<String> addresses) async {
+      fetchAvatar(addresses);
+    });
+  }
+
+  void fetchAvatar(List<String> addresses) {
+    loadAvatar(widget.chat, addresses).then((MemoryImage image) {
+      if (image != null) {
+        if (contactImage == null || contactImage.bytes.length != image.bytes.length) {
+          contactImage = image;
+          if (this.mounted) setState(() {}); 
+        }
+      }
+    });
   }
 
   @override
   void dispose() {
-    debugPrint("dispose");
     widget.messageBloc.dispose();
     NotificationManager().leaveChat();
-
-    // String appDocPath = SettingsManager().appDocDir.path;
-
-    // String pathName = "$appDocPath/tempAssets";
-    // Directory tempAssets = Directory(pathName);
-    // tempAssets.exists().then((value) {
-    //   if (value) {
-    //     tempAssets.delete(recursive: true);
-    //   }
-    // });
     super.dispose();
   }
 
@@ -79,15 +77,7 @@ class _ConversationViewState extends State<ConversationView> {
   void didChangeDependencies() async {
     super.didChangeDependencies();
     SocketManager().removeChatNotification(chat);
-
-    // Chat _chat = await chat.getParticipants();
-    if (chat.participants.length == 1) {
-      Contact contact = getContact(chat.participants.first.address);
-      if (contact != null && contact.avatar.length > 0) {
-        contactImage = MemoryImage(contact.avatar);
-        if (this.mounted) setState(() {});
-      }
-    }
+    fetchAvatar(null);
   }
 
   @override

@@ -10,6 +10,7 @@ import 'package:bluebubbles/socket_manager.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:intent/intent.dart' as android_intent;
 import 'package:intent/action.dart' as android_action;
@@ -35,23 +36,27 @@ class ContactTile extends StatefulWidget {
 }
 
 class _ContactTileState extends State<ContactTile> {
-  ImageProvider contactImage;
+  MemoryImage contactImage;
 
   @override
-  Future<void> didChangeDependencies() async {
-    super.didChangeDependencies();
-    getAvatar(widget);
-    ContactManager().stream.listen((event) {
-      getAvatar(widget);
+  void initState() {
+    super.initState();
+
+    fetchAvatar();
+    ContactManager().stream.listen((List<String> addresses) {
+      fetchAvatar();
     });
   }
 
-  Future<void> getAvatar(ContactTile widget) async {
-    if (contactImage != null) return;
+  void fetchAvatar() async {
+    Contact contact = ContactManager().getCachedContact(widget.handle.address);
+    if (contact == null || contact.avatar.length == 0) return null;
+    MemoryImage tmpAvatar = MemoryImage(
+      await FlutterImageCompress.compressWithList(contact.avatar, quality: 50));
 
-    if (widget.contact != null && widget.contact.avatar.length > 0) {
-      contactImage = MemoryImage(widget.contact.avatar);
-      if (this.mounted) setState(() {});
+    if (contactImage == null || contactImage.bytes.length != tmpAvatar.bytes.length) {
+      contactImage = tmpAvatar;
+      if (this.mounted) setState(() {}); 
     }
   }
 
