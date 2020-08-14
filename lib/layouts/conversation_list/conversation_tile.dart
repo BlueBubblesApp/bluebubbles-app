@@ -6,8 +6,7 @@ import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
-import 'package:contacts_service/contacts_service.dart';
-import 'package:flutter_image_compress/flutter_image_compress.dart';
+import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -49,17 +48,36 @@ class ConversationTile extends StatefulWidget {
 
 class _ConversationTileState extends State<ConversationTile> {
   MemoryImage contactImage;
-
   bool isPressed = false;
+  String chatTitle;
 
   @override
   void initState() {
     super.initState();
+    chatTitle = widget.title;
 
     fetchAvatar(null);
     ContactManager().stream.listen((List<String> addresses) {
       fetchAvatar(addresses);
+
+      // Check if any of the addresses are members of the chat
+      List<Handle> participants = widget.chat.participants ?? [];
+      dynamic handles = participants.map((Handle handle) => handle.address);
+      for (String addr in addresses) {
+        if (handles.contains(addr)) {
+          setNewChatTitle();
+          break;
+        }
+      }
     });
+  }
+
+  void setNewChatTitle() async {
+    String tmpTitle = await getFullChatTitle(widget.chat);
+    if (tmpTitle != chatTitle) {
+      chatTitle = tmpTitle;
+      if (this.mounted) setState(() {});
+    }
   }
 
   @override

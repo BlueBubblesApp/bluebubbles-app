@@ -46,7 +46,7 @@ Future<Null> _reportError(dynamic error, dynamic stackTrace) async {
   debugPrint('Caught error: $error');
   if (isInDebugMode) {
     // Print the full stacktrace in debug mode.
-    debugPrint(stackTrace);
+    debugPrint(stackTrace.toString());
   } else {
     // Send the Exception and Stacktrace to Sentry in Production mode.
     _sentry.captureException(

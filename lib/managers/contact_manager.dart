@@ -54,6 +54,7 @@ class ContactManager {
       // of the loop so we don't "over-process" more than we need
       if (contactMatch != null) {
         handleToContact[handle.address] = contactMatch;
+        _stream.sink.add([handle.address]);
       }
     }
 
