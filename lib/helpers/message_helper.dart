@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
+import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
@@ -12,7 +13,6 @@ class MessageHelper {
   static Future<List<Message>> bulkAddMessages(
       Chat chat, List<dynamic> messages,
       {bool notifyForNewMessage = false}) async {
-
     // Create master list for all the messages and a chat cache
     List<Message> _messages = <Message>[];
     Map<String, Chat> chats = <String, Chat>{};
@@ -41,7 +41,7 @@ class MessageHelper {
           chats[msgChat.guid] = msgChat;
         }
       }
-      
+
       // If we can't get a chat from the data, skip the message
       if (msgChat == null) return;
 
@@ -51,7 +51,8 @@ class MessageHelper {
         if (existingMessage == null) {
           String title = await getFullChatTitle(msgChat);
 
-          if (!message.isFromMe && message.handle != null &&
+          if (!message.isFromMe &&
+              message.handle != null &&
               (NotificationManager().chatGuid != msgChat.guid ||
                   !LifeCycleManager().isAlive) &&
               !msgChat.isMuted &&
@@ -68,22 +69,22 @@ class MessageHelper {
             }
 
             NotificationManager().createNewNotification(
-              title,
-              text,
-              msgChat.guid,
-              Random().nextInt(9998) + 1,
-              msgChat.id,
-              message.dateCreated.millisecondsSinceEpoch,
-              getContactTitle(message.handle.id, message.handle.address),
-              msgChat.participants.length > 1,
-              handle: message.handle,
-              contact: getContact(message.handle.address)
-            );
+                title,
+                text,
+                msgChat.guid,
+                Random().nextInt(9998) + 1,
+                msgChat.id,
+                message.dateCreated.millisecondsSinceEpoch,
+                getContactTitle(message.handle.id, message.handle.address),
+                msgChat.participants.length > 1,
+                handle: message.handle,
+                contact: getContact(message.handle.address));
             NotificationManager().processedNotifications.add(message.guid);
-            if (!SocketManager().chatsWithNotifications.contains(msgChat.guid) &&
-                NotificationManager().chatGuid != msgChat.guid) {
-              SocketManager().chatsWithNotifications.add(msgChat.guid);
-            }
+            NewMessageManager().updateWithMessage(chat, message);
+            // if (!SocketManager().chatsWithNotifications.contains(msgChat.guid) &&
+            //     NotificationManager().chatGuid != msgChat.guid) {
+            //   SocketManager().chatsWithNotifications.add(msgChat.guid);
+            // }
           }
         }
       }

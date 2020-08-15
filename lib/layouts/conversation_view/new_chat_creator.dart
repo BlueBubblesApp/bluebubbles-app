@@ -93,9 +93,10 @@ class _NewChatCreatorState extends State<NewChatCreator> {
     List _conversations = [];
     _conversations.addAll(conversations);
     _conversations.retainWhere((element) {
-      Map<String, dynamic> data = ChatBloc().tileVals[element.guid];
+      // Map<String, dynamic> data = ChatBloc().tileVals[element.guid];
       if (element.participants.length == 1) return false;
-      if (data["title"].contains(searchQuery.toLowerCase())) return true;
+      if ((element as Chat).title.contains(searchQuery.toLowerCase()))
+        return true;
       return false;
     });
     _conversations.addAll(_contacts);
@@ -149,9 +150,7 @@ class _NewChatCreatorState extends State<NewChatCreator> {
     }
     if (possibleChats.length > 1) {
       possibleChats.sort((a, b) {
-        return -ChatBloc()
-            .tileVals[a.guid]["actualDate"]
-            .compareTo(ChatBloc().tileVals[b.guid]["actualDate"]);
+        return -a.latestMessageDate.compareTo(b.latestMessageDate);
       });
       possibleChats.forEach((element) {
         String toPrint = "Chat: ";
@@ -390,14 +389,14 @@ class _NewChatCreatorState extends State<NewChatCreator> {
                                 )
                               : Builder(
                                   builder: (context) {
-                                    Map<String, dynamic> _data = ChatBloc()
-                                        .tileVals[contacts[index].guid];
+                                    // Map<String, dynamic> _data = ChatBloc()
+                                    //     .tileVals[contacts[index].guid];
                                     return ConversationTile(
                                       chat: contacts[index],
-                                      title: _data["title"],
-                                      subtitle: _data["subtitle"],
-                                      date: _data["date"],
-                                      hasNewMessage: false,
+                                      // title: _data["title"],
+                                      // subtitle: _data["subtitle"],
+                                      // date: _data["date"],
+                                      // hasNewMessage: false,
                                       replaceOnTap: true,
                                     );
                                   },
@@ -408,17 +407,17 @@ class _NewChatCreatorState extends State<NewChatCreator> {
                         physics: AlwaysScrollableScrollPhysics(
                             parent: BouncingScrollPhysics()),
                         itemBuilder: (context, index) {
-                          Map<String, dynamic> _data =
-                              ChatBloc().tileVals[conversations[index].guid];
+                          // Map<String, dynamic> _data =
+                          //     ChatBloc().tileVals[conversations[index].guid];
 
                           return ConversationTile(
                             existingAttachments: widget.attachments,
                             existingText: widget.existingText,
                             chat: conversations[index],
-                            title: _data["title"],
-                            subtitle: _data["subtitle"],
-                            date: _data["date"],
-                            hasNewMessage: false,
+                            // title: _data["title"],
+                            // subtitle: _data["subtitle"],
+                            // date: _data["date"],
+                            // hasNewMessage: false,
                             replaceOnTap: true,
                           );
                         },

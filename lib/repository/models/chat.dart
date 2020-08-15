@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:intl/intl.dart';
 import 'package:sqflite/sqflite.dart';
 
 import '../database.dart';
@@ -74,6 +75,9 @@ class Chat {
   bool isArchived;
   bool isMuted;
   bool hasUnreadMessage;
+  DateTime latestMessageDate;
+  String latestMessageText;
+  String title;
   String displayName;
   List<Handle> participants;
 
@@ -87,6 +91,8 @@ class Chat {
     this.hasUnreadMessage,
     this.displayName,
     this.participants,
+    this.latestMessageDate,
+    this.latestMessageText,
   });
 
   factory Chat.fromMap(Map<String, dynamic> json) {
@@ -115,6 +121,14 @@ class Chat {
               ? json['hasUnreadMessage']
               : ((json['hasUnreadMessage'] == 1) ? true : false)
           : false,
+      latestMessageText: json.containsKey("latestMessageText")
+          ? json["latestMessageText"]
+          : null,
+      latestMessageDate: json.containsKey("latestMessageDate") &&
+              json['latestMessageDate'] != null
+          ? new DateTime.fromMillisecondsSinceEpoch(
+              json['latestMessageDate'] as int)
+          : null,
       displayName: json.containsKey("displayName") ? json["displayName"] : null,
       participants: participants,
     );
@@ -167,19 +181,56 @@ class Chat {
     return this;
   }
 
+  Future<String> getTitle() async {
+    this.title = await getFullChatTitle(this);
+    return this.title;
+  }
+
+  String getDateText() {
+    if (this.latestMessageDate == null) return "";
+    if (this.latestMessageDate.isToday()) {
+      return new DateFormat.jm().format(this.latestMessageDate);
+    } else if (this.latestMessageDate.isYesterday()) {
+      return "Yesterday";
+    } else {
+      return "${this.latestMessageDate.month.toString()}/${this.latestMessageDate.day.toString()}/${this.latestMessageDate.year.toString()}";
+    }
+  }
+
   Future<Chat> update() async {
     final Database db = await DBProvider.db.database;
 
     Map<String, dynamic> params = {
       "isArchived": this.isArchived ? 1 : 0,
       "isMuted": this.isMuted ? 1 : 0,
-      "hasUnreadMessage": this.hasUnreadMessage ? 1 : 0
+      "latestMessageText": this.latestMessageText,
+      "latestMessageDate": this.latestMessageDate != null
+          ? this.latestMessageDate.millisecondsSinceEpoch
+          : null,
     };
 
     // Add display name if it's been updated
     if (this.displayName != null) {
       params.putIfAbsent("displayName", () => this.displayName);
     }
+
+    // If it already exists, update it
+    if (this.id != null) {
+      await db.update("chat", params, where: "ROWID = ?", whereArgs: [this.id]);
+    } else {
+      await this.save(updateIfAbsent: false);
+    }
+
+    return this;
+  }
+
+  Future<Chat> markReadUnread(bool hasUnreadMessage) async {
+    final Database db = await DBProvider.db.database;
+
+    this.hasUnreadMessage = hasUnreadMessage;
+    Map<String, dynamic> params = {
+      "hasUnreadMessage": this.hasUnreadMessage,
+    };
 
     // If it already exists, update it
     if (this.id != null) {
@@ -438,7 +489,7 @@ class Chat {
   }
 
   static Future<List<Chat>> find(
-      [Map<String, dynamic> filters = const {}]) async {
+      [Map<String, dynamic> filters = const {}, limit, offset]) async {
     final Database db = await DBProvider.db.database;
 
     List<String> whereParams = [];
@@ -448,7 +499,31 @@ class Chat {
 
     var res = await db.query("chat",
         where: (whereParams.length > 0) ? whereParams.join(" AND ") : null,
-        whereArgs: (whereArgs.length > 0) ? whereArgs : null);
+        whereArgs: (whereArgs.length > 0) ? whereArgs : null,
+        limit: limit,
+        offset: offset);
+    return (res.isNotEmpty) ? res.map((c) => Chat.fromMap(c)).toList() : [];
+  }
+
+  static Future<List<Chat>> getChats(
+      {bool archived = false, int limit = 15, int offset = 0}) async {
+    final Database db = await DBProvider.db.database;
+    var res = await db.rawQuery(
+        "SELECT"
+        " chat.ROWID as ROWID,"
+        " chat.guid as guid,"
+        " chat.style as style,"
+        " chat.chatIdentifier as chatIdentifier,"
+        " chat.isArchived as isArchived,"
+        " chat.isMuted as isMuted,"
+        " chat.hasUnreadMessage as hasUnreadMessage,"
+        " chat.latestMessageDate as latestMessageDate,"
+        " chat.latestMessageText as latestMessageText,"
+        " chat.displayName as displayName"
+        " FROM chat"
+        " WHERE chat.isArchived = ? ORDER BY chat.latestMessageDate DESC LIMIT $limit OFFSET $offset;",
+        [archived ? 1 : 0]);
+
     return (res.isNotEmpty) ? res.map((c) => Chat.fromMap(c)).toList() : [];
   }
 
@@ -467,5 +542,9 @@ class Chat {
         "displayName": displayName,
         "participants": participants.map((item) => item.toMap()),
         "hasUnreadMessage": hasUnreadMessage ? 1 : 0,
+        "latestMessageDate": latestMessageDate != null
+            ? latestMessageDate.millisecondsSinceEpoch
+            : 0,
+        "latestMessageText": latestMessageText
       };
 }

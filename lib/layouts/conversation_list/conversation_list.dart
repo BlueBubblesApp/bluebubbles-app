@@ -235,34 +235,35 @@ class _ConversationListState extends State<ConversationList> {
               ),
             ),
             StreamBuilder(
-              stream: ChatBloc().tileStream,
-              builder: (BuildContext context,
-                  AsyncSnapshot<Map<String, Map<String, dynamic>>> snapshot) {
+              stream: ChatBloc().chatStream,
+              builder:
+                  (BuildContext context, AsyncSnapshot<List<Chat>> snapshot) {
                 if (snapshot.hasData || widget.showArchivedChats) {
-                  // debugPrint(snapshot.data.toString());
-
-                  if (snapshot.hasData)
-                    _chats.sort((a, b) {
-                      return -snapshot.data[a.guid]["actualDate"]
-                          .compareTo(snapshot.data[b.guid]["actualDate"]);
-                    });
+                  _chats.sort((a, b) {
+                    if (a.latestMessageDate == null &&
+                        b.latestMessageDate == null) return 0;
+                    if (a.latestMessageDate == null) return 1;
+                    if (b.latestMessageDate == null) return -1;
+                    return -a.latestMessageDate.compareTo(b.latestMessageDate);
+                  });
 
                   return SliverList(
                     delegate: SliverChildBuilderDelegate(
                       (context, index) {
-                        Map<String, dynamic> _data = !widget.showArchivedChats
-                            ? snapshot.data[_chats[index].guid]
-                            : ChatBloc().archivedTiles[_chats[index].guid];
-                        if (!widget.showArchivedChats &&
-                            !snapshot.data.containsKey(_chats[index].guid))
-                          return Container();
+                        // Map<String, dynamic> _data = !widget.showArchivedChats
+                        //     ? snapshot.data[_chats[index].guid]
+                        //     : ChatBloc().archivedTiles[_chats[index].guid];
+                        // if (_chats[index].title == "" ||
+                        //     _chats[index].title == null ||
+                        //     _chats[index].latestMessageDate == null)
+                        //   return Container();
                         return ConversationTile(
                           key: Key(_chats[index].guid.toString()),
                           chat: _chats[index],
-                          title: _data["title"],
-                          subtitle: _data["subtitle"],
-                          date: _data["date"],
-                          hasNewMessage: _data["hasNotification"],
+                          // title: _data["title"],
+                          // subtitle: _data["subtitle"],
+                          // date: _data["date"],
+                          // hasNewMessage: _data["hasNotification"],
                         );
                       },
                       childCount: _chats.length,

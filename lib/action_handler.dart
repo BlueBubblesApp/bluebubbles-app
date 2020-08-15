@@ -43,7 +43,7 @@ class ActionHandler {
     RegExpMatch linkMatch;
     String linkMsg;
     RegExp exp = new RegExp(
-          r'((https?:\/\/)|(www\.))[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}([-a-zA-Z0-9\/()@:%_.~#?&=\*\[\]]{0,})\b');
+        r'((https?:\/\/)|(www\.))[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}([-a-zA-Z0-9\/()@:%_.~#?&=\*\[\]]{0,})\b');
     List<RegExpMatch> matches = exp.allMatches(text).toList();
 
     // Get the last match (if it exists)
@@ -386,6 +386,7 @@ class ActionHandler {
         await ActionHandler.handleChat(
             chat: chats[i], checkIfExists: true, isHeadless: isHeadless);
         Message existing = await Message.findOne({"guid": message.guid});
+        await chats[i].save();
         if (!message.isFromMe &&
             message.handle != null &&
             (NotificationManager().chatGuid != chats[i].guid ||
@@ -399,7 +400,6 @@ class ActionHandler {
                 " attachment" +
                 ((data['attachments'] as List<dynamic>).length > 1 ? "s" : "");
           }
-          await chats[i].save();
           String title = await getFullChatTitle(chats[i]);
           NotificationManager().createNewNotification(
               title,
@@ -421,14 +421,6 @@ class ActionHandler {
             "(handle message) after saving ${message.text}, ${message.guid} " +
                 message.dateCreated.millisecondsSinceEpoch.toString());
         await chats[i].addMessage(message);
-
-        // Add notification metadata
-        if (!isHeadless &&
-            !SocketManager().chatsWithNotifications.contains(chats[i].guid) &&
-            NotificationManager().chatGuid != chats[i].guid &&
-            !message.isFromMe) {
-          SocketManager().chatsWithNotifications.add(chats[i].guid);
-        }
 
         if (message.itemType == ItemTypes.nameChanged.index) {
           chats[i] = await chats[i].changeName(message.groupTitle);

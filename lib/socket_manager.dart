@@ -40,16 +40,9 @@ class SocketManager {
 
   SocketManager._internal();
 
-  List<String> chatsWithNotifications = <String>[];
+  void removeChatNotification(Chat chat) async {
+    await chat.markReadUnread(false);
 
-  void removeChatNotification(Chat chat) {
-    for (int i = 0; i < chatsWithNotifications.length; i++) {
-      if (chatsWithNotifications[i] == chat.guid) {
-        chatsWithNotifications.removeAt(i);
-        break;
-      }
-    }
-    // ChatBloc().initTileValsForChat(chat);
     NewMessageManager().updateWithMessage(chat, null);
   }
 
@@ -172,7 +165,8 @@ class SocketManager {
         });
         if (SettingsManager().settings.finishedSetup)
           setup.startIncrementalSync(SettingsManager().settings, (String err) {
-            debugPrint("(SYNC) Error performing incremental sync. Not saving last sync date.");
+            debugPrint(
+                "(SYNC) Error performing incremental sync. Not saving last sync date.");
             debugPrint(err);
           });
         // if (connectCb != null) connectCb();

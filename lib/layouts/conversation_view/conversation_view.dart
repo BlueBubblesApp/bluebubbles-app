@@ -13,7 +13,6 @@ import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/cupertino.dart' as Cupertino;
 import 'package:flutter/material.dart';
 
-
 import '../../repository/models/chat.dart';
 
 class ConversationView extends StatefulWidget {
@@ -48,7 +47,7 @@ class _ConversationViewState extends State<ConversationView> {
     super.initState();
     chat = widget.chat;
     NotificationManager().switchChat(chat);
-    
+
     fetchAvatar(null);
     ContactManager().stream.listen((List<String> addresses) async {
       fetchAvatar(addresses);
@@ -58,9 +57,10 @@ class _ConversationViewState extends State<ConversationView> {
   void fetchAvatar(List<String> addresses) {
     loadAvatar(widget.chat, addresses).then((MemoryImage image) {
       if (image != null) {
-        if (contactImage == null || contactImage.bytes.length != image.bytes.length) {
+        if (contactImage == null ||
+            contactImage.bytes.length != image.bytes.length) {
           contactImage = image;
-          if (this.mounted) setState(() {}); 
+          if (this.mounted) setState(() {});
         }
       }
     });

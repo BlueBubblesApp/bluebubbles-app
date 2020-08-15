@@ -108,6 +108,8 @@ class DBProvider {
         "isArchived INTEGER DEFAULT 0,"
         "isMuted INTEGER DEFAULT 0,"
         "hasUnreadMessage INTEGER DEFAULT 0,"
+        "latestMessageDate INTEGER DEFAULT 0,"
+        "latestMessageText TEXT,"
         "displayName TEXT DEFAULT NULL"
         ");");
   }

@@ -20,10 +20,6 @@ import '../../helpers/utils.dart';
 
 class ConversationTile extends StatefulWidget {
   final Chat chat;
-  final String title;
-  final dynamic subtitle;
-  final String date;
-  final bool hasNewMessage;
   final bool replaceOnTap;
   final List<File> existingAttachments;
   final String existingText;
@@ -31,10 +27,6 @@ class ConversationTile extends StatefulWidget {
   ConversationTile(
       {Key key,
       this.chat,
-      this.title,
-      this.subtitle,
-      this.date,
-      this.hasNewMessage,
       this.replaceOnTap,
       this.existingAttachments,
       this.existingText})
@@ -49,15 +41,14 @@ class ConversationTile extends StatefulWidget {
 class _ConversationTileState extends State<ConversationTile> {
   MemoryImage contactImage;
   bool isPressed = false;
-  String chatTitle;
 
   @override
   void initState() {
     super.initState();
-    chatTitle = widget.title;
 
     fetchAvatar(null);
     ContactManager().stream.listen((List<String> addresses) {
+      debugPrint("contact manager listen event ");
       fetchAvatar(addresses);
 
       // Check if any of the addresses are members of the chat
@@ -69,15 +60,16 @@ class _ConversationTileState extends State<ConversationTile> {
           break;
         }
       }
+      setNewChatTitle();
     });
   }
 
   void setNewChatTitle() async {
     String tmpTitle = await getFullChatTitle(widget.chat);
-    if (tmpTitle != chatTitle) {
-      chatTitle = tmpTitle;
+    if (tmpTitle != widget.chat.title) {
       if (this.mounted) setState(() {});
     }
+    widget.chat.title = tmpTitle;
   }
 
   @override
@@ -89,9 +81,10 @@ class _ConversationTileState extends State<ConversationTile> {
   void fetchAvatar(List<String> addresses) {
     loadAvatar(widget.chat, addresses).then((MemoryImage image) {
       if (image != null) {
-        if (contactImage == null || contactImage.bytes.length != image.bytes.length) {
+        if (contactImage == null ||
+            contactImage.bytes.length != image.bytes.length) {
           contactImage = image;
-          if (this.mounted) setState(() {}); 
+          if (this.mounted) setState(() {});
         }
       }
     });
@@ -99,7 +92,7 @@ class _ConversationTileState extends State<ConversationTile> {
 
   @override
   Widget build(BuildContext context) {
-    var initials = getInitials(widget.title, " ");
+    var initials = getInitials(widget.chat.title, " ");
     return Slidable(
       actionPane: SlidableStrechActionPane(),
       secondaryActions: <Widget>[
@@ -146,7 +139,7 @@ class _ConversationTileState extends State<ConversationTile> {
                   builder: (BuildContext context) {
                     return ConversationView(
                       chat: widget.chat,
-                      title: widget.title,
+                      title: widget.chat.title,
                       messageBloc: messageBloc,
                       existingAttachments: widget.existingAttachments,
                       existingText: widget.existingText,
@@ -161,7 +154,7 @@ class _ConversationTileState extends State<ConversationTile> {
                   builder: (BuildContext context) {
                     return ConversationView(
                       chat: widget.chat,
-                      title: widget.title,
+                      title: widget.chat.title,
                       messageBloc: messageBloc,
                       existingAttachments: widget.existingAttachments,
                       existingText: widget.existingText,
@@ -193,18 +186,22 @@ class _ConversationTileState extends State<ConversationTile> {
                               color: Colors.white.withAlpha(40), width: 0.5))),
                   child: ListTile(
                     contentPadding: EdgeInsets.only(left: 0),
-                    title: Text(widget.title,
-                        style: Theme.of(context).textTheme.bodyText1,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis),
-                    subtitle:
-                        widget.subtitle != null && !(widget.subtitle is String)
-                            ? widget.subtitle
-                            : Text(
-                                widget.subtitle != null ? widget.subtitle : "",
-                                style: Theme.of(context).textTheme.subtitle1,
-                                maxLines: 1,
-                              ),
+                    title: Text(
+                      widget.chat.title != null ? widget.chat.title : "",
+                      style: Theme.of(context).textTheme.bodyText1,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    subtitle: widget.chat.latestMessageText != null &&
+                            !(widget.chat.latestMessageText is String)
+                        ? widget.chat.latestMessageText
+                        : Text(
+                            widget.chat.latestMessageText != null
+                                ? widget.chat.latestMessageText
+                                : "",
+                            style: Theme.of(context).textTheme.subtitle1,
+                            maxLines: 1,
+                          ),
                     leading: ContactAvatarWidget(
                       contactImage: contactImage,
                       initials: initials,
@@ -218,7 +215,7 @@ class _ConversationTileState extends State<ConversationTile> {
                           Container(
                             padding: EdgeInsets.only(right: 5),
                             child: Text(
-                              widget.date,
+                              widget.chat.getDateText(),
                               style: Theme.of(context).textTheme.subtitle2,
                             ),
                           ),
@@ -244,7 +241,7 @@ class _ConversationTileState extends State<ConversationTile> {
                           ? Container(
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(35),
-                                color: widget.hasNewMessage
+                                color: widget.chat.hasUnreadMessage
                                     ? Colors.blue[500].withOpacity(0.8)
                                     : Colors.transparent,
                               ),
@@ -253,7 +250,7 @@ class _ConversationTileState extends State<ConversationTile> {
                             )
                           : SvgPicture.asset(
                               "assets/icon/moon.svg",
-                              color: widget.hasNewMessage
+                              color: widget.chat.hasUnreadMessage
                                   ? Colors.blue[500].withOpacity(0.8)
                                   : Theme.of(context).textTheme.subtitle1.color,
                               width: 15,

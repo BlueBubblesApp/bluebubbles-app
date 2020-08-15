@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:contacts_service/contacts_service.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class ContactManager {
@@ -62,6 +63,7 @@ class ContactManager {
 
     // Lazy load thumbnails after rendering initial contacts.
     getAvatars();
+    debugPrint("finished getting contacts");
   }
 
   Future<void> getAvatars() async {

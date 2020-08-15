@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:bluebubbles/managers/method_channel_interface.dart';
+import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:contacts_service/contacts_service.dart';
@@ -20,9 +21,11 @@ class NotificationManager {
 
   List<String> processedNotifications = <String>[];
 
-  void switchChat(Chat chat) {
+  void switchChat(Chat chat) async {
     if (chat == null) return;
     _currentChat = chat;
+    await chat.markReadUnread(false);
+    NewMessageManager().updateWithMessage(chat, null);
     MethodChannelInterface()
         .invokeMethod("clear-chat-notifs", {"chatGuid": _currentChat.guid});
   }
