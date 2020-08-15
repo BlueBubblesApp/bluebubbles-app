@@ -125,9 +125,7 @@ class ChatBloc {
     // if (customMap == null) _tileValController.sink.add(_tileVals);
   }
 
-  Future<void> initTileValsForChat(Chat chat,
-      {Message latestMessage,
-      Map<String, Map<String, dynamic>> customMap}) async {
+  Future<void> initTileValsForChat(Chat chat, {Message latestMessage}) async {
     await chat.getTitle();
     Message firstMessage;
     if (latestMessage == null) {
@@ -204,24 +202,23 @@ class ChatBloc {
   }
 
   void archiveChat(Chat chat) async {
-    // chats.removeWhere((element) => element.guid == chat.guid);
-    // archivedChats.add(chat);
-    // initTileValsForChat(chat, customMap: _archivedTileVals);
-    // if (_tileVals.containsKey(chat.guid)) _tileVals.remove(chat.guid);
-    // _tileValController.sink.add(_tileVals);
-    // chat.isArchived = true;
-    // await chat.save(updateLocalVals: true);
+    _chats.removeWhere((element) => element.guid == chat.guid);
+    _archivedChats.add(chat);
+    chat.isArchived = true;
+    await chat.save(updateLocalVals: true);
+    initTileValsForChat(chat);
+    _chatController.sink.add(_chats);
+    _archivedChatController.sink.add(_archivedChats);
   }
 
   void unArchiveChat(Chat chat) async {
-    // archivedChats.removeWhere((element) => element.guid == chat.guid);
-    // if (_archivedTileVals.containsKey(chat.guid))
-    //   _archivedTileVals.remove(chat.guid);
-    // _archivedChatController.sink.add(archivedChats);
-    // chats.add(chat);
-    // await initTileValsForChat(chat);
-    // chat.isArchived = false;
-    // await chat.save(updateLocalVals: true);
+    _archivedChats.removeWhere((element) => element.guid == chat.guid);
+    chat.isArchived = false;
+    await chat.save(updateLocalVals: true);
+    await initTileValsForChat(chat);
+    _chats.add(chat);
+    _archivedChatController.sink.add(_archivedChats);
+    _chatController.sink.add(_chats);
   }
 
   void updateTileVals(Chat chat, Map<String, dynamic> chatMap,
