@@ -187,7 +187,8 @@ class Chat {
   }
 
   String getDateText() {
-    if (this.latestMessageDate == null) return "";
+    if (this.latestMessageDate == null ||
+        this.latestMessageDate.millisecondsSinceEpoch == 0) return "";
     if (this.latestMessageDate.isToday()) {
       return new DateFormat.jm().format(this.latestMessageDate);
     } else if (this.latestMessageDate.isYesterday()) {
