@@ -100,7 +100,7 @@ class _SendWidgetState extends State<SendWidget> {
                       flightDirection, fromHeroContext, toHeroContext) {
                     Animation animation = _animation.drive(
                       Tween<double>(
-                        end: MediaQuery.of(context).size.width * 3 / 4 + 37,
+                        end: MediaQuery.of(context).size.width * 3 / 4 + 40,
                         begin: 0,
                       ),
                     );
@@ -210,5 +210,5 @@ class SendPageBuilder extends PageRoute<void> {
   Duration get transitionDuration => Duration(milliseconds: 0);
 
   @override
-  Duration get reverseTransitionDuration => Duration(milliseconds: 500);
+  Duration get reverseTransitionDuration => Duration(milliseconds: 300);
 }

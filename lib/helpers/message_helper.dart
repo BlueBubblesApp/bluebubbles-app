@@ -80,7 +80,8 @@ class MessageHelper {
                 handle: message.handle,
                 contact: getContact(message.handle.address));
             NotificationManager().processedNotifications.add(message.guid);
-            NewMessageManager().updateWithMessage(chat, message);
+            await msgChat.markReadUnread(true);
+            NewMessageManager().updateWithMessage(msgChat, message);
             // if (!SocketManager().chatsWithNotifications.contains(msgChat.guid) &&
             //     NotificationManager().chatGuid != msgChat.guid) {
             //   SocketManager().chatsWithNotifications.add(msgChat.guid);
