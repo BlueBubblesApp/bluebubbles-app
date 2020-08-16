@@ -191,7 +191,6 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
         builder: (BuildContext context, AsyncSnapshot<bool> snapshot) {
           if (snapshot.hasData) {
             if (snapshot.data) {
-              ContactManager().getContacts();
               return ConversationList(
                 showArchivedChats: false,
               );

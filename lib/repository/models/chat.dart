@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:intl/intl.dart';
@@ -227,7 +228,11 @@ class Chat {
 
   Future<Chat> markReadUnread(bool hasUnreadMessage) async {
     final Database db = await DBProvider.db.database;
-
+    if (hasUnreadMessage) {
+      if (NotificationManager().chatGuid == this.guid) {
+        return this;
+      }
+    }
     this.hasUnreadMessage = hasUnreadMessage;
     Map<String, dynamic> params = {
       "hasUnreadMessage": this.hasUnreadMessage,
