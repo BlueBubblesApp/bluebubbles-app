@@ -8,6 +8,8 @@ import 'package:bluebubbles/helpers/attachment_sender.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/layouts/conversation_view/camera_widget.dart';
 import 'package:bluebubbles/layouts/image_viewer/image_viewer.dart';
+import 'package:bluebubbles/managers/outgoing_queue.dart';
+import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:file_picker_cross/file_picker_cross.dart';
@@ -371,13 +373,13 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                             } else {
                               if (pickedImages.length > 0) {
                                 for (int i = 0; i < pickedImages.length; i++) {
-                                  new AttachmentSender(
+                                  OutgoingQueue().add(new QueueItem(event: "send-attachment", item: new AttachmentSender(
                                     pickedImages[i],
                                     widget.chat,
                                     i == pickedImages.length - 1
                                         ? _controller.text
                                         : "",
-                                  );
+                                  )));
                                 }
                               } else {
                                 ActionHandler.sendMessage(

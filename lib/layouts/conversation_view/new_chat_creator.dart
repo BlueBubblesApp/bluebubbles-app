@@ -10,6 +10,9 @@ import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/conversation_view/messages_view.dart';
 import 'package:bluebubbles/layouts/conversation_view/text_field.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
+import 'package:bluebubbles/managers/new_message_manager.dart';
+import 'package:bluebubbles/managers/outgoing_queue.dart';
+import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/socket_manager.dart';
@@ -442,11 +445,11 @@ class _NewChatCreatorState extends State<NewChatCreator> {
                     if (existingChat != null) {
                       if (pickedImages.length > 0) {
                         for (int i = 0; i < pickedImages.length; i++) {
-                          new AttachmentSender(
+                          OutgoingQueue().add(new QueueItem(event: "send-attachment", item: new AttachmentSender(
                             pickedImages[i],
                             existingChat,
                             i == pickedImages.length - 1 ? text : "",
-                          );
+                          )));
                         }
                       } else {
                         await ActionHandler.sendMessage(existingChat, text);
@@ -536,17 +539,19 @@ class _NewChatCreatorState extends State<NewChatCreator> {
                         }
                         Chat newChat = Chat.fromMap(data["data"]);
                         await newChat.save();
-                        String title = await getFullChatTitle(newChat);
 
+                        NewMessageManager().updateWithMessage(null, null);
+
+                        String title = await getFullChatTitle(newChat);
                         await ChatBloc().moveChatToTop(newChat);
 
                         if (pickedImages.length > 0) {
                           for (int i = 0; i < pickedImages.length; i++) {
-                            new AttachmentSender(
+                            OutgoingQueue().add(new QueueItem(event: "send-attachment", item: new AttachmentSender(
                               pickedImages[i],
                               newChat,
                               i == pickedImages.length - 1 ? text : "",
-                            );
+                            )));
                           }
                         } else {
                           await ActionHandler.sendMessage(newChat, text);

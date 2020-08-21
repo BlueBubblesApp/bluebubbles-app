@@ -6,8 +6,10 @@ import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/conversation_view/new_chat_creator.dart';
+import 'package:bluebubbles/managers/incoming_queue.dart';
 import 'package:bluebubbles/managers/navigator_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
+import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/socket_manager.dart';
@@ -62,10 +64,14 @@ class MethodChannelInterface {
         return new Future.value("");
       case "new-message":
         Map<String, dynamic> data = jsonDecode(call.arguments);
-        ActionHandler.handleMessage(data);
+        IncomingQueue().add(new QueueItem(event: "handle-message", item: {
+          "data": data
+        }));
         return new Future.value("");
       case "updated-message":
-        ActionHandler.handleUpdatedMessage(jsonDecode(call.arguments));
+        IncomingQueue().add(new QueueItem(
+            event: "handle-updated-message",
+            item: {"data": jsonDecode(call.arguments)}));
         return new Future.value("");
       case "ChatOpen":
         debugPrint("open chat " + call.arguments.toString());

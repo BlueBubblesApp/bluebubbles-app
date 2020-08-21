@@ -4,8 +4,10 @@ import 'dart:ui';
 
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
+import 'package:bluebubbles/managers/incoming_queue.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
+import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
@@ -92,9 +94,14 @@ callbackHandler() async {
       //       ));
       // }
 
-      ActionHandler.handleMessage(data, isHeadless: true);
+      IncomingQueue().add(new QueueItem(event: "handle-message", item: {
+        "data": data,
+        "isHeadless": true
+      }));
     } else if (call.method == "updated-message") {
-      ActionHandler.handleUpdatedMessage(jsonDecode(call.arguments));
+      IncomingQueue().add(new QueueItem(
+          event: "handle-updated-message",
+          item: {"data": jsonDecode(call.arguments)}));
     } else if (call.method == "reply") {
       debugPrint("replying with data " + call.arguments.toString());
       Chat chat = await Chat.findOne({"guid": call.arguments["chat"]});

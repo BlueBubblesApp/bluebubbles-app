@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:math';
 
@@ -12,6 +13,8 @@ import 'package:bluebubbles/layouts/widgets/message_widget/group_event.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
+import 'package:bluebubbles/managers/outgoing_queue.dart';
+import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
@@ -33,8 +36,7 @@ class ActionHandler {
   /// sendMessage(chatObject, 'Hello world!')
   /// ```
   static Future<void> sendMessage(Chat chat, String text,
-      {List<Attachment> attachments = const [],
-      bool closeOnFinish = false}) async {
+      {List<Attachment> attachments = const []}) async {
     if (text == null || text.trim().length == 0) return;
 
     List<Message> messages = <Message>[];
@@ -74,38 +76,56 @@ class ActionHandler {
       ));
     }
 
+    // Make sure to save the chat
     await chat.save();
-    for (Message msg in messages) {
-      Map<String, dynamic> params = new Map();
-      params["guid"] = chat.guid;
-      params["message"] = msg.text;
-      params["tempGuid"] = msg.guid;
 
-      if (!closeOnFinish) {
-        NewMessageManager()
-            .updateWithMessage(chat, msg, sentFromThisClient: true);
-        await msg.save();
-        await chat.addMessage(msg);
+    // Send all the messages
+    for (Message message in messages) {
+      // Add the message to the UI and DB
+      NewMessageManager()
+        .updateWithMessage(chat, message, sentFromThisClient: true);
+      await message.save();
+      await chat.addMessage(message);
+
+      // Create params for the queue item
+      Map<String, dynamic> params = {
+        "chat": chat,
+        "message": message
+      };
+  
+      // Add the message send to the queue
+      await OutgoingQueue().add(new QueueItem(event: "send-message", item: params));
+    }
+  }
+
+  static Future<void> sendMessageHelper(Chat chat, Message message) async {
+    Completer<void> completer = new Completer<void>();
+    Map<String, dynamic> params = new Map();
+    params["guid"] = chat.guid;
+    params["message"] = message.text;
+    params["tempGuid"] = message.guid;
+
+    // // If we aren't connected to the socket, return
+    // if (SettingsManager().settings.connected == false) return;
+    SocketManager().sendMessage("send-message", params, (response) async {
+      String tempGuid = message.guid;
+
+      // If there is an error, replace the temp value with an error
+      if (response['status'] != 200) {
+        message.guid = message.guid
+            .replaceAll("temp", "error-${response['error']['message']}");
+        message.error = response['status'] == 400
+            ? MessageError.BAD_REQUEST.code
+            : MessageError.SERVER_ERROR.code;
+
+        await Message.replaceMessage(tempGuid, message);
+        NewMessageManager().updateSpecificMessage(chat, tempGuid, message);
       }
 
-      // // If we aren't connected to the socket, return
-      // if (SettingsManager().settings.connected == false) return;
-      SocketManager().sendMessage("send-message", params, (response) async {
-        String tempGuid = msg.guid;
+      completer.complete();
+    });
 
-        // If there is an error, replace the temp value with an error
-        if (response['status'] != 200) {
-          msg.guid = msg.guid
-              .replaceAll("temp", "error-${response['error']['message']}");
-          msg.error = response['status'] == 400
-              ? MessageError.BAD_REQUEST.code
-              : MessageError.SERVER_ERROR.code;
-
-          await Message.replaceMessage(tempGuid, msg);
-          NewMessageManager().updateSpecificMessage(chat, tempGuid, msg);
-        }
-      });
-    }
+    return completer.future;
   }
 
   /// Try to resents a [message] that has errored during the
@@ -130,11 +150,12 @@ class ActionHandler {
         String pathName =
             "$appDocPath/attachments/${attachments[i].guid}/${attachments[i].transferName}";
         File file = File(pathName);
-        new AttachmentSender(
+
+        OutgoingQueue().add(new QueueItem(event: "send-attachment", item: new AttachmentSender(
           file,
           chat,
           i == attachments.length - 1 ? message.text : "",
-        );
+        )));
       }
       return;
     }

@@ -28,6 +28,8 @@ class AttachmentSender {
   int _chunkSize = 512;
   Chat _chat;
   // String _tempGuid;
+
+  File _attachment;
   String _attachmentGuid;
   List<int> _imageBytes;
   String _text;
@@ -44,13 +46,13 @@ class AttachmentSender {
     Chat chat,
     String text,
   ) {
+
     // Set default chunk size to what is set in the settings
     _chunkSize = SettingsManager().settings.chunkSize * 1024;
     _chat = chat;
     _attachmentGuid = "temp-${randomString(8)}";
     _text = text;
-
-    sendAttachment(attachment);
+    _attachment = attachment;
   }
 
   // resumeChunkingAfterDisconnect() {
@@ -123,9 +125,9 @@ class AttachmentSender {
   }
   //{"identifier":"160E8D64-0A22-400D-93BE-7D4C19346F1F","start":1048576,"chunkSize":524288,"compress":false}
 
-  Future<void> sendAttachment(File attachment) async {
-    _attachmentName = basename(attachment.path);
-    _imageBytes = await attachment.readAsBytes();
+  Future<void> send() async {
+    _attachmentName = basename(_attachment.path);
+    _imageBytes = await _attachment.readAsBytes();
 
     int numOfChunks = (_imageBytes.length / _chunkSize).ceil();
 
@@ -139,10 +141,10 @@ class AttachmentSender {
       transferName: _attachmentName,
       mimeType: mime(_attachmentName),
       width: mime(_attachmentName).startsWith("image")
-          ? ImageSizGetter.getSize(attachment).width
+          ? ImageSizGetter.getSize(_attachment).width
           : null,
       height: mime(_attachmentName).startsWith("image")
-          ? ImageSizGetter.getSize(attachment).height
+          ? ImageSizGetter.getSize(_attachment).height
           : null,
     );
 
