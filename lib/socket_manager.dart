@@ -5,9 +5,11 @@ import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/blocs/setup_bloc.dart';
 import 'package:bluebubbles/helpers/contstants.dart';
+import 'package:bluebubbles/managers/incoming_queue.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
+import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/database.dart';
 import 'package:flutter_socket_io/socket_io_manager.dart';
@@ -240,7 +242,8 @@ class SocketManager {
 
   Future<String> handleNewMessage(_data) async {
     Map<String, dynamic> data = jsonDecode(_data);
-    ActionHandler.handleMessage(data);
+    IncomingQueue()
+        .add(new QueueItem(event: "handle-message", item: {"data": data}));
     return new Future.value("");
   }
 
@@ -353,8 +356,9 @@ class SocketManager {
        * This may be when a read/delivered date has been changed.
        */
       _manager.socket.subscribe("updated-message", (_data) async {
-        // QueueManager().addEvent("updated-message", _data);
-        ActionHandler.handleUpdatedMessage(jsonDecode(_data));
+        IncomingQueue().add(new QueueItem(
+            event: "handle-updated-message",
+            item: {"data": jsonDecode(_data)}));
       });
     } catch (e) {
       debugPrint("FAILED TO CONNECT");
