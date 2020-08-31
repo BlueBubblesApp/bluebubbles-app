@@ -128,10 +128,13 @@ class _ConversationViewState extends State<ConversationView> {
                       style: Theme.of(context).textTheme.headline2,
                     ),
                   ),
-                  Container(width: 5),
-                  Text(
-                    ">",
-                    style: Theme.of(context).textTheme.subtitle1,
+                  //Container(width: 5),
+                  Padding(
+                    padding: EdgeInsets.only(top: 2.0, left: 3.0),
+                    child: Text(
+                      ">",
+                      style: Theme.of(context).textTheme.subtitle1.apply(),
+                    )
                   )
                 ],
               ),
