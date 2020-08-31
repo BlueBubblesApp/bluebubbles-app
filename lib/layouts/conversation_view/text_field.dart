@@ -21,7 +21,6 @@ import 'package:mime_type/mime_type.dart';
 import 'package:photo_manager/photo_manager.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
 
-
 class BlueBubblesTextField extends StatefulWidget {
   final Chat chat;
   final Function customSend;
@@ -335,10 +334,13 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                         autocorrect: true,
                         controller: _controller,
                         scrollPhysics: BouncingScrollPhysics(),
-                        style: Theme.of(context)
-                            .textTheme
-                            .bodyText2
-                            .apply(color: Colors.white, fontSizeDelta: -0.25),
+                        style: Theme.of(context).textTheme.bodyText2.apply(
+                            color: ThemeData.estimateBrightnessForColor(
+                                        Theme.of(context).backgroundColor) ==
+                                    Brightness.light
+                                ? Colors.black
+                                : Colors.white,
+                            fontSizeDelta: -0.25),
                         keyboardType: TextInputType.multiline,
                         maxLines: 14,
                         minLines: 1,
@@ -373,13 +375,15 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                             } else {
                               if (pickedImages.length > 0) {
                                 for (int i = 0; i < pickedImages.length; i++) {
-                                  OutgoingQueue().add(new QueueItem(event: "send-attachment", item: new AttachmentSender(
-                                    pickedImages[i],
-                                    widget.chat,
-                                    i == pickedImages.length - 1
-                                        ? _controller.text
-                                        : "",
-                                  )));
+                                  OutgoingQueue().add(new QueueItem(
+                                      event: "send-attachment",
+                                      item: new AttachmentSender(
+                                        pickedImages[i],
+                                        widget.chat,
+                                        i == pickedImages.length - 1
+                                            ? _controller.text
+                                            : "",
+                                      )));
                                 }
                               } else {
                                 ActionHandler.sendMessage(
