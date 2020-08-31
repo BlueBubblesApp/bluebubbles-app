@@ -200,7 +200,7 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                                 video: pickedImages[index].path,
                                 imageFormat: ImageFormat.PNG,
                                 maxHeight: 100,
-                                quality: 100,
+                                quality: 50,
                               ),
                               builder: (context, snapshot) {
                                 if (snapshot.connectionState ==
@@ -208,7 +208,7 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                                     snapshot.hasData) {
                                   return Image.memory(
                                     snapshot.data,
-                                    fit: BoxFit.fill,
+                                    fit: BoxFit.fill
                                   );
                                 }
                                 return SizedBox(
@@ -259,8 +259,8 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                             borderRadius: BorderRadius.circular(80),
                             color: Colors.black,
                           ),
-                          width: 20,
-                          height: 20,
+                          width: 25,
+                          height: 25,
                           child: GestureDetector(
                             onTap: () {
                               File image = pickedImages[index];
@@ -275,7 +275,7 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                             child: Icon(
                               Icons.close,
                               color: Colors.white,
-                              size: 10,
+                              size: 15,
                             ),
                           ),
                         ),
@@ -324,8 +324,12 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                         key: _searchFormKey,
                         onContentCommited: (String url) async {
                           debugPrint("got attachment " + url);
+                          List<String> fnParts = url.split("/");
+                          fnParts = (fnParts.length > 2)
+                              ? fnParts.sublist(fnParts.length - 2)
+                              : fnParts.last;
                           File file =
-                              await _downloadFile(url, url.split("/").last);
+                              await _downloadFile(url, fnParts.join("_"));
                           pickedImages.add(file);
                           setState(() {});
                         },
