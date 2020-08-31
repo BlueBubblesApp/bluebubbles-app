@@ -208,13 +208,14 @@ class _ConversationTileState extends State<ConversationTile> {
                       initials: initials,
                     ),
                     trailing: Container(
+                      padding: EdgeInsets.only(right: 5),
                       width: 80,
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: <Widget>[
                           Container(
-                            padding: EdgeInsets.only(right: 5),
+                            padding: EdgeInsets.only(right: 2),
                             child: Text(
                               widget.chat.getDateText(),
                               style: Theme.of(context).textTheme.subtitle2,
