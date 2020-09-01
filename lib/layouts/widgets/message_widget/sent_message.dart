@@ -330,15 +330,14 @@ class _SentMessageState extends State<SentMessage>
                       text: TextSpan(
                         style: Theme.of(context)
                             .textTheme
-                            .subtitle2
-                            .apply(fontSizeDelta: 1.7),
+                            .subtitle2,
                         children: [
                           TextSpan(
                             text: "${widget.timeStamp["date"]}, ",
                             style: Theme.of(context)
                                 .textTheme
                                 .subtitle2
-                                .apply(fontSizeDelta: 1.7, fontWeightDelta: 10),
+                                .apply(fontWeightDelta: 10),
                           ),
                           TextSpan(text: "${widget.timeStamp["time"]}")
                         ],
