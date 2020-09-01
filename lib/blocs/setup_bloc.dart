@@ -62,8 +62,12 @@ class SetupBloc {
   void receivedChats(data) async {
     debugPrint("got chats");
     chats = data["data"];
-    getChatMessagesRecursive(chats, 0);
-    _stream.sink.add(_progress);
+    if (chats.length == 0) {
+      finishSetup();
+    } else {
+      getChatMessagesRecursive(chats, 0);
+      _stream.sink.add(_progress);
+    }
   }
 
   void getChatMessagesRecursive(List chats, int index) async {

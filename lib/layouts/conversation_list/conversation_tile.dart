@@ -201,19 +201,21 @@ class _ConversationTileState extends State<ConversationTile> {
                                 : "",
                             style: Theme.of(context).textTheme.subtitle1,
                             maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                     leading: ContactAvatarWidget(
                       contactImage: contactImage,
                       initials: initials,
                     ),
                     trailing: Container(
+                      padding: EdgeInsets.only(right: 5),
                       width: 80,
                       child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        mainAxisAlignment: MainAxisAlignment.end,
                         children: <Widget>[
                           Container(
-                            padding: EdgeInsets.only(right: 5),
+                            padding: EdgeInsets.only(right: 2),
                             child: Text(
                               widget.chat.getDateText(),
                               style: Theme.of(context).textTheme.subtitle2,

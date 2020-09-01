@@ -63,6 +63,8 @@ String getShortChatTitle(Chat _chat) {
   if (_chat.participants.length == 1) {
     return getContactTitle(
         _chat.participants[0].id, _chat.participants[0].address);
+  } else if (_chat.displayName != null) {
+    return _chat.displayName;
   } else {
     return "${_chat.participants.length} people";
   }

@@ -247,6 +247,17 @@ class _ConversationListState extends State<ConversationList> {
                     return -a.latestMessageDate.compareTo(b.latestMessageDate);
                   });
 
+                  if (_chats.length == 0) {
+                    return SliverToBoxAdapter(
+                        child: Center(
+                            child: Container(
+                                padding: EdgeInsets.only(top: 50.0),
+                                child: Text("You have no chats :(",
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .subtitle1))));
+                  }
+
                   return SliverList(
                     delegate: SliverChildBuilderDelegate(
                       (context, index) {
@@ -270,9 +281,7 @@ class _ConversationListState extends State<ConversationList> {
                     ),
                   );
                 } else {
-                  return SliverToBoxAdapter(
-                    child: Container(),
-                  );
+                  return SliverToBoxAdapter(child: Container());
                 }
               },
             ),
