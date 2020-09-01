@@ -29,12 +29,10 @@ class SetupBloc {
   void handleError({String error = ""}) {
     closeSync();
 
-    if (onConnectionError != null)
-      onConnectionError(error);
+    if (onConnectionError != null) onConnectionError(error);
   }
 
   void startSync(Settings settings, Function _onConnectionError) {
-    
     // Make sure we aren't already syncing
     if (isSyncing) return;
 
@@ -127,18 +125,23 @@ class SetupBloc {
     isSyncing = true;
 
     // Store the time we started syncing
-    debugPrint("(SYNC) Starting incremental sync for messages since: ${settings.lastIncrementalSync}");
+    debugPrint(
+        "(SYNC) Starting incremental sync for messages since: ${settings.lastIncrementalSync}");
     int syncStart = DateTime.now().millisecondsSinceEpoch;
 
     // Build request params. We want all details on the messages
     Map<String, dynamic> params = Map();
-    params["withBlurhash"] = false;  // Maybe we want it?
-    params["limit"] = 1000;  // This is arbitrary, hopefully there aren't more messages
-    params["after"] = settings.lastIncrementalSync;  // Get everything since the last sync
-    params["withChats"] = true;  // We want the chats too so we can save them correctly
-    params["withAttachments"] = true;  // We want the attachment data
-    params["withHandle"] = true;  // We want to know who sent it
-    params["sort"] = "ASC";  // Sort my ASC so we receive the earliest messages first
+    params["withBlurhash"] = false; // Maybe we want it?
+    params["limit"] =
+        1000; // This is arbitrary, hopefully there aren't more messages
+    params["after"] =
+        settings.lastIncrementalSync; // Get everything since the last sync
+    params["withChats"] =
+        true; // We want the chats too so we can save them correctly
+    params["withAttachments"] = true; // We want the attachment data
+    params["withHandle"] = true; // We want to know who sent it
+    params["sort"] =
+        "ASC"; // Sort my ASC so we receive the earliest messages first
     params["where"] = [
       {"statement": "message.service = 'iMessage'", "args": null}
     ];
@@ -151,14 +154,16 @@ class SetupBloc {
 
       // Get the messages and add them to the DB
       List messages = data["data"];
-      debugPrint("(SYNC) Incremental sync found ${messages.length} messages. Syncing...");
+      debugPrint(
+          "(SYNC) Incremental sync found ${messages.length} messages. Syncing...");
 
       if (messages.length > 0) {
-        await MessageHelper.bulkAddMessages(
-          null, messages, notifyForNewMessage: true);
+        await MessageHelper.bulkAddMessages(null, messages,
+            notifyForNewMessage: true);
       }
 
-      debugPrint("(SYNC) Finished incremental sync. Saving last sync date: $syncStart");
+      debugPrint(
+          "(SYNC) Finished incremental sync. Saving last sync date: $syncStart");
 
       // Once we have added everything, save the last sync date
       Settings _settingsCopy = SettingsManager().settings;

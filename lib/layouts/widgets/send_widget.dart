@@ -43,7 +43,6 @@ class _SendWidgetState extends State<SendWidget> {
         Container(
           constraints: BoxConstraints(
             minWidth: MediaQuery.of(context).size.width * 3 / 4 + 37,
-            // maxWidth: MediaQuery.of(context).size.width * 3 / 4 + 37,
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -62,9 +61,6 @@ class _SendWidgetState extends State<SendWidget> {
                   ),
                 ),
               ),
-              // Padding(
-              //   padding: EdgeInsets.only(right: 37),
-              // ),
             ],
           ),
         )

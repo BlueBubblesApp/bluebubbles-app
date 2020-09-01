@@ -191,7 +191,7 @@ public class MainActivity extends FlutterActivity {
             } catch (Exception e) {
                 // Don't do anything
             }
-            
+
             // Re-add the listener
             db.addValueEventListener(dbListener);
         } else if (call.method.equals("create-notif-channel")) {
@@ -277,7 +277,12 @@ public class MainActivity extends FlutterActivity {
                     .setType("reply");
             PendingIntent replyIntent = PendingIntent.getBroadcast(context, existingNotificationId, intent, PendingIntent.FLAG_UPDATE_CURRENT);
             androidx.core.app.RemoteInput replyInput = new androidx.core.app.RemoteInput.Builder("key_text_reply").setLabel("Reply").build();
-            NotificationCompat.Action replyAction = new NotificationCompat.Action.Builder(0, "Reply", replyIntent).addRemoteInput(replyInput).build();
+            NotificationCompat.Action replyAction = new NotificationCompat.Action.Builder(0, "Reply", replyIntent)
+                    .addRemoteInput(replyInput)
+                    .setAllowGeneratedReplies(true)
+                    .extend(new NotificationCompat.Action.WearableExtender()
+                            .setHintDisplayActionInline(true))
+                    .build();
 
             //actual notification
             NotificationCompat.Builder builder = new NotificationCompat.Builder(context, call.argument("CHANNEL_ID"))
@@ -346,26 +351,26 @@ public class MainActivity extends FlutterActivity {
             // If we don't have the location client, let's get it
             if (fusedLocationClient == null)
                 fusedLocationClient = LocationServices.getFusedLocationProviderClient(context);
-            
+
             // Fetch the last location
             fusedLocationClient.getLastLocation()
-                .addOnSuccessListener((Activity) context, new OnSuccessListener<Location>() {
-                    @Override
-                    public void onSuccess(Location location) {
-                        // Got last known location. In some rare situations this can be null.
-                        if (location != null) {
-                            // Logic to handle location object
-                            Map<String, Double> latlng = new HashMap<String, Double>();
-                            latlng.put("longitude", location.getLongitude());
-                            latlng.put("latitude", location.getLatitude());
-                            Log.d("Location", "Location retreived " + latlng.toString());
-                            result.success(latlng);
-                        } else {
-                            Log.d("Location", "unable to retreive location");
-                            result.success(null);
+                    .addOnSuccessListener((Activity) context, new OnSuccessListener<Location>() {
+                        @Override
+                        public void onSuccess(Location location) {
+                            // Got last known location. In some rare situations this can be null.
+                            if (location != null) {
+                                // Logic to handle location object
+                                Map<String, Double> latlng = new HashMap<String, Double>();
+                                latlng.put("longitude", location.getLongitude());
+                                latlng.put("latitude", location.getLatitude());
+                                Log.d("Location", "Location retreived " + latlng.toString());
+                                result.success(latlng);
+                            } else {
+                                Log.d("Location", "unable to retreive location");
+                                result.success(null);
+                            }
                         }
-                    }
-                });
+                    });
         } else if (call.method.equals("save-image-to-album")) {
 //                                File storageDir = new File(
 //                                        Environment.getExternalStoragePublicDirectory(
@@ -410,7 +415,7 @@ public class MainActivity extends FlutterActivity {
                 }
 
                 @Override
-                public void onCancelled(DatabaseError  databaseError) {
+                public void onCancelled(DatabaseError databaseError) {
                     result.success(null);
                 }
             };
@@ -581,22 +586,22 @@ public class MainActivity extends FlutterActivity {
         final Bitmap output = Bitmap.createBitmap(bitmap.getWidth(),
                 bitmap.getHeight(), Bitmap.Config.ARGB_8888);
         final Canvas canvas = new Canvas(output);
-    
+
         final int color = Color.RED;
         final Paint paint = new Paint();
         final Rect rect = new Rect(0, 0, bitmap.getWidth(), bitmap.getHeight());
         final RectF rectF = new RectF(rect);
-    
+
         paint.setAntiAlias(true);
         canvas.drawARGB(0, 0, 0, 0);
         paint.setColor(color);
         canvas.drawOval(rectF, paint);
-    
+
         paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_IN));
         canvas.drawBitmap(bitmap, rect, rect, paint);
-    
+
         bitmap.recycle();
-    
+
         return output;
     }
 }

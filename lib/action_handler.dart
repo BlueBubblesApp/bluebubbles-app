@@ -83,18 +83,16 @@ class ActionHandler {
     for (Message message in messages) {
       // Add the message to the UI and DB
       NewMessageManager()
-        .updateWithMessage(chat, message, sentFromThisClient: true);
+          .updateWithMessage(chat, message, sentFromThisClient: true);
       await message.save();
       await chat.addMessage(message);
 
       // Create params for the queue item
-      Map<String, dynamic> params = {
-        "chat": chat,
-        "message": message
-      };
-  
+      Map<String, dynamic> params = {"chat": chat, "message": message};
+
       // Add the message send to the queue
-      await OutgoingQueue().add(new QueueItem(event: "send-message", item: params));
+      await OutgoingQueue()
+          .add(new QueueItem(event: "send-message", item: params));
     }
   }
 
@@ -151,11 +149,13 @@ class ActionHandler {
             "$appDocPath/attachments/${attachments[i].guid}/${attachments[i].transferName}";
         File file = File(pathName);
 
-        OutgoingQueue().add(new QueueItem(event: "send-attachment", item: new AttachmentSender(
-          file,
-          chat,
-          i == attachments.length - 1 ? message.text : "",
-        )));
+        OutgoingQueue().add(new QueueItem(
+            event: "send-attachment",
+            item: new AttachmentSender(
+              file,
+              chat,
+              i == attachments.length - 1 ? message.text : "",
+            )));
       }
       return;
     }
@@ -404,15 +404,19 @@ class ActionHandler {
             .contains(message.guid)) {
           NotificationManager().processedNotifications.add(message.guid);
         }
-        await ActionHandler.handleChat(
-            chat: chats[i], checkIfExists: true, isHeadless: isHeadless);
+        Chat chat = ChatBloc().getChat(chats[i].guid);
+        if (chat == null) {
+          await ActionHandler.handleChat(
+              chat: chats[i], checkIfExists: true, isHeadless: isHeadless);
+          chat = chats[i];
+        }
         Message existing = await Message.findOne({"guid": message.guid});
-        await chats[i].save();
+        // await chats[i].save();
         if (!message.isFromMe &&
             message.handle != null &&
-            (NotificationManager().chatGuid != chats[i].guid ||
+            (NotificationManager().chatGuid != chat.guid ||
                 !LifeCycleManager().isAlive) &&
-            !chats[i].isMuted &&
+            !chat.isMuted &&
             !processedNotificationsCopy.contains(message.guid) &&
             existing == null) {
           String text = message.text;
@@ -421,16 +425,16 @@ class ActionHandler {
                 " attachment" +
                 ((data['attachments'] as List<dynamic>).length > 1 ? "s" : "");
           }
-          String title = await getFullChatTitle(chats[i]);
+          String title = await getFullChatTitle(chat);
           NotificationManager().createNewNotification(
               title,
               text,
-              chats[i].guid,
+              chat.guid,
               Random().nextInt(9998) + 1,
-              chats[i].id,
+              chat.id,
               message.dateCreated.millisecondsSinceEpoch,
               getContactTitle(message.handle.id, message.handle.address),
-              chats[i].participants.length > 1,
+              chat.participants.length > 1,
               handle: message.handle,
               contact: getContact(message.handle.address));
         }
@@ -441,11 +445,11 @@ class ActionHandler {
         debugPrint(
             "(handle message) after saving ${message.text}, ${message.guid} " +
                 message.dateCreated.millisecondsSinceEpoch.toString());
-        await chats[i].addMessage(message);
+        await chat.addMessage(message);
 
         if (message.itemType == ItemTypes.nameChanged.index) {
-          chats[i] = await chats[i].changeName(message.groupTitle);
-          ChatBloc().updateChat(chats[i]);
+          chat = await chat.changeName(message.groupTitle);
+          ChatBloc().updateChat(chat);
         }
       }
 

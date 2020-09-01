@@ -73,6 +73,10 @@ dependencies:
   image_gallery_saver: ^1.5.0
   sentry: ^3.0.1
   flutter_image_compress: ^0.7.0
+  rich_input:
+    path: packages/rich_input
+  extended_text_field:
+    path: packages/Extended-Text-Field
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.

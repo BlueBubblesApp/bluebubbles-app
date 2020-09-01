@@ -274,6 +274,20 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.2.0"
+  extended_text_field:
+    dependency: "direct main"
+    description:
+      path: "packages/Extended-Text-Field"
+      relative: true
+    source: path
+    version: "3.0.1"
+  extended_text_library:
+    dependency: transitive
+    description:
+      name: extended_text_library
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "3.0.0"
   file:
     dependency: transitive
     description:
@@ -940,6 +954,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.4.0+2"
+  rich_input:
+    dependency: "direct main"
+    description:
+      path: "packages/rich_input"
+      relative: true
+    source: path
+    version: "1.2.1"
   rxdart:
     dependency: transitive
     description:
@@ -1318,4 +1339,4 @@ packages:
     version: "2.2.1"
 sdks:
   dart: ">=2.7.0 <3.0.0"
-  flutter: ">=1.16.3 <2.0.0"
+  flutter: ">=1.17.0 <2.0.0"

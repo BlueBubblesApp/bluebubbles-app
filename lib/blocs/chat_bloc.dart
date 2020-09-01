@@ -33,6 +33,13 @@ class ChatBloc {
 
   List<Chat> _chats;
   List<Chat> get chats => _chats;
+
+  Chat getChat(String guid) {
+    for (Chat chat in _chats) {
+      if (chat.guid == guid) return chat;
+    }
+    return null;
+  }
   // Map<String, Map<String, dynamic>> _tileVals = new Map();
   // Map<String, Map<String, dynamic>> get tileVals => _tileVals;
 
@@ -57,6 +64,7 @@ class ChatBloc {
     await ContactManager().getContacts();
 
     _chats = await Chat.getChats(archived: false, limit: 10);
+    debugPrint("first chat is " + _chats.first.chatIdentifier);
     _archivedChats = await Chat.getChats(archived: true);
 
     NewMessageManager().stream.listen((event) async {
