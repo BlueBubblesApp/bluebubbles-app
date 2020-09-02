@@ -59,7 +59,6 @@ class _ReactionsState extends State<Reactions> {
               Map<Widget, Message> reactionIcon = new Map();
               reactions.keys.forEach(
                 (String key) {
-                  debugPrint(reactions[key].toString());
                   if (reactions[key].length != 0) {
                     Color iconColor = Colors.white;
                     bool anyFromMe = false;
