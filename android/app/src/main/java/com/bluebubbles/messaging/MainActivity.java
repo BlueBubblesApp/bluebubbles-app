@@ -198,7 +198,7 @@ public class MainActivity extends FlutterActivity {
             createNotificationChannel(call.argument("channel_name"), call.argument("channel_description"), call.argument("CHANNEL_ID"), context);
             result.success("");
         } else if (call.method.equals("new-message-notification")) {
-
+            // Find any notifications that match the same chat
             NotificationCompat.MessagingStyle style = null;
             NotificationManager notificationManager = (NotificationManager) context.getSystemService(context.NOTIFICATION_SERVICE);
             int existingNotificationId = 0;
@@ -212,12 +212,14 @@ public class MainActivity extends FlutterActivity {
                 }
             }
 
+            // Set the style based on if there is already a matching notification
             if (style == null) {
-
                 style = new NotificationCompat.MessagingStyle(androidx.core.app.Person.fromAndroidPerson(new Person.Builder().setName("You").build()));
                 style.setConversationTitle(call.argument("contentTitle"));
                 style.setGroupConversation(call.argument("groupConversation"));
             }
+
+            // Get the current timestamp
             Long timestamp;
             if (call.argument("timeStamp").getClass() == Long.class) {
                 timestamp = call.argument("timeStamp");
@@ -226,6 +228,8 @@ public class MainActivity extends FlutterActivity {
             } else {
                 timestamp = Long.valueOf(call.argument("timeStamp"));
             }
+
+            // Build the sender icon
             Icon icon = null;
             if (call.argument("contactIcon") != null) {
                 Bitmap bmp = BitmapFactory.decodeByteArray((byte[]) call.argument("contactIcon"), 0, ((byte[]) call.argument("contactIcon")).length);
@@ -235,6 +239,8 @@ public class MainActivity extends FlutterActivity {
             if (icon != null) {
                 person.setIcon(icon);
             }
+
+            // Add the message to the notification
             style.addMessage(new NotificationCompat.MessagingStyle.Message(
                     call.argument("contentText"),
                     timestamp,
@@ -247,7 +253,7 @@ public class MainActivity extends FlutterActivity {
                 existingNotificationId = call.argument("notificationId");
             }
 
-            //occurs when clicking on the notification
+            // Create intent for opening the conversation in the app
             PendingIntent openIntent = PendingIntent.getActivity(
                     context,
                     existingNotificationId,
@@ -257,7 +263,7 @@ public class MainActivity extends FlutterActivity {
                                     (String) call.argument("group")).setType("NotificationOpen"),
                     Intent.FILL_IN_ACTION);
 
-            //for the dismiss button
+            // Create intent for dismissing the notification
             PendingIntent dismissIntent = PendingIntent.getBroadcast(
                     context,
                     existingNotificationId,
@@ -268,7 +274,7 @@ public class MainActivity extends FlutterActivity {
                     PendingIntent.FLAG_UPDATE_CURRENT);
             NotificationCompat.Action dismissAction = new NotificationCompat.Action.Builder(0, "Mark As Read", dismissIntent).build();
 
-            //for the quick reply
+            // Create intent for quick reply
             Intent intent = new Intent(context, ReplyReceiver.class)
                     .putExtra("id", existingNotificationId)
                     .putExtra("chatGuid", (String) call.argument("group"))
@@ -279,32 +285,22 @@ public class MainActivity extends FlutterActivity {
             androidx.core.app.RemoteInput replyInput = new androidx.core.app.RemoteInput.Builder("key_text_reply").setLabel("Reply").build();
             NotificationCompat.Action replyAction = new NotificationCompat.Action.Builder(0, "Reply", replyIntent).addRemoteInput(replyInput).build();
 
-            //actual notification
+            // Build the actual notification
             NotificationCompat.Builder builder = new NotificationCompat.Builder(context, call.argument("CHANNEL_ID"))
                     .setSmallIcon(R.mipmap.ic_stat_icon)
-                    .setContentTitle(call.argument("contentTitle"))
-                    .setContentText(call.argument("contentText"))
+                    .setAllowSystemGeneratedContextualActions(true)
                     .setAutoCancel(true)
+                    .setCategory(NotificationCompat.CATEGORY_MESSAGE)
                     .setContentIntent(openIntent)
                     .addAction(dismissAction)
                     .addAction(replyAction)
                     .setStyle(style)
                     .addExtras(extras)
                     .setColor(4888294);
-//                                        .setGroup("new-messages");
-//                                        .setGroup("messageGroup");
-//                                NotificationCompat.Builder summaryBuilder = new NotificationCompat.Builder(this, call.argument("CHANNEL_ID"))
-//                                        .setSmallIcon(R.mipmap.ic_launcher)
-//                                        .setContentTitle("New messages")
-//                                        .setGroup(call.argument("new-messages"))
-//                                        .setAutoCancel(true)
-//                                        .setContentIntent(openIntent)
-//                                        .setGroupSummary(true);
 
+            // Send the notification
             NotificationManagerCompat notificationManagerCompat = NotificationManagerCompat.from(context);
-
             notificationManagerCompat.notify(existingNotificationId, builder.build());
-//                                notificationManagerCompat.notify(call.argument("summaryId"), summaryBuilder.build());
             result.success("");
         } else if (call.method.equals("create-socket-issue-warning")) {
             NotificationCompat.Builder builder = new NotificationCompat.Builder(context, call.argument("CHANNEL_ID"))

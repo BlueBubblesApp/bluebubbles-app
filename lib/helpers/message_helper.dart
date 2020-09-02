@@ -7,7 +7,6 @@ import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
-import 'package:bluebubbles/socket_manager.dart';
 
 class MessageHelper {
   static Future<List<Message>> bulkAddMessages(
@@ -59,18 +58,9 @@ class MessageHelper {
               !NotificationManager()
                   .processedNotifications
                   .contains(message.guid)) {
-            String text = message.text;
-            if ((item['attachments'] as List<dynamic>).length > 0) {
-              text = (item['attachments'] as List<dynamic>).length.toString() +
-                  " attachment" +
-                  ((item['attachments'] as List<dynamic>).length > 1
-                      ? "s"
-                      : "");
-            }
-
             NotificationManager().createNewNotification(
                 title,
-                text,
+                MessageHelper.getNotificationText(message),
                 msgChat.guid,
                 Random().nextInt(9998) + 1,
                 msgChat.id,
@@ -121,5 +111,17 @@ class MessageHelper {
     }
 
     return chats;
+  }
+
+  static String getNotificationText(Message message) {
+    List<RegExpMatch> matches = parseLinks(message.text);
+
+    // If there are attachments, return the number of attachments
+    int aCount = (message.attachments ?? []).length;
+    if (message.hasAttachments && matches.length == 0) {
+      return "$aCount Attachment${aCount > 1 ? "s" : ""}";
+    } else {
+      return message.text;
+    }
   }
 }

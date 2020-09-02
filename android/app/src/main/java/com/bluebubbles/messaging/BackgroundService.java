@@ -234,6 +234,7 @@ public class BackgroundService extends Service {
         NotificationCompat.Builder builder = new NotificationCompat.Builder(getApplicationContext(), "background_notification_channel")
                 .setSmallIcon(R.mipmap.ic_stat_icon)
                 .setContentTitle("BlueBubbles Service")
+                .setColor(4888294)
                 .setContentText("BlueBubbles is running in the background");
 
 
