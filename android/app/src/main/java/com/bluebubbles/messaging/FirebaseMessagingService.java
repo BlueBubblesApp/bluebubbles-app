@@ -60,6 +60,7 @@ public class FirebaseMessagingService extends com.google.firebase.messaging.Fire
     protected ServiceConnection mServerConn = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder binder) {
+            if (binder == null) return;
             backgroundService = ((BackgroundService.LocalBinder) binder).getService();
         }
 
@@ -86,6 +87,8 @@ public class FirebaseMessagingService extends com.google.firebase.messaging.Fire
 
     @Override
     public void onMessageReceived(RemoteMessage remoteMessage) {
+        if (remoteMessage == null) return;
+
         // Check if message contains a data payload.
         if (remoteMessage.getData().size() > 0 && !remoteMessage.getData().get("type").equals("new-server")) {
             Intent intent = new Intent("MyData");

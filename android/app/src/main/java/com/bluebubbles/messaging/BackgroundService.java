@@ -241,10 +241,10 @@ public class BackgroundService extends Service {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ECLAIR) {
             startForeground(startId, builder.build());
         }
+
         if (intent != null && intent.getExtras() != null && intent.getExtras().getBoolean("fromBackground")) {
             initHeadlessThread();
             isAlive = false;
-
         } else {
             Log.d("headless", "destroying headless thread");
             destroyHeadlessThread();

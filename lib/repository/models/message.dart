@@ -98,57 +98,6 @@ class Message {
       hasAttachments = (json['attachments'] as List).length > 0 ? true : false;
     }
     List<Attachment> attachments;
-    // if (json.containsKey("attachmentId") && json["attachmentId"] != null) {
-    //   attachments = [];
-    //   List res = jsonDecode(json["attachmentId"]);
-    //   for (int i = 0; i < res.length; i++) {
-    //     attachments.add(new Attachment(
-    //       id: int.parse((jsonDecode(json["attachmentId"]) as List)[i]),
-    //       guid: json["attachmentGuid"] != null
-    //           ? (jsonDecode(json["attachmentGuid"]) as List)[i]
-    //           : null,
-    //       uti: json["attachmentUti"] != null
-    //           ? (jsonDecode(json["attachmentUti"]) as List)[i]
-    //           : null,
-    //       mimeType: json["attachmentMimeType"] != null
-    //           ? (jsonDecode(json["attachmentMimeType"]) as List)[i]
-    //           : null,
-    //       transferState: json["attachmentTransferState"] != null
-    //           ? (jsonDecode(json["attachmentTransferState"]) as List)[i]
-    //           : null,
-    //       transferName: json["attachmentTransferName"] != null
-    //           ? (jsonDecode(json["attachmentTransferName"]) as List)[i]
-    //           : null,
-    //       isOutgoing: json["attachmentIsOutgoing"] != null
-    //           ? int.parse(
-    //                   (jsonDecode(json["attachmentIsOutgoing"]) as List)[i]) ==
-    //               1
-    //           : null,
-    //       totalBytes: json["attachmentTotalBytes"] != null
-    //           ? int.parse((jsonDecode(json["attachmentTotalBytes"]) as List)[i])
-    //           : null,
-    //       isSticker: json["attachmentIsSticker"] != null
-    //           ? int.parse(
-    //                   (jsonDecode(json["attachmentIsSticker"]) as List)[i]) ==
-    //               1
-    //           : null,
-    //       hideAttachment: json["attachmentHideAttachment"] != null
-    //           ? int.parse((jsonDecode(json["attachmentHideAttachment"])
-    //                   as List)[i]) ==
-    //               1
-    //           : null,
-    //       blurhash: json["attachmentBlurhash"] != null
-    //           ? (jsonDecode(json["attachmentBlurhash"]) as List)[i]
-    //           : null,
-    //       height: json["attachmentHeight"] != null
-    //           ? int.parse((jsonDecode(json["attachmentHeight"]) as List)[i])
-    //           : null,
-    //       width: json["attachmentWidth"] != null
-    //           ? int.parse((jsonDecode(json["attachmentWidth"]) as List)[i])
-    //           : null,
-    //     ));
-    //   }
-    // }
 
     String associatedMessageGuid;
     if (json.containsKey("associatedMessageGuid") &&
