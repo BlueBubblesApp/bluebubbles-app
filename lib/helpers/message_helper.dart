@@ -119,7 +119,33 @@ class MessageHelper {
     // If there are attachments, return the number of attachments
     int aCount = (message.attachments ?? []).length;
     if (message.hasAttachments && matches.length == 0) {
-      return "$aCount Attachment${aCount > 1 ? "s" : ""}";
+      // Build the attachment output by counting the attachments
+      String output = "Attachment${aCount > 1 ? "s" : ""}";
+      Map<String, int> counts = {};
+      for (Attachment attachment in message.attachments) {
+        String mime = attachment.mimeType;
+        String key;
+        if (mime == null) {
+          key = "link";
+        } else if (mime.contains("location")) {
+          key = "location";
+        } else if (mime.contains("contact")) {
+          key = "contact";
+        } else {
+          key = mime.split("/").first;
+        }
+
+        if (key != null) {
+          counts.putIfAbsent(key, () => (counts.containsKey(key) ? counts[key] : 0) + 1);
+        }
+      }
+
+      List<String> attachmentStr = [];
+      counts.forEach((key, value) {
+        attachmentStr.add("$value $key${value > 1 ? "s" : ""}");
+      });
+
+      return "$output: ${attachmentStr.join(", ")}";
     } else {
       return message.text;
     }
