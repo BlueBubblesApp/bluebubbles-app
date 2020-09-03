@@ -136,7 +136,8 @@ class MessageHelper {
         }
 
         if (key != null) {
-          counts.putIfAbsent(key, () => (counts.containsKey(key) ? counts[key] : 0) + 1);
+          int current = counts.containsKey(key) ? counts[key] : 0;
+          counts[key] = current + 1;
         }
       }
 
@@ -145,7 +146,7 @@ class MessageHelper {
         attachmentStr.add("$value $key${value > 1 ? "s" : ""}");
       });
 
-      return "$output: ${attachmentStr.join(", ")}";
+      return "$output: ${attachmentStr.join(attachmentStr.length == 2 ? " & " : ", ")}";
     } else {
       return message.text;
     }
