@@ -180,7 +180,8 @@ class _ConversationTileState extends State<ConversationTile> {
                   decoration: BoxDecoration(
                       border: Border(
                           top: BorderSide(
-                              color: Theme.of(context).dividerColor, width: 0.5))),
+                              color: Theme.of(context).dividerColor,
+                              width: 0.5))),
                   child: ListTile(
                     contentPadding: EdgeInsets.only(left: 0),
                     title: Text(
@@ -196,7 +197,12 @@ class _ConversationTileState extends State<ConversationTile> {
                             widget.chat.latestMessageText != null
                                 ? widget.chat.latestMessageText
                                 : "",
-                            style: Theme.of(context).textTheme.subtitle1,
+                            style: Theme.of(context).textTheme.subtitle1.apply(
+                                color: Theme.of(context)
+                                    .textTheme
+                                    .subtitle1
+                                    .color
+                                    .withOpacity(0.85)),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -215,7 +221,15 @@ class _ConversationTileState extends State<ConversationTile> {
                             padding: EdgeInsets.only(right: 2),
                             child: Text(
                               widget.chat.getDateText(),
-                              style: Theme.of(context).textTheme.subtitle2,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .subtitle2
+                                  .apply(
+                                      color: Theme.of(context)
+                                          .textTheme
+                                          .subtitle2
+                                          .color
+                                          .withOpacity(0.85)),
                             ),
                           ),
                           Icon(

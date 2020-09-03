@@ -8,6 +8,7 @@ import 'package:bluebubbles/helpers/attachment_sender.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/layouts/conversation_view/camera_widget.dart';
 import 'package:bluebubbles/layouts/image_viewer/image_viewer.dart';
+import 'package:bluebubbles/layouts/widgets/CustomCupertinoTextField.dart';
 import 'package:bluebubbles/managers/outgoing_queue.dart';
 import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -319,7 +320,13 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                       duration: Duration(milliseconds: 100),
                       vsync: this,
                       curve: Curves.easeInOut,
-                      child: CupertinoTextField(
+                      child: CustomCupertinoTextField(
+                        onLongPressStart: () {
+                          Feedback.forLongPress(context);
+                        },
+                        onTap: () {
+                          Feedback.forLongPress(context);
+                        },
                         // autofocus: true,
                         key: _searchFormKey,
                         onContentCommited: (String url) async {
