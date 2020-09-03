@@ -35,9 +35,10 @@ class _ThemingPanelState extends State<ThemingPanel> {
         child: ClipRRect(
           child: BackdropFilter(
             child: AppBar(
+              toolbarHeight: 100.0,
               elevation: 0,
               leading: IconButton(
-                icon: Icon(Icons.arrow_back_ios),
+                icon: Icon(Icons.arrow_back_ios, color: Theme.of(context).primaryColor),
                 onPressed: () {
                   Navigator.of(context).pop();
                 },

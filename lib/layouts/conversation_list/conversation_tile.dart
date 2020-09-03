@@ -48,19 +48,16 @@ class _ConversationTileState extends State<ConversationTile> {
 
     fetchAvatar(null);
     ContactManager().stream.listen((List<String> addresses) {
-      debugPrint("contact manager listen event ");
-      fetchAvatar(addresses);
-
       // Check if any of the addresses are members of the chat
       List<Handle> participants = widget.chat.participants ?? [];
       dynamic handles = participants.map((Handle handle) => handle.address);
       for (String addr in addresses) {
         if (handles.contains(addr)) {
+          fetchAvatar(addresses);
           setNewChatTitle();
           break;
         }
       }
-      setNewChatTitle();
     });
   }
 
@@ -183,7 +180,7 @@ class _ConversationTileState extends State<ConversationTile> {
                   decoration: BoxDecoration(
                       border: Border(
                           top: BorderSide(
-                              color: Colors.white.withAlpha(40), width: 0.5))),
+                              color: Theme.of(context).dividerColor, width: 0.5))),
                   child: ListTile(
                     contentPadding: EdgeInsets.only(left: 0),
                     title: Text(

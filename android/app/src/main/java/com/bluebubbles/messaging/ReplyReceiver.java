@@ -33,6 +33,7 @@ public class ReplyReceiver extends BroadcastReceiver {
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     public void onReceive(Context context, Intent intent) {
+        if (intent == null) return;
 
         if (intent.getType().equals("reply")) {
             Bundle remoteInput = RemoteInput.getResultsFromIntent(intent);

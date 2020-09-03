@@ -237,7 +237,7 @@ class Chat {
     }
     this.hasUnreadMessage = hasUnreadMessage;
     Map<String, dynamic> params = {
-      "hasUnreadMessage": this.hasUnreadMessage,
+      "hasUnreadMessage": this.hasUnreadMessage ? 1 : 0,
     };
 
     // If it already exists, update it

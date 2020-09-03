@@ -243,3 +243,20 @@ Future<MemoryImage> loadAvatar(Chat chat, List<String> addresses) async {
   return MemoryImage(
       await FlutterImageCompress.compressWithList(contact.avatar, quality: 50));
 }
+
+List<RegExpMatch> parseLinks(String text) {
+  RegExp exp = new RegExp(
+    r'((https?:\/\/)|(www\.))[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}([-a-zA-Z0-9\/()@:%_.~#?&=\*\[\]]{0,})\b');
+  return exp.allMatches(text).toList();
+}
+
+String getSizeString(double size) {
+  int kb = 1000;
+  if (size < kb) {
+    return "${(size).floor()} KB";
+  } else if (size < kb^2) {
+    return "${(size / kb).toStringAsFixed(1)} MB";
+  } else {
+    return "${(size * (kb^2)).toStringAsFixed(1)} GB";
+  }
+}

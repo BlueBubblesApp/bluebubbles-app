@@ -261,20 +261,9 @@ class _ConversationListState extends State<ConversationList> {
                   return SliverList(
                     delegate: SliverChildBuilderDelegate(
                       (context, index) {
-                        // Map<String, dynamic> _data = !widget.showArchivedChats
-                        //     ? snapshot.data[_chats[index].guid]
-                        //     : ChatBloc().archivedTiles[_chats[index].guid];
-                        // if (_chats[index].title == "" ||
-                        //     _chats[index].title == null ||
-                        //     _chats[index].latestMessageDate == null)
-                        //   return Container();
                         return ConversationTile(
                           key: Key(_chats[index].guid.toString()),
-                          chat: _chats[index],
-                          // title: _data["title"],
-                          // subtitle: _data["subtitle"],
-                          // date: _data["date"],
-                          // hasNewMessage: _data["hasNotification"],
+                          chat: _chats[index]
                         );
                       },
                       childCount: _chats.length,

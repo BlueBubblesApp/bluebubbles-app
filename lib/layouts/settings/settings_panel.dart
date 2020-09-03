@@ -3,6 +3,7 @@ import 'dart:ui';
 
 // import 'package:bluebubbles/qr_code_scanner.dart';
 import 'package:adaptive_theme/adaptive_theme.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/theming/theming_panel.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -60,9 +61,10 @@ class _SettingsPanelState extends State<SettingsPanel> {
         child: ClipRRect(
           child: BackdropFilter(
             child: AppBar(
+              toolbarHeight: 100.0,
               elevation: 0,
               leading: IconButton(
-                icon: Icon(Icons.arrow_back_ios),
+                icon: Icon(Icons.arrow_back_ios, color: Theme.of(context).primaryColor),
                 onPressed: () {
                   Navigator.of(context).pop();
                 },
@@ -268,7 +270,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                     _settingsCopy.autoDownload = val;
                   },
                   initialVal: _settingsCopy.autoDownload,
-                  title: "Auto Download",
+                  title: "Auto-download Attachments",
                 ),
                 SettingsOptions(
                   onChanged: (AdaptiveThemeMode val) {
@@ -463,7 +465,6 @@ class _SettingsSliderState extends State<SettingsSlider> {
   void initState() {
     // TODO: implement initState
     super.initState();
-    debugPrint(widget.startingVal.toString());
     if (widget.startingVal > 1 && widget.startingVal < 5000) {
       currentVal = widget.startingVal;
     }
@@ -475,21 +476,18 @@ class _SettingsSliderState extends State<SettingsSlider> {
       children: <Widget>[
         ListTile(
           title: Text(
-            "Attachment Chunk Size",
+            "Attachment Chunk Size (Current: ${getSizeString(currentVal)})",
             style: Theme.of(context).textTheme.bodyText1,
           ),
           subtitle: Slider(
             value: currentVal,
             onChanged: (double value) {
-              debugPrint(value.toString());
               setState(() {
                 currentVal = value;
                 widget.update(currentVal.floor());
               });
             },
-            label: currentVal < 1000
-                ? "${(currentVal * 1024 / 1000).floor()}kb"
-                : "${(currentVal * 1024 * 0.000001).floor()}mb",
+            label: getSizeString(currentVal),
             divisions: 30,
             min: 1,
             max: 3000,
