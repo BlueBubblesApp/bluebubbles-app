@@ -31,7 +31,7 @@ class _ImageWidgetState extends State<ImageWidget> {
         widget.savedAttachmentData.imageData[widget.attachment.guid] =
           await FlutterImageCompress.compressWithFile(
             widget.file.absolute.path,
-            quality: 75 // This is arbitrary
+            quality: 70 // This is arbitrary
           );
 
       // All other attachments can be held in memory as bytes
@@ -46,10 +46,19 @@ class _ImageWidgetState extends State<ImageWidget> {
 
   @override
   Widget build(BuildContext context) {
+    Color progressBgColor = Colors.grey;
+    Color progressValColor = Colors.white;
+    if (ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor) == Brightness.light) {
+      progressBgColor = Colors.black;
+      progressValColor = Colors.white;
+    }
     return Stack(
       children: <Widget>[
         widget.savedAttachmentData.imageData[widget.attachment.guid] == null
-            ? Container()
+            ? CircularProgressIndicator(
+                backgroundColor: progressBgColor,
+                valueColor:  AlwaysStoppedAnimation(progressValColor),
+              )
             : Hero(
                 tag: widget.attachment.guid,
                 child: Image.memory(widget
