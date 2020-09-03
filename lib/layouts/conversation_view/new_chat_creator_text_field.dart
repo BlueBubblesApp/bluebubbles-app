@@ -2,7 +2,6 @@ import 'package:bluebubbles/layouts/conversation_view/participant_special_text.d
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/material.dart';
-import 'package:rich_input/rich_input.dart';
 import 'package:extended_text_field/extended_text_field.dart';
 
 class NewChatCreatorTextField extends StatefulWidget {

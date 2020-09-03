@@ -5,7 +5,6 @@ import 'package:bluebubbles/layouts/conversation_view/new_chat_creator_text_fiel
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:rich_input/rich_input.dart';
 
 class NewChatCreator extends StatefulWidget {
   final bool isCreator;
