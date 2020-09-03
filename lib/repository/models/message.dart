@@ -97,7 +97,10 @@ class Message {
     } else if (json.containsKey("attachments")) {
       hasAttachments = (json['attachments'] as List).length > 0 ? true : false;
     }
-    List<Attachment> attachments;
+
+    List<Attachment> attachments = json.containsKey("attachments")
+        ? (json['attachments'] as List).map((a) => Attachment.fromMap(a)).toList()
+        : [];
 
     String associatedMessageGuid;
     if (json.containsKey("associatedMessageGuid") &&
