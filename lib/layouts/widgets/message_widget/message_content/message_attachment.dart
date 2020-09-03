@@ -5,7 +5,7 @@ import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/audio_player_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/contact_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/image_widget.dart';
-import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/loaction_widget.dart';
+import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/location_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/regular_file_opener.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/video_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_attachments.dart';

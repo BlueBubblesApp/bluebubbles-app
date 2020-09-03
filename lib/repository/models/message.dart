@@ -97,7 +97,12 @@ class Message {
     } else if (json.containsKey("attachments")) {
       hasAttachments = (json['attachments'] as List).length > 0 ? true : false;
     }
-    List<Attachment> attachments;
+
+    List<Attachment> attachments = json.containsKey("attachments")
+        ? (json['attachments'] as List)
+            .map((a) => Attachment.fromMap(a))
+            .toList()
+        : [];
 
     String associatedMessageGuid;
     if (json.containsKey("associatedMessageGuid") &&
@@ -321,9 +326,12 @@ class Message {
   }
 
   static Future<List<Attachment>> getAttachments(Message message) async {
-    if (message.attachments != null) {
-      return message.attachments;
+    if (message.hasAttachments &&
+        message.attachments != null &&
+        message.attachments.length != 0) {
+      return message.attachments ?? [];
     }
+
     final Database db = await DBProvider.db.database;
     if (message.id == null) return [];
 
@@ -348,9 +356,10 @@ class Message {
         " WHERE message.ROWID = ?;",
         [message.id]);
 
-    return (res.isNotEmpty)
-        ? res.map((c) => Attachment.fromMap(c)).toList()
-        : [];
+    message.attachments =
+        (res.isNotEmpty) ? res.map((c) => Attachment.fromMap(c)).toList() : [];
+
+    return message.attachments;
   }
 
   static Future<Chat> getChat(Message message) async {

@@ -140,23 +140,22 @@ class ActionHandler {
     Chat chat = await Message.getChat(message);
     if (chat == null) throw ("Could not find chat!");
 
-    if (message.hasAttachments) {
-      List<Attachment> attachments = await Message.getAttachments(message);
+    await Message.getAttachments(message);
+    for (int i = 0; i < message.attachments.length; i++) {
+      String appDocPath = SettingsManager().appDocDir.path;
+      String pathName =
+          "$appDocPath/attachments/${message.attachments[i].guid}/${message.attachments[i].transferName}";
+      File file = File(pathName);
 
-      for (int i = 0; i < attachments.length; i++) {
-        String appDocPath = SettingsManager().appDocDir.path;
-        String pathName =
-            "$appDocPath/attachments/${attachments[i].guid}/${attachments[i].transferName}";
-        File file = File(pathName);
-
-        OutgoingQueue().add(new QueueItem(event: "send-attachment", item: new AttachmentSender(
-          file,
-          chat,
-          i == attachments.length - 1 ? message.text : "",
-        )));
-      }
-      return;
+      OutgoingQueue().add(new QueueItem(event: "send-attachment", item: new AttachmentSender(
+        file,
+        chat,
+        i == message.attachments.length - 1 ? message.text : "",
+      )));
     }
+
+    // If we sent attachments, return because we finished sending
+    if (message.attachments.length > 0) return;
 
     // Build request parameters
     Map<String, dynamic> params = new Map();
