@@ -34,8 +34,7 @@ class _GroupEventState extends State<GroupEvent> {
             text,
             style: Theme.of(context)
                 .textTheme
-                .subtitle2
-                .apply(fontWeightDelta: 15, fontSizeDelta: 1.5),
+                .subtitle2,
           ),
         ],
       ),

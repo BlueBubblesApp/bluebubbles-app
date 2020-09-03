@@ -70,8 +70,7 @@ class _DeliveredReceiptState extends State<DeliveredReceipt>
                     text,
                     style: Theme.of(context)
                         .textTheme
-                        .subtitle2
-                        .apply(fontSizeDelta: 2),
+                        .subtitle2,
                   )
                 ],
               ),
