@@ -17,6 +17,7 @@ import 'package:file_picker_cross/file_picker_cross.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mime_type/mime_type.dart';
 import 'package:photo_manager/photo_manager.dart';
@@ -325,7 +326,7 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                           Feedback.forLongPress(context);
                         },
                         onTap: () {
-                          Feedback.forLongPress(context);
+                          HapticFeedback.selectionClick();
                         },
                         // autofocus: true,
                         key: _searchFormKey,
