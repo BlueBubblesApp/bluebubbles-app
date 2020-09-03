@@ -55,10 +55,16 @@ class _ImageWidgetState extends State<ImageWidget> {
     return Stack(
       children: <Widget>[
         widget.savedAttachmentData.imageData[widget.attachment.guid] == null
-            ? CircularProgressIndicator(
+            ? Container(
+              child: LinearProgressIndicator(
                 backgroundColor: progressBgColor,
                 valueColor:  AlwaysStoppedAnimation(progressValColor),
+              ),
+              padding: EdgeInsets.all(2.0),
+              constraints: BoxConstraints(
+                maxWidth: MediaQuery.of(context).size.width / 3,
               )
+            )
             : Hero(
                 tag: widget.attachment.guid,
                 child: Image.memory(widget
