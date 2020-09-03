@@ -27,7 +27,6 @@ class NewChatCreatorTextField extends StatefulWidget {
 class _NewChatCreatorTextFieldState extends State<NewChatCreatorTextField> {
   TextEditingController _controller = new TextEditingController();
   String currentText = "";
-  List<Contact> participants = [];
   Map<String, Contact> _participants = {};
   @override
   void initState() {
@@ -96,42 +95,58 @@ class _NewChatCreatorTextFieldState extends State<NewChatCreatorTextField> {
                   // widget.filter(null);
 
                   List<String> participants = val.split(", ");
-                  participants.removeLast();
-                  String latestParticipant = participants.last;
-                  debugPrint("latest participant: " +
-                      latestParticipant +
-                      ", participants: " +
-                      participants.toString());
+                  participants.removeWhere(
+                      (element) => element == " " || element == "");
+                  _participants = {};
+                  for (String participant in participants) {
+                    Contact contact = await tryFindContact(participant);
+                    if (contact != null) {
+                      _participants[participant] = contact;
+                    } else {
+                      //this is just to ensure that if there is a space after the comma, we remove that first
+                      _controller.text =
+                          _controller.text.replaceAll(participant + ", ", "");
 
-                  // if (latestParticipant == "") {
-                  //   latestParticipant =
-                  //       val.split(", ").first.replaceAll(",", "").trim();
-                  // }
-                  // if (latestParticipant == "") {
-                  //   return;
-                  // }
-                  Contact contact = await tryFindContact(latestParticipant);
-                  _participants[latestParticipant] = contact;
-                  int indexToStartRemovingAt = val.indexOf(latestParticipant);
-                  if (contact == null) {
-                    _controller.text = val.substring(0, indexToStartRemovingAt);
-                    Scaffold.of(context).showSnackBar(SnackBar(
-                      content: Text("Invalid Contact"),
-                    ));
+                      //if the comma with space after it wasn't found, then we do this
+                      _controller.text =
+                          _controller.text.replaceAll(participant + ",", "");
+                      if (participant.length > 1) {
+                        Scaffold.of(context).showSnackBar(SnackBar(
+                          content: Text("Invalid Contact " + participant),
+                        ));
+                      }
+                    }
                   }
+
                   _controller.selection = TextSelection.fromPosition(
                     TextPosition(
                       offset: _controller.text.length,
                     ),
                   );
-                } else {
-                  // widget.filter(val.split(", ").last);
+                  setState(() {});
+
+                  // participants.removeLast();
+
+                  // Contact contact = await tryFindContact(latestParticipant);
+                  // int indexToStartRemovingAt = val.indexOf(latestParticipant);
+                  // if (contact == null) {
+                  //   _controller.text = val.substring(0, indexToStartRemovingAt);
+                  // } else {
+                  //   debugPrint("participants: " +
+                  //       _participants.values.toList().toString());
+                  //   setState(() {
+                  //     _participants[latestParticipant] = contact;
+                  //   });
+                  // }
                 }
                 currentText = val;
               },
               controller: _controller,
-              // specialTextSpanBuilder:
-              //     ParticipantSpanBuilder(_controller, context, participants),
+              specialTextSpanBuilder: ParticipantSpanBuilder(
+                _controller,
+                context,
+                _participants.values.toList(),
+              ),
             ),
           ),
           Padding(

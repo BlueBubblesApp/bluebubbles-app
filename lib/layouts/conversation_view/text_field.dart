@@ -206,10 +206,8 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                                 if (snapshot.connectionState ==
                                         ConnectionState.done &&
                                     snapshot.hasData) {
-                                  return Image.memory(
-                                    snapshot.data,
-                                    fit: BoxFit.fill
-                                  );
+                                  return Image.memory(snapshot.data,
+                                      fit: BoxFit.fill);
                                 }
                                 return SizedBox(
                                   height: 100,
@@ -232,7 +230,7 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                           child: InkWell(
                             onTap: () async {
                               Navigator.of(context).push(
-                                CupertinoPageRoute(
+                                MaterialPageRoute(
                                   builder: (context) => ImageViewer(
                                     file: pickedImages[index],
                                     tag: pickedImages[index].path,

@@ -481,7 +481,7 @@ class _NewChatCreatorState extends State<NewChatCreator> {
 //                       }
 //                       String title = await getFullChatTitle(existingChat);
 //                       Navigator.of(context).pushReplacement(
-//                         CupertinoPageRoute(
+//                         MaterialPageRoute(
 //                           builder: (context) => ConversationView(
 //                             chat: existingChat,
 //                             title: title,
@@ -585,7 +585,7 @@ class _NewChatCreatorState extends State<NewChatCreator> {
 //                         }
 //                         Navigator.of(context, rootNavigator: true).pop();
 //                         Navigator.of(context).pushReplacement(
-//                           CupertinoPageRoute(
+//                           MaterialPageRoute(
 //                             builder: (context) => ConversationView(
 //                               chat: newChat,
 //                               title: title,

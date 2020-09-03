@@ -19,28 +19,29 @@ class ParticipantText extends SpecialText {
 
   @override
   bool isEnd(String value) {
+    debugPrint("isEnd: " + value);
     bool isEnd = super.isEnd(value) &&
         contact != null &&
-        (value.endsWith(",") || value.endsWith(" "));
+        (value.endsWith(",") || value.endsWith(", "));
     return isEnd;
   }
 
-  String _getValue(String initial) {
-    if (contact != null) {
-      if (contact.phones.length > 0) {
-        return contact.phones.first.value;
-      } else if (contact.emails.length > 0) {
-        return contact.emails.first.value;
-      }
-    } else {
-      return initial;
-    }
-  }
+  // String _getValue(String initial) {
+  //   if (contact != null) {
+  //     if (contact.phones.length > 0) {
+  //       return contact.phones.first.value;
+  //     } else if (contact.emails.length > 0) {
+  //       return contact.emails.first.value;
+  //     }
+  //   } else {
+  //     return initial;
+  //   }
+  // }
 
   @override
   InlineSpan finishText() {
     String text = toString();
-    String displayedText = text;
+    String displayedText = contact.displayName.replaceAll(",", "");
 
     return ExtendedWidgetSpan(
       actualText: text,
@@ -72,10 +73,12 @@ class ParticipantText extends SpecialText {
                       ),
                       onTap: () {
                         controller.value = controller.value.copyWith(
-                            text: controller.text
-                                .replaceRange(start, start + text.length, ""),
-                            selection: TextSelection.fromPosition(
-                                TextPosition(offset: start)));
+                          text: controller.text
+                              .replaceRange(start, start + text.length, ""),
+                          selection: TextSelection.fromPosition(
+                            TextPosition(offset: start),
+                          ),
+                        );
                       },
                     )
                   ],
