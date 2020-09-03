@@ -46,19 +46,13 @@ class _ImageWidgetState extends State<ImageWidget> {
 
   @override
   Widget build(BuildContext context) {
-    Color progressBgColor = Colors.grey;
-    Color progressValColor = Colors.white;
-    if (ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor) == Brightness.light) {
-      progressBgColor = Colors.black;
-      progressValColor = Colors.white;
-    }
     return Stack(
       children: <Widget>[
         widget.savedAttachmentData.imageData[widget.attachment.guid] == null
             ? Container(
               child: LinearProgressIndicator(
-                backgroundColor: progressBgColor,
-                valueColor:  AlwaysStoppedAnimation(progressValColor),
+                backgroundColor: Colors.grey,
+                valueColor:  AlwaysStoppedAnimation(Theme.of(context).primaryColor),
               ),
               padding: EdgeInsets.all(2.0),
               constraints: BoxConstraints(
