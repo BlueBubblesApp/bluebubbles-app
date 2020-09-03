@@ -1,16 +1,11 @@
 import 'dart:async';
-import 'dart:io';
 
+import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_image_compress/flutter_image_compress.dart';
-import 'package:intl/intl.dart';
 
-import '../socket_manager.dart';
 import '../repository/models/handle.dart';
 import '../repository/models/chat.dart';
 import '../helpers/utils.dart';
@@ -138,65 +133,12 @@ class ChatBloc {
     }
 
     if (firstMessage != null) {
-      chat.latestMessageText = firstMessage.text;
+      chat.latestMessageText = MessageHelper.getNotificationText(firstMessage);
       chat.latestMessageDate = firstMessage.dateCreated;
       if (firstMessage.itemType != 0)
         chat.latestMessageText = getGroupEventText(firstMessage);
-
-      if (firstMessage.hasAttachments) {
-        List<Attachment> attachments =
-            await Message.getAttachments(firstMessage);
-        chat.latestMessageText = "${attachments.length} Attachment" +
-            (attachments.length > 1 ? "s" : "");
-
-        // // When there is an attachment,the text length  1
-        // if (chat.latestMessageText.length == 0 && attachments.length > 0) {
-        //   String appDocPath = SettingsManager().appDocDir.path;
-        //   String pathName =
-        //       "$appDocPath/attachments/${attachments[0].guid}/${attachments[0].transferName}";
-
-        //   if (FileSystemEntity.typeSync(pathName) !=
-        //           FileSystemEntityType.notFound &&
-        //       attachments[0].mimeType.startsWith("image/")) {
-        //     // We need a row here so the parent honors our clipping
-        //     subtitle = Container(
-        //         padding: EdgeInsets.only(top: 2),
-        //         child: Row(children: <Widget>[
-        //           ClipRRect(
-        //               borderRadius: BorderRadius.circular(4),
-        //               child: Image.memory(
-        //                   await FlutterImageCompress.compressWithFile(pathName,
-        //                       quality: 25),
-        //                   alignment: Alignment.centerLeft,
-        //                   height: 38))
-        //         ]));
-        //   } else {}
-        // }
-      }
     }
 
-    // Map<String, dynamic> chatMap = customMap != null
-    //     ? customMap[chat.guid] ?? {}
-    //     : _tileVals[chat.guid] ?? {};
-    // chatMap["title"] = title;
-    // chatMap["subtitle"] = subtitle;
-    // chatMap["date"] = date;
-    // chatMap["actualDate"] = firstMessage != null
-    //     ? firstMessage.dateCreated.millisecondsSinceEpoch
-    //     : 0;
-    // bool hasNotification = false;
-
-    // for (int i = 0; i < SocketManager().chatsWithNotifications.length; i++) {
-    //   if (SocketManager().chatsWithNotifications[i] == chat.guid) {
-    //     hasNotification = true;
-    //     break;
-    //   }
-    // }
-
-    // chatMap["hasNotification"] = hasNotification;
-
-    // updateTileVals(chat, chatMap, customMap != null ? customMap : _tileVals);
-    // if (customMap != null) _tileValController.sink.add(_tileVals);
     await chat.save();
     if (chat.title == null) await chat.getTitle();
   }

@@ -44,13 +44,11 @@ class ActionHandler {
     // Check for URLs
     RegExpMatch linkMatch;
     String linkMsg;
-    RegExp exp = new RegExp(
-        r'((https?:\/\/)|(www\.))[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}([-a-zA-Z0-9\/()@:%_.~#?&=\*\[\]]{0,})\b');
-    List<RegExpMatch> matches = exp.allMatches(text).toList();
+    List<RegExpMatch> matches = parseLinks(text);
 
-    // Get the last match (if it exists)
+    // Get the first match (if it exists)
     if (matches.length > 0) {
-      linkMatch = matches.last;
+      linkMatch = matches.first;
       linkMsg = text.substring(linkMatch.start, linkMatch.end);
     }
 
@@ -415,16 +413,11 @@ class ActionHandler {
             !chats[i].isMuted &&
             !processedNotificationsCopy.contains(message.guid) &&
             existing == null) {
-          String text = message.text;
-          if ((data['attachments'] as List<dynamic>).length > 0) {
-            text = (data['attachments'] as List<dynamic>).length.toString() +
-                " attachment" +
-                ((data['attachments'] as List<dynamic>).length > 1 ? "s" : "");
-          }
+
           String title = await getFullChatTitle(chats[i]);
           NotificationManager().createNewNotification(
               title,
-              text,
+              MessageHelper.getNotificationText(message),
               chats[i].guid,
               Random().nextInt(9998) + 1,
               chats[i].id,

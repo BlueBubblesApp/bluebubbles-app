@@ -60,11 +60,25 @@ class _ReactionsState extends State<Reactions> {
               reactions.keys.forEach(
                 (String key) {
                   if (reactions[key].length != 0) {
+                    Color iconColor = Colors.white;
+                    bool anyFromMe = false;
+                    for (Message msg in reactions[key]) {
+                      if (msg.isFromMe) {
+                        anyFromMe = true;
+                        break;
+                      }
+                    }
+
+                    // Check if light background
+                    if (!anyFromMe && Theme.of(context).accentColor.computeLuminance() >= 0.179) {
+                      iconColor = Colors.black.withAlpha(95);
+                    }
+
                     reactionIcon[Padding(
-                      padding: const EdgeInsets.all(8.0),
+                      padding: const EdgeInsets.all(6.0),
                       child: SvgPicture.asset(
                         'assets/reactions/$key-black.svg',
-                        color: key == love ? Colors.pink : Colors.white,
+                        color: key == love ? Colors.pink : iconColor,
                       ),
                     )] = reactions[key].last;
                   }
@@ -78,10 +92,10 @@ class _ReactionsState extends State<Reactions> {
                   for (int i = 0; i < reactionIcon.keys.toList().length; i++)
                     Padding(
                       padding:
-                          EdgeInsets.fromLTRB(i.toDouble() * 20.0, 0, 0, 0),
+                          EdgeInsets.fromLTRB(i.toDouble() * 20.0, 1.0, 0, 0),
                       child: Container(
-                        height: 30,
-                        width: 30,
+                        height: 28,
+                        width: 28,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(100),
                           color: reactionIcon[reactionIcon.keys.toList()[i]]
@@ -90,11 +104,8 @@ class _ReactionsState extends State<Reactions> {
                               : Theme.of(context).accentColor,
                           boxShadow: [
                             new BoxShadow(
-                              blurRadius: 5.0,
-                              offset: Offset(
-                                  3.0 * (widget.message.isFromMe ? 1 : -1),
-                                  0.0),
-                              color: Colors.black,
+                              blurRadius: 1.0,
+                              color: Colors.black.withOpacity(0.7),
                             )
                           ],
                         ),

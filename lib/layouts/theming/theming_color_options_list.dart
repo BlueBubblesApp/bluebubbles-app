@@ -48,7 +48,7 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
                           return DropdownMenuItem(
                             value: e,
                             child: Text(
-                              e.toString().split(".").last,
+                              e.toString().split(".").last.replaceAll("_", " "),
                               style: Theme.of(context).textTheme.bodyText1,
                             ),
                           );
@@ -58,7 +58,7 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
                           return DropdownMenuItem(
                             value: e,
                             child: Text(
-                              e.toString().split(".").last,
+                              e.toString().split(".").last.replaceAll("_", " "),
                               style: Theme.of(context).textTheme.bodyText1,
                             ),
                           );
