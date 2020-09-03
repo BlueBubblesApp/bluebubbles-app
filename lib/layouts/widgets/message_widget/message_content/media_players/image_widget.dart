@@ -31,7 +31,7 @@ class _ImageWidgetState extends State<ImageWidget> {
         widget.savedAttachmentData.imageData[widget.attachment.guid] =
           await FlutterImageCompress.compressWithFile(
             widget.file.absolute.path,
-            quality: 75 // This is arbitrary
+            quality: 70 // This is arbitrary
           );
 
       // All other attachments can be held in memory as bytes
@@ -49,7 +49,16 @@ class _ImageWidgetState extends State<ImageWidget> {
     return Stack(
       children: <Widget>[
         widget.savedAttachmentData.imageData[widget.attachment.guid] == null
-            ? Container()
+            ? Container(
+              child: LinearProgressIndicator(
+                backgroundColor: Colors.grey,
+                valueColor:  AlwaysStoppedAnimation(Theme.of(context).primaryColor),
+              ),
+              padding: EdgeInsets.all(2.0),
+              constraints: BoxConstraints(
+                maxWidth: MediaQuery.of(context).size.width / 3,
+              )
+            )
             : Hero(
                 tag: widget.attachment.guid,
                 child: Image.memory(widget

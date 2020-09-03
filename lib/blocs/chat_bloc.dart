@@ -141,6 +141,8 @@ class ChatBloc {
     }
 
     if (firstMessage != null) {
+      await Message.getAttachments(
+          firstMessage); // This will auto-store the attachments
       chat.latestMessageText = MessageHelper.getNotificationText(firstMessage);
       chat.latestMessageDate = firstMessage.dateCreated;
       if (firstMessage.itemType != 0)
