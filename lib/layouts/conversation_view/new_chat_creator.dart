@@ -1,8 +1,13 @@
 import 'dart:io';
 import 'dart:ui';
 
+import 'package:bluebubbles/blocs/chat_bloc.dart';
+import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/layouts/conversation_list/conversation_tile.dart';
 import 'package:bluebubbles/layouts/conversation_view/new_chat_creator_text_field.dart';
+import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
+import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -24,12 +29,132 @@ class NewChatCreator extends StatefulWidget {
 }
 
 class _NewChatCreatorState extends State<NewChatCreator> {
-  List<String> participants = [];
+  String filter = "";
+  List<Chat> conversations = [];
+  List contacts = <Contact>[];
 
   @override
   void initState() {
     super.initState();
+    if (ChatBloc().chats != null) {
+      conversations = ChatBloc().chats;
+      conversations.forEach((element) {
+        element.getParticipants();
+      });
+    }
+    ChatBloc().chatStream.listen((event) {
+      if (conversations.length == 0 && this.mounted && event != null) {
+        conversations = event;
+        conversations.forEach((element) {
+          element.getParticipants();
+        });
+        setState(() {});
+      }
+    });
   }
+
+  void filterContacts(String searchQuery) {
+    List _contacts = [];
+    _contacts.addAll(ContactManager().contacts);
+    if (filter.isNotEmpty) {
+      _contacts.retainWhere((contact) {
+        String searchTerm = searchQuery.toLowerCase();
+        searchTerm = cleansePhoneNumber(searchTerm);
+
+        String contactName = contact.displayName.toLowerCase();
+        String contactAddress = "";
+        String contactEmail = "";
+        if (contact.phones.length > 0) {
+          contactAddress =
+              cleansePhoneNumber(contact.phones.first.value.toLowerCase());
+        }
+        if (contact.emails.length > 0) {
+          contactEmail =
+              cleansePhoneNumber(contact.emails.first.value.toLowerCase());
+        }
+        return (contactName != "" && contactName.contains(searchTerm)) ||
+            (contactAddress != "" && contactAddress.contains(searchTerm) ||
+                (contactEmail != "" && contactEmail.contains(searchTerm)));
+        // return true;
+      });
+    }
+
+    List _conversations = [];
+    _conversations.addAll(conversations);
+    _conversations.retainWhere((element) {
+      // Map<String, dynamic> data = ChatBloc().tileVals[element.guid];
+      if (element.participants.length == 1) return false;
+      if ((element as Chat).title.contains(searchQuery.toLowerCase()))
+        return true;
+      return false;
+    });
+    _conversations.addAll(_contacts);
+    contacts = _conversations;
+
+    setState(() {});
+  }
+
+  // Future<void> tryFindExistingChat() async {
+  //   if (!widget.isCreator) return;
+  //   List<Chat> possibleChats = <Chat>[];
+  //   for (Chat _chat in ChatBloc().chats) {
+  //     Chat chat = await _chat.getParticipants();
+
+  //     List<String> addresses = <String>[];
+  //     participants.forEach((element) {
+  //       if (element is Contact) {
+  //         element.phones.forEach((element) {
+  //           if (!addresses.contains(cleansePhoneNumber(element.value)))
+  //             addresses.add(cleansePhoneNumber(element.value));
+  //         });
+  //         element.emails.forEach((element) {
+  //           if (!addresses.contains(cleansePhoneNumber(element.value)))
+  //             addresses.add(cleansePhoneNumber(element.value));
+  //         });
+  //       } else {
+  //         addresses.add(element);
+  //       }
+  //     });
+  //     debugPrint(addresses.toString());
+  //     int foundContacts = 0;
+  //     for (Handle handle in chat.participants) {
+  //       for (String address in addresses) {
+  //         if (cleansePhoneNumber(handle.address).contains(address)) {
+  //           foundContacts++;
+  //           break;
+  //         }
+  //       }
+  //     }
+  //     if (foundContacts == participants.length &&
+  //         chat.participants.length == participants.length)
+  //       possibleChats.add(chat);
+  //   }
+  //   if (possibleChats.length > 1) {
+  //     possibleChats.sort((a, b) {
+  //       return -a.latestMessageDate.compareTo(b.latestMessageDate);
+  //     });
+  //     possibleChats.forEach((element) {
+  //       String toPrint = "Chat: ";
+  //       element.participants.forEach((element) {
+  //         toPrint += element.address + ", ";
+  //       });
+  //       debugPrint(toPrint);
+  //     });
+  //   }
+  //   if (possibleChats.length > 0) {
+  //     existingChat = possibleChats.first;
+  //     if (existingMessageBloc != null) {
+  //       existingMessageBloc.dispose();
+  //     }
+  //     existingMessageBloc = new MessageBloc(existingChat);
+  //     await existingMessageBloc.getMessages();
+  //     setState(() {});
+  //   } else {
+  //     setState(() {
+  //       existingChat = null;
+  //     });
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -49,17 +174,76 @@ class _NewChatCreatorState extends State<NewChatCreator> {
         mainAxisSize: MainAxisSize.max,
         mainAxisAlignment: MainAxisAlignment.end,
         children: <Widget>[
+          Expanded(
+            child: filter.length > 0
+                ? ListView.builder(
+                    physics: AlwaysScrollableScrollPhysics(
+                      parent: BouncingScrollPhysics(),
+                    ),
+                    itemCount: contacts.length,
+                    itemBuilder: (BuildContext context, int index) {
+                      return contacts[index] is Contact
+                          ? ListTile(
+                              onTap: () {},
+                              title: Text(
+                                contacts[index].displayName,
+                                style: Theme.of(context).textTheme.bodyText1,
+                              ),
+                              subtitle: Text(
+                                contacts[index].phones.length > 0
+                                    ? contacts[index].phones.first.value
+                                    : contacts[index].emails.length > 0
+                                        ? contacts[index].emails.first.value
+                                        : "",
+                                style: Theme.of(context).textTheme.subtitle1,
+                              ),
+                            )
+                          : Builder(
+                              builder: (context) {
+                                // Map<String, dynamic> _data = ChatBloc()
+                                //     .tileVals[contacts[index].guid];
+                                return ConversationTile(
+                                  chat: contacts[index],
+                                  // title: _data["title"],
+                                  // subtitle: _data["subtitle"],
+                                  // date: _data["date"],
+                                  // hasNewMessage: false,
+                                  replaceOnTap: true,
+                                );
+                              },
+                            );
+                    },
+                  )
+                : ListView.builder(
+                    physics: AlwaysScrollableScrollPhysics(
+                      parent: BouncingScrollPhysics(),
+                    ),
+                    itemBuilder: (context, index) {
+                      // Map<String, dynamic> _data =
+                      //     ChatBloc().tileVals[conversations[index].guid];
+
+                      return ConversationTile(
+                        existingAttachments: widget.attachments,
+                        existingText: widget.existingText,
+                        chat: conversations[index],
+                        // title: _data["title"],
+                        // subtitle: _data["subtitle"],
+                        // date: _data["date"],
+                        // hasNewMessage: false,
+                        replaceOnTap: true,
+                      );
+                    },
+                    itemCount: conversations.length,
+                  ),
+          ),
           NewChatCreatorTextField(
             createText: widget.isCreator ? "Create" : "Done",
             onCreate: () {},
-            addToParticipants: (String participant) {
-              participants.add(participant);
-            },
-            removeParticipant: (String participant) {
-              participants.removeWhere((element) => element == participant);
-            },
-            filter: (String val) {
-              debugPrint("filter: " + val);
+            filter: (String val) async {
+              filterContacts(val);
+              setState(() {
+                filter = val;
+              });
             },
           ),
         ],

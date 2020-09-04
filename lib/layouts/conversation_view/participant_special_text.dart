@@ -6,7 +6,7 @@ class ParticipantText extends SpecialText {
   final TextEditingController controller;
   final int start;
   final BuildContext context;
-  final Contact contact;
+  final Map<String, Contact> contacts;
   ParticipantText(
     TextStyle textStyle,
     SpecialTextGestureTapCallback onTap, {
@@ -14,34 +14,25 @@ class ParticipantText extends SpecialText {
     this.controller,
     this.context,
     String startFlag,
-    this.contact,
+    this.contacts,
   }) : super(startFlag, " ", textStyle, onTap: onTap);
 
   @override
   bool isEnd(String value) {
-    debugPrint("isEnd: " + value);
     bool isEnd = super.isEnd(value) &&
-        contact != null &&
-        (value.endsWith(",") || value.endsWith(", "));
+        (value.endsWith(",") || value.endsWith(", ")) &&
+        contacts.containsKey(toString().replaceAll(",", "").trim());
     return isEnd;
   }
-
-  // String _getValue(String initial) {
-  //   if (contact != null) {
-  //     if (contact.phones.length > 0) {
-  //       return contact.phones.first.value;
-  //     } else if (contact.emails.length > 0) {
-  //       return contact.emails.first.value;
-  //     }
-  //   } else {
-  //     return initial;
-  //   }
-  // }
 
   @override
   InlineSpan finishText() {
     String text = toString();
-    String displayedText = contact.displayName.replaceAll(",", "");
+    Contact contact = contacts[text.replaceAll(",", "").trim()];
+    String displayedText = "";
+    if (contact != null) {
+      displayedText = contact.displayName.replaceAll(",", "");
+    }
 
     return ExtendedWidgetSpan(
       actualText: text,
@@ -138,7 +129,7 @@ class ParticipantText extends SpecialText {
 class ParticipantSpanBuilder extends SpecialTextSpanBuilder {
   ParticipantSpanBuilder(this.controller, this.context, this.contacts);
   final TextEditingController controller;
-  final List<Contact> contacts;
+  final Map<String, Contact> contacts;
   final BuildContext context;
   @override
   SpecialText createSpecialText(String flag,
@@ -155,7 +146,7 @@ class ParticipantSpanBuilder extends SpecialTextSpanBuilder {
         context: context,
         controller: controller,
         startFlag: flag,
-        contact: contacts.length > index ? contacts[index] : null,
+        contacts: contacts,
       );
     }
     return null;

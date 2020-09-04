@@ -1,3 +1,4 @@
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/participant_special_text.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:contacts_service/contacts_service.dart';
@@ -7,15 +8,11 @@ import 'package:extended_text_field/extended_text_field.dart';
 class NewChatCreatorTextField extends StatefulWidget {
   final String createText;
   final Function() onCreate;
-  final Function(String) addToParticipants;
-  final Function(String) removeParticipant;
   final Function(String) filter;
   NewChatCreatorTextField({
     Key key,
     @required this.createText,
     @required this.onCreate,
-    @required this.addToParticipants,
-    @required this.removeParticipant,
     @required this.filter,
   }) : super(key: key);
 
@@ -37,14 +34,6 @@ class _NewChatCreatorTextFieldState extends State<NewChatCreatorTextField> {
   void dispose() {
     _controller.dispose();
     super.dispose();
-  }
-
-  String cleansePhoneNumber(String input) {
-    String output = input.replaceAll("-", "");
-    output = output.replaceAll("(", "");
-    output = output.replaceAll(")", "");
-    output = output.replaceAll(" ", "");
-    return output;
   }
 
   Future<Contact> tryFindContact(String value) async {
@@ -92,12 +81,10 @@ class _NewChatCreatorTextFieldState extends State<NewChatCreatorTextField> {
               style: Theme.of(context).textTheme.bodyText1,
               onChanged: (String val) async {
                 if (val.endsWith(",") || val.endsWith(", ")) {
-                  // widget.filter(null);
-
                   List<String> participants = val.split(", ");
                   participants.removeWhere(
                       (element) => element == " " || element == "");
-                  _participants = {};
+                  _participants = new Map();
                   for (String participant in participants) {
                     Contact contact = await tryFindContact(participant);
                     if (contact != null) {
@@ -124,20 +111,9 @@ class _NewChatCreatorTextFieldState extends State<NewChatCreatorTextField> {
                     ),
                   );
                   setState(() {});
-
-                  // participants.removeLast();
-
-                  // Contact contact = await tryFindContact(latestParticipant);
-                  // int indexToStartRemovingAt = val.indexOf(latestParticipant);
-                  // if (contact == null) {
-                  //   _controller.text = val.substring(0, indexToStartRemovingAt);
-                  // } else {
-                  //   debugPrint("participants: " +
-                  //       _participants.values.toList().toString());
-                  //   setState(() {
-                  //     _participants[latestParticipant] = contact;
-                  //   });
-                  // }
+                  widget.filter("");
+                } else {
+                  widget.filter(val.split(",").last.trim());
                 }
                 currentText = val;
               },
@@ -145,7 +121,7 @@ class _NewChatCreatorTextFieldState extends State<NewChatCreatorTextField> {
               specialTextSpanBuilder: ParticipantSpanBuilder(
                 _controller,
                 context,
-                _participants.values.toList(),
+                _participants,
               ),
             ),
           ),
