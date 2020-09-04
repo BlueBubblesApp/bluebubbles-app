@@ -42,6 +42,11 @@ class _ReactionDetailWidgetState extends State<ReactionDetailWidget> {
     final initials = getInitials(
         getContactTitle(widget.handle.id, widget.handle.address), " ");
 
+    Color iconColor = Colors.white;
+    if (Theme.of(context).accentColor.computeLuminance() >= 0.179) {
+        iconColor = Colors.black.withAlpha(95);
+    }
+
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 10),
       child: Column(
@@ -65,26 +70,25 @@ class _ReactionDetailWidgetState extends State<ReactionDetailWidget> {
             ),
           ),
           Container(
-            height: 30,
-            width: 30,
+            height: 28,
+            width: 28,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(100),
               color: Theme.of(context).accentColor,
               boxShadow: [
                 new BoxShadow(
-                  blurRadius: 5.0,
-                  offset: Offset(3.0 * (widget.message.isFromMe ? 1 : -1), 0.0),
+                  blurRadius: 1.0,
                   color: Colors.black,
                 )
               ],
             ),
             child: Padding(
-              padding: const EdgeInsets.all(8.0),
+              padding: const EdgeInsets.only(top: 8.0, left: 7.0, right: 7.0, bottom: 7.0),
               child: SvgPicture.asset(
                 'assets/reactions/${widget.message.associatedMessageType}-black.svg',
                 color: widget.message.associatedMessageType == "love"
                     ? Colors.pink
-                    : Colors.white,
+                    : iconColor,
               ),
             ),
           )

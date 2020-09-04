@@ -187,16 +187,18 @@ class MessageBloc {
     return _allMessages;
   }
 
-  Future loadMessageChunk(int offset) async {
+  Future loadMessageChunk(int offset, {includeReactions = true}) async {
+    int reactionCnt = includeReactions ? _reactions : 0;
     Completer completer = new Completer();
     if (_currentChat != null) {
       List<Message> messages =
-          await Chat.getMessages(_currentChat, offset: offset + _reactions);
+          await Chat.getMessages(_currentChat, offset: offset + reactionCnt);
+
       if (messages.length == 0) {
         Map<String, dynamic> params = Map();
         params["identifier"] = _currentChat.guid;
         params["limit"] = 25;
-        params["offset"] = offset + _reactions;
+        params["offset"] = offset + reactionCnt;
         params["withBlurhash"] = false;
         params["where"] = [
           {"statement": "message.service = 'iMessage'", "args": null}
