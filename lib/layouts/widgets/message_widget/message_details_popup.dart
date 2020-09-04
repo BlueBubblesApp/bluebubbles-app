@@ -67,8 +67,8 @@ class _MessageDetailsPopupState extends State<MessageDetailsPopup>
                 color: Colors.black.withAlpha(200),
                 child: Column(
                   children: <Widget>[
-                    Spacer(
-                      flex: 2,
+                    Container(
+                      height: 45.0
                     ),
                     AnimatedSize(
                       vsync: this,
@@ -84,11 +84,8 @@ class _MessageDetailsPopupState extends State<MessageDetailsPopup>
                                 child: Container(
                                   alignment: Alignment.center,
                                   height: 120,
-                                  width:
-                                      MediaQuery.of(context).size.width * 9 / 5,
-                                  color: Theme.of(context)
-                                      .accentColor
-                                      .withAlpha(100),
+                                  width: MediaQuery.of(context).size.width - 20,
+                                  color: Theme.of(context).accentColor,
                                   child: Padding(
                                     padding:
                                         EdgeInsets.symmetric(horizontal: 30),
@@ -109,8 +106,8 @@ class _MessageDetailsPopupState extends State<MessageDetailsPopup>
                             )
                           : Container(),
                     ),
-                    Spacer(
-                      flex: 1,
+                    Container(
+                      height: 10.0,
                     ),
                     AnimatedSize(
                       duration: Duration(milliseconds: 500),
@@ -125,221 +122,194 @@ class _MessageDetailsPopupState extends State<MessageDetailsPopup>
                                 child: Container(
                                   alignment: Alignment.center,
                                   height: 60,
-                                  width:
-                                      MediaQuery.of(context).size.width * 9 / 5,
-                                  color: Theme.of(context)
-                                      .accentColor
-                                      .withAlpha(100),
+                                  width: MediaQuery.of(context).size.width - 20,
+                                  color: Theme.of(context).accentColor,
                                   child: Container(
-                                    width: MediaQuery.of(context).size.width *
-                                        9 /
-                                        5,
+                                    width:
+                                        MediaQuery.of(context).size.width - 20,
                                     child: Row(
                                       mainAxisAlignment:
                                           MainAxisAlignment.spaceEvenly,
                                       mainAxisSize: MainAxisSize.max,
                                       children: <Widget>[
-                                        SizedBox(
-                                          // width: double.infinity,
-                                          width: MediaQuery.of(context)
-                                                  .size
-                                                  .width *
-                                              2.5 /
-                                              5,
-                                          height: 60,
-                                          child: FlatButton(
-                                            splashColor:
-                                                Theme.of(context).splashColor,
-                                            child: Row(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: <Widget>[
-                                                Padding(
-                                                  padding:
-                                                      const EdgeInsets.all(8.0),
-                                                  child: Icon(
-                                                    Icons.content_paste,
+                                        FlatButton(
+                                          splashColor:
+                                              Theme.of(context).splashColor,
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: <Widget>[
+                                              Padding(
+                                                padding:
+                                                    const EdgeInsets.all(8.0),
+                                                child: Icon(
+                                                  Icons.content_paste,
+                                                  color: Theme.of(context)
+                                                      .textTheme
+                                                      .bodyText1
+                                                      .color,
+                                                ),
+                                              ),
+                                              Text(
+                                                "Copy",
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .bodyText1,
+                                              ),
+                                            ],
+                                          ),
+                                          onPressed: () {
+                                            if (!isEmptyString(
+                                                widget.message.text))
+                                              FlutterClipboard.copy(
+                                                  widget.message.text);
+                                            FlutterToast flutterToast =
+                                                FlutterToast(context);
+                                            Widget toast = ClipRRect(
+                                              borderRadius:
+                                                  BorderRadius.circular(25.0),
+                                              child: BackdropFilter(
+                                                filter: ImageFilter.blur(
+                                                    sigmaX: 15, sigmaY: 15),
+                                                child: Container(
+                                                  padding: const EdgeInsets
+                                                          .symmetric(
+                                                      horizontal: 24.0,
+                                                      vertical: 12.0),
+                                                  decoration: BoxDecoration(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            25.0),
                                                     color: Theme.of(context)
-                                                        .textTheme
-                                                        .bodyText1
-                                                        .color,
+                                                        .accentColor
+                                                        .withOpacity(0.1),
+                                                  ),
+                                                  child: Row(
+                                                    mainAxisSize:
+                                                        MainAxisSize.min,
+                                                    children: [
+                                                      Icon(
+                                                        !isEmptyString(widget
+                                                                .message.text)
+                                                            ? Icons.check
+                                                            : Icons.close,
+                                                        color: Theme.of(context)
+                                                            .textTheme
+                                                            .bodyText1
+                                                            .color,
+                                                      ),
+                                                      SizedBox(
+                                                        width: 12.0,
+                                                      ),
+                                                      Text(
+                                                        !isEmptyString(widget
+                                                                .message.text)
+                                                            ? "Copied to clipboard"
+                                                            : "Failed to copy empty message",
+                                                        style: Theme.of(context)
+                                                            .textTheme
+                                                            .bodyText1,
+                                                      ),
+                                                    ],
                                                   ),
                                                 ),
-                                                Text(
-                                                  "Copy",
+                                              ),
+                                            );
+
+                                            flutterToast.showToast(
+                                              child: toast,
+                                              gravity: ToastGravity.BOTTOM,
+                                              toastDuration:
+                                                  Duration(seconds: 2),
+                                            );
+                                          },
+                                        ),
+                                        FlatButton(
+                                          splashColor:
+                                              Theme.of(context).splashColor,
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: <Widget>[
+                                              Padding(
+                                                padding:
+                                                    const EdgeInsets.all(8.0),
+                                                child: Icon(
+                                                  Icons.content_paste,
+                                                  color: Theme.of(context)
+                                                      .textTheme
+                                                      .bodyText1
+                                                      .color,
+                                                ),
+                                              ),
+                                              Container(
+                                                width: 70,
+                                                child: Text(
+                                                  "Copy Section",
+                                                  textAlign: TextAlign.center,
                                                   style: Theme.of(context)
                                                       .textTheme
                                                       .bodyText1,
                                                 ),
-                                              ],
-                                            ),
-                                            onPressed: () {
-                                              if (!isEmptyString(
-                                                  widget.message.text))
-                                                FlutterClipboard.copy(
-                                                    widget.message.text);
-                                              FlutterToast flutterToast =
-                                                  FlutterToast(context);
-                                              Widget toast = ClipRRect(
-                                                borderRadius:
-                                                    BorderRadius.circular(25.0),
-                                                child: BackdropFilter(
-                                                  filter: ImageFilter.blur(
-                                                      sigmaX: 15, sigmaY: 15),
-                                                  child: Container(
-                                                    padding: const EdgeInsets
-                                                            .symmetric(
-                                                        horizontal: 24.0,
-                                                        vertical: 12.0),
-                                                    decoration: BoxDecoration(
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              25.0),
-                                                      color: Theme.of(context)
-                                                          .accentColor
-                                                          .withOpacity(0.1),
+                                              ),
+                                            ],
+                                          ),
+                                          onPressed: () {
+                                            if (isEmptyString(
+                                                widget.message.text)) return;
+                                            widget.entry.remove();
+                                            showDialog(
+                                              context: context,
+                                              builder: (context) => AlertDialog(
+                                                backgroundColor:
+                                                    Theme.of(context)
+                                                        .accentColor,
+                                                title: Text(
+                                                  "Copy",
+                                                  style: Theme.of(context)
+                                                      .textTheme
+                                                      .headline1,
+                                                ),
+                                                content: Container(
+                                                  constraints: BoxConstraints(
+                                                      maxHeight:
+                                                          MediaQuery.of(context)
+                                                                  .size
+                                                                  .height *
+                                                              2 /
+                                                              3),
+                                                  child: SingleChildScrollView(
+                                                    physics:
+                                                        AlwaysScrollableScrollPhysics(
+                                                      parent:
+                                                          BouncingScrollPhysics(),
                                                     ),
-                                                    child: Row(
-                                                      mainAxisSize:
-                                                          MainAxisSize.min,
-                                                      children: [
-                                                        Icon(
-                                                          !isEmptyString(widget
-                                                                  .message.text)
-                                                              ? Icons.check
-                                                              : Icons.close,
-                                                          color:
-                                                              Theme.of(context)
-                                                                  .textTheme
-                                                                  .bodyText1
-                                                                  .color,
-                                                        ),
-                                                        SizedBox(
-                                                          width: 12.0,
-                                                        ),
-                                                        Text(
-                                                          !isEmptyString(widget
-                                                                  .message.text)
-                                                              ? "Copied to clipboard"
-                                                              : "Failed to copy empty message",
-                                                          style:
-                                                              Theme.of(context)
-                                                                  .textTheme
-                                                                  .bodyText1,
-                                                        ),
-                                                      ],
+                                                    child: SelectableText(
+                                                      widget.message.text,
+                                                      style: Theme.of(context)
+                                                          .textTheme
+                                                          .bodyText1,
                                                     ),
                                                   ),
                                                 ),
-                                              );
-
-                                              flutterToast.showToast(
-                                                child: toast,
-                                                gravity: ToastGravity.BOTTOM,
-                                                toastDuration:
-                                                    Duration(seconds: 2),
-                                              );
-                                            },
-                                          ),
+                                                actions: <Widget>[
+                                                  FlatButton(
+                                                    child: Text(
+                                                      "Done",
+                                                      style: Theme.of(context)
+                                                          .textTheme
+                                                          .bodyText1,
+                                                    ),
+                                                    onPressed: () {
+                                                      Navigator.of(context,
+                                                              rootNavigator:
+                                                                  true)
+                                                          .pop('dialog');
+                                                    },
+                                                  )
+                                                ],
+                                              ),
+                                            );
+                                          },
                                         ),
-                                        SizedBox(
-                                          // width: double.infinity,
-                                          width: MediaQuery.of(context)
-                                                  .size
-                                                  .width *
-                                              2.5 /
-                                              5,
-                                          height: 60,
-                                          child: FlatButton(
-                                            splashColor:
-                                                Theme.of(context).splashColor,
-                                            child: Row(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: <Widget>[
-                                                Padding(
-                                                  padding:
-                                                      const EdgeInsets.all(8.0),
-                                                  child: Icon(
-                                                    Icons.content_paste,
-                                                    color: Theme.of(context)
-                                                        .textTheme
-                                                        .bodyText1
-                                                        .color,
-                                                  ),
-                                                ),
-                                                Container(
-                                                  width: 70,
-                                                  child: Text(
-                                                    "Copy Section",
-                                                    textAlign: TextAlign.center,
-                                                    style: Theme.of(context)
-                                                        .textTheme
-                                                        .bodyText1,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                            onPressed: () {
-                                              if (isEmptyString(
-                                                  widget.message.text)) return;
-                                              widget.entry.remove();
-                                              showDialog(
-                                                context: context,
-                                                builder: (context) =>
-                                                    AlertDialog(
-                                                  backgroundColor:
-                                                      Theme.of(context)
-                                                          .accentColor,
-                                                  title: Text(
-                                                    "Copy",
-                                                    style: Theme.of(context)
-                                                        .textTheme
-                                                        .headline1,
-                                                  ),
-                                                  content: Container(
-                                                    constraints: BoxConstraints(
-                                                        maxHeight:
-                                                            MediaQuery.of(
-                                                                        context)
-                                                                    .size
-                                                                    .height *
-                                                                2 /
-                                                                3),
-                                                    child:
-                                                        SingleChildScrollView(
-                                                      physics:
-                                                          AlwaysScrollableScrollPhysics(
-                                                        parent:
-                                                            BouncingScrollPhysics(),
-                                                      ),
-                                                      child: SelectableText(
-                                                        widget.message.text,
-                                                        style: Theme.of(context)
-                                                            .textTheme
-                                                            .bodyText1,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  actions: <Widget>[
-                                                    FlatButton(
-                                                      child: Text(
-                                                        "Done",
-                                                        style: Theme.of(context)
-                                                            .textTheme
-                                                            .bodyText1,
-                                                      ),
-                                                      onPressed: () {
-                                                        Navigator.of(context,
-                                                                rootNavigator:
-                                                                    true)
-                                                            .pop('dialog');
-                                                      },
-                                                    )
-                                                  ],
-                                                ),
-                                              );
-                                            },
-                                          ),
-                                        )
                                       ],
                                     ),
                                   ),

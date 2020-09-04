@@ -223,12 +223,8 @@ class _SentMessageState extends State<SentMessage>
     return GestureDetector(
       behavior: HitTestBehavior.translucent,
       onLongPress: () async {
-        // Scrollable.ensureVisible(
-        //   context,
-        //   // alignmentPolicy: ScrollPositionAlignmentPolicy.keepVisibleAtStart,
-        //   duration: Duration(milliseconds: 250),
-        //   curve: Curves.easeInOut,
-        // );
+        Feedback.forLongPress(context);
+
         List<Message> reactions = [];
         if (widget.message.hasReactions) {
           reactions = await widget.message.getReactions();

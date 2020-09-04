@@ -287,12 +287,9 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
             ),
           ),
           Row(
-            mainAxisAlignment: MainAxisAlignment.end,
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             crossAxisAlignment: CrossAxisAlignment.end,
             children: <Widget>[
-              // Spacer(
-              //   flex: 1,
-              // ),
               Padding(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 6.0, vertical: 8.0),
@@ -306,10 +303,6 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                   ),
                 ),
               ),
-
-              // Spacer(
-              //   flex: 1,
-              // ),
               Container(
                 width: MediaQuery.of(context).size.width * 3 / 4 + 50,
                 child: Stack(
@@ -458,7 +451,7 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                                       pickedImages.add(image);
                                       setState(() {});
                                     },
-                                    color: HexColor('26262a'),
+                                    color: Theme.of(context).accentColor,
                                     child: Column(
                                       mainAxisAlignment:
                                           MainAxisAlignment.center,
@@ -467,7 +460,7 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                                           padding: const EdgeInsets.all(8.0),
                                           child: Icon(
                                             Icons.photo_library,
-                                            color: Colors.white,
+                                            color: Theme.of(context).textTheme.bodyText1.color,
                                           ),
                                         ),
                                         Text(
@@ -498,7 +491,7 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                                       pickedImages.add(File(filePicker.path));
                                       setState(() {});
                                     },
-                                    color: HexColor('26262a'),
+                                    color: Theme.of(context).accentColor,
                                     child: Column(
                                       mainAxisAlignment:
                                           MainAxisAlignment.center,
@@ -507,7 +500,7 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                                           padding: const EdgeInsets.all(8.0),
                                           child: Icon(
                                             Icons.video_library,
-                                            color: Colors.white,
+                                            color: Theme.of(context).textTheme.bodyText1.color,
                                           ),
                                         ),
                                         Text(

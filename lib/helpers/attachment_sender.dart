@@ -25,7 +25,7 @@ class AttachmentSender {
   Stream<double> get stream => _stream.stream;
 
   int _totalChunks = 0;
-  int _chunkSize = 512;
+  int _chunkSize = 500;
   Chat _chat;
   // String _tempGuid;
 

@@ -204,6 +204,7 @@ class ActionHandler {
     // Fetch messages associated with the chat
     var items = await db.rawQuery(
         "SELECT"
+        " ROWID,"
         " chatId,"
         " messageId"
         " FROM chat_message_join"
@@ -211,42 +212,45 @@ class ActionHandler {
         [chat.id]);
 
     // If there are no messages, return
+    debugPrint("Deleting ${items.length} messages");
     if (items.length == 0) return;
 
     Batch batch = db.batch();
-    for (int i = 0; i < items.length; i++) {
-      //find all attachments associated with a message
+    for (Map<String, dynamic> message in items) {
+      // Find all attachments associated with a message
       var attachments = await db.rawQuery(
           "SELECT"
+          " ROWID,"
           " attachmentId,"
           " messageId"
           " FROM attachment_message_join"
           " WHERE messageId = ?",
-          [items[i]["messageId"]]);
-      //1 -> delete all attachments associated with a message
-      for (int j = 0; j < attachments.length; j++) {
+          [message["messageId"]]);
+
+      // 1 -> Delete all attachments associated with a message
+      for (Map<String, dynamic> attachment in attachments) {
         batch.delete("attachment",
-            where: "ROWID = ?", whereArgs: [attachments[j]["attachmentId"]]);
+            where: "ROWID = ?", whereArgs: [attachment["attachmentId"]]);
 
         batch.delete("attachment_message_join",
-            where: "ROWID = ?", whereArgs: [items[j]["ROWID"]]);
+            where: "ROWID = ?", whereArgs: [attachment["ROWID"]]);
       }
 
       // 2 -> Delete all messages associated with a chat
       batch.delete("message",
-          where: "ROWID = ?", whereArgs: [items[i]["messageId"]]);
+          where: "ROWID = ?", whereArgs: [message["messageId"]]);
       // 3 -> Delete all chat_message_join entries associated with a chat
       batch.delete("chat_message_join",
-          where: "ROWID = ?", whereArgs: [items[i]["ROWID"]]);
+          where: "ROWID = ?", whereArgs: [message["ROWID"]]);
     }
 
     // Commit the deletes, then refresh the chats
-    await batch.commit(noResult: true);
+    await batch.commit(noResult: true, continueOnError: true);
     NewMessageManager().updateWithMessage(chat, null);
 
     // Now, let's re-fetch the messages for the chat
-    await messageBloc.loadMessageChunk(0);
-    ChatBloc().getChats();
+    await messageBloc.loadMessageChunk(0, includeReactions: false);
+    NewMessageManager().updateWithMessage(null, null);
   }
 
   /// Handles the ingestion of a 'updated-message' event. It takes the

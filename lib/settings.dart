@@ -17,7 +17,7 @@ class Settings {
             json.containsKey('guidAuthKey') ? json['guidAuthKey'] : "",
         finishedSetup =
             json.containsKey('finishedSetup') ? json['finishedSetup'] : false,
-        chunkSize = json.containsKey('chunkSize') ? json['chunkSize'] : 512,
+        chunkSize = json.containsKey('chunkSize') ? json['chunkSize'] : 500,
         autoDownload =
             json.containsKey('autoDownload') ? json['autoDownload'] : true,
         lastIncrementalSync =
@@ -33,7 +33,7 @@ class Settings {
   String guidAuthKey = "";
   String serverAddress = "";
   bool finishedSetup = false;
-  int chunkSize = 512;
+  int chunkSize = 500;
   bool autoDownload = true;
   int lastIncrementalSync = 0;
   Map<String, dynamic> _lightColorTheme = {};

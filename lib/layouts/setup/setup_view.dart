@@ -73,24 +73,32 @@ class _SetupViewState extends State<SetupView> {
       body: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
-          Text(
-            "BlueBubbles needs to access contacts, cause its a messaging app, what do you expect?",
-            style: Theme.of(context).textTheme.bodyText1,
-            textAlign: TextAlign.center,
-          ),
-          RaisedButton(
-            color: Colors.blue,
-            onPressed: () {
-              ContactManager().getContacts();
-              controller.nextPage(
-                duration: Duration(milliseconds: 300),
-                curve: Curves.easeInOut,
-              );
-            },
-            child: Icon(
-              Icons.check,
-              color: Colors.white,
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 20.0),
+            child: Text(
+              "BlueBubbles needs to access contacts. Tap the check to allow the permission.",
+              style: Theme.of(context).textTheme.bodyText1.apply(fontSizeFactor: 1.5),
+              textAlign: TextAlign.center,
             ),
+          ),
+          Container(height: 20.0),
+          ClipOval(
+            child: Material(
+              color: Colors.blue, // button color
+              child: InkWell(
+                child: SizedBox(
+                  width: 60,
+                  height: 60,
+                  child: Icon(Icons.check, color: Colors.white)),
+                onTap: () async {
+                  ContactManager().getContacts();
+                  controller.nextPage(
+                    duration: Duration(milliseconds: 300),
+                    curve: Curves.easeInOut,
+                  );
+                }
+              )
+            )
           ),
         ],
       ),
@@ -104,23 +112,32 @@ class _SetupViewState extends State<SetupView> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            Text(
-              "Next download the BlueBubbles Server app on your Mac and install. Follow the setup process",
-              style: Theme.of(context).textTheme.bodyText1,
-              textAlign: TextAlign.center,
-            ),
-            RaisedButton(
-              color: Colors.blue,
-              onPressed: () {
-                controller.nextPage(
-                  duration: Duration(milliseconds: 300),
-                  curve: Curves.easeInOut,
-                );
-              },
-              child: Icon(
-                Icons.check,
-                color: Colors.white,
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20.0),
+              child: Text(
+                "Next download the BlueBubbles Server app on your Mac and install. Follow the setup process",
+                style: Theme.of(context).textTheme.bodyText1.apply(fontSizeFactor: 1.5),
+                textAlign: TextAlign.center,
               ),
+            ),
+            Container(height: 20.0),
+            ClipOval(
+              child: Material(
+                color: Colors.blue, // button color
+                child: InkWell(
+                  child: SizedBox(
+                    width: 60,
+                    height: 60,
+                    child: Icon(Icons.check, color: Colors.white)
+                  ),
+                  onTap: () async {
+                    controller.nextPage(
+                      duration: Duration(milliseconds: 300),
+                      curve: Curves.easeInOut,
+                    );
+                  }
+                )
+              )
             ),
           ],
         ),
@@ -135,128 +152,132 @@ class _SetupViewState extends State<SetupView> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            Text(
-              "BlueBubbles tries to make the setup process as easy as possible",
-              style: Theme.of(context).textTheme.bodyText1,
-              textAlign: TextAlign.center,
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20.0),
+              child: Text(
+                "BlueBubbles tries to make the setup process as easy as possible. We've created a QR code on your server that you can use to easily register this device with the server.",
+                style: Theme.of(context).textTheme.bodyText1.apply(fontSizeFactor: 1.5),
+                textAlign: TextAlign.center,
+              ),
             ),
-            Text(
-              "As such, we need to retreive some Firebase authentication data from the server. This is done through a QR Code present in the settings of the Mac Server",
-              style: Theme.of(context).textTheme.bodyText1,
-              textAlign: TextAlign.center,
-            ),
-            RaisedButton(
-              color: Colors.blue,
-              onPressed: () async {
-                var fcmData;
-                try {
-                  fcmData = jsonDecode(
-                    await Navigator.of(context).push(
-                      CupertinoPageRoute(
-                        builder: (BuildContext context) {
-                          return QRCodeScanner();
-                        },
-                      ),
-                    ),
-                  );
-                } catch (e) {
-                  return;
-                }
-                if (fcmData != null) {
-                  _settingsCopy.fcmAuthData = {
-                    "project_id": fcmData[2],
-                    "storage_bucket": fcmData[3],
-                    "api_key": fcmData[4],
-                    "firebase_url": fcmData[5],
-                    "client_id": fcmData[6],
-                    "application_id": fcmData[7],
-                  };
-                  _settingsCopy.guidAuthKey = fcmData[0];
-                  _settingsCopy.serverAddress = fcmData[1];
-                  await SettingsManager().saveSettings(
-                    _settingsCopy,
-                    connectToSocket: false,
-                    authorizeFCM: false,
-                  );
-                  showDialog(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                      backgroundColor: Theme.of(context).backgroundColor,
-                      title: Text(
-                        "Connecting",
-                        style: Theme.of(context).textTheme.bodyText1,
-                      ),
-                      content: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: <Widget>[
-                          Container(
-                            // height: 70,
-                            // color: Colors.black,
-                            child: CircularProgressIndicator(
-                              valueColor:
-                                  AlwaysStoppedAnimation<Color>(Colors.blue),
-                            ),
+            Container(height: 20.0),
+            ClipOval(
+              child: Material(
+                color: Colors.blue, // button color
+                child: InkWell(
+                  child: SizedBox(
+                    width: 60,
+                    height: 60,
+                    child: Icon(Icons.camera, color: Colors.white)),
+                  onTap: () async {
+                    var fcmData;
+                    try {
+                      fcmData = jsonDecode(
+                        await Navigator.of(context).push(
+                          CupertinoPageRoute(
+                            builder: (BuildContext context) {
+                              return QRCodeScanner();
+                            },
                           ),
-                        ],
-                      ),
-                    ),
-                  );
-                  if (SocketManager().state == SocketState.CONNECTED) {
-                    Navigator.of(context).pop();
-                    controller.nextPage(
-                      duration: Duration(milliseconds: 300),
-                      curve: Curves.easeInOut,
-                    );
-                  }
-
-                  SocketManager().startSocketIO();
-
-                  StreamSubscription connectionStateSubscription;
-                  connectionStateSubscription =
-                      SocketManager().connectionStateStream.listen((event) {
-                    if (event == SocketState.CONNECTED) {
-                      Navigator.of(context).pop();
-                      controller.nextPage(
-                        duration: Duration(milliseconds: 300),
-                        curve: Curves.easeInOut,
+                        ),
                       );
-                      connectionStateSubscription.cancel();
-                    } else if (event == SocketState.ERROR ||
-                        event == SocketState.DISCONNECTED) {
-                      Navigator.of(context).pop();
+                    } catch (e) {
+                      return;
+                    }
+                    if (fcmData != null) {
+                      _settingsCopy.fcmAuthData = {
+                        "project_id": fcmData[2],
+                        "storage_bucket": fcmData[3],
+                        "api_key": fcmData[4],
+                        "firebase_url": fcmData[5],
+                        "client_id": fcmData[6],
+                        "application_id": fcmData[7],
+                      };
+                      _settingsCopy.guidAuthKey = fcmData[0];
+                      _settingsCopy.serverAddress = fcmData[1];
+                      await SettingsManager().saveSettings(
+                        _settingsCopy,
+                        connectToSocket: false,
+                        authorizeFCM: false,
+                      );
                       showDialog(
                         context: context,
                         builder: (context) => AlertDialog(
                           backgroundColor: Theme.of(context).backgroundColor,
                           title: Text(
-                            "An error occurred trying to connect to the socket",
+                            "Connecting",
                             style: Theme.of(context).textTheme.bodyText1,
                           ),
-                          actions: <Widget>[
-                            FlatButton(
-                              child: Text("Ok",
-                                  style: Theme.of(context).textTheme.bodyText1),
-                              onPressed: () {
-                                Navigator.of(context).pop();
-                              },
-                            )
-                          ],
+                          content: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: <Widget>[
+                              Container(
+                                // height: 70,
+                                // color: Colors.black,
+                                child: CircularProgressIndicator(
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                      Colors.blue),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       );
-                      connectionStateSubscription.cancel();
-                    }
-                  });
+                      if (SocketManager().state == SocketState.CONNECTED) {
+                        Navigator.of(context).pop();
+                        controller.nextPage(
+                          duration: Duration(milliseconds: 300),
+                          curve: Curves.easeInOut,
+                        );
+                      }
 
-                  // Singleton().saveSettings(_settingsCopy);
-                }
-              },
-              child: Text(
-                "Scan QR Code",
-                style: Theme.of(context).textTheme.bodyText1,
-                textAlign: TextAlign.center,
+                      SocketManager().startSocketIO();
+
+                      StreamSubscription connectionStateSubscription;
+                      connectionStateSubscription = SocketManager()
+                          .connectionStateStream
+                          .listen((event) {
+                        if (event == SocketState.CONNECTED) {
+                          Navigator.of(context).pop();
+                          controller.nextPage(
+                            duration: Duration(milliseconds: 300),
+                            curve: Curves.easeInOut,
+                          );
+                          connectionStateSubscription.cancel();
+                        } else if (event == SocketState.ERROR ||
+                            event == SocketState.DISCONNECTED) {
+                          Navigator.of(context).pop();
+                          showDialog(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              backgroundColor:
+                                  Theme.of(context).backgroundColor,
+                              title: Text(
+                                "An error occurred trying to connect to the socket",
+                                style: Theme.of(context).textTheme.bodyText1,
+                              ),
+                              actions: <Widget>[
+                                FlatButton(
+                                  child: Text("Ok",
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyText1),
+                                  onPressed: () {
+                                    Navigator.of(context).pop();
+                                  },
+                                )
+                              ],
+                            ),
+                          );
+                          connectionStateSubscription.cancel();
+                        }
+                      });
+                    }
+                  }
+                ),
               ),
-            ),
+            )
           ],
         ),
       ),
@@ -270,60 +291,72 @@ class _SetupViewState extends State<SetupView> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            Text(
-              "For the final step, BlueBubbles will download all of the messages from your Mac's Message database.",
-              style: Theme.of(context).textTheme.bodyText1,
-              textAlign: TextAlign.center,
-            ),
-            Text(
-              "This may take a while, so please be patient and do not exit out of the app or let your phone fall asleep",
-              style: Theme.of(context).textTheme.bodyText1,
-              textAlign: TextAlign.center,
-            ),
-            RaisedButton(
-              color: Colors.grey,
-              onPressed: () {
-                if (_settingsCopy == null) {
-                  controller.animateToPage(3,
-                      duration: Duration(milliseconds: 3),
-                      curve: Curves.easeInOut);
-                } else {
-                  SocketManager().setup.startSync(_settingsCopy, () {
-                    showDialog(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        backgroundColor: Theme.of(context).backgroundColor,
-                        title: Text(
-                          "The socket connection failed, please check the server",
-                          style: Theme.of(context).textTheme.bodyText1,
-                        ),
-                        actions: <Widget>[
-                          FlatButton(
-                            child: Text("Ok",
-                                style: Theme.of(context).textTheme.bodyText1),
-                            onPressed: () {
-                              Navigator.of(context).pop();
-                            },
-                          )
-                        ],
-                      ),
-                    );
-                    controller.animateToPage(3,
-                        duration: Duration(milliseconds: 500),
-                        curve: Curves.easeInOut);
-                  });
-                  controller.nextPage(
-                    duration: Duration(milliseconds: 300),
-                    curve: Curves.easeInOut,
-                  );
-                }
-              },
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20.0),
               child: Text(
-                "Begin Sync",
-                style: Theme.of(context).textTheme.bodyText1,
+                "For the final step, BlueBubbles will download the first 25 messages for each of your chats.",
+                style: Theme.of(context).textTheme.bodyText1.apply(fontSizeFactor: 1.5),
                 textAlign: TextAlign.center,
               ),
             ),
+            Container(height: 10.0),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20.0),
+              child: Text(
+                "Don't worry, you can see your chat history by scrolling up in a chat.",
+                style: Theme.of(context).textTheme.bodyText1.apply(fontSizeFactor: 1.5),
+                textAlign: TextAlign.center,
+              ),
+            ),
+            Container(height: 20.0),
+            ClipOval(
+              child: Material(
+                color: Colors.green.withAlpha(200), // button color
+                child: InkWell(
+                  child: SizedBox(
+                    width: 60,
+                    height: 60,
+                    child: Icon(Icons.cloud_download, color: Colors.white)
+                  ),
+                  onTap: () async {
+                    if (_settingsCopy == null) {
+                      controller.animateToPage(3,
+                          duration: Duration(milliseconds: 3),
+                          curve: Curves.easeInOut);
+                    } else {
+                      SocketManager().setup.startSync(_settingsCopy, () {
+                        showDialog(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            backgroundColor: Theme.of(context).backgroundColor,
+                            title: Text(
+                              "The socket connection failed, please check the server",
+                              style: Theme.of(context).textTheme.bodyText1,
+                            ),
+                            actions: <Widget>[
+                              FlatButton(
+                                child: Text("Ok",
+                                    style: Theme.of(context).textTheme.bodyText1),
+                                onPressed: () {
+                                  Navigator.of(context).pop();
+                                },
+                              )
+                            ],
+                          ),
+                        );
+                        controller.animateToPage(3,
+                            duration: Duration(milliseconds: 500),
+                            curve: Curves.easeInOut);
+                      });
+                      controller.nextPage(
+                        duration: Duration(milliseconds: 300),
+                        curve: Curves.easeInOut,
+                      );
+                    }
+                  }
+                )
+              )
+            )
           ],
         ),
       ),
@@ -351,7 +384,7 @@ class _SetupViewState extends State<SetupView> {
                     ),
                     Text(
                       "${(progress * 100).floor()}%",
-                      style: Theme.of(context).textTheme.bodyText1,
+                      style: Theme.of(context).textTheme.bodyText1.apply(fontSizeFactor: 1.5),
                     ),
                     Spacer(
                       flex: 5,

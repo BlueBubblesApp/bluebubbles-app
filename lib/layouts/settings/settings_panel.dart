@@ -124,9 +124,9 @@ class _SettingsPanelState extends State<SettingsPanel> {
                         trailing: connectionStatus == SocketState.CONNECTED ||
                                 connectionStatus == SocketState.CONNECTING
                             ? Icon(Icons.fiber_manual_record,
-                                color: HexColor('32CD32'))
+                                color: HexColor('32CD32').withAlpha(200))
                             : Icon(Icons.fiber_manual_record,
-                                color: HexColor('DC143C')),
+                                color: HexColor('DC143C').withAlpha(200)),
                       );
                     }),
                 SettingsTile(
@@ -190,11 +190,11 @@ class _SettingsPanelState extends State<SettingsPanel> {
                   },
                   title: "Connection Address",
                   subTitle: _settingsCopy.serverAddress,
-                  trailing: Icon(Icons.edit, color: HexColor('26262a')),
+                  trailing: Icon(Icons.edit, color: Theme.of(context).primaryColor.withAlpha(200)),
                 ),
                 SettingsTile(
                   title: "Re-configure with MacOS Server",
-                  trailing: Icon(Icons.camera, color: HexColor('26262a')),
+                  trailing: Icon(Icons.camera, color: Theme.of(context).primaryColor.withAlpha(200)),
                   onTap: () async {
                     var fcmData;
                     try {
@@ -387,7 +387,8 @@ class _SettingsSwitchState extends State<SettingsSwitch> {
         style: Theme.of(context).textTheme.bodyText1,
       ),
       value: _value,
-      activeColor: Colors.blue,
+      activeColor: Theme.of(context).primaryColor,
+      activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
       inactiveTrackColor: Theme.of(context).accentColor.withOpacity(0.6),
       inactiveThumbColor: Theme.of(context).accentColor,
       onChanged: (bool val) {
@@ -460,7 +461,7 @@ class SettingsSlider extends StatefulWidget {
 }
 
 class _SettingsSliderState extends State<SettingsSlider> {
-  double currentVal = 512;
+  double currentVal = 500;
   @override
   void initState() {
     // TODO: implement initState
@@ -476,7 +477,7 @@ class _SettingsSliderState extends State<SettingsSlider> {
       children: <Widget>[
         ListTile(
           title: Text(
-            "Attachment Chunk Size (Current: ${getSizeString(currentVal)})",
+            "Attachment Chunk Size: ${getSizeString(currentVal)}",
             style: Theme.of(context).textTheme.bodyText1,
           ),
           subtitle: Slider(
@@ -488,8 +489,8 @@ class _SettingsSliderState extends State<SettingsSlider> {
               });
             },
             label: getSizeString(currentVal),
-            divisions: 30,
-            min: 1,
+            divisions: 29,
+            min: 100,
             max: 3000,
           ),
         ),
