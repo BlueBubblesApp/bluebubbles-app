@@ -75,7 +75,7 @@ class _ReactionsState extends State<Reactions> {
                     }
 
                     reactionIcon[Padding(
-                      padding: const EdgeInsets.all(6.0),
+                      padding: const EdgeInsets.only(top: 8.0, left: 7.0, right: 7.0, bottom: 7.0),
                       child: SvgPicture.asset(
                         'assets/reactions/$key-black.svg',
                         color: key == love ? Colors.pink : iconColor,

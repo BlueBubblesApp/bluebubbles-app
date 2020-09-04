@@ -20,7 +20,7 @@ class AttachmentDownloader {
 
   int _currentChunk = 0;
   int _totalChunks = 0;
-  int _chunkSize = 512; // Default to 512kb
+  int _chunkSize = 500; // Default to 500
   List<int> _currentBytes = <int>[];
   String _guid = "";
   Function _cb;
