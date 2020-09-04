@@ -1,4 +1,5 @@
 import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -84,13 +85,11 @@ class _WelcomePageState extends State<WelcomePage>
               position: titleOffset,
               child: FadeTransition(
                 opacity: opacityTitle,
-                child: Text(
-                  "Welcome to BlueBubbles",
-                  style: Theme.of(context)
-                      .textTheme
-                      .headline1
-                      .apply(fontSizeDelta: 7),
-                ),
+                child: Text("Welcome to BlueBubbles",
+                    style: Theme.of(context)
+                        .textTheme
+                        .headline1
+                        .apply(fontSizeDelta: 7, color: Colors.white)),
               ),
             ),
             SlideTransition(
@@ -105,27 +104,30 @@ class _WelcomePageState extends State<WelcomePage>
             ),
             Center(
               child: FadeTransition(
-                opacity: opacityButton,
-                child: RaisedButton(
-                  color: Colors.blue,
-                  onPressed: () async {
-                    if (await Permission.contacts.isGranted) {
-                      widget.controller.animateToPage(2,
-                          duration: Duration(milliseconds: 300),
-                          curve: Curves.easeInOut);
-                    } else {
-                      widget.controller.nextPage(
-                        duration: Duration(milliseconds: 300),
-                        curve: Curves.easeInOut,
-                      );
-                    }
-                  },
-                  child: Icon(
-                    Icons.arrow_forward,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
+                  opacity: opacityButton,
+                  child: ClipOval(
+                    child: Material(
+                      color: Colors.blue, // button color
+                      child: InkWell(
+                          child: SizedBox(
+                              width: 60,
+                              height: 60,
+                              child: Icon(Icons.arrow_forward,
+                                  color: Colors.white)),
+                          onTap: () async {
+                            if (await Permission.contacts.isGranted) {
+                              widget.controller.animateToPage(2,
+                                  duration: Duration(milliseconds: 300),
+                                  curve: Curves.easeInOut);
+                            } else {
+                              widget.controller.nextPage(
+                                duration: Duration(milliseconds: 300),
+                                curve: Curves.easeInOut,
+                              );
+                            }
+                          }),
+                    ),
+                  )),
             )
           ],
         ),
