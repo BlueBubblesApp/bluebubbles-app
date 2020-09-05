@@ -97,7 +97,7 @@ class _ConversationViewState extends State<ConversationView> {
       backgroundColor: Theme.of(context).backgroundColor,
       extendBodyBehindAppBar: true,
       appBar: CupertinoNavigationBar(
-        backgroundColor: Theme.of(context).backgroundColor.withAlpha(150),
+        backgroundColor: Theme.of(context).accentColor.withAlpha(125),
         border: Border(
             bottom:
                 BorderSide(color: Colors.white.withOpacity(0.2), width: 0.2)),
@@ -130,12 +130,11 @@ class _ConversationViewState extends State<ConversationView> {
                   ),
                   //Container(width: 5),
                   Padding(
-                    padding: EdgeInsets.only(top: 2.0, left: 3.0),
-                    child: Text(
-                      ">",
-                      style: Theme.of(context).textTheme.subtitle1.apply(),
-                    )
-                  )
+                      padding: EdgeInsets.only(top: 2.0, left: 3.0),
+                      child: Text(
+                        ">",
+                        style: Theme.of(context).textTheme.subtitle1.apply(),
+                      ))
                 ],
               ),
             ),

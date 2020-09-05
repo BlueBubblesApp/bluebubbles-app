@@ -2,14 +2,20 @@ import 'dart:io';
 import 'dart:ui';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
+import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_list/conversation_tile.dart';
+import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/conversation_view/new_chat_creator_text_field.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
+import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
+import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+
+import '../../socket_manager.dart';
 
 class NewChatCreator extends StatefulWidget {
   final bool isCreator;
@@ -32,6 +38,8 @@ class _NewChatCreatorState extends State<NewChatCreator> {
   String filter = "";
   List<Chat> conversations = [];
   List contacts = <Contact>[];
+
+  TextEditingController controller = new TextEditingController();
 
   @override
   void initState() {
@@ -61,7 +69,8 @@ class _NewChatCreatorState extends State<NewChatCreator> {
         String searchTerm = searchQuery.toLowerCase();
         searchTerm = cleansePhoneNumber(searchTerm);
 
-        String contactName = contact.displayName.toLowerCase();
+        String contactName =
+            cleansePhoneNumber(contact.displayName.toLowerCase());
         String contactAddress = "";
         String contactEmail = "";
         if (contact.phones.length > 0) {
@@ -94,68 +103,6 @@ class _NewChatCreatorState extends State<NewChatCreator> {
     setState(() {});
   }
 
-  // Future<void> tryFindExistingChat() async {
-  //   if (!widget.isCreator) return;
-  //   List<Chat> possibleChats = <Chat>[];
-  //   for (Chat _chat in ChatBloc().chats) {
-  //     Chat chat = await _chat.getParticipants();
-
-  //     List<String> addresses = <String>[];
-  //     participants.forEach((element) {
-  //       if (element is Contact) {
-  //         element.phones.forEach((element) {
-  //           if (!addresses.contains(cleansePhoneNumber(element.value)))
-  //             addresses.add(cleansePhoneNumber(element.value));
-  //         });
-  //         element.emails.forEach((element) {
-  //           if (!addresses.contains(cleansePhoneNumber(element.value)))
-  //             addresses.add(cleansePhoneNumber(element.value));
-  //         });
-  //       } else {
-  //         addresses.add(element);
-  //       }
-  //     });
-  //     debugPrint(addresses.toString());
-  //     int foundContacts = 0;
-  //     for (Handle handle in chat.participants) {
-  //       for (String address in addresses) {
-  //         if (cleansePhoneNumber(handle.address).contains(address)) {
-  //           foundContacts++;
-  //           break;
-  //         }
-  //       }
-  //     }
-  //     if (foundContacts == participants.length &&
-  //         chat.participants.length == participants.length)
-  //       possibleChats.add(chat);
-  //   }
-  //   if (possibleChats.length > 1) {
-  //     possibleChats.sort((a, b) {
-  //       return -a.latestMessageDate.compareTo(b.latestMessageDate);
-  //     });
-  //     possibleChats.forEach((element) {
-  //       String toPrint = "Chat: ";
-  //       element.participants.forEach((element) {
-  //         toPrint += element.address + ", ";
-  //       });
-  //       debugPrint(toPrint);
-  //     });
-  //   }
-  //   if (possibleChats.length > 0) {
-  //     existingChat = possibleChats.first;
-  //     if (existingMessageBloc != null) {
-  //       existingMessageBloc.dispose();
-  //     }
-  //     existingMessageBloc = new MessageBloc(existingChat);
-  //     await existingMessageBloc.getMessages();
-  //     setState(() {});
-  //   } else {
-  //     setState(() {
-  //       existingChat = null;
-  //     });
-  //   }
-  // }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -184,7 +131,29 @@ class _NewChatCreatorState extends State<NewChatCreator> {
                     itemBuilder: (BuildContext context, int index) {
                       return contacts[index] is Contact
                           ? ListTile(
-                              onTap: () {},
+                              onTap: () {
+                                Contact contact = contacts[index];
+                                controller.text =
+                                    controller.text.replaceAll(filter, "");
+
+                                if (contact.phones.length > 0) {
+                                  controller.text += contact.phones.first.value;
+                                } else if (contact.emails.length > 0) {
+                                  controller.text += contact.emails.first.value;
+                                } else if (contact.displayName != null &&
+                                    contact.displayName != "") {
+                                  controller.text += contact.displayName;
+                                } else {
+                                  return;
+                                }
+                                controller.selection =
+                                    TextSelection.fromPosition(
+                                  TextPosition(
+                                    offset: controller.text.length,
+                                  ),
+                                );
+                                setState(() {});
+                              },
                               title: Text(
                                 contacts[index].displayName,
                                 style: Theme.of(context).textTheme.bodyText1,
@@ -219,17 +188,10 @@ class _NewChatCreatorState extends State<NewChatCreator> {
                       parent: BouncingScrollPhysics(),
                     ),
                     itemBuilder: (context, index) {
-                      // Map<String, dynamic> _data =
-                      //     ChatBloc().tileVals[conversations[index].guid];
-
                       return ConversationTile(
                         existingAttachments: widget.attachments,
                         existingText: widget.existingText,
                         chat: conversations[index],
-                        // title: _data["title"],
-                        // subtitle: _data["subtitle"],
-                        // date: _data["date"],
-                        // hasNewMessage: false,
                         replaceOnTap: true,
                       );
                     },
@@ -238,17 +200,119 @@ class _NewChatCreatorState extends State<NewChatCreator> {
           ),
           NewChatCreatorTextField(
             createText: widget.isCreator ? "Create" : "Done",
-            onCreate: () {},
+            onCreate: (List<Contact> _vals) {
+              List<String> participants = _convertContactsToString(_vals);
+
+              if (widget.isCreator) {
+                Map<String, dynamic> params = {};
+                showDialog(
+                  context: context,
+                  child: AlertDialog(
+                    backgroundColor: Theme.of(context).backgroundColor,
+                    title: Text(
+                      "Creating a new chat...",
+                      style: Theme.of(context).textTheme.bodyText1,
+                    ),
+                    content: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        Container(
+                          // height: 70,
+                          // color: Colors.black,
+                          child: CircularProgressIndicator(
+                            valueColor:
+                                AlwaysStoppedAnimation<Color>(Colors.blue),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+                params["participants"] = participants;
+                SocketManager().sendMessage(
+                  "start-chat",
+                  params,
+                  (data) async {
+                    if (data['status'] != 200) {
+                      Navigator.of(context).pop();
+                      showDialog(
+                        context: context,
+                        child: AlertDialog(
+                          backgroundColor: Theme.of(context).backgroundColor,
+                          title: Text(
+                            "Could not create",
+                            style: Theme.of(context).textTheme.bodyText1,
+                          ),
+                          content: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: <Widget>[
+                              Container(
+                                // height: 70,
+                                // color: Colors.black,
+                                child: CircularProgressIndicator(
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    Colors.blue,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                      return;
+                    }
+                    Chat newChat = Chat.fromMap(data["data"]);
+                    await newChat.save();
+                    await ChatBloc().moveChatToTop(newChat);
+
+                    NewMessageManager().updateWithMessage(null, null);
+
+                    String title = await getFullChatTitle(newChat);
+                    await ChatBloc().moveChatToTop(newChat);
+                    Navigator.of(context, rootNavigator: true).pop();
+                    Navigator.of(context).pushReplacement(
+                      MaterialPageRoute(
+                        builder: (context) => ConversationView(
+                          chat: newChat,
+                          title: title,
+                          messageBloc: MessageBloc(newChat),
+                          existingAttachments: widget.attachments,
+                          existingText: widget.existingText,
+                        ),
+                      ),
+                    );
+                  },
+                );
+              } else {}
+            },
             filter: (String val) async {
               filterContacts(val);
               setState(() {
                 filter = val;
               });
             },
+            controller: controller,
           ),
         ],
       ),
     );
+  }
+
+  List<String> _convertContactsToString(List<Contact> _contacts) {
+    List<String> vals = [];
+    for (Contact contact in _contacts) {
+      if (contact.phones.length > 0) {
+        vals.add(contact.phones.first.value);
+      } else if (contact.emails.length > 0) {
+        vals.add(contact.emails.first.value);
+      } else {
+        //If for whatever reason the contact does not have a phone number or email, we want to throw an error
+        return null;
+      }
+    }
+    return vals;
   }
 }
 

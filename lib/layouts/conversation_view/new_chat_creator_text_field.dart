@@ -7,13 +7,15 @@ import 'package:extended_text_field/extended_text_field.dart';
 
 class NewChatCreatorTextField extends StatefulWidget {
   final String createText;
-  final Function() onCreate;
+  final Function(List<Contact>) onCreate;
   final Function(String) filter;
+  final TextEditingController controller;
   NewChatCreatorTextField({
     Key key,
     @required this.createText,
     @required this.onCreate,
     @required this.filter,
+    @required this.controller,
   }) : super(key: key);
 
   @override
@@ -22,7 +24,6 @@ class NewChatCreatorTextField extends StatefulWidget {
 }
 
 class _NewChatCreatorTextFieldState extends State<NewChatCreatorTextField> {
-  TextEditingController _controller = new TextEditingController();
   String currentText = "";
   Map<String, Contact> _participants = {};
   @override
@@ -32,7 +33,7 @@ class _NewChatCreatorTextFieldState extends State<NewChatCreatorTextField> {
 
   @override
   void dispose() {
-    _controller.dispose();
+    widget.controller.dispose();
     super.dispose();
   }
 
@@ -81,45 +82,15 @@ class _NewChatCreatorTextFieldState extends State<NewChatCreatorTextField> {
               style: Theme.of(context).textTheme.bodyText1,
               onChanged: (String val) async {
                 if (val.endsWith(",") || val.endsWith(", ")) {
-                  List<String> participants = val.split(", ");
-                  participants.removeWhere(
-                      (element) => element == " " || element == "");
-                  _participants = new Map();
-                  for (String participant in participants) {
-                    Contact contact = await tryFindContact(participant);
-                    if (contact != null) {
-                      _participants[participant] = contact;
-                    } else {
-                      //this is just to ensure that if there is a space after the comma, we remove that first
-                      _controller.text =
-                          _controller.text.replaceAll(participant + ", ", "");
-
-                      //if the comma with space after it wasn't found, then we do this
-                      _controller.text =
-                          _controller.text.replaceAll(participant + ",", "");
-                      if (participant.length > 1) {
-                        Scaffold.of(context).showSnackBar(SnackBar(
-                          content: Text("Invalid Contact " + participant),
-                        ));
-                      }
-                    }
-                  }
-
-                  _controller.selection = TextSelection.fromPosition(
-                    TextPosition(
-                      offset: _controller.text.length,
-                    ),
-                  );
-                  setState(() {});
-                  widget.filter("");
+                  await _getParticipantsFromText(val);
                 } else {
                   widget.filter(val.split(",").last.trim());
                 }
                 currentText = val;
               },
-              controller: _controller,
+              controller: widget.controller,
               specialTextSpanBuilder: ParticipantSpanBuilder(
-                _controller,
+                widget.controller,
                 context,
                 _participants,
               ),
@@ -129,8 +100,9 @@ class _NewChatCreatorTextFieldState extends State<NewChatCreatorTextField> {
             padding: EdgeInsets.only(left: 12),
             child: FlatButton(
               color: Theme.of(context).accentColor,
-              onPressed: () {
-                widget.onCreate();
+              onPressed: () async {
+                await _getParticipantsFromText(widget.controller.text);
+                widget.onCreate(_participants.values.toList());
               },
               child: Text(
                 widget.createText,
@@ -141,5 +113,38 @@ class _NewChatCreatorTextFieldState extends State<NewChatCreatorTextField> {
         ],
       ),
     );
+  }
+
+  Future<void> _getParticipantsFromText(String val) async {
+    List<String> participants = val.split(", ");
+    participants.removeWhere((element) => element == " " || element == "");
+    _participants = new Map();
+    for (String participant in participants) {
+      Contact contact = await tryFindContact(participant);
+      if (contact != null) {
+        _participants[participant] = contact;
+      } else {
+        //this is just to ensure that if there is a space after the comma, we remove that first
+        widget.controller.text =
+            widget.controller.text.replaceAll(participant + ", ", "");
+
+        //if the comma with space after it wasn't found, then we do this
+        widget.controller.text =
+            widget.controller.text.replaceAll(participant + ",", "");
+        if (participant.length > 1) {
+          Scaffold.of(context).showSnackBar(SnackBar(
+            content: Text("Invalid Contact " + participant),
+          ));
+        }
+      }
+    }
+
+    widget.controller.selection = TextSelection.fromPosition(
+      TextPosition(
+        offset: widget.controller.text.length,
+      ),
+    );
+    setState(() {});
+    widget.filter("");
   }
 }
