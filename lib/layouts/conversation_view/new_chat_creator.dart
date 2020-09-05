@@ -145,6 +145,7 @@ class _NewChatCreatorState extends State<NewChatCreator> {
                                 } else {
                                   return;
                                 }
+                                controller.text += ",";
                                 controller.selection =
                                     TextSelection.fromPosition(
                                   TextPosition(
