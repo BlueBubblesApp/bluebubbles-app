@@ -77,29 +77,29 @@ class _SetupViewState extends State<SetupView> {
             padding: EdgeInsets.symmetric(horizontal: 20.0),
             child: Text(
               "BlueBubbles needs to access contacts. Tap the check to allow the permission.",
-              style: Theme.of(context).textTheme.bodyText1.apply(fontSizeFactor: 1.5),
+              style: Theme.of(context)
+                  .textTheme
+                  .bodyText1
+                  .apply(fontSizeFactor: 1.5),
               textAlign: TextAlign.center,
             ),
           ),
           Container(height: 20.0),
           ClipOval(
-            child: Material(
-              color: Colors.blue, // button color
-              child: InkWell(
-                child: SizedBox(
-                  width: 60,
-                  height: 60,
-                  child: Icon(Icons.check, color: Colors.white)),
-                onTap: () async {
-                  ContactManager().getContacts();
-                  controller.nextPage(
-                    duration: Duration(milliseconds: 300),
-                    curve: Curves.easeInOut,
-                  );
-                }
-              )
-            )
-          ),
+              child: Material(
+                  color: Colors.blue, // button color
+                  child: InkWell(
+                      child: SizedBox(
+                          width: 60,
+                          height: 60,
+                          child: Icon(Icons.check, color: Colors.white)),
+                      onTap: () async {
+                        ContactManager().getContacts();
+                        controller.nextPage(
+                          duration: Duration(milliseconds: 300),
+                          curve: Curves.easeInOut,
+                        );
+                      }))),
         ],
       ),
     );
@@ -116,29 +116,28 @@ class _SetupViewState extends State<SetupView> {
               padding: EdgeInsets.symmetric(horizontal: 20.0),
               child: Text(
                 "Next download the BlueBubbles Server app on your Mac and install. Follow the setup process",
-                style: Theme.of(context).textTheme.bodyText1.apply(fontSizeFactor: 1.5),
+                style: Theme.of(context)
+                    .textTheme
+                    .bodyText1
+                    .apply(fontSizeFactor: 1.5),
                 textAlign: TextAlign.center,
               ),
             ),
             Container(height: 20.0),
             ClipOval(
-              child: Material(
-                color: Colors.blue, // button color
-                child: InkWell(
-                  child: SizedBox(
-                    width: 60,
-                    height: 60,
-                    child: Icon(Icons.check, color: Colors.white)
-                  ),
-                  onTap: () async {
-                    controller.nextPage(
-                      duration: Duration(milliseconds: 300),
-                      curve: Curves.easeInOut,
-                    );
-                  }
-                )
-              )
-            ),
+                child: Material(
+                    color: Colors.blue, // button color
+                    child: InkWell(
+                        child: SizedBox(
+                            width: 60,
+                            height: 60,
+                            child: Icon(Icons.check, color: Colors.white)),
+                        onTap: () async {
+                          controller.nextPage(
+                            duration: Duration(milliseconds: 300),
+                            curve: Curves.easeInOut,
+                          );
+                        }))),
           ],
         ),
       ),
@@ -146,6 +145,8 @@ class _SetupViewState extends State<SetupView> {
   }
 
   Widget _scanQRCode() {
+    TextEditingController textController = new TextEditingController();
+
     return Scaffold(
       backgroundColor: Theme.of(context).accentColor,
       body: Center(
@@ -156,7 +157,10 @@ class _SetupViewState extends State<SetupView> {
               padding: EdgeInsets.symmetric(horizontal: 20.0),
               child: Text(
                 "BlueBubbles tries to make the setup process as easy as possible. We've created a QR code on your server that you can use to easily register this device with the server.",
-                style: Theme.of(context).textTheme.bodyText1.apply(fontSizeFactor: 1.5),
+                style: Theme.of(context)
+                    .textTheme
+                    .bodyText1
+                    .apply(fontSizeFactor: 1.5),
                 textAlign: TextAlign.center,
               ),
             ),
@@ -165,117 +169,152 @@ class _SetupViewState extends State<SetupView> {
               child: Material(
                 color: Colors.blue, // button color
                 child: InkWell(
-                  child: SizedBox(
-                    width: 60,
-                    height: 60,
-                    child: Icon(Icons.camera, color: Colors.white)),
-                  onTap: () async {
-                    var fcmData;
-                    try {
-                      fcmData = jsonDecode(
-                        await Navigator.of(context).push(
-                          CupertinoPageRoute(
-                            builder: (BuildContext context) {
-                              return QRCodeScanner();
-                            },
+                    child: SizedBox(
+                        width: 60,
+                        height: 60,
+                        child: Icon(Icons.camera, color: Colors.white)),
+                    onTap: () async {
+                      var fcmData;
+                      try {
+                        fcmData = jsonDecode(
+                          await Navigator.of(context).push(
+                            CupertinoPageRoute(
+                              builder: (BuildContext context) {
+                                return QRCodeScanner();
+                              },
+                            ),
                           ),
-                        ),
-                      );
-                    } catch (e) {
-                      return;
-                    }
-                    if (fcmData != null) {
-                      _settingsCopy.fcmAuthData = {
-                        "project_id": fcmData[2],
-                        "storage_bucket": fcmData[3],
-                        "api_key": fcmData[4],
-                        "firebase_url": fcmData[5],
-                        "client_id": fcmData[6],
-                        "application_id": fcmData[7],
-                      };
-                      _settingsCopy.guidAuthKey = fcmData[0];
-                      _settingsCopy.serverAddress = fcmData[1];
-                      await SettingsManager().saveSettings(
-                        _settingsCopy,
-                        connectToSocket: false,
-                        authorizeFCM: false,
-                      );
-                      showDialog(
-                        context: context,
-                        builder: (context) => AlertDialog(
-                          backgroundColor: Theme.of(context).backgroundColor,
-                          title: Text(
-                            "Connecting",
-                            style: Theme.of(context).textTheme.bodyText1,
-                          ),
-                          content: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: <Widget>[
-                              Container(
-                                // height: 70,
-                                // color: Colors.black,
-                                child: CircularProgressIndicator(
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                      Colors.blue),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                      if (SocketManager().state == SocketState.CONNECTED) {
-                        Navigator.of(context).pop();
-                        controller.nextPage(
-                          duration: Duration(milliseconds: 300),
-                          curve: Curves.easeInOut,
                         );
+                      } catch (e) {
+                        return;
                       }
-
-                      SocketManager().startSocketIO();
-
-                      StreamSubscription connectionStateSubscription;
-                      connectionStateSubscription = SocketManager()
-                          .connectionStateStream
-                          .listen((event) {
-                        if (event == SocketState.CONNECTED) {
+                      if (fcmData != null) {
+                        _settingsCopy.fcmAuthData = {
+                          "project_id": fcmData[2],
+                          "storage_bucket": fcmData[3],
+                          "api_key": fcmData[4],
+                          "firebase_url": fcmData[5],
+                          "client_id": fcmData[6],
+                          "application_id": fcmData[7],
+                        };
+                        _settingsCopy.guidAuthKey = fcmData[0];
+                        _settingsCopy.serverAddress = fcmData[1];
+                        await SettingsManager().saveSettings(
+                          _settingsCopy,
+                          connectToSocket: false,
+                          authorizeFCM: false,
+                        );
+                        showDialog(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            backgroundColor: Theme.of(context).backgroundColor,
+                            title: Text(
+                              "Connecting",
+                              style: Theme.of(context).textTheme.bodyText1,
+                            ),
+                            content: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: <Widget>[
+                                Container(
+                                  // height: 70,
+                                  // color: Colors.black,
+                                  child: CircularProgressIndicator(
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                        Colors.blue),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                        if (SocketManager().state == SocketState.CONNECTED) {
                           Navigator.of(context).pop();
                           controller.nextPage(
                             duration: Duration(milliseconds: 300),
                             curve: Curves.easeInOut,
                           );
-                          connectionStateSubscription.cancel();
-                        } else if (event == SocketState.ERROR ||
-                            event == SocketState.DISCONNECTED) {
-                          Navigator.of(context).pop();
-                          showDialog(
-                            context: context,
-                            builder: (context) => AlertDialog(
-                              backgroundColor:
-                                  Theme.of(context).backgroundColor,
-                              title: Text(
-                                "An error occurred trying to connect to the socket",
-                                style: Theme.of(context).textTheme.bodyText1,
-                              ),
-                              actions: <Widget>[
-                                FlatButton(
-                                  child: Text("Ok",
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodyText1),
-                                  onPressed: () {
-                                    Navigator.of(context).pop();
-                                  },
-                                )
-                              ],
-                            ),
-                          );
-                          connectionStateSubscription.cancel();
                         }
-                      });
-                    }
-                  }
-                ),
+
+                        SocketManager().startSocketIO();
+
+                        StreamSubscription connectionStateSubscription;
+                        connectionStateSubscription = SocketManager()
+                            .connectionStateStream
+                            .listen((event) {
+                          if (event == SocketState.CONNECTED) {
+                            Navigator.of(context).pop();
+                            controller.nextPage(
+                              duration: Duration(milliseconds: 300),
+                              curve: Curves.easeInOut,
+                            );
+                            connectionStateSubscription.cancel();
+                          } else if (event == SocketState.ERROR ||
+                              event == SocketState.DISCONNECTED) {
+                            Navigator.of(context).pop();
+                            showDialog(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                backgroundColor:
+                                    Theme.of(context).backgroundColor,
+                                title: Text(
+                                  "An error occurred trying to connect to the socket",
+                                  style: Theme.of(context).textTheme.bodyText1,
+                                ),
+                                actions: <Widget>[
+                                  FlatButton(
+                                    child: Text("Ok",
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodyText1),
+                                    onPressed: () {
+                                      Navigator.of(context).pop();
+                                    },
+                                  )
+                                ],
+                              ),
+                            );
+                            connectionStateSubscription.cancel();
+                          }
+                        });
+                      }
+                    }),
+              ),
+            ),
+            Container(height: 80.0),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20.0),
+              child: Text(
+                "Or alternatively... you can enter in your ngrok url here: ",
+                style: Theme.of(context)
+                    .textTheme
+                    .bodyText1
+                    .apply(fontSizeFactor: 1.25),
+                textAlign: TextAlign.center,
+              ),
+            ),
+            Padding(
+              padding: EdgeInsets.only(top: 15.0),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Spacer(
+                    flex: 1,
+                  ),
+                  Text("https://"),
+                  Expanded(
+                    child: CupertinoTextField(
+                      controller: textController,
+                      maxLength: 10,
+                      maxLengthEnforced: false,
+                      maxLines: 1,
+                    ),
+                  ),
+                  Text(".ngrok.io"),
+                  Spacer(
+                    flex: 1,
+                  ),
+                ],
               ),
             )
           ],
@@ -295,7 +334,10 @@ class _SetupViewState extends State<SetupView> {
               padding: EdgeInsets.symmetric(horizontal: 20.0),
               child: Text(
                 "For the final step, BlueBubbles will download the first 25 messages for each of your chats.",
-                style: Theme.of(context).textTheme.bodyText1.apply(fontSizeFactor: 1.5),
+                style: Theme.of(context)
+                    .textTheme
+                    .bodyText1
+                    .apply(fontSizeFactor: 1.5),
                 textAlign: TextAlign.center,
               ),
             ),
@@ -304,59 +346,63 @@ class _SetupViewState extends State<SetupView> {
               padding: EdgeInsets.symmetric(horizontal: 20.0),
               child: Text(
                 "Don't worry, you can see your chat history by scrolling up in a chat.",
-                style: Theme.of(context).textTheme.bodyText1.apply(fontSizeFactor: 1.5),
+                style: Theme.of(context)
+                    .textTheme
+                    .bodyText1
+                    .apply(fontSizeFactor: 1.5),
                 textAlign: TextAlign.center,
               ),
             ),
             Container(height: 20.0),
             ClipOval(
-              child: Material(
-                color: Colors.green.withAlpha(200), // button color
-                child: InkWell(
-                  child: SizedBox(
-                    width: 60,
-                    height: 60,
-                    child: Icon(Icons.cloud_download, color: Colors.white)
-                  ),
-                  onTap: () async {
-                    if (_settingsCopy == null) {
-                      controller.animateToPage(3,
-                          duration: Duration(milliseconds: 3),
-                          curve: Curves.easeInOut);
-                    } else {
-                      SocketManager().setup.startSync(_settingsCopy, () {
-                        showDialog(
-                          context: context,
-                          builder: (context) => AlertDialog(
-                            backgroundColor: Theme.of(context).backgroundColor,
-                            title: Text(
-                              "The socket connection failed, please check the server",
-                              style: Theme.of(context).textTheme.bodyText1,
-                            ),
-                            actions: <Widget>[
-                              FlatButton(
-                                child: Text("Ok",
-                                    style: Theme.of(context).textTheme.bodyText1),
-                                onPressed: () {
-                                  Navigator.of(context).pop();
-                                },
-                              )
-                            ],
-                          ),
-                        );
-                        controller.animateToPage(3,
-                            duration: Duration(milliseconds: 500),
-                            curve: Curves.easeInOut);
-                      });
-                      controller.nextPage(
-                        duration: Duration(milliseconds: 300),
-                        curve: Curves.easeInOut,
-                      );
-                    }
-                  }
-                )
-              )
-            )
+                child: Material(
+                    color: Colors.green.withAlpha(200), // button color
+                    child: InkWell(
+                        child: SizedBox(
+                            width: 60,
+                            height: 60,
+                            child: Icon(Icons.cloud_download,
+                                color: Colors.white)),
+                        onTap: () async {
+                          if (_settingsCopy == null) {
+                            controller.animateToPage(3,
+                                duration: Duration(milliseconds: 3),
+                                curve: Curves.easeInOut);
+                          } else {
+                            SocketManager().setup.startSync(_settingsCopy, () {
+                              showDialog(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                  backgroundColor:
+                                      Theme.of(context).backgroundColor,
+                                  title: Text(
+                                    "The socket connection failed, please check the server",
+                                    style:
+                                        Theme.of(context).textTheme.bodyText1,
+                                  ),
+                                  actions: <Widget>[
+                                    FlatButton(
+                                      child: Text("Ok",
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodyText1),
+                                      onPressed: () {
+                                        Navigator.of(context).pop();
+                                      },
+                                    )
+                                  ],
+                                ),
+                              );
+                              controller.animateToPage(3,
+                                  duration: Duration(milliseconds: 500),
+                                  curve: Curves.easeInOut);
+                            });
+                            controller.nextPage(
+                              duration: Duration(milliseconds: 300),
+                              curve: Curves.easeInOut,
+                            );
+                          }
+                        })))
           ],
         ),
       ),
@@ -384,7 +430,10 @@ class _SetupViewState extends State<SetupView> {
                     ),
                     Text(
                       "${(progress * 100).floor()}%",
-                      style: Theme.of(context).textTheme.bodyText1.apply(fontSizeFactor: 1.5),
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodyText1
+                          .apply(fontSizeFactor: 1.5),
                     ),
                     Spacer(
                       flex: 5,
