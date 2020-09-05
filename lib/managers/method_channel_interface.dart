@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
@@ -16,6 +17,7 @@ import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:path/path.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class MethodChannelInterface {
@@ -64,9 +66,8 @@ class MethodChannelInterface {
         return new Future.value("");
       case "new-message":
         Map<String, dynamic> data = jsonDecode(call.arguments);
-        IncomingQueue().add(new QueueItem(event: "handle-message", item: {
-          "data": data
-        }));
+        IncomingQueue()
+            .add(new QueueItem(event: "handle-message", item: {"data": data}));
         return new Future.value("");
       case "updated-message":
         IncomingQueue().add(new QueueItem(
@@ -91,33 +92,42 @@ class MethodChannelInterface {
         SocketManager().removeChatNotification(chat);
         return new Future.value("");
       case "shareAttachments":
+        debugPrint("Received shared attachments: " +
+            call.arguments.runtimeType.toString());
         List<File> attachments = <File>[];
-        call.arguments.forEach((element) {
-          attachments.add(File(element));
+        String appDocPath = SettingsManager().appDocDir.path;
+        call.arguments.forEach((key, element) {
+          debugPrint("attachment " + key.runtimeType.toString());
+          String pathName = "$appDocPath/sharedFiles/$key";
+          File file = File(pathName);
+          file.writeAsBytesSync(element.toList());
+          attachments.add(file);
         });
         if (!await Permission.storage.request().isGranted) return;
 
         NavigatorManager().navigatorKey.currentState.pushAndRemoveUntil(
-            CupertinoPageRoute(
-              builder: (context) => NewChatCreator(
-                attachments: attachments,
-                isCreator: true,
+              CupertinoPageRoute(
+                builder: (context) => NewChatCreator(
+                  attachments: attachments,
+                  isCreator: true,
+                ),
               ),
-            ),
-            (route) => route.isFirst);
+              (route) => route.isFirst,
+            );
         return new Future.value("");
 
       case "shareText":
         String text = call.arguments;
         debugPrint("got text " + text);
         NavigatorManager().navigatorKey.currentState.pushAndRemoveUntil(
-            CupertinoPageRoute(
-              builder: (context) => NewChatCreator(
-                existingText: text,
-                isCreator: true,
+              CupertinoPageRoute(
+                builder: (context) => NewChatCreator(
+                  existingText: text,
+                  isCreator: true,
+                ),
               ),
-            ),
-            (route) => route.isFirst);
+              (route) => route.isFirst,
+            );
         return new Future.value("");
     }
   }

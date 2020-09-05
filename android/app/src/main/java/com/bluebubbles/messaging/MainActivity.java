@@ -4,33 +4,23 @@ import androidx.annotation.NonNull;
 
 import io.flutter.embedding.android.FlutterActivity;
 import io.flutter.embedding.engine.FlutterEngine;
-import io.flutter.embedding.engine.plugins.shim.ShimPluginRegistry;
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
-import io.flutter.plugin.common.PluginRegistry;
 import io.flutter.plugins.GeneratedPluginRegistrant;
-import io.sentry.core.Sentry;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Person;
-import android.app.RemoteInput;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
-import android.content.ContentResolver;
-import android.content.ContentUris;
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
-import android.content.SharedPreferences;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -47,12 +37,9 @@ import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.IBinder;
 import android.os.PersistableBundle;
-import android.preference.PreferenceManager;
-import android.provider.ContactsContract;
-import android.provider.MediaStore;
+import android.provider.OpenableColumns;
 import android.service.notification.StatusBarNotification;
 import android.util.Log;
 
@@ -60,11 +47,9 @@ import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
-import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
-import com.bluebubbles.giftextfield.GiftextfieldPlugin;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -72,7 +57,6 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
-import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -80,14 +64,14 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.iid.InstanceIdResult;
-import com.google.firebase.messaging.FirebaseMessaging;
-import com.google.firebase.messaging.FirebaseMessagingService;
-import com.judemanutd.autostarter.AutoStartPermissionHelper;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -453,12 +437,16 @@ public class MainActivity extends FlutterActivity {
                 handleSendImage(intent); // Handle single image being sent
             } else if (type.startsWith("video/")) {
                 handleSendImage(intent);
+            } else {
+                Log.d("ShareImage", "type not found " + type);
             }
         } else if (Intent.ACTION_SEND_MULTIPLE.equals(action) && type != null) {
             if (type.startsWith("image/")) {
                 handleSendMultipleImages(intent); // Handle multiple images being sent
             } else if (type.startsWith("video/")) {
                 handleSendMultipleImages(intent);
+            } else {
+                Log.d("ShareImage", "type not found " + type);
             }
         } else {
             if (type.equals("NotificationOpen")) {
@@ -483,31 +471,64 @@ public class MainActivity extends FlutterActivity {
     }
 
     void handleSendImage(Intent intent) {
-        ArrayList<String> imagePaths = new ArrayList<String>();
+        Map<String, byte[]> imagePaths = new HashMap<String, byte[]>() ;
         Uri imageUri = (Uri) intent.getParcelableExtra(Intent.EXTRA_STREAM);
         if (imageUri != null) {
-            imagePaths.add(getRealPathFromURI(imageUri));
+            imagePaths.put(getFileName(imageUri), getBytesFromUri(imageUri));
             new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod("shareAttachments", imagePaths);
-            // Update UI to reflect image being shared
+            Log.d("ShareImage", imagePaths.toString());
         }
     }
 
-    public String getRealPathFromURI(Uri contentUri) {
-        String[] proj = {MediaStore.Audio.Media.DATA};
-        Cursor cursor = managedQuery(contentUri, proj, null, null, null);
-        int column_index = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA);
-        cursor.moveToFirst();
-        return cursor.getString(column_index);
+    public byte[] getBytesFromUri(Uri contentUri) {
+//        String[] proj = {MediaStore.Audio.Media.DATA};
+//        Cursor cursor = getContentResolver().query(contentUri, proj, null, null, null);
+//        int column_index = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA);
+//        cursor.moveToFirst();
+//        return cursor.getString(column_index);
+        try {
+            InputStream stream = getContentResolver().openInputStream(contentUri);
+            byte[] bytes = new byte[stream.available()];
+            stream.read(bytes);
+            return bytes;
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+    public String getFileName(Uri uri) {
+        String result = null;
+        if (uri.getScheme().equals("content")) {
+            Cursor cursor = getContentResolver().query(uri, null, null, null, null);
+            try {
+                if (cursor != null && cursor.moveToFirst()) {
+                    result = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME));
+                }
+            } finally {
+                cursor.close();
+            }
+        }
+        if (result == null) {
+            result = uri.getPath();
+            int cut = result.lastIndexOf('/');
+            if (cut != -1) {
+                result = result.substring(cut + 1);
+            }
+        }
+        return result;
     }
 
     void handleSendMultipleImages(Intent intent) {
         ArrayList<Uri> imageUris = intent.getParcelableArrayListExtra(Intent.EXTRA_STREAM);
-        ArrayList<String> imagePaths = new ArrayList<String>();
+        Map<String, byte[] > imagePaths = new HashMap<String, byte[]>();
         if (imageUris != null) {
             for (Uri imageUri : imageUris) {
-                imagePaths.add(getRealPathFromURI(imageUri));
+                imagePaths.put(getFileName(imageUri), getBytesFromUri(imageUri));
             }
             new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod("shareAttachments", imagePaths);
+            Log.d("ShareImage", imagePaths.toString());
             // Update UI to reflect multiple images being shared
         }
     }

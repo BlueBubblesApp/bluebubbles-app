@@ -91,7 +91,6 @@ class _NewChatCreatorState extends State<NewChatCreator> {
     List _conversations = [];
     _conversations.addAll(conversations);
     _conversations.retainWhere((element) {
-      // Map<String, dynamic> data = ChatBloc().tileVals[element.guid];
       if (element.participants.length == 1) return false;
       if ((element as Chat).title.contains(searchQuery.toLowerCase()))
         return true;
@@ -273,7 +272,7 @@ class _NewChatCreatorState extends State<NewChatCreator> {
                     await ChatBloc().moveChatToTop(newChat);
                     Navigator.of(context, rootNavigator: true).pop();
                     Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(
+                      CupertinoPageRoute(
                         builder: (context) => ConversationView(
                           chat: newChat,
                           title: title,
@@ -285,7 +284,18 @@ class _NewChatCreatorState extends State<NewChatCreator> {
                     );
                   },
                 );
-              } else {}
+              } else {
+                showDialog(
+                  context: context,
+                  child: AlertDialog(
+                    backgroundColor: Theme.of(context).backgroundColor,
+                    title: Text(
+                      "Not Implemented Lol",
+                      style: Theme.of(context).textTheme.bodyText1,
+                    ),
+                  ),
+                );
+              }
             },
             filter: (String val) async {
               filterContacts(val);
