@@ -19,8 +19,7 @@ class ParticipantText extends SpecialText {
 
   @override
   bool isEnd(String value) {
-    bool isEnd = super.isEnd(value) &&
-        (value.endsWith(",") || value.endsWith(", ")) &&
+    bool isEnd = (value.endsWith(",") || value.endsWith(", ")) &&
         contacts.containsKey(toString().replaceAll(",", "").trim());
     return isEnd;
   }
