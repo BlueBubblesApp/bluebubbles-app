@@ -44,12 +44,14 @@ class _NewChatCreatorTextFieldState extends State<NewChatCreatorTextField> {
         return contact;
       } else {
         for (Item phone in contact.phones) {
-          if (cleansePhoneNumber(phone.value) == cleansePhoneNumber(value)) {
+          if (cleansePhoneNumber(phone.value).trim() ==
+              cleansePhoneNumber(value).trim()) {
             return contact;
           }
         }
         for (Item email in contact.emails) {
-          if (cleansePhoneNumber(email.value) == cleansePhoneNumber(value)) {
+          if (cleansePhoneNumber(email.value).trim() ==
+              cleansePhoneNumber(value).trim()) {
             return contact;
           }
         }
@@ -116,7 +118,10 @@ class _NewChatCreatorTextFieldState extends State<NewChatCreatorTextField> {
   }
 
   Future<void> _getParticipantsFromText(String val) async {
-    List<String> participants = val.split(", ");
+    List<String> participants = val.split(",");
+    participants.forEach((element) {
+      element = element.trim();
+    });
     participants.removeWhere((element) => element == " " || element == "");
     _participants = new Map();
     for (String participant in participants) {
