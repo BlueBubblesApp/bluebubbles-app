@@ -29,6 +29,17 @@ class _NewChatCreatorTextFieldState extends State<NewChatCreatorTextField> {
   @override
   void initState() {
     super.initState();
+    widget.controller.addListener(() async {
+      String val = widget.controller.text;
+      if (val.endsWith(",") || val.endsWith(", ")) {
+        await _getParticipantsFromText(val);
+        debugPrint("getting participants from text");
+      } else {
+        widget.filter(val.split(",").last.trim());
+        debugPrint("not getting participants from text " + val);
+      }
+      currentText = val;
+    });
   }
 
   @override
@@ -82,14 +93,6 @@ class _NewChatCreatorTextFieldState extends State<NewChatCreatorTextField> {
               autocorrect: false,
               maxLines: 1,
               style: Theme.of(context).textTheme.bodyText1,
-              onChanged: (String val) async {
-                if (val.endsWith(",") || val.endsWith(", ")) {
-                  await _getParticipantsFromText(val);
-                } else {
-                  widget.filter(val.split(",").last.trim());
-                }
-                currentText = val;
-              },
               controller: widget.controller,
               specialTextSpanBuilder: ParticipantSpanBuilder(
                 widget.controller,
