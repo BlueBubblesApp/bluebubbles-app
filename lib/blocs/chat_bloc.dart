@@ -30,6 +30,7 @@ class ChatBloc {
   List<Chat> get chats => _chats;
 
   Chat getChat(String guid) {
+    if (_chats == null) return null;
     for (Chat chat in _chats) {
       if (chat.guid == guid) return chat;
     }

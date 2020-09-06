@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:ui';
 
 import 'package:bluebubbles/action_handler.dart';
+import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/incoming_queue.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
@@ -46,10 +47,8 @@ callbackHandler() async {
     if (call.method == "new-message") {
       Map<String, dynamic> data = jsonDecode(call.arguments);
 
-      IncomingQueue().add(new QueueItem(event: "handle-message", item: {
-        "data": data,
-        "isHeadless": true
-      }));
+      IncomingQueue().add(new QueueItem(
+          event: "handle-message", item: {"data": data, "isHeadless": true}));
     } else if (call.method == "updated-message") {
       IncomingQueue().add(new QueueItem(
           event: "handle-updated-message",

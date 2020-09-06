@@ -412,7 +412,7 @@ class ActionHandler {
           chat = chats[i];
         }
         Message existing = await Message.findOne({"guid": message.guid});
-        // await chats[i].save();
+        await chats[i].save();
         if (!message.isFromMe &&
             message.handle != null &&
             (NotificationManager().chatGuid != chat.guid ||

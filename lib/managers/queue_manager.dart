@@ -47,12 +47,16 @@ abstract class QueueManager {
 
   /// Performs pre-processing before the [item] is handled by the implementer.
   /// You can pass any number of [params] using the second Map parameter
-  Future<void> beforeProcessing(QueueItem item, Map params) async { /* Do Nothing */ }
+  Future<void> beforeProcessing(QueueItem item, Map params) async {
+    /* Do Nothing */
+  }
 
   /// Handles the currently passed [item] from the queue
   Future<void> handleQueueItem(QueueItem item);
 
   /// Performs post-processing before the [item] is handled by the implementer.
   /// You can pass any number of [params] using the second Map parameter
-  Future<void> afterProcessing(QueueItem item, Map params) async { /* Do Nothing */ }
+  Future<void> afterProcessing(QueueItem item, Map params) async {
+    /* Do Nothing */
+  }
 }
