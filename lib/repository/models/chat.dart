@@ -207,11 +207,19 @@ class Chat {
     Map<String, dynamic> params = {
       "isArchived": this.isArchived ? 1 : 0,
       "isMuted": this.isMuted ? 1 : 0,
-      "latestMessageText": this.latestMessageText,
-      "latestMessageDate": this.latestMessageDate != null
-          ? this.latestMessageDate.millisecondsSinceEpoch
-          : null,
     };
+    if (this.latestMessageDate == null) {
+      try {
+        throw new Exception("LATEST MESSAGE DATE IS NULL " + this.guid + "");
+      } catch (_, stack) {
+        debugPrint(stack.toString());
+      }
+      // debugPrint("LATEST MESSAGE DATE IS NULL " + this.guid);
+    } else {
+      params["latestMessageText"] = this.latestMessageText;
+      params["latestMessageDate"] =
+          this.latestMessageDate.millisecondsSinceEpoch;
+    }
 
     // Add display name if it's been updated
     if (this.displayName != null) {

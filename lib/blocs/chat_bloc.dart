@@ -92,7 +92,6 @@ class ChatBloc {
     await initTileVals(_chats);
     recursiveGetChats();
 
-    // initTileVals(_chats, offset: 15);
     initTileVals(_archivedChats);
 
     return _chats;
@@ -130,27 +129,32 @@ class ChatBloc {
   }
 
   Future<void> initTileValsForChat(Chat chat, {Message latestMessage}) async {
-    await chat.getTitle();
-    Message firstMessage;
-    if (latestMessage == null) {
-      if (chat.latestMessageText == null) {
-        List<Message> messages = await Chat.getMessages(chat, limit: 1);
-        firstMessage = messages.length > 0 ? messages[0] : null;
+    if (latestMessage != null) {
+      chat.latestMessageText = latestMessage.text;
+      chat.latestMessageDate = latestMessage.dateCreated;
+      if (latestMessage.itemType != 0) {
+        chat.latestMessageText = getGroupEventText(latestMessage);
       }
-    } else {
-      firstMessage = latestMessage;
-    }
-
-    if (firstMessage != null) {
       await Message.getAttachments(
-          firstMessage); // This will auto-store the attachments
-      chat.latestMessageText = MessageHelper.getNotificationText(firstMessage);
-      chat.latestMessageDate = firstMessage.dateCreated;
-      if (firstMessage.itemType != 0)
-        chat.latestMessageText = getGroupEventText(firstMessage);
+          latestMessage); // This will auto-store the attachments
+      await chat.save();
+      debugPrint("latestMessageDate after saving is " +
+          chat.latestMessageDate.toString());
+    } else if (chat.latestMessageDate == null) {
+      List<Message> messages = await Chat.getMessages(chat, limit: 1);
+      Message message = messages.length > 0 ? messages[0] : null;
+      if (message != null) {
+        chat.latestMessageText = message.text;
+        chat.latestMessageDate = message.dateCreated;
+        if (message.itemType != 0) {
+          chat.latestMessageText = getGroupEventText(message);
+        }
+        await Message.getAttachments(
+            message); // This will auto-store the attachments
+        await chat.save();
+      }
     }
 
-    await chat.save();
     if (chat.title == null) await chat.getTitle();
   }
 
