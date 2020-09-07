@@ -21,7 +21,6 @@ class ParticipantText extends SpecialText {
   bool isEnd(String value) {
     bool isEnd = (value.endsWith(",") || value.endsWith(", ")) &&
         contacts.containsKey(toString().replaceAll(",", "").trim());
-    debugPrint("isEnd: $isEnd");
     return isEnd;
   }
 

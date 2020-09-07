@@ -33,10 +33,8 @@ class _NewChatCreatorTextFieldState extends State<NewChatCreatorTextField> {
       String val = widget.controller.text;
       if (val.endsWith(",") || val.endsWith(", ")) {
         await _getParticipantsFromText(val);
-        debugPrint("getting participants from text");
       } else {
         widget.filter(val.split(",").last.trim());
-        debugPrint("not getting participants from text " + val);
       }
       currentText = val;
     });
