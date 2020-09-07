@@ -171,7 +171,6 @@ class SocketManager {
                 "(SYNC) Error performing incremental sync. Not saving last sync date.");
             debugPrint(err);
           });
-        // if (connectCb != null) connectCb();
         return;
       case "connect_error":
         debugPrint("CONNECT ERROR");
