@@ -138,9 +138,8 @@ class ChatBloc {
       await Message.getAttachments(
           latestMessage); // This will auto-store the attachments
       await chat.save();
-      debugPrint("latestMessageDate after saving is " +
-          chat.latestMessageDate.toString());
-    } else if (chat.latestMessageDate == null) {
+    } else if (chat.latestMessageDate == null ||
+        chat.latestMessageDate.millisecondsSinceEpoch == 0) {
       List<Message> messages = await Chat.getMessages(chat, limit: 1);
       Message message = messages.length > 0 ? messages[0] : null;
       if (message != null) {
