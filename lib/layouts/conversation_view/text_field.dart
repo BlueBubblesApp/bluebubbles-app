@@ -108,7 +108,7 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
       _images.forEach((element) {
         _imageWidgets.add(
           FutureBuilder(
-            future: element.thumbDataWithSize(800, 800),
+            future: element.thumbDataWithSize(800, 800, quality: 20),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.done) {
                 return Stack(
@@ -460,7 +460,10 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                                           padding: const EdgeInsets.all(8.0),
                                           child: Icon(
                                             Icons.photo_library,
-                                            color: Theme.of(context).textTheme.bodyText1.color,
+                                            color: Theme.of(context)
+                                                .textTheme
+                                                .bodyText1
+                                                .color,
                                           ),
                                         ),
                                         Text(
@@ -500,7 +503,10 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                                           padding: const EdgeInsets.all(8.0),
                                           child: Icon(
                                             Icons.video_library,
-                                            color: Theme.of(context).textTheme.bodyText1.color,
+                                            color: Theme.of(context)
+                                                .textTheme
+                                                .bodyText1
+                                                .color,
                                           ),
                                         ),
                                         Text(

@@ -143,7 +143,7 @@ class ChatBloc {
       List<Message> messages = await Chat.getMessages(chat, limit: 1);
       Message message = messages.length > 0 ? messages[0] : null;
       if (message != null) {
-        chat.latestMessageText = message.text;
+        chat.latestMessageText = MessageHelper.getNotificationText(message);
         chat.latestMessageDate = message.dateCreated;
         if (message.itemType != 0) {
           chat.latestMessageText = getGroupEventText(message);
