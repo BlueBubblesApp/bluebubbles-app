@@ -40,7 +40,7 @@ Total : 43 files,  9145 codes, 781 comments, 715 blanks, all 10641 lines
 | [lib/layouts/widgets/message_widget/message_content/media_players/audio_player_widget.dart](/lib/layouts/widgets/message_widget/message_content/media_players/audio_player_widget.dart) | Dart | 95 | 42 | 10 | 147 |
 | [lib/layouts/widgets/message_widget/message_content/media_players/contact_widget.dart](/lib/layouts/widgets/message_widget/message_content/media_players/contact_widget.dart) | Dart | 97 | 0 | 8 | 105 |
 | [lib/layouts/widgets/message_widget/message_content/media_players/image_widget.dart](/lib/layouts/widgets/message_widget/message_content/media_players/image_widget.dart) | Dart | 61 | 0 | 6 | 67 |
-| [lib/layouts/widgets/message_widget/message_content/media_players/loaction_widget.dart](/lib/layouts/widgets/message_widget/message_content/media_players/loaction_widget.dart) | Dart | 70 | 0 | 6 | 76 |
+| [lib/layouts/widgets/message_widget/message_content/media_players/location_widget.dart](/lib/layouts/widgets/message_widget/message_content/media_players/location_widget.dart) | Dart | 70 | 0 | 6 | 76 |
 | [lib/layouts/widgets/message_widget/message_content/media_players/regular_file_opener.dart](/lib/layouts/widgets/message_widget/message_content/media_players/regular_file_opener.dart) | Dart | 53 | 0 | 5 | 58 |
 | [lib/layouts/widgets/message_widget/message_content/media_players/url_preview_widget.dart](/lib/layouts/widgets/message_widget/message_content/media_players/url_preview_widget.dart) | Dart | 165 | 5 | 12 | 182 |
 | [lib/layouts/widgets/message_widget/message_content/media_players/video_widget.dart](/lib/layouts/widgets/message_widget/message_content/media_players/video_widget.dart) | Dart | 140 | 2 | 8 | 150 |

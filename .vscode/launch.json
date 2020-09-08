@@ -13,9 +13,10 @@
     },
     {
       "type": "dart",
-      "name": "BlueBubbles",
+      "name": "BlueBubblesDebug",
       "request": "launch",
-      "program": "lib/main.dart"
+      "program": "lib/main.dart",
+      "flutterMode": "debug"
     }
   ]
 }
