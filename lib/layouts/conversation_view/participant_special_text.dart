@@ -44,7 +44,7 @@ class ParticipantText extends SpecialText {
               borderRadius: BorderRadius.all(Radius.circular(5.0)),
               child: Container(
                 padding: EdgeInsets.all(5.0),
-                color: Colors.orange,
+                color: Theme.of(context).primaryColor,
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,

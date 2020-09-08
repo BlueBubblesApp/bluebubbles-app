@@ -74,9 +74,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
             if (data["status"] == 200) {
               Chat updatedChat = Chat.fromMap(data["data"]);
               await updatedChat.save();
-              // await ChatBloc().getChats();
-              // NewMessageManager().updateWithMessage(null, null);
-              await ChatBloc().moveChatToTop(updatedChat);
+              await ChatBloc().updateChatPosition(updatedChat);
             }
             debugPrint("renamed group chat " + data.toString());
           });
@@ -238,8 +236,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                               await chat.save();
                               await chat.addMessage(sentMessage);
 
-                              NewMessageManager()
-                                  .updateWithMessage(chat, sentMessage);
+                              NewMessageManager().addMessage(chat, sentMessage);
                               Map<String, dynamic> params = new Map();
                               params["guid"] = chat.guid;
                               params["attachmentGuid"] = _attachmentGuid;

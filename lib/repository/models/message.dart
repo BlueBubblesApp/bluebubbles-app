@@ -260,8 +260,7 @@ class Message {
           await newMessage.save();
           await chat.save();
           await chat.addMessage(newMessage);
-          NewMessageManager()
-              .updateWithMessage(chat, newMessage, sentFromThisClient: false);
+          NewMessageManager().addMessage(chat, newMessage, outgoing: false);
           return newMessage;
         }
       }
@@ -458,8 +457,11 @@ class Message {
     List<dynamic> whereArgs = [];
     where.values.forEach((filter) => whereArgs.add(filter));
 
-    await db.delete("message",
-        where: whereParams.join(" AND "), whereArgs: whereArgs);
+    List<Message> toDelete = await Message.find(where);
+    for (Message msg in toDelete) {
+      await db.delete("chat_message_join", where: "messageId = ?", whereArgs: [msg.id]);
+      await db.delete("message", where: "ROWID = ?", whereArgs: [msg.id]);
+    }
   }
 
   static flush() async {

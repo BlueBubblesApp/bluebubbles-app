@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'package:bluebubbles/blocs/chat_bloc.dart';
+import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:flutter/cupertino.dart';
@@ -208,14 +210,9 @@ class Chat {
       "isArchived": this.isArchived ? 1 : 0,
       "isMuted": this.isMuted ? 1 : 0,
     };
-    if (this.latestMessageDate == null) {
-      try {
-        throw new Exception("LATEST MESSAGE DATE IS NULL " + this.guid + "");
-      } catch (_, stack) {
-        debugPrint(stack.toString());
-      }
-      // debugPrint("LATEST MESSAGE DATE IS NULL " + this.guid);
-    } else {
+
+    // Only update the latestMessage info if it's not null
+    if (this.latestMessageDate != null) {
       params["latestMessageText"] = this.latestMessageText;
       params["latestMessageDate"] =
           this.latestMessageDate.millisecondsSinceEpoch;
@@ -223,7 +220,7 @@ class Chat {
 
     // Add display name if it's been updated
     if (this.displayName != null) {
-      params.putIfAbsent("displayName", () => this.displayName);
+      params["displayName"] = this.displayName;
     }
 
     // If it already exists, update it
@@ -261,19 +258,37 @@ class Chat {
   Future<Chat> addMessage(Message message) async {
     final Database db = await DBProvider.db.database;
 
-    // Save the message and the chat
+    // Save the message
+    Message newMessage = await message.save();
+
+    debugPrint(message.toMap().toString());
+
+    // If the message was saved correctly, update this chat's latestMessage info
+    if (newMessage.id != null) {
+      this.latestMessageText = MessageHelper.getNotificationText(message);
+      this.latestMessageDate = message.dateCreated;
+    }
+
+    // Save the chat.
+    // This will update the latestMessage info as well as update some
+    // other fields that we want to "mimic" from the server
     await this.save();
-    await message.save();
 
     // Check join table and add if relationship doesn't exist
     List entries = await db.query("chat_message_join",
         where: "chatId = ? AND messageId = ?",
         whereArgs: [this.id, message.id]);
+
+    // If the relationship doesn't exist, add it
     if (entries.length == 0) {
       await db.insert(
           "chat_message_join", {"chatId": this.id, "messageId": message.id});
     }
 
+    // Update the chat position
+    await ChatBloc().updateChatPosition(this);
+
+    // Return the current chat instance (with updated vals)
     return this;
   }
 

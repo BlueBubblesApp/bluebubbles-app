@@ -84,6 +84,14 @@ class _ReactionsState extends State<Reactions> {
                   }
                 },
               );
+
+              double topPadding = 1.0;
+              double rightPadding = 0;
+              if (widget.message.hasAttachments) {
+                topPadding = 10.0;
+                rightPadding = 5.0;
+              }
+
               return Stack(
                 alignment: widget.message.isFromMe
                     ? Alignment.bottomRight
@@ -92,7 +100,7 @@ class _ReactionsState extends State<Reactions> {
                   for (int i = 0; i < reactionIcon.keys.toList().length; i++)
                     Padding(
                       padding:
-                          EdgeInsets.fromLTRB(i.toDouble() * 20.0, 1.0, 0, 0),
+                          EdgeInsets.fromLTRB(i.toDouble() * 20.0, topPadding, rightPadding, 0),
                       child: Container(
                         height: 28,
                         width: 28,

@@ -103,7 +103,7 @@ class AttachmentSender {
             : MessageError.SERVER_ERROR.code;
 
         await Message.replaceMessage(tempGuid, sentMessage);
-        NewMessageManager().updateWithMessage(_chat, sentMessage);
+        NewMessageManager().addMessage(_chat, sentMessage, outgoing: true);
         if (messageWithText != null) {
           tempGuid = messageWithText.guid;
           messageWithText.guid = messageWithText.guid
@@ -113,7 +113,7 @@ class AttachmentSender {
               : MessageError.SERVER_ERROR.code;
 
           await Message.replaceMessage(tempGuid, sentMessage);
-          NewMessageManager().updateWithMessage(_chat, sentMessage);
+          NewMessageManager().addMessage(_chat, sentMessage, outgoing: true);
         }
         // sendChunkRecursive(index, total, tempGuid);
         SocketManager().finishSender(_attachmentGuid);
@@ -153,6 +153,7 @@ class AttachmentSender {
       text: "",
       dateCreated: DateTime.now(),
       hasAttachments: true,
+      attachments: [messageAttachment]
     );
 
     if (_text != "") {
@@ -172,16 +173,11 @@ class AttachmentSender {
     debugPrint("saved attachment with temp guid ${messageAttachment.guid}");
 
     await sentMessage.save();
-
-    await messageAttachment.save(sentMessage);
-    await _chat.save();
     await _chat.addMessage(sentMessage);
-    NewMessageManager().updateWithMessage(_chat, sentMessage);
+    NewMessageManager().addMessage(_chat, sentMessage, outgoing: true);
     if (messageWithText != null) {
-      await messageWithText.save();
-      await _chat.save();
       await _chat.addMessage(messageWithText);
-      NewMessageManager().updateWithMessage(_chat, messageWithText);
+      NewMessageManager().addMessage(_chat, messageWithText, outgoing: true);
     }
 
     _totalChunks = numOfChunks;

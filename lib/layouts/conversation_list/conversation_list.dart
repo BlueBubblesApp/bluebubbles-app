@@ -55,7 +55,7 @@ class _ConversationListState extends State<ConversationList> {
         if (this.mounted) setState(() {});
       });
 
-      ChatBloc().getChats();
+      ChatBloc().refreshChats();
     } else {
       ChatBloc().archivedChatStream.listen((List<Chat> chats) {
         _chats = chats;

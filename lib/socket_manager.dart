@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 import 'package:bluebubbles/action_handler.dart';
+import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/blocs/setup_bloc.dart';
 import 'package:bluebubbles/helpers/contstants.dart';
@@ -44,8 +45,7 @@ class SocketManager {
 
   void removeChatNotification(Chat chat) async {
     await chat.markReadUnread(false);
-
-    NewMessageManager().updateWithMessage(chat, null);
+    await ChatBloc().updateChatPosition(chat);
   }
 
   List<String> processedGUIDS = <String>[];
@@ -451,7 +451,7 @@ class SocketManager {
 
   void finishSetup() {
     finishedSetup.sink.add(true);
-    NewMessageManager().updateWithMessage(null, null);
+    ChatBloc().refreshChats();
     // notify();
   }
 

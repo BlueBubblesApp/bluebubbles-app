@@ -265,12 +265,10 @@ class _NewChatCreatorState extends State<NewChatCreator> {
                     }
                     Chat newChat = Chat.fromMap(data["data"]);
                     await newChat.save();
-                    await ChatBloc().moveChatToTop(newChat);
+                    await ChatBloc().updateChatPosition(newChat);
 
-                    NewMessageManager().updateWithMessage(null, null);
 
                     String title = await getFullChatTitle(newChat);
-                    await ChatBloc().moveChatToTop(newChat);
                     Navigator.of(context, rootNavigator: true).pop();
                     Navigator.of(context).pushReplacement(
                       CupertinoPageRoute(
