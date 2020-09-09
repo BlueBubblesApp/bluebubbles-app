@@ -25,7 +25,6 @@ class NotificationManager {
     if (chat == null) return;
     _currentChat = chat;
     await chat.markReadUnread(false);
-    NewMessageManager().updateWithMessage(chat, null);
     MethodChannelInterface()
         .invokeMethod("clear-chat-notifs", {"chatGuid": _currentChat.guid});
   }

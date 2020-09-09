@@ -108,10 +108,16 @@ class _MessageViewState extends State<MessageView>
           }
         } else if (originalMessageLength > _messages.length) {
           for (int i = originalMessageLength; i >= _messages.length; i--) {
-            if (_listKey != null && _listKey.currentState != null)
-              _listKey.currentState.removeItem(
+            if (_listKey != null && _listKey.currentState != null) {
+              try {
+                _listKey.currentState.removeItem(
                   i, (context, animation) => Container(),
-                  duration: Duration(milliseconds: 0));
+                    duration: Duration(milliseconds: 0));
+              } catch (ex) {
+                debugPrint("Error removing item animation");
+                debugPrint(ex.toString());
+              }
+            }
           }
         }
         if (_listKey != null && _listKey.currentState != null)
@@ -215,6 +221,7 @@ class _MessageViewState extends State<MessageView>
                             offset: timeStampOffset,
                             fromSelf: _messages[index].isFromMe,
                             message: _messages[index],
+                            chat: widget.messageBloc.currentChat,
                             olderMessage: olderMessage,
                             newerMessage: newerMessage,
                             showHandle: widget.showHandle,

@@ -66,6 +66,7 @@ class _SendWidgetState extends State<SendWidget> {
         )
       ],
       message: null,
+      chat: null,
       showTail: true,
       textSpans: <InlineSpan>[],
     );
@@ -148,6 +149,7 @@ class _SendWidgetState extends State<SendWidget> {
                                 )),
                           ],
                           message: null,
+                          chat: null,
                           showTail: true,
                           textSpans: <InlineSpan>[],
                         ),

@@ -92,16 +92,12 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
 
   Future<void> handleOpenImagePicker() async {
     FocusScope.of(context).requestFocus(new FocusNode());
-    debugPrint("Camera");
     if (await PhotoManager.requestPermission()) {
       List<AssetPathEntity> list =
           await PhotoManager.getAssetPathList(onlyAll: true);
       List<AssetEntity> images =
           await list.first.getAssetListRange(start: 0, end: 60);
-      _images = <AssetEntity>[];
-      images.forEach((element) {
-        _images.add(element);
-      });
+      _images = images;
       showImagePicker = true;
       _imageWidgets = <Widget>[];
 
@@ -124,6 +120,13 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                       child: Material(
                         color: Colors.transparent,
                         child: InkWell(
+                          child: element.type == AssetType.video
+                            ? Icon(
+                                Icons.play_circle_fill,
+                                color: Colors.white.withOpacity(0.5),
+                                size: 50
+                              )
+                            : Container(),
                           onTap: () async {
                             File image = await element.file;
                             for (int i = 0; i < pickedImages.length; i++) {
@@ -135,12 +138,6 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                         ),
                       ),
                     ),
-                    element.type == AssetType.video
-                        ? Icon(
-                            Icons.play_arrow,
-                            color: Colors.white,
-                          )
-                        : Container(),
                   ],
                 );
               } else {
@@ -202,7 +199,7 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                                 video: pickedImages[index].path,
                                 imageFormat: ImageFormat.PNG,
                                 maxHeight: 100,
-                                quality: 50,
+                                quality: 25,
                               ),
                               builder: (context, snapshot) {
                                 if (snapshot.connectionState ==

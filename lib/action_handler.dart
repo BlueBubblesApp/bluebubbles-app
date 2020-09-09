@@ -81,8 +81,7 @@ class ActionHandler {
     for (Message message in messages) {
       // Add the message to the UI and DB
       NewMessageManager()
-          .updateWithMessage(chat, message, sentFromThisClient: true);
-      await message.save();
+          .addMessage(chat, message, outgoing: true);
       await chat.addMessage(message);
 
       // Create params for the queue item
@@ -115,7 +114,7 @@ class ActionHandler {
             : MessageError.SERVER_ERROR.code;
 
         await Message.replaceMessage(tempGuid, message);
-        NewMessageManager().updateSpecificMessage(chat, tempGuid, message);
+        NewMessageManager().updateMessage(chat, tempGuid, message);
       }
 
       completer.complete();
@@ -174,11 +173,11 @@ class ActionHandler {
     // Delete the old message
     Map<String, dynamic> msgOpts = {'guid': oldGuid};
     await Message.delete(msgOpts);
-    NewMessageManager().deleteSpecificMessage(chat, oldGuid);
+    NewMessageManager().removeMessage(chat, oldGuid);
 
     // Add the new message
     await chat.addMessage(message);
-    NewMessageManager().updateWithMessage(chat, message);
+    NewMessageManager().addMessage(chat, message);
 
     SocketManager().sendMessage("send-message", params, (response) async {
       // If there is an error, replace the temp value with an error
@@ -187,7 +186,7 @@ class ActionHandler {
             .replaceAll("temp", "error-${response['error']['message']}");
         message.error = response['status'] == 400 ? 1001 : 1002;
         await Message.replaceMessage(tempGuid, message);
-        NewMessageManager().updateWithMessage(chat, message);
+        NewMessageManager().addMessage(chat, message);
       }
     });
   }
@@ -244,13 +243,12 @@ class ActionHandler {
           where: "ROWID = ?", whereArgs: [message["ROWID"]]);
     }
 
-    // Commit the deletes, then refresh the chats
+    // Commit the deletes
     await batch.commit(noResult: true, continueOnError: true);
-    NewMessageManager().updateWithMessage(chat, null);
 
     // Now, let's re-fetch the messages for the chat
     await messageBloc.loadMessageChunk(0, includeReactions: false);
-    NewMessageManager().updateWithMessage(null, null);
+    ChatBloc().refreshChats();
   }
 
   /// Handles the ingestion of a 'updated-message' event. It takes the
@@ -281,7 +279,7 @@ class ActionHandler {
 
     if (!headless && updatedMessage != null)
       NewMessageManager()
-          .updateSpecificMessage(chat, updatedMessage.guid, updatedMessage);
+          .updateMessage(chat, updatedMessage.guid, updatedMessage);
   }
 
   /// Handles the ingestion of an incoming chat. Chats come in
@@ -341,7 +339,7 @@ class ActionHandler {
 
         // Update the main view
         // await ChatBloc().getChats();
-        await ChatBloc().moveChatToTop(newChat);
+        await ChatBloc().updateChatPosition(newChat);
         // NewMessageManager().updateWithMessage(null, null);
       }
     });
@@ -375,7 +373,7 @@ class ActionHandler {
       if (existing != null) {
         await Message.delete({'guid': data['tempGuid']});
         NewMessageManager()
-            .deleteSpecificMessage(chats.first, data['tempGuid']);
+            .removeMessage(chats.first, data['tempGuid']);
       } else {
         await Message.replaceMessage(data["tempGuid"], message,
             chat: chats.first);
@@ -388,7 +386,7 @@ class ActionHandler {
         debugPrint("Client received message match for ${data["guid"]}");
         if (!isHeadless)
           NewMessageManager()
-              .updateSpecificMessage(chats.first, data['tempGuid'], message);
+              .updateMessage(chats.first, data['tempGuid'], message);
       }
     } else {
       if (SocketManager().processedGUIDS.contains(data["guid"])) return;
@@ -433,7 +431,7 @@ class ActionHandler {
               handle: message.handle,
               contact: getContact(message.handle.address));
         }
-        await message.save();
+
         debugPrint(
             "(handle message) handle message ${message.text}, ${message.guid} " +
                 data["dateCreated"].toString());
@@ -446,6 +444,9 @@ class ActionHandler {
           chat = await chat.changeName(message.groupTitle);
           ChatBloc().updateChat(chat);
         }
+
+        // Replace the chat with the updated chat
+        chats[i] = chat;
       }
 
       // Add any related attachments
@@ -465,9 +466,8 @@ class ActionHandler {
       }
 
       chats.forEach((element) {
-        // Update chats
         if (!isHeadless)
-          NewMessageManager().updateWithMessage(element, message);
+          NewMessageManager().addMessage(element, message);
       });
     }
   }

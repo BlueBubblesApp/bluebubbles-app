@@ -4,6 +4,7 @@ import 'package:bluebubbles/layouts/widgets/message_widget/message_content/messa
 import 'package:bluebubbles/layouts/widgets/message_widget/received_message.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/sent_message.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
+import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -15,6 +16,7 @@ class MessageWidget extends StatefulWidget {
     Key key,
     this.fromSelf,
     this.message,
+    this.chat,
     this.olderMessage,
     this.newerMessage,
     this.showHandle,
@@ -28,6 +30,7 @@ class MessageWidget extends StatefulWidget {
 
   final fromSelf;
   final Message message;
+  final Chat chat;
   final Message newerMessage;
   final Message olderMessage;
   final bool showHandle;
@@ -99,6 +102,7 @@ class _MessageState extends State<MessageWidget> {
         offset: widget.offset,
         timeStamp: _buildTimeStamp(context),
         message: widget.message,
+        chat: widget.chat,
         showDeliveredReceipt:
             widget.customContent == null && widget.isFirstSentMessage,
         // overlayEntry: _createOverlayEntry(context),

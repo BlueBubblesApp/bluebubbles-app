@@ -7,6 +7,7 @@ import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
+import 'package:flutter/cupertino.dart';
 
 class MessageHelper {
   static Future<List<Message>> bulkAddMessages(
@@ -71,11 +72,7 @@ class MessageHelper {
                 contact: getContact(message.handle.address));
             NotificationManager().processedNotifications.add(message.guid);
             await msgChat.markReadUnread(true);
-            NewMessageManager().updateWithMessage(msgChat, message);
-            // if (!SocketManager().chatsWithNotifications.contains(msgChat.guid) &&
-            //     NotificationManager().chatGuid != msgChat.guid) {
-            //   SocketManager().chatsWithNotifications.add(msgChat.guid);
-            // }
+            NewMessageManager().addMessage(msgChat, message);
           }
         }
       }
@@ -114,6 +111,12 @@ class MessageHelper {
   }
 
   static String getNotificationText(Message message) {
+    // If the item type is not 0, it's a group event
+    if (message.itemType != 0) {
+      return getGroupEventText(message);
+    }
+
+    // Parse/search for links
     List<RegExpMatch> matches = parseLinks(message.text);
 
     // If there are attachments, return the number of attachments
@@ -122,7 +125,7 @@ class MessageHelper {
       // Build the attachment output by counting the attachments
       String output = "Attachment${aCount > 1 ? "s" : ""}";
       Map<String, int> counts = {};
-      for (Attachment attachment in message.attachments) {
+      for (Attachment attachment in message.attachments ?? []) {
         String mime = attachment.mimeType;
         String key;
         if (mime == null) {

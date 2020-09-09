@@ -1,12 +1,16 @@
 import 'dart:ui';
 
 import 'package:bluebubbles/action_handler.dart';
+import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/delivered_receipt.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_details_popup.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/reactions.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
+import 'package:bluebubbles/managers/new_message_manager.dart';
+import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
@@ -16,6 +20,7 @@ import 'package:intl/intl.dart';
 class SentMessage extends StatefulWidget {
   final bool showTail;
   final Message message;
+  final Chat chat;
   // final OverlayEntry overlayEntry;
   final bool shouldFadeIn;
   final Map<String, String> timeStamp;
@@ -32,6 +37,7 @@ class SentMessage extends StatefulWidget {
     Key key,
     @required this.showTail,
     @required this.message,
+    @required this.chat,
     // @required this.overlayEntry,
     @required this.timeStamp,
     @required this.showDeliveredReceipt,
@@ -56,12 +62,6 @@ class _SentMessageState extends State<SentMessage>
   @override
   void initState() {
     super.initState();
-    // _visible = !widget.shouldFadeIn;
-    // Future.delayed(Duration(milliseconds: 50), () {
-    //   setState(() {
-    //     _visible = true;
-    //   });
-    // });
   }
 
   OverlayEntry _createErrorPopup() {
@@ -69,7 +69,6 @@ class _SentMessageState extends State<SentMessage>
     int errorCode = widget.message != null ? widget.message.error : 0;
     String errorText =
         widget.message != null ? widget.message.guid.split('-')[1] : "";
-    debugPrint(errorText);
 
     entry = OverlayEntry(
       builder: (context) => Scaffold(
@@ -125,6 +124,24 @@ class _SentMessageState extends State<SentMessage>
                                       if (widget.message != null)
                                         ActionHandler.retryMessage(
                                             widget.message);
+                                      entry.remove();
+                                    }),
+                                CupertinoButton(
+                                    child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: <Widget>[
+                                          Text("Remove"),
+                                          Container(width: 5.0),
+                                          Icon(Icons.refresh,
+                                              color: Colors.white, size: 18)
+                                        ]),
+                                    color: Colors.black26,
+                                    onPressed: () async {
+                                      if (widget.message != null) {
+                                        NewMessageManager().removeMessage(widget.chat, widget.message.guid);
+                                      }
+                                        
                                       entry.remove();
                                     })
                               ],
@@ -278,6 +295,7 @@ class _SentMessageState extends State<SentMessage>
                                     createErrorPopup: this._createErrorPopup,
                                     customContent: widget.customContent,
                                     message: widget.message,
+                                    chat: widget.chat,
                                     showTail: widget.showTail,
                                     textSpans: textSpans,
                                   ),
@@ -288,6 +306,7 @@ class _SentMessageState extends State<SentMessage>
                                 createErrorPopup: this._createErrorPopup,
                                 customContent: widget.customContent,
                                 message: widget.message,
+                                chat: widget.chat,
                                 showTail: widget.showTail,
                                 textSpans: textSpans,
                               ),
@@ -366,6 +385,7 @@ class ActualSentMessage extends StatefulWidget {
     @required this.blueColor,
     @required this.showTail,
     @required this.message,
+    @required this.chat,
     @required this.customContent,
     @required this.textSpans,
     @required this.createErrorPopup,
@@ -374,6 +394,7 @@ class ActualSentMessage extends StatefulWidget {
   final Color blueColor;
   final bool showTail;
   final Message message;
+  final Chat chat;
   final List<Widget> customContent;
   final List<InlineSpan> textSpans;
   final Function() createErrorPopup;
@@ -462,25 +483,64 @@ class _ActualSentMessageState extends State<ActualSentMessage> {
           : Container()
     ];
 
-    if (widget.message != null && widget.message.error > 0)
+    if (widget.message != null && widget.message.error > 0) {
+      int errorCode = widget.message != null ? widget.message.error : 0;
+      String errorText =
+          widget.message != null ? widget.message.guid.split('-')[1] : "";
+
       messageWidget.add(
-        // ButtonTheme(
-        //   minWidth: 1,
-        //   height: 1,
-        //   child: CupertinoButton(
-        //     onPressed: () {
-        //       Overlay.of(context).insert(widget.createErrorPopup());
-        //     },
-        //     child: Icon(Icons.error_outline, color: Colors.red),
-        //   ),
-        // ),
         GestureDetector(
           onTap: () {
-            Overlay.of(context).insert(widget.createErrorPopup());
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  title: new Text("Message failed to send"),
+                  content: new Text("Error ($errorCode): $errorText"),
+                  actions: <Widget> [
+                    new FlatButton(
+                      child: new Text("Retry"),
+                      onPressed: () {
+                        // Remove the OG alert dialog
+                        Navigator.of(context).pop();
+                        ActionHandler.retryMessage(widget.message);
+                      }
+                    ),
+                    new FlatButton(
+                      child: new Text("Remove"),
+                      onPressed: () async {
+                        Navigator.of(context).pop();
+                        // Delete the message from the DB
+                        await Message.delete({'guid': widget.message.guid});
+
+                        // Remove the message from the Bloc
+                        NewMessageManager().removeMessage(widget.chat, widget.message.guid);
+
+                        // Get the "new" latest info
+                        List<Message> latest = await Chat.getMessages(widget.chat, limit: 1);
+                        widget.chat.latestMessageDate = latest.first != null ? latest.first.dateCreated : null;
+                        widget.chat.latestMessageText = latest.first != null ? MessageHelper.getNotificationText(latest.first) : null;
+
+                        // Update it in the Bloc
+                        await ChatBloc().updateChatPosition(widget.chat);
+                      }
+                    ),
+                    new FlatButton(
+                      child: new Text("Cancel"),
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      }
+                    )
+                  ]
+                );
+              }
+            );
           },
           child: Icon(Icons.error_outline, color: Colors.red),
         ),
       );
+    }
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.end,
       children: messageWidget,

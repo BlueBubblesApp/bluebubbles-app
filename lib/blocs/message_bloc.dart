@@ -36,64 +36,49 @@ class MessageBloc {
 
   MessageBloc(Chat chat) {
     _currentChat = chat;
-    NewMessageManager().stream.listen((Map<String, dynamic> event) {
+    NewMessageManager().stream.listen((msgEvent) {
       if (_messageController.isClosed) return;
-      if (event.containsKey(_currentChat.guid)) {
-        //if there even is a chat specified in the newmessagemanager update
-        if (event[_currentChat.guid] == null) {
-          if (event.containsKey("remove") && event["remove"] != null) {
-            if (_allMessages.containsKey(event["remove"])) {
-              _allMessages.remove(event["remove"]);
-              if (!_messageController.isClosed)
-                _messageController.sink.add({
-                  "messages": _allMessages,
-                  "update": event[_currentChat.guid],
-                  "index": null,
-                  "remove": event["remove"]
-                });
-            }
-          } else {
-            //if no message is specified in the newmessagemanager update
-            getMessages();
+
+      // Ignore any events that don't have to do with the current chat
+      if (!msgEvent.containsKey(_currentChat.guid)) return;
+
+      // Iterate over each action that needs to take place on the chat
+      msgEvent[_currentChat.guid].forEach((actionType, actions) {
+        for (Map<String, dynamic> action in actions) {
+          bool addToSink = true;
+          Map<String, dynamic> baseEvent = {
+            "messages": null,
+            "update": null,
+            "index": null,
+            "remove": null
+          };
+
+          // If we want to remove something, set the event data correctly
+          if (actionType == NewMessageAction.REMOVE &&
+              _allMessages.containsKey(action["guid"])) {
+            _allMessages.remove(action["guid"]);
+            baseEvent["remove"] = action["guid"];
+          } else if (actionType == NewMessageAction.UPDATE &&
+              _allMessages.containsKey(action["oldGuid"])) {
+            
+            // If we want to updating an existing message, remove the old one, and add the new one
+            _allMessages.remove(action["oldGuid"]);
+            insert(action["message"], addToSink: false);
+            baseEvent["update"] = action["message"];
+            baseEvent["oldGuid"] = action["oldGuid"];
+          } else if (actionType == NewMessageAction.ADD) {
+            // If we want to add a message, just add it through `insert`
+            addToSink = false;
+            insert(action["message"], sentFromThisClient: action["outgoing"]);
           }
-        } else {
-          if (event.containsKey("oldGuid")) {
-            if (_allMessages.containsKey(event["oldGuid"])) {
-              // List<Message> values = _allMessages.values.toList();
-              // List<String> keys = _allMessages.keys.toList();
-              // for (int i = 0; i < keys.length; i++) {
-              //   if (keys[i] == event["oldGuid"]) {
-              //     keys[i] = (event[_currentChat.guid] as Message).guid;
-              //     values[i] = event[_currentChat.guid];
-              //     break;
-              //   }
-              // }
-              _allMessages.remove(event["oldGuid"]);
-              insert(event[_currentChat.guid], addToSink: false);
-              // _allMessages = LinkedHashMap<String, Message>.from(
-              //     LinkedHashMap.fromIterables(keys, values));
-              if (!_messageController.isClosed)
-                _messageController.sink.add({
-                  "messages": _allMessages,
-                  "update": event[_currentChat.guid],
-                  "index": null,
-                  "oldGuid": event["oldGuid"]
-                });
-            } else {
-              debugPrint("could not find existing message");
-            }
-          } else {
-            //if there is a specific message to insert
-            insert(event[_currentChat.guid],
-                sentFromThisClient: event.containsKey("sentFromThisClient")
-                    ? event["sentFromThisClient"]
-                    : false);
+
+          // As long as the controller isn't closed and it's not an `add`, update the listeners
+          if (addToSink && !_messageController.isClosed) {
+            baseEvent["messages"] = _allMessages;
+            _messageController.sink.add(baseEvent);
           }
         }
-      } else if (event.keys.first == null) {
-        //if there is no chat specified in the newmessagemanager update
-        getMessages();
-      }
+      });
     });
   }
 
@@ -129,7 +114,8 @@ class MessageBloc {
     }
 
     if (sentFromThisClient) {
-      _allMessages = linkedHashMapInsert(_allMessages, 0, message.guid, message);
+      _allMessages =
+          linkedHashMapInsert(_allMessages, 0, message.guid, message);
     } else {
       List<Message> messages = _allMessages.values.toList();
       for (int i = 0; i < messages.length; i++) {
@@ -148,14 +134,15 @@ class MessageBloc {
         }
       }
     }
-    
-    if (!_messageController.isClosed && addToSink)
+
+    if (!_messageController.isClosed && addToSink) {
       _messageController.sink.add({
         "messages": _allMessages,
         "insert": message,
         "index": index,
         "sentFromThisClient": sentFromThisClient
       });
+    }
   }
 
   LinkedHashMap linkedHashMapInsert(map, int index, key, value) {
