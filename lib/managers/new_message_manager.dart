@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
+import 'package:flutter/material.dart';
 
 class NewMessageAction {
   // ignore: non_constant_identifier_names
@@ -58,22 +59,17 @@ class NewMessageManager {
 
   void addMessage(Chat chat, Message message, {bool outgoing = false}) {
     if (chat == null) {
-      _stream.sink.add({
-        null: {
-          NewMessageAction.ADD: [
-            {"message": message}
-          ]
-        }
-      });
-    } else {
-      _stream.sink.add({
-        chat.guid: {
-          NewMessageAction.ADD: [
-            {"message": message, "outgoing": outgoing, "chat": chat}
-          ]
-        }
-      });
+      debugPrint("No chat provided to NewMessageManager!");
+      return;
     }
+
+    _stream.sink.add({
+      chat.guid: {
+        NewMessageAction.ADD: [
+          {"message": message, "outgoing": outgoing, "chat": chat}
+        ]
+      }
+    });
   }
 
   dispose() {

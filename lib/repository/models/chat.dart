@@ -233,7 +233,7 @@ class Chat {
     return this;
   }
 
-  Future<Chat> markReadUnread(bool hasUnreadMessage) async {
+  Future<Chat> setUnreadStatus(bool hasUnreadMessage) async {
     final Database db = await DBProvider.db.database;
     if (hasUnreadMessage) {
       if (NotificationManager().chatGuid == this.guid) {
@@ -260,13 +260,20 @@ class Chat {
 
     // Save the message
     Message newMessage = await message.save();
+    bool isNewer = false;
 
-    debugPrint(message.toMap().toString());
-
-    // If the message was saved correctly, update this chat's latestMessage info
-    if (newMessage.id != null) {
+    // If the message was saved correctly, update this chat's latestMessage info,
+    // but only if the incoming message's date is newer
+    if (newMessage.id != null &&
+        (
+          this.latestMessageDate == null ||
+          this.latestMessageDate.millisecondsSinceEpoch <
+            message.dateCreated.millisecondsSinceEpoch
+        )
+    ) {
       this.latestMessageText = MessageHelper.getNotificationText(message);
       this.latestMessageDate = message.dateCreated;
+      isNewer = true;
     }
 
     // Save the chat.
@@ -283,6 +290,17 @@ class Chat {
     if (entries.length == 0) {
       await db.insert(
           "chat_message_join", {"chatId": this.id, "messageId": message.id});
+    }
+
+    // If the incoming message was newer than the "last" one, set the unread status accordingly
+    if (isNewer) {
+      // If the message is from me, mark it unread
+      // If the message is not from the same chat as the current chat, mark unread
+      if (message.isFromMe) {
+        await this.setUnreadStatus(false);
+      } else if (NotificationManager().chatGuid != this.guid) {
+        await this.setUnreadStatus(true);
+      }
     }
 
     // Update the chat position

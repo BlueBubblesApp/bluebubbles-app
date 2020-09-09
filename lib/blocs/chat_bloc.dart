@@ -129,15 +129,6 @@ class ChatBloc {
     if (actionType == NewMessageAction.ADD) {
       // Find the chat to update
       Chat updatedChat = action["chat"];
-      Message newMessage = action["message"];
-
-      // If the message is from "me", mark the chat as unread
-      if (newMessage != null && newMessage.isFromMe) {
-        await updatedChat.markReadUnread(false);
-      }
-
-      debugPrint("Updating CHAT");
-      debugPrint(action["chat"].toString());
 
       // Update the tile values for the chat (basically just the title)
       await initTileValsForChat(updatedChat);
