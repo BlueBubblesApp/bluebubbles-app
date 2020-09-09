@@ -7,6 +7,8 @@ import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
+import 'package:contacts_service/contacts_service.dart';
+import 'package:flutter/cupertino.dart';
 
 class MessageHelper {
   static Future<List<Message>> bulkAddMessages(
@@ -152,7 +154,19 @@ class MessageHelper {
       });
 
       return "$output: ${attachmentStr.join(attachmentStr.length == 2 ? " & " : ", ")}";
+    } else if (![null, ""].contains(message.associatedMessageGuid)) {
+      // It's a reaction message, get the "sender"
+      String sender = (message.isFromMe) ? "You" : formatPhoneNumber(message.handle.address);
+      if (message.handle != null) {
+        Contact contact = getContact(message.handle.address);
+        if (contact != null) {
+          sender = contact.givenName ?? contact.displayName;
+        }
+      }
+
+      return "$sender ${message.text}";
     } else {
+      // It's all other message types
       return message.text;
     }
   }

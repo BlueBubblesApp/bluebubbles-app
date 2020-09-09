@@ -95,7 +95,7 @@ Contact getContact(String id) {
 }
 
 getInitials(String name, String delimeter) {
-  if (name == null) return "";
+  if (name == null) return Icon(Icons.person, color: Colors.white, size: 30);
   List array = name.split(delimeter);
   // If there is a comma, just return the "people" icon
   if (name.contains(", "))

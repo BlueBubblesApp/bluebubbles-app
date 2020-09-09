@@ -190,6 +190,7 @@ class _MessageViewState extends State<MessageView>
                           loader = null;
                         });
                       }
+
                       return NewMessageLoader(
                         messageBloc: widget.messageBloc,
                         offset: _messages.length,

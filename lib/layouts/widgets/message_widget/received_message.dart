@@ -1,3 +1,4 @@
+import 'package:bluebubbles/helpers/reaction.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_details_popup.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/reactions.dart';
@@ -299,7 +300,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> {
     entry = OverlayEntry(
       builder: (context) => MessageDetailsPopup(
         entry: entry,
-        reactions: reactions,
+        reactions: Reaction.getUniqueReactionMessages(reactions),
         message: widget.message,
       ),
     );
