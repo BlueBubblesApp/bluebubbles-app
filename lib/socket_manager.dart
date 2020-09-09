@@ -44,7 +44,7 @@ class SocketManager {
   SocketManager._internal();
 
   void removeChatNotification(Chat chat) async {
-    await chat.markReadUnread(false);
+    await chat.setUnreadStatus(false);
     await ChatBloc().updateChatPosition(chat);
   }
 
@@ -99,14 +99,6 @@ class SocketManager {
       _socketProcessUpdater.sink.add(socketProcesses.keys.toList());
     });
   }
-
-  // void removeFromSocketProcess(int processId) {
-  //   socketProcesses.remove(processId);
-  //   _socketProcessUpdater.sink.add(socketProcesses);
-  //   // if (!LifeCycleManager().isAlive) {
-  //   //   closeSocket();
-  //   // }
-  // }
 
   StreamController _socketProcessUpdater =
       StreamController<List<int>>.broadcast();
@@ -190,14 +182,6 @@ class SocketManager {
             if (!LifeCycleManager().isAlive) {
               closeSocket(force: true);
             }
-            // socket.destroy();
-            // NotificationManager().createNotificationChannel();
-            // NotificationManager().createNewNotification(
-            //     "Unable To Connect To Server",
-            //     "We were unable to connect to your server, are you online?",
-            //     "Socket_io",
-            //     404,
-            //     404);
           });
         }
         return;
@@ -255,15 +239,6 @@ class SocketManager {
     if (state == SocketState.FAILED) {
       state = SocketState.CONNECTING;
     }
-
-    // if ((state == SocketState.FAILED && socketProcesses.length > 0) &&
-    //     !forceNewConnection) {
-    //   debugPrint(
-    //       "not reconnecting with socket processes still active and connection failed");
-    //   return;
-    // } else {
-    //   state = SocketState.CONNECTING;
-    // }
 
     // If we already have a socket connection, kill it
     if (_manager.socket != null) {
