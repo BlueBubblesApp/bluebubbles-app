@@ -116,27 +116,30 @@ class _ConversationViewState extends State<ConversationView> {
               ),
             ),
             Container(height: 3.0),
-            Container(
-              padding: EdgeInsets.only(left: 10),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  GestureDetector(
-                    onTap: openDetails,
-                    child: Text(
-                      getShortChatTitle(chat),
-                      style: Theme.of(context).textTheme.headline2,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                GestureDetector(
+                  onTap: openDetails,
+                  child: RichText(
+                    text: TextSpan(
+                      style: Theme.of(context)
+                          .textTheme
+                          .headline2,
+                      children: [
+                        TextSpan(
+                          text: getShortChatTitle(chat),
+                          style: Theme.of(context).textTheme.bodyText1,
+                        ),
+                        TextSpan(
+                          text: " >",
+                          style: Theme.of(context).textTheme.subtitle1
+                        )
+                      ],
                     ),
-                  ),
-                  //Container(width: 5),
-                  Padding(
-                      padding: EdgeInsets.only(top: 2.0, left: 3.0),
-                      child: Text(
-                        ">",
-                        style: Theme.of(context).textTheme.subtitle1.apply(),
-                      ))
-                ],
-              ),
+                  )
+                )
+              ],
             ),
           ],
         ),
