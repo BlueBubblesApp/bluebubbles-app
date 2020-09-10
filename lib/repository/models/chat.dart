@@ -35,8 +35,7 @@ Future<String> getFullChatTitle(Chat _chat) async {
 
     List<String> titles = [];
     for (int i = 0; i < chat.participants.length; i++) {
-      String name = getContactTitle(
-          chat.participants[i].id, chat.participants[i].address);
+      String name = getContactTitle(chat.participants[i].address);
 
       if (chat.participants.length > 1 && !name.startsWith('+1')) {
         name = name.trim().split(" ")[0];
@@ -69,8 +68,7 @@ Future<String> getFullChatTitle(Chat _chat) async {
 
 String getShortChatTitle(Chat _chat) {
   if (_chat.participants.length == 1) {
-    return getContactTitle(
-        _chat.participants[0].id, _chat.participants[0].address);
+    return getContactTitle(_chat.participants[0].address);
   } else if (_chat.displayName != null && _chat.displayName.length != 0) {
     return _chat.displayName;
   } else {

@@ -393,12 +393,7 @@ class ActionHandler {
         // Handle the notification based on the message and chat
         await MessageHelper.handleNotification(message, chat);
 
-        debugPrint(
-            "(handle message) handle message ${message.text}, ${message.guid} " +
-                data["dateCreated"].toString());
-        debugPrint(
-            "(handle message) after saving ${message.text}, ${message.guid} " +
-                message.dateCreated.millisecondsSinceEpoch.toString());
+        debugPrint("(ActionHandler.handleMessage) [${message.text}] - [${message.guid}]");
         await chat.addMessage(message);
 
         if (message.itemType == ItemTypes.nameChanged.index) {

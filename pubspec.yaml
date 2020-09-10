@@ -117,6 +117,7 @@ flutter:
     - assets/reactions/question-black.svg
     - assets/reactions/love-black.svg
     - assets/icon/moon.svg
+    - assets/images/person.png
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware.
   # For details regarding adding assets from package dependencies, see

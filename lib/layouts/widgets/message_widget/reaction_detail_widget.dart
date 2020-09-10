@@ -40,8 +40,8 @@ class _ReactionDetailWidgetState extends State<ReactionDetailWidget> {
 
   @override
   Widget build(BuildContext context) {
-    final initials = getInitials(widget.handle == null ? null :
-        getContactTitle(widget.handle.id, widget.handle.address), " ");
+    String handleAddress = widget.handle == null ? null : widget.handle.address;
+    final initials = getInitials(handleAddress, " ");
 
     Color iconColor = Colors.white;
     if (Theme.of(context).accentColor.computeLuminance() >= 0.179) {
@@ -60,8 +60,7 @@ class _ReactionDetailWidgetState extends State<ReactionDetailWidget> {
         ),
         Padding(
           padding: EdgeInsets.only(bottom: 8.0),
-          child: Text(
-            (widget.handle == null) ? "You" : getContactTitle(widget.handle.id, widget.handle.address),
+          child: Text(getContactTitle(handleAddress),
             style: Theme.of(context)
                 .textTheme
                 .bodyText1

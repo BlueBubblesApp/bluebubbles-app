@@ -1,8 +1,8 @@
 import 'dart:async';
 
 import 'package:bluebubbles/managers/contact_manager.dart';
+import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
-import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/material.dart';
 
 import '../repository/models/handle.dart';
@@ -47,6 +47,7 @@ class ChatBloc {
   }
 
   Future<void> refreshChats() async {
+    _chats = [];
     debugPrint("[ChatBloc] -> Fetching chats...");
 
     // Get the contacts in case we haven't
@@ -73,6 +74,10 @@ class ChatBloc {
 
   /// Inserts a [chat] into the chat bloc based on the lastMessage data
   Future<void> updateChatPosition(Chat chat) async {
+    if (_chats == null && LifeCycleManager().isAlive) {
+      await this.refreshChats();
+    }
+
     int currentIndex = -1;
     bool shouldUpdate = true;
 

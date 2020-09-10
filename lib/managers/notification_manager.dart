@@ -1,9 +1,12 @@
+import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:contacts_service/contacts_service.dart';
+import 'package:flutter/material.dart';
 
 class NotificationManager {
   factory NotificationManager() {
@@ -18,6 +21,8 @@ class NotificationManager {
   NotificationManager._internal();
 
   List<String> processedItems = <String>[];
+
+  Uint8List personAvatar;
 
   /// Checks if a [guid] has been marked as processed
   bool hasProcessed(String guid) {
@@ -72,12 +77,22 @@ class NotificationManager {
       String senderName,
       bool groupConversation,
       {Handle handle,
-      Contact contact}) {
-    String address = handle.address;
-
+      Contact contact}) async {
     Uint8List contactIcon;
-    if (contact != null) {
-      if (contact.avatar.length > 0) contactIcon = contact.avatar;
+
+    try {
+      if (contact != null) {
+        if (contact.avatar.length > 0) contactIcon = contact.avatar;
+      } else {
+        if (personAvatar == null) {
+          ByteData file = await loadAsset("assets/images/person.png");
+          personAvatar = file.buffer.asUint8List();
+        }
+
+        contactIcon = personAvatar;
+      }
+    } catch (ex) {
+      debugPrint("Failed to load contact avatar: ${ex.toString()}");
     }
 
     MethodChannelInterface().platform.invokeMethod("new-message-notification", {
@@ -88,7 +103,6 @@ class NotificationManager {
       "group": group,
       "notificationId": id,
       "summaryId": summaryId,
-      "address": address,
       "timeStamp": timeStamp,
       "name": senderName,
       "groupConversation": groupConversation,

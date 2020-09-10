@@ -43,8 +43,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> {
   Widget build(BuildContext context) {
     String handle = "";
     if (widget.message.handle != null && widget.showHandle) {
-      handle = getContactTitle(
-          widget.message.handleId, widget.message.handle.address);
+      handle = getContactTitle(widget.message.handle.address);
     }
 
     List<Widget> tail = <Widget>[
