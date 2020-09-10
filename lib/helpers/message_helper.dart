@@ -5,11 +5,9 @@ import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
-import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:contacts_service/contacts_service.dart';
-import 'package:flutter/cupertino.dart';
 
 class MessageHelper {
   static Future<List<Message>> bulkAddMessages(
@@ -54,7 +52,7 @@ class MessageHelper {
 
       // Tell all listeners that we have a new message, and save the message
       NewMessageManager().addMessage(msgChat, message);
-      await msgChat.addMessage(message);
+      await msgChat.addMessage(message, changeUnreadStatus: notifyForNewMessage);
 
       // Create the attachments
       List<dynamic> attachments = item['attachments'];

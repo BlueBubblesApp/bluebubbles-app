@@ -259,7 +259,7 @@ class Chat {
     return this;
   }
 
-  Future<Chat> addMessage(Message message) async {
+  Future<Chat> addMessage(Message message, {bool changeUnreadStatus: true}) async {
     final Database db = await DBProvider.db.database;
 
     // Save the message
@@ -297,7 +297,7 @@ class Chat {
     }
 
     // If the incoming message was newer than the "last" one, set the unread status accordingly
-    if (isNewer) {
+    if (changeUnreadStatus && isNewer) {
       // If the message is from me, mark it unread
       // If the message is not from the same chat as the current chat, mark unread
       if (message.isFromMe) {
