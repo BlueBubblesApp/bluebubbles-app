@@ -98,7 +98,7 @@ class MessageHelper {
 
     // Handle all the cases that would mean we don't show the notification
     if (existingMessage != null || chat.isMuted) return;
-    //if (message.isFromMe || message.handle == null) return;
+    if (message.isFromMe || message.handle == null) return;
     if (LifeCycleManager().isAlive && NotificationManager().chatGuid == chat.guid) return;
 
     String handleAddress;
