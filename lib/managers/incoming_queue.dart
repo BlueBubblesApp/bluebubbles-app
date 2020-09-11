@@ -1,5 +1,4 @@
 import 'package:bluebubbles/action_handler.dart';
-import 'package:bluebubbles/helpers/attachment_sender.dart';
 import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:flutter/material.dart';
 

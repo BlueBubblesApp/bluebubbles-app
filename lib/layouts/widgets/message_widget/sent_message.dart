@@ -4,6 +4,7 @@ import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
+import 'package:bluebubbles/helpers/reaction.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/delivered_receipt.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_details_popup.dart';
@@ -371,7 +372,7 @@ class _SentMessageState extends State<SentMessage>
     entry = OverlayEntry(
       builder: (context) => MessageDetailsPopup(
         entry: entry,
-        reactions: reactions,
+        reactions: Reaction.getUniqueReactionMessages(reactions),
         message: widget.message,
       ),
     );

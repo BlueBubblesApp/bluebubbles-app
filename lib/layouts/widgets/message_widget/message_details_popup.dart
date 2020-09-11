@@ -39,7 +39,6 @@ class _MessageDetailsPopupState extends State<MessageDetailsPopup>
   void didChangeDependencies() async {
     super.didChangeDependencies();
     for (Message reaction in widget.reactions) {
-      if (reaction.isFromMe) continue;
       await reaction.getHandle();
       reactionWidgets.add(
         ReactionDetailWidget(
@@ -88,7 +87,7 @@ class _MessageDetailsPopupState extends State<MessageDetailsPopup>
                                   color: Theme.of(context).accentColor,
                                   child: Padding(
                                     padding:
-                                        EdgeInsets.symmetric(horizontal: 30),
+                                        EdgeInsets.symmetric(horizontal: 0),
                                     child: ListView.builder(
                                       shrinkWrap: true,
                                       physics: AlwaysScrollableScrollPhysics(

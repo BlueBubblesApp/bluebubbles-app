@@ -180,7 +180,6 @@ class MessageBloc {
     if (_currentChat != null) {
       List<Message> messages =
           await Chat.getMessages(_currentChat, offset: offset + reactionCnt);
-
       if (messages.length == 0) {
         Map<String, dynamic> params = Map();
         params["identifier"] = _currentChat.guid;

@@ -38,6 +38,7 @@ abstract class QueueManager {
       await afterProcessing(queued, {});
     } catch (ex) {
       debugPrint("Failed to handle queued item!");
+      debugPrint(StackTrace.current.toString());
     }
 
     // Process the next item

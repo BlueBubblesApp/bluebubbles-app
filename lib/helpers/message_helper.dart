@@ -7,6 +7,7 @@ import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
+import 'package:contacts_service/contacts_service.dart';
 
 class MessageHelper {
   static Future<List<Message>> bulkAddMessages(
@@ -51,7 +52,7 @@ class MessageHelper {
 
       // Tell all listeners that we have a new message, and save the message
       NewMessageManager().addMessage(msgChat, message);
-      await msgChat.addMessage(message);
+      await msgChat.addMessage(message, changeUnreadStatus: notifyForNewMessage);
 
       // Create the attachments
       List<dynamic> attachments = item['attachments'];
@@ -87,16 +88,25 @@ class MessageHelper {
     // See if there is an existing message for the given GUID
     Message existingMessage = await Message.findOne({"guid": message.guid});
 
+    // If we've already processed the GUID, skip it
+    if (NotificationManager().hasProcessed(message.guid)) return;
+
     // Add the message to the "processed" list
     NotificationManager().addProcessed(message.guid);
 
     // Handle all the cases that would mean we don't show the notification
-    if (existingMessage != null) return;
+    if (existingMessage != null || chat.isMuted) return;
     if (message.isFromMe || message.handle == null) return;
-    if (chat.isMuted || NotificationManager().hasProcessed(message.guid)) return;
     if (LifeCycleManager().isAlive && NotificationManager().chatGuid == chat.guid) return;
-  
+
+    String handleAddress;
+    if (message.handle != null) {
+      handleAddress = message.handle.address;
+    }
+
     // Create the notification
+    String contactTitle = getContactTitle(handleAddress);
+    Contact contact = getContact(handleAddress);
     String title = await getFullChatTitle(chat);
     NotificationManager().createNewNotification(
       title,
@@ -105,10 +115,10 @@ class MessageHelper {
       Random().nextInt(9998) + 1,
       chat.id,
       message.dateCreated.millisecondsSinceEpoch,
-      getContactTitle(message.handle.id, message.handle.address),
+      contactTitle,
       chat.participants.length > 1,
       handle: message.handle,
-      contact: getContact(message.handle.address)
+      contact: contact
     );
   }
 
@@ -152,7 +162,19 @@ class MessageHelper {
       });
 
       return "$output: ${attachmentStr.join(attachmentStr.length == 2 ? " & " : ", ")}";
+    } else if (![null, ""].contains(message.associatedMessageGuid)) {
+      // It's a reaction message, get the "sender"
+      String sender = (message.isFromMe) ? "You" : formatPhoneNumber(message.handle.address);
+      if (!message.isFromMe && message.handle != null) {
+        Contact contact = getContact(message.handle.address);
+        if (contact != null) {
+          sender = contact.givenName ?? contact.displayName;
+        }
+      }
+
+      return "$sender ${message.text}";
     } else {
+      // It's all other message types
       return message.text;
     }
   }

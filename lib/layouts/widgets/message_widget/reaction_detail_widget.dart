@@ -30,6 +30,7 @@ class _ReactionDetailWidgetState extends State<ReactionDetailWidget> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    if (widget.handle == null) return;
     Contact contact = getContact(widget.handle.address);
     if (contact != null && contact.avatar.length > 0) {
       contactImage = MemoryImage(contact.avatar);
@@ -39,61 +40,57 @@ class _ReactionDetailWidgetState extends State<ReactionDetailWidget> {
 
   @override
   Widget build(BuildContext context) {
-    final initials = getInitials(
-        getContactTitle(widget.handle.id, widget.handle.address), " ");
+    String handleAddress = widget.handle == null ? null : widget.handle.address;
+    final initials = getInitials(handleAddress, " ");
 
     Color iconColor = Colors.white;
     if (Theme.of(context).accentColor.computeLuminance() >= 0.179) {
         iconColor = Colors.black.withAlpha(95);
     }
 
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 10),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 25.0, vertical: 10),
-            child: ContactAvatarWidget(
-              contactImage: contactImage,
-              initials: initials,
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 25.0, vertical: 10),
+          child: ContactAvatarWidget(
+            contactImage: contactImage,
+            initials: initials,
+          ),
+        ),
+        Padding(
+          padding: EdgeInsets.only(bottom: 8.0),
+          child: Text(getContactTitle(handleAddress),
+            style: Theme.of(context)
+                .textTheme
+                .bodyText1
+                .apply(fontSizeDelta: -5),
+          ),
+        ),
+        Container(
+          height: 28,
+          width: 28,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(100),
+            color: Theme.of(context).accentColor,
+            boxShadow: [
+              new BoxShadow(
+                blurRadius: 1.0,
+                color: Colors.black,
+              )
+            ],
+          ),
+          child: Padding(
+            padding: const EdgeInsets.only(top: 8.0, left: 7.0, right: 7.0, bottom: 7.0),
+            child: SvgPicture.asset(
+              'assets/reactions/${widget.message.associatedMessageType}-black.svg',
+              color: widget.message.associatedMessageType == "love"
+                  ? Colors.pink
+                  : iconColor,
             ),
           ),
-          Padding(
-            padding: EdgeInsets.only(bottom: 8.0),
-            child: Text(
-              getContactTitle(widget.handle.id, widget.handle.address),
-              style: Theme.of(context)
-                  .textTheme
-                  .bodyText1
-                  .apply(fontSizeDelta: -5),
-            ),
-          ),
-          Container(
-            height: 28,
-            width: 28,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(100),
-              color: Theme.of(context).accentColor,
-              boxShadow: [
-                new BoxShadow(
-                  blurRadius: 1.0,
-                  color: Colors.black,
-                )
-              ],
-            ),
-            child: Padding(
-              padding: const EdgeInsets.only(top: 8.0, left: 7.0, right: 7.0, bottom: 7.0),
-              child: SvgPicture.asset(
-                'assets/reactions/${widget.message.associatedMessageType}-black.svg',
-                color: widget.message.associatedMessageType == "love"
-                    ? Colors.pink
-                    : iconColor,
-              ),
-            ),
-          )
-        ],
-      ),
+        )
+      ],
     );
   }
 }

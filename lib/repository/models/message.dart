@@ -382,20 +382,8 @@ class Message {
   }
 
   Future<List<Message>> getReactions() async {
-    List<Message> res =
-        await Message.find({"associatedMessageGuid": this.guid});
-    res.sort((a, b) => b.dateCreated.compareTo(a.dateCreated));
-    List<int> alreadyTrackedHandleIds = [];
-    Map<int, Message> reactions = new Map();
-    for (Message reaction in res) {
-      if (!reactions.containsKey(reaction.handleId) &&
-          !alreadyTrackedHandleIds.contains(reaction.handleId) &&
-          !reaction.associatedMessageType.startsWith("-")) {
-        reactions[reaction.handleId] = reaction;
-      }
-      alreadyTrackedHandleIds.add(reaction.handleId);
-    }
-    return reactions.values.toList();
+    List<Message> res = await Message.find({"associatedMessageGuid": this.guid});
+    return res;
   }
 
   Future<Handle> getHandle() async {

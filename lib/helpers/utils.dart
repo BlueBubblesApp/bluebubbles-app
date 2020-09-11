@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:contacts_service/contacts_service.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 
 DateTime parseDate(dynamic value) {
@@ -19,7 +20,8 @@ DateTime parseDate(dynamic value) {
   return null;
 }
 
-String getContactTitle(int id, String address) {
+String getContactTitle(String address) {
+  if (address == null) return "You";
   if (ContactManager().handleToContact.containsKey(address))
     return ContactManager().handleToContact[address].displayName;
   String contactTitle = address;
@@ -67,13 +69,14 @@ bool sameAddress(String address1, String address2) {
       "+" + formattedNumber == address2;
 }
 
-Contact getContact(String id) {
+Contact getContact(String address) {
+  if (address == null) return null;
   Contact contact;
 
   for (Contact c in ContactManager().contacts) {
     // Get a phone number match
     for (Item item in c.phones) {
-      if (sameAddress(item.value, id)) {
+      if (sameAddress(item.value, address)) {
         contact = c;
         break;
       }
@@ -81,7 +84,7 @@ Contact getContact(String id) {
 
     // Get an email match
     for (Item item in c.emails) {
-      if (item.value == id) {
+      if (item.value == address) {
         contact = c;
         break;
       }
@@ -95,7 +98,7 @@ Contact getContact(String id) {
 }
 
 getInitials(String name, String delimeter) {
-  if (name == null) return "";
+  if (name == null) return Icon(Icons.person, color: Colors.white, size: 30);
   List array = name.split(delimeter);
   // If there is a comma, just return the "people" icon
   if (name.contains(", "))
@@ -201,7 +204,7 @@ String getGroupEventText(Message message) {
   String text = "Unknown group event";
   String handle = "You";
   if (message.handleId != null && message.handle != null)
-    handle = getContactTitle(message.handleId, message.handle.address);
+    handle = getContactTitle(message.handle.address);
 
   if (message.itemType == ItemTypes.participantRemoved.index) {
     text = "$handle removed someone from the conversation";
@@ -267,4 +270,8 @@ String cleansePhoneNumber(String input) {
   output = output.replaceAll(")", "");
   output = output.replaceAll(" ", "");
   return output;
+}
+
+Future<dynamic> loadAsset(String path) {
+  return rootBundle.load(path);
 }
