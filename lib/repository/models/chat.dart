@@ -280,6 +280,11 @@ class Chat {
       isNewer = true;
     }
 
+    // Save any attachments
+    for (Attachment attachment in message.attachments ?? []) {
+      await attachment.save(newMessage);
+    }
+
     // Save the chat.
     // This will update the latestMessage info as well as update some
     // other fields that we want to "mimic" from the server
