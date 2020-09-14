@@ -66,8 +66,14 @@ class _ConversationTileState extends State<ConversationTile> {
     fetchAvatar(null);
   }
 
-  void fetchAvatar(List<String> addresses) {
-    loadAvatar(widget.chat, addresses).then((MemoryImage image) {
+  Future<void> fetchAvatar(List<String> addresses) async {
+    // If our chat does not have any participants, get them
+    if (widget.chat.participants == null || widget.chat.participants.length < 1) {
+      await widget.chat.getParticipants();
+    }
+
+    if (widget.chat.participants.length != 1) return;
+    loadAvatar(widget.chat, widget.chat.participants[0].address).then((MemoryImage image) {
       if (image != null) {
         if (contactImage == null ||
             contactImage.bytes.length != image.bytes.length) {

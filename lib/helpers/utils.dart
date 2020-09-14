@@ -180,7 +180,7 @@ Future<String> getGroupEventText(Message message) async {
   return text;
 }
 
-Future<MemoryImage> loadAvatar(Chat chat, List<String> addresses) async {
+Future<MemoryImage> loadAvatar(Chat chat, String address) async {
   // If the chat hasn't been saved, save it
   if (chat.id == null) await chat.save();
 
@@ -190,17 +190,18 @@ Future<MemoryImage> loadAvatar(Chat chat, List<String> addresses) async {
   }
 
   // If there are no participants, return
-  if (chat.participants == null || chat.participants.length != 1) return null;
-  String address = chat.participants.first.address;
+  if (chat.participants == null) return null;
 
-  if (addresses == null) addresses = [address];
+  if (address == null) {
+    address = chat.participants.first.address;
+  }
 
   // See if the update contains the current conversation
-  int matchIdx = addresses.indexOf(address);
+  int matchIdx = chat.participants.map((i) => i.address).toList().indexOf(address);
   if (matchIdx == -1) return null;
 
   // Get the contact
-  Contact contact = await ContactManager().getCachedContact(addresses[matchIdx]);
+  Contact contact = await ContactManager().getCachedContact(address);
   if (contact == null || contact.avatar.length == 0) return null;
 
   // Set the contact image
