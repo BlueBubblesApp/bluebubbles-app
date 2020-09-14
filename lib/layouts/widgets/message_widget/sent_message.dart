@@ -520,7 +520,7 @@ class _ActualSentMessageState extends State<ActualSentMessage> {
                         // Get the "new" latest info
                         List<Message> latest = await Chat.getMessages(widget.chat, limit: 1);
                         widget.chat.latestMessageDate = latest.first != null ? latest.first.dateCreated : null;
-                        widget.chat.latestMessageText = latest.first != null ? MessageHelper.getNotificationText(latest.first) : null;
+                        widget.chat.latestMessageText = latest.first != null ? await MessageHelper.getNotificationText(latest.first) : null;
 
                         // Update it in the Bloc
                         await ChatBloc().updateChatPosition(widget.chat);

@@ -17,14 +17,14 @@ import 'package:intent/action.dart' as android_action;
 import 'package:permission_handler/permission_handler.dart';
 
 class ContactTile extends StatefulWidget {
-  final Contact contact;
+  final String address;
   final Handle handle;
   final Chat chat;
   final Function updateChat;
   final bool canBeRemoved;
   ContactTile({
     Key key,
-    this.contact,
+    this.address,
     this.handle,
     this.chat,
     this.updateChat,
@@ -37,19 +37,29 @@ class ContactTile extends StatefulWidget {
 
 class _ContactTileState extends State<ContactTile> {
   MemoryImage contactImage;
+  Contact contact;
 
   @override
   void initState() {
     super.initState();
 
+    getContact();
     fetchAvatar();
     ContactManager().stream.listen((List<String> addresses) {
-      fetchAvatar();
+      // Check if any of the addresses are members of the chat
+      List<Handle> participants = widget.chat.participants ?? [];
+      dynamic handles = participants.map((Handle handle) => handle.address);
+      for (String addr in addresses) {
+        if (handles.contains(addr)) {
+          fetchAvatar();
+          break;
+        }
+      }
     });
   }
 
   void fetchAvatar() async {
-    Contact contact = ContactManager().getCachedContact(widget.handle.address);
+    Contact contact = await ContactManager().getCachedContact(widget.handle.address);
     if (contact == null || contact.avatar.length == 0) return null;
     MemoryImage tmpAvatar = MemoryImage(
       await FlutterImageCompress.compressWithList(contact.avatar, quality: 50));
@@ -60,8 +70,19 @@ class _ContactTileState extends State<ContactTile> {
     }
   }
 
+  void getContact() {
+    ContactManager().getCachedContact(widget.address).then((Contact contact) {
+      if (contact != null) {
+        if (this.contact == null || this.contact.identifier != contact.identifier) {
+          this.contact = contact;
+          if (this.mounted) setState(() {});
+        }
+      }
+    });
+  }
+
   Widget _buildContactTile() {
-    var initials = getInitials(widget.contact?.displayName ?? "", " ");
+    var initials = getInitials(contact?.displayName ?? "", " ");
     return InkWell(
       onLongPress: () {
         Clipboard.setData(new ClipboardData(text: widget.handle.address));
@@ -69,16 +90,16 @@ class _ContactTileState extends State<ContactTile> {
         Scaffold.of(context).showSnackBar(snackBar);
       },
       onTap: () async {
-        if (widget.contact == null) {
+        if (contact == null) {
           await ContactsService.openContactForm();
         } else {
-          await ContactsService.openExistingContact(widget.contact);
+          await ContactsService.openExistingContact(contact);
         }
       },
       child: ListTile(
         title: Text(
-          widget.contact != null
-              ? widget.contact.displayName
+          contact != null
+              ? contact.displayName
               : widget.handle.address,
           style: Theme.of(context).textTheme.bodyText1,
         ),
@@ -97,14 +118,14 @@ class _ContactTileState extends State<ContactTile> {
                   shape: CircleBorder(),
                   color: Theme.of(context).accentColor,
                   onPressed: () async {
-                    if (widget.contact != null &&
-                        widget.contact.phones.length > 0) {
+                    if (contact != null &&
+                        contact.phones.length > 0) {
                       if (await Permission.phone.request().isGranted) {
                         android_intent.Intent()
                           ..setAction(android_action.Action.ACTION_CALL)
                           ..setData(Uri(
                               scheme: "tel",
-                              path: widget.contact.phones.first.value))
+                              path: contact.phones.first.value))
                           ..startActivity().catchError((e) => print(e));
                       }
                     }

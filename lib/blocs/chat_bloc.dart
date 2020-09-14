@@ -38,11 +38,16 @@ class ChatBloc {
     return _chatBloc;
   }
 
-  Chat getChat(String guid) {
-    if (_chats == null) return null;
+  Future<Chat> getChat(String guid) async {
+    if (guid == null) return null;
+    if (_chats == null) {
+      await this.refreshChats();
+    }
+
     for (Chat chat in _chats) {
       if (chat.guid == guid) return chat;
     }
+
     return null;
   }
 
@@ -74,7 +79,9 @@ class ChatBloc {
 
   /// Inserts a [chat] into the chat bloc based on the lastMessage data
   Future<void> updateChatPosition(Chat chat) async {
-    if (_chats == null && LifeCycleManager().isAlive) {
+    if (chat == null) return;
+    if (!LifeCycleManager().isAlive) return;
+    if (_chats == null) {
       await this.refreshChats();
     }
 

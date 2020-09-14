@@ -40,16 +40,29 @@ class _ConversationViewState extends State<ConversationView> {
   Chat chat;
   OverlayEntry entry;
   LayerLink layerLink = LayerLink();
+  String chatTitle;
 
   @override
   void initState() {
     super.initState();
     chat = widget.chat;
+    chatTitle = "...";
     NotificationManager().switchChat(chat);
 
     fetchAvatar(null);
     ContactManager().stream.listen((List<String> addresses) async {
       fetchAvatar(addresses);
+    });
+
+    getChatTitle();
+  }
+
+  void getChatTitle() {
+    getShortChatTitle(widget.chat).then((String title) {
+      if (title != chatTitle) {
+        chatTitle = title;
+        if (this.mounted) setState(() {});
+      }
     });
   }
 
@@ -77,6 +90,7 @@ class _ConversationViewState extends State<ConversationView> {
     super.didChangeDependencies();
     SocketManager().removeChatNotification(chat);
     fetchAvatar(null);
+    getChatTitle();
   }
 
   @override
@@ -127,7 +141,7 @@ class _ConversationViewState extends State<ConversationView> {
                           .headline2,
                       children: [
                         TextSpan(
-                          text: getShortChatTitle(chat),
+                          text: chatTitle,
                           style: Theme.of(context).textTheme.bodyText1,
                         ),
                         TextSpan(

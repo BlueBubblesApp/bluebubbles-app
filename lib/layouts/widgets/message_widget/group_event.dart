@@ -21,10 +21,31 @@ class GroupEvent extends StatefulWidget {
 }
 
 class _GroupEventState extends State<GroupEvent> {
+  String text = "";
+
+  @override
+  initState() {
+    super.initState();
+    getEventText();
+  }
+
+  @override
+  didChangeDependencies() {
+    super.didChangeDependencies();
+    getEventText();
+  }
+
+  void getEventText() {
+    getGroupEventText(widget.message).then((String text) {
+      if (this.text != text) {
+        this.text = text;
+        if (this.mounted) setState(() {});
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    String text = getGroupEventText(widget.message);
-
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: Row(

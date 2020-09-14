@@ -48,16 +48,7 @@ class _ConversationTileState extends State<ConversationTile> {
 
     fetchAvatar(null);
     ContactManager().stream.listen((List<String> addresses) {
-      // Check if any of the addresses are members of the chat
-      List<Handle> participants = widget.chat.participants ?? [];
-      dynamic handles = participants.map((Handle handle) => handle.address);
-      for (String addr in addresses) {
-        if (handles.contains(addr)) {
-          fetchAvatar(addresses);
-          setNewChatTitle();
-          break;
-        }
-      }
+      fetchAvatar(addresses);
     });
   }
 

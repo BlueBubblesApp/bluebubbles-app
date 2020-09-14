@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
+import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:intl/intl.dart';
@@ -35,7 +36,7 @@ Future<String> getFullChatTitle(Chat _chat) async {
 
     List<String> titles = [];
     for (int i = 0; i < chat.participants.length; i++) {
-      String name = getContactTitle(chat.participants[i].address);
+      String name = await ContactManager().getContactTitle(chat.participants[i].address);
 
       if (chat.participants.length > 1 && !name.startsWith('+1')) {
         name = name.trim().split(" ")[0];
@@ -66,9 +67,9 @@ Future<String> getFullChatTitle(Chat _chat) async {
   return title;
 }
 
-String getShortChatTitle(Chat _chat) {
+Future<String> getShortChatTitle(Chat _chat) async {
   if (_chat.participants.length == 1) {
-    return getContactTitle(_chat.participants[0].address);
+    return await ContactManager().getContactTitle(_chat.participants[0].address);
   } else if (_chat.displayName != null && _chat.displayName.length != 0) {
     return _chat.displayName;
   } else {
@@ -275,7 +276,7 @@ class Chat {
             message.dateCreated.millisecondsSinceEpoch
         )
     ) {
-      this.latestMessageText = MessageHelper.getNotificationText(message);
+      this.latestMessageText = await MessageHelper.getNotificationText(message);
       this.latestMessageDate = message.dateCreated;
       isNewer = true;
     }

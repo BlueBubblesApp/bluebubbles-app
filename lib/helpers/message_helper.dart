@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
@@ -8,6 +9,7 @@ import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:contacts_service/contacts_service.dart';
+import 'package:flutter/cupertino.dart';
 
 class MessageHelper {
   static Future<List<Message>> bulkAddMessages(
@@ -105,12 +107,13 @@ class MessageHelper {
     }
 
     // Create the notification
-    String contactTitle = getContactTitle(handleAddress);
-    Contact contact = getContact(handleAddress);
+    String contactTitle = await ContactManager().getContactTitle(handleAddress);
+    Contact contact = await ContactManager().getCachedContact(handleAddress);
     String title = await getFullChatTitle(chat);
+    String notification = await MessageHelper.getNotificationText(message);
     NotificationManager().createNewNotification(
       title,
-      MessageHelper.getNotificationText(message),
+      notification,
       chat.guid,
       Random().nextInt(9998) + 1,
       chat.id,
@@ -122,10 +125,10 @@ class MessageHelper {
     );
   }
 
-  static String getNotificationText(Message message) {
+  static Future<String> getNotificationText(Message message) async {
     // If the item type is not 0, it's a group event
     if (message.itemType != 0) {
-      return getGroupEventText(message);
+      return await getGroupEventText(message);
     }
 
     // Parse/search for links
@@ -166,7 +169,7 @@ class MessageHelper {
       // It's a reaction message, get the "sender"
       String sender = (message.isFromMe) ? "You" : formatPhoneNumber(message.handle.address);
       if (!message.isFromMe && message.handle != null) {
-        Contact contact = getContact(message.handle.address);
+        Contact contact = await ContactManager().getCachedContact(message.handle.address);
         if (contact != null) {
           sender = contact.givenName ?? contact.displayName;
         }
