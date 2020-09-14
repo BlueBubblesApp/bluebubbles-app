@@ -61,8 +61,10 @@ class _ImageWidgetState extends State<ImageWidget> {
             )
             : Hero(
                 tag: widget.attachment.guid,
-                child: Image.memory(widget
-                    .savedAttachmentData.imageData[widget.attachment.guid]),
+                child: Image.memory(
+                  widget.savedAttachmentData.imageData[widget.attachment.guid],
+                  cacheHeight: MediaQuery.of(context).size.height ~/ 3,
+                ),
               ),
         Positioned.fill(
           child: Material(
