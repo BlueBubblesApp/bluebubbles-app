@@ -5,9 +5,11 @@ import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/layouts/conversation_details/conversation_details.dart';
 import 'package:bluebubbles/layouts/conversation_view/messages_view.dart';
 import 'package:bluebubbles/layouts/conversation_view/text_field.dart';
+import 'package:bluebubbles/layouts/widgets/CustomCupertinoNavBackButton.dart';
 import 'package:bluebubbles/layouts/widgets/CustomCupertinoNavBar.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
+import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/socket_manager.dart';
@@ -43,6 +45,7 @@ class _ConversationViewState extends State<ConversationView> {
   LayerLink layerLink = LayerLink();
   String chatTitle;
   Map<String, dynamic> avatarStack = {};
+  int newMessages = 0;
 
   @override
   void initState() {
@@ -55,6 +58,25 @@ class _ConversationViewState extends State<ConversationView> {
     fetchAvatars();
     ContactManager().stream.listen((List<String> addresses) async {
       fetchAvatars();
+    });
+
+    NewMessageManager()
+        .stream
+        .listen((Map<String, Map<String, List<Map<String, dynamic>>>> event) {
+      // If the new message is from the current chat, return
+      if (event.containsKey(widget.chat.guid)) return;
+      int before = newMessages;
+
+      // If the new message isn't an "ADD", return
+      event
+          .forEach((chatGuid, Map<String, List<Map<String, dynamic>>> actions) {
+        if (!actions.containsKey(NewMessageAction.ADD)) return;
+
+        // Increment the newMessages counter by the number of messages being added
+        newMessages += actions[NewMessageAction.ADD].length;
+      });
+
+      if (newMessages > before && this.mounted) setState(() {});
     });
   }
 
@@ -85,11 +107,8 @@ class _ConversationViewState extends State<ConversationView> {
       bool existed = avatarStack.containsKey(handle.address);
 
       // If the avatar doesnt exist yet, add it as null
-      dynamic currentVal =
-          avatarStack.putIfAbsent(handle.address, () => {
-            "avatar": null,
-            "initials": getInitials(null, "")
-          });
+      dynamic currentVal = avatarStack.putIfAbsent(handle.address,
+          () => {"avatar": null, "initials": getInitials(null, "")});
 
       // Update the UI with the placeholders
       if (!existed) cb();
@@ -104,7 +123,7 @@ class _ConversationViewState extends State<ConversationView> {
         if (avatarStack[handle.address]["initials"] != initials) {
           avatarStack[handle.address]["initials"] = initials;
         }
-        
+
         if (avatar != null) {
           avatarStack[handle.address]["avatar"] = avatar;
         }
@@ -138,20 +157,15 @@ class _ConversationViewState extends State<ConversationView> {
     List<Widget> avatars = [];
     avatarStack.forEach((address, info) {
       avatars.add(Container(
-        height: 42.0,  // 1 px larger than the diameter
-        width: 42.0,  // 1 px larger than the diameter
-        decoration: new BoxDecoration(
-          color: Colors.red,
-          shape: BoxShape.circle
-        ),
-        child: CircleAvatar(
-          radius: 20,
-          backgroundColor: Theme.of(context).accentColor,
-          child: ContactAvatarWidget(
-            contactImage: info["avatar"],
-            initials: info["initials"]
-          )))
-      );
+          height: 42.0, // 1 px larger than the diameter
+          width: 42.0, // 1 px larger than the diameter
+          decoration:
+              new BoxDecoration(color: Colors.red, shape: BoxShape.circle),
+          child: CircleAvatar(
+              radius: 20,
+              backgroundColor: Theme.of(context).accentColor,
+              child: ContactAvatarWidget(
+                  contactImage: info["avatar"], initials: info["initials"]))));
     });
 
     // Calculate separation factor
@@ -167,6 +181,8 @@ class _ConversationViewState extends State<ConversationView> {
         border: Border(
             bottom:
                 BorderSide(color: Colors.white.withOpacity(0.2), width: 0.2)),
+        leading: CustomCupertinoNavigationBarBackButton(
+            color: Theme.of(context).primaryColor, notifications: newMessages),
         middle: ListView(
           physics: Cupertino.NeverScrollableScrollPhysics(),
           children: <Widget>[
