@@ -235,7 +235,7 @@ class _MessageViewState extends State<MessageView>
                                 attachments.containsKey(_messages[index].guid)
                                     ? attachments[_messages[index].guid]
                                     : null,
-                            showHero: index == 0,
+                            showHero: index == 0 && _messages[index].originalROWID == null
                           ),
                         ),
                       ),
