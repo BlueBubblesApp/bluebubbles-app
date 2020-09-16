@@ -18,27 +18,51 @@ class ContactManager {
   Stream<List<String>> get stream => _stream.stream;
 
   ContactManager._internal();
-  List<Contact> contacts = <Contact>[];
+  List<Contact> contacts;
   Map<String, Contact> handleToContact = new Map();
 
   // We need these so we don't have threads fetching at the same time
-  bool isGettingContacts = false;
-  bool isGettingAvatars = false;
+  Completer getContactsFuture;
+  Completer getAvatarsFuture;
 
-  Contact getCachedContact(String address) {
+  Future<Contact> getCachedContact(String address) async {
+    if (contacts == null || !handleToContact.containsKey(address)) await getContacts();
     if (!handleToContact.containsKey(address)) return null;
     return handleToContact[address];
   }
 
-  Future<void> getContacts({bool headless = false}) async {
-    bool hasPermission =
-        !headless ? await Permission.contacts.request().isGranted : true;
-    if (!headless && !hasPermission) return;
-    if (isGettingContacts) return;
+  Future<bool> canAccessContacts() async {
+    bool output = false;
 
-    isGettingContacts = true;
+    try {
+      bool granted = await Permission.contacts.isGranted;
+      if (granted) return true;
+
+      bool totallyDisabled = await Permission.contacts.isPermanentlyDenied;
+      if (!totallyDisabled) {
+        return await Permission.contacts.request().isGranted;
+      }
+    } catch (ex) {
+      debugPrint("Error getting access to contacts!");
+      debugPrint(ex.toString());
+    }
+
+    return output;
+  }
+
+  Future<void> getContacts({bool headless = false}) async {
+    if (!(await canAccessContacts())) return;
+
+    // If we are fetching the contacts, return the current future so we can await it
+    if (getContactsFuture != null && !getContactsFuture.isCompleted) {
+      return getContactsFuture.future;
+    }
+
+    // Start a new completer
+    getContactsFuture = new Completer();
 
     // Fetch the current list of contacts
+    debugPrint("ContactManager -> Fetching Contacts");
     contacts =
         (await ContactsService.getContacts(withThumbnails: false)).toList();
 
@@ -49,29 +73,35 @@ class ContactManager {
       if (handleToContact.containsKey(handle.address)) continue;
 
       // Find a contact match
-      Contact contactMatch = getContact(handle.address);
+      Contact contactMatch = await getContact(handle.address);
+      handleToContact[handle.address] = contactMatch;
 
       // If we have a match, add it to the mapping, then break out
       // of the loop so we don't "over-process" more than we need
       if (contactMatch != null) {
-        handleToContact[handle.address] = contactMatch;
         _stream.sink.add([handle.address]);
       }
     }
 
-    isGettingContacts = false;
+    getContactsFuture.complete();
 
     // Lazy load thumbnails after rendering initial contacts.
     getAvatars();
-    debugPrint("finished getting contacts");
   }
 
   Future<void> getAvatars() async {
-    if (isGettingAvatars) return;
-    isGettingAvatars = true;
+    if (getAvatarsFuture != null && !getAvatarsFuture.isCompleted) {
+      return getAvatarsFuture.future;
+    }
 
+    // Create a new completer for this
+    getAvatarsFuture = new Completer();
+
+    debugPrint("ContactManager -> Fetching Avatars");
     for (String address in handleToContact.keys) {
       Contact contact = handleToContact[address];
+      if (contact == null) continue;
+
       final avatar = await ContactsService.getAvatar(contact);
       if (avatar == null) continue;
 
@@ -83,7 +113,50 @@ class ContactManager {
       _stream.sink.add([address]);
     }
 
-    isGettingAvatars = false;
+    getAvatarsFuture.complete();
+  }
+
+  Future<Contact> getContact(String address) async {
+    if (address == null) return null;
+    Contact contact;
+
+    // If the contact list is null, get the contacts
+    if (contacts == null) await getContacts();
+    for (Contact c in contacts) {
+      // Get a phone number match
+      for (Item item in c.phones) {
+        if (sameAddress(item.value, address)) {
+          contact = c;
+          break;
+        }
+      }
+
+      // Get an email match
+      for (Item item in c.emails) {
+        if (item.value == address) {
+          contact = c;
+          break;
+        }
+      }
+
+      // If we have a match, break out of the loop
+      if (contact != null) break;
+    }
+
+    return contact;
+  }
+
+  Future<String> getContactTitle(String address) async {
+    if (address == null) return "You";
+    if (contacts == null) await getContacts();
+
+    if (handleToContact.containsKey(address) && handleToContact[address] != null)
+      return handleToContact[address].displayName;
+    String contactTitle = address;
+    if (contactTitle == address && !contactTitle.contains("@")) {
+      return formatPhoneNumber(contactTitle);
+    }
+    return contactTitle;
   }
 
   dispose() {

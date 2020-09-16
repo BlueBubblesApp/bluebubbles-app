@@ -383,7 +383,7 @@ class ActionHandler {
         debugPrint("Client received new message " + chats[i].guid);
 
         // Gets the chat from the chat bloc
-        Chat chat = ChatBloc().getChat(chats[i].guid);
+        Chat chat = await ChatBloc().getChat(chats[i].guid);
         if (chat == null) {
           await ActionHandler.handleChat(
               chat: chats[i], checkIfExists: true, isHeadless: isHeadless);

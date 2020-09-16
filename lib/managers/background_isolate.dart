@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'dart:ui';
 
 import 'package:bluebubbles/action_handler.dart';
-import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/incoming_queue.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
@@ -26,7 +25,7 @@ abstract class BackgroundIsolateInterface {
 }
 
 callbackHandler() async {
-  debugPrint("callback");
+  debugPrint("(ISOLATE) Starting up...");
   MethodChannel _backgroundChannel = MethodChannel("background_isolate");
   WidgetsFlutterBinding.ensureInitialized();
   await DBProvider.db.initDB();

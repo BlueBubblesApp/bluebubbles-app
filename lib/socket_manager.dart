@@ -403,10 +403,6 @@ class SocketManager {
           cb(jsonDecode(data));
           completer.complete(jsonDecode(data));
           if (awaitResponse) _manager.finishSocketProcess(_processId);
-          if (reason != null)
-            debugPrint("finished process with id " +
-                _processId.toString() +
-                " because $reason");
         });
       }
     };

@@ -2,6 +2,7 @@ import 'package:bluebubbles/helpers/reaction.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_details_popup.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/reactions.dart';
+import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/gestures.dart';
@@ -39,13 +40,34 @@ class ReceivedMessage extends StatefulWidget {
 }
 
 class _ReceivedMessageState extends State<ReceivedMessage> {
+
+  String contactTitle = "";
+
+  @override
+  initState() {
+    super.initState();
+    getContactTitle();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    getContactTitle(); 
+  }
+
+  void getContactTitle() {
+    if (widget.message.handle == null || !widget.showHandle) return;
+
+    ContactManager().getContactTitle(widget.message.handle.address).then((String title) {
+      if (title != contactTitle) {
+        contactTitle = title;
+        if (this.mounted) setState(() {});
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    String handle = "";
-    if (widget.message.handle != null && widget.showHandle) {
-      handle = getContactTitle(widget.message.handle.address);
-    }
-
     List<Widget> tail = <Widget>[
       Container(
         margin: EdgeInsets.only(bottom: 1),
@@ -189,7 +211,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> {
       contactItem = Padding(
         padding: EdgeInsets.only(left: 25.0, top: 5.0, bottom: 3.0),
         child: Text(
-          handle,
+          contactTitle,
           style: Theme.of(context).textTheme.bodyText1,
         ),
       );

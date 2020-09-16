@@ -80,7 +80,6 @@ class AttachmentSender {
     debugPrint(chunk.length.toString() + "/" + _imageBytes.length.toString());
     SocketManager().sendMessage("send-message-chunk", params, (data) async {
       Map<String, dynamic> response = data;
-      debugPrint(data.toString());
       if (response['status'] == 200) {
         if (index + _chunkSize < _imageBytes.length) {
           progress = index / _imageBytes.length;
@@ -89,7 +88,6 @@ class AttachmentSender {
         } else {
           progress = index / _imageBytes.length;
           if (!_stream.isClosed) _stream.sink.add(progress);
-          debugPrint("no more to send");
           SocketManager().finishSender(_attachmentGuid);
           LifeCycleManager().finishDownloader();
         }
@@ -165,16 +163,19 @@ class AttachmentSender {
       );
     }
 
+    // Save the attachment to device
     String appDocPath = SettingsManager().appDocDir.path;
     String pathName =
         "$appDocPath/attachments/${messageAttachment.guid}/$_attachmentName";
     File file = await new File(pathName).create(recursive: true);
     await file.writeAsBytes(Uint8List.fromList(_imageBytes));
-    debugPrint("saved attachment with temp guid ${messageAttachment.guid}");
 
-    await sentMessage.save();
+    // Add the message to the chat.
+    // This will save the message, attachments, and chat
     await _chat.addMessage(sentMessage);
     NewMessageManager().addMessage(_chat, sentMessage, outgoing: true);
+
+    // If there is any text, save the text too
     if (messageWithText != null) {
       await _chat.addMessage(messageWithText);
       NewMessageManager().addMessage(_chat, messageWithText, outgoing: true);

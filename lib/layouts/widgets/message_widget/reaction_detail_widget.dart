@@ -1,5 +1,6 @@
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
+import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:contacts_service/contacts_service.dart';
@@ -21,21 +22,33 @@ class ReactionDetailWidget extends StatefulWidget {
 
 class _ReactionDetailWidgetState extends State<ReactionDetailWidget> {
   ImageProvider contactImage;
+  String contactTitle;
 
   @override
   void initState() {
     super.initState();
+
+    contactTitle = widget.handle.address;
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (widget.handle == null) return;
-    Contact contact = getContact(widget.handle.address);
-    if (contact != null && contact.avatar.length > 0) {
-      contactImage = MemoryImage(contact.avatar);
-      if (this.mounted) setState(() {});
-    }
+
+    ContactManager().getCachedContact(widget.handle.address).then((Contact contact) {
+      if (contact != null && contact.avatar.length > 0) {
+        contactImage = MemoryImage(contact.avatar);
+        if (this.mounted) setState(() {});
+      }
+    });
+
+    ContactManager().getContactTitle(widget.handle.address).then((String title) {
+      if (title != contactTitle) {
+        contactTitle = title;
+        if (this.mounted) setState(() {});
+      }
+    });
   }
 
   @override
@@ -60,7 +73,7 @@ class _ReactionDetailWidgetState extends State<ReactionDetailWidget> {
         ),
         Padding(
           padding: EdgeInsets.only(bottom: 8.0),
-          child: Text(getContactTitle(handleAddress),
+          child: Text(contactTitle,
             style: Theme.of(context)
                 .textTheme
                 .bodyText1

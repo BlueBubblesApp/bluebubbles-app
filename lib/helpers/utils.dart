@@ -20,17 +20,6 @@ DateTime parseDate(dynamic value) {
   return null;
 }
 
-String getContactTitle(String address) {
-  if (address == null) return "You";
-  if (ContactManager().handleToContact.containsKey(address))
-    return ContactManager().handleToContact[address].displayName;
-  String contactTitle = address;
-  if (contactTitle == address && !contactTitle.contains("@")) {
-    return formatPhoneNumber(contactTitle);
-  }
-  return contactTitle;
-}
-
 Size textSize(String text, TextStyle style) {
   final TextPainter textPainter = TextPainter(
       text: TextSpan(text: text, style: style),
@@ -67,34 +56,6 @@ bool sameAddress(String address1, String address2) {
   return formattedNumber == address2 ||
       "+1" + formattedNumber == address2 ||
       "+" + formattedNumber == address2;
-}
-
-Contact getContact(String address) {
-  if (address == null) return null;
-  Contact contact;
-
-  for (Contact c in ContactManager().contacts) {
-    // Get a phone number match
-    for (Item item in c.phones) {
-      if (sameAddress(item.value, address)) {
-        contact = c;
-        break;
-      }
-    }
-
-    // Get an email match
-    for (Item item in c.emails) {
-      if (item.value == address) {
-        contact = c;
-        break;
-      }
-    }
-
-    // If we have a match, break out of the loop
-    if (contact != null) break;
-  }
-
-  return contact;
 }
 
 getInitials(String name, String delimeter) {
@@ -200,11 +161,11 @@ bool isEmptyString(String input) {
   return input.isEmpty;
 }
 
-String getGroupEventText(Message message) {
+Future<String> getGroupEventText(Message message) async {
   String text = "Unknown group event";
   String handle = "You";
   if (message.handleId != null && message.handle != null)
-    handle = getContactTitle(message.handle.address);
+    handle = await ContactManager().getContactTitle(message.handle.address);
 
   if (message.itemType == ItemTypes.participantRemoved.index) {
     text = "$handle removed someone from the conversation";
@@ -219,7 +180,7 @@ String getGroupEventText(Message message) {
   return text;
 }
 
-Future<MemoryImage> loadAvatar(Chat chat, List<String> addresses) async {
+Future<MemoryImage> loadAvatar(Chat chat, String address) async {
   // If the chat hasn't been saved, save it
   if (chat.id == null) await chat.save();
 
@@ -229,17 +190,18 @@ Future<MemoryImage> loadAvatar(Chat chat, List<String> addresses) async {
   }
 
   // If there are no participants, return
-  if (chat.participants == null || chat.participants.length != 1) return null;
-  String address = chat.participants.first.address;
+  if (chat.participants == null) return null;
 
-  if (addresses == null) addresses = [address];
+  if (address == null) {
+    address = chat.participants.first.address;
+  }
 
   // See if the update contains the current conversation
-  int matchIdx = addresses.indexOf(address);
+  int matchIdx = chat.participants.map((i) => i.address).toList().indexOf(address);
   if (matchIdx == -1) return null;
 
   // Get the contact
-  Contact contact = ContactManager().getCachedContact(addresses[matchIdx]);
+  Contact contact = await ContactManager().getCachedContact(address);
   if (contact == null || contact.avatar.length == 0) return null;
 
   // Set the contact image
