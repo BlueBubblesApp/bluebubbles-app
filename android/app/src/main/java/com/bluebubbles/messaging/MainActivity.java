@@ -80,7 +80,7 @@ import static com.bluebubbles.messaging.BackgroundService.db;
 
 
 public class MainActivity extends FlutterActivity {
-    public static final String CHANNEL = "samples.flutter.dev/fcm";
+    public static final String CHANNEL = "com.bluebubbles.messaging";
     private static final String TAG = "MainActivity";
     static FlutterEngine engine;
     private FusedLocationProviderClient fusedLocationClient;
@@ -352,13 +352,6 @@ public class MainActivity extends FlutterActivity {
                         }
                     });
         } else if (call.method.equals("save-image-to-album")) {
-//                                File storageDir = new File(
-//                                        Environment.getExternalStoragePublicDirectory(
-//                                                Environment.DIRECTORY_PICTURES
-//                                        ),
-//
-//
-//                                );
             Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
             File f = new File((String) call.argument("path"));
             Uri contentUri = Uri.fromFile(f);
@@ -401,6 +394,22 @@ public class MainActivity extends FlutterActivity {
             };
 
             database.addListenerForSingleValueEvent(listener);
+        } else if (call.method.equals("share-file")) {
+            HashMap<String, String> argsMap = (HashMap<String, String>) call.arguments;
+            File requestFile = new File(argsMap.get("filepath"));
+            Uri shareContentUri = FileProvider.getUriForFile(
+                context,
+                "com.bluebubbles.messaging.fileprovider",
+                requestFile
+            );
+            Intent shareIntent = new Intent(Intent.ACTION_SEND);
+            shareIntent.putExtra(Intent.EXTRA_TITLE, argsMap.get("filename"));
+            shareIntent.putExtra(Intent.EXTRA_STREAM, shareContentUri);
+            shareIntent.setType(argsMap.get("mimeType"));
+            shareIntent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            
+
+            context.startActivity(Intent.createChooser(shareIntent, argsMap.get("subject")));
         } else {
             result.notImplemented();
         }

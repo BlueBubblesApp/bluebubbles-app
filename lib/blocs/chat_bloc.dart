@@ -119,9 +119,12 @@ class ChatBloc {
       for (int i = 0; i < _chats.length; i++) {
         // If the chat is older, that's where we want to insert
         if (_chats[i].latestMessageDate == null ||
+              (
+                _chats[i].latestMessageDate != null && chat.latestMessageDate != null &&
                 _chats[i].latestMessageDate.millisecondsSinceEpoch <
-                    chat.latestMessageDate.millisecondsSinceEpoch ??
-            0) {
+                chat.latestMessageDate.millisecondsSinceEpoch
+              )
+        ) {
           _chats.insert(i, chat);
           break;
         }

@@ -41,7 +41,7 @@ class MethodChannelInterface {
       platform = channel;
       // platform.setMethodCallHandler(callHandler);
     } else {
-      platform = MethodChannel('samples.flutter.dev/fcm');
+      platform = MethodChannel('com.bluebubbles.messaging');
       _context = context;
     }
 
