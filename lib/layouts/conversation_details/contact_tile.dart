@@ -59,13 +59,9 @@ class _ContactTileState extends State<ContactTile> {
   }
 
   void fetchAvatar() async {
-    Contact contact = await ContactManager().getCachedContact(widget.handle.address);
-    if (contact == null || contact.avatar.length == 0) return null;
-    MemoryImage tmpAvatar = MemoryImage(
-      await FlutterImageCompress.compressWithList(contact.avatar, quality: 50));
-
-    if (contactImage == null || contactImage.bytes.length != tmpAvatar.bytes.length) {
-      contactImage = tmpAvatar;
+    MemoryImage avatar = await loadAvatar(widget.chat, widget.handle.address);
+    if (contactImage == null || contactImage.bytes.length != avatar.bytes.length) {
+      contactImage = avatar;
       if (this.mounted) setState(() {}); 
     }
   }

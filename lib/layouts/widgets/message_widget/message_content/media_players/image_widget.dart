@@ -57,13 +57,20 @@ class _ImageWidgetState extends State<ImageWidget> {
               padding: EdgeInsets.all(2.0),
               constraints: BoxConstraints(
                 maxWidth: MediaQuery.of(context).size.width / 3,
+                maxHeight: MediaQuery.of(context).size.height / 3,
               )
             )
-            : Hero(
+            : Container(
+              child: Hero(
                 tag: widget.attachment.guid,
-                child: Image.memory(widget
-                    .savedAttachmentData.imageData[widget.attachment.guid]),
+                child: Image.memory(
+                  widget.savedAttachmentData.imageData[widget.attachment.guid]
+                ),
               ),
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height / 3,
+              )
+            ),
         Positioned.fill(
           child: Material(
             color: Colors.transparent,
@@ -72,6 +79,7 @@ class _ImageWidgetState extends State<ImageWidget> {
                 Navigator.of(context).push(
                   MaterialPageRoute(
                     builder: (context) => ImageViewer(
+                      attachment: widget.attachment,
                       file: widget.file,
                       bytes: widget.savedAttachmentData
                           .imageData[widget.attachment.guid],

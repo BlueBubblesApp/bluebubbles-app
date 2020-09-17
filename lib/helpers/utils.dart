@@ -62,7 +62,7 @@ getInitials(String name, String delimeter) {
   if (name == null) return Icon(Icons.person, color: Colors.white, size: 30);
   List array = name.split(delimeter);
   // If there is a comma, just return the "people" icon
-  if (name.contains(", "))
+  if (name.contains(", ") || name.contains(" & "))
     return Icon(Icons.people, color: Colors.white, size: 30);
 
   // If there is an & character, it's 2 people, format accordingly
@@ -205,8 +205,9 @@ Future<MemoryImage> loadAvatar(Chat chat, String address) async {
   if (contact == null || contact.avatar.length == 0) return null;
 
   // Set the contact image
-  return MemoryImage(
-      await FlutterImageCompress.compressWithList(contact.avatar, quality: 50));
+  // NOTE: Don't compress this. It will increase load time significantly
+  // NOTE: These don't need to be compressed. They are usually already small
+  return MemoryImage(contact.avatar);
 }
 
 List<RegExpMatch> parseLinks(String text) {
