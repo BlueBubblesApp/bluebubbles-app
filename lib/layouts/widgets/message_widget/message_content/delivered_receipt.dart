@@ -57,10 +57,8 @@ class _DeliveredReceiptState extends State<DeliveredReceipt>
       curve: Curves.easeInOut,
       alignment: Alignment.bottomLeft,
       duration: Duration(milliseconds: 250),
-      child: widget.message != null &&
-              !(widget.message.dateRead == null &&
-                  widget.message.dateDelivered == null) &&
-              showReceipt
+      child: widget.message != null && showReceipt && (widget.message.dateRead != null ||
+                  widget.message.dateDelivered != null)
           ? Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8.0),
               child: Row(

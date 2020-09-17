@@ -257,8 +257,6 @@ class Message {
       } else {
         if (chat != null) {
           debugPrint("adding message to chat");
-          await newMessage.save();
-          await chat.save();
           await chat.addMessage(newMessage);
           NewMessageManager().addMessage(chat, newMessage, outgoing: false);
           return newMessage;
