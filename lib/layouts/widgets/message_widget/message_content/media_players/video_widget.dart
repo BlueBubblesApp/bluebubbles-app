@@ -29,13 +29,11 @@ class _VideoWidgetState extends State<VideoWidget> {
   @override
   void initState() {
     super.initState();
-    debugPrint("height ${widget.attachment.width}");
     if (!widget.savedAttachmentData.controllers
         .containsKey(widget.attachment.guid)) {
       widget.savedAttachmentData.controllers[widget.attachment.guid] =
           VideoPlayerController.file(widget.file)
             ..initialize().then((value) {
-              // widget.savedAttachmentData.controllers[widget.attachment.guid].play();
               if (this.mounted) setState(() {});
             });
     }

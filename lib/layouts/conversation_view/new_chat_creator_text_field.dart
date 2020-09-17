@@ -100,7 +100,7 @@ class _NewChatCreatorTextFieldState extends State<NewChatCreatorTextField> {
             ),
           ),
           Padding(
-            padding: EdgeInsets.only(left: 12),
+            padding: EdgeInsets.only(left: 12, right: 10.0),
             child: FlatButton(
               color: Theme.of(context).accentColor,
               onPressed: () async {
