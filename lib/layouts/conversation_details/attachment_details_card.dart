@@ -63,16 +63,6 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
       return Stack(
         alignment: Alignment.center,
         children: <Widget>[
-          // attachment.blurhash != null
-          //     ? BlurHash(
-          //         hash: attachment.blurhash,
-          //         decodingWidth:
-          //             (attachment.width).clamp(1, double.infinity).toInt(),
-          //         decodingHeight:
-          //             (attachment.height).clamp(1, double.infinity).toInt(),
-          //         imageFit: BoxFit.fill,
-          //       )
-          //     :
           Container(
             color: Theme.of(context).accentColor,
           ),
@@ -144,6 +134,7 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
               child: Image.file(
                 file,
                 fit: BoxFit.cover,
+                filterQuality: FilterQuality.low,
                 alignment: Alignment.center,
               ),
             ),
