@@ -102,6 +102,11 @@ class _ConversationViewState extends State<ConversationView> {
       if (this.mounted) setState(() {});
     };
 
+    // If we don't have participants, get them
+    if (widget.chat.participants.length == 0) {
+      await widget.chat.getParticipants();
+    }
+
     // Loop over the participants
     for (Handle handle in widget.chat.participants) {
       // Since we only want to update if we've made changes, check a flag
