@@ -31,7 +31,7 @@ class _ImageWidgetState extends State<ImageWidget> {
         widget.savedAttachmentData.imageData[widget.attachment.guid] =
           await FlutterImageCompress.compressWithFile(
             widget.file.absolute.path,
-            quality: 70 // This is arbitrary
+            quality: 50 // This is arbitrary
           );
 
       // All other attachments can be held in memory as bytes
