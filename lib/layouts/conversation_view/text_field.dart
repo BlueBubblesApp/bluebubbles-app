@@ -6,6 +6,7 @@ import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/text_field_bloc.dart';
 import 'package:bluebubbles/helpers/attachment_sender.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/helpers/share.dart';
 import 'package:bluebubbles/layouts/conversation_view/camera_widget.dart';
 import 'package:bluebubbles/layouts/image_viewer/image_viewer.dart';
 import 'package:bluebubbles/layouts/widgets/CustomCupertinoTextField.dart';
@@ -90,7 +91,14 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
     super.dispose();
   }
 
-  Future<void> handleOpenImagePicker() async {
+  Future<void> toggleShareMenu() async {
+    // If the image picker is already open, close it, and return
+    if (showImagePicker) {
+      showImagePicker = !showImagePicker;
+      setState(() {});
+      return;
+    }
+
     FocusScope.of(context).requestFocus(new FocusNode());
     if (await PhotoManager.requestPermission()) {
       List<AssetPathEntity> list =
@@ -98,7 +106,7 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
       List<AssetEntity> images =
           await list.first.getAssetListRange(start: 0, end: 60);
       _images = images;
-      showImagePicker = true;
+      showImagePicker = !showImagePicker;
       _imageWidgets = <Widget>[];
 
       _images.forEach((element) {
@@ -294,8 +302,8 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                   width: 30,
                   height: 30,
                   child: GestureDetector(
-                    onTap: handleOpenImagePicker,
-                    child: Icon(Icons.camera_alt,
+                    onTap: toggleShareMenu,
+                    child: Icon(Icons.share,
                         color: HexColor('8e8e8e'), size: 22),
                   ),
                 ),
@@ -433,8 +441,8 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                               children: <Widget>[
                                 SizedBox(
-                                  width: 80,
-                                  height: 120,
+                                  width: 85,
+                                  height: 80,
                                   child: RaisedButton(
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(18),
@@ -478,8 +486,8 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                                   ),
                                 ),
                                 SizedBox(
-                                  width: 80,
-                                  height: 120,
+                                  width: 85,
+                                  height: 80,
                                   child: RaisedButton(
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(18),
@@ -519,7 +527,78 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                                       ],
                                     ),
                                   ),
-                                )
+                                ),
+                                SizedBox(
+                                  width: 85,
+                                  height: 80,
+                                  child: RaisedButton(
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(18),
+                                    ),
+                                    onPressed: () async {
+                                      showDialog(
+                                        context: context,
+                                        builder: (context) => AlertDialog(
+                                          backgroundColor: Theme.of(context).accentColor,
+                                          title: Text(
+                                            "Send Current Location?",
+                                            style: Theme.of(context).textTheme.headline1,
+                                          ),
+                                          actions: <Widget>[
+                                            FlatButton(
+                                              color: Colors.blue[600],
+                                              child: Text(
+                                                "Send",
+                                                style: Theme.of(context).textTheme.bodyText1,
+                                              ),
+                                              onPressed: () async {
+                                                Share.location(widget.chat);
+                                                Navigator.of(context).pop();
+                                              },
+                                            ),
+                                            FlatButton(
+                                              child: Text(
+                                                "Cancel",
+                                                style: Theme.of(context).textTheme.bodyText1,
+                                              ),
+                                              color: Colors.red,
+                                              onPressed: () {
+                                                Navigator.of(context).pop();
+                                              },
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    },
+                                    color: Theme.of(context).accentColor,
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: <Widget>[
+                                        Padding(
+                                          padding: const EdgeInsets.all(8.0),
+                                          child: Icon(
+                                            Icons.location_on,
+                                            color: Theme.of(context)
+                                                .textTheme
+                                                .bodyText1
+                                                .color,
+                                          ),
+                                        ),
+                                        Text(
+                                          "Location",
+                                          style: TextStyle(
+                                            color: Theme.of(context)
+                                                .textTheme
+                                                .bodyText1
+                                                .color,
+                                            fontSize: 13,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
                               ],
                             ),
                           ),

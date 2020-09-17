@@ -1,26 +1,17 @@
-import 'dart:convert';
-import 'dart:io';
 import 'dart:ui';
 
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
-import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
-import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_details/attachment_details_card.dart';
 import 'package:bluebubbles/layouts/conversation_details/contact_tile.dart';
 import 'package:bluebubbles/layouts/conversation_view/new_chat_creator.dart';
-import 'package:bluebubbles/managers/method_channel_interface.dart';
-import 'package:bluebubbles/managers/new_message_manager.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
-import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:permission_handler/permission_handler.dart';
 
 class ConversationDetails extends StatefulWidget {
   final Chat chat;
@@ -171,112 +162,6 @@ class _ConversationDetailsState extends State<ConversationDetails> {
             ),
             SliverPadding(
               padding: EdgeInsets.symmetric(vertical: 20),
-            ),
-            SliverToBoxAdapter(
-              child: InkWell(
-                onTap: () async {
-                  if (await Permission.locationWhenInUse.request().isGranted) {
-                    showDialog(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        backgroundColor: Theme.of(context).accentColor,
-                        title: Text(
-                          "Send Current Location?",
-                          style: Theme.of(context).textTheme.headline1,
-                        ),
-                        actions: <Widget>[
-                          FlatButton(
-                            color: Colors.blue[600],
-                            child: Text(
-                              "Send",
-                              style: Theme.of(context).textTheme.bodyText1,
-                            ),
-                            onPressed: () async {
-                              final result = await MethodChannelInterface()
-                                  .invokeMethod("get-last-location");
-                              String vcfString =
-                                  AttachmentHelper.createAppleLocation(
-                                      result["latitude"], result["longitude"]);
-
-                              String _attachmentGuid =
-                                  "temp-${randomString(8)}";
-
-                              String fileName = "CL.loc.vcf";
-                              String appDocPath =
-                                  SettingsManager().appDocDir.path;
-                              String pathName =
-                                  "$appDocPath/attachments/$_attachmentGuid/$fileName";
-                              await new File(pathName).create(recursive: true);
-
-                              File attachmentFile = await new File(pathName)
-                                  .writeAsString(vcfString);
-
-                              List<int> bytes =
-                                  await attachmentFile.readAsBytes();
-                              Attachment messageAttachment = Attachment(
-                                guid: _attachmentGuid,
-                                totalBytes: bytes.length,
-                                isOutgoing: true,
-                                isSticker: false,
-                                hideAttachment: false,
-                                uti: "public.jpg",
-                                transferName: fileName,
-                                mimeType: "text/x-vlocation",
-                              );
-
-                              Message sentMessage = Message(
-                                guid: _attachmentGuid,
-                                text: "",
-                                dateCreated: DateTime.now(),
-                                hasAttachments: true,
-                              );
-                              await sentMessage.save();
-
-                              await messageAttachment.save(sentMessage);
-                              await chat.save();
-                              await chat.addMessage(sentMessage);
-
-                              NewMessageManager().addMessage(chat, sentMessage);
-                              Map<String, dynamic> params = new Map();
-                              params["guid"] = chat.guid;
-                              params["attachmentGuid"] = _attachmentGuid;
-                              params["attachmentName"] = fileName;
-                              params["attachment"] = base64Encode(bytes);
-                              SocketManager()
-                                  .sendMessage("send-message", params, (data) {
-                                debugPrint("sent " + data.toString());
-                              });
-                              Navigator.of(context).pop();
-                            },
-                          ),
-                          FlatButton(
-                            child: Text(
-                              "Cancel",
-                              style: Theme.of(context).textTheme.bodyText1,
-                            ),
-                            color: Colors.red,
-                            onPressed: () {
-                              Navigator.of(context).pop();
-                            },
-                          ),
-                        ],
-                      ),
-                    );
-                  }
-                },
-                child: ListTile(
-                  title: Text(
-                    "Send Current Location",
-                    style: TextStyle(
-                      color: Colors.blue,
-                    ),
-                  ),
-                  leading: Icon(
-                    Icons.my_location,
-                    color: Colors.blue,
-                  ),
-                ),
-              ),
             ),
             SliverToBoxAdapter(
               child: InkWell(
