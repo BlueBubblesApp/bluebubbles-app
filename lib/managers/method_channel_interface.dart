@@ -98,7 +98,9 @@ class MethodChannelInterface {
         String appDocPath = SettingsManager().appDocDir.path;
         call.arguments.forEach((key, element) {
           debugPrint("attachment " + key.runtimeType.toString());
+          Directory("$appDocPath/sharedFiles").createSync();
           String pathName = "$appDocPath/sharedFiles/$key";
+          debugPrint("HERE! $pathName");
           File file = File(pathName);
           file.writeAsBytesSync(element.toList());
           attachments.add(file);

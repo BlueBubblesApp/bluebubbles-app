@@ -95,10 +95,12 @@ class ChatBloc {
       if (_chats[i].guid != chat.guid) continue;
 
       // Don't move/update the chat if the latest message for it is newer than the incoming one
-      int latest = chat.latestMessageDate != null ? chat.latestMessageDate.millisecondsSinceEpoch : 0;
+      int latest = chat.latestMessageDate != null
+          ? chat.latestMessageDate.millisecondsSinceEpoch
+          : 0;
       if (_chats[i].latestMessageDate != null &&
-              _chats[i].latestMessageDate.millisecondsSinceEpoch >
-                  latest ?? 0) {
+              _chats[i].latestMessageDate.millisecondsSinceEpoch > latest ??
+          0) {
         shouldUpdate = false;
       }
 
@@ -119,6 +121,7 @@ class ChatBloc {
       for (int i = 0; i < _chats.length; i++) {
         // If the chat is older, that's where we want to insert
         if (_chats[i].latestMessageDate == null ||
+                chat.latestMessageDate == null ||
                 _chats[i].latestMessageDate.millisecondsSinceEpoch <
                     chat.latestMessageDate.millisecondsSinceEpoch ??
             0) {
