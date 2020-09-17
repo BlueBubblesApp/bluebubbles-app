@@ -179,10 +179,12 @@ class _ConversationViewState extends State<ConversationView> {
       appBar: CupertinoNavigationBar(
         backgroundColor: Theme.of(context).accentColor.withAlpha(125),
         border: Border(
-            bottom:
-                BorderSide(color: Colors.white.withOpacity(0.2), width: 0.2)),
+          bottom: BorderSide(color: Colors.white.withOpacity(0.2), width: 0.2),
+        ),
         leading: CustomCupertinoNavigationBarBackButton(
-            color: Theme.of(context).primaryColor, notifications: newMessages),
+          color: Theme.of(context).primaryColor,
+          notifications: newMessages,
+        ),
         middle: ListView(
           physics: Cupertino.NeverScrollableScrollPhysics(),
           children: <Widget>[
@@ -190,8 +192,9 @@ class _ConversationViewState extends State<ConversationView> {
             GestureDetector(
               onTap: openDetails,
               child: Align(
-                  alignment: Alignment.center,
-                  child: RowSuper(children: avatars, innerDistance: distance)),
+                alignment: Alignment.center,
+                child: RowSuper(children: avatars, innerDistance: distance),
+              ),
             ),
             Container(height: 3.0),
             Row(
@@ -208,8 +211,9 @@ class _ConversationViewState extends State<ConversationView> {
                             style: Theme.of(context).textTheme.bodyText1,
                           ),
                           TextSpan(
-                              text: " >",
-                              style: Theme.of(context).textTheme.subtitle1)
+                            text: " >",
+                            style: Theme.of(context).textTheme.subtitle1,
+                          )
                         ],
                       ),
                     ))
