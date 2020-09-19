@@ -11,7 +11,6 @@ import 'package:flutter/material.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_image_compress/flutter_image_compress.dart';
 
 DateTime parseDate(dynamic value) {
   if (value == null) return null;
@@ -145,6 +144,21 @@ extension DateHelpers on DateTime {
     return yesterday.day == this.day &&
         yesterday.month == this.month &&
         yesterday.year == this.year;
+  }
+
+  bool isWithin(DateTime other, {int ms, int seconds, int minutes, int hours}) {
+    Duration diff = this.difference(other);
+    if (ms != null) {
+      return diff.inMilliseconds < ms;
+    } else if (seconds != null) {
+      return diff.inSeconds < seconds;
+    } else if (minutes != null) {
+      return diff.inMinutes < minutes;
+    } else if (hours != null) {
+      return diff.inHours < hours;
+    } else {
+      throw new Exception("No timerange specified!");
+    }
   }
 }
 

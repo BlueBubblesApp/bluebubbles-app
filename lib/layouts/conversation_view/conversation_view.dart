@@ -197,33 +197,32 @@ class _ConversationViewState extends State<ConversationView> {
             Container(height: 10.0),
             GestureDetector(
               onTap: openDetails,
-              child: Align(
-                alignment: Alignment.center,
-                child: RowSuper(children: avatars, innerDistance: distance),
-              ),
-            ),
-            Container(height: 3.0),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                GestureDetector(
-                    onTap: openDetails,
-                    child: RichText(
-                      text: TextSpan(
-                        style: Theme.of(context).textTheme.headline2,
-                        children: [
-                          TextSpan(
-                            text: chatTitle,
-                            style: Theme.of(context).textTheme.bodyText1,
-                          ),
-                          TextSpan(
-                            text: " >",
-                            style: Theme.of(context).textTheme.subtitle1,
-                          )
-                        ],
-                      ),
-                    ))
-              ],
+              child: Container(
+                padding: EdgeInsets.only(right: 15.0),
+                child: Align(
+                  alignment: Alignment.center,
+                  child: Column(
+                    children: [
+                      RowSuper(children: avatars, innerDistance: distance),
+                      RichText(
+                        text: TextSpan(
+                          style: Theme.of(context).textTheme.headline2,
+                          children: [
+                            TextSpan(
+                              text: chatTitle,
+                              style: Theme.of(context).textTheme.bodyText1,
+                            ),
+                            TextSpan(
+                              text: " >",
+                              style: Theme.of(context).textTheme.subtitle1,
+                            )
+                          ],
+                        ),
+                      )
+                    ],
+                  )
+                )
+              )
             ),
           ],
         ),
