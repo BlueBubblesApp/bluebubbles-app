@@ -55,7 +55,6 @@ class _ReactionsState extends State<Reactions> {
 
               // This is a workaround for a flutter bug
               reactionWidgets.add(Text(''));
-
               return Stack(
                 clipBehavior: Clip.hardEdge,
                 overflow: Overflow.clip,

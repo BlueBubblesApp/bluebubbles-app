@@ -356,7 +356,7 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                         padding: EdgeInsets.only(
                             left: 10, top: 10, right: 40, bottom: 10),
                         placeholderStyle: Theme.of(context).textTheme.subtitle1,
-                        autofocus: true,
+                        autofocus: SettingsManager().settings.autoOpenKeyboard,
                         decoration: BoxDecoration(
                           color: Theme.of(context).backgroundColor,
                           border: Border.all(

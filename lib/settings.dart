@@ -18,8 +18,11 @@ class Settings {
         finishedSetup =
             json.containsKey('finishedSetup') ? json['finishedSetup'] : false,
         chunkSize = json.containsKey('chunkSize') ? json['chunkSize'] : 500,
+        autoOpenKeyboard = json.containsKey('autoOpenKeyboard') ? json['autoOpenKeyboard'] : true,
         autoDownload =
             json.containsKey('autoDownload') ? json['autoDownload'] : true,
+        hideTextPreviews =
+            json.containsKey('hideTextPreviews') ? json['hideTextPreviews'] : false,
         lastIncrementalSync =
             json.containsKey('lastIncrementalSync') ? json['lastIncrementalSync'] : 0,
         _darkColorTheme = json.containsKey('darkColorTheme')
@@ -35,6 +38,8 @@ class Settings {
   bool finishedSetup = false;
   int chunkSize = 500;
   bool autoDownload = true;
+  bool autoOpenKeyboard = true;
+  bool hideTextPreviews = false;
   int lastIncrementalSync = 0;
   Map<String, dynamic> _lightColorTheme = {};
   Map<String, dynamic> _darkColorTheme = {};
@@ -198,6 +203,8 @@ class Settings {
         'chunkSize': chunkSize,
         'lastIncrementalSync': lastIncrementalSync,
         'autoDownload': autoDownload != null ? autoDownload : true,
+        'autoOpenKeyboard': autoOpenKeyboard != null ? autoOpenKeyboard : true,
+        'hideTextPreviews': hideTextPreviews != null ? hideTextPreviews : false,
         'darkColorTheme': jsonEncode(_darkColorTheme),
         'lightColorTheme': jsonEncode(_lightColorTheme),
       };

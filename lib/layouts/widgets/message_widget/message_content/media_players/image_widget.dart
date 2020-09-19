@@ -19,7 +19,7 @@ class ImageWidget extends StatefulWidget {
   _ImageWidgetState createState() => _ImageWidgetState();
 }
 
-class _ImageWidgetState extends State<ImageWidget> {
+class _ImageWidgetState extends State<ImageWidget> with SingleTickerProviderStateMixin {
   @override
   void didChangeDependencies() async {
     super.didChangeDependencies();
@@ -63,9 +63,15 @@ class _ImageWidgetState extends State<ImageWidget> {
             : Container(
               child: Hero(
                 tag: widget.attachment.guid,
-                child: Image.memory(
-                  widget.savedAttachmentData.imageData[widget.attachment.guid]
-                ),
+                child: AnimatedSize(
+                  vsync: this,
+                  curve: Curves.easeInOut,
+                  alignment: Alignment.center,
+                  duration: Duration(milliseconds: 250),
+                  child: Image.memory(
+                    widget.savedAttachmentData.imageData[widget.attachment.guid]
+                  ),
+                )
               ),
               constraints: BoxConstraints(
                 maxHeight: MediaQuery.of(context).size.height / 3,

@@ -8,8 +8,10 @@ class DeliveredReceipt extends StatefulWidget {
     Key key,
     this.message,
     this.showDeliveredReceipt,
+    this.shouldAnimate,
   }) : super(key: key);
   final bool showDeliveredReceipt;
+  final bool shouldAnimate;
   final Message message;
 
   @override
@@ -23,7 +25,6 @@ class _DeliveredReceiptState extends State<DeliveredReceipt>
   @override
   void didChangeDependencies() async {
     super.didChangeDependencies();
-    await Future.delayed(Duration(milliseconds: 100));
     if (this.mounted) {
       setState(() {
         showReceipt = widget.showDeliveredReceipt;
@@ -52,28 +53,34 @@ class _DeliveredReceiptState extends State<DeliveredReceipt>
     if (widget.message != null && widget.message.dateRead != null)
       text = "Read " + _buildDate();
 
-    return AnimatedSize(
-      vsync: this,
-      curve: Curves.easeInOut,
-      alignment: Alignment.bottomLeft,
-      duration: Duration(milliseconds: 250),
-      child: widget.message != null && showReceipt && (widget.message.dateRead != null ||
-                  widget.message.dateDelivered != null)
-          ? Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: <Widget>[
-                  Text(
-                    text,
-                    style: Theme.of(context)
-                        .textTheme
-                        .subtitle2,
-                  )
-                ],
-              ),
+    Widget timestampWidget = Container();
+    if (widget.message != null && showReceipt && (widget.message.dateRead != null || widget.message.dateDelivered != null)) {
+      timestampWidget = Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: <Widget>[
+            Text(
+              text,
+              style: Theme.of(context)
+                  .textTheme
+                  .subtitle2,
             )
-          : Container(),
-    );
+          ],
+        ),
+      );
+    }
+
+    if (widget.shouldAnimate) {
+      return AnimatedSize(
+        vsync: this,
+        curve: Curves.easeInOut,
+        alignment: Alignment.bottomLeft,
+        duration: Duration(milliseconds: 250),
+        child: timestampWidget
+      ); 
+    } else {
+      return timestampWidget;
+    }
   }
 }

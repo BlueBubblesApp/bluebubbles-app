@@ -39,7 +39,6 @@ class SentMessage extends StatefulWidget {
     @required this.showTail,
     @required this.message,
     @required this.chat,
-    // @required this.overlayEntry,
     @required this.timeStamp,
     @required this.showDeliveredReceipt,
     @required this.customContent,
@@ -338,6 +337,7 @@ class _SentMessageState extends State<SentMessage>
             DeliveredReceipt(
               message: widget.message,
               showDeliveredReceipt: widget.showDeliveredReceipt,
+              shouldAnimate: widget.shouldFadeIn
             ),
             widget.timeStamp != null
                 ? Padding(

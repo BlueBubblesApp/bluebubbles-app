@@ -232,6 +232,44 @@ class _SettingsPanelState extends State<SettingsPanel> {
                     _settingsCopy.chunkSize = val;
                   },
                 ),
+                SettingsSwitch(
+                  onChanged: (bool val) {
+                    _settingsCopy.hideTextPreviews = val;
+                  },
+                  initialVal: _settingsCopy.hideTextPreviews,
+                  title: "Hide Text Previews (in notifications)",
+                ),
+                SettingsSwitch(
+                  onChanged: (bool val) {
+                    _settingsCopy.autoOpenKeyboard = val;
+                  },
+                  initialVal: _settingsCopy.autoOpenKeyboard,
+                  title: "Auto-open Keyboard",
+                ),
+                SettingsSwitch(
+                  onChanged: (bool val) {
+                    _settingsCopy.autoDownload = val;
+                  },
+                  initialVal: _settingsCopy.autoDownload,
+                  title: "Auto-download Attachments",
+                ),
+                SettingsOptions(
+                  onChanged: (AdaptiveThemeMode val) {
+                    AdaptiveTheme.of(context).setThemeMode(val);
+                  },
+                ),
+                SettingsTile(
+                  title: "Theming",
+                  trailing:
+                      Icon(Icons.arrow_forward_ios, color: HexColor('26262a')),
+                  onTap: () async {
+                    Navigator.of(context).push(
+                      CupertinoPageRoute(
+                        builder: (context) => ThemingPanel(),
+                      ),
+                    );
+                  },
+                ),
                 SettingsTile(
                   onTap: () {
                     showDialog(
@@ -264,30 +302,6 @@ class _SettingsPanelState extends State<SettingsPanel> {
                     );
                   },
                   title: "Reset DB",
-                ),
-                SettingsSwitch(
-                  onChanged: (bool val) {
-                    _settingsCopy.autoDownload = val;
-                  },
-                  initialVal: _settingsCopy.autoDownload,
-                  title: "Auto-download Attachments",
-                ),
-                SettingsOptions(
-                  onChanged: (AdaptiveThemeMode val) {
-                    AdaptiveTheme.of(context).setThemeMode(val);
-                  },
-                ),
-                SettingsTile(
-                  title: "Theming",
-                  trailing:
-                      Icon(Icons.arrow_forward_ios, color: HexColor('26262a')),
-                  onTap: () async {
-                    Navigator.of(context).push(
-                      CupertinoPageRoute(
-                        builder: (context) => ThemingPanel(),
-                      ),
-                    );
-                  },
                 ),
               ],
             ),
