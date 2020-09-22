@@ -19,7 +19,7 @@ class DeliveredReceipt extends StatefulWidget {
 }
 
 class _DeliveredReceiptState extends State<DeliveredReceipt>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   bool showReceipt = false;
 
   @override

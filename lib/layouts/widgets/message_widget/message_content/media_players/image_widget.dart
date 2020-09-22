@@ -19,7 +19,7 @@ class ImageWidget extends StatefulWidget {
   _ImageWidgetState createState() => _ImageWidgetState();
 }
 
-class _ImageWidgetState extends State<ImageWidget> with SingleTickerProviderStateMixin {
+class _ImageWidgetState extends State<ImageWidget> with TickerProviderStateMixin {
   @override
   void didChangeDependencies() async {
     super.didChangeDependencies();

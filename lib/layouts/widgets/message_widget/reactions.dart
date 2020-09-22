@@ -13,7 +13,7 @@ class Reactions extends StatefulWidget {
   _ReactionsState createState() => _ReactionsState();
 }
 
-class _ReactionsState extends State<Reactions> {
+class _ReactionsState extends State<Reactions> with TickerProviderStateMixin {
   Future<List<Message>> reactionRetreivalFuture;
   Map<String, Reaction> reactions = new Map();
 
@@ -29,7 +29,7 @@ class _ReactionsState extends State<Reactions> {
               if (!snapshot.hasData || snapshot.data.length == 0) {
                 return Container();
               }
-              
+
               reactions = Reaction.getLatestReactionMap(snapshot.data);
 
               double topPadding = 1.0;
@@ -38,15 +38,15 @@ class _ReactionsState extends State<Reactions> {
                 topPadding = 10.0;
                 rightPadding = 5.0;
               }
-              
+
               List<Widget> reactionWidgets = [];
               int tmpIdx = 0;
               reactions.forEach((String reactionType, Reaction item) {
                 Widget itemWidget = item.getSmallWidget(context);
                 if (itemWidget != null) {
                   reactionWidgets.add(Padding(
-                    padding:
-                        EdgeInsets.fromLTRB(tmpIdx.toDouble() * 10.0, topPadding, rightPadding, 0),
+                    padding: EdgeInsets.fromLTRB(
+                        tmpIdx.toDouble() * 10.0, topPadding, rightPadding, 0),
                     child: itemWidget,
                   ));
                   tmpIdx++;
@@ -55,13 +55,21 @@ class _ReactionsState extends State<Reactions> {
 
               // This is a workaround for a flutter bug
               reactionWidgets.add(Text(''));
-              return Stack(
-                clipBehavior: Clip.hardEdge,
-                overflow: Overflow.clip,
-                fit: StackFit.passthrough,
-                alignment: Alignment.bottomLeft,
-                children: reactionWidgets,
-              );
+              return AnimatedSize(
+                  duration: Duration(milliseconds: 200),
+                  reverseDuration: Duration(milliseconds: 200),
+                  vsync: this,
+                  curve: Curves.bounceInOut,
+                  alignment: (widget.message.isFromMe)
+                      ? Alignment.topLeft
+                      : Alignment.topRight,
+                  child: Stack(
+                    clipBehavior: Clip.hardEdge,
+                    overflow: Overflow.clip,
+                    fit: StackFit.passthrough,
+                    alignment: Alignment.bottomLeft,
+                    children: reactionWidgets,
+                  ));
             },
           )
         : Container();

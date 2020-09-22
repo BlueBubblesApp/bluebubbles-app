@@ -64,7 +64,7 @@ class _ConversationViewState extends State<ConversationView> {
         .stream
         .listen((Map<String, Map<String, List<Map<String, dynamic>>>> event) {
       // If the new message is from the current chat, return
-      if (event.containsKey(widget.chat.guid)) return;
+      if (event.containsKey(chat.guid)) return;
       int before = newMessages;
 
       // If the new message isn't an "ADD", return
