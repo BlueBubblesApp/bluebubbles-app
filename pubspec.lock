@@ -78,6 +78,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "2.4.1"
+  audio_recorder:
+    dependency: "direct main"
+    description:
+      name: audio_recorder
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "1.0.2"
   blurhash_flutter:
     dependency: "direct main"
     description:
