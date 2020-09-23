@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:ui';
 
+import 'package:audio_recorder/audio_recorder.dart';
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/text_field_bloc.dart';
 import 'package:bluebubbles/helpers/attachment_sender.dart';
@@ -10,6 +11,7 @@ import 'package:bluebubbles/helpers/share.dart';
 import 'package:bluebubbles/layouts/conversation_view/camera_widget.dart';
 import 'package:bluebubbles/layouts/image_viewer/image_viewer.dart';
 import 'package:bluebubbles/layouts/widgets/CustomCupertinoTextField.dart';
+import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/audio_player_widget.dart';
 import 'package:bluebubbles/managers/outgoing_queue.dart';
 import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -21,6 +23,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mime_type/mime_type.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:photo_manager/photo_manager.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
 
@@ -53,6 +56,7 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
   bool showImagePicker = false;
   List<File> pickedImages = <File>[];
   List<Widget> _imageWidgets = <Widget>[];
+  bool isRecording = false;
   static final GlobalKey<FormFieldState<String>> _searchFormKey =
       GlobalKey<FormFieldState<String>>();
 
@@ -89,6 +93,51 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
       }
     });
     super.dispose();
+  }
+
+  Future<void> reviewAudio(BuildContext context, File file) async {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Theme.of(context).accentColor,
+          title: new Text("Send it?", style: Theme.of(context).textTheme.headline1),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text("Review your audio snippet before sending it", style: Theme.of(context).textTheme.subtitle1),
+              Container(height: 10.0),
+              AudioPlayerWiget(file: file)
+            ],
+          ),
+          actions: <Widget> [
+            new FlatButton(
+              child: new Text("Send", style: Theme.of(context).textTheme.bodyText1),
+              onPressed: () {
+                OutgoingQueue().add(new QueueItem(
+                  event: "send-attachment",
+                  item: new AttachmentSender(
+                    file,
+                    widget.chat,
+                    "",
+                  ))
+                );
+
+                // Remove the OG alert dialog
+                Navigator.of(context).pop();
+              }
+            ),
+            new FlatButton(
+              child: new Text("Discard", style: Theme.of(context).textTheme.subtitle1),
+              onPressed: () {
+                file.delete();
+                Navigator.of(context).pop();
+              }
+            ),
+          ]
+        );
+      }
+    );
   }
 
   Future<void> toggleShareMenu() async {
@@ -129,12 +178,10 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                         color: Colors.transparent,
                         child: InkWell(
                           child: element.type == AssetType.video
-                            ? Icon(
-                                Icons.play_circle_fill,
-                                color: Colors.white.withOpacity(0.5),
-                                size: 50
-                              )
-                            : Container(),
+                              ? Icon(Icons.play_circle_fill,
+                                  color: Colors.white.withOpacity(0.5),
+                                  size: 50)
+                              : Container(),
                           onTap: () async {
                             File image = await element.file;
                             for (int i = 0; i < pickedImages.length; i++) {
@@ -179,6 +226,9 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
 
   @override
   Widget build(BuildContext context) {
+    IconData rightIcon = Icons.arrow_upward;
+    bool canRecord = _controller.text.isEmpty && pickedImages.length == 0;
+    if (canRecord) rightIcon = Icons.mic;
     return Container(
       width: MediaQuery.of(context).size.width,
       padding: EdgeInsets.all(5),
@@ -303,8 +353,8 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                   height: 30,
                   child: GestureDetector(
                     onTap: toggleShareMenu,
-                    child: Icon(Icons.share,
-                        color: HexColor('8e8e8e'), size: 22),
+                    child:
+                        Icon(Icons.share, color: HexColor('8e8e8e'), size: 22),
                   ),
                 ),
               ),
@@ -326,6 +376,19 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                         },
                         // autofocus: true,
                         key: _searchFormKey,
+                        onChanged: (String value) {
+                          if (value.isEmpty && this.mounted) {
+                            setState(() {
+                              rightIcon = Icons.mic;
+                            });
+                          } else if (value.isNotEmpty &&
+                              rightIcon == Icons.mic &&
+                              this.mounted) {
+                            setState(() {
+                              rightIcon = Icons.arrow_upward;
+                            });
+                          }
+                        },
                         onContentCommited: (String url) async {
                           debugPrint("got attachment " + url);
                           List<String> fnParts = url.split("/");
@@ -377,8 +440,24 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                             horizontal: 0,
                           ),
                           color: Colors.blue,
-                          onPressed: () {
-                            if (widget.customSend != null) {
+                          onPressed: () async {
+                            if (isRecording) {
+                              HapticFeedback.heavyImpact();
+                              Recording recording = await AudioRecorder.stop();
+                              setState(() { isRecording = false; });
+                              reviewAudio(context, new File(recording.path));
+                            } else if (canRecord && !isRecording &&
+                                await Permission.microphone
+                                    .request()
+                                    .isGranted) {
+                                  HapticFeedback.heavyImpact();
+                                  String appDocPath = SettingsManager().appDocDir.path;
+                                  String pathName = "$appDocPath/attachments/tmp.m4a";
+                                  File file = new File(pathName);
+                                  if (file.existsSync()) file.deleteSync();
+                                  await AudioRecorder.start(path: pathName, audioOutputFormat: AudioOutputFormat.AAC);
+                                  setState(() { isRecording = true; });
+                            } else if (widget.customSend != null) {
                               widget.customSend(pickedImages, _controller.text);
                             } else {
                               if (pickedImages.length > 0) {
@@ -407,10 +486,24 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                             pickedImages = <File>[];
                             setState(() {});
                           },
-                          child: Icon(
-                            Icons.arrow_upward,
-                            color: Colors.white,
-                            size: 20,
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              AnimatedOpacity(
+                                  opacity: _controller.text.isEmpty &&
+                                          pickedImages.length == 0
+                                      ? 1.0
+                                      : 0.0,
+                                  duration: Duration(milliseconds: 150),
+                                  child: Icon(Icons.mic,
+                                      color: (isRecording) ? Colors.red : Colors.white, size: 20)),
+                              AnimatedOpacity(
+                                  opacity:
+                                      _controller.text.isNotEmpty && !isRecording ? 1.0 : 0.0,
+                                  duration: Duration(milliseconds: 150),
+                                  child: Icon(Icons.arrow_upward,
+                                      color: Colors.white, size: 20)),
+                            ],
                           ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(40),
@@ -539,17 +632,22 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                                       showDialog(
                                         context: context,
                                         builder: (context) => AlertDialog(
-                                          backgroundColor: Theme.of(context).accentColor,
+                                          backgroundColor:
+                                              Theme.of(context).accentColor,
                                           title: Text(
                                             "Send Current Location?",
-                                            style: Theme.of(context).textTheme.headline1,
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .headline1,
                                           ),
                                           actions: <Widget>[
                                             FlatButton(
                                               color: Colors.blue[600],
                                               child: Text(
                                                 "Send",
-                                                style: Theme.of(context).textTheme.bodyText1,
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .bodyText1,
                                               ),
                                               onPressed: () async {
                                                 Share.location(widget.chat);
@@ -559,7 +657,9 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                                             FlatButton(
                                               child: Text(
                                                 "Cancel",
-                                                style: Theme.of(context).textTheme.bodyText1,
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .bodyText1,
                                               ),
                                               color: Colors.red,
                                               onPressed: () {

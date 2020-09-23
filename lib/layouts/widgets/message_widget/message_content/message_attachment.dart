@@ -153,7 +153,6 @@ class _MessageAttachmentState extends State<MessageAttachment>
         return MediaFile(
           attachment: widget.attachment,
           child: AudioPlayerWiget(
-            attachment: widget.attachment,
             file: content,
           ),
         );

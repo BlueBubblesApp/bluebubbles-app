@@ -496,7 +496,7 @@ class _ActualSentMessageState extends State<ActualSentMessage> {
               context: context,
               builder: (BuildContext context) {
                 return AlertDialog(
-                  title: new Text("Message failed to send"),
+                  title: new Text("Message failed to send", style: TextStyle(color: Colors.black)),
                   content: new Text("Error ($errorCode): $errorText"),
                   actions: <Widget> [
                     new FlatButton(
