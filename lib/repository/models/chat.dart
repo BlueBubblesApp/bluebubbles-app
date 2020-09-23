@@ -3,6 +3,7 @@ import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
+import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:intl/intl.dart';
@@ -308,8 +309,10 @@ class Chat {
       // If the message is not from the same chat as the current chat, mark unread
       if (message.isFromMe) {
         await this.setUnreadStatus(false);
+        EventDispatcher().emit("remove-unread-chat", {"chatGuid": this.guid});
       } else if (NotificationManager().chatGuid != this.guid) {
         await this.setUnreadStatus(true);
+        EventDispatcher().emit("add-unread-chat", {"chatGuid": this.guid});
       }
     }
 
