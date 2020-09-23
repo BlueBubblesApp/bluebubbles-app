@@ -148,7 +148,7 @@ class _MessageAttachmentState extends State<MessageAttachment>
             savedAttachmentData: widget.savedAttachmentData,
           ),
         );
-      } else if (mimeType == "audio") {
+      } else if (mimeType == "audio" && !widget.attachment.mimeType.contains("caf")) {
         // TODO: fix this stuff
         return MediaFile(
           attachment: widget.attachment,

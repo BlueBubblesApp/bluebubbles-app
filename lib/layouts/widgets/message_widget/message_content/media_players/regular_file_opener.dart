@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:flutter/cupertino.dart';
@@ -22,10 +23,12 @@ class RegularFileOpener extends StatefulWidget {
 class _RegularFileOpenerState extends State<RegularFileOpener> {
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 150,
-      width: 400,
+    return Container(
+      height: 110,
+      width: 200,
+      color: Theme.of(context).accentColor,
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
           Text(
             basename(widget.file.path),
@@ -35,18 +38,22 @@ class _RegularFileOpenerState extends State<RegularFileOpener> {
               Icons.open_in_new,
               color: Colors.white,
             ),
-            onPressed: () {
-              debugPrint(widget.file.path);
-              MethodChannelInterface().invokeMethod(
-                "open_file",
-                {
-                  "path": "/attachments/" +
-                      widget.attachment.guid +
-                      "/" +
-                      basename(widget.file.path),
-                  "mimeType": widget.attachment.mimeType,
-                },
-              );
+            onPressed: () async {
+              try {
+                await MethodChannelInterface().invokeMethod(
+                  "open_file",
+                  {
+                    "path": "/attachments/" +
+                        widget.attachment.guid +
+                        "/" +
+                        basename(widget.file.path),
+                    "mimeType": widget.attachment.mimeType,
+                  },
+                );
+              } catch (ex) {
+                final snackBar = SnackBar(content: Text("No handler for this file type!"));
+                Scaffold.of(context).showSnackBar(snackBar);
+              }
             },
           ),
           Text(widget.attachment.mimeType),
