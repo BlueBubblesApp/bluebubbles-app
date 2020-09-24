@@ -1,21 +1,19 @@
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/layouts/conversation_view/participant_special_text.dart';
-import 'package:bluebubbles/managers/contact_manager.dart';
-import 'package:contacts_service/contacts_service.dart';
+import 'package:bluebubbles/layouts/conversation_view/new_chat_creator.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:extended_text_field/extended_text_field.dart';
 
 class NewChatCreatorTextField extends StatefulWidget {
-  final String createText;
-  final Function(List<Contact>) onCreate;
-  final Function(String) filter;
   final TextEditingController controller;
+  final Function onCreate;
+  final Function(UniqueContact) onRemove;
+  final List<UniqueContact> selectedContacts;
   NewChatCreatorTextField({
     Key key,
-    @required this.createText,
-    @required this.onCreate,
-    @required this.filter,
     @required this.controller,
+    @required this.onCreate,
+    @required this.onRemove,
+    @required this.selectedContacts
   }) : super(key: key);
 
   @override
@@ -24,78 +22,125 @@ class NewChatCreatorTextField extends StatefulWidget {
 }
 
 class _NewChatCreatorTextFieldState extends State<NewChatCreatorTextField> {
-  String currentText = "";
-  Map<String, Contact> _participants = {};
+  FocusNode inputFieldNode;
+  
   @override
   void initState() {
     super.initState();
-    widget.controller.addListener(() async {
-      String val = widget.controller.text;
-      if (val.endsWith(",") || val.endsWith(", ")) {
-        await _getParticipantsFromText(val);
-      } else {
-        widget.filter(val.split(",").last.trim());
-      }
-      currentText = val;
-    });
+    inputFieldNode = FocusNode();
   }
 
   @override
   void dispose() {
-    widget.controller.dispose();
+    inputFieldNode.dispose();
     super.dispose();
-  }
-
-  Future<Contact> tryFindContact(String value) async {
-    for (Contact contact in ContactManager().contacts) {
-      if (contact.displayName.toLowerCase().trim() ==
-          value.toLowerCase().trim()) {
-        return contact;
-      } else {
-        for (Item phone in contact.phones) {
-          if (cleansePhoneNumber(phone.value).trim() ==
-              cleansePhoneNumber(value).trim()) {
-            return contact;
-          }
-        }
-        for (Item email in contact.emails) {
-          if (cleansePhoneNumber(email.value).trim() ==
-              cleansePhoneNumber(value).trim()) {
-            return contact;
-          }
-        }
-      }
-    }
-
-    return null;
   }
 
   @override
   Widget build(BuildContext context) {
+    List<Widget> items = [];
+    for (UniqueContact contact in widget.selectedContacts) {
+      items.add(
+        Padding(
+          padding: EdgeInsets.only(right: 5.0, top: 2.0, bottom: 2.0),
+          child: ClipRRect(
+            borderRadius: BorderRadius.all(Radius.circular(5.0)),
+            child: Container(
+              padding: EdgeInsets.all(5.0),
+              color: Theme.of(context).primaryColor,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Text(
+                    contact.displayName.trim(),
+                    //style: textStyle?.copyWith(color: Colors.orange),
+                  ),
+                  SizedBox(
+                    width: 5.0,
+                  ),
+                  InkWell(
+                    child: Icon(
+                      Icons.close,
+                      size: 15.0,
+                    ),
+                    onTap: () {
+                      widget.onRemove(contact);
+                    },
+                  )
+                ],
+              ),
+            )
+          ),
+        )
+      );
+    }
+
+    // Add the next text field
+    items.add(
+      SizedBox(
+        width: 100.0,
+        child: CupertinoTextField(
+          focusNode: inputFieldNode,
+          onSubmitted: (String done) {
+            FocusScope.of(context).requestFocus(inputFieldNode);
+            if (done.length == 0) return;
+            if (validatePhoneNumber(done)) {
+              widget.controller.clear();
+              widget.selectedContacts.add(
+                new UniqueContact(address: done, displayName: done)
+              );
+            } else {
+              Scaffold.of(context).showSnackBar(SnackBar(
+                content: Text("Invalid Number $done"),
+                duration: Duration(milliseconds: 500),
+              ));
+            }
+          },
+          controller: widget.controller,
+          maxLength: 50,
+          maxLines: 1,
+          autocorrect: false,
+          placeholder: "Type a name...",
+          padding: EdgeInsets.only(right: 5.0, top: 2.0, bottom: 2.0),
+          autofocus: true,
+          style: Theme.of(context).textTheme.bodyText2.apply(
+            color: ThemeData.estimateBrightnessForColor(
+                        Theme.of(context).backgroundColor) ==
+                    Brightness.light
+                ? Colors.black
+                : Colors.white,
+            fontSizeDelta: -0.25
+          ),
+          decoration: BoxDecoration(
+            color: Theme.of(context).backgroundColor,
+          )
+        )
+      )
+    );
+
     return Padding(
       padding: EdgeInsets.only(left: 12.0, bottom: 10),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.end,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: <Widget>[
           Padding(
-            padding: const EdgeInsets.only(right: 12, bottom: 14),
+            padding: const EdgeInsets.only(right: 12),
             child: Text(
               "To: ",
               style: Theme.of(context).textTheme.subtitle1,
             ),
           ),
           Flexible(
-            child: ExtendedTextField(
-              autofocus: true,
-              autocorrect: false,
-              maxLines: 1,
-              style: Theme.of(context).textTheme.bodyText1,
-              controller: widget.controller,
-              specialTextSpanBuilder: ParticipantSpanBuilder(
-                widget.controller,
-                context,
-                _participants,
+            flex: 1,
+            fit: FlexFit.tight,
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                mainAxisSize: MainAxisSize.max,
+                children: items,
               ),
             ),
           ),
@@ -104,11 +149,10 @@ class _NewChatCreatorTextFieldState extends State<NewChatCreatorTextField> {
             child: FlatButton(
               color: Theme.of(context).accentColor,
               onPressed: () async {
-                await _getParticipantsFromText(widget.controller.text);
-                widget.onCreate(_participants.values.toList());
+                widget.onCreate();
               },
               child: Text(
-                widget.createText,
+                "Create",
                 style: Theme.of(context).textTheme.bodyText1,
               ),
             ),
@@ -116,41 +160,5 @@ class _NewChatCreatorTextFieldState extends State<NewChatCreatorTextField> {
         ],
       ),
     );
-  }
-
-  Future<void> _getParticipantsFromText(String val) async {
-    List<String> participants = val.split(",");
-    participants.forEach((element) {
-      element = element.trim();
-    });
-    participants.removeWhere((element) => element == " " || element == "");
-    _participants = new Map();
-    for (String participant in participants) {
-      Contact contact = await tryFindContact(participant);
-      if (contact != null) {
-        _participants[participant] = contact;
-      } else {
-        //this is just to ensure that if there is a space after the comma, we remove that first
-        widget.controller.text =
-            widget.controller.text.replaceAll(participant + ", ", "");
-
-        //if the comma with space after it wasn't found, then we do this
-        widget.controller.text =
-            widget.controller.text.replaceAll(participant + ",", "");
-        if (participant.length > 1) {
-          Scaffold.of(context).showSnackBar(SnackBar(
-            content: Text("Invalid Contact " + participant),
-          ));
-        }
-      }
-    }
-
-    widget.controller.selection = TextSelection.fromPosition(
-      TextPosition(
-        offset: widget.controller.text.length,
-      ),
-    );
-    setState(() {});
-    widget.filter("");
   }
 }

@@ -237,7 +237,7 @@ class _ConversationTileState extends State<ConversationTile> {
                       initials: initials,
                     ),
                     trailing: Container(
-                      padding: EdgeInsets.only(right: 5),
+                      padding: EdgeInsets.only(right: 3),
                       width: 80,
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.center,

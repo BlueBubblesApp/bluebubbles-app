@@ -252,3 +252,9 @@ String cleansePhoneNumber(String input) {
 Future<dynamic> loadAsset(String path) {
   return rootBundle.load(path);
 }
+
+bool validatePhoneNumber(String value) {
+  String patttern = r'^(\+?\d{1,2}\s?)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}$';
+  RegExp regExp = new RegExp(patttern);
+  return regExp.hasMatch(value);
+}    
