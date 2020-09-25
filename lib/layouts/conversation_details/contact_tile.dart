@@ -10,7 +10,6 @@ import 'package:bluebubbles/socket_manager.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:intent/intent.dart' as android_intent;
 import 'package:intent/action.dart' as android_action;
@@ -60,21 +59,52 @@ class _ContactTileState extends State<ContactTile> {
 
   void fetchAvatar() async {
     MemoryImage avatar = await loadAvatar(widget.chat, widget.handle.address);
-    if (contactImage == null || contactImage.bytes.length != avatar.bytes.length) {
+    if (contactImage == null ||
+        contactImage.bytes.length != avatar.bytes.length) {
       contactImage = avatar;
-      if (this.mounted) setState(() {}); 
+      if (this.mounted) setState(() {});
     }
   }
 
   void getContact() {
     ContactManager().getCachedContact(widget.address).then((Contact contact) {
       if (contact != null) {
-        if (this.contact == null || this.contact.identifier != contact.identifier) {
+        if (this.contact == null ||
+            this.contact.identifier != contact.identifier) {
           this.contact = contact;
           if (this.mounted) setState(() {});
         }
       }
     });
+  }
+
+  Future<void> makeCall(String phoneNumber) async {
+    if (await Permission.phone.request().isGranted) {
+      android_intent.Intent()
+        ..setAction(android_action.Action.ACTION_CALL)
+        ..setData(Uri(scheme: "tel", path: phoneNumber))
+        ..startActivity().catchError((e) => print(e));
+    }
+  }
+
+  List<Item> getUniqueNumbers(Iterable<Item> numbers) {
+    List<Item> phones = [];
+    for (Item phone in numbers) {
+      bool exists = false;
+      for (Item current in phones) {
+        if (cleansePhoneNumber(phone.value) ==
+            cleansePhoneNumber(current.value)) {
+          exists = true;
+          break;
+        }
+      }
+
+      if (!exists) {
+        phones.add(phone);
+      }
+    }
+
+    return phones;
   }
 
   Widget _buildContactTile() {
@@ -94,9 +124,7 @@ class _ContactTileState extends State<ContactTile> {
       },
       child: ListTile(
         title: Text(
-          contact != null
-              ? contact.displayName
-              : widget.handle.address,
+          contact != null ? contact.displayName : widget.handle.address,
           style: Theme.of(context).textTheme.bodyText1,
         ),
         leading: ContactAvatarWidget(
@@ -108,30 +136,67 @@ class _ContactTileState extends State<ContactTile> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: <Widget>[
-              ButtonTheme(
-                minWidth: 1,
-                child: FlatButton(
-                  shape: CircleBorder(),
-                  color: Theme.of(context).accentColor,
-                  onPressed: () async {
-                    if (contact != null &&
-                        contact.phones.length > 0) {
-                      if (await Permission.phone.request().isGranted) {
-                        android_intent.Intent()
-                          ..setAction(android_action.Action.ACTION_CALL)
-                          ..setData(Uri(
-                              scheme: "tel",
-                              path: contact.phones.first.value))
-                          ..startActivity().catchError((e) => print(e));
-                      }
-                    }
-                  },
-                  child: Icon(
-                    Icons.call,
-                    color: Colors.blue,
-                  ),
-                ),
-              ),
+              (contact != null && contact.phones.length > 0)
+                  ? ButtonTheme(
+                      minWidth: 1,
+                      child: FlatButton(
+                        shape: CircleBorder(),
+                        color: Theme.of(context).accentColor,
+                        onPressed: () {
+                          List<Item> phones = getUniqueNumbers(contact.phones);
+                          if (phones.length == 1) {
+                            makeCall(contact.phones.elementAt(0).value);
+                          } else {
+                            showDialog(
+                                context: context,
+                                builder: (BuildContext context) {
+                                  return AlertDialog(
+                                      backgroundColor:
+                                          Theme.of(context).accentColor,
+                                      title: new Text("Select a Phone Number",
+                                          style: TextStyle(
+                                              color: Theme.of(context)
+                                                  .textTheme
+                                                  .bodyText1
+                                                  .color)),
+                                      content: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        mainAxisSize: MainAxisSize.min,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          for (int i = 0;
+                                              i < phones.length;
+                                              i++)
+                                            FlatButton(
+                                                minWidth: MediaQuery.of(context)
+                                                    .size
+                                                    .width,
+                                                child: Text(
+                                                    "${phones[i].value} (${phones[i].label})",
+                                                    style: TextStyle(
+                                                        color: Theme.of(context)
+                                                            .textTheme
+                                                            .bodyText1
+                                                            .color),
+                                                    textAlign: TextAlign.start),
+                                                onPressed: () async {
+                                                  makeCall(phones[i].value);
+                                                  Navigator.of(context).pop();
+                                                })
+                                        ],
+                                      ));
+                                });
+                          }
+                        },
+                        child: Icon(
+                          Icons.call,
+                          color: Colors.blue,
+                        ),
+                      ),
+                    )
+                  : Container()
             ],
           ),
         ),

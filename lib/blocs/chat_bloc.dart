@@ -80,7 +80,6 @@ class ChatBloc {
   /// Inserts a [chat] into the chat bloc based on the lastMessage data
   Future<void> updateChatPosition(Chat chat) async {
     if (chat == null) return;
-    if (!LifeCycleManager().isAlive) return;
     if (_chats == null) {
       await this.refreshChats();
     }

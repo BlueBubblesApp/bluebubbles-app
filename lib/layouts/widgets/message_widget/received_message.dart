@@ -40,7 +40,6 @@ class ReceivedMessage extends StatefulWidget {
 }
 
 class _ReceivedMessageState extends State<ReceivedMessage> {
-
   String contactTitle = "";
 
   @override
@@ -52,13 +51,15 @@ class _ReceivedMessageState extends State<ReceivedMessage> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    getContactTitle(); 
+    getContactTitle();
   }
 
   void getContactTitle() {
     if (widget.message.handle == null || !widget.showHandle) return;
 
-    ContactManager().getContactTitle(widget.message.handle.address).then((String title) {
+    ContactManager()
+        .getContactTitle(widget.message.handle.address)
+        .then((String title) {
       if (title != contactTitle) {
         contactTitle = title;
         if (this.mounted) setState(() {});
@@ -207,7 +208,8 @@ class _ReceivedMessageState extends State<ReceivedMessage> {
     ];
 
     Widget contactItem = new Container(width: 0, height: 0);
-    if (!sameSender(widget.message, widget.olderMessage)) {
+    if (!sameSender(widget.message, widget.olderMessage) ||
+        !widget.message.dateCreated.isWithin(widget.olderMessage.dateCreated, minutes: 30)) {
       contactItem = Padding(
         padding: EdgeInsets.only(left: 25.0, top: 5.0, bottom: 3.0),
         child: Text(
@@ -292,9 +294,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> {
                     children: <Widget>[
                       RichText(
                         text: TextSpan(
-                          style: Theme.of(context)
-                              .textTheme
-                              .subtitle2,
+                          style: Theme.of(context).textTheme.subtitle2,
                           children: [
                             TextSpan(
                               text: "${widget.timeStamp["date"]}, ",

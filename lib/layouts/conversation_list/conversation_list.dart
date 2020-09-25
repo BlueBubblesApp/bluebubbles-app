@@ -2,6 +2,9 @@ import 'dart:ui';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/layouts/conversation_view/new_chat_creator.dart';
+import 'package:bluebubbles/managers/event_dispatcher.dart';
+import 'package:bluebubbles/managers/life_cycle_manager.dart';
+import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 
 import './conversation_tile.dart';
@@ -65,6 +68,16 @@ class _ConversationListState extends State<ConversationList> {
     }
 
     _scrollController = ScrollController()..addListener(scrollListener);
+
+    // Listen for any incoming events
+    EventDispatcher().stream.listen((Map<String, dynamic> event) {
+      if (!event.containsKey("type") || event["type"] != "show-snackbar") return;
+
+      // Make sure that the app is open and the conversation list is present
+      if (!LifeCycleManager().isAlive || NotificationManager().chat != null) return;
+      final snackBar = SnackBar(content: Text(event["data"]["text"]));
+      Scaffold.of(context).showSnackBar(snackBar);
+    });
   }
 
   bool get _isAppBarExpanded {

@@ -69,7 +69,7 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
 
       if (!widget.message.text.startsWith("http://") &&
           !widget.message.text.startsWith("https://")) {
-        url = "http://" + widget.message.text;
+        url = "https://" + widget.message.text;
       }
       data = await extract(url);
       widget.savedAttachmentData
@@ -105,6 +105,7 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
                       ? attachmentSaved(widget.linkPreviews.last)
                           ? Image.file(
                               attachmentFile(widget.linkPreviews.last),
+                              filterQuality: FilterQuality.low,
                             )
                           : CupertinoActivityIndicator(
                               animating: true,
@@ -120,10 +121,12 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: <Widget>[
                                   data != null
-                                      ? Padding(
-                                          padding: const EdgeInsets.only(
-                                            bottom: 8.0,
-                                          ),
+                                      ? Container(
+                                          width: MediaQuery.of(context)
+                                                  .size
+                                                  .width *
+                                              4 /
+                                              9,
                                           child: Text(
                                             data.title != null
                                                 ? data.title
@@ -132,6 +135,8 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
                                                 .textTheme
                                                 .bodyText1
                                                 .apply(fontWeightDelta: 2),
+                                            overflow: TextOverflow.ellipsis,
+                                            maxLines: 2,
                                           ),
                                         )
                                       : Container(),
@@ -155,11 +160,14 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
                               )
                             : Container(),
                         attachmentSaved(widget.linkPreviews.first)
-                            ? Image.file(
+                            ? ClipRRect(
+                              borderRadius: BorderRadius.circular(10.0),
+                              child: Image.file(
                                 attachmentFile(widget.linkPreviews.first),
                                 width: 40,
                                 fit: BoxFit.contain,
                               )
+                            ) 
                             : CupertinoActivityIndicator(
                                 animating: true,
                               )

@@ -9,6 +9,8 @@ import 'package:bluebubbles/layouts/widgets/CustomCupertinoNavBackButton.dart';
 import 'package:bluebubbles/layouts/widgets/CustomCupertinoNavBar.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
+import 'package:bluebubbles/managers/event_dispatcher.dart';
+import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
@@ -45,7 +47,7 @@ class _ConversationViewState extends State<ConversationView> {
   LayerLink layerLink = LayerLink();
   String chatTitle;
   Map<String, dynamic> avatarStack = {};
-  int newMessages = 0;
+  List<String> newMessages = [];
 
   @override
   void initState() {
@@ -60,23 +62,23 @@ class _ConversationViewState extends State<ConversationView> {
       fetchAvatars();
     });
 
-    NewMessageManager()
-        .stream
-        .listen((Map<String, Map<String, List<Map<String, dynamic>>>> event) {
-      // If the new message is from the current chat, return
-      if (event.containsKey(widget.chat.guid)) return;
-      int before = newMessages;
+    EventDispatcher().stream.listen((Map<String, dynamic> event) {
+      if (!["add-unread-chat", "remove-unread-chat"].contains(event["type"])) return;
+      if (!event["data"].containsKey("chatGuid")) return;
 
-      // If the new message isn't an "ADD", return
-      event
-          .forEach((chatGuid, Map<String, List<Map<String, dynamic>>> actions) {
-        if (!actions.containsKey(NewMessageAction.ADD)) return;
+      // Ignore any events having to do with this chat
+      String chatGuid = event["data"]["chatGuid"];
+      if (chat.guid == chatGuid) return;
 
-        // Increment the newMessages counter by the number of messages being added
-        newMessages += actions[NewMessageAction.ADD].length;
-      });
+      int preLength = newMessages.length;
+      if (event["type"] == "add-unread-chat" && !newMessages.contains(chatGuid)) {
+        newMessages.add(chatGuid);
+      } else if (event["type"] == "remove-unread-chat" && newMessages.contains(chatGuid)) {
+        newMessages.remove(chatGuid);
+      }
 
-      if (newMessages > before && this.mounted) setState(() {});
+      // Only re-render if the newMessages count changes
+      if (preLength != newMessages.length && this.mounted) setState(() {});
     });
   }
 
@@ -101,6 +103,11 @@ class _ConversationViewState extends State<ConversationView> {
     Function cb = () {
       if (this.mounted) setState(() {});
     };
+
+    // If we don't have participants, get them
+    if (widget.chat.participants.length == 0) {
+      await widget.chat.getParticipants();
+    }
 
     // Loop over the participants
     for (Handle handle in widget.chat.participants) {
@@ -184,7 +191,7 @@ class _ConversationViewState extends State<ConversationView> {
         ),
         leading: CustomCupertinoNavigationBarBackButton(
           color: Theme.of(context).primaryColor,
-          notifications: newMessages,
+          notifications: newMessages.length,
         ),
         middle: ListView(
           physics: Cupertino.NeverScrollableScrollPhysics(),
@@ -192,33 +199,32 @@ class _ConversationViewState extends State<ConversationView> {
             Container(height: 10.0),
             GestureDetector(
               onTap: openDetails,
-              child: Align(
-                alignment: Alignment.center,
-                child: RowSuper(children: avatars, innerDistance: distance),
-              ),
-            ),
-            Container(height: 3.0),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                GestureDetector(
-                    onTap: openDetails,
-                    child: RichText(
-                      text: TextSpan(
-                        style: Theme.of(context).textTheme.headline2,
-                        children: [
-                          TextSpan(
-                            text: chatTitle,
-                            style: Theme.of(context).textTheme.bodyText1,
-                          ),
-                          TextSpan(
-                            text: " >",
-                            style: Theme.of(context).textTheme.subtitle1,
-                          )
-                        ],
-                      ),
-                    ))
-              ],
+              child: Container(
+                padding: EdgeInsets.only(right: 15.0),
+                child: Align(
+                  alignment: Alignment.center,
+                  child: Column(
+                    children: [
+                      RowSuper(children: avatars, innerDistance: distance),
+                      RichText(
+                        text: TextSpan(
+                          style: Theme.of(context).textTheme.headline2,
+                          children: [
+                            TextSpan(
+                              text: chatTitle,
+                              style: Theme.of(context).textTheme.bodyText1,
+                            ),
+                            TextSpan(
+                              text: " >",
+                              style: Theme.of(context).textTheme.subtitle1,
+                            )
+                          ],
+                        ),
+                      )
+                    ],
+                  )
+                )
+              )
             ),
           ],
         ),

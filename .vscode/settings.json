@@ -1,0 +1,12 @@
+{
+    "files.watcherExclude": {
+        "**/.dart_tool/**": true,
+        "**/.idea/**": true,
+        "**/.settings/**": true,
+        "**/build/**": true,
+        "**/ios/**": true,
+        "**/assets/**": true,
+        "**/.git/objects/**": true,
+        "**/.git/subtree-cache/**": true
+    }
+}

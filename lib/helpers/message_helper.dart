@@ -5,6 +5,7 @@ import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
@@ -111,6 +112,9 @@ class MessageHelper {
     Contact contact = await ContactManager().getCachedContact(handleAddress);
     String title = await getFullChatTitle(chat);
     String notification = await MessageHelper.getNotificationText(message);
+    if (SettingsManager().settings.hideTextPreviews) {
+      notification = "New Message (unlock to view)";
+    }
     NotificationManager().createNewNotification(
       title,
       notification,

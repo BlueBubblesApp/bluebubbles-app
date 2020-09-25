@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
+import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/settings.dart';
@@ -173,6 +174,11 @@ class SetupBloc {
       Settings _settingsCopy = SettingsManager().settings;
       _settingsCopy.lastIncrementalSync = syncStart;
       SettingsManager().saveSettings(_settingsCopy, connectToSocket: false);
+
+      // Show a nice lil toast/snackbar
+      EventDispatcher().emit("show-snackbar", {
+        "text": "🔄 Incremental sync complete 🔄"
+      });
 
       // End the sync
       closeSync();

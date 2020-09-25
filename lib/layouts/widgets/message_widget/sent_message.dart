@@ -39,7 +39,6 @@ class SentMessage extends StatefulWidget {
     @required this.showTail,
     @required this.message,
     @required this.chat,
-    // @required this.overlayEntry,
     @required this.timeStamp,
     @required this.showDeliveredReceipt,
     @required this.customContent,
@@ -338,6 +337,7 @@ class _SentMessageState extends State<SentMessage>
             DeliveredReceipt(
               message: widget.message,
               showDeliveredReceipt: widget.showDeliveredReceipt,
+              shouldAnimate: widget.shouldFadeIn
             ),
             widget.timeStamp != null
                 ? Padding(
@@ -496,7 +496,7 @@ class _ActualSentMessageState extends State<ActualSentMessage> {
               context: context,
               builder: (BuildContext context) {
                 return AlertDialog(
-                  title: new Text("Message failed to send"),
+                  title: new Text("Message failed to send", style: TextStyle(color: Colors.black)),
                   content: new Text("Error ($errorCode): $errorText"),
                   actions: <Widget> [
                     new FlatButton(

@@ -6,7 +6,7 @@ import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
-import 'package:bluebubbles/repository/models/handle.dart';
+import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -41,6 +41,7 @@ class ConversationTile extends StatefulWidget {
 class _ConversationTileState extends State<ConversationTile> {
   MemoryImage contactImage;
   bool isPressed = false;
+  var initials;
 
   @override
   void initState() {
@@ -66,27 +67,55 @@ class _ConversationTileState extends State<ConversationTile> {
     fetchAvatar(null);
   }
 
+  void setContactImage(MemoryImage image) {
+    if (image != null) {
+      if (contactImage == null ||
+          contactImage.bytes.length != image.bytes.length) {
+        contactImage = image;
+        if (this.mounted) setState(() {});
+      }
+    }
+  }
+
   Future<void> fetchAvatar(List<String> addresses) async {
     // If our chat does not have any participants, get them
-    if (widget.chat.participants == null || widget.chat.participants.length < 1) {
+    if (widget.chat.participants == null ||
+        widget.chat.participants.length == 0) {
       await widget.chat.getParticipants();
     }
 
-    if (widget.chat.participants.length != 1) return;
-    loadAvatar(widget.chat, widget.chat.participants[0].address).then((MemoryImage image) {
-      if (image != null) {
-        if (contactImage == null ||
-            contactImage.bytes.length != image.bytes.length) {
-          contactImage = image;
-          if (this.mounted) setState(() {});
+    if (widget.chat.participants.length > 1 ||
+        (widget.chat.displayName != null && widget.chat.displayName != "")) {
+      initials = Icon(Icons.people, color: Colors.white, size: 30);
+      if (this.mounted) setState(() {});
+    } else if (widget.chat.participants.length == 1) {
+      ContactManager()
+          .getCachedContact(widget.chat.participants[0].address)
+          .then((Contact c) {
+        if (c == null && this.mounted) {
+          initials = Icon(Icons.person, color: Colors.white, size: 30);
+          setState(() {});
+        } else {
+          loadAvatar(widget.chat, widget.chat.participants[0].address)
+              .then((MemoryImage image) {
+            setContactImage(image);
+          });
         }
-      }
-    });
+      });
+    } else {
+      loadAvatar(widget.chat, widget.chat.participants[0].address)
+          .then((MemoryImage image) {
+        setContactImage(image);
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    var initials = getInitials(widget.chat.title, " ");
+    if (initials == null) {
+      initials = getInitials(widget.chat.title, " ");
+    }
+
     return Slidable(
       actionPane: SlidableStrechActionPane(),
       secondaryActions: <Widget>[
@@ -208,7 +237,7 @@ class _ConversationTileState extends State<ConversationTile> {
                       initials: initials,
                     ),
                     trailing: Container(
-                      padding: EdgeInsets.only(right: 5),
+                      padding: EdgeInsets.only(right: 3),
                       width: 80,
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.center,
