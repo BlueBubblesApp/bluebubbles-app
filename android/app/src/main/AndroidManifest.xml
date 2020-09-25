@@ -23,7 +23,7 @@
         android:name=".Application"
         android:icon="@mipmap/ic_launcher"
         android:label="BlueBubbles"
-        android:debuggable="false"
+        android:debuggable="true"
         android:usesCleartextTraffic="true"
         tools:ignore="HardcodedDebugMode">
 

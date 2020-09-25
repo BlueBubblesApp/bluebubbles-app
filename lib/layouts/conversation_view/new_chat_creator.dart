@@ -115,9 +115,8 @@ class _NewChatCreatorState extends State<NewChatCreator> {
     };
 
     for (Contact contact in ContactManager().contacts) {
-      if (contact.displayName
-          .toLowerCase()
-          .contains(searchQuery.toLowerCase())) {
+      String name = (contact.displayName ?? "").toLowerCase();
+      if (name.contains(searchQuery.toLowerCase())) {
         addContactEntries(contact);
       } else {
         addContactEntries(contact, conditionally: true);
@@ -127,7 +126,8 @@ class _NewChatCreatorState extends State<NewChatCreator> {
     List<UniqueContact> _conversations = [];
     if (!controller.text.contains(",")) {
       for (Chat chat in conversations) {
-        if (chat.title.toLowerCase().contains(searchQuery.toLowerCase())) {
+        String title = (chat?.title ?? "").toLowerCase();
+        if (title.contains(searchQuery.toLowerCase())) {
           if (!cache.contains(chat.guid)) {
             cache.add(chat.guid);
             _conversations.add(new UniqueContact(

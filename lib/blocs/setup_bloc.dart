@@ -121,7 +121,9 @@ class SetupBloc {
   void startIncrementalSync(Settings settings, Function _onConnectionError) {
     // If we are already syncing, don't sync again
     // If the last sync date is empty, then we've never synced, so don't.
-    if (isSyncing || settings.lastIncrementalSync == 0) return;
+    if (isSyncing ||
+        settings.lastIncrementalSync == 0 ||
+        SocketManager().state != SocketState.CONNECTED) return;
 
     // Setup the socket process and error handler
     processId =
@@ -176,9 +178,8 @@ class SetupBloc {
       SettingsManager().saveSettings(_settingsCopy, connectToSocket: false);
 
       // Show a nice lil toast/snackbar
-      EventDispatcher().emit("show-snackbar", {
-        "text": "🔄 Incremental sync complete 🔄"
-      });
+      EventDispatcher()
+          .emit("show-snackbar", {"text": "🔄 Incremental sync complete 🔄"});
 
       // End the sync
       closeSync();
