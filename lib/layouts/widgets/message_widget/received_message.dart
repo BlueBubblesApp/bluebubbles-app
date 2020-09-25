@@ -103,7 +103,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> {
 
   @override
   Widget build(BuildContext context) {
-    var initials = getInitials(contact?.displayName ?? "", " ");
+    var initials = getInitials(contact?.displayName ?? "", " ", size: 25);
     List<Widget> tail = <Widget>[
       Container(
         margin: EdgeInsets.only(bottom: 1),
@@ -261,7 +261,10 @@ class _ReceivedMessageState extends State<ReceivedMessage> {
           padding: EdgeInsets.only(
               left: 5.0, bottom: (!widget.message.hasAttachments) ? 10.0 : 0.0),
           child: ContactAvatarWidget(
-              contactImage: contactImage, initials: initials, size: 30)));
+              contactImage: contactImage,
+              initials: initials,
+              size: 30,
+              fontSize: 14)));
     }
 
     msgItems.add(Padding(

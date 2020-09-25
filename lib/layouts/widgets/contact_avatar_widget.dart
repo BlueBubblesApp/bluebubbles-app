@@ -7,10 +7,12 @@ class ContactAvatarWidget extends StatefulWidget {
     this.initials,
     this.contactImage,
     this.size,
+    this.fontSize,
   }) : super(key: key);
   final initials;
   final ImageProvider contactImage;
   final double size;
+  final double fontSize;
 
   @override
   _ContactAvatarWidgetState createState() => _ContactAvatarWidgetState();
@@ -35,7 +37,11 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> {
               child: Container(
                 child: (widget.initials is Icon)
                     ? widget.initials
-                    : Text(widget.initials),
+                    : Text(widget.initials,
+                        style: TextStyle(
+                            fontSize: (widget.fontSize == null)
+                                ? 18
+                                : widget.fontSize)),
                 alignment: AlignmentDirectional.center,
               ),
             )
