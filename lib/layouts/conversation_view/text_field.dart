@@ -501,7 +501,7 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                                         color: (isRecording) ? Colors.red : Colors.white, size: 20)),
                                 AnimatedOpacity(
                                     opacity:
-                                        _controller.text.isNotEmpty && !isRecording ? 1.0 : 0.0,
+                                        (_controller.text.isNotEmpty || pickedImages.length > 0) && !isRecording ? 1.0 : 0.0,
                                     duration: Duration(milliseconds: 150),
                                     child: Icon(Icons.arrow_upward,
                                         color: Colors.white, size: 20)),

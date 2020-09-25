@@ -114,7 +114,9 @@ class _MessageState extends State<MessageWidget> {
         attachments: widget.savedAttachmentData != null
             ? MessageAttachments(
                 message: widget.message,
-                savedAttachmentData: widget.savedAttachmentData)
+                savedAttachmentData: widget.savedAttachmentData,
+                showTail: showTail,
+                showHandle: widget.showHandle)
             : Container(),
         showHero: widget.showHero,
       );
@@ -132,7 +134,9 @@ class _MessageState extends State<MessageWidget> {
         attachments: widget.savedAttachmentData != null
             ? MessageAttachments(
                 message: widget.message,
-                savedAttachmentData: widget.savedAttachmentData)
+                savedAttachmentData: widget.savedAttachmentData,
+                showTail: showTail,
+                showHandle: widget.showHandle)
             : Container(),
       );
     }

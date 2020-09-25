@@ -6,9 +6,11 @@ class ContactAvatarWidget extends StatefulWidget {
     Key key,
     this.initials,
     this.contactImage,
+    this.size,
   }) : super(key: key);
   final initials;
   final ImageProvider contactImage;
+  final double size;
 
   @override
   _ContactAvatarWidgetState createState() => _ContactAvatarWidgetState();
@@ -18,11 +20,11 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> {
   @override
   Widget build(BuildContext context) {
     return CircleAvatar(
-      radius: 20,
+      radius: (widget.size != null) ? widget.size / 2 : 20,
       child: widget.contactImage == null
           ? Container(
-              width: 40,
-              height: 40,
+              width: widget.size ?? 40,
+              height: widget.size ?? 40,
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: AlignmentDirectional.topStart,
