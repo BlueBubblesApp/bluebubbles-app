@@ -280,7 +280,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                             "Are you sure?",
                             style: Theme.of(context).textTheme.bodyText1,
                           ),
-                          backgroundColor: HexColor('26262a'),
+                          backgroundColor: Theme.of(context).backgroundColor,
                           actions: <Widget>[
                             FlatButton(
                               child: Text("Yes"),

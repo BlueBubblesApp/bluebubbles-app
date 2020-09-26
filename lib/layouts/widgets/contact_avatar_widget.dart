@@ -6,9 +6,13 @@ class ContactAvatarWidget extends StatefulWidget {
     Key key,
     this.initials,
     this.contactImage,
+    this.size,
+    this.fontSize,
   }) : super(key: key);
   final initials;
   final ImageProvider contactImage;
+  final double size;
+  final double fontSize;
 
   @override
   _ContactAvatarWidgetState createState() => _ContactAvatarWidgetState();
@@ -18,11 +22,11 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> {
   @override
   Widget build(BuildContext context) {
     return CircleAvatar(
-      radius: 20,
+      radius: (widget.size != null) ? widget.size / 2 : 20,
       child: widget.contactImage == null
           ? Container(
-              width: 40,
-              height: 40,
+              width: widget.size ?? 40,
+              height: widget.size ?? 40,
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: AlignmentDirectional.topStart,
@@ -33,7 +37,11 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> {
               child: Container(
                 child: (widget.initials is Icon)
                     ? widget.initials
-                    : Text(widget.initials),
+                    : Text(widget.initials,
+                        style: TextStyle(
+                            fontSize: (widget.fontSize == null)
+                                ? 18
+                                : widget.fontSize)),
                 alignment: AlignmentDirectional.center,
               ),
             )

@@ -56,8 +56,8 @@ class _ImageWidgetState extends State<ImageWidget> with TickerProviderStateMixin
               ),
               padding: EdgeInsets.all(2.0),
               constraints: BoxConstraints(
-                maxWidth: MediaQuery.of(context).size.width / 3,
-                maxHeight: MediaQuery.of(context).size.height / 3,
+                maxWidth: MediaQuery.of(context).size.width / 2,
+                maxHeight: MediaQuery.of(context).size.height / 2,
               )
             )
             : Container(

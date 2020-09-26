@@ -111,7 +111,7 @@ class _MessageViewState extends State<MessageView>
             if (_listKey != null && _listKey.currentState != null) {
               try {
                 _listKey.currentState.removeItem(
-                  i, (context, animation) => Container(),
+                    i, (context, animation) => Container(),
                     duration: Duration(milliseconds: 0));
               } catch (ex) {
                 debugPrint("Error removing item animation");
@@ -189,13 +189,15 @@ class _MessageViewState extends State<MessageView>
                         loader.then((val) {
                           loader = null;
                         });
-                      }
 
-                      return NewMessageLoader(
-                        messageBloc: widget.messageBloc,
-                        offset: _messages.length,
-                        loader: loader,
-                      );
+                        return NewMessageLoader(
+                          messageBloc: widget.messageBloc,
+                          offset: _messages.length,
+                          loader: loader,
+                        );
+                      } else {
+                        return Container();
+                      }
                     }
 
                     Message olderMessage;
@@ -218,25 +220,25 @@ class _MessageViewState extends State<MessageView>
                         child: FadeTransition(
                           opacity: animation,
                           child: MessageWidget(
-                            key: Key(_messages[index].guid),
-                            offset: timeStampOffset,
-                            fromSelf: _messages[index].isFromMe,
-                            message: _messages[index],
-                            chat: widget.messageBloc.currentChat,
-                            olderMessage: olderMessage,
-                            newerMessage: newerMessage,
-                            showHandle: widget.showHandle,
-                            shouldFadeIn:
-                                sentMessages.contains(_messages[index].guid),
-                            isFirstSentMessage:
-                                widget.messageBloc.firstSentMessage ==
-                                    _messages[index].guid,
-                            savedAttachmentData:
-                                attachments.containsKey(_messages[index].guid)
-                                    ? attachments[_messages[index].guid]
-                                    : null,
-                            showHero: index == 0 && _messages[index].originalROWID == null
-                          ),
+                              key: Key(_messages[index].guid),
+                              offset: timeStampOffset,
+                              fromSelf: _messages[index].isFromMe,
+                              message: _messages[index],
+                              chat: widget.messageBloc.currentChat,
+                              olderMessage: olderMessage,
+                              newerMessage: newerMessage,
+                              showHandle: widget.showHandle,
+                              shouldFadeIn:
+                                  sentMessages.contains(_messages[index].guid),
+                              isFirstSentMessage:
+                                  widget.messageBloc.firstSentMessage ==
+                                      _messages[index].guid,
+                              savedAttachmentData:
+                                  attachments.containsKey(_messages[index].guid)
+                                      ? attachments[_messages[index].guid]
+                                      : null,
+                              showHero: index == 0 &&
+                                  _messages[index].originalROWID == null),
                         ),
                       ),
                     );

@@ -57,12 +57,12 @@ bool sameAddress(String address1, String address2) {
       "+" + formattedNumber == address2;
 }
 
-getInitials(String name, String delimeter) {
-  if (name == null) return Icon(Icons.person, color: Colors.white, size: 30);
+getInitials(String name, String delimeter, {double size = 30}) {
+  if (name == null) return Icon(Icons.person, color: Colors.white, size: size);
   List array = name.split(delimeter);
   // If there is a comma, just return the "people" icon
   if (name.contains(", ") || name.contains(" & "))
-    return Icon(Icons.people, color: Colors.white, size: 30);
+    return Icon(Icons.people, color: Colors.white, size: size);
 
   // If there is an & character, it's 2 people, format accordingly
   if (name.contains(' & ')) {
@@ -72,7 +72,7 @@ getInitials(String name, String delimeter) {
 
     // If either first or second name is null, return the people icon
     if (first == null || second == null) {
-      return Icon(Icons.people, color: Colors.white, size: 30);
+      return Icon(Icons.people, color: Colors.white, size: size);
     } else {
       return "${first.toUpperCase()}&${second.toUpperCase()}";
     }
@@ -80,7 +80,7 @@ getInitials(String name, String delimeter) {
 
   // If the name is a phone number, return the "person" icon
   if (name.startsWith("+") || array[0].length < 1)
-    return Icon(Icons.person, color: Colors.white, size: 30);
+    return Icon(Icons.person, color: Colors.white, size: size);
 
   switch (array.length) {
     case 1:
@@ -195,24 +195,26 @@ Future<String> getGroupEventText(Message message) async {
 }
 
 Future<MemoryImage> loadAvatar(Chat chat, String address) async {
-  // If the chat hasn't been saved, save it
-  if (chat.id == null) await chat.save();
+  if (chat != null) {
+    // If the chat hasn't been saved, save it
+    if (chat.id == null) await chat.save();
 
-  // If there are no participants, get them
-  if (chat.participants == null || chat.participants.length == 0) {
-    chat = await chat.getParticipants();
+    // If there are no participants, get them
+    if (chat.participants == null || chat.participants.length == 0) {
+      chat = await chat.getParticipants();
+    }
+
+    // If there are no participants, return
+    if (chat.participants == null) return null;
+
+    if (address == null) {
+      address = chat.participants.first.address;
+    }
+
+    // See if the update contains the current conversation
+    int matchIdx = chat.participants.map((i) => i.address).toList().indexOf(address);
+    if (matchIdx == -1) return null;
   }
-
-  // If there are no participants, return
-  if (chat.participants == null) return null;
-
-  if (address == null) {
-    address = chat.participants.first.address;
-  }
-
-  // See if the update contains the current conversation
-  int matchIdx = chat.participants.map((i) => i.address).toList().indexOf(address);
-  if (matchIdx == -1) return null;
 
   // Get the contact
   Contact contact = await ContactManager().getCachedContact(address);

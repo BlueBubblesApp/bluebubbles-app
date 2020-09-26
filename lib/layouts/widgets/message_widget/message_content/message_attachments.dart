@@ -30,13 +30,17 @@ class SavedAttachmentData {
 }
 
 class MessageAttachments extends StatefulWidget {
-  MessageAttachments({
-    Key key,
-    @required this.message,
-    @required this.savedAttachmentData,
-  }) : super(key: key);
+  MessageAttachments(
+      {Key key,
+      @required this.message,
+      @required this.savedAttachmentData,
+      @required this.showTail,
+      @required this.showHandle})
+      : super(key: key);
   final Message message;
   final SavedAttachmentData savedAttachmentData;
+  final bool showTail;
+  final bool showHandle;
 
   @override
   _MessageAttachmentsState createState() => _MessageAttachmentsState();
@@ -113,14 +117,15 @@ class _MessageAttachmentsState extends State<MessageAttachments>
   }
 
   Widget _buildActualWidget() {
-    return Row(
+    return Column(
       mainAxisAlignment: widget.message.isFromMe
           ? MainAxisAlignment.end
           : MainAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.end,
       children: <Widget>[
         Stack(
           alignment:
-              widget.message.isFromMe ? Alignment.topLeft : Alignment.topRight,
+              widget.message.isFromMe ? Alignment.topRight : Alignment.topLeft,
           children: <Widget>[
             Padding(
               padding:
@@ -131,10 +136,16 @@ class _MessageAttachmentsState extends State<MessageAttachments>
                           left: widget.message.isFromMe ? 16.0 : 10.0,
                           top: 24.0,
                         )
-                      : EdgeInsets.symmetric(horizontal: 10.0),
+                      : EdgeInsets.symmetric(
+                          horizontal: (widget.showTail ||
+                                  !widget.showHandle ||
+                                  widget.message.isFromMe)
+                              ? 10.0
+                              : 45.0),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: _buildAttachments(),
-              ),
+              )
             ),
             widget.message.hasReactions
                 ? Reactions(

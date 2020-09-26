@@ -51,26 +51,37 @@ class _NewChatCreatorState extends State<NewChatCreator> {
   List<UniqueContact> contacts = [];
   List<UniqueContact> selected = [];
   bool hadInvisibleSpace = false;
+  String searchQuery = "";
 
   TextEditingController controller = new TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    if (ChatBloc().chats != null) {
-      conversations = ChatBloc().chats;
-      conversations.forEach((element) {
-        element.getParticipants();
-      });
-    }
-
-    // Initially filter the contacts
-    filterContacts("");
+    loadEntries();
 
     // Add listener to filter the contacts on text change
     controller.addListener(() {
-      filterContacts(controller.text);
+      searchQuery = controller.text;
+      filterContacts();
     });
+
+    ChatBloc().chatStream.listen((List<Chat> chats) {
+      loadEntries();
+    });
+  }
+
+  Future<void> loadEntries() async {
+    if (ChatBloc().chats == null || ChatBloc().chats.length == 0) {
+      await ChatBloc().refreshChats();
+    }
+
+    conversations = ChatBloc().chats;
+    conversations.forEach((element) {
+      element.getParticipants();
+    });
+
+    filterContacts();
   }
 
   String getTypeStr(String type) {
@@ -78,7 +89,7 @@ class _NewChatCreatorState extends State<NewChatCreator> {
     return " ($type)";
   }
 
-  void filterContacts(String searchQuery) {
+  void filterContacts() {
     searchQuery = (searchQuery ?? "");
 
     List<UniqueContact> _contacts = [];
@@ -115,9 +126,8 @@ class _NewChatCreatorState extends State<NewChatCreator> {
     };
 
     for (Contact contact in ContactManager().contacts) {
-      if (contact.displayName
-          .toLowerCase()
-          .contains(searchQuery.toLowerCase())) {
+      String name = (contact.displayName ?? "").toLowerCase();
+      if (name.contains(searchQuery.toLowerCase())) {
         addContactEntries(contact);
       } else {
         addContactEntries(contact, conditionally: true);
@@ -127,7 +137,8 @@ class _NewChatCreatorState extends State<NewChatCreator> {
     List<UniqueContact> _conversations = [];
     if (!controller.text.contains(",")) {
       for (Chat chat in conversations) {
-        if (chat.title.toLowerCase().contains(searchQuery.toLowerCase())) {
+        String title = (chat?.title ?? "").toLowerCase();
+        if (title.contains(searchQuery.toLowerCase())) {
           if (!cache.contains(chat.guid)) {
             cache.add(chat.guid);
             _conversations.add(new UniqueContact(
