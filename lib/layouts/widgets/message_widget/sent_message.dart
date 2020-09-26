@@ -57,6 +57,7 @@ class SentMessage extends StatefulWidget {
 
 class _SentMessageState extends State<SentMessage>
     with TickerProviderStateMixin {
+  OverlayEntry _entry;
   // bool _visible = false;
 
   @override
@@ -139,9 +140,10 @@ class _SentMessageState extends State<SentMessage>
                                     color: Colors.black26,
                                     onPressed: () async {
                                       if (widget.message != null) {
-                                        NewMessageManager().removeMessage(widget.chat, widget.message.guid);
+                                        NewMessageManager().removeMessage(
+                                            widget.chat, widget.message.guid);
                                       }
-                                        
+
                                       entry.remove();
                                     })
                               ],
@@ -237,146 +239,154 @@ class _SentMessageState extends State<SentMessage>
       }
     }
 
-    return GestureDetector(
-      behavior: HitTestBehavior.translucent,
-      onLongPress: () async {
-        Feedback.forLongPress(context);
-
-        List<Message> reactions = [];
-        if (widget.message.hasReactions) {
-          reactions = await widget.message.getReactions();
+    return WillPopScope(
+      onWillPop: () async {
+        if (_entry != null) {
+          _entry.remove();
+          _entry = null;
+          return false;
+        } else {
+          return true;
         }
-        // if (widget.overlayEntry != null)
-        Overlay.of(context).insert(_createMessageDetailsPopup(reactions));
       },
-      child: AnimatedOpacity(
-        opacity: 1.0, //_visible ? 1.0 : 0.0,
-        duration: Duration(milliseconds: widget.shouldFadeIn ? 200 : 0),
-        child: Column(
-          children: <Widget>[
-            widget.attachments != null ? widget.attachments : Container(),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: <Widget>[
-                AnimatedPadding(
-                  curve: Curves.easeInOut,
-                  duration: Duration(milliseconds: 200),
-                  padding: EdgeInsets.only(
-                    bottom: widget.showTail ? 10.0 : 3.0,
-                    right: (widget.message != null && widget.message.error > 0
-                        ? 10.0
-                        : 0),
-                  ),
-                  child: Stack(
-                    alignment: Alignment.topLeft,
-                    children: <Widget>[
-                      AnimatedPadding(
-                        duration: Duration(milliseconds: 250),
-                        curve: Curves.easeInOut,
-                        padding: EdgeInsets.only(
-                          left: widget.message != null &&
-                                  widget.message.hasReactions &&
-                                  !widget.message.hasAttachments
-                              ? 6.0
-                              : 0.0,
-                          top: widget.message != null &&
-                                  widget.message.hasReactions &&
-                                  !widget.message.hasAttachments
-                              ? 14.0
-                              : 0.0,
-                        ),
-                        child: widget.showHero
-                            ? Hero(
-                                tag: "first",
-                                child: Material(
-                                  type: MaterialType.transparency,
-                                  child: ActualSentMessage(
-                                    blueColor: blueColor,
-                                    createErrorPopup: this._createErrorPopup,
-                                    customContent: widget.customContent,
-                                    message: widget.message,
-                                    chat: widget.chat,
-                                    showTail: widget.showTail,
-                                    textSpans: textSpans,
-                                  ),
-                                ),
-                              )
-                            : ActualSentMessage(
-                                blueColor: blueColor,
-                                createErrorPopup: this._createErrorPopup,
-                                customContent: widget.customContent,
-                                message: widget.message,
-                                chat: widget.chat,
-                                showTail: widget.showTail,
-                                textSpans: textSpans,
-                              ),
-                      ),
-                      widget.message != null && !widget.message.hasAttachments
-                          ? Reactions(
-                              message: widget.message,
-                            )
-                          : Container(),
-                    ],
-                  ),
-                ),
-                AnimatedContainer(
-                  width: (-widget.offset).clamp(0, 70).toDouble(),
-                  duration:
-                      Duration(milliseconds: widget.offset == 0 ? 150 : 0),
-                  child: Text(
-                    DateFormat('h:mm a')
-                        .format(widget.message.dateCreated)
-                        .toLowerCase(),
-                    style: Theme.of(context).textTheme.subtitle1,
-                    overflow: TextOverflow.clip,
-                    maxLines: 1,
-                  ),
-                )
-              ],
-            ),
-            DeliveredReceipt(
-              message: widget.message,
-              showDeliveredReceipt: widget.showDeliveredReceipt,
-              shouldAnimate: widget.shouldFadeIn
-            ),
-            widget.timeStamp != null
-                ? Padding(
-                    padding: const EdgeInsets.all(14.0),
-                    child: RichText(
-                      text: TextSpan(
-                        style: Theme.of(context)
-                            .textTheme
-                            .subtitle2,
-                        children: [
-                          TextSpan(
-                            text: "${widget.timeStamp["date"]}, ",
-                            style: Theme.of(context)
-                                .textTheme
-                                .subtitle2
-                                .apply(fontWeightDelta: 10),
+      child: GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onLongPress: () async {
+          Feedback.forLongPress(context);
+
+          List<Message> reactions = [];
+          if (widget.message.hasReactions) {
+            reactions = await widget.message.getReactions();
+          }
+          // if (widget.overlayEntry != null)
+          Overlay.of(context).insert(_createMessageDetailsPopup(reactions));
+        },
+        child: AnimatedOpacity(
+          opacity: 1.0, //_visible ? 1.0 : 0.0,
+          duration: Duration(milliseconds: widget.shouldFadeIn ? 200 : 0),
+          child: Column(
+            children: <Widget>[
+              widget.attachments != null ? widget.attachments : Container(),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: <Widget>[
+                  AnimatedPadding(
+                    curve: Curves.easeInOut,
+                    duration: Duration(milliseconds: 200),
+                    padding: EdgeInsets.only(
+                      bottom: widget.showTail ? 10.0 : 3.0,
+                      right: (widget.message != null && widget.message.error > 0
+                          ? 10.0
+                          : 0),
+                    ),
+                    child: Stack(
+                      alignment: Alignment.topLeft,
+                      children: <Widget>[
+                        AnimatedPadding(
+                          duration: Duration(milliseconds: 250),
+                          curve: Curves.easeInOut,
+                          padding: EdgeInsets.only(
+                            left: widget.message != null &&
+                                    widget.message.hasReactions &&
+                                    !widget.message.hasAttachments
+                                ? 6.0
+                                : 0.0,
+                            top: widget.message != null &&
+                                    widget.message.hasReactions &&
+                                    !widget.message.hasAttachments
+                                ? 14.0
+                                : 0.0,
                           ),
-                          TextSpan(text: "${widget.timeStamp["time"]}")
-                        ],
-                      ),
+                          child: widget.showHero
+                              ? Hero(
+                                  tag: "first",
+                                  child: Material(
+                                    type: MaterialType.transparency,
+                                    child: ActualSentMessage(
+                                      blueColor: blueColor,
+                                      createErrorPopup: this._createErrorPopup,
+                                      customContent: widget.customContent,
+                                      message: widget.message,
+                                      chat: widget.chat,
+                                      showTail: widget.showTail,
+                                      textSpans: textSpans,
+                                    ),
+                                  ),
+                                )
+                              : ActualSentMessage(
+                                  blueColor: blueColor,
+                                  createErrorPopup: this._createErrorPopup,
+                                  customContent: widget.customContent,
+                                  message: widget.message,
+                                  chat: widget.chat,
+                                  showTail: widget.showTail,
+                                  textSpans: textSpans,
+                                ),
+                        ),
+                        widget.message != null && !widget.message.hasAttachments
+                            ? Reactions(
+                                message: widget.message,
+                              )
+                            : Container(),
+                      ],
+                    ),
+                  ),
+                  AnimatedContainer(
+                    width: (-widget.offset).clamp(0, 70).toDouble(),
+                    duration:
+                        Duration(milliseconds: widget.offset == 0 ? 150 : 0),
+                    child: Text(
+                      DateFormat('h:mm a')
+                          .format(widget.message.dateCreated)
+                          .toLowerCase(),
+                      style: Theme.of(context).textTheme.subtitle1,
+                      overflow: TextOverflow.clip,
+                      maxLines: 1,
                     ),
                   )
-                : Container(),
-          ],
+                ],
+              ),
+              DeliveredReceipt(
+                  message: widget.message,
+                  showDeliveredReceipt: widget.showDeliveredReceipt,
+                  shouldAnimate: widget.shouldFadeIn),
+              widget.timeStamp != null
+                  ? Padding(
+                      padding: const EdgeInsets.all(14.0),
+                      child: RichText(
+                        text: TextSpan(
+                          style: Theme.of(context).textTheme.subtitle2,
+                          children: [
+                            TextSpan(
+                              text: "${widget.timeStamp["date"]}, ",
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .subtitle2
+                                  .apply(fontWeightDelta: 10),
+                            ),
+                            TextSpan(text: "${widget.timeStamp["time"]}")
+                          ],
+                        ),
+                      ),
+                    )
+                  : Container(),
+            ],
+          ),
         ),
       ),
     );
   }
 
   OverlayEntry _createMessageDetailsPopup(List<Message> reactions) {
-    OverlayEntry entry;
-    entry = OverlayEntry(
+    // OverlayEntry entry;
+    _entry = OverlayEntry(
       builder: (context) => MessageDetailsPopup(
-        entry: entry,
+        entry: _entry,
         reactions: Reaction.getUniqueReactionMessages(reactions),
         message: widget.message,
       ),
     );
-    return entry;
+    return _entry;
   }
 }
 
@@ -493,49 +503,55 @@ class _ActualSentMessageState extends State<ActualSentMessage> {
         GestureDetector(
           onTap: () {
             showDialog(
-              context: context,
-              builder: (BuildContext context) {
-                return AlertDialog(
-                  title: new Text("Message failed to send", style: TextStyle(color: Colors.black)),
-                  content: new Text("Error ($errorCode): $errorText"),
-                  actions: <Widget> [
-                    new FlatButton(
-                      child: new Text("Retry"),
-                      onPressed: () {
-                        // Remove the OG alert dialog
-                        Navigator.of(context).pop();
-                        ActionHandler.retryMessage(widget.message);
-                      }
-                    ),
-                    new FlatButton(
-                      child: new Text("Remove"),
-                      onPressed: () async {
-                        Navigator.of(context).pop();
-                        // Delete the message from the DB
-                        await Message.delete({'guid': widget.message.guid});
+                context: context,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                      title: new Text("Message failed to send",
+                          style: TextStyle(color: Colors.black)),
+                      content: new Text("Error ($errorCode): $errorText"),
+                      actions: <Widget>[
+                        new FlatButton(
+                            child: new Text("Retry"),
+                            onPressed: () {
+                              // Remove the OG alert dialog
+                              Navigator.of(context).pop();
+                              ActionHandler.retryMessage(widget.message);
+                            }),
+                        new FlatButton(
+                            child: new Text("Remove"),
+                            onPressed: () async {
+                              Navigator.of(context).pop();
+                              // Delete the message from the DB
+                              await Message.delete(
+                                  {'guid': widget.message.guid});
 
-                        // Remove the message from the Bloc
-                        NewMessageManager().removeMessage(widget.chat, widget.message.guid);
+                              // Remove the message from the Bloc
+                              NewMessageManager().removeMessage(
+                                  widget.chat, widget.message.guid);
 
-                        // Get the "new" latest info
-                        List<Message> latest = await Chat.getMessages(widget.chat, limit: 1);
-                        widget.chat.latestMessageDate = latest.first != null ? latest.first.dateCreated : null;
-                        widget.chat.latestMessageText = latest.first != null ? await MessageHelper.getNotificationText(latest.first) : null;
+                              // Get the "new" latest info
+                              List<Message> latest =
+                                  await Chat.getMessages(widget.chat, limit: 1);
+                              widget.chat.latestMessageDate =
+                                  latest.first != null
+                                      ? latest.first.dateCreated
+                                      : null;
+                              widget.chat.latestMessageText =
+                                  latest.first != null
+                                      ? await MessageHelper.getNotificationText(
+                                          latest.first)
+                                      : null;
 
-                        // Update it in the Bloc
-                        await ChatBloc().updateChatPosition(widget.chat);
-                      }
-                    ),
-                    new FlatButton(
-                      child: new Text("Cancel"),
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                      }
-                    )
-                  ]
-                );
-              }
-            );
+                              // Update it in the Bloc
+                              await ChatBloc().updateChatPosition(widget.chat);
+                            }),
+                        new FlatButton(
+                            child: new Text("Cancel"),
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                            })
+                      ]);
+                });
           },
           child: Icon(Icons.error_outline, color: Colors.red),
         ),

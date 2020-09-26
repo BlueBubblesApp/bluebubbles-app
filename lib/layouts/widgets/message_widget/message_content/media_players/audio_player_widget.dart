@@ -96,7 +96,7 @@ class _AudioPlayerWigetState extends State<AudioPlayerWiget> {
                 Text("Audio Message",
                     style: Theme.of(context).textTheme.bodyText1),
                 (isPlaying)
-                    ? Icon(Icons.stop_circle_outlined,
+                    ? Icon(Icons.pause_circle_outline,
                         size: 50.0,
                         color: Theme.of(context).textTheme.subtitle1.color)
                     : Icon(Icons.play_circle_filled,

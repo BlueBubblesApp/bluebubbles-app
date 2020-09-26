@@ -148,46 +148,43 @@ class _ContactTileState extends State<ContactTile> {
                             makeCall(contact.phones.elementAt(0).value);
                           } else {
                             showDialog(
-                                context: context,
-                                builder: (BuildContext context) {
-                                  return AlertDialog(
-                                      backgroundColor:
-                                          Theme.of(context).accentColor,
-                                      title: new Text("Select a Phone Number",
-                                          style: TextStyle(
-                                              color: Theme.of(context)
-                                                  .textTheme
-                                                  .bodyText1
-                                                  .color)),
-                                      content: Column(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        mainAxisSize: MainAxisSize.min,
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          for (int i = 0;
-                                              i < phones.length;
-                                              i++)
-                                            FlatButton(
-                                                minWidth: MediaQuery.of(context)
-                                                    .size
-                                                    .width,
-                                                child: Text(
-                                                    "${phones[i].value} (${phones[i].label})",
-                                                    style: TextStyle(
-                                                        color: Theme.of(context)
-                                                            .textTheme
-                                                            .bodyText1
-                                                            .color),
-                                                    textAlign: TextAlign.start),
-                                                onPressed: () async {
-                                                  makeCall(phones[i].value);
-                                                  Navigator.of(context).pop();
-                                                })
-                                        ],
-                                      ));
-                                });
+                              context: context,
+                              builder: (BuildContext context) {
+                                return AlertDialog(
+                                  backgroundColor:
+                                      Theme.of(context).accentColor,
+                                  title: new Text("Select a Phone Number",
+                                      style: TextStyle(
+                                          color: Theme.of(context)
+                                              .textTheme
+                                              .bodyText1
+                                              .color)),
+                                  content: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    mainAxisSize: MainAxisSize.min,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      for (int i = 0; i < phones.length; i++)
+                                        FlatButton(
+                                          child: Text(
+                                              "${phones[i].value} (${phones[i].label})",
+                                              style: TextStyle(
+                                                  color: Theme.of(context)
+                                                      .textTheme
+                                                      .bodyText1
+                                                      .color),
+                                              textAlign: TextAlign.start),
+                                          onPressed: () async {
+                                            makeCall(phones[i].value);
+                                            Navigator.of(context).pop();
+                                          },
+                                        )
+                                    ],
+                                  ),
+                                );
+                              },
+                            );
                           }
                         },
                         child: Icon(

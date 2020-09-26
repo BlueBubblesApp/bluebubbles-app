@@ -97,47 +97,46 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
 
   Future<void> reviewAudio(BuildContext context, File file) async {
     showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          backgroundColor: Theme.of(context).accentColor,
-          title: new Text("Send it?", style: Theme.of(context).textTheme.headline1),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text("Review your audio snippet before sending it", style: Theme.of(context).textTheme.subtitle1),
-              Container(height: 10.0),
-              AudioPlayerWiget(file: file)
-            ],
-          ),
-          actions: <Widget> [
-            new FlatButton(
-              child: new Text("Send", style: Theme.of(context).textTheme.bodyText1),
-              onPressed: () {
-                OutgoingQueue().add(new QueueItem(
-                  event: "send-attachment",
-                  item: new AttachmentSender(
-                    file,
-                    widget.chat,
-                    "",
-                  ))
-                );
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+              backgroundColor: Theme.of(context).accentColor,
+              title: new Text("Send it?",
+                  style: Theme.of(context).textTheme.headline1),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text("Review your audio snippet before sending it",
+                      style: Theme.of(context).textTheme.subtitle1),
+                  Container(height: 10.0),
+                  AudioPlayerWiget(file: file)
+                ],
+              ),
+              actions: <Widget>[
+                new FlatButton(
+                    child: new Text("Send",
+                        style: Theme.of(context).textTheme.bodyText1),
+                    onPressed: () {
+                      OutgoingQueue().add(new QueueItem(
+                          event: "send-attachment",
+                          item: new AttachmentSender(
+                            file,
+                            widget.chat,
+                            "",
+                          )));
 
-                // Remove the OG alert dialog
-                Navigator.of(context).pop();
-              }
-            ),
-            new FlatButton(
-              child: new Text("Discard", style: Theme.of(context).textTheme.subtitle1),
-              onPressed: () {
-                file.delete();
-                Navigator.of(context).pop();
-              }
-            ),
-          ]
-        );
-      }
-    );
+                      // Remove the OG alert dialog
+                      Navigator.of(context).pop();
+                    }),
+                new FlatButton(
+                    child: new Text("Discard",
+                        style: Theme.of(context).textTheme.subtitle1),
+                    onPressed: () {
+                      file.delete();
+                      Navigator.of(context).pop();
+                    }),
+              ]);
+        });
   }
 
   Future<void> toggleShareMenu() async {
@@ -178,9 +177,11 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                         color: Colors.transparent,
                         child: InkWell(
                           child: element.type == AssetType.video
-                              ? Icon(Icons.play_circle_fill,
+                              ? Icon(
+                                  Icons.play_circle_filled,
                                   color: Colors.white.withOpacity(0.5),
-                                  size: 50)
+                                  size: 50,
+                                )
                               : Container(),
                           onTap: () async {
                             File image = await element.file;
@@ -420,8 +421,10 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                           placeholder: "BlueBubbles",
                           padding: EdgeInsets.only(
                               left: 10, top: 10, right: 40, bottom: 10),
-                          placeholderStyle: Theme.of(context).textTheme.subtitle1,
-                          autofocus: SettingsManager().settings.autoOpenKeyboard,
+                          placeholderStyle:
+                              Theme.of(context).textTheme.subtitle1,
+                          autofocus:
+                              SettingsManager().settings.autoOpenKeyboard,
                           decoration: BoxDecoration(
                             color: Theme.of(context).backgroundColor,
                             border: Border.all(
@@ -445,25 +448,38 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                             onPressed: () async {
                               if (isRecording) {
                                 HapticFeedback.heavyImpact();
-                                Recording recording = await AudioRecorder.stop();
-                                setState(() { isRecording = false; });
+                                Recording recording =
+                                    await AudioRecorder.stop();
+                                setState(() {
+                                  isRecording = false;
+                                });
                                 reviewAudio(context, new File(recording.path));
-                              } else if (canRecord && !isRecording &&
+                              } else if (canRecord &&
+                                  !isRecording &&
                                   await Permission.microphone
                                       .request()
                                       .isGranted) {
-                                    HapticFeedback.heavyImpact();
-                                    String appDocPath = SettingsManager().appDocDir.path;
-                                    String pathName = "$appDocPath/attachments/tmp.m4a";
-                                    File file = new File(pathName);
-                                    if (file.existsSync()) file.deleteSync();
-                                    await AudioRecorder.start(path: pathName, audioOutputFormat: AudioOutputFormat.AAC);
-                                    setState(() { isRecording = true; });
+                                HapticFeedback.heavyImpact();
+                                String appDocPath =
+                                    SettingsManager().appDocDir.path;
+                                String pathName =
+                                    "$appDocPath/attachments/tmp.m4a";
+                                File file = new File(pathName);
+                                if (file.existsSync()) file.deleteSync();
+                                await AudioRecorder.start(
+                                    path: pathName,
+                                    audioOutputFormat: AudioOutputFormat.AAC);
+                                setState(() {
+                                  isRecording = true;
+                                });
                               } else if (widget.customSend != null) {
-                                widget.customSend(pickedImages, _controller.text);
+                                widget.customSend(
+                                    pickedImages, _controller.text);
                               } else {
                                 if (pickedImages.length > 0) {
-                                  for (int i = 0; i < pickedImages.length; i++) {
+                                  for (int i = 0;
+                                      i < pickedImages.length;
+                                      i++) {
                                     OutgoingQueue().add(new QueueItem(
                                         event: "send-attachment",
                                         item: new AttachmentSender(
@@ -498,10 +514,16 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                                         : 0.0,
                                     duration: Duration(milliseconds: 150),
                                     child: Icon(Icons.mic,
-                                        color: (isRecording) ? Colors.red : Colors.white, size: 20)),
+                                        color: (isRecording)
+                                            ? Colors.red
+                                            : Colors.white,
+                                        size: 20)),
                                 AnimatedOpacity(
-                                    opacity:
-                                        (_controller.text.isNotEmpty || pickedImages.length > 0) && !isRecording ? 1.0 : 0.0,
+                                    opacity: (_controller.text.isNotEmpty ||
+                                                pickedImages.length > 0) &&
+                                            !isRecording
+                                        ? 1.0
+                                        : 0.0,
                                     duration: Duration(milliseconds: 150),
                                     child: Icon(Icons.arrow_upward,
                                         color: Colors.white, size: 20)),

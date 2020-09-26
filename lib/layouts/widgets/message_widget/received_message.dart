@@ -45,6 +45,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> {
   String contactTitle = "";
   MemoryImage contactImage;
   Contact contact;
+  OverlayEntry _entry;
 
   @override
   initState() {
@@ -270,125 +271,134 @@ class _ReceivedMessageState extends State<ReceivedMessage> {
               fontSize: 14)));
     }
 
-    msgItems.add(new Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(padding: EdgeInsets.only(bottom: 1.0), child: widget.attachments),
-        Padding(
-          padding: EdgeInsets.only(
-              bottom: widget.showTail ? 10.0 : 3.0,
-              left: widget.showTail || !widget.showHandle ? 0.0 : 35.0),
-          child: Stack(
-            alignment: Alignment.topRight,
-            children: <Widget>[
-              AnimatedPadding(
-                duration: Duration(milliseconds: 250),
-                curve: Curves.easeInOut,
-                padding: EdgeInsets.only(
-                  right: widget.message != null &&
-                          widget.message.hasReactions &&
-                          !widget.message.hasAttachments
-                      ? 6.0
-                      : 0.0,
-                  top: widget.message != null &&
-                          widget.message.hasReactions &&
-                          !widget.message.hasAttachments
-                      ? 14.0
-                      : 0.0,
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: messageWidget,
-                ),
+    msgItems.add(
+        new Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Padding(padding: EdgeInsets.only(bottom: 1.0), child: widget.attachments),
+      Padding(
+        padding: EdgeInsets.only(
+            bottom: widget.showTail ? 10.0 : 3.0,
+            left: widget.showTail || !widget.showHandle ? 0.0 : 35.0),
+        child: Stack(
+          alignment: Alignment.topRight,
+          children: <Widget>[
+            AnimatedPadding(
+              duration: Duration(milliseconds: 250),
+              curve: Curves.easeInOut,
+              padding: EdgeInsets.only(
+                right: widget.message != null &&
+                        widget.message.hasReactions &&
+                        !widget.message.hasAttachments
+                    ? 6.0
+                    : 0.0,
+                top: widget.message != null &&
+                        widget.message.hasReactions &&
+                        !widget.message.hasAttachments
+                    ? 14.0
+                    : 0.0,
               ),
-              !widget.message.hasAttachments
-                  ? Reactions(
-                      message: widget.message,
-                    )
-                  : Container(),
-            ],
-          ),
-        )
-      ]
-    ));
-
-    return GestureDetector(
-      behavior: HitTestBehavior.translucent,
-      onLongPress: () async {
-        Feedback.forLongPress(context);
-        List<Message> reactions = [];
-        if (widget.message.hasReactions) {
-          reactions = await widget.message.getReactions();
-        }
-
-        Overlay.of(context).insert(_createMessageDetailsPopup(reactions));
-      },
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          contactItem,
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: <Widget>[
-              Row(
+              child: Row(
                 mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: msgItems,
+                mainAxisSize: MainAxisSize.min,
+                children: messageWidget,
               ),
-              AnimatedContainer(
-                width: (-widget.offset).clamp(0, 70).toDouble(),
-                duration: Duration(milliseconds: widget.offset == 0 ? 150 : 0),
-                child: Text(
-                  DateFormat('h:mm a')
-                      .format(widget.message.dateCreated)
-                      .toLowerCase(),
-                  style: Theme.of(context).textTheme.subtitle1,
-                  overflow: TextOverflow.clip,
-                  maxLines: 1,
+            ),
+            !widget.message.hasAttachments
+                ? Reactions(
+                    message: widget.message,
+                  )
+                : Container(),
+          ],
+        ),
+      )
+    ]));
+
+    return WillPopScope(
+      onWillPop: () async {
+        if (_entry != null) {
+          _entry.remove();
+          _entry = null;
+          return false;
+        } else {
+          return true;
+        }
+      },
+      child: GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onLongPress: () async {
+          Feedback.forLongPress(context);
+          List<Message> reactions = [];
+          if (widget.message.hasReactions) {
+            reactions = await widget.message.getReactions();
+          }
+
+          Overlay.of(context).insert(_createMessageDetailsPopup(reactions));
+        },
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            contactItem,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: <Widget>[
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: msgItems,
                 ),
-              )
-            ],
-          ),
-          widget.timeStamp != null
-              ? Padding(
-                  padding: const EdgeInsets.all(14.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: <Widget>[
-                      RichText(
-                        text: TextSpan(
-                          style: Theme.of(context).textTheme.subtitle2,
-                          children: [
-                            TextSpan(
-                              text: "${widget.timeStamp["date"]}, ",
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .subtitle2
-                                  .apply(fontWeightDelta: 10),
-                            ),
-                            TextSpan(text: "${widget.timeStamp["time"]}")
-                          ],
-                        ),
-                      ),
-                    ],
+                AnimatedContainer(
+                  width: (-widget.offset).clamp(0, 70).toDouble(),
+                  duration:
+                      Duration(milliseconds: widget.offset == 0 ? 150 : 0),
+                  child: Text(
+                    DateFormat('h:mm a')
+                        .format(widget.message.dateCreated)
+                        .toLowerCase(),
+                    style: Theme.of(context).textTheme.subtitle1,
+                    overflow: TextOverflow.clip,
+                    maxLines: 1,
                   ),
                 )
-              : Container()
-        ],
+              ],
+            ),
+            widget.timeStamp != null
+                ? Padding(
+                    padding: const EdgeInsets.all(14.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        RichText(
+                          text: TextSpan(
+                            style: Theme.of(context).textTheme.subtitle2,
+                            children: [
+                              TextSpan(
+                                text: "${widget.timeStamp["date"]}, ",
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .subtitle2
+                                    .apply(fontWeightDelta: 10),
+                              ),
+                              TextSpan(text: "${widget.timeStamp["time"]}")
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : Container()
+          ],
+        ),
       ),
     );
   }
 
   OverlayEntry _createMessageDetailsPopup(List<Message> reactions) {
-    OverlayEntry entry;
-    entry = OverlayEntry(
+    _entry = OverlayEntry(
       builder: (context) => MessageDetailsPopup(
-        entry: entry,
+        entry: _entry,
         reactions: Reaction.getUniqueReactionMessages(reactions),
         message: widget.message,
       ),
     );
-    return entry;
+    return _entry;
   }
 }

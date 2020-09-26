@@ -66,9 +66,7 @@ class _MessageDetailsPopupState extends State<MessageDetailsPopup>
                 color: Colors.black.withAlpha(200),
                 child: Column(
                   children: <Widget>[
-                    Container(
-                      height: 45.0
-                    ),
+                    Container(height: 45.0),
                     AnimatedSize(
                       vsync: this,
                       duration: Duration(milliseconds: 500),
