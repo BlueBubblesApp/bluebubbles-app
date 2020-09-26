@@ -61,7 +61,7 @@ class SetupBloc {
   }
 
   void receivedChats(data) async {
-    debugPrint("got chats");
+    debugPrint("(Setup) -> Received initial chat list");
     chats = data["data"];
     if (chats.length == 0) {
       finishSetup();

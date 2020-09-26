@@ -117,14 +117,15 @@ class _MessageAttachmentsState extends State<MessageAttachments>
   }
 
   Widget _buildActualWidget() {
-    return Row(
+    return Column(
       mainAxisAlignment: widget.message.isFromMe
           ? MainAxisAlignment.end
           : MainAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.end,
       children: <Widget>[
         Stack(
           alignment:
-              widget.message.isFromMe ? Alignment.topLeft : Alignment.topRight,
+              widget.message.isFromMe ? Alignment.topRight : Alignment.topLeft,
           children: <Widget>[
             Padding(
               padding:
@@ -142,8 +143,9 @@ class _MessageAttachmentsState extends State<MessageAttachments>
                               ? 10.0
                               : 45.0),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: _buildAttachments(),
-              ),
+              )
             ),
             widget.message.hasReactions
                 ? Reactions(

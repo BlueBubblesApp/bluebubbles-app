@@ -42,10 +42,14 @@ class _NewMessageLoaderState extends State<NewMessageLoader> {
             ),
             Padding(
               padding: const EdgeInsets.all(16.0),
-              child: CupertinoActivityIndicator(
-                animating: true,
-                radius: 15,
-              ),
+              child: Theme(
+                data: ThemeData(
+                  cupertinoOverrideTheme: CupertinoThemeData(
+                      brightness: Brightness.dark
+                  )
+                ), 
+                child: CupertinoActivityIndicator()
+              )
             ),
           ],
         );

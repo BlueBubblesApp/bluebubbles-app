@@ -223,7 +223,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> {
                       horizontal: 10,
                     ),
                     constraints: BoxConstraints(
-                      maxWidth: MediaQuery.of(context).size.width * 3 / 4,
+                      maxWidth: MediaQuery.of(context).size.width * 3 / 4.5,
                     ),
                     padding: EdgeInsets.symmetric(
                       vertical: 8,
@@ -259,7 +259,10 @@ class _ReceivedMessageState extends State<ReceivedMessage> {
     if (widget.showTail && widget.showHandle) {
       msgItems.add(Padding(
           padding: EdgeInsets.only(
-              left: 5.0, bottom: (!widget.message.hasAttachments) ? 10.0 : 0.0),
+              left: 5.0,
+              bottom: (isEmptyString(sanitizeString(widget.message.text)))
+                  ? 5.0
+                  : 10.0),
           child: ContactAvatarWidget(
               contactImage: contactImage,
               initials: initials,
@@ -267,43 +270,47 @@ class _ReceivedMessageState extends State<ReceivedMessage> {
               fontSize: 14)));
     }
 
-    msgItems.add(Padding(
-        padding: EdgeInsets.only(bottom: 1.0), child: widget.attachments));
-    msgItems.add(Padding(
-      padding: EdgeInsets.only(
-          bottom: widget.showTail ? 10.0 : 3.0,
-          left: widget.showTail || !widget.showHandle ? 0.0 : 35.0),
-      child: Stack(
-        alignment: Alignment.topRight,
-        children: <Widget>[
-          AnimatedPadding(
-            duration: Duration(milliseconds: 250),
-            curve: Curves.easeInOut,
-            padding: EdgeInsets.only(
-              right: widget.message != null &&
-                      widget.message.hasReactions &&
-                      !widget.message.hasAttachments
-                  ? 6.0
-                  : 0.0,
-              top: widget.message != null &&
-                      widget.message.hasReactions &&
-                      !widget.message.hasAttachments
-                  ? 14.0
-                  : 0.0,
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: messageWidget,
-            ),
+    msgItems.add(new Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(padding: EdgeInsets.only(bottom: 1.0), child: widget.attachments),
+        Padding(
+          padding: EdgeInsets.only(
+              bottom: widget.showTail ? 10.0 : 3.0,
+              left: widget.showTail || !widget.showHandle ? 0.0 : 35.0),
+          child: Stack(
+            alignment: Alignment.topRight,
+            children: <Widget>[
+              AnimatedPadding(
+                duration: Duration(milliseconds: 250),
+                curve: Curves.easeInOut,
+                padding: EdgeInsets.only(
+                  right: widget.message != null &&
+                          widget.message.hasReactions &&
+                          !widget.message.hasAttachments
+                      ? 6.0
+                      : 0.0,
+                  top: widget.message != null &&
+                          widget.message.hasReactions &&
+                          !widget.message.hasAttachments
+                      ? 14.0
+                      : 0.0,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: messageWidget,
+                ),
+              ),
+              !widget.message.hasAttachments
+                  ? Reactions(
+                      message: widget.message,
+                    )
+                  : Container(),
+            ],
           ),
-          !widget.message.hasAttachments
-              ? Reactions(
-                  message: widget.message,
-                )
-              : Container(),
-        ],
-      ),
+        )
+      ]
     ));
 
     return GestureDetector(
