@@ -480,7 +480,8 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                                   for (int i = 0;
                                       i < pickedImages.length;
                                       i++) {
-                                    OutgoingQueue().add(new QueueItem(
+                                    OutgoingQueue().add(
+                                      new QueueItem(
                                         event: "send-attachment",
                                         item: new AttachmentSender(
                                           pickedImages[i],
@@ -488,7 +489,9 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                                           i == pickedImages.length - 1
                                               ? _controller.text
                                               : "",
-                                        )));
+                                        ),
+                                      ),
+                                    );
                                   }
                                 } else {
                                   ActionHandler.sendMessage(

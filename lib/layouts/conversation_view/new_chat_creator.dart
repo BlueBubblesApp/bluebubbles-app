@@ -208,7 +208,7 @@ class _NewChatCreatorState extends State<NewChatCreator> {
                       existingAttachments: widget.attachments,
                       existingText: widget.existingText,
                       chat: item.chat,
-                      replaceOnTap: false,
+                      replaceOnTap: true,
                     );
             },
           )),
