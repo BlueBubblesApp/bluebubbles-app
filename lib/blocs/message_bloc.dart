@@ -10,10 +10,27 @@ import 'package:flutter/material.dart';
 
 import '../socket_manager.dart';
 
-class MessageBloc {
-  final _messageController = StreamController<Map<String, dynamic>>.broadcast();
+abstract class MessageBlocEventType {
+  static String insert = "INSERT";
+  static String update = "UPDATE";
+  static String remove = "REMOVE";
+  static String messageUpdate = "MESSAGEUPDATE";
+}
 
-  Stream<Map<String, dynamic>> get stream => _messageController.stream;
+class MessageBlocEvent {
+  List<Message> messages;
+  Message message;
+  String remove;
+  String oldGuid;
+  bool outGoing = false;
+  int index;
+  String type;
+}
+
+class MessageBloc {
+  final _messageController = StreamController<MessageBlocEvent>.broadcast();
+
+  Stream<MessageBlocEvent> get stream => _messageController.stream;
 
   LinkedHashMap<String, Message> _allMessages = new LinkedHashMap();
 
@@ -46,35 +63,33 @@ class MessageBloc {
       msgEvent[_currentChat.guid].forEach((actionType, actions) {
         for (Map<String, dynamic> action in actions) {
           bool addToSink = true;
-          Map<String, dynamic> baseEvent = {
-            "messages": null,
-            "update": null,
-            "index": null,
-            "remove": null
-          };
+          MessageBlocEvent baseEvent = new MessageBlocEvent();
 
           // If we want to remove something, set the event data correctly
           if (actionType == NewMessageAction.REMOVE &&
               _allMessages.containsKey(action["guid"])) {
             _allMessages.remove(action["guid"]);
-            baseEvent["remove"] = action["guid"];
+            baseEvent.remove = action["guid"];
+            baseEvent.type = MessageBlocEventType.remove;
           } else if (actionType == NewMessageAction.UPDATE &&
               _allMessages.containsKey(action["oldGuid"])) {
-            
             // If we want to updating an existing message, remove the old one, and add the new one
             _allMessages.remove(action["oldGuid"]);
             insert(action["message"], addToSink: false);
-            baseEvent["update"] = action["message"];
-            baseEvent["oldGuid"] = action["oldGuid"];
+            baseEvent.message = action["message"];
+            baseEvent.oldGuid = action["oldGuid"];
+            baseEvent.type = MessageBlocEventType.update;
           } else if (actionType == NewMessageAction.ADD) {
             // If we want to add a message, just add it through `insert`
             addToSink = false;
             insert(action["message"], sentFromThisClient: action["outgoing"]);
+            baseEvent.message = action["message"];
+            baseEvent.type = MessageBlocEventType.insert;
           }
 
           // As long as the controller isn't closed and it's not an `add`, update the listeners
           if (addToSink && !_messageController.isClosed) {
-            baseEvent["messages"] = _allMessages;
+            baseEvent.messages = _allMessages.values.toList();
             _messageController.sink.add(baseEvent);
           }
         }
@@ -91,11 +106,14 @@ class MessageBloc {
         messageWithReaction.hasReactions = true;
         _allMessages.update(
             message.associatedMessageGuid, (value) => messageWithReaction);
-        if (addToSink)
-          _messageController.sink.add({
-            "messages": _allMessages,
-            "update": _allMessages[message.associatedMessageGuid],
-          });
+        if (addToSink) {
+          MessageBlocEvent event = MessageBlocEvent();
+          event.messages = _allMessages.values.toList();
+          event.oldGuid = message.associatedMessageGuid;
+          event.message = _allMessages[message.associatedMessageGuid];
+          event.type = MessageBlocEventType.update;
+          _messageController.sink.add(event);
+        }
       }
       return;
     }
@@ -103,13 +121,16 @@ class MessageBloc {
     int index = 0;
     if (_allMessages.length == 0) {
       _allMessages.addAll({message.guid: message});
-      if (!_messageController.isClosed && addToSink)
-        _messageController.sink.add({
-          "messages": _allMessages,
-          "insert": message,
-          "index": index,
-          "sentFromThisClient": sentFromThisClient
-        });
+      if (!_messageController.isClosed && addToSink) {
+        MessageBlocEvent event = MessageBlocEvent();
+        event.messages = _allMessages.values.toList();
+        event.message = message;
+        event.outGoing = sentFromThisClient;
+        event.type = MessageBlocEventType.insert;
+        event.index = index;
+        _messageController.sink.add(event);
+      }
+
       return;
     }
 
@@ -136,12 +157,13 @@ class MessageBloc {
     }
 
     if (!_messageController.isClosed && addToSink) {
-      _messageController.sink.add({
-        "messages": _allMessages,
-        "insert": message,
-        "index": index,
-        "sentFromThisClient": sentFromThisClient
-      });
+      MessageBlocEvent event = MessageBlocEvent();
+      event.messages = _allMessages.values.toList();
+      event.message = message;
+      event.outGoing = sentFromThisClient;
+      event.type = MessageBlocEventType.insert;
+      event.index = index;
+      _messageController.sink.add(event);
     }
   }
 
@@ -169,8 +191,11 @@ class MessageBloc {
         }
       });
     }
-    if (!_messageController.isClosed)
-      _messageController.sink.add({"messages": _allMessages, "insert": null});
+    if (!_messageController.isClosed) {
+      MessageBlocEvent event = MessageBlocEvent();
+      event.messages = _allMessages.values.toList();
+      _messageController.sink.add(event);
+    }
     return _allMessages;
   }
 
@@ -211,8 +236,9 @@ class MessageBloc {
             }
           });
           if (!_messageController.isClosed) {
-            _messageController.sink
-                .add({"messages": _allMessages, "insert": null});
+            MessageBlocEvent event = MessageBlocEvent();
+            event.messages = _allMessages.values.toList();
+            _messageController.sink.add(event);
             completer.complete();
           } else {
             debugPrint("message controller closed");
@@ -227,8 +253,9 @@ class MessageBloc {
           }
         });
         if (!_messageController.isClosed) {
-          _messageController.sink
-              .add({"messages": _allMessages, "insert": null});
+          MessageBlocEvent event = MessageBlocEvent();
+          event.messages = _allMessages.values.toList();
+          _messageController.sink.add(event);
           completer.complete();
         }
       }

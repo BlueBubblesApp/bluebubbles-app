@@ -13,6 +13,7 @@ import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:video_player/video_player.dart';
 
 class MessageAttachment extends StatefulWidget {
   MessageAttachment({
@@ -22,12 +23,16 @@ class MessageAttachment extends StatefulWidget {
     @required this.updateAttachment,
     @required this.message,
     @required this.savedAttachmentData,
+    @required this.controllers,
+    @required this.changeCurrentPlayingVideo,
   }) : super(key: key);
   final content;
   final Attachment attachment;
   final Function() updateAttachment;
   final Message message;
   final SavedAttachmentData savedAttachmentData;
+  final Map<String, VideoPlayerController> controllers;
+  final Function(Map<String, VideoPlayerController>) changeCurrentPlayingVideo;
 
   @override
   _MessageAttachmentState createState() => _MessageAttachmentState();
@@ -143,12 +148,15 @@ class _MessageAttachmentState extends State<MessageAttachment>
         return MediaFile(
           attachment: widget.attachment,
           child: VideoWidget(
+            changeCurrentPlayingVideo: widget.changeCurrentPlayingVideo,
+            controllers: widget.controllers,
             attachment: widget.attachment,
             file: content,
             savedAttachmentData: widget.savedAttachmentData,
           ),
         );
-      } else if (mimeType == "audio" && !widget.attachment.mimeType.contains("caf")) {
+      } else if (mimeType == "audio" &&
+          !widget.attachment.mimeType.contains("caf")) {
         // TODO: fix this stuff
         return MediaFile(
           attachment: widget.attachment,

@@ -7,6 +7,7 @@ import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:bluebubbles/layouts/widgets/send_widget.dart';
+import 'package:video_player/video_player.dart';
 
 class MessageView extends StatefulWidget {
   final MessageBloc messageBloc;
@@ -30,101 +31,15 @@ class _MessageViewState extends State<MessageView>
   OverlayEntry entry;
   List<String> sentMessages = <String>[];
   Map<String, SavedAttachmentData> attachments = Map();
-  // Map<String, Future<List<Attachment>>> attachmentFutures = Map();
-  // Map<String, Map<String, dynamic>> attachmentResults = Map();
   bool initializedList = false;
   double timeStampOffset = 0;
+  Map<String, VideoPlayerController> currentPlayingVideo;
+  List<VideoPlayerController> controllersToDispose = [];
 
   @override
   void initState() {
     super.initState();
-    widget.messageBloc.stream.listen((event) async {
-      if (event["insert"] != null) {
-        getAttachmentsForMessage(event["insert"]);
-        if (event["sentFromThisClient"]) {
-          sentMessages.add(event["insert"].guid);
-          Future.delayed(Duration(milliseconds: 500), () {
-            sentMessages
-                .removeWhere((element) => element == event["insert"].guid);
-            _listKey.currentState.setState(() {});
-          });
-          Navigator.of(context).push(
-            SendPageBuilder(
-              builder: (context) {
-                return SendWidget(
-                  text: event["insert"].text,
-                  tag: "first",
-                );
-              },
-            ),
-          );
-        }
-
-        _messages = event["messages"].values.toList();
-        if (_listKey != null && _listKey.currentState != null) {
-          _listKey.currentState.insertItem(
-              event.containsKey("index") ? event["index"] : 0,
-              duration: event["sentFromThisClient"]
-                  ? Duration(milliseconds: 500)
-                  : animationDuration);
-        }
-      } else if (event.containsKey("update") && event["update"] != null) {
-        if (event.containsKey("oldGuid") &&
-            event["oldGuid"] != null &&
-            event["oldGuid"] != (event["update"] as Message).guid) {
-          if (attachments.containsKey(event["oldGuid"])) {
-            Message messageWithROWID = await Message.findOne(
-                {"guid": (event["update"] as Message).guid});
-            List<Attachment> updatedAttachments =
-                await Message.getAttachments(messageWithROWID);
-            SavedAttachmentData data = attachments.remove(event["oldGuid"]);
-            data.attachments = updatedAttachments;
-            attachments[(event["update"] as Message).guid] = data;
-          }
-        } else if (event.containsKey("remove") && event["remove"] != null) {
-          for (int i = 0; i < _messages.length; i++) {
-            if (_messages[i].guid == event["remove"]) {
-              _messages = event["messages"].values.toList();
-              _listKey.currentState
-                  .removeItem(i, (context, animation) => Container());
-            }
-          }
-        }
-        _messages = event["messages"].values.toList();
-        if (this.mounted) setState(() {});
-        _listKey.currentState.setState(() {});
-      } else {
-        int originalMessageLength = _messages.length;
-        _messages = event["messages"].values.toList();
-        _messages.forEach((element) => getAttachmentsForMessage(element));
-        initializedList = true;
-        if (_listKey == null) _listKey = GlobalKey<SliverAnimatedListState>();
-
-        if (originalMessageLength < _messages.length) {
-          for (int i = originalMessageLength; i < _messages.length; i++) {
-            if (_listKey != null && _listKey.currentState != null)
-              _listKey.currentState
-                  .insertItem(i, duration: Duration(milliseconds: 0));
-          }
-        } else if (originalMessageLength > _messages.length) {
-          for (int i = originalMessageLength; i >= _messages.length; i--) {
-            if (_listKey != null && _listKey.currentState != null) {
-              try {
-                _listKey.currentState.removeItem(
-                    i, (context, animation) => Container(),
-                    duration: Duration(milliseconds: 0));
-              } catch (ex) {
-                debugPrint("Error removing item animation");
-                debugPrint(ex.toString());
-              }
-            }
-          }
-        }
-        if (_listKey != null && _listKey.currentState != null)
-          _listKey.currentState.setState(() {});
-        if (this.mounted) setState(() {});
-      }
-    });
+    widget.messageBloc.stream.listen(handleNewMessage);
   }
 
   @override
@@ -145,15 +60,108 @@ class _MessageViewState extends State<MessageView>
 
   @override
   void dispose() {
+    if (currentPlayingVideo != null && currentPlayingVideo.length > 0) {
+      currentPlayingVideo.values.forEach((element) {
+        element.dispose();
+      });
+    }
     if (entry != null) entry.remove();
-    attachments.values.forEach((element) {
-      element.dispose();
-    });
     super.dispose();
+  }
+
+  void handleNewMessage(MessageBlocEvent event) async {
+    if (event.type == MessageBlocEventType.insert) {
+      getAttachmentsForMessage(event.message);
+      if (event.outGoing) {
+        sentMessages.add(event.message.guid);
+        Future.delayed(Duration(milliseconds: 500), () {
+          sentMessages.removeWhere((element) => element == event.message.guid);
+          _listKey.currentState.setState(() {});
+        });
+        Navigator.of(context).push(
+          SendPageBuilder(
+            builder: (context) {
+              return SendWidget(
+                text: event.message.text,
+                tag: "first",
+              );
+            },
+          ),
+        );
+      }
+
+      _messages = event.messages;
+      if (_listKey != null && _listKey.currentState != null) {
+        _listKey.currentState.insertItem(
+          event.index != null ? event.index : 0,
+          duration:
+              event.outGoing ? Duration(milliseconds: 500) : animationDuration,
+        );
+      }
+    } else if (event.type == MessageBlocEventType.update) {
+      if (attachments.containsKey(event.oldGuid)) {
+        Message messageWithROWID =
+            await Message.findOne({"guid": event.message.guid});
+        List<Attachment> updatedAttachments =
+            await Message.getAttachments(messageWithROWID);
+        SavedAttachmentData data = attachments.remove(event.oldGuid);
+        data.attachments = updatedAttachments;
+        attachments[event.message.guid] = data;
+      }
+      for (int i = 0; i < _messages.length; i++) {
+        if (_messages[i].guid == event.oldGuid) {
+          _messages[i] = event.message;
+          if (this.mounted) setState(() {});
+          break;
+        }
+      }
+    } else if (event.type == MessageBlocEventType.remove) {
+      for (int i = 0; i < _messages.length; i++) {
+        if (_messages[i].guid == event.remove) {
+          _messages.removeAt(i);
+          _listKey.currentState
+              .removeItem(i, (context, animation) => Container());
+        }
+      }
+    } else {
+      int originalMessageLength = _messages.length;
+      _messages = event.messages;
+      _messages.forEach((message) => getAttachmentsForMessage(message));
+      if (_listKey == null) _listKey = GlobalKey<SliverAnimatedListState>();
+
+      if (originalMessageLength < _messages.length) {
+        for (int i = originalMessageLength; i < _messages.length; i++) {
+          if (_listKey != null && _listKey.currentState != null)
+            _listKey.currentState
+                .insertItem(i, duration: Duration(milliseconds: 0));
+        }
+      } else if (originalMessageLength > _messages.length) {
+        for (int i = originalMessageLength; i >= _messages.length; i--) {
+          if (_listKey != null && _listKey.currentState != null) {
+            try {
+              _listKey.currentState.removeItem(
+                  i, (context, animation) => Container(),
+                  duration: Duration(milliseconds: 0));
+            } catch (ex) {
+              debugPrint("Error removing item animation");
+              debugPrint(ex.toString());
+            }
+          }
+        }
+      }
+      if (_listKey != null && _listKey.currentState != null)
+        _listKey.currentState.setState(() {});
+      if (this.mounted) setState(() {});
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    controllersToDispose.forEach((element) {
+      element.dispose();
+    });
+    controllersToDispose = [];
+
     return GestureDetector(
       behavior: HitTestBehavior.deferToChild,
       onHorizontalDragStart: (details) {},
@@ -220,25 +228,40 @@ class _MessageViewState extends State<MessageView>
                         child: FadeTransition(
                           opacity: animation,
                           child: MessageWidget(
-                              key: Key(_messages[index].guid),
-                              offset: timeStampOffset,
-                              fromSelf: _messages[index].isFromMe,
-                              message: _messages[index],
-                              chat: widget.messageBloc.currentChat,
-                              olderMessage: olderMessage,
-                              newerMessage: newerMessage,
-                              showHandle: widget.showHandle,
-                              shouldFadeIn:
-                                  sentMessages.contains(_messages[index].guid),
-                              isFirstSentMessage:
-                                  widget.messageBloc.firstSentMessage ==
-                                      _messages[index].guid,
-                              savedAttachmentData:
-                                  attachments.containsKey(_messages[index].guid)
-                                      ? attachments[_messages[index].guid]
-                                      : null,
-                              showHero: index == 0 &&
-                                  _messages[index].originalROWID == null),
+                            key: Key(_messages[index].guid),
+                            offset: timeStampOffset,
+                            fromSelf: _messages[index].isFromMe,
+                            message: _messages[index],
+                            chat: widget.messageBloc.currentChat,
+                            olderMessage: olderMessage,
+                            newerMessage: newerMessage,
+                            showHandle: widget.showHandle,
+                            shouldFadeIn:
+                                sentMessages.contains(_messages[index].guid),
+                            isFirstSentMessage:
+                                widget.messageBloc.firstSentMessage ==
+                                    _messages[index].guid,
+                            savedAttachmentData:
+                                attachments.containsKey(_messages[index].guid)
+                                    ? attachments[_messages[index].guid]
+                                    : null,
+                            showHero: index == 0 &&
+                                _messages[index].originalROWID == null,
+                            currentPlayingVideo: currentPlayingVideo,
+                            changeCurrentPlayingVideo:
+                                (Map<String, VideoPlayerController> video) {
+                              if (currentPlayingVideo != null &&
+                                  currentPlayingVideo.length > 0) {
+                                currentPlayingVideo.values.forEach((element) {
+                                  controllersToDispose.add(element);
+                                  element = null;
+                                });
+                              }
+                              setState(() {
+                                currentPlayingVideo = video;
+                              });
+                            },
+                          ),
                         ),
                       ),
                     );

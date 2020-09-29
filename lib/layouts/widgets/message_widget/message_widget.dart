@@ -8,6 +8,7 @@ import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:video_player/video_player.dart';
 import '../../../helpers/utils.dart';
 import '../../../repository/models/message.dart';
 
@@ -26,6 +27,8 @@ class MessageWidget extends StatefulWidget {
     this.showHero,
     this.savedAttachmentData,
     this.offset,
+    this.currentPlayingVideo,
+    this.changeCurrentPlayingVideo,
   }) : super(key: key);
 
   final fromSelf;
@@ -39,6 +42,8 @@ class MessageWidget extends StatefulWidget {
   final bool showHero;
   final SavedAttachmentData savedAttachmentData;
   final double offset;
+  final Map<String, VideoPlayerController> currentPlayingVideo;
+  final Function(Map<String, VideoPlayerController>) changeCurrentPlayingVideo;
 
   final List<Widget> customContent;
 
@@ -50,6 +55,12 @@ class _MessageState extends State<MessageWidget> {
   List<Attachment> attachments = <Attachment>[];
   bool showTail = true;
   Widget blurredImage;
+
+  @override
+  void initState() {
+    super.initState();
+    debugPrint("initState " + widget.message.text);
+  }
 
   bool withinTimeThreshold(Message first, Message second, {threshold: 5}) {
     if (first == null || second == null) return false;
@@ -116,7 +127,10 @@ class _MessageState extends State<MessageWidget> {
                 message: widget.message,
                 savedAttachmentData: widget.savedAttachmentData,
                 showTail: showTail,
-                showHandle: widget.showHandle)
+                showHandle: widget.showHandle,
+                controllers: widget.currentPlayingVideo,
+                changeCurrentPlayingVideo: widget.changeCurrentPlayingVideo,
+              )
             : Container(),
         showHero: widget.showHero,
       );
@@ -136,7 +150,10 @@ class _MessageState extends State<MessageWidget> {
                 message: widget.message,
                 savedAttachmentData: widget.savedAttachmentData,
                 showTail: showTail,
-                showHandle: widget.showHandle)
+                showHandle: widget.showHandle,
+                controllers: widget.currentPlayingVideo,
+                changeCurrentPlayingVideo: widget.changeCurrentPlayingVideo,
+              )
             : Container(),
       );
     }

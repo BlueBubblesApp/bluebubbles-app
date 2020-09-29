@@ -18,29 +18,26 @@ import 'package:video_player/video_player.dart';
 class SavedAttachmentData {
   List<Attachment> attachments = [];
   Map<String, Metadata> urlMetaData = {};
-  Map<String, VideoPlayerController> controllers = {};
   Future<List<Attachment>> attachmentsFuture;
   Map<String, Uint8List> imageData = {};
-
-  void dispose() {
-    controllers.values.forEach((element) {
-      element.dispose();
-    });
-  }
 }
 
 class MessageAttachments extends StatefulWidget {
-  MessageAttachments(
-      {Key key,
-      @required this.message,
-      @required this.savedAttachmentData,
-      @required this.showTail,
-      @required this.showHandle})
-      : super(key: key);
+  MessageAttachments({
+    Key key,
+    @required this.message,
+    @required this.savedAttachmentData,
+    @required this.showTail,
+    @required this.showHandle,
+    @required this.controllers,
+    @required this.changeCurrentPlayingVideo,
+  }) : super(key: key);
   final Message message;
   final SavedAttachmentData savedAttachmentData;
   final bool showTail;
   final bool showHandle;
+  final Map<String, VideoPlayerController> controllers;
+  final Function(Map<String, VideoPlayerController>) changeCurrentPlayingVideo;
 
   @override
   _MessageAttachmentsState createState() => _MessageAttachmentsState();
@@ -128,25 +125,24 @@ class _MessageAttachmentsState extends State<MessageAttachments>
               widget.message.isFromMe ? Alignment.topRight : Alignment.topLeft,
           children: <Widget>[
             Padding(
-              padding:
-                  widget.message.hasReactions && widget.message.hasAttachments
-                      ? EdgeInsets.only(
-                          right: !widget.message.isFromMe ? 16.0 : 10.0,
-                          bottom: 10.0,
-                          left: widget.message.isFromMe ? 16.0 : 10.0,
-                          top: 24.0,
-                        )
-                      : EdgeInsets.symmetric(
-                          horizontal: (widget.showTail ||
-                                  !widget.showHandle ||
-                                  widget.message.isFromMe)
-                              ? 10.0
-                              : 45.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: _buildAttachments(),
-              )
-            ),
+                padding:
+                    widget.message.hasReactions && widget.message.hasAttachments
+                        ? EdgeInsets.only(
+                            right: !widget.message.isFromMe ? 16.0 : 10.0,
+                            bottom: 10.0,
+                            left: widget.message.isFromMe ? 16.0 : 10.0,
+                            top: 24.0,
+                          )
+                        : EdgeInsets.symmetric(
+                            horizontal: (widget.showTail ||
+                                    !widget.showHandle ||
+                                    widget.message.isFromMe)
+                                ? 10.0
+                                : 45.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: _buildAttachments(),
+                )),
             widget.message.hasReactions
                 ? Reactions(
                     message: widget.message,
@@ -168,9 +164,11 @@ class _MessageAttachmentsState extends State<MessageAttachments>
       } else {
         content.add(
           MessageAttachment(
+            controllers: widget.controllers,
             message: widget.message,
             attachment: attachment,
             content: _attachments[attachment.guid],
+            changeCurrentPlayingVideo: widget.changeCurrentPlayingVideo,
             updateAttachment: () {
               initForAttachment(attachment);
             },
