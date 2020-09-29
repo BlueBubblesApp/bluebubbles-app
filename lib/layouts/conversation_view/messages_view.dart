@@ -257,9 +257,10 @@ class _MessageViewState extends State<MessageView>
                                   element = null;
                                 });
                               }
-                              setState(() {
-                                currentPlayingVideo = video;
-                              });
+                              if (this.mounted)
+                                setState(() {
+                                  currentPlayingVideo = video;
+                                });
                             },
                           ),
                         ),

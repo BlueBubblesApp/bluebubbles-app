@@ -242,7 +242,9 @@ class _SentMessageState extends State<SentMessage>
     return WillPopScope(
       onWillPop: () async {
         if (_entry != null) {
-          _entry.remove();
+          try {
+            _entry.remove();
+          } catch (e) {}
           _entry = null;
           return false;
         } else {

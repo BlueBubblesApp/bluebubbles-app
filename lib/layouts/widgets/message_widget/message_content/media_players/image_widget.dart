@@ -64,96 +64,80 @@ class _ImageWidgetState extends State<ImageWidget>
 
   @override
   Widget build(BuildContext context) {
-    return VisibilityDetector(
-      key: Key(widget.attachment.guid),
-      onVisibilityChanged: (info) {
-        if (info.visibleFraction == 0 && visible && !navigated) {
-          visible = false;
-          if (widget.savedAttachmentData.imageData
-              .containsKey(widget.attachment.guid)) {
-            widget.savedAttachmentData.imageData.remove(widget.attachment.guid);
-          }
-        } else if (!visible) {
-          visible = true;
-          _initializeBytes();
-        }
-        if (this.mounted) setState(() {});
-      },
-      child: Stack(
-        children: <Widget>[
-          Container(
-            constraints: BoxConstraints(
-              maxWidth: MediaQuery.of(context).size.width / 2,
-              maxHeight: MediaQuery.of(context).size.height / 2,
-            ),
-            child: AspectRatio(
-              aspectRatio: widget.attachment.width != null &&
-                      widget.attachment.height != null &&
-                      widget.attachment.width > 0 &&
-                      widget.attachment.height > 0
-                  ? widget.attachment.width / widget.attachment.height
-                  : MediaQuery.of(context).size.width / 5,
-              child: widget.savedAttachmentData
-                          .imageData[widget.attachment.guid] ==
-                      null
-                  ? Container(
-                      height: 5,
-                      child: Center(
-                        child: LinearProgressIndicator(
-                          backgroundColor: Colors.grey,
-                          valueColor: AlwaysStoppedAnimation(
-                              Theme.of(context).primaryColor),
-                        ),
-                      ),
-                    )
-                  : Container(
-                      child: Hero(
-                        tag: widget.attachment.guid,
-                        child: AnimatedSize(
-                          vsync: this,
-                          curve: Curves.easeInOut,
-                          alignment: Alignment.center,
-                          duration: Duration(milliseconds: 250),
-                          child: Image.memory(
-                            widget.savedAttachmentData
-                                .imageData[widget.attachment.guid],
+    return Stack(
+      children: <Widget>[
+        Container(
+          constraints: BoxConstraints(
+            maxWidth: MediaQuery.of(context).size.width / 2,
+            maxHeight: MediaQuery.of(context).size.height / 2,
+          ),
+          child: AspectRatio(
+            aspectRatio: widget.attachment.width != null &&
+                    widget.attachment.height != null &&
+                    widget.attachment.width > 0 &&
+                    widget.attachment.height > 0
+                ? widget.attachment.width / widget.attachment.height
+                : MediaQuery.of(context).size.width / 5,
+            child:
+                widget.savedAttachmentData.imageData[widget.attachment.guid] ==
+                        null
+                    ? Container(
+                        height: 5,
+                        child: Center(
+                          child: LinearProgressIndicator(
+                            backgroundColor: Colors.grey,
+                            valueColor: AlwaysStoppedAnimation(
+                                Theme.of(context).primaryColor),
                           ),
                         ),
+                      )
+                    : Container(
+                        child: Hero(
+                          tag: widget.attachment.guid,
+                          child: AnimatedSize(
+                            vsync: this,
+                            curve: Curves.easeInOut,
+                            alignment: Alignment.center,
+                            duration: Duration(milliseconds: 250),
+                            child: Image.memory(
+                              widget.savedAttachmentData
+                                  .imageData[widget.attachment.guid],
+                            ),
+                          ),
+                        ),
+                        constraints: BoxConstraints(
+                          maxHeight: MediaQuery.of(context).size.height / 3,
+                        ),
                       ),
-                      constraints: BoxConstraints(
-                        maxHeight: MediaQuery.of(context).size.height / 3,
-                      ),
+          ),
+        ),
+        Positioned.fill(
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () async {
+                setState(() {
+                  navigated = true;
+                });
+                await Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => ImageViewer(
+                      attachment: widget.attachment,
+                      file: widget.file,
+                      bytes: widget.savedAttachmentData
+                          .imageData[widget.attachment.guid],
+                      tag: widget.attachment.guid,
                     ),
+                  ),
+                );
+                setState(() {
+                  navigated = false;
+                });
+              },
             ),
           ),
-          Positioned.fill(
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: () async {
-                  setState(() {
-                    navigated = true;
-                  });
-                  await Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => ImageViewer(
-                        attachment: widget.attachment,
-                        file: widget.file,
-                        bytes: widget.savedAttachmentData
-                            .imageData[widget.attachment.guid],
-                        tag: widget.attachment.guid,
-                      ),
-                    ),
-                  );
-                  setState(() {
-                    navigated = false;
-                  });
-                },
-              ),
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

@@ -89,13 +89,8 @@ class _VideoWidgetState extends State<VideoWidget>
             controller = null;
             widget.changeCurrentPlayingVideo(null);
           }
-          if (widget.savedAttachmentData.imageData
-              .containsKey(widget.attachment.guid)) {
-            widget.savedAttachmentData.imageData.remove(widget.attachment.guid);
-          }
         } else if (!isVisible) {
           isVisible = true;
-          getThumbnail();
         }
         if (this.mounted) setState(() {});
       },
