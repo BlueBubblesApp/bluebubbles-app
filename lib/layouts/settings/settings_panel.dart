@@ -36,9 +36,10 @@ class _SettingsPanelState extends State<SettingsPanel> {
   }
 
   void refreshConnection(SocketState connection) async {
-    if ([SocketState.CONNECTED, SocketState.CONNECTING].contains(connection)) return;
+    if ([SocketState.CONNECTED, SocketState.CONNECTING].contains(connection))
+      return;
     debugPrint("Fetching new server URL from Firebase");
-    
+
     // Get the server URL
     String url = await MethodChannelInterface().invokeMethod("get-server-url");
     debugPrint("New server URL: $url");
@@ -64,7 +65,8 @@ class _SettingsPanelState extends State<SettingsPanel> {
               toolbarHeight: 100.0,
               elevation: 0,
               leading: IconButton(
-                icon: Icon(Icons.arrow_back_ios, color: Theme.of(context).primaryColor),
+                icon: Icon(Icons.arrow_back_ios,
+                    color: Theme.of(context).primaryColor),
                 onPressed: () {
                   Navigator.of(context).pop();
                 },
@@ -190,11 +192,13 @@ class _SettingsPanelState extends State<SettingsPanel> {
                   },
                   title: "Connection Address",
                   subTitle: _settingsCopy.serverAddress,
-                  trailing: Icon(Icons.edit, color: Theme.of(context).primaryColor.withAlpha(200)),
+                  trailing: Icon(Icons.edit,
+                      color: Theme.of(context).primaryColor.withAlpha(200)),
                 ),
                 SettingsTile(
                   title: "Re-configure with MacOS Server",
-                  trailing: Icon(Icons.camera, color: Theme.of(context).primaryColor.withAlpha(200)),
+                  trailing: Icon(Icons.camera,
+                      color: Theme.of(context).primaryColor.withAlpha(200)),
                   onTap: () async {
                     var fcmData;
                     try {
@@ -252,6 +256,13 @@ class _SettingsPanelState extends State<SettingsPanel> {
                   },
                   initialVal: _settingsCopy.autoDownload,
                   title: "Auto-download Attachments",
+                ),
+                SettingsSwitch(
+                  onChanged: (bool val) {
+                    _settingsCopy.showIncrementalSync = val;
+                  },
+                  initialVal: _settingsCopy.showIncrementalSync,
+                  title: "Notify when incremental sync complete",
                 ),
                 SettingsOptions(
                   onChanged: (AdaptiveThemeMode val) {

@@ -18,13 +18,20 @@ class Settings {
         finishedSetup =
             json.containsKey('finishedSetup') ? json['finishedSetup'] : false,
         chunkSize = json.containsKey('chunkSize') ? json['chunkSize'] : 500,
-        autoOpenKeyboard = json.containsKey('autoOpenKeyboard') ? json['autoOpenKeyboard'] : true,
+        autoOpenKeyboard = json.containsKey('autoOpenKeyboard')
+            ? json['autoOpenKeyboard']
+            : true,
         autoDownload =
             json.containsKey('autoDownload') ? json['autoDownload'] : true,
-        hideTextPreviews =
-            json.containsKey('hideTextPreviews') ? json['hideTextPreviews'] : false,
-        lastIncrementalSync =
-            json.containsKey('lastIncrementalSync') ? json['lastIncrementalSync'] : 0,
+        hideTextPreviews = json.containsKey('hideTextPreviews')
+            ? json['hideTextPreviews']
+            : false,
+        showIncrementalSync = json.containsKey('showIncrementalSync')
+            ? json['showIncrementalSync']
+            : false,
+        lastIncrementalSync = json.containsKey('lastIncrementalSync')
+            ? json['lastIncrementalSync']
+            : 0,
         _darkColorTheme = json.containsKey('darkColorTheme')
             ? jsonDecode(json['darkColorTheme'])
             : {},
@@ -40,6 +47,7 @@ class Settings {
   bool autoDownload = true;
   bool autoOpenKeyboard = true;
   bool hideTextPreviews = false;
+  bool showIncrementalSync = false;
   int lastIncrementalSync = 0;
   Map<String, dynamic> _lightColorTheme = {};
   Map<String, dynamic> _darkColorTheme = {};
@@ -205,6 +213,8 @@ class Settings {
         'autoDownload': autoDownload != null ? autoDownload : true,
         'autoOpenKeyboard': autoOpenKeyboard != null ? autoOpenKeyboard : true,
         'hideTextPreviews': hideTextPreviews != null ? hideTextPreviews : false,
+        'showIncrementalSync':
+            showIncrementalSync != null ? showIncrementalSync : false,
         'darkColorTheme': jsonEncode(_darkColorTheme),
         'lightColorTheme': jsonEncode(_lightColorTheme),
       };

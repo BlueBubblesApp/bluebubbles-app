@@ -177,9 +177,10 @@ class SetupBloc {
       _settingsCopy.lastIncrementalSync = syncStart;
       SettingsManager().saveSettings(_settingsCopy, connectToSocket: false);
 
-      // Show a nice lil toast/snackbar
-      EventDispatcher()
-          .emit("show-snackbar", {"text": "🔄 Incremental sync complete 🔄"});
+      if (SettingsManager().settings.showIncrementalSync)
+        // Show a nice lil toast/snackbar
+        EventDispatcher()
+            .emit("show-snackbar", {"text": "🔄 Incremental sync complete 🔄"});
 
       // End the sync
       closeSync();
