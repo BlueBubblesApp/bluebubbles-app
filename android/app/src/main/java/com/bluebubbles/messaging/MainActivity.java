@@ -307,7 +307,7 @@ public class MainActivity extends FlutterActivity {
         } else if (call.method.equals("open_file")) {
             Intent intent = new Intent(Intent.ACTION_VIEW);
             Log.d("filesDir", "filesDir is " + context.getFilesDir().getAbsolutePath() + (String) call.argument("path"));
-            Uri data = FileProvider.getUriForFile(context, "com.example.path_provider", new File(context.getFilesDir().getAbsolutePath() + (String) call.argument("path")));
+            Uri data = FileProvider.getUriForFile(context, "com.bluebubbles.messaging.fileprovider", new File(context.getFilesDir().getAbsolutePath() + (String) call.argument("path")));
             context.grantUriPermission(context.getPackageName(), data, Intent.FLAG_GRANT_READ_URI_PERMISSION);
             intent.setDataAndType(data, (String) call.argument("mimeType"));
             intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
