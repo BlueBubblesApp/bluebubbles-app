@@ -112,14 +112,18 @@ class _SentMessageState extends State<SentMessage>
                                 ),
                                 CupertinoButton(
                                     child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: <Widget>[
-                                          Text("Retry"),
-                                          Container(width: 5.0),
-                                          Icon(Icons.refresh,
-                                              color: Colors.white, size: 18)
-                                        ]),
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: <Widget>[
+                                        Text("Retry"),
+                                        Container(width: 5.0),
+                                        Icon(
+                                          Icons.refresh,
+                                          color: Colors.white,
+                                          size: 18,
+                                        )
+                                      ],
+                                    ),
                                     color: Colors.black26,
                                     onPressed: () async {
                                       if (widget.message != null)
