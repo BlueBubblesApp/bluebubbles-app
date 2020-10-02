@@ -212,7 +212,8 @@ Future<MemoryImage> loadAvatar(Chat chat, String address) async {
     }
 
     // See if the update contains the current conversation
-    int matchIdx = chat.participants.map((i) => i.address).toList().indexOf(address);
+    int matchIdx =
+        chat.participants.map((i) => i.address).toList().indexOf(address);
     if (matchIdx == -1) return null;
   }
 
@@ -256,7 +257,10 @@ Future<dynamic> loadAsset(String path) {
 }
 
 bool validatePhoneNumber(String value) {
-  String patttern = r'^(\+?\d{1,2}\s?)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}$';
-  RegExp regExp = new RegExp(patttern);
-  return regExp.hasMatch(value);
-}    
+  String phonePattern =
+      r'^(\+?\d{1,2}\s?)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}$';
+  String emailPattern = r'^\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$';
+  RegExp regExpPhone = new RegExp(phonePattern);
+  RegExp regExpEmail = new RegExp(emailPattern);
+  return regExpPhone.hasMatch(value) || regExpEmail.hasMatch(value);
+}
