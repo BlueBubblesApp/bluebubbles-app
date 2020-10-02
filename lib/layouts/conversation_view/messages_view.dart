@@ -24,7 +24,8 @@ class MessageView extends StatefulWidget {
 
 class _MessageViewState extends State<MessageView>
     with TickerProviderStateMixin {
-  Future loader;
+  Future<LoadMessageResult> loader;
+  bool reachedTopOfChat = false;
   List<Message> _messages = <Message>[];
   GlobalKey<SliverAnimatedListState> _listKey;
   final Duration animationDuration = Duration(milliseconds: 400);
@@ -191,11 +192,22 @@ class _MessageViewState extends State<MessageView>
                   itemBuilder: (BuildContext context, int index,
                       Animation<double> animation) {
                     if (index >= _messages.length) {
-                      if (loader == null) {
+                      if (loader == null && !reachedTopOfChat) {
                         loader = widget.messageBloc
                             .loadMessageChunk(_messages.length);
                         loader.then((val) {
-                          loader = null;
+                          if (val == LoadMessageResult.FAILED_TO_RETREIVE) {
+                            loader = widget.messageBloc
+                                .loadMessageChunk(_messages.length);
+                          } else if (val ==
+                              LoadMessageResult.RETREIVED_NO_MESSAGES) {
+                            debugPrint("Reached the top of the chat");
+                            reachedTopOfChat = true;
+                            loader = null;
+                          } else {
+                            loader = null;
+                          }
+                          setState(() {});
                         });
 
                         return NewMessageLoader(

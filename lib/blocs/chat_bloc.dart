@@ -9,10 +9,10 @@ import '../repository/models/handle.dart';
 import '../repository/models/chat.dart';
 
 class ChatBloc {
-  //Stream controller is the 'Admin' that manages
-  //the state of our stream of data like adding
-  //new data, change the state of the stream
-  //and broadcast it to observers/subscribers
+  // Stream controller is the 'Admin' that manages
+  // the state of our stream of data like adding
+  // new data, change the state of the stream
+  // and broadcast it to observers/subscribers
   final _chatController = StreamController<List<Chat>>.broadcast();
   final _tileValController =
       StreamController<Map<String, Map<String, dynamic>>>.broadcast();
@@ -166,14 +166,34 @@ class ChatBloc {
   }
 
   void recursiveGetChats() async {
+    // Get more chats
     List<Chat> newChats = await Chat.getChats(limit: 10, offset: _chats.length);
+
+    // If there were indeed results, then continue
     if (newChats.length != 0) {
-      _chats.addAll(newChats);
-      await initTileVals(newChats);
+      // Check to see if the chat already exists in the list
+      // If so, don't add it
+      // Otherwise add it and initialize it's values
+      for (Chat newChat in newChats) {
+        bool existingChat = false;
+        for (Chat chat in _chats) {
+          if (chat.guid == newChat.guid) {
+            existingChat = true;
+            break;
+          }
+        }
+        if (existingChat) continue;
+        _chats.add(newChat);
+        await initTileValsForChat(newChat);
+      }
+      _chatController.sink.add(_chats);
       recursiveGetChats();
     }
   }
 
+  /// Used to initialize all the values of the set List of [chat]s
+  /// @param chats list of chats to initialize values for
+  /// @param addToSink optional param whether to update the stream after initalizing all the values of the chat, defaults to true
   Future<void> initTileVals(List<Chat> chats, [bool addToSink = true]) async {
     for (int i = 0; i < chats.length; i++) {
       await initTileValsForChat(chats[i]);
@@ -182,6 +202,8 @@ class ChatBloc {
     if (addToSink) _chatController.sink.add(_chats);
   }
 
+  /// Get the values for the chat, specifically the title
+  /// @param chat to initialize
   Future<void> initTileValsForChat(Chat chat) async {
     if (chat.title == null) await chat.getTitle();
   }

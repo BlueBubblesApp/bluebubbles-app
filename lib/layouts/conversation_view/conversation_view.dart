@@ -63,7 +63,8 @@ class _ConversationViewState extends State<ConversationView> {
     });
 
     EventDispatcher().stream.listen((Map<String, dynamic> event) {
-      if (!["add-unread-chat", "remove-unread-chat"].contains(event["type"])) return;
+      if (!["add-unread-chat", "remove-unread-chat"].contains(event["type"]))
+        return;
       if (!event["data"].containsKey("chatGuid")) return;
 
       // Ignore any events having to do with this chat
@@ -71,9 +72,11 @@ class _ConversationViewState extends State<ConversationView> {
       if (chat.guid == chatGuid) return;
 
       int preLength = newMessages.length;
-      if (event["type"] == "add-unread-chat" && !newMessages.contains(chatGuid)) {
+      if (event["type"] == "add-unread-chat" &&
+          !newMessages.contains(chatGuid)) {
         newMessages.add(chatGuid);
-      } else if (event["type"] == "remove-unread-chat" && newMessages.contains(chatGuid)) {
+      } else if (event["type"] == "remove-unread-chat" &&
+          newMessages.contains(chatGuid)) {
         newMessages.remove(chatGuid);
       }
 
@@ -164,16 +167,22 @@ class _ConversationViewState extends State<ConversationView> {
     // Build the stack
     List<Widget> avatars = [];
     avatarStack.forEach((address, info) {
-      avatars.add(Container(
+      avatars.add(
+        Container(
           height: 42.0, // 1 px larger than the diameter
           width: 42.0, // 1 px larger than the diameter
           decoration:
               new BoxDecoration(color: Colors.red, shape: BoxShape.circle),
           child: CircleAvatar(
-              radius: 20,
-              backgroundColor: Theme.of(context).accentColor,
-              child: ContactAvatarWidget(
-                  contactImage: info["avatar"], initials: info["initials"]))));
+            radius: 20,
+            backgroundColor: Theme.of(context).accentColor,
+            child: ContactAvatarWidget(
+              contactImage: info["avatar"],
+              initials: info["initials"],
+            ),
+          ),
+        ),
+      );
     });
 
     // Calculate separation factor
@@ -198,34 +207,36 @@ class _ConversationViewState extends State<ConversationView> {
           children: <Widget>[
             Container(height: 10.0),
             GestureDetector(
-              onTap: openDetails,
-              child: Container(
-                padding: EdgeInsets.only(right: 15.0),
-                child: Align(
-                  alignment: Alignment.center,
-                  child: Column(
-                    children: [
-                      RowSuper(children: avatars, innerDistance: distance),
-                      RichText(
-                        text: TextSpan(
-                          style: Theme.of(context).textTheme.headline2,
+                onTap: openDetails,
+                child: Container(
+                    // padding: EdgeInsets.only(right: 15.0),
+                    child: Align(
+                        alignment: Alignment.center,
+                        child: Column(
                           children: [
-                            TextSpan(
-                              text: chatTitle,
-                              style: Theme.of(context).textTheme.bodyText1,
+                            RowSuper(
+                              children: avatars,
+                              innerDistance: distance,
                             ),
-                            TextSpan(
-                              text: " >",
-                              style: Theme.of(context).textTheme.subtitle1,
+                            RichText(
+                              text: TextSpan(
+                                style: Theme.of(context).textTheme.headline2,
+                                children: [
+                                  TextSpan(
+                                    text: chatTitle,
+                                    style:
+                                        Theme.of(context).textTheme.bodyText1,
+                                  ),
+                                  TextSpan(
+                                    text: " >",
+                                    style:
+                                        Theme.of(context).textTheme.subtitle1,
+                                  )
+                                ],
+                              ),
                             )
                           ],
-                        ),
-                      )
-                    ],
-                  )
-                )
-              )
-            ),
+                        )))),
           ],
         ),
         trailing: Container(width: 20),

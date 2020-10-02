@@ -199,9 +199,10 @@ class MessageBloc {
     return _allMessages;
   }
 
-  Future loadMessageChunk(int offset, {includeReactions = true}) async {
+  Future<LoadMessageResult> loadMessageChunk(int offset,
+      {includeReactions = true}) async {
     int reactionCnt = includeReactions ? _reactions : 0;
-    Completer completer = new Completer();
+    Completer<LoadMessageResult> completer = new Completer();
     if (_currentChat != null) {
       List<Message> messages =
           await Chat.getMessages(_currentChat, offset: offset + reactionCnt);
@@ -217,12 +218,12 @@ class MessageBloc {
 
         SocketManager().sendMessage("get-chat-messages", params, (data) async {
           if (data['status'] != 200) {
-            completer.complete();
+            completer.complete(LoadMessageResult.FAILED_TO_RETREIVE);
             return;
           }
           List messages = data["data"];
           if (messages.length == 0) {
-            completer.complete();
+            completer.complete(LoadMessageResult.RETREIVED_NO_MESSAGES);
             return;
           }
 
@@ -239,7 +240,7 @@ class MessageBloc {
             MessageBlocEvent event = MessageBlocEvent();
             event.messages = _allMessages.values.toList();
             _messageController.sink.add(event);
-            completer.complete();
+            completer.complete(LoadMessageResult.RETREIVED_MESSAGES);
           } else {
             debugPrint("message controller closed");
           }
@@ -256,12 +257,12 @@ class MessageBloc {
           MessageBlocEvent event = MessageBlocEvent();
           event.messages = _allMessages.values.toList();
           _messageController.sink.add(event);
-          completer.complete();
+          completer.complete(LoadMessageResult.RETREIVED_MESSAGES);
         }
       }
     } else {
       debugPrint("failed to load ");
-      completer.completeError("chat not found");
+      completer.complete(LoadMessageResult.FAILED_TO_RETREIVE);
     }
     return completer.future;
   }
@@ -270,4 +271,10 @@ class MessageBloc {
     _allMessages = new LinkedHashMap();
     _messageController.close();
   }
+}
+
+enum LoadMessageResult {
+  RETREIVED_MESSAGES,
+  RETREIVED_NO_MESSAGES,
+  FAILED_TO_RETREIVE
 }
