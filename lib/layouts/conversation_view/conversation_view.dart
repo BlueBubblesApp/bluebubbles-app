@@ -188,7 +188,7 @@ class _ConversationViewState extends State<ConversationView> {
     // Calculate separation factor
     // Anything below -60 won't work due to the alignment
     double distance = avatars.length * -4.0;
-    if (distance <= -60.0) distance = -50.0;
+    if (distance <= -60.0) distance = -60.0;
 
     return Scaffold(
       backgroundColor: Theme.of(context).backgroundColor,
@@ -207,36 +207,40 @@ class _ConversationViewState extends State<ConversationView> {
           children: <Widget>[
             Container(height: 10.0),
             GestureDetector(
-                onTap: openDetails,
-                child: Container(
-                    // padding: EdgeInsets.only(right: 15.0),
-                    child: Align(
-                        alignment: Alignment.center,
-                        child: Column(
-                          children: [
-                            RowSuper(
-                              children: avatars,
-                              innerDistance: distance,
-                            ),
-                            RichText(
-                              text: TextSpan(
-                                style: Theme.of(context).textTheme.headline2,
-                                children: [
-                                  TextSpan(
-                                    text: chatTitle,
-                                    style:
-                                        Theme.of(context).textTheme.bodyText1,
-                                  ),
-                                  TextSpan(
-                                    text: " >",
-                                    style:
-                                        Theme.of(context).textTheme.subtitle1,
-                                  )
-                                ],
-                              ),
-                            )
-                          ],
-                        )))),
+              onTap: openDetails,
+              child: Container(
+                // padding: EdgeInsets.only(right: 15.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Padding(
+                      padding:
+                          EdgeInsets.only(left: distance <= -40.0 ? 60 : 0),
+                      child: RowSuper(
+                        children: avatars,
+                        innerDistance: distance,
+                        alignment: Alignment.centerRight,
+                      ),
+                    ),
+                    RichText(
+                      text: TextSpan(
+                        style: Theme.of(context).textTheme.headline2,
+                        children: [
+                          TextSpan(
+                            text: chatTitle,
+                            style: Theme.of(context).textTheme.bodyText1,
+                          ),
+                          TextSpan(
+                            text: " >",
+                            style: Theme.of(context).textTheme.subtitle1,
+                          )
+                        ],
+                      ),
+                    )
+                  ],
+                ),
+              ),
+            ),
           ],
         ),
         trailing: Container(width: 20),
