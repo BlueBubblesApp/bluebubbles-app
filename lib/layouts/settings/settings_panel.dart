@@ -259,6 +259,13 @@ class _SettingsPanelState extends State<SettingsPanel> {
                 ),
                 SettingsSwitch(
                   onChanged: (bool val) {
+                    _settingsCopy.lowMemoryMode = val;
+                  },
+                  initialVal: _settingsCopy.lowMemoryMode,
+                  title: "Low Memory Mode",
+                ),
+                SettingsSwitch(
+                  onChanged: (bool val) {
                     _settingsCopy.showIncrementalSync = val;
                   },
                   initialVal: _settingsCopy.showIncrementalSync,

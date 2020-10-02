@@ -29,6 +29,8 @@ class Settings {
         showIncrementalSync = json.containsKey('showIncrementalSync')
             ? json['showIncrementalSync']
             : false,
+        lowMemoryMode =
+            json.containsKey('lowMemoryMode') ? json['lowMemoryMode'] : false,
         lastIncrementalSync = json.containsKey('lastIncrementalSync')
             ? json['lastIncrementalSync']
             : 0,
@@ -48,6 +50,7 @@ class Settings {
   bool autoOpenKeyboard = true;
   bool hideTextPreviews = false;
   bool showIncrementalSync = false;
+  bool lowMemoryMode = false;
   int lastIncrementalSync = 0;
   Map<String, dynamic> _lightColorTheme = {};
   Map<String, dynamic> _darkColorTheme = {};
@@ -215,6 +218,7 @@ class Settings {
         'hideTextPreviews': hideTextPreviews != null ? hideTextPreviews : false,
         'showIncrementalSync':
             showIncrementalSync != null ? showIncrementalSync : false,
+        'lowMemoryMode': lowMemoryMode != null ? lowMemoryMode : false,
         'darkColorTheme': jsonEncode(_darkColorTheme),
         'lightColorTheme': jsonEncode(_lightColorTheme),
       };

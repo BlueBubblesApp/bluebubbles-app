@@ -250,7 +250,7 @@ class _SentMessageState extends State<SentMessage>
             _entry.remove();
           } catch (e) {}
           _entry = null;
-          return false;
+          return true;
         } else {
           return true;
         }

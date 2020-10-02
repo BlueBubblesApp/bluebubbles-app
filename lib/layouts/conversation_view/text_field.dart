@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:typed_data';
 import 'dart:ui';
 
 import 'package:audio_recorder/audio_recorder.dart';
@@ -21,6 +22,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mime_type/mime_type.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -92,6 +94,7 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
         tempAssets.delete(recursive: true);
       }
     });
+    pickedImages = [];
     super.dispose();
   }
 
@@ -251,7 +254,8 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                       itemCount: pickedImages.length,
                       scrollDirection: Axis.horizontal,
                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 1),
+                        crossAxisCount: 1,
+                      ),
                       itemBuilder: (context, int index) {
                         return Stack(
                           children: <Widget>[
@@ -279,10 +283,37 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                                   )
                                 : Hero(
                                     tag: pickedImages[index].path,
-                                    child: Image.file(
-                                      pickedImages[index],
-                                      height: 100,
-                                      fit: BoxFit.fitHeight,
+                                    child: FutureBuilder<Uint8List>(
+                                      future:
+                                          FlutterImageCompress.compressWithFile(
+                                              pickedImages[index].absolute.path,
+                                              quality: SettingsManager()
+                                                      .settings
+                                                      .lowMemoryMode
+                                                  ? 5
+                                                  : 10 // This is arbitrary
+                                              ),
+                                      builder: (context, snapshot) {
+                                        if (snapshot.hasData) {
+                                          return Image.memory(
+                                            snapshot.data,
+                                            height: 100,
+                                            fit: BoxFit.fitHeight,
+                                          );
+                                        }
+                                        return Container(
+                                          height: 100,
+                                          child: Center(
+                                            child: LinearProgressIndicator(
+                                              backgroundColor: Colors.grey,
+                                              valueColor:
+                                                  AlwaysStoppedAnimation(
+                                                Theme.of(context).primaryColor,
+                                              ),
+                                            ),
+                                          ),
+                                        );
+                                      },
                                     ),
                                   ),
                             Positioned.fill(
@@ -359,8 +390,11 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                         height: 30,
                         child: GestureDetector(
                           onTap: toggleShareMenu,
-                          child: Icon(Icons.share,
-                              color: HexColor('8e8e8e'), size: 22),
+                          child: Icon(
+                            Icons.share,
+                            color: HexColor('8e8e8e'),
+                            size: 22,
+                          ),
                         ),
                       ),
                     ),
@@ -586,13 +620,29 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                                                 BorderRadius.circular(18),
                                           ),
                                           onPressed: () async {
+                                            debugPrint(
+                                                "(Sigabrt) Before pick image");
                                             PickedFile pickedImage =
                                                 await ImagePicker().getImage(
                                               source: ImageSource.gallery,
                                             );
+                                            debugPrint(
+                                                "(Sigabrt) After pick image");
+                                            debugPrint(
+                                                "(Sigabrt) Before set file");
                                             File image = File(pickedImage.path);
+                                            debugPrint(
+                                                "(Sigabrt) After set file");
+                                            debugPrint(
+                                                "(Sigabrt) Before add to picked images list");
                                             pickedImages.add(image);
+                                            debugPrint(
+                                                "(Sigabrt) After add to picked images list");
+                                            debugPrint(
+                                                "(Sigabrt) Before set state");
                                             setState(() {});
+                                            debugPrint(
+                                                "(Sigabrt) After set state");
                                           },
                                           color: Theme.of(context).accentColor,
                                           child: Column(

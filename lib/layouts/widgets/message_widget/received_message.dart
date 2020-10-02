@@ -315,9 +315,11 @@ class _ReceivedMessageState extends State<ReceivedMessage> {
     return WillPopScope(
       onWillPop: () async {
         if (_entry != null) {
-          _entry.remove();
+          try {
+            _entry.remove();
+          } catch (e) {}
           _entry = null;
-          return false;
+          return true;
         } else {
           return true;
         }

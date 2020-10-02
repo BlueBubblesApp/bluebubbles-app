@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:bluebubbles/layouts/image_viewer/image_viewer.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_attachments.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:flutter/cupertino.dart';
@@ -40,7 +41,9 @@ class _ImageWidgetState extends State<ImageWidget>
         widget.savedAttachmentData.imageData[widget.attachment.guid] =
             await FlutterImageCompress.compressWithFile(
                 widget.file.absolute.path,
-                quality: 25 // This is arbitrary
+                quality: SettingsManager().settings.lowMemoryMode
+                    ? 15
+                    : 25 // This is arbitrary
                 );
 
         // All other attachments can be held in memory as bytes
@@ -64,80 +67,96 @@ class _ImageWidgetState extends State<ImageWidget>
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: <Widget>[
-        Container(
-          constraints: BoxConstraints(
-            maxWidth: MediaQuery.of(context).size.width / 2,
-            maxHeight: MediaQuery.of(context).size.height / 2,
-          ),
-          child: AspectRatio(
-            aspectRatio: widget.attachment.width != null &&
-                    widget.attachment.height != null &&
-                    widget.attachment.width > 0 &&
-                    widget.attachment.height > 0
-                ? widget.attachment.width / widget.attachment.height
-                : MediaQuery.of(context).size.width / 5,
-            child:
-                widget.savedAttachmentData.imageData[widget.attachment.guid] ==
-                        null
-                    ? Container(
-                        height: 5,
-                        child: Center(
-                          child: LinearProgressIndicator(
-                            backgroundColor: Colors.grey,
-                            valueColor: AlwaysStoppedAnimation(
-                                Theme.of(context).primaryColor),
-                          ),
-                        ),
-                      )
-                    : Container(
-                        child: Hero(
-                          tag: widget.attachment.guid,
-                          child: AnimatedSize(
-                            vsync: this,
-                            curve: Curves.easeInOut,
-                            alignment: Alignment.center,
-                            duration: Duration(milliseconds: 250),
-                            child: Image.memory(
-                              widget.savedAttachmentData
-                                  .imageData[widget.attachment.guid],
-                            ),
-                          ),
-                        ),
-                        constraints: BoxConstraints(
-                          maxHeight: MediaQuery.of(context).size.height / 3,
+    return VisibilityDetector(
+      key: Key(widget.attachment.guid),
+      onVisibilityChanged: (info) {
+        if (!SettingsManager().settings.lowMemoryMode) return;
+        if (info.visibleFraction == 0 && visible && !navigated) {
+          visible = false;
+          if (widget.savedAttachmentData.imageData
+              .containsKey(widget.attachment.guid))
+            widget.savedAttachmentData.imageData.remove(widget.attachment.guid);
+          if (this.mounted) setState(() {});
+        } else if (!visible) {
+          visible = true;
+          _initializeBytes();
+        }
+      },
+      child: Stack(
+        children: <Widget>[
+          Container(
+            constraints: BoxConstraints(
+              maxWidth: MediaQuery.of(context).size.width / 2,
+              maxHeight: MediaQuery.of(context).size.height / 2,
+            ),
+            child: AspectRatio(
+              aspectRatio: widget.attachment.width != null &&
+                      widget.attachment.height != null &&
+                      widget.attachment.width > 0 &&
+                      widget.attachment.height > 0
+                  ? widget.attachment.width / widget.attachment.height
+                  : MediaQuery.of(context).size.width / 5,
+              child: widget.savedAttachmentData
+                          .imageData[widget.attachment.guid] ==
+                      null
+                  ? Container(
+                      height: 5,
+                      child: Center(
+                        child: LinearProgressIndicator(
+                          backgroundColor: Colors.grey,
+                          valueColor: AlwaysStoppedAnimation(
+                              Theme.of(context).primaryColor),
                         ),
                       ),
-          ),
-        ),
-        Positioned.fill(
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: () async {
-                setState(() {
-                  navigated = true;
-                });
-                await Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => ImageViewer(
-                      attachment: widget.attachment,
-                      file: widget.file,
-                      bytes: widget.savedAttachmentData
-                          .imageData[widget.attachment.guid],
-                      tag: widget.attachment.guid,
+                    )
+                  : Container(
+                      child: Hero(
+                        tag: widget.attachment.guid,
+                        child: AnimatedSize(
+                          vsync: this,
+                          curve: Curves.easeInOut,
+                          alignment: Alignment.center,
+                          duration: Duration(milliseconds: 250),
+                          child: Image.memory(
+                            widget.savedAttachmentData
+                                .imageData[widget.attachment.guid],
+                          ),
+                        ),
+                      ),
+                      constraints: BoxConstraints(
+                        maxHeight: MediaQuery.of(context).size.height / 3,
+                      ),
                     ),
-                  ),
-                );
-                setState(() {
-                  navigated = false;
-                });
-              },
             ),
           ),
-        ),
-      ],
+          Positioned.fill(
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () async {
+                  setState(() {
+                    navigated = true;
+                  });
+                  await Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => ImageViewer(
+                        attachment: widget.attachment,
+                        file: widget.file,
+                        bytes: widget.savedAttachmentData
+                            .imageData[widget.attachment.guid],
+                        tag: widget.attachment.guid,
+                      ),
+                    ),
+                  );
+                  setState(() {
+                    navigated = false;
+                  });
+                },
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
