@@ -29,6 +29,8 @@ Size textSize(String text, TextStyle style) {
 }
 
 String formatPhoneNumber(String str) {
+  // If the string is an email, we don't want to format it
+  if (str.contains("@")) return str;
   if (str.length < 10) return str;
   String areaCode = "";
 

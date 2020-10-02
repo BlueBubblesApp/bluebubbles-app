@@ -683,12 +683,24 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                                                 BorderRadius.circular(18),
                                           ),
                                           onPressed: () async {
+                                            debugPrint(
+                                                "(Sigabrt) Before pick video");
                                             FilePickerCross filePicker =
                                                 FilePickerCross();
                                             await filePicker.pick();
+                                            debugPrint(
+                                                "(Sigabrt) After pick video");
+                                            debugPrint(
+                                                "(Sigabrt) Before set file");
                                             pickedImages
                                                 .add(File(filePicker.path));
+                                            debugPrint(
+                                                "(Sigabrt) After add to picked videos list");
+                                            debugPrint(
+                                                "(Sigabrt) Before set state");
                                             setState(() {});
+                                            debugPrint(
+                                                "(Sigabrt) After set state");
                                           },
                                           color: Theme.of(context).accentColor,
                                           child: Column(
