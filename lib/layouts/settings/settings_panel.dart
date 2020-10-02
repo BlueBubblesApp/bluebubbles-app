@@ -55,7 +55,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      extendBodyBehindAppBar: true,
+      // extendBodyBehindAppBar: true,
       backgroundColor: Theme.of(context).backgroundColor,
       appBar: PreferredSize(
         preferredSize: Size(MediaQuery.of(context).size.width, 80),
@@ -84,9 +84,6 @@ class _SettingsPanelState extends State<SettingsPanel> {
       body: CustomScrollView(
         physics: AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
         slivers: <Widget>[
-          SliverPadding(
-            padding: EdgeInsets.only(top: 130),
-          ),
           SliverList(
             delegate: SliverChildListDelegate(
               <Widget>[
