@@ -131,6 +131,16 @@ class _ConversationTileState extends State<ConversationTile> {
             if (this.mounted) setState(() {});
           },
         ),
+        if (!widget.chat.hasUnreadMessage)
+          IconSlideAction(
+            caption: 'Mark Unread',
+            color: Colors.blue,
+            icon: Icons.notifications,
+            onTap: () {
+              widget.chat.setUnreadStatus(true);
+              ChatBloc().updateChatPosition(widget.chat);
+            },
+          ),
         IconSlideAction(
           caption: widget.chat.isArchived ? 'UnArchive' : 'Archive',
           color: widget.chat.isArchived ? Colors.blue : Colors.red,
@@ -142,7 +152,7 @@ class _ConversationTileState extends State<ConversationTile> {
               ChatBloc().archiveChat(widget.chat);
             }
           },
-        )
+        ),
       ],
       child: Material(
         color: !isPressed
