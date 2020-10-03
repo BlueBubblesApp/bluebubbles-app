@@ -71,10 +71,13 @@ class _ConversationListState extends State<ConversationList> {
 
     // Listen for any incoming events
     EventDispatcher().stream.listen((Map<String, dynamic> event) {
-      if (!event.containsKey("type") || event["type"] != "show-snackbar") return;
+      if (!event.containsKey("type") || event["type"] != "show-snackbar")
+        return;
 
       // Make sure that the app is open and the conversation list is present
-      if (!LifeCycleManager().isAlive || NotificationManager().chat != null) return;
+      if (!LifeCycleManager().isAlive ||
+          NotificationManager().chat != null ||
+          context == null) return;
       final snackBar = SnackBar(content: Text(event["data"]["text"]));
       Scaffold.of(context).showSnackBar(snackBar);
     });

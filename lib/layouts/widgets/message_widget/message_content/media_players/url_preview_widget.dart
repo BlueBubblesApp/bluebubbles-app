@@ -15,23 +15,18 @@ class UrlPreviewWidget extends StatefulWidget {
     Key key,
     @required this.linkPreviews,
     @required this.message,
-    // @required this.onFinish,
-    // this.existingMetaData,
     @required this.savedAttachmentData,
   }) : super(key: key);
   final List<Attachment> linkPreviews;
   final Message message;
   final SavedAttachmentData savedAttachmentData;
-  // final Function(Metadata) onFinish;
-  // final Metadata existingMetaData;
 
   @override
   _UrlPreviewWidgetState createState() => _UrlPreviewWidgetState();
 }
 
 class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
-    with AutomaticKeepAliveClientMixin {
-  bool isFetching = true;
+    with AutomaticKeepAliveClientMixin, TickerProviderStateMixin {
   Metadata data;
   String url;
 
@@ -74,112 +69,122 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
       data = await extract(url);
       widget.savedAttachmentData
           .urlMetaData[widget.message.guid + "-url-preview"] = data;
-      if (this.mounted)
-        setState(() {
-          isFetching = false;
-          // isFetching = !checkIfImagesAreSaved();
-        });
+      if (this.mounted) setState(() {});
     }
   }
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    if (isEmptyString(widget.message.text) || data == null) return Container();
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: 4),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: Material(
-          color: Theme.of(context).accentColor,
-          child: InkResponse(
-            borderRadius: BorderRadius.circular(20),
-            onTap: () {
-              MethodChannelInterface().invokeMethod("open-link", {"link": url});
-            },
-            child: Container(
-              width: MediaQuery.of(context).size.width * 2 / 3,
-              child: Column(
-                children: <Widget>[
-                  widget.linkPreviews.length > 1
-                      ? attachmentSaved(widget.linkPreviews.last)
-                          ? Image.file(
-                              attachmentFile(widget.linkPreviews.last),
-                              filterQuality: FilterQuality.low,
-                            )
-                          : CupertinoActivityIndicator(
-                              animating: true,
-                            )
-                      : Container(),
-                  Padding(
-                    padding: EdgeInsets.all(14.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: <Widget>[
-                        data != null
-                            ? Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: <Widget>[
-                                  data != null
-                                      ? Container(
-                                          width: MediaQuery.of(context)
-                                                  .size
-                                                  .width *
-                                              4 /
-                                              9,
-                                          child: Text(
-                                            data.title != null
-                                                ? data.title
-                                                : "Loading...",
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .bodyText1
-                                                .apply(fontWeightDelta: 2),
-                                            overflow: TextOverflow.ellipsis,
-                                            maxLines: 2,
-                                          ),
-                                        )
-                                      : Container(),
-                                  data != null && data.description != null
-                                      ? Container(
-                                          width: MediaQuery.of(context)
-                                                  .size
-                                                  .width *
-                                              4 /
-                                              9,
-                                          child: Text(
-                                            data.description,
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .bodyText1
-                                                .apply(fontSizeDelta: -5),
-                                          ),
-                                        )
-                                      : Container(),
-                                ],
-                              )
-                            : Container(),
-                        attachmentSaved(widget.linkPreviews.first)
-                            ? ClipRRect(
-                              borderRadius: BorderRadius.circular(10.0),
-                              child: Image.file(
-                                attachmentFile(widget.linkPreviews.first),
-                                width: 40,
-                                fit: BoxFit.contain,
-                              )
-                            ) 
-                            : CupertinoActivityIndicator(
-                                animating: true,
-                              )
-                      ],
+    return AnimatedSize(
+      curve: Curves.easeInOut,
+      alignment: Alignment.center,
+      duration: Duration(milliseconds: 500),
+      vsync: this,
+      child: (isEmptyString(widget.message.text) || data == null)
+          ? Container()
+          : Padding(
+              padding: EdgeInsets.symmetric(vertical: 4),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: Material(
+                  color: Theme.of(context).accentColor,
+                  child: InkResponse(
+                    borderRadius: BorderRadius.circular(20),
+                    onTap: () {
+                      MethodChannelInterface()
+                          .invokeMethod("open-link", {"link": url});
+                    },
+                    child: Container(
+                      width: MediaQuery.of(context).size.width * 2 / 3,
+                      child: Column(
+                        children: <Widget>[
+                          widget.linkPreviews.length > 1
+                              ? attachmentSaved(widget.linkPreviews.last)
+                                  ? Image.file(
+                                      attachmentFile(widget.linkPreviews.last),
+                                      filterQuality: FilterQuality.low,
+                                    )
+                                  : CupertinoActivityIndicator(
+                                      animating: true,
+                                    )
+                              : Container(),
+                          Padding(
+                            padding: EdgeInsets.all(14.0),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: <Widget>[
+                                data != null
+                                    ? Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: <Widget>[
+                                          data != null
+                                              ? Container(
+                                                  width: MediaQuery.of(context)
+                                                          .size
+                                                          .width *
+                                                      4 /
+                                                      9,
+                                                  child: Text(
+                                                    data.title != null
+                                                        ? data.title
+                                                        : "Loading...",
+                                                    style: Theme.of(context)
+                                                        .textTheme
+                                                        .bodyText1
+                                                        .apply(
+                                                            fontWeightDelta: 2),
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                    maxLines: 2,
+                                                  ),
+                                                )
+                                              : Container(),
+                                          data != null &&
+                                                  data.description != null
+                                              ? Container(
+                                                  width: MediaQuery.of(context)
+                                                          .size
+                                                          .width *
+                                                      4 /
+                                                      9,
+                                                  child: Text(
+                                                    data.description,
+                                                    style: Theme.of(context)
+                                                        .textTheme
+                                                        .bodyText1
+                                                        .apply(
+                                                            fontSizeDelta: -5),
+                                                  ),
+                                                )
+                                              : Container(),
+                                        ],
+                                      )
+                                    : Container(),
+                                attachmentSaved(widget.linkPreviews.first)
+                                    ? ClipRRect(
+                                        borderRadius:
+                                            BorderRadius.circular(10.0),
+                                        child: Image.file(
+                                          attachmentFile(
+                                              widget.linkPreviews.first),
+                                          width: 40,
+                                          fit: BoxFit.contain,
+                                        ))
+                                    : CupertinoActivityIndicator(
+                                        animating: true,
+                                      )
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ],
+                ),
               ),
             ),
-          ),
-        ),
-      ),
     );
   }
 
