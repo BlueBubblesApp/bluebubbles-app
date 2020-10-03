@@ -142,13 +142,16 @@ class ActionHandler {
           "$appDocPath/attachments/${message.attachments[i].guid}/${message.attachments[i].transferName}";
       File file = File(pathName);
 
-      OutgoingQueue().add(new QueueItem(
+      OutgoingQueue().add(
+        new QueueItem(
           event: "send-attachment",
           item: new AttachmentSender(
             file,
             chat,
             i == message.attachments.length - 1 ? message.text : "",
-          )));
+          ),
+        ),
+      );
     }
 
     // If we sent attachments, return because we finished sending
@@ -180,6 +183,7 @@ class ActionHandler {
     SocketManager().sendMessage("send-message", params, (response) async {
       // If there is an error, replace the temp value with an error
       if (response['status'] != 200) {
+        NewMessageManager().removeMessage(chat, message.guid);
         message.guid = message.guid
             .replaceAll("temp", "error-${response['error']['message']}");
         message.error = response['status'] == 400 ? 1001 : 1002;
