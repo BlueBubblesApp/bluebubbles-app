@@ -236,11 +236,13 @@ class ChatBloc {
     map[chat.guid] = chatMap;
   }
 
-  void updateChat(Chat chat) {
+  void updateChat(Chat chat) async {
     for (int i = 0; i < _chats.length; i++) {
       Chat _chat = _chats[i];
       if (_chat.guid == chat.guid) {
         _chats[i] = chat;
+        await chats[i].getTitle();
+        _chatController.sink.add(_chats);
       }
     }
   }

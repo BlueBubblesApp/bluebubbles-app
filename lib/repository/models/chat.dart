@@ -2,10 +2,13 @@ import 'dart:convert';
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
+import 'package:bluebubbles/layouts/widgets/message_widget/group_event.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
+import 'package:bluebubbles/socket_manager.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:intl/intl.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -37,7 +40,8 @@ Future<String> getFullChatTitle(Chat _chat) async {
 
     List<String> titles = [];
     for (int i = 0; i < chat.participants.length; i++) {
-      String name = await ContactManager().getContactTitle(chat.participants[i].address);
+      String name =
+          await ContactManager().getContactTitle(chat.participants[i].address);
 
       if (chat.participants.length > 1 && !name.startsWith('+1')) {
         name = name.trim().split(" ")[0];
@@ -70,7 +74,8 @@ Future<String> getFullChatTitle(Chat _chat) async {
 
 Future<String> getShortChatTitle(Chat _chat) async {
   if (_chat.participants.length == 1) {
-    return await ContactManager().getContactTitle(_chat.participants[0].address);
+    return await ContactManager()
+        .getContactTitle(_chat.participants[0].address);
   } else if (_chat.displayName != null && _chat.displayName.length != 0) {
     return _chat.displayName;
   } else {
@@ -180,6 +185,8 @@ class Chat {
     for (int i = 0; i < this.participants.length; i++) {
       await this.addParticipant(this.participants[i]);
     }
+    debugPrint("chats.participants.length after saving: " +
+        this.participants.length.toString());
 
     return this;
   }
@@ -261,7 +268,8 @@ class Chat {
     return this;
   }
 
-  Future<Chat> addMessage(Message message, {bool changeUnreadStatus: true}) async {
+  Future<Chat> addMessage(Message message,
+      {bool changeUnreadStatus: true}) async {
     final Database db = await DBProvider.db.database;
 
     // Save the message
@@ -271,12 +279,9 @@ class Chat {
     // If the message was saved correctly, update this chat's latestMessage info,
     // but only if the incoming message's date is newer
     if (newMessage.id != null &&
-        (
-          this.latestMessageDate == null ||
-          this.latestMessageDate.millisecondsSinceEpoch <
-            message.dateCreated.millisecondsSinceEpoch
-        )
-    ) {
+        (this.latestMessageDate == null ||
+            this.latestMessageDate.millisecondsSinceEpoch <
+                message.dateCreated.millisecondsSinceEpoch)) {
       this.latestMessageText = await MessageHelper.getNotificationText(message);
       this.latestMessageDate = message.dateCreated;
       isNewer = true;
@@ -319,8 +324,62 @@ class Chat {
     // Update the chat position
     await ChatBloc().updateChatPosition(this);
 
+    // If the message is for adding or removing participants, we need to ensure that all of the chat participants are correct by syncing with the server
+    if ((message.itemType == ItemTypes.participantRemoved.index ||
+            message.itemType == ItemTypes.participantAdded.index) &&
+        isEmptyString(message.text)) {
+      serverSyncParticipants();
+    }
+
     // Return the current chat instance (with updated vals)
     return this;
+  }
+
+  void serverSyncParticipants() {
+    // Send message to server to get the participants
+    SocketManager().sendMessage("get-participants", {"identifier": this.guid},
+        (response) async {
+      if (response["status"] == 200) {
+        // Get all the participants from the server
+        List data = response["data"];
+        List<Handle> handles = data.map((e) => Handle.fromMap(e)).toList();
+
+        // Make sure that all participants for our local chat are fetched
+        await this.getParticipants();
+
+        // We want to determine all the participants that exist in the response that are not already in our locally saved chat (AKA all the new participants)
+        List<Handle> newParticipants = handles
+            .where((a) => (this
+                    .participants
+                    .where((b) => b.address == a.address)
+                    .toList()
+                    .length ==
+                0))
+            .toList();
+
+        // We want to determine all the participants that exist in the locally saved chat that are not in the response (AKA all the removed participants)
+        List<Handle> removedParticipants = this
+            .participants
+            .where((a) =>
+                (handles.where((b) => b.address == a.address).toList().length ==
+                    0))
+            .toList();
+
+        // Add all participants that are missing from our local db
+        for (Handle newParticipant in newParticipants) {
+          await this.addParticipant(newParticipant);
+        }
+
+        // Remove all extraneous participants from our local db
+        for (Handle removedParticipant in removedParticipants) {
+          await removedParticipant.save();
+          await this.removeParticipant(removedParticipant);
+        }
+
+        // Sync all changes with the chatbloc
+        ChatBloc().updateChat(this);
+      }
+    });
   }
 
   static Future<List<Attachment>> getAttachments(Chat chat,

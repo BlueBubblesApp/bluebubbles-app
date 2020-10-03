@@ -17,6 +17,7 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
+import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/widgets.dart';
@@ -78,8 +79,7 @@ class ActionHandler {
     // Send all the messages
     for (Message message in messages) {
       // Add the message to the UI and DB
-      NewMessageManager()
-          .addMessage(chat, message, outgoing: true);
+      NewMessageManager().addMessage(chat, message, outgoing: true);
       await chat.addMessage(message);
 
       // Create params for the queue item
@@ -359,8 +359,7 @@ class ActionHandler {
       // Otherwise, replace the temp message
       if (existing != null) {
         await Message.delete({'guid': data['tempGuid']});
-        NewMessageManager()
-            .removeMessage(chats.first, data['tempGuid']);
+        NewMessageManager().removeMessage(chats.first, data['tempGuid']);
       } else {
         await Message.replaceMessage(data["tempGuid"], message,
             chat: chats.first);
@@ -391,7 +390,8 @@ class ActionHandler {
         // Handle the notification based on the message and chat
         await MessageHelper.handleNotification(message, chat);
 
-        debugPrint("(ActionHandler.handleMessage) [${message.text}] - [${message.guid}]");
+        debugPrint(
+            "(ActionHandler.handleMessage) [${message.text}] - [${message.guid}]");
         await chat.addMessage(message);
 
         if (message.itemType == ItemTypes.nameChanged.index) {
@@ -420,8 +420,7 @@ class ActionHandler {
       }
 
       chats.forEach((element) {
-        if (!isHeadless)
-          NewMessageManager().addMessage(element, message);
+        if (!isHeadless) NewMessageManager().addMessage(element, message);
       });
     }
   }
