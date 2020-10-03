@@ -191,7 +191,7 @@ class _MessageViewState extends State<MessageView>
                   key: _listKey,
                   itemBuilder: (BuildContext context, int index,
                       Animation<double> animation) {
-                    if (index >= _messages.length) {
+                    if (index == _messages.length) {
                       if (loader == null && !reachedTopOfChat) {
                         loader = widget.messageBloc
                             .loadMessageChunk(_messages.length);
@@ -209,15 +209,15 @@ class _MessageViewState extends State<MessageView>
                           }
                           setState(() {});
                         });
-
-                        return NewMessageLoader(
-                          messageBloc: widget.messageBloc,
-                          offset: _messages.length,
-                          loader: loader,
-                        );
-                      } else {
-                        return Container();
                       }
+
+                      return NewMessageLoader(
+                        messageBloc: widget.messageBloc,
+                        offset: _messages.length,
+                        loader: loader,
+                      );
+                    } else if (index > _messages.length) {
+                      return Container();
                     }
 
                     Message olderMessage;
