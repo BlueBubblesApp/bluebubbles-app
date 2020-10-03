@@ -22,7 +22,7 @@ import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 import 'package:sentry/sentry.dart';
 
 import './layouts/conversation_list/conversation_list.dart';
-import 'layouts/conversation_view/new_chat_creator.dart';
+import 'layouts/conversation_view/new_chat_creator/new_chat_creator.dart';
 import 'socket_manager.dart';
 
 final SentryClient _sentry = SentryClient(

@@ -6,7 +6,8 @@ import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_list/conversation_tile.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
-import 'package:bluebubbles/layouts/conversation_view/new_chat_creator_text_field.dart';
+import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/adding_participant_popup.dart';
+import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/new_chat_creator_text_field.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/group_event.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
@@ -16,7 +17,7 @@ import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-import '../../socket_manager.dart';
+import '../../../socket_manager.dart';
 
 class UniqueContact {
   final bool isChat;
@@ -72,6 +73,7 @@ class _NewChatCreatorState extends State<NewChatCreator> {
   }
 
   Future<void> loadEntries() async {
+    if (!widget.isCreator) return;
     if (ChatBloc().chats == null || ChatBloc().chats.length == 0) {
       await ChatBloc().refreshChats();
     }
@@ -102,11 +104,14 @@ class _NewChatCreatorState extends State<NewChatCreator> {
 
         if (!cache.contains(cleansed)) {
           cache.add(cleansed);
-          _contacts.add(new UniqueContact(
+          _contacts.add(
+            new UniqueContact(
               isChat: false,
               address: phone.value,
               displayName: contact.displayName,
-              label: phone.label));
+              label: phone.label,
+            ),
+          );
         }
       }
 
@@ -116,11 +121,14 @@ class _NewChatCreatorState extends State<NewChatCreator> {
 
         if (!cache.contains(email.value)) {
           cache.add(email.value);
-          _contacts.add(new UniqueContact(
+          _contacts.add(
+            new UniqueContact(
               isChat: false,
               address: email.value,
               displayName: contact.displayName,
-              label: email.label));
+              label: email.label,
+            ),
+          );
         }
       }
     };
@@ -141,8 +149,13 @@ class _NewChatCreatorState extends State<NewChatCreator> {
         if (title.contains(searchQuery.toLowerCase())) {
           if (!cache.contains(chat.guid)) {
             cache.add(chat.guid);
-            _conversations.add(new UniqueContact(
-                isChat: true, chat: chat, displayName: chat.title));
+            _conversations.add(
+              new UniqueContact(
+                isChat: true,
+                chat: chat,
+                displayName: chat.title,
+              ),
+            );
           }
         }
       }
@@ -213,12 +226,13 @@ class _NewChatCreatorState extends State<NewChatCreator> {
             },
           )),
           NewChatCreatorTextField(
+              isCreator: widget.isCreator,
               controller: controller,
               onCreate: () {
-                List<String> participants =
-                    selected.map((e) => cleansePhoneNumber(e.address)).toList();
-
                 if (widget.isCreator) {
+                  List<String> participants = selected
+                      .map((e) => cleansePhoneNumber(e.address))
+                      .toList();
                   Map<String, dynamic> params = {};
                   showDialog(
                     context: context,
@@ -252,6 +266,7 @@ class _NewChatCreatorState extends State<NewChatCreator> {
                       if (data['status'] != 200) {
                         Navigator.of(context).pop();
                         showDialog(
+                          barrierDismissible: false,
                           context: context,
                           child: AlertDialog(
                             backgroundColor: Theme.of(context).backgroundColor,
@@ -300,16 +315,15 @@ class _NewChatCreatorState extends State<NewChatCreator> {
                     },
                   );
                 } else {
-                  showDialog(
-                    context: context,
-                    child: AlertDialog(
-                      backgroundColor: Theme.of(context).backgroundColor,
-                      title: Text(
-                        "Not Implemented Lol",
-                        style: Theme.of(context).textTheme.bodyText1,
+                  if (selected.length > 0)
+                    showDialog(
+                      barrierDismissible: false,
+                      context: context,
+                      child: AddingParticipantPopup(
+                        contacts: selected,
+                        chat: widget.currentChat,
                       ),
-                    ),
-                  );
+                    );
                 }
               },
               onRemove: (UniqueContact contact) {

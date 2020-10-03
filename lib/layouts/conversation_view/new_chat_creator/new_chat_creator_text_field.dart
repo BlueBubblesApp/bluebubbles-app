@@ -1,5 +1,5 @@
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/layouts/conversation_view/new_chat_creator.dart';
+import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/new_chat_creator.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -7,14 +7,16 @@ class NewChatCreatorTextField extends StatefulWidget {
   final TextEditingController controller;
   final Function onCreate;
   final Function(UniqueContact) onRemove;
+  final bool isCreator;
   final List<UniqueContact> selectedContacts;
-  NewChatCreatorTextField({
-    Key key,
-    @required this.controller,
-    @required this.onCreate,
-    @required this.onRemove,
-    @required this.selectedContacts
-  }) : super(key: key);
+  NewChatCreatorTextField(
+      {Key key,
+      @required this.controller,
+      @required this.onCreate,
+      @required this.onRemove,
+      @required this.selectedContacts,
+      @required this.isCreator})
+      : super(key: key);
 
   @override
   _NewChatCreatorTextFieldState createState() =>
@@ -23,7 +25,7 @@ class NewChatCreatorTextField extends StatefulWidget {
 
 class _NewChatCreatorTextFieldState extends State<NewChatCreatorTextField> {
   FocusNode inputFieldNode;
-  
+
   @override
   void initState() {
     super.initState();
@@ -70,9 +72,9 @@ class _NewChatCreatorTextFieldState extends State<NewChatCreatorTextField> {
                   )
                 ],
               ),
-            )
+            ),
           ),
-        )
+        ),
       );
     }
 
@@ -87,9 +89,8 @@ class _NewChatCreatorTextFieldState extends State<NewChatCreatorTextField> {
             if (done.length == 0) return;
             if (validatePhoneNumber(done)) {
               widget.controller.clear();
-              widget.selectedContacts.add(
-                new UniqueContact(address: done, displayName: done)
-              );
+              widget.selectedContacts
+                  .add(new UniqueContact(address: done, displayName: done));
             } else {
               Scaffold.of(context).showSnackBar(SnackBar(
                 content: Text("Invalid Number $done"),
@@ -105,18 +106,18 @@ class _NewChatCreatorTextFieldState extends State<NewChatCreatorTextField> {
           padding: EdgeInsets.only(right: 5.0, top: 2.0, bottom: 2.0),
           autofocus: true,
           style: Theme.of(context).textTheme.bodyText2.apply(
-            color: ThemeData.estimateBrightnessForColor(
-                        Theme.of(context).backgroundColor) ==
-                    Brightness.light
-                ? Colors.black
-                : Colors.white,
-            fontSizeDelta: -0.25
-          ),
+                color: ThemeData.estimateBrightnessForColor(
+                            Theme.of(context).backgroundColor) ==
+                        Brightness.light
+                    ? Colors.black
+                    : Colors.white,
+                fontSizeDelta: -0.25,
+              ),
           decoration: BoxDecoration(
             color: Theme.of(context).backgroundColor,
-          )
-        )
-      )
+          ),
+        ),
+      ),
     );
 
     return Padding(
@@ -152,7 +153,7 @@ class _NewChatCreatorTextFieldState extends State<NewChatCreatorTextField> {
                 widget.onCreate();
               },
               child: Text(
-                "Create",
+                widget.isCreator ? "Create" : "Add",
                 style: Theme.of(context).textTheme.bodyText1,
               ),
             ),
