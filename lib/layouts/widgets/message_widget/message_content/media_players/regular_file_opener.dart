@@ -24,7 +24,7 @@ class _RegularFileOpenerState extends State<RegularFileOpener> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 110,
+      height: 140,
       width: 200,
       color: Theme.of(context).accentColor,
       child: Column(
@@ -32,6 +32,9 @@ class _RegularFileOpenerState extends State<RegularFileOpener> {
         children: <Widget>[
           Text(
             basename(widget.file.path),
+            textAlign: TextAlign.center,
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
           ),
           CupertinoButton(
             child: Icon(
