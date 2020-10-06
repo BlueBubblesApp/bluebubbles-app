@@ -23,6 +23,23 @@ class RegularFileOpener extends StatefulWidget {
 class _RegularFileOpenerState extends State<RegularFileOpener> {
   @override
   Widget build(BuildContext context) {
+    IconData fileIcon = Icons.open_in_new;
+    if (widget.attachment.mimeType != null) {
+      if (widget.attachment.mimeType == "application/pdf") {
+        fileIcon = Icons.picture_as_pdf;
+      } else if (widget.attachment.mimeType == "application/zip") {
+        fileIcon = Icons.folder;
+      } else if (widget.attachment.mimeType.startsWith("audio")) {
+        fileIcon = Icons.music_note;
+      } else if (widget.attachment.mimeType.startsWith("image")) {
+        fileIcon = Icons.photo;
+      } else if (widget.attachment.mimeType.startsWith("video")) {
+        fileIcon = Icons.videocam;
+      } else if (widget.attachment.mimeType.startsWith("text")) {
+        fileIcon = Icons.notes;
+      }
+    }
+
     return Container(
       height: 140,
       width: 200,
@@ -38,7 +55,7 @@ class _RegularFileOpenerState extends State<RegularFileOpener> {
           ),
           CupertinoButton(
             child: Icon(
-              Icons.open_in_new,
+              fileIcon,
               color: Colors.white,
             ),
             onPressed: () async {
