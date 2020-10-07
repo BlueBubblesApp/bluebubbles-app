@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/layouts/image_viewer/video_viewer.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_attachments.dart';
@@ -75,20 +76,6 @@ class _VideoWidgetState extends State<VideoWidget>
     if (this.mounted) this.setState(() {});
   }
 
-  double getAspectRatio() {
-    double width = widget.attachment.width?.toDouble() ?? 0.0;
-    double factor = widget.attachment.height?.toDouble() ?? 0.0;
-    if (widget.attachment.width == null ||
-        widget.attachment.width == 0 ||
-        widget.attachment.height == null ||
-        widget.attachment.height == 0) {
-      width = MediaQuery.of(context).size.width;
-      factor = 2;
-    }
-
-    return (width / factor) / width;
-  }
-
   @override
   Widget build(BuildContext context) {
     VideoPlayerController controller;
@@ -158,7 +145,7 @@ class _VideoWidgetState extends State<VideoWidget>
                             alignment: Alignment.center,
                             children: <Widget>[
                               AspectRatio(
-                                aspectRatio: getAspectRatio(),
+                                aspectRatio: AttachmentHelper.getAspectRatio(context, widget.attachment),
                                 child: Stack(
                                   children: <Widget>[
                                     VideoPlayer(controller),
