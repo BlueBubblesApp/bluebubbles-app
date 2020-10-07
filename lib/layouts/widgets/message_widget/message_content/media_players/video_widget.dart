@@ -75,6 +75,20 @@ class _VideoWidgetState extends State<VideoWidget>
     if (this.mounted) this.setState(() {});
   }
 
+  double getAspectRatio() {
+    double width = widget.attachment.width?.toDouble() ?? 0.0;
+    double factor = widget.attachment.height?.toDouble() ?? 0.0;
+    if (widget.attachment.width == null ||
+        widget.attachment.width == 0 ||
+        widget.attachment.height == null ||
+        widget.attachment.height == 0) {
+      width = MediaQuery.of(context).size.width;
+      factor = 2;
+    }
+
+    return (width / factor) / width;
+  }
+
   @override
   Widget build(BuildContext context) {
     VideoPlayerController controller;
@@ -144,8 +158,7 @@ class _VideoWidgetState extends State<VideoWidget>
                             alignment: Alignment.center,
                             children: <Widget>[
                               AspectRatio(
-                                aspectRatio: widget.attachment.width /
-                                    widget.attachment.height,
+                                aspectRatio: getAspectRatio(),
                                 child: Stack(
                                   children: <Widget>[
                                     VideoPlayer(controller),
@@ -217,30 +230,23 @@ class _VideoWidgetState extends State<VideoWidget>
                           maxWidth: MediaQuery.of(context).size.width / 2,
                           maxHeight: MediaQuery.of(context).size.height / 2,
                         ),
-                        child: AspectRatio(
-                          aspectRatio: widget.attachment.width != null &&
-                                  widget.attachment.height != null
-                              ? widget.attachment.width /
-                                  widget.attachment.height
-                              : MediaQuery.of(context).size.width / 5,
-                          child: widget.savedAttachmentData.imageData
-                                  .containsKey(widget.attachment.guid)
-                              ? Image.memory(
-                                  widget.savedAttachmentData
-                                      .imageData[widget.attachment.guid],
-                                )
-                              : Container(
-                                  height: 5,
-                                  child: Center(
-                                    child: LinearProgressIndicator(
-                                      backgroundColor: Colors.grey,
-                                      valueColor: AlwaysStoppedAnimation(
-                                        Theme.of(context).primaryColor,
-                                      ),
+                        child: widget.savedAttachmentData.imageData
+                                .containsKey(widget.attachment.guid)
+                            ? Image.memory(
+                                widget.savedAttachmentData
+                                    .imageData[widget.attachment.guid],
+                              )
+                            : Container(
+                                height: 5,
+                                child: Center(
+                                  child: LinearProgressIndicator(
+                                    backgroundColor: Colors.grey,
+                                    valueColor: AlwaysStoppedAnimation(
+                                      Theme.of(context).primaryColor,
                                     ),
                                   ),
                                 ),
-                        ),
+                              ),
                       ),
                       // child: Image.file(widget.file),
                     ),

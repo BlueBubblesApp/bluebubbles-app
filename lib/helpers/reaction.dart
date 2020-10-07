@@ -35,8 +35,9 @@ class Reaction {
 
     // Iterate over the messages and insert the latest reaction for each user
     for (Message msg in current) {
-      if (!handleCache.contains(msg.handleId)) {
-        handleCache.add(msg.handleId);
+      int cache = msg.isFromMe ? 0 : msg.handleId;
+      if (!handleCache.contains(cache)) {
+        handleCache.add(cache);
 
         // Only add the reaction if it's not a "negative"
         if (!msg.associatedMessageType.startsWith("-"))
@@ -84,10 +85,15 @@ class Reaction {
     List<int> cache = [];
     List<Message> msgs = [];
     List<Message> current = messages ?? this.messages;
+
+    // Sort the messages
     current.sort((a, b) => -a.dateCreated.compareTo(b.dateCreated));
+
+    // Iterate over them and get the unique reactions (per participant)
     for (Message msg in current) {
-      if (!cache.contains(msg.handleId)) {
-        cache.add(msg.handleId);
+      int cached = msg.isFromMe ? 0 : msg.handleId;
+      if (!cache.contains(cached)) {
+        cache.add(cached);
 
         // Only add the reaction if it's not a "negative"
         if (!msg.associatedMessageType.startsWith("-"))
@@ -119,7 +125,7 @@ class Reaction {
         boxShadow: [
           new BoxShadow(
             blurRadius: 1.0,
-            color: Colors.black.withOpacity(0.7),
+            color: Colors.black.withOpacity(0.8),
           )
         ],
       ),
