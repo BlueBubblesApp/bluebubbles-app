@@ -106,7 +106,10 @@ class _AudioPlayerWigetState extends State<AudioPlayerWiget> {
                     ? Text("00:00 / 00:00",
                         style: Theme.of(context).textTheme.bodyText1)
                     : Text(
-                        "${formatDuration(current)} / ${formatDuration(playing.audio.duration)}",
+                        (playing.audio.duration == null ||
+                                playing.audio.duration.inSeconds == 0)
+                            ? formatDuration(current)
+                            : "${formatDuration(current)} / ${formatDuration(playing.audio.duration)}",
                         style: Theme.of(context).textTheme.bodyText1)
               ],
             )));
