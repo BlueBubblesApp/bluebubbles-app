@@ -7,6 +7,7 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/theming/theming_panel.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/settings.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
@@ -288,6 +289,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                 SettingsTile(
                   onTap: () {
                     showDialog(
+                      barrierDismissible: false,
                       context: context,
                       builder: (BuildContext context) {
                         return AlertDialog(
@@ -299,10 +301,14 @@ class _SettingsPanelState extends State<SettingsPanel> {
                           actions: <Widget>[
                             FlatButton(
                               child: Text("Yes"),
-                              onPressed: () {
-                                // SocketManager().deleteDB().then((value) {
-                                //   SocketManager().notify();
-                                // });
+                              onPressed: () async {
+                                await DBProvider.deleteDB();
+                                Settings temp = SettingsManager().settings;
+                                temp.finishedSetup = false;
+                                await SettingsManager().saveSettings(temp);
+                                SocketManager().finishedSetup.sink.add(false);
+                                Navigator.of(context)
+                                    .popUntil((route) => route.isFirst);
                               },
                             ),
                             FlatButton(

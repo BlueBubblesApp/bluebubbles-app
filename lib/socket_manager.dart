@@ -53,7 +53,6 @@ class SocketManager {
   StreamController<bool> finishedSetup = StreamController<bool>();
 
   //Socket io
-  // SocketIOManager manager;
   SocketIO socket;
 
   //setstate for these widgets
@@ -192,9 +191,8 @@ class SocketManager {
         debugPrint("disconnected");
         state = SocketState.DISCONNECTED;
 
-        EventDispatcher().emit("show-snackbar", {
-          "text": "Disconnected from socket! 🔌"
-        });
+        EventDispatcher()
+            .emit("show-snackbar", {"text": "Disconnected from socket! 🔌"});
         return;
       case "reconnect":
         debugPrint("RECONNECTED");
@@ -206,24 +204,6 @@ class SocketManager {
       default:
         return;
     }
-  }
-
-  Future<void> deleteDB() async {
-    Database db = await DBProvider.db.database;
-
-    // Remove base tables
-    await Handle.flush();
-    await Chat.flush();
-    await Attachment.flush();
-    await Message.flush();
-
-    // Remove join tables
-    await db.execute("DELETE FROM chat_handle_join");
-    await db.execute("DELETE FROM chat_message_join");
-    await db.execute("DELETE FROM attachment_message_join");
-
-    // Recreate tables
-    DBProvider.db.buildDatabase(db);
   }
 
   Future<String> handleNewMessage(_data) async {

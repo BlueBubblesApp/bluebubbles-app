@@ -1,4 +1,5 @@
 import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
@@ -104,30 +105,33 @@ class _WelcomePageState extends State<WelcomePage>
             ),
             Center(
               child: FadeTransition(
-                  opacity: opacityButton,
-                  child: ClipOval(
-                    child: Material(
-                      color: Colors.blue, // button color
-                      child: InkWell(
-                          child: SizedBox(
-                              width: 60,
-                              height: 60,
-                              child: Icon(Icons.arrow_forward,
-                                  color: Colors.white)),
-                          onTap: () async {
-                            if (await Permission.contacts.isGranted) {
-                              widget.controller.animateToPage(2,
-                                  duration: Duration(milliseconds: 300),
-                                  curve: Curves.easeInOut);
-                            } else {
-                              widget.controller.nextPage(
-                                duration: Duration(milliseconds: 300),
-                                curve: Curves.easeInOut,
-                              );
-                            }
-                          }),
-                    ),
-                  )),
+                opacity: opacityButton,
+                child: ClipOval(
+                  child: Material(
+                    color: Colors.blue, // button color
+                    child: InkWell(
+                        child: SizedBox(
+                            width: 60,
+                            height: 60,
+                            child:
+                                Icon(Icons.arrow_forward, color: Colors.white)),
+                        onTap: () async {
+                          if (await Permission.contacts.isGranted) {
+                            widget.controller.animateToPage(
+                              2,
+                              duration: Duration(milliseconds: 300),
+                              curve: Curves.easeInOut,
+                            );
+                          } else {
+                            widget.controller.nextPage(
+                              duration: Duration(milliseconds: 300),
+                              curve: Curves.easeInOut,
+                            );
+                          }
+                        }),
+                  ),
+                ),
+              ),
             )
           ],
         ),

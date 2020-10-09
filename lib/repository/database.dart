@@ -1,5 +1,9 @@
 import 'dart:io';
 
+import 'package:bluebubbles/repository/models/attachment.dart';
+import 'package:bluebubbles/repository/models/chat.dart';
+import 'package:bluebubbles/repository/models/handle.dart';
+import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
@@ -42,6 +46,21 @@ class DBProvider {
       debugPrint("creating database");
       await this.buildDatabase(db);
     });
+  }
+
+  static Future<void> deleteDB() async {
+    Database db = await DBProvider.db.database;
+
+    // Remove base tables
+    await Handle.flush();
+    await Chat.flush();
+    await Attachment.flush();
+    await Message.flush();
+
+    // Remove join tables
+    await db.execute("DELETE FROM chat_handle_join");
+    await db.execute("DELETE FROM chat_message_join");
+    await db.execute("DELETE FROM attachment_message_join");
   }
 
   Future<void> checkTableExistenceAndCreate(Database db) async {
@@ -197,10 +216,5 @@ class DBProvider {
         "FOREIGN KEY(attachmentId) REFERENCES attachment(ROWID),"
         "FOREIGN KEY(messageId) REFERENCES message(ROWID)"
         ");");
-  }
-
-  deleteDB(Database db) async {
-    db.close();
-    deleteDatabase(_path);
   }
 }

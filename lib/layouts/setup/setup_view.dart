@@ -86,20 +86,23 @@ class _SetupViewState extends State<SetupView> {
           ),
           Container(height: 20.0),
           ClipOval(
-              child: Material(
-                  color: Colors.blue, // button color
-                  child: InkWell(
-                      child: SizedBox(
-                          width: 60,
-                          height: 60,
-                          child: Icon(Icons.check, color: Colors.white)),
-                      onTap: () async {
-                        ContactManager().getContacts();
-                        controller.nextPage(
-                          duration: Duration(milliseconds: 300),
-                          curve: Curves.easeInOut,
-                        );
-                      }))),
+            child: Material(
+              color: Colors.blue, // button color
+              child: InkWell(
+                child: SizedBox(
+                    width: 60,
+                    height: 60,
+                    child: Icon(Icons.check, color: Colors.white)),
+                onTap: () async {
+                  ContactManager().getContacts();
+                  controller.nextPage(
+                    duration: Duration(milliseconds: 300),
+                    curve: Curves.easeInOut,
+                  );
+                },
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -125,19 +128,22 @@ class _SetupViewState extends State<SetupView> {
             ),
             Container(height: 20.0),
             ClipOval(
-                child: Material(
-                    color: Colors.blue, // button color
-                    child: InkWell(
-                        child: SizedBox(
-                            width: 60,
-                            height: 60,
-                            child: Icon(Icons.check, color: Colors.white)),
-                        onTap: () async {
-                          controller.nextPage(
-                            duration: Duration(milliseconds: 300),
-                            curve: Curves.easeInOut,
-                          );
-                        }))),
+              child: Material(
+                color: Colors.blue, // button color
+                child: InkWell(
+                  child: SizedBox(
+                      width: 60,
+                      height: 60,
+                      child: Icon(Icons.check, color: Colors.white)),
+                  onTap: () async {
+                    controller.nextPage(
+                      duration: Duration(milliseconds: 300),
+                      curve: Curves.easeInOut,
+                    );
+                  },
+                ),
+              ),
+            ),
           ],
         ),
       ),
