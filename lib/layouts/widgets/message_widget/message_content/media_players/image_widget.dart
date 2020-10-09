@@ -89,45 +89,37 @@ class _ImageWidgetState extends State<ImageWidget>
               maxWidth: MediaQuery.of(context).size.width / 2,
               maxHeight: MediaQuery.of(context).size.height / 2,
             ),
-            child: AspectRatio(
-              aspectRatio: widget.attachment.width != null &&
-                      widget.attachment.height != null &&
-                      widget.attachment.width > 0 &&
-                      widget.attachment.height > 0
-                  ? widget.attachment.width / widget.attachment.height
-                  : MediaQuery.of(context).size.width / 5,
-              child: widget.savedAttachmentData
-                          .imageData[widget.attachment.guid] ==
-                      null
-                  ? Container(
-                      height: 5,
-                      child: Center(
-                        child: LinearProgressIndicator(
-                          backgroundColor: Colors.grey,
-                          valueColor: AlwaysStoppedAnimation(
-                              Theme.of(context).primaryColor),
-                        ),
-                      ),
-                    )
-                  : Container(
-                      child: Hero(
-                        tag: widget.attachment.guid,
-                        child: AnimatedSize(
-                          vsync: this,
-                          curve: Curves.easeInOut,
-                          alignment: Alignment.center,
-                          duration: Duration(milliseconds: 250),
-                          child: Image.memory(
-                            widget.savedAttachmentData
-                                .imageData[widget.attachment.guid],
+            child:
+                widget.savedAttachmentData.imageData[widget.attachment.guid] ==
+                        null
+                    ? Container(
+                        height: 5,
+                        child: Center(
+                          child: LinearProgressIndicator(
+                            backgroundColor: Colors.grey,
+                            valueColor: AlwaysStoppedAnimation(
+                                Theme.of(context).primaryColor),
                           ),
                         ),
+                      )
+                    : Container(
+                        child: Hero(
+                          tag: widget.attachment.guid,
+                          child: AnimatedSize(
+                            vsync: this,
+                            curve: Curves.easeInOut,
+                            alignment: Alignment.center,
+                            duration: Duration(milliseconds: 250),
+                            child: Image.memory(
+                              widget.savedAttachmentData
+                                  .imageData[widget.attachment.guid],
+                            ),
+                          ),
+                        ),
+                        constraints: BoxConstraints(
+                          maxHeight: MediaQuery.of(context).size.height / 3,
+                        ),
                       ),
-                      constraints: BoxConstraints(
-                        maxHeight: MediaQuery.of(context).size.height / 3,
-                      ),
-                    ),
-            ),
           ),
           Positioned.fill(
             child: Material(

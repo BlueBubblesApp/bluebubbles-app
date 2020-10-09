@@ -28,13 +28,13 @@ class _ReactionDetailWidgetState extends State<ReactionDetailWidget> {
   void initState() {
     super.initState();
 
-    contactTitle = widget.handle.address;
+    contactTitle = widget.message.isFromMe ? "You" : widget.handle.address;
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (widget.handle == null) return;
+    if (widget.message.isFromMe || widget.handle == null) return;
 
     ContactManager().getCachedContact(widget.handle.address).then((Contact contact) {
       if (contact != null && contact.avatar.length > 0) {
@@ -53,7 +53,7 @@ class _ReactionDetailWidgetState extends State<ReactionDetailWidget> {
 
   @override
   Widget build(BuildContext context) {
-    String handleAddress = widget.handle == null ? null : widget.handle.address;
+    String handleAddress = widget.handle == null || widget.message.isFromMe ? null : widget.handle.address;
     final initials = getInitials(handleAddress, " ");
 
     Color iconColor = Colors.white;
