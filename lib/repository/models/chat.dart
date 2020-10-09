@@ -185,8 +185,6 @@ class Chat {
     for (int i = 0; i < this.participants.length; i++) {
       await this.addParticipant(this.participants[i]);
     }
-    debugPrint("chats.participants.length after saving: " +
-        this.participants.length.toString());
 
     return this;
   }

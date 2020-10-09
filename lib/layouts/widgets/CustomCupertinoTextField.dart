@@ -1063,7 +1063,7 @@ class _CupertinoTextFieldState extends State<CustomCupertinoTextField>
           selectionControls:
               widget.selectionEnabled ? cupertinoTextSelectionControls : null,
           onChanged: widget.onChanged,
-          // onContentCommited: widget.onContentCommited,
+          onContentCommited: widget.onContentCommited,
           onSelectionChanged: _handleSelectionChanged,
           onEditingComplete: widget.onEditingComplete,
           onSubmitted: widget.onSubmitted,

@@ -46,7 +46,11 @@ class _ReactionsState extends State<Reactions> with TickerProviderStateMixin {
                 if (itemWidget != null) {
                   reactionWidgets.add(Padding(
                     padding: EdgeInsets.fromLTRB(
-                        tmpIdx.toDouble() * 10.0, topPadding, rightPadding, 0),
+                        (widget.message.isFromMe ? 5.0 : 0.0) +
+                            tmpIdx.toDouble() * 15.0,
+                        topPadding,
+                        rightPadding + (tmpIdx.toDouble() * 5.0),
+                        0),
                     child: itemWidget,
                   ));
                   tmpIdx++;

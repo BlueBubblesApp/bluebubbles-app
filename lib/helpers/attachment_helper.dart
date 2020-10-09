@@ -98,4 +98,18 @@ class AttachmentHelper {
     List<String> blacklist = ["image/gif"];
     return mime.startsWith("image/") && !blacklist.contains(mime);
   }
+
+  static double getAspectRatio(BuildContext context, Attachment attachment) {
+    double width = attachment.width?.toDouble() ?? 0.0;
+    double factor = attachment.height?.toDouble() ?? 0.0;
+    if (attachment.width == null ||
+        attachment.width == 0 ||
+        attachment.height == null ||
+        attachment.height == 0) {
+      width = MediaQuery.of(context).size.width;
+      factor = 2;
+    }
+
+    return (width / factor) / width;
+  }
 }

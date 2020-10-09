@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'package:assorted_layout_widgets/assorted_layout_widgets.dart';
-import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/layouts/conversation_details/conversation_details.dart';
@@ -11,8 +10,6 @@ import 'package:bluebubbles/layouts/widgets/CustomCupertinoNavBar.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
-import 'package:bluebubbles/managers/life_cycle_manager.dart';
-import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/socket_manager.dart';
@@ -113,8 +110,10 @@ class _ConversationViewState extends State<ConversationView> {
       await widget.chat.getParticipants();
     }
 
+    List<dynamic> test = List.from(widget.chat.participants);
+
     // Loop over the participants
-    for (Handle handle in widget.chat.participants) {
+    for (Handle handle in test) {
       // Since we only want to update if we've made changes, check a flag
       bool existed = avatarStack.containsKey(handle.address);
 
@@ -189,7 +188,8 @@ class _ConversationViewState extends State<ConversationView> {
     // Calculate separation factor
     // Anything below -60 won't work due to the alignment
     double distance = avatars.length * -4.0;
-    if (distance <= -60.0) distance = -60.0;
+    if (distance <= -30.0 && distance > -60) distance = -30.0;
+    if (distance <= -60.0) distance = -35.0;
 
     return Scaffold(
       backgroundColor: Theme.of(context).backgroundColor,
@@ -205,23 +205,19 @@ class _ConversationViewState extends State<ConversationView> {
         ),
         middle: ListView(
           physics: Cupertino.NeverScrollableScrollPhysics(),
+          padding: EdgeInsets.only(right: 30),
           children: <Widget>[
             Container(height: 10.0),
             GestureDetector(
               onTap: openDetails,
               child: Container(
-                // padding: EdgeInsets.only(right: 15.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Padding(
-                      padding:
-                          EdgeInsets.only(left: distance <= -40.0 ? 60 : 0),
-                      child: RowSuper(
-                        children: avatars,
-                        innerDistance: distance,
-                        alignment: Alignment.centerRight,
-                      ),
+                    RowSuper(
+                      children: avatars,
+                      innerDistance: distance,
+                      alignment: Alignment.center,
                     ),
                     RichText(
                       text: TextSpan(

@@ -121,8 +121,7 @@ class _MessageAttachmentsState extends State<MessageAttachments>
       crossAxisAlignment: CrossAxisAlignment.end,
       children: <Widget>[
         Stack(
-          alignment:
-              widget.message.isFromMe ? Alignment.topRight : Alignment.topLeft,
+          alignment: Alignment.topRight,
           children: <Widget>[
             Padding(
                 padding:
@@ -130,7 +129,9 @@ class _MessageAttachmentsState extends State<MessageAttachments>
                         ? EdgeInsets.only(
                             right: !widget.message.isFromMe ? 16.0 : 10.0,
                             bottom: 10.0,
-                            left: widget.message.isFromMe ? 16.0 : 10.0,
+                            left: widget.message.isFromMe
+                                ? 16.0
+                                : (widget.showTail) ? 10.0 : 45.0,
                             top: 24.0,
                           )
                         : EdgeInsets.symmetric(

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/layouts/image_viewer/video_viewer.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_attachments.dart';
@@ -144,8 +145,7 @@ class _VideoWidgetState extends State<VideoWidget>
                             alignment: Alignment.center,
                             children: <Widget>[
                               AspectRatio(
-                                aspectRatio: widget.attachment.width /
-                                    widget.attachment.height,
+                                aspectRatio: AttachmentHelper.getAspectRatio(context, widget.attachment),
                                 child: Stack(
                                   children: <Widget>[
                                     VideoPlayer(controller),
@@ -217,30 +217,23 @@ class _VideoWidgetState extends State<VideoWidget>
                           maxWidth: MediaQuery.of(context).size.width / 2,
                           maxHeight: MediaQuery.of(context).size.height / 2,
                         ),
-                        child: AspectRatio(
-                          aspectRatio: widget.attachment.width != null &&
-                                  widget.attachment.height != null
-                              ? widget.attachment.width /
-                                  widget.attachment.height
-                              : MediaQuery.of(context).size.width / 5,
-                          child: widget.savedAttachmentData.imageData
-                                  .containsKey(widget.attachment.guid)
-                              ? Image.memory(
-                                  widget.savedAttachmentData
-                                      .imageData[widget.attachment.guid],
-                                )
-                              : Container(
-                                  height: 5,
-                                  child: Center(
-                                    child: LinearProgressIndicator(
-                                      backgroundColor: Colors.grey,
-                                      valueColor: AlwaysStoppedAnimation(
-                                        Theme.of(context).primaryColor,
-                                      ),
+                        child: widget.savedAttachmentData.imageData
+                                .containsKey(widget.attachment.guid)
+                            ? Image.memory(
+                                widget.savedAttachmentData
+                                    .imageData[widget.attachment.guid],
+                              )
+                            : Container(
+                                height: 5,
+                                child: Center(
+                                  child: LinearProgressIndicator(
+                                    backgroundColor: Colors.grey,
+                                    valueColor: AlwaysStoppedAnimation(
+                                      Theme.of(context).primaryColor,
                                     ),
                                   ),
                                 ),
-                        ),
+                              ),
                       ),
                       // child: Image.file(widget.file),
                     ),
