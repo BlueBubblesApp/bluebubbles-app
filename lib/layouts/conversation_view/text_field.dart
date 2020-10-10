@@ -13,6 +13,7 @@ import 'package:bluebubbles/layouts/conversation_view/camera_widget.dart';
 import 'package:bluebubbles/layouts/image_viewer/image_viewer.dart';
 import 'package:bluebubbles/layouts/widgets/CustomCupertinoTextField.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/audio_player_widget.dart';
+import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/outgoing_queue.dart';
 import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -620,29 +621,13 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                                                 BorderRadius.circular(18),
                                           ),
                                           onPressed: () async {
-                                            debugPrint(
-                                                "(Sigabrt) Before pick image");
-                                            PickedFile pickedImage =
-                                                await ImagePicker().getImage(
-                                              source: ImageSource.gallery,
-                                            );
-                                            debugPrint(
-                                                "(Sigabrt) After pick image");
-                                            debugPrint(
-                                                "(Sigabrt) Before set file");
-                                            File image = File(pickedImage.path);
-                                            debugPrint(
-                                                "(Sigabrt) After set file");
-                                            debugPrint(
-                                                "(Sigabrt) Before add to picked images list");
+                                            String res =
+                                                await MethodChannelInterface()
+                                                    .invokeMethod("pick-image");
+                                            if (res == null) return;
+                                            File image = File(res);
                                             pickedImages.add(image);
-                                            debugPrint(
-                                                "(Sigabrt) After add to picked images list");
-                                            debugPrint(
-                                                "(Sigabrt) Before set state");
                                             setState(() {});
-                                            debugPrint(
-                                                "(Sigabrt) After set state");
                                           },
                                           color: Theme.of(context).accentColor,
                                           child: Column(
@@ -683,24 +668,13 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                                                 BorderRadius.circular(18),
                                           ),
                                           onPressed: () async {
-                                            debugPrint(
-                                                "(Sigabrt) Before pick video");
-                                            FilePickerCross filePicker =
-                                                FilePickerCross();
-                                            await filePicker.pick();
-                                            debugPrint(
-                                                "(Sigabrt) After pick video");
-                                            debugPrint(
-                                                "(Sigabrt) Before set file");
-                                            pickedImages
-                                                .add(File(filePicker.path));
-                                            debugPrint(
-                                                "(Sigabrt) After add to picked videos list");
-                                            debugPrint(
-                                                "(Sigabrt) Before set state");
+                                            String res =
+                                                await MethodChannelInterface()
+                                                    .invokeMethod("pick-video");
+                                            if (res == null) return;
+                                            File video = File(res);
+                                            pickedImages.add(video);
                                             setState(() {});
-                                            debugPrint(
-                                                "(Sigabrt) After set state");
                                           },
                                           color: Theme.of(context).accentColor,
                                           child: Column(

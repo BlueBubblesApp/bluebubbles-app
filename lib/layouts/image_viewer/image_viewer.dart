@@ -87,8 +87,7 @@ class _ImageViewerState extends State<ImageViewer> {
                                 ),
                                 Text(
                                   "Saved to gallery",
-                                  style:
-                                      Theme.of(context).textTheme.bodyText1,
+                                  style: Theme.of(context).textTheme.bodyText1,
                                 ),
                               ],
                             ),
@@ -110,10 +109,11 @@ class _ImageViewerState extends State<ImageViewer> {
                 onPressed: () async {
                   // final Uint8List bytes = await widget.file.readAsBytes();
                   await Share.file(
-                      "Shared ${widget.attachment.mimeType.split("/")[0]} from BlueBubbles: ${widget.attachment.transferName}",
-                      widget.attachment.transferName,
-                      widget.file.path,
-                      widget.attachment.mimeType);
+                    "Shared ${widget.attachment.mimeType.split("/")[0]} from BlueBubbles: ${widget.attachment.transferName}",
+                    widget.attachment.transferName,
+                    widget.file.path,
+                    widget.attachment.mimeType,
+                  );
                 },
                 child: Icon(
                   Icons.share,
@@ -122,8 +122,8 @@ class _ImageViewerState extends State<ImageViewer> {
               ),
             ),
           ],
-        )
-      )
+        ),
+      ),
     );
     return Scaffold(
       backgroundColor: Colors.black,
@@ -146,13 +146,14 @@ class _ImageViewerState extends State<ImageViewer> {
                   imageProvider: FileImage(widget.file),
                   loadingBuilder: (BuildContext context, ImageChunkEvent ev) {
                     return PhotoView(
-                        minScale: PhotoViewComputedScale.contained,
-                        maxScale: PhotoViewComputedScale.contained * 13,
-                        controller: controller,
-                        heroAttributes: PhotoViewHeroAttributes(
-                          tag: widget.tag,
-                        ),
-                        imageProvider: MemoryImage(widget.bytes));
+                      minScale: PhotoViewComputedScale.contained,
+                      maxScale: PhotoViewComputedScale.contained * 13,
+                      controller: controller,
+                      heroAttributes: PhotoViewHeroAttributes(
+                        tag: widget.tag,
+                      ),
+                      imageProvider: MemoryImage(widget.bytes),
+                    );
                   }),
             ),
             overlay

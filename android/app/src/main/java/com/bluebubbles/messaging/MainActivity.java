@@ -39,6 +39,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.PersistableBundle;
+import android.provider.MediaStore;
 import android.provider.OpenableColumns;
 import android.service.notification.StatusBarNotification;
 import android.util.Log;
@@ -69,6 +70,8 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -88,6 +91,10 @@ public class MainActivity extends FlutterActivity {
     Map<Integer, NotificationCompat.Builder> progressBars = new HashMap<>();
     public static String BACKGROUND_SERVICE_SHARED_PREF = "BACKGROUND_SERVICE_SHARED_PREF ";
     public static String BACKGROUND_HANDLE_SHARED_PREF_KEY = "BACKGROUND_HANDLE_SHARED_PREF_KEY";
+
+    public static int PICK_IMAGE = 1000;
+    public static int PICK_VIDEO = 2000;
+    public MethodChannel.Result result = null;
 
 
     @Override
@@ -398,18 +405,54 @@ public class MainActivity extends FlutterActivity {
             HashMap<String, String> argsMap = (HashMap<String, String>) call.arguments;
             File requestFile = new File(argsMap.get("filepath"));
             Uri shareContentUri = FileProvider.getUriForFile(
-                context,
-                "com.bluebubbles.messaging.fileprovider",
-                requestFile
+                    context,
+                    "com.bluebubbles.messaging.fileprovider",
+                    requestFile
             );
             Intent shareIntent = new Intent(Intent.ACTION_SEND);
             shareIntent.putExtra(Intent.EXTRA_TITLE, argsMap.get("filename"));
             shareIntent.putExtra(Intent.EXTRA_STREAM, shareContentUri);
             shareIntent.setType(argsMap.get("mimeType"));
             shareIntent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            
+
 
             context.startActivity(Intent.createChooser(shareIntent, argsMap.get("subject")));
+        } else if (call.method.equals(("pick-image"))) {
+            Intent getIntent = new Intent(Intent.ACTION_GET_CONTENT);
+            getIntent.setType("image/*");
+
+            Intent pickIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+            pickIntent.setType("image/*");
+
+            Intent chooserIntent = Intent.createChooser(getIntent, "Select Image");
+            chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Intent[]{pickIntent});
+
+
+            try {
+                MainActivity activity = (MainActivity) context;
+                activity.result = result;
+                activity.startActivityForResult(chooserIntent, PICK_IMAGE);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        } else if (call.method.equals(("pick-video"))) {
+            Intent getIntent = new Intent(Intent.ACTION_GET_CONTENT);
+            getIntent.setType("video/*");
+
+            Intent pickIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+            pickIntent.setType("video/*");
+
+            Intent chooserIntent = Intent.createChooser(getIntent, "Select Video");
+            chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Intent[]{pickIntent});
+
+
+            try {
+                MainActivity activity = (MainActivity)  context;
+                activity.result = result;
+                activity.startActivityForResult(chooserIntent, PICK_VIDEO);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         } else {
             result.notImplemented();
         }
@@ -426,6 +469,7 @@ public class MainActivity extends FlutterActivity {
             int importance = NotificationManager.IMPORTANCE_HIGH;
             NotificationChannel channel = new NotificationChannel(CHANNEL_ID, name, importance);
             channel.setDescription(description);
+            channel.setLockscreenVisibility(Notification.VIS);
             // Register the channel with the system; you can't change the importance
             // or other notification behaviors after this
             NotificationManager notificationManager = context.getSystemService(NotificationManager.class);
@@ -460,7 +504,6 @@ public class MainActivity extends FlutterActivity {
         } else {
             if (type.equals("NotificationOpen")) {
                 Log.d("Notifications", "tapped on notification by id " + intent.getExtras().getInt("id"));
-//                startingIntent = intent;
                 startingChat = intent.getStringExtra("chatGUID");
 
 
@@ -468,6 +511,32 @@ public class MainActivity extends FlutterActivity {
             }
         }
 
+    }
+
+    // Used during the result after file picking
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == PICK_IMAGE || resultCode == PICK_VIDEO) {
+
+            if (resultCode == RESULT_OK) {
+                File file = new File(getApplicationContext().getFilesDir().getAbsolutePath() + "/sharedFiles/" + getFileName(data.getData()));
+                try {
+                    file.createNewFile();
+                    Files.write(Paths.get(file.getAbsolutePath()), getBytesFromUri(data.getData()));
+                    if(result != null) {
+                        result.success(file.getAbsolutePath());
+                        Log.d("PICK_FILE", "Result is okay! " +  file.getAbsolutePath());
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+            } else {
+                result.success(null);
+            }
+            result = null;
+        }
     }
 
 
@@ -480,7 +549,7 @@ public class MainActivity extends FlutterActivity {
     }
 
     void handleSendImage(Intent intent) {
-        Map<String, byte[]> imagePaths = new HashMap<String, byte[]>() ;
+        Map<String, byte[]> imagePaths = new HashMap<String, byte[]>();
         Uri imageUri = (Uri) intent.getParcelableExtra(Intent.EXTRA_STREAM);
         if (imageUri != null) {
             imagePaths.put(getFileName(imageUri), getBytesFromUri(imageUri));
@@ -507,6 +576,7 @@ public class MainActivity extends FlutterActivity {
         }
         return null;
     }
+
     public String getFileName(Uri uri) {
         String result = null;
         if (uri.getScheme().equals("content")) {
@@ -531,7 +601,7 @@ public class MainActivity extends FlutterActivity {
 
     void handleSendMultipleImages(Intent intent) {
         ArrayList<Uri> imageUris = intent.getParcelableArrayListExtra(Intent.EXTRA_STREAM);
-        Map<String, byte[] > imagePaths = new HashMap<String, byte[]>();
+        Map<String, byte[]> imagePaths = new HashMap<String, byte[]>();
         if (imageUris != null) {
             for (Uri imageUri : imageUris) {
                 imagePaths.put(getFileName(imageUri), getBytesFromUri(imageUri));
