@@ -36,7 +36,7 @@ class _RegularFileOpenerState extends State<RegularFileOpener> {
       } else if (widget.attachment.mimeType.startsWith("video")) {
         fileIcon = Icons.videocam;
       } else if (widget.attachment.mimeType.startsWith("text")) {
-        fileIcon = Icons.notes;
+        fileIcon = Icons.note;
       }
     }
 
@@ -71,7 +71,8 @@ class _RegularFileOpenerState extends State<RegularFileOpener> {
                   },
                 );
               } catch (ex) {
-                final snackBar = SnackBar(content: Text("No handler for this file type!"));
+                final snackBar =
+                    SnackBar(content: Text("No handler for this file type!"));
                 Scaffold.of(context).showSnackBar(snackBar);
               }
             },

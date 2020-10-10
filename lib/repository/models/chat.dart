@@ -558,6 +558,8 @@ class Chat {
 
     // Save participant and add to list
     await participant.save();
+    if (participant.id == null) return this;
+
     if (!this.participants.contains(participant)) {
       this.participants.add(participant);
     }
