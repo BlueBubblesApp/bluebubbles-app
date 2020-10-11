@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/layouts/image_viewer/attachmet_fullscreen_viewer.dart';
 import 'package:bluebubbles/layouts/image_viewer/video_viewer.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_attachments.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -123,10 +124,9 @@ class _VideoWidgetState extends State<VideoWidget>
                     });
                     await Navigator.of(context).push(
                       CupertinoPageRoute(
-                        builder: (context) => VideoViewer(
-                          // controller: controller,
-                          // heroTag: widget.attachment.guid,
-                          file: widget.file,
+                        builder: (context) => AttachmentFullscreenViewer(
+                          allAttachments: widget.allAttachments,
+                          attachment: widget.attachment,
                         ),
                       ),
                     );

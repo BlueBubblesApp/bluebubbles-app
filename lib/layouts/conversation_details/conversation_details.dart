@@ -238,6 +238,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                     ),
                     child: AttachmentDetailsCard(
                       attachment: attachmentsForChat[index],
+                      allAttachments: attachmentsForChat,
                     ),
                   );
                 },

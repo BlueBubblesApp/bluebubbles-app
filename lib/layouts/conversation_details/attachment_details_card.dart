@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
+import 'package:bluebubbles/layouts/image_viewer/attachmet_fullscreen_viewer.dart';
 import 'package:bluebubbles/layouts/image_viewer/image_viewer.dart';
 import 'package:bluebubbles/layouts/image_viewer/video_viewer.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/regular_file_opener.dart';
@@ -10,12 +12,16 @@ import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:image_size_getter/image_size_getter.dart';
 import 'package:path/path.dart';
 import 'package:video_player/video_player.dart';
+import 'package:video_thumbnail/video_thumbnail.dart';
 
 class AttachmentDetailsCard extends StatefulWidget {
-  AttachmentDetailsCard({Key key, this.attachment}) : super(key: key);
+  AttachmentDetailsCard({Key key, this.attachment, this.allAttachments})
+      : super(key: key);
   final Attachment attachment;
+  final List<Attachment> allAttachments;
 
   @override
   _AttachmentDetailsCardState createState() => _AttachmentDetailsCardState();
@@ -23,17 +29,12 @@ class AttachmentDetailsCard extends StatefulWidget {
 
 class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
   StreamSubscription downloadStream;
-  VideoPlayerController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-  }
+  Uint8List previewImage;
+  double aspectRatio = 4 / 3;
 
   @override
   void dispose() {
     if (downloadStream != null) downloadStream.cancel();
-    if (_controller != null) _controller.dispose();
     super.dispose();
   }
 
@@ -124,6 +125,20 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
     }
   }
 
+  Future<void> getVideoPreview(File file) async {
+    if (previewImage != null) return;
+    previewImage = await VideoThumbnail.thumbnailData(
+      video: file.path,
+      imageFormat: ImageFormat.JPEG,
+      quality: 50,
+    );
+    Size size = ImageSizeGetter.getSize(MemoryInput(previewImage));
+    widget.attachment.width = size.width;
+    widget.attachment.height = size.height;
+    aspectRatio = size.width / size.height;
+    setState(() {});
+  }
+
   Widget _buildPreview(File file, BuildContext context) {
     if (widget.attachment.mimeType.startsWith("image/")) {
       return Stack(
@@ -147,9 +162,9 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
               onTap: () {
                 Navigator.of(context).push(
                   CupertinoPageRoute(
-                    builder: (context) => ImageViewer(
-                      file: file,
-                      tag: widget.attachment.guid,
+                    builder: (context) => AttachmentFullscreenViewer(
+                      allAttachments: widget.allAttachments,
+                      attachment: widget.attachment,
                     ),
                   ),
                 );
@@ -159,14 +174,24 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
         ],
       );
     } else if (widget.attachment.mimeType.startsWith("video/")) {
-      if (_controller == null)
-        _controller = VideoPlayerController.file(file)..initialize();
+      getVideoPreview(file);
 
       return Stack(
         children: <Widget>[
-          Hero(
-            tag: widget.attachment.guid,
-            child: VideoPlayer(_controller),
+          SizedBox(
+            child: Hero(
+              tag: widget.attachment.guid,
+              child: previewImage != null
+                  ? Image.memory(
+                      previewImage,
+                      fit: BoxFit.cover,
+                      filterQuality: FilterQuality.low,
+                      alignment: Alignment.center,
+                    )
+                  : Container(),
+            ),
+            width: MediaQuery.of(context).size.width / 2,
+            height: MediaQuery.of(context).size.width / 2,
           ),
           Material(
             color: Colors.transparent,
@@ -174,10 +199,9 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
               onTap: () {
                 Navigator.of(context).push(
                   CupertinoPageRoute(
-                    builder: (context) => VideoViewer(
-                      // controller: _controller,
-                      // heroTag: widget.attachment.guid,
-                      file: file,
+                    builder: (context) => AttachmentFullscreenViewer(
+                      allAttachments: widget.allAttachments,
+                      attachment: widget.attachment,
                     ),
                   ),
                 );
