@@ -9,13 +9,17 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:photo_view/photo_view.dart';
+import 'package:photo_view/photo_view_gallery.dart';
 
 class ImageViewer extends StatefulWidget {
-  ImageViewer({Key key, this.tag, this.file, this.bytes, this.attachment})
-      : super(key: key);
+  ImageViewer({
+    Key key,
+    this.tag,
+    this.file,
+    this.attachment,
+  }) : super(key: key);
   final String tag;
   final File file;
-  final Uint8List bytes;
   final Attachment attachment;
 
   @override
@@ -135,27 +139,19 @@ class _ImageViewerState extends State<ImageViewer> {
         },
         child: Stack(
           children: <Widget>[
-            PhotoViewGestureDetectorScope(
-              child: PhotoView(
-                  minScale: PhotoViewComputedScale.contained,
-                  maxScale: PhotoViewComputedScale.contained * 13,
-                  controller: controller,
-                  heroAttributes: PhotoViewHeroAttributes(
-                    tag: widget.tag,
-                  ),
-                  imageProvider: FileImage(widget.file),
-                  loadingBuilder: (BuildContext context, ImageChunkEvent ev) {
-                    return PhotoView(
-                      minScale: PhotoViewComputedScale.contained,
-                      maxScale: PhotoViewComputedScale.contained * 13,
-                      controller: controller,
-                      heroAttributes: PhotoViewHeroAttributes(
-                        tag: widget.tag,
-                      ),
-                      imageProvider: MemoryImage(widget.bytes),
-                    );
-                  }),
-            ),
+            PhotoView(
+                minScale: PhotoViewComputedScale.contained,
+                maxScale: PhotoViewComputedScale.contained * 13,
+                controller: controller,
+                imageProvider: FileImage(widget.file),
+                loadingBuilder: (BuildContext context, ImageChunkEvent ev) {
+                  return PhotoView(
+                    minScale: PhotoViewComputedScale.contained,
+                    maxScale: PhotoViewComputedScale.contained * 13,
+                    controller: controller,
+                    imageProvider: FileImage(widget.file),
+                  );
+                }),
             overlay
           ],
         ),

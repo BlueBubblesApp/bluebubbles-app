@@ -407,7 +407,14 @@ class Chat {
     var res = await db.rawQuery("$query;", [chat.id]);
     return res == null
         ? []
-        : res.map((attachment) => Attachment.fromMap(attachment)).toList();
+        : res
+            .map((attachment) => Attachment.fromMap(attachment))
+            .where((element) {
+            String mimeType = element.mimeType;
+            if (mimeType == null) return false;
+            mimeType = mimeType.substring(0, mimeType.indexOf("/"));
+            return mimeType == "image" || mimeType == "video";
+          }).toList();
   }
 
   static Future<List<Message>> getMessages(Chat chat,

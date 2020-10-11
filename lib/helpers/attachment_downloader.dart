@@ -25,7 +25,6 @@ class AttachmentDownloader {
   String _guid = "";
   Function _cb;
   Attachment _attachment;
-  Message _message;
   String _title;
   Chat _chat;
   bool _createNotification;
@@ -34,12 +33,11 @@ class AttachmentDownloader {
   double get progress => (_currentChunk) / _totalChunks;
   Attachment get attachment => _attachment;
 
-  AttachmentDownloader(Attachment attachment, Message message,
+  AttachmentDownloader(Attachment attachment,
       {bool createNotification = false}) {
     // Set default chunk size based on the current settings
     _chunkSize = SettingsManager().settings.chunkSize * 1024;
     _attachment = attachment;
-    _message = message;
     _createNotification = createNotification;
     String appDocPath = SettingsManager().appDocDir.path;
     String pathName =
@@ -50,16 +48,6 @@ class AttachmentDownloader {
 
     fetchAttachment(attachment);
   }
-
-  // resumeChunkingAfterDisconnect() {
-  //   if (_stream.isClosed) return;
-  //   if (_guid != "" && _cb != null) {
-  //     debugPrint("restarting chunking " + _currentBytes.length.toString());
-  //     getChunkRecursive(_guid, _currentChunk, _totalChunks, _currentBytes, _cb);
-  //   } else {
-  //     debugPrint("could not restart chunking");
-  //   }
-  // }
 
   getChunkRecursive(
       String guid, int index, int total, List<int> currentBytes, Function cb) {
@@ -168,7 +156,7 @@ class AttachmentDownloader {
         Uint8List bytes = Uint8List.fromList(data);
         file = await writeToFile(bytes, pathName);
       }
-      
+
       // Finish the downloader
       SocketManager().finishDownloader(attachment.guid);
       LifeCycleManager().finishDownloader();

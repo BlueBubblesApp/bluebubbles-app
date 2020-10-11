@@ -417,7 +417,7 @@ class ActionHandler {
         if (SettingsManager().settings.autoDownload &&
             file.mimeType != null &&
             !SocketManager().attachmentDownloaders.containsKey(file.guid)) {
-          new AttachmentDownloader(file, message,
+          new AttachmentDownloader(file,
               createNotification:
                   createAttachmentNotification && file.mimeType != null);
         }

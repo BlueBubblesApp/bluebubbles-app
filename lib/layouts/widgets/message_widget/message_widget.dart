@@ -29,6 +29,7 @@ class MessageWidget extends StatefulWidget {
     this.offset,
     this.currentPlayingVideo,
     this.changeCurrentPlayingVideo,
+    this.allAttachments,
   }) : super(key: key);
 
   final fromSelf;
@@ -44,6 +45,7 @@ class MessageWidget extends StatefulWidget {
   final double offset;
   final Map<String, VideoPlayerController> currentPlayingVideo;
   final Function(Map<String, VideoPlayerController>) changeCurrentPlayingVideo;
+  final List<Attachment> allAttachments;
 
   final List<Widget> customContent;
 
@@ -129,6 +131,7 @@ class _MessageState extends State<MessageWidget> {
                 showHandle: widget.showHandle,
                 controllers: widget.currentPlayingVideo,
                 changeCurrentPlayingVideo: widget.changeCurrentPlayingVideo,
+                allAttachments: widget.allAttachments,
               )
             : Container(),
         showHero: widget.showHero,
@@ -152,6 +155,7 @@ class _MessageState extends State<MessageWidget> {
                 showHandle: widget.showHandle,
                 controllers: widget.currentPlayingVideo,
                 changeCurrentPlayingVideo: widget.changeCurrentPlayingVideo,
+                allAttachments: widget.allAttachments,
               )
             : Container(),
       );

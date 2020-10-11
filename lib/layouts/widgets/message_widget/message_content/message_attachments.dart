@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
+import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/url_preview_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_attachment.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/reactions.dart';
@@ -31,6 +32,7 @@ class MessageAttachments extends StatefulWidget {
     @required this.showHandle,
     @required this.controllers,
     @required this.changeCurrentPlayingVideo,
+    @required this.allAttachments,
   }) : super(key: key);
   final Message message;
   final SavedAttachmentData savedAttachmentData;
@@ -38,6 +40,7 @@ class MessageAttachments extends StatefulWidget {
   final bool showHandle;
   final Map<String, VideoPlayerController> controllers;
   final Function(Map<String, VideoPlayerController>) changeCurrentPlayingVideo;
+  final List<Attachment> allAttachments;
 
   @override
   _MessageAttachmentsState createState() => _MessageAttachmentsState();
@@ -52,37 +55,8 @@ class _MessageAttachmentsState extends State<MessageAttachments>
     super.initState();
     if (widget.savedAttachmentData.attachments.length > 0) {
       for (Attachment attachment in widget.savedAttachmentData.attachments) {
-        initForAttachment(attachment);
+        _attachments[attachment.guid] = AttachmentHelper.getContent(attachment);
       }
-    }
-  }
-
-  void initForAttachment(Attachment attachment) {
-    String appDocPath = SettingsManager().appDocDir.path;
-    String pathName =
-        "$appDocPath/attachments/${attachment.guid}/${attachment.transferName}";
-
-    /**
-           * Case 1: If the file exists (we can get the type), add the file to the chat's attachments
-           * Case 2: If the attachment is currently being downloaded, get the AttachmentDownloader object and add it to the chat's attachments
-           * Case 3: If the attachment is a text-based one, automatically auto-download
-           * Case 4: Otherwise, add the attachment, as is, meaning it needs to be downloaded
-           */
-
-    if (FileSystemEntity.typeSync(pathName) != FileSystemEntityType.notFound) {
-      _attachments[attachment.guid] = File(pathName);
-    } else if (SocketManager()
-        .attachmentDownloaders
-        .containsKey(attachment.guid)) {
-      _attachments[attachment.guid] =
-          SocketManager().attachmentDownloaders[attachment.guid];
-    } else if (attachment.mimeType == null ||
-        attachment.mimeType.startsWith("text/")) {
-      AttachmentDownloader downloader =
-          new AttachmentDownloader(attachment, widget.message);
-      _attachments[attachment.guid] = downloader;
-    } else {
-      _attachments[attachment.guid] = attachment;
     }
   }
 
@@ -102,7 +76,8 @@ class _MessageAttachmentsState extends State<MessageAttachments>
 
           for (Attachment attachment
               in widget.savedAttachmentData.attachments) {
-            initForAttachment(attachment);
+            _attachments[attachment.guid] =
+                AttachmentHelper.getContent(attachment);
           }
           return _buildActualWidget();
         } else {
@@ -171,9 +146,10 @@ class _MessageAttachmentsState extends State<MessageAttachments>
             content: _attachments[attachment.guid],
             changeCurrentPlayingVideo: widget.changeCurrentPlayingVideo,
             updateAttachment: () {
-              initForAttachment(attachment);
+              attachment = AttachmentHelper.getContent(attachment);
             },
             savedAttachmentData: widget.savedAttachmentData,
+            allAttachments: widget.allAttachments,
           ),
         );
       }

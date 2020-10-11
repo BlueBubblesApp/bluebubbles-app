@@ -1,8 +1,14 @@
+import 'dart:io';
+
+import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
+import 'package:bluebubbles/repository/models/message.dart';
+import 'package:bluebubbles/socket_manager.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/material.dart';
 import 'package:vcard_parser/vcard_parser.dart';
+import 'package:video_player/video_player.dart';
 
 class AttachmentHelper {
   static String createAppleLocation(double longitude, double latitude,
@@ -16,7 +22,7 @@ class AttachmentHelper {
       "item1.URL;type=pref:http://maps.apple.com/?ll=$longitude\\,$latitude&q=$longitude\\,$latitude",
       "item1.X-ABLabel:map url",
       "END:VCARD"
-      ""
+          ""
     ];
 
     return lines.join("\n");
@@ -85,7 +91,8 @@ class AttachmentHelper {
 
     // If the file is an image, compress it for the preview
     if ((attachment.mimeType ?? "").startsWith("image/")) {
-      String fn = fileName.split(".").sublist(0, fileName.length - 1).join("") + "prev";
+      String fn =
+          fileName.split(".").sublist(0, fileName.length - 1).join("") + "prev";
       String ext = fileName.split(".").last;
       pathName = "$appDocPath/attachments/${attachment.guid}/$fn.$ext";
     }
@@ -99,7 +106,8 @@ class AttachmentHelper {
     return mime.startsWith("image/") && !blacklist.contains(mime);
   }
 
-  static double getAspectRatio(BuildContext context, Attachment attachment) {
+  static double getImageAspectRatio(
+      BuildContext context, Attachment attachment) {
     double width = attachment.width?.toDouble() ?? 0.0;
     double factor = attachment.height?.toDouble() ?? 0.0;
     if (attachment.width == null ||
@@ -111,5 +119,31 @@ class AttachmentHelper {
     }
 
     return (width / factor) / width;
+  }
+
+  static dynamic getContent(Attachment attachment) {
+    String appDocPath = SettingsManager().appDocDir.path;
+    String pathName =
+        "$appDocPath/attachments/${attachment.guid}/${attachment.transferName}";
+
+    /**
+           * Case 1: If the file exists (we can get the type), add the file to the chat's attachments
+           * Case 2: If the attachment is currently being downloaded, get the AttachmentDownloader object and add it to the chat's attachments
+           * Case 3: If the attachment is a text-based one, automatically auto-download
+           * Case 4: Otherwise, add the attachment, as is, meaning it needs to be downloaded
+           */
+
+    if (FileSystemEntity.typeSync(pathName) != FileSystemEntityType.notFound) {
+      return File(pathName);
+    } else if (SocketManager()
+        .attachmentDownloaders
+        .containsKey(attachment.guid)) {
+      return SocketManager().attachmentDownloaders[attachment.guid];
+    } else if (attachment.mimeType == null ||
+        attachment.mimeType.startsWith("text/")) {
+      return AttachmentDownloader(attachment);
+    } else {
+      return attachment;
+    }
   }
 }

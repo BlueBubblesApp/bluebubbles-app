@@ -76,7 +76,7 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
                       padding: EdgeInsets.only(
                           left: 20, right: 20, top: 10, bottom: 10),
                       onPressed: () {
-                        new AttachmentDownloader(attachment, null);
+                        new AttachmentDownloader(attachment);
                         subscribeToDownloadStream();
                         if (this.mounted) setState(() {});
                       },
@@ -175,8 +175,8 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
                 Navigator.of(context).push(
                   CupertinoPageRoute(
                     builder: (context) => VideoViewer(
-                      controller: _controller,
-                      heroTag: widget.attachment.guid,
+                      // controller: _controller,
+                      // heroTag: widget.attachment.guid,
                       file: file,
                     ),
                   ),

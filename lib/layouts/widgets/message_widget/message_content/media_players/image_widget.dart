@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:bluebubbles/layouts/image_viewer/attachmet_fullscreen_viewer.dart';
 import 'package:bluebubbles/layouts/image_viewer/image_viewer.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_attachments.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -12,11 +13,17 @@ import 'package:image_size_getter/image_size_getter.dart';
 import 'package:visibility_detector/visibility_detector.dart';
 
 class ImageWidget extends StatefulWidget {
-  ImageWidget({Key key, this.file, this.attachment, this.savedAttachmentData})
-      : super(key: key);
+  ImageWidget({
+    Key key,
+    this.file,
+    this.attachment,
+    this.savedAttachmentData,
+    this.allAttachments,
+  }) : super(key: key);
   final File file;
   final Attachment attachment;
   final SavedAttachmentData savedAttachmentData;
+  final List<Attachment> allAttachments;
 
   @override
   _ImageWidgetState createState() => _ImageWidgetState();
@@ -131,12 +138,9 @@ class _ImageWidgetState extends State<ImageWidget>
                   });
                   await Navigator.of(context).push(
                     MaterialPageRoute(
-                      builder: (context) => ImageViewer(
+                      builder: (context) => AttachmentFullscreenViewer(
+                        allAttachments: widget.allAttachments,
                         attachment: widget.attachment,
-                        file: widget.file,
-                        bytes: widget.savedAttachmentData
-                            .imageData[widget.attachment.guid],
-                        tag: widget.attachment.guid,
                       ),
                     ),
                   );

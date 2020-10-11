@@ -93,7 +93,6 @@ public class MainActivity extends FlutterActivity {
     public static String BACKGROUND_HANDLE_SHARED_PREF_KEY = "BACKGROUND_HANDLE_SHARED_PREF_KEY";
 
     public static int PICK_IMAGE = 1000;
-    public static int PICK_VIDEO = 2000;
     public MethodChannel.Result result = null;
 
 
@@ -449,7 +448,7 @@ public class MainActivity extends FlutterActivity {
             try {
                 MainActivity activity = (MainActivity)  context;
                 activity.result = result;
-                activity.startActivityForResult(chooserIntent, PICK_VIDEO);
+                activity.startActivityForResult(chooserIntent, PICK_IMAGE);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -516,7 +515,7 @@ public class MainActivity extends FlutterActivity {
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == PICK_IMAGE || resultCode == PICK_VIDEO) {
+        if (requestCode == PICK_IMAGE) {
 
             if (resultCode == RESULT_OK) {
                 File file = new File(getApplicationContext().getFilesDir().getAbsolutePath() + "/sharedFiles/" + getFileName(data.getData()));
@@ -532,6 +531,7 @@ public class MainActivity extends FlutterActivity {
                 }
 
             } else {
+                Log.d("PICK_FILE", "Something went wrong");
                 result.success(null);
             }
             result = null;

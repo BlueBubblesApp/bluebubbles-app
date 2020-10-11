@@ -22,8 +22,10 @@ class VideoWidget extends StatefulWidget {
     @required this.savedAttachmentData,
     @required this.controllers,
     @required this.changeCurrentPlayingVideo,
+    @required this.allAttachments,
   }) : super(key: key);
   final File file;
+  final List<Attachment> allAttachments;
   final Attachment attachment;
   final SavedAttachmentData savedAttachmentData;
   final Map<String, VideoPlayerController> controllers;
@@ -122,8 +124,8 @@ class _VideoWidgetState extends State<VideoWidget>
                     await Navigator.of(context).push(
                       CupertinoPageRoute(
                         builder: (context) => VideoViewer(
-                          controller: controller,
-                          heroTag: widget.attachment.guid,
+                          // controller: controller,
+                          // heroTag: widget.attachment.guid,
                           file: widget.file,
                         ),
                       ),
@@ -145,7 +147,7 @@ class _VideoWidgetState extends State<VideoWidget>
                             alignment: Alignment.center,
                             children: <Widget>[
                               AspectRatio(
-                                aspectRatio: AttachmentHelper.getAspectRatio(context, widget.attachment),
+                                aspectRatio: controller.value.aspectRatio,
                                 child: Stack(
                                   children: <Widget>[
                                     VideoPlayer(controller),

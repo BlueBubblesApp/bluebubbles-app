@@ -3,6 +3,7 @@ import 'package:bluebubbles/layouts/widgets/message_widget/message_content/messa
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/new_message_loader.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
+import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -12,6 +13,7 @@ import 'package:video_player/video_player.dart';
 class MessageView extends StatefulWidget {
   final MessageBloc messageBloc;
   final bool showHandle;
+
   MessageView({
     Key key,
     this.messageBloc,
@@ -37,10 +39,13 @@ class _MessageViewState extends State<MessageView>
   Map<String, VideoPlayerController> currentPlayingVideo;
   List<VideoPlayerController> controllersToDispose = [];
 
+  List<Attachment> allAttachments = [];
+
   @override
   void initState() {
     super.initState();
     widget.messageBloc.stream.listen(handleNewMessage);
+    updateAllAttachments();
   }
 
   @override
@@ -57,6 +62,11 @@ class _MessageViewState extends State<MessageView>
     if (message.hasAttachments) {
       attachments[message.guid] = new SavedAttachmentData();
     }
+  }
+
+  Future<void> updateAllAttachments() async {
+    allAttachments = await Chat.getAttachments(widget.messageBloc.currentChat);
+    setState(() {});
   }
 
   @override
@@ -154,6 +164,7 @@ class _MessageViewState extends State<MessageView>
         _listKey.currentState.setState(() {});
       if (this.mounted) setState(() {});
     }
+    updateAllAttachments();
   }
 
   @override
@@ -274,6 +285,7 @@ class _MessageViewState extends State<MessageView>
                                   currentPlayingVideo = video;
                                 });
                             },
+                            allAttachments: allAttachments,
                           ),
                         ),
                       ),

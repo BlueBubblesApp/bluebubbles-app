@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
+import 'package:bluebubbles/layouts/widgets/message_widget/message_content/attachment_downloader_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_file.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/audio_player_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/contact_widget.dart';
@@ -25,9 +26,11 @@ class MessageAttachment extends StatefulWidget {
     @required this.savedAttachmentData,
     @required this.controllers,
     @required this.changeCurrentPlayingVideo,
+    @required this.allAttachments,
   }) : super(key: key);
   final content;
   final Attachment attachment;
+  final List<Attachment> allAttachments;
   final Function() updateAttachment;
   final Message message;
   final SavedAttachmentData savedAttachmentData;
@@ -137,12 +140,13 @@ class _MessageAttachmentState extends State<MessageAttachment>
         mimeType = mimeType.substring(0, mimeType.indexOf("/"));
       if (mimeType == "image") {
         return MediaFile(
+          attachment: widget.attachment,
           child: ImageWidget(
             savedAttachmentData: widget.savedAttachmentData,
             attachment: widget.attachment,
             file: content,
+            allAttachments: widget.allAttachments,
           ),
-          attachment: widget.attachment,
         );
       } else if (mimeType == "video") {
         return MediaFile(
@@ -153,6 +157,7 @@ class _MessageAttachmentState extends State<MessageAttachment>
             attachment: widget.attachment,
             file: content,
             savedAttachmentData: widget.savedAttachmentData,
+            allAttachments: widget.allAttachments,
           ),
         );
       } else if (mimeType == "audio" &&
@@ -175,7 +180,10 @@ class _MessageAttachmentState extends State<MessageAttachment>
       } else if (widget.attachment.mimeType == "text/vcard") {
         return MediaFile(
           attachment: widget.attachment,
-          child: ContactWidget(file: content, attachment: widget.attachment),
+          child: ContactWidget(
+            file: content,
+            attachment: widget.attachment,
+          ),
         );
       } else if (widget.attachment.mimeType == null) {
         return Container();
@@ -191,35 +199,14 @@ class _MessageAttachmentState extends State<MessageAttachment>
 
       // If it's an attachment, then it needs to be manually downloaded
     } else if (content is Attachment) {
-      return Stack(
-        alignment: Alignment.center,
-        children: <Widget>[
-          placeHolder,
-          CupertinoButton(
-            padding: EdgeInsets.only(left: 20, right: 20, top: 10, bottom: 10),
-            onPressed: () {
-              content = new AttachmentDownloader(content, widget.message);
-              widget.updateAttachment();
-              setState(() {});
-            },
-            color: Colors.transparent,
-            child: Column(
-              children: <Widget>[
-                Text(
-                  content.getFriendlySize(),
-                  style: Theme.of(context).textTheme.bodyText1,
-                ),
-                Icon(Icons.cloud_download, size: 28.0),
-                (content.mimeType != null)
-                    ? Text(
-                        content.mimeType,
-                        style: Theme.of(context).textTheme.bodyText1,
-                      )
-                    : Container()
-              ],
-            ),
-          ),
-        ],
+      return AttachmentDownloaderWidget(
+        onPressed: () {
+          content = new AttachmentDownloader(content);
+          widget.updateAttachment();
+          setState(() {});
+        },
+        attachment: content,
+        placeHolder: placeHolder,
       );
 
       // If it's an AttachmentDownloader, it is currently being downloaded
