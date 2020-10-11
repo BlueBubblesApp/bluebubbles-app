@@ -166,7 +166,7 @@ class SetupBloc {
 
       if (messages.length > 0) {
         await MessageHelper.bulkAddMessages(null, messages,
-            notifyForNewMessage: false);
+            notifyForNewMessage: true);
       }
 
       debugPrint(
