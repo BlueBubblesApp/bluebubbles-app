@@ -119,18 +119,29 @@ class _ConversationTileState extends State<ConversationTile> {
     return Slidable(
       actionPane: SlidableStrechActionPane(),
       secondaryActions: <Widget>[
-        IconSlideAction(
-          caption: widget.chat.isMuted ? 'Show Alerts' : 'Hide Alerts',
-          color: Colors.purple[700],
-          icon: widget.chat.isMuted
-              ? Icons.notifications_active
-              : Icons.notifications_off,
-          onTap: () async {
-            widget.chat.isMuted = !widget.chat.isMuted;
-            await widget.chat.save(updateLocalVals: true);
-            if (this.mounted) setState(() {});
-          },
-        ),
+        if (!widget.chat.isArchived)
+          IconSlideAction(
+            caption: widget.chat.isMuted ? 'Show Alerts' : 'Hide Alerts',
+            color: Colors.purple[700],
+            icon: widget.chat.isMuted
+                ? Icons.notifications_active
+                : Icons.notifications_off,
+            onTap: () async {
+              widget.chat.isMuted = !widget.chat.isMuted;
+              await widget.chat.save(updateLocalVals: true);
+              if (this.mounted) setState(() {});
+            },
+          ),
+        if (widget.chat.isArchived)
+          IconSlideAction(
+            caption: "Delete",
+            color: Colors.red,
+            icon: Icons.delete_forever,
+            onTap: () async {
+              ChatBloc().deleteChat(widget.chat);
+              Chat.deleteChat(widget.chat);
+            },
+          ),
         if (!widget.chat.hasUnreadMessage)
           IconSlideAction(
             caption: 'Mark Unread',

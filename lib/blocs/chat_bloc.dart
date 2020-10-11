@@ -228,6 +228,13 @@ class ChatBloc {
     _chatController.sink.add(_chats);
   }
 
+  void deleteChat(Chat chat) async {
+    _archivedChats.removeWhere((element) => element.id == chat.id);
+    _chats.removeWhere((element) => element.id == chat.id);
+    _archivedChatController.sink.add(_archivedChats);
+    _chatController.sink.add(_chats);
+  }
+
   void updateTileVals(Chat chat, Map<String, dynamic> chatMap,
       Map<String, Map<String, dynamic>> map) {
     if (map.containsKey(chat.guid)) {

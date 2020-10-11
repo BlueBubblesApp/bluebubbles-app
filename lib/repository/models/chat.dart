@@ -244,6 +244,20 @@ class Chat {
     return this;
   }
 
+  static Future<void> deleteChat(Chat chat) async {
+    final Database db = await DBProvider.db.database;
+    await chat.save();
+    List<Message> messages = await Chat.getMessages(chat);
+    for (Message message in messages) {
+      await db.delete("message", where: "ROWID = ?", whereArgs: [message.id]);
+    }
+    await db.delete("chat", where: "ROWID = ?", whereArgs: [chat.id]);
+    await db
+        .delete("chat_handle_join", where: "chatId = ?", whereArgs: [chat.id]);
+    await db
+        .delete("chat_message_join", where: "chatId = ?", whereArgs: [chat.id]);
+  }
+
   Future<Chat> setUnreadStatus(bool hasUnreadMessage) async {
     final Database db = await DBProvider.db.database;
     if (hasUnreadMessage) {
