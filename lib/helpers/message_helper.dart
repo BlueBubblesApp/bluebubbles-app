@@ -15,7 +15,8 @@ import 'package:flutter/cupertino.dart';
 class MessageHelper {
   static Future<List<Message>> bulkAddMessages(
       Chat chat, List<dynamic> messages,
-      {bool notifyForNewMessage = false}) async {
+      {bool notifyForNewMessage = false,
+      bool notifyMessageManager = true}) async {
     // Create master list for all the messages and a chat cache
     List<Message> _messages = <Message>[];
     Map<String, Chat> chats = <String, Chat>{};
@@ -54,8 +55,11 @@ class MessageHelper {
       }
 
       // Tell all listeners that we have a new message, and save the message
-      NewMessageManager().addMessage(msgChat, message);
-      await msgChat.addMessage(message, changeUnreadStatus: notifyForNewMessage);
+      if (notifyMessageManager) {
+        NewMessageManager().addMessage(msgChat, message);
+        await msgChat.addMessage(message,
+            changeUnreadStatus: notifyForNewMessage);
+      }
 
       // Create the attachments
       List<dynamic> attachments = item['attachments'];
@@ -67,7 +71,6 @@ class MessageHelper {
       // Add message to the "master list"
       _messages.add(message);
     });
-
 
     // Return all the synced messages
     return _messages;
@@ -100,7 +103,8 @@ class MessageHelper {
     // Handle all the cases that would mean we don't show the notification
     if (existingMessage != null || chat.isMuted) return;
     if (message.isFromMe || message.handle == null) return;
-    if (LifeCycleManager().isAlive && NotificationManager().chatGuid == chat.guid) return;
+    if (LifeCycleManager().isAlive &&
+        NotificationManager().chatGuid == chat.guid) return;
 
     String handleAddress;
     if (message.handle != null) {
@@ -116,17 +120,16 @@ class MessageHelper {
       notification = "New Message (unlock to view)";
     }
     NotificationManager().createNewNotification(
-      title,
-      notification,
-      chat.guid,
-      Random().nextInt(9998) + 1,
-      chat.id,
-      message.dateCreated.millisecondsSinceEpoch,
-      contactTitle,
-      chat.participants.length > 1,
-      handle: message.handle,
-      contact: contact
-    );
+        title,
+        notification,
+        chat.guid,
+        Random().nextInt(9998) + 1,
+        chat.id,
+        message.dateCreated.millisecondsSinceEpoch,
+        contactTitle,
+        chat.participants.length > 1,
+        handle: message.handle,
+        contact: contact);
   }
 
   static Future<String> getNotificationText(Message message) async {
@@ -171,9 +174,12 @@ class MessageHelper {
       return "$output: ${attachmentStr.join(attachmentStr.length == 2 ? " & " : ", ")}";
     } else if (![null, ""].contains(message.associatedMessageGuid)) {
       // It's a reaction message, get the "sender"
-      String sender = (message.isFromMe) ? "You" : formatPhoneNumber(message.handle.address);
+      String sender = (message.isFromMe)
+          ? "You"
+          : formatPhoneNumber(message.handle.address);
       if (!message.isFromMe && message.handle != null) {
-        Contact contact = await ContactManager().getCachedContact(message.handle.address);
+        Contact contact =
+            await ContactManager().getCachedContact(message.handle.address);
         if (contact != null) {
           sender = contact.givenName ?? contact.displayName;
         }

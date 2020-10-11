@@ -227,8 +227,9 @@ class MessageBloc {
             return;
           }
 
-          List<Message> _messages =
-              await MessageHelper.bulkAddMessages(_currentChat, messages);
+          List<Message> _messages = await MessageHelper.bulkAddMessages(
+              _currentChat, messages,
+              notifyMessageManager: false);
           _messages.forEach((element) {
             if (element.associatedMessageGuid == null) {
               _allMessages.addAll({element.guid: element});
