@@ -66,7 +66,7 @@ class _MessageViewState extends State<MessageView>
 
   Future<void> updateAllAttachments() async {
     allAttachments = await Chat.getAttachments(widget.messageBloc.currentChat);
-    setState(() {});
+    if (this.mounted) setState(() {});
   }
 
   @override
@@ -101,14 +101,22 @@ class _MessageViewState extends State<MessageView>
         );
       }
 
+      bool isNewMessage = true;
+      for (Message message in _messages) {
+        if (message.guid == event.message.guid) {
+          isNewMessage = false;
+          break;
+        }
+      }
       _messages = event.messages;
-      if (_listKey != null && _listKey.currentState != null) {
+      if (isNewMessage && _listKey != null && _listKey.currentState != null) {
         _listKey.currentState.insertItem(
           event.index != null ? event.index : 0,
           duration:
               event.outGoing ? Duration(milliseconds: 500) : animationDuration,
         );
       }
+      if (event.message.hasAttachments) updateAllAttachments();
     } else if (event.type == MessageBlocEventType.update) {
       if (attachments.containsKey(event.oldGuid)) {
         Message messageWithROWID =
@@ -164,7 +172,6 @@ class _MessageViewState extends State<MessageView>
         _listKey.currentState.setState(() {});
       if (this.mounted) setState(() {});
     }
-    updateAllAttachments();
   }
 
   @override
