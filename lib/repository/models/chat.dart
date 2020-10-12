@@ -285,6 +285,8 @@ class Chat {
     final Database db = await DBProvider.db.database;
 
     // Save the message
+    Message existing = await Message.findOne({"guid": message.guid});
+
     Message newMessage = await message.save();
     bool isNewer = false;
 
@@ -321,7 +323,7 @@ class Chat {
     }
 
     // If the incoming message was newer than the "last" one, set the unread status accordingly
-    if (changeUnreadStatus && isNewer) {
+    if (changeUnreadStatus && isNewer && existing == null) {
       // If the message is from me, mark it unread
       // If the message is not from the same chat as the current chat, mark unread
       if (message.isFromMe) {
