@@ -44,7 +44,7 @@ class SocketManager {
 
   void removeChatNotification(Chat chat) async {
     await chat.setUnreadStatus(false);
-    await ChatBloc().updateChatPosition(chat);
+    ChatBloc().updateChat(chat);
   }
 
   List<String> processedGUIDS = <String>[];

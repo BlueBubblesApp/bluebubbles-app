@@ -194,7 +194,8 @@ class DBProvider {
         "chatId INTEGER NOT NULL,"
         "handleId INTEGER NOT NULL,"
         "FOREIGN KEY(chatId) REFERENCES chat(ROWID),"
-        "FOREIGN KEY(handleId) REFERENCES handle(ROWID)"
+        "FOREIGN KEY(handleId) REFERENCES handle(ROWID),"
+        "unique (chatId, handleId)"
         ");");
   }
 
