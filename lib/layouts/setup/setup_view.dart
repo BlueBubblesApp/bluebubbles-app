@@ -223,8 +223,6 @@ class _SetupViewState extends State<SetupView> {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: <Widget>[
                                 Container(
-                                  // height: 70,
-                                  // color: Colors.black,
                                   child: CircularProgressIndicator(
                                     valueColor: AlwaysStoppedAnimation<Color>(
                                         Colors.blue),
@@ -302,23 +300,75 @@ class _SetupViewState extends State<SetupView> {
             Padding(
               padding: EdgeInsets.only(top: 15.0),
               child: Row(
-                mainAxisSize: MainAxisSize.min,
+                mainAxisSize: MainAxisSize.max,
                 children: [
                   Spacer(
-                    flex: 1,
+                    flex: 3,
                   ),
                   Text("https://"),
-                  Expanded(
+                  Flexible(
                     child: CupertinoTextField(
                       controller: textController,
                       maxLength: 10,
                       maxLengthEnforced: false,
                       maxLines: 1,
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).backgroundColor,
+                        borderRadius: BorderRadius.circular(7),
+                      ),
+                      style: Theme.of(context).textTheme.bodyText1,
                     ),
+                    flex: 4,
                   ),
                   Text(".ngrok.io"),
-                  Spacer(
-                    flex: 1,
+                  Flexible(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16.0),
+                      child: FlatButton(
+                        child: Icon(
+                          Icons.arrow_forward,
+                          color: Theme.of(context).textTheme.bodyText1.color,
+                        ),
+                        color: Colors.blue,
+                        onPressed: () {
+                          showDialog(
+                            context: context,
+                            barrierDismissible: false,
+                            builder: (context) => AlertDialog(
+                              title: Text(
+                                "Connecting",
+                                style: Theme.of(context).textTheme.bodyText1,
+                              ),
+                              backgroundColor:
+                                  Theme.of(context).backgroundColor,
+                              content: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: <Widget>[
+                                  Container(
+                                    child: CircularProgressIndicator(
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        Colors.blue,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                          if (SocketManager().state == SocketState.CONNECTED) {
+                            Navigator.of(context).pop();
+                            controller.nextPage(
+                              duration: Duration(milliseconds: 300),
+                              curve: Curves.easeInOut,
+                            );
+                          }
+
+                          SocketManager().startSocketIO();
+                        },
+                      ),
+                    ),
+                    flex: 3,
                   ),
                 ],
               ),
