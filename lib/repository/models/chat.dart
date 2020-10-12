@@ -573,6 +573,9 @@ class Chat {
 
     this.participants =
         (res.isNotEmpty) ? res.map((c) => Handle.fromMap(c)).toList() : [];
+    final ids = this.participants.map((e) => e.id).toSet();
+    this.participants.retainWhere((element) => ids.remove(element.id));
+
     return this;
   }
 
