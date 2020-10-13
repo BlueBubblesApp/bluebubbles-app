@@ -82,6 +82,8 @@ class _MessageViewState extends State<MessageView>
 
   void handleNewMessage(MessageBlocEvent event) async {
     if (event.type == MessageBlocEventType.insert) {
+      debugPrint(
+          "(Message status) Insert message: [${event.message.text}] - [${event.message.guid}]");
       getAttachmentsForMessage(event.message);
       if (event.outGoing) {
         sentMessages.add(event.message.guid);
@@ -109,11 +111,12 @@ class _MessageViewState extends State<MessageView>
         }
       }
       _messages = event.messages;
-      if (isNewMessage && _listKey != null && _listKey.currentState != null) {
+      if (_listKey != null && _listKey.currentState != null) {
         _listKey.currentState.insertItem(
           event.index != null ? event.index : 0,
-          duration:
-              event.outGoing ? Duration(milliseconds: 500) : animationDuration,
+          duration: isNewMessage
+              ? event.outGoing ? Duration(milliseconds: 500) : animationDuration
+              : 0,
         );
       }
       if (event.message.hasAttachments) updateAllAttachments();
@@ -127,12 +130,20 @@ class _MessageViewState extends State<MessageView>
         data.attachments = updatedAttachments;
         attachments[event.message.guid] = data;
       }
+      bool updatedAMessage = false;
       for (int i = 0; i < _messages.length; i++) {
         if (_messages[i].guid == event.oldGuid) {
+          debugPrint(
+              "(Message status) Update message: [${event.message.text}] - [${event.message.guid}] - [${event.oldGuid}]");
           _messages[i] = event.message;
           if (this.mounted) setState(() {});
+          updatedAMessage = true;
           break;
         }
+      }
+      if (!updatedAMessage) {
+        debugPrint(
+            "(Message status) FAILED TO UPDATE A MESSAGE: [${event.message.text}] - [${event.message.guid}] - [${event.oldGuid}]");
       }
     } else if (event.type == MessageBlocEventType.remove) {
       for (int i = 0; i < _messages.length; i++) {

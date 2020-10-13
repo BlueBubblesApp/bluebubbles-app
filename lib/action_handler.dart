@@ -266,7 +266,8 @@ class ActionHandler {
 
     if (updatedMessage.isFromMe) {
       await Future.delayed(Duration(milliseconds: 200));
-      debugPrint("Handle update message: " + updatedMessage.text);
+      debugPrint(
+          "(Message status) -> handleUpdatedMessage: " + updatedMessage.text);
     }
     updatedMessage =
         await Message.replaceMessage(updatedMessage.guid, updatedMessage);
@@ -375,7 +376,7 @@ class ActionHandler {
           await Attachment.replaceAttachment(data["tempGuid"], file);
         }
         debugPrint(
-            "(ActionHandler.handleMessage) Message match [${data["text"]}] - ${data["guid"]}");
+            "(Message status) -> Message match: [${data["text"]}] - ${data["guid"]} - ${data["tempGuid"]}");
         if (!isHeadless)
           NewMessageManager()
               .updateMessage(chats.first, data['tempGuid'], message);
@@ -397,7 +398,7 @@ class ActionHandler {
         await MessageHelper.handleNotification(message, chat);
 
         debugPrint(
-            "(ActionHandler.handleMessage) New message [${message.text}] - [${message.guid}]");
+            "(Message status) New message: [${message.text}] - [${message.guid}]");
         await chat.addMessage(message);
 
         if (message.itemType == ItemTypes.nameChanged.index) {
