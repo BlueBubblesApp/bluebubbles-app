@@ -591,13 +591,11 @@ class Chat {
       this.participants.add(participant);
     }
 
-    // Check join table and add if relationship doesn't exist
-    List entries = await db.query("chat_handle_join",
-        where: "chatId = ? AND handleId = ?",
-        whereArgs: [this.id, participant.id]);
-    if (entries.length == 0) {
+    try {
       await db.insert(
           "chat_handle_join", {"chatId": this.id, "handleId": participant.id});
+    } catch (ex) {
+      // Don't do anything if it already exists
     }
 
     return this;

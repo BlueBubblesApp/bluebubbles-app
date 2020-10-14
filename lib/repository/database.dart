@@ -196,7 +196,7 @@ class DBProvider {
         "handleId INTEGER NOT NULL,"
         "FOREIGN KEY(chatId) REFERENCES chat(ROWID),"
         "FOREIGN KEY(handleId) REFERENCES handle(ROWID),"
-        "unique (chatId, handleId)"
+        "UNIQUE (chatId, handleId)"
         ");");
   }
 
@@ -206,7 +206,8 @@ class DBProvider {
         "chatId INTEGER NOT NULL,"
         "messageId INTEGER NOT NULL,"
         "FOREIGN KEY(chatId) REFERENCES chat(ROWID),"
-        "FOREIGN KEY(messageId) REFERENCES message(ROWID)"
+        "FOREIGN KEY(messageId) REFERENCES message(ROWID),"
+        "UNIQUE (chatId, messageId)"
         ");");
   }
 
@@ -216,7 +217,8 @@ class DBProvider {
         "attachmentId INTEGER NOT NULL,"
         "messageId INTEGER NOT NULL,"
         "FOREIGN KEY(attachmentId) REFERENCES attachment(ROWID),"
-        "FOREIGN KEY(messageId) REFERENCES message(ROWID)"
+        "FOREIGN KEY(messageId) REFERENCES message(ROWID),"
+        "UNIQUE (attachmentId, messageId)"
         ");");
   }
 
