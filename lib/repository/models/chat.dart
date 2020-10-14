@@ -336,7 +336,7 @@ class Chat {
     }
 
     // Update the chat position
-    await ChatBloc().updateChatPosition(this);
+    ChatBloc().updateChatPosition(this);
 
     // If the message is for adding or removing participants, we need to ensure that all of the chat participants are correct by syncing with the server
     if ((message.itemType == ItemTypes.participantRemoved.index ||
