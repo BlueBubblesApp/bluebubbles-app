@@ -311,15 +311,12 @@ class Chat {
     // other fields that we want to "mimic" from the server
     await this.save();
 
-    // Check join table and add if relationship doesn't exist
-    List entries = await db.query("chat_message_join",
-        where: "chatId = ? AND messageId = ?",
-        whereArgs: [this.id, message.id]);
-
-    // If the relationship doesn't exist, add it
-    if (entries.length == 0) {
+    try {
+      // Add the relationship
       await db.insert(
           "chat_message_join", {"chatId": this.id, "messageId": message.id});
+    } catch (ex) {
+      // Don't do anything if it already exists
     }
 
     // If the incoming message was newer than the "last" one, set the unread status accordingly
