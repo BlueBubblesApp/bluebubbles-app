@@ -156,6 +156,8 @@ class MessageHelper {
           key = "location";
         } else if (mime.contains("contact")) {
           key = "contact";
+        } else if (mime.contains("video")) {
+          key = "movie";
         } else {
           key = mime.split("/").first;
         }

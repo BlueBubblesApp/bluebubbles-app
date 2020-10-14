@@ -48,6 +48,10 @@ class NewMessageManager {
   }
 
   void updateMessage(Chat chat, String oldGuid, Message message) {
+    // If the message is not from yourself, we don't need an update
+    // Theoretically, addMessage will be called for all incoming messages
+    if (!message.isFromMe) return;
+
     _stream.sink.add({
       chat.guid: {
         NewMessageAction.UPDATE: [
