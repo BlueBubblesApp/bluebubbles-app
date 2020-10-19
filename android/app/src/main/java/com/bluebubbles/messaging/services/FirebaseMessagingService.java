@@ -53,30 +53,10 @@ import static com.bluebubbles.messaging.MainActivity.engine;
 
 public class FirebaseMessagingService extends com.google.firebase.messaging.FirebaseMessagingService {
     private static final String TAG = "MyFirebaseMsgService";
-    private LocalBroadcastManager broadcaster;
-    private BackgroundService backgroundService;
-//    ArrayList<String> processedGuids = new ArrayList<String>();
-
-    protected ServiceConnection mServerConn = new ServiceConnection() {
-        @Override
-        public void onServiceConnected(ComponentName name, IBinder binder) {
-            if (binder == null) return;
-            backgroundService = ((BackgroundService.LocalBinder) binder).getService();
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName name) {
-            backgroundService = null;
-        }
-    };
-
 
     @Override
     public void onCreate() {
         Log.d("isolate", "firebase service spawned");
-        broadcaster = LocalBroadcastManager.getInstance(this);
-        Intent intent = new Intent(getApplicationContext(), BackgroundService.class);
-        getApplicationContext().bindService(intent, mServerConn, Context.BIND_AUTO_CREATE);
     }
 
     @Override
@@ -102,9 +82,9 @@ public class FirebaseMessagingService extends com.google.firebase.messaging.Fire
                     }
                 }
             });
-            if (backgroundService != null && backgroundService.backgroundChannel != null) {
-                backgroundService.invokeMethod(intent.getExtras().getString("type"), intent.getExtras().getString("data"));
-            }
+//            if (backgroundService != null && backgroundService.backgroundChannel != null) {
+//                backgroundService.invokeMethod(intent.getExtras().getString("type"), intent.getExtras().getString("data"));
+//            }
         }
     }
 
