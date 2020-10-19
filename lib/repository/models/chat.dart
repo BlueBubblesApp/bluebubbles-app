@@ -311,15 +311,12 @@ class Chat {
     // other fields that we want to "mimic" from the server
     await this.save();
 
-    // Check join table and add if relationship doesn't exist
-    List entries = await db.query("chat_message_join",
-        where: "chatId = ? AND messageId = ?",
-        whereArgs: [this.id, message.id]);
-
-    // If the relationship doesn't exist, add it
-    if (entries.length == 0) {
+    try {
+      // Add the relationship
       await db.insert(
           "chat_message_join", {"chatId": this.id, "messageId": message.id});
+    } catch (ex) {
+      // Don't do anything if it already exists
     }
 
     // If the incoming message was newer than the "last" one, set the unread status accordingly
@@ -336,7 +333,7 @@ class Chat {
     }
 
     // Update the chat position
-    await ChatBloc().updateChatPosition(this);
+    ChatBloc().updateChatPosition(this);
 
     // If the message is for adding or removing participants, we need to ensure that all of the chat participants are correct by syncing with the server
     if ((message.itemType == ItemTypes.participantRemoved.index ||
@@ -594,13 +591,11 @@ class Chat {
       this.participants.add(participant);
     }
 
-    // Check join table and add if relationship doesn't exist
-    List entries = await db.query("chat_handle_join",
-        where: "chatId = ? AND handleId = ?",
-        whereArgs: [this.id, participant.id]);
-    if (entries.length == 0) {
+    try {
       await db.insert(
           "chat_handle_join", {"chatId": this.id, "handleId": participant.id});
+    } catch (ex) {
+      // Don't do anything if it already exists
     }
 
     return this;

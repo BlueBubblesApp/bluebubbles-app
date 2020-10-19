@@ -48,11 +48,11 @@ class _ImageViewerState extends State<ImageViewer> {
   Widget build(BuildContext context) {
     Widget overlay = AnimatedOpacity(
       opacity: showOverlay ? 1.0 : 0.0,
-      duration: Duration(milliseconds: 200),
+      duration: Duration(milliseconds: 125),
       child: Container(
         height: 120.0,
         width: MediaQuery.of(context).size.width,
-        color: Colors.black.withOpacity(0.75),
+        color: Colors.black.withOpacity(0.65),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [

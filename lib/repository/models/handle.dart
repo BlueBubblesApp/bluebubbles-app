@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:flutter/material.dart';
 import 'package:sqflite/sqflite.dart';
 
 import '../database.dart';
@@ -42,7 +41,7 @@ class Handle {
   Future<Handle> save([bool updateIfAbsent = false]) async {
     final Database db = await DBProvider.db.database;
 
-    // Try to find an existing chat before saving it
+    // Try to find an existing handle before saving it
     Handle existing = await Handle.findOne({"address": this.address});
     if (existing != null) {
       this.id = existing.id;

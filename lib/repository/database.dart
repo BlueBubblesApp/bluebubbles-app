@@ -107,6 +107,7 @@ class DBProvider {
     await createAttachmentMessageJoinTable(db);
     await createChatHandleJoinTable(db);
     await createChatMessageJoinTable(db);
+    await createIndexes(db);
   }
 
   createHandleTable(Database db) async {
@@ -138,7 +139,7 @@ class DBProvider {
         "ROWID INTEGER PRIMARY KEY AUTOINCREMENT,"
         "originalROWID INTEGER DEFAULT NULL,"
         "handleId INTEGER NOT NULL,"
-        "guid TEXT NOT NULL,"
+        "guid TEXT UNIQUE NOT NULL,"
         "text TEXT,"
         "subject TEXT DEFAULT NULL,"
         "country TEXT DEFAULT NULL,"
@@ -173,7 +174,7 @@ class DBProvider {
   createAttachmentTable(Database db) async {
     await db.execute("CREATE TABLE attachment ("
         "ROWID INTEGER PRIMARY KEY AUTOINCREMENT,"
-        "guid TEXT NOT NULL,"
+        "guid TEXT UNIQUE NOT NULL,"
         "uti TEXT NOT NULL,"
         "mimeType TEXT DEFAULT NULL,"
         "transferState INTEGER DEFAULT 0,"
@@ -195,7 +196,7 @@ class DBProvider {
         "handleId INTEGER NOT NULL,"
         "FOREIGN KEY(chatId) REFERENCES chat(ROWID),"
         "FOREIGN KEY(handleId) REFERENCES handle(ROWID),"
-        "unique (chatId, handleId)"
+        "UNIQUE (chatId, handleId)"
         ");");
   }
 
@@ -205,7 +206,8 @@ class DBProvider {
         "chatId INTEGER NOT NULL,"
         "messageId INTEGER NOT NULL,"
         "FOREIGN KEY(chatId) REFERENCES chat(ROWID),"
-        "FOREIGN KEY(messageId) REFERENCES message(ROWID)"
+        "FOREIGN KEY(messageId) REFERENCES message(ROWID),"
+        "UNIQUE (chatId, messageId)"
         ");");
   }
 
@@ -215,7 +217,15 @@ class DBProvider {
         "attachmentId INTEGER NOT NULL,"
         "messageId INTEGER NOT NULL,"
         "FOREIGN KEY(attachmentId) REFERENCES attachment(ROWID),"
-        "FOREIGN KEY(messageId) REFERENCES message(ROWID)"
+        "FOREIGN KEY(messageId) REFERENCES message(ROWID),"
+        "UNIQUE (attachmentId, messageId)"
         ");");
+  }
+
+  createIndexes(Database db) async {
+    await db.execute("CREATE UNIQUE INDEX idx_handle_address ON handle (address);");
+    await db.execute("CREATE UNIQUE INDEX idx_message_guid ON message (guid);");
+    await db.execute("CREATE UNIQUE INDEX idx_chat_guid ON chat (guid);");
+    await db.execute("CREATE UNIQUE INDEX idx_attachment_guid ON attachment (guid);");
   }
 }
