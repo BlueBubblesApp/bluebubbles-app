@@ -1,4 +1,4 @@
-package com.bluebubbles.messaging;
+package com.bluebubbles.messaging.helpers;
 
 import java.sql.Timestamp;
 import java.util.Map;

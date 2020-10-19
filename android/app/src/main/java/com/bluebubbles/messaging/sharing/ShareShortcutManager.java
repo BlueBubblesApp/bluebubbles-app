@@ -1,4 +1,4 @@
-package com.bluebubbles.messaging;
+package com.bluebubbles.messaging.sharing;
 
 import android.content.Context;
 

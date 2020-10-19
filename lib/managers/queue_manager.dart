@@ -1,3 +1,4 @@
+import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:flutter/material.dart';
 
 class QueueItem {
@@ -25,6 +26,7 @@ abstract class QueueManager {
     // If there are no queued items, we are done processing
     if (this.queue.length == 0) {
       this.isProcessing = false;
+      MethodChannelInterface().closeThread();
       return;
     }
 

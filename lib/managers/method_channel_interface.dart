@@ -90,6 +90,7 @@ class MethodChannelInterface {
       case "markAsRead":
         Chat chat = await Chat.findOne({"guid": call.arguments["chat"]});
         SocketManager().removeChatNotification(chat);
+        closeThread();
         return new Future.value("");
       case "shareAttachments":
         debugPrint("Received shared attachments: " +
@@ -131,6 +132,13 @@ class MethodChannelInterface {
               (route) => route.isFirst,
             );
         return new Future.value("");
+    }
+  }
+
+  void closeThread() {
+    if (_context == null) {
+      invokeMethod("close-background-isolate");
+      debugPrint("Close");
     }
   }
 

@@ -1,23 +1,19 @@
-package com.bluebubbles.messaging;
+package com.bluebubbles.messaging.services;
 
 import android.app.Notification;
-import android.app.NotificationChannel;
 import android.app.NotificationManager;
-import android.app.Person;
 import android.app.RemoteInput;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.IBinder;
 import android.service.notification.StatusBarNotification;
-import android.util.Log;
 
 import androidx.annotation.RequiresApi;
-import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+
+import com.bluebubbles.messaging.workers.NotificationWorker;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -43,7 +39,7 @@ public class ReplyReceiver extends BroadcastReceiver {
                 if (notification.getId() == intent.getExtras().getInt("id")) {
                     Notification.Builder builder = Notification.Builder.recoverBuilder(context, notification.getNotification());
                     Notification.MessagingStyle style = (Notification.MessagingStyle) builder.getStyle();
-                    style.addMessage(new Notification.MessagingStyle.Message(remoteInput.getString("key_text_reply"), System.currentTimeMillis() / 1000,  "You"));
+                    style.addMessage(new Notification.MessagingStyle.Message(remoteInput.getString("key_text_reply"), System.currentTimeMillis() / 1000, "You"));
                     builder.setStyle(style);
 
 
@@ -51,42 +47,26 @@ public class ReplyReceiver extends BroadcastReceiver {
 
                 }
             }
-//            notificationManager.cancel(intent.getExtras().getInt("id"));
             Map<String, Object> params = new HashMap<>();
 
             params.put("chat", intent.getExtras().getString("chatGuid"));
             params.put("text", remoteInput.getString("key_text_reply"));
 
-            IBinder binder = peekService(context, new Intent(context, BackgroundService.class));
-            if (binder != null) {
-                Log.d("replyReceiver", "binder != null");
-                MethodChannel channel = ((BackgroundService.LocalBinder) binder).getService().backgroundChannel;
-                if (channel != null) {
-                    Log.d("replyReceiver", "channel != null");
-                    channel.invokeMethod("reply", params);
-                } else if (engine != null) {
-                    Log.d("replyReceiver", "channel == null");
-                    new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod("reply", params);
-                }
-            } else if (engine != null) {
-                Log.d("replyReceiver", "binder == null");
+            if (engine != null) {
                 new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod("reply", params);
+            } else {
+                NotificationWorker.createWorker(context.getApplicationContext(), "reply", params);
             }
         } else if (intent.getType().equals("markAsRead")) {
             Map<String, Object> params = new HashMap<>();
             params.put("chat", intent.getExtras().getString("chatGuid"));
             NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
             notificationManager.cancel(intent.getExtras().getInt("id"));
-            IBinder binder = peekService(context, new Intent(context, BackgroundService.class));
-            if (binder != null) {
-                MethodChannel channel = ((BackgroundService.LocalBinder) binder).getService().backgroundChannel;
-                if (channel != null) {
-                    channel.invokeMethod("markAsRead", params);
-                } else if (engine != null) {
-                    new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod("markAsRead", params);
-                }
-            } else if (engine != null) {
+            if (engine != null) {
                 new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod("markAsRead", params);
+            } else {
+                NotificationWorker.createWorker(context.getApplicationContext(), "markAsRead", params);
+
             }
         }
     }

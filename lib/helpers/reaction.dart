@@ -40,8 +40,7 @@ class Reaction {
         handleCache.add(cache);
 
         // Only add the reaction if it's not a "negative"
-        if (!msg.associatedMessageType.startsWith("-"))
-          output.add(msg);
+        if (!msg.associatedMessageType.startsWith("-")) output.add(msg);
       }
     }
 
@@ -50,12 +49,18 @@ class Reaction {
 
   static Map<String, Reaction> getLatestReactionMap(List<Message> messages) {
     Map<String, Reaction> reactions = {};
-    reactions[ReactionTypes.LIKE] = new Reaction(reactionType: ReactionTypes.LIKE);
-    reactions[ReactionTypes.LOVE] = new Reaction(reactionType: ReactionTypes.LOVE);
-    reactions[ReactionTypes.DISLIKE] = new Reaction(reactionType: ReactionTypes.DISLIKE);
-    reactions[ReactionTypes.QUESTION] = new Reaction(reactionType: ReactionTypes.QUESTION);
-    reactions[ReactionTypes.EMPHASIZE] = new Reaction(reactionType: ReactionTypes.EMPHASIZE);
-    reactions[ReactionTypes.LAUGH] = new Reaction(reactionType: ReactionTypes.LAUGH);
+    reactions[ReactionTypes.LIKE] =
+        new Reaction(reactionType: ReactionTypes.LIKE);
+    reactions[ReactionTypes.LOVE] =
+        new Reaction(reactionType: ReactionTypes.LOVE);
+    reactions[ReactionTypes.DISLIKE] =
+        new Reaction(reactionType: ReactionTypes.DISLIKE);
+    reactions[ReactionTypes.QUESTION] =
+        new Reaction(reactionType: ReactionTypes.QUESTION);
+    reactions[ReactionTypes.EMPHASIZE] =
+        new Reaction(reactionType: ReactionTypes.EMPHASIZE);
+    reactions[ReactionTypes.LAUGH] =
+        new Reaction(reactionType: ReactionTypes.LAUGH);
 
     // Iterate over the messages and insert the latest reaction for each user
     for (Message msg in Reaction.getUniqueReactionMessages(messages)) {
@@ -96,8 +101,7 @@ class Reaction {
         cache.add(cached);
 
         // Only add the reaction if it's not a "negative"
-        if (!msg.associatedMessageType.startsWith("-"))
-          msgs.add(msg);
+        if (!msg.associatedMessageType.startsWith("-")) msgs.add(msg);
       }
     }
 
@@ -110,7 +114,8 @@ class Reaction {
     bool hasMyReaction = this.hasMyReaction(messages: added);
 
     Color iconColor = Colors.white;
-    if (!hasMyReaction && Theme.of(context).accentColor.computeLuminance() >= 0.179) {
+    if (!hasMyReaction &&
+        Theme.of(context).accentColor.computeLuminance() >= 0.179) {
       iconColor = Colors.black.withAlpha(95);
     }
 
@@ -119,9 +124,7 @@ class Reaction {
       width: 28,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(100),
-        color: hasMyReaction
-          ? Colors.blue
-          : Theme.of(context).accentColor,
+        color: hasMyReaction ? Colors.blue : Theme.of(context).accentColor,
         boxShadow: [
           new BoxShadow(
             blurRadius: 1.0,
@@ -130,7 +133,8 @@ class Reaction {
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.only(top: 8.0, left: 7.0, right: 7.0, bottom: 7.0),
+        padding:
+            const EdgeInsets.only(top: 8.0, left: 7.0, right: 7.0, bottom: 7.0),
         child: SvgPicture.asset(
           'assets/reactions/$reactionType-black.svg',
           color: reactionType == "love" ? Colors.pink : iconColor,

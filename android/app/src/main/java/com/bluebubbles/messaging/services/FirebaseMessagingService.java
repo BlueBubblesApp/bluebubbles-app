@@ -1,52 +1,18 @@
-package com.bluebubbles.messaging;
+package com.bluebubbles.messaging.services;
 
-import android.app.AlarmManager;
-import android.app.PendingIntent;
-import android.content.BroadcastReceiver;
-import android.content.ComponentName;
-import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
-import android.content.ServiceConnection;
-import android.content.SharedPreferences;
-import android.net.Uri;
-import android.os.Binder;
-import android.os.Build;
 import android.os.Handler;
-import android.os.IBinder;
 import android.os.Looper;
-import android.os.SystemClock;
-import android.preference.PreferenceManager;
 import android.util.Log;
 
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.work.Data;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkManager;
 
-import com.google.firebase.FirebaseApp;
-import com.google.firebase.FirebaseOptions;
+import com.bluebubbles.messaging.workers.FCMWorker;
 import com.google.firebase.messaging.RemoteMessage;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-import com.itsclicking.clickapp.fluttersocketio.FlutterSocketIoPlugin;
-import com.tekartik.sqflite.SqflitePlugin;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-
-import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
-import io.flutter.plugin.common.PluginRegistry;
-import io.flutter.plugins.pathprovider.PathProviderPlugin;
-import io.flutter.view.FlutterCallbackInformation;
-import io.flutter.view.FlutterMain;
-import io.flutter.view.FlutterNativeView;
-import io.flutter.view.FlutterRunArguments;
 
 import static com.bluebubbles.messaging.MainActivity.CHANNEL;
 import static com.bluebubbles.messaging.MainActivity.engine;
@@ -82,9 +48,8 @@ public class FirebaseMessagingService extends com.google.firebase.messaging.Fire
                     }
                 }
             });
-//            if (backgroundService != null && backgroundService.backgroundChannel != null) {
-//                backgroundService.invokeMethod(intent.getExtras().getString("type"), intent.getExtras().getString("data"));
-//            }
+            FCMWorker.createWorker(getApplicationContext(), remoteMessage.getData().get("type"), remoteMessage.getData().get("data"));
+
         }
     }
 

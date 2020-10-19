@@ -29,14 +29,7 @@
 
         <meta-data android:name="io.sentry.dsn" android:value="https://3123d4f0d82d405190cb599d0e904adc@o373132.ingest.sentry.io/5372783" />
 
-        <receiver android:name=".Autostart">
-            <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <action android:name="android.intent.action.QUICKBOOT_POWERON"/>
-            </intent-filter>
-        </receiver>
-        <receiver android:name=".ReplyReceiver"></receiver>
+        <receiver android:name=".services.ReplyReceiver"></receiver>
 
         <provider
             android:name="androidx.core.content.FileProvider"
@@ -52,7 +45,7 @@
 
         <!-- [START firebase_service] -->
         <service
-            android:name=".FirebaseMessagingService"
+            android:name=".services.FirebaseMessagingService"
             android:exported="false"
             android:stopWithTask="false"
             android:directBootAware="true">
@@ -62,11 +55,6 @@
                 <action android:name="android.intent.action.QUICKBOOT_POWERON"/>
             </intent-filter>
         </service>
-        <service
-            android:name=".BackgroundService"
-            android:enabled="true"
-            android:stopWithTask="false"
-            android:directBootAware="true"/>
 
         <provider
             android:name="com.google.firebase.provider.FirebaseInitProvider"

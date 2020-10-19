@@ -77,6 +77,13 @@ android {
             shrinkResources false
         }
     }
+    sourceSets {
+        main {
+            java {
+                srcDirs 'src/main/java', 'src/main/java/workers'
+            }
+        }
+    }
 }
 
 flutter {

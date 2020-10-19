@@ -39,31 +39,31 @@ callbackHandler() async {
   //   resyncChats(_backgroundChannel);
   // };
   await SettingsManager().getSavedSettings(headless: true);
-  SocketManager().authFCM();
-  SocketManager().startSocketIO();
-  _backgroundChannel.setMethodCallHandler((call) async {
-    debugPrint("call " + call.method);
-    if (call.method == "new-message") {
-      Map<String, dynamic> data = jsonDecode(call.arguments);
+  // SocketManager().authFCM();
+  // SocketManager().startSocketIO();
+  // _backgroundChannel.setMethodCallHandler((call) async {
+  //   debugPrint("call " + call.method);
+  //   if (call.method == "new-message") {
+  //     Map<String, dynamic> data = jsonDecode(call.arguments);
 
-      IncomingQueue().add(new QueueItem(
-          event: "handle-message", item: {"data": data, "isHeadless": true}));
-    } else if (call.method == "updated-message") {
-      IncomingQueue().add(new QueueItem(
-          event: "handle-updated-message",
-          item: {"data": jsonDecode(call.arguments)}));
-    } else if (call.method == "reply") {
-      debugPrint("replying with data " + call.arguments.toString());
-      Chat chat = await Chat.findOne({"guid": call.arguments["chat"]});
-      // SocketManager().startSocketIO(connectCB: () {
-      //   debugPrint("replying with data " + call.arguments.toString());
-      // });
-      ActionHandler.sendMessage(chat, call.arguments["text"]);
-    } else if (call.method == "markAsRead") {
-      Chat chat = await Chat.findOne({"guid": call.arguments["chat"]});
-      SocketManager().removeChatNotification(chat);
-    }
-  });
+  //     IncomingQueue().add(new QueueItem(
+  //         event: "handle-message", item: {"data": data, "isHeadless": true}));
+  //   } else if (call.method == "updated-message") {
+  //     IncomingQueue().add(new QueueItem(
+  //         event: "handle-updated-message",
+  //         item: {"data": jsonDecode(call.arguments)}));
+  //   } else if (call.method == "reply") {
+  //     debugPrint("replying with data " + call.arguments.toString());
+  //     Chat chat = await Chat.findOne({"guid": call.arguments["chat"]});
+  //     // SocketManager().startSocketIO(connectCB: () {
+  //     //   debugPrint("replying with data " + call.arguments.toString());
+  //     // });
+  //     ActionHandler.sendMessage(chat, call.arguments["text"]);
+  //   } else if (call.method == "markAsRead") {
+  //     Chat chat = await Chat.findOne({"guid": call.arguments["chat"]});
+  //     SocketManager().removeChatNotification(chat);
+  //   }
+  // });
   fcmAuth(_backgroundChannel);
 }
 

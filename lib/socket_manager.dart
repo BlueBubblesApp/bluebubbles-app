@@ -143,9 +143,6 @@ class SocketManager {
       case "connect":
         authFCM();
         NotificationManager().clearSocketWarning();
-        // syncChats();
-        // if (connectCB != null) {
-        // }
         _manager.disconnectSubscribers.forEach((key, value) {
           value();
           _manager.disconnectSubscribers.remove(key);
@@ -166,7 +163,6 @@ class SocketManager {
         debugPrint("CONNECT ERROR");
         if (state != SocketState.ERROR && state != SocketState.FAILED) {
           state = SocketState.ERROR;
-          // startSocketIO();
           Timer(Duration(seconds: 10), () {
             if (state != SocketState.ERROR) return;
             debugPrint("UNABLE TO CONNECT");

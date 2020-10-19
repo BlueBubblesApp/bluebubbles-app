@@ -98,8 +98,6 @@ class ActionHandler {
     params["message"] = message.text;
     params["tempGuid"] = message.guid;
 
-    // // If we aren't connected to the socket, return
-    // if (SettingsManager().settings.connected == false) return;
     SocketManager().sendMessage("send-message", params, (response) async {
       String tempGuid = message.guid;
 

@@ -1,4 +1,5 @@
 import 'package:bluebubbles/blocs/chat_bloc.dart';
+import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/socket_manager.dart';
@@ -45,6 +46,7 @@ class LifeCycleManager {
     if (SettingsManager().settings.finishedSetup) {
       _isAlive = false;
       SocketManager().closeSocket();
+      MethodChannelInterface().closeThread();
     }
   }
 }

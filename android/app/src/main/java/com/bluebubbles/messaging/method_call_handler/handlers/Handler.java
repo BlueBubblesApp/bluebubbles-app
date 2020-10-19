@@ -1,4 +1,5 @@
 package com.bluebubbles.messaging.method_call_handler.handlers;
 
-public class Handler {
+public interface Handler {
+    void Handle();
 }
