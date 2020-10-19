@@ -82,8 +82,6 @@ class _MessageViewState extends State<MessageView>
 
   void handleNewMessage(MessageBlocEvent event) async {
     if (event.type == MessageBlocEventType.insert) {
-      debugPrint(
-          "(Message status) Insert message: [${event.message.text}] - [${event.message.guid}]");
       getAttachmentsForMessage(event.message);
       if (event.outGoing) {
         sentMessages.add(event.message.guid);
@@ -116,7 +114,7 @@ class _MessageViewState extends State<MessageView>
           event.index != null ? event.index : 0,
           duration: isNewMessage
               ? event.outGoing ? Duration(milliseconds: 500) : animationDuration
-              : 0,
+              : Duration(milliseconds: 0),
         );
       }
       if (event.message.hasAttachments) updateAllAttachments();

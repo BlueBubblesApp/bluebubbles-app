@@ -1,8 +1,11 @@
+import 'dart:io';
+
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/group_event.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_attachments.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/received_message.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/sent_message.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:flutter/cupertino.dart';
@@ -57,10 +60,36 @@ class _MessageState extends State<MessageWidget> {
   List<Attachment> attachments = <Attachment>[];
   bool showTail = true;
   Widget blurredImage;
+  List<Attachment> stickers = [];
 
   @override
   void initState() {
     super.initState();
+    fetchStickers();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    fetchStickers();
+  }
+
+  Future<void> fetchStickers() async {
+    widget.message.getAssociatedMessages().then((List<Message> messages) async {
+      List<Message> tmp = messages
+          .where((element) => element.associatedMessageType == "sticker")
+          .toList();
+      if (tmp.length > 0 && tmp.length != stickers.length) {
+        stickers = [];
+        for (Message msg in tmp) {
+          if (!msg.hasAttachments) continue;
+          List<Attachment> attachments = await Message.getAttachments(msg);
+          stickers.addAll(attachments);
+        }
+
+        if (this.mounted) setState(() {});
+      }
+    });
   }
 
   bool withinTimeThreshold(Message first, Message second, {threshold: 5}) {
@@ -103,62 +132,84 @@ class _MessageState extends State<MessageWidget> {
               widget.message.dateDelivered != null &&
               widget.newerMessage.dateDelivered == null);
     }
+
     if (widget.message != null &&
         isEmptyString(widget.message.text) &&
         !widget.message.hasAttachments) {
       return GroupEvent(
         message: widget.message,
       );
-    } else if (widget.fromSelf) {
-      return SentMessage(
-        offset: widget.offset,
-        timeStamp: _buildTimeStamp(context),
-        message: widget.message,
-        chat: widget.chat,
-        showDeliveredReceipt:
-            widget.customContent == null && widget.isFirstSentMessage,
-        // overlayEntry: _createOverlayEntry(context),
-        showTail: showTail,
-        limited: widget.customContent == null,
-        shouldFadeIn: widget.shouldFadeIn,
-        customContent: widget.customContent,
-        isFromMe: widget.fromSelf,
-        attachments: widget.savedAttachmentData != null
-            ? MessageAttachments(
-                message: widget.message,
-                savedAttachmentData: widget.savedAttachmentData,
-                showTail: showTail,
-                showHandle: widget.showHandle,
-                controllers: widget.currentPlayingVideo,
-                changeCurrentPlayingVideo: widget.changeCurrentPlayingVideo,
-                allAttachments: widget.allAttachments,
-              )
-            : Container(),
-        showHero: widget.showHero,
-      );
     } else {
-      return ReceivedMessage(
-        offset: widget.offset,
-        timeStamp: _buildTimeStamp(context),
-        showTail: showTail,
-        olderMessage: widget.olderMessage,
-        message: widget.message,
-        // overlayEntry: _createOverlayEntry(context),
-        showHandle: widget.showHandle,
-        customContent: widget.customContent,
-        isFromMe: widget.fromSelf,
-        attachments: widget.savedAttachmentData != null
-            ? MessageAttachments(
-                message: widget.message,
-                savedAttachmentData: widget.savedAttachmentData,
-                showTail: showTail,
-                showHandle: widget.showHandle,
-                controllers: widget.currentPlayingVideo,
-                changeCurrentPlayingVideo: widget.changeCurrentPlayingVideo,
-                allAttachments: widget.allAttachments,
-              )
-            : Container(),
-      );
+      List<Widget> widgetStack = [];
+
+      if (widget.fromSelf) {
+        widgetStack.add(SentMessage(
+          offset: widget.offset,
+          timeStamp: _buildTimeStamp(context),
+          message: widget.message,
+          chat: widget.chat,
+          showDeliveredReceipt:
+              widget.customContent == null && widget.isFirstSentMessage,
+          // overlayEntry: _createOverlayEntry(context),
+          showTail: showTail,
+          limited: widget.customContent == null,
+          shouldFadeIn: widget.shouldFadeIn,
+          customContent: widget.customContent,
+          isFromMe: widget.fromSelf,
+          attachments: widget.savedAttachmentData != null
+              ? MessageAttachments(
+                  message: widget.message,
+                  savedAttachmentData: widget.savedAttachmentData,
+                  showTail: showTail,
+                  showHandle: widget.showHandle,
+                  controllers: widget.currentPlayingVideo,
+                  changeCurrentPlayingVideo: widget.changeCurrentPlayingVideo,
+                  allAttachments: widget.allAttachments,
+                )
+              : Container(),
+          showHero: widget.showHero,
+        ));
+      } else {
+        widgetStack.add(ReceivedMessage(
+          offset: widget.offset,
+          timeStamp: _buildTimeStamp(context),
+          showTail: showTail,
+          olderMessage: widget.olderMessage,
+          message: widget.message,
+          // overlayEntry: _createOverlayEntry(context),
+          showHandle: widget.showHandle,
+          customContent: widget.customContent,
+          isFromMe: widget.fromSelf,
+          attachments: widget.savedAttachmentData != null
+              ? MessageAttachments(
+                  message: widget.message,
+                  savedAttachmentData: widget.savedAttachmentData,
+                  showTail: showTail,
+                  showHandle: widget.showHandle,
+                  controllers: widget.currentPlayingVideo,
+                  changeCurrentPlayingVideo: widget.changeCurrentPlayingVideo,
+                  allAttachments: widget.allAttachments,
+                )
+              : Container(),
+        ));
+      }
+
+      for (Attachment sticker in stickers) {
+        String fileName = sticker.transferName;
+        String appDocPath = SettingsManager().appDocDir.path;
+        String pathName = "$appDocPath/attachments/${sticker.guid}/$fileName";
+        widgetStack.add(Image.file(new File(pathName),
+            width: MediaQuery.of(context).size.width * 2 / 3,
+            height: MediaQuery.of(context).size.width * 2 / 4));
+      }
+
+      widgetStack.add(Text("")); // Workaround for Flutter bug
+
+      return Stack(
+          alignment: widget.fromSelf
+              ? AlignmentDirectional.centerEnd
+              : AlignmentDirectional.centerStart,
+          children: widgetStack);
     }
   }
 }

@@ -262,7 +262,9 @@ class _SentMessageState extends State<SentMessage>
 
           List<Message> reactions = [];
           if (widget.message.hasReactions) {
-            reactions = await widget.message.getReactions();
+            reactions = await widget.message.getAssociatedMessages();
+            reactions = reactions.where((element) =>
+                ReactionTypes.toList().contains(element.associatedMessageType)).toList();
           }
           // if (widget.overlayEntry != null)
           Overlay.of(context).insert(_createMessageDetailsPopup(reactions));
