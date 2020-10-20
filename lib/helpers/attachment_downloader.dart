@@ -28,16 +28,23 @@ class AttachmentDownloader {
   Chat _chat;
   bool _createNotification;
   int _socketProcessId;
+  Function _onComplete;
 
   double get progress => (_currentChunk) / _totalChunks;
   Attachment get attachment => _attachment;
 
   AttachmentDownloader(Attachment attachment,
-      {bool createNotification = false}) {
+    {
+      bool createNotification = false,
+      Function onComplete
+    }) {
+
     // Set default chunk size based on the current settings
     _chunkSize = SettingsManager().settings.chunkSize * 1024;
     _attachment = attachment;
     _createNotification = createNotification;
+    _onComplete = onComplete;
+
     String appDocPath = SettingsManager().appDocDir.path;
     String pathName =
         "$appDocPath/attachments/${attachment.guid}/${attachment.transferName}";
@@ -159,6 +166,7 @@ class AttachmentDownloader {
       // Finish the downloader
       SocketManager().finishDownloader(attachment.guid);
       LifeCycleManager().finishDownloader();
+      if (_onComplete != null) _onComplete();
 
       // Add attachment to sink based on if we got data
       if (data == null || data.length == 0) {

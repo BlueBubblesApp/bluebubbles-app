@@ -1,11 +1,10 @@
-import 'dart:io';
-
-import 'package:bluebubbles/helpers/attachment_helper.dart';
+import 'dart:async';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/group_event.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_attachments.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/received_message.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/sent_message.dart';
+import 'package:bluebubbles/layouts/widgets/message_widget/sticker_widget.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:flutter/cupertino.dart';
@@ -61,6 +60,7 @@ class _MessageState extends State<MessageWidget> {
   bool showTail = true;
   Widget blurredImage;
   List<Attachment> stickers = [];
+  Completer<void> stickerRequest;
 
   @override
   void initState() {
@@ -75,6 +75,9 @@ class _MessageState extends State<MessageWidget> {
   }
 
   Future<void> fetchStickers() async {
+    if (stickerRequest != null && !stickerRequest.isCompleted) return stickerRequest.future;
+    stickerRequest = new Completer();
+
     widget.message.getAssociatedMessages().then((List<Message> messages) async {
       List<Message> tmp = messages
           .where((element) => element.associatedMessageType == "sticker")
@@ -88,8 +91,11 @@ class _MessageState extends State<MessageWidget> {
         }
 
         if (this.mounted) setState(() {});
+        stickerRequest.complete();
       }
     });
+
+    return stickerRequest.future;
   }
 
   bool withinTimeThreshold(Message first, Message second, {threshold: 5}) {
@@ -195,12 +201,7 @@ class _MessageState extends State<MessageWidget> {
       }
 
       for (Attachment sticker in stickers) {
-        String pathName = AttachmentHelper.getAttachmentPath(sticker);
-        if (FileSystemEntity.typeSync(pathName) == FileSystemEntityType.notFound) continue;
-
-        widgetStack.add(Image.file(new File(pathName),
-            width: MediaQuery.of(context).size.width * 2 / 3,
-            height: MediaQuery.of(context).size.width * 2 / 4));
+        widgetStack.add(StickerWidget(attachment: sticker));
       }
 
       widgetStack.add(Text("")); // Workaround for Flutter bug
