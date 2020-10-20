@@ -273,6 +273,7 @@ class _SentMessageState extends State<SentMessage>
           opacity: 1.0, //_visible ? 1.0 : 0.0,
           duration: Duration(milliseconds: widget.shouldFadeIn ? 200 : 0),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: <Widget>[
               widget.attachments != null ? widget.attachments : Container(),
               Row(

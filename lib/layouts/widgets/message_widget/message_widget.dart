@@ -147,6 +147,17 @@ class _MessageState extends State<MessageWidget> {
       );
     } else {
       List<Widget> widgetStack = [];
+      Widget widgetAttachments = widget.savedAttachmentData != null
+          ? MessageAttachments(
+              message: widget.message,
+              savedAttachmentData: widget.savedAttachmentData,
+              showTail: showTail,
+              showHandle: widget.showHandle,
+              controllers: widget.currentPlayingVideo,
+              changeCurrentPlayingVideo: widget.changeCurrentPlayingVideo,
+              allAttachments: widget.allAttachments,
+            )
+          : Container();
 
       if (widget.fromSelf) {
         widgetStack.add(SentMessage(
@@ -156,23 +167,12 @@ class _MessageState extends State<MessageWidget> {
           chat: widget.chat,
           showDeliveredReceipt:
               widget.customContent == null && widget.isFirstSentMessage,
-          // overlayEntry: _createOverlayEntry(context),
           showTail: showTail,
           limited: widget.customContent == null,
           shouldFadeIn: widget.shouldFadeIn,
           customContent: widget.customContent,
           isFromMe: widget.fromSelf,
-          attachments: widget.savedAttachmentData != null
-              ? MessageAttachments(
-                  message: widget.message,
-                  savedAttachmentData: widget.savedAttachmentData,
-                  showTail: showTail,
-                  showHandle: widget.showHandle,
-                  controllers: widget.currentPlayingVideo,
-                  changeCurrentPlayingVideo: widget.changeCurrentPlayingVideo,
-                  allAttachments: widget.allAttachments,
-                )
-              : Container(),
+          attachments: widgetAttachments,
           showHero: widget.showHero,
         ));
       } else {
@@ -182,21 +182,10 @@ class _MessageState extends State<MessageWidget> {
           showTail: showTail,
           olderMessage: widget.olderMessage,
           message: widget.message,
-          // overlayEntry: _createOverlayEntry(context),
           showHandle: widget.showHandle,
           customContent: widget.customContent,
           isFromMe: widget.fromSelf,
-          attachments: widget.savedAttachmentData != null
-              ? MessageAttachments(
-                  message: widget.message,
-                  savedAttachmentData: widget.savedAttachmentData,
-                  showTail: showTail,
-                  showHandle: widget.showHandle,
-                  controllers: widget.currentPlayingVideo,
-                  changeCurrentPlayingVideo: widget.changeCurrentPlayingVideo,
-                  allAttachments: widget.allAttachments,
-                )
-              : Container(),
+          attachments: widgetAttachments,
         ));
       }
 
