@@ -3,12 +3,10 @@ import 'dart:io';
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
-import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/material.dart';
 import 'package:vcard_parser/vcard_parser.dart';
-import 'package:video_player/video_player.dart';
 
 class AttachmentHelper {
   static String createAppleLocation(double longitude, double latitude,
@@ -87,7 +85,7 @@ class AttachmentHelper {
   static String getPreviewPath(Attachment attachment) {
     String fileName = attachment.transferName;
     String appDocPath = SettingsManager().appDocDir.path;
-    String pathName = "$appDocPath/attachments/${attachment.guid}/$fileName";
+    String pathName = AttachmentHelper.getAttachmentPath(attachment);
 
     // If the file is an image, compress it for the preview
     if ((attachment.mimeType ?? "").startsWith("image/")) {
@@ -119,6 +117,12 @@ class AttachmentHelper {
     }
 
     return (width / factor) / width;
+  }
+
+  static String getAttachmentPath(Attachment attachment) {
+    String fileName = attachment.transferName;
+    String appDocPath = SettingsManager().appDocDir.path;
+    return "$appDocPath/attachments/${attachment.guid}/$fileName";
   }
 
   static dynamic getContent(Attachment attachment) {

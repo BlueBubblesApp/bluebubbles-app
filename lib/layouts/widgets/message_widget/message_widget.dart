@@ -1,11 +1,11 @@
 import 'dart:io';
 
+import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/group_event.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_attachments.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/received_message.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/sent_message.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:flutter/cupertino.dart';
@@ -195,9 +195,9 @@ class _MessageState extends State<MessageWidget> {
       }
 
       for (Attachment sticker in stickers) {
-        String fileName = sticker.transferName;
-        String appDocPath = SettingsManager().appDocDir.path;
-        String pathName = "$appDocPath/attachments/${sticker.guid}/$fileName";
+        String pathName = AttachmentHelper.getAttachmentPath(sticker);
+        if (FileSystemEntity.typeSync(pathName) == FileSystemEntityType.notFound) continue;
+
         widgetStack.add(Image.file(new File(pathName),
             width: MediaQuery.of(context).size.width * 2 / 3,
             height: MediaQuery.of(context).size.width * 2 / 4));
