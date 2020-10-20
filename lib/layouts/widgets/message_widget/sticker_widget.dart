@@ -30,10 +30,11 @@ class _StickerWidgetState extends State<StickerWidget> {
     // Make sure the attachment exists
     String pathName = AttachmentHelper.getAttachmentPath(widget.attachment);
     if (FileSystemEntity.typeSync(pathName) == FileSystemEntityType.notFound) {
+      // We probably don't want to try the download again
       if (!triedDownload) {
         triedDownload = true;
         AttachmentDownloader(widget.attachment, onComplete: () {
-          setState(() {});
+          if (this.mounted) setState(() {});
         });
       }
 

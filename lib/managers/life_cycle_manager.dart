@@ -1,4 +1,5 @@
 import 'package:bluebubbles/blocs/chat_bloc.dart';
+import 'package:bluebubbles/blocs/setup_bloc.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -39,7 +40,9 @@ class LifeCycleManager {
     }
     _isAlive = true;
     SocketManager().startSocketIO();
-    ChatBloc().refreshChats();
+
+    if (SetupBloc().finishedSetup)
+      ChatBloc().refreshChats();
   }
 
   close() {
