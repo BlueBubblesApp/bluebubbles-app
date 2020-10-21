@@ -92,7 +92,6 @@ class AttachmentSender {
           progress = index / _imageBytes.length;
           if (!_stream.isClosed) _stream.sink.add(progress);
           SocketManager().finishSender(_attachmentGuid);
-          LifeCycleManager().finishDownloader();
         }
       } else {
         debugPrint("failed to send");
@@ -116,9 +115,7 @@ class AttachmentSender {
           await Message.replaceMessage(tempGuid, sentMessage);
           NewMessageManager().addMessage(_chat, sentMessage, outgoing: true);
         }
-        // sendChunkRecursive(index, total, tempGuid);
         SocketManager().finishSender(_attachmentGuid);
-        LifeCycleManager().finishDownloader();
         _stream.sink.addError("failed to send");
         _stream.close();
       }

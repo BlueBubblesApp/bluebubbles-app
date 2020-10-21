@@ -34,11 +34,7 @@ class AttachmentDownloader {
   Attachment get attachment => _attachment;
 
   AttachmentDownloader(Attachment attachment,
-    {
-      bool createNotification = false,
-      Function onComplete
-    }) {
-
+      {bool createNotification = false, Function onComplete}) {
     // Set default chunk size based on the current settings
     _chunkSize = SettingsManager().settings.chunkSize * 1024;
     _attachment = attachment;
@@ -144,7 +140,6 @@ class AttachmentDownloader {
 
       if (data == null || data.length == 0) {
         SocketManager().finishDownloader(attachment.guid);
-        LifeCycleManager().finishDownloader();
         // NotificationManager().finishProgressWithAttachment(
         //     "Failed to download", _attachment.id, _attachment);
         _stream.sink.addError("unable to load");
@@ -165,7 +160,6 @@ class AttachmentDownloader {
 
       // Finish the downloader
       SocketManager().finishDownloader(attachment.guid);
-      LifeCycleManager().finishDownloader();
       if (_onComplete != null) _onComplete();
 
       // Add attachment to sink based on if we got data
@@ -180,15 +174,6 @@ class AttachmentDownloader {
     };
 
     SocketManager().addAttachmentDownloader(attachment.guid, this);
-    LifeCycleManager().startDownloader();
-    // SocketManager().disconnectCallback(() {
-    //   _currentChunk = 0;
-    //   _totalChunks = 0;
-    //   _currentBytes = <int>[];
-    //   _guid = "";
-    //   _cb = null;
-    //   fetchAttachment(attachment);
-    // }, attachment.guid);
 
     getChunkRecursive(attachment.guid, 0, numOfChunks, [], _cb);
   }

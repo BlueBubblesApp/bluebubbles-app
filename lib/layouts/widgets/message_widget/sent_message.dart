@@ -263,17 +263,17 @@ class _SentMessageState extends State<SentMessage>
           List<Message> reactions = [];
           if (widget.message.hasReactions) {
             reactions = await widget.message.getAssociatedMessages();
-            reactions = reactions.where((element) =>
-                ReactionTypes.toList().contains(element.associatedMessageType)).toList();
+            reactions = reactions
+                .where((element) => ReactionTypes.toList()
+                    .contains(element.associatedMessageType))
+                .toList();
           }
-          // if (widget.overlayEntry != null)
           Overlay.of(context).insert(_createMessageDetailsPopup(reactions));
         },
         child: AnimatedOpacity(
           opacity: 1.0, //_visible ? 1.0 : 0.0,
           duration: Duration(milliseconds: widget.shouldFadeIn ? 200 : 0),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
             children: <Widget>[
               widget.attachments != null ? widget.attachments : Container(),
               Row(
@@ -434,7 +434,9 @@ class _ActualSentMessageState extends State<ActualSentMessage> {
         height: 15,
         decoration: BoxDecoration(
           color: widget.blueColor,
-          borderRadius: BorderRadius.only(bottomLeft: Radius.circular(12)),
+          borderRadius: BorderRadius.only(
+            bottomLeft: Radius.circular(12),
+          ),
         ),
       ),
       Container(
@@ -442,8 +444,11 @@ class _ActualSentMessageState extends State<ActualSentMessage> {
         height: 28,
         width: 11,
         decoration: BoxDecoration(
-            color: Theme.of(context).backgroundColor,
-            borderRadius: BorderRadius.only(bottomLeft: Radius.circular(8))),
+          color: Theme.of(context).backgroundColor,
+          borderRadius: BorderRadius.only(
+            bottomLeft: Radius.circular(8),
+          ),
+        ),
       ),
     ];
 
@@ -512,55 +517,57 @@ class _ActualSentMessageState extends State<ActualSentMessage> {
         GestureDetector(
           onTap: () {
             showDialog(
-                context: context,
-                builder: (BuildContext context) {
-                  return AlertDialog(
-                      title: new Text("Message failed to send",
-                          style: TextStyle(color: Colors.black)),
-                      content: new Text("Error ($errorCode): $errorText"),
-                      actions: <Widget>[
-                        new FlatButton(
-                            child: new Text("Retry"),
-                            onPressed: () {
-                              // Remove the OG alert dialog
-                              Navigator.of(context).pop();
-                              ActionHandler.retryMessage(widget.message);
-                            }),
-                        new FlatButton(
-                            child: new Text("Remove"),
-                            onPressed: () async {
-                              Navigator.of(context).pop();
-                              // Delete the message from the DB
-                              await Message.delete(
-                                  {'guid': widget.message.guid});
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  title: new Text("Message failed to send",
+                      style: TextStyle(color: Colors.black)),
+                  content: new Text("Error ($errorCode): $errorText"),
+                  actions: <Widget>[
+                    new FlatButton(
+                      child: new Text("Retry"),
+                      onPressed: () {
+                        // Remove the OG alert dialog
+                        Navigator.of(context).pop();
+                        ActionHandler.retryMessage(widget.message);
+                      },
+                    ),
+                    new FlatButton(
+                      child: new Text("Remove"),
+                      onPressed: () async {
+                        Navigator.of(context).pop();
+                        // Delete the message from the DB
+                        await Message.delete({'guid': widget.message.guid});
 
-                              // Remove the message from the Bloc
-                              NewMessageManager().removeMessage(
-                                  widget.chat, widget.message.guid);
+                        // Remove the message from the Bloc
+                        NewMessageManager()
+                            .removeMessage(widget.chat, widget.message.guid);
 
-                              // Get the "new" latest info
-                              List<Message> latest =
-                                  await Chat.getMessages(widget.chat, limit: 1);
-                              widget.chat.latestMessageDate =
-                                  latest.first != null
-                                      ? latest.first.dateCreated
-                                      : null;
-                              widget.chat.latestMessageText =
-                                  latest.first != null
-                                      ? await MessageHelper.getNotificationText(
-                                          latest.first)
-                                      : null;
+                        // Get the "new" latest info
+                        List<Message> latest =
+                            await Chat.getMessages(widget.chat, limit: 1);
+                        widget.chat.latestMessageDate = latest.first != null
+                            ? latest.first.dateCreated
+                            : null;
+                        widget.chat.latestMessageText = latest.first != null
+                            ? await MessageHelper.getNotificationText(
+                                latest.first)
+                            : null;
 
-                              // Update it in the Bloc
-                              await ChatBloc().updateChatPosition(widget.chat);
-                            }),
-                        new FlatButton(
-                            child: new Text("Cancel"),
-                            onPressed: () {
-                              Navigator.of(context).pop();
-                            })
-                      ]);
-                });
+                        // Update it in the Bloc
+                        await ChatBloc().updateChatPosition(widget.chat);
+                      },
+                    ),
+                    new FlatButton(
+                      child: new Text("Cancel"),
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                    )
+                  ],
+                );
+              },
+            );
           },
           child: Icon(Icons.error_outline, color: Colors.red),
         ),

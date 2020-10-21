@@ -4,7 +4,6 @@ import 'dart:io';
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/managers/background_isolate.dart';
-import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/navigator_manager.dart';
@@ -88,8 +87,6 @@ Future<Null> main() async {
 ///     - Theming
 ///     - [NavgatorManager]
 ///     - [Home] widget
-///
-
 class Main extends StatelessWidget with WidgetsBindingObserver {
   const Main({Key key}) : super(key: key);
 
