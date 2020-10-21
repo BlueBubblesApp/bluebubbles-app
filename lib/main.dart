@@ -81,26 +81,54 @@ Future<Null> main() async {
   });
 }
 
+/// The [Main] app.
+///
+/// This is the entry for the whole app (when the app is visible or not fully closed in the background)
+/// This main widget controls
+///     - Theming
+///     - [NavgatorManager]
+///     - [Home] widget
+///
+
 class Main extends StatelessWidget with WidgetsBindingObserver {
   const Main({Key key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return AdaptiveTheme(
+      /// These are the default white and dark themes.
+      /// These will be changed by [SettingsManager] when you set a custom theme
       light: whiteLightTheme,
       dark: oledDarkTheme,
+
+      /// The default is that the dark and light themes will follow the system theme
+      /// This will be changed by [SettingsManager]
       initial: AdaptiveThemeMode.system,
       builder: (theme, darkTheme) => MaterialApp(
         title: 'BlueBubbles',
+
+        /// Set the light theme from the [AdaptiveTheme]
         theme: theme,
+
+        /// Set the dark theme from the [AdaptiveTheme]
         darkTheme: darkTheme,
+
+        /// [NavigatorManager] is set as the navigator key so that we can control navigation from anywhere
         navigatorKey: NavigatorManager().navigatorKey,
+
+        /// [Home] is the starting widget for the app
         home: Home(),
       ),
     );
   }
 }
 
+/// [Home] widget is responsible for holding the main UI view.
+///
+/// It renders the main view and also initializes a few managers
+///
+/// The [LifeCycleManager] also is binded to the [WidgetsBindingObserver]
+/// so that it can know when the app is closed, paused, or resumed
 class Home extends StatefulWidget {
   Home({Key key}) : super(key: key);
 
@@ -112,69 +140,94 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
+    // We initialize the [LifeCycleManager] so that it is open, because [initState] occurs when the app is opened
     LifeCycleManager().opened();
-    // QueueManager().init();
+
+    // Initalize a bunch of managers
     SettingsManager().init();
     MethodChannelInterface().init(context);
+
+    // This initialization sets the function address in the native code to be used later
     BackgroundIsolateInterface.initialize();
+
+    // Get sharing media from files shared to the app from cold start
+    // This one only handles files, not text
     ReceiveSharingIntent.getInitialMedia()
         .then((List<SharedMediaFile> value) async {
       if (value == null) return;
 
+      // If we don't have storage permission, we can't do anything
       if (!await Permission.storage.request().isGranted) return;
 
+      // Add the attached files to a list
       List<File> attachments = <File>[];
       if (value != null) {
         value.forEach((element) {
-          debugPrint("${element.path}");
           attachments.add(File(element.path));
         });
       }
 
+      // Go to the new chat creator, with all of our attachments
       Navigator.of(context).pushAndRemoveUntil(
-          CupertinoPageRoute(
-            builder: (context) => NewChatCreator(
-              attachments: attachments,
-              isCreator: true,
-            ),
+        CupertinoPageRoute(
+          builder: (context) => NewChatCreator(
+            attachments: attachments,
+            isCreator: true,
           ),
-          (route) => route.isFirst);
+        ),
+        (route) => route.isFirst,
+      );
     });
+
+    // Same thing as [getInitialMedia] except for text
     ReceiveSharingIntent.getInitialText().then((String text) {
       if (text == null) return;
 
+      // Go to the new chat creator, with all of our text
       Navigator.of(context).pushAndRemoveUntil(
-          CupertinoPageRoute(
-            builder: (context) => NewChatCreator(
-              existingText: text,
-              isCreator: true,
-            ),
+        CupertinoPageRoute(
+          builder: (context) => NewChatCreator(
+            existingText: text,
+            isCreator: true,
           ),
-          (route) => route.isFirst);
+        ),
+        (route) => route.isFirst,
+      );
     });
 
+    // Request native code to retreive what the starting intent was
+    //
+    // The starting intent will be set when you click on a notification
+    // This is only really necessary when opening a notification and the app is fully closed
     MethodChannelInterface().invokeMethod("get-starting-intent").then((value) {
-      debugPrint("starting intent " + value.toString());
       if (value != null) {
+        // Open that chat
         MethodChannelInterface().openChat(value.toString());
       }
     });
 
+    // Create the notification in case it hasn't been already. Doing this multiple times won't do anything, so we just do it on every app start
     NotificationManager().createNotificationChannel();
+
+    // Get the saved settings from the settings manager after the first frame
     SchedulerBinding.instance.addPostFrameCallback(
         (_) => SettingsManager().getSavedSettings(context: context));
+
+    // Bind the lifecycle events
     WidgetsBinding.instance.addObserver(this);
   }
 
   @override
   void dispose() {
+    // Clean up observer when app is fully closed
     WidgetsBinding.instance.removeObserver(this);
-
     super.dispose();
   }
 
+  /// Called when the app is either closed or opened or paused
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Call the [LifeCycleManager] events based on the [state]
     if (state == AppLifecycleState.paused) {
       LifeCycleManager().close();
     } else if (state == AppLifecycleState.resumed) {
@@ -182,14 +235,18 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     }
   }
 
+  /// Render
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
+      // The stream builder connects to the [SocketManager] to check if the app has finished the setup or not
       body: StreamBuilder(
         stream: SocketManager().finishedSetup.stream,
         builder: (BuildContext context, AsyncSnapshot<bool> snapshot) {
           if (snapshot.hasData) {
+            // If the app has already gone through setup, show the convo list
+            // Otherwise show the setup
             if (snapshot.data) {
               return ConversationList(
                 showArchivedChats: false,

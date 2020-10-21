@@ -108,7 +108,6 @@ class SocketManager {
   Stream<String> get attachmentSenderCompleter =>
       _attachmentSenderCompleter.stream;
 
-  // Function connectCb;
   void addAttachmentDownloader(String guid, AttachmentDownloader downloader) {
     attachmentDownloaders[guid] = downloader;
   }
