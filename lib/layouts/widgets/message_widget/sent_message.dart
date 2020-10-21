@@ -262,7 +262,9 @@ class _SentMessageState extends State<SentMessage>
 
           List<Message> reactions = [];
           if (widget.message.hasReactions) {
-            reactions = await widget.message.getReactions();
+            reactions = await widget.message.getAssociatedMessages();
+            reactions = reactions.where((element) =>
+                ReactionTypes.toList().contains(element.associatedMessageType)).toList();
           }
           // if (widget.overlayEntry != null)
           Overlay.of(context).insert(_createMessageDetailsPopup(reactions));
@@ -271,6 +273,7 @@ class _SentMessageState extends State<SentMessage>
           opacity: 1.0, //_visible ? 1.0 : 0.0,
           duration: Duration(milliseconds: widget.shouldFadeIn ? 200 : 0),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: <Widget>[
               widget.attachments != null ? widget.attachments : Container(),
               Row(

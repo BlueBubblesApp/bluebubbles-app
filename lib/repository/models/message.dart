@@ -379,7 +379,7 @@ class Message {
     return (res.isNotEmpty) ? Chat.fromMap(res[0]) : null;
   }
 
-  Future<List<Message>> getReactions() async {
+  Future<List<Message>> getAssociatedMessages() async {
     List<Message> res = await Message.find({"associatedMessageGuid": this.guid});
     return res;
   }

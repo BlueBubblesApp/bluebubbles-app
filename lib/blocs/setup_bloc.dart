@@ -99,7 +99,11 @@ class SetupBloc {
 
   void receivedMessagesForChat(Chat chat, Map<String, dynamic> data) async {
     List messages = data["data"];
-    MessageHelper.bulkAddMessages(chat, messages, notifyForNewMessage: false);
+
+    // Since we got the messages in desc order, we want to reverse it.
+    // Reversing it will add older messages before newer one. This should help fix
+    // issues with associated message GUIDs
+    MessageHelper.bulkAddMessages(chat, messages.reversed.toList(), notifyForNewMessage: false);
 
     _progress = (_currentIndex + 1) / chats.length;
     _stream.sink.add(_progress);

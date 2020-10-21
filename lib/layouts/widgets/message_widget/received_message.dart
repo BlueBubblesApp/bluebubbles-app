@@ -330,7 +330,9 @@ class _ReceivedMessageState extends State<ReceivedMessage> {
           Feedback.forLongPress(context);
           List<Message> reactions = [];
           if (widget.message.hasReactions) {
-            reactions = await widget.message.getReactions();
+            reactions = await widget.message.getAssociatedMessages();
+            reactions = reactions.where((element) =>
+                ReactionTypes.toList().contains(element.associatedMessageType)).toList();
           }
 
           Overlay.of(context).insert(_createMessageDetailsPopup(reactions));

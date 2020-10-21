@@ -20,7 +20,7 @@ class _ReactionsState extends State<Reactions> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     if (widget.message != null && widget.message.hasReactions)
-      reactionRetreivalFuture = widget.message.getReactions();
+      reactionRetreivalFuture = widget.message.getAssociatedMessages();
 
     return reactionRetreivalFuture != null
         ? FutureBuilder(
@@ -30,7 +30,13 @@ class _ReactionsState extends State<Reactions> with TickerProviderStateMixin {
                 return Container();
               }
 
-              reactions = Reaction.getLatestReactionMap(snapshot.data);
+              List<Message> reactionMsgs = snapshot.data;
+              reactionMsgs = reactionMsgs
+                  .where((element) => ReactionTypes.toList()
+                      .contains(element.associatedMessageType))
+                  .toList();
+
+              reactions = Reaction.getLatestReactionMap(reactionMsgs);
 
               double topPadding = 1.0;
               double rightPadding = 0;

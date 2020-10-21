@@ -16,6 +16,13 @@ class ReactionTypes {
   static final String EMPHASIZE = "emphasize";
   // ignore: non_constant_identifier_names
   static final String LAUGH = "laugh";
+
+  static List<String> toList() {
+    return [
+      "like", "love", "dislike", "question", "emphasize", "laugh",
+      "-like", "-love", "-dislike", "-question", "-emphasize", "-laugh",
+    ];
+  }
 }
 
 class Reaction {
@@ -40,7 +47,8 @@ class Reaction {
         handleCache.add(cache);
 
         // Only add the reaction if it's not a "negative"
-        if (!msg.associatedMessageType.startsWith("-")) output.add(msg);
+        if (msg.associatedMessageType != null && !msg.associatedMessageType.startsWith("-"))
+          output.add(msg);
       }
     }
 
