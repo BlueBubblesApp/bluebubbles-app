@@ -38,6 +38,8 @@ class _MessageDetailsPopupState extends State<MessageDetailsPopup>
   @override
   void didChangeDependencies() async {
     super.didChangeDependencies();
+    
+    reactionWidgets = [];
     for (Message reaction in widget.reactions) {
       await reaction.getHandle();
       reactionWidgets.add(
@@ -47,6 +49,7 @@ class _MessageDetailsPopupState extends State<MessageDetailsPopup>
         ),
       );
     }
+    
     setState(() {});
   }
 

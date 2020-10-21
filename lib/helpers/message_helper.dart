@@ -10,7 +10,6 @@ import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:contacts_service/contacts_service.dart';
-import 'package:flutter/cupertino.dart';
 
 class MessageHelper {
   static Future<List<Message>> bulkAddMessages(
