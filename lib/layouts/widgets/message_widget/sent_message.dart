@@ -5,16 +5,14 @@ import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/helpers/widget_helper.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/delivered_receipt.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/reactions.dart';
-import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
 class SentMessage extends StatefulWidget {
   final bool showTail;
@@ -172,74 +170,6 @@ class _SentMessageState extends State<SentMessage>
             ? darken(Colors.blue[600], 0.2)
             : Colors.blue[600];
 
-    List<InlineSpan> textSpans = <InlineSpan>[];
-
-    if (widget.message != null && !isEmptyString(widget.message.text)) {
-      RegExp exp =
-          new RegExp(r'(?:(?:https?|ftp):\/\/)?[\w/\-?=%.]+\.[\w/\-?=%@&]+');
-      List<RegExpMatch> matches = exp.allMatches(widget.message.text).toList();
-
-      List<int> linkIndexMatches = <int>[];
-      matches.forEach((match) {
-        linkIndexMatches.add(match.start);
-        linkIndexMatches.add(match.end);
-      });
-      if (linkIndexMatches.length > 0) {
-        for (int i = 0; i < linkIndexMatches.length + 1; i++) {
-          if (i == 0) {
-            textSpans.add(
-              TextSpan(
-                  text: widget.message.text.substring(0, linkIndexMatches[i])),
-            );
-          } else if (i == linkIndexMatches.length && i - 1 >= 0) {
-            textSpans.add(
-              TextSpan(
-                text: widget.message.text.substring(
-                    linkIndexMatches[i - 1], widget.message.text.length),
-              ),
-            );
-          } else if (i - 1 >= 0) {
-            String text = widget.message.text
-                .substring(linkIndexMatches[i - 1], linkIndexMatches[i]);
-            if (exp.hasMatch(text)) {
-              textSpans.add(
-                TextSpan(
-                  text: text,
-                  recognizer: new TapGestureRecognizer()
-                    ..onTap = () async {
-                      String url = text;
-                      if (!url.startsWith("http://") &&
-                          !url.startsWith("https://")) {
-                        url = "http://" + url;
-                      }
-                      debugPrint("opening url " + url);
-                      MethodChannelInterface()
-                          .invokeMethod("open-link", {"link": url});
-                    },
-                  style: Theme.of(context).textTheme.bodyText2.apply(
-                        color: Colors.white,
-                        decoration: TextDecoration.underline,
-                      ),
-                ),
-              );
-            } else {
-              textSpans.add(
-                TextSpan(
-                  text: text,
-                ),
-              );
-            }
-          }
-        }
-      } else {
-        textSpans.add(
-          TextSpan(
-            text: widget.message.text,
-          ),
-        );
-      }
-    }
-
     return AnimatedOpacity(
       opacity: 1.0, //_visible ? 1.0 : 0.0,
       duration: Duration(milliseconds: widget.shouldFadeIn ? 200 : 0),
@@ -288,7 +218,7 @@ class _SentMessageState extends State<SentMessage>
                                   message: widget.message,
                                   chat: widget.chat,
                                   showTail: widget.showTail,
-                                  textSpans: textSpans,
+                                  textSpans: WidgetHelper.buildMessageSpans(context, widget.message),
                                 ),
                               ),
                             )
@@ -299,7 +229,7 @@ class _SentMessageState extends State<SentMessage>
                               message: widget.message,
                               chat: widget.chat,
                               showTail: widget.showTail,
-                              textSpans: textSpans,
+                              textSpans: WidgetHelper.buildMessageSpans(context, widget.message),
                             ),
                     ),
                     widget.message != null && !widget.message.hasAttachments
@@ -310,19 +240,7 @@ class _SentMessageState extends State<SentMessage>
                   ],
                 ),
               ),
-              AnimatedContainer(
-                width: (-widget.offset).clamp(0, 70).toDouble(),
-                duration:
-                    Duration(milliseconds: widget.offset == 0 ? 150 : 0),
-                child: Text(
-                  DateFormat('h:mm a')
-                      .format(widget.message.dateCreated)
-                      .toLowerCase(),
-                  style: Theme.of(context).textTheme.subtitle1,
-                  overflow: TextOverflow.clip,
-                  maxLines: 1,
-                ),
-              )
+              WidgetHelper.buildMessageTimestamp(context, widget.message, widget.offset)
             ],
           ),
           DeliveredReceipt(
