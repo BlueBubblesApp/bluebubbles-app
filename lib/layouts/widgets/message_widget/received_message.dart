@@ -1,7 +1,5 @@
-import 'package:bluebubbles/helpers/reaction.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
-import 'package:bluebubbles/layouts/widgets/message_widget/message_details_popup.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/reactions.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
@@ -45,7 +43,6 @@ class _ReceivedMessageState extends State<ReceivedMessage> {
   String contactTitle = "";
   MemoryImage contactImage;
   Contact contact;
-  OverlayEntry _entry;
 
   @override
   initState() {
@@ -312,97 +309,59 @@ class _ReceivedMessageState extends State<ReceivedMessage> {
       )
     ]));
 
-    return WillPopScope(
-      onWillPop: () async {
-        if (_entry != null) {
-          try {
-            _entry.remove();
-          } catch (e) {}
-          _entry = null;
-          return true;
-        } else {
-          return true;
-        }
-      },
-      child: GestureDetector(
-        behavior: HitTestBehavior.translucent,
-        onLongPress: () async {
-          Feedback.forLongPress(context);
-          List<Message> reactions = [];
-          if (widget.message.hasReactions) {
-            reactions = await widget.message.getAssociatedMessages();
-            reactions = reactions.where((element) =>
-                ReactionTypes.toList().contains(element.associatedMessageType)).toList();
-          }
-
-          Overlay.of(context).insert(_createMessageDetailsPopup(reactions));
-        },
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        contactItem,
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: <Widget>[
-            contactItem,
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: <Widget>[
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: msgItems,
-                ),
-                AnimatedContainer(
-                  width: (-widget.offset).clamp(0, 70).toDouble(),
-                  duration:
-                      Duration(milliseconds: widget.offset == 0 ? 150 : 0),
-                  child: Text(
-                    DateFormat('h:mm a')
-                        .format(widget.message.dateCreated)
-                        .toLowerCase(),
-                    style: Theme.of(context).textTheme.subtitle1,
-                    overflow: TextOverflow.clip,
-                    maxLines: 1,
-                  ),
-                )
-              ],
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: msgItems,
             ),
-            widget.timeStamp != null
-                ? Padding(
-                    padding: const EdgeInsets.all(14.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: <Widget>[
-                        RichText(
-                          text: TextSpan(
-                            style: Theme.of(context).textTheme.subtitle2,
-                            children: [
-                              TextSpan(
-                                text: "${widget.timeStamp["date"]}, ",
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .subtitle2
-                                    .apply(fontWeightDelta: 10),
-                              ),
-                              TextSpan(text: "${widget.timeStamp["time"]}")
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  )
-                : Container()
+            AnimatedContainer(
+              width: (-widget.offset).clamp(0, 70).toDouble(),
+              duration:
+                  Duration(milliseconds: widget.offset == 0 ? 150 : 0),
+              child: Text(
+                DateFormat('h:mm a')
+                    .format(widget.message.dateCreated)
+                    .toLowerCase(),
+                style: Theme.of(context).textTheme.subtitle1,
+                overflow: TextOverflow.clip,
+                maxLines: 1,
+              ),
+            )
           ],
         ),
-      ),
+        widget.timeStamp != null
+            ? Padding(
+                padding: const EdgeInsets.all(14.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    RichText(
+                      text: TextSpan(
+                        style: Theme.of(context).textTheme.subtitle2,
+                        children: [
+                          TextSpan(
+                            text: "${widget.timeStamp["date"]}, ",
+                            style: Theme.of(context)
+                                .textTheme
+                                .subtitle2
+                                .apply(fontWeightDelta: 10),
+                          ),
+                          TextSpan(text: "${widget.timeStamp["time"]}")
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            : Container()
+      ],
     );
-  }
-
-  OverlayEntry _createMessageDetailsPopup(List<Message> reactions) {
-    _entry = OverlayEntry(
-      builder: (context) => MessageDetailsPopup(
-        entry: _entry,
-        reactions: Reaction.getUniqueReactionMessages(reactions),
-        message: widget.message,
-      ),
-    );
-    return _entry;
   }
 }

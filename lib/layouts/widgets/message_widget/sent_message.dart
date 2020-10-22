@@ -4,10 +4,8 @@ import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
-import 'package:bluebubbles/helpers/reaction.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/delivered_receipt.dart';
-import 'package:bluebubbles/layouts/widgets/message_widget/message_details_popup.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/reactions.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
@@ -57,7 +55,6 @@ class SentMessage extends StatefulWidget {
 
 class _SentMessageState extends State<SentMessage>
     with TickerProviderStateMixin {
-  OverlayEntry _entry;
   // bool _visible = false;
 
   @override
@@ -243,86 +240,48 @@ class _SentMessageState extends State<SentMessage>
       }
     }
 
-    return WillPopScope(
-      onWillPop: () async {
-        if (_entry != null) {
-          try {
-            _entry.remove();
-          } catch (e) {}
-          _entry = null;
-          return true;
-        } else {
-          return true;
-        }
-      },
-      child: GestureDetector(
-        behavior: HitTestBehavior.translucent,
-        onLongPress: () async {
-          Feedback.forLongPress(context);
-
-          List<Message> reactions = [];
-          if (widget.message.hasReactions) {
-            reactions = await widget.message.getAssociatedMessages();
-            reactions = reactions
-                .where((element) => ReactionTypes.toList()
-                    .contains(element.associatedMessageType))
-                .toList();
-          }
-          Overlay.of(context).insert(_createMessageDetailsPopup(reactions));
-        },
-        child: AnimatedOpacity(
-          opacity: 1.0, //_visible ? 1.0 : 0.0,
-          duration: Duration(milliseconds: widget.shouldFadeIn ? 200 : 0),
-          child: Column(
+    return AnimatedOpacity(
+      opacity: 1.0, //_visible ? 1.0 : 0.0,
+      duration: Duration(milliseconds: widget.shouldFadeIn ? 200 : 0),
+      child: Column(
+        children: <Widget>[
+          widget.attachments != null ? widget.attachments : Container(),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
             children: <Widget>[
-              widget.attachments != null ? widget.attachments : Container(),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: <Widget>[
-                  AnimatedPadding(
-                    curve: Curves.easeInOut,
-                    duration: Duration(milliseconds: 200),
-                    padding: EdgeInsets.only(
-                      bottom: widget.showTail ? 10.0 : 3.0,
-                      right: (widget.message != null && widget.message.error > 0
-                          ? 10.0
-                          : 0),
-                    ),
-                    child: Stack(
-                      alignment: Alignment.topLeft,
-                      children: <Widget>[
-                        AnimatedPadding(
-                          duration: Duration(milliseconds: 250),
-                          curve: Curves.easeInOut,
-                          padding: EdgeInsets.only(
-                            left: widget.message != null &&
-                                    widget.message.hasReactions &&
-                                    !widget.message.hasAttachments
-                                ? 6.0
-                                : 0.0,
-                            top: widget.message != null &&
-                                    widget.message.hasReactions &&
-                                    !widget.message.hasAttachments
-                                ? 14.0
-                                : 0.0,
-                          ),
-                          child: widget.showHero
-                              ? Hero(
-                                  tag: "first",
-                                  child: Material(
-                                    type: MaterialType.transparency,
-                                    child: ActualSentMessage(
-                                      blueColor: blueColor,
-                                      createErrorPopup: this._createErrorPopup,
-                                      customContent: widget.customContent,
-                                      message: widget.message,
-                                      chat: widget.chat,
-                                      showTail: widget.showTail,
-                                      textSpans: textSpans,
-                                    ),
-                                  ),
-                                )
-                              : ActualSentMessage(
+              AnimatedPadding(
+                curve: Curves.easeInOut,
+                duration: Duration(milliseconds: 200),
+                padding: EdgeInsets.only(
+                  bottom: widget.showTail ? 10.0 : 3.0,
+                  right: (widget.message != null && widget.message.error > 0
+                      ? 10.0
+                      : 0),
+                ),
+                child: Stack(
+                  alignment: Alignment.topLeft,
+                  children: <Widget>[
+                    AnimatedPadding(
+                      duration: Duration(milliseconds: 250),
+                      curve: Curves.easeInOut,
+                      padding: EdgeInsets.only(
+                        left: widget.message != null &&
+                                widget.message.hasReactions &&
+                                !widget.message.hasAttachments
+                            ? 6.0
+                            : 0.0,
+                        top: widget.message != null &&
+                                widget.message.hasReactions &&
+                                !widget.message.hasAttachments
+                            ? 14.0
+                            : 0.0,
+                      ),
+                      child: widget.showHero
+                          ? Hero(
+                              tag: "first",
+                              child: Material(
+                                type: MaterialType.transparency,
+                                child: ActualSentMessage(
                                   blueColor: blueColor,
                                   createErrorPopup: this._createErrorPopup,
                                   customContent: widget.customContent,
@@ -331,71 +290,68 @@ class _SentMessageState extends State<SentMessage>
                                   showTail: widget.showTail,
                                   textSpans: textSpans,
                                 ),
+                              ),
+                            )
+                          : ActualSentMessage(
+                              blueColor: blueColor,
+                              createErrorPopup: this._createErrorPopup,
+                              customContent: widget.customContent,
+                              message: widget.message,
+                              chat: widget.chat,
+                              showTail: widget.showTail,
+                              textSpans: textSpans,
+                            ),
+                    ),
+                    widget.message != null && !widget.message.hasAttachments
+                        ? Reactions(
+                            message: widget.message,
+                          )
+                        : Container(),
+                  ],
+                ),
+              ),
+              AnimatedContainer(
+                width: (-widget.offset).clamp(0, 70).toDouble(),
+                duration:
+                    Duration(milliseconds: widget.offset == 0 ? 150 : 0),
+                child: Text(
+                  DateFormat('h:mm a')
+                      .format(widget.message.dateCreated)
+                      .toLowerCase(),
+                  style: Theme.of(context).textTheme.subtitle1,
+                  overflow: TextOverflow.clip,
+                  maxLines: 1,
+                ),
+              )
+            ],
+          ),
+          DeliveredReceipt(
+              message: widget.message,
+              showDeliveredReceipt: widget.showDeliveredReceipt,
+              shouldAnimate: widget.shouldFadeIn),
+          widget.timeStamp != null
+              ? Padding(
+                  padding: const EdgeInsets.all(14.0),
+                  child: RichText(
+                    text: TextSpan(
+                      style: Theme.of(context).textTheme.subtitle2,
+                      children: [
+                        TextSpan(
+                          text: "${widget.timeStamp["date"]}, ",
+                          style: Theme.of(context)
+                              .textTheme
+                              .subtitle2
+                              .apply(fontWeightDelta: 10),
                         ),
-                        widget.message != null && !widget.message.hasAttachments
-                            ? Reactions(
-                                message: widget.message,
-                              )
-                            : Container(),
+                        TextSpan(text: "${widget.timeStamp["time"]}")
                       ],
                     ),
                   ),
-                  AnimatedContainer(
-                    width: (-widget.offset).clamp(0, 70).toDouble(),
-                    duration:
-                        Duration(milliseconds: widget.offset == 0 ? 150 : 0),
-                    child: Text(
-                      DateFormat('h:mm a')
-                          .format(widget.message.dateCreated)
-                          .toLowerCase(),
-                      style: Theme.of(context).textTheme.subtitle1,
-                      overflow: TextOverflow.clip,
-                      maxLines: 1,
-                    ),
-                  )
-                ],
-              ),
-              DeliveredReceipt(
-                  message: widget.message,
-                  showDeliveredReceipt: widget.showDeliveredReceipt,
-                  shouldAnimate: widget.shouldFadeIn),
-              widget.timeStamp != null
-                  ? Padding(
-                      padding: const EdgeInsets.all(14.0),
-                      child: RichText(
-                        text: TextSpan(
-                          style: Theme.of(context).textTheme.subtitle2,
-                          children: [
-                            TextSpan(
-                              text: "${widget.timeStamp["date"]}, ",
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .subtitle2
-                                  .apply(fontWeightDelta: 10),
-                            ),
-                            TextSpan(text: "${widget.timeStamp["time"]}")
-                          ],
-                        ),
-                      ),
-                    )
-                  : Container(),
-            ],
-          ),
-        ),
+                )
+              : Container(),
+        ],
       ),
     );
-  }
-
-  OverlayEntry _createMessageDetailsPopup(List<Message> reactions) {
-    // OverlayEntry entry;
-    _entry = OverlayEntry(
-      builder: (context) => MessageDetailsPopup(
-        entry: _entry,
-        reactions: Reaction.getUniqueReactionMessages(reactions),
-        message: widget.message,
-      ),
-    );
-    return _entry;
   }
 }
 
