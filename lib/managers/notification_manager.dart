@@ -8,21 +8,30 @@ import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/material.dart';
 
+/// [NotificationManager] holds data relating to the current chat, and manages things such as
 class NotificationManager {
   factory NotificationManager() {
     return _manager;
   }
 
-  Chat _currentChat;
-  Chat get chat => _currentChat;
-  String get chatGuid => _currentChat != null ? _currentChat.guid : null;
-
   static final NotificationManager _manager = NotificationManager._internal();
   NotificationManager._internal();
 
+  /// [_currentChat] holds the current chat that is open.
+  /// This will allow us to check things such as "should we show this notification"
+  /// because if the chat is open, then we should not show a notification
+  Chat _currentChat;
+  Chat get chat => _currentChat;
+
+  /// Helper getter to try and get the guid of the [_currentChat]
+  String get chatGuid => _currentChat != null ? _currentChat.guid : null;
+
+  /// [processedItems] holds all of the notifications that have already been notified / processed
+  /// This ensures that items don't get processed twice
   List<String> processedItems = <String>[];
 
-  Uint8List personAvatar;
+  /// [defaultAvatar] is the avatar that is used if there is no contact icon
+  Uint8List defaultAvatar;
 
   /// Checks if a [guid] has been marked as processed
   bool hasProcessed(String guid) {
@@ -59,14 +68,39 @@ class NotificationManager {
     _currentChat = null;
   }
 
+  /// Creates notification channel for android
+  /// This is done through native code and all of this data is hard coded for now
   void createNotificationChannel() {
     MethodChannelInterface().invokeMethod("create-notif-channel", {
       "channel_name": "New Messages",
       "channel_description": "For new messages retreived",
-      "CHANNEL_ID": "com.bluebubbles..new_messages"
+      "CHANNEL_ID": "com.bluebubbles.new_messages"
     });
   }
 
+  /// Creates a notification by sending to native code
+  ///
+  /// @param [contentTitle] title of the notification
+  ///
+  /// @param [contentText] text of the notification
+  ///
+  /// @param [group] the tag for the group of the notification.
+  /// Notifications are grouped by a shared string, and this sets that value.
+  ///
+  /// @param [id] the id of the notification to separate it from other notifications. Generally this is just a randomized integer
+  ///
+  /// @param [summaryId] the id summary of the message. Generally this is just the chat rowid.
+  ///
+  /// @param [timeStamp] is the specified time at which the message was sent.
+  ///
+  /// @param [senderName] the contact which the message was sent from. This is just the contact title of the message.
+  ///
+  /// @param [groupConversation] tells the notification if it is a group conversation.
+  /// This is something just required by android.
+  ///
+  /// @param [handle] optional parameter of the handle of the message
+  ///
+  /// @param [contact] optional parameter of the contact of the message
   void createNewNotification(
       String contentTitle,
       String contentText,
@@ -81,20 +115,24 @@ class NotificationManager {
     Uint8List contactIcon;
 
     try {
+      // If there is a contact specified, we can use it's avatar
       if (contact != null) {
         if (contact.avatar.length > 0) contactIcon = contact.avatar;
+        // Otherwise if there isn't, we use the [defaultAvatar]
       } else {
-        if (personAvatar == null) {
+        // If [defaultAvatar] is not loaded, load it from assets
+        if (defaultAvatar == null) {
           ByteData file = await loadAsset("assets/images/person.png");
-          personAvatar = file.buffer.asUint8List();
+          defaultAvatar = file.buffer.asUint8List();
         }
 
-        contactIcon = personAvatar;
+        contactIcon = defaultAvatar;
       }
     } catch (ex) {
       debugPrint("Failed to load contact avatar: ${ex.toString()}");
     }
 
+    // Invoke the method in native code
     MethodChannelInterface().platform.invokeMethod("new-message-notification", {
       "CHANNEL_ID": "com.bluebubbles..new_messages",
       "CHANNEL_NAME": "New Messages",
@@ -110,6 +148,7 @@ class NotificationManager {
     });
   }
 
+  /// Creates a notification for when the socket is disconnected
   void createSocketWarningNotification() {
     MethodChannelInterface()
         .platform
@@ -118,6 +157,7 @@ class NotificationManager {
     });
   }
 
+  /// Clears the socket warning notification
   void clearSocketWarning() {
     MethodChannelInterface().platform.invokeMethod("clear-socket-issue");
   }
