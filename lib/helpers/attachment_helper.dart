@@ -60,7 +60,9 @@ class AttachmentHelper {
     List<Item> phones = <Item>[];
     _contact.keys.forEach((String key) {
       if (key.contains("EMAIL")) {
-        String label = key.split("type=")[2].replaceAll(";", "");
+        String label = key.contains("type=")
+            ? key.split("type=")[2].replaceAll(";", "")
+            : "HOME";
         emails.add(
           Item(
             value: (_contact[key] as Map<String, dynamic>)["value"],

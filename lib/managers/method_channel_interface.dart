@@ -145,6 +145,8 @@ class MethodChannelInterface {
         // Get the path to where the temp files are stored
         String sharedFilesPath = SettingsManager().sharedFilesPath;
 
+        debugPrint("shareAttachments " + sharedFilesPath);
+
         // Loop through all of the attachments sent by native code
         call.arguments.forEach((key, element) {
           // Create the sharedFilesPath if it hasn't been already created

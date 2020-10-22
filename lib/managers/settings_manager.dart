@@ -27,7 +27,7 @@ class SettingsManager {
 
   /// [sharedFilesPath] is the path where most temporary files like those inserted from the keyboard or shared to the app are stored
   /// The getter simply is a helper to that path
-  String get sharedFilesPath => "$appDocDir/sharedFiles";
+  String get sharedFilesPath => "${appDocDir.path}/sharedFiles";
 
   /// [settings] is just an instance of the current settings that are saved
   Settings settings;

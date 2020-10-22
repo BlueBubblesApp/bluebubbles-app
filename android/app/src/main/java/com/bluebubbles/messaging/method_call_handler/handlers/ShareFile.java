@@ -14,7 +14,7 @@ import io.flutter.plugin.common.MethodChannel;
 
 public class ShareFile implements Handler{
 
-    public static String TAG = "get-server-url";
+    public static String TAG = "share-file";
 
     private Context context;
     private MethodCall call;

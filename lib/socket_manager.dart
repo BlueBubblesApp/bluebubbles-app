@@ -56,9 +56,6 @@ class SocketManager {
   //Socket io
   SocketIO socket;
 
-  //setstate for these widgets
-  Map<String, Function> subscribers = new Map();
-
   Map<String, AttachmentDownloader> attachmentDownloaders = Map();
   Map<String, AttachmentSender> attachmentSenders = Map();
   Map<int, Function> socketProcesses = new Map();
@@ -81,7 +78,6 @@ class SocketManager {
   int addSocketProcess(Function() cb) {
     int processId = Random().nextInt(10000);
     socketProcesses[processId] = cb;
-    // _socketProcessUpdater.sink.add(socketProcesses.keys.toList());
     Future.delayed(Duration(milliseconds: Random().nextInt(100)), () {
       if (state == SocketState.DISCONNECTED || state == SocketState.FAILED) {
         _manager.startSocketIO();
