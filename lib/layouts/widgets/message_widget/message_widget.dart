@@ -162,6 +162,14 @@ class _MessageState extends State<MessageWidget> {
             )
           : Container();
 
+      bool hasNullMime = false;
+      for (Attachment attachment in widget.savedAttachmentData?.attachments ?? []) {
+        if (attachment.mimeType == null) {
+          hasNullMime = true;
+          break;
+        }
+      }
+
       if (widget.fromSelf) {
         widgetStack.add(SentMessage(
           offset: widget.offset,
@@ -189,6 +197,7 @@ class _MessageState extends State<MessageWidget> {
           customContent: widget.customContent,
           isFromMe: widget.fromSelf,
           attachments: widgetAttachments,
+          hasNullMime: hasNullMime,
         ));
       }
 

@@ -231,7 +231,7 @@ Future<MemoryImage> loadAvatar(Chat chat, String address) async {
 
 List<RegExpMatch> parseLinks(String text) {
   RegExp exp = new RegExp(
-      r'((https?:\/\/)|(www\.))[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}([-a-zA-Z0-9\/()@:%_.~#?&=\*\[\]]{0,})\b');
+      r'(((h|H)ttps?:\/\/)|(www\.))[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}([-a-zA-Z0-9\/()@:%_.~#?&=\*\[\]]{0,})\b');
   return exp.allMatches(text).toList();
 }
 

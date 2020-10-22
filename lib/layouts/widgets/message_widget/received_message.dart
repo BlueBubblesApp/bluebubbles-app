@@ -18,6 +18,7 @@ class ReceivedMessage extends StatefulWidget {
   final List<Widget> customContent;
   final bool isFromMe;
   final Widget attachments;
+  final bool hasNullMime;
 
   ReceivedMessage({
     Key key,
@@ -30,6 +31,7 @@ class ReceivedMessage extends StatefulWidget {
     @required this.customContent,
     @required this.isFromMe,
     @required this.attachments,
+    @required this.hasNullMime,
     this.offset,
   }) : super(key: key);
 
@@ -41,11 +43,15 @@ class _ReceivedMessageState extends State<ReceivedMessage> {
   String contactTitle = "";
   MemoryImage contactImage;
   Contact contact;
+  bool hasHyperlinks = false;
 
   @override
   initState() {
     super.initState();
     getContactTitle();
+
+    // Length == 2 because 1 for the preview, and 2 for the site icon
+    this.hasHyperlinks = parseLinks(widget.message.text).isNotEmpty;
   }
 
   @override
@@ -132,7 +138,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> {
     }
 
     List<Widget> messageWidget = [
-      widget.message == null || !isEmptyString(widget.message.text)
+      widget.message != null && !isEmptyString(widget.message.text)
           ? Stack(
               alignment: AlignmentDirectional.bottomStart,
               children: <Widget>[
@@ -195,42 +201,44 @@ class _ReceivedMessageState extends State<ReceivedMessage> {
     msgItems.add(
         new Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Padding(padding: EdgeInsets.only(bottom: 1.0), child: widget.attachments),
-      Padding(
-        padding: EdgeInsets.only(
-            bottom: widget.showTail ? 10.0 : 3.0,
-            left: widget.showTail || !widget.showHandle ? 0.0 : 35.0),
-        child: Stack(
-          alignment: Alignment.topRight,
-          children: <Widget>[
-            AnimatedPadding(
-              duration: Duration(milliseconds: 250),
-              curve: Curves.easeInOut,
-              padding: EdgeInsets.only(
-                right: widget.message != null &&
-                        widget.message.hasReactions &&
-                        !widget.message.hasAttachments
-                    ? 6.0
-                    : 0.0,
-                top: widget.message != null &&
-                        widget.message.hasReactions &&
-                        !widget.message.hasAttachments
-                    ? 14.0
-                    : 0.0,
+      (!this.hasHyperlinks || !widget.hasNullMime)
+        ? Padding(
+          padding: EdgeInsets.only(
+              bottom: widget.showTail ? 10.0 : 3.0,
+              left: widget.showTail || !widget.showHandle ? 0.0 : 35.0),
+          child: Stack(
+            alignment: Alignment.topRight,
+            children: <Widget>[
+              AnimatedPadding(
+                duration: Duration(milliseconds: 250),
+                curve: Curves.easeInOut,
+                padding: EdgeInsets.only(
+                  right: widget.message != null &&
+                          widget.message.hasReactions &&
+                          !widget.message.hasAttachments
+                      ? 6.0
+                      : 0.0,
+                  top: widget.message != null &&
+                          widget.message.hasReactions &&
+                          !widget.message.hasAttachments
+                      ? 14.0
+                      : 0.0,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: messageWidget,
+                ),
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: messageWidget,
-              ),
-            ),
-            !widget.message.hasAttachments
-                ? Reactions(
-                    message: widget.message,
-                  )
-                : Container(),
-          ],
-        ),
-      )
+              !widget.message.hasAttachments
+                  ? Reactions(
+                      message: widget.message,
+                    )
+                  : Container(),
+            ],
+          ),
+        )
+      : Container()
     ]));
 
     return Column(
