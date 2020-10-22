@@ -142,7 +142,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
 
     // Initalize a bunch of managers
     SettingsManager().init();
-    MethodChannelInterface().init(context);
+    MethodChannelInterface().init();
 
     // This initialization sets the function address in the native code to be used later
     BackgroundIsolateInterface.initialize();

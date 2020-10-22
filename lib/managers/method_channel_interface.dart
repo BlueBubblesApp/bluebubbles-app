@@ -20,6 +20,9 @@ import 'package:flutter/services.dart';
 import 'package:path/path.dart';
 import 'package:permission_handler/permission_handler.dart';
 
+/// [MethodChannelInterface] is a manager used to talk to native code via a flutter MethodChannel
+///
+/// This class is a singleton
 class MethodChannelInterface {
   factory MethodChannelInterface() {
     return _interface;
@@ -30,84 +33,138 @@ class MethodChannelInterface {
 
   MethodChannelInterface._internal();
 
-  //interface with native code
+  /// [platform] is the actual channel which can be used to talk to native code
   MethodChannel platform;
 
-  BuildContext _context;
+  /// [headless] identifies if this MethodChannelInterface is used when the app is fully closed, in hich case some actions cannot be done
+  bool headless = false;
 
-  void init(BuildContext context, {MethodChannel channel}) {
-    //this happens if it is a headless thread
-    if (channel != null) {
-      platform = channel;
-      // platform.setMethodCallHandler(callHandler);
+  /// Initialize all of the platform channels
+  ///
+  /// @param [customChannel] an optional custom platform channel to use by the methodchannelinterface
+  void init({MethodChannel customChannel}) {
+    // If a [customChannel] is set, then we should use that
+    if (customChannel != null) {
+      headless = true;
+      platform = customChannel;
+      // Otherwise, we set the [platform] as the default
     } else {
       platform = MethodChannel('com.bluebubbles.messaging');
-      _context = context;
     }
 
-    platform.setMethodCallHandler(callHandler);
+    // We set the handler for all of the method calls from the platform to be the [callHandler]
+    platform.setMethodCallHandler(_callHandler);
   }
 
+  /// Helper method to invoke a method in the native code
+  ///
+  /// @param [method] is the tag to be recognized in native code
+  /// @param [arguments] is an optional parameter which can be used to send other data along with the method call
   Future invokeMethod(String method, [dynamic arguments]) async {
     return platform.invokeMethod(method, arguments);
   }
 
-  Future<dynamic> callHandler(call) async {
+  /// The handler used to handle all methods sent from native code to the dart vm
+  ///
+  /// @param [call] is the actual [MethodCall] sent from native code. It has data such as the method name and the arguments.
+  Future<dynamic> _callHandler(MethodCall call) async {
+    // call.method is the name of the call from native code
     switch (call.method) {
       case "new-server":
-        debugPrint("New Server: " + call.arguments.toString());
-        debugPrint(call.arguments.toString().length.toString());
-        SettingsManager().settings.serverAddress = call.arguments
-            .toString()
-            .substring(1, call.arguments.toString().length - 1);
-        await SettingsManager().saveSettings(SettingsManager().settings,
-            connectToSocket: false, authorizeFCM: false);
-        SocketManager().startSocketIO(forceNewConnection: true);
+        // The arguments for a new server are formatted with the new server address inside square brackets
+        // As such: [https://alksdjfoaehg.ngrok.io]
+        String address = call.arguments.toString();
+
+        // We remove the brackets from the formatting
+        address = address.substring(1, address.length - 1);
+
+        // And then tell the socket to set the new server address
+        await SocketManager().newServer(address);
+
         return new Future.value("");
       case "new-message":
+        // Retreive the data for this message as a json
         Map<String, dynamic> data = jsonDecode(call.arguments);
-        IncomingQueue()
-            .add(new QueueItem(event: "handle-message", item: {"data": data}));
+
+        // Add it to the queue with the data as the item
+        IncomingQueue().add(new QueueItem(
+            event: IncomingQueue.HANDLE_MESSAGE_EVENT, item: {"data": data}));
+
         return new Future.value("");
       case "updated-message":
+        // Retreive the data for this message as a json
+        Map<String, dynamic> data = jsonDecode(call.arguments);
+
+        // Add it to the queue with the data as the item
         IncomingQueue().add(new QueueItem(
-            event: "handle-updated-message",
-            item: {"data": jsonDecode(call.arguments)}));
+            event: IncomingQueue.HANDLE_UPDATE_MESSAGE, item: {"data": data}));
+
         return new Future.value("");
       case "ChatOpen":
-        debugPrint("open chat " + call.arguments.toString());
         openChat(call.arguments);
-        return new Future.value("");
 
-      case "restart-fcm":
-        debugPrint("restart fcm");
         return new Future.value("");
       case "reply":
-        debugPrint("replying with data " + call.arguments.toString());
+        // Find the chat to reply to
         Chat chat = await Chat.findOne({"guid": call.arguments["chat"]});
+
+        // If no chat is found, then we can't do anything
+        if (chat == null) {
+          // If `reply` is called when the app is in a background isolate, then we need to close it once we are done
+          closeThread();
+
+          return new Future.value("");
+        }
+
+        // Send the message to that chat
         ActionHandler.sendMessage(chat, call.arguments["text"]);
+
         return new Future.value("");
       case "markAsRead":
+        // Find the chat to mark as read
         Chat chat = await Chat.findOne({"guid": call.arguments["chat"]});
+
+        // If no chat is found, then we can't do anything
+        if (chat == null) {
+          // If `markAsRead` is called when the app is in a background isolate, then we need to close it once we are done
+          closeThread();
+
+          return new Future.value("");
+        }
+
+        // Remove the notificaiton from that chat
         SocketManager().removeChatNotification(chat);
+
+        // In case this method is called when the app is in a background isolate
         closeThread();
+
         return new Future.value("");
       case "shareAttachments":
-        debugPrint("Received shared attachments: " +
-            call.arguments.runtimeType.toString());
         List<File> attachments = <File>[];
-        String appDocPath = SettingsManager().appDocDir.path;
+
+        // Get the path to where the temp files are stored
+        String sharedFilesPath = SettingsManager().sharedFilesPath;
+
+        // Loop through all of the attachments sent by native code
         call.arguments.forEach((key, element) {
-          debugPrint("attachment " + key.runtimeType.toString());
-          Directory("$appDocPath/sharedFiles").createSync();
-          String pathName = "$appDocPath/sharedFiles/$key";
-          debugPrint("HERE! $pathName");
+          // Create the sharedFilesPath if it hasn't been already created
+          Directory(sharedFilesPath).createSync();
+
+          // Create a new path for each file
+          // [key] is the file name
+          String pathName = "$sharedFilesPath/$key";
+
+          // Create the file in that directory
           File file = File(pathName);
+
+          // Write all of the bytes to that file
           file.writeAsBytesSync(element.toList());
+
+          // Add each file to the attachment list
           attachments.add(file);
         });
-        if (!await Permission.storage.request().isGranted) return;
 
+        // Go to the new chat creator with all of these attachments to select a chat
         NavigatorManager().navigatorKey.currentState.pushAndRemoveUntil(
               CupertinoPageRoute(
                 builder: (context) => NewChatCreator(
@@ -120,8 +177,11 @@ class MethodChannelInterface {
         return new Future.value("");
 
       case "shareText":
+
+        // Get the text that was shared to the app
         String text = call.arguments;
-        debugPrint("got text " + text);
+
+        // Navigate to the new chat creator with the specified text
         NavigatorManager().navigatorKey.currentState.pushAndRemoveUntil(
               CupertinoPageRoute(
                 builder: (context) => NewChatCreator(
@@ -131,41 +191,61 @@ class MethodChannelInterface {
               ),
               (route) => route.isFirst,
             );
+
+        return new Future.value("");
+      default:
         return new Future.value("");
     }
   }
 
+  /// [closeThread] closes the background isolate when the app is fully closed
   void closeThread() {
-    if (_context == null) {
+    // Only do this if we are indeed running in the background
+    if (headless) {
+      // Tells the native code to close the isolate
       invokeMethod("close-background-isolate");
-      debugPrint("Close");
+
+      debugPrint("(closeThread) -> Closed the background isolate");
     }
   }
 
   void openChat(String id) async {
-    if (_context == null) return;
+    // Try to find the specified chat to open
     Chat openedChat = await Chat.findOne({"GUID": id});
+
+    // If we did find one, then we can move on
     if (openedChat != null) {
+      // Get all of the participants of the chat so that it looks right when it is opened
       await openedChat.getParticipants();
-      String title = await getFullChatTitle(openedChat);
+
+      // Make sure that the title is set
+      String title = await openedChat.getTitle();
+
+      // Create a new [MessageBloc] for this chat
       MessageBloc messageBloc = new MessageBloc(openedChat);
+
+      // Clear all notifications for this chat
       NotificationManager().switchChat(openedChat);
 
-      Navigator.of(_context).pushAndRemoveUntil(
-        CupertinoPageRoute(
-          builder: (context) => ConversationView(
-            chat: openedChat,
-            messageBloc: messageBloc,
-            title: title,
+      // Actually navigate to the chat page
+      NavigatorManager().navigatorKey.currentState
+        ..pushAndRemoveUntil(
+          CupertinoPageRoute(
+            builder: (context) => ConversationView(
+              chat: openedChat,
+              messageBloc: messageBloc,
+              title: title,
+            ),
           ),
-        ),
-        (route) => route.isFirst,
-      );
-      Future.delayed(Duration(milliseconds: 500), () {
-        NotificationManager().switchChat(openedChat);
-      });
+          (route) => route.isFirst,
+        );
+
+      // // We have a delay, just in case the first [switchChat] did not work.
+      // Future.delayed(Duration(milliseconds: 500), () {
+      //   NotificationManager().switchChat(openedChat);
+      // });
     } else {
-      debugPrint("could not find chat");
+      debugPrint("(OpenChat) -> Failed to find chat");
     }
   }
 }

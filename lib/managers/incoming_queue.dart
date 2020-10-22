@@ -9,12 +9,15 @@ class IncomingQueue extends QueueManager {
 
   static final IncomingQueue _queue = IncomingQueue._internal();
 
+  static const String HANDLE_MESSAGE_EVENT = "handle-message";
+  static const String HANDLE_UPDATE_MESSAGE = "handle-updated-message";
+
   IncomingQueue._internal();
 
   @override
   Future<void> handleQueueItem(QueueItem item) async {
     switch (item.event) {
-      case "handle-message":
+      case HANDLE_MESSAGE_EVENT:
         {
           Map<String, dynamic> params = item.item;
           await ActionHandler.handleMessage(params["data"],
@@ -27,7 +30,7 @@ class IncomingQueue extends QueueManager {
                   : false);
           break;
         }
-      case "handle-updated-message":
+      case HANDLE_UPDATE_MESSAGE:
         {
           Map<String, dynamic> params = item.item;
           await ActionHandler.handleUpdatedMessage(params["data"],

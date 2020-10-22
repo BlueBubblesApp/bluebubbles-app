@@ -31,7 +31,7 @@ callbackHandler() async {
   await DBProvider.db.initDB();
   await ContactManager().getContacts(headless: true);
   SettingsManager().init();
-  MethodChannelInterface().init(null, channel: _backgroundChannel);
+  MethodChannelInterface().init(customChannel: _backgroundChannel);
   // LifeCycleManager().opened();
   LifeCycleManager().close();
   // SocketManager().connectCb = () {
