@@ -4,6 +4,8 @@ import 'package:flutter/cupertino.dart';
 ///
 /// It's purpose is to keep the text in each text field even when you leave a conversation
 /// so that when you re-enter, the text will still be there
+///
+/// This class is a singleton
 class TextFieldBloc {
   factory TextFieldBloc() {
     return _chatBloc;
@@ -13,17 +15,20 @@ class TextFieldBloc {
 
   TextFieldBloc._internal();
 
-  Map<String, TextEditingController> _textFields = new Map();
+  Map<String, TextFieldData> _textFields = new Map();
 
-  TextEditingController getTextField(String chatGuid) {
+  TextFieldData getTextField(String chatGuid) {
     if (_textFields.containsKey(chatGuid)) {
       return _textFields[chatGuid];
     } else {
-      _textFields[chatGuid] = new TextEditingController();
+      _textFields[chatGuid].controller = new TextEditingController();
       return _textFields[chatGuid];
     }
   }
 }
 
 /// [TextFieldData] holds a TextEditingController and a list of strings that link to attachments
-class TextFieldData {}
+class TextFieldData {
+  TextEditingController controller;
+  List<String> attachments = [];
+}

@@ -66,9 +66,11 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
   @override
   void initState() {
     super.initState();
-    _controller = widget.chat != null
-        ? TextFieldBloc().getTextField(widget.chat.guid)
-        : new TextEditingController();
+    TextFieldData textFieldData;
+    if (widget.chat != null) {
+      textFieldData = TextFieldBloc().getTextField(widget.chat.guid);
+    }
+    _controller = textFieldData?.controller ?? new TextEditingController();
     if (widget.existingText != null) {
       _controller.text = widget.existingText;
     }
@@ -118,20 +120,24 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
               ),
               actions: <Widget>[
                 new FlatButton(
-                    child: new Text("Send",
-                        style: Theme.of(context).textTheme.bodyText1),
-                    onPressed: () {
-                      OutgoingQueue().add(new QueueItem(
-                          event: "send-attachment",
-                          item: new AttachmentSender(
-                            file,
-                            widget.chat,
-                            "",
-                          )));
+                  child: new Text("Send",
+                      style: Theme.of(context).textTheme.bodyText1),
+                  onPressed: () {
+                    OutgoingQueue().add(
+                      new QueueItem(
+                        event: "send-attachment",
+                        item: new AttachmentSender(
+                          file,
+                          widget.chat,
+                          "",
+                        ),
+                      ),
+                    );
 
-                      // Remove the OG alert dialog
-                      Navigator.of(context).pop();
-                    }),
+                    // Remove the OG alert dialog
+                    Navigator.of(context).pop();
+                  },
+                ),
                 new FlatButton(
                     child: new Text("Discard",
                         style: Theme.of(context).textTheme.subtitle1),
@@ -400,7 +406,6 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                                 onTap: () {
                                   HapticFeedback.selectionClick();
                                 },
-                                // autofocus: true,
                                 key: _searchFormKey,
                                 onChanged: (String value) {
                                   if (value.isEmpty && this.mounted) {
@@ -542,16 +547,19 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                                     alignment: Alignment.center,
                                     children: [
                                       AnimatedOpacity(
-                                          opacity: _controller.text.isEmpty &&
-                                                  pickedImages.length == 0
-                                              ? 1.0
-                                              : 0.0,
-                                          duration: Duration(milliseconds: 150),
-                                          child: Icon(Icons.mic,
-                                              color: (isRecording)
-                                                  ? Colors.red
-                                                  : Colors.white,
-                                              size: 20)),
+                                        opacity: _controller.text.isEmpty &&
+                                                pickedImages.length == 0
+                                            ? 1.0
+                                            : 0.0,
+                                        duration: Duration(milliseconds: 150),
+                                        child: Icon(
+                                          Icons.mic,
+                                          color: (isRecording)
+                                              ? Colors.red
+                                              : Colors.white,
+                                          size: 20,
+                                        ),
+                                      ),
                                       AnimatedOpacity(
                                           opacity:
                                               (_controller.text.isNotEmpty ||
