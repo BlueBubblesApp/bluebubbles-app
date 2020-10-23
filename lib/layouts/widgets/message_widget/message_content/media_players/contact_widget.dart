@@ -33,6 +33,7 @@ class _ContactWidgetState extends State<ContactWidget> {
     String appleContact = widget.file.readAsStringSync();
     contact = AttachmentHelper.parseAppleContact(appleContact);
     initials = getInitials(contact.displayName, " ");
+    if (this.mounted) setState(() {});
   }
 
   @override
@@ -43,7 +44,7 @@ class _ContactWidgetState extends State<ContactWidget> {
         height: 60,
         width: 250,
         child: Material(
-          color: Colors.transparent,
+          color: Theme.of(context).accentColor,
           child: InkWell(
             onTap: () async {
               MethodChannelInterface().invokeMethod(
@@ -61,9 +62,22 @@ class _ContactWidgetState extends State<ContactWidget> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: <Widget>[
-                  Text(
-                    contact.displayName,
-                    style: Theme.of(context).textTheme.bodyText1,
+                  Padding(
+                    padding: EdgeInsets.only(left: 20.0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Contact Card",
+                          style: Theme.of(context).textTheme.subtitle2,
+                        ),
+                        Text(
+                          contact.displayName,
+                          style: Theme.of(context).textTheme.bodyText1,
+                        )
+                      ]
+                    ),
                   ),
                   Spacer(
                     flex: 1,
@@ -83,16 +97,19 @@ class _ContactWidgetState extends State<ContactWidget> {
                           ? initials
                           : Text(
                               initials,
-                              style: Theme.of(context).textTheme.bodyText1,
+                              style: Theme.of(context).textTheme.headline1,
                             ),
                       alignment: AlignmentDirectional.center,
                     ),
                   ),
-                  Icon(
-                    Icons.arrow_forward_ios,
-                    color: Colors.white,
-                    size: 15,
-                  ),
+                  Padding(
+                    padding: EdgeInsets.only(left: 10.0, right: 10.0),
+                    child: Icon(
+                      Icons.arrow_forward_ios,
+                      color: Colors.white,
+                      size: 15,
+                    ),
+                  )
                 ],
               ),
             ),

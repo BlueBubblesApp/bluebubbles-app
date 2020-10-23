@@ -151,6 +151,8 @@ class MessageHelper {
         String key;
         if (mime == null) {
           key = "link";
+        } else if (mime.contains("vcard")) {
+          key = "contact card";
         } else if (mime.contains("location")) {
           key = "location";
         } else if (mime.contains("contact")) {
