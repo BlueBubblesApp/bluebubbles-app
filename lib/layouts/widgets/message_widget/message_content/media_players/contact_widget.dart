@@ -31,7 +31,13 @@ class _ContactWidgetState extends State<ContactWidget> {
     super.initState();
 
     String appleContact = widget.file.readAsStringSync();
-    contact = AttachmentHelper.parseAppleContact(appleContact);
+
+    try {
+      contact = AttachmentHelper.parseAppleContact(appleContact);
+    } catch (ex) {
+      contact = new Contact(displayName: "Invalid Contact");
+    }
+  
     initials = getInitials(contact.displayName, " ");
     if (this.mounted) setState(() {});
   }
