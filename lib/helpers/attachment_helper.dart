@@ -49,13 +49,14 @@ class AttachmentHelper {
     debugPrint(_contact.toString());
 
     Contact contact = Contact();
-    if (_contact.containsKey("N")) {
+    if (_contact.containsKey("N") && _contact["N"].toString().isNotEmpty) {
       String firstName = (_contact["N"] + " ").split(";")[1];
       String lastName = _contact["N"].split(";")[0];
       contact.displayName = firstName + " " + lastName;
     } else if (_contact.containsKey("FN")) {
       contact.displayName = _contact["FN"];
     }
+
     List<Item> emails = <Item>[];
     List<Item> phones = <Item>[];
     _contact.keys.forEach((String key) {

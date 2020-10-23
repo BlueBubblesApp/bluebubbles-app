@@ -9,12 +9,14 @@ class NewChatCreatorTextField extends StatefulWidget {
   final Function(UniqueContact) onRemove;
   final bool isCreator;
   final List<UniqueContact> selectedContacts;
+  final List<UniqueContact> allContacts;
   NewChatCreatorTextField(
       {Key key,
       @required this.controller,
       @required this.onCreate,
       @required this.onRemove,
       @required this.selectedContacts,
+      @required this.allContacts,
       @required this.isCreator})
       : super(key: key);
 
@@ -43,34 +45,36 @@ class _NewChatCreatorTextFieldState extends State<NewChatCreatorTextField> {
     List<Widget> items = [];
     for (UniqueContact contact in widget.selectedContacts) {
       items.add(
-        Padding(
-          padding: EdgeInsets.only(right: 5.0, top: 2.0, bottom: 2.0),
-          child: ClipRRect(
-            borderRadius: BorderRadius.all(Radius.circular(5.0)),
-            child: Container(
-              padding: EdgeInsets.all(5.0),
-              color: Theme.of(context).primaryColor,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  Text(
-                    contact.displayName.trim(),
-                    //style: textStyle?.copyWith(color: Colors.orange),
-                  ),
-                  SizedBox(
-                    width: 5.0,
-                  ),
-                  InkWell(
-                    child: Icon(
-                      Icons.close,
-                      size: 15.0,
+        GestureDetector(
+          onTap: () {
+            widget.onRemove(contact);
+          },
+          child: Padding(
+            padding: EdgeInsets.only(right: 5.0, top: 2.0, bottom: 2.0),
+            child: ClipRRect(
+              borderRadius: BorderRadius.all(Radius.circular(5.0)),
+              child: Container(
+                padding: EdgeInsets.all(5.0),
+                color: Theme.of(context).primaryColor,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    Text(
+                      contact.displayName.trim(),
+                      //style: textStyle?.copyWith(color: Colors.orange),
                     ),
-                    onTap: () {
-                      widget.onRemove(contact);
-                    },
-                  )
-                ],
+                    SizedBox(
+                      width: 5.0,
+                    ),
+                    InkWell(
+                      child: Icon(
+                        Icons.close,
+                        size: 15.0,
+                      )
+                    )
+                  ],
+                ),
               ),
             ),
           ),
@@ -80,8 +84,10 @@ class _NewChatCreatorTextFieldState extends State<NewChatCreatorTextField> {
 
     // Add the next text field
     items.add(
-      SizedBox(
-        width: 100.0,
+      ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: 255.0
+        ),
         child: CupertinoTextField(
           focusNode: inputFieldNode,
           onSubmitted: (String done) {
@@ -92,10 +98,16 @@ class _NewChatCreatorTextFieldState extends State<NewChatCreatorTextField> {
               widget.selectedContacts
                   .add(new UniqueContact(address: done, displayName: done));
             } else {
-              Scaffold.of(context).showSnackBar(SnackBar(
-                content: Text("Invalid Number $done"),
-                duration: Duration(milliseconds: 500),
-              ));
+              if (widget.allContacts.length == 0) {
+                Scaffold.of(context).showSnackBar(SnackBar(
+                  content: Text("Invalid Number $done"),
+                  duration: Duration(milliseconds: 500),
+                ));
+              } else {
+                widget.controller.clear();
+                widget.selectedContacts
+                  .add(widget.allContacts[0]);
+              }
             }
           },
           controller: widget.controller,
@@ -103,6 +115,7 @@ class _NewChatCreatorTextFieldState extends State<NewChatCreatorTextField> {
           maxLines: 1,
           autocorrect: false,
           placeholder: "Type a name...",
+          placeholderStyle: Theme.of(context).textTheme.subtitle1,
           padding: EdgeInsets.only(right: 5.0, top: 2.0, bottom: 2.0),
           autofocus: true,
           style: Theme.of(context).textTheme.bodyText2.apply(

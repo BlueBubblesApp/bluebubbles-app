@@ -100,8 +100,10 @@ class Attachment {
       // }
 
       this.id = await db.insert("attachment", map);
-      await db.insert("attachment_message_join",
-          {"attachmentId": this.id, "messageId": message.id});
+      if (this.id != null && message.id != null) {
+        await db.insert("attachment_message_join",
+            {"attachmentId": this.id, "messageId": message.id});
+      }
     }
 
     return this;

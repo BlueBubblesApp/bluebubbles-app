@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:bluebubbles/helpers/utils.dart';
@@ -9,6 +10,7 @@ import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:metadata_fetch/metadata_fetch.dart';
+import 'package:http/http.dart' as http;
 
 class UrlPreviewWidget extends StatefulWidget {
   UrlPreviewWidget({
@@ -29,6 +31,7 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
     with AutomaticKeepAliveClientMixin, TickerProviderStateMixin {
   Metadata data;
   String url;
+  bool isLoading = true;
 
   @override
   void initState() {
@@ -60,131 +63,148 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
   void didChangeDependencies() async {
     super.didChangeDependencies();
     if (data == null && !isEmptyString(widget.message.text)) {
+      if (this.mounted)
+        setState(() {
+          isLoading = true;
+        });
       url = widget.message.text;
 
-      if (!widget.message.text.startsWith("http://") &&
-          !widget.message.text.startsWith("https://")) {
+      if (!widget.message.text.toLowerCase().startsWith("http://") &&
+          !widget.message.text.toLowerCase().startsWith("https://")) {
         url = "https://" + widget.message.text;
       }
-      data = await extract(url);
+
+      if (url.contains('youtube.com/watch?v=')) {
+        // Manually request this URL
+        String newUrl = "https://www.youtube.com/oembed?url=$url";
+        var response = await http.get(newUrl);
+
+        // Manually load it into a metadata object via JSON
+        data = Metadata.fromJson(jsonDecode(response.body));
+
+        // Set the URL to the original URL
+        data.url = url;
+      } else {
+        data = await extract(url);
+      }
+
       widget.savedAttachmentData
           .urlMetaData[widget.message.guid + "-url-preview"] = data;
-      if (this.mounted) setState(() {});
+      if (this.mounted)
+        setState(() {
+          // isLoading = false;
+        });
     }
   }
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
+    Widget titleWidget = Container();
+    if (data == null && isLoading) {
+      titleWidget = Text("Loading...",
+          style:
+              Theme.of(context).textTheme.bodyText1.apply(fontWeightDelta: 2));
+    } else if (data != null && data.title != null) {
+      titleWidget = Text(
+        data.title,
+        style: Theme.of(context).textTheme.bodyText1.apply(fontWeightDelta: 2),
+        overflow: TextOverflow.ellipsis,
+        maxLines: 2,
+      );
+    }
+
     return AnimatedSize(
       curve: Curves.easeInOut,
       alignment: Alignment.center,
       duration: Duration(milliseconds: 500),
       vsync: this,
-      child: (isEmptyString(widget.message.text) || data == null)
-          ? Container()
-          : Padding(
-              padding: EdgeInsets.symmetric(vertical: 4),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(20),
-                child: Material(
-                  color: Theme.of(context).accentColor,
-                  child: InkResponse(
-                    borderRadius: BorderRadius.circular(20),
-                    onTap: () {
-                      MethodChannelInterface()
-                          .invokeMethod("open-link", {"link": url});
-                    },
-                    child: Container(
-                      width: MediaQuery.of(context).size.width * 2 / 3,
-                      child: Column(
+      child: Padding(
+        padding: EdgeInsets.symmetric(vertical: 4),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(20),
+          child: Material(
+            color: Theme.of(context).accentColor,
+            child: InkResponse(
+              borderRadius: BorderRadius.circular(20),
+              onTap: () {
+                MethodChannelInterface()
+                    .invokeMethod("open-link", {"link": url});
+              },
+              child: Container(
+                width: MediaQuery.of(context).size.width * 2 / 3,
+                child: Column(
+                  children: <Widget>[
+                    widget.linkPreviews.length > 1
+                        ? attachmentSaved(widget.linkPreviews.last)
+                            ? Image.file(
+                                attachmentFile(widget.linkPreviews.last),
+                                filterQuality: FilterQuality.low,
+                              )
+                            : CupertinoActivityIndicator(
+                                animating: true,
+                              )
+                        : Container(),
+                    Padding(
+                      padding:
+                          EdgeInsets.only(left: 14.0, right: 14.0, top: 14.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
-                          widget.linkPreviews.length > 1
-                              ? attachmentSaved(widget.linkPreviews.last)
-                                  ? Image.file(
-                                      attachmentFile(widget.linkPreviews.last),
-                                      filterQuality: FilterQuality.low,
-                                    )
-                                  : CupertinoActivityIndicator(
-                                      animating: true,
-                                    )
-                              : Container(),
-                          Padding(
-                            padding: EdgeInsets.all(14.0),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: <Widget>[
-                                data != null
-                                    ? Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: <Widget>[
-                                          data != null
-                                              ? Container(
-                                                  width: MediaQuery.of(context)
-                                                          .size
-                                                          .width *
-                                                      4 /
-                                                      9,
-                                                  child: Text(
-                                                    data.title != null
-                                                        ? data.title
-                                                        : "Loading...",
-                                                    style: Theme.of(context)
-                                                        .textTheme
-                                                        .bodyText1
-                                                        .apply(
-                                                            fontWeightDelta: 2),
-                                                    overflow:
-                                                        TextOverflow.ellipsis,
-                                                    maxLines: 2,
-                                                  ),
-                                                )
-                                              : Container(),
-                                          data != null &&
-                                                  data.description != null
-                                              ? Container(
-                                                  width: MediaQuery.of(context)
-                                                          .size
-                                                          .width *
-                                                      4 /
-                                                      9,
-                                                  child: Text(
-                                                    data.description,
-                                                    style: Theme.of(context)
-                                                        .textTheme
-                                                        .bodyText1
-                                                        .apply(
-                                                            fontSizeDelta: -5),
-                                                  ),
-                                                )
-                                              : Container(),
-                                        ],
-                                      )
-                                    : Container(),
-                                attachmentSaved(widget.linkPreviews.first)
-                                    ? ClipRRect(
-                                        borderRadius:
-                                            BorderRadius.circular(10.0),
-                                        child: Image.file(
-                                          attachmentFile(
-                                              widget.linkPreviews.first),
-                                          width: 40,
-                                          fit: BoxFit.contain,
-                                        ))
-                                    : CupertinoActivityIndicator(
-                                        animating: true,
-                                      )
-                              ],
-                            ),
-                          ),
+                          Flexible(
+                              fit: FlexFit.tight,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: <Widget>[
+                                  titleWidget,
+                                  data != null && data.description != null
+                                      ? Text(data.description,
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodyText1
+                                              .apply(fontSizeDelta: -5),
+                                          maxLines: 3,
+                                          overflow: TextOverflow.ellipsis)
+                                      : Container(),
+                                  Padding(
+                                      padding: EdgeInsets.only(
+                                          top: 5.0, bottom: 10.0),
+                                      child: Text(
+                                        widget.message.text,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .subtitle2,
+                                        overflow: TextOverflow.ellipsis,
+                                        maxLines: 1,
+                                      ))
+                                ],
+                              )),
+                          attachmentSaved(widget.linkPreviews.first)
+                              ? Padding(
+                                  padding:
+                                      EdgeInsets.only(left: 10.0, bottom: 10.0),
+                                  child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(10.0),
+                                      child: Image.file(
+                                        attachmentFile(
+                                            widget.linkPreviews.first),
+                                        width: 40,
+                                        fit: BoxFit.contain,
+                                      )))
+                              : CupertinoActivityIndicator(
+                                  animating: true,
+                                )
                         ],
                       ),
                     ),
-                  ),
+                  ],
                 ),
               ),
             ),
+          ),
+        ),
+      ),
     );
   }
 

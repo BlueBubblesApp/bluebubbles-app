@@ -4,19 +4,15 @@ import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
-import 'package:bluebubbles/helpers/reaction.dart';
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/helpers/widget_helper.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/delivered_receipt.dart';
-import 'package:bluebubbles/layouts/widgets/message_widget/message_details_popup.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/reactions.dart';
-import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
 class SentMessage extends StatefulWidget {
   final bool showTail;
@@ -57,12 +53,12 @@ class SentMessage extends StatefulWidget {
 
 class _SentMessageState extends State<SentMessage>
     with TickerProviderStateMixin {
-  OverlayEntry _entry;
-  // bool _visible = false;
+  bool hasHyperlinks = false;
 
   @override
   void initState() {
     super.initState();
+    this.hasHyperlinks = parseLinks(widget.message.text).isNotEmpty;
   }
 
   OverlayEntry _createErrorPopup() {
@@ -175,227 +171,108 @@ class _SentMessageState extends State<SentMessage>
             ? darken(Colors.blue[600], 0.2)
             : Colors.blue[600];
 
-    List<InlineSpan> textSpans = <InlineSpan>[];
-
-    if (widget.message != null && !isEmptyString(widget.message.text)) {
-      RegExp exp =
-          new RegExp(r'(?:(?:https?|ftp):\/\/)?[\w/\-?=%.]+\.[\w/\-?=%@&]+');
-      List<RegExpMatch> matches = exp.allMatches(widget.message.text).toList();
-
-      List<int> linkIndexMatches = <int>[];
-      matches.forEach((match) {
-        linkIndexMatches.add(match.start);
-        linkIndexMatches.add(match.end);
-      });
-      if (linkIndexMatches.length > 0) {
-        for (int i = 0; i < linkIndexMatches.length + 1; i++) {
-          if (i == 0) {
-            textSpans.add(
-              TextSpan(
-                  text: widget.message.text.substring(0, linkIndexMatches[i])),
-            );
-          } else if (i == linkIndexMatches.length && i - 1 >= 0) {
-            textSpans.add(
-              TextSpan(
-                text: widget.message.text.substring(
-                    linkIndexMatches[i - 1], widget.message.text.length),
-              ),
-            );
-          } else if (i - 1 >= 0) {
-            String text = widget.message.text
-                .substring(linkIndexMatches[i - 1], linkIndexMatches[i]);
-            if (exp.hasMatch(text)) {
-              textSpans.add(
-                TextSpan(
-                  text: text,
-                  recognizer: new TapGestureRecognizer()
-                    ..onTap = () async {
-                      String url = text;
-                      if (!url.startsWith("http://") &&
-                          !url.startsWith("https://")) {
-                        url = "http://" + url;
-                      }
-                      debugPrint("opening url " + url);
-                      MethodChannelInterface()
-                          .invokeMethod("open-link", {"link": url});
-                    },
-                  style: Theme.of(context).textTheme.bodyText2.apply(
-                        color: Colors.white,
-                        decoration: TextDecoration.underline,
-                      ),
-                ),
-              );
-            } else {
-              textSpans.add(
-                TextSpan(
-                  text: text,
-                ),
-              );
-            }
-          }
-        }
-      } else {
-        textSpans.add(
-          TextSpan(
-            text: widget.message.text,
-          ),
-        );
-      }
-    }
-
-    return WillPopScope(
-      onWillPop: () async {
-        if (_entry != null) {
-          try {
-            _entry.remove();
-          } catch (e) {}
-          _entry = null;
-          return true;
-        } else {
-          return true;
-        }
-      },
-      child: GestureDetector(
-        behavior: HitTestBehavior.translucent,
-        onLongPress: () async {
-          Feedback.forLongPress(context);
-
-          List<Message> reactions = [];
-          if (widget.message.hasReactions) {
-            reactions = await widget.message.getAssociatedMessages();
-            reactions = reactions
-                .where((element) => ReactionTypes.toList()
-                    .contains(element.associatedMessageType))
-                .toList();
-          }
-          Overlay.of(context).insert(_createMessageDetailsPopup(reactions));
-        },
-        child: AnimatedOpacity(
-          opacity: 1.0, //_visible ? 1.0 : 0.0,
-          duration: Duration(milliseconds: widget.shouldFadeIn ? 200 : 0),
-          child: Column(
-            children: <Widget>[
-              widget.attachments != null ? widget.attachments : Container(),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: <Widget>[
-                  AnimatedPadding(
-                    curve: Curves.easeInOut,
-                    duration: Duration(milliseconds: 200),
-                    padding: EdgeInsets.only(
-                      bottom: widget.showTail ? 10.0 : 3.0,
-                      right: (widget.message != null && widget.message.error > 0
-                          ? 10.0
-                          : 0),
-                    ),
-                    child: Stack(
-                      alignment: Alignment.topLeft,
-                      children: <Widget>[
-                        AnimatedPadding(
-                          duration: Duration(milliseconds: 250),
-                          curve: Curves.easeInOut,
-                          padding: EdgeInsets.only(
-                            left: widget.message != null &&
-                                    widget.message.hasReactions &&
-                                    !widget.message.hasAttachments
-                                ? 6.0
-                                : 0.0,
-                            top: widget.message != null &&
-                                    widget.message.hasReactions &&
-                                    !widget.message.hasAttachments
-                                ? 14.0
-                                : 0.0,
-                          ),
-                          child: widget.showHero
-                              ? Hero(
-                                  tag: "first",
-                                  child: Material(
-                                    type: MaterialType.transparency,
-                                    child: ActualSentMessage(
-                                      blueColor: blueColor,
-                                      createErrorPopup: this._createErrorPopup,
-                                      customContent: widget.customContent,
-                                      message: widget.message,
-                                      chat: widget.chat,
-                                      showTail: widget.showTail,
-                                      textSpans: textSpans,
-                                    ),
-                                  ),
-                                )
-                              : ActualSentMessage(
-                                  blueColor: blueColor,
-                                  createErrorPopup: this._createErrorPopup,
-                                  customContent: widget.customContent,
-                                  message: widget.message,
-                                  chat: widget.chat,
-                                  showTail: widget.showTail,
-                                  textSpans: textSpans,
-                                ),
+    return AnimatedOpacity(
+      opacity: 1.0, //_visible ? 1.0 : 0.0,
+      duration: Duration(milliseconds: widget.shouldFadeIn ? 200 : 0),
+      child: Column(
+        children: <Widget>[
+          widget.attachments != null ? widget.attachments : Container(),
+          (!this.hasHyperlinks || !widget.message.hasDdResults)
+            ? Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: <Widget>[
+                AnimatedPadding(
+                  curve: Curves.easeInOut,
+                  duration: Duration(milliseconds: 200),
+                  padding: EdgeInsets.only(
+                    bottom: widget.showTail ? 10.0 : 3.0,
+                    right: (widget.message != null && widget.message.error > 0
+                        ? 10.0
+                        : 0),
+                  ),
+                  child: Stack(
+                    alignment: Alignment.topLeft,
+                    children: <Widget>[
+                      AnimatedPadding(
+                        duration: Duration(milliseconds: 250),
+                        curve: Curves.easeInOut,
+                        padding: EdgeInsets.only(
+                          left: widget.message != null &&
+                                  widget.message.hasReactions &&
+                                  !widget.message.hasAttachments
+                              ? 6.0
+                              : 0.0,
+                          top: widget.message != null &&
+                                  widget.message.hasReactions &&
+                                  !widget.message.hasAttachments
+                              ? 14.0
+                              : 0.0,
                         ),
-                        widget.message != null && !widget.message.hasAttachments
-                            ? Reactions(
-                                message: widget.message,
+                        child: widget.showHero
+                            ? Hero(
+                                tag: "first",
+                                child: Material(
+                                  type: MaterialType.transparency,
+                                  child: ActualSentMessage(
+                                    blueColor: blueColor,
+                                    createErrorPopup: this._createErrorPopup,
+                                    customContent: widget.customContent,
+                                    message: widget.message,
+                                    chat: widget.chat,
+                                    showTail: widget.showTail,
+                                    textSpans: WidgetHelper.buildMessageSpans(context, widget.message),
+                                  ),
+                                ),
                               )
-                            : Container(),
+                            : ActualSentMessage(
+                                blueColor: blueColor,
+                                createErrorPopup: this._createErrorPopup,
+                                customContent: widget.customContent,
+                                message: widget.message,
+                                chat: widget.chat,
+                                showTail: widget.showTail,
+                                textSpans: WidgetHelper.buildMessageSpans(context, widget.message),
+                              ),
+                      ),
+                      widget.message != null && !widget.message.hasAttachments
+                          ? Reactions(
+                              message: widget.message,
+                            )
+                          : Container(),
+                    ],
+                  ),
+                ),
+                WidgetHelper.buildMessageTimestamp(context, widget.message, widget.offset)
+              ],
+            )
+          : Container(),
+          DeliveredReceipt(
+              message: widget.message,
+              showDeliveredReceipt: widget.showDeliveredReceipt,
+              shouldAnimate: widget.shouldFadeIn),
+          widget.timeStamp != null
+              ? Padding(
+                  padding: const EdgeInsets.all(14.0),
+                  child: RichText(
+                    text: TextSpan(
+                      style: Theme.of(context).textTheme.subtitle2,
+                      children: [
+                        TextSpan(
+                          text: "${widget.timeStamp["date"]}, ",
+                          style: Theme.of(context)
+                              .textTheme
+                              .subtitle2
+                              .apply(fontWeightDelta: 10),
+                        ),
+                        TextSpan(text: "${widget.timeStamp["time"]}")
                       ],
                     ),
                   ),
-                  AnimatedContainer(
-                    width: (-widget.offset).clamp(0, 70).toDouble(),
-                    duration:
-                        Duration(milliseconds: widget.offset == 0 ? 150 : 0),
-                    child: Text(
-                      DateFormat('h:mm a')
-                          .format(widget.message.dateCreated)
-                          .toLowerCase(),
-                      style: Theme.of(context).textTheme.subtitle1,
-                      overflow: TextOverflow.clip,
-                      maxLines: 1,
-                    ),
-                  )
-                ],
-              ),
-              DeliveredReceipt(
-                  message: widget.message,
-                  showDeliveredReceipt: widget.showDeliveredReceipt,
-                  shouldAnimate: widget.shouldFadeIn),
-              widget.timeStamp != null
-                  ? Padding(
-                      padding: const EdgeInsets.all(14.0),
-                      child: RichText(
-                        text: TextSpan(
-                          style: Theme.of(context).textTheme.subtitle2,
-                          children: [
-                            TextSpan(
-                              text: "${widget.timeStamp["date"]}, ",
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .subtitle2
-                                  .apply(fontWeightDelta: 10),
-                            ),
-                            TextSpan(text: "${widget.timeStamp["time"]}")
-                          ],
-                        ),
-                      ),
-                    )
-                  : Container(),
-            ],
-          ),
-        ),
+                )
+              : Container(),
+        ],
       ),
     );
-  }
-
-  OverlayEntry _createMessageDetailsPopup(List<Message> reactions) {
-    // OverlayEntry entry;
-    _entry = OverlayEntry(
-      builder: (context) => MessageDetailsPopup(
-        entry: _entry,
-        reactions: Reaction.getUniqueReactionMessages(reactions),
-        message: widget.message,
-      ),
-    );
-    return _entry;
   }
 }
 

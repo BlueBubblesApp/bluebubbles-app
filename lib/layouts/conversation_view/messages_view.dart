@@ -228,7 +228,6 @@ class _MessageViewState extends State<MessageView>
                                 .loadMessageChunk(_messages.length);
                           } else if (val ==
                               LoadMessageResult.RETREIVED_NO_MESSAGES) {
-                            debugPrint("Reached the top of the chat");
                             reachedTopOfChat = true;
                             loader = null;
                           } else {

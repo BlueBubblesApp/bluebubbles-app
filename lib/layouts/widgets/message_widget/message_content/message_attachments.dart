@@ -154,6 +154,7 @@ class _MessageAttachmentsState extends State<MessageAttachments>
         );
       }
     }
+
     if (nullMimeTypeAttachments.length != 0)
       content.add(
         UrlPreviewWidget(

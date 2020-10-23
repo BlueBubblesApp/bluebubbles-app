@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'package:bluebubbles/helpers/reaction.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/group_event.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_attachments.dart';
+import 'package:bluebubbles/layouts/widgets/message_widget/message_details_popup.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/received_message.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/sent_message.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/sticker_widget.dart';
@@ -61,6 +63,7 @@ class _MessageState extends State<MessageWidget> {
   Widget blurredImage;
   List<Attachment> stickers = [];
   Completer<void> stickerRequest;
+  OverlayEntry _entry;
 
   @override
   void initState() {
@@ -195,11 +198,50 @@ class _MessageState extends State<MessageWidget> {
 
       widgetStack.add(Text("")); // Workaround for Flutter bug
 
-      return Stack(
-          alignment: widget.fromSelf
-              ? AlignmentDirectional.centerEnd
-              : AlignmentDirectional.centerStart,
-          children: widgetStack);
+      return WillPopScope(
+        onWillPop: () async {
+          if (_entry != null) {
+            try {
+              _entry.remove();
+            } catch (e) {}
+            _entry = null;
+            return true;
+          } else {
+            return true;
+          }
+        },
+        child: GestureDetector(
+          behavior: HitTestBehavior.translucent,
+          onLongPress: () async {
+            Feedback.forLongPress(context);
+            List<Message> reactions = [];
+            if (widget.message.hasReactions) {
+              reactions = await widget.message.getAssociatedMessages();
+              reactions = reactions.where((element) =>
+                  ReactionTypes.toList().contains(element.associatedMessageType)).toList();
+            }
+
+            Overlay.of(context).insert(_createMessageDetailsPopup(reactions));
+          },
+          child: Stack(
+            alignment: widget.fromSelf
+                ? AlignmentDirectional.centerEnd
+                : AlignmentDirectional.centerStart,
+            children: widgetStack
+          )
+        )
+      );
     }
+  }
+
+  OverlayEntry _createMessageDetailsPopup(List<Message> reactions) {
+    _entry = OverlayEntry(
+      builder: (context) => MessageDetailsPopup(
+        entry: _entry,
+        reactions: Reaction.getUniqueReactionMessages(reactions),
+        message: widget.message,
+      ),
+    );
+    return _entry;
   }
 }

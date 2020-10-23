@@ -61,7 +61,7 @@ bool sameAddress(String address1, String address2) {
 
 getInitials(String name, String delimeter, {double size = 30}) {
   if (name == null) return Icon(Icons.person, color: Colors.white, size: size);
-  List array = name.split(delimeter);
+  List<String> array = name.split(delimeter);
   // If there is a comma, just return the "people" icon
   if (name.contains(", ") || name.contains(" & "))
     return Icon(Icons.people, color: Colors.white, size: size);
@@ -84,11 +84,13 @@ getInitials(String name, String delimeter, {double size = 30}) {
   if (name.startsWith("+") || array[0].length < 1)
     return Icon(Icons.person, color: Colors.white, size: size);
 
+  array = array.where((element) => element.isNotEmpty).toList();
   switch (array.length) {
     case 1:
       return array[0][0].toUpperCase();
       break;
     default:
+
       if (array.length - 1 < 0 || array[array.length - 1].length < 1) return "";
       String first = array[0][0].toUpperCase();
       String last = array[array.length - 1][0].toUpperCase();
@@ -231,7 +233,7 @@ Future<MemoryImage> loadAvatar(Chat chat, String address) async {
 
 List<RegExpMatch> parseLinks(String text) {
   RegExp exp = new RegExp(
-      r'((https?:\/\/)|(www\.))[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}([-a-zA-Z0-9\/()@:%_.~#?&=\*\[\]]{0,})\b');
+      r'(((h|H)ttps?:\/\/)|(www\.))[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}([-a-zA-Z0-9\/()@:%_.~#?&=\*\[\]]{0,})\b');
   return exp.allMatches(text).toList();
 }
 
