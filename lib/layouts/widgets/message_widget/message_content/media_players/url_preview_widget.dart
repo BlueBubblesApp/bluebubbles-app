@@ -102,10 +102,9 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
     super.build(context);
     Widget titleWidget = Container();
     if (data == null && isLoading) {
-      titleWidget = Text(
-        "Loading...",
-        style: Theme.of(context).textTheme.bodyText1.apply(fontWeightDelta: 2)
-      );
+      titleWidget = Text("Loading...",
+          style:
+              Theme.of(context).textTheme.bodyText1.apply(fontWeightDelta: 2));
     } else if (data != null && data.title != null) {
       titleWidget = Text(
         data.title,
@@ -114,8 +113,6 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
         maxLines: 2,
       );
     }
-
-    print(titleWidget);
 
     return AnimatedSize(
       curve: Curves.easeInOut,
@@ -156,35 +153,33 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
                           Flexible(
-                            fit: FlexFit.tight,
-                            child: Column(
-                              crossAxisAlignment:
-                                  CrossAxisAlignment.start,
-                              children: <Widget>[
-                                titleWidget,
-                                data != null && data.description != null
-                                    ? Text(data.description,
+                              fit: FlexFit.tight,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: <Widget>[
+                                  titleWidget,
+                                  data != null && data.description != null
+                                      ? Text(data.description,
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodyText1
+                                              .apply(fontSizeDelta: -5),
+                                          maxLines: 3,
+                                          overflow: TextOverflow.ellipsis)
+                                      : Container(),
+                                  Padding(
+                                      padding: EdgeInsets.only(
+                                          top: 5.0, bottom: 10.0),
+                                      child: Text(
+                                        widget.message.text,
                                         style: Theme.of(context)
                                             .textTheme
-                                            .bodyText1
-                                            .apply(fontSizeDelta: -5),
-                                        maxLines: 3,
-                                        overflow: TextOverflow.ellipsis)
-                                    : Container(),
-                                Padding(
-                                    padding: EdgeInsets.only(
-                                        top: 5.0, bottom: 10.0),
-                                    child: Text(
-                                      widget.message.text,
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .subtitle2,
-                                      overflow: TextOverflow.ellipsis,
-                                      maxLines: 1,
-                                    ))
-                              ],
-                            )
-                          ),
+                                            .subtitle2,
+                                        overflow: TextOverflow.ellipsis,
+                                        maxLines: 1,
+                                      ))
+                                ],
+                              )),
                           attachmentSaved(widget.linkPreviews.first)
                               ? Padding(
                                   padding:
