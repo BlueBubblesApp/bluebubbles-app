@@ -1,5 +1,9 @@
 import 'package:flutter/cupertino.dart';
 
+/// [TextFieldBloc] holds in memory all of the data for all of the textfields.
+///
+/// It's purpose is to keep the text in each text field even when you leave a conversation
+/// so that when you re-enter, the text will still be there
 class TextFieldBloc {
   factory TextFieldBloc() {
     return _chatBloc;
@@ -20,3 +24,6 @@ class TextFieldBloc {
     }
   }
 }
+
+/// [TextFieldData] holds a TextEditingController and a list of strings that link to attachments
+class TextFieldData {}

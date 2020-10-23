@@ -43,7 +43,6 @@
 
 
 
-        <!-- [START firebase_service] -->
         <service
             android:name=".services.FirebaseMessagingService"
             android:exported="false"
@@ -67,16 +66,11 @@
             android:launchMode="singleTask"
             android:theme="@style/LaunchTheme"
             android:windowSoftInputMode="adjustResize">
-            <!--            <intent-filter>-->
-            <!--                <action android:name="FLUTTER_NOTIFICATION_CLICK" />-->
-            <!--                <category android:name="android.intent.category.DEFAULT" />-->
-            <!--            </intent-filter>-->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
-            <!--TODO: Add this filter, if you want to support sharing images into your app-->
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -89,7 +83,6 @@
                 <data android:mimeType="image/*" />
             </intent-filter>
 
-            <!--TODO: Add this filter, if you want to support sharing videos into your app-->
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -120,9 +113,6 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="audio/*" />
             </intent-filter>
-<!--            <meta-data-->
-<!--                android:name="android.app.shortcuts"-->
-<!--                android:resource="@xml/shortcuts" />-->
 
         </activity>
         <!-- Don't delete the meta-data below.
