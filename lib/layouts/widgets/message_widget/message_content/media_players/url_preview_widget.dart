@@ -31,6 +31,7 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
     with AutomaticKeepAliveClientMixin, TickerProviderStateMixin {
   Metadata data;
   String url;
+  bool isLoading = true;
 
   @override
   void initState() {
@@ -62,6 +63,10 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
   void didChangeDependencies() async {
     super.didChangeDependencies();
     if (data == null && !isEmptyString(widget.message.text)) {
+      if (this.mounted)
+        setState(() {
+          isLoading = true;
+        });
       url = widget.message.text;
 
       if (!widget.message.text.toLowerCase().startsWith("http://") &&
@@ -85,13 +90,33 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
 
       widget.savedAttachmentData
           .urlMetaData[widget.message.guid + "-url-preview"] = data;
-      if (this.mounted) setState(() {});
+      if (this.mounted)
+        setState(() {
+          // isLoading = false;
+        });
     }
   }
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
+    Widget titleWidget = Container();
+    if (data == null && isLoading) {
+      titleWidget = Text(
+        "Loading...",
+        style: Theme.of(context).textTheme.bodyText1.apply(fontWeightDelta: 2)
+      );
+    } else if (data != null && data.title != null) {
+      titleWidget = Text(
+        data.title,
+        style: Theme.of(context).textTheme.bodyText1.apply(fontWeightDelta: 2),
+        overflow: TextOverflow.ellipsis,
+        maxLines: 2,
+      );
+    }
+
+    print(titleWidget);
+
     return AnimatedSize(
       curve: Curves.easeInOut,
       alignment: Alignment.center,
@@ -124,83 +149,54 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
                               )
                         : Container(),
                     Padding(
-                      padding: EdgeInsets.only(left: 14.0, right: 14.0, top: 14.0),
+                      padding:
+                          EdgeInsets.only(left: 14.0, right: 14.0, top: 14.0),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
-                          data != null
-                              ? Flexible(
-                                fit: FlexFit.loose,
-                                child: Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.start,
-                                  children: <Widget>[
-                                    data != null
-                                        ? Text(
-                                            data.title != null
-                                                ? data.title
-                                                : "Loading...",
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .bodyText1
-                                                .apply(
-                                                    fontWeightDelta: 2),
-                                            overflow:
-                                                TextOverflow.ellipsis,
-                                            maxLines: 2,
-                                          )
-                                        : Container(),
-                                    data != null &&
-                                            data.description != null
-                                        ? Text(
-                                            data.description,
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .bodyText1
-                                                .apply(
-                                                    fontSizeDelta: -5),
-                                            maxLines: 3,
-                                            overflow: TextOverflow.ellipsis
-                                          )
-                                        : Container(),
-                                    Container(
-                                      width: MediaQuery.of(context)
-                                              .size
-                                              .width *
-                                          4 /
-                                          9,
-                                      child:Padding(
-                                        padding: EdgeInsets.only(top: 5.0, bottom: 10.0),
-                                        child: Text(
-                                          widget.message.text,
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .subtitle2,
-                                          overflow:
-                                              TextOverflow.ellipsis,
-                                          maxLines: 1,
-                                        )
-                                      )
-                                    )
-                                  ],
-                                )
-                              )
-                              : Container(),
+                          Flexible(
+                            fit: FlexFit.tight,
+                            child: Column(
+                              crossAxisAlignment:
+                                  CrossAxisAlignment.start,
+                              children: <Widget>[
+                                titleWidget,
+                                data != null && data.description != null
+                                    ? Text(data.description,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodyText1
+                                            .apply(fontSizeDelta: -5),
+                                        maxLines: 3,
+                                        overflow: TextOverflow.ellipsis)
+                                    : Container(),
+                                Padding(
+                                    padding: EdgeInsets.only(
+                                        top: 5.0, bottom: 10.0),
+                                    child: Text(
+                                      widget.message.text,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .subtitle2,
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
+                                    ))
+                              ],
+                            )
+                          ),
                           attachmentSaved(widget.linkPreviews.first)
                               ? Padding(
-                                padding: EdgeInsets.only(left: 10.0),
+                                  padding:
+                                      EdgeInsets.only(left: 10.0, bottom: 10.0),
                                   child: ClipRRect(
-                                    borderRadius:
-                                        BorderRadius.circular(10.0),
-                                    child: Image.file(
-                                      attachmentFile(
-                                          widget.linkPreviews.first),
-                                      width: 40,
-                                      fit: BoxFit.contain,
-                                    )
-                                  )
-                                )
+                                      borderRadius: BorderRadius.circular(10.0),
+                                      child: Image.file(
+                                        attachmentFile(
+                                            widget.linkPreviews.first),
+                                        width: 40,
+                                        fit: BoxFit.contain,
+                                      )))
                               : CupertinoActivityIndicator(
                                   animating: true,
                                 )
