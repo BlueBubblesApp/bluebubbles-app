@@ -28,12 +28,14 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> {
     if (widget.contactImage != null) {
       return CircleAvatar(
         backgroundImage: widget.contactImage,
+        backgroundColor: Theme.of(context).backgroundColor,
         radius: widget.radius ?? 20,
       );
     }
 
     if (widget.initials is Transform) {
       return Container(
+        color: Theme.of(context).backgroundColor,
         width: widget.height ?? 40,
         height: widget.width ?? 40,
         child: widget.initials
@@ -41,6 +43,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> {
     }
 
     return CircleAvatar(
+      backgroundColor: Theme.of(context).backgroundColor,
       radius: widget.radius ?? 20,
       child: Container(
         width: widget.width ?? 40,
@@ -58,7 +61,10 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> {
                   style: TextStyle(
                       fontSize: (widget.fontSize == null)
                           ? 18
-                          : widget.fontSize))
+                          : widget.fontSize,
+                      color: Theme.of(context).textTheme.bodyText1.color
+                  )
+                )
               : widget.initials,
           alignment: AlignmentDirectional.center,
         ),
