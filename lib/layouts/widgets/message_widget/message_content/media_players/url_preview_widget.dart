@@ -130,48 +130,38 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
                           data != null
-                              ? Column(
+                              ? Flexible(
+                                fit: FlexFit.loose,
+                                child: Column(
                                   crossAxisAlignment:
                                       CrossAxisAlignment.start,
                                   children: <Widget>[
                                     data != null
-                                        ? Container(
-                                            width: MediaQuery.of(context)
-                                                    .size
-                                                    .width *
-                                                4 /
-                                                9,
-                                            child: Text(
-                                              data.title != null
-                                                  ? data.title
-                                                  : "Loading...",
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .bodyText1
-                                                  .apply(
-                                                      fontWeightDelta: 2),
-                                              overflow:
-                                                  TextOverflow.ellipsis,
-                                              maxLines: 2,
-                                            ),
+                                        ? Text(
+                                            data.title != null
+                                                ? data.title
+                                                : "Loading...",
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodyText1
+                                                .apply(
+                                                    fontWeightDelta: 2),
+                                            overflow:
+                                                TextOverflow.ellipsis,
+                                            maxLines: 2,
                                           )
                                         : Container(),
                                     data != null &&
                                             data.description != null
-                                        ? Container(
-                                            width: MediaQuery.of(context)
-                                                    .size
-                                                    .width *
-                                                4 /
-                                                9,
-                                            child: Text(
-                                              data.description,
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .bodyText1
-                                                  .apply(
-                                                      fontSizeDelta: -5),
-                                            ),
+                                        ? Text(
+                                            data.description,
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodyText1
+                                                .apply(
+                                                    fontSizeDelta: -5),
+                                            maxLines: 3,
+                                            overflow: TextOverflow.ellipsis
                                           )
                                         : Container(),
                                     Container(
@@ -195,17 +185,22 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
                                     )
                                   ],
                                 )
+                              )
                               : Container(),
                           attachmentSaved(widget.linkPreviews.first)
-                              ? ClipRRect(
-                                  borderRadius:
-                                      BorderRadius.circular(10.0),
-                                  child: Image.file(
-                                    attachmentFile(
-                                        widget.linkPreviews.first),
-                                    width: 40,
-                                    fit: BoxFit.contain,
-                                  ))
+                              ? Padding(
+                                padding: EdgeInsets.only(left: 10.0),
+                                  child: ClipRRect(
+                                    borderRadius:
+                                        BorderRadius.circular(10.0),
+                                    child: Image.file(
+                                      attachmentFile(
+                                          widget.linkPreviews.first),
+                                      width: 40,
+                                      fit: BoxFit.contain,
+                                    )
+                                  )
+                                )
                               : CupertinoActivityIndicator(
                                   animating: true,
                                 )

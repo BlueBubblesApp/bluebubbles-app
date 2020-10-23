@@ -18,7 +18,6 @@ class ReceivedMessage extends StatefulWidget {
   final List<Widget> customContent;
   final bool isFromMe;
   final Widget attachments;
-  final bool hasNullMime;
 
   ReceivedMessage({
     Key key,
@@ -31,7 +30,6 @@ class ReceivedMessage extends StatefulWidget {
     @required this.customContent,
     @required this.isFromMe,
     @required this.attachments,
-    @required this.hasNullMime,
     this.offset,
   }) : super(key: key);
 
@@ -49,8 +47,6 @@ class _ReceivedMessageState extends State<ReceivedMessage> {
   initState() {
     super.initState();
     getContactTitle();
-
-    // Length == 2 because 1 for the preview, and 2 for the site icon
     this.hasHyperlinks = parseLinks(widget.message.text).isNotEmpty;
   }
 
@@ -197,11 +193,11 @@ class _ReceivedMessageState extends State<ReceivedMessage> {
               size: 30,
               fontSize: 14)));
     }
-
+    
     msgItems.add(
         new Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Padding(padding: EdgeInsets.only(bottom: 1.0), child: widget.attachments),
-      (!this.hasHyperlinks || !widget.hasNullMime)
+      (!this.hasHyperlinks || !widget.message.hasDdResults)
         ? Padding(
           padding: EdgeInsets.only(
               bottom: widget.showTail ? 10.0 : 3.0,

@@ -38,6 +38,7 @@ class Message {
   bool isServiceMessage;
   bool isForward;
   bool isArchived;
+  bool hasDdResults;
   String cacheRoomnames;
   bool isAudioMessage;
   DateTime datePlayed;
@@ -73,6 +74,7 @@ class Message {
     this.isServiceMessage = false,
     this.isForward = false,
     this.isArchived = false,
+    this.hasDdResults = false,
     this.cacheRoomnames,
     this.isAudioMessage = false,
     this.datePlayed,
@@ -155,6 +157,9 @@ class Message {
       isArchived: (json["isArchived"] is bool)
           ? json['isArchived']
           : ((json['isArchived'] == 1) ? true : false),
+      hasDdResults: (json["hasDdResults"] is bool)
+          ? json['hasDdResults']
+          : ((json['hasDdResults'] == 1) ? true : false),
       cacheRoomnames:
           json.containsKey("cacheRoomnames") ? json["cacheRoomnames"] : null,
       isAudioMessage: (json["isAudioMessage"] is bool)
@@ -309,6 +314,7 @@ class Message {
           : this.datePlayed.millisecondsSinceEpoch,
       "error": this.error,
       "hasReactions": this.hasReactions ? 1 : 0,
+      "hasDdResults": this.hasDdResults ? 1 : 0,
     };
 
     // If it already exists, update it
@@ -477,6 +483,7 @@ class Message {
         "isServiceMessage": isServiceMessage ? 1 : 0,
         "isForward": isForward ? 1 : 0,
         "isArchived": isArchived ? 1 : 0,
+        "hasDdResults": hasDdResults ? 1 : 0,
         "cacheRoomnames": cacheRoomnames,
         "isAudioMessage": isAudioMessage ? 1 : 0,
         "datePlayed":
