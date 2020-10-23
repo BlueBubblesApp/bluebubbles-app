@@ -82,8 +82,10 @@ class _NewChatCreatorTextFieldState extends State<NewChatCreatorTextField> {
 
     // Add the next text field
     items.add(
-      SizedBox(
-        width: 100.0,
+      ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: 255.0
+        ),
         child: CupertinoTextField(
           focusNode: inputFieldNode,
           onSubmitted: (String done) {
