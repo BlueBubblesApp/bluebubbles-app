@@ -1,15 +1,11 @@
-import 'package:bluebubbles/helpers/reaction.dart';
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/helpers/widget_helper.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
-import 'package:bluebubbles/layouts/widgets/message_widget/message_details_popup.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/reactions.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
-import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:contacts_service/contacts_service.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
 class ReceivedMessage extends StatefulWidget {
   final bool showTail;
@@ -45,12 +41,13 @@ class _ReceivedMessageState extends State<ReceivedMessage> {
   String contactTitle = "";
   MemoryImage contactImage;
   Contact contact;
-  OverlayEntry _entry;
+  bool hasHyperlinks = false;
 
   @override
   initState() {
     super.initState();
     getContactTitle();
+    this.hasHyperlinks = parseLinks(widget.message.text).isNotEmpty;
   }
 
   @override
@@ -136,82 +133,8 @@ class _ReceivedMessageState extends State<ReceivedMessage> {
       stack.insertAll(0, tail);
     }
 
-    List<InlineSpan> textSpans = <InlineSpan>[];
-
-    if (widget.message != null && !isEmptyString(widget.message.text)) {
-      RegExp exp = new RegExp(
-          r'((https?:\/\/)|(www\.))[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}([-a-zA-Z0-9\/()@:%_.~#?&=\*\[\]]{0,})\b');
-      List<RegExpMatch> matches = exp.allMatches(widget.message.text).toList();
-
-      List<int> linkIndexMatches = <int>[];
-      matches.forEach((match) {
-        linkIndexMatches.add(match.start);
-        linkIndexMatches.add(match.end);
-      });
-      if (linkIndexMatches.length > 0) {
-        for (int i = 0; i < linkIndexMatches.length + 1; i++) {
-          if (i == 0) {
-            textSpans.add(
-              TextSpan(
-                  text: widget.message.text.substring(0, linkIndexMatches[i])),
-            );
-          } else if (i == linkIndexMatches.length && i - 1 >= 0) {
-            textSpans.add(
-              TextSpan(
-                text: widget.message.text.substring(
-                    linkIndexMatches[i - 1], widget.message.text.length),
-              ),
-            );
-          } else if (i - 1 >= 0) {
-            String text = widget.message.text
-                .substring(linkIndexMatches[i - 1], linkIndexMatches[i]);
-            if (exp.hasMatch(text)) {
-              textSpans.add(
-                TextSpan(
-                  text: text,
-                  recognizer: new TapGestureRecognizer()
-                    ..onTap = () async {
-                      String url = text;
-                      if (!url.startsWith("http://") &&
-                          !url.startsWith("https://")) {
-                        url = "http://" + url;
-                      }
-                      debugPrint(
-                          "open url " + text.startsWith("http://").toString());
-                      MethodChannelInterface()
-                          .invokeMethod("open-link", {"link": url});
-
-                      // if (await canLaunch(url)) {
-                      //   await launch(url);
-                      // } else {
-                      //   throw 'Could not launch $url';
-                      // }
-                    },
-                  style: Theme.of(context).textTheme.bodyText1.apply(
-                        decoration: TextDecoration.underline,
-                      ),
-                ),
-              );
-            } else {
-              textSpans.add(
-                TextSpan(
-                  text: text,
-                ),
-              );
-            }
-          }
-        }
-      } else {
-        textSpans.add(
-          TextSpan(
-            text: widget.message.text,
-          ),
-        );
-      }
-    }
-
     List<Widget> messageWidget = [
-      widget.message == null || !isEmptyString(widget.message.text)
+      widget.message != null && !isEmptyString(widget.message.text)
           ? Stack(
               alignment: AlignmentDirectional.bottomStart,
               children: <Widget>[
@@ -235,7 +158,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> {
                         color: Theme.of(context).accentColor),
                     child: RichText(
                         text: TextSpan(
-                      children: textSpans,
+                      children: WidgetHelper.buildMessageSpans(context, widget.message),
                       style: Theme.of(context).textTheme.bodyText1,
                     ))),
               ],
@@ -270,139 +193,91 @@ class _ReceivedMessageState extends State<ReceivedMessage> {
               size: 30,
               fontSize: 14)));
     }
-
+    
     msgItems.add(
         new Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Padding(padding: EdgeInsets.only(bottom: 1.0), child: widget.attachments),
-      Padding(
-        padding: EdgeInsets.only(
-            bottom: widget.showTail ? 10.0 : 3.0,
-            left: widget.showTail || !widget.showHandle ? 0.0 : 35.0),
-        child: Stack(
-          alignment: Alignment.topRight,
-          children: <Widget>[
-            AnimatedPadding(
-              duration: Duration(milliseconds: 250),
-              curve: Curves.easeInOut,
-              padding: EdgeInsets.only(
-                right: widget.message != null &&
-                        widget.message.hasReactions &&
-                        !widget.message.hasAttachments
-                    ? 6.0
-                    : 0.0,
-                top: widget.message != null &&
-                        widget.message.hasReactions &&
-                        !widget.message.hasAttachments
-                    ? 14.0
-                    : 0.0,
+      (!this.hasHyperlinks || !widget.message.hasDdResults)
+        ? Padding(
+          padding: EdgeInsets.only(
+              bottom: widget.showTail ? 10.0 : 3.0,
+              left: widget.showTail || !widget.showHandle ? 0.0 : 35.0),
+          child: Stack(
+            alignment: Alignment.topRight,
+            children: <Widget>[
+              AnimatedPadding(
+                duration: Duration(milliseconds: 250),
+                curve: Curves.easeInOut,
+                padding: EdgeInsets.only(
+                  right: widget.message != null &&
+                          widget.message.hasReactions &&
+                          !widget.message.hasAttachments
+                      ? 6.0
+                      : 0.0,
+                  top: widget.message != null &&
+                          widget.message.hasReactions &&
+                          !widget.message.hasAttachments
+                      ? 14.0
+                      : 0.0,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: messageWidget,
+                ),
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: messageWidget,
-              ),
-            ),
-            !widget.message.hasAttachments
-                ? Reactions(
-                    message: widget.message,
-                  )
-                : Container(),
-          ],
-        ),
-      )
+              !widget.message.hasAttachments
+                  ? Reactions(
+                      message: widget.message,
+                    )
+                  : Container(),
+            ],
+          ),
+        )
+      : Container()
     ]));
 
-    return WillPopScope(
-      onWillPop: () async {
-        if (_entry != null) {
-          try {
-            _entry.remove();
-          } catch (e) {}
-          _entry = null;
-          return true;
-        } else {
-          return true;
-        }
-      },
-      child: GestureDetector(
-        behavior: HitTestBehavior.translucent,
-        onLongPress: () async {
-          Feedback.forLongPress(context);
-          List<Message> reactions = [];
-          if (widget.message.hasReactions) {
-            reactions = await widget.message.getAssociatedMessages();
-            reactions = reactions.where((element) =>
-                ReactionTypes.toList().contains(element.associatedMessageType)).toList();
-          }
-
-          Overlay.of(context).insert(_createMessageDetailsPopup(reactions));
-        },
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        contactItem,
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: <Widget>[
-            contactItem,
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: <Widget>[
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: msgItems,
-                ),
-                AnimatedContainer(
-                  width: (-widget.offset).clamp(0, 70).toDouble(),
-                  duration:
-                      Duration(milliseconds: widget.offset == 0 ? 150 : 0),
-                  child: Text(
-                    DateFormat('h:mm a')
-                        .format(widget.message.dateCreated)
-                        .toLowerCase(),
-                    style: Theme.of(context).textTheme.subtitle1,
-                    overflow: TextOverflow.clip,
-                    maxLines: 1,
-                  ),
-                )
-              ],
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: msgItems,
             ),
-            widget.timeStamp != null
-                ? Padding(
-                    padding: const EdgeInsets.all(14.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: <Widget>[
-                        RichText(
-                          text: TextSpan(
-                            style: Theme.of(context).textTheme.subtitle2,
-                            children: [
-                              TextSpan(
-                                text: "${widget.timeStamp["date"]}, ",
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .subtitle2
-                                    .apply(fontWeightDelta: 10),
-                              ),
-                              TextSpan(text: "${widget.timeStamp["time"]}")
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  )
-                : Container()
+            WidgetHelper.buildMessageTimestamp(context, widget.message, widget.offset)
           ],
         ),
-      ),
+        widget.timeStamp != null
+            ? Padding(
+                padding: const EdgeInsets.all(14.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    RichText(
+                      text: TextSpan(
+                        style: Theme.of(context).textTheme.subtitle2,
+                        children: [
+                          TextSpan(
+                            text: "${widget.timeStamp["date"]}, ",
+                            style: Theme.of(context)
+                                .textTheme
+                                .subtitle2
+                                .apply(fontWeightDelta: 10),
+                          ),
+                          TextSpan(text: "${widget.timeStamp["time"]}")
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            : Container()
+      ],
     );
-  }
-
-  OverlayEntry _createMessageDetailsPopup(List<Message> reactions) {
-    _entry = OverlayEntry(
-      builder: (context) => MessageDetailsPopup(
-        entry: _entry,
-        reactions: Reaction.getUniqueReactionMessages(reactions),
-        message: widget.message,
-      ),
-    );
-    return _entry;
   }
 }

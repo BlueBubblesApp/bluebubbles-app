@@ -25,6 +25,8 @@ class _NewMessageLoaderState extends State<NewMessageLoader> {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.loader == null) return Container();
+
     return FutureBuilder(
       future: widget.loader,
       builder: (BuildContext context, AsyncSnapshot snapshot) {

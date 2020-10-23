@@ -31,8 +31,15 @@ class _ContactWidgetState extends State<ContactWidget> {
     super.initState();
 
     String appleContact = widget.file.readAsStringSync();
-    contact = AttachmentHelper.parseAppleContact(appleContact);
+
+    try {
+      contact = AttachmentHelper.parseAppleContact(appleContact);
+    } catch (ex) {
+      contact = new Contact(displayName: "Invalid Contact");
+    }
+  
     initials = getInitials(contact.displayName, " ");
+    if (this.mounted) setState(() {});
   }
 
   @override
@@ -43,7 +50,7 @@ class _ContactWidgetState extends State<ContactWidget> {
         height: 60,
         width: 250,
         child: Material(
-          color: Colors.transparent,
+          color: Theme.of(context).accentColor,
           child: InkWell(
             onTap: () async {
               MethodChannelInterface().invokeMethod(
@@ -57,42 +64,63 @@ class _ContactWidgetState extends State<ContactWidget> {
                 },
               );
             },
-            child: Center(
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 15.0),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: <Widget>[
-                  Text(
-                    contact.displayName,
-                    style: Theme.of(context).textTheme.bodyText1,
+                  Flexible(
+                    fit: FlexFit.loose,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Contact Card",
+                          style: Theme.of(context).textTheme.subtitle2,
+                        ),
+                        Text(
+                          contact?.displayName ?? "No Name",
+                          style: Theme.of(context).textTheme.bodyText1,
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 2,
+                          softWrap: true,
+                        )
+                      ]
+                    ),
                   ),
-                  Spacer(
-                    flex: 1,
-                  ),
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: AlignmentDirectional.topStart,
-                        colors: [HexColor('a0a4af'), HexColor('848894')],
+                  Row(
+                    children: [
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: AlignmentDirectional.topStart,
+                            colors: [HexColor('a0a4af'), HexColor('848894')],
+                          ),
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                        child: Container(
+                          child: (initials is Icon)
+                              ? initials
+                              : Text(
+                                  initials,
+                                  style: Theme.of(context).textTheme.headline1,
+                                ),
+                          alignment: AlignmentDirectional.center,
+                        ),
                       ),
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                    child: Container(
-                      child: (initials is Icon)
-                          ? initials
-                          : Text(
-                              initials,
-                              style: Theme.of(context).textTheme.bodyText1,
-                            ),
-                      alignment: AlignmentDirectional.center,
-                    ),
-                  ),
-                  Icon(
-                    Icons.arrow_forward_ios,
-                    color: Colors.white,
-                    size: 15,
-                  ),
+                      Padding(
+                        padding: EdgeInsets.only(left: 5.0),
+                        child: Icon(
+                          Icons.arrow_forward_ios,
+                          color: Colors.grey,
+                          size: 15,
+                        ),
+                      )
+                    ],
+                  )
                 ],
               ),
             ),

@@ -39,13 +39,20 @@ class DBProvider {
   initDB() async {
     Directory documentsDirectory = await getApplicationDocumentsDirectory();
     _path = join(documentsDirectory.path, "chat.db");
-    return await openDatabase(_path, version: 1, onOpen: (Database db) async {
+    return await openDatabase(_path, version: 2, onUpgrade: _onUpgrade, onOpen: (Database db) async {
       debugPrint("Database Opened");
       await checkTableExistenceAndCreate(db);
     }, onCreate: (Database db, int version) async {
       debugPrint("creating database");
       await this.buildDatabase(db);
     });
+  }
+
+  void _onUpgrade(Database db, int oldVersion, int newVersion) {
+    // From v1 -> v2, we added the hasDdResults column
+    if (oldVersion == 1 && newVersion == 2) {
+      db.execute("ALTER TABLE message ADD COLUMN hasDdResults INTEGER DEFAULT 0;");
+    }
   }
 
   static Future<void> deleteDB() async {
@@ -154,6 +161,7 @@ class DBProvider {
         "isServiceMessage INTEGER DEFAULT 0,"
         "isForward INTEGER DEFAULT 0,"
         "isArchived INTEGER DEFAULT 0,"
+        "hasDdResults INTEGER DEFAULT 0,"
         "cacheRoomnames TEXT DEFAULT NULL,"
         "isAudioMessage INTEGER DEFAULT 0,"
         "datePlayed INTEGER DEFAULT 0,"
