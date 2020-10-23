@@ -7,6 +7,7 @@ import 'package:bluebubbles/repository/models/message.dart';
 import 'package:blurhash_flutter/blurhash.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:html/parser.dart';
 
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:contacts_service/contacts_service.dart';
@@ -267,4 +268,11 @@ bool validatePhoneNumber(String value) {
   RegExp regExpPhone = new RegExp(phonePattern);
   RegExp regExpEmail = new RegExp(emailPattern);
   return regExpPhone.hasMatch(value) || regExpEmail.hasMatch(value);
+}
+
+String stripHtmlTags(String htmlString) {
+  final document = parse(htmlString);
+  final String parsedString = parse(document.body.text).documentElement.text;
+
+  return parsedString;
 }

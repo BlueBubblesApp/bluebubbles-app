@@ -110,16 +110,14 @@ class _ConversationViewState extends State<ConversationView> {
       await widget.chat.getParticipants();
     }
 
-    List<dynamic> test = List.from(widget.chat.participants);
-
     // Loop over the participants
-    for (Handle handle in test) {
+    for (Handle handle in widget.chat.participants) {
       // Since we only want to update if we've made changes, check a flag
       bool existed = avatarStack.containsKey(handle.address);
 
       // If the avatar doesnt exist yet, add it as null
       dynamic currentVal = avatarStack.putIfAbsent(handle.address,
-          () => {"avatar": null, "initials": getInitials(null, "")});
+          () => {"avatar": null, "initials": getInitials(null, "", size: 40)});
 
       // Update the UI with the placeholders
       if (!existed) cb();
@@ -128,7 +126,7 @@ class _ConversationViewState extends State<ConversationView> {
       if (currentVal["avatar"] == null) {
         MemoryImage avatar = await loadAvatar(widget.chat, handle.address);
         String tile = await ContactManager().getContactTitle(handle.address);
-        dynamic initials = getInitials(tile, " ");
+        dynamic initials = getInitials(tile, " ", size: 40);
 
         // Only update if there is a change
         if (avatarStack[handle.address]["initials"] != initials) {
@@ -169,10 +167,8 @@ class _ConversationViewState extends State<ConversationView> {
     avatarStack.forEach((address, info) {
       avatars.add(
         Container(
-          height: 42.0, // 1 px larger than the diameter
-          width: 42.0, // 1 px larger than the diameter
-          decoration:
-              new BoxDecoration(color: Colors.red, shape: BoxShape.circle),
+          height: 42.0, // 2 px larger than the diameter
+          width: 42.0, // 2 px larger than the diameter
           child: CircleAvatar(
             radius: 20,
             backgroundColor: Theme.of(context).accentColor,
