@@ -15,7 +15,7 @@ import static com.bluebubbles.messaging.method_call_handler.handlers.FirebaseAut
 
 public class GetServerUrl implements Handler{
 
-    public static String TAG = "share-file";
+    public static String TAG = "get-server-url";
 
     private Context context;
     private MethodCall call;

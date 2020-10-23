@@ -12,6 +12,7 @@ import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/database.dart';
+import 'package:bluebubbles/settings.dart';
 import 'package:flutter_socket_io/socket_io_manager.dart';
 import 'package:flutter_socket_io/flutter_socket_io.dart';
 import 'package:flutter/material.dart';
@@ -55,9 +56,6 @@ class SocketManager {
   //Socket io
   SocketIO socket;
 
-  //setstate for these widgets
-  Map<String, Function> subscribers = new Map();
-
   Map<String, AttachmentDownloader> attachmentDownloaders = Map();
   Map<String, AttachmentSender> attachmentSenders = Map();
   Map<int, Function> socketProcesses = new Map();
@@ -80,7 +78,6 @@ class SocketManager {
   int addSocketProcess(Function() cb) {
     int processId = Random().nextInt(10000);
     socketProcesses[processId] = cb;
-    // _socketProcessUpdater.sink.add(socketProcesses.keys.toList());
     Future.delayed(Duration(milliseconds: Random().nextInt(100)), () {
       if (state == SocketState.DISCONNECTED || state == SocketState.FAILED) {
         _manager.startSocketIO();
@@ -402,6 +399,28 @@ class SocketManager {
     finishedSetup.sink.add(true);
     ChatBloc().refreshChats();
     // notify();
+  }
+
+  /// Updates and saves a new server address and then forces a new reconnection to the socket with this address
+  ///
+  /// @param [serverAddress] is the new address to update to
+  Future<void> newServer(String serverAddress) async {
+    // We copy the settings to a local variable
+    Settings settingsCopy = SettingsManager().settings;
+    // Update the address of the copied settings
+    settingsCopy.serverAddress = serverAddress;
+
+    // And then save to disk
+    // NOTE: we do not automatically connect to the socket or authorize fcm,
+    //       because we need to do that manually with a forced connection
+    await SettingsManager().saveSettings(settingsCopy,
+        connectToSocket: false, authorizeFCM: false);
+
+    // Then we connect to the socket.
+    // We force a connection because the socket may still be attempting to connect to the socket,
+    // in which case it won't attempt to connect again.
+    // We need to override this behavior.
+    SocketManager().startSocketIO(forceNewConnection: true);
   }
 
   dispose() {

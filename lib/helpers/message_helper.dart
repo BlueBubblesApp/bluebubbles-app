@@ -119,16 +119,17 @@ class MessageHelper {
       notification = "New Message (unlock to view)";
     }
     NotificationManager().createNewNotification(
-        title,
-        notification,
-        chat.guid,
-        Random().nextInt(9998) + 1,
-        chat.id,
-        message.dateCreated.millisecondsSinceEpoch,
-        contactTitle,
-        chat.participants.length > 1,
-        handle: message.handle,
-        contact: contact);
+      title,
+      notification,
+      chat.guid,
+      Random().nextInt(9998) + 1,
+      chat.id,
+      message.dateCreated.millisecondsSinceEpoch,
+      contactTitle,
+      chat.participants.length > 1,
+      handle: message.handle,
+      contact: contact,
+    );
   }
 
   static Future<String> getNotificationText(Message message) async {

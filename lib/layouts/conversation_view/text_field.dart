@@ -317,23 +317,6 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                                       },
                                     ),
                                   ),
-                            // Positioned.fill(
-                            //   child: Material(
-                            //     color: Colors.transparent,
-                            //     child: InkWell(
-                            //       onTap: () async {
-                            //         Navigator.of(context).push(
-                            //           MaterialPageRoute(
-                            //             builder: (context) => ImageViewer(
-                            //               file: pickedImages[index],
-                            //               tag: pickedImages[index].path,
-                            //             ),
-                            //           ),
-                            //         );
-                            //       },
-                            //     ),
-                            //   ),
-                            // ),
                             mime(pickedImages[index].path).startsWith("video/")
                                 ? Align(
                                     alignment: Alignment.bottomRight,

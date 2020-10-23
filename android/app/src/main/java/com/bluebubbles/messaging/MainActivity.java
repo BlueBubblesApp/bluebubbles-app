@@ -9,16 +9,13 @@ import io.flutter.plugins.GeneratedPluginRegistrant;
 
 import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.ServiceConnection;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.IBinder;
 import android.os.PersistableBundle;
 import android.provider.OpenableColumns;
 import android.util.Log;
@@ -85,10 +82,12 @@ public class MainActivity extends FlutterActivity {
         if (Intent.ACTION_SEND.equals(action)) {
             if ("text/plain".equals(type)) {
                 handleSendText(intent); // Handle text being sent
+            } else if("text/x-vcard".equals(type)) {
+                handleShareFile(intent);
             } else if (type.startsWith("image/")) {
-                handleSendImage(intent); // Handle single image being sent
+                handleShareFile(intent); // Handle single image being sent
             } else if (type.startsWith("video/")) {
-                handleSendImage(intent);
+                handleShareFile(intent);
             } else {
                 Log.d("ShareImage", "type not found " + type);
             }
@@ -144,26 +143,19 @@ public class MainActivity extends FlutterActivity {
         String sharedText = intent.getStringExtra(Intent.EXTRA_TEXT);
         if (sharedText != null) {
             new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod("shareText", sharedText);
-            // Update UI to reflect text being shared
         }
     }
 
-    void handleSendImage(Intent intent) {
+    void handleShareFile(Intent intent) {
         Map<String, byte[]> imagePaths = new HashMap<String, byte[]>();
         Uri imageUri = (Uri) intent.getParcelableExtra(Intent.EXTRA_STREAM);
         if (imageUri != null) {
             imagePaths.put(getFileName(imageUri), getBytesFromUri(imageUri));
             new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod("shareAttachments", imagePaths);
-            Log.d("ShareImage", imagePaths.toString());
         }
     }
 
     public byte[] getBytesFromUri(Uri contentUri) {
-//        String[] proj = {MediaStore.Audio.Media.DATA};
-//        Cursor cursor = getContentResolver().query(contentUri, proj, null, null, null);
-//        int column_index = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA);
-//        cursor.moveToFirst();
-//        return cursor.getString(column_index);
         try {
             InputStream stream = getContentResolver().openInputStream(contentUri);
             byte[] bytes = new byte[stream.available()];
