@@ -84,6 +84,21 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
 
         // Set the URL to the original URL
         data.url = url;
+      } else if (url.contains("twitter.com") && url.contains("/status/")) {
+        // Manually request this URL
+        String newUrl = "https://publish.twitter.com/oembed?url=$url";
+        var response = await http.get(newUrl);
+
+        // Manually load it into a metadata object via JSON
+        Map res = jsonDecode(response.body);
+        data = new Metadata();
+        data.title = (res.containsKey("author_name")) ? res["author_name"] : "";
+        data.description = (res.containsKey("html"))
+            ? stripHtmlTags(res["html"].replaceAll("<br>", "\n")).trim()
+            : "";
+
+        // Set the URL to the original URL
+        data.url = url;
       } else {
         data = await extract(url);
       }
@@ -159,13 +174,14 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
                                 children: <Widget>[
                                   titleWidget,
                                   data != null && data.description != null
-                                      ? Text(data.description,
+                                      ? Padding(
+                                          padding: EdgeInsets.only(top: 5.0),
+                                          child: Text(data.description,
                                           style: Theme.of(context)
                                               .textTheme
                                               .bodyText1
-                                              .apply(fontSizeDelta: -5),
-                                          maxLines: 3,
-                                          overflow: TextOverflow.ellipsis)
+                                              .apply(fontSizeDelta: -5),)
+                                        )
                                       : Container(),
                                   Padding(
                                       padding: EdgeInsets.only(
