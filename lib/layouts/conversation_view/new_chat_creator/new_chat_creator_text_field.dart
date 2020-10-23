@@ -43,34 +43,36 @@ class _NewChatCreatorTextFieldState extends State<NewChatCreatorTextField> {
     List<Widget> items = [];
     for (UniqueContact contact in widget.selectedContacts) {
       items.add(
-        Padding(
-          padding: EdgeInsets.only(right: 5.0, top: 2.0, bottom: 2.0),
-          child: ClipRRect(
-            borderRadius: BorderRadius.all(Radius.circular(5.0)),
-            child: Container(
-              padding: EdgeInsets.all(5.0),
-              color: Theme.of(context).primaryColor,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  Text(
-                    contact.displayName.trim(),
-                    //style: textStyle?.copyWith(color: Colors.orange),
-                  ),
-                  SizedBox(
-                    width: 5.0,
-                  ),
-                  InkWell(
-                    child: Icon(
-                      Icons.close,
-                      size: 15.0,
+        GestureDetector(
+          onTap: () {
+            widget.onRemove(contact);
+          },
+          child: Padding(
+            padding: EdgeInsets.only(right: 5.0, top: 2.0, bottom: 2.0),
+            child: ClipRRect(
+              borderRadius: BorderRadius.all(Radius.circular(5.0)),
+              child: Container(
+                padding: EdgeInsets.all(5.0),
+                color: Theme.of(context).primaryColor,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    Text(
+                      contact.displayName.trim(),
+                      //style: textStyle?.copyWith(color: Colors.orange),
                     ),
-                    onTap: () {
-                      widget.onRemove(contact);
-                    },
-                  )
-                ],
+                    SizedBox(
+                      width: 5.0,
+                    ),
+                    InkWell(
+                      child: Icon(
+                        Icons.close,
+                        size: 15.0,
+                      )
+                    )
+                  ],
+                ),
               ),
             ),
           ),
