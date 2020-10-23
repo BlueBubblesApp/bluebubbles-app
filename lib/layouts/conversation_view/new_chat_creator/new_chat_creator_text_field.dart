@@ -103,6 +103,7 @@ class _NewChatCreatorTextFieldState extends State<NewChatCreatorTextField> {
           maxLines: 1,
           autocorrect: false,
           placeholder: "Type a name...",
+          placeholderStyle: Theme.of(context).textTheme.subtitle1,
           padding: EdgeInsets.only(right: 5.0, top: 2.0, bottom: 2.0),
           autofocus: true,
           style: Theme.of(context).textTheme.bodyText2.apply(
