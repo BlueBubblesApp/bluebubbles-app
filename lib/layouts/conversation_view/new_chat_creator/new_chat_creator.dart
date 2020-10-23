@@ -8,11 +8,8 @@ import 'package:bluebubbles/layouts/conversation_list/conversation_tile.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/adding_participant_popup.dart';
 import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/new_chat_creator_text_field.dart';
-import 'package:bluebubbles/layouts/widgets/message_widget/group_event.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
-import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
-import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -226,6 +223,7 @@ class _NewChatCreatorState extends State<NewChatCreator> {
             },
           )),
           NewChatCreatorTextField(
+              allContacts: this.contacts.where((element) => !element.isChat).toList(),
               isCreator: widget.isCreator,
               controller: controller,
               onCreate: () {

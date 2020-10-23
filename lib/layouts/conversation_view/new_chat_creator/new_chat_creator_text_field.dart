@@ -9,12 +9,14 @@ class NewChatCreatorTextField extends StatefulWidget {
   final Function(UniqueContact) onRemove;
   final bool isCreator;
   final List<UniqueContact> selectedContacts;
+  final List<UniqueContact> allContacts;
   NewChatCreatorTextField(
       {Key key,
       @required this.controller,
       @required this.onCreate,
       @required this.onRemove,
       @required this.selectedContacts,
+      @required this.allContacts,
       @required this.isCreator})
       : super(key: key);
 
@@ -96,10 +98,16 @@ class _NewChatCreatorTextFieldState extends State<NewChatCreatorTextField> {
               widget.selectedContacts
                   .add(new UniqueContact(address: done, displayName: done));
             } else {
-              Scaffold.of(context).showSnackBar(SnackBar(
-                content: Text("Invalid Number $done"),
-                duration: Duration(milliseconds: 500),
-              ));
+              if (widget.allContacts.length == 0) {
+                Scaffold.of(context).showSnackBar(SnackBar(
+                  content: Text("Invalid Number $done"),
+                  duration: Duration(milliseconds: 500),
+                ));
+              } else {
+                widget.controller.clear();
+                widget.selectedContacts
+                  .add(widget.allContacts[0]);
+              }
             }
           },
           controller: widget.controller,
