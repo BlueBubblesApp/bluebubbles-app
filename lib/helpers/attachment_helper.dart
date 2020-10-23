@@ -50,7 +50,6 @@ class AttachmentHelper {
 
     Contact contact = Contact();
     if (_contact.containsKey("N") && _contact["N"].toString().isNotEmpty) {
-      print(_contact["N"]);
       String firstName = (_contact["N"] + " ").split(";")[1];
       String lastName = _contact["N"].split(";")[0];
       contact.displayName = firstName + " " + lastName;
