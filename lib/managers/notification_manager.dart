@@ -14,6 +14,8 @@ class NotificationManager {
     return _manager;
   }
 
+  static const String NEW_MESSAGE_CHANNEL = "com.bluebubbles.new_messages";
+
   static final NotificationManager _manager = NotificationManager._internal();
   NotificationManager._internal();
 
@@ -74,7 +76,7 @@ class NotificationManager {
     MethodChannelInterface().invokeMethod("create-notif-channel", {
       "channel_name": "New Messages",
       "channel_description": "For new messages retreived",
-      "CHANNEL_ID": "com.bluebubbles.new_messages"
+      "CHANNEL_ID": NEW_MESSAGE_CHANNEL
     });
   }
 
@@ -134,7 +136,7 @@ class NotificationManager {
 
     // Invoke the method in native code
     MethodChannelInterface().platform.invokeMethod("new-message-notification", {
-      "CHANNEL_ID": "com.bluebubbles..new_messages",
+      "CHANNEL_ID": NEW_MESSAGE_CHANNEL,
       "CHANNEL_NAME": "New Messages",
       "contentTitle": contentTitle,
       "contentText": contentText,
@@ -153,7 +155,7 @@ class NotificationManager {
     MethodChannelInterface()
         .platform
         .invokeMethod("create-socket-issue-warning", {
-      "CHANNEL_ID": "com.bluebubbles..new_messages",
+      "CHANNEL_ID": NEW_MESSAGE_CHANNEL,
     });
   }
 
