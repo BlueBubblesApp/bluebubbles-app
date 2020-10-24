@@ -190,7 +190,6 @@ class _ReceivedMessageState extends State<ReceivedMessage> {
           child: ContactAvatarWidget(
               contactImage: contactImage,
               initials: initials,
-              radius: 15,
               fontSize: 14)));
     }
     

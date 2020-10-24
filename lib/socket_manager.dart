@@ -206,6 +206,11 @@ class SocketManager {
   }
 
   startSocketIO({bool forceNewConnection = false}) async {
+    if (SettingsManager().settings == null) {
+      debugPrint("Settings have not loaded yet, not starting socket...");
+      return;
+    }
+
     if ((state == SocketState.CONNECTING || state == SocketState.CONNECTED) &&
         !forceNewConnection) {
       debugPrint("already connected");
@@ -221,7 +226,7 @@ class SocketManager {
     }
 
     debugPrint(
-        "Starting socket io with the server: ${SettingsManager().settings?.serverAddress}");
+        "Starting socket io with the server: ${SettingsManager().settings.serverAddress}");
 
     try {
       // Create a new socket connection
@@ -229,6 +234,12 @@ class SocketManager {
           SettingsManager().settings.serverAddress, "/",
           query: "guid=${SettingsManager().settings.guidAuthKey}",
           socketStatusCallback: (data) => socketStatusUpdate(data));
+
+      if (_manager.socket == null) {
+        debugPrint("Socket was never created. Can't connect to server...");
+        return;
+      }
+
       _manager.socket.init();
       _manager.socket.connect();
       _manager.socket.unSubscribesAll();
