@@ -38,7 +38,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> {
         color: Theme.of(context).backgroundColor,
         width: widget.height ?? 40,
         height: widget.width ?? 40,
-        child: widget.initials
+        child: widget.initials,
       );
     }
 
@@ -57,18 +57,17 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> {
         ),
         child: Container(
           child: (widget.initials is String)
-              ? Text(widget.initials,
+              ? Text(
+                  widget.initials,
                   style: TextStyle(
-                      fontSize: (widget.fontSize == null)
-                          ? 18
-                          : widget.fontSize,
-                      color: Theme.of(context).textTheme.bodyText1.color
-                  )
+                    fontSize: (widget.fontSize == null) ? 18 : widget.fontSize,
+                    color: Theme.of(context).textTheme.bodyText1.color,
+                  ),
                 )
               : widget.initials,
           alignment: AlignmentDirectional.center,
         ),
-      )
+      ),
     );
   }
 }

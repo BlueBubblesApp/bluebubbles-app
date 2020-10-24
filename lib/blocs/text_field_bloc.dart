@@ -21,6 +21,7 @@ class TextFieldBloc {
     if (_textFields.containsKey(chatGuid)) {
       return _textFields[chatGuid];
     } else {
+      _textFields[chatGuid] = new TextFieldData();
       _textFields[chatGuid].controller = new TextEditingController();
       return _textFields[chatGuid];
     }

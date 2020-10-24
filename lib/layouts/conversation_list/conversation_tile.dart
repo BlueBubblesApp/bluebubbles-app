@@ -27,15 +27,13 @@ class ConversationTile extends StatefulWidget {
   final List<File> existingAttachments;
   final String existingText;
 
-  ConversationTile(
-      {Key key,
-      this.chat,
-      this.replaceOnTap,
-      this.existingAttachments,
-      this.existingText})
-      : super(key: key);
-
-  // final Chat chat;
+  ConversationTile({
+    Key key,
+    this.chat,
+    this.replaceOnTap,
+    this.existingAttachments,
+    this.existingText,
+  }) : super(key: key);
 
   @override
   _ConversationTileState createState() => _ConversationTileState();
@@ -89,7 +87,7 @@ class _ConversationTileState extends State<ConversationTile> {
     }
 
     if (widget.chat.participants.length > 1 ||
-        (widget.chat.displayName != null && widget.chat.displayName != "")) { 
+        (widget.chat.displayName != null && widget.chat.displayName != "")) {
       if (widget.chat.participants.length > 1) {
         // Loop over the participants
         for (Handle handle in widget.chat.participants.sublist(0, 2)) {
@@ -97,8 +95,12 @@ class _ConversationTileState extends State<ConversationTile> {
           bool existed = avatarStack.containsKey(handle.address);
 
           // If the avatar doesnt exist yet, add it as null
-          dynamic currentVal = avatarStack.putIfAbsent(handle.address,
-              () => {"avatar": null, "initials": getInitials(null, "", size: 15)});
+          dynamic currentVal = avatarStack.putIfAbsent(
+              handle.address,
+              () => {
+                    "avatar": null,
+                    "initials": getInitials(null, "", size: 15)
+                  });
 
           // Update the UI with the placeholders
           if (!existed) continue;
@@ -106,7 +108,8 @@ class _ConversationTileState extends State<ConversationTile> {
           // Get the latest avatar
           if (currentVal["avatar"] == null) {
             MemoryImage avatar = await loadAvatar(widget.chat, handle.address);
-            String tile = await ContactManager().getContactTitle(handle.address);
+            String tile =
+                await ContactManager().getContactTitle(handle.address);
             dynamic initials = getInitials(tile, " ", size: 15);
 
             // Only update if there is a change
@@ -119,7 +122,7 @@ class _ConversationTileState extends State<ConversationTile> {
             }
           }
         }
-          
+
         // Build the stack
         List<Widget> avatars = [];
         avatarStack.forEach((address, info) {
@@ -127,24 +130,22 @@ class _ConversationTileState extends State<ConversationTile> {
             Transform.rotate(
               angle: -(45 * pi / 180),
               child: ContactAvatarWidget(
-                contactImage: info["avatar"],
-                initials: info["initials"],
-                fontSize: 12,
-                height: 25,
-                width: 30
-              ),
+                  contactImage: info["avatar"],
+                  initials: info["initials"],
+                  fontSize: 12,
+                  height: 25,
+                  width: 30),
             ),
           );
         });
 
         initials = Transform.rotate(
-          angle: 45 * pi / 180,
-          child: RowSuper(
-            children: avatars,
-            innerDistance: -10.0,
-            alignment: Alignment.center,
-          )
-        );
+            angle: 45 * pi / 180,
+            child: RowSuper(
+              children: avatars,
+              innerDistance: -10.0,
+              alignment: Alignment.center,
+            ));
       } else {
         initials = Icon(Icons.people, color: Colors.white, size: 30);
       }
