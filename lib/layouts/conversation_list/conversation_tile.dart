@@ -1,20 +1,17 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:assorted_layout_widgets/assorted_layout_widgets.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
-import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'dart:math';
 
 import '../conversation_view/conversation_view.dart';
 import '../../repository/models/chat.dart';
@@ -88,72 +85,7 @@ class _ConversationTileState extends State<ConversationTile> {
 
     if (widget.chat.participants.length > 1 ||
         (widget.chat.displayName != null && widget.chat.displayName != "")) {
-      if (widget.chat.participants.length > 1) {
-        // Loop over the participants
-        for (Handle handle in widget.chat.participants.sublist(0, 2)) {
-          // Since we only want to update if we've made changes, check a flag
-          bool existed = avatarStack.containsKey(handle.address);
-
-          // If the avatar doesnt exist yet, add it as null
-          dynamic currentVal = avatarStack.putIfAbsent(
-              handle.address,
-              () => {
-                    "avatar": null,
-                    "initials": getInitials(null, "", size: 15)
-                  });
-
-          // Update the UI with the placeholders
-          if (!existed) continue;
-
-          // Get the latest avatar
-          if (currentVal["avatar"] == null) {
-            MemoryImage avatar = await loadAvatar(widget.chat, handle.address);
-            String tile =
-                await ContactManager().getContactTitle(handle.address);
-            dynamic initials = getInitials(tile, " ", size: 15);
-
-            // Only update if there is a change
-            if (avatarStack[handle.address]["initials"] != initials) {
-              avatarStack[handle.address]["initials"] = initials;
-            }
-
-            if (avatar != null) {
-              avatarStack[handle.address]["avatar"] = avatar;
-            }
-          }
-        }
-
-        // Build the stack
-        List<Widget> avatars = [];
-        avatarStack.forEach((address, info) {
-          avatars.add(
-            Transform.rotate(
-              angle: -(45 * pi / 180),
-              child: ContactAvatarWidget(
-                  contactImage: info["avatar"],
-                  initials: info["initials"],
-                  fontSize: 12,
-                  height: 25,
-                  width: 30),
-            ),
-          );
-        });
-
-        initials = Transform.rotate(
-          angle: 45 * pi / 180,
-          child: Container(
-            color: Colors.transparent,
-            child: RowSuper(
-              children: avatars,
-              innerDistance: -10.0,
-              alignment: Alignment.center,
-            )
-          )
-        );
-      } else {
-        initials = Icon(Icons.people, color: Colors.white, size: 30);
-      }
-
+      initials = Icon(Icons.people, color: Colors.white, size: 30);
       if (this.mounted) setState(() {});
     } else if (widget.chat.participants.length == 1) {
       ContactManager()

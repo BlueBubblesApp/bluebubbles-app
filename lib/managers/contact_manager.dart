@@ -26,7 +26,8 @@ class ContactManager {
   Completer getAvatarsFuture;
 
   Future<Contact> getCachedContact(String address) async {
-    if (contacts == null || !handleToContact.containsKey(address)) await getContacts();
+    if (contacts == null || !handleToContact.containsKey(address))
+      await getContacts();
     if (!handleToContact.containsKey(address)) return null;
     return handleToContact[address];
   }
@@ -64,7 +65,8 @@ class ContactManager {
     // Fetch the current list of contacts
     debugPrint("ContactManager -> Fetching Contacts");
     contacts =
-        (await ContactsService.getContacts(withThumbnails: false)).toList();
+        ((await ContactsService.getContacts(withThumbnails: false)) ?? [])
+            .toList();
 
     // Match handles to contacts
     List<Handle> handles = await Handle.find({});
@@ -150,7 +152,8 @@ class ContactManager {
     if (address == null) return "You";
     if (contacts == null) await getContacts();
 
-    if (handleToContact.containsKey(address) && handleToContact[address] != null)
+    if (handleToContact.containsKey(address) &&
+        handleToContact[address] != null)
       return handleToContact[address].displayName;
     String contactTitle = address;
     if (contactTitle == address && !contactTitle.contains("@")) {
