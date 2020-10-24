@@ -140,12 +140,16 @@ class _ConversationTileState extends State<ConversationTile> {
         });
 
         initials = Transform.rotate(
-            angle: 45 * pi / 180,
+          angle: 45 * pi / 180,
+          child: Container(
+            color: Colors.transparent,
             child: RowSuper(
               children: avatars,
               innerDistance: -10.0,
               alignment: Alignment.center,
-            ));
+            )
+          )
+        );
       } else {
         initials = Icon(Icons.people, color: Colors.white, size: 30);
       }
