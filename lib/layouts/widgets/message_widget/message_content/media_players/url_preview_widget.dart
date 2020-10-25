@@ -11,6 +11,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:metadata_fetch/metadata_fetch.dart';
 import 'package:http/http.dart' as http;
+import 'package:html/dom.dart' as dom;
 
 class UrlPreviewWidget extends StatefulWidget {
   UrlPreviewWidget({
@@ -59,6 +60,28 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
     return File(pathName);
   }
 
+  Future<Metadata> manuallyGetMetadata(String url) async {
+    Metadata meta = new Metadata();
+
+    var response = await http.get(url);
+    var document = responseToDocument(response);
+
+    for (dom.Element i in document.head?.children ?? []) {
+      if (i.localName != "meta") continue;
+      i.attributes.forEach((dynamic name, String value) {
+        String prop = name as String;
+        if (prop != "property" && prop != "name") return;
+        if (value.contains("title")) {
+          meta.title = i.attributes["content"];
+        } else if (value.contains("description")) {
+          meta.description = i.attributes["content"];
+        }
+      });
+    }
+
+    return meta;
+  }
+
   @override
   void didChangeDependencies() async {
     super.didChangeDependencies();
@@ -99,8 +122,17 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
 
         // Set the URL to the original URL
         data.url = url;
+      } else if (url.contains("linkedin.com/posts/")) {
+        data = await this.manuallyGetMetadata(url);
+        data.url = url;
       } else {
         data = await extract(url);
+      }
+
+      // If the data or title was null, try to manually parse
+      if (data == null || data.title == null) {
+        data = await this.manuallyGetMetadata(url);
+        data.url = url;
       }
 
       widget.savedAttachmentData
