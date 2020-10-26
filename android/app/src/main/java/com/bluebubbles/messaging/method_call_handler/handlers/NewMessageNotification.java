@@ -65,7 +65,10 @@ public class NewMessageNotification implements Handler{
         // Set the style based on if there is already a matching notification
         if (style == null) {
             style = new NotificationCompat.MessagingStyle(androidx.core.app.Person.fromAndroidPerson(new Person.Builder().setName("You").build()));
-            style.setConversationTitle(call.argument("contentTitle"));
+            if (call.argument("groupConversation")) {
+                style.setConversationTitle(call.argument("contentTitle"));
+            }
+
             style.setGroupConversation(call.argument("groupConversation"));
         }
 
