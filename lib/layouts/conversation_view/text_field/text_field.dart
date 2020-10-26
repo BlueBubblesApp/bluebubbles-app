@@ -407,17 +407,19 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                     ),
                   ],
                 ),
-                TextFieldAttachmentPicker(
-                  visible: showImagePicker,
-                  onAddAttachment: (File file) {
-                    for (File image in pickedImages) {
-                      if (image.path == file.path) return;
-                    }
-                    pickedImages.add(file);
-                    setState(() {});
-                  },
-                  chat: widget.chat,
-                )
+                showImagePicker
+                    ? TextFieldAttachmentPicker(
+                        visible: showImagePicker,
+                        onAddAttachment: (File file) {
+                          for (File image in pickedImages) {
+                            if (image.path == file.path) return;
+                          }
+                          pickedImages.add(file);
+                          setState(() {});
+                        },
+                        chat: widget.chat,
+                      )
+                    : Container(),
               ],
             ),
           ),
