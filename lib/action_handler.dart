@@ -17,7 +17,6 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
-import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/widgets.dart';
@@ -282,6 +281,19 @@ class ActionHandler {
     if (!headless && updatedMessage != null)
       NewMessageManager()
           .updateMessage(chat, updatedMessage.guid, updatedMessage);
+  }
+
+  /// Handles marking a chat by [chatGuid], with a new [status] of read or unread.
+  ///
+  /// ```dart
+  /// handleChatStatusChange(chatGuid, status)
+  /// ```
+  static Future<void> handleChatStatusChange(String chatGuid, bool status) async {
+    Chat chat = await Chat.findOne({"guid": chatGuid});
+    if (chat == null) return;
+
+    await chat.setUnreadStatus(status);
+    ChatBloc().updateChat(chat);
   }
 
   /// Handles the ingestion of an incoming chat. Chats come in
