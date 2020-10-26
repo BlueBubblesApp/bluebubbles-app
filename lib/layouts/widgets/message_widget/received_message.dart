@@ -102,6 +102,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> {
   @override
   Widget build(BuildContext context) {
     var initials = getInitials(contact?.displayName ?? "", " ", size: 25);
+
     List<Widget> tail = <Widget>[
       Container(
         margin: EdgeInsets.only(bottom: 1),
@@ -190,6 +191,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> {
           child: ContactAvatarWidget(
               contactImage: contactImage,
               initials: initials,
+              size: 30,
               fontSize: 14)));
     }
     

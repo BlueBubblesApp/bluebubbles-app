@@ -11,6 +11,7 @@ class IncomingQueue extends QueueManager {
 
   static const String HANDLE_MESSAGE_EVENT = "handle-message";
   static const String HANDLE_UPDATE_MESSAGE = "handle-updated-message";
+  static const String HANDLE_CHAT_STATUS_CHANGE = "chat-status-change";
 
   IncomingQueue._internal();
 
@@ -37,6 +38,12 @@ class IncomingQueue extends QueueManager {
               headless: params.containsKey("isHeadless")
                   ? params["isHeadless"]
                   : false);
+          break;
+        }
+      case HANDLE_CHAT_STATUS_CHANGE:
+        {
+          Map<String, dynamic> params = item.item;
+          await ActionHandler.handleChatStatusChange(params["chatGuid"], params["status"]);
           break;
         }
       default:

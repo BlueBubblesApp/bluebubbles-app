@@ -205,6 +205,13 @@ class SocketManager {
     return new Future.value("");
   }
 
+  Future<String> handleChatStatusChange(_data) async {
+    Map<String, dynamic> data = jsonDecode(_data);
+    IncomingQueue()
+        .add(new QueueItem(event: IncomingQueue.HANDLE_CHAT_STATUS_CHANGE, item: {"data": data}));
+    return new Future.value("");
+  }
+
   startSocketIO({bool forceNewConnection = false}) async {
     if (SettingsManager().settings == null) {
       debugPrint("Settings have not loaded yet, not starting socket...");
@@ -269,6 +276,7 @@ class SocketManager {
       _manager.socket.subscribe("participant-removed", handleNewMessage);
       _manager.socket.subscribe("participant-added", handleNewMessage);
       _manager.socket.subscribe("participant-left", handleNewMessage);
+      _manager.socket.subscribe("chat-read-status-changed", handleChatStatusChange);
 
       /**
        * Handle errors sent by the server
