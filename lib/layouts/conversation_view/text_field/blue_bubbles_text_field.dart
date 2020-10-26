@@ -60,19 +60,20 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
   bool showImagePicker = false;
   List<File> pickedImages = <File>[];
   bool isRecording = false;
+  TextFieldData textFieldData;
   static final GlobalKey<FormFieldState<String>> _searchFormKey =
       GlobalKey<FormFieldState<String>>();
 
   @override
   void initState() {
     super.initState();
-    TextFieldData textFieldData;
     if (widget.chat != null) {
       textFieldData = TextFieldBloc().getTextField(widget.chat.guid);
     }
     _controller = textFieldData != null
         ? textFieldData.controller
         : new TextEditingController();
+
     if (widget.existingText != null) {
       _controller.text = widget.existingText;
     }
@@ -85,7 +86,14 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
     });
     if (widget.existingAttachments != null) {
       pickedImages.addAll(widget.existingAttachments);
+      updateTextFieldAttachments();
+    } else if (textFieldData != null) {
+      pickedImages.addAll(textFieldData.attachments);
     }
+  }
+
+  void updateTextFieldAttachments() {
+    if (textFieldData != null) textFieldData.attachments = pickedImages;
   }
 
   @override
@@ -154,6 +162,11 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
   Future<void> toggleShareMenu() async {
     // If the image picker is already open, close it, and return
     if (!showImagePicker) FocusScope.of(context).requestFocus(new FocusNode());
+    if (!showImagePicker && !(await PhotoManager.requestPermission())) {
+      showImagePicker = false;
+      setState(() {});
+      return;
+    }
     showImagePicker = !showImagePicker;
     setState(() {});
   }
@@ -189,6 +202,11 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
               children: <Widget>[
                 TextFieldAttachmentList(
                   attachments: pickedImages,
+                  onRemove: (File attachment) {
+                    pickedImages.removeWhere(
+                        (element) => element.path == attachment.path);
+                    setState(() {});
+                  },
                 ),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -251,6 +269,7 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                                   File file = await _downloadFile(
                                       url, fnParts.join("_"));
                                   pickedImages.add(file);
+                                  updateTextFieldAttachments();
                                   setState(() {});
                                 },
                                 textCapitalization:
@@ -363,6 +382,7 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
 
                                     _controller.text = "";
                                     pickedImages = <File>[];
+                                    updateTextFieldAttachments();
                                     setState(() {});
                                   },
                                   child: Stack(
@@ -407,19 +427,18 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                     ),
                   ],
                 ),
-                showImagePicker
-                    ? TextFieldAttachmentPicker(
-                        visible: showImagePicker,
-                        onAddAttachment: (File file) {
-                          for (File image in pickedImages) {
-                            if (image.path == file.path) return;
-                          }
-                          pickedImages.add(file);
-                          setState(() {});
-                        },
-                        chat: widget.chat,
-                      )
-                    : Container(),
+                TextFieldAttachmentPicker(
+                  visible: showImagePicker,
+                  onAddAttachment: (File file) {
+                    for (File image in pickedImages) {
+                      if (image.path == file.path) return;
+                    }
+                    pickedImages.add(file);
+                    updateTextFieldAttachments();
+                    setState(() {});
+                  },
+                  chat: widget.chat,
+                ),
               ],
             ),
           ),

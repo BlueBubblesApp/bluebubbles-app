@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/cupertino.dart';
 
 /// [TextFieldBloc] holds in memory all of the data for all of the textfields.
@@ -31,5 +33,5 @@ class TextFieldBloc {
 /// [TextFieldData] holds a TextEditingController and a list of strings that link to attachments
 class TextFieldData {
   TextEditingController controller;
-  List<String> attachments = [];
+  List<File> attachments = [];
 }

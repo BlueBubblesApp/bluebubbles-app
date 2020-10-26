@@ -34,14 +34,12 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker>
   }
 
   Future<void> getAttachments() async {
-    if (await PhotoManager.requestPermission()) {
-      List<AssetPathEntity> list =
-          await PhotoManager.getAssetPathList(onlyAll: true);
-      List<AssetEntity> images =
-          await list.first.getAssetListRange(start: 0, end: 60);
-      _images = images;
-      setState(() {});
-    }
+    List<AssetPathEntity> list =
+        await PhotoManager.getAssetPathList(onlyAll: true);
+    List<AssetEntity> images =
+        await list.first.getAssetListRange(start: 0, end: 60);
+    _images = images;
+    setState(() {});
   }
 
   @override
@@ -241,7 +239,7 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker>
                       (context, index) {
                         AssetEntity element = _images[index];
                         return AttachmentPicked(
-                          key: Key(index.toString()),
+                          key: Key("attachmentPicked" + _images[index].id),
                           data: element,
                           onTap: () async {
                             widget.onAddAttachment(await element.file);

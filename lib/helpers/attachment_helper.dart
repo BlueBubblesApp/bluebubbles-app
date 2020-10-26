@@ -153,4 +153,22 @@ class AttachmentHelper {
       return attachment;
     }
   }
+
+  static IconData getIcon(String mimeType) {
+    if (mimeType == null) return Icons.open_in_new;
+    if (mimeType == "application/pdf") {
+      return Icons.picture_as_pdf;
+    } else if (mimeType == "application/zip") {
+      return Icons.folder;
+    } else if (mimeType.startsWith("audio")) {
+      return Icons.music_note;
+    } else if (mimeType.startsWith("image")) {
+      return Icons.photo;
+    } else if (mimeType.startsWith("video")) {
+      return Icons.videocam;
+    } else if (mimeType.startsWith("text")) {
+      return Icons.note;
+    }
+    return Icons.open_in_new;
+  }
 }
