@@ -4,6 +4,8 @@ import 'dart:typed_data';
 import 'dart:ui';
 
 import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/helpers/share.dart';
+import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -12,8 +14,10 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:video_player/video_player.dart';
 
 class VideoViewer extends StatefulWidget {
-  VideoViewer({Key key, this.file}) : super(key: key);
+  VideoViewer({Key key, @required this.file, @required this.attachment})
+      : super(key: key);
   final File file;
+  final Attachment attachment;
 
   @override
   _VideoViewerState createState() => _VideoViewerState();
@@ -184,6 +188,27 @@ class _VideoViewerState extends State<VideoViewer> {
                 },
                 child: Icon(
                   Icons.file_download,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.only(top: 50.0, right: 70),
+            child: Align(
+              alignment: Alignment.topRight,
+              child: CupertinoButton(
+                onPressed: () async {
+                  // final Uint8List bytes = await widget.file.readAsBytes();
+                  await Share.file(
+                    "Shared ${widget.attachment.mimeType.split("/")[0]} from BlueBubbles: ${widget.attachment.transferName}",
+                    widget.attachment.transferName,
+                    widget.file.path,
+                    widget.attachment.mimeType,
+                  );
+                },
+                child: Icon(
+                  Icons.share,
                   color: Colors.white,
                 ),
               ),
