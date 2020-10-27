@@ -15,6 +15,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/scheduler.dart' hide Priority;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
@@ -245,10 +246,19 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
             // If the app has already gone through setup, show the convo list
             // Otherwise show the setup
             if (snapshot.data) {
+              SystemChrome.setPreferredOrientations([
+                DeviceOrientation.landscapeRight,
+                DeviceOrientation.landscapeLeft,
+                DeviceOrientation.portraitUp,
+                DeviceOrientation.portraitDown,
+              ]);
               return ConversationList(
                 showArchivedChats: false,
               );
             } else {
+              SystemChrome.setPreferredOrientations([
+                DeviceOrientation.portraitUp,
+              ]);
               return SetupView();
             }
           } else {
