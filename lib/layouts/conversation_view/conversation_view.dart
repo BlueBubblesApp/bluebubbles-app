@@ -4,7 +4,7 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/layouts/conversation_details/conversation_details.dart';
 import 'package:bluebubbles/layouts/conversation_view/messages_view.dart';
-import 'package:bluebubbles/layouts/conversation_view/text_field/text_field.dart';
+import 'package:bluebubbles/layouts/conversation_view/text_field/blue_bubbles_text_field.dart';
 import 'package:bluebubbles/layouts/widgets/CustomCupertinoNavBackButton.dart';
 import 'package:bluebubbles/layouts/widgets/CustomCupertinoNavBar.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';

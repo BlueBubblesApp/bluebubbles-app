@@ -162,7 +162,6 @@ class _MessageAttachmentState extends State<MessageAttachment>
         );
       } else if (mimeType == "audio" &&
           !widget.attachment.mimeType.contains("caf")) {
-        // TODO: fix this stuff
         return MediaFile(
           attachment: widget.attachment,
           child: AudioPlayerWiget(
