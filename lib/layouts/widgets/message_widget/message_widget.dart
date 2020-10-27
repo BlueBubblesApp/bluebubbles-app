@@ -78,7 +78,8 @@ class _MessageState extends State<MessageWidget> {
   }
 
   Future<void> fetchStickers() async {
-    if (stickerRequest != null && !stickerRequest.isCompleted) return stickerRequest.future;
+    if (stickerRequest != null && !stickerRequest.isCompleted)
+      return stickerRequest.future;
     stickerRequest = new Completer();
 
     widget.message.getAssociatedMessages().then((List<Message> messages) async {
@@ -199,38 +200,38 @@ class _MessageState extends State<MessageWidget> {
       widgetStack.add(Text("")); // Workaround for Flutter bug
 
       return WillPopScope(
-        onWillPop: () async {
-          if (_entry != null) {
-            try {
-              _entry.remove();
-            } catch (e) {}
-            _entry = null;
-            return true;
-          } else {
-            return true;
-          }
-        },
-        child: GestureDetector(
-          behavior: HitTestBehavior.translucent,
-          onLongPress: () async {
-            Feedback.forLongPress(context);
-            List<Message> reactions = [];
-            if (widget.message.hasReactions) {
-              reactions = await widget.message.getAssociatedMessages();
-              reactions = reactions.where((element) =>
-                  ReactionTypes.toList().contains(element.associatedMessageType)).toList();
+          onWillPop: () async {
+            if (_entry != null) {
+              try {
+                _entry.remove();
+              } catch (e) {}
+              _entry = null;
+              return true;
+            } else {
+              return true;
             }
-
-            Overlay.of(context).insert(_createMessageDetailsPopup(reactions));
           },
-          child: Stack(
-            alignment: widget.fromSelf
-                ? AlignmentDirectional.centerEnd
-                : AlignmentDirectional.centerStart,
-            children: widgetStack
-          )
-        )
-      );
+          child: GestureDetector(
+              behavior: HitTestBehavior.translucent,
+              onLongPress: () async {
+                Feedback.forLongPress(context);
+                List<Message> reactions = [];
+                if (widget.message.hasReactions) {
+                  reactions = await widget.message.getAssociatedMessages();
+                  reactions = reactions
+                      .where((element) => ReactionTypes.toList()
+                          .contains(element.associatedMessageType))
+                      .toList();
+                }
+
+                Overlay.of(context)
+                    .insert(_createMessageDetailsPopup(reactions));
+              },
+              child: Stack(
+                  alignment: widget.fromSelf
+                      ? AlignmentDirectional.centerEnd
+                      : AlignmentDirectional.centerStart,
+                  children: widgetStack)));
     }
   }
 
