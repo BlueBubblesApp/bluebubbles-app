@@ -66,6 +66,7 @@ class ActionHandler {
     if (shouldSplit) {
       messages.add(Message(
         guid: "temp-${randomString(8)}",
+        hasDdResults: true,
         text: text.substring(linkMatch.start, linkMatch.end),
         dateCreated: DateTime.now(),
         hasAttachments: false,
@@ -383,7 +384,12 @@ class ActionHandler {
             data.containsKey("attachments") ? data['attachments'] : [];
         for (dynamic attachmentItem in attachments) {
           Attachment file = Attachment.fromMap(attachmentItem);
-          await Attachment.replaceAttachment(data["tempGuid"], file);
+
+          try {
+            await Attachment.replaceAttachment(data["tempGuid"], file);
+          } catch (ex) {
+            debugPrint("Attachment's Old GUID doesn't exist. Skipping");
+          }
         }
         debugPrint(
             "(Message status) -> Message match: [${data["text"]}] - ${data["guid"]} - ${data["tempGuid"]}");

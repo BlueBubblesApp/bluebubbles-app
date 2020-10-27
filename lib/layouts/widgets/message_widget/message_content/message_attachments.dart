@@ -79,6 +79,7 @@ class _MessageAttachmentsState extends State<MessageAttachments>
             _attachments[attachment.guid] =
                 AttachmentHelper.getContent(attachment);
           }
+
           return _buildActualWidget();
         } else {
           return Container();
@@ -111,6 +112,8 @@ class _MessageAttachmentsState extends State<MessageAttachments>
         }
       } else if (!widget.message.isFromMe) {
         padding = EdgeInsets.only(left: 45.0);
+      } else if (widget.message.isFromMe) {
+        padding = EdgeInsets.only(right: 10.0);
       }
     }
 
@@ -165,7 +168,7 @@ class _MessageAttachmentsState extends State<MessageAttachments>
       }
     }
 
-    if (nullMimeTypeAttachments.length != 0)
+    if (widget.message.hasDdResults) {
       content.add(
         UrlPreviewWidget(
           linkPreviews: nullMimeTypeAttachments,
@@ -173,6 +176,7 @@ class _MessageAttachmentsState extends State<MessageAttachments>
           savedAttachmentData: widget.savedAttachmentData,
         ),
       );
+    }
 
     return content;
   }
