@@ -67,6 +67,7 @@ class ActionHandler {
       messages.add(Message(
         guid: "temp-${randomString(8)}",
         text: text.substring(linkMatch.start, linkMatch.end),
+        hasDdResults: true,
         dateCreated: DateTime.now(),
         hasAttachments: false,
       ));

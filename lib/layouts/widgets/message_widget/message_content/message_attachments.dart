@@ -89,6 +89,31 @@ class _MessageAttachmentsState extends State<MessageAttachments>
   }
 
   Widget _buildActualWidget() {
+    // Calculate padding for the widget
+    EdgeInsets padding = EdgeInsets.all(0.0);
+    if (widget.message.hasReactions && widget.message.hasAttachments) {
+      if (widget.message.isFromMe) {
+        padding =
+            EdgeInsets.only(top: 24.0, bottom: 10.0, left: 16.0, right: 10.0);
+      } else {
+        padding = EdgeInsets.only(
+            top: 24.0,
+            bottom: 10.0,
+            left: (widget.showTail) ? 10.0 : 45.0,
+            right: 16.0);
+      }
+    } else {
+      if (widget.showTail || !widget.showHandle) {
+        if (widget.message.isFromMe) {
+          padding = EdgeInsets.only(right: 10.0);
+        } else {
+          padding = EdgeInsets.only(left: 10.0);
+        }
+      } else if (!widget.message.isFromMe) {
+        padding = EdgeInsets.only(left: 45.0);
+      }
+    }
+
     return Column(
       mainAxisAlignment: widget.message.isFromMe
           ? MainAxisAlignment.end
@@ -99,22 +124,7 @@ class _MessageAttachmentsState extends State<MessageAttachments>
           alignment: Alignment.topRight,
           children: <Widget>[
             Padding(
-                padding:
-                    widget.message.hasReactions && widget.message.hasAttachments
-                        ? EdgeInsets.only(
-                            right: !widget.message.isFromMe ? 16.0 : 10.0,
-                            bottom: 10.0,
-                            left: widget.message.isFromMe
-                                ? 16.0
-                                : (widget.showTail) ? 10.0 : 45.0,
-                            top: 24.0,
-                          )
-                        : EdgeInsets.symmetric(
-                            horizontal: (widget.showTail ||
-                                    !widget.showHandle ||
-                                    widget.message.isFromMe)
-                                ? 10.0
-                                : 45.0),
+                padding: padding,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: _buildAttachments(),
