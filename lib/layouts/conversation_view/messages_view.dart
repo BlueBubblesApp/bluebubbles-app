@@ -300,7 +300,7 @@ class _MessageViewState extends State<MessageView>
                                   currentPlayingVideo = video;
                                 });
                             },
-                            allAttachments: allAttachments,
+                            allAttachments: allAttachments.reversed.toList(),
                           ),
                         ),
                       ),

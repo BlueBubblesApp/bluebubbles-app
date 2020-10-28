@@ -23,17 +23,15 @@ public class GetLastLocation implements Handler{
     private MethodChannel.Result result;
     private FusedLocationProviderClient fusedLocationClient;
 
-    public GetLastLocation(Context context, MethodCall call, MethodChannel.Result result, FusedLocationProviderClient fusedLocationProviderClient) {
+    public GetLastLocation(Context context, MethodCall call, MethodChannel.Result result) {
         this.context = context;
         this.call = call;
         this.result = result;
-        this.fusedLocationClient = fusedLocationProviderClient;
     }
 
     @Override
     public void Handle() {
         // If we don't have the location client, let's get it
-        if (fusedLocationClient == null)
             fusedLocationClient = LocationServices.getFusedLocationProviderClient(context);
 
         // Fetch the last location

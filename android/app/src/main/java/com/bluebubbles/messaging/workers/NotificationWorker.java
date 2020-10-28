@@ -103,7 +103,7 @@ public class NotificationWorker extends Worker implements DartWorker {
             backgroundView.runFromBundle(args);
             backgroundChannel = new MethodChannel(backgroundView, "background_isolate");
 
-            backgroundChannel.setMethodCallHandler((call, result) -> MethodCallHandler.methodCallHandler(call, result, getApplicationContext(), null, this));
+            backgroundChannel.setMethodCallHandler((call, result) -> MethodCallHandler.methodCallHandler(call, result, getApplicationContext(),  this));
         }
     }
 

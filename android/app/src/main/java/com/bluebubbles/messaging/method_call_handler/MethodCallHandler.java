@@ -70,7 +70,7 @@ import io.flutter.plugin.common.MethodChannel;
 public class MethodCallHandler {
     @SuppressLint("RestrictedApi")
     @RequiresApi(api = Build.VERSION_CODES.O)
-    public static void methodCallHandler(MethodCall call, MethodChannel.Result result, Context context, FusedLocationProviderClient fusedLocationClient, DartWorker worker) {
+    public static void methodCallHandler(MethodCall call, MethodChannel.Result result, Context context, DartWorker worker) {
         if (call.method.equals(FirebaseAuth.TAG)) {
             new FirebaseAuth(context, call, result).Handle();
         } else if (call.method.equals("close-background-isolate")) {
@@ -93,7 +93,7 @@ public class MethodCallHandler {
         } else if (call.method.equals(ClearChatNotifs.TAG)) {
             new ClearChatNotifs(context, call, result).Handle();
         } else if (call.method.equals(GetLastLocation.TAG)) {
-            new GetLastLocation(context, call, result, fusedLocationClient).Handle();
+            new GetLastLocation(context, call, result).Handle();
         } else if (call.method.equals(SaveToFile.TAG)) {
             new SaveToFile(context, call, result).Handle();
         } else if (call.method.equals("get-starting-intent")) {

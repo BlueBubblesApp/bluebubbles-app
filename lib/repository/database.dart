@@ -26,6 +26,16 @@ class DBProvider {
   static Database _database;
   static String _path = "";
 
+  /// Contains list of functions to invoke when going from a previous to the current database verison
+  /// The previous version is always [key - 1], for example for key 2, it will be the upgrade scheme from version 1 to version 2
+  static final Map<int, Function(Database)> upgradeSchemes = {
+    2: (Database db) {
+      // From v1 -> v2, we added the hasDdResults column
+      db.execute(
+          "ALTER TABLE message ADD COLUMN hasDdResults INTEGER DEFAULT 0;");
+    },
+  };
+
   Future<Database> get database async {
     if (_database != null) return _database;
 
@@ -39,7 +49,8 @@ class DBProvider {
   initDB() async {
     Directory documentsDirectory = await getApplicationDocumentsDirectory();
     _path = join(documentsDirectory.path, "chat.db");
-    return await openDatabase(_path, version: 2, onUpgrade: _onUpgrade, onOpen: (Database db) async {
+    return await openDatabase(_path, version: 2, onUpgrade: _onUpgrade,
+        onOpen: (Database db) async {
       debugPrint("Database Opened");
       await checkTableExistenceAndCreate(db);
     }, onCreate: (Database db, int version) async {
@@ -48,10 +59,13 @@ class DBProvider {
     });
   }
 
-  void _onUpgrade(Database db, int oldVersion, int newVersion) {
-    // From v1 -> v2, we added the hasDdResults column
-    if (oldVersion == 1 && newVersion == 2) {
-      db.execute("ALTER TABLE message ADD COLUMN hasDdResults INTEGER DEFAULT 0;");
+  void _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    // Run each upgrade scheme for every difference in version.
+    // If the user is on version 1 and they need to upgrade to version 3,
+    // then we will run every single scheme from 1 -> 2 and 2 -> 3
+    for (int i = oldVersion + 1; i <= newVersion; i++) {
+      debugPrint("UPGRADE FROM VERSION ${i - 1} TO VERSION $i");
+      await upgradeSchemes[i](db);
     }
   }
 
@@ -117,7 +131,7 @@ class DBProvider {
     await createIndexes(db);
   }
 
-  createHandleTable(Database db) async {
+  static Future<void> createHandleTable(Database db) async {
     await db.execute("CREATE TABLE handle ("
         "ROWID INTEGER PRIMARY KEY AUTOINCREMENT,"
         "address TEXT UNIQUE NOT NULL,"
@@ -126,7 +140,7 @@ class DBProvider {
         ");");
   }
 
-  createChatTable(Database db) async {
+  static Future<void> createChatTable(Database db) async {
     await db.execute("CREATE TABLE chat ("
         "ROWID INTEGER PRIMARY KEY AUTOINCREMENT,"
         "guid TEXT UNIQUE NOT NULL,"
@@ -141,7 +155,7 @@ class DBProvider {
         ");");
   }
 
-  createMessageTable(Database db) async {
+  static Future<void> createMessageTable(Database db) async {
     await db.execute("CREATE TABLE message ("
         "ROWID INTEGER PRIMARY KEY AUTOINCREMENT,"
         "originalROWID INTEGER DEFAULT NULL,"
@@ -179,7 +193,7 @@ class DBProvider {
         ");");
   }
 
-  createAttachmentTable(Database db) async {
+  static Future<void> createAttachmentTable(Database db) async {
     await db.execute("CREATE TABLE attachment ("
         "ROWID INTEGER PRIMARY KEY AUTOINCREMENT,"
         "guid TEXT UNIQUE NOT NULL,"
@@ -197,7 +211,7 @@ class DBProvider {
         ");");
   }
 
-  createChatHandleJoinTable(Database db) async {
+  static Future<void> createChatHandleJoinTable(Database db) async {
     await db.execute("CREATE TABLE chat_handle_join ("
         "ROWID INTEGER PRIMARY KEY AUTOINCREMENT,"
         "chatId INTEGER NOT NULL,"
@@ -208,7 +222,7 @@ class DBProvider {
         ");");
   }
 
-  createChatMessageJoinTable(Database db) async {
+  static Future<void> createChatMessageJoinTable(Database db) async {
     await db.execute("CREATE TABLE chat_message_join ("
         "ROWID INTEGER PRIMARY KEY AUTOINCREMENT,"
         "chatId INTEGER NOT NULL,"
@@ -219,7 +233,7 @@ class DBProvider {
         ");");
   }
 
-  createAttachmentMessageJoinTable(Database db) async {
+  static Future<void> createAttachmentMessageJoinTable(Database db) async {
     await db.execute("CREATE TABLE attachment_message_join ("
         "ROWID INTEGER PRIMARY KEY AUTOINCREMENT,"
         "attachmentId INTEGER NOT NULL,"
@@ -230,10 +244,12 @@ class DBProvider {
         ");");
   }
 
-  createIndexes(Database db) async {
-    await db.execute("CREATE UNIQUE INDEX idx_handle_address ON handle (address);");
+  static Future<void> createIndexes(Database db) async {
+    await db
+        .execute("CREATE UNIQUE INDEX idx_handle_address ON handle (address);");
     await db.execute("CREATE UNIQUE INDEX idx_message_guid ON message (guid);");
     await db.execute("CREATE UNIQUE INDEX idx_chat_guid ON chat (guid);");
-    await db.execute("CREATE UNIQUE INDEX idx_attachment_guid ON attachment (guid);");
+    await db.execute(
+        "CREATE UNIQUE INDEX idx_attachment_guid ON attachment (guid);");
   }
 }
