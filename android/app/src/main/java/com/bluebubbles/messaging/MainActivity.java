@@ -45,9 +45,7 @@ public class MainActivity extends FlutterActivity {
     public static final String CHANNEL = "com.bluebubbles.messaging";
     private static final String TAG = "MainActivity";
     public static FlutterEngine engine;
-    private FusedLocationProviderClient fusedLocationClient;
     private String startingChat;
-    Map<Integer, NotificationCompat.Builder> progressBars = new HashMap<>();
 
     public static int PICK_IMAGE = 1000;
     public MethodChannel.Result result = null;
@@ -67,7 +65,7 @@ public class MainActivity extends FlutterActivity {
         engine = flutterEngine;
 
         new MethodChannel(flutterEngine.getDartExecutor().getBinaryMessenger(), CHANNEL)
-                .setMethodCallHandler(((call, result) -> MethodCallHandler.methodCallHandler(call, result, MainActivity.this,  fusedLocationClient, null)));
+                .setMethodCallHandler(((call, result) -> MethodCallHandler.methodCallHandler(call, result, MainActivity.this,   null)));
     }
 
 

@@ -138,12 +138,12 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
-    // We initialize the [LifeCycleManager] so that it is open, because [initState] occurs when the app is opened
-    LifeCycleManager().opened();
-
     // Initalize a bunch of managers
     SettingsManager().init();
     MethodChannelInterface().init();
+
+    // We initialize the [LifeCycleManager] so that it is open, because [initState] occurs when the app is opened
+    LifeCycleManager().opened();
 
     // This initialization sets the function address in the native code to be used later
     BackgroundIsolateInterface.initialize();

@@ -171,7 +171,7 @@ class _AttachmentFullscreenViewerState
                 Text(
                   "Error loading",
                   style: Theme.of(context).textTheme.bodyText1,
-                )
+                ),
               ],
             );
           }

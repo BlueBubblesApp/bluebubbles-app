@@ -207,8 +207,8 @@ class SocketManager {
 
   Future<String> handleChatStatusChange(_data) async {
     Map<String, dynamic> data = jsonDecode(_data);
-    IncomingQueue()
-        .add(new QueueItem(event: IncomingQueue.HANDLE_CHAT_STATUS_CHANGE, item: {"data": data}));
+    IncomingQueue().add(new QueueItem(
+        event: IncomingQueue.HANDLE_CHAT_STATUS_CHANGE, item: {"data": data}));
     return new Future.value("");
   }
 
@@ -231,6 +231,8 @@ class SocketManager {
     if (_manager.socket != null) {
       _manager.socket.destroy();
     }
+
+    await refreshConnection(connectToSocket: false);
 
     debugPrint(
         "Starting socket io with the server: ${SettingsManager().settings.serverAddress}");
@@ -276,7 +278,8 @@ class SocketManager {
       _manager.socket.subscribe("participant-removed", handleNewMessage);
       _manager.socket.subscribe("participant-added", handleNewMessage);
       _manager.socket.subscribe("participant-left", handleNewMessage);
-      _manager.socket.subscribe("chat-read-status-changed", handleChatStatusChange);
+      _manager.socket
+          .subscribe("chat-read-status-changed", handleChatStatusChange);
 
       /**
        * Handle errors sent by the server
@@ -447,5 +450,20 @@ class SocketManager {
     _connectionStateStream.close();
     _socketProcessUpdater.close();
     finishedSetup.close();
+  }
+
+  Future<void> refreshConnection({bool connectToSocket = true}) async {
+    debugPrint("Fetching new server URL from Firebase");
+
+    // Get the server URL
+    String url = await MethodChannelInterface().invokeMethod("get-server-url");
+    debugPrint("New server URL: $url");
+
+    // Set the server URL
+    Settings _settingsCopy = SettingsManager().settings;
+    if (_settingsCopy.serverAddress == url) return;
+    _settingsCopy.serverAddress = url;
+    await SettingsManager()
+        .saveSettings(_settingsCopy, connectToSocket: connectToSocket);
   }
 }
