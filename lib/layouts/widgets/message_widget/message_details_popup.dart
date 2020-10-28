@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'dart:ui';
 
+import 'package:bluebubbles/helpers/reaction.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/reaction_detail_widget.dart';
 import 'package:bluebubbles/repository/models/message.dart';
@@ -9,11 +11,11 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:sprung/sprung.dart';
 
 class MessageDetailsPopup extends StatefulWidget {
-  MessageDetailsPopup({Key key, this.entry, this.reactions, this.message})
+  MessageDetailsPopup({Key key, this.entry, this.message, this.reactions})
       : super(key: key);
   final OverlayEntry entry;
-  final List<Message> reactions;
   final Message message;
+  final List<Message> reactions;
 
   @override
   _MessageDetailsPopupState createState() => _MessageDetailsPopupState();
@@ -23,10 +25,14 @@ class _MessageDetailsPopupState extends State<MessageDetailsPopup>
     with TickerProviderStateMixin {
   List<Widget> reactionWidgets = <Widget>[];
   bool showTools = false;
+  Completer fetchRequest;
 
   @override
   void initState() {
     super.initState();
+    fetchReactions();
+
+    // Animate showing the copy menu, slightly delayed
     Future.delayed(Duration(milliseconds: 50), () {
       if (this.mounted)
         setState(() {
@@ -36,11 +42,42 @@ class _MessageDetailsPopupState extends State<MessageDetailsPopup>
   }
 
   @override
-  void didChangeDependencies() async {
+  void didChangeDependencies() {
     super.didChangeDependencies();
-    
+    fetchReactions();
+  }
+
+  Future<void> fetchReactions() async {
+    if (fetchRequest != null && !fetchRequest.isCompleted) {
+      return fetchRequest.future;
+    }
+
+    // Create a new fetch request
+    fetchRequest = new Completer();
+
+    // If reaction messages were provided, use those
+    List<Message> reactions =
+        (widget.reactions == null) ? [] : widget.reactions;
+
+    // Check if the message has reactions
+    if (widget.reactions == null && widget.message.hasReactions) {
+      // If it has reactions, fetch the associated messages (reactions)
+      reactions = await widget.message.getAssociatedMessages();
+      reactions = reactions
+          .where((element) =>
+              ReactionTypes.toList().contains(element.associatedMessageType))
+          .toList();
+    }
+
+    // If there are no associated messages, return now
+    if (reactions.length == 0) return fetchRequest.complete();
+
+    // Filter down the messages to the unique ones (one per user, newest)
+    List<Message> reactionMessages =
+        Reaction.getUniqueReactionMessages(reactions);
+
     reactionWidgets = [];
-    for (Message reaction in widget.reactions) {
+    for (Message reaction in reactionMessages) {
       await reaction.getHandle();
       reactionWidgets.add(
         ReactionDetailWidget(
@@ -49,8 +86,13 @@ class _MessageDetailsPopupState extends State<MessageDetailsPopup>
         ),
       );
     }
-    
-    setState(() {});
+
+    // If we aren't mounted, get out
+    if (!this.mounted) return fetchRequest.complete();
+
+    // Tell the component to re-render
+    this.setState(() {});
+    return fetchRequest.complete();
   }
 
   @override

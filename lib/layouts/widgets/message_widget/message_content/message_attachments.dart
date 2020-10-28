@@ -1,15 +1,12 @@
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/url_preview_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_attachment.dart';
-import 'package:bluebubbles/layouts/widgets/message_widget/reactions.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/layouts/widgets/message_widget/reactions_widget.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/message.dart';
-import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:metadata_fetch/metadata_fetch.dart';
 import 'package:mime_type/mime_type.dart';
@@ -133,7 +130,7 @@ class _MessageAttachmentsState extends State<MessageAttachments>
                   children: _buildAttachments(),
                 )),
             widget.message.hasReactions
-                ? Reactions(
+                ? ReactionsWidget(
                     message: widget.message,
                   )
                 : Container(),
@@ -145,12 +142,9 @@ class _MessageAttachmentsState extends State<MessageAttachments>
 
   List<Widget> _buildAttachments() {
     List<Widget> content = <Widget>[];
-    List<Attachment> nullMimeTypeAttachments = <Attachment>[];
 
     for (Attachment attachment in widget.savedAttachmentData.attachments) {
-      if (attachment.mimeType == null) {
-        nullMimeTypeAttachments.add(attachment);
-      } else {
+      if (attachment.mimeType != null) {
         content.add(
           MessageAttachment(
             controllers: widget.controllers,
@@ -166,16 +160,6 @@ class _MessageAttachmentsState extends State<MessageAttachments>
           ),
         );
       }
-    }
-
-    if (widget.message.hasDdResults) {
-      content.add(
-        UrlPreviewWidget(
-          linkPreviews: nullMimeTypeAttachments,
-          message: widget.message,
-          savedAttachmentData: widget.savedAttachmentData,
-        ),
-      );
     }
 
     return content;

@@ -265,42 +265,44 @@ class _MessageViewState extends State<MessageView>
                                 .chain(CurveTween(curve: Curves.easeInOut))),
                         child: FadeTransition(
                           opacity: animation,
-                          child: MessageWidget(
-                            key: Key(_messages[index].guid),
-                            offset: timeStampOffset,
-                            fromSelf: _messages[index].isFromMe,
-                            message: _messages[index],
-                            chat: widget.messageBloc.currentChat,
-                            olderMessage: olderMessage,
-                            newerMessage: newerMessage,
-                            showHandle: widget.showHandle,
-                            shouldFadeIn:
-                                sentMessages.contains(_messages[index].guid),
-                            isFirstSentMessage:
-                                widget.messageBloc.firstSentMessage ==
-                                    _messages[index].guid,
-                            savedAttachmentData:
-                                attachments.containsKey(_messages[index].guid)
-                                    ? attachments[_messages[index].guid]
-                                    : null,
-                            showHero: index == 0 &&
-                                _messages[index].originalROWID == null,
-                            currentPlayingVideo: currentPlayingVideo,
-                            changeCurrentPlayingVideo:
-                                (Map<String, VideoPlayerController> video) {
-                              if (currentPlayingVideo != null &&
-                                  currentPlayingVideo.length > 0) {
-                                currentPlayingVideo.values.forEach((element) {
-                                  controllersToDispose.add(element);
-                                  element = null;
-                                });
-                              }
-                              if (this.mounted)
-                                setState(() {
-                                  currentPlayingVideo = video;
-                                });
-                            },
-                            allAttachments: allAttachments.reversed.toList(),
+                          child: Padding(
+                            padding: EdgeInsets.only(left: 5.0, right: 5.0),
+                            child: MessageWidget(
+                              key: Key(_messages[index].guid),
+                              offset: timeStampOffset,
+                              message: _messages[index],
+                              chat: widget.messageBloc.currentChat,
+                              olderMessage: olderMessage,
+                              newerMessage: newerMessage,
+                              showHandle: widget.showHandle,
+                              shouldFadeIn:
+                                  sentMessages.contains(_messages[index].guid),
+                              isFirstSentMessage:
+                                  widget.messageBloc.firstSentMessage ==
+                                      _messages[index].guid,
+                              savedAttachmentData:
+                                  attachments.containsKey(_messages[index].guid)
+                                      ? attachments[_messages[index].guid]
+                                      : null,
+                              showHero: index == 0 &&
+                                  _messages[index].originalROWID == null,
+                              currentPlayingVideo: currentPlayingVideo,
+                              changeCurrentPlayingVideo:
+                                  (Map<String, VideoPlayerController> video) {
+                                if (currentPlayingVideo != null &&
+                                    currentPlayingVideo.length > 0) {
+                                  currentPlayingVideo.values.forEach((element) {
+                                    controllersToDispose.add(element);
+                                    element = null;
+                                  });
+                                }
+                                if (this.mounted)
+                                  setState(() {
+                                    currentPlayingVideo = video;
+                                  });
+                              },
+                              allAttachments: allAttachments.reversed.toList(),
+                            ),
                           ),
                         ),
                       ),

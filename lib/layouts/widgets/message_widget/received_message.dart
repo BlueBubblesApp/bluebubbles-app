@@ -1,8 +1,11 @@
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/helpers/widget_helper.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
-import 'package:bluebubbles/layouts/widgets/message_widget/reactions.dart';
+import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/url_preview_widget.dart';
+import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_attachments.dart';
+import 'package:bluebubbles/layouts/widgets/message_widget/reactions_widget.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
+import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/material.dart';
@@ -18,6 +21,7 @@ class ReceivedMessage extends StatefulWidget {
   final List<Widget> customContent;
   final bool isFromMe;
   final Widget attachments;
+  final SavedAttachmentData savedAttachmentData;
 
   ReceivedMessage({
     Key key,
@@ -30,6 +34,7 @@ class ReceivedMessage extends StatefulWidget {
     @required this.customContent,
     @required this.isFromMe,
     @required this.attachments,
+    @required this.savedAttachmentData,
     this.offset,
   }) : super(key: key);
 
@@ -194,49 +199,76 @@ class _ReceivedMessageState extends State<ReceivedMessage> {
               size: 30,
               fontSize: 14)));
     }
-    
-    msgItems.add(
-        new Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Padding(padding: EdgeInsets.only(bottom: 1.0), child: widget.attachments),
-      (!this.hasHyperlinks || !widget.message.hasDdResults)
-        ? Padding(
-          padding: EdgeInsets.only(
-              bottom: widget.showTail ? 10.0 : 3.0,
-              left: widget.showTail || !widget.showHandle ? 0.0 : 35.0),
-          child: Stack(
-            alignment: Alignment.topRight,
-            children: <Widget>[
-              AnimatedPadding(
-                duration: Duration(milliseconds: 250),
-                curve: Curves.easeInOut,
-                padding: EdgeInsets.only(
-                  right: widget.message != null &&
-                          widget.message.hasReactions &&
-                          !widget.message.hasAttachments
-                      ? 6.0
-                      : 0.0,
-                  top: widget.message != null &&
-                          widget.message.hasReactions &&
-                          !widget.message.hasAttachments
-                      ? 14.0
-                      : 0.0,
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: messageWidget,
-                ),
+
+    List<Widget> messageCol = [];
+    if (widget.attachments != null)
+      messageCol.add(Padding(padding: EdgeInsets.only(bottom: 1.0), child: widget.attachments));
+
+    List<Attachment> previewAttachments = [];
+    if (widget.message.hasDdResults) {
+      for (Attachment i in widget.savedAttachmentData?.attachments ?? []) {
+        if (i.mimeType == null) {
+          previewAttachments.add(i);
+        }
+      }
+    }
+
+    if (previewAttachments.length > 0) {
+      messageCol.add(Row(
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          Padding(
+            padding: EdgeInsets.only(
+              bottom: 3.0,
+            ),
+            child: UrlPreviewWidget(
+              linkPreviews: previewAttachments,
+              message: widget.message,
+              savedAttachmentData: widget.savedAttachmentData,
+            )
+          )
+        ]
+      ));
+    } else {
+      messageCol.add(Padding(
+        padding: EdgeInsets.only(
+            bottom: widget.showTail ? 10.0 : 3.0,
+            left: widget.showTail || !widget.showHandle ? 0.0 : 35.0),
+        child: Stack(
+          alignment: Alignment.topRight,
+          children: <Widget>[
+            AnimatedPadding(
+              duration: Duration(milliseconds: 250),
+              curve: Curves.easeInOut,
+              padding: EdgeInsets.only(
+                right: widget.message != null &&
+                        widget.message.hasReactions &&
+                        !widget.message.hasAttachments
+                    ? 6.0
+                    : 0.0,
+                top: widget.message != null &&
+                        widget.message.hasReactions &&
+                        !widget.message.hasAttachments
+                    ? 14.0
+                    : 0.0,
               ),
-              !widget.message.hasAttachments
-                  ? Reactions(
-                      message: widget.message,
-                    )
-                  : Container(),
-            ],
-          ),
-        )
-      : Container()
-    ]));
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: messageWidget,
+              ),
+            ),
+            !widget.message.hasAttachments
+                ? ReactionsWidget(
+                    message: widget.message,
+                  )
+                : Container(),
+          ],
+        ),
+      ));
+    }
+    
+    msgItems.addAll(messageCol);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
