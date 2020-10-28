@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:math';
 import 'dart:typed_data';
-import 'package:bluebubbles/layouts/widgets/message_widget/group_event.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:blurhash_flutter/blurhash.dart';
@@ -186,13 +185,13 @@ Future<String> getGroupEventText(Message message) async {
   if (message.handleId != null && message.handle != null)
     handle = await ContactManager().getContactTitle(message.handle.address);
 
-  if (message.itemType == ItemTypes.participantRemoved.index) {
+  if (message.itemType == 1 && message.groupActionType == 1) {
     text = "$handle removed someone from the conversation";
-  } else if (message.itemType == ItemTypes.participantAdded.index) {
+  } else if (message.itemType == 1 && message.groupActionType == 0) {
     text = "$handle added someone to the conversation";
-  } else if (message.itemType == ItemTypes.participantLeft.index) {
+  } else if (message.itemType == 3) {
     text = "$handle left the conversation";
-  } else if (message.itemType == ItemTypes.nameChanged.index) {
+  } else if (message.itemType == 2 && message.groupTitle != null) {
     text = "$handle renamed the conversation to \"${message.groupTitle}\"";
   }
 

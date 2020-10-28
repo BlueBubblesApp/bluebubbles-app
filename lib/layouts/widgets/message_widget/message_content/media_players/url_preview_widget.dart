@@ -97,7 +97,7 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
         url = "https://" + widget.message.text;
       }
 
-      if (url.contains('youtube.com/watch?v=')) {
+      if (url.contains('youtube.com/watch?v=') || url.contains("youtu.be/")) {
         // Manually request this URL
         String newUrl = "https://www.youtube.com/oembed?url=$url";
         var response = await http.get(newUrl);
@@ -219,7 +219,7 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
                                       padding: EdgeInsets.only(
                                           top: 5.0, bottom: 10.0),
                                       child: Text(
-                                        widget.message.text,
+                                        widget.message.text.replaceAll("https://", "").replaceAll("http://", ""),
                                         style: Theme.of(context)
                                             .textTheme
                                             .subtitle2,
