@@ -36,23 +36,6 @@ class _SettingsPanelState extends State<SettingsPanel> {
     _settingsCopy = SettingsManager().settings;
   }
 
-  void refreshConnection(SocketState connection) async {
-    if ([SocketState.CONNECTED, SocketState.CONNECTING].contains(connection))
-      return;
-    debugPrint("Fetching new server URL from Firebase");
-
-    // Get the server URL
-    String url = await MethodChannelInterface().invokeMethod("get-server-url");
-    debugPrint("New server URL: $url");
-
-    // Set the server URL
-    _settingsCopy.serverAddress = url;
-    await SettingsManager().saveSettings(_settingsCopy, connectToSocket: true);
-
-    // Refresh the state data
-    setState(() {});
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -120,13 +103,22 @@ class _SettingsPanelState extends State<SettingsPanel> {
                       return SettingsTile(
                         title: "Connection Status",
                         subTitle: subtitle,
-                        onTap: () => this.refreshConnection(connectionStatus),
+                        onTap: () async {
+                          if ([SocketState.CONNECTED, SocketState.CONNECTING]
+                              .contains(connectionStatus)) return;
+                          await SocketManager().refreshConnection();
+                          setState(() {});
+                        },
                         trailing: connectionStatus == SocketState.CONNECTED ||
                                 connectionStatus == SocketState.CONNECTING
-                            ? Icon(Icons.fiber_manual_record,
-                                color: HexColor('32CD32').withAlpha(200))
-                            : Icon(Icons.fiber_manual_record,
-                                color: HexColor('DC143C').withAlpha(200)),
+                            ? Icon(
+                                Icons.fiber_manual_record,
+                                color: HexColor('32CD32').withAlpha(200),
+                              )
+                            : Icon(
+                                Icons.fiber_manual_record,
+                                color: HexColor('DC143C').withAlpha(200),
+                              ),
                       );
                     }),
                 SettingsTile(
