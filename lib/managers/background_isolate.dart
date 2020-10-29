@@ -30,27 +30,8 @@ callbackHandler() async {
   WidgetsFlutterBinding.ensureInitialized();
   await DBProvider.db.initDB();
   await ContactManager().getContacts(headless: true);
-  SettingsManager().init();
-  MethodChannelInterface().init(customChannel: _backgroundChannel);
-  LifeCycleManager().close();
+  await SettingsManager().init();
   await SettingsManager().getSavedSettings(headless: true);
-  fcmAuth(_backgroundChannel);
-}
-
-void fcmAuth(MethodChannel channel) async {
-  debugPrint("authenticating auth fcm with data " +
-      SettingsManager().settings.fcmAuthData.toString());
-  try {
-    String result = await channel.invokeMethod(
-        "auth", SettingsManager().settings.fcmAuthData);
-    SocketManager().token = result;
-  } on PlatformException catch (e) {
-    if (e.code != "failed") {
-      debugPrint("error authorizing firebase: " + e.code);
-      await Future.delayed(Duration(seconds: 10));
-      fcmAuth(channel);
-    } else {
-      debugPrint("some weird ass error " + e.details);
-    }
-  }
+  MethodChannelInterface().init(customChannel: _backgroundChannel);
+  await SocketManager().refreshConnection(connectToSocket: false);
 }

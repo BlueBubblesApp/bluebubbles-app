@@ -40,15 +40,14 @@ class _ConversationTileState extends State<ConversationTile> {
   MemoryImage contactImage;
   bool isPressed = false;
   var initials;
-  Map<String, dynamic> avatarStack = {};
 
   @override
   void initState() {
     super.initState();
 
-    fetchAvatar(null);
+    fetchAvatar();
     ContactManager().stream.listen((List<String> addresses) {
-      fetchAvatar(addresses);
+      fetchAvatar();
     });
   }
 
@@ -63,7 +62,7 @@ class _ConversationTileState extends State<ConversationTile> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    fetchAvatar(null);
+    fetchAvatar();
   }
 
   void setContactImage(MemoryImage image) {
@@ -76,7 +75,7 @@ class _ConversationTileState extends State<ConversationTile> {
     }
   }
 
-  Future<void> fetchAvatar(List<String> addresses) async {
+  Future<void> fetchAvatar() async {
     // If our chat does not have any participants, get them
     if (widget.chat.participants == null ||
         widget.chat.participants.length == 0) {

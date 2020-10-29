@@ -232,8 +232,6 @@ class SocketManager {
       _manager.socket.destroy();
     }
 
-    await refreshConnection(connectToSocket: false);
-
     debugPrint(
         "Starting socket io with the server: ${SettingsManager().settings.serverAddress}");
 
