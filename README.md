@@ -4,6 +4,10 @@ iMessage for android solution, open source and free. It uses a Mac server to sen
 
 You will need a mac to set this up
 
+## Contacting us!
+
+Join our discord [here](https://discord.gg/4F7nbf3)!
+
 ## Getting Started
 
 All android builds can be found in [here](https://github.com/BlueBubblesApp/BlueBubbles-Android-App/releases)
