@@ -39,7 +39,7 @@ class _MessageViewState extends State<MessageView>
   Map<String, VideoPlayerController> currentPlayingVideo;
   List<VideoPlayerController> controllersToDispose = [];
 
-  List<Attachment> allAttachments = [];
+  List<Attachment> chatAttachments = [];
 
   @override
   void initState() {
@@ -65,7 +65,7 @@ class _MessageViewState extends State<MessageView>
   }
 
   Future<void> updateAllAttachments() async {
-    allAttachments = await Chat.getAttachments(widget.messageBloc.currentChat);
+    chatAttachments = await Chat.getAttachments(widget.messageBloc.currentChat);
     if (this.mounted) setState(() {});
   }
 
@@ -301,7 +301,7 @@ class _MessageViewState extends State<MessageView>
                                     currentPlayingVideo = video;
                                   });
                               },
-                              allAttachments: allAttachments.reversed.toList(),
+                              chatAttachments: chatAttachments.reversed.toList(),
                             ),
                           ),
                         ),

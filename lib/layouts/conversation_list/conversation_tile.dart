@@ -218,9 +218,10 @@ class _ConversationTileState extends State<ConversationTile> {
             });
           },
           child: Stack(
+            alignment: Alignment.centerLeft,
             children: <Widget>[
               Padding(
-                padding: const EdgeInsets.only(left: 35.0),
+                padding: const EdgeInsets.only(left: 30.0),
                 child: Container(
                   decoration: BoxDecoration(
                       border: Border(
@@ -291,7 +292,6 @@ class _ConversationTileState extends State<ConversationTile> {
               Padding(
                 padding: const EdgeInsets.only(left: 8.0),
                 child: Container(
-                  height: 70,
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: <Widget>[
@@ -314,7 +314,6 @@ class _ConversationTileState extends State<ConversationTile> {
                               width: 15,
                               height: 15,
                             ),
-                      Text("")
                     ],
                   ),
                 ),

@@ -29,7 +29,7 @@ class MessageAttachments extends StatefulWidget {
     @required this.showHandle,
     @required this.controllers,
     @required this.changeCurrentPlayingVideo,
-    @required this.allAttachments,
+    @required this.chatAttachments,
   }) : super(key: key);
   final Message message;
   final SavedAttachmentData savedAttachmentData;
@@ -37,7 +37,7 @@ class MessageAttachments extends StatefulWidget {
   final bool showHandle;
   final Map<String, VideoPlayerController> controllers;
   final Function(Map<String, VideoPlayerController>) changeCurrentPlayingVideo;
-  final List<Attachment> allAttachments;
+  final List<Attachment> chatAttachments;
 
   @override
   _MessageAttachmentsState createState() => _MessageAttachmentsState();
@@ -107,10 +107,8 @@ class _MessageAttachmentsState extends State<MessageAttachments>
         } else {
           padding = EdgeInsets.only(left: 10.0);
         }
-      } else if (!widget.message.isFromMe) {
-        padding = EdgeInsets.only(left: 45.0);
-      } else if (widget.message.isFromMe) {
-        padding = EdgeInsets.only(right: 10.0);
+      } else {
+        padding = EdgeInsets.only(left: 10.0);
       }
     }
 
@@ -129,11 +127,6 @@ class _MessageAttachmentsState extends State<MessageAttachments>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: _buildAttachments(),
                 )),
-            widget.message.hasReactions
-                ? ReactionsWidget(
-                    message: widget.message,
-                  )
-                : Container(),
           ],
         ),
       ],
@@ -156,7 +149,7 @@ class _MessageAttachmentsState extends State<MessageAttachments>
               attachment = AttachmentHelper.getContent(attachment);
             },
             savedAttachmentData: widget.savedAttachmentData,
-            allAttachments: widget.allAttachments,
+            allAttachments: widget.chatAttachments,
           ),
         );
       }

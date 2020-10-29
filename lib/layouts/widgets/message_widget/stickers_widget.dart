@@ -47,6 +47,8 @@ class _StickersWidgetState extends State<StickersWidget> {
       return request;
     }
 
+    request = new Completer();
+
     // For each message, load the sticker for it
     for (Message msg in widget.messages) {
       // If the message type isn't a sticker, skip it
