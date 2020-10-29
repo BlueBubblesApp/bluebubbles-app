@@ -1,5 +1,5 @@
 name: bluebubbles
-description: A new Flutter project.
+description: Send iMessages on Android using BlueBubbles!
 
 # The following defines the version and build number for your application.
 # A version number is three numbers separated by dots, like 1.2.43
@@ -11,46 +11,119 @@ description: A new Flutter project.
 # In iOS, build-name is used as CFBundleShortVersionString while build-number used as CFBundleVersion.
 # Read more about iOS versioning at
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
-version: 1.0.0+1
+version: 0.0.7
 
 environment:
-  sdk: ">=2.1.0 <3.0.0"
+  sdk: ">=2.6.0 <3.0.0"
 
 dependencies:
   flutter:
     sdk: flutter
+  shared_preferences: ^0.5.7
+  flutter_socket_io:
+    path: packages/flutter_socket_io-0.6.0
+  qr_code_scanner: ^0.0.12
+  assorted_layout_widgets: ^2.0.0
+  audio_recorder: any
+  flutter_local_notifications: any
+  contacts_service: ^0.4.6
+  permission_handler: ^5.0.1+1
+  path_provider: ^1.6.7
+  sqflite: ^1.3.0
+  path: ">=1.6.2 <2.0.0"
+  intl: ^0.16.1
+  overlay_container: ^0.0.4+1
+  cupertino_back_gesture: ^0.0.3
+  flutter_svg: ^0.18.0
+  intent: ^1.3.4
+  photo_manager: ^0.5.3+1
+  image_picker: ^0.6.7+11
+  video_player: ^0.10.11+1
+  assets_audio_player: ^2.0.1+9
+  mime_type: ^0.3.1
+  receive_sharing_intent: ^1.4.0+2
+  flutter_map: ^0.9.0
+  vcard_parser: ^0.1.6
+  simple_router: ^0.1.0+1
+  video_thumbnail: ^0.2.1
+  google_map_location_picker: ^3.3.2
+  camera: ^0.5.8+2
+  android_intent: ^0.3.7+2
+  flutter_slidable: ^0.5.4
+  image_size_getter: ^0.2.0
+  photo_view: ^0.9.2
+  logger: ^0.9.1
+  flutter_linkify: ^3.1.3
+  link_previewer: ^1.2.1
+  url_launcher: ^5.4.11
+  file_picker_cross: ^2.1.0
+  adaptive_theme: ^0.1.1
+  flutter_lock_screen: ^1.0.6
+  local_auth: ^0.6.2+3
+  flutter_blurhash: ^0.5.0
+  blurhash_flutter: ^0.1.0
+  sprung: ^1.1.0+11
+  metadata_fetch: ^0.3.3
+  clipboard: ^0.1.2+8
+  fluttertoast: ^6.0.1
+  matrix_gesture_detector: ^0.1.0
+  save_in_gallery: ^0.1.3
+  flutter_colorpicker: ^0.3.4
+  giftextfield:
+    path: packages/gif_text_field
+  image_gallery_saver: ^1.5.0
+  sentry: ^3.0.1
+  flutter_image_compress: ^0.7.0
+  extended_text_field:
+    path: packages/extended_text_field
+  visibility_detector: ^0.1.5
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^0.1.2
 
 dev_dependencies:
-  flutter_test:
-    sdk: flutter
+  build_runner: ^1.6.5
+  build_verify: ^1.1.0
+  flutter_launcher_icons: "^0.7.3"
 
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon/icon.png"
+
+#   flutter_test:
+#     sdk: flutter
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 
 # The following section is specific to Flutter.
 flutter:
-
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
-
   # To add assets to your application, add an assets section, like this:
-  # assets:
-  #  - images/a_dot_burr.jpeg
-  #  - images/a_dot_ham.jpeg
-
+  assets:
+    - assets/reactions/dislike-white.svg
+    - assets/reactions/like-white.svg
+    - assets/reactions/emphasize-white.svg
+    # - assets/reactions/laugh-white.svg
+    - assets/reactions/question-white.svg
+    - assets/reactions/love-white.svg
+    - assets/reactions/dislike-black.svg
+    - assets/reactions/like-black.svg
+    - assets/reactions/emphasize-black.svg
+    - assets/reactions/laugh-black.svg
+    - assets/reactions/question-black.svg
+    - assets/reactions/love-black.svg
+    - assets/icon/moon.svg
+    - assets/images/person.png
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware.
-
   # For details regarding adding assets from package dependencies, see
   # https://flutter.dev/assets-and-images/#from-packages
-
   # To add custom fonts to your application, add a fonts section here,
   # in this "flutter" section. Each entry in this list should have a
   # "family" key with the font family name, and a "fonts" key with a

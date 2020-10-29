@@ -1,0 +1,37 @@
+import 'dart:async';
+import 'dart:convert';
+import 'dart:ui';
+
+import 'package:bluebubbles/action_handler.dart';
+import 'package:bluebubbles/managers/contact_manager.dart';
+import 'package:bluebubbles/managers/incoming_queue.dart';
+import 'package:bluebubbles/managers/life_cycle_manager.dart';
+import 'package:bluebubbles/managers/method_channel_interface.dart';
+import 'package:bluebubbles/managers/queue_manager.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/repository/database.dart';
+import 'package:bluebubbles/repository/models/chat.dart';
+import 'package:bluebubbles/socket_manager.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+
+abstract class BackgroundIsolateInterface {
+  static void initialize() {
+    CallbackHandle callbackHandle =
+        PluginUtilities.getCallbackHandle(callbackHandler);
+    MethodChannelInterface().invokeMethod("initialize-background-handle",
+        {"handle": callbackHandle.toRawHandle()});
+  }
+}
+
+callbackHandler() async {
+  debugPrint("(ISOLATE) Starting up...");
+  MethodChannel _backgroundChannel = MethodChannel("background_isolate");
+  WidgetsFlutterBinding.ensureInitialized();
+  await DBProvider.db.initDB();
+  await ContactManager().getContacts(headless: true);
+  await SettingsManager().init();
+  await SettingsManager().getSavedSettings(headless: true);
+  MethodChannelInterface().init(customChannel: _backgroundChannel);
+  await SocketManager().refreshConnection(connectToSocket: false);
+}
