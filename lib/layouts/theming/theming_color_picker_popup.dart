@@ -1,3 +1,4 @@
+import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 
@@ -28,7 +29,8 @@ class _ThemingColorPickerPopupState extends State<ThemingColorPickerPopup> {
       title:
           Text("Choose a Color", style: Theme.of(context).textTheme.headline1),
       content: SingleChildScrollView(
-        physics: AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+        physics: AlwaysScrollableScrollPhysics(
+            parent: CustomBouncingScrollPhysics()),
         child: ColorPicker(
           pickerColor: widget.initialColor,
           onColorChanged: (Color color) => currentColor = color,

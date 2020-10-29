@@ -5,6 +5,7 @@ import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/layouts/image_viewer/image_viewer.dart';
 import 'package:bluebubbles/layouts/image_viewer/video_viewer.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/attachment_downloader_widget.dart';
+import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import "package:flutter/material.dart";
 import 'package:photo_view/photo_view.dart';
@@ -55,7 +56,9 @@ class _AttachmentFullscreenViewerState
     return Scaffold(
       backgroundColor: Colors.black,
       body: PageView.builder(
-        physics: AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+        physics: AlwaysScrollableScrollPhysics(
+          parent: CustomBouncingScrollPhysics(),
+        ),
         itemCount: widget.allAttachments.length,
         itemBuilder: (BuildContext context, int index) {
           Attachment attachment = widget.allAttachments[index];

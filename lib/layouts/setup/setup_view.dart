@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:bluebubbles/layouts/setup/qr_code_scanner.dart';
 import 'package:bluebubbles/layouts/setup/welcome_page.dart';
+import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/settings.dart';
@@ -38,8 +39,9 @@ class _SetupViewState extends State<SetupView> {
             currentPage = page + 1;
             setState(() {});
           },
-          physics:
-              AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+          physics: AlwaysScrollableScrollPhysics(
+            parent: CustomBouncingScrollPhysics(),
+          ),
           controller: controller,
           children: <Widget>[
             WelcomePage(

@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:bluebubbles/helpers/share.dart';
 import 'package:bluebubbles/layouts/conversation_view/camera_widget.dart';
 import 'package:bluebubbles/layouts/conversation_view/text_field/attachments/picker/attachment_picked.dart';
+import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:flutter/material.dart';
@@ -52,7 +53,7 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker>
           ? SizedBox(
               child: CustomScrollView(
                 physics: AlwaysScrollableScrollPhysics(
-                  parent: BouncingScrollPhysics(),
+                  parent: CustomBouncingScrollPhysics(),
                 ),
                 scrollDirection: Axis.horizontal,
                 slivers: <Widget>[

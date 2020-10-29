@@ -1,6 +1,7 @@
 import 'package:bluebubbles/helpers/contstants.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/layouts/theming/theming_color_selector.dart';
+import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/material.dart';
 
@@ -17,7 +18,8 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
   @override
   Widget build(BuildContext context) {
     return CustomScrollView(
-      physics: AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+      physics:
+          AlwaysScrollableScrollPhysics(parent: CustomBouncingScrollPhysics()),
       slivers: <Widget>[
         SliverPadding(
           padding: EdgeInsets.all(70),

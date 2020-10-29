@@ -8,6 +8,7 @@ import 'package:bluebubbles/layouts/conversation_list/conversation_tile.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/adding_participant_popup.dart';
 import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/new_chat_creator_text_field.dart';
+import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:contacts_service/contacts_service.dart';
@@ -188,7 +189,7 @@ class _NewChatCreatorState extends State<NewChatCreator> {
           Expanded(
               child: ListView.builder(
             physics: AlwaysScrollableScrollPhysics(
-              parent: BouncingScrollPhysics(),
+              parent: CustomBouncingScrollPhysics(),
             ),
             itemCount: contacts.length,
             itemBuilder: (BuildContext context, int index) {
@@ -223,7 +224,8 @@ class _NewChatCreatorState extends State<NewChatCreator> {
             },
           )),
           NewChatCreatorTextField(
-              allContacts: this.contacts.where((element) => !element.isChat).toList(),
+              allContacts:
+                  this.contacts.where((element) => !element.isChat).toList(),
               isCreator: widget.isCreator,
               controller: controller,
               onCreate: () {

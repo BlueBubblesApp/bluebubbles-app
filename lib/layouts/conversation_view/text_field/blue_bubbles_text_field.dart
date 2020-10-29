@@ -12,6 +12,7 @@ import 'package:bluebubbles/layouts/conversation_view/text_field/attachments/lis
 import 'package:bluebubbles/layouts/conversation_view/text_field/attachments/picker/text_field_attachment_picker.dart';
 import 'package:bluebubbles/layouts/widgets/CustomCupertinoTextField.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/audio_player_widget.dart';
+import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/managers/outgoing_queue.dart';
 import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -269,7 +270,7 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                                 focusNode: _focusNode,
                                 autocorrect: true,
                                 controller: _controller,
-                                scrollPhysics: BouncingScrollPhysics(),
+                                scrollPhysics: CustomBouncingScrollPhysics(),
                                 style: Theme.of(context)
                                     .textTheme
                                     .bodyText2

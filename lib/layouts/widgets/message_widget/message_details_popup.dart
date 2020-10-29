@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/reaction_detail_widget.dart';
+import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:clipboard/clipboard.dart';
 import 'package:flutter/material.dart';
@@ -38,7 +39,7 @@ class _MessageDetailsPopupState extends State<MessageDetailsPopup>
   @override
   void didChangeDependencies() async {
     super.didChangeDependencies();
-    
+
     reactionWidgets = [];
     for (Message reaction in widget.reactions) {
       await reaction.getHandle();
@@ -49,7 +50,7 @@ class _MessageDetailsPopupState extends State<MessageDetailsPopup>
         ),
       );
     }
-    
+
     setState(() {});
   }
 
@@ -92,7 +93,7 @@ class _MessageDetailsPopupState extends State<MessageDetailsPopup>
                                     child: ListView.builder(
                                       shrinkWrap: true,
                                       physics: AlwaysScrollableScrollPhysics(
-                                        parent: BouncingScrollPhysics(),
+                                        parent: CustomBouncingScrollPhysics(),
                                       ),
                                       scrollDirection: Axis.horizontal,
                                       itemBuilder: (context, index) {
@@ -280,7 +281,7 @@ class _MessageDetailsPopupState extends State<MessageDetailsPopup>
                                                     physics:
                                                         AlwaysScrollableScrollPhysics(
                                                       parent:
-                                                          BouncingScrollPhysics(),
+                                                          CustomBouncingScrollPhysics(),
                                                     ),
                                                     child: SelectableText(
                                                       widget.message.text,

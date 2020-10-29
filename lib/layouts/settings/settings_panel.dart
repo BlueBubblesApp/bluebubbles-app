@@ -5,6 +5,7 @@ import 'dart:ui';
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/theming/theming_panel.dart';
+import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/database.dart';
@@ -66,7 +67,9 @@ class _SettingsPanelState extends State<SettingsPanel> {
         ),
       ),
       body: CustomScrollView(
-        physics: AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+        physics: AlwaysScrollableScrollPhysics(
+          parent: CustomBouncingScrollPhysics(),
+        ),
         slivers: <Widget>[
           SliverList(
             delegate: SliverChildListDelegate(
@@ -143,7 +146,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                               autofocus: true,
                               controller: _controller,
                               // autofocus: true,
-                              scrollPhysics: BouncingScrollPhysics(),
+                              scrollPhysics: CustomBouncingScrollPhysics(),
                               style: Theme.of(context).textTheme.bodyText1,
                               keyboardType: TextInputType.multiline,
                               maxLines: null,
