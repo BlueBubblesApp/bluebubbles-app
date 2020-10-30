@@ -7,8 +7,11 @@ import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/helpers/widget_helper.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/delivered_receipt.dart';
-import 'package:bluebubbles/layouts/widgets/message_widget/reactions.dart';
+import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/url_preview_widget.dart';
+import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_attachments.dart';
+import 'package:bluebubbles/layouts/widgets/message_widget/reactions_widget.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
+import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/cupertino.dart';
@@ -27,6 +30,7 @@ class SentMessage extends StatefulWidget {
   final Widget attachments;
   final bool showHero;
   final double offset;
+  final SavedAttachmentData savedAttachmentData;
 
   final String substituteText;
   final bool limited;
@@ -40,6 +44,7 @@ class SentMessage extends StatefulWidget {
     @required this.customContent,
     @required this.isFromMe,
     @required this.attachments,
+    @required this.savedAttachmentData,
     this.substituteText,
     this.limited,
     this.shouldFadeIn,
@@ -171,81 +176,113 @@ class _SentMessageState extends State<SentMessage>
             ? darken(Colors.blue[600], 0.2)
             : Colors.blue[600];
 
+    List<Widget> messageCol = [];
+    if (widget.attachments != null)
+      messageCol.add(widget.attachments);
+
+    List<Attachment> previewAttachments = [];
+    if (widget.message.hasDdResults) {
+      for (Attachment i in widget.savedAttachmentData?.attachments ?? []) {
+        if (i.mimeType == null) {
+          previewAttachments.add(i);
+        }
+      }
+    }
+
+    if (previewAttachments.length > 0) {
+      messageCol.add(Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          Padding(
+            padding: EdgeInsets.only(
+              bottom: 3.0,
+              right: 10.0,
+            ),
+            child: UrlPreviewWidget(
+              linkPreviews: previewAttachments,
+              message: widget.message,
+              savedAttachmentData: widget.savedAttachmentData,
+            )
+          )
+        ]
+      ));
+    } else {
+      messageCol.add(Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: <Widget>[
+          AnimatedPadding(
+            curve: Curves.easeInOut,
+            duration: Duration(milliseconds: 200),
+            padding: EdgeInsets.only(
+              bottom: widget.showTail ? 10.0 : 3.0,
+              right: (widget.message != null && widget.message.error > 0
+                  ? 10.0
+                  : 0),
+            ),
+            child: Stack(
+              alignment: Alignment.topLeft,
+              children: <Widget>[
+                AnimatedPadding(
+                  duration: Duration(milliseconds: 250),
+                  curve: Curves.easeInOut,
+                  padding: EdgeInsets.only(
+                    left: widget.message != null &&
+                            widget.message.hasReactions &&
+                            !widget.message.hasAttachments
+                        ? 6.0
+                        : 0.0,
+                    top: widget.message != null &&
+                            widget.message.hasReactions &&
+                            !widget.message.hasAttachments
+                        ? 14.0
+                        : 0.0,
+                  ),
+                  child: widget.showHero
+                      ? Hero(
+                          tag: "first",
+                          child: Material(
+                            type: MaterialType.transparency,
+                            child: ActualSentMessage(
+                              blueColor: blueColor,
+                              createErrorPopup: this._createErrorPopup,
+                              customContent: widget.customContent,
+                              message: widget.message,
+                              chat: widget.chat,
+                              showTail: widget.showTail,
+                              textSpans: WidgetHelper.buildMessageSpans(context, widget.message),
+                            ),
+                          ),
+                        )
+                      : ActualSentMessage(
+                          blueColor: blueColor,
+                          createErrorPopup: this._createErrorPopup,
+                          customContent: widget.customContent,
+                          message: widget.message,
+                          chat: widget.chat,
+                          showTail: widget.showTail,
+                          textSpans: WidgetHelper.buildMessageSpans(context, widget.message),
+                        ),
+                ),
+                widget.message != null && !widget.message.hasAttachments
+                    ? ReactionsWidget(
+                        message: widget.message,
+                      )
+                    : Container(),
+              ],
+            ),
+          ),
+          WidgetHelper.buildMessageTimestamp(context, widget.message, widget.offset)
+        ],
+      ));
+    }
+  
+
     return AnimatedOpacity(
       opacity: 1.0, //_visible ? 1.0 : 0.0,
       duration: Duration(milliseconds: widget.shouldFadeIn ? 200 : 0),
       child: Column(
         children: <Widget>[
-          widget.attachments != null ? widget.attachments : Container(),
-          (!this.hasHyperlinks || !widget.message.hasDdResults)
-            ? Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: <Widget>[
-                AnimatedPadding(
-                  curve: Curves.easeInOut,
-                  duration: Duration(milliseconds: 200),
-                  padding: EdgeInsets.only(
-                    bottom: widget.showTail ? 10.0 : 3.0,
-                    right: (widget.message != null && widget.message.error > 0
-                        ? 10.0
-                        : 0),
-                  ),
-                  child: Stack(
-                    alignment: Alignment.topLeft,
-                    children: <Widget>[
-                      AnimatedPadding(
-                        duration: Duration(milliseconds: 250),
-                        curve: Curves.easeInOut,
-                        padding: EdgeInsets.only(
-                          left: widget.message != null &&
-                                  widget.message.hasReactions &&
-                                  !widget.message.hasAttachments
-                              ? 6.0
-                              : 0.0,
-                          top: widget.message != null &&
-                                  widget.message.hasReactions &&
-                                  !widget.message.hasAttachments
-                              ? 14.0
-                              : 0.0,
-                        ),
-                        child: widget.showHero
-                            ? Hero(
-                                tag: "first",
-                                child: Material(
-                                  type: MaterialType.transparency,
-                                  child: ActualSentMessage(
-                                    blueColor: blueColor,
-                                    createErrorPopup: this._createErrorPopup,
-                                    customContent: widget.customContent,
-                                    message: widget.message,
-                                    chat: widget.chat,
-                                    showTail: widget.showTail,
-                                    textSpans: WidgetHelper.buildMessageSpans(context, widget.message),
-                                  ),
-                                ),
-                              )
-                            : ActualSentMessage(
-                                blueColor: blueColor,
-                                createErrorPopup: this._createErrorPopup,
-                                customContent: widget.customContent,
-                                message: widget.message,
-                                chat: widget.chat,
-                                showTail: widget.showTail,
-                                textSpans: WidgetHelper.buildMessageSpans(context, widget.message),
-                              ),
-                      ),
-                      widget.message != null && !widget.message.hasAttachments
-                          ? Reactions(
-                              message: widget.message,
-                            )
-                          : Container(),
-                    ],
-                  ),
-                ),
-                WidgetHelper.buildMessageTimestamp(context, widget.message, widget.offset)
-              ],
-            )
-          : Container(),
+          ...messageCol,
           DeliveredReceipt(
               message: widget.message,
               showDeliveredReceipt: widget.showDeliveredReceipt,

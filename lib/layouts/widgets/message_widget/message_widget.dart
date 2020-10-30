@@ -1,12 +1,13 @@
 import 'dart:async';
-import 'package:bluebubbles/helpers/reaction.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/group_event.dart';
+import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/url_preview_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_attachments.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_details_popup.dart';
+import 'package:bluebubbles/layouts/widgets/message_widget/reactions_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/received_message.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/sent_message.dart';
-import 'package:bluebubbles/layouts/widgets/message_widget/sticker_widget.dart';
+import 'package:bluebubbles/layouts/widgets/message_widget/stickers_widget.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:flutter/cupertino.dart';
@@ -19,7 +20,6 @@ import '../../../repository/models/message.dart';
 class MessageWidget extends StatefulWidget {
   MessageWidget({
     Key key,
-    this.fromSelf,
     this.message,
     this.chat,
     this.olderMessage,
@@ -33,10 +33,9 @@ class MessageWidget extends StatefulWidget {
     this.offset,
     this.currentPlayingVideo,
     this.changeCurrentPlayingVideo,
-    this.allAttachments,
+    this.chatAttachments,
   }) : super(key: key);
 
-  final fromSelf;
   final Message message;
   final Chat chat;
   final Message newerMessage;
@@ -49,7 +48,7 @@ class MessageWidget extends StatefulWidget {
   final double offset;
   final Map<String, VideoPlayerController> currentPlayingVideo;
   final Function(Map<String, VideoPlayerController>) changeCurrentPlayingVideo;
-  final List<Attachment> allAttachments;
+  final List<Attachment> chatAttachments;
 
   final List<Widget> customContent;
 
@@ -59,47 +58,75 @@ class MessageWidget extends StatefulWidget {
 
 class _MessageState extends State<MessageWidget> {
   List<Attachment> attachments = <Attachment>[];
+  List<Message> associatedMessages = [];
   bool showTail = true;
   Widget blurredImage;
-  List<Attachment> stickers = [];
-  Completer<void> stickerRequest;
   OverlayEntry _entry;
+  Completer<void> associatedMessageRequest;
+  Completer<void> attachmentsRequest;
 
   @override
   void initState() {
     super.initState();
-    fetchStickers();
+    fetchAssociatedMessages();
+    fetchAttachments();
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    fetchStickers();
+    fetchAssociatedMessages();
+    fetchAttachments();
   }
 
-  Future<void> fetchStickers() async {
-    if (stickerRequest != null && !stickerRequest.isCompleted)
-      return stickerRequest.future;
-    stickerRequest = new Completer();
+  Future<void> fetchAssociatedMessages() async {
+    // If there is already a request being made, return that request
+    if (associatedMessageRequest != null &&
+        !associatedMessageRequest.isCompleted) {
+      return associatedMessageRequest.future;
+    }
 
-    widget.message.getAssociatedMessages().then((List<Message> messages) async {
-      List<Message> tmp = messages
-          .where((element) => element.associatedMessageType == "sticker")
-          .toList();
-      if (tmp.length > 0 && tmp.length != stickers.length) {
-        stickers = [];
-        for (Message msg in tmp) {
-          if (!msg.hasAttachments) continue;
-          List<Attachment> attachments = await Message.getAttachments(msg);
-          stickers.addAll(attachments);
-        }
+    // Create a new request and get the messages
+    associatedMessageRequest = new Completer();
+    List<Message> messages = await widget.message.getAssociatedMessages();
 
-        if (this.mounted) setState(() {});
-        stickerRequest.complete();
-      }
-    });
+    bool hasChanges = false;
+    if (messages.length != associatedMessages.length) {
+      associatedMessages = messages;
+      hasChanges = true;
+    }
 
-    return stickerRequest.future;
+    // NOTE: Not sure if we need to re-render
+    if (this.mounted && hasChanges) {
+      setState(() {});
+    }
+
+    associatedMessageRequest.complete();
+  }
+
+  Future<void> fetchAttachments() async {
+    // If there is already a request being made, return that request
+    if (attachmentsRequest != null &&
+        !attachmentsRequest.isCompleted) {
+      return attachmentsRequest.future;
+    }
+
+    // Create a new request and get the attachments
+    attachmentsRequest = new Completer();
+    List<Attachment> attachments = await Message.getAttachments(widget.message);
+
+    bool hasChanges = false;
+    if (attachments.length != associatedMessages.length) {
+      this.attachments = attachments;
+      hasChanges = true;
+    }
+
+    // NOTE: Not sure if we need to re-render
+    if (this.mounted && hasChanges) {
+      setState(() {});
+    }
+
+    attachmentsRequest.complete();
   }
 
   bool withinTimeThreshold(Message first, Message second, {threshold: 5}) {
@@ -146,100 +173,106 @@ class _MessageState extends State<MessageWidget> {
     if (widget.message != null &&
         isEmptyString(widget.message.text) &&
         !widget.message.hasAttachments) {
-      return GroupEvent(
+      return GroupEvent(message: widget.message);
+    }
+
+    ////////// READ //////////
+    /// This widget and code below will handle building out the following:
+    /// -> Attachments
+    /// -> Reactions
+    /// -> Stickers
+    /// -> URL Previews
+    /// -> Big Emojis??
+    ////////// READ //////////
+
+    // Build the attachments widget
+    Widget widgetAttachments = widget.savedAttachmentData != null
+        ? MessageAttachments(
+            message: widget.message,
+            savedAttachmentData: widget.savedAttachmentData,
+            showTail: showTail,
+            showHandle: widget.showHandle,
+            controllers: widget.currentPlayingVideo,
+            changeCurrentPlayingVideo: widget.changeCurrentPlayingVideo,
+            chatAttachments: widget.chatAttachments,
+          )
+        : Container();
+
+    Widget urlPreviewWidget = UrlPreviewWidget(
+      linkPreviews: this.attachments.where((item) => item.mimeType == null).toList(),
+      message: widget.message,
+      savedAttachmentData: widget.savedAttachmentData
+    );
+
+    // Add the correct type of message to the message stack
+    Widget message;
+    if (widget.message.isFromMe) {
+      message = SentMessage(
+        offset: widget.offset,
+        timeStamp: _buildTimeStamp(context),
         message: widget.message,
+        chat: widget.chat,
+        savedAttachmentData: widget.savedAttachmentData,
+        showDeliveredReceipt:
+            widget.customContent == null && widget.isFirstSentMessage,
+        showTail: showTail,
+        limited: widget.customContent == null,
+        shouldFadeIn: widget.shouldFadeIn,
+        customContent: widget.customContent,
+        isFromMe: widget.message.isFromMe,
+        attachments: widgetAttachments,
+        showHero: widget.showHero,
       );
     } else {
-      List<Widget> widgetStack = [];
-      Widget widgetAttachments = widget.savedAttachmentData != null
-          ? MessageAttachments(
-              message: widget.message,
-              savedAttachmentData: widget.savedAttachmentData,
-              showTail: showTail,
-              showHandle: widget.showHandle,
-              controllers: widget.currentPlayingVideo,
-              changeCurrentPlayingVideo: widget.changeCurrentPlayingVideo,
-              allAttachments: widget.allAttachments,
-            )
-          : Container();
+      message = ReceivedMessage(
+        offset: widget.offset,
+        timeStamp: _buildTimeStamp(context),
+        savedAttachmentData: widget.savedAttachmentData,
+        showTail: showTail,
+        olderMessage: widget.olderMessage,
+        message: widget.message,
+        showHandle: widget.showHandle,
+        customContent: widget.customContent,
+        isFromMe: widget.message.isFromMe,
+        attachments: widgetAttachments,
+        isGroup: widget.chat.participants.length > 1,
+        urlPreviewWidget: urlPreviewWidget,
 
-      if (widget.fromSelf) {
-        widgetStack.add(SentMessage(
-          offset: widget.offset,
-          timeStamp: _buildTimeStamp(context),
-          message: widget.message,
-          chat: widget.chat,
-          showDeliveredReceipt:
-              widget.customContent == null && widget.isFirstSentMessage,
-          showTail: showTail,
-          limited: widget.customContent == null,
-          shouldFadeIn: widget.shouldFadeIn,
-          customContent: widget.customContent,
-          isFromMe: widget.fromSelf,
-          attachments: widgetAttachments,
-          showHero: widget.showHero,
-        ));
-      } else {
-        widgetStack.add(ReceivedMessage(
-          offset: widget.offset,
-          timeStamp: _buildTimeStamp(context),
-          showTail: showTail,
-          olderMessage: widget.olderMessage,
-          message: widget.message,
-          showHandle: widget.showHandle,
-          customContent: widget.customContent,
-          isFromMe: widget.fromSelf,
-          attachments: widgetAttachments,
-        ));
-      }
-
-      for (Attachment sticker in stickers) {
-        widgetStack.add(StickerWidget(attachment: sticker));
-      }
-
-      widgetStack.add(Text("")); // Workaround for Flutter bug
-
-      return WillPopScope(
-          onWillPop: () async {
-            if (_entry != null) {
-              try {
-                _entry.remove();
-              } catch (e) {}
-              _entry = null;
-              return true;
-            } else {
-              return true;
-            }
-          },
-          child: GestureDetector(
-              behavior: HitTestBehavior.translucent,
-              onLongPress: () async {
-                Feedback.forLongPress(context);
-                List<Message> reactions = [];
-                if (widget.message.hasReactions) {
-                  reactions = await widget.message.getAssociatedMessages();
-                  reactions = reactions
-                      .where((element) => ReactionTypes.toList()
-                          .contains(element.associatedMessageType))
-                      .toList();
-                }
-
-                Overlay.of(context)
-                    .insert(_createMessageDetailsPopup(reactions));
-              },
-              child: Stack(
-                  alignment: widget.fromSelf
-                      ? AlignmentDirectional.centerEnd
-                      : AlignmentDirectional.centerStart,
-                  children: widgetStack)));
+        stickersWidget: StickersWidget(messages: this.associatedMessages),
+        attachmentsWidget: widgetAttachments,
+        reactionsWidget: ReactionsWidget(
+          message: widget.message, associatedMessages: associatedMessages
+        )
+      );
     }
+
+    return WillPopScope(
+      onWillPop: () async {
+        if (_entry != null) {
+          try {
+            _entry.remove();
+          } catch (e) {}
+          _entry = null;
+          return true;
+        } else {
+          return true;
+        }
+      },
+      child: GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onLongPress: () async {
+          Feedback.forLongPress(context);
+          Overlay.of(context).insert(_createMessageDetailsPopup());
+        },
+        child: message
+      )
+    );
   }
 
-  OverlayEntry _createMessageDetailsPopup(List<Message> reactions) {
+  OverlayEntry _createMessageDetailsPopup() {
     _entry = OverlayEntry(
       builder: (context) => MessageDetailsPopup(
         entry: _entry,
-        reactions: Reaction.getUniqueReactionMessages(reactions),
         message: widget.message,
       ),
     );

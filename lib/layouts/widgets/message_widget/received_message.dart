@@ -1,23 +1,34 @@
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/helpers/widget_helper.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
-import 'package:bluebubbles/layouts/widgets/message_widget/reactions.dart';
+import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/url_preview_widget.dart';
+import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_attachments.dart';
+import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_tail.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
+import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/material.dart';
 
 class ReceivedMessage extends StatefulWidget {
+  final double offset;
   final bool showTail;
   final Message message;
   final Message olderMessage;
-  final double offset;
   // final OverlayEntry overlayEntry;
   final Map<String, String> timeStamp;
   final bool showHandle;
   final List<Widget> customContent;
   final bool isFromMe;
   final Widget attachments;
+  final SavedAttachmentData savedAttachmentData;
+  final bool isGroup;
+
+  // Sub-widgets
+  final stickersWidget;
+  final attachmentsWidget;
+  final reactionsWidget;
+  final urlPreviewWidget;
 
   ReceivedMessage({
     Key key,
@@ -30,6 +41,14 @@ class ReceivedMessage extends StatefulWidget {
     @required this.customContent,
     @required this.isFromMe,
     @required this.attachments,
+    @required this.savedAttachmentData,
+    @required this.isGroup,
+
+    // Sub-widgets
+    @required this.stickersWidget,
+    @required this.attachmentsWidget,
+    @required this.reactionsWidget,
+    @required this.urlPreviewWidget,
     this.offset,
   }) : super(key: key);
 
@@ -47,7 +66,8 @@ class _ReceivedMessageState extends State<ReceivedMessage> {
   initState() {
     super.initState();
     getContactTitle();
-    this.hasHyperlinks = parseLinks(widget.message.text).isNotEmpty;
+
+     this.hasHyperlinks = parseLinks(widget.message.text).isNotEmpty;
   }
 
   @override
@@ -56,6 +76,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> {
     getContactTitle();
     getContact();
     fetchAvatar();
+
     ContactManager().stream.listen((List<String> addresses) {
       // Check if any of the addresses are members of the chat
       if (!addresses.contains(widget.message.handle.address)) return;
@@ -99,186 +120,205 @@ class _ReceivedMessageState extends State<ReceivedMessage> {
     });
   }
 
-  @override
-  Widget build(BuildContext context) {
-    var initials = getInitials(contact?.displayName ?? "", " ", size: 25);
-
-    List<Widget> tail = <Widget>[
+  /// Builds the message bubble with teh tail (if applicable)
+  Widget _buildMessageWithTail() {
+    List<Widget> msgStack = [
       Container(
-        margin: EdgeInsets.only(bottom: 1),
-        width: 20,
-        height: 15,
-        decoration: BoxDecoration(
-          color: Theme.of(context).accentColor,
-          borderRadius: BorderRadius.only(bottomRight: Radius.circular(12)),
+        margin: EdgeInsets.only(
+            top: widget.message.hasReactions ? 12 : 0, left: 10, right: 10),
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.of(context).size.width * 3 / 4,
         ),
-      ),
-      Container(
-        margin: EdgeInsets.only(bottom: 2),
-        height: 28,
-        width: 11,
+        padding: EdgeInsets.symmetric(
+          vertical: 8,
+          horizontal: 14,
+        ),
         decoration: BoxDecoration(
-            color: Theme.of(context).backgroundColor,
-            borderRadius: BorderRadius.only(bottomRight: Radius.circular(8))),
+            borderRadius: BorderRadius.circular(20),
+            color: Theme.of(context).accentColor),
+        child: RichText(
+          text: TextSpan(
+            children: WidgetHelper.buildMessageSpans(context, widget.message),
+            style: Theme.of(context).textTheme.bodyText1,
+          )
+        )
       ),
     ];
 
-    List<Widget> stack = <Widget>[
-      Container(
-        height: 30,
-        width: 6,
-        color: Theme.of(context).backgroundColor,
-      )
-    ];
     if (widget.showTail) {
-      stack.insertAll(0, tail);
+      msgStack.insert(
+          0, MessageTail(isFromMe: false));
     }
 
-    List<Widget> messageWidget = [
-      widget.message != null && !isEmptyString(widget.message.text)
-          ? Stack(
-              alignment: AlignmentDirectional.bottomStart,
-              children: <Widget>[
-                Stack(
-                  alignment: AlignmentDirectional.bottomStart,
-                  children: stack,
-                ),
-                Container(
-                    margin: EdgeInsets.symmetric(
-                      horizontal: 10,
-                    ),
-                    constraints: BoxConstraints(
-                      maxWidth: MediaQuery.of(context).size.width * 3 / 4.5,
-                    ),
-                    padding: EdgeInsets.symmetric(
-                      vertical: 8,
-                      horizontal: 14,
-                    ),
-                    decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(20),
-                        color: Theme.of(context).accentColor),
-                    child: RichText(
-                        text: TextSpan(
-                      children: WidgetHelper.buildMessageSpans(context, widget.message),
-                      style: Theme.of(context).textTheme.bodyText1,
-                    ))),
-              ],
-            )
-          : Container()
-    ];
+    return Stack(
+      alignment: AlignmentDirectional.bottomStart,
+      children: msgStack
+    );
+  }
 
-    Widget contactItem = new Container(width: 0, height: 0);
+  /// Adds reacts to a [message] widget
+  Widget _addReactionsToWidget(Widget message) {
+    return Stack(
+      alignment: AlignmentDirectional.topEnd,
+      children: [
+        message,
+        widget.reactionsWidget
+      ],
+    );
+  }
+
+  /// Adds reacts to a [message] widget
+  Widget _addStickersToWidget(Widget message) {
+    return Stack(
+      alignment: AlignmentDirectional.center,
+      children: [
+        message,
+        widget.stickersWidget
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.message == null) return Container();
+
+    dynamic initials = getInitials(contact?.displayName ?? "", " ", size: 25);
+
+    // The column that holds all the "messages"
+    List<Widget> messageColumn = [];
+
+    // First, add the message sender (if applicable)
     if (!sameSender(widget.message, widget.olderMessage) ||
         !widget.message.dateCreated
             .isWithin(widget.olderMessage.dateCreated, minutes: 30)) {
-      contactItem = Padding(
-        padding: EdgeInsets.only(left: 50.0, top: 5.0, bottom: 3.0),
-        child: Text(
-          contactTitle,
-          style: Theme.of(context).textTheme.subtitle1,
-        ),
+      messageColumn.add(
+        Padding(
+          padding: EdgeInsets.only(left: 25.0, top: 5.0, bottom: 3.0),
+          child: Text(
+            contactTitle,
+            style: Theme.of(context).textTheme.subtitle1,
+          ),
+        )
       );
     }
 
-    List<Widget> msgItems = [];
-    if (widget.showTail && widget.showHandle) {
-      msgItems.add(Padding(
+    // Second, add the attachments
+    if (isEmptyString(widget.message.text)) {
+      messageColumn.add(_addStickersToWidget(_addReactionsToWidget(widget.attachmentsWidget)));
+    } else {
+      messageColumn.add(widget.attachmentsWidget);
+    }
+
+    // Third, let's add the message or URL preview
+    Widget message;
+    if (widget.message.hasDdResults && this.hasHyperlinks) {
+      message = Padding(padding: EdgeInsets.only(left: 10.0), child: widget.urlPreviewWidget);
+    } else if (!isEmptyString(widget.message.text)) {
+      message = _buildMessageWithTail();
+    }
+
+    // Fourth, let's add any reactions or stickers to the widget
+    if (message != null) {
+      messageColumn.add(_addStickersToWidget(_addReactionsToWidget(message)));
+    }
+
+    // Now, let's create a row that will be the row with the following:
+    // -> Contact avatar
+    // -> Message
+    List<Widget> msgRow = [];
+    if (widget.showTail && widget.isGroup) {
+      msgRow.add(Padding(
           padding: EdgeInsets.only(
               left: 5.0,
-              bottom: (isEmptyString(sanitizeString(widget.message.text)))
-                  ? 5.0
-                  : 10.0),
+          ),
           child: ContactAvatarWidget(
               contactImage: contactImage,
               initials: initials,
               size: 30,
               fontSize: 14)));
     }
-    
-    msgItems.add(
-        new Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Padding(padding: EdgeInsets.only(bottom: 1.0), child: widget.attachments),
-      (!this.hasHyperlinks || !widget.message.hasDdResults)
-        ? Padding(
-          padding: EdgeInsets.only(
-              bottom: widget.showTail ? 10.0 : 3.0,
-              left: widget.showTail || !widget.showHandle ? 0.0 : 35.0),
-          child: Stack(
-            alignment: Alignment.topRight,
-            children: <Widget>[
-              AnimatedPadding(
-                duration: Duration(milliseconds: 250),
-                curve: Curves.easeInOut,
-                padding: EdgeInsets.only(
-                  right: widget.message != null &&
-                          widget.message.hasReactions &&
-                          !widget.message.hasAttachments
-                      ? 6.0
-                      : 0.0,
-                  top: widget.message != null &&
-                          widget.message.hasReactions &&
-                          !widget.message.hasAttachments
-                      ? 14.0
-                      : 0.0,
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: messageWidget,
-                ),
-              ),
-              !widget.message.hasAttachments
-                  ? Reactions(
-                      message: widget.message,
-                    )
-                  : Container(),
-            ],
-          ),
-        )
-      : Container()
-    ]));
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        contactItem,
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: <Widget>[
-            Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: msgItems,
-            ),
-            WidgetHelper.buildMessageTimestamp(context, widget.message, widget.offset)
-          ],
-        ),
-        widget.timeStamp != null
-            ? Padding(
-                padding: const EdgeInsets.all(14.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[
-                    RichText(
-                      text: TextSpan(
-                        style: Theme.of(context).textTheme.subtitle2,
-                        children: [
-                          TextSpan(
-                            text: "${widget.timeStamp["date"]}, ",
-                            style: Theme.of(context)
-                                .textTheme
-                                .subtitle2
-                                .apply(fontWeightDelta: 10),
-                          ),
-                          TextSpan(text: "${widget.timeStamp["time"]}")
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              )
-            : Container()
-      ],
+    // Add the message column to the row
+    msgRow.add(Padding(
+      // Padding to shift the bubble up a bit, relative to the avatar
+      padding: EdgeInsets.only(
+        bottom: (widget.showTail)
+          ? 5.0
+          : 3.0
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: messageColumn,
+      )
+    ));
+
+    // Finally, create a container row so we can have the swipe timestamp
+    return Padding(
+      // Add padding when we are showing the avatar
+      padding: EdgeInsets.only(
+        left: (!widget.showTail && widget.isGroup)
+          ? 35.0
+          : 0.0
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.max,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: msgRow
+          ),
+          WidgetHelper.buildMessageTimestamp(
+            context, widget.message, widget.offset)
+        ],
+      )
     );
+
+    // return Column(
+    //   crossAxisAlignment: CrossAxisAlignment.start,
+    //   children: <Widget>[
+    //     contactItem,
+    //     Row(
+    //       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    //       children: <Widget>[
+    //         Row(
+    //           mainAxisAlignment: MainAxisAlignment.start,
+    //           crossAxisAlignment: CrossAxisAlignment.end,
+    //           children: msgItems,
+    //         ),
+    //         WidgetHelper.buildMessageTimestamp(
+    //             context, widget.message, widget.offset)
+    //       ],
+    //     ),
+    //     widget.timeStamp != null
+    //         ? Padding(
+    //             padding: const EdgeInsets.all(14.0),
+    //             child: Row(
+    //               mainAxisAlignment: MainAxisAlignment.center,
+    //               children: <Widget>[
+    //                 RichText(
+    //                   text: TextSpan(
+    //                     style: Theme.of(context).textTheme.subtitle2,
+    //                     children: [
+    //                       TextSpan(
+    //                         text: "${widget.timeStamp["date"]}, ",
+    //                         style: Theme.of(context)
+    //                             .textTheme
+    //                             .subtitle2
+    //                             .apply(fontWeightDelta: 10),
+    //                       ),
+    //                       TextSpan(text: "${widget.timeStamp["time"]}")
+    //                     ],
+    //                   ),
+    //                 ),
+    //               ],
+    //             ),
+    //           )
+    //         : Container()
+    //   ],
+    // );
   }
 }

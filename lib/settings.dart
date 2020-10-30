@@ -31,6 +31,8 @@ class Settings {
             : false,
         lowMemoryMode =
             json.containsKey('lowMemoryMode') ? json['lowMemoryMode'] : false,
+        scrollSpeed =
+            json.containsKey('scrollSpeed') ? json['scrollSpeed'] : 0.95,
         lastIncrementalSync = json.containsKey('lastIncrementalSync')
             ? json['lastIncrementalSync']
             : 0,
@@ -51,6 +53,7 @@ class Settings {
   bool hideTextPreviews = false;
   bool showIncrementalSync = false;
   bool lowMemoryMode = false;
+  double scrollSpeed = 0.95;
   int lastIncrementalSync = 0;
   Map<String, dynamic> _lightColorTheme = {};
   Map<String, dynamic> _darkColorTheme = {};
@@ -219,6 +222,7 @@ class Settings {
         'showIncrementalSync':
             showIncrementalSync != null ? showIncrementalSync : false,
         'lowMemoryMode': lowMemoryMode != null ? lowMemoryMode : false,
+        'scrollSpeed': scrollSpeed != null ? scrollSpeed : 0.95,
         'darkColorTheme': jsonEncode(_darkColorTheme),
         'lightColorTheme': jsonEncode(_lightColorTheme),
       };
