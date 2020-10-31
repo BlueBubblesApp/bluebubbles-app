@@ -1,10 +1,9 @@
 import 'dart:ui';
 
 import 'package:bluebubbles/action_handler.dart';
-import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
-import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/layouts/widgets/message_widget/message_content/delivered_receipt.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_attachments.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_tail.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_time_stamp.dart';
@@ -23,44 +22,47 @@ class SentMessageHelper {
     blueColor = message == null || message.guid.startsWith("temp")
         ? darken(Colors.blue[600], 0.2)
         : Colors.blue[600];
-    return Stack(
-      alignment: AlignmentDirectional.bottomEnd,
-      children: [
-        if (showTail)
-          MessageTail(
-            isFromMe: true,
-            blueColor: blueColor,
+    return Padding(
+      padding: EdgeInsets.only(bottom: showTail ? 2.0 : 0),
+      child: Stack(
+        alignment: AlignmentDirectional.bottomEnd,
+        children: [
+          if (showTail)
+            MessageTail(
+              isFromMe: true,
+              blueColor: blueColor,
+            ),
+          Container(
+            margin: EdgeInsets.only(
+              top: hasReactions ? 12 : 0,
+              left: 10,
+              right: 10,
+            ),
+            constraints: BoxConstraints(
+              maxWidth: MediaQuery.of(context).size.width *
+                      MessageWidgetMixin.maxSize +
+                  (customContent != null ? 100 : 0),
+            ),
+            padding: EdgeInsets.symmetric(
+              vertical: 8,
+              horizontal: 14,
+            ),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              color: blueColor,
+            ),
+            child: customContent == null
+                ? RichText(
+                    text: TextSpan(
+                      children: MessageWidgetMixin.buildMessageSpans(
+                          context, message),
+                      style: Theme.of(context).textTheme.bodyText1,
+                    ),
+                  )
+                : customContent,
           ),
-        Container(
-          margin: EdgeInsets.only(
-            top: hasReactions ? 12 : 0,
-            left: 10,
-            right: 10,
-          ),
-          constraints: BoxConstraints(
-            maxWidth:
-                MediaQuery.of(context).size.width * MessageWidgetMixin.maxSize +
-                    (customContent != null ? 100 : 0),
-          ),
-          padding: EdgeInsets.symmetric(
-            vertical: 8,
-            horizontal: 14,
-          ),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            color: blueColor,
-          ),
-          child: customContent == null
-              ? RichText(
-                  text: TextSpan(
-                    children:
-                        MessageWidgetMixin.buildMessageSpans(context, message),
-                    style: Theme.of(context).textTheme.bodyText1,
-                  ),
-                )
-              : customContent,
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -293,6 +295,13 @@ class _SentMessageState extends State<SentMessage>
         ),
       );
     }
+    messageColumn.add(
+      DeliveredReceipt(
+        message: widget.message,
+        showDeliveredReceipt: widget.showDeliveredReceipt,
+        shouldAnimate: widget.shouldFadeIn,
+      ),
+    );
 
     // Now, let's create a row that will be the row with the following:
     // -> Contact avatar
