@@ -1,31 +1,12 @@
 package com.bluebubbles.messaging.method_call_handler;
 
 import android.annotation.SuppressLint;
-import android.app.Activity;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
-import android.app.Person;
 import android.content.Context;
-import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.drawable.Icon;
-import android.location.Location;
-import android.net.Uri;
 import android.os.Build;
-import android.os.Bundle;
-import android.provider.MediaStore;
-import android.service.notification.StatusBarNotification;
-import android.util.Log;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
-import androidx.core.app.NotificationCompat;
-import androidx.core.app.NotificationManagerCompat;
-import androidx.core.content.FileProvider;
 
 import com.bluebubbles.messaging.MainActivity;
-import com.bluebubbles.messaging.R;
 import com.bluebubbles.messaging.method_call_handler.handlers.ClearChatNotifs;
 import com.bluebubbles.messaging.method_call_handler.handlers.ClearSocketIssue;
 import com.bluebubbles.messaging.method_call_handler.handlers.CreateNotificationChannel;
@@ -36,32 +17,11 @@ import com.bluebubbles.messaging.method_call_handler.handlers.InitializeBackgrou
 import com.bluebubbles.messaging.method_call_handler.handlers.NewMessageNotification;
 import com.bluebubbles.messaging.method_call_handler.handlers.OpenFile;
 import com.bluebubbles.messaging.method_call_handler.handlers.OpenLink;
-import com.bluebubbles.messaging.method_call_handler.handlers.PickImage;
-import com.bluebubbles.messaging.method_call_handler.handlers.PickVideo;
+import com.bluebubbles.messaging.method_call_handler.handlers.PickFile;
 import com.bluebubbles.messaging.method_call_handler.handlers.SaveToFile;
 import com.bluebubbles.messaging.method_call_handler.handlers.ShareFile;
 import com.bluebubbles.messaging.method_call_handler.handlers.SocketIssueWarning;
-import com.bluebubbles.messaging.services.ReplyReceiver;
 import com.bluebubbles.messaging.workers.DartWorker;
-import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
-import com.google.firebase.FirebaseApp;
-import com.google.firebase.FirebaseOptions;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
-import com.google.firebase.iid.FirebaseInstanceId;
-import com.google.firebase.iid.InstanceIdResult;
-
-import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
 
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
@@ -104,10 +64,8 @@ public class MethodCallHandler {
             new GetServerUrl(context, call, result).Handle();
         } else if (call.method.equals(ShareFile.TAG)) {
             new ShareFile(context, call, result).Handle();
-        } else if (call.method.equals(PickImage.TAG)) {
-            new PickImage(context, call, result).Handle();
-        } else if (call.method.equals(PickVideo.TAG)) {
-            new PickVideo(context, call, result).Handle();
+        }  else if (call.method.equals(PickFile.TAG)) {
+            new PickFile(context, call, result).Handle();
         } else {
             result.notImplemented();
         }

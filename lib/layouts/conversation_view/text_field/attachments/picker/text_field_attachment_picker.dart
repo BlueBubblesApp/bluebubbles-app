@@ -71,56 +71,15 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker>
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: <Widget>[
                           SizedBox(
-                            width: 85,
-                            height: 80,
+                            width: 90,
+                            height: 120,
                             child: RaisedButton(
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(18),
                               ),
                               onPressed: () async {
                                 String res = await MethodChannelInterface()
-                                    .invokeMethod("pick-image");
-                                if (res == null) return;
-                                widget.onAddAttachment(File(res));
-                              },
-                              color: Theme.of(context).accentColor,
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: <Widget>[
-                                  Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: Icon(
-                                      Icons.photo_library,
-                                      color: Theme.of(context)
-                                          .textTheme
-                                          .bodyText1
-                                          .color,
-                                    ),
-                                  ),
-                                  Text(
-                                    "Images",
-                                    style: TextStyle(
-                                      color: Theme.of(context)
-                                          .textTheme
-                                          .bodyText1
-                                          .color,
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          SizedBox(
-                            width: 85,
-                            height: 80,
-                            child: RaisedButton(
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(18),
-                              ),
-                              onPressed: () async {
-                                String res = await MethodChannelInterface()
-                                    .invokeMethod("pick-video");
+                                    .invokeMethod("pick-file");
                                 if (res == null) return;
                                 widget.onAddAttachment(File(res));
                               },
@@ -139,7 +98,7 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker>
                                     ),
                                   ),
                                   Text(
-                                    "Videos",
+                                    "Files",
                                     style: TextStyle(
                                       color: Theme.of(context)
                                           .textTheme
@@ -153,8 +112,8 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker>
                             ),
                           ),
                           SizedBox(
-                            width: 85,
-                            height: 80,
+                            width: 90,
+                            height: 120,
                             child: RaisedButton(
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(18),

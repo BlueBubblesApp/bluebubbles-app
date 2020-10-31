@@ -11,15 +11,14 @@ import io.flutter.plugin.common.MethodChannel;
 
 import static com.bluebubbles.messaging.MainActivity.PICK_IMAGE;
 
-public class PickImage implements Handler{
-
-    public static String TAG = "pick-image";
+public class PickFile implements Handler{
+    public static String TAG = "pick-file";
 
     private Context context;
     private MethodCall call;
     private MethodChannel.Result result;
 
-    public PickImage(Context context, MethodCall call, MethodChannel.Result result) {
+    public PickFile(Context context, MethodCall call, MethodChannel.Result result) {
         this.context = context;
         this.call = call;
         this.result = result;
@@ -27,20 +26,12 @@ public class PickImage implements Handler{
 
     @Override
     public void Handle() {
-        Intent getIntent = new Intent(Intent.ACTION_GET_CONTENT);
-        getIntent.setType("image/*");
-
-        Intent pickIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-        pickIntent.setType("image/*");
-
-        Intent chooserIntent = Intent.createChooser(getIntent, "Select Image");
-        chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Intent[]{pickIntent});
-
-
+        Intent intent  = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent.setType("*/*");
         try {
             MainActivity activity = (MainActivity) context;
             activity.result = result;
-            activity.startActivityForResult(chooserIntent, PICK_IMAGE);
+            activity.startActivityForResult(intent, PICK_IMAGE);
         } catch (Exception e) {
             e.printStackTrace();
         }
