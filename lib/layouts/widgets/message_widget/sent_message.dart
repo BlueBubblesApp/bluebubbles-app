@@ -5,51 +5,52 @@ import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/helpers/widget_helper.dart';
-import 'package:bluebubbles/layouts/widgets/message_widget/message_content/delivered_receipt.dart';
-import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/url_preview_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_attachments.dart';
-import 'package:bluebubbles/layouts/widgets/message_widget/reactions_widget.dart';
+import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_tail.dart';
+import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_time_stamp.dart';
+import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
-import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class SentMessage extends StatefulWidget {
+  final double offset;
   final bool showTail;
   final Message message;
-  final Chat chat;
-  // final OverlayEntry overlayEntry;
-  final bool shouldFadeIn;
-  final Map<String, String> timeStamp;
-  final bool showDeliveredReceipt;
-  final List<Widget> customContent;
-  final bool isFromMe;
-  final Widget attachments;
+  final Message olderMessage;
   final bool showHero;
-  final double offset;
+  final bool shouldFadeIn;
+  final bool showDeliveredReceipt;
   final SavedAttachmentData savedAttachmentData;
+  final Chat chat;
 
-  final String substituteText;
-  final bool limited;
+  // Sub-widgets
+  final Widget stickersWidget;
+  final Widget attachmentsWidget;
+  final Widget reactionsWidget;
+  final Widget urlPreviewWidget;
+  final List<Widget> customContent;
+
   SentMessage({
     Key key,
     @required this.showTail,
+    @required this.olderMessage,
     @required this.message,
-    @required this.chat,
-    @required this.timeStamp,
+    @required this.showHero,
     @required this.showDeliveredReceipt,
-    @required this.customContent,
-    @required this.isFromMe,
-    @required this.attachments,
     @required this.savedAttachmentData,
-    this.substituteText,
-    this.limited,
-    this.shouldFadeIn,
-    this.showHero,
-    this.offset,
+    @required this.shouldFadeIn,
+    @required this.offset,
+    @required this.chat,
+
+    // Sub-widgets
+    @required this.stickersWidget,
+    @required this.attachmentsWidget,
+    @required this.reactionsWidget,
+    @required this.urlPreviewWidget,
+    @required this.customContent,
   }) : super(key: key);
 
   @override
@@ -57,13 +58,51 @@ class SentMessage extends StatefulWidget {
 }
 
 class _SentMessageState extends State<SentMessage>
-    with TickerProviderStateMixin {
-  bool hasHyperlinks = false;
+    with TickerProviderStateMixin, MessageWidgetMixin {
+  Color blueColor;
 
   @override
   void initState() {
     super.initState();
-    this.hasHyperlinks = parseLinks(widget.message.text).isNotEmpty;
+    initMessageState(widget.message, false);
+    blueColor = widget.message == null || widget.message.guid.startsWith("temp")
+        ? darken(Colors.blue[600], 0.2)
+        : Colors.blue[600];
+  }
+
+  static Widget _buildMessageWithTail(
+      BuildContext context, Message message, bool showTail) {
+    return Stack(
+      alignment: AlignmentDirectional.bottomEnd,
+      children: [
+        if (showTail) MessageTail(isFromMe: true),
+        Container(
+          margin: EdgeInsets.only(
+            top: message.hasReactions ? 12 : 0,
+            left: 10,
+            right: 10,
+          ),
+          constraints: BoxConstraints(
+            maxWidth:
+                MediaQuery.of(context).size.width * MessageWidgetMixin.maxSize,
+          ),
+          padding: EdgeInsets.symmetric(
+            vertical: 8,
+            horizontal: 14,
+          ),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            color: Colors.blue,
+          ),
+          child: RichText(
+            text: TextSpan(
+              children: MessageWidgetMixin.buildMessageSpans(context, message),
+              style: Theme.of(context).textTheme.bodyText1,
+            ),
+          ),
+        ),
+      ],
+    );
   }
 
   OverlayEntry _createErrorPopup() {
@@ -112,45 +151,46 @@ class _SentMessageState extends State<SentMessage>
                                   ],
                                 ),
                                 CupertinoButton(
-                                    child: Row(
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: <Widget>[
+                                      Text("Retry"),
+                                      Container(width: 5.0),
+                                      Icon(
+                                        Icons.refresh,
+                                        color: Colors.white,
+                                        size: 18,
+                                      )
+                                    ],
+                                  ),
+                                  color: Colors.black26,
+                                  onPressed: () async {
+                                    if (widget.message != null)
+                                      ActionHandler.retryMessage(
+                                          widget.message);
+                                    entry.remove();
+                                  },
+                                ),
+                                CupertinoButton(
+                                  child: Row(
                                       mainAxisAlignment:
                                           MainAxisAlignment.center,
                                       children: <Widget>[
-                                        Text("Retry"),
+                                        Text("Remove"),
                                         Container(width: 5.0),
-                                        Icon(
-                                          Icons.refresh,
-                                          color: Colors.white,
-                                          size: 18,
-                                        )
-                                      ],
-                                    ),
-                                    color: Colors.black26,
-                                    onPressed: () async {
-                                      if (widget.message != null)
-                                        ActionHandler.retryMessage(
-                                            widget.message);
-                                      entry.remove();
-                                    }),
-                                CupertinoButton(
-                                    child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: <Widget>[
-                                          Text("Remove"),
-                                          Container(width: 5.0),
-                                          Icon(Icons.refresh,
-                                              color: Colors.white, size: 18)
-                                        ]),
-                                    color: Colors.black26,
-                                    onPressed: () async {
-                                      if (widget.message != null) {
-                                        NewMessageManager().removeMessage(
-                                            widget.chat, widget.message.guid);
-                                      }
+                                        Icon(Icons.refresh,
+                                            color: Colors.white, size: 18)
+                                      ]),
+                                  color: Colors.black26,
+                                  onPressed: () async {
+                                    if (widget.message != null) {
+                                      NewMessageManager().removeMessage(
+                                          widget.chat, widget.message.guid);
+                                    }
 
-                                      entry.remove();
-                                    })
+                                    entry.remove();
+                                  },
+                                )
                               ],
                             ),
                           ),
@@ -171,144 +211,97 @@ class _SentMessageState extends State<SentMessage>
 
   @override
   Widget build(BuildContext context) {
-    Color blueColor =
-        widget.message == null || widget.message.guid.startsWith("temp")
-            ? darken(Colors.blue[600], 0.2)
-            : Colors.blue[600];
+    if (widget.message == null) return Container();
 
-    List<Widget> messageCol = [];
-    if (widget.attachments != null)
-      messageCol.add(widget.attachments);
+    // The column that holds all the "messages"
+    List<Widget> messageColumn = [];
 
-    List<Attachment> previewAttachments = [];
-    if (widget.message.hasDdResults) {
-      for (Attachment i in widget.savedAttachmentData?.attachments ?? []) {
-        if (i.mimeType == null) {
-          previewAttachments.add(i);
-        }
-      }
-    }
-
-    if (previewAttachments.length > 0) {
-      messageCol.add(Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          Padding(
-            padding: EdgeInsets.only(
-              bottom: 3.0,
-              right: 10.0,
-            ),
-            child: UrlPreviewWidget(
-              linkPreviews: previewAttachments,
-              message: widget.message,
-              savedAttachmentData: widget.savedAttachmentData,
-            )
-          )
-        ]
-      ));
-    } else {
-      messageCol.add(Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: <Widget>[
-          AnimatedPadding(
-            curve: Curves.easeInOut,
-            duration: Duration(milliseconds: 200),
-            padding: EdgeInsets.only(
-              bottom: widget.showTail ? 10.0 : 3.0,
-              right: (widget.message != null && widget.message.error > 0
-                  ? 10.0
-                  : 0),
-            ),
-            child: Stack(
-              alignment: Alignment.topLeft,
-              children: <Widget>[
-                AnimatedPadding(
-                  duration: Duration(milliseconds: 250),
-                  curve: Curves.easeInOut,
-                  padding: EdgeInsets.only(
-                    left: widget.message != null &&
-                            widget.message.hasReactions &&
-                            !widget.message.hasAttachments
-                        ? 6.0
-                        : 0.0,
-                    top: widget.message != null &&
-                            widget.message.hasReactions &&
-                            !widget.message.hasAttachments
-                        ? 14.0
-                        : 0.0,
-                  ),
-                  child: widget.showHero
-                      ? Hero(
-                          tag: "first",
-                          child: Material(
-                            type: MaterialType.transparency,
-                            child: ActualSentMessage(
-                              blueColor: blueColor,
-                              createErrorPopup: this._createErrorPopup,
-                              customContent: widget.customContent,
-                              message: widget.message,
-                              chat: widget.chat,
-                              showTail: widget.showTail,
-                              textSpans: WidgetHelper.buildMessageSpans(context, widget.message),
-                            ),
-                          ),
-                        )
-                      : ActualSentMessage(
-                          blueColor: blueColor,
-                          createErrorPopup: this._createErrorPopup,
-                          customContent: widget.customContent,
-                          message: widget.message,
-                          chat: widget.chat,
-                          showTail: widget.showTail,
-                          textSpans: WidgetHelper.buildMessageSpans(context, widget.message),
-                        ),
-                ),
-                widget.message != null && !widget.message.hasAttachments
-                    ? ReactionsWidget(
-                        message: widget.message,
-                      )
-                    : Container(),
-              ],
-            ),
+    // First, add the message sender (if applicable)
+    if (!sameSender(widget.message, widget.olderMessage) ||
+        !widget.message.dateCreated
+            .isWithin(widget.olderMessage.dateCreated, minutes: 30)) {
+      messageColumn.add(
+        Padding(
+          padding: EdgeInsets.only(left: 25.0, top: 5.0, bottom: 3.0),
+          child: Text(
+            contactTitle,
+            style: Theme.of(context).textTheme.subtitle1,
           ),
-          WidgetHelper.buildMessageTimestamp(context, widget.message, widget.offset)
-        ],
-      ));
+        ),
+      );
     }
-  
 
-    return AnimatedOpacity(
-      opacity: 1.0, //_visible ? 1.0 : 0.0,
-      duration: Duration(milliseconds: widget.shouldFadeIn ? 200 : 0),
-      child: Column(
-        children: <Widget>[
-          ...messageCol,
-          DeliveredReceipt(
-              message: widget.message,
-              showDeliveredReceipt: widget.showDeliveredReceipt,
-              shouldAnimate: widget.shouldFadeIn),
-          widget.timeStamp != null
-              ? Padding(
-                  padding: const EdgeInsets.all(14.0),
-                  child: RichText(
-                    text: TextSpan(
-                      style: Theme.of(context).textTheme.subtitle2,
-                      children: [
-                        TextSpan(
-                          text: "${widget.timeStamp["date"]}, ",
-                          style: Theme.of(context)
-                              .textTheme
-                              .subtitle2
-                              .apply(fontWeightDelta: 10),
-                        ),
-                        TextSpan(text: "${widget.timeStamp["time"]}")
-                      ],
-                    ),
-                  ),
-                )
-              : Container(),
-        ],
+    // Second, add the attachments
+    if (isEmptyString(widget.message.text)) {
+      messageColumn.add(
+        addStickersToWidget(
+          message: addReactionsToWidget(
+            message: widget.attachmentsWidget,
+            reactions: widget.reactionsWidget,
+          ),
+          stickers: widget.stickersWidget,
+        ),
+      );
+    } else {
+      messageColumn.add(widget.attachmentsWidget);
+    }
+
+    // Third, let's add the message or URL preview
+    Widget message;
+    if (widget.message.hasDdResults && this.hasHyperlinks) {
+      message = Padding(
+          padding: EdgeInsets.only(left: 10.0), child: widget.urlPreviewWidget);
+    } else if (!isEmptyString(widget.message.text)) {
+      message = _buildMessageWithTail(context, widget.message, widget.showTail);
+    }
+
+    // Fourth, let's add any reactions or stickers to the widget
+    if (message != null) {
+      messageColumn.add(
+        addStickersToWidget(
+          message: addReactionsToWidget(
+            message: message,
+            reactions: widget.reactionsWidget,
+          ),
+          stickers: widget.stickersWidget,
+        ),
+      );
+    }
+
+    // Now, let's create a row that will be the row with the following:
+    // -> Contact avatar
+    // -> Message
+    List<Widget> msgRow = [];
+
+    // Add the message column to the row
+    msgRow.add(
+      Padding(
+        // Padding to shift the bubble up a bit, relative to the avatar
+        padding: EdgeInsets.only(bottom: (widget.showTail) ? 5.0 : 3.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: messageColumn,
+        ),
       ),
+    );
+
+    // Finally, create a container row so we can have the swipe timestamp
+    return Row(
+      mainAxisSize: MainAxisSize.max,
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.end,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: msgRow,
+        ),
+        MessageTimeStamp(
+          message: widget.message,
+          offset: widget.offset,
+        )
+      ],
     );
   }
 }

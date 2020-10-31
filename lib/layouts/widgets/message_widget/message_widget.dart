@@ -106,8 +106,7 @@ class _MessageState extends State<MessageWidget> {
 
   Future<void> fetchAttachments() async {
     // If there is already a request being made, return that request
-    if (attachmentsRequest != null &&
-        !attachmentsRequest.isCompleted) {
+    if (attachmentsRequest != null && !attachmentsRequest.isCompleted) {
       return attachmentsRequest.future;
     }
 
@@ -133,29 +132,6 @@ class _MessageState extends State<MessageWidget> {
     if (first == null || second == null) return false;
     return second.dateCreated.difference(first.dateCreated).inMinutes.abs() >
         threshold;
-  }
-
-  Map<String, String> _buildTimeStamp(BuildContext context) {
-    if (widget.newerMessage != null &&
-        (!isEmptyString(widget.message.text) ||
-            widget.message.hasAttachments) &&
-        withinTimeThreshold(widget.message, widget.newerMessage,
-            threshold: 30)) {
-      DateTime timeOfnewerMessage = widget.newerMessage.dateCreated;
-      String time = new DateFormat.jm().format(timeOfnewerMessage);
-      String date;
-      if (widget.newerMessage.dateCreated.isToday()) {
-        date = "Today";
-      } else if (widget.newerMessage.dateCreated.isYesterday()) {
-        date = "Yesterday";
-      } else {
-        date =
-            "${timeOfnewerMessage.month.toString()}/${timeOfnewerMessage.day.toString()}/${timeOfnewerMessage.year.toString()}";
-      }
-      return {"date": date, "time": time};
-    } else {
-      return null;
-    }
   }
 
   @override
@@ -199,74 +175,76 @@ class _MessageState extends State<MessageWidget> {
         : Container();
 
     Widget urlPreviewWidget = UrlPreviewWidget(
-      linkPreviews: this.attachments.where((item) => item.mimeType == null).toList(),
-      message: widget.message,
-      savedAttachmentData: widget.savedAttachmentData
-    );
+        linkPreviews:
+            this.attachments.where((item) => item.mimeType == null).toList(),
+        message: widget.message,
+        savedAttachmentData: widget.savedAttachmentData);
 
     // Add the correct type of message to the message stack
     Widget message;
     if (widget.message.isFromMe) {
       message = SentMessage(
         offset: widget.offset,
-        timeStamp: _buildTimeStamp(context),
-        message: widget.message,
-        chat: widget.chat,
         savedAttachmentData: widget.savedAttachmentData,
+        showTail: showTail,
+        olderMessage: widget.olderMessage,
+        message: widget.message,
+        urlPreviewWidget: urlPreviewWidget,
+        stickersWidget: StickersWidget(
+          messages: this.associatedMessages,
+        ),
+        attachmentsWidget: widgetAttachments,
+        reactionsWidget: ReactionsWidget(
+          message: widget.message,
+          associatedMessages: associatedMessages,
+        ),
+        chat: widget.chat,
+        shouldFadeIn: widget.shouldFadeIn,
+        showHero: widget.showHero,
         showDeliveredReceipt:
             widget.customContent == null && widget.isFirstSentMessage,
-        showTail: showTail,
-        limited: widget.customContent == null,
-        shouldFadeIn: widget.shouldFadeIn,
-        customContent: widget.customContent,
-        isFromMe: widget.message.isFromMe,
-        attachments: widgetAttachments,
-        showHero: widget.showHero,
+        customContent: [],
       );
     } else {
       message = ReceivedMessage(
         offset: widget.offset,
-        timeStamp: _buildTimeStamp(context),
         savedAttachmentData: widget.savedAttachmentData,
         showTail: showTail,
         olderMessage: widget.olderMessage,
         message: widget.message,
         showHandle: widget.showHandle,
-        customContent: widget.customContent,
-        isFromMe: widget.message.isFromMe,
-        attachments: widgetAttachments,
         isGroup: widget.chat.participants.length > 1,
         urlPreviewWidget: urlPreviewWidget,
-
-        stickersWidget: StickersWidget(messages: this.associatedMessages),
+        stickersWidget: StickersWidget(
+          messages: this.associatedMessages,
+        ),
         attachmentsWidget: widgetAttachments,
         reactionsWidget: ReactionsWidget(
-          message: widget.message, associatedMessages: associatedMessages
-        )
+          message: widget.message,
+          associatedMessages: associatedMessages,
+        ),
       );
     }
 
     return WillPopScope(
-      onWillPop: () async {
-        if (_entry != null) {
-          try {
-            _entry.remove();
-          } catch (e) {}
-          _entry = null;
-          return true;
-        } else {
-          return true;
-        }
-      },
-      child: GestureDetector(
-        behavior: HitTestBehavior.translucent,
-        onLongPress: () async {
-          Feedback.forLongPress(context);
-          Overlay.of(context).insert(_createMessageDetailsPopup());
+        onWillPop: () async {
+          if (_entry != null) {
+            try {
+              _entry.remove();
+            } catch (e) {}
+            _entry = null;
+            return true;
+          } else {
+            return true;
+          }
         },
-        child: message
-      )
-    );
+        child: GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            onLongPress: () async {
+              Feedback.forLongPress(context);
+              Overlay.of(context).insert(_createMessageDetailsPopup());
+            },
+            child: message));
   }
 
   OverlayEntry _createMessageDetailsPopup() {

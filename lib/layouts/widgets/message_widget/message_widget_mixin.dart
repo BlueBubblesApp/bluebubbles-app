@@ -1,11 +1,72 @@
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/repository/models/message.dart';
+import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
-class WidgetHelper {
+// Mixin just for commonly shared functions and properties between the SentMessage and ReceivedMessage
+abstract class MessageWidgetMixin {
+  Contact contact;
+  String contactTitle = "";
+  MemoryImage contactImage;
+  bool hasHyperlinks = false;
+  static const double maxSize = 3 / 5;
+
+  Future<void> initMessageState(Message message, bool showHandle) async {
+    this.hasHyperlinks = parseLinks(message.text).isNotEmpty;
+    await getContactTitle(message, showHandle);
+  }
+
+  Future<void> getContact(Message message) async {
+    Contact contact =
+        await ContactManager().getCachedContact(message.handle.address);
+    if (contact != null) {
+      if (this.contact == null ||
+          this.contact.identifier != contact.identifier) {
+        this.contact = contact;
+      }
+    }
+  }
+
+  Future<void> getContactTitle(Message message, bool showHandle) async {
+    if (message.handle == null || !showHandle) return;
+
+    String title =
+        await ContactManager().getContactTitle(message.handle.address);
+
+    if (title != contactTitle) {
+      contactTitle = title;
+    }
+  }
+
+  Future<void> fetchAvatar(Message message) async {
+    MemoryImage avatar = await loadAvatar(null, message.handle.address);
+    if (contactImage == null ||
+        contactImage.bytes.length != avatar.bytes.length) {
+      contactImage = avatar;
+    }
+  }
+
+  /// Adds reacts to a [message] widget
+  Widget addReactionsToWidget(
+      {@required Widget message, @required Widget reactions}) {
+    return Stack(
+      alignment: AlignmentDirectional.topEnd,
+      children: [message, reactions],
+    );
+  }
+
+  /// Adds reacts to a [message] widget
+  Widget addStickersToWidget(
+      {@required Widget message, @required Widget stickers}) {
+    return Stack(
+      alignment: AlignmentDirectional.center,
+      children: [message, stickers],
+    );
+  }
+
   static List<InlineSpan> buildMessageSpans(
       BuildContext context, Message message) {
     List<InlineSpan> textSpans = <InlineSpan>[];
@@ -76,19 +137,5 @@ class WidgetHelper {
     }
 
     return textSpans;
-  }
-
-  static AnimatedContainer buildMessageTimestamp(
-      BuildContext context, Message message, double offset) {
-    return AnimatedContainer(
-      width: (-offset).clamp(0, 70).toDouble(),
-      duration: Duration(milliseconds: offset == 0 ? 150 : 0),
-      child: Text(
-        DateFormat('h:mm a').format(message.dateCreated).toLowerCase(),
-        style: Theme.of(context).textTheme.subtitle1,
-        overflow: TextOverflow.clip,
-        maxLines: 1,
-      ),
-    );
   }
 }
