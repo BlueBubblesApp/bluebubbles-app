@@ -418,16 +418,20 @@ class Chat {
 
     // Execute the query
     var res = await db.rawQuery("$query;", [chat.id]);
-    return res == null
-        ? []
-        : res
-            .map((attachment) => Attachment.fromMap(attachment))
-            .where((element) {
-            String mimeType = element.mimeType;
-            if (mimeType == null) return false;
-            mimeType = mimeType.substring(0, mimeType.indexOf("/"));
-            return mimeType == "image" || mimeType == "video";
-          }).toList();
+    if (res == null) return [];
+    List<Attachment> attachments = res
+        .map((attachment) => Attachment.fromMap(attachment))
+        .where((element) {
+      String mimeType = element.mimeType;
+      if (mimeType == null) return false;
+      mimeType = mimeType.substring(0, mimeType.indexOf("/"));
+      return mimeType == "image" || mimeType == "video";
+    }).toList();
+    if (attachments.length > 0) {
+      final guids = attachments.map((e) => e.guid).toSet();
+      attachments.retainWhere((element) => guids.remove(element.guid));
+    }
+    return attachments;
   }
 
   static Future<List<Message>> getMessages(Chat chat,
