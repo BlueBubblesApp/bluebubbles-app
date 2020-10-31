@@ -3,6 +3,7 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/group_event.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/url_preview_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_attachments.dart';
+import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_time_stamp_separator.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_details_popup.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/reactions_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/received_message.dart';
@@ -227,7 +228,6 @@ class _MessageState extends State<MessageWidget> {
         showHero: widget.showHero,
         showDeliveredReceipt:
             widget.customContent == null && widget.isFirstSentMessage,
-        customContent: [],
       );
     } else {
       message = ReceivedMessage(
@@ -252,24 +252,34 @@ class _MessageState extends State<MessageWidget> {
     }
 
     return WillPopScope(
-        onWillPop: () async {
-          if (_entry != null) {
-            try {
-              _entry.remove();
-            } catch (e) {}
-            _entry = null;
-            return true;
-          } else {
-            return true;
-          }
+      onWillPop: () async {
+        if (_entry != null) {
+          try {
+            _entry.remove();
+          } catch (e) {}
+          _entry = null;
+          return true;
+        } else {
+          return true;
+        }
+      },
+      child: GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onLongPress: () async {
+          Feedback.forLongPress(context);
+          Overlay.of(context).insert(_createMessageDetailsPopup());
         },
-        child: GestureDetector(
-            behavior: HitTestBehavior.translucent,
-            onLongPress: () async {
-              Feedback.forLongPress(context);
-              Overlay.of(context).insert(_createMessageDetailsPopup());
-            },
-            child: message));
+        child: Column(
+          children: [
+            message,
+            MessageTimeStampSeparator(
+              newerMessage: widget.newerMessage,
+              message: widget.message,
+            )
+          ],
+        ),
+      ),
+    );
   }
 
   OverlayEntry _createMessageDetailsPopup() {

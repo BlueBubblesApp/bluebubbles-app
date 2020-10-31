@@ -3,6 +3,24 @@ import 'package:bluebubbles/layouts/widgets/message_widget/sent_message.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 
+/// This widget is responsible for the send animation.
+/// This is probably the weirdest and hackiest thing in the codebase
+/// In order to achieve the iOS style send animation, I rely on a [Hero] widget,
+/// which animate a widget on page b to the same widget page a when navigating.
+/// This widget is very similar to the iOS send animation and thus I decided to use it.
+///
+/// However when sending, obviously you aren't navigating to different pages, or are you?
+/// Yeah so basically, when you hit the send button, for a split second you are navigated to
+/// an "invisible" page, with no background or other widgets other than a sent message widget
+///
+/// Then this invisible page is popped back to the convo view and the message is animated to the
+/// correct place in the messages list by flutter [Hero] widget automatically
+///
+/// Okay, now that that is out of the way, let's talk about the actual code
+///
+/// @param [text] is the text from the textfield to send
+/// @param [tag] is the tag of the hero widget. This is typically "first"
+
 class SendWidget extends StatefulWidget {
   SendWidget({
     Key key,
@@ -20,61 +38,49 @@ class _SendWidgetState extends State<SendWidget> {
   @override
   void initState() {
     super.initState();
-    // Future.delayed(Duration(milliseconds: 60), () {
-    //   Navigator.of(context).pop();
-    // });
 
+    // We need to pop the "invisible" after the first frame renders
     SchedulerBinding.instance
         .addPostFrameCallback((_) => Navigator.of(context).pop());
   }
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    Widget messageWidget = ActualSentMessage(
-      blueColor: darken(Colors.blue[600], 0.2),
-      createErrorPopup: () {},
-      constrained: false,
-      customContent: <Widget>[
-        Container(
-          constraints: BoxConstraints(
-            minWidth: MediaQuery.of(context).size.width * 3 / 4 + 37,
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: <Widget>[
-              Container(
-                constraints: BoxConstraints(
-                  maxWidth: MediaQuery.of(context).size.width * 3 / 4 - 30,
-                ),
-                child: RichText(
-                  text: TextSpan(
-                    text: widget.text,
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodyText2
-                        .apply(color: Colors.white),
-                  ),
+    Widget messageWidget = SentMessageHelper.buildMessageWithTail(
+      context,
+      null,
+      true,
+      false,
+      customContent: Container(
+        constraints: BoxConstraints(
+          minWidth: MediaQuery.of(context).size.width * 3 / 4 + 37,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: <Widget>[
+            Container(
+              constraints: BoxConstraints(
+                maxWidth: MediaQuery.of(context).size.width * 3 / 4 - 30,
+              ),
+              child: RichText(
+                text: TextSpan(
+                  text: widget.text,
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodyText2
+                      .apply(color: Colors.white),
                 ),
               ),
-            ],
-          ),
-        )
-      ],
-      message: null,
-      chat: null,
-      showTail: true,
-      textSpans: <InlineSpan>[],
+            ),
+          ],
+        ),
+      ),
     );
 
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Stack(
-        alignment: Alignment.bottomCenter,
+        alignment: Alignment.bottomRight,
         children: <Widget>[
           Material(
             color: Colors.transparent,
@@ -105,53 +111,48 @@ class _SendWidgetState extends State<SendWidget> {
                       type: MaterialType.transparency,
                       child: FadeTransition(
                         opacity: _animation.drive(
-                          Tween<double>(end: 0, begin: 10),
+                          Tween<double>(end: 0, begin: 2),
                         ),
-                        child: ActualSentMessage(
-                          blueColor: darken(Colors.blue[600], 0.2),
-                          createErrorPopup: () {},
-                          constrained: false,
-                          customContent: <Widget>[
-                            AnimatedBuilder(
-                                animation: animation,
-                                builder: (context, child) {
-                                  return Container(
-                                    constraints: BoxConstraints(
-                                      minWidth: animation.value,
+                        child: SentMessageHelper.buildMessageWithTail(
+                          context,
+                          null,
+                          true,
+                          false,
+                          customContent: AnimatedBuilder(
+                            animation: animation,
+                            builder: (context, child) {
+                              return Container(
+                                constraints: BoxConstraints(
+                                  minWidth: animation.value,
+                                ),
+                                child: child,
+                              );
+                            },
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              mainAxisSize: MainAxisSize.min,
+                              children: <Widget>[
+                                Container(
+                                  constraints: BoxConstraints(
+                                    maxWidth:
+                                        MediaQuery.of(context).size.width *
+                                                3 /
+                                                4 -
+                                            30,
+                                  ),
+                                  child: RichText(
+                                    text: TextSpan(
+                                      text: widget.text,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyText2
+                                          .apply(color: Colors.white),
                                     ),
-                                    child: child,
-                                  );
-                                },
-                                child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: <Widget>[
-                                    Container(
-                                      constraints: BoxConstraints(
-                                        maxWidth:
-                                            MediaQuery.of(context).size.width *
-                                                    3 /
-                                                    4 -
-                                                30,
-                                      ),
-                                      child: RichText(
-                                        text: TextSpan(
-                                          text: widget.text,
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .bodyText2
-                                              .apply(color: Colors.white),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                )),
-                          ],
-                          message: null,
-                          chat: null,
-                          showTail: true,
-                          textSpans: <InlineSpan>[],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
                     );
@@ -159,8 +160,6 @@ class _SendWidgetState extends State<SendWidget> {
                   tag: widget.tag,
                   child: Material(
                     type: MaterialType.transparency,
-                    // color: Colors.transparent,
-                    // elevation: 0.0,
                     child: Opacity(
                       child: messageWidget,
                       opacity: 0,

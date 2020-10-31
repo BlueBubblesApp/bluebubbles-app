@@ -3,8 +3,10 @@ import 'package:flutter/widgets.dart';
 
 class MessageTail extends StatelessWidget {
   final bool isFromMe;
+  final Color blueColor;
 
-  const MessageTail({Key key, @required this.isFromMe}) : super(key: key);
+  const MessageTail({Key key, @required this.isFromMe, this.blueColor})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -22,9 +24,7 @@ class MessageTail extends StatelessWidget {
           width: 20,
           height: 15,
           decoration: BoxDecoration(
-            color: isFromMe
-                ? Theme.of(context).primaryColor
-                : Theme.of(context).accentColor,
+            color: isFromMe ? blueColor : Theme.of(context).accentColor,
             borderRadius: BorderRadius.only(
               bottomRight: isFromMe ? Radius.zero : Radius.circular(12),
               bottomLeft: isFromMe ? Radius.circular(12) : Radius.zero,

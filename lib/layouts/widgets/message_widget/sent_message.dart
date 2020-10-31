@@ -15,6 +15,56 @@ import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
+class SentMessageHelper {
+  static Widget buildMessageWithTail(
+      BuildContext context, Message message, bool showTail, bool hasReactions,
+      {Widget customContent}) {
+    Color blueColor;
+    blueColor = message == null || message.guid.startsWith("temp")
+        ? darken(Colors.blue[600], 0.2)
+        : Colors.blue[600];
+    return Stack(
+      alignment: AlignmentDirectional.bottomEnd,
+      children: [
+        if (showTail)
+          MessageTail(
+            isFromMe: true,
+            blueColor: blueColor,
+          ),
+        Container(
+          margin: EdgeInsets.only(
+            top: hasReactions ? 12 : 0,
+            left: 10,
+            right: 10,
+          ),
+          constraints: BoxConstraints(
+            maxWidth:
+                MediaQuery.of(context).size.width * MessageWidgetMixin.maxSize +
+                    (customContent != null ? 100 : 0),
+          ),
+          padding: EdgeInsets.symmetric(
+            vertical: 8,
+            horizontal: 14,
+          ),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            color: blueColor,
+          ),
+          child: customContent == null
+              ? RichText(
+                  text: TextSpan(
+                    children:
+                        MessageWidgetMixin.buildMessageSpans(context, message),
+                    style: Theme.of(context).textTheme.bodyText1,
+                  ),
+                )
+              : customContent,
+        ),
+      ],
+    );
+  }
+}
+
 class SentMessage extends StatefulWidget {
   final double offset;
   final bool showTail;
@@ -32,7 +82,6 @@ class SentMessage extends StatefulWidget {
   final Widget attachmentsWidget;
   final Widget reactionsWidget;
   final Widget urlPreviewWidget;
-  final List<Widget> customContent;
 
   SentMessage({
     Key key,
@@ -52,7 +101,6 @@ class SentMessage extends StatefulWidget {
     @required this.attachmentsWidget,
     @required this.reactionsWidget,
     @required this.urlPreviewWidget,
-    @required this.customContent,
   }) : super(key: key);
 
   @override
@@ -61,50 +109,10 @@ class SentMessage extends StatefulWidget {
 
 class _SentMessageState extends State<SentMessage>
     with TickerProviderStateMixin, MessageWidgetMixin {
-  Color blueColor;
-
   @override
   void initState() {
     super.initState();
     initMessageState(widget.message, false);
-    blueColor = widget.message == null || widget.message.guid.startsWith("temp")
-        ? darken(Colors.blue[600], 0.2)
-        : Colors.blue[600];
-  }
-
-  static Widget _buildMessageWithTail(
-      BuildContext context, Message message, bool showTail, bool hasReactions) {
-    return Stack(
-      alignment: AlignmentDirectional.bottomEnd,
-      children: [
-        if (showTail) MessageTail(isFromMe: true),
-        Container(
-          margin: EdgeInsets.only(
-            top: hasReactions ? 12 : 0,
-            left: 10,
-            right: 10,
-          ),
-          constraints: BoxConstraints(
-            maxWidth:
-                MediaQuery.of(context).size.width * MessageWidgetMixin.maxSize,
-          ),
-          padding: EdgeInsets.symmetric(
-            vertical: 8,
-            horizontal: 14,
-          ),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            color: Colors.blue,
-          ),
-          child: RichText(
-            text: TextSpan(
-              children: MessageWidgetMixin.buildMessageSpans(context, message),
-              style: Theme.of(context).textTheme.bodyText1,
-            ),
-          ),
-        ),
-      ],
-    );
   }
 
   OverlayEntry _createErrorPopup() {
@@ -252,10 +260,25 @@ class _SentMessageState extends State<SentMessage>
     Widget message;
     if (widget.message.hasDdResults && this.hasHyperlinks) {
       message = Padding(
-          padding: EdgeInsets.only(left: 10.0), child: widget.urlPreviewWidget);
+        padding: EdgeInsets.only(left: 10.0),
+        child: widget.urlPreviewWidget,
+      );
     } else if (!isEmptyString(widget.message.text)) {
-      message = _buildMessageWithTail(
-          context, widget.message, widget.showTail, widget.hasReactions);
+      message = SentMessageHelper.buildMessageWithTail(
+        context,
+        widget.message,
+        widget.showTail,
+        widget.hasReactions,
+      );
+      if (widget.showHero) {
+        message = Hero(
+          tag: "first",
+          child: Material(
+            type: MaterialType.transparency,
+            child: message,
+          ),
+        );
+      }
     }
 
     // Fourth, let's add any reactions or stickers to the widget
@@ -309,184 +332,184 @@ class _SentMessageState extends State<SentMessage>
   }
 }
 
-class ActualSentMessage extends StatefulWidget {
-  ActualSentMessage({
-    Key key,
-    @required this.blueColor,
-    @required this.showTail,
-    @required this.message,
-    @required this.chat,
-    @required this.customContent,
-    @required this.textSpans,
-    @required this.createErrorPopup,
-    this.constrained,
-  }) : super(key: key);
-  final Color blueColor;
-  final bool showTail;
-  final Message message;
-  final Chat chat;
-  final List<Widget> customContent;
-  final List<InlineSpan> textSpans;
-  final Function() createErrorPopup;
-  final bool constrained;
+// class ActualSentMessage extends StatefulWidget {
+//   ActualSentMessage({
+//     Key key,
+//     @required this.blueColor,
+//     @required this.showTail,
+//     @required this.message,
+//     @required this.chat,
+//     @required this.customContent,
+//     @required this.textSpans,
+//     @required this.createErrorPopup,
+//     this.constrained,
+//   }) : super(key: key);
+//   final Color blueColor;
+//   final bool showTail;
+//   final Message message;
+//   final Chat chat;
+//   final List<Widget> customContent;
+//   final List<InlineSpan> textSpans;
+//   final Function() createErrorPopup;
+//   final bool constrained;
 
-  @override
-  _ActualSentMessageState createState() => _ActualSentMessageState();
-}
+//   @override
+//   _ActualSentMessageState createState() => _ActualSentMessageState();
+// }
 
-class _ActualSentMessageState extends State<ActualSentMessage> {
-  @override
-  Widget build(BuildContext context) {
-    List<Widget> tail = <Widget>[
-      Container(
-        margin: EdgeInsets.only(bottom: 1),
-        width: 20,
-        height: 15,
-        decoration: BoxDecoration(
-          color: widget.blueColor,
-          borderRadius: BorderRadius.only(
-            bottomLeft: Radius.circular(12),
-          ),
-        ),
-      ),
-      Container(
-        margin: EdgeInsets.only(bottom: 2),
-        height: 28,
-        width: 11,
-        decoration: BoxDecoration(
-          color: Theme.of(context).backgroundColor,
-          borderRadius: BorderRadius.only(
-            bottomLeft: Radius.circular(8),
-          ),
-        ),
-      ),
-    ];
+// class _ActualSentMessageState extends State<ActualSentMessage> {
+//   @override
+//   Widget build(BuildContext context) {
+//     List<Widget> tail = <Widget>[
+//       Container(
+//         margin: EdgeInsets.only(bottom: 1),
+//         width: 20,
+//         height: 15,
+//         decoration: BoxDecoration(
+//           color: widget.blueColor,
+//           borderRadius: BorderRadius.only(
+//             bottomLeft: Radius.circular(12),
+//           ),
+//         ),
+//       ),
+//       Container(
+//         margin: EdgeInsets.only(bottom: 2),
+//         height: 28,
+//         width: 11,
+//         decoration: BoxDecoration(
+//           color: Theme.of(context).backgroundColor,
+//           borderRadius: BorderRadius.only(
+//             bottomLeft: Radius.circular(8),
+//           ),
+//         ),
+//       ),
+//     ];
 
-    List<Widget> stack = <Widget>[
-      Container(
-        height: 30,
-        width: 6,
-        color: Theme.of(context).backgroundColor,
-      ),
-    ];
-    if (widget.showTail) {
-      stack.insertAll(0, tail);
-    }
+//     List<Widget> stack = <Widget>[
+//       Container(
+//         height: 30,
+//         width: 6,
+//         color: Theme.of(context).backgroundColor,
+//       ),
+//     ];
+//     if (widget.showTail) {
+//       stack.insertAll(0, tail);
+//     }
 
-    List<Widget> messageWidget = [
-      widget.message == null || !isEmptyString(widget.message.text)
-          ? Stack(
-              alignment: AlignmentDirectional.bottomEnd,
-              children: <Widget>[
-                Stack(
-                  alignment: AlignmentDirectional.bottomEnd,
-                  children: stack,
-                ),
-                Container(
-                  margin: EdgeInsets.symmetric(
-                    horizontal: 10,
-                  ),
-                  constraints: BoxConstraints(
-                    maxWidth: widget.constrained == null
-                        ? MediaQuery.of(context).size.width * 3 / 4
-                        : MediaQuery.of(context).size.width * 3 / 4 + 37,
-                  ),
-                  padding: EdgeInsets.symmetric(
-                    vertical: 8,
-                    horizontal: 14,
-                  ),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(20),
-                    color: widget.blueColor,
-                  ),
-                  child: widget.customContent == null
-                      ? Container(
-                          child: RichText(
-                            text: TextSpan(
-                              children: widget.textSpans,
-                              style:
-                                  Theme.of(context).textTheme.bodyText2.apply(
-                                        color: Colors.white,
-                                      ),
-                            ),
-                          ),
-                        )
-                      : widget.customContent.first,
-                ),
-              ],
-            )
-          : Container()
-    ];
+//     List<Widget> messageWidget = [
+//       widget.message == null || !isEmptyString(widget.message.text)
+//           ? Stack(
+//               alignment: AlignmentDirectional.bottomEnd,
+//               children: <Widget>[
+//                 Stack(
+//                   alignment: AlignmentDirectional.bottomEnd,
+//                   children: stack,
+//                 ),
+//                 Container(
+//                   margin: EdgeInsets.symmetric(
+//                     horizontal: 10,
+//                   ),
+//                   constraints: BoxConstraints(
+//                     maxWidth: widget.constrained == null
+//                         ? MediaQuery.of(context).size.width * 3 / 4
+//                         : MediaQuery.of(context).size.width * 3 / 4 + 37,
+//                   ),
+//                   padding: EdgeInsets.symmetric(
+//                     vertical: 8,
+//                     horizontal: 14,
+//                   ),
+//                   decoration: BoxDecoration(
+//                     borderRadius: BorderRadius.circular(20),
+//                     color: widget.blueColor,
+//                   ),
+//                   child: widget.customContent == null
+//                       ? Container(
+//                           child: RichText(
+//                             text: TextSpan(
+//                               children: widget.textSpans,
+//                               style:
+//                                   Theme.of(context).textTheme.bodyText2.apply(
+//                                         color: Colors.white,
+//                                       ),
+//                             ),
+//                           ),
+//                         )
+//                       : widget.customContent.first,
+//                 ),
+//               ],
+//             )
+//           : Container()
+//     ];
 
-    if (widget.message != null && widget.message.error > 0) {
-      int errorCode = widget.message != null ? widget.message.error : 0;
-      String errorText =
-          widget.message != null ? widget.message.guid.split('-')[1] : "";
+//     if (widget.message != null && widget.message.error > 0) {
+//       int errorCode = widget.message != null ? widget.message.error : 0;
+//       String errorText =
+//           widget.message != null ? widget.message.guid.split('-')[1] : "";
 
-      messageWidget.add(
-        GestureDetector(
-          onTap: () {
-            showDialog(
-              context: context,
-              builder: (BuildContext context) {
-                return AlertDialog(
-                  title: new Text("Message failed to send",
-                      style: TextStyle(color: Colors.black)),
-                  content: new Text("Error ($errorCode): $errorText"),
-                  actions: <Widget>[
-                    new FlatButton(
-                      child: new Text("Retry"),
-                      onPressed: () {
-                        // Remove the OG alert dialog
-                        Navigator.of(context).pop();
-                        ActionHandler.retryMessage(widget.message);
-                      },
-                    ),
-                    new FlatButton(
-                      child: new Text("Remove"),
-                      onPressed: () async {
-                        Navigator.of(context).pop();
-                        // Delete the message from the DB
-                        await Message.delete({'guid': widget.message.guid});
+//       messageWidget.add(
+//         GestureDetector(
+//           onTap: () {
+//             showDialog(
+//               context: context,
+//               builder: (BuildContext context) {
+//                 return AlertDialog(
+//                   title: new Text("Message failed to send",
+//                       style: TextStyle(color: Colors.black)),
+//                   content: new Text("Error ($errorCode): $errorText"),
+//                   actions: <Widget>[
+//                     new FlatButton(
+//                       child: new Text("Retry"),
+//                       onPressed: () {
+//                         // Remove the OG alert dialog
+//                         Navigator.of(context).pop();
+//                         ActionHandler.retryMessage(widget.message);
+//                       },
+//                     ),
+//                     new FlatButton(
+//                       child: new Text("Remove"),
+//                       onPressed: () async {
+//                         Navigator.of(context).pop();
+//                         // Delete the message from the DB
+//                         await Message.delete({'guid': widget.message.guid});
 
-                        // Remove the message from the Bloc
-                        NewMessageManager()
-                            .removeMessage(widget.chat, widget.message.guid);
+//                         // Remove the message from the Bloc
+//                         NewMessageManager()
+//                             .removeMessage(widget.chat, widget.message.guid);
 
-                        // Get the "new" latest info
-                        List<Message> latest =
-                            await Chat.getMessages(widget.chat, limit: 1);
-                        widget.chat.latestMessageDate = latest.first != null
-                            ? latest.first.dateCreated
-                            : null;
-                        widget.chat.latestMessageText = latest.first != null
-                            ? await MessageHelper.getNotificationText(
-                                latest.first)
-                            : null;
+//                         // Get the "new" latest info
+//                         List<Message> latest =
+//                             await Chat.getMessages(widget.chat, limit: 1);
+//                         widget.chat.latestMessageDate = latest.first != null
+//                             ? latest.first.dateCreated
+//                             : null;
+//                         widget.chat.latestMessageText = latest.first != null
+//                             ? await MessageHelper.getNotificationText(
+//                                 latest.first)
+//                             : null;
 
-                        // Update it in the Bloc
-                        await ChatBloc().updateChatPosition(widget.chat);
-                      },
-                    ),
-                    new FlatButton(
-                      child: new Text("Cancel"),
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                      },
-                    )
-                  ],
-                );
-              },
-            );
-          },
-          child: Icon(Icons.error_outline, color: Colors.red),
-        ),
-      );
-    }
+//                         // Update it in the Bloc
+//                         await ChatBloc().updateChatPosition(widget.chat);
+//                       },
+//                     ),
+//                     new FlatButton(
+//                       child: new Text("Cancel"),
+//                       onPressed: () {
+//                         Navigator.of(context).pop();
+//                       },
+//                     )
+//                   ],
+//                 );
+//               },
+//             );
+//           },
+//           child: Icon(Icons.error_outline, color: Colors.red),
+//         ),
+//       );
+//     }
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.end,
-      children: messageWidget,
-    );
-  }
-}
+//     return Row(
+//       mainAxisAlignment: MainAxisAlignment.end,
+//       children: messageWidget,
+//     );
+//   }
+// }
