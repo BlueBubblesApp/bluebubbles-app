@@ -4,6 +4,7 @@ import 'package:bluebubbles/helpers/share.dart';
 import 'package:bluebubbles/layouts/conversation_view/camera_widget.dart';
 import 'package:bluebubbles/layouts/conversation_view/text_field/attachments/picker/attachment_picked.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
+import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:flutter/material.dart';
@@ -32,6 +33,10 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker>
   void initState() {
     super.initState();
     getAttachments();
+    // If the app is reopened, then update the attachments
+    LifeCycleManager().stream.listen((event) async {
+      if (event) getAttachments();
+    });
   }
 
   Future<void> getAttachments() async {
