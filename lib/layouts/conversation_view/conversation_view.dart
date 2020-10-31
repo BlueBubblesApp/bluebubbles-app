@@ -15,6 +15,7 @@ import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart' as Cupertino;
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 
 import '../../repository/models/chat.dart';
 
@@ -81,6 +82,13 @@ class _ConversationViewState extends State<ConversationView> {
       // Only re-render if the newMessages count changes
       if (preLength != newMessages.length && this.mounted) setState(() {});
     });
+    // Future.delayed(Duration(milliseconds: 250), () {
+    //   if (this.mounted) NotificationManager().switchChat(widget.chat);
+    // });
+
+    // SchedulerBinding.instance.addPostFrameCallback((_) {
+    //   if (this.mounted) NotificationManager().switchChat(widget.chat);
+    // });
   }
 
   @override
@@ -254,8 +262,7 @@ class _ConversationViewState extends State<ConversationView> {
             chat: chat,
             existingAttachments: widget.existingAttachments,
             existingText: widget.existingText,
-            onSend: (String text) async {},
-          )
+          ),
         ],
       ),
     );

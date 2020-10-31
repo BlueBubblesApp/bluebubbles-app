@@ -27,7 +27,6 @@ import 'package:photo_manager/photo_manager.dart';
 class BlueBubblesTextField extends StatefulWidget {
   final Chat chat;
   final Function customSend;
-  final Function onSend;
   final List<File> existingAttachments;
   final String existingText;
   final Function saveText;
@@ -37,7 +36,6 @@ class BlueBubblesTextField extends StatefulWidget {
     this.customSend,
     this.existingAttachments,
     this.existingText,
-    this.onSend,
     this.saveText,
   }) : super(key: key);
 
@@ -366,10 +364,6 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                                       } else {
                                         ActionHandler.sendMessage(
                                             widget.chat, _controller.text);
-                                      }
-
-                                      if (widget.onSend != null) {
-                                        widget.onSend(_controller.text);
                                       }
                                     }
 
