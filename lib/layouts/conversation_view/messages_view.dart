@@ -263,8 +263,15 @@ class _MessageViewState extends State<MessageView>
                           .chain(CurveTween(curve: Curves.easeInOut))),
                       child: SlideTransition(
                         position: animation.drive(
-                            Tween(begin: Offset(0.0, 1), end: Offset(0.0, 0.0))
-                                .chain(CurveTween(curve: Curves.easeInOut))),
+                          Tween(
+                            begin: Offset(0.0, 1),
+                            end: Offset(0.0, 0.0),
+                          ).chain(
+                            CurveTween(
+                              curve: Curves.easeInOut,
+                            ),
+                          ),
+                        ),
                         child: FadeTransition(
                           opacity: animation,
                           child: Padding(
@@ -303,7 +310,8 @@ class _MessageViewState extends State<MessageView>
                                     currentPlayingVideo = video;
                                   });
                               },
-                              chatAttachments: chatAttachments.reversed.toList(),
+                              chatAttachments:
+                                  chatAttachments.reversed.toList(),
                             ),
                           ),
                         ),

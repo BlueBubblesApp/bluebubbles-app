@@ -19,6 +19,7 @@ class ReceivedMessage extends StatefulWidget {
   final bool showHandle;
   final SavedAttachmentData savedAttachmentData;
   final bool isGroup;
+  final bool hasReactions;
 
   // Sub-widgets
   final Widget stickersWidget;
@@ -33,6 +34,7 @@ class ReceivedMessage extends StatefulWidget {
     @required this.message,
     @required this.showHandle,
     @required this.savedAttachmentData,
+    @required this.hasReactions,
     @required this.isGroup,
 
     // Sub-widgets
@@ -73,7 +75,7 @@ class _ReceivedMessageState extends State<ReceivedMessage>
     await getContactTitle(message, showHandle);
     await getContact(message);
     await fetchAvatar(message);
-    setState(() {});
+    if (this.mounted) setState(() {});
   }
 
   /// Builds the message bubble with teh tail (if applicable)
@@ -84,7 +86,7 @@ class _ReceivedMessageState extends State<ReceivedMessage>
         if (widget.showTail) MessageTail(isFromMe: false),
         Container(
           margin: EdgeInsets.only(
-            top: widget.message.hasReactions ? 12 : 0,
+            top: widget.hasReactions ? 12 : 0,
             left: 10,
             right: 10,
           ),
@@ -155,7 +157,9 @@ class _ReceivedMessageState extends State<ReceivedMessage>
     Widget message;
     if (widget.message.hasDdResults && this.hasHyperlinks) {
       message = Padding(
-          padding: EdgeInsets.only(left: 10.0), child: widget.urlPreviewWidget);
+        padding: EdgeInsets.only(left: 10.0),
+        child: widget.urlPreviewWidget,
+      );
     } else if (!isEmptyString(widget.message.text)) {
       message = _buildMessageWithTail();
     }

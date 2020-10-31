@@ -19,8 +19,12 @@ class ReactionTypes {
 
   static List<String> toList() {
     return [
-      "like", "love", "dislike", "question", "emphasize", "laugh",
-      "-like", "-love", "-dislike", "-question", "-emphasize", "-laugh",
+      "like",
+      "love",
+      "dislike",
+      "question",
+      "emphasize",
+      "laugh",
     ];
   }
 }
@@ -47,8 +51,8 @@ class Reaction {
         handleCache.add(cache);
 
         // Only add the reaction if it's not a "negative"
-        if (msg.associatedMessageType != null && !msg.associatedMessageType.startsWith("-"))
-          output.add(msg);
+        if (msg.associatedMessageType != null &&
+            !msg.associatedMessageType.startsWith("-")) output.add(msg);
       }
     }
 

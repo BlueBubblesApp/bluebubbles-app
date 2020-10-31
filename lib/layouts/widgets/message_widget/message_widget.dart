@@ -60,7 +60,6 @@ class _MessageState extends State<MessageWidget> {
   List<Attachment> attachments = <Attachment>[];
   List<Message> associatedMessages = [];
   bool showTail = true;
-  Widget blurredImage;
   OverlayEntry _entry;
   Completer<void> associatedMessageRequest;
   Completer<void> attachmentsRequest;
@@ -90,6 +89,10 @@ class _MessageState extends State<MessageWidget> {
     associatedMessageRequest = new Completer();
     List<Message> messages = await widget.message.getAssociatedMessages();
 
+    // Make sure the messages are in the correct order from oldest to newest
+    messages.sort((a, b) => a.originalROWID.compareTo(b.originalROWID));
+    messages = normalizedAssociatedMessages(messages);
+
     bool hasChanges = false;
     if (messages.length != associatedMessages.length) {
       associatedMessages = messages;
@@ -102,6 +105,7 @@ class _MessageState extends State<MessageWidget> {
     }
 
     associatedMessageRequest.complete();
+    associatedMessageRequest = null;
   }
 
   Future<void> fetchAttachments() async {
@@ -128,6 +132,20 @@ class _MessageState extends State<MessageWidget> {
     attachmentsRequest.complete();
   }
 
+  /// Removes duplicate associated message guids from a list of [associatedMessages]
+  List<Message> normalizedAssociatedMessages(List<Message> associatedMessages) {
+    Set<String> guids =
+        associatedMessages.map((e) => e.associatedMessageGuid).toSet();
+    List<Message> normalized = [];
+
+    for (Message message in associatedMessages.reversed.toList()) {
+      if (guids.remove(message.associatedMessageGuid)) {
+        normalized.add(message);
+      }
+    }
+    return normalized;
+  }
+
   bool withinTimeThreshold(Message first, Message second, {threshold: 5}) {
     if (first == null || second == null) return false;
     return second.dateCreated.difference(first.dateCreated).inMinutes.abs() >
@@ -136,6 +154,10 @@ class _MessageState extends State<MessageWidget> {
 
   @override
   Widget build(BuildContext context) {
+    // This needs to be done every build so that if there is a new reaction added
+    // while the chat is open, then it will auto update
+    fetchAssociatedMessages();
+
     if (widget.newerMessage != null) {
       showTail = withinTimeThreshold(widget.message, widget.newerMessage,
               threshold: 1) ||
@@ -175,10 +197,11 @@ class _MessageState extends State<MessageWidget> {
         : Container();
 
     Widget urlPreviewWidget = UrlPreviewWidget(
-        linkPreviews:
-            this.attachments.where((item) => item.mimeType == null).toList(),
-        message: widget.message,
-        savedAttachmentData: widget.savedAttachmentData);
+      linkPreviews:
+          this.attachments.where((item) => item.mimeType == null).toList(),
+      message: widget.message,
+      savedAttachmentData: widget.savedAttachmentData,
+    );
 
     // Add the correct type of message to the message stack
     Widget message;
@@ -186,6 +209,7 @@ class _MessageState extends State<MessageWidget> {
       message = SentMessage(
         offset: widget.offset,
         savedAttachmentData: widget.savedAttachmentData,
+        hasReactions: associatedMessages.length > 0,
         showTail: showTail,
         olderMessage: widget.olderMessage,
         message: widget.message,
@@ -209,6 +233,7 @@ class _MessageState extends State<MessageWidget> {
       message = ReceivedMessage(
         offset: widget.offset,
         savedAttachmentData: widget.savedAttachmentData,
+        hasReactions: associatedMessages.length > 0,
         showTail: showTail,
         olderMessage: widget.olderMessage,
         message: widget.message,
@@ -216,7 +241,7 @@ class _MessageState extends State<MessageWidget> {
         isGroup: widget.chat.participants.length > 1,
         urlPreviewWidget: urlPreviewWidget,
         stickersWidget: StickersWidget(
-          messages: this.associatedMessages,
+          messages: associatedMessages,
         ),
         attachmentsWidget: widgetAttachments,
         reactionsWidget: ReactionsWidget(

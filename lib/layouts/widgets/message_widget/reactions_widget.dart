@@ -17,18 +17,19 @@ class ReactionsWidget extends StatefulWidget {
 
 class _ReactionsWidgetState extends State<ReactionsWidget>
     with TickerProviderStateMixin {
-  Future<List<Message>> reactionRetreivalFuture;
-  Map<String, Reaction> reactionsMap = new Map();
-
   @override
   Widget build(BuildContext context) {
+    Map<String, Reaction> reactionsMap = new Map();
     // Filter associated messages down to just the sticker
     List<Message> reactions = widget.associatedMessages
-        .where((item) => ReactionTypes.toList().contains(item.associatedMessageType))
+        .where((item) =>
+            ReactionTypes.toList().contains(item.associatedMessageType))
         .toList();
 
     // If the reactions are empty, return nothing
-    if (reactions.length == 0) return Container();
+    if (reactions.length == 0) {
+      return Container();
+    }
 
     // Filter down the reactions by the newest for each user
     reactionsMap = Reaction.getLatestReactionMap(reactions);
@@ -39,15 +40,17 @@ class _ReactionsWidgetState extends State<ReactionsWidget>
     reactionsMap.forEach((String reactionType, Reaction item) {
       Widget itemWidget = item.getSmallWidget(context);
       if (itemWidget != null) {
-        reactionWidgets.add(Padding(
-          padding: EdgeInsets.fromLTRB(
-              (widget.message.isFromMe ? 5.0 : 0.0) +
-                  tmpIdx.toDouble() * 15.0,
+        reactionWidgets.add(
+          Padding(
+            padding: EdgeInsets.fromLTRB(
+              (widget.message.isFromMe ? 5.0 : 0.0) + tmpIdx.toDouble() * 15.0,
               1.0,
               tmpIdx.toDouble() * 5.0,
-              0),
-          child: itemWidget,
-        ));
+              0,
+            ),
+            child: itemWidget,
+          ),
+        );
         tmpIdx++;
       }
     });
@@ -70,7 +73,7 @@ class _ReactionsWidgetState extends State<ReactionsWidget>
         fit: StackFit.passthrough,
         alignment: Alignment.bottomLeft,
         children: reactionWidgets,
-      )
+      ),
     );
   }
 }

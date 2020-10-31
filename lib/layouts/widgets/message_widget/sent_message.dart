@@ -25,6 +25,7 @@ class SentMessage extends StatefulWidget {
   final bool showDeliveredReceipt;
   final SavedAttachmentData savedAttachmentData;
   final Chat chat;
+  final bool hasReactions;
 
   // Sub-widgets
   final Widget stickersWidget;
@@ -41,6 +42,7 @@ class SentMessage extends StatefulWidget {
     @required this.showHero,
     @required this.showDeliveredReceipt,
     @required this.savedAttachmentData,
+    @required this.hasReactions,
     @required this.shouldFadeIn,
     @required this.offset,
     @required this.chat,
@@ -71,14 +73,14 @@ class _SentMessageState extends State<SentMessage>
   }
 
   static Widget _buildMessageWithTail(
-      BuildContext context, Message message, bool showTail) {
+      BuildContext context, Message message, bool showTail, bool hasReactions) {
     return Stack(
       alignment: AlignmentDirectional.bottomEnd,
       children: [
         if (showTail) MessageTail(isFromMe: true),
         Container(
           margin: EdgeInsets.only(
-            top: message.hasReactions ? 12 : 0,
+            top: hasReactions ? 12 : 0,
             left: 10,
             right: 10,
           ),
@@ -252,7 +254,8 @@ class _SentMessageState extends State<SentMessage>
       message = Padding(
           padding: EdgeInsets.only(left: 10.0), child: widget.urlPreviewWidget);
     } else if (!isEmptyString(widget.message.text)) {
-      message = _buildMessageWithTail(context, widget.message, widget.showTail);
+      message = _buildMessageWithTail(
+          context, widget.message, widget.showTail, widget.hasReactions);
     }
 
     // Fourth, let's add any reactions or stickers to the widget

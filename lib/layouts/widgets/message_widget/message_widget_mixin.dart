@@ -54,7 +54,10 @@ abstract class MessageWidgetMixin {
       {@required Widget message, @required Widget reactions}) {
     return Stack(
       alignment: AlignmentDirectional.topEnd,
-      children: [message, reactions],
+      children: [
+        message,
+        reactions,
+      ],
     );
   }
 
@@ -63,7 +66,10 @@ abstract class MessageWidgetMixin {
       {@required Widget message, @required Widget stickers}) {
     return Stack(
       alignment: AlignmentDirectional.center,
-      children: [message, stickers],
+      children: [
+        message,
+        stickers,
+      ],
     );
   }
 

@@ -386,7 +386,8 @@ class Message {
   }
 
   Future<List<Message>> getAssociatedMessages() async {
-    List<Message> res = await Message.find({"associatedMessageGuid": this.guid});
+    List<Message> res =
+        await Message.find({"associatedMessageGuid": this.guid});
     return res;
   }
 
@@ -451,7 +452,8 @@ class Message {
 
     List<Message> toDelete = await Message.find(where);
     for (Message msg in toDelete) {
-      await db.delete("chat_message_join", where: "messageId = ?", whereArgs: [msg.id]);
+      await db.delete("chat_message_join",
+          where: "messageId = ?", whereArgs: [msg.id]);
       await db.delete("message", where: "ROWID = ?", whereArgs: [msg.id]);
     }
   }
