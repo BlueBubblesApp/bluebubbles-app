@@ -10,6 +10,7 @@ import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/regular_file_opener.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/video_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_attachments.dart';
+import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/cupertino.dart';
@@ -23,19 +24,11 @@ class MessageAttachment extends StatefulWidget {
     @required this.attachment,
     @required this.updateAttachment,
     @required this.message,
-    @required this.savedAttachmentData,
-    @required this.controllers,
-    @required this.changeCurrentPlayingVideo,
-    @required this.allAttachments,
   }) : super(key: key);
   final content;
   final Attachment attachment;
-  final List<Attachment> allAttachments;
   final Function() updateAttachment;
   final Message message;
-  final SavedAttachmentData savedAttachmentData;
-  final Map<String, VideoPlayerController> controllers;
-  final Function(Map<String, VideoPlayerController>) changeCurrentPlayingVideo;
 
   @override
   _MessageAttachmentState createState() => _MessageAttachmentState();
@@ -142,22 +135,20 @@ class _MessageAttachmentState extends State<MessageAttachment>
         return MediaFile(
           attachment: widget.attachment,
           child: ImageWidget(
-            savedAttachmentData: widget.savedAttachmentData,
+            savedAttachmentData:
+                CurrentChat().getSavedAttachmentData(widget.message),
             attachment: widget.attachment,
             file: content,
-            allAttachments: widget.allAttachments,
           ),
         );
       } else if (mimeType == "video") {
         return MediaFile(
           attachment: widget.attachment,
           child: VideoWidget(
-            changeCurrentPlayingVideo: widget.changeCurrentPlayingVideo,
-            controllers: widget.controllers,
             attachment: widget.attachment,
             file: content,
-            savedAttachmentData: widget.savedAttachmentData,
-            allAttachments: widget.allAttachments,
+            savedAttachmentData:
+                CurrentChat().getSavedAttachmentData(widget.message),
           ),
         );
       } else if (mimeType == "audio" &&

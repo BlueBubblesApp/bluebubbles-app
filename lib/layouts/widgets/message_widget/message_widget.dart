@@ -9,6 +9,7 @@ import 'package:bluebubbles/layouts/widgets/message_widget/reactions_widget.dart
 import 'package:bluebubbles/layouts/widgets/message_widget/received_message.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/sent_message.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/stickers_widget.dart';
+import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:flutter/cupertino.dart';
@@ -26,15 +27,9 @@ class MessageWidget extends StatefulWidget {
     this.olderMessage,
     this.newerMessage,
     this.showHandle,
-    this.customContent,
-    this.shouldFadeIn,
     this.isFirstSentMessage,
     this.showHero,
-    this.savedAttachmentData,
     this.offset,
-    this.currentPlayingVideo,
-    this.changeCurrentPlayingVideo,
-    this.chatAttachments,
   }) : super(key: key);
 
   final Message message;
@@ -42,16 +37,9 @@ class MessageWidget extends StatefulWidget {
   final Message newerMessage;
   final Message olderMessage;
   final bool showHandle;
-  final bool shouldFadeIn;
   final bool isFirstSentMessage;
   final bool showHero;
-  final SavedAttachmentData savedAttachmentData;
   final double offset;
-  final Map<String, VideoPlayerController> currentPlayingVideo;
-  final Function(Map<String, VideoPlayerController>) changeCurrentPlayingVideo;
-  final List<Attachment> chatAttachments;
-
-  final List<Widget> customContent;
 
   @override
   _MessageState createState() => _MessageState();
@@ -183,17 +171,16 @@ class _MessageState extends State<MessageWidget> {
     /// -> URL Previews
     /// -> Big Emojis??
     ////////// READ //////////
+    SavedAttachmentData savedAttachmentData =
+        CurrentChat().getSavedAttachmentData(widget.message);
 
     // Build the attachments widget
-    Widget widgetAttachments = widget.savedAttachmentData != null
+    Widget widgetAttachments = savedAttachmentData != null
         ? MessageAttachments(
             message: widget.message,
-            savedAttachmentData: widget.savedAttachmentData,
+            savedAttachmentData: savedAttachmentData,
             showTail: showTail,
             showHandle: widget.showHandle,
-            controllers: widget.currentPlayingVideo,
-            changeCurrentPlayingVideo: widget.changeCurrentPlayingVideo,
-            chatAttachments: widget.chatAttachments,
           )
         : Container();
 
@@ -201,7 +188,6 @@ class _MessageState extends State<MessageWidget> {
       linkPreviews:
           this.attachments.where((item) => item.mimeType == null).toList(),
       message: widget.message,
-      savedAttachmentData: widget.savedAttachmentData,
     );
 
     // Add the correct type of message to the message stack
@@ -209,7 +195,6 @@ class _MessageState extends State<MessageWidget> {
     if (widget.message.isFromMe) {
       message = SentMessage(
         offset: widget.offset,
-        savedAttachmentData: widget.savedAttachmentData,
         hasReactions: associatedMessages.length > 0,
         showTail: showTail,
         olderMessage: widget.olderMessage,
@@ -224,15 +209,13 @@ class _MessageState extends State<MessageWidget> {
           associatedMessages: associatedMessages,
         ),
         chat: widget.chat,
-        shouldFadeIn: widget.shouldFadeIn,
+        shouldFadeIn: CurrentChat().sentMessages.contains(widget.message.guid),
         showHero: widget.showHero,
-        showDeliveredReceipt:
-            widget.customContent == null && widget.isFirstSentMessage,
+        showDeliveredReceipt: widget.isFirstSentMessage,
       );
     } else {
       message = ReceivedMessage(
         offset: widget.offset,
-        savedAttachmentData: widget.savedAttachmentData,
         hasReactions: associatedMessages.length > 0,
         showTail: showTail,
         olderMessage: widget.olderMessage,

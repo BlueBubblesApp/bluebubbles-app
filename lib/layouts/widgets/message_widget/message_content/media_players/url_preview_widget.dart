@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_attachments.dart';
+import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
@@ -18,11 +19,9 @@ class UrlPreviewWidget extends StatefulWidget {
     Key key,
     @required this.linkPreviews,
     @required this.message,
-    @required this.savedAttachmentData,
   }) : super(key: key);
   final List<Attachment> linkPreviews;
   final Message message;
-  final SavedAttachmentData savedAttachmentData;
 
   @override
   _UrlPreviewWidgetState createState() => _UrlPreviewWidgetState();
@@ -37,9 +36,11 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
   @override
   void initState() {
     super.initState();
-    if (widget.savedAttachmentData.urlMetaData != null)
-      data = widget.savedAttachmentData
-          .urlMetaData[widget.message.guid + "-url-preview"];
+    SavedAttachmentData savedAttachmentData =
+        CurrentChat().getSavedAttachmentData(widget.message);
+    if (savedAttachmentData.urlMetaData != null)
+      data =
+          savedAttachmentData.urlMetaData[widget.message.guid + "-url-preview"];
   }
 
   bool attachmentSaved(Attachment attachment) {
@@ -135,7 +136,8 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
         data.url = url;
       }
 
-      widget.savedAttachmentData
+      CurrentChat()
+          .getSavedAttachmentData(widget.message)
           .urlMetaData[widget.message.guid + "-url-preview"] = data;
       if (this.mounted)
         setState(() {
@@ -208,18 +210,21 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
                                   data != null && data.description != null
                                       ? Padding(
                                           padding: EdgeInsets.only(top: 5.0),
-                                          child: Text(data.description,
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .bodyText1
-                                              .apply(fontSizeDelta: -5),)
-                                        )
+                                          child: Text(
+                                            data.description,
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodyText1
+                                                .apply(fontSizeDelta: -5),
+                                          ))
                                       : Container(),
                                   Padding(
                                       padding: EdgeInsets.only(
                                           top: 5.0, bottom: 10.0),
                                       child: Text(
-                                        widget.message.text.replaceAll("https://", "").replaceAll("http://", ""),
+                                        widget.message.text
+                                            .replaceAll("https://", "")
+                                            .replaceAll("http://", ""),
                                         style: Theme.of(context)
                                             .textTheme
                                             .subtitle2,

@@ -6,6 +6,7 @@ import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/layouts/image_viewer/attachmet_fullscreen_viewer.dart';
 import 'package:bluebubbles/layouts/image_viewer/video_viewer.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_attachments.dart';
+import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:flutter/cupertino.dart';
@@ -21,16 +22,10 @@ class VideoWidget extends StatefulWidget {
     @required this.file,
     @required this.attachment,
     @required this.savedAttachmentData,
-    @required this.controllers,
-    @required this.changeCurrentPlayingVideo,
-    @required this.allAttachments,
   }) : super(key: key);
   final File file;
-  final List<Attachment> allAttachments;
   final Attachment attachment;
   final SavedAttachmentData savedAttachmentData;
-  final Map<String, VideoPlayerController> controllers;
-  final Function(Map<String, VideoPlayerController>) changeCurrentPlayingVideo;
 
   @override
   _VideoWidgetState createState() => _VideoWidgetState();
@@ -38,8 +33,6 @@ class VideoWidget extends StatefulWidget {
 
 class _VideoWidgetState extends State<VideoWidget>
     with TickerProviderStateMixin {
-  // VideoPlayerController widget.savedAttachmentData.controller;
-
   bool showPlayPauseOverlay = true;
   bool isVisible = false;
   Timer hideOverlayTimer;
@@ -48,9 +41,10 @@ class _VideoWidgetState extends State<VideoWidget>
   @override
   void initState() {
     super.initState();
-    showPlayPauseOverlay = widget.controllers == null ||
-        !widget.controllers.containsKey(widget.attachment.guid) ||
-        !widget.controllers[widget.attachment.guid].value.isPlaying;
+    dynamic controllers = CurrentChat().currentPlayingVideo;
+    showPlayPauseOverlay = controllers == null ||
+        !controllers.containsKey(widget.attachment.guid) ||
+        !controllers[widget.attachment.guid].value.isPlaying;
   }
 
   @override
@@ -82,9 +76,10 @@ class _VideoWidgetState extends State<VideoWidget>
   @override
   Widget build(BuildContext context) {
     VideoPlayerController controller;
-    if (widget.controllers != null &&
-        widget.controllers.containsKey(widget.attachment.guid)) {
-      controller = widget.controllers[widget.attachment.guid];
+    dynamic controllers = CurrentChat().currentPlayingVideo;
+    if (controllers != null &&
+        controllers.containsKey(widget.attachment.guid)) {
+      controller = controllers[widget.attachment.guid];
     }
     return VisibilityDetector(
       onVisibilityChanged: (info) {
@@ -92,7 +87,7 @@ class _VideoWidgetState extends State<VideoWidget>
           isVisible = false;
           if (controller != null) {
             controller = null;
-            widget.changeCurrentPlayingVideo(null);
+            CurrentChat().changeCurrentPlayingVideo(null);
           }
           if (SettingsManager().settings.lowMemoryMode &&
               widget.savedAttachmentData.imageData
@@ -125,7 +120,7 @@ class _VideoWidgetState extends State<VideoWidget>
                     await Navigator.of(context).push(
                       CupertinoPageRoute(
                         builder: (context) => AttachmentFullscreenViewer(
-                          allAttachments: widget.allAttachments,
+                          allAttachments: CurrentChat().chatAttachments,
                           attachment: widget.attachment,
                         ),
                       ),
@@ -204,7 +199,7 @@ class _VideoWidgetState extends State<VideoWidget>
                       VideoPlayerController.file(widget.file);
                   await controller.initialize();
                   controller.play();
-                  widget.changeCurrentPlayingVideo(
+                  CurrentChat().changeCurrentPlayingVideo(
                       {widget.attachment.guid: controller});
                 },
                 child: Stack(

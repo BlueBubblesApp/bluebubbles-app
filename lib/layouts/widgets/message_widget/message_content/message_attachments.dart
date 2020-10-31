@@ -27,17 +27,11 @@ class MessageAttachments extends StatefulWidget {
     @required this.savedAttachmentData,
     @required this.showTail,
     @required this.showHandle,
-    @required this.controllers,
-    @required this.changeCurrentPlayingVideo,
-    @required this.chatAttachments,
   }) : super(key: key);
   final Message message;
   final SavedAttachmentData savedAttachmentData;
   final bool showTail;
   final bool showHandle;
-  final Map<String, VideoPlayerController> controllers;
-  final Function(Map<String, VideoPlayerController>) changeCurrentPlayingVideo;
-  final List<Attachment> chatAttachments;
 
   @override
   _MessageAttachmentsState createState() => _MessageAttachmentsState();
@@ -140,16 +134,12 @@ class _MessageAttachmentsState extends State<MessageAttachments>
       if (attachment.mimeType != null) {
         content.add(
           MessageAttachment(
-            controllers: widget.controllers,
             message: widget.message,
             attachment: attachment,
             content: _attachments[attachment.guid],
-            changeCurrentPlayingVideo: widget.changeCurrentPlayingVideo,
             updateAttachment: () {
               attachment = AttachmentHelper.getContent(attachment);
             },
-            savedAttachmentData: widget.savedAttachmentData,
-            allAttachments: widget.chatAttachments,
           ),
         );
       }

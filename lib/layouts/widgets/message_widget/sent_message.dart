@@ -75,7 +75,6 @@ class SentMessage extends StatefulWidget {
   final bool showHero;
   final bool shouldFadeIn;
   final bool showDeliveredReceipt;
-  final SavedAttachmentData savedAttachmentData;
   final Chat chat;
   final bool hasReactions;
 
@@ -92,7 +91,6 @@ class SentMessage extends StatefulWidget {
     @required this.message,
     @required this.showHero,
     @required this.showDeliveredReceipt,
-    @required this.savedAttachmentData,
     @required this.hasReactions,
     @required this.shouldFadeIn,
     @required this.offset,

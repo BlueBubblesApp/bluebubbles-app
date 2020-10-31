@@ -17,7 +17,6 @@ class ReceivedMessage extends StatefulWidget {
   final Message message;
   final Message olderMessage;
   final bool showHandle;
-  final SavedAttachmentData savedAttachmentData;
   final bool isGroup;
   final bool hasReactions;
 
@@ -33,7 +32,6 @@ class ReceivedMessage extends StatefulWidget {
     @required this.olderMessage,
     @required this.message,
     @required this.showHandle,
-    @required this.savedAttachmentData,
     @required this.hasReactions,
     @required this.isGroup,
 

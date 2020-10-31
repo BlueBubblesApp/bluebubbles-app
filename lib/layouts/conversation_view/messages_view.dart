@@ -3,6 +3,7 @@ import 'package:bluebubbles/layouts/widgets/message_widget/message_content/messa
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/new_message_loader.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
+import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
@@ -32,21 +33,20 @@ class _MessageViewState extends State<MessageView>
   List<Message> _messages = <Message>[];
   GlobalKey<SliverAnimatedListState> _listKey;
   final Duration animationDuration = Duration(milliseconds: 400);
-  OverlayEntry entry;
-  List<String> sentMessages = <String>[];
-  Map<String, SavedAttachmentData> attachments = Map();
   bool initializedList = false;
   double timeStampOffset = 0;
-  Map<String, VideoPlayerController> currentPlayingVideo;
-  List<VideoPlayerController> controllersToDispose = [];
-
-  List<Attachment> chatAttachments = [];
 
   @override
   void initState() {
     super.initState();
     widget.messageBloc.stream.listen(handleNewMessage);
-    updateAllAttachments();
+    CurrentChat().init(widget.messageBloc.currentChat);
+    CurrentChat().updateAllAttachments().then((value) {
+      if (this.mounted) setState(() {});
+    });
+    CurrentChat().stream.listen((event) {
+      if (this.mounted) setState(() {});
+    });
   }
 
   @override
@@ -58,36 +58,20 @@ class _MessageViewState extends State<MessageView>
     }
   }
 
-  void getAttachmentsForMessage(Message message) {
-    if (attachments.containsKey(message.guid)) return;
-    if (message.hasAttachments) {
-      attachments[message.guid] = new SavedAttachmentData();
-    }
-  }
-
-  Future<void> updateAllAttachments() async {
-    chatAttachments = await Chat.getAttachments(widget.messageBloc.currentChat);
-    if (this.mounted) setState(() {});
-  }
-
   @override
   void dispose() {
-    if (currentPlayingVideo != null && currentPlayingVideo.length > 0) {
-      currentPlayingVideo.values.forEach((element) {
-        element.dispose();
-      });
-    }
-    if (entry != null) entry.remove();
     super.dispose();
   }
 
   void handleNewMessage(MessageBlocEvent event) async {
     if (event.type == MessageBlocEventType.insert) {
-      getAttachmentsForMessage(event.message);
+      CurrentChat().getAttachmentsForMessage(event.message);
       if (event.outGoing) {
-        sentMessages.add(event.message.guid);
+        CurrentChat().sentMessages.add(event.message.guid);
         Future.delayed(Duration(milliseconds: 500), () {
-          sentMessages.removeWhere((element) => element == event.message.guid);
+          CurrentChat()
+              .sentMessages
+              .removeWhere((element) => element == event.message.guid);
           _listKey.currentState.setState(() {});
         });
         Navigator.of(context).push(
@@ -118,16 +102,20 @@ class _MessageViewState extends State<MessageView>
               : Duration(milliseconds: 0),
         );
       }
-      if (event.message.hasAttachments) updateAllAttachments();
+      if (event.message.hasAttachments) {
+        await CurrentChat().updateAllAttachments();
+        setState(() {});
+      }
     } else if (event.type == MessageBlocEventType.update) {
-      if (attachments.containsKey(event.oldGuid)) {
+      if (CurrentChat().attachments.containsKey(event.oldGuid)) {
         Message messageWithROWID =
             await Message.findOne({"guid": event.message.guid});
         List<Attachment> updatedAttachments =
             await Message.getAttachments(messageWithROWID);
-        SavedAttachmentData data = attachments.remove(event.oldGuid);
+        SavedAttachmentData data =
+            CurrentChat().attachments.remove(event.oldGuid);
         data.attachments = updatedAttachments;
-        attachments[event.message.guid] = data;
+        CurrentChat().attachments[event.message.guid] = data;
       }
       bool updatedAMessage = false;
       for (int i = 0; i < _messages.length; i++) {
@@ -155,7 +143,8 @@ class _MessageViewState extends State<MessageView>
     } else {
       int originalMessageLength = _messages.length;
       _messages = event.messages;
-      _messages.forEach((message) => getAttachmentsForMessage(message));
+      _messages.forEach(
+          (message) => CurrentChat().getAttachmentsForMessage(message));
       if (_listKey == null) _listKey = GlobalKey<SliverAnimatedListState>();
 
       if (originalMessageLength < _messages.length) {
@@ -186,10 +175,7 @@ class _MessageViewState extends State<MessageView>
 
   @override
   Widget build(BuildContext context) {
-    controllersToDispose.forEach((element) {
-      element.dispose();
-    });
-    controllersToDispose = [];
+    CurrentChat().disposeControllers();
 
     return GestureDetector(
       behavior: HitTestBehavior.deferToChild,
@@ -284,34 +270,17 @@ class _MessageViewState extends State<MessageView>
                               olderMessage: olderMessage,
                               newerMessage: newerMessage,
                               showHandle: widget.showHandle,
-                              shouldFadeIn:
-                                  sentMessages.contains(_messages[index].guid),
+                              // shouldFadeIn:
+                              //     sentMessages.contains(_messages[index].guid),
                               isFirstSentMessage:
                                   widget.messageBloc.firstSentMessage ==
                                       _messages[index].guid,
-                              savedAttachmentData:
-                                  attachments.containsKey(_messages[index].guid)
-                                      ? attachments[_messages[index].guid]
-                                      : null,
+                              // savedAttachmentData:
+                              //     attachments.containsKey(_messages[index].guid)
+                              //         ? attachments[_messages[index].guid]
+                              //         : null,
                               showHero: index == 0 &&
                                   _messages[index].originalROWID == null,
-                              currentPlayingVideo: currentPlayingVideo,
-                              changeCurrentPlayingVideo:
-                                  (Map<String, VideoPlayerController> video) {
-                                if (currentPlayingVideo != null &&
-                                    currentPlayingVideo.length > 0) {
-                                  currentPlayingVideo.values.forEach((element) {
-                                    controllersToDispose.add(element);
-                                    element = null;
-                                  });
-                                }
-                                if (this.mounted)
-                                  setState(() {
-                                    currentPlayingVideo = video;
-                                  });
-                              },
-                              chatAttachments:
-                                  chatAttachments.reversed.toList(),
                             ),
                           ),
                         ),
