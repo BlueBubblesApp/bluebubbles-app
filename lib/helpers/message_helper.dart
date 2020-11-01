@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'dart:math';
 
+import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
@@ -73,6 +75,60 @@ class MessageHelper {
 
     // Return all the synced messages
     return _messages;
+  }
+
+  static Future<void> bulkDownloadAttachments(
+      Chat chat, List<dynamic> messages) async {
+
+    // Create master list for all the messages and a chat cache
+    Map<String, Chat> chats = <String, Chat>{};
+
+    // Add the chat in the cache and save it if it hasn't been saved yet
+    if (chat != null) {
+      chats[chat.guid] = chat;
+      if (chat.id == null) {
+        await chat.save();
+      }
+    }
+
+    // Iterate over each message to parse it
+    for (dynamic item in messages) {
+      // Pull the chats out of the message, if there isnt a default
+      Chat msgChat = chat;
+      if (msgChat == null) {
+        List<Chat> msgChats = parseChats(item);
+        msgChat = msgChats.length > 0 ? msgChats[0] : null;
+
+        // If there is a cached chat, get it. Otherwise, save the new one
+        if (msgChat != null && chats.containsKey(msgChat.guid)) {
+          msgChat = chats[msgChat.guid];
+        } else if (msgChat != null) {
+          await msgChat.save();
+          chats[msgChat.guid] = msgChat;
+        }
+      }
+
+      // If we can't get a chat from the data, skip the message
+      if (msgChat == null) continue;
+
+      // Create the attachments
+      List<dynamic> attachments = item['attachments'];
+      for (dynamic attachmentItem in attachments) {
+        Attachment file = Attachment.fromMap(attachmentItem);
+        await MessageHelper.downloadAttachmentSync(file);
+      }
+    }
+  }
+
+  static Future<void> downloadAttachmentSync(Attachment file) {
+    Completer<void> completer = new Completer();
+    new AttachmentDownloader(file, onComplete: () {
+      completer.complete();
+    }, onError: () {
+      completer.completeError(new Error());
+    });
+
+    return completer.future;
   }
 
   static List<Chat> parseChats(Map<String, dynamic> data) {

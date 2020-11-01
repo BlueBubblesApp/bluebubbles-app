@@ -29,17 +29,19 @@ class AttachmentDownloader {
   bool _createNotification;
   int _socketProcessId;
   Function _onComplete;
+  Function _onError;
 
   double get progress => (_currentChunk) / _totalChunks;
   Attachment get attachment => _attachment;
 
   AttachmentDownloader(Attachment attachment,
-      {bool createNotification = false, Function onComplete}) {
+      {bool createNotification = false, Function onComplete, Function onError}) {
     // Set default chunk size based on the current settings
     _chunkSize = SettingsManager().settings.chunkSize * 1024;
     _attachment = attachment;
     _createNotification = createNotification;
     _onComplete = onComplete;
+    _onError = onError;
 
     String appDocPath = SettingsManager().appDocDir.path;
     String pathName =
@@ -65,6 +67,7 @@ class AttachmentDownloader {
         (attachmentResponse) async {
       if (attachmentResponse['status'] != 200) {
         cb(null);
+        _onError(attachmentResponse);
         return;
       }
       if (!attachmentResponse.containsKey("data") ||

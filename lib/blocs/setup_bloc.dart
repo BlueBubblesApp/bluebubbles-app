@@ -17,6 +17,8 @@ class SetupBloc {
   int _currentIndex = 0;
   List chats = [];
   bool isSyncing = false;
+  double numberOfMessagesPerPage = 25;
+  bool downloadAttachments = false;
 
   Stream<double> get stream => _stream.stream;
   double get progress => _progress;
@@ -78,16 +80,19 @@ class SetupBloc {
     Map<String, dynamic> params = Map();
     params["identifier"] = chat.guid;
     params["withBlurhash"] = false;
+    params["limit"] = numberOfMessagesPerPage.round();
     params["where"] = [
       {"statement": "message.service = 'iMessage'", "args": null}
     ];
 
-    SocketManager().sendMessage("get-chat-messages", params, (data) {
+    SocketManager().sendMessage("get-chat-messages", params, (data) async {
       if (data['status'] != 200) {
         handleError();
         return;
       }
-      receivedMessagesForChat(chat, data);
+
+      await receivedMessagesForChat(chat, data);
+
       if (index + 1 < chats.length) {
         _currentIndex = index + 1;
         getChatMessagesRecursive(chats, index + 1);
@@ -97,13 +102,18 @@ class SetupBloc {
     });
   }
 
-  void receivedMessagesForChat(Chat chat, Map<String, dynamic> data) async {
+  Future<void> receivedMessagesForChat(Chat chat, Map<String, dynamic> data) async {
     List messages = data["data"];
 
     // Since we got the messages in desc order, we want to reverse it.
     // Reversing it will add older messages before newer one. This should help fix
     // issues with associated message GUIDs
     MessageHelper.bulkAddMessages(chat, messages.reversed.toList(), notifyForNewMessage: false);
+
+    // If we want to download the attachments, do it, and wait for them to finish before continuing
+    if (downloadAttachments) {
+      await MessageHelper.bulkDownloadAttachments(chat, messages.reversed.toList());
+    }
 
     _progress = (_currentIndex + 1) / chats.length;
     _stream.sink.add(_progress);
