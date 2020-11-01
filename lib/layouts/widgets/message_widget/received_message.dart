@@ -64,7 +64,9 @@ class _ReceivedMessageState extends State<ReceivedMessage>
     ContactManager().stream.listen((List<String> addresses) {
       // Check if any of the addresses are members of the chat
       if (!addresses.contains(widget.message.handle.address)) return;
-      fetchAvatar(widget.message).then((value) => setState(() {}));
+      fetchAvatar(widget.message).then((value) {
+        if (this.mounted) setState(() {});
+      });
     });
   }
 

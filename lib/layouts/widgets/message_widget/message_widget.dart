@@ -69,17 +69,25 @@ class _MessageState extends State<MessageWidget> {
       if (!chatData.containsKey(NewMessageType.ADD)) return;
 
       // Check if the new message has an associated GUID that matches this message
-      bool pertains = false;
+      bool fetchAssoc = false;
+      bool fetchAttach = false;
       chatData[NewMessageType.ADD].forEach((item) {
         Message message = item["message"];
         if (message.associatedMessageGuid == widget.message.guid) {
-          pertains = true;
+          fetchAssoc = true;
+        }
+        if (message.hasAttachments) {
+          fetchAttach = true;
         }
       });
 
       // If the associated message GUID matches this one, fetch associated messages
-      if (pertains) {
+      if (fetchAssoc) {
         fetchAssociatedMessages(forceReload: true);
+      }
+
+      if (fetchAttach) {
+        fetchAttachments(forceReload: true);
       }
     });
   }
@@ -120,7 +128,7 @@ class _MessageState extends State<MessageWidget> {
     associatedMessageRequest.complete();
   }
 
-  Future<void> fetchAttachments() async {
+  Future<void> fetchAttachments({ bool forceReload = false }) async {
     // If there is already a request being made, return that request
     if (attachmentsRequest != null && !attachmentsRequest.isCompleted) {
       return attachmentsRequest.future;
@@ -131,7 +139,7 @@ class _MessageState extends State<MessageWidget> {
     List<Attachment> attachments = await Message.getAttachments(widget.message);
 
     bool hasChanges = false;
-    if (attachments.length != associatedMessages.length) {
+    if (attachments.length != associatedMessages.length || forceReload) {
       this.attachments = attachments;
       hasChanges = true;
     }
