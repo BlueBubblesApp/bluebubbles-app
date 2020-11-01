@@ -93,9 +93,7 @@ class _MessageAttachmentsState extends State<MessageAttachments>
       }
     } else {
       if (widget.showTail || !widget.showHandle) {
-        if (widget.message.isFromMe) {
-          padding = EdgeInsets.only(right: 10.0);
-        } else {
+        if (!widget.message.isFromMe) {
           padding = EdgeInsets.only(left: 10.0);
         }
       } else {

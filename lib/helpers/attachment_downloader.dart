@@ -5,7 +5,7 @@ import 'dart:io';
 
 import 'dart:typed_data';
 
-import 'package:bluebubbles/managers/life_cycle_manager.dart';
+import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
@@ -173,7 +173,10 @@ class AttachmentDownloader {
       _stream.close();
     };
 
-    SocketManager().addAttachmentDownloader(attachment.guid, this);
+    // Only donwload if auto download is on or the wifi stars align
+    if ((await AttachmentHelper.canAutoDownload())) {
+      SocketManager().addAttachmentDownloader(attachment.guid, this);
+    }
 
     getChunkRecursive(attachment.guid, 0, numOfChunks, [], _cb);
   }

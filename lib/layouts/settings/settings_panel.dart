@@ -251,6 +251,13 @@ class _SettingsPanelState extends State<SettingsPanel> {
                 ),
                 SettingsSwitch(
                   onChanged: (bool val) {
+                    _settingsCopy.onlyWifiDownload = val;
+                  },
+                  initialVal: _settingsCopy.onlyWifiDownload,
+                  title: "Only Auto-download Attachments on WiFi",
+                ),
+                SettingsSwitch(
+                  onChanged: (bool val) {
                     _settingsCopy.lowMemoryMode = val;
                   },
                   initialVal: _settingsCopy.lowMemoryMode,

@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
+import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/attachment_sender.dart';
 import 'package:bluebubbles/helpers/contstants.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
@@ -435,7 +436,7 @@ class ActionHandler {
         Attachment file = Attachment.fromMap(attachmentItem);
         await file.save(message);
 
-        if (SettingsManager().settings.autoDownload &&
+        if ((await AttachmentHelper.canAutoDownload()) &&
             file.mimeType != null &&
             !SocketManager().attachmentDownloaders.containsKey(file.guid)) {
           new AttachmentDownloader(file,
