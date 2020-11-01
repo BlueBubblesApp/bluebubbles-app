@@ -110,7 +110,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                           if ([SocketState.CONNECTED, SocketState.CONNECTING]
                               .contains(connectionStatus)) return;
                           await SocketManager().refreshConnection();
-                          setState(() {});
+                          if (this.mounted) setState(() {});
                         },
                         trailing: connectionStatus == SocketState.CONNECTED ||
                                 connectionStatus == SocketState.CONNECTING
@@ -422,6 +422,9 @@ class _SettingsSwitchState extends State<SettingsSwitch> {
       inactiveThumbColor: Theme.of(context).accentColor,
       onChanged: (bool val) {
         widget.onChanged(val);
+
+        if (!this.mounted) return;
+
         setState(() {
           _value = val;
         });
@@ -470,6 +473,9 @@ class _SettingsOptionsState extends State<SettingsOptions> {
         }).toList(),
         onChanged: (AdaptiveThemeMode val) {
           widget.onChanged(val);
+
+          if (!this.mounted) return;
+
           setState(() {
             initialVal = val;
           });
@@ -512,6 +518,8 @@ class _SettingsSliderState extends State<SettingsSlider> {
           subtitle: Slider(
             value: currentVal,
             onChanged: (double value) {
+              if (!this.mounted) return;
+
               setState(() {
                 currentVal = value;
                 widget.update(currentVal.floor());

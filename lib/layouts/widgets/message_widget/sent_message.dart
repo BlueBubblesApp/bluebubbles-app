@@ -6,7 +6,6 @@ import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/delivered_receipt.dart';
-import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_attachments.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_tail.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_time_stamp.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.dart';
@@ -219,8 +218,9 @@ class _SentMessageState extends State<SentMessage>
           message: addReactionsToWidget(
             message: widget.attachmentsWidget,
             reactions: widget.reactionsWidget,
+            isFromMe: widget.message.isFromMe
           ),
-          stickers: widget.stickersWidget,
+          stickers: widget.stickersWidget
         ),
       );
     } else {
@@ -263,6 +263,7 @@ class _SentMessageState extends State<SentMessage>
               child: message,
             ),
             reactions: widget.reactionsWidget,
+            isFromMe: widget.message.isFromMe
           ),
           stickers: widget.stickersWidget,
         ),

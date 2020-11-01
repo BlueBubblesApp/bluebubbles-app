@@ -54,7 +54,7 @@ class _MessageViewState extends State<MessageView>
     super.didChangeDependencies();
     if (_messages.length == 0) {
       widget.messageBloc.getMessages();
-      setState(() {});
+      if (this.mounted) setState(() {});
     }
   }
 
@@ -104,7 +104,7 @@ class _MessageViewState extends State<MessageView>
       }
       if (event.message.hasAttachments) {
         await CurrentChat().updateAllAttachments();
-        setState(() {});
+        if (this.mounted) setState(() {});
       }
     } else if (event.type == MessageBlocEventType.update) {
       if (CurrentChat().attachments.containsKey(event.oldGuid)) {
@@ -181,16 +181,22 @@ class _MessageViewState extends State<MessageView>
       behavior: HitTestBehavior.deferToChild,
       onHorizontalDragStart: (details) {},
       onHorizontalDragUpdate: (details) {
+        if (!this.mounted) return;
+
         setState(() {
           timeStampOffset += details.delta.dx * 0.3;
         });
       },
       onHorizontalDragEnd: (details) {
+        if (!this.mounted) return;
+
         setState(() {
           timeStampOffset = 0;
         });
       },
       onHorizontalDragCancel: () {
+        if (!this.mounted) return;
+
         setState(() {
           timeStampOffset = 0;
         });

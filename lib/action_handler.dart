@@ -290,6 +290,8 @@ class ActionHandler {
   /// handleChatStatusChange(chatGuid, status)
   /// ```
   static Future<void> handleChatStatusChange(String chatGuid, bool status) async {
+    if (chatGuid == null) return;
+
     Chat chat = await Chat.findOne({"guid": chatGuid});
     if (chat == null) return;
 

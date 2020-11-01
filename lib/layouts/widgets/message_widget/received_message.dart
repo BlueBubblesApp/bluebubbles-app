@@ -1,14 +1,10 @@
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
-import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/url_preview_widget.dart';
-import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_attachments.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_tail.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_time_stamp.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
-import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/message.dart';
-import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/material.dart';
 
 class ReceivedMessage extends StatefulWidget {
@@ -53,7 +49,9 @@ class _ReceivedMessageState extends State<ReceivedMessage>
   initState() {
     super.initState();
     initMessageState(widget.message, widget.showHandle)
-        .then((value) => setState(() {}));
+        .then((value) => {
+          if (this.mounted) setState(() {})
+        });
   }
 
   @override
@@ -143,6 +141,7 @@ class _ReceivedMessageState extends State<ReceivedMessage>
           message: addReactionsToWidget(
             message: widget.attachmentsWidget,
             reactions: widget.reactionsWidget,
+            isFromMe: widget.message.isFromMe
           ),
           stickers: widget.stickersWidget,
         ),
@@ -172,6 +171,7 @@ class _ReceivedMessageState extends State<ReceivedMessage>
               child: message,
             ),
             reactions: widget.reactionsWidget,
+            isFromMe: widget.message.isFromMe
           ),
           stickers: widget.stickersWidget,
         ),

@@ -50,7 +50,7 @@ class _VideoViewerState extends State<VideoViewer> {
   void didChangeDependencies() async {
     super.didChangeDependencies();
     await controller.initialize();
-    setState(() {});
+    if (this.mounted) setState(() {});
   }
 
   @override
@@ -70,6 +70,8 @@ class _VideoViewerState extends State<VideoViewer> {
           GestureDetector(
             behavior: HitTestBehavior.translucent,
             onTap: () {
+              if (!this.mounted) return;
+
               setState(() {
                 showPlayPauseOverlay = !showPlayPauseOverlay;
                 resetTimer();
@@ -116,7 +118,7 @@ class _VideoViewerState extends State<VideoViewer> {
                             ),
                             onTap: () {
                               controller.pause();
-                              setState(() {});
+                              if (this.mounted) setState(() {});
                               resetTimer();
                               setTimer();
                             },
@@ -131,7 +133,7 @@ class _VideoViewerState extends State<VideoViewer> {
                               controller.play();
                               resetTimer();
                               setTimer();
-                              setState(() {});
+                              if (this.mounted) setState(() {});
                             },
                           ),
                   ),

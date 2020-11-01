@@ -66,12 +66,12 @@ class MessageBloc {
           MessageBlocEvent baseEvent = new MessageBlocEvent();
 
           // If we want to remove something, set the event data correctly
-          if (actionType == NewMessageAction.REMOVE &&
+          if (actionType == NewMessageType.REMOVE &&
               _allMessages.containsKey(action["guid"])) {
             _allMessages.remove(action["guid"]);
             baseEvent.remove = action["guid"];
             baseEvent.type = MessageBlocEventType.remove;
-          } else if (actionType == NewMessageAction.UPDATE &&
+          } else if (actionType == NewMessageType.UPDATE &&
               _allMessages.containsKey(action["oldGuid"])) {
             // If we want to updating an existing message, remove the old one, and add the new one
             _allMessages.remove(action["oldGuid"]);
@@ -79,7 +79,7 @@ class MessageBloc {
             baseEvent.message = action["message"];
             baseEvent.oldGuid = action["oldGuid"];
             baseEvent.type = MessageBlocEventType.update;
-          } else if (actionType == NewMessageAction.ADD) {
+          } else if (actionType == NewMessageType.ADD) {
             // If we want to add a message, just add it through `insert`
             addToSink = false;
             insert(action["message"], sentFromThisClient: action["outgoing"]);

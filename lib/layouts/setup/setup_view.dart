@@ -37,7 +37,7 @@ class _SetupViewState extends State<SetupView> {
         PageView(
           onPageChanged: (int page) {
             currentPage = page + 1;
-            setState(() {});
+            if (this.mounted) setState(() {});
           },
           physics: AlwaysScrollableScrollPhysics(
             parent: CustomBouncingScrollPhysics(),

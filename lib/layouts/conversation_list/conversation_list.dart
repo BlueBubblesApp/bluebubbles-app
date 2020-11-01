@@ -30,9 +30,11 @@ class _ConversationListState extends State<ConversationList> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    setState(() {
-      _theme = Colors.transparent;
-    });
+    if (this.mounted) {
+      setState(() {
+        _theme = Colors.transparent;
+      });
+    }
   }
 
   void scrollListener() {

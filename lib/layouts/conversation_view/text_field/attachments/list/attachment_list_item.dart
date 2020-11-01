@@ -43,12 +43,12 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
         maxHeight: 100,
         quality: 25,
       );
-      setState(() {});
+      if (this.mounted) setState(() {});
     } else if (mimeType.startsWith("image/")) {
       preview = await FlutterImageCompress.compressWithFile(
           widget.file.absolute.path,
           quality: SettingsManager().settings.lowMemoryMode ? 5 : 10);
-      setState(() {});
+      if (this.mounted) setState(() {});
     }
   }
 

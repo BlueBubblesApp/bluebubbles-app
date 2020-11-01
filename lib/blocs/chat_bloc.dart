@@ -140,7 +140,7 @@ class ChatBloc {
   Future<void> handleMessageAction(
       String chatGuid, String actionType, Map<String, dynamic> action) async {
     // Only handle the "add" action right now
-    if (actionType == NewMessageAction.ADD) {
+    if (actionType == NewMessageType.ADD) {
       // Find the chat to update
       Chat updatedChat = action["chat"];
 

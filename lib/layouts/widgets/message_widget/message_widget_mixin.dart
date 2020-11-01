@@ -51,9 +51,9 @@ abstract class MessageWidgetMixin {
 
   /// Adds reacts to a [message] widget
   Widget addReactionsToWidget(
-      {@required Widget message, @required Widget reactions}) {
+      {@required Widget message, @required Widget reactions, @required bool isFromMe}) {
     return Stack(
-      alignment: AlignmentDirectional.topEnd,
+      alignment: isFromMe ? AlignmentDirectional.topStart : AlignmentDirectional.topEnd,
       children: [
         message,
         reactions,

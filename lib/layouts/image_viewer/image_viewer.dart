@@ -133,6 +133,8 @@ class _ImageViewerState extends State<ImageViewer> {
       backgroundColor: Colors.black,
       body: GestureDetector(
         onTap: () {
+          if (!this.mounted) return;
+
           setState(() {
             showOverlay = !showOverlay;
           });
