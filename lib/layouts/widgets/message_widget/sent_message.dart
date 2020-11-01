@@ -220,7 +220,8 @@ class _SentMessageState extends State<SentMessage>
             reactions: widget.reactionsWidget,
             isFromMe: widget.message.isFromMe
           ),
-          stickers: widget.stickersWidget
+          stickers: widget.stickersWidget,
+          isFromMe: widget.message.isFromMe,
         ),
       );
     } else {
@@ -266,6 +267,7 @@ class _SentMessageState extends State<SentMessage>
             isFromMe: widget.message.isFromMe
           ),
           stickers: widget.stickersWidget,
+          isFromMe: widget.message.isFromMe,
         ),
       );
     }

@@ -144,6 +144,7 @@ class _ReceivedMessageState extends State<ReceivedMessage>
             isFromMe: widget.message.isFromMe
           ),
           stickers: widget.stickersWidget,
+          isFromMe: widget.message.isFromMe,
         ),
       );
     } else {
@@ -174,6 +175,7 @@ class _ReceivedMessageState extends State<ReceivedMessage>
             isFromMe: widget.message.isFromMe
           ),
           stickers: widget.stickersWidget,
+          isFromMe: widget.message.isFromMe,
         ),
       );
     }

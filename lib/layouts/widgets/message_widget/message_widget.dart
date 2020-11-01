@@ -244,10 +244,12 @@ class _MessageState extends State<MessageWidget> {
         isGroup: widget.chat.participants.length > 1,
         urlPreviewWidget: urlPreviewWidget,
         stickersWidget: StickersWidget(
+          key: new Key("stickers-${this.associatedMessages.length.toString()}"),
           messages: associatedMessages,
         ),
         attachmentsWidget: widgetAttachments,
         reactionsWidget: ReactionsWidget(
+          key: new Key("reactions-${this.associatedMessages.length.toString()}"),
           message: widget.message,
           associatedMessages: associatedMessages,
         ),
