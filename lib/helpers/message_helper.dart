@@ -216,6 +216,8 @@ class MessageHelper {
           key = "contact";
         } else if (mime.contains("video")) {
           key = "movie";
+        } else if (mime.contains("image/gif")) {
+          key = "GIF";
         } else {
           key = mime.split("/").first;
         }
