@@ -78,40 +78,37 @@ class _ReceivedMessageState extends State<ReceivedMessage>
 
   /// Builds the message bubble with teh tail (if applicable)
   Widget _buildMessageWithTail() {
-    return Padding(
-      padding: EdgeInsets.only(bottom: widget.showTail ? 2.0 : 0.0),
-      child: Stack(
-        alignment: AlignmentDirectional.bottomStart,
-        children: [
-          if (widget.showTail) MessageTail(isFromMe: false),
-          Container(
-            margin: EdgeInsets.only(
-              top: widget.hasReactions ? 12 : 0,
-              left: 10,
-              right: 10,
-            ),
-            constraints: BoxConstraints(
-              maxWidth: MediaQuery.of(context).size.width *
-                  MessageWidgetMixin.maxSize,
-            ),
-            padding: EdgeInsets.symmetric(
-              vertical: 8,
-              horizontal: 14,
-            ),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
-              color: Theme.of(context).accentColor,
-            ),
-            child: RichText(
-              text: TextSpan(
-                children: MessageWidgetMixin.buildMessageSpans(
-                    context, widget.message),
-                style: Theme.of(context).textTheme.bodyText1,
-              ),
+    return Stack(
+      alignment: AlignmentDirectional.bottomStart,
+      children: [
+        if (widget.showTail) MessageTail(isFromMe: false),
+        Container(
+          margin: EdgeInsets.only(
+            top: widget.hasReactions ? 12 : 0,
+            left: 10,
+            right: 10,
+          ),
+          constraints: BoxConstraints(
+            maxWidth:
+                MediaQuery.of(context).size.width * MessageWidgetMixin.maxSize,
+          ),
+          padding: EdgeInsets.symmetric(
+            vertical: 8,
+            horizontal: 14,
+          ),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            color: Theme.of(context).accentColor,
+          ),
+          child: RichText(
+            text: TextSpan(
+              children:
+                  MessageWidgetMixin.buildMessageSpans(context, widget.message),
+              style: Theme.of(context).textTheme.bodyText1,
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -170,7 +167,10 @@ class _ReceivedMessageState extends State<ReceivedMessage>
       messageColumn.add(
         addStickersToWidget(
           message: addReactionsToWidget(
-            message: message,
+            message: Padding(
+              padding: EdgeInsets.only(bottom: widget.showTail ? 2.0 : 0.0),
+              child: message,
+            ),
             reactions: widget.reactionsWidget,
           ),
           stickers: widget.stickersWidget,

@@ -221,7 +221,7 @@ class _MessageViewState extends State<MessageView>
                           } else {
                             loader = null;
                           }
-                          setState(() {});
+                          if (this.mounted) setState(() {});
                         });
                       }
 
