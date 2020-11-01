@@ -9,6 +9,7 @@ import 'package:bluebubbles/layouts/widgets/message_widget/message_content/deliv
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_tail.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_time_stamp.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.dart';
+import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
@@ -16,56 +17,70 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class SentMessageHelper {
-  static Widget buildMessageWithTail(
-      BuildContext context, Message message, bool showTail, bool hasReactions,
-      {Widget customContent, Chat chat}) {
+  static Widget buildMessageWithTail(BuildContext context, Message message,
+      bool showTail, bool hasReactions, bool bigEmoji,
+      {Widget customContent}) {
     Color blueColor;
     blueColor = message == null || message.guid.startsWith("temp")
         ? darken(Colors.blue[600], 0.2)
         : Colors.blue[600];
+
+    Widget msg;
+    if (bigEmoji) {
+      msg = Padding(
+          padding: EdgeInsets.only(right: 5),
+          child: Text(message.text,
+              style: Theme.of(context)
+                  .textTheme
+                  .bodyText1
+                  .apply(fontSizeFactor: 4)));
+    } else {
+      msg = Stack(
+        alignment: AlignmentDirectional.bottomEnd,
+        children: [
+          if (showTail)
+            MessageTail(
+              isFromMe: true,
+              blueColor: blueColor,
+            ),
+          Container(
+            margin: EdgeInsets.only(
+              top: hasReactions ? 12 : 0,
+              left: 10,
+              right: 10,
+            ),
+            constraints: BoxConstraints(
+              maxWidth: MediaQuery.of(context).size.width *
+                      MessageWidgetMixin.maxSize +
+                  (customContent != null ? 100 : 0),
+            ),
+            padding: EdgeInsets.symmetric(
+              vertical: 8,
+              horizontal: 14,
+            ),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              color: blueColor,
+            ),
+            child: customContent == null
+                ? RichText(
+                    text: TextSpan(
+                      children: MessageWidgetMixin.buildMessageSpans(
+                          context, message),
+                      style: Theme.of(context).textTheme.bodyText1,
+                    ),
+                  )
+                : customContent,
+          ),
+        ],
+      );
+    }
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
+      mainAxisSize: MainAxisSize.max,
       children: [
-        Stack(
-          alignment: AlignmentDirectional.bottomEnd,
-          children: [
-            if (showTail)
-              MessageTail(
-                isFromMe: true,
-                blueColor: blueColor,
-              ),
-            Container(
-              margin: EdgeInsets.only(
-                top: hasReactions ? 12 : 0,
-                left: 10,
-                right: 10,
-              ),
-              constraints: BoxConstraints(
-                maxWidth: MediaQuery.of(context).size.width *
-                        MessageWidgetMixin.maxSize +
-                    (customContent != null ? 100 : 0),
-              ),
-              padding: EdgeInsets.symmetric(
-                vertical: 8,
-                horizontal: 14,
-              ),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
-                color: blueColor,
-              ),
-              child: customContent == null
-                  ? RichText(
-                      text: TextSpan(
-                        children: MessageWidgetMixin.buildMessageSpans(
-                            context, message),
-                        style: Theme.of(context).textTheme.bodyText1,
-                      ),
-                    )
-                  : customContent,
-            ),
-          ],
-        ),
-        getErrorWidget(context, message, chat),
+        msg,
+        getErrorWidget(context, message, CurrentChat().chat),
       ],
     );
   }
@@ -151,6 +166,7 @@ class SentMessage extends StatefulWidget {
   final bool showDeliveredReceipt;
   final Chat chat;
   final bool hasReactions;
+  final bool shouldShowBigEmoji;
 
   // Sub-widgets
   final Widget stickersWidget;
@@ -169,6 +185,7 @@ class SentMessage extends StatefulWidget {
     @required this.shouldFadeIn,
     @required this.offset,
     @required this.chat,
+    @required this.shouldShowBigEmoji,
 
     // Sub-widgets
     @required this.stickersWidget,
@@ -216,10 +233,9 @@ class _SentMessageState extends State<SentMessage>
       messageColumn.add(
         addStickersToWidget(
           message: addReactionsToWidget(
-            message: widget.attachmentsWidget,
-            reactions: widget.reactionsWidget,
-            isFromMe: widget.message.isFromMe
-          ),
+              message: widget.attachmentsWidget,
+              reactions: widget.reactionsWidget,
+              isFromMe: widget.message.isFromMe),
           stickers: widget.stickersWidget,
           isFromMe: widget.message.isFromMe,
         ),
@@ -241,7 +257,7 @@ class _SentMessageState extends State<SentMessage>
         widget.message,
         widget.showTail,
         widget.hasReactions,
-        chat: widget.chat,
+        widget.shouldShowBigEmoji,
       );
       if (widget.showHero) {
         message = Hero(
@@ -259,13 +275,12 @@ class _SentMessageState extends State<SentMessage>
       messageColumn.add(
         addStickersToWidget(
           message: addReactionsToWidget(
-            message: Padding(
-              padding: EdgeInsets.only(bottom: widget.showTail ? 2.0 : 0),
-              child: message,
-            ),
-            reactions: widget.reactionsWidget,
-            isFromMe: widget.message.isFromMe
-          ),
+              message: Padding(
+                padding: EdgeInsets.only(bottom: widget.showTail ? 2.0 : 0),
+                child: message,
+              ),
+              reactions: widget.reactionsWidget,
+              isFromMe: widget.message.isFromMe),
           stickers: widget.stickersWidget,
           isFromMe: widget.message.isFromMe,
         ),

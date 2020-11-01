@@ -4,6 +4,8 @@ import 'package:bluebubbles/layouts/widgets/message_widget/message_content/messa
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_time_stamp.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
+import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/material.dart';
 
@@ -15,6 +17,7 @@ class ReceivedMessage extends StatefulWidget {
   final bool showHandle;
   final bool isGroup;
   final bool hasReactions;
+  final bool shouldShowBigEmoji;
 
   // Sub-widgets
   final Widget stickersWidget;
@@ -30,6 +33,7 @@ class ReceivedMessage extends StatefulWidget {
     @required this.showHandle,
     @required this.hasReactions,
     @required this.isGroup,
+    @required this.shouldShowBigEmoji,
 
     // Sub-widgets
     @required this.stickersWidget,
@@ -49,9 +53,7 @@ class _ReceivedMessageState extends State<ReceivedMessage>
   initState() {
     super.initState();
     initMessageState(widget.message, widget.showHandle)
-        .then((value) => {
-          if (this.mounted) setState(() {})
-        });
+        .then((value) => {if (this.mounted) setState(() {})});
   }
 
   @override
@@ -75,7 +77,18 @@ class _ReceivedMessageState extends State<ReceivedMessage>
   }
 
   /// Builds the message bubble with teh tail (if applicable)
-  Widget _buildMessageWithTail() {
+  Widget _buildMessageWithTail(Message message, bool bigEmoji) {
+    if (bigEmoji) {
+      return Padding(
+          padding: EdgeInsets.only(
+              left: CurrentChat().chat.participants.length > 1 ? 5.0 : 0.0),
+          child: Text(message.text,
+              style: Theme.of(context)
+                  .textTheme
+                  .bodyText1
+                  .apply(fontSizeFactor: 4)));
+    }
+
     return Stack(
       alignment: AlignmentDirectional.bottomStart,
       children: [
@@ -139,10 +152,9 @@ class _ReceivedMessageState extends State<ReceivedMessage>
       messageColumn.add(
         addStickersToWidget(
           message: addReactionsToWidget(
-            message: widget.attachmentsWidget,
-            reactions: widget.reactionsWidget,
-            isFromMe: widget.message.isFromMe
-          ),
+              message: widget.attachmentsWidget,
+              reactions: widget.reactionsWidget,
+              isFromMe: widget.message.isFromMe),
           stickers: widget.stickersWidget,
           isFromMe: widget.message.isFromMe,
         ),
@@ -159,7 +171,8 @@ class _ReceivedMessageState extends State<ReceivedMessage>
         child: widget.urlPreviewWidget,
       );
     } else if (!isEmptyString(widget.message.text)) {
-      message = _buildMessageWithTail();
+      message =
+          _buildMessageWithTail(widget.message, widget.shouldShowBigEmoji);
     }
 
     // Fourth, let's add any reactions or stickers to the widget
@@ -167,13 +180,12 @@ class _ReceivedMessageState extends State<ReceivedMessage>
       messageColumn.add(
         addStickersToWidget(
           message: addReactionsToWidget(
-            message: Padding(
-              padding: EdgeInsets.only(bottom: widget.showTail ? 2.0 : 0.0),
-              child: message,
-            ),
-            reactions: widget.reactionsWidget,
-            isFromMe: widget.message.isFromMe
-          ),
+              message: Padding(
+                padding: EdgeInsets.only(bottom: widget.showTail ? 2.0 : 0.0),
+                child: message,
+              ),
+              reactions: widget.reactionsWidget,
+              isFromMe: widget.message.isFromMe),
           stickers: widget.stickersWidget,
           isFromMe: widget.message.isFromMe,
         ),

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/group_event.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/url_preview_widget.dart';
@@ -208,6 +209,8 @@ class _MessageState extends State<MessageWidget> {
       message: widget.message,
     );
 
+    bool shouldShowBigEmoji = MessageHelper.shouldShowBigEmoji(widget.message.text);
+
     // Add the correct type of message to the message stack
     Widget message;
     if (widget.message.isFromMe) {
@@ -232,6 +235,7 @@ class _MessageState extends State<MessageWidget> {
         shouldFadeIn: CurrentChat().sentMessages.contains(widget.message.guid),
         showHero: widget.showHero,
         showDeliveredReceipt: widget.isFirstSentMessage,
+        shouldShowBigEmoji: shouldShowBigEmoji
       );
     } else {
       message = ReceivedMessage(
@@ -248,6 +252,7 @@ class _MessageState extends State<MessageWidget> {
           messages: associatedMessages,
         ),
         attachmentsWidget: widgetAttachments,
+        shouldShowBigEmoji: shouldShowBigEmoji,
         reactionsWidget: ReactionsWidget(
           key: new Key("reactions-${this.associatedMessages.length.toString()}"),
           message: widget.message,

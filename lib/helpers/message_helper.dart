@@ -13,6 +13,12 @@ import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:contacts_service/contacts_service.dart';
 
+class EmojiConst {
+  static final String charNonSpacingMark = String.fromCharCode(0xfe0f);
+  static final String charColon = ':';
+  static final String charEmpty = '';
+}
+
 class MessageHelper {
   static Future<List<Message>> bulkAddMessages(
       Chat chat, List<dynamic> messages,
@@ -252,5 +258,25 @@ class MessageHelper {
       // It's all other message types
       return message.text;
     }
+  }
+
+  static bool shouldShowBigEmoji(String text) {
+    RegExp pattern = new RegExp(r'(\u00a9|\u00ae|[\u2000-\u3300]|\ud83c[\ud000-\udfff]|\ud83d[\ud000-\udfff]|\ud83e[\ud000-\udfff])');
+    List<RegExpMatch> matches = pattern.allMatches(text).toList();
+    List<String> items = matches.map((item) => item.group(0)).toList();
+    items = items
+      .map((item) => item.replaceAll(String.fromCharCode(8205), ""))
+      .map((item) => item.replaceAll(String.fromCharCode(55356), ""))
+      .map((item) => item.replaceAll(String.fromCharCode(9794), ""))
+      .map((item) => item.replaceAll(String.fromCharCode(57282), ""))
+      .map((item) => item.replaceAll(String.fromCharCode(57341), ""))
+      .where((item) => item.isNotEmpty).toList();
+
+    String replaced = text
+      .replaceAll(pattern, "")
+      .replaceAll(String.fromCharCode(65039), "")
+      .trim();
+
+    return items.length <= 3 && replaced.isEmpty;
   }
 }
