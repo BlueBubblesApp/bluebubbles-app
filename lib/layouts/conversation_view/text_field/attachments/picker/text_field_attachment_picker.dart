@@ -44,7 +44,7 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker>
     List<AssetEntity> images =
         await list.first.getAssetListRange(start: 0, end: 60);
     _images = images;
-    setState(() {});
+    if (this.mounted) setState(() {});
   }
 
   @override

@@ -47,11 +47,10 @@ class _MessageAttachmentState extends State<MessageAttachment>
     content = widget.content;
     if (content is AttachmentDownloader) {
       (content as AttachmentDownloader).stream.listen((event) {
-        if (event is File) {
-          if (this.mounted)
-            setState(() {
-              content = event;
-            });
+        if (event is File && this.mounted) {
+          setState(() {
+            content = event;
+          });
         }
       });
     }
@@ -193,7 +192,7 @@ class _MessageAttachmentState extends State<MessageAttachment>
         onPressed: () {
           content = new AttachmentDownloader(content);
           widget.updateAttachment();
-          setState(() {});
+          if (this.mounted) setState(() {});
         },
         attachment: content,
         placeHolder: placeHolder,

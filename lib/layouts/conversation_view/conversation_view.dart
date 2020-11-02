@@ -15,7 +15,6 @@ import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart' as Cupertino;
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 
 import '../../repository/models/chat.dart';
 
@@ -223,13 +222,18 @@ class _ConversationViewState extends State<ConversationView> {
                       innerDistance: distance,
                       alignment: Alignment.center,
                     ),
+                    Container(height: 5.0),
                     RichText(
+                      maxLines: 1,
+                      overflow: Cupertino.TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
                       text: TextSpan(
                         style: Theme.of(context).textTheme.headline2,
                         children: [
                           TextSpan(
                             text: chatTitle,
                             style: Theme.of(context).textTheme.bodyText1,
+
                           ),
                           TextSpan(
                             text: " >",

@@ -23,6 +23,8 @@ class Settings {
             : true,
         autoDownload =
             json.containsKey('autoDownload') ? json['autoDownload'] : true,
+        onlyWifiDownload =
+          json.containsKey('onlyWifiDownload') ? json['onlyWifiDownload'] : false,
         hideTextPreviews = json.containsKey('hideTextPreviews')
             ? json['hideTextPreviews']
             : false,
@@ -49,6 +51,7 @@ class Settings {
   bool finishedSetup = false;
   int chunkSize = 500;
   bool autoDownload = true;
+  bool onlyWifiDownload = false;
   bool autoOpenKeyboard = true;
   bool hideTextPreviews = false;
   bool showIncrementalSync = false;
@@ -218,6 +221,7 @@ class Settings {
         'chunkSize': chunkSize,
         'lastIncrementalSync': lastIncrementalSync,
         'autoDownload': autoDownload != null ? autoDownload : true,
+        'onlyWifiDownload': onlyWifiDownload != null ? onlyWifiDownload : true,
         'autoOpenKeyboard': autoOpenKeyboard != null ? autoOpenKeyboard : true,
         'hideTextPreviews': hideTextPreviews != null ? hideTextPreviews : false,
         'showIncrementalSync':

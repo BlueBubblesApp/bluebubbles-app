@@ -6,7 +6,6 @@ import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/theming/theming_panel.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
-import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/settings.dart';
@@ -110,7 +109,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                           if ([SocketState.CONNECTED, SocketState.CONNECTING]
                               .contains(connectionStatus)) return;
                           await SocketManager().refreshConnection();
-                          setState(() {});
+                          if (this.mounted) setState(() {});
                         },
                         trailing: connectionStatus == SocketState.CONNECTED ||
                                 connectionStatus == SocketState.CONNECTING
@@ -248,6 +247,13 @@ class _SettingsPanelState extends State<SettingsPanel> {
                   },
                   initialVal: _settingsCopy.autoDownload,
                   title: "Auto-download Attachments",
+                ),
+                SettingsSwitch(
+                  onChanged: (bool val) {
+                    _settingsCopy.onlyWifiDownload = val;
+                  },
+                  initialVal: _settingsCopy.onlyWifiDownload,
+                  title: "Only Auto-download Attachments on WiFi",
                 ),
                 SettingsSwitch(
                   onChanged: (bool val) {
@@ -422,6 +428,9 @@ class _SettingsSwitchState extends State<SettingsSwitch> {
       inactiveThumbColor: Theme.of(context).accentColor,
       onChanged: (bool val) {
         widget.onChanged(val);
+
+        if (!this.mounted) return;
+
         setState(() {
           _value = val;
         });
@@ -470,6 +479,9 @@ class _SettingsOptionsState extends State<SettingsOptions> {
         }).toList(),
         onChanged: (AdaptiveThemeMode val) {
           widget.onChanged(val);
+
+          if (!this.mounted) return;
+
           setState(() {
             initialVal = val;
           });
@@ -512,6 +524,8 @@ class _SettingsSliderState extends State<SettingsSlider> {
           subtitle: Slider(
             value: currentVal,
             onChanged: (double value) {
+              if (!this.mounted) return;
+
               setState(() {
                 currentVal = value;
                 widget.update(currentVal.floor());

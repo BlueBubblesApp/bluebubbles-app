@@ -136,7 +136,7 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
     widget.attachment.width = size.width;
     widget.attachment.height = size.height;
     aspectRatio = size.width / size.height;
-    setState(() {});
+    if (this.mounted) setState(() {});
   }
 
   Widget _buildPreview(File file, BuildContext context) {

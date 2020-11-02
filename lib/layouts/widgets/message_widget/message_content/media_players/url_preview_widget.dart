@@ -36,9 +36,11 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
   @override
   void initState() {
     super.initState();
+    print(widget.message.text);
+    print(widget.message.hasAttachments);
     SavedAttachmentData savedAttachmentData =
         CurrentChat().getSavedAttachmentData(widget.message);
-    if (savedAttachmentData.urlMetaData != null)
+    if (savedAttachmentData?.urlMetaData != null)
       data =
           savedAttachmentData.urlMetaData[widget.message.guid + "-url-preview"];
   }
@@ -138,10 +140,11 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
 
       CurrentChat()
           .getSavedAttachmentData(widget.message)
-          .urlMetaData[widget.message.guid + "-url-preview"] = data;
+          ?.urlMetaData[widget.message.guid + "-url-preview"] = data;
+
       if (this.mounted)
         setState(() {
-          // isLoading = false;
+          isLoading = false;
         });
     }
   }
@@ -233,7 +236,7 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
                                       ))
                                 ],
                               )),
-                          attachmentSaved(widget.linkPreviews.first)
+                          (widget.linkPreviews.length > 0)
                               ? Padding(
                                   padding:
                                       EdgeInsets.only(left: 10.0, bottom: 10.0),

@@ -169,6 +169,8 @@ class _ConversationTileState extends State<ConversationTile> {
             : Theme.of(context).buttonColor,
         child: GestureDetector(
           onTapDown: (details) {
+            if (!this.mounted) return;
+
             setState(() {
               isPressed = true;
             });
@@ -213,6 +215,8 @@ class _ConversationTileState extends State<ConversationTile> {
             });
           },
           onTapCancel: () {
+            if (!this.mounted) return;
+
             setState(() {
               isPressed = false;
             });

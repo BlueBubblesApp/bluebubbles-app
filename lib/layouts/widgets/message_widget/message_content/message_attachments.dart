@@ -2,16 +2,13 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:bluebubbles/helpers/attachment_helper.dart';
-import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/url_preview_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_attachment.dart';
-import 'package:bluebubbles/layouts/widgets/message_widget/reactions_widget.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/material.dart';
 import 'package:metadata_fetch/metadata_fetch.dart';
 import 'package:mime_type/mime_type.dart';
 import 'package:path/path.dart';
-import 'package:video_player/video_player.dart';
 
 class SavedAttachmentData {
   List<Attachment> attachments = [];
@@ -86,19 +83,17 @@ class _MessageAttachmentsState extends State<MessageAttachments>
     if (widget.message.hasReactions && widget.message.hasAttachments) {
       if (widget.message.isFromMe) {
         padding =
-            EdgeInsets.only(top: 24.0, bottom: 10.0, left: 16.0, right: 10.0);
+            EdgeInsets.only(top: 15.0, bottom: 10.0, left: 16.0, right: 10.0);
       } else {
         padding = EdgeInsets.only(
-            top: 24.0,
+            top: 15.0,
             bottom: 10.0,
             left: (widget.showTail) ? 10.0 : 45.0,
-            right: 16.0);
+            right: 10.0);
       }
     } else {
       if (widget.showTail || !widget.showHandle) {
-        if (widget.message.isFromMe) {
-          padding = EdgeInsets.only(right: 10.0);
-        } else {
+        if (!widget.message.isFromMe) {
           padding = EdgeInsets.only(left: 10.0);
         }
       } else {

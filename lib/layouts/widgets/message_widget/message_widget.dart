@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/group_event.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/url_preview_widget.dart';
@@ -10,12 +11,11 @@ import 'package:bluebubbles/layouts/widgets/message_widget/received_message.dart
 import 'package:bluebubbles/layouts/widgets/message_widget/sent_message.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/stickers_widget.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
-import 'package:video_player/video_player.dart';
 import '../../../helpers/utils.dart';
 import '../../../repository/models/message.dart';
 
@@ -58,6 +58,38 @@ class _MessageState extends State<MessageWidget> {
     super.initState();
     fetchAssociatedMessages();
     fetchAttachments();
+
+    // Listen for new messages
+    NewMessageManager().stream.listen((data) {
+      // If the message doesn't apply to this chat, ignore it
+      if (!data.containsKey(widget.chat.guid)) return;
+      dynamic chatData = data[widget.chat.guid];
+
+      // If it's not an ADD event, ignore it
+      if (!chatData.containsKey(NewMessageType.ADD)) return;
+
+      // Check if the new message has an associated GUID that matches this message
+      bool fetchAssoc = false;
+      bool fetchAttach = false;
+      chatData[NewMessageType.ADD].forEach((item) {
+        Message message = item["message"];
+        if (message.associatedMessageGuid == widget.message.guid) {
+          fetchAssoc = true;
+        }
+        if (message.hasAttachments) {
+          fetchAttach = true;
+        }
+      });
+
+      // If the associated message GUID matches this one, fetch associated messages
+      if (fetchAssoc) {
+        fetchAssociatedMessages(forceReload: true);
+      }
+
+      if (fetchAttach) {
+        fetchAttachments(forceReload: true);
+      }
+    });
   }
 
   @override
@@ -67,7 +99,7 @@ class _MessageState extends State<MessageWidget> {
     fetchAttachments();
   }
 
-  Future<void> fetchAssociatedMessages() async {
+  Future<void> fetchAssociatedMessages({ bool forceReload = false }) async {
     // If there is already a request being made, return that request
     if (associatedMessageRequest != null &&
         !associatedMessageRequest.isCompleted) {
@@ -83,7 +115,7 @@ class _MessageState extends State<MessageWidget> {
     messages = normalizedAssociatedMessages(messages);
 
     bool hasChanges = false;
-    if (messages.length != associatedMessages.length) {
+    if (messages.length != associatedMessages.length || forceReload) {
       associatedMessages = messages;
       hasChanges = true;
     }
@@ -94,10 +126,9 @@ class _MessageState extends State<MessageWidget> {
     }
 
     associatedMessageRequest.complete();
-    associatedMessageRequest = null;
   }
 
-  Future<void> fetchAttachments() async {
+  Future<void> fetchAttachments({ bool forceReload = false }) async {
     // If there is already a request being made, return that request
     if (attachmentsRequest != null && !attachmentsRequest.isCompleted) {
       return attachmentsRequest.future;
@@ -108,7 +139,7 @@ class _MessageState extends State<MessageWidget> {
     List<Attachment> attachments = await Message.getAttachments(widget.message);
 
     bool hasChanges = false;
-    if (attachments.length != associatedMessages.length) {
+    if (attachments.length != associatedMessages.length || forceReload) {
       this.attachments = attachments;
       hasChanges = true;
     }
@@ -123,12 +154,12 @@ class _MessageState extends State<MessageWidget> {
 
   /// Removes duplicate associated message guids from a list of [associatedMessages]
   List<Message> normalizedAssociatedMessages(List<Message> associatedMessages) {
-    Set<String> guids =
-        associatedMessages.map((e) => e.associatedMessageGuid).toSet();
+    Set<int> guids =
+        associatedMessages.map((e) => e.handleId ?? 0).toSet();
     List<Message> normalized = [];
 
     for (Message message in associatedMessages.reversed.toList()) {
-      if (guids.remove(message.associatedMessageGuid)) {
+      if (guids.remove(message.handleId ?? 0)) {
         normalized.add(message);
       }
     }
@@ -143,10 +174,6 @@ class _MessageState extends State<MessageWidget> {
 
   @override
   Widget build(BuildContext context) {
-    // This needs to be done every build so that if there is a new reaction added
-    // while the chat is open, then it will auto update
-    fetchAssociatedMessages();
-
     if (widget.newerMessage != null) {
       showTail = withinTimeThreshold(widget.message, widget.newerMessage,
               threshold: 1) ||
@@ -190,6 +217,8 @@ class _MessageState extends State<MessageWidget> {
       message: widget.message,
     );
 
+    bool shouldShowBigEmoji = MessageHelper.shouldShowBigEmoji(widget.message.text);
+
     // Add the correct type of message to the message stack
     Widget message;
     if (widget.message.isFromMe) {
@@ -201,10 +230,12 @@ class _MessageState extends State<MessageWidget> {
         message: widget.message,
         urlPreviewWidget: urlPreviewWidget,
         stickersWidget: StickersWidget(
+          key: new Key("stickers-${this.associatedMessages.length.toString()}"),
           messages: this.associatedMessages,
         ),
         attachmentsWidget: widgetAttachments,
         reactionsWidget: ReactionsWidget(
+          key: new Key("reactions-${this.associatedMessages.length.toString()}"),
           message: widget.message,
           associatedMessages: associatedMessages,
         ),
@@ -212,6 +243,7 @@ class _MessageState extends State<MessageWidget> {
         shouldFadeIn: CurrentChat().sentMessages.contains(widget.message.guid),
         showHero: widget.showHero,
         showDeliveredReceipt: widget.isFirstSentMessage,
+        shouldShowBigEmoji: shouldShowBigEmoji
       );
     } else {
       message = ReceivedMessage(
@@ -224,10 +256,13 @@ class _MessageState extends State<MessageWidget> {
         isGroup: widget.chat.participants.length > 1,
         urlPreviewWidget: urlPreviewWidget,
         stickersWidget: StickersWidget(
+          key: new Key("stickers-${this.associatedMessages.length.toString()}"),
           messages: associatedMessages,
         ),
         attachmentsWidget: widgetAttachments,
+        shouldShowBigEmoji: shouldShowBigEmoji,
         reactionsWidget: ReactionsWidget(
+          key: new Key("reactions-${this.associatedMessages.length.toString()}"),
           message: widget.message,
           associatedMessages: associatedMessages,
         ),
