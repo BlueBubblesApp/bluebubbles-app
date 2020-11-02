@@ -29,3 +29,8 @@ enum ThemeColors {
   DividerColor,
   BackgroundColor
 }
+
+enum Skins {
+  IOS,
+  Material,
+}

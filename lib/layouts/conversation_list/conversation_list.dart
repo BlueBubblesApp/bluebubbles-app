@@ -6,6 +6,7 @@ import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scrol
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
+import 'package:bluebubbles/managers/theme_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 
 import './conversation_tile.dart';
@@ -132,9 +133,7 @@ class _ConversationListState extends State<ConversationList> {
       extendBodyBehindAppBar: true,
       body: CustomScrollView(
         controller: _scrollController,
-        physics: AlwaysScrollableScrollPhysics(
-          parent: CustomBouncingScrollPhysics(),
-        ),
+        physics: ThemeManager().scrollPhysics,
         slivers: <Widget>[
           SliverAppBar(
             leading: new Container(),

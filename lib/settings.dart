@@ -57,6 +57,7 @@ class Settings {
   int lastIncrementalSync = 0;
   Map<String, dynamic> _lightColorTheme = {};
   Map<String, dynamic> _darkColorTheme = {};
+  Skins skin = Skins.IOS;
 
   void setOneColorOfDarkTheme(
       ThemeColors theme, Color color, BuildContext context) {
