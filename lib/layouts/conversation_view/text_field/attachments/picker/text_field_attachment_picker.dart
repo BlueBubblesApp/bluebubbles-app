@@ -39,12 +39,13 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker>
   }
 
   Future<void> getAttachments() async {
+    if (!this.mounted) return;
     List<AssetPathEntity> list =
         await PhotoManager.getAssetPathList(onlyAll: true);
     List<AssetEntity> images =
         await list.first.getAssetListRange(start: 0, end: 60);
     _images = images;
-    if (this.mounted) setState(() {});
+    setState(() {});
   }
 
   @override
