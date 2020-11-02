@@ -484,6 +484,7 @@ class Chat {
         " message.timeExpressiveSendStyleId AS timeExpressiveSendStyleId,"
         " message.hasAttachments AS hasAttachments,"
         " message.hasReactions AS hasReactions,"
+        " message.hasDdResults AS hasDdResults,"
         " handle.ROWID AS handleId,"
         " handle.address AS handleAddress,"
         " handle.country AS handleCountry,"

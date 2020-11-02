@@ -132,7 +132,7 @@ class SetupBloc {
     SocketManager().finishSetup();
   }
 
-  void startIncrementalSync(Settings settings, Function _onConnectionError) {
+  void startIncrementalSync(Settings settings, {String chatGuid, bool saveDate = false, Function onConnectionError, Function onComplete}) {
     // If we are already syncing, don't sync again
     // If the last sync date is empty, then we've never synced, so don't.
     if (isSyncing ||
@@ -142,7 +142,9 @@ class SetupBloc {
     // Setup the socket process and error handler
     processId =
         SocketManager().addSocketProcess(([bool finishWithError = false]) {});
-    onConnectionError = _onConnectionError;
+
+    if (onConnectionError != null)
+      this.onConnectionError = onConnectionError;
     isSyncing = true;
 
     // Store the time we started syncing
@@ -152,6 +154,10 @@ class SetupBloc {
 
     // Build request params. We want all details on the messages
     Map<String, dynamic> params = Map();
+    if (chatGuid != null) {
+      params["chatGuid"] = chatGuid;
+    }
+
     params["withBlurhash"] = false; // Maybe we want it?
     params["limit"] =
         1000; // This is arbitrary, hopefully there aren't more messages
@@ -187,14 +193,20 @@ class SetupBloc {
           "(SYNC) Finished incremental sync. Saving last sync date: $syncStart");
 
       // Once we have added everything, save the last sync date
-      Settings _settingsCopy = SettingsManager().settings;
-      _settingsCopy.lastIncrementalSync = syncStart;
-      SettingsManager().saveSettings(_settingsCopy, connectToSocket: false);
+      if (saveDate) {
+        Settings _settingsCopy = SettingsManager().settings;
+        _settingsCopy.lastIncrementalSync = syncStart;
+        SettingsManager().saveSettings(_settingsCopy, connectToSocket: false);
+      }
 
       if (SettingsManager().settings.showIncrementalSync)
         // Show a nice lil toast/snackbar
         EventDispatcher()
             .emit("show-snackbar", {"text": "🔄 Incremental sync complete 🔄"});
+
+      if (onComplete != null) {
+        onComplete();
+      }
 
       // End the sync
       closeSync();

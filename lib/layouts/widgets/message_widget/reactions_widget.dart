@@ -43,9 +43,9 @@ class _ReactionsWidgetState extends State<ReactionsWidget>
         reactionWidgets.add(
           Padding(
             padding: EdgeInsets.fromLTRB(
-              (widget.message.isFromMe ? 5.0 : 0.0) + tmpIdx.toDouble() * 15.0,
+              tmpIdx.toDouble() * 15.0,
               1.0,
-              tmpIdx.toDouble() * 5.0,
+              0,
               0,
             ),
             child: itemWidget,

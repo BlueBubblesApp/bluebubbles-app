@@ -1,5 +1,10 @@
 import 'dart:async';
+import 'package:bluebubbles/action_handler.dart';
+import 'package:bluebubbles/blocs/setup_bloc.dart';
+import 'package:bluebubbles/helpers/attachment_downloader.dart';
+import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
+import 'package:bluebubbles/helpers/reaction.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/group_event.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/url_preview_widget.dart';
@@ -12,8 +17,10 @@ import 'package:bluebubbles/layouts/widgets/message_widget/sent_message.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/stickers_widget.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
+import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../../../helpers/utils.dart';
@@ -99,7 +106,7 @@ class _MessageState extends State<MessageWidget> {
     fetchAttachments();
   }
 
-  Future<void> fetchAssociatedMessages({ bool forceReload = false }) async {
+  Future<void> fetchAssociatedMessages({bool forceReload = false}) async {
     // If there is already a request being made, return that request
     if (associatedMessageRequest != null &&
         !associatedMessageRequest.isCompleted) {
@@ -120,15 +127,28 @@ class _MessageState extends State<MessageWidget> {
       hasChanges = true;
     }
 
-    // NOTE: Not sure if we need to re-render
+    // If there are changes, re-render
     if (this.mounted && hasChanges) {
+      // If we don't think there are reactions, and we found reactions,
+      // Update the DB so it saves that we have reactions
+      if (!widget.message.hasReactions &&
+          associatedMessages
+                  .where((item) => ReactionTypes.toList()
+                      .contains(item.associatedMessageType))
+                  .toList()
+                  .length >
+              0) {
+        widget.message.hasReactions = true;
+        widget.message.update();
+      }
+
       setState(() {});
     }
 
     associatedMessageRequest.complete();
   }
 
-  Future<void> fetchAttachments({ bool forceReload = false }) async {
+  Future<void> fetchAttachments({bool forceReload = false}) async {
     // If there is already a request being made, return that request
     if (attachmentsRequest != null && !attachmentsRequest.isCompleted) {
       return attachmentsRequest.future;
@@ -138,8 +158,16 @@ class _MessageState extends State<MessageWidget> {
     attachmentsRequest = new Completer();
     List<Attachment> attachments = await Message.getAttachments(widget.message);
 
+    // If hasDdResults is true, it means we have attachents, so if we don't, we should get em
+    if (widget.message.hasDdResults && attachments.length == 0) {
+      SocketManager().setup.startIncrementalSync(SettingsManager().settings,
+          chatGuid: CurrentChat().chat.guid, saveDate: false, onComplete: () {
+            if (this.mounted) setState(() {});
+          });
+    }
+
     bool hasChanges = false;
-    if (attachments.length != associatedMessages.length || forceReload) {
+    if (attachments.length != this.attachments.length || forceReload) {
       this.attachments = attachments;
       hasChanges = true;
     }
@@ -154,8 +182,7 @@ class _MessageState extends State<MessageWidget> {
 
   /// Removes duplicate associated message guids from a list of [associatedMessages]
   List<Message> normalizedAssociatedMessages(List<Message> associatedMessages) {
-    Set<int> guids =
-        associatedMessages.map((e) => e.handleId ?? 0).toSet();
+    Set<int> guids = associatedMessages.map((e) => e.handleId ?? 0).toSet();
     List<Message> normalized = [];
 
     for (Message message in associatedMessages.reversed.toList()) {
@@ -211,40 +238,44 @@ class _MessageState extends State<MessageWidget> {
           )
         : Container();
 
-    Widget urlPreviewWidget = UrlPreviewWidget(
-      linkPreviews:
-          this.attachments.where((item) => item.mimeType == null).toList(),
-      message: widget.message,
-    );
-
-    bool shouldShowBigEmoji = MessageHelper.shouldShowBigEmoji(widget.message.text);
+    bool shouldShowBigEmoji =
+        MessageHelper.shouldShowBigEmoji(widget.message.text);
 
     // Add the correct type of message to the message stack
     Widget message;
     if (widget.message.isFromMe) {
       message = SentMessage(
-        offset: widget.offset,
-        hasReactions: associatedMessages.length > 0,
-        showTail: showTail,
-        olderMessage: widget.olderMessage,
-        message: widget.message,
-        urlPreviewWidget: urlPreviewWidget,
-        stickersWidget: StickersWidget(
-          key: new Key("stickers-${this.associatedMessages.length.toString()}"),
-          messages: this.associatedMessages,
-        ),
-        attachmentsWidget: widgetAttachments,
-        reactionsWidget: ReactionsWidget(
-          key: new Key("reactions-${this.associatedMessages.length.toString()}"),
+          offset: widget.offset,
+          hasReactions: associatedMessages.length > 0,
+          showTail: showTail,
+          olderMessage: widget.olderMessage,
           message: widget.message,
-          associatedMessages: associatedMessages,
-        ),
-        chat: widget.chat,
-        shouldFadeIn: CurrentChat().sentMessages.contains(widget.message.guid),
-        showHero: widget.showHero,
-        showDeliveredReceipt: widget.isFirstSentMessage,
-        shouldShowBigEmoji: shouldShowBigEmoji
-      );
+          urlPreviewWidget: UrlPreviewWidget(
+            key: new Key("preview-${widget.message.guid}"),
+            linkPreviews: this
+                .attachments
+                .where((item) => item.mimeType == null)
+                .toList(),
+            message: widget.message,
+          ),
+          stickersWidget: StickersWidget(
+            key: new Key(
+                "stickers-${this.associatedMessages.length.toString()}"),
+            messages: this.associatedMessages,
+          ),
+          attachmentsWidget: widgetAttachments,
+          reactionsWidget: ReactionsWidget(
+            key: new Key(
+                "reactions-${this.associatedMessages.length.toString()}"),
+            message: widget.message,
+            associatedMessages: associatedMessages,
+          ),
+          chat: widget.chat,
+          shouldFadeIn:
+              CurrentChat().sentMessages.contains(widget.message.guid),
+          showHero: widget.showHero,
+          showDeliveredReceipt: widget.isFirstSentMessage,
+          shouldShowBigEmoji: shouldShowBigEmoji);
     } else {
       message = ReceivedMessage(
         offset: widget.offset,
@@ -254,7 +285,12 @@ class _MessageState extends State<MessageWidget> {
         message: widget.message,
         showHandle: widget.showHandle,
         isGroup: widget.chat.participants.length > 1,
-        urlPreviewWidget: urlPreviewWidget,
+        urlPreviewWidget: UrlPreviewWidget(
+          key: new Key("preview-${widget.message.guid}"),
+          linkPreviews:
+              this.attachments.where((item) => item.mimeType == null).toList(),
+          message: widget.message,
+        ),
         stickersWidget: StickersWidget(
           key: new Key("stickers-${this.associatedMessages.length.toString()}"),
           messages: associatedMessages,
@@ -262,7 +298,8 @@ class _MessageState extends State<MessageWidget> {
         attachmentsWidget: widgetAttachments,
         shouldShowBigEmoji: shouldShowBigEmoji,
         reactionsWidget: ReactionsWidget(
-          key: new Key("reactions-${this.associatedMessages.length.toString()}"),
+          key:
+              new Key("reactions-${this.associatedMessages.length.toString()}"),
           message: widget.message,
           associatedMessages: associatedMessages,
         ),

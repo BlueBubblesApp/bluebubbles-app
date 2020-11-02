@@ -293,6 +293,7 @@ class Message {
 
     await db.update("message", params,
         where: "ROWID = ?", whereArgs: [existing.id]);
+
     return newMessage;
   }
 

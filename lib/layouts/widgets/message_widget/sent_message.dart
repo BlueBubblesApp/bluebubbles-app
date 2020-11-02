@@ -45,7 +45,7 @@ class SentMessageHelper {
             ),
           Container(
             margin: EdgeInsets.only(
-              top: hasReactions ? 12 : 0,
+              top: hasReactions ? 18 : 0,
               left: 10,
               right: 10,
             ),
@@ -215,21 +215,6 @@ class _SentMessageState extends State<SentMessage>
 
     // The column that holds all the "messages"
     List<Widget> messageColumn = [];
-
-    // First, add the message sender (if applicable)
-    if (!sameSender(widget.message, widget.olderMessage) ||
-        !widget.message.dateCreated
-            .isWithin(widget.olderMessage.dateCreated, minutes: 30)) {
-      messageColumn.add(
-        Padding(
-          padding: EdgeInsets.only(left: 25.0, top: 5.0, bottom: 3.0),
-          child: Text(
-            contactTitle,
-            style: Theme.of(context).textTheme.subtitle1,
-          ),
-        ),
-      );
-    }
 
     // Second, add the attachments
     if (isEmptyString(widget.message.text)) {

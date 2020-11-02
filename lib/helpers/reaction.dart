@@ -121,37 +121,55 @@ class Reaction {
   }
 
   Widget getSmallWidget(BuildContext context) {
-    List<Message> added = this.getUniqueReactions();
-    if (added.length == 0) return null;
-    bool hasMyReaction = this.hasMyReaction(messages: added);
+    if (this.messages.length == 0) return null;
+    
 
-    Color iconColor = Colors.white;
-    if (!hasMyReaction &&
-        Theme.of(context).accentColor.computeLuminance() >= 0.179) {
-      iconColor = Colors.black.withAlpha(95);
+    List<Widget> reactionList = [];
+
+    for (int i = 0; i < this.messages.length; i++) {
+      Color iconColor = Colors.white;
+      if (!this.messages[i].isFromMe && Theme.of(context).accentColor.computeLuminance() >= 0.179) {
+        iconColor = Colors.black.withAlpha(95);
+      }
+
+      reactionList.add(Padding(
+        padding: EdgeInsets.fromLTRB(
+          (this.messages[i].isFromMe ? 5.0 : 0.0) + i.toDouble() * 10.0,
+          1.0,
+          0,
+          0,
+        ),
+        child: Container(
+          height: 28,
+          width: 28,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(100),
+            color: this.messages[i].isFromMe ? Colors.blue : Theme.of(context).accentColor,
+            boxShadow: [
+              new BoxShadow(
+                blurRadius: 1.0,
+                color: Colors.black.withOpacity(0.8),
+              )
+            ],
+          ),
+          child: Padding(
+            padding:
+                const EdgeInsets.only(top: 8.0, left: 7.0, right: 7.0, bottom: 7.0),
+            child: SvgPicture.asset(
+              'assets/reactions/$reactionType-black.svg',
+              color: reactionType == "love" ? Colors.pink : iconColor,
+            ),
+          ),
+        ),
+      ));
     }
 
-    return Container(
-      height: 28,
-      width: 28,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(100),
-        color: hasMyReaction ? Colors.blue : Theme.of(context).accentColor,
-        boxShadow: [
-          new BoxShadow(
-            blurRadius: 1.0,
-            color: Colors.black.withOpacity(0.8),
-          )
-        ],
-      ),
-      child: Padding(
-        padding:
-            const EdgeInsets.only(top: 8.0, left: 7.0, right: 7.0, bottom: 7.0),
-        child: SvgPicture.asset(
-          'assets/reactions/$reactionType-black.svg',
-          color: reactionType == "love" ? Colors.pink : iconColor,
-        ),
-      ),
+    return Stack(
+      clipBehavior: Clip.hardEdge,
+      overflow: Overflow.clip,
+      fit: StackFit.passthrough,
+      alignment: Alignment.centerLeft,
+      children: reactionList,
     );
   }
 }
