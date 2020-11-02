@@ -4,7 +4,7 @@ import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/material.dart';
 
-class NewMessageAction {
+class NewMessageType {
   // ignore: non_constant_identifier_names
   static String ADD = "NEW";
   // ignore: non_constant_identifier_names
@@ -40,7 +40,7 @@ class NewMessageManager {
   void removeMessage(Chat chat, String guid) {
     _stream.sink.add({
       chat.guid: {
-        NewMessageAction.REMOVE: [
+        NewMessageType.REMOVE: [
           {"guid": guid}
         ]
       }
@@ -54,7 +54,7 @@ class NewMessageManager {
 
     _stream.sink.add({
       chat.guid: {
-        NewMessageAction.UPDATE: [
+        NewMessageType.UPDATE: [
           {"oldGuid": oldGuid, "message": message}
         ]
       }
@@ -69,7 +69,7 @@ class NewMessageManager {
 
     _stream.sink.add({
       chat.guid: {
-        NewMessageAction.ADD: [
+        NewMessageType.ADD: [
           {"message": message, "outgoing": outgoing, "chat": chat}
         ]
       }

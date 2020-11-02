@@ -1,4 +1,3 @@
-import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/sent_message.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
@@ -50,6 +49,7 @@ class _SendWidgetState extends State<SendWidget> {
       context,
       null,
       true,
+      false,
       false,
       customContent: Container(
         constraints: BoxConstraints(
@@ -117,6 +117,7 @@ class _SendWidgetState extends State<SendWidget> {
                           context,
                           null,
                           true,
+                          false,
                           false,
                           customContent: AnimatedBuilder(
                             animation: animation,

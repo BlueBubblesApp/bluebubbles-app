@@ -90,7 +90,7 @@ class _AttachmentFullscreenViewerState
                     onPressed: () {
                       new AttachmentDownloader(attachment);
                       content = AttachmentHelper.getContent(attachment);
-                      setState(() {});
+                      if (this.mounted) setState(() {});
                     },
                     placeHolder: placeHolder,
                   ),

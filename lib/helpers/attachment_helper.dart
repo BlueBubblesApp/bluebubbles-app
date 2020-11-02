@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:connectivity/connectivity.dart';
 
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -170,5 +171,21 @@ class AttachmentHelper {
       return Icons.note;
     }
     return Icons.open_in_new;
+  }
+
+  static Future<bool> canAutoDownload() async {
+    ConnectivityResult status = await (Connectivity().checkConnectivity());
+
+    // If auto-download is enabled
+    // and (only wifi download is disabled or
+    // only wifi download enabled, and we have wifi)
+    return (
+      SettingsManager().settings.autoDownload && (
+        !SettingsManager().settings.onlyWifiDownload || (
+          SettingsManager().settings.onlyWifiDownload &&
+          status == ConnectivityResult.wifi
+        )
+      )
+    );
   }
 }

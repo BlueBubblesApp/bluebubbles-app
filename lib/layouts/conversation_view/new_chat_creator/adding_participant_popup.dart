@@ -29,7 +29,8 @@ class _AddingParticipantPopupState extends State<AddingParticipantPopup> {
   void recursiveAddParticipants(int i) {
     index = i;
     title = "Adding participant ${widget.contacts[i].displayName}";
-    setState(() {});
+    if (this.mounted) setState(() {});
+
     Map<String, dynamic> params = {};
     params["identifier"] = widget.chat.guid;
     params["address"] = cleansePhoneNumber(widget.contacts[i].address);

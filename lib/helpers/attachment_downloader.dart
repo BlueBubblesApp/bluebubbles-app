@@ -5,7 +5,7 @@ import 'dart:io';
 
 import 'dart:typed_data';
 
-import 'package:bluebubbles/managers/life_cycle_manager.dart';
+import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
@@ -29,17 +29,19 @@ class AttachmentDownloader {
   bool _createNotification;
   int _socketProcessId;
   Function _onComplete;
+  Function _onError;
 
   double get progress => (_currentChunk) / _totalChunks;
   Attachment get attachment => _attachment;
 
   AttachmentDownloader(Attachment attachment,
-      {bool createNotification = false, Function onComplete}) {
+      {bool createNotification = false, Function onComplete, Function onError}) {
     // Set default chunk size based on the current settings
     _chunkSize = SettingsManager().settings.chunkSize * 1024;
     _attachment = attachment;
     _createNotification = createNotification;
     _onComplete = onComplete;
+    _onError = onError;
 
     String appDocPath = SettingsManager().appDocDir.path;
     String pathName =
@@ -65,6 +67,7 @@ class AttachmentDownloader {
         (attachmentResponse) async {
       if (attachmentResponse['status'] != 200) {
         cb(null);
+        _onError(attachmentResponse);
         return;
       }
       if (!attachmentResponse.containsKey("data") ||
@@ -173,7 +176,10 @@ class AttachmentDownloader {
       _stream.close();
     };
 
-    SocketManager().addAttachmentDownloader(attachment.guid, this);
+    // Only donwload if auto download is on or the wifi stars align
+    if ((await AttachmentHelper.canAutoDownload())) {
+      SocketManager().addAttachmentDownloader(attachment.guid, this);
+    }
 
     getChunkRecursive(attachment.guid, 0, numOfChunks, [], _cb);
   }

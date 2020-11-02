@@ -132,6 +132,8 @@ class _ImageWidgetState extends State<ImageWidget>
               color: Colors.transparent,
               child: InkWell(
                 onTap: () async {
+                  if (!this.mounted) return;
+
                   setState(() {
                     navigated = true;
                   });

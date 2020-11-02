@@ -69,7 +69,7 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
     }
     _focusNode = new FocusNode();
     _focusNode.addListener(() {
-      if (_focusNode.hasFocus) {
+      if (_focusNode.hasFocus && this.mounted) {
         showImagePicker = false;
         setState(() {});
       }
@@ -154,11 +154,11 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
     if (!showImagePicker) FocusScope.of(context).requestFocus(new FocusNode());
     if (!showImagePicker && !(await PhotoManager.requestPermission())) {
       showImagePicker = false;
-      setState(() {});
+      if (this.mounted) setState(() {});
       return;
     }
     showImagePicker = !showImagePicker;
-    setState(() {});
+    if (this.mounted) setState(() {});
   }
 
   Future<File> _downloadFile(String url, String filename) async {
@@ -196,7 +196,7 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                   onRemove: (File attachment) {
                     pickedImages.removeWhere(
                         (element) => element.path == attachment.path);
-                    setState(() {});
+                    if (this.mounted) setState(() {});
                   },
                 ),
                 Row(
@@ -261,7 +261,7 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                                       url, fnParts.join("_"));
                                   pickedImages.add(file);
                                   updateTextFieldAttachments();
-                                  setState(() {});
+                                  if (this.mounted) setState(() {});
                                 },
                                 textCapitalization:
                                     TextCapitalization.sentences,
@@ -316,9 +316,12 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                                       HapticFeedback.heavyImpact();
                                       Recording recording =
                                           await AudioRecorder.stop();
-                                      setState(() {
-                                        isRecording = false;
-                                      });
+                                      if (this.mounted) {
+                                        setState(() {
+                                          isRecording = false;
+                                        });
+                                      }
+
                                       reviewAudio(
                                           context, new File(recording.path));
                                     } else if (canRecord &&
@@ -337,9 +340,11 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                                           path: pathName,
                                           audioOutputFormat:
                                               AudioOutputFormat.AAC);
-                                      setState(() {
-                                        isRecording = true;
-                                      });
+                                      if (this.mounted) {
+                                        setState(() {
+                                          isRecording = true;
+                                        });
+                                      }
                                     } else if (widget.customSend != null) {
                                       widget.customSend(
                                           pickedImages, _controller.text);
@@ -370,7 +375,7 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                                     _controller.text = "";
                                     pickedImages = <File>[];
                                     updateTextFieldAttachments();
-                                    setState(() {});
+                                    if (this.mounted) setState(() {});
                                   },
                                   child: Stack(
                                     alignment: Alignment.center,
@@ -422,7 +427,7 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                     }
                     pickedImages.add(file);
                     updateTextFieldAttachments();
-                    setState(() {});
+                    if (this.mounted) setState(() {});
                   },
                   chat: widget.chat,
                 ),

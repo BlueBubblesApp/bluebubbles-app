@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:bluebubbles/layouts/settings/settings_panel.dart';
 import 'package:bluebubbles/layouts/setup/qr_code_scanner.dart';
 import 'package:bluebubbles/layouts/setup/welcome_page.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
@@ -22,6 +23,8 @@ class _SetupViewState extends State<SetupView> {
   final controller = PageController(initialPage: 0);
   int currentPage = 1;
   Settings _settingsCopy;
+  double numberOfMessages = 25;
+  bool downloadAttachments = false;
 
   @override
   void initState() {
@@ -37,7 +40,7 @@ class _SetupViewState extends State<SetupView> {
         PageView(
           onPageChanged: (int page) {
             currentPage = page + 1;
-            setState(() {});
+            if (this.mounted) setState(() {});
           },
           physics: AlwaysScrollableScrollPhysics(
             parent: CustomBouncingScrollPhysics(),
@@ -411,6 +414,67 @@ class _SetupViewState extends State<SetupView> {
                 textAlign: TextAlign.center,
               ),
             ),
+            Container(height: 50.0),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20.0),
+              child: Text(
+                "Number of Messages to Sync Per Chat: $numberOfMessages",
+                style: Theme.of(context)
+                    .textTheme
+                    .bodyText1
+                    .apply(fontSizeFactor: 1.0),
+                textAlign: TextAlign.center,
+              ),
+            ),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20.0),
+              child: Slider(
+                value: numberOfMessages,
+                onChanged: (double value) {
+                  if (!this.mounted) return;
+
+                  setState(() {
+                    numberOfMessages = value;
+                  });
+                },
+                label: numberOfMessages.toString(),
+                divisions: 9,
+                min: 25,
+                max: 250,
+              ),
+            ),
+            Container(height: 20.0),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 40.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                mainAxisSize: MainAxisSize.max,
+                children: [
+                  Text(
+                    "Auto-download Attachments (long sync)",
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodyText1
+                        .apply(fontSizeFactor: 1.0),
+                    textAlign: TextAlign.center,
+                  ),
+                  Switch(
+                    value: downloadAttachments,
+                    activeColor: Theme.of(context).primaryColor,
+                    activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
+                    inactiveTrackColor: Theme.of(context).primaryColor.withAlpha(75),
+                    inactiveThumbColor: Theme.of(context).textTheme.bodyText1.color,
+                    onChanged: (bool value) {
+                      if (!this.mounted) return;
+
+                      setState(() {
+                        downloadAttachments = value;
+                      });
+                    }
+                  )
+                ]
+              )
+            ),
             Container(height: 20.0),
             ClipOval(
                 child: Material(
@@ -427,6 +491,11 @@ class _SetupViewState extends State<SetupView> {
                                 duration: Duration(milliseconds: 3),
                                 curve: Curves.easeInOut);
                           } else {
+                            // Set the number of messages to sync
+                            SocketManager().setup.numberOfMessagesPerPage = numberOfMessages;
+                            SocketManager().setup.downloadAttachments = downloadAttachments;
+
+                            // Start syncing
                             SocketManager().setup.startSync(_settingsCopy, () {
                               showDialog(
                                 context: context,

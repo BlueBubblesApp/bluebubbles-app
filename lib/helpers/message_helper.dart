@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'dart:math';
 
+import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
@@ -10,6 +12,12 @@ import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:contacts_service/contacts_service.dart';
+
+class EmojiConst {
+  static final String charNonSpacingMark = String.fromCharCode(0xfe0f);
+  static final String charColon = ':';
+  static final String charEmpty = '';
+}
 
 class MessageHelper {
   static Future<List<Message>> bulkAddMessages(
@@ -73,6 +81,60 @@ class MessageHelper {
 
     // Return all the synced messages
     return _messages;
+  }
+
+  static Future<void> bulkDownloadAttachments(
+      Chat chat, List<dynamic> messages) async {
+
+    // Create master list for all the messages and a chat cache
+    Map<String, Chat> chats = <String, Chat>{};
+
+    // Add the chat in the cache and save it if it hasn't been saved yet
+    if (chat != null) {
+      chats[chat.guid] = chat;
+      if (chat.id == null) {
+        await chat.save();
+      }
+    }
+
+    // Iterate over each message to parse it
+    for (dynamic item in messages) {
+      // Pull the chats out of the message, if there isnt a default
+      Chat msgChat = chat;
+      if (msgChat == null) {
+        List<Chat> msgChats = parseChats(item);
+        msgChat = msgChats.length > 0 ? msgChats[0] : null;
+
+        // If there is a cached chat, get it. Otherwise, save the new one
+        if (msgChat != null && chats.containsKey(msgChat.guid)) {
+          msgChat = chats[msgChat.guid];
+        } else if (msgChat != null) {
+          await msgChat.save();
+          chats[msgChat.guid] = msgChat;
+        }
+      }
+
+      // If we can't get a chat from the data, skip the message
+      if (msgChat == null) continue;
+
+      // Create the attachments
+      List<dynamic> attachments = item['attachments'];
+      for (dynamic attachmentItem in attachments) {
+        Attachment file = Attachment.fromMap(attachmentItem);
+        await MessageHelper.downloadAttachmentSync(file);
+      }
+    }
+  }
+
+  static Future<void> downloadAttachmentSync(Attachment file) {
+    Completer<void> completer = new Completer();
+    new AttachmentDownloader(file, onComplete: () {
+      completer.complete();
+    }, onError: () {
+      completer.completeError(new Error());
+    });
+
+    return completer.future;
   }
 
   static List<Chat> parseChats(Map<String, dynamic> data) {
@@ -160,6 +222,8 @@ class MessageHelper {
           key = "contact";
         } else if (mime.contains("video")) {
           key = "movie";
+        } else if (mime.contains("image/gif")) {
+          key = "GIF";
         } else {
           key = mime.split("/").first;
         }
@@ -194,5 +258,25 @@ class MessageHelper {
       // It's all other message types
       return message.text;
     }
+  }
+
+  static bool shouldShowBigEmoji(String text) {
+    RegExp pattern = new RegExp(r'(\u00a9|\u00ae|[\u2000-\u3300]|\ud83c[\ud000-\udfff]|\ud83d[\ud000-\udfff]|\ud83e[\ud000-\udfff])');
+    List<RegExpMatch> matches = pattern.allMatches(text).toList();
+    List<String> items = matches.map((item) => item.group(0)).toList();
+    items = items
+      .map((item) => item.replaceAll(String.fromCharCode(8205), ""))
+      .map((item) => item.replaceAll(String.fromCharCode(55356), ""))
+      .map((item) => item.replaceAll(String.fromCharCode(9794), ""))
+      .map((item) => item.replaceAll(String.fromCharCode(57282), ""))
+      .map((item) => item.replaceAll(String.fromCharCode(57341), ""))
+      .where((item) => item.isNotEmpty).toList();
+
+    String replaced = text
+      .replaceAll(pattern, "")
+      .replaceAll(String.fromCharCode(65039), "")
+      .trim();
+
+    return items.length <= 3 && replaced.isEmpty;
   }
 }
