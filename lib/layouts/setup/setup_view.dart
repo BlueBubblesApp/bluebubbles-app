@@ -43,9 +43,7 @@ class _SetupViewState extends State<SetupView> {
             currentPage = page + 1;
             if (this.mounted) setState(() {});
           },
-          physics: AlwaysScrollableScrollPhysics(
-            parent: CustomBouncingScrollPhysics(),
-          ),
+          physics: NeverScrollableScrollPhysics(),
           controller: controller,
           children: <Widget>[
             WelcomePage(

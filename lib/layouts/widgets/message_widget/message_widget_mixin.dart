@@ -51,9 +51,13 @@ abstract class MessageWidgetMixin {
 
   /// Adds reacts to a [message] widget
   Widget addReactionsToWidget(
-      {@required Widget message, @required Widget reactions, @required bool isFromMe}) {
+      {@required Widget message,
+      @required Widget reactions,
+      @required bool isFromMe}) {
     return Stack(
-      alignment: isFromMe ? AlignmentDirectional.topStart : AlignmentDirectional.topEnd,
+      alignment: isFromMe
+          ? AlignmentDirectional.topStart
+          : AlignmentDirectional.topEnd,
       children: [
         message,
         reactions,
@@ -63,9 +67,13 @@ abstract class MessageWidgetMixin {
 
   /// Adds reacts to a [message] widget
   Widget addStickersToWidget(
-      {@required Widget message, @required Widget stickers, @required bool isFromMe}) {
+      {@required Widget message,
+      @required Widget stickers,
+      @required bool isFromMe}) {
     return Stack(
-      alignment: (isFromMe) ? AlignmentDirectional.bottomEnd : AlignmentDirectional.bottomStart,
+      alignment: (isFromMe)
+          ? AlignmentDirectional.bottomEnd
+          : AlignmentDirectional.bottomStart,
       children: [
         message,
         stickers,
@@ -91,13 +99,27 @@ abstract class MessageWidgetMixin {
         for (int i = 0; i < linkIndexMatches.length + 1; i++) {
           if (i == 0) {
             textSpans.add(
-              TextSpan(text: message.text.substring(0, linkIndexMatches[i])),
+              TextSpan(
+                text: message.text.substring(0, linkIndexMatches[i]),
+                style: message.isFromMe
+                    ? Theme.of(context)
+                        .textTheme
+                        .bodyText1
+                        .apply(color: Colors.white)
+                    : null,
+              ),
             );
           } else if (i == linkIndexMatches.length && i - 1 >= 0) {
             textSpans.add(
               TextSpan(
                 text: message.text
                     .substring(linkIndexMatches[i - 1], message.text.length),
+                style: message.isFromMe
+                    ? Theme.of(context)
+                        .textTheme
+                        .bodyText1
+                        .apply(color: Colors.white)
+                    : null,
               ),
             );
           } else if (i - 1 >= 0) {
@@ -121,6 +143,7 @@ abstract class MessageWidgetMixin {
                     },
                   style: Theme.of(context).textTheme.bodyText1.apply(
                         decoration: TextDecoration.underline,
+                        color: message.isFromMe ? Colors.white : null,
                       ),
                 ),
               );
@@ -128,6 +151,12 @@ abstract class MessageWidgetMixin {
               textSpans.add(
                 TextSpan(
                   text: text,
+                  style: message.isFromMe
+                      ? Theme.of(context)
+                          .textTheme
+                          .bodyText1
+                          .apply(color: Colors.white)
+                      : null,
                 ),
               );
             }
@@ -137,6 +166,12 @@ abstract class MessageWidgetMixin {
         textSpans.add(
           TextSpan(
             text: message.text,
+            style: message.isFromMe
+                ? Theme.of(context)
+                    .textTheme
+                    .bodyText1
+                    .apply(color: Colors.white)
+                : null,
           ),
         );
       }

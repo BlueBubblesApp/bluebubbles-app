@@ -28,12 +28,12 @@ class SentMessageHelper {
     Widget msg;
     if (bigEmoji) {
       msg = Padding(
-          padding: EdgeInsets.only(right: 5),
-          child: Text(message.text,
-              style: Theme.of(context)
-                  .textTheme
-                  .bodyText1
-                  .apply(fontSizeFactor: 4)));
+        padding: EdgeInsets.only(right: 5),
+        child: Text(
+          message.text,
+          style: Theme.of(context).textTheme.bodyText1.apply(fontSizeFactor: 4),
+        ),
+      );
     } else {
       msg = Stack(
         alignment: AlignmentDirectional.bottomEnd,
@@ -67,7 +67,10 @@ class SentMessageHelper {
                     text: TextSpan(
                       children: MessageWidgetMixin.buildMessageSpans(
                           context, message),
-                      style: Theme.of(context).textTheme.bodyText1,
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodyText1
+                          .apply(color: Colors.white),
                     ),
                   )
                 : customContent,

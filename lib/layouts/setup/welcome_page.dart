@@ -77,7 +77,7 @@ class _WelcomePageState extends State<WelcomePage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: HexColor('26262a'),
+      backgroundColor: Theme.of(context).accentColor,
       body: Padding(
         padding: const EdgeInsets.symmetric(vertical: 80.0, horizontal: 24.0),
         child: Stack(
@@ -86,11 +86,12 @@ class _WelcomePageState extends State<WelcomePage>
               position: titleOffset,
               child: FadeTransition(
                 opacity: opacityTitle,
-                child: Text("Welcome to BlueBubbles",
-                    style: Theme.of(context)
-                        .textTheme
-                        .headline1
-                        .apply(fontSizeDelta: 7, color: Colors.white)),
+                child: Text(
+                  "Welcome to BlueBubbles",
+                  style: Theme.of(context).textTheme.headline1.apply(
+                        fontSizeDelta: 7,
+                      ),
+                ),
               ),
             ),
             SlideTransition(
