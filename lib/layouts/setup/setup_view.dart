@@ -311,9 +311,13 @@ class _SetupViewState extends State<SetupView> {
                   color: Colors.blue, // button color
                   child: InkWell(
                     child: SizedBox(
-                        width: 60,
-                        height: 60,
-                        child: Icon(Icons.input, color: Colors.white)),
+                      width: 60,
+                      height: 60,
+                      child: Icon(
+                        Icons.input,
+                        color: Colors.white,
+                      ),
+                    ),
                     onTap: () async {
                       showDialog(
                         context: context,

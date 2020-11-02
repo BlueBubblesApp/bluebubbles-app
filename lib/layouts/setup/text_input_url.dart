@@ -74,7 +74,6 @@ class _TextInputURLState extends State<TextInputURL> {
 
   void retreiveFCMData() {
     SocketManager().sendMessage("get-fcm-client", {}, (_data) {
-      // {project_info: {project_number: 975002594316, firebase_url: https://bluebubblesapp-e9218.firebaseio.com, project_id: bluebubblesapp-e9218, storage_bucket: bluebubblesapp-e9218.appspot.com}, client: [{client_info: {mobilesdk_app_id: 1:975002594316:android:1aefa8b34662ba64e21229, android_client_info: {package_name: com.bricktheworld.bluebubbles}}, oauth_client: [{client_id: 975002594316-qa60kepjtvl31068lf5teiiuo87sgr9o.apps.googleusercontent.com, client_type: 3}], api_key: [{current_key: AIzaSyDbaTf2ynb09WyaKNuZnyHDtqrvyCxaq9s}], services: {appinvite_service: {other_platform_oauth_client: [{client_id: 975002594316-qa60kepjtvl31068lf5teiiuo87sgr9o.apps.googleusercontent.com, client_type: 3}]}}}], configuration_version: 1}
       if (_data["status"] != 200) {
         widget.onError();
         return;

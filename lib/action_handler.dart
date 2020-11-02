@@ -415,6 +415,7 @@ class ActionHandler {
           chat = chats[i];
         }
 
+        await chat.getParticipants();
         // Handle the notification based on the message and chat
         await MessageHelper.handleNotification(message, chat);
 
