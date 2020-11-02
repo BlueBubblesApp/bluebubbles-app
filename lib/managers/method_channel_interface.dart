@@ -148,19 +148,9 @@ class MethodChannelInterface {
         debugPrint("shareAttachments " + sharedFilesPath);
 
         // Loop through all of the attachments sent by native code
-        call.arguments.forEach((key, element) {
-          // Create the sharedFilesPath if it hasn't been already created
-          Directory(sharedFilesPath).createSync();
-
-          // Create a new path for each file
-          // [key] is the file name
-          String pathName = "$sharedFilesPath/$key";
-
-          // Create the file in that directory
-          File file = File(pathName);
-
-          // Write all of the bytes to that file
-          file.writeAsBytesSync(element.toList());
+        call.arguments.forEach((element) {
+          // Get the file in that directory
+          File file = File(element);
 
           // Add each file to the attachment list
           attachments.add(file);
