@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
 import 'package:bluebubbles/layouts/setup/qr_code_scanner.dart';
+import 'package:bluebubbles/layouts/setup/text_input_url.dart';
 import 'package:bluebubbles/layouts/setup/welcome_page.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
@@ -230,7 +231,8 @@ class _SetupViewState extends State<SetupView> {
                                 Container(
                                   child: CircularProgressIndicator(
                                     valueColor: AlwaysStoppedAnimation<Color>(
-                                        Colors.blue),
+                                      Colors.blue,
+                                    ),
                                   ),
                                 ),
                               ],
@@ -294,88 +296,60 @@ class _SetupViewState extends State<SetupView> {
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 20.0),
               child: Text(
-                "Or alternatively... you can enter in your ngrok url here: ",
+                "Or alternatively... you can enter in your url here",
                 style: Theme.of(context)
                     .textTheme
                     .bodyText1
-                    .apply(fontSizeFactor: 1.25),
+                    .apply(fontSizeFactor: 1.15),
                 textAlign: TextAlign.center,
               ),
             ),
             Padding(
               padding: EdgeInsets.only(top: 15.0),
-              child: Row(
-                mainAxisSize: MainAxisSize.max,
-                children: [
-                  Spacer(
-                    flex: 3,
-                  ),
-                  Text("https://"),
-                  Flexible(
-                    child: CupertinoTextField(
-                      controller: textController,
-                      maxLength: 10,
-                      maxLengthEnforced: false,
-                      maxLines: 1,
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).backgroundColor,
-                        borderRadius: BorderRadius.circular(7),
-                      ),
-                      style: Theme.of(context).textTheme.bodyText1,
-                    ),
-                    flex: 4,
-                  ),
-                  Text(".ngrok.io"),
-                  Flexible(
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 16.0),
-                      child: FlatButton(
-                        child: Icon(
-                          Icons.arrow_forward,
-                          color: Theme.of(context).textTheme.bodyText1.color,
-                        ),
-                        color: Colors.blue,
-                        onPressed: () {
-                          showDialog(
-                            context: context,
-                            barrierDismissible: false,
-                            builder: (context) => AlertDialog(
-                              title: Text(
-                                "Connecting",
-                                style: Theme.of(context).textTheme.bodyText1,
-                              ),
-                              backgroundColor:
-                                  Theme.of(context).backgroundColor,
-                              content: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: <Widget>[
-                                  Container(
-                                    child: CircularProgressIndicator(
-                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                        Colors.blue,
-                                      ),
-                                    ),
-                                  ),
+              child: ClipOval(
+                child: Material(
+                  color: Colors.blue, // button color
+                  child: InkWell(
+                    child: SizedBox(
+                        width: 60,
+                        height: 60,
+                        child: Icon(Icons.input, color: Colors.white)),
+                    onTap: () async {
+                      showDialog(
+                        context: context,
+                        builder: (context) => TextInputURL(
+                          onError: () {
+                            showDialog(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                title:
+                                    Text("An error occured trying to connect"),
+                                actions: [
+                                  FlatButton(
+                                    child: Text("OK"),
+                                    onPressed: () {
+                                      Navigator.of(context).pop();
+                                    },
+                                  )
                                 ],
                               ),
-                            ),
-                          );
-                          if (SocketManager().state == SocketState.CONNECTED) {
+                            );
+                          },
+                          onConnect: () {
                             Navigator.of(context).pop();
                             controller.nextPage(
                               duration: Duration(milliseconds: 300),
                               curve: Curves.easeInOut,
                             );
-                          }
-
-                          SocketManager().startSocketIO();
-                        },
-                      ),
-                    ),
-                    flex: 3,
+                          },
+                          onClose: () {
+                            Navigator.of(context).pop();
+                          },
+                        ),
+                      );
+                    },
                   ),
-                ],
+                ),
               ),
             )
           ],
@@ -461,75 +435,92 @@ class _SetupViewState extends State<SetupView> {
                   Switch(
                     value: downloadAttachments,
                     activeColor: Theme.of(context).primaryColor,
-                    activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
-                    inactiveTrackColor: Theme.of(context).primaryColor.withAlpha(75),
-                    inactiveThumbColor: Theme.of(context).textTheme.bodyText1.color,
+                    activeTrackColor:
+                        Theme.of(context).primaryColor.withAlpha(200),
+                    inactiveTrackColor:
+                        Theme.of(context).primaryColor.withAlpha(75),
+                    inactiveThumbColor:
+                        Theme.of(context).textTheme.bodyText1.color,
                     onChanged: (bool value) {
                       if (!this.mounted) return;
 
                       setState(() {
                         downloadAttachments = value;
                       });
-                    }
+                    },
                   )
-                ]
-              )
+                ],
+              ),
             ),
             Container(height: 20.0),
             ClipOval(
-                child: Material(
-                    color: Colors.green.withAlpha(200), // button color
-                    child: InkWell(
-                        child: SizedBox(
-                            width: 60,
-                            height: 60,
-                            child: Icon(Icons.cloud_download,
-                                color: Colors.white)),
-                        onTap: () async {
-                          if (_settingsCopy == null) {
-                            controller.animateToPage(3,
-                                duration: Duration(milliseconds: 3),
-                                curve: Curves.easeInOut);
-                          } else {
-                            // Set the number of messages to sync
-                            SocketManager().setup.numberOfMessagesPerPage = numberOfMessages;
-                            SocketManager().setup.downloadAttachments = downloadAttachments;
+              child: Material(
+                color: Colors.green.withAlpha(200), // button color
+                child: InkWell(
+                  child: SizedBox(
+                    width: 60,
+                    height: 60,
+                    child: Icon(
+                      Icons.cloud_download,
+                      color: Colors.white,
+                    ),
+                  ),
+                  onTap: () async {
+                    if (_settingsCopy == null) {
+                      controller.animateToPage(
+                        3,
+                        duration: Duration(milliseconds: 3),
+                        curve: Curves.easeInOut,
+                      );
+                    } else {
+                      // Set the number of messages to sync
+                      SocketManager().setup.numberOfMessagesPerPage =
+                          numberOfMessages;
+                      SocketManager().setup.downloadAttachments =
+                          downloadAttachments;
 
-                            // Start syncing
-                            SocketManager().setup.startSync(_settingsCopy, () {
-                              showDialog(
-                                context: context,
-                                builder: (context) => AlertDialog(
-                                  backgroundColor:
-                                      Theme.of(context).backgroundColor,
-                                  title: Text(
-                                    "The socket connection failed, please check the server",
-                                    style:
-                                        Theme.of(context).textTheme.bodyText1,
-                                  ),
-                                  actions: <Widget>[
-                                    FlatButton(
-                                      child: Text("Ok",
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .bodyText1),
-                                      onPressed: () {
-                                        Navigator.of(context).pop();
-                                      },
-                                    )
-                                  ],
-                                ),
-                              );
-                              controller.animateToPage(3,
-                                  duration: Duration(milliseconds: 500),
-                                  curve: Curves.easeInOut);
-                            });
-                            controller.nextPage(
-                              duration: Duration(milliseconds: 300),
-                              curve: Curves.easeInOut,
-                            );
-                          }
-                        })))
+                      // Start syncing
+                      SocketManager().setup.startSync(
+                        _settingsCopy,
+                        () {
+                          showDialog(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              backgroundColor:
+                                  Theme.of(context).backgroundColor,
+                              title: Text(
+                                "The socket connection failed, please check the server",
+                                style: Theme.of(context).textTheme.bodyText1,
+                              ),
+                              actions: <Widget>[
+                                FlatButton(
+                                  child: Text("Ok",
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyText1),
+                                  onPressed: () {
+                                    Navigator.of(context).pop();
+                                  },
+                                )
+                              ],
+                            ),
+                          );
+                          controller.animateToPage(
+                            3,
+                            duration: Duration(milliseconds: 500),
+                            curve: Curves.easeInOut,
+                          );
+                        },
+                      );
+                      controller.nextPage(
+                        duration: Duration(milliseconds: 300),
+                        curve: Curves.easeInOut,
+                      );
+                    }
+                  },
+                ),
+              ),
+            ),
           ],
         ),
       ),

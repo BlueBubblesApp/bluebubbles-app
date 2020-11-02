@@ -41,7 +41,7 @@ class _MessageViewState extends State<MessageView>
     super.initState();
     widget.messageBloc.stream.listen(handleNewMessage);
     CurrentChat().init(widget.messageBloc.currentChat);
-    CurrentChat().updateAllAttachments().then((value) {
+    CurrentChat().updateChatAttachments().then((value) {
       if (this.mounted) setState(() {});
     });
     CurrentChat().stream.listen((event) {
@@ -103,7 +103,7 @@ class _MessageViewState extends State<MessageView>
         );
       }
       if (event.message.hasAttachments) {
-        await CurrentChat().updateAllAttachments();
+        await CurrentChat().updateChatAttachments();
         if (this.mounted) setState(() {});
       }
     } else if (event.type == MessageBlocEventType.update) {

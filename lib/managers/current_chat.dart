@@ -68,7 +68,7 @@ class CurrentChat {
   }
 
   /// Retreive all of the attachments associated with a chat
-  Future<void> updateAllAttachments() async {
+  Future<void> updateChatAttachments() async {
     chatAttachments = await Chat.getAttachments(chat);
   }
 

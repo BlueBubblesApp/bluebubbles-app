@@ -200,6 +200,7 @@ class ActionHandler {
   /// ```
   static Future<void> resyncChat(Chat chat, MessageBloc messageBloc) async {
     final Database db = await DBProvider.db.database;
+    await chat.save();
 
     // Fetch messages associated with the chat
     var items = await db.rawQuery(
@@ -290,7 +291,8 @@ class ActionHandler {
   /// ```dart
   /// handleChatStatusChange(chatGuid, status)
   /// ```
-  static Future<void> handleChatStatusChange(String chatGuid, bool status) async {
+  static Future<void> handleChatStatusChange(
+      String chatGuid, bool status) async {
     if (chatGuid == null) return;
 
     Chat chat = await Chat.findOne({"guid": chatGuid});

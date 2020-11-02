@@ -173,43 +173,47 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                                 "Are you sure you want to resync this chat? All messages/attachments will be removed and the last 25 messages will be pre-loaded."),
                             actions: <Widget>[
                               new FlatButton(
-                                  child: new Text("Yes, I'm sure!"),
-                                  onPressed: () {
-                                    // Remove the OG alert dialog
-                                    Navigator.of(context).pop();
-
-                                    // Show the next dialog
-                                    showDialog(
-                                        context: context,
-                                        builder: (BuildContext context) {
-                                          // Resync the chat, then return to the first page
-                                          ActionHandler.resyncChat(
-                                                  chat, widget.messageBloc)
-                                              .then((value) {
-                                            Navigator.of(context).popUntil(
-                                                (Route<dynamic> route) {
-                                              return route.isFirst;
-                                            });
-                                          });
-
-                                          // Show a loading dialog
-                                          return AlertDialog(
-                                              title:
-                                                  new Text("Resyncing Chat..."),
-                                              content: Container(
-                                                  alignment: Alignment.center,
-                                                  height: 100,
-                                                  width: 100,
-                                                  child: new Container(
-                                                      child:
-                                                          CircularProgressIndicator())));
+                                child: new Text("Yes, I'm sure!"),
+                                onPressed: () async {
+                                  // Remove the OG alert dialog
+                                  Navigator.of(context).pop();
+                                  // Show the next dialog
+                                  showDialog(
+                                    context: context,
+                                    barrierDismissible: false,
+                                    builder: (BuildContext context) {
+                                      // Resync the chat, then return to the first page
+                                      ActionHandler.resyncChat(
+                                              chat, widget.messageBloc)
+                                          .then((value) {
+                                        Navigator.of(context)
+                                            .popUntil((Route<dynamic> route) {
+                                          return route.isFirst;
                                         });
-                                  }),
+                                      });
+
+                                      // Show a loading dialog
+                                      return AlertDialog(
+                                        title: new Text("Resyncing Chat..."),
+                                        content: Container(
+                                          alignment: Alignment.center,
+                                          height: 100,
+                                          width: 100,
+                                          child: new Container(
+                                            child: CircularProgressIndicator(),
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  );
+                                },
+                              ),
                               new FlatButton(
-                                  child: new Text("Cancel"),
-                                  onPressed: () {
-                                    Navigator.of(context).pop();
-                                  })
+                                child: new Text("Cancel"),
+                                onPressed: () {
+                                  Navigator.of(context).pop();
+                                },
+                              )
                             ]);
                       });
                 },
