@@ -97,7 +97,7 @@ class _ReceivedMessageState extends State<ReceivedMessage>
         if (widget.showTail) MessageTail(isFromMe: false),
         Container(
           margin: EdgeInsets.only(
-            top: widget.hasReactions ? 12 : 0,
+            top: widget.hasReactions ? 18 : 0,
             left: 10,
             right: 10,
           ),

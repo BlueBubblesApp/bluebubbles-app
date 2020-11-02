@@ -45,7 +45,7 @@ class SentMessageHelper {
             ),
           Container(
             margin: EdgeInsets.only(
-              top: hasReactions ? 12 : 0,
+              top: hasReactions ? 18 : 0,
               left: 10,
               right: 10,
             ),
