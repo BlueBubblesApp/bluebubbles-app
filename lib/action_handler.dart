@@ -67,7 +67,6 @@ class ActionHandler {
     if (shouldSplit) {
       messages.add(Message(
         guid: "temp-${randomString(8)}",
-        hasDdResults: true,
         text: text.substring(linkMatch.start, linkMatch.end),
         dateCreated: DateTime.now(),
         hasAttachments: false,
@@ -368,7 +367,8 @@ class ActionHandler {
   /// ```
   static Future<void> handleMessage(Map<String, dynamic> data,
       {bool createAttachmentNotification = false,
-      bool isHeadless = false}) async {
+      bool isHeadless = false,
+      bool forceProcess = false}) async {
     Message message = Message.fromMap(data);
     List<Chat> chats = MessageHelper.parseChats(data);
 
@@ -398,11 +398,13 @@ class ActionHandler {
         }
         debugPrint(
             "(Message status) -> Message match: [${data["text"]}] - ${data["guid"]} - ${data["tempGuid"]}");
+
         if (!isHeadless)
           NewMessageManager()
               .updateMessage(chats.first, data['tempGuid'], message);
       }
-    } else if (!NotificationManager().hasProcessed(data["guid"])) {
+    } else if (forceProcess ||
+        !NotificationManager().hasProcessed(data["guid"])) {
       // Add the message to the chats
       for (int i = 0; i < chats.length; i++) {
         debugPrint("Client received new message " + chats[i].guid);

@@ -5,6 +5,7 @@ import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/material.dart';
+import 'package:metadata_fetch/metadata_fetch.dart';
 import 'package:video_player/video_player.dart';
 
 /// Holds cached metadata for the currently opened chat
@@ -26,6 +27,7 @@ class CurrentChat {
   Chat chat;
 
   Map<String, SavedAttachmentData> attachments;
+  Map<String, Metadata> urlPreviews;
   Map<String, VideoPlayerController> currentPlayingVideo;
   List<VideoPlayerController> controllersToDispose;
   List<Attachment> chatAttachments;
@@ -42,6 +44,7 @@ class CurrentChat {
     this.chat = chat;
     attachments = {};
     currentPlayingVideo = {};
+    urlPreviews = {};
     controllersToDispose = [];
     chatAttachments = [];
     sentMessages = [];
@@ -64,6 +67,7 @@ class CurrentChat {
     if (attachments.containsKey(message.guid)) {
       return attachments[message.guid];
     }
+
     return null;
   }
 

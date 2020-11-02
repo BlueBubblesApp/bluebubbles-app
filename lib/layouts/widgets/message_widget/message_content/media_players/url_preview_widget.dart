@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_attachments.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -28,34 +28,24 @@ class UrlPreviewWidget extends StatefulWidget {
 }
 
 class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
-    with AutomaticKeepAliveClientMixin, TickerProviderStateMixin {
+    with TickerProviderStateMixin {
   Metadata data;
   String url;
-  bool isLoading = true;
+  bool isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    print(widget.message.text);
-    print(widget.message.hasAttachments);
-    SavedAttachmentData savedAttachmentData =
-        CurrentChat().getSavedAttachmentData(widget.message);
-    if (savedAttachmentData?.urlMetaData != null)
-      data =
-          savedAttachmentData.urlMetaData[widget.message.guid + "-url-preview"];
+    fetchPreview();
   }
 
-  bool attachmentSaved(Attachment attachment) {
-    String appDocPath = SettingsManager().appDocDir.path;
-    String pathName =
-        "$appDocPath/attachments/${attachment.guid}/${attachment.transferName}";
-    if (FileSystemEntity.typeSync(pathName) == FileSystemEntityType.notFound) {
-      return false;
-    } else {
-      return true;
-    }
+  @override
+  void didChangeDependencies() async {
+    super.didChangeDependencies();
+    fetchPreview();
   }
 
+  /// Returns a File object representing the [attachment]
   File attachmentFile(Attachment attachment) {
     String appDocPath = SettingsManager().appDocDir.path;
     String pathName =
@@ -63,6 +53,7 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
     return File(pathName);
   }
 
+  /// Manually tries to parse out metadata from a given [url]
   Future<Metadata> manuallyGetMetadata(String url) async {
     Metadata meta = new Metadata();
 
@@ -85,73 +76,80 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
     return meta;
   }
 
-  @override
-  void didChangeDependencies() async {
-    super.didChangeDependencies();
-    if (data == null && !isEmptyString(widget.message.text)) {
-      if (this.mounted)
-        setState(() {
-          isLoading = true;
-        });
-      url = widget.message.text;
+  Future<void> fetchPreview() async {
+    // Try to get any already loaded attachment data
+    if (CurrentChat().urlPreviews?.containsKey(widget.message.text) != null) {
+      data = CurrentChat().urlPreviews[widget.message.text];
+    }
 
-      if (!widget.message.text.toLowerCase().startsWith("http://") &&
-          !widget.message.text.toLowerCase().startsWith("https://")) {
-        url = "https://" + widget.message.text;
-      }
+    if (data != null || isEmptyString(widget.message.text) || isLoading) return;
 
-      if (url.contains('youtube.com/watch?v=') || url.contains("youtu.be/")) {
-        // Manually request this URL
-        String newUrl = "https://www.youtube.com/oembed?url=$url";
-        var response = await http.get(newUrl);
+    // Let the UI know we are loading
+    if (this.mounted) {
+      setState(() {
+        isLoading = true;
+      });
+    }
 
-        // Manually load it into a metadata object via JSON
-        data = Metadata.fromJson(jsonDecode(response.body));
+    // Make sure there is a schema with the URL
+    url = widget.message.text;
+    if (!widget.message.text.toLowerCase().startsWith("http://") &&
+        !widget.message.text.toLowerCase().startsWith("https://")) {
+      url = "https://" + widget.message.text;
+    }
 
-        // Set the URL to the original URL
-        data.url = url;
-      } else if (url.contains("twitter.com") && url.contains("/status/")) {
-        // Manually request this URL
-        String newUrl = "https://publish.twitter.com/oembed?url=$url";
-        var response = await http.get(newUrl);
+    // Handle specific cases
+    if (url.contains('youtube.com/watch?v=') || url.contains("youtu.be/")) {
+      // Manually request this URL
+      String newUrl = "https://www.youtube.com/oembed?url=$url";
+      var response = await http.get(newUrl);
 
-        // Manually load it into a metadata object via JSON
-        Map res = jsonDecode(response.body);
-        data = new Metadata();
-        data.title = (res.containsKey("author_name")) ? res["author_name"] : "";
-        data.description = (res.containsKey("html"))
-            ? stripHtmlTags(res["html"].replaceAll("<br>", "\n")).trim()
-            : "";
+      // Manually load it into a metadata object via JSON
+      data = Metadata.fromJson(jsonDecode(response.body));
 
-        // Set the URL to the original URL
-        data.url = url;
-      } else if (url.contains("linkedin.com/posts/")) {
-        data = await this.manuallyGetMetadata(url);
-        data.url = url;
-      } else {
-        data = await extract(url);
-      }
+      // Set the URL to the original URL
+      data.url = url;
+    } else if (url.contains("twitter.com") && url.contains("/status/")) {
+      // Manually request this URL
+      String newUrl = "https://publish.twitter.com/oembed?url=$url";
+      var response = await http.get(newUrl);
 
-      // If the data or title was null, try to manually parse
-      if (data == null || data.title == null) {
-        data = await this.manuallyGetMetadata(url);
-        data.url = url;
-      }
+      // Manually load it into a metadata object via JSON
+      Map res = jsonDecode(response.body);
+      data = new Metadata();
+      data.title = (res.containsKey("author_name")) ? res["author_name"] : "";
+      data.description = (res.containsKey("html"))
+          ? stripHtmlTags(res["html"].replaceAll("<br>", "\n")).trim()
+          : "";
 
-      CurrentChat()
-          .getSavedAttachmentData(widget.message)
-          ?.urlMetaData[widget.message.guid + "-url-preview"] = data;
+      // Set the URL to the original URL
+      data.url = url;
+    } else if (url.contains("linkedin.com/posts/")) {
+      data = await this.manuallyGetMetadata(url);
+      data.url = url;
+    } else {
+      data = await extract(url);
+    }
 
-      if (this.mounted)
-        setState(() {
-          isLoading = false;
-        });
+    // If the data or title was null, try to manually parse
+    if (data == null || data.title == null) {
+      data = await this.manuallyGetMetadata(url);
+      data.url = url;
+    }
+
+    // Save the metadata
+    CurrentChat().urlPreviews[widget.message.text] = data;
+
+    // Let the UI know we are done loading
+    if (this.mounted) {
+      setState(() {
+        isLoading = false;
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    super.build(context);
     Widget titleWidget = Container();
     if (data == null && isLoading) {
       titleWidget = Text("Loading...",
@@ -188,14 +186,13 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
                 child: Column(
                   children: <Widget>[
                     widget.linkPreviews.length > 1
-                        ? attachmentSaved(widget.linkPreviews.last)
+                        ? AttachmentHelper.attachmentExists(
+                                widget.linkPreviews.last)
                             ? Image.file(
                                 attachmentFile(widget.linkPreviews.last),
                                 filterQuality: FilterQuality.low,
                               )
-                            : CupertinoActivityIndicator(
-                                animating: true,
-                              )
+                            : Container()
                         : Container(),
                     Padding(
                       padding:
@@ -236,7 +233,7 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
                                       ))
                                 ],
                               )),
-                          (widget.linkPreviews.length > 0)
+                          (widget.linkPreviews.length == 1)
                               ? Padding(
                                   padding:
                                       EdgeInsets.only(left: 10.0, bottom: 10.0),
@@ -248,9 +245,7 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
                                         width: 40,
                                         fit: BoxFit.contain,
                                       )))
-                              : CupertinoActivityIndicator(
-                                  animating: true,
-                                )
+                              : Container()
                         ],
                       ),
                     ),
@@ -263,7 +258,4 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
       ),
     );
   }
-
-  @override
-  bool get wantKeepAlive => true;
 }

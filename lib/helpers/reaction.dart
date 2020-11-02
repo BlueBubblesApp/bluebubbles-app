@@ -168,7 +168,7 @@ class Reaction {
       clipBehavior: Clip.hardEdge,
       overflow: Overflow.clip,
       fit: StackFit.passthrough,
-      alignment: Alignment.bottomLeft,
+      alignment: Alignment.centerLeft,
       children: reactionList,
     );
   }

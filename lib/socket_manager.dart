@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
+import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/blocs/setup_bloc.dart';
@@ -11,20 +12,16 @@ import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/settings.dart';
 import 'package:flutter_socket_io/socket_io_manager.dart';
 import 'package:flutter_socket_io/flutter_socket_io.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:sqflite/sqflite.dart';
 
 import 'helpers/attachment_sender.dart';
 import 'managers/method_channel_interface.dart';
-import 'repository/models/attachment.dart';
 import 'repository/models/message.dart';
 import './repository/models/chat.dart';
-import './repository/models/handle.dart';
 
 enum SocketState {
   CONNECTED,
@@ -149,7 +146,8 @@ class SocketManager {
           element();
         });
         if (SettingsManager().settings.finishedSetup)
-          setup.startIncrementalSync(SettingsManager().settings, (String err) {
+          setup.startIncrementalSync(SettingsManager().settings,
+              onConnectionError: (String err) {
             debugPrint(
                 "(SYNC) Error performing incremental sync. Not saving last sync date.");
             debugPrint(err);
@@ -375,6 +373,43 @@ class SocketManager {
       token = "Failed to get token: " + e.toString();
       debugPrint(token);
     }
+  }
+
+  Future<void> getAttachments(String chatGuid, String messageGuid,
+      {Function cb}) {
+    Completer<void> completer = new Completer();
+
+    dynamic params = {
+      'after': 1,
+      'identifier': chatGuid,
+      'limit': 1,
+      'withAttachments': true,
+      'withChats': true,
+      'where': [
+        {
+          'statement': 'message.guid = :guid',
+          'args': {'guid': messageGuid}
+        }
+      ]
+    };
+
+    _manager.socket.sendMessage("get-messages", jsonEncode(params),
+        (String data) async {
+      dynamic json = jsonDecode(data);
+      if (json["status"] != 200) return completer.completeError(json);
+
+      if (json.containsKey("data") && json["data"].length > 0) {
+        print("NUM");
+        print(json["data"][0]["attachments"].length);
+        await ActionHandler.handleMessage(json["data"][0], forceProcess: true);
+      }
+
+      completer.complete();
+
+      if (cb != null) cb(json);
+    });
+
+    return completer.future;
   }
 
   Future<Map<String, dynamic>> sendMessage(String event,

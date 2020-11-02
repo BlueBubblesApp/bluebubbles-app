@@ -129,6 +129,12 @@ class AttachmentHelper {
     return "$appDocPath/attachments/${attachment.guid}/$fileName";
   }
 
+  /// Checks to see if an [attachment] exists in our attachment filesystem
+  static bool attachmentExists(Attachment attachment) {
+    String pathName = AttachmentHelper.getAttachmentPath(attachment);
+    return !(FileSystemEntity.typeSync(pathName) == FileSystemEntityType.notFound);
+  }
+
   static dynamic getContent(Attachment attachment) {
     String appDocPath = SettingsManager().appDocDir.path;
     String pathName =
