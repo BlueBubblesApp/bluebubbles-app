@@ -187,8 +187,13 @@ class SetupBloc {
 
       // Get the messages and add them to the DB
       List messages = data["data"];
-      debugPrint(
-          "(SYNC) Incremental sync found ${messages.length} messages. Syncing...");
+      if (messages.length == 0) {
+        debugPrint(
+            "(SYNC) No new messages found during incremental sync");
+      } else {
+        debugPrint(
+            "(SYNC) Incremental sync found ${messages.length} messages. Syncing...");
+      }
 
       if (messages.length > 0) {
         await MessageHelper.bulkAddMessages(null, messages,

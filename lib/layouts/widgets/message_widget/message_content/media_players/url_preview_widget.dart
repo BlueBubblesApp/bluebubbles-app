@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
@@ -32,6 +33,7 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
   Metadata data;
   String url;
   bool isLoading = false;
+  bool fetchedMissing = false;
 
   @override
   void initState() {
@@ -50,7 +52,23 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
     String appDocPath = SettingsManager().appDocDir.path;
     String pathName =
         "$appDocPath/attachments/${attachment.guid}/${attachment.transferName}";
-    return File(pathName);
+    return new File(pathName);
+  }
+
+  void fetchMissingAttachments() {
+    // We only want to try fetching once
+    if (fetchedMissing) return;
+
+    for (Attachment attachment in widget.linkPreviews) {
+      if (AttachmentHelper.attachmentExists(attachment)) continue;
+      AttachmentDownloader(attachment, onComplete: () {
+        if (this.mounted) setState(() {});
+      });
+    }
+
+    if (widget.linkPreviews.length > 0) {
+      fetchedMissing = true;
+    }
   }
 
   /// Manually tries to parse out metadata from a given [url]
@@ -164,13 +182,32 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
       );
     }
 
+    // Everytime we build, we want to fetch any missing attachments
+    fetchMissingAttachments();
+
+    // Build the main image
+    Widget mainImage = Container();
+    if (data != null &&
+        data.image != null &&
+        data.image.isNotEmpty &&
+        !data.image.contains("renderTimingPixel.png")) {
+      mainImage = Image.network(data.image,
+          filterQuality: FilterQuality.low,
+          errorBuilder: (context, error, stackTrace) => Container());
+    } else if (widget.linkPreviews.length > 1 &&
+        AttachmentHelper.attachmentExists(widget.linkPreviews.last)) {
+      mainImage = Image.file(attachmentFile(widget.linkPreviews.last),
+          filterQuality: FilterQuality.low,
+          errorBuilder: (context, error, stackTrace) => Container());
+    }
+
     return AnimatedSize(
       curve: Curves.easeInOut,
       alignment: Alignment.center,
       duration: Duration(milliseconds: 500),
       vsync: this,
       child: Padding(
-        padding: EdgeInsets.symmetric(vertical: 4),
+        padding: EdgeInsets.only(top: widget.message.hasReactions ? 15.0 : 4, bottom: 4),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(20),
           child: Material(
@@ -185,15 +222,7 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
                 width: MediaQuery.of(context).size.width * 2 / 3,
                 child: Column(
                   children: <Widget>[
-                    widget.linkPreviews.length > 1
-                        ? AttachmentHelper.attachmentExists(
-                                widget.linkPreviews.last)
-                            ? Image.file(
-                                attachmentFile(widget.linkPreviews.last),
-                                filterQuality: FilterQuality.low,
-                              )
-                            : Container()
-                        : Container(),
+                    mainImage,
                     Padding(
                       padding:
                           EdgeInsets.only(left: 14.0, right: 14.0, top: 14.0),
@@ -224,7 +253,8 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
                                       child: Text(
                                         widget.message.text
                                             .replaceAll("https://", "")
-                                            .replaceAll("http://", ""),
+                                            .replaceAll("http://", "")
+                                            .toLowerCase(),
                                         style: Theme.of(context)
                                             .textTheme
                                             .subtitle2,
@@ -233,7 +263,9 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
                                       ))
                                 ],
                               )),
-                          (widget.linkPreviews.length == 1)
+                          (widget.linkPreviews.length == 1 &&
+                                  AttachmentHelper.attachmentExists(
+                                      widget.linkPreviews.last))
                               ? Padding(
                                   padding:
                                       EdgeInsets.only(left: 10.0, bottom: 10.0),
@@ -244,6 +276,10 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
                                             widget.linkPreviews.first),
                                         width: 40,
                                         fit: BoxFit.contain,
+                                        errorBuilder: (BuildContext contenxt,
+                                            Object test, StackTrace trace) {
+                                          return Container();
+                                        },
                                       )))
                               : Container()
                         ],

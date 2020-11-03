@@ -51,9 +51,13 @@ abstract class MessageWidgetMixin {
 
   /// Adds reacts to a [message] widget
   Widget addReactionsToWidget(
-      {@required Widget message, @required Widget reactions, @required bool isFromMe}) {
+      {@required Widget message,
+      @required Widget reactions,
+      @required bool isFromMe}) {
     return Stack(
-      alignment: isFromMe ? AlignmentDirectional.topStart : AlignmentDirectional.topEnd,
+      alignment: isFromMe
+          ? AlignmentDirectional.topStart
+          : AlignmentDirectional.topEnd,
       children: [
         message,
         reactions,
@@ -63,12 +67,40 @@ abstract class MessageWidgetMixin {
 
   /// Adds reacts to a [message] widget
   Widget addStickersToWidget(
-      {@required Widget message, @required Widget stickers, @required bool isFromMe}) {
+      {@required Widget message,
+      @required Widget stickers,
+      @required bool isFromMe}) {
     return Stack(
-      alignment: (isFromMe) ? AlignmentDirectional.bottomEnd : AlignmentDirectional.bottomStart,
+      alignment: (isFromMe)
+          ? AlignmentDirectional.bottomEnd
+          : AlignmentDirectional.bottomStart,
       children: [
         message,
         stickers,
+      ],
+    );
+  }
+
+  /// Adds reacts to a [message] widget
+  Widget addNameToWidget(
+      {@required Widget message,
+      @required name,
+      @required shouldShow,
+      @required showBigEmoji,
+      @required BuildContext context}) {
+    if (!shouldShow) return message;
+
+    return Stack(
+      alignment: AlignmentDirectional.topStart,
+      children: [
+        message,
+        Padding(
+          padding: EdgeInsets.only(left: showBigEmoji ? 10.0 : 20.0),
+          child: Text(
+            name,
+            style: Theme.of(context).textTheme.subtitle1,
+          ),
+        ),
       ],
     );
   }

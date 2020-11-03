@@ -288,7 +288,10 @@ class _SentMessageState extends State<SentMessage>
     msgRow.add(
       Padding(
         // Padding to shift the bubble up a bit, relative to the avatar
-        padding: EdgeInsets.only(bottom: (widget.showTail) ? 5.0 : 3.0),
+        padding: EdgeInsets.only(
+            bottom: (widget.showTail && !isEmptyString(widget.message.text)) ? 5.0 : 3.0,
+            right: isEmptyString(widget.message.text) ? 10.0 : 0.0
+        ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.end,

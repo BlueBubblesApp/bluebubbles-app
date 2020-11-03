@@ -6,13 +6,11 @@ import 'package:bluebubbles/layouts/widgets/message_widget/message_content/messa
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/material.dart';
-import 'package:metadata_fetch/metadata_fetch.dart';
 import 'package:mime_type/mime_type.dart';
 import 'package:path/path.dart';
 
 class SavedAttachmentData {
   List<Attachment> attachments = [];
-  Map<String, Metadata> urlMetaData = {};
   Future<List<Attachment>> attachmentsFuture;
   Map<String, Uint8List> imageData = {};
 }
@@ -41,10 +39,10 @@ class _MessageAttachmentsState extends State<MessageAttachments>
   @override
   void initState() {
     super.initState();
-    if (widget.savedAttachmentData.attachments.length > 0) {
-      for (Attachment attachment in widget.savedAttachmentData.attachments) {
-        _attachments[attachment.guid] = AttachmentHelper.getContent(attachment);
-      }
+
+    for (Attachment attachment in widget.savedAttachmentData.attachments) {
+      if (_attachments.containsKey(attachment.guid)) continue;
+      _attachments[attachment.guid] = AttachmentHelper.getContent(attachment);
     }
   }
 
@@ -55,15 +53,29 @@ class _MessageAttachmentsState extends State<MessageAttachments>
       widget.savedAttachmentData.attachmentsFuture =
           Message.getAttachments(widget.message);
     }
+
     return FutureBuilder(
       builder: (context, snapshot) {
-        if (snapshot.hasData ||
-            widget.savedAttachmentData.attachments.length > 0) {
-          if (widget.savedAttachmentData.attachments.length == 0)
-            widget.savedAttachmentData.attachments = snapshot.data;
+        if (!snapshot.hasData) return Container();
 
+        // Fetch the current attachment list
+        List<Attachment> items = widget.savedAttachmentData.attachments
+            .where((item) => item.mimeType != null)
+            .toList();
+
+        // If we have no attachment data, pull from the builder snapshot
+        if (items.length == 0) {
+          items = (snapshot.data as List<Attachment>)
+              .where((item) => item.mimeType != null)
+              .toList();
+          widget.savedAttachmentData.attachments = items;
+        }
+
+        // Only create the widget if we have attachments
+        if (items.length > 0) {
           for (Attachment attachment
-              in widget.savedAttachmentData.attachments) {
+              in items) {
+            if (_attachments.containsKey(attachment.guid)) continue;
             _attachments[attachment.guid] =
                 AttachmentHelper.getContent(attachment);
           }
@@ -86,18 +98,18 @@ class _MessageAttachmentsState extends State<MessageAttachments>
             EdgeInsets.only(top: 15.0, bottom: 10.0, left: 16.0, right: 10.0);
       } else {
         padding = EdgeInsets.only(
-            top: 15.0,
+            top: (widget.showHandle) ? 18.0 : 15.0,
             bottom: 10.0,
-            left: (widget.showTail) ? 10.0 : 45.0,
+            left: 10.0,
             right: 10.0);
       }
     } else {
       if (widget.showTail || !widget.showHandle) {
         if (!widget.message.isFromMe) {
-          padding = EdgeInsets.only(left: 10.0);
+          padding = EdgeInsets.only(left: 10.0, top: widget.showHandle ? 18.0 : 0.0);
         }
       } else {
-        padding = EdgeInsets.only(left: 10.0);
+        padding = EdgeInsets.only(left: 10.0, top: widget.showHandle ? 18.0 : 0.0);
       }
     }
 
