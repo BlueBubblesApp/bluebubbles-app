@@ -95,7 +95,9 @@ abstract class MessageWidgetMixin {
       children: [
         message,
         Padding(
-          padding: EdgeInsets.only(left: showBigEmoji ? 10.0 : 20.0),
+          padding: EdgeInsets.only(
+            left: showBigEmoji ? 10.0 : 20.0,
+          ),
           child: Text(
             name,
             style: Theme.of(context).textTheme.subtitle1,
