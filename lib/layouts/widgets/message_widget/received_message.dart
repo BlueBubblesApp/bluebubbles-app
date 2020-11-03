@@ -99,7 +99,10 @@ class _ReceivedMessageState extends State<ReceivedMessage>
         if (widget.showTail) MessageTail(isFromMe: false),
         Container(
           margin: EdgeInsets.only(
-            top: widget.hasReactions || showSender ? 18 : 0,
+            top: (widget.hasReactions && !widget.message.hasAttachments) ||
+                    showSender
+                ? 18
+                : 0,
             left: 10,
             right: 10,
           ),
@@ -140,28 +143,27 @@ class _ReceivedMessageState extends State<ReceivedMessage>
     bool showSender = (!sameSender(widget.message, widget.olderMessage) ||
         !widget.message.dateCreated
             .isWithin(widget.olderMessage.dateCreated, minutes: 30));
+    showSender = showSender && !widget.message.hasAttachments;
 
-    // First, add the layers
-    if (isEmptyString(widget.message.text)) {
-      messageColumn.add(
-        addStickersToWidget(
-          message: addReactionsToWidget(
-              message: addNameToWidget(
-                message: widget.attachmentsWidget,
-                name: contactTitle,
-                shouldShow: showSender,
-                showBigEmoji: widget.shouldShowBigEmoji,
-                context: context,
-              ),
-              reactions: widget.reactionsWidget,
-              isFromMe: widget.message.isFromMe),
-          stickers: widget.stickersWidget,
-          isFromMe: widget.message.isFromMe,
+    // First, add the attachments
+    messageColumn.add(
+      addStickersToWidget(
+        message: addReactionsToWidget(
+            messageWidget: addNameToWidget(
+              message: widget.attachmentsWidget,
+              name: contactTitle,
+              shouldShow: showSender && isEmptyString(widget.message.text),
+              showBigEmoji: widget.shouldShowBigEmoji,
+              context: context,
+            ),
+            reactions: widget.reactionsWidget,
+            message: widget.message,
+            shouldShow: widget.message.hasAttachments
         ),
-      );
-    } else {
-      messageColumn.add(widget.attachmentsWidget);
-    }
+        stickers: widget.stickersWidget,
+        isFromMe: widget.message.isFromMe,
+      ),
+    );
 
     // Second, let's add the message or URL preview
     Widget message;
@@ -180,7 +182,7 @@ class _ReceivedMessageState extends State<ReceivedMessage>
       messageColumn.add(
         addStickersToWidget(
           message: addReactionsToWidget(
-              message: addNameToWidget(
+              messageWidget: addNameToWidget(
                 message: message,
                 name: contactTitle,
                 shouldShow: showSender,
@@ -188,7 +190,9 @@ class _ReceivedMessageState extends State<ReceivedMessage>
                 context: context,
               ),
               reactions: widget.reactionsWidget,
-              isFromMe: widget.message.isFromMe),
+              message: widget.message,
+              shouldShow: !widget.message.hasAttachments
+          ),
           stickers: widget.stickersWidget,
           isFromMe: widget.message.isFromMe,
         ),

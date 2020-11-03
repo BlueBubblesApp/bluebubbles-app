@@ -95,18 +95,22 @@ class _MessageAttachmentsState extends State<MessageAttachments>
     if (widget.message.hasReactions && widget.message.hasAttachments) {
       if (widget.message.isFromMe) {
         padding =
-            EdgeInsets.only(top: 15.0, bottom: 10.0, left: 16.0, right: 10.0);
+            EdgeInsets.only(
+              top: 15.0,
+              bottom: (widget.message.hasAttachments) ? 2.0 : 10.0,
+              left: 16.0,
+              right: 10.0);
       } else {
         padding = EdgeInsets.only(
             top: (widget.showHandle) ? 18.0 : 15.0,
-            bottom: 10.0,
+            bottom: (widget.message.hasAttachments) ? 2.0 : 10.0,
             left: 10.0,
             right: 10.0);
       }
     } else {
       if (widget.showTail || !widget.showHandle) {
         if (!widget.message.isFromMe) {
-          padding = EdgeInsets.only(left: 10.0, top: widget.showHandle ? 18.0 : 0.0);
+          padding = EdgeInsets.only(left: 10.0, top: widget.showHandle ? 18.0 : 0.0, bottom: 2.0);
         }
       } else {
         padding = EdgeInsets.only(left: 10.0, top: widget.showHandle ? 18.0 : 0.0);

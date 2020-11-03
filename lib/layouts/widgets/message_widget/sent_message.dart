@@ -222,9 +222,9 @@ class _SentMessageState extends State<SentMessage>
       messageColumn.add(
         addStickersToWidget(
           message: addReactionsToWidget(
-              message: widget.attachmentsWidget,
+              messageWidget: widget.attachmentsWidget,
               reactions: widget.reactionsWidget,
-              isFromMe: widget.message.isFromMe),
+              message: widget.message),
           stickers: widget.stickersWidget,
           isFromMe: widget.message.isFromMe,
         ),
@@ -264,12 +264,12 @@ class _SentMessageState extends State<SentMessage>
       messageColumn.add(
         addStickersToWidget(
           message: addReactionsToWidget(
-              message: Padding(
+              messageWidget: Padding(
                 padding: EdgeInsets.only(bottom: widget.showTail ? 2.0 : 0),
                 child: message,
               ),
               reactions: widget.reactionsWidget,
-              isFromMe: widget.message.isFromMe),
+              message: widget.message),
           stickers: widget.stickersWidget,
           isFromMe: widget.message.isFromMe,
         ),
