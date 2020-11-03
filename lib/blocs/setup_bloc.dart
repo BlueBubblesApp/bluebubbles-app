@@ -102,17 +102,20 @@ class SetupBloc {
     });
   }
 
-  Future<void> receivedMessagesForChat(Chat chat, Map<String, dynamic> data) async {
+  Future<void> receivedMessagesForChat(
+      Chat chat, Map<String, dynamic> data) async {
     List messages = data["data"];
 
     // Since we got the messages in desc order, we want to reverse it.
     // Reversing it will add older messages before newer one. This should help fix
     // issues with associated message GUIDs
-    MessageHelper.bulkAddMessages(chat, messages.reversed.toList(), notifyForNewMessage: false);
+    MessageHelper.bulkAddMessages(chat, messages.reversed.toList(),
+        notifyForNewMessage: false);
 
     // If we want to download the attachments, do it, and wait for them to finish before continuing
     if (downloadAttachments) {
-      await MessageHelper.bulkDownloadAttachments(chat, messages.reversed.toList());
+      await MessageHelper.bulkDownloadAttachments(
+          chat, messages.reversed.toList());
     }
 
     _progress = (_currentIndex + 1) / chats.length;
@@ -132,7 +135,11 @@ class SetupBloc {
     SocketManager().finishSetup();
   }
 
-  void startIncrementalSync(Settings settings, {String chatGuid, bool saveDate = false, Function onConnectionError, Function onComplete}) {
+  void startIncrementalSync(Settings settings,
+      {String chatGuid,
+      bool saveDate = true,
+      Function onConnectionError,
+      Function onComplete}) {
     // If we are already syncing, don't sync again
     // If the last sync date is empty, then we've never synced, so don't.
     if (isSyncing ||
@@ -143,8 +150,7 @@ class SetupBloc {
     processId =
         SocketManager().addSocketProcess(([bool finishWithError = false]) {});
 
-    if (onConnectionError != null)
-      this.onConnectionError = onConnectionError;
+    if (onConnectionError != null) this.onConnectionError = onConnectionError;
     isSyncing = true;
 
     // Store the time we started syncing
@@ -189,11 +195,11 @@ class SetupBloc {
             notifyForNewMessage: true);
       }
 
-      debugPrint(
-          "(SYNC) Finished incremental sync. Saving last sync date: $syncStart");
-
       // Once we have added everything, save the last sync date
       if (saveDate) {
+        debugPrint(
+          "(SYNC) Finished incremental sync. Saving last sync date: $syncStart");
+
         Settings _settingsCopy = SettingsManager().settings;
         _settingsCopy.lastIncrementalSync = syncStart;
         SettingsManager().saveSettings(_settingsCopy, connectToSocket: false);
