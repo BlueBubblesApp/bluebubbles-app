@@ -399,8 +399,6 @@ class SocketManager {
       if (json["status"] != 200) return completer.completeError(json);
 
       if (json.containsKey("data") && json["data"].length > 0) {
-        print("NUM");
-        print(json["data"][0]["attachments"].length);
         await ActionHandler.handleMessage(json["data"][0], forceProcess: true);
       }
 
