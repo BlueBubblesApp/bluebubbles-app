@@ -488,6 +488,11 @@ class SocketManager {
   Future<void> refreshConnection({bool connectToSocket = true}) async {
     debugPrint("Fetching new server URL from Firebase");
 
+    if (MethodChannelInterface() == null) {
+      debugPrint("Method channel interface is null, not refreshing connection...");
+      return;
+    }
+
     // Get the server URL
     String url = await MethodChannelInterface().invokeMethod("get-server-url");
     debugPrint("New server URL: $url");
