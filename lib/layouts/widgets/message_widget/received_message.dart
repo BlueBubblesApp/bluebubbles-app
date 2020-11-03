@@ -131,7 +131,9 @@ class _ReceivedMessageState extends State<ReceivedMessage>
   Widget build(BuildContext context) {
     if (widget.message == null) return Container();
 
-    dynamic initials = getInitials(contact?.displayName ?? "", " ", size: 25);
+    dynamic initials = getInitials(
+        contact?.displayName ?? widget.message.handle?.address ?? "", " ",
+        size: 25);
 
     // The column that holds all the "messages"
     List<Widget> messageColumn = [];
