@@ -78,13 +78,14 @@ class _ReceivedMessageState extends State<ReceivedMessage>
   }
 
   /// Builds the message bubble with teh tail (if applicable)
-  Widget _buildMessageWithTail(Message message, bool bigEmoji, bool showSender) {
+  Widget _buildMessageWithTail(
+      Message message, bool bigEmoji, bool hasReactions, bool showSender) {
     if (bigEmoji) {
       return Padding(
           padding: EdgeInsets.only(
               left: CurrentChat().chat.participants.length > 1 ? 5.0 : 0.0,
-              top: widget.hasReactions || showSender ? 18 : 0
-          ),
+              right: (hasReactions) ? 15.0 : 0.0,
+              top: widget.hasReactions || showSender ? 15 : 0),
           child: Text(message.text,
               style: Theme.of(context)
                   .textTheme
@@ -135,9 +136,8 @@ class _ReceivedMessageState extends State<ReceivedMessage>
     // The column that holds all the "messages"
     List<Widget> messageColumn = [];
     bool showSender = (!sameSender(widget.message, widget.olderMessage) ||
-                          !widget.message.dateCreated.isWithin(
-                              widget.olderMessage.dateCreated,
-                              minutes: 30));
+        !widget.message.dateCreated
+            .isWithin(widget.olderMessage.dateCreated, minutes: 30));
 
     // First, add the layers
     if (isEmptyString(widget.message.text)) {
@@ -145,11 +145,11 @@ class _ReceivedMessageState extends State<ReceivedMessage>
         addStickersToWidget(
           message: addReactionsToWidget(
               message: addNameToWidget(
-                  message: widget.attachmentsWidget,
-                  name: contactTitle,
-                  shouldShow: showSender,
-                  showBigEmoji: widget.shouldShowBigEmoji,
-                  context: context,
+                message: widget.attachmentsWidget,
+                name: contactTitle,
+                shouldShow: showSender,
+                showBigEmoji: widget.shouldShowBigEmoji,
+                context: context,
               ),
               reactions: widget.reactionsWidget,
               isFromMe: widget.message.isFromMe),
@@ -169,8 +169,8 @@ class _ReceivedMessageState extends State<ReceivedMessage>
         child: widget.urlPreviewWidget,
       );
     } else if (!isEmptyString(widget.message.text)) {
-      message =
-          _buildMessageWithTail(widget.message, widget.shouldShowBigEmoji, showSender);
+      message = _buildMessageWithTail(widget.message, widget.shouldShowBigEmoji,
+          widget.hasReactions, showSender);
     }
 
     // Third, let's add any reactions or stickers to the widget
@@ -178,15 +178,12 @@ class _ReceivedMessageState extends State<ReceivedMessage>
       messageColumn.add(
         addStickersToWidget(
           message: addReactionsToWidget(
-              message: Padding(
-                padding: EdgeInsets.only(bottom: widget.showTail ? 2.0 : 0.0),
-                child: addNameToWidget(
-                  message: message,
-                  name: contactTitle,
-                  shouldShow: showSender,
-                  showBigEmoji: widget.shouldShowBigEmoji,
-                  context: context,
-                ),
+              message: addNameToWidget(
+                message: message,
+                name: contactTitle,
+                shouldShow: showSender,
+                showBigEmoji: widget.shouldShowBigEmoji,
+                context: context,
               ),
               reactions: widget.reactionsWidget,
               isFromMe: widget.message.isFromMe),
@@ -220,7 +217,7 @@ class _ReceivedMessageState extends State<ReceivedMessage>
     msgRow.add(
       Padding(
         // Padding to shift the bubble up a bit, relative to the avatar
-        padding: EdgeInsets.only(bottom: widget.showTail ? 10.0 : 5.0),
+        padding: EdgeInsets.only(bottom: widget.showTail ? 0.0 : 5.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -233,8 +230,8 @@ class _ReceivedMessageState extends State<ReceivedMessage>
     return Padding(
       // Add padding when we are showing the avatar
       padding: EdgeInsets.only(
-        left: (!widget.showTail && widget.isGroup) ? 35.0 : 0.0,
-      ),
+          left: (!widget.showTail && widget.isGroup) ? 35.0 : 0.0,
+          bottom: (widget.showTail) ? 10.0 : 0.0),
       child: Row(
         mainAxisSize: MainAxisSize.max,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,

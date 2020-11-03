@@ -28,7 +28,11 @@ class SentMessageHelper {
     Widget msg;
     if (bigEmoji) {
       msg = Padding(
-          padding: EdgeInsets.only(right: 5),
+          padding: EdgeInsets.only(
+            left: (hasReactions) ? 15.0 : 0.0,
+            top: (hasReactions) ? 15.0 : 0.0,
+            right: 5
+          ),
           child: Text(message.text,
               style: Theme.of(context)
                   .textTheme
