@@ -28,7 +28,6 @@ class _ThemingPanelState extends State<ThemingPanel> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      extendBodyBehindAppBar: true,
       extendBody: true,
       backgroundColor: Theme.of(context).backgroundColor,
       appBar: PreferredSize(

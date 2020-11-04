@@ -21,9 +21,9 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
       physics:
           AlwaysScrollableScrollPhysics(parent: CustomBouncingScrollPhysics()),
       slivers: <Widget>[
-        SliverPadding(
-          padding: EdgeInsets.all(70),
-        ),
+        // SliverPadding(
+        //   padding: EdgeInsets.all(70),
+        // ),
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 20),
@@ -88,16 +88,25 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
         //     ],
         //   ),
         // ),
-        SliverList(
+        // SliverToBoxAdapter(
+        //   child: ,
+        // ),
+        SliverGrid(
           delegate: SliverChildBuilderDelegate(
             (context, index) {
-              return ThemingColorSelector(
-                colorTitle:
-                    ThemeColors.Headline1, //  ThemeColors.values[index],
-                isDarkMode: widget.isDarkMode,
+              return Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: ThemingColorSelector(
+                  colorTitle:
+                      ThemeColors.Headline1, //  ThemeColors.values[index],
+                  isDarkMode: widget.isDarkMode,
+                ),
               );
             },
             childCount: 9, // ThemeColors.values.length,
+          ),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
           ),
         )
       ],

@@ -101,45 +101,65 @@ class _ThemingColorSelectorState extends State<ThemingColorSelector> {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Theme.of(context).accentColor,
-      child: InkWell(
-        onTap: () {
-          showDialog(
-            context: context,
-            builder: (context) => ThemingColorPickerPopup(
-              initialColor:
-                  getColorForTitle(widget.isDarkMode, widget.colorTitle),
-              onSet: (Color color) async {
-                // if (widget.isDarkMode) {
-                //   SettingsManager().settings.setOneColorOfDarkTheme(
-                //       widget.colorTitle, color, context);
-                //   await SettingsManager().saveSettings(
-                //     SettingsManager().settings,
-                //     context: context,
-                //   );
-                //   AdaptiveTheme.of(context).reassemble();
-                // } else {
-                //   SettingsManager().settings.setOneColorOfLightTheme(
-                //       widget.colorTitle, color, context);
-                //   await SettingsManager().saveSettings(
-                //     SettingsManager().settings,
-                //     context: context,
-                //   );
-                //   AdaptiveTheme.of(context).reassemble();
-                // }
-              },
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: Material(
+        color: Theme.of(context).accentColor,
+        child: InkWell(
+          onTap: () {
+            showDialog(
+              context: context,
+              builder: (context) => ThemingColorPickerPopup(
+                initialColor:
+                    getColorForTitle(widget.isDarkMode, widget.colorTitle),
+                onSet: (Color color) async {
+                  // if (widget.isDarkMode) {
+                  //   SettingsManager().settings.setOneColorOfDarkTheme(
+                  //       widget.colorTitle, color, context);
+                  //   await SettingsManager().saveSettings(
+                  //     SettingsManager().settings,
+                  //     context: context,
+                  //   );
+                  //   AdaptiveTheme.of(context).reassemble();
+                  // } else {
+                  //   SettingsManager().settings.setOneColorOfLightTheme(
+                  //       widget.colorTitle, color, context);
+                  //   await SettingsManager().saveSettings(
+                  //     SettingsManager().settings,
+                  //     context: context,
+                  //   );
+                  //   AdaptiveTheme.of(context).reassemble();
+                  // }
+                },
+              ),
+            );
+          },
+          child: Container(
+            // title: Text(
+            //   widget.colorTitle.toString().split(".").last,
+            //   style: Theme.of(context).textTheme.bodyText1,
+            // ),
+            // trailing: Icon(
+            //   Icons.color_lens,
+            //   color: getColorForTitle(widget.isDarkMode, widget.colorTitle),
+            // ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.text_fields,
+                  size: 40,
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text(
+                    widget.colorTitle,
+                    style: Theme.of(context).textTheme.bodyText1,
+                  ),
+                ),
+              ],
             ),
-          );
-        },
-        child: ListTile(
-          title: Text(
-            widget.colorTitle.toString().split(".").last,
-            style: Theme.of(context).textTheme.bodyText1,
-          ),
-          trailing: Icon(
-            Icons.color_lens,
-            color: getColorForTitle(widget.isDarkMode, widget.colorTitle),
           ),
         ),
       ),

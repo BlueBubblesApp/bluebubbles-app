@@ -28,6 +28,18 @@ abstract class ThemeColors {
   static const String AccentColor = "AccentColor";
   static const String DividerColor = "DividerColor";
   static const String BackgroundColor = "BackgroundColor";
+
+  static const List<String> Colors = [
+    Headline1,
+    Headline2,
+    Bodytext1,
+    Bodytext2,
+    Subtitle1,
+    Subtitle2,
+    AccentColor,
+    DividerColor,
+    BackgroundColor,
+  ];
 }
 
 enum Skins {
