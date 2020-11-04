@@ -67,7 +67,7 @@ class FCMData {
   static Future<FCMData> getFCM() async {
     Database db = await DBProvider.db.database;
 
-    List<Map<String, dynamic>> result = await db.query("config");
+    List<Map<String, dynamic>> result = await db.query("fcm");
     if (result.length == 0) return new FCMData();
     List<ConfigEntry> entries = [];
     for (Map<String, dynamic> setting in result) {
