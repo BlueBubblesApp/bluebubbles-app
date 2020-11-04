@@ -217,11 +217,6 @@ class _MessageState extends State<MessageWidget> {
       return GroupEvent(message: widget.message);
     }
 
-    bool showSender = (!sameSender(widget.message, widget.olderMessage) ||
-                          !widget.message.dateCreated.isWithin(
-                              widget.olderMessage.dateCreated,
-                              minutes: 30));
-
     ////////// READ //////////
     /// This widget and code below will handle building out the following:
     /// -> Attachments
@@ -261,8 +256,7 @@ class _MessageState extends State<MessageWidget> {
                 .attachments
                 .where((item) => item.mimeType == null)
                 .toList(),
-            message: widget.message,
-            showSender: showSender
+            message: widget.message
           ),
           stickersWidget: StickersWidget(
             key: new Key(
@@ -295,8 +289,7 @@ class _MessageState extends State<MessageWidget> {
           key: new Key("preview-${widget.message.guid}"),
           linkPreviews:
               this.attachments.where((item) => item.mimeType == null).toList(),
-          message: widget.message,
-          showSender: showSender
+          message: widget.message
         ),
         stickersWidget: StickersWidget(
           key: new Key("stickers-${this.associatedMessages.length.toString()}"),

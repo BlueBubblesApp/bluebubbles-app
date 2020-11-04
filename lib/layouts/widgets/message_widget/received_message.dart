@@ -146,7 +146,7 @@ class _ReceivedMessageState extends State<ReceivedMessage>
             .isWithin(widget.olderMessage.dateCreated, minutes: 30)) {
       messageColumn.add(
         Padding(
-          padding: EdgeInsets.only(left: 15.0, top: 5.0, bottom: 3.0),
+          padding: EdgeInsets.only(left: 15.0, top: 5.0, bottom: widget.hasReactions ? 0.0 : 3.0),
           child: Text(
             contactTitle,
             style: Theme.of(context).textTheme.subtitle1,
