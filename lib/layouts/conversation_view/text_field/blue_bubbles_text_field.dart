@@ -201,20 +201,22 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                 ),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  crossAxisAlignment: CrossAxisAlignment.end,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: <Widget>[
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 6.0, vertical: 8.0),
-                      child: SizedBox(
-                        width: 30,
-                        height: 30,
-                        child: GestureDetector(
-                          onTap: toggleShareMenu,
-                          child: Icon(
-                            Icons.share,
-                            color: HexColor('8e8e8e'),
-                            size: 22,
+                    Container(
+                      height: 35,
+                      width: 35,
+                      margin: EdgeInsets.only(left: 5.0, right: 5.0),
+                      child: ClipOval(
+                        child: Material(
+                          color: Theme.of(context).accentColor,
+                          child: InkWell(
+                            onTap: toggleShareMenu,
+                            child: Icon(
+                              Icons.share,
+                              color: Theme.of(context).textTheme.subtitle1.color,
+                              size: 20,
+                            ),
                           ),
                         ),
                       ),
