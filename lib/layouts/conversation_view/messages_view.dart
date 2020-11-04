@@ -5,12 +5,10 @@ import 'package:bluebubbles/layouts/widgets/message_widget/new_message_loader.da
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
-import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:bluebubbles/layouts/widgets/send_widget.dart';
-import 'package:video_player/video_player.dart';
 
 class MessageView extends StatefulWidget {
   final MessageBloc messageBloc;
@@ -114,7 +112,8 @@ class _MessageViewState extends State<MessageView>
             await Message.getAttachments(messageWithROWID);
         SavedAttachmentData data =
             CurrentChat().attachments.remove(event.oldGuid);
-        data.attachments = updatedAttachments;
+
+        data.attachments = updatedAttachments.where((item) => item.mimeType != null).toList();
         CurrentChat().attachments[event.message.guid] = data;
       }
       bool updatedAMessage = false;

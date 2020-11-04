@@ -51,15 +51,18 @@ abstract class MessageWidgetMixin {
 
   /// Adds reacts to a [message] widget
   Widget addReactionsToWidget(
-      {@required Widget message,
+      {@required Widget messageWidget,
       @required Widget reactions,
-      @required bool isFromMe}) {
+      @required Message message,
+      bool shouldShow = true}) {
+    if (!shouldShow) return messageWidget;
+
     return Stack(
-      alignment: isFromMe
+      alignment: message.isFromMe
           ? AlignmentDirectional.topStart
           : AlignmentDirectional.topEnd,
       children: [
-        message,
+        messageWidget,
         reactions,
       ],
     );
@@ -77,6 +80,32 @@ abstract class MessageWidgetMixin {
       children: [
         message,
         stickers,
+      ],
+    );
+  }
+
+  /// Adds reacts to a [message] widget
+  Widget addNameToWidget(
+      {@required Widget message,
+      @required name,
+      @required shouldShow,
+      @required showBigEmoji,
+      @required BuildContext context}) {
+    if (!shouldShow) return message;
+
+    return Stack(
+      alignment: AlignmentDirectional.topStart,
+      children: [
+        message,
+        Padding(
+          padding: EdgeInsets.only(
+            left: showBigEmoji ? 10.0 : 20.0,
+          ),
+          child: Text(
+            name,
+            style: Theme.of(context).textTheme.subtitle1,
+          ),
+        ),
       ],
     );
   }

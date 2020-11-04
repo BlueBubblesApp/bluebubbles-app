@@ -28,12 +28,15 @@ class SentMessageHelper {
     Widget msg;
     if (bigEmoji) {
       msg = Padding(
-        padding: EdgeInsets.only(right: 5),
-        child: Text(
-          message.text,
-          style: Theme.of(context).textTheme.bodyText1.apply(fontSizeFactor: 4),
-        ),
-      );
+          padding: EdgeInsets.only(
+              left: (hasReactions) ? 15.0 : 0.0,
+              top: (hasReactions) ? 15.0 : 0.0,
+              right: 5),
+          child: Text(message.text,
+              style: Theme.of(context)
+                  .textTheme
+                  .bodyText1
+                  .apply(fontSizeFactor: 4)));
     } else {
       msg = Stack(
         alignment: AlignmentDirectional.bottomEnd,
@@ -221,9 +224,9 @@ class _SentMessageState extends State<SentMessage>
       messageColumn.add(
         addStickersToWidget(
           message: addReactionsToWidget(
-              message: widget.attachmentsWidget,
+              messageWidget: widget.attachmentsWidget,
               reactions: widget.reactionsWidget,
-              isFromMe: widget.message.isFromMe),
+              message: widget.message),
           stickers: widget.stickersWidget,
           isFromMe: widget.message.isFromMe,
         ),
@@ -263,12 +266,12 @@ class _SentMessageState extends State<SentMessage>
       messageColumn.add(
         addStickersToWidget(
           message: addReactionsToWidget(
-              message: Padding(
+              messageWidget: Padding(
                 padding: EdgeInsets.only(bottom: widget.showTail ? 2.0 : 0),
                 child: message,
               ),
               reactions: widget.reactionsWidget,
-              isFromMe: widget.message.isFromMe),
+              message: widget.message),
           stickers: widget.stickersWidget,
           isFromMe: widget.message.isFromMe,
         ),
@@ -291,7 +294,11 @@ class _SentMessageState extends State<SentMessage>
     msgRow.add(
       Padding(
         // Padding to shift the bubble up a bit, relative to the avatar
-        padding: EdgeInsets.only(bottom: (widget.showTail) ? 5.0 : 3.0),
+        padding: EdgeInsets.only(
+            bottom: (widget.showTail && !isEmptyString(widget.message.text))
+                ? 5.0
+                : 3.0,
+            right: isEmptyString(widget.message.text) ? 10.0 : 0.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.end,

@@ -399,8 +399,6 @@ class SocketManager {
       if (json["status"] != 200) return completer.completeError(json);
 
       if (json.containsKey("data") && json["data"].length > 0) {
-        print("NUM");
-        print(json["data"][0]["attachments"].length);
         await ActionHandler.handleMessage(json["data"][0], forceProcess: true);
       }
 
@@ -486,6 +484,11 @@ class SocketManager {
 
   Future<void> refreshConnection({bool connectToSocket = true}) async {
     debugPrint("Fetching new server URL from Firebase");
+
+    if (MethodChannelInterface() == null) {
+      debugPrint("Method channel interface is null, not refreshing connection...");
+      return;
+    }
 
     // Get the server URL
     String url = await MethodChannelInterface().invokeMethod("get-server-url");

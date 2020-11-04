@@ -137,7 +137,7 @@ class SetupBloc {
 
   void startIncrementalSync(Settings settings,
       {String chatGuid,
-      bool saveDate = false,
+      bool saveDate = true,
       Function onConnectionError,
       Function onComplete}) {
     // If we are already syncing, don't sync again
@@ -187,19 +187,23 @@ class SetupBloc {
 
       // Get the messages and add them to the DB
       List messages = data["data"];
-      debugPrint(
-          "(SYNC) Incremental sync found ${messages.length} messages. Syncing...");
+      if (messages.length == 0) {
+        debugPrint("(SYNC) No new messages found during incremental sync");
+      } else {
+        debugPrint(
+            "(SYNC) Incremental sync found ${messages.length} messages. Syncing...");
+      }
 
       if (messages.length > 0) {
         await MessageHelper.bulkAddMessages(null, messages,
             notifyForNewMessage: true);
       }
 
-      debugPrint(
-          "(SYNC) Finished incremental sync. Saving last sync date: $syncStart");
-
       // Once we have added everything, save the last sync date
       if (saveDate) {
+        debugPrint(
+            "(SYNC) Finished incremental sync. Saving last sync date: $syncStart");
+
         Settings _settingsCopy = SettingsManager().settings;
         _settingsCopy.lastIncrementalSync = syncStart;
         SettingsManager().saveSettings(_settingsCopy);

@@ -108,7 +108,9 @@ class _ContactTileState extends State<ContactTile> {
   }
 
   Widget _buildContactTile() {
-    var initials = getInitials(contact?.displayName ?? "", " ");
+    dynamic initials = getInitials(
+        contact?.displayName ?? widget.handle?.address ?? "", " ",
+        size: 25);
     return InkWell(
       onLongPress: () {
         Clipboard.setData(new ClipboardData(text: widget.handle.address));

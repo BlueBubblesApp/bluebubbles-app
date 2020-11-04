@@ -79,7 +79,7 @@ public class MainActivity extends FlutterActivity {
         if (type == null) return;
 
         if (Intent.ACTION_SEND.equals(action)) {
-            if ("text/plain".equals(type)) {
+            if (type.equals("text/plain")) {
                 handleSendText(intent); // Handle text being sent
             } else {
                 handleShareFile(intent);
@@ -148,7 +148,8 @@ public class MainActivity extends FlutterActivity {
                 images.add(file.getPath());
                 new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod("shareAttachments", images);
             } catch (Exception e) {
-
+                Log.d("ShareImage", "FAILURE");
+                e.printStackTrace();
             }
         }
     }

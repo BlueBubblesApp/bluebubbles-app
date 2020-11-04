@@ -5,7 +5,6 @@ import 'package:bluebubbles/layouts/widgets/message_widget/message_content/messa
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
-import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/material.dart';
 
@@ -79,11 +78,14 @@ class _ReceivedMessageState extends State<ReceivedMessage>
   }
 
   /// Builds the message bubble with teh tail (if applicable)
-  Widget _buildMessageWithTail(Message message, bool bigEmoji) {
+  Widget _buildMessageWithTail(
+      Message message, bool bigEmoji, bool hasReactions, bool showSender) {
     if (bigEmoji) {
       return Padding(
           padding: EdgeInsets.only(
-              left: CurrentChat().chat.participants.length > 1 ? 5.0 : 0.0),
+              left: CurrentChat().chat.participants.length > 1 ? 5.0 : 0.0,
+              right: (hasReactions) ? 15.0 : 0.0,
+              top: widget.hasReactions || showSender ? 15 : 0),
           child: Text(message.text,
               style: Theme.of(context)
                   .textTheme
@@ -97,7 +99,10 @@ class _ReceivedMessageState extends State<ReceivedMessage>
         if (widget.showTail) MessageTail(isFromMe: false),
         Container(
           margin: EdgeInsets.only(
-            top: widget.hasReactions ? 18 : 0,
+            top: (widget.hasReactions && !widget.message.hasAttachments) ||
+                    showSender
+                ? 18
+                : 0,
             left: 10,
             right: 10,
           ),
@@ -129,43 +134,38 @@ class _ReceivedMessageState extends State<ReceivedMessage>
   Widget build(BuildContext context) {
     if (widget.message == null) return Container();
 
-    dynamic initials = getInitials(contact?.displayName ?? "", " ", size: 25);
+    dynamic initials = getInitials(
+        contact?.displayName ?? widget.message.handle?.address ?? "", " ",
+        size: 25);
 
     // The column that holds all the "messages"
     List<Widget> messageColumn = [];
-
-    // First, add the message sender (if applicable)
-    if (!sameSender(widget.message, widget.olderMessage) ||
+    bool showSender = (!sameSender(widget.message, widget.olderMessage) ||
         !widget.message.dateCreated
-            .isWithin(widget.olderMessage.dateCreated, minutes: 30)) {
-      messageColumn.add(
-        Padding(
-          padding: EdgeInsets.only(left: 25.0, top: 5.0, bottom: 3.0),
-          child: Text(
-            contactTitle,
-            style: Theme.of(context).textTheme.subtitle1,
-          ),
-        ),
-      );
-    }
+            .isWithin(widget.olderMessage.dateCreated, minutes: 30));
+    showSender = showSender && !widget.message.hasAttachments;
 
-    // Second, add the attachments
-    if (isEmptyString(widget.message.text)) {
-      messageColumn.add(
-        addStickersToWidget(
-          message: addReactionsToWidget(
+    // First, add the attachments
+    messageColumn.add(
+      addStickersToWidget(
+        message: addReactionsToWidget(
+            messageWidget: addNameToWidget(
               message: widget.attachmentsWidget,
-              reactions: widget.reactionsWidget,
-              isFromMe: widget.message.isFromMe),
-          stickers: widget.stickersWidget,
-          isFromMe: widget.message.isFromMe,
+              name: contactTitle,
+              shouldShow: showSender && isEmptyString(widget.message.text),
+              showBigEmoji: widget.shouldShowBigEmoji,
+              context: context,
+            ),
+            reactions: widget.reactionsWidget,
+            message: widget.message,
+            shouldShow: widget.message.hasAttachments
         ),
-      );
-    } else {
-      messageColumn.add(widget.attachmentsWidget);
-    }
+        stickers: widget.stickersWidget,
+        isFromMe: widget.message.isFromMe,
+      ),
+    );
 
-    // Third, let's add the message or URL preview
+    // Second, let's add the message or URL preview
     Widget message;
     if (widget.message.hasDdResults && this.hasHyperlinks) {
       message = Padding(
@@ -173,21 +173,26 @@ class _ReceivedMessageState extends State<ReceivedMessage>
         child: widget.urlPreviewWidget,
       );
     } else if (!isEmptyString(widget.message.text)) {
-      message =
-          _buildMessageWithTail(widget.message, widget.shouldShowBigEmoji);
+      message = _buildMessageWithTail(widget.message, widget.shouldShowBigEmoji,
+          widget.hasReactions, showSender);
     }
 
-    // Fourth, let's add any reactions or stickers to the widget
+    // Third, let's add any reactions or stickers to the widget
     if (message != null) {
       messageColumn.add(
         addStickersToWidget(
           message: addReactionsToWidget(
-              message: Padding(
-                padding: EdgeInsets.only(bottom: widget.showTail ? 2.0 : 0.0),
-                child: message,
+              messageWidget: addNameToWidget(
+                message: message,
+                name: contactTitle,
+                shouldShow: showSender,
+                showBigEmoji: widget.shouldShowBigEmoji,
+                context: context,
               ),
               reactions: widget.reactionsWidget,
-              isFromMe: widget.message.isFromMe),
+              message: widget.message,
+              shouldShow: !widget.message.hasAttachments
+          ),
           stickers: widget.stickersWidget,
           isFromMe: widget.message.isFromMe,
         ),
@@ -218,7 +223,7 @@ class _ReceivedMessageState extends State<ReceivedMessage>
     msgRow.add(
       Padding(
         // Padding to shift the bubble up a bit, relative to the avatar
-        padding: EdgeInsets.only(bottom: (widget.showTail) ? 5.0 : 3.0),
+        padding: EdgeInsets.only(bottom: widget.showTail ? 0.0 : 5.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -231,8 +236,8 @@ class _ReceivedMessageState extends State<ReceivedMessage>
     return Padding(
       // Add padding when we are showing the avatar
       padding: EdgeInsets.only(
-        left: (!widget.showTail && widget.isGroup) ? 35.0 : 0.0,
-      ),
+          left: (!widget.showTail && widget.isGroup) ? 35.0 : 0.0,
+          bottom: (widget.showTail) ? 10.0 : 0.0),
       child: Row(
         mainAxisSize: MainAxisSize.max,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,

@@ -120,6 +120,13 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
               ),
               actions: <Widget>[
                 new FlatButton(
+                    child: new Text("Discard",
+                        style: Theme.of(context).textTheme.subtitle1),
+                    onPressed: () {
+                      file.delete();
+                      Navigator.of(context).pop();
+                    }),
+                new FlatButton(
                   child: new Text("Send",
                       style: Theme.of(context).textTheme.bodyText1),
                   onPressed: () {
@@ -138,13 +145,6 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                     Navigator.of(context).pop();
                   },
                 ),
-                new FlatButton(
-                    child: new Text("Discard",
-                        style: Theme.of(context).textTheme.subtitle1),
-                    onPressed: () {
-                      file.delete();
-                      Navigator.of(context).pop();
-                    }),
               ]);
         });
   }

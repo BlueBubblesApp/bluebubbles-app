@@ -260,6 +260,8 @@ class MessageHelper {
   }
 
   static bool shouldShowBigEmoji(String text) {
+    if (isEmptyString(text)) return false;
+
     RegExp pattern = new RegExp(
         r'(\u00a9|\u00ae|[\u2000-\u3300]|\ud83c[\ud000-\udfff]|\ud83d[\ud000-\udfff]|\ud83e[\ud000-\udfff])');
     List<RegExpMatch> matches = pattern.allMatches(text).toList();

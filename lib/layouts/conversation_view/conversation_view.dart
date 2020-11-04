@@ -254,12 +254,9 @@ class _ConversationViewState extends State<ConversationView> {
         mainAxisAlignment: MainAxisAlignment.end,
         children: <Widget>[
           Expanded(
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 16.0),
-              child: MessageView(
-                messageBloc: widget.messageBloc,
-                showHandle: chat.participants.length > 1,
-              ),
+            child: MessageView(
+              messageBloc: widget.messageBloc,
+              showHandle: chat.participants.length > 1,
             ),
           ),
           BlueBubblesTextField(
