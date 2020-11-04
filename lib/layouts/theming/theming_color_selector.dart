@@ -1,5 +1,6 @@
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/contstants.dart';
+import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/layouts/theming/theming_color_picker_popup.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/material.dart';
@@ -7,7 +8,7 @@ import 'package:flutter/material.dart';
 class ThemingColorSelector extends StatefulWidget {
   ThemingColorSelector({Key key, this.colorTitle, this.isDarkMode})
       : super(key: key);
-  final ThemeColors colorTitle;
+  final String colorTitle;
   final bool isDarkMode;
 
   @override
@@ -15,12 +16,14 @@ class ThemingColorSelector extends StatefulWidget {
 }
 
 class _ThemingColorSelectorState extends State<ThemingColorSelector> {
-  Color getColorForTitle(bool isDarkMode, ThemeColors title) {
+  Color getColorForTitle(bool isDarkMode, String title) {
     ThemeData theme;
     if (isDarkMode) {
-      theme = SettingsManager().settings.darkTheme;
+      // theme = SettingsManager().settings.darkTheme;
+      theme = oledDarkTheme;
     } else {
-      theme = SettingsManager().settings.lightTheme;
+      // theme = SettingsManager().settings.lightTheme;
+      theme = whiteLightTheme;
     }
     switch (title) {
       case ThemeColors.Headline1:
@@ -29,7 +32,7 @@ class _ThemingColorSelectorState extends State<ThemingColorSelector> {
         return theme.textTheme.headline2.color;
       case ThemeColors.Bodytext1:
         return theme.textTheme.bodyText1.color;
-      case ThemeColors.BodyText2:
+      case ThemeColors.Bodytext2:
         return theme.textTheme.bodyText2.color;
       case ThemeColors.Subtitle1:
         return theme.textTheme.subtitle1.color;
@@ -47,7 +50,7 @@ class _ThemingColorSelectorState extends State<ThemingColorSelector> {
     return theme.textTheme.headline1.color;
   }
 
-  ThemeData themeDataForTitle(ThemeColors title, ThemeData data, Color newVal) {
+  ThemeData themeDataForTitle(String title, ThemeData data, Color newVal) {
     switch (title) {
       case ThemeColors.Headline1:
         return data.copyWith(
@@ -67,7 +70,7 @@ class _ThemingColorSelectorState extends State<ThemingColorSelector> {
             bodyText1: data.textTheme.headline1.copyWith(color: newVal),
           ),
         );
-      case ThemeColors.BodyText2:
+      case ThemeColors.Bodytext2:
         return data.copyWith(
           textTheme: data.textTheme.copyWith(
             bodyText2: data.textTheme.headline1.copyWith(color: newVal),
@@ -108,23 +111,23 @@ class _ThemingColorSelectorState extends State<ThemingColorSelector> {
               initialColor:
                   getColorForTitle(widget.isDarkMode, widget.colorTitle),
               onSet: (Color color) async {
-                if (widget.isDarkMode) {
-                  SettingsManager().settings.setOneColorOfDarkTheme(
-                      widget.colorTitle, color, context);
-                  await SettingsManager().saveSettings(
-                    SettingsManager().settings,
-                    context: context,
-                  );
-                  AdaptiveTheme.of(context).reassemble();
-                } else {
-                  SettingsManager().settings.setOneColorOfLightTheme(
-                      widget.colorTitle, color, context);
-                  await SettingsManager().saveSettings(
-                    SettingsManager().settings,
-                    context: context,
-                  );
-                  AdaptiveTheme.of(context).reassemble();
-                }
+                // if (widget.isDarkMode) {
+                //   SettingsManager().settings.setOneColorOfDarkTheme(
+                //       widget.colorTitle, color, context);
+                //   await SettingsManager().saveSettings(
+                //     SettingsManager().settings,
+                //     context: context,
+                //   );
+                //   AdaptiveTheme.of(context).reassemble();
+                // } else {
+                //   SettingsManager().settings.setOneColorOfLightTheme(
+                //       widget.colorTitle, color, context);
+                //   await SettingsManager().saveSettings(
+                //     SettingsManager().settings,
+                //     context: context,
+                //   );
+                //   AdaptiveTheme.of(context).reassemble();
+                // }
               },
             ),
           );

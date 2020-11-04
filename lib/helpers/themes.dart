@@ -96,7 +96,7 @@ ThemeData whiteLightTheme = ThemeData(
   textTheme: TextTheme(
     headline1: TextStyle(
       color: Colors.black,
-      fontWeight: FontWeight.bold,
+      fontWeight: FontWeight.normal,
       fontSize: 18,
     ),
     headline2: TextStyle(

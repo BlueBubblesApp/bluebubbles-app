@@ -35,68 +35,69 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
             ),
           ),
         ),
-        SliverToBoxAdapter(
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: DropdownButton(
-                  isExpanded: false,
-                  dropdownColor: Theme.of(context).accentColor,
-                  items: widget.isDarkMode
-                      ? DarkThemes.values
-                          .map<DropdownMenuItem<DarkThemes>>((e) {
-                          return DropdownMenuItem(
-                            value: e,
-                            child: Text(
-                              e.toString().split(".").last.replaceAll("_", " "),
-                              style: Theme.of(context).textTheme.bodyText1,
-                            ),
-                          );
-                        }).toList()
-                      : LightThemes.values
-                          .map<DropdownMenuItem<LightThemes>>((e) {
-                          return DropdownMenuItem(
-                            value: e,
-                            child: Text(
-                              e.toString().split(".").last.replaceAll("_", " "),
-                              style: Theme.of(context).textTheme.bodyText1,
-                            ),
-                          );
-                        }).toList(),
-                  onChanged: (value) {
-                    if (widget.isDarkMode) {
-                      SettingsManager().settings.darkColorPreset = value;
-                      SettingsManager().saveSettings(SettingsManager().settings,
-                          context: context);
-                    } else {
-                      SettingsManager().settings.lightColorPreset = value;
-                      SettingsManager().saveSettings(SettingsManager().settings,
-                          context: context);
-                    }
-                  },
-                  value: widget.isDarkMode
-                      ? SettingsManager().settings.darkPreset
-                      : SettingsManager().settings.lightPreset,
-                  hint: Text(
-                    "Preset",
-                    style: Theme.of(context).textTheme.bodyText1,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
+        // SliverToBoxAdapter(
+        //   child: Row(
+        //     mainAxisSize: MainAxisSize.min,
+        //     children: [
+        //       Padding(
+        //         padding: const EdgeInsets.all(8.0),
+        //         child: DropdownButton(
+        //           isExpanded: false,
+        //           dropdownColor: Theme.of(context).accentColor,
+        //           items: widget.isDarkMode
+        //               ? DarkThemes.values
+        //                   .map<DropdownMenuItem<DarkThemes>>((e) {
+        //                   return DropdownMenuItem(
+        //                     value: e,
+        //                     child: Text(
+        //                       e.toString().split(".").last.replaceAll("_", " "),
+        //                       style: Theme.of(context).textTheme.bodyText1,
+        //                     ),
+        //                   );
+        //                 }).toList()
+        //               : LightThemes.values
+        //                   .map<DropdownMenuItem<LightThemes>>((e) {
+        //                   return DropdownMenuItem(
+        //                     value: e,
+        //                     child: Text(
+        //                       e.toString().split(".").last.replaceAll("_", " "),
+        //                       style: Theme.of(context).textTheme.bodyText1,
+        //                     ),
+        //                   );
+        //                 }).toList(),
+        //           onChanged: (value) {
+        //             // if (widget.isDarkMode) {
+        //             //   SettingsManager().settings.darkColorPreset = value;
+        //             //   SettingsManager().saveSettings(SettingsManager().settings,
+        //             //       context: context);
+        //             // } else {
+        //             //   SettingsManager().settings.lightColorPreset = value;
+        //             //   SettingsManager().saveSettings(SettingsManager().settings,
+        //             //       context: context);
+        //             // }
+        //           },
+        //           value: widget.isDarkMode
+        //               ? SettingsManager().settings.darkPreset
+        //               : SettingsManager().settings.lightPreset,
+        //           hint: Text(
+        //             "Preset",
+        //             style: Theme.of(context).textTheme.bodyText1,
+        //           ),
+        //         ),
+        //       ),
+        //     ],
+        //   ),
+        // ),
         SliverList(
           delegate: SliverChildBuilderDelegate(
             (context, index) {
               return ThemingColorSelector(
-                colorTitle: ThemeColors.values[index],
+                colorTitle:
+                    ThemeColors.Headline1, //  ThemeColors.values[index],
                 isDarkMode: widget.isDarkMode,
               );
             },
-            childCount: ThemeColors.values.length,
+            childCount: 9, // ThemeColors.values.length,
           ),
         )
       ],

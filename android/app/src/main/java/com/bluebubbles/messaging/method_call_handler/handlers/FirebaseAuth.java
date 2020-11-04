@@ -42,6 +42,7 @@ public class FirebaseAuth implements Handler {
         if (!isNetworkAvailable(context))
             result.error("no_internet", "No internet, retry in 10 seconds", "");
         if (app == null) {
+            Log.d("firebase_auth", "client_id: " + call.argument("client_id"));
             app = FirebaseApp.initializeApp(context, new FirebaseOptions.Builder()
                     .setProjectId(call.argument("project_id"))
                     .setStorageBucket(call.argument("storage_bucket"))

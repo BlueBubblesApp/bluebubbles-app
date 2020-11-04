@@ -12,7 +12,7 @@ import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/settings.dart';
+import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:flutter_socket_io/socket_io_manager.dart';
 import 'package:flutter_socket_io/flutter_socket_io.dart';
 import 'package:flutter/material.dart';
@@ -346,7 +346,7 @@ class SocketManager {
   }
 
   Future<void> authFCM() async {
-    if (SettingsManager().settings.fcmAuthData == null) {
+    if (SettingsManager().fcmData.isNull) {
       debugPrint("No FCM Auth data found. Skipping FCM authentication");
       return;
     } else if (token != null) {
@@ -361,7 +361,7 @@ class SocketManager {
 
     try {
       final String result = await MethodChannelInterface()
-          .invokeMethod('auth', SettingsManager().settings.fcmAuthData);
+          .invokeMethod('auth', SettingsManager().fcmData.toMap());
       token = result;
       if (_manager.socket != null) {
         _manager.sendMessage("add-fcm-device",
@@ -468,8 +468,7 @@ class SocketManager {
     // And then save to disk
     // NOTE: we do not automatically connect to the socket or authorize fcm,
     //       because we need to do that manually with a forced connection
-    await SettingsManager().saveSettings(settingsCopy,
-        connectToSocket: false, authorizeFCM: false);
+    await SettingsManager().saveSettings(settingsCopy);
 
     // Then we connect to the socket.
     // We force a connection because the socket may still be attempting to connect to the socket,
@@ -496,7 +495,9 @@ class SocketManager {
     Settings _settingsCopy = SettingsManager().settings;
     if (_settingsCopy.serverAddress == url) return;
     _settingsCopy.serverAddress = url;
-    await SettingsManager()
-        .saveSettings(_settingsCopy, connectToSocket: connectToSocket);
+    await SettingsManager().saveSettings(_settingsCopy);
+    if (connectToSocket) {
+      startSocketIO(forceNewConnection: connectToSocket);
+    }
   }
 }

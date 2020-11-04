@@ -6,13 +6,11 @@ import 'package:bluebubbles/layouts/widgets/message_widget/message_content/messa
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/material.dart';
-import 'package:metadata_fetch/metadata_fetch.dart';
 import 'package:mime_type/mime_type.dart';
 import 'package:path/path.dart';
 
 class SavedAttachmentData {
   List<Attachment> attachments = [];
-  Map<String, Metadata> urlMetaData = {};
   Future<List<Attachment>> attachmentsFuture;
   Map<String, Uint8List> imageData = {};
 }

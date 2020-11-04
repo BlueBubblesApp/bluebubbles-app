@@ -1,12 +1,18 @@
+import 'dart:convert';
 import 'dart:io';
 
+import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
+import 'package:bluebubbles/repository/models/fcm_data.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/repository/models/message.dart';
+import 'package:bluebubbles/repository/models/settings.dart';
+import 'package:bluebubbles/repository/models/theme_object.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
 
 enum Tables {
@@ -16,7 +22,12 @@ enum Tables {
   attachment,
   chat_handle_join,
   chat_message_join,
-  attachment_message_join
+  attachment_message_join,
+  themes,
+  theme_values,
+  theme_value_join,
+  config,
+  fcm,
 }
 
 class DBProvider {
@@ -113,6 +124,26 @@ class DBProvider {
           case Tables.attachment_message_join:
             await createAttachmentMessageJoinTable(db);
             break;
+          case Tables.themes:
+            await createThemeTable(db);
+            await setupConfigRows(db);
+            break;
+          case Tables.theme_values:
+            await createThemeValuesTable(db);
+            await setupConfigRows(db);
+            break;
+          case Tables.theme_value_join:
+            await createThemeValueJoin(db);
+            await setupConfigRows(db);
+            break;
+          case Tables.config:
+            await createConfigTable(db);
+            await setupConfigRows(db);
+            break;
+          case Tables.fcm:
+            await createFCMTable(db);
+            await setupConfigRows(db);
+            break;
         }
         debugPrint(
             "creating missing table " + tableName.toString().split(".").last);
@@ -129,6 +160,12 @@ class DBProvider {
     await createChatHandleJoinTable(db);
     await createChatMessageJoinTable(db);
     await createIndexes(db);
+    await createConfigTable(db);
+    await createFCMTable(db);
+    await createThemeTable(db);
+    await createThemeValuesTable(db);
+    await createThemeValueJoin(db);
+    await setupConfigRows(db);
   }
 
   static Future<void> createHandleTable(Database db) async {
@@ -251,5 +288,104 @@ class DBProvider {
     await db.execute("CREATE UNIQUE INDEX idx_chat_guid ON chat (guid);");
     await db.execute(
         "CREATE UNIQUE INDEX idx_attachment_guid ON attachment (guid);");
+  }
+
+  static Future<void> createConfigTable(Database db) async {
+    await db.execute("CREATE TABLE config ("
+        "ROWID INTEGER PRIMARY KEY AUTOINCREMENT,"
+        "name TEXT,"
+        "value TEXT,"
+        "type TEXT NOT NULL"
+        ");");
+  }
+
+  static Future<void> createFCMTable(Database db) async {
+    await db.execute("CREATE TABLE fcm ("
+        "ROWID INTEGER PRIMARY KEY AUTOINCREMENT,"
+        "name TEXT,"
+        "value TEXT,"
+        "type TEXT NOT NULL"
+        ");");
+  }
+
+  static Future<void> createThemeValuesTable(Database db) async {
+    await db.execute("CREATE TABLE theme_values ("
+        "ROWID INTEGER PRIMARY KEY AUTOINCREMENT,"
+        "themeId INTEGER NOT NULL,"
+        "name TEXT NOT NULL,"
+        "color TEXT NOT NULL,"
+        "isFont INTEGER DEFAULT 0,"
+        "fontSize INTEGER"
+        ");");
+  }
+
+  static Future<void> createThemeTable(Database db) async {
+    await db.execute("CREATE TABLE themes ("
+        "ROWID INTEGER PRIMARY KEY AUTOINCREMENT,"
+        "name TEXT UNIQUE,"
+        "selectedLightTheme INTEGER DEFAULT 0,"
+        "selectedDarkTheme INTEGER DEFAULT 0"
+        ");");
+  }
+
+  static Future<void> createThemeValueJoin(Database db) async {
+    await db.execute("CREATE TABLE theme_value_join ("
+        "ROWID INTEGER PRIMARY KEY AUTOINCREMENT,"
+        "themeId INTEGER NOT NULL,"
+        "themeValueId INTEGER NOT NULL,"
+        "FOREIGN KEY(themeId) REFERENCES theme_values(ROWID),"
+        "FOREIGN KEY(themeValueId) REFERENCES themes(ROWID),"
+        "UNIQUE (themeId, themeValueId)"
+        ");");
+  }
+
+  static Future<void> setupConfigRows(Database database) async {
+    // Get the shared preferences and store it
+    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+
+    // Get `Settings` from the shared preferences
+    String result = sharedPreferences.getString('Settings');
+
+    // Set those settings as the [settings] variable
+    if (result != null) {
+      Map resultMap = jsonDecode(result);
+      Settings settings = new Settings();
+      settings.serverAddress = resultMap["server_address"];
+      settings.guidAuthKey = resultMap["guidAuthKey"];
+      settings.finishedSetup = resultMap["finishedSetup"];
+      settings.chunkSize = resultMap["chunkSize"];
+      settings.autoOpenKeyboard = resultMap["autoOpenKeyboard"];
+      settings.autoDownload = resultMap["autoDownload"];
+      settings.onlyWifiDownload = resultMap["onlyWifiDownload"];
+      settings.hideTextPreviews = resultMap["hideTextPreviews"];
+      settings.showIncrementalSync = resultMap["showIncrementalSync"];
+      settings.lowMemoryMode = resultMap["lowMemoryMode"];
+      settings.lastIncrementalSync = resultMap["lastIncrementalSync"];
+      await settings.save(database: database);
+
+      Map resultFCM = resultMap["fcm_auth_data"];
+
+      FCMData fcmData = new FCMData();
+      fcmData.projectID = resultFCM["project_id"];
+      fcmData.storageBucket = resultFCM["storage_bucket"];
+      fcmData.apiKey = resultFCM["api_key"];
+      fcmData.firebaseURL = resultFCM["firebase_url"];
+      fcmData.clientID = resultFCM["client_id"];
+      fcmData.applicationID = resultFCM["application_id"];
+      await fcmData.save(database: database);
+    }
+    await ThemeObject(
+      data: oledDarkTheme,
+      name: "OLED_DARK",
+      selectedDarkTheme: true,
+      selectedLightTheme: false,
+    ).save(database: database);
+    await ThemeObject(
+      data: whiteLightTheme,
+      name: "WHITE_LIGHT",
+      selectedDarkTheme: false,
+      selectedLightTheme: true,
+    ).save(database: database);
+    await sharedPreferences.remove('Settings');
   }
 }

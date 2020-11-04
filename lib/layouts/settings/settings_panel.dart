@@ -8,7 +8,8 @@ import 'package:bluebubbles/layouts/theming/theming_panel.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/database.dart';
-import 'package:bluebubbles/settings.dart';
+import 'package:bluebubbles/repository/models/fcm_data.dart';
+import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import '../../helpers/hex_color.dart';
@@ -28,12 +29,14 @@ class SettingsPanel extends StatefulWidget {
 
 class _SettingsPanelState extends State<SettingsPanel> {
   Settings _settingsCopy;
+  FCMData _fcmDataCopy;
   bool needToReconnect = false;
 
   @override
   void initState() {
     super.initState();
     _settingsCopy = SettingsManager().settings;
+    _fcmDataCopy = SettingsManager().fcmData;
   }
 
   @override
@@ -207,14 +210,14 @@ class _SettingsPanelState extends State<SettingsPanel> {
                       return;
                     }
                     if (fcmData != null) {
-                      _settingsCopy.fcmAuthData = {
-                        "project_id": fcmData[2],
-                        "storage_bucket": fcmData[3],
-                        "api_key": fcmData[4],
-                        "firebase_url": fcmData[5],
-                        "client_id": fcmData[6],
-                        "application_id": fcmData[7],
-                      };
+                      _fcmDataCopy = FCMData(
+                        projectID: fcmData[2],
+                        storageBucket: fcmData[3],
+                        apiKey: fcmData[4],
+                        firebaseURL: fcmData[5],
+                        clientID: fcmData[6],
+                        applicationID: fcmData[7],
+                      );
                       _settingsCopy.guidAuthKey = fcmData[0];
                       _settingsCopy.serverAddress = fcmData[1];
                       needToReconnect = true;
@@ -339,11 +342,10 @@ class _SettingsPanelState extends State<SettingsPanel> {
 
   @override
   void dispose() {
-    // if (_settingsCopy != Singleton().settings) {
-    debugPrint("saving settings");
-    SettingsManager()
-        .saveSettings(_settingsCopy, connectToSocket: needToReconnect);
-    // }
+    SettingsManager().saveSettings(_settingsCopy);
+    if (needToReconnect) {
+      SocketManager().startSocketIO(forceNewConnection: true);
+    }
     super.dispose();
   }
 }

@@ -81,23 +81,11 @@ public class MainActivity extends FlutterActivity {
         if (Intent.ACTION_SEND.equals(action)) {
             if ("text/plain".equals(type)) {
                 handleSendText(intent); // Handle text being sent
-            } else if ("text/x-vcard".equals(type)) {
-                handleShareFile(intent);
-            } else if (type.startsWith("image/")) {
-                handleShareFile(intent); // Handle single image being sent
-            } else if (type.startsWith("video/")) {
-                handleShareFile(intent);
             } else {
-                Log.d("ShareImage", "type not found " + type);
+                handleShareFile(intent);
             }
         } else if (Intent.ACTION_SEND_MULTIPLE.equals(action) && type != null) {
-            if (type.startsWith("image/")) {
-                handleSendMultipleImages(intent); // Handle multiple images being sent
-            } else if (type.startsWith("video/")) {
-                handleSendMultipleImages(intent);
-            } else {
-                Log.d("ShareImage", "type not found " + type);
-            }
+            handleSendMultipleImages(intent);
         } else {
             if (type.equals("NotificationOpen")) {
                 Log.d("Notifications", "tapped on notification by id " + intent.getExtras().getInt("id"));
@@ -156,9 +144,9 @@ public class MainActivity extends FlutterActivity {
                 }
                 File file = new File(getFilesDir().getPath() + "/sharedFiles/" + getFileName(imageUri));
                 file.createNewFile();
-                new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod("shareAttachments", images);
                 writeBytesFromURI(imageUri, file);
                 images.add(file.getPath());
+                new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod("shareAttachments", images);
             } catch (Exception e) {
 
             }

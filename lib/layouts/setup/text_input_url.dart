@@ -2,7 +2,8 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/settings.dart';
+import 'package:bluebubbles/repository/models/fcm_data.dart';
+import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/material.dart';
 
@@ -68,8 +69,8 @@ class _TextInputURLState extends State<TextInputURL> {
     Settings copy = SettingsManager().settings;
     copy.serverAddress = url;
     copy.guidAuthKey = password;
-    SettingsManager()
-        .saveSettings(copy, authorizeFCM: false, connectToSocket: true);
+    SettingsManager().saveSettings(copy);
+    SocketManager().startSocketIO(forceNewConnection: true);
   }
 
   void retreiveFCMData() {
@@ -78,20 +79,11 @@ class _TextInputURLState extends State<TextInputURL> {
         widget.onError();
         return;
       }
-      Settings copy = SettingsManager().settings;
+      FCMData copy = SettingsManager().fcmData;
       Map<String, dynamic> data = _data["data"];
-      Map<String, dynamic> projectInfo = data["project_info"];
-      Map<String, dynamic> client = data["client"][0];
-      copy.fcmAuthData = {
-        "project_id": projectInfo["project_info"],
-        "storage_bucket": projectInfo["storage_bucket"],
-        "api_key": client["api_key"][0]["current_key"],
-        "firebase_url": projectInfo["firebase_url"],
-        "client_id": client["oauth_client"][0]["client_id"],
-        "application_id": client["client_info"]["mobilesdk_app_id"],
-      };
+      copy = FCMData.fromMap(data);
 
-      SettingsManager().saveSettings(copy, authorizeFCM: true);
+      SettingsManager().saveFCMData(copy);
       widget.onConnect();
     });
   }
