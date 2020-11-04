@@ -79,13 +79,13 @@ class _ReceivedMessageState extends State<ReceivedMessage>
 
   /// Builds the message bubble with teh tail (if applicable)
   Widget _buildMessageWithTail(
-      Message message, bool bigEmoji, bool hasReactions, bool showSender) {
+      Message message, bool bigEmoji, bool hasReactions) {
     if (bigEmoji) {
       return Padding(
           padding: EdgeInsets.only(
               left: CurrentChat().chat.participants.length > 1 ? 5.0 : 0.0,
               right: (hasReactions) ? 15.0 : 0.0,
-              top: widget.hasReactions || showSender ? 15 : 0),
+              top: widget.hasReactions ? 15 : 0),
           child: Text(message.text,
               style: Theme.of(context)
                   .textTheme
@@ -99,8 +99,7 @@ class _ReceivedMessageState extends State<ReceivedMessage>
         if (widget.showTail) MessageTail(isFromMe: false),
         Container(
           margin: EdgeInsets.only(
-            top: (widget.hasReactions && !widget.message.hasAttachments) ||
-                    showSender
+            top: widget.hasReactions && !widget.message.hasAttachments
                 ? 18
                 : 0,
             left: 10,
@@ -140,22 +139,27 @@ class _ReceivedMessageState extends State<ReceivedMessage>
 
     // The column that holds all the "messages"
     List<Widget> messageColumn = [];
-    bool showSender = (!sameSender(widget.message, widget.olderMessage) ||
-        !widget.message.dateCreated
-            .isWithin(widget.olderMessage.dateCreated, minutes: 30));
-    showSender = showSender && !widget.message.hasAttachments;
 
-    // First, add the attachments
+    // First, add the message sender (if applicable)
+    if (!sameSender(widget.message, widget.olderMessage) ||
+        !widget.message.dateCreated
+            .isWithin(widget.olderMessage.dateCreated, minutes: 30)) {
+      messageColumn.add(
+        Padding(
+          padding: EdgeInsets.only(left: 15.0, top: 5.0, bottom: 3.0),
+          child: Text(
+            contactTitle,
+            style: Theme.of(context).textTheme.subtitle1,
+          ),
+        ),
+      );
+    }
+
+    // Second, add the attachments
     messageColumn.add(
       addStickersToWidget(
         message: addReactionsToWidget(
-            messageWidget: addNameToWidget(
-              message: widget.attachmentsWidget,
-              name: contactTitle,
-              shouldShow: showSender && isEmptyString(widget.message.text),
-              showBigEmoji: widget.shouldShowBigEmoji,
-              context: context,
-            ),
+            messageWidget: widget.attachmentsWidget,
             reactions: widget.reactionsWidget,
             message: widget.message,
             shouldShow: widget.message.hasAttachments
@@ -165,7 +169,7 @@ class _ReceivedMessageState extends State<ReceivedMessage>
       ),
     );
 
-    // Second, let's add the message or URL preview
+    // Third, let's add the message or URL preview
     Widget message;
     if (widget.message.hasDdResults && this.hasHyperlinks) {
       message = Padding(
@@ -174,21 +178,15 @@ class _ReceivedMessageState extends State<ReceivedMessage>
       );
     } else if (!isEmptyString(widget.message.text)) {
       message = _buildMessageWithTail(widget.message, widget.shouldShowBigEmoji,
-          widget.hasReactions, showSender);
+          widget.hasReactions);
     }
 
-    // Third, let's add any reactions or stickers to the widget
+    // Fourth, let's add any reactions or stickers to the widget
     if (message != null) {
       messageColumn.add(
         addStickersToWidget(
           message: addReactionsToWidget(
-              messageWidget: addNameToWidget(
-                message: message,
-                name: contactTitle,
-                shouldShow: showSender,
-                showBigEmoji: widget.shouldShowBigEmoji,
-                context: context,
-              ),
+              messageWidget: message,
               reactions: widget.reactionsWidget,
               message: widget.message,
               shouldShow: !widget.message.hasAttachments

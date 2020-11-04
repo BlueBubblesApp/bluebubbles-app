@@ -110,10 +110,10 @@ class _MessageAttachmentsState extends State<MessageAttachments>
     } else {
       if (widget.showTail || !widget.showHandle) {
         if (!widget.message.isFromMe) {
-          padding = EdgeInsets.only(left: 10.0, top: widget.showHandle ? 18.0 : 0.0, bottom: 2.0);
+          padding = EdgeInsets.only(left: 10.0, bottom: 2.0);
         }
       } else {
-        padding = EdgeInsets.only(left: 10.0, top: widget.showHandle ? 18.0 : 0.0);
+        padding = EdgeInsets.only(left: 10.0);
       }
     }
 

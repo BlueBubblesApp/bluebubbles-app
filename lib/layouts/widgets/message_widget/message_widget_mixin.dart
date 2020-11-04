@@ -84,32 +84,6 @@ abstract class MessageWidgetMixin {
     );
   }
 
-  /// Adds reacts to a [message] widget
-  Widget addNameToWidget(
-      {@required Widget message,
-      @required name,
-      @required shouldShow,
-      @required showBigEmoji,
-      @required BuildContext context}) {
-    if (!shouldShow) return message;
-
-    return Stack(
-      alignment: AlignmentDirectional.topStart,
-      children: [
-        message,
-        Padding(
-          padding: EdgeInsets.only(
-            left: showBigEmoji ? 10.0 : 20.0,
-          ),
-          child: Text(
-            name,
-            style: Theme.of(context).textTheme.subtitle1,
-          ),
-        ),
-      ],
-    );
-  }
-
   static List<InlineSpan> buildMessageSpans(
       BuildContext context, Message message) {
     List<InlineSpan> textSpans = <InlineSpan>[];
