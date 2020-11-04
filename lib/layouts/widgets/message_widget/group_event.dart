@@ -50,7 +50,7 @@ class _GroupEventState extends State<GroupEvent> {
       direction: Axis.horizontal,
       children: [
         Flexible(
-          fit: FlexFit.loose,
+          fit: FlexFit.tight,
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 25.0, vertical: 10.0),
             child: Text(
