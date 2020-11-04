@@ -210,7 +210,7 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
         padding: EdgeInsets.only(
           top: widget.message.hasReactions ? 18.0 : 4,
           bottom: 4,
-          right: !widget.message.isFromMe && widget.message.hasReactions ? 10.0 : 0,
+          right: !widget.message.isFromMe && widget.message.hasReactions ? 10.0 : 5.0,
           left: widget.message.isFromMe && widget.message.hasReactions ? 5.0 : 0,
         ),
         child: ClipRRect(
