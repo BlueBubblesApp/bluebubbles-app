@@ -9,19 +9,20 @@ import 'package:sqflite/sqflite.dart';
 class ThemeObject {
   int id;
   String name;
-  bool selectedLightTheme;
-  bool selectedDarkTheme;
+  bool selectedLightTheme = false;
+  bool selectedDarkTheme = false;
   ThemeData data;
   List<ThemeEntry> entries = [];
 
   ThemeObject({
     this.id,
     this.name,
-    this.selectedLightTheme,
-    this.selectedDarkTheme,
+    this.selectedLightTheme = false,
+    this.selectedDarkTheme = false,
     this.data,
   });
   factory ThemeObject.fromMap(Map<String, dynamic> json) {
+    //
     return ThemeObject(
       id: json["ROWID"],
       name: json["name"],
@@ -67,11 +68,6 @@ class ThemeObject {
       this.id = existing.id;
     }
 
-    if (this.selectedDarkTheme) {
-      await db.update("themes", {"selectedDarkTheme": 0});
-    } else if (this.selectedLightTheme) {
-      await db.update("themes", {"selectedLightTheme": 0});
-    }
     // If it already exists, update it
     if (existing == null) {
       // Remove the ID from the map for inserting
@@ -114,10 +110,19 @@ class ThemeObject {
     return this;
   }
 
-  static Future<ThemeObject> getLightTheme() async {
-    List<ThemeObject> themes = await ThemeObject.getThemes();
-    ThemeObject theme =
-        themes.firstWhere((element) => element.selectedLightTheme);
+  static Future<ThemeObject> getLightTheme([bool setIfAbsent = true]) async {
+    List<ThemeObject> res = await ThemeObject.getThemes();
+    List<ThemeObject> themes =
+        res.where((element) => element.selectedLightTheme).toList();
+    if (themes.isEmpty && setIfAbsent) {
+      Database db = await DBProvider.db.database;
+      await db.update("themes", {"selectedLightTheme": 1},
+          where: "name = ?", whereArgs: ["WHITE_LIGHT"]);
+      await db.update("themes", {"selectedDarkTheme": 1},
+          where: "name = ?", whereArgs: ["OLED_DARK"]);
+      return await getLightTheme(false);
+    }
+    ThemeObject theme = themes.first;
     await theme.fetchData();
     return theme;
   }
@@ -130,14 +135,18 @@ class ThemeObject {
     return theme;
   }
 
-  static Future<void> setSelectedTheme(int light, int dark) async {
+  static Future<void> setSelectedTheme({int light, int dark}) async {
     final Database db = await DBProvider.db.database;
-    await db
-        .update("themes", {"selectedLightTheme": 0, "selectedDarkTheme": 0});
-    await db.update("themes", {"selectedLightTheme": 1},
-        where: "ROWID = ?", whereArgs: [light]);
-    await db.update("themes", {"selectedDarkTheme": 1},
-        where: "ROWID = ?", whereArgs: [dark]);
+    if (light != null) {
+      await db.update("themes", {"selectedLightTheme": 0});
+      await db.update("themes", {"selectedLightTheme": 1},
+          where: "ROWID = ?", whereArgs: [light]);
+    }
+    if (dark != null) {
+      await db.update("themes", {"selectedDarkTheme": 0});
+      await db.update("themes", {"selectedDarkTheme": 1},
+          where: "ROWID = ?", whereArgs: [dark]);
+    }
   }
 
   static Future<ThemeObject> findOne(Map<String, dynamic> filters,
@@ -187,6 +196,7 @@ class ThemeObject {
         [this.id]);
     this.entries =
         (res.isNotEmpty) ? res.map((t) => ThemeEntry.fromMap(t)).toList() : [];
+    this.data = themeData;
     return this.entries;
   }
 
@@ -236,4 +246,14 @@ class ThemeObject {
       backgroundColor: data[ThemeColors.BackgroundColor].style,
     );
   }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ThemeObject &&
+          runtimeType == other.runtimeType &&
+          name == other.name;
+
+  @override
+  int get hashCode => name.hashCode;
 }

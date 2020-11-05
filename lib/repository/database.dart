@@ -374,18 +374,28 @@ class DBProvider {
       fcmData.applicationID = resultFCM["application_id"];
       await fcmData.save(database: database);
     }
+    await setupDefaultPresetThemes(database);
+    await sharedPreferences.remove('Settings');
+  }
+
+  static Future<void> setupDefaultPresetThemes(Database database) async {
     await ThemeObject(
       data: oledDarkTheme,
       name: "OLED_DARK",
       selectedDarkTheme: true,
       selectedLightTheme: false,
-    ).save(database: database);
+    ).save(database: database, updateIfAbsent: false);
     await ThemeObject(
       data: whiteLightTheme,
       name: "WHITE_LIGHT",
       selectedDarkTheme: false,
       selectedLightTheme: true,
-    ).save(database: database);
-    await sharedPreferences.remove('Settings');
+    ).save(database: database, updateIfAbsent: false);
+    await ThemeObject(
+      data: nordDarkTheme,
+      name: "NORD",
+      selectedDarkTheme: false,
+      selectedLightTheme: false,
+    ).save(database: database, updateIfAbsent: false);
   }
 }

@@ -61,6 +61,7 @@ class SettingsManager {
       {bool headless = false, BuildContext context}) async {
     settings = await Settings.getSettings();
     fcmData = await FCMData.getFCM();
+    await DBProvider.setupDefaultPresetThemes(await DBProvider.db.database);
     themes = await ThemeObject.getThemes();
     for (ThemeObject theme in themes) {
       await theme.fetchData();
@@ -102,12 +103,16 @@ class SettingsManager {
   /// @param [selectedDarkTheme] is the [ThemeObject] of the dark theme to save and set as dark theme in the db
   ///
   /// @param [context] is the [BuildContext] used to set the theme of the new settings
-  Future<void> saveSelectedTheme(ThemeObject selectedLightTheme,
-      ThemeObject selectedDarkTheme, BuildContext context) async {
-    await selectedLightTheme.save();
-    await selectedDarkTheme.save();
+  Future<void> saveSelectedTheme(
+    BuildContext context, {
+    ThemeObject selectedLightTheme,
+    ThemeObject selectedDarkTheme,
+  }) async {
+    await selectedLightTheme?.save();
+    await selectedDarkTheme?.save();
     await ThemeObject.setSelectedTheme(
-        selectedLightTheme.id, selectedDarkTheme.id);
+        light: selectedLightTheme?.id ?? null,
+        dark: selectedDarkTheme?.id ?? null);
 
     ThemeData lightTheme = (await ThemeObject.getLightTheme()).themeData;
     ThemeData darkTheme = (await ThemeObject.getDarkTheme()).themeData;

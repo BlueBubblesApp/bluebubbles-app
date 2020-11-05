@@ -35,34 +35,10 @@ class _TextInputURLState extends State<TextInputURL> {
     connectionStateSubscription =
         SocketManager().connectionStateStream.listen((event) {
       if (event == SocketState.CONNECTED) {
-        // Navigator.of(context).pop();
-        // controller.nextPage(
-        //   duration: Duration(milliseconds: 300),
-        //   curve: Curves.easeInOut,
-        // );
         connectionStateSubscription.cancel();
         retreiveFCMData();
       } else if (event == SocketState.ERROR ||
           event == SocketState.DISCONNECTED) {
-        // Navigator.of(context).pop();
-        // showDialog(
-        //   context: context,
-        //   builder: (context) => AlertDialog(
-        //     backgroundColor: Theme.of(context).backgroundColor,
-        //     title: Text(
-        //       "An error occurred trying to connect to the socket",
-        //       style: Theme.of(context).textTheme.bodyText1,
-        //     ),
-        //     actions: <Widget>[
-        //       FlatButton(
-        //         child: Text("Ok", style: Theme.of(context).textTheme.bodyText1),
-        //         onPressed: () {
-        //           Navigator.of(context).pop();
-        //         },
-        //       )
-        //     ],
-        //   ),
-        // );
         connectionStateSubscription.cancel();
       }
     });
