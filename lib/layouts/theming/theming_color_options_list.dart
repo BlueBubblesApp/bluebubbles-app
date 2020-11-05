@@ -23,41 +23,46 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
   ThemeObject currentTheme;
   List<ThemeObject> allThemes = [];
   bool editable = false;
-  bool showingDialog = false;
 
   @override
   void initState() {
     super.initState();
     widget.controller.stream.listen((event) {
-      BuildContext _context = context;
-      if (!showingDialog) {
-        showingDialog = true;
-        showDialog(
-          context: context,
-          builder: (context) => NewThemeCreateAlert(
-            onCreate: (String name) async {
-              Navigator.of(context).pop();
-              showingDialog = false;
-              ThemeObject newTheme =
-                  new ThemeObject(data: currentTheme.themeData, name: name);
-              allThemes.add(newTheme);
-              currentTheme = newTheme;
-              if (widget.isDarkMode) {
-                await SettingsManager().saveSelectedTheme(_context,
-                    selectedDarkTheme: currentTheme);
-              } else {
-                await SettingsManager().saveSelectedTheme(_context,
-                    selectedLightTheme: currentTheme);
-              }
-              setState(() {});
-            },
-            onCancel: () {
-              Navigator.of(context).pop();
-              showingDialog = false;
-            },
+      if (!currentTheme.isPreset) {
+        Scaffold.of(context).hideCurrentSnackBar();
+        Scaffold.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Click on an item to customize"),
+            behavior: SnackBarBehavior.floating,
           ),
         );
+        return;
       }
+      BuildContext _context = context;
+      showDialog(
+        context: context,
+        builder: (context) => NewThemeCreateAlert(
+          onCreate: (String name) async {
+            Navigator.of(context).pop();
+            ThemeObject newTheme =
+                new ThemeObject(data: currentTheme.themeData, name: name);
+            allThemes.add(newTheme);
+            currentTheme = newTheme;
+            if (widget.isDarkMode) {
+              await SettingsManager()
+                  .saveSelectedTheme(_context, selectedDarkTheme: currentTheme);
+            } else {
+              await SettingsManager().saveSelectedTheme(_context,
+                  selectedLightTheme: currentTheme);
+            }
+            setState(() {});
+          },
+          onCancel: () {
+            Navigator.of(context).pop();
+          },
+        ),
+      );
+      // }
     });
   }
 
@@ -130,6 +135,8 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
                                 selectedLightTheme: value);
                           }
                           currentTheme = value;
+                          editable =
+                              currentTheme != null && !currentTheme.isPreset;
                           setState(() {});
                         },
                         value: currentTheme,
