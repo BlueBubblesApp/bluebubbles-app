@@ -120,6 +120,7 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
                             )
                             .toList(),
                         onChanged: (value) async {
+                          value.data = value.themeData;
                           await value.save();
                           if (widget.isDarkMode) {
                             SettingsManager().saveSelectedTheme(context,

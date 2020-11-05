@@ -122,6 +122,7 @@ class _VideoWidgetState extends State<VideoWidget>
                         builder: (context) => AttachmentFullscreenViewer(
                           allAttachments: CurrentChat().chatAttachments,
                           attachment: widget.attachment,
+                          showInteractions: true,
                         ),
                       ),
                     );

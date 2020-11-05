@@ -165,6 +165,7 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
                     builder: (context) => AttachmentFullscreenViewer(
                       allAttachments: widget.allAttachments,
                       attachment: widget.attachment,
+                      showInteractions: true,
                     ),
                   ),
                 );
@@ -202,6 +203,7 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
                     builder: (context) => AttachmentFullscreenViewer(
                       allAttachments: widget.allAttachments,
                       attachment: widget.attachment,
+                      showInteractions: true,
                     ),
                   ),
                 );

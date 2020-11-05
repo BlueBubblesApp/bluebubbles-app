@@ -372,6 +372,9 @@ class DBProvider {
       fcmData.applicationID = resultFCM["application_id"];
       await fcmData.save();
     }
+    for (ThemeObject theme in Themes.themes) {
+      await theme.save(updateIfAbsent: false);
+    }
     // await sharedPreferences.remove('Settings');
   }
 }

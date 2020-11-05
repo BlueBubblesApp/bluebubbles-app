@@ -11,12 +11,12 @@ import 'package:bluebubbles/repository/models/attachment.dart';
 import "package:flutter/material.dart";
 
 class AttachmentFullscreenViewer extends StatefulWidget {
-  AttachmentFullscreenViewer({
-    Key key,
-    this.attachment,
-    this.allAttachments,
-    this.showInteractions
-  }) : super(key: key);
+  AttachmentFullscreenViewer(
+      {Key key,
+      this.attachment,
+      this.allAttachments,
+      @required this.showInteractions})
+      : super(key: key);
   final List<Attachment> allAttachments;
   final Attachment attachment;
   final bool showInteractions;
