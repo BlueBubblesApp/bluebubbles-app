@@ -103,50 +103,52 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
 
   Future<void> reviewAudio(BuildContext context, File file) async {
     showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-              backgroundColor: Theme.of(context).accentColor,
-              title: new Text("Send it?",
-                  style: Theme.of(context).textTheme.headline1),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text("Review your audio snippet before sending it",
-                      style: Theme.of(context).textTheme.subtitle1),
-                  Container(height: 10.0),
-                  AudioPlayerWiget(file: file)
-                ],
-              ),
-              actions: <Widget>[
-                new FlatButton(
-                    child: new Text("Discard",
-                        style: Theme.of(context).textTheme.subtitle1),
-                    onPressed: () {
-                      file.delete();
-                      Navigator.of(context).pop();
-                    }),
-                new FlatButton(
-                  child: new Text("Send",
-                      style: Theme.of(context).textTheme.bodyText1),
-                  onPressed: () {
-                    OutgoingQueue().add(
-                      new QueueItem(
-                        event: "send-attachment",
-                        item: new AttachmentSender(
-                          file,
-                          widget.chat,
-                          "",
-                        ),
-                      ),
-                    );
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Theme.of(context).accentColor,
+          title: new Text("Send it?",
+              style: Theme.of(context).textTheme.headline1),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text("Review your audio snippet before sending it",
+                  style: Theme.of(context).textTheme.subtitle1),
+              Container(height: 10.0),
+              AudioPlayerWiget(file: file)
+            ],
+          ),
+          actions: <Widget>[
+            new FlatButton(
+                child: new Text("Discard",
+                    style: Theme.of(context).textTheme.subtitle1),
+                onPressed: () {
+                  file.delete();
+                  Navigator.of(context).pop();
+                }),
+            new FlatButton(
+              child: new Text("Send",
+                  style: Theme.of(context).textTheme.bodyText1),
+              onPressed: () {
+                OutgoingQueue().add(
+                  new QueueItem(
+                    event: "send-attachment",
+                    item: new AttachmentSender(
+                      file,
+                      widget.chat,
+                      "",
+                    ),
+                  ),
+                );
 
-                    // Remove the OG alert dialog
-                    Navigator.of(context).pop();
-                  },
-                ),
-              ]);
-        });
+                // Remove the OG alert dialog
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Future<void> toggleShareMenu() async {
@@ -273,7 +275,7 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                                 scrollPhysics: CustomBouncingScrollPhysics(),
                                 style: Theme.of(context)
                                     .textTheme
-                                    .bodyText2
+                                    .bodyText1
                                     .apply(
                                         color: ThemeData
                                                     .estimateBrightnessForColor(

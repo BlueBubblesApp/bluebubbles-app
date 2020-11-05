@@ -5,7 +5,7 @@ import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
-import 'package:bluebubbles/settings.dart';
+import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/material.dart';
 
@@ -43,14 +43,14 @@ class SetupBloc {
     processId =
         SocketManager().addSocketProcess(([bool finishWithError = false]) {});
     onConnectionError = _onConnectionError;
-    debugPrint(settings.toJson().toString());
     isSyncing = true;
 
     // Set the last sync date (for incremental, even though this isn't incremental)
     // We won't try an incremental sync until the last (full) sync date is set
     Settings _settingsCopy = SettingsManager().settings;
     _settingsCopy.lastIncrementalSync = DateTime.now().millisecondsSinceEpoch;
-    SettingsManager().saveSettings(_settingsCopy, connectToSocket: false);
+
+    SettingsManager().saveSettings(_settingsCopy);
 
     // Get the chats to sync
     SocketManager().sendMessage("get-chats", {}, (data) {
@@ -131,7 +131,7 @@ class SetupBloc {
     _finishedSetup = true;
     ContactManager().contacts = [];
     await ContactManager().getContacts();
-    SettingsManager().saveSettings(_settingsCopy, connectToSocket: false);
+    SettingsManager().saveSettings(_settingsCopy);
     SocketManager().finishSetup();
   }
 
@@ -188,8 +188,7 @@ class SetupBloc {
       // Get the messages and add them to the DB
       List messages = data["data"];
       if (messages.length == 0) {
-        debugPrint(
-            "(SYNC) No new messages found during incremental sync");
+        debugPrint("(SYNC) No new messages found during incremental sync");
       } else {
         debugPrint(
             "(SYNC) Incremental sync found ${messages.length} messages. Syncing...");
@@ -203,11 +202,11 @@ class SetupBloc {
       // Once we have added everything, save the last sync date
       if (saveDate) {
         debugPrint(
-          "(SYNC) Finished incremental sync. Saving last sync date: $syncStart");
+            "(SYNC) Finished incremental sync. Saving last sync date: $syncStart");
 
         Settings _settingsCopy = SettingsManager().settings;
         _settingsCopy.lastIncrementalSync = syncStart;
-        SettingsManager().saveSettings(_settingsCopy, connectToSocket: false);
+        SettingsManager().saveSettings(_settingsCopy);
       }
 
       if (SettingsManager().settings.showIncrementalSync)

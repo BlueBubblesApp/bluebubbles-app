@@ -83,6 +83,7 @@ class _ConversationListState extends State<ConversationList> {
           NotificationManager().chat != null ||
           context == null) return;
       final snackBar = SnackBar(content: Text(event["data"]["text"]));
+      Scaffold.of(context).hideCurrentSnackBar();
       Scaffold.of(context).showSnackBar(snackBar);
     });
   }

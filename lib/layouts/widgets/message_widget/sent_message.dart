@@ -29,10 +29,9 @@ class SentMessageHelper {
     if (bigEmoji) {
       msg = Padding(
           padding: EdgeInsets.only(
-            left: (hasReactions) ? 15.0 : 0.0,
-            top: (hasReactions) ? 15.0 : 0.0,
-            right: 5
-          ),
+              left: (hasReactions) ? 15.0 : 0.0,
+              top: (hasReactions) ? 15.0 : 0.0,
+              right: 5),
           child: Text(message.text,
               style: Theme.of(context)
                   .textTheme
@@ -71,7 +70,10 @@ class SentMessageHelper {
                     text: TextSpan(
                       children: MessageWidgetMixin.buildMessageSpans(
                           context, message),
-                      style: Theme.of(context).textTheme.bodyText1,
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodyText1
+                          .apply(color: Colors.white),
                     ),
                   )
                 : customContent,
@@ -293,9 +295,10 @@ class _SentMessageState extends State<SentMessage>
       Padding(
         // Padding to shift the bubble up a bit, relative to the avatar
         padding: EdgeInsets.only(
-            bottom: (widget.showTail && !isEmptyString(widget.message.text)) ? 5.0 : 3.0,
-            right: isEmptyString(widget.message.text) ? 10.0 : 0.0
-        ),
+            bottom: (widget.showTail && !isEmptyString(widget.message.text))
+                ? 5.0
+                : 3.0,
+            right: isEmptyString(widget.message.text) ? 10.0 : 0.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.end,

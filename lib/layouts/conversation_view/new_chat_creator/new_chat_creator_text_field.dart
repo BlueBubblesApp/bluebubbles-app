@@ -68,11 +68,10 @@ class _NewChatCreatorTextFieldState extends State<NewChatCreatorTextField> {
                       width: 5.0,
                     ),
                     InkWell(
-                      child: Icon(
-                        Icons.close,
-                        size: 15.0,
-                      )
-                    )
+                        child: Icon(
+                      Icons.close,
+                      size: 15.0,
+                    ))
                   ],
                 ),
               ),
@@ -85,9 +84,7 @@ class _NewChatCreatorTextFieldState extends State<NewChatCreatorTextField> {
     // Add the next text field
     items.add(
       ConstrainedBox(
-        constraints: BoxConstraints(
-          maxWidth: 255.0
-        ),
+        constraints: BoxConstraints(maxWidth: 255.0),
         child: CupertinoTextField(
           focusNode: inputFieldNode,
           onSubmitted: (String done) {
@@ -105,8 +102,7 @@ class _NewChatCreatorTextFieldState extends State<NewChatCreatorTextField> {
                 ));
               } else {
                 widget.controller.clear();
-                widget.selectedContacts
-                  .add(widget.allContacts[0]);
+                widget.selectedContacts.add(widget.allContacts[0]);
               }
             }
           },
@@ -118,7 +114,7 @@ class _NewChatCreatorTextFieldState extends State<NewChatCreatorTextField> {
           placeholderStyle: Theme.of(context).textTheme.subtitle1,
           padding: EdgeInsets.only(right: 5.0, top: 2.0, bottom: 2.0),
           autofocus: true,
-          style: Theme.of(context).textTheme.bodyText2.apply(
+          style: Theme.of(context).textTheme.bodyText1.apply(
                 color: ThemeData.estimateBrightnessForColor(
                             Theme.of(context).backgroundColor) ==
                         Brightness.light

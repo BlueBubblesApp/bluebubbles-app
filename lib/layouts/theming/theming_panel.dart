@@ -1,9 +1,18 @@
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
+import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/layouts/theming/theming_color_options_list.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/repository/models/theme_object.dart';
 import 'package:flutter/material.dart';
+
+class EditController {
+  StreamController controller = StreamController.broadcast();
+  Stream get stream => controller.stream;
+}
 
 class ThemingPanel extends StatefulWidget {
   ThemingPanel({Key key}) : super(key: key);
@@ -12,25 +21,33 @@ class ThemingPanel extends StatefulWidget {
   _ThemingPanelState createState() => _ThemingPanelState();
 }
 
-class _ThemingPanelState extends State<ThemingPanel> {
-  PageController controller;
+class _ThemingPanelState extends State<ThemingPanel>
+    with TickerProviderStateMixin {
+  TabController controller;
+  EditController editController;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (AdaptiveTheme.of(context).mode.isDark) {
-      controller = PageController(initialPage: 1);
+      controller = TabController(vsync: this, initialIndex: 1, length: 2);
     } else {
-      controller = PageController();
+      controller = TabController(vsync: this, initialIndex: 0, length: 2);
     }
+    editController = new EditController();
+  }
+
+  @override
+  void dispose() {
+    // SettingsManager().saveSelectedTheme(, selectedDarkTheme, context)
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      extendBodyBehindAppBar: true,
       extendBody: true,
-      backgroundColor: Theme.of(context).backgroundColor,
+      backgroundColor: Colors.white,
       appBar: PreferredSize(
         preferredSize: Size(MediaQuery.of(context).size.width, 80),
         child: ClipRRect(
@@ -40,22 +57,22 @@ class _ThemingPanelState extends State<ThemingPanel> {
               elevation: 0,
               leading: IconButton(
                 icon: Icon(Icons.arrow_back_ios,
-                    color: Theme.of(context).primaryColor),
+                    color: whiteLightTheme.primaryColor),
                 onPressed: () {
                   Navigator.of(context).pop();
                 },
               ),
-              backgroundColor: Theme.of(context).accentColor.withOpacity(0.5),
+              backgroundColor: whiteLightTheme.accentColor.withOpacity(0.5),
               title: Text(
                 "Theming",
-                style: Theme.of(context).textTheme.headline1,
+                style: whiteLightTheme.textTheme.headline1,
               ),
             ),
             filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
           ),
         ),
       ),
-      body: PageView(
+      body: TabBarView(
         physics: AlwaysScrollableScrollPhysics(
           parent: CustomBouncingScrollPhysics(),
         ),
@@ -63,11 +80,52 @@ class _ThemingPanelState extends State<ThemingPanel> {
         children: <Widget>[
           ThemingColorOptionsList(
             isDarkMode: false,
+            controller: editController,
           ),
           ThemingColorOptionsList(
             isDarkMode: true,
+            controller: editController,
           )
         ],
+      ),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: .0),
+        child: FloatingActionButton(
+          backgroundColor: Colors.blue,
+          onPressed: () {
+            editController.controller.sink.add(null);
+          },
+          child: Icon(
+            Icons.edit,
+            color: Colors.white,
+          ),
+        ),
+      ),
+      bottomSheet: TabBar(
+        indicatorColor: whiteLightTheme.primaryColor,
+        indicator: BoxDecoration(
+          border: Border(
+            top: BorderSide(
+              color: Colors.blue,
+              width: 3.0,
+            ),
+          ),
+        ),
+        tabs: [
+          Tab(
+            icon: Icon(
+              Icons.brightness_high,
+              color: whiteLightTheme.textTheme.bodyText1.color,
+            ),
+          ),
+          Tab(
+            icon: Icon(
+              Icons.brightness_3,
+              color: whiteLightTheme.textTheme.bodyText1.color,
+            ),
+          ),
+        ],
+        controller: controller,
       ),
     );
   }

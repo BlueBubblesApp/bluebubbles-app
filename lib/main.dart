@@ -259,7 +259,10 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
               SystemChrome.setPreferredOrientations([
                 DeviceOrientation.portraitUp,
               ]);
-              return SetupView();
+              return WillPopScope(
+                onWillPop: () async => false,
+                child: SetupView(),
+              );
             }
           } else {
             return Container();

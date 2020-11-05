@@ -81,23 +81,11 @@ public class MainActivity extends FlutterActivity {
         if (Intent.ACTION_SEND.equals(action)) {
             if (type.equals("text/plain")) {
                 handleSendText(intent); // Handle text being sent
-            } else if ("text/x-vcard".equals(type)) {
-                handleShareFile(intent);
-            } else if (type.startsWith("image/")) {
-                handleShareFile(intent); // Handle single image being sent
-            } else if (type.startsWith("video/")) {
-                handleShareFile(intent);
             } else {
-                Log.d("ShareImage", "type not found " + type);
+                handleShareFile(intent);
             }
-        } else if (Intent.ACTION_SEND_MULTIPLE.equals(action)) {
-            if (type.startsWith("image/")) {
-                handleSendMultipleImages(intent); // Handle multiple images being sent
-            } else if (type.startsWith("video/")) {
-                handleSendMultipleImages(intent);
-            } else {
-                Log.d("ShareImage", "type not found " + type);
-            }
+        } else if (Intent.ACTION_SEND_MULTIPLE.equals(action) && type != null) {
+            handleSendMultipleImages(intent);
         } else {
             if (type.equals("NotificationOpen")) {
                 Log.d("Notifications", "tapped on notification by id " + intent.getExtras().getInt("id"));
