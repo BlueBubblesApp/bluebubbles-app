@@ -19,12 +19,10 @@ class UrlPreviewWidget extends StatefulWidget {
   UrlPreviewWidget({
     Key key,
     @required this.linkPreviews,
-    @required this.message,
-    @required this.showSender
+    @required this.message
   }) : super(key: key);
   final List<Attachment> linkPreviews;
   final Message message;
-  final bool showSender;
 
   @override
   _UrlPreviewWidgetState createState() => _UrlPreviewWidgetState();
@@ -210,9 +208,9 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
       vsync: this,
       child: Padding(
         padding: EdgeInsets.only(
-          top: widget.message.hasReactions || widget.showSender ? 18.0 : 4,
+          top: widget.message.hasReactions ? 18.0 : 4,
           bottom: 4,
-          right: !widget.message.isFromMe && widget.message.hasReactions ? 10.0 : 0,
+          right: !widget.message.isFromMe && widget.message.hasReactions ? 10.0 : 5.0,
           left: widget.message.isFromMe && widget.message.hasReactions ? 5.0 : 0,
         ),
         child: ClipRRect(

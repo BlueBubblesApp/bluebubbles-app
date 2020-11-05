@@ -135,9 +135,9 @@ class AttachmentHelper {
     return !(FileSystemEntity.typeSync(pathName) == FileSystemEntityType.notFound);
   }
 
-  static dynamic getContent(Attachment attachment) {
+  static dynamic getContent(Attachment attachment, {String path}) {
     String appDocPath = SettingsManager().appDocDir.path;
-    String pathName =
+    String pathName = path ??
         "$appDocPath/attachments/${attachment.guid}/${attachment.transferName}";
 
     /**

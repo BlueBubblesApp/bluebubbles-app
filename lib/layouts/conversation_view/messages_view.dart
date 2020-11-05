@@ -33,6 +33,8 @@ class _MessageViewState extends State<MessageView>
   final Duration animationDuration = Duration(milliseconds: 400);
   bool initializedList = false;
   double timeStampOffset = 0;
+  ScrollController scrollController = new ScrollController();
+  bool showScrollDown = false;
 
   @override
   void initState() {
@@ -44,6 +46,24 @@ class _MessageViewState extends State<MessageView>
     });
     CurrentChat().stream.listen((event) {
       if (this.mounted) setState(() {});
+    });
+
+    scrollController.addListener(() {
+      if (scrollController.hasClients &&
+          scrollController.offset >= 500 &&
+          !showScrollDown) {
+        if (this.mounted)
+          setState(() {
+            showScrollDown = true;
+          });
+      } else if (scrollController.hasClients &&
+          scrollController.offset < 500 &&
+          showScrollDown) {
+        if (this.mounted)
+          setState(() {
+            showScrollDown = false;
+          });
+      }
     });
   }
 
@@ -96,7 +116,9 @@ class _MessageViewState extends State<MessageView>
         _listKey.currentState.insertItem(
           event.index != null ? event.index : 0,
           duration: isNewMessage
-              ? event.outGoing ? Duration(milliseconds: 500) : animationDuration
+              ? event.outGoing
+                  ? Duration(milliseconds: 500)
+                  : animationDuration
               : Duration(milliseconds: 0),
         );
       }
@@ -113,7 +135,8 @@ class _MessageViewState extends State<MessageView>
         SavedAttachmentData data =
             CurrentChat().attachments.remove(event.oldGuid);
 
-        data.attachments = updatedAttachments.where((item) => item.mimeType != null).toList();
+        data.attachments =
+            updatedAttachments.where((item) => item.mimeType != null).toList();
         CurrentChat().attachments[event.message.guid] = data;
       }
       bool updatedAMessage = false;
@@ -200,105 +223,133 @@ class _MessageViewState extends State<MessageView>
           timeStampOffset = 0;
         });
       },
-      child: CustomScrollView(
-        reverse: true,
-        physics: AlwaysScrollableScrollPhysics(
-            parent: CustomBouncingScrollPhysics()),
-        slivers: <Widget>[
-          _listKey != null
-              ? SliverAnimatedList(
-                  initialItemCount: _messages.length + 1,
-                  key: _listKey,
-                  itemBuilder: (BuildContext context, int index,
-                      Animation<double> animation) {
-                    if (index == _messages.length) {
-                      if (loader == null && !reachedTopOfChat) {
-                        loader = widget.messageBloc
-                            .loadMessageChunk(_messages.length);
-                        loader.then((val) {
-                          if (val == LoadMessageResult.FAILED_TO_RETREIVE) {
-                            loader = widget.messageBloc
-                                .loadMessageChunk(_messages.length);
-                          } else if (val ==
-                              LoadMessageResult.RETREIVED_NO_MESSAGES) {
-                            reachedTopOfChat = true;
-                            loader = null;
-                          } else {
-                            loader = null;
-                          }
-                          if (this.mounted) setState(() {});
-                        });
+      child: Stack(alignment: AlignmentDirectional.bottomCenter, children: [
+        CustomScrollView(
+          controller: scrollController,
+          reverse: true,
+          physics: AlwaysScrollableScrollPhysics(
+              parent: CustomBouncingScrollPhysics()),
+          slivers: <Widget>[
+            _listKey != null
+                ? SliverAnimatedList(
+                    initialItemCount: _messages.length + 1,
+                    key: _listKey,
+                    itemBuilder: (BuildContext context, int index,
+                        Animation<double> animation) {
+                      if (index == _messages.length) {
+                        if (loader == null && !reachedTopOfChat) {
+                          loader = widget.messageBloc
+                              .loadMessageChunk(_messages.length);
+                          loader.then((val) {
+                            if (val == LoadMessageResult.FAILED_TO_RETREIVE) {
+                              loader = widget.messageBloc
+                                  .loadMessageChunk(_messages.length);
+                            } else if (val ==
+                                LoadMessageResult.RETREIVED_NO_MESSAGES) {
+                              reachedTopOfChat = true;
+                              loader = null;
+                            } else {
+                              loader = null;
+                            }
+                            if (this.mounted) setState(() {});
+                          });
+                        }
+
+                        return NewMessageLoader(
+                          messageBloc: widget.messageBloc,
+                          offset: _messages.length,
+                          loader: loader,
+                        );
+                      } else if (index > _messages.length) {
+                        return Container();
                       }
 
-                      return NewMessageLoader(
-                        messageBloc: widget.messageBloc,
-                        offset: _messages.length,
-                        loader: loader,
+                      Message olderMessage;
+                      Message newerMessage;
+                      if (index + 1 >= 0 && index + 1 < _messages.length) {
+                        olderMessage = _messages[index + 1];
+                      }
+                      if (index - 1 >= 0 && index - 1 < _messages.length) {
+                        newerMessage = _messages[index - 1];
+                      }
+
+                      return SizeTransition(
+                        axis: Axis.vertical,
+                        sizeFactor: animation.drive(Tween(begin: 0.0, end: 1.0)
+                            .chain(CurveTween(curve: Curves.easeInOut))),
+                        child: SlideTransition(
+                          position: animation.drive(
+                            Tween(
+                              begin: Offset(0.0, 1),
+                              end: Offset(0.0, 0.0),
+                            ).chain(
+                              CurveTween(
+                                curve: Curves.easeInOut,
+                              ),
+                            ),
+                          ),
+                          child: FadeTransition(
+                            opacity: animation,
+                            child: Padding(
+                              padding: EdgeInsets.only(left: 5.0, right: 5.0),
+                              child: MessageWidget(
+                                key: Key(_messages[index].guid),
+                                offset: timeStampOffset,
+                                message: _messages[index],
+                                chat: widget.messageBloc.currentChat,
+                                olderMessage: olderMessage,
+                                newerMessage: newerMessage,
+                                showHandle: widget.showHandle,
+                                // shouldFadeIn:
+                                //     sentMessages.contains(_messages[index].guid),
+                                isFirstSentMessage:
+                                    widget.messageBloc.firstSentMessage ==
+                                        _messages[index].guid,
+                                // savedAttachmentData:
+                                //     attachments.containsKey(_messages[index].guid)
+                                //         ? attachments[_messages[index].guid]
+                                //         : null,
+                                showHero: index == 0 &&
+                                    _messages[index].originalROWID == null,
+                              ),
+                            ),
+                          ),
+                        ),
                       );
-                    } else if (index > _messages.length) {
-                      return Container();
-                    }
-
-                    Message olderMessage;
-                    Message newerMessage;
-                    if (index + 1 >= 0 && index + 1 < _messages.length) {
-                      olderMessage = _messages[index + 1];
-                    }
-                    if (index - 1 >= 0 && index - 1 < _messages.length) {
-                      newerMessage = _messages[index - 1];
-                    }
-
-                    return SizeTransition(
-                      axis: Axis.vertical,
-                      sizeFactor: animation.drive(Tween(begin: 0.0, end: 1.0)
-                          .chain(CurveTween(curve: Curves.easeInOut))),
-                      child: SlideTransition(
-                        position: animation.drive(
-                          Tween(
-                            begin: Offset(0.0, 1),
-                            end: Offset(0.0, 0.0),
-                          ).chain(
-                            CurveTween(
-                              curve: Curves.easeInOut,
-                            ),
-                          ),
-                        ),
-                        child: FadeTransition(
-                          opacity: animation,
-                          child: Padding(
-                            padding: EdgeInsets.only(left: 5.0, right: 5.0),
-                            child: MessageWidget(
-                              key: Key(_messages[index].guid),
-                              offset: timeStampOffset,
-                              message: _messages[index],
-                              chat: widget.messageBloc.currentChat,
-                              olderMessage: olderMessage,
-                              newerMessage: newerMessage,
-                              showHandle: widget.showHandle,
-                              // shouldFadeIn:
-                              //     sentMessages.contains(_messages[index].guid),
-                              isFirstSentMessage:
-                                  widget.messageBloc.firstSentMessage ==
-                                      _messages[index].guid,
-                              // savedAttachmentData:
-                              //     attachments.containsKey(_messages[index].guid)
-                              //         ? attachments[_messages[index].guid]
-                              //         : null,
-                              showHero: index == 0 &&
-                                  _messages[index].originalROWID == null,
-                            ),
-                          ),
-                        ),
-                      ),
+                    },
+                  )
+                : SliverToBoxAdapter(child: Container()),
+            SliverPadding(
+              padding: EdgeInsets.all(70),
+            ),
+          ],
+        ),
+        (showScrollDown)
+            ? Container(
+              height: 35,
+              width: 150,
+              decoration: BoxDecoration(
+                color: Theme.of(context).accentColor.withOpacity(0.7),
+                borderRadius: BorderRadius.circular(10.0)
+              ),
+              child: Center(
+                child: GestureDetector(
+                  onTap: () {
+                    scrollController.animateTo(
+                      0.0,
+                      curve: Curves.easeOut,
+                      duration: const Duration(milliseconds: 300),
                     );
                   },
-                )
-              : SliverToBoxAdapter(child: Container()),
-          SliverPadding(
-            padding: EdgeInsets.all(70),
-          ),
-        ],
-      ),
+                  child: Text(
+                    "\u{2193} Scroll to bottom \u{2193}",
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+            )
+          : Container()
+      ]),
     );
   }
 }

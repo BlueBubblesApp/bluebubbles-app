@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:typed_data';
 import 'dart:ui';
 
 import 'package:bluebubbles/helpers/hex_color.dart';
@@ -14,10 +13,11 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:video_player/video_player.dart';
 
 class VideoViewer extends StatefulWidget {
-  VideoViewer({Key key, @required this.file, @required this.attachment})
+  VideoViewer({Key key, @required this.file, @required this.attachment, this.showInteractions})
       : super(key: key);
   final File file;
   final Attachment attachment;
+  final bool showInteractions;
 
   @override
   _VideoViewerState createState() => _VideoViewerState();
@@ -62,6 +62,86 @@ class _VideoViewerState extends State<VideoViewer> {
 
   @override
   Widget build(BuildContext context) {
+    List<Widget> interactives = [];
+    if (widget.showInteractions) {
+      interactives.addAll([
+        Padding(
+          padding: EdgeInsets.only(top: 50.0, right: 10),
+          child: Align(
+            alignment: Alignment.topRight,
+            child: CupertinoButton(
+              onPressed: () async {
+                if (await Permission.storage.request().isGranted) {
+                  await ImageGallerySaver.saveFile(widget.file.path);
+                  FlutterToast(context).showToast(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(25.0),
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 24.0, vertical: 12.0),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(25.0),
+                            color: Theme.of(context)
+                                .accentColor
+                                .withOpacity(0.1),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.check,
+                                color: Theme.of(context)
+                                    .textTheme
+                                    .bodyText1
+                                    .color,
+                              ),
+                              SizedBox(
+                                width: 12.0,
+                              ),
+                              Text(
+                                "Saved to gallery",
+                                style: Theme.of(context).textTheme.bodyText1,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }
+              },
+              child: Icon(
+                Icons.file_download,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ),
+        Padding(
+            padding: EdgeInsets.only(top: 50.0, right: 70),
+            child: Align(
+              alignment: Alignment.topRight,
+              child: CupertinoButton(
+                onPressed: () async {
+                  // final Uint8List bytes = await widget.file.readAsBytes();
+                  await Share.file(
+                    "Shared ${widget.attachment.mimeType.split("/")[0]} from BlueBubbles: ${widget.attachment.transferName}",
+                    widget.attachment.transferName,
+                    widget.file.path,
+                    widget.attachment.mimeType,
+                  );
+                },
+                child: Icon(
+                  Icons.share,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ),
+      ]);
+    }
     return Scaffold(
       backgroundColor: Theme.of(context).backgroundColor,
       body: Stack(
@@ -141,81 +221,7 @@ class _VideoViewerState extends State<VideoViewer> {
               ],
             ),
           ),
-          Padding(
-            padding: EdgeInsets.only(top: 50.0, right: 10),
-            child: Align(
-              alignment: Alignment.topRight,
-              child: CupertinoButton(
-                onPressed: () async {
-                  if (await Permission.storage.request().isGranted) {
-                    await ImageGallerySaver.saveFile(widget.file.path);
-                    FlutterToast(context).showToast(
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(25.0),
-                        child: BackdropFilter(
-                          filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 24.0, vertical: 12.0),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(25.0),
-                              color: Theme.of(context)
-                                  .accentColor
-                                  .withOpacity(0.1),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.check,
-                                  color: Theme.of(context)
-                                      .textTheme
-                                      .bodyText1
-                                      .color,
-                                ),
-                                SizedBox(
-                                  width: 12.0,
-                                ),
-                                Text(
-                                  "Saved to gallery",
-                                  style: Theme.of(context).textTheme.bodyText1,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    );
-                  }
-                },
-                child: Icon(
-                  Icons.file_download,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-          ),
-          Padding(
-            padding: EdgeInsets.only(top: 50.0, right: 70),
-            child: Align(
-              alignment: Alignment.topRight,
-              child: CupertinoButton(
-                onPressed: () async {
-                  // final Uint8List bytes = await widget.file.readAsBytes();
-                  await Share.file(
-                    "Shared ${widget.attachment.mimeType.split("/")[0]} from BlueBubbles: ${widget.attachment.transferName}",
-                    widget.attachment.transferName,
-                    widget.file.path,
-                    widget.attachment.mimeType,
-                  );
-                },
-                child: Icon(
-                  Icons.share,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-          ),
+          ...interactives,
           controller.value.duration != null
               ? StreamBuilder(
                   stream: videoProgressStream.stream,

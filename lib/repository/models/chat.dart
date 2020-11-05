@@ -287,7 +287,13 @@ class Chat {
     // Save the message
     Message existing = await Message.findOne({"guid": message.guid});
 
-    Message newMessage = await message.save();
+    Message newMessage;
+
+    try {
+      newMessage = await message.save();
+    } catch (ex) {
+      newMessage = await Message.findOne({"guid": message.guid});
+    }
     bool isNewer = false;
 
     // If the message was saved correctly, update this chat's latestMessage info,

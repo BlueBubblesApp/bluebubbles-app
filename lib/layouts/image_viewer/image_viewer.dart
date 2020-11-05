@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:typed_data';
 import 'dart:ui';
 import 'package:bluebubbles/helpers/share.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
@@ -9,7 +8,6 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:photo_view/photo_view.dart';
-import 'package:photo_view/photo_view_gallery.dart';
 
 class ImageViewer extends StatefulWidget {
   ImageViewer({
@@ -17,10 +15,12 @@ class ImageViewer extends StatefulWidget {
     this.tag,
     this.file,
     this.attachment,
+    this.showInteractions,
   }) : super(key: key);
   final String tag;
   final File file;
   final Attachment attachment;
+  final bool showInteractions;
 
   @override
   _ImageViewerState createState() => _ImageViewerState();
@@ -133,7 +133,7 @@ class _ImageViewerState extends State<ImageViewer> {
       backgroundColor: Colors.black,
       body: GestureDetector(
         onTap: () {
-          if (!this.mounted) return;
+          if (!this.mounted || !widget.showInteractions) return;
 
           setState(() {
             showOverlay = !showOverlay;

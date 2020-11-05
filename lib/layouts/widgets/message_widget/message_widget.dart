@@ -59,6 +59,7 @@ class _MessageState extends State<MessageWidget> {
   OverlayEntry _entry;
   Completer<void> associatedMessageRequest;
   Completer<void> attachmentsRequest;
+  int lastRequestCount = -1;
 
   @override
   void initState() {
@@ -160,10 +161,14 @@ class _MessageState extends State<MessageWidget> {
 
     // If hasDdResults is true, it means we have attachents, so if we don't, we should get em
     if (widget.message.hasDdResults && attachments.length == 0) {
-      SocketManager().setup.startIncrementalSync(SettingsManager().settings,
+      if (lastRequestCount != attachments.length) {
+        lastRequestCount = attachments.length;
+        SocketManager().setup.startIncrementalSync(SettingsManager().settings,
           chatGuid: CurrentChat().chat.guid, saveDate: false, onComplete: () {
             if (this.mounted) setState(() {});
           });
+      }
+      
     }
 
     bool hasChanges = false;
@@ -217,11 +222,6 @@ class _MessageState extends State<MessageWidget> {
       return GroupEvent(message: widget.message);
     }
 
-    bool showSender = (!sameSender(widget.message, widget.olderMessage) ||
-                          !widget.message.dateCreated.isWithin(
-                              widget.olderMessage.dateCreated,
-                              minutes: 30));
-
     ////////// READ //////////
     /// This widget and code below will handle building out the following:
     /// -> Attachments
@@ -261,8 +261,7 @@ class _MessageState extends State<MessageWidget> {
                 .attachments
                 .where((item) => item.mimeType == null)
                 .toList(),
-            message: widget.message,
-            showSender: showSender
+            message: widget.message
           ),
           stickersWidget: StickersWidget(
             key: new Key(
@@ -295,8 +294,7 @@ class _MessageState extends State<MessageWidget> {
           key: new Key("preview-${widget.message.guid}"),
           linkPreviews:
               this.attachments.where((item) => item.mimeType == null).toList(),
-          message: widget.message,
-          showSender: showSender
+          message: widget.message
         ),
         stickersWidget: StickersWidget(
           key: new Key("stickers-${this.associatedMessages.length.toString()}"),

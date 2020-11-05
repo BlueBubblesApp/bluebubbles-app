@@ -9,17 +9,17 @@ import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scrol
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import "package:flutter/material.dart";
-import 'package:photo_view/photo_view.dart';
-import 'package:photo_view/photo_view_gallery.dart';
 
 class AttachmentFullscreenViewer extends StatefulWidget {
   AttachmentFullscreenViewer({
     Key key,
     this.attachment,
     this.allAttachments,
+    this.showInteractions
   }) : super(key: key);
   final List<Attachment> allAttachments;
   final Attachment attachment;
+  final bool showInteractions;
 
   @override
   _AttachmentFullscreenViewerState createState() =>
@@ -82,7 +82,10 @@ class _AttachmentFullscreenViewerState
                 Attachment attachment = widget.allAttachments[index];
                 String mimeType = attachment.mimeType;
                 mimeType = mimeType.substring(0, mimeType.indexOf("/"));
-                dynamic content = AttachmentHelper.getContent(attachment);
+                dynamic content = AttachmentHelper.getContent(attachment,
+                    path: attachment.guid == null
+                        ? attachment.transferName
+                        : null);
 
                 if (content is File) {
                   content = content as File;
@@ -90,11 +93,13 @@ class _AttachmentFullscreenViewerState
                     return ImageViewer(
                       attachment: attachment,
                       file: content,
+                      showInteractions: widget.showInteractions,
                     );
                   } else if (mimeType == "video") {
                     return VideoViewer(
                       file: content,
                       attachment: attachment,
+                      showInteractions: widget.showInteractions,
                     );
                   }
                 } else if (content is Attachment) {

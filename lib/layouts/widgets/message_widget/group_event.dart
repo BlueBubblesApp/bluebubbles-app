@@ -46,19 +46,25 @@ class _GroupEventState extends State<GroupEvent> {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: <Widget>[
-          Text(
-            text,
-            style: Theme.of(context)
-                .textTheme
-                .subtitle2,
+    return Flex(
+      direction: Axis.horizontal,
+      children: [
+        Flexible(
+          fit: FlexFit.loose,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 25.0, vertical: 10.0),
+            child: Text(
+              text,
+              style: Theme.of(context)
+                  .textTheme
+                  .subtitle2,
+              overflow: TextOverflow.ellipsis,
+              maxLines: 2,
+              textAlign: TextAlign.center,
+            ),
           ),
-        ],
-      ),
+        ),
+      ]
     );
   }
 }
