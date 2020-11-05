@@ -52,17 +52,15 @@ class ThemeEntry {
       : color;
 
   Future<ThemeEntry> save(ThemeObject theme,
-      {bool updateIfAbsent = true, Database database}) async {
-    final Database db =
-        database != null ? database : await DBProvider.db.database;
+      {bool updateIfAbsent = true}) async {
+    final Database db = await DBProvider.db.database;
 
     assert(theme.id != null);
     this.themeId = theme.id;
 
     // Try to find an existing ConfigEntry before saving it
-    ThemeEntry existing = await ThemeEntry.findOne(
-        {"name": this.name, "themeId": this.themeId},
-        database: database);
+    ThemeEntry existing =
+        await ThemeEntry.findOne({"name": this.name, "themeId": this.themeId});
     if (existing != null) {
       this.id = existing.id;
     }
@@ -83,15 +81,14 @@ class ThemeEntry {
             "theme_value_join", {"themeValueId": this.id, "themeId": theme.id});
       }
     } else if (updateIfAbsent) {
-      await this.update(theme, database: database);
+      await this.update(theme);
     }
 
     return this;
   }
 
-  Future<ThemeEntry> update(ThemeObject theme, {Database database}) async {
-    final Database db =
-        database != null ? database : await DBProvider.db.database;
+  Future<ThemeEntry> update(ThemeObject theme) async {
+    final Database db = await DBProvider.db.database;
 
     // If it already exists, update it
     if (this.id != null) {
@@ -106,7 +103,7 @@ class ThemeEntry {
           where: "ROWID = ?",
           whereArgs: [this.id]);
     } else {
-      await this.save(theme, updateIfAbsent: false, database: database);
+      await this.save(theme, updateIfAbsent: false);
     }
 
     return this;

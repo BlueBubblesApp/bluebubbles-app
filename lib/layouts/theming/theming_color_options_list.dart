@@ -156,21 +156,22 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
                   crossAxisCount: 2,
                 ),
               ),
-              SliverToBoxAdapter(
-                child: FlatButton(
-                  child: Text(
-                    "Delete",
-                    style: TextStyle(color: Colors.red),
+              if (!currentTheme.isPreset)
+                SliverToBoxAdapter(
+                  child: FlatButton(
+                    child: Text(
+                      "Delete",
+                      style: TextStyle(color: Colors.red),
+                    ),
+                    color: whiteLightTheme.accentColor,
+                    onPressed: () async {
+                      allThemes.removeWhere(
+                          (element) => element == this.currentTheme);
+                      // currentTheme
+                      await this.currentTheme.delete();
+                    },
                   ),
-                  color: whiteLightTheme.accentColor,
-                  onPressed: () async {
-                    allThemes
-                        .removeWhere((element) => element == this.currentTheme);
-                    // currentTheme
-                    await this.currentTheme.delete();
-                  },
                 ),
-              ),
               SliverPadding(
                 padding: EdgeInsets.all(25),
               ),
