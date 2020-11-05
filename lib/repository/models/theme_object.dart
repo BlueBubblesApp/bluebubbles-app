@@ -33,6 +33,7 @@ class ThemeObject {
     );
     object.id = -1;
     object.entries = object.toEntries();
+
     return object;
   }
 

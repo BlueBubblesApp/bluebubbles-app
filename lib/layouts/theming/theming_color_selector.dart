@@ -35,9 +35,12 @@ class _ThemingColorSelectorState extends State<ThemingColorSelector> {
                 showDialog(
                   context: context,
                   builder: (context) => ThemingColorPickerPopup(
-                    initialColor: widget.entry.color,
-                    onSet: (Color color) async {
+                    entry: widget.entry,
+                    onSet: (Color color, {int fontSize}) async {
                       widget.entry.color = color;
+                      if (fontSize != null && widget.entry.isFont) {
+                        widget.entry.fontSize = fontSize;
+                      }
                       await widget.entry.save(widget.currentTheme);
                       await widget.currentTheme.fetchData();
                       if (widget.currentTheme.selectedDarkTheme) {

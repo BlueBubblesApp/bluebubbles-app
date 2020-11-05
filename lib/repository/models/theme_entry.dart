@@ -39,7 +39,7 @@ class ThemeEntry {
       color: style.color,
       name: title,
       isFont: true,
-      fontSize: style.fontSize != null ? style.fontSize.toInt() : null,
+      fontSize: style.fontSize != null ? style.fontSize.toInt() : 14,
     );
   }
 
