@@ -12,7 +12,6 @@ class ThemeObject {
   String name;
   bool selectedLightTheme = false;
   bool selectedDarkTheme = false;
-  bool isPreset = false;
   ThemeData data;
   List<ThemeEntry> entries = [];
 
@@ -21,7 +20,6 @@ class ThemeObject {
     this.name,
     this.selectedLightTheme = false,
     this.selectedDarkTheme = false,
-    this.isPreset = false,
     this.data,
   });
   factory ThemeObject.fromData(ThemeData data, String name,
@@ -29,9 +27,7 @@ class ThemeObject {
     ThemeObject object = new ThemeObject(
       data: data,
       name: name,
-      isPreset: isPreset,
     );
-    object.id = -1;
     object.entries = object.toEntries();
 
     return object;
@@ -45,6 +41,11 @@ class ThemeObject {
       selectedDarkTheme: json["selectedDarkTheme"] == 1,
     );
   }
+
+  bool get isPreset =>
+      this.name == "OLED Dark" ||
+      this.name == "Bright White" ||
+      this.name == "Nord Theme";
 
   List<ThemeEntry> toEntries() => [
         ThemeEntry.fromStyle(ThemeColors.Headline1, data.textTheme.headline1),
@@ -69,7 +70,6 @@ class ThemeObject {
 
   Future<ThemeObject> save({bool updateIfAbsent = true}) async {
     assert(this.data != null);
-    if (this.isPreset) return this;
     final Database db = await DBProvider.db.database;
 
     if (entries.isEmpty) {
@@ -94,6 +94,7 @@ class ThemeObject {
       await this.update();
     }
 
+    if (this.isPreset) return this;
     for (ThemeEntry entry in this.entries) {
       await entry.save(this);
     }
@@ -116,7 +117,6 @@ class ThemeObject {
   }
 
   Future<ThemeObject> update() async {
-    if (this.isPreset) return this;
     final Database db = await DBProvider.db.database;
 
     // If it already exists, update it
@@ -200,13 +200,22 @@ class ThemeObject {
     if (res.isEmpty) return Themes.themes;
 
     return (res.isNotEmpty)
-        ? (res.map((c) => ThemeObject.fromMap(c)).toList()
-          ..insertAll(0, Themes.themes))
+        ? res.map((c) => ThemeObject.fromMap(c)..fetchData()).toList()
         : Themes.themes;
   }
 
   Future<List<ThemeEntry>> fetchData() async {
-    if (this.isPreset) return this.entries;
+    if (isPreset) {
+      if (name == "OLED Dark") {
+        this.data = oledDarkTheme;
+      } else if (name == "Bright White") {
+        this.data = whiteLightTheme;
+      } else if (name == "Nord Theme") {
+        this.data = nordDarkTheme;
+      }
+      this.entries = this.toEntries();
+      return this.entries;
+    }
     final Database db = await DBProvider.db.database;
 
     var res = await db.rawQuery(

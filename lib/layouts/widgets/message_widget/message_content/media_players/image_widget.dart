@@ -142,6 +142,7 @@ class _ImageWidgetState extends State<ImageWidget>
                       builder: (context) => AttachmentFullscreenViewer(
                         allAttachments: CurrentChat().chatAttachments,
                         attachment: widget.attachment,
+                        showInteractions: true,
                       ),
                     ),
                   );
