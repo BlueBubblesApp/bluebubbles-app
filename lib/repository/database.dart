@@ -130,23 +130,18 @@ class DBProvider {
             break;
           case Tables.themes:
             await createThemeTable(db);
-            await setupConfigRows(db);
             break;
           case Tables.theme_values:
             await createThemeValuesTable(db);
-            await setupConfigRows(db);
             break;
           case Tables.theme_value_join:
             await createThemeValueJoin(db);
-            await setupConfigRows(db);
             break;
           case Tables.config:
             await createConfigTable(db);
-            await setupConfigRows(db);
             break;
           case Tables.fcm:
             await createFCMTable(db);
-            await setupConfigRows(db);
             break;
         }
         debugPrint(
@@ -169,7 +164,6 @@ class DBProvider {
     await createThemeTable(db);
     await createThemeValuesTable(db);
     await createThemeValueJoin(db);
-    await setupConfigRows(db);
   }
 
   static Future<void> createHandleTable(Database db) async {
@@ -343,7 +337,7 @@ class DBProvider {
         ");");
   }
 
-  static Future<void> setupConfigRows(Database database) async {
+  static Future<void> setupConfigRows() async {
     // Get the shared preferences and store it
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
 
@@ -365,7 +359,7 @@ class DBProvider {
       settings.showIncrementalSync = resultMap["showIncrementalSync"];
       settings.lowMemoryMode = resultMap["lowMemoryMode"];
       settings.lastIncrementalSync = resultMap["lastIncrementalSync"];
-      await settings.save(database: database);
+      await settings.save();
 
       Map resultFCM = resultMap["fcm_auth_data"];
 
@@ -376,9 +370,8 @@ class DBProvider {
       fcmData.firebaseURL = resultFCM["firebase_url"];
       fcmData.clientID = resultFCM["client_id"];
       fcmData.applicationID = resultFCM["application_id"];
-      await fcmData.save(database: database);
+      await fcmData.save();
     }
-    // await setupDefaultPresetThemes(database);
-    await sharedPreferences.remove('Settings');
+    // await sharedPreferences.remove('Settings');
   }
 }
