@@ -1,4 +1,5 @@
 import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/repository/models/theme_object.dart';
 import 'package:flutter/material.dart';
 
 enum DarkThemes {
@@ -8,6 +9,14 @@ enum DarkThemes {
 
 enum LightThemes {
   Bright_White,
+}
+
+class Themes {
+  static List<ThemeObject> get themes => [
+        ThemeObject.fromData(oledDarkTheme, "OLED Dark", isPreset: true),
+        ThemeObject.fromData(whiteLightTheme, "Bright White", isPreset: true),
+        ThemeObject.fromData(nordDarkTheme, "Nord Theme", isPreset: true),
+      ];
 }
 
 ThemeData oledDarkTheme = ThemeData(

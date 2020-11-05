@@ -81,10 +81,7 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
 
   @override
   Widget build(BuildContext context) {
-    editable = currentTheme != null &&
-        currentTheme.name != "OLED_DARK" &&
-        currentTheme.name != "WHITE_LIGHT" &&
-        currentTheme.name != "NORD";
+    editable = currentTheme != null && !currentTheme.isPreset;
     return currentTheme != null
         ? CustomScrollView(
             physics: AlwaysScrollableScrollPhysics(
@@ -159,9 +156,24 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
                   crossAxisCount: 2,
                 ),
               ),
+              SliverToBoxAdapter(
+                child: FlatButton(
+                  child: Text(
+                    "Delete",
+                    style: TextStyle(color: Colors.red),
+                  ),
+                  color: whiteLightTheme.accentColor,
+                  onPressed: () async {
+                    allThemes
+                        .removeWhere((element) => element == this.currentTheme);
+                    // currentTheme
+                    await this.currentTheme.delete();
+                  },
+                ),
+              ),
               SliverPadding(
                 padding: EdgeInsets.all(25),
-              )
+              ),
             ],
           )
         : Center(

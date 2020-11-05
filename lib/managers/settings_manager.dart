@@ -61,7 +61,7 @@ class SettingsManager {
       {bool headless = false, BuildContext context}) async {
     settings = await Settings.getSettings();
     fcmData = await FCMData.getFCM();
-    await DBProvider.setupDefaultPresetThemes(await DBProvider.db.database);
+    // await DBProvider.setupDefaultPresetThemes(await DBProvider.db.database);
     themes = await ThemeObject.getThemes();
     for (ThemeObject theme in themes) {
       await theme.fetchData();

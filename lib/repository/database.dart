@@ -63,10 +63,14 @@ class DBProvider {
     return await openDatabase(_path, version: 2, onUpgrade: _onUpgrade,
         onOpen: (Database db) async {
       debugPrint("Database Opened");
+      _database = db;
       await checkTableExistenceAndCreate(db);
+      _database = null;
     }, onCreate: (Database db, int version) async {
       debugPrint("creating database");
+      _database = db;
       await this.buildDatabase(db);
+      _database = null;
     });
   }
 
@@ -374,28 +378,7 @@ class DBProvider {
       fcmData.applicationID = resultFCM["application_id"];
       await fcmData.save(database: database);
     }
-    await setupDefaultPresetThemes(database);
+    // await setupDefaultPresetThemes(database);
     await sharedPreferences.remove('Settings');
-  }
-
-  static Future<void> setupDefaultPresetThemes(Database database) async {
-    await ThemeObject(
-      data: oledDarkTheme,
-      name: "OLED_DARK",
-      selectedDarkTheme: true,
-      selectedLightTheme: false,
-    ).save(database: database, updateIfAbsent: false);
-    await ThemeObject(
-      data: whiteLightTheme,
-      name: "WHITE_LIGHT",
-      selectedDarkTheme: false,
-      selectedLightTheme: true,
-    ).save(database: database, updateIfAbsent: false);
-    await ThemeObject(
-      data: nordDarkTheme,
-      name: "NORD",
-      selectedDarkTheme: false,
-      selectedLightTheme: false,
-    ).save(database: database, updateIfAbsent: false);
   }
 }

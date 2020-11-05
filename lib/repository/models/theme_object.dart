@@ -1,5 +1,6 @@
 import 'package:bluebubbles/helpers/contstants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/models/theme_entry.dart';
@@ -11,6 +12,7 @@ class ThemeObject {
   String name;
   bool selectedLightTheme = false;
   bool selectedDarkTheme = false;
+  bool isPreset = false;
   ThemeData data;
   List<ThemeEntry> entries = [];
 
@@ -19,10 +21,22 @@ class ThemeObject {
     this.name,
     this.selectedLightTheme = false,
     this.selectedDarkTheme = false,
+    this.isPreset = false,
     this.data,
   });
+  factory ThemeObject.fromData(ThemeData data, String name,
+      {bool isPreset = false}) {
+    ThemeObject object = new ThemeObject(
+      data: data,
+      name: name,
+      isPreset: isPreset,
+    );
+    object.id = -1;
+    object.entries = object.toEntries();
+    return object;
+  }
+
   factory ThemeObject.fromMap(Map<String, dynamic> json) {
-    //
     return ThemeObject(
       id: json["ROWID"],
       name: json["name"],
@@ -52,18 +66,16 @@ class ThemeObject {
             isFont: false),
       ];
 
-  Future<ThemeObject> save(
-      {bool updateIfAbsent = true, Database database}) async {
+  Future<ThemeObject> save({bool updateIfAbsent = true}) async {
     assert(this.data != null);
-    final Database db =
-        database != null ? database : await DBProvider.db.database;
+    if (this.isPreset) return this;
+    final Database db = await DBProvider.db.database;
 
     if (entries.isEmpty) {
       entries = this.toEntries();
     }
 
-    ThemeObject existing =
-        await ThemeObject.findOne({"name": this.name}, database: database);
+    ThemeObject existing = await ThemeObject.findOne({"name": this.name});
     if (existing != null) {
       this.id = existing.id;
     }
@@ -78,19 +90,33 @@ class ThemeObject {
 
       this.id = await db.insert("themes", map);
     } else if (updateIfAbsent) {
-      await this.update(database: database);
+      await this.update();
     }
 
     for (ThemeEntry entry in this.entries) {
-      await entry.save(this, database: database);
+      await entry.save(this);
     }
 
     return this;
   }
 
-  Future<ThemeObject> update({Database database}) async {
-    final Database db =
-        database != null ? database : await DBProvider.db.database;
+  Future<void> delete() async {
+    if (this.isPreset) return this;
+    final Database db = await DBProvider.db.database;
+    if (this.id == null) await this.save(updateIfAbsent: false);
+    await this.fetchData();
+    for (ThemeEntry entry in this.entries) {
+      await db
+          .delete("theme_values", where: "ROWID = ?", whereArgs: [entry.id]);
+    }
+    await db
+        .delete("theme_value_join", where: "themeId = ?", whereArgs: [this.id]);
+    await db.delete("themes", where: "ROWID = ?", whereArgs: [this.id]);
+  }
+
+  Future<ThemeObject> update() async {
+    if (this.isPreset) return this;
+    final Database db = await DBProvider.db.database;
 
     // If it already exists, update it
     if (this.id != null) {
@@ -104,23 +130,18 @@ class ThemeObject {
           where: "ROWID = ?",
           whereArgs: [this.id]);
     } else {
-      await this.save(updateIfAbsent: false, database: database);
+      await this.save(updateIfAbsent: false);
     }
 
     return this;
   }
 
-  static Future<ThemeObject> getLightTheme([bool setIfAbsent = true]) async {
+  static Future<ThemeObject> getLightTheme() async {
     List<ThemeObject> res = await ThemeObject.getThemes();
     List<ThemeObject> themes =
         res.where((element) => element.selectedLightTheme).toList();
-    if (themes.isEmpty && setIfAbsent) {
-      Database db = await DBProvider.db.database;
-      await db.update("themes", {"selectedLightTheme": 1},
-          where: "name = ?", whereArgs: ["WHITE_LIGHT"]);
-      await db.update("themes", {"selectedDarkTheme": 1},
-          where: "name = ?", whereArgs: ["OLED_DARK"]);
-      return await getLightTheme(false);
+    if (themes.isEmpty) {
+      return Themes.themes[1];
     }
     ThemeObject theme = themes.first;
     await theme.fetchData();
@@ -128,9 +149,13 @@ class ThemeObject {
   }
 
   static Future<ThemeObject> getDarkTheme() async {
-    List<ThemeObject> themes = await ThemeObject.getThemes();
-    ThemeObject theme =
-        themes.firstWhere((element) => element.selectedDarkTheme);
+    List<ThemeObject> res = await ThemeObject.getThemes();
+    List<ThemeObject> themes =
+        res.where((element) => element.selectedDarkTheme).toList();
+    if (themes.isEmpty) {
+      return Themes.themes[0];
+    }
+    ThemeObject theme = themes.first;
     await theme.fetchData();
     return theme;
   }
@@ -149,10 +174,10 @@ class ThemeObject {
     }
   }
 
-  static Future<ThemeObject> findOne(Map<String, dynamic> filters,
-      {Database database}) async {
-    final Database db =
-        database != null ? database : await DBProvider.db.database;
+  static Future<ThemeObject> findOne(
+    Map<String, dynamic> filters,
+  ) async {
+    final Database db = await DBProvider.db.database;
 
     List<String> whereParams = [];
     filters.keys.forEach((filter) => whereParams.add('$filter = ?'));
@@ -168,18 +193,19 @@ class ThemeObject {
     return ThemeObject.fromMap(res.elementAt(0));
   }
 
-  static Future<List<ThemeObject>> getThemes({Database database}) async {
-    final Database db =
-        database != null ? database : await DBProvider.db.database;
+  static Future<List<ThemeObject>> getThemes() async {
+    final Database db = await DBProvider.db.database;
     var res = await db.query("themes");
-    if (res.isEmpty) return [];
+    if (res.isEmpty) return Themes.themes;
 
     return (res.isNotEmpty)
-        ? res.map((c) => ThemeObject.fromMap(c)).toList()
-        : [];
+        ? (res.map((c) => ThemeObject.fromMap(c)).toList()
+          ..insertAll(0, Themes.themes))
+        : Themes.themes;
   }
 
   Future<List<ThemeEntry>> fetchData() async {
+    if (this.isPreset) return this.entries;
     final Database db = await DBProvider.db.database;
 
     var res = await db.rawQuery(
