@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_attachment.dart';
+import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/material.dart';
@@ -19,12 +20,10 @@ class MessageAttachments extends StatefulWidget {
   MessageAttachments({
     Key key,
     @required this.message,
-    @required this.savedAttachmentData,
     @required this.showTail,
     @required this.showHandle,
   }) : super(key: key);
   final Message message;
-  final SavedAttachmentData savedAttachmentData;
   final bool showTail;
   final bool showHandle;
 
@@ -35,12 +34,14 @@ class MessageAttachments extends StatefulWidget {
 class _MessageAttachmentsState extends State<MessageAttachments>
     with TickerProviderStateMixin {
   Map<String, dynamic> _attachments = new Map();
+  SavedAttachmentData savedAttachmentData;
 
   @override
   void initState() {
     super.initState();
+    savedAttachmentData = CurrentChat().getSavedAttachmentData(widget.message);
 
-    for (Attachment attachment in widget.savedAttachmentData.attachments) {
+    for (Attachment attachment in savedAttachmentData?.attachments ?? []) {
       if (_attachments.containsKey(attachment.guid)) continue;
       _attachments[attachment.guid] = AttachmentHelper.getContent(attachment);
     }
@@ -48,9 +49,9 @@ class _MessageAttachmentsState extends State<MessageAttachments>
 
   @override
   Widget build(BuildContext context) {
-    if (widget.savedAttachmentData.attachmentsFuture == null &&
-        widget.savedAttachmentData.attachments.length == 0) {
-      widget.savedAttachmentData.attachmentsFuture =
+    if (savedAttachmentData?.attachmentsFuture == null &&
+        savedAttachmentData?.attachments?.length == 0) {
+      savedAttachmentData?.attachmentsFuture =
           Message.getAttachments(widget.message);
     }
 
@@ -59,7 +60,7 @@ class _MessageAttachmentsState extends State<MessageAttachments>
         if (!snapshot.hasData) return Container();
 
         // Fetch the current attachment list
-        List<Attachment> items = widget.savedAttachmentData.attachments
+        List<Attachment> items = savedAttachmentData.attachments
             .where((item) => item.mimeType != null)
             .toList();
 
@@ -68,13 +69,12 @@ class _MessageAttachmentsState extends State<MessageAttachments>
           items = (snapshot.data as List<Attachment>)
               .where((item) => item.mimeType != null)
               .toList();
-          widget.savedAttachmentData.attachments = items;
+          savedAttachmentData.attachments = items;
         }
 
         // Only create the widget if we have attachments
         if (items.length > 0) {
-          for (Attachment attachment
-              in items) {
+          for (Attachment attachment in items) {
             if (_attachments.containsKey(attachment.guid)) continue;
             _attachments[attachment.guid] =
                 AttachmentHelper.getContent(attachment);
@@ -85,7 +85,7 @@ class _MessageAttachmentsState extends State<MessageAttachments>
           return Container();
         }
       },
-      future: widget.savedAttachmentData.attachmentsFuture,
+      future: savedAttachmentData?.attachmentsFuture,
     );
   }
 
@@ -94,12 +94,11 @@ class _MessageAttachmentsState extends State<MessageAttachments>
     EdgeInsets padding = EdgeInsets.all(0.0);
     if (widget.message.hasReactions && widget.message.hasAttachments) {
       if (widget.message.isFromMe) {
-        padding =
-            EdgeInsets.only(
-              top: 15.0,
-              bottom: (widget.message.hasAttachments) ? 2.0 : 10.0,
-              left: 16.0,
-              right: 10.0);
+        padding = EdgeInsets.only(
+            top: 15.0,
+            bottom: (widget.message.hasAttachments) ? 2.0 : 10.0,
+            left: 16.0,
+            right: 10.0);
       } else {
         padding = EdgeInsets.only(
             top: (widget.showHandle) ? 18.0 : 15.0,
@@ -141,7 +140,7 @@ class _MessageAttachmentsState extends State<MessageAttachments>
   List<Widget> _buildAttachments() {
     List<Widget> content = <Widget>[];
 
-    for (Attachment attachment in widget.savedAttachmentData.attachments) {
+    for (Attachment attachment in savedAttachmentData.attachments) {
       if (attachment.mimeType != null) {
         content.add(
           MessageAttachment(

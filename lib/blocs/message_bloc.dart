@@ -200,71 +200,74 @@ class MessageBloc {
   }
 
   Future<LoadMessageResult> loadMessageChunk(int offset,
-      {includeReactions = true}) async {
+      {includeReactions = true, checkLocal = true}) async {
     int reactionCnt = includeReactions ? _reactions : 0;
     Completer<LoadMessageResult> completer = new Completer();
     if (_currentChat != null) {
-      List<Message> messages =
-          await Chat.getMessages(_currentChat, offset: offset + reactionCnt);
+      List<Message> messages = [];
+      int count = 0;
+
+      // Should we check locally first?
+      if (checkLocal)
+        messages =
+            await Chat.getMessages(_currentChat, offset: offset + reactionCnt);
+
+      // Fetch messages from the socket
+      count = messages.length;
       if (messages.length == 0) {
-        Map<String, dynamic> params = Map();
-        params["identifier"] = _currentChat.guid;
-        params["limit"] = 25;
-        params["offset"] = offset + reactionCnt;
-        params["withBlurhash"] = false;
-        params["where"] = [
-          {"statement": "message.service = 'iMessage'", "args": null}
-        ];
+        try {
+          // Fetch messages from the server
+          List<dynamic> _messages = await SocketManager()
+              .loadMessageChunk(_currentChat, offset + reactionCnt);
+          count = _messages.length;
 
-        SocketManager().sendMessage("get-chat-messages", params, (data) async {
-          if (data['status'] != 200) {
-            completer.complete(LoadMessageResult.FAILED_TO_RETREIVE);
-            return;
-          }
-          List messages = data["data"];
-          if (messages.length == 0) {
+          // Handle the messages
+          if (_messages.length == 0) {
+            debugPrint("(CHUNK) No message chunks left from server");
             completer.complete(LoadMessageResult.RETREIVED_NO_MESSAGES);
-            return;
-          }
+          } else {
+            debugPrint(
+                "(CHUNK) Received ${_messages.length} messages from socket");
 
-          List<Message> _messages = await MessageHelper.bulkAddMessages(
-              _currentChat, messages,
-              notifyMessageManager: false);
-          _messages.forEach((element) {
-            if (element.associatedMessageGuid == null) {
-              _allMessages.addAll({element.guid: element});
-            } else {
-              _reactions++;
-            }
-          });
-          if (!_messageController.isClosed) {
-            MessageBlocEvent event = MessageBlocEvent();
-            event.messages = _allMessages.values.toList();
-            _messageController.sink.add(event);
-            completer.complete(LoadMessageResult.RETREIVED_MESSAGES);
-          } else {
-            debugPrint("message controller closed");
+            messages = await MessageHelper.bulkAddMessages(
+                _currentChat, _messages,
+                notifyMessageManager: false);
           }
-        });
-      } else {
-        messages.forEach((element) {
-          if (element.associatedMessageGuid == null) {
-            _allMessages.addAll({element.guid: element});
-          } else {
-            _reactions++;
-          }
-        });
-        if (!_messageController.isClosed) {
-          MessageBlocEvent event = MessageBlocEvent();
-          event.messages = _allMessages.values.toList();
-          _messageController.sink.add(event);
+        } catch (ex) {
+          debugPrint("(CHUNK) Failed to load message chunk!");
+          debugPrint(ex.toString());
+          completer.complete(LoadMessageResult.FAILED_TO_RETREIVE);
+        }
+      }
+
+      // Save the messages to the bloc
+      debugPrint("(CHUNK) Emitting ${messages.length} messages to listeners");
+      for (Message element in messages) {
+        if (element.associatedMessageGuid == null) {
+          _allMessages.addAll({element.guid: element});
+        } else {
+          _reactions++;
+        }
+      }
+
+      // Emit messages to listeners
+      if (!_messageController.isClosed) {
+        MessageBlocEvent event = MessageBlocEvent();
+        event.messages = _allMessages.values.toList();
+        _messageController.sink.add(event);
+
+        // Complete the execution
+        if (count < 25) {
+          completer.complete(LoadMessageResult.RETREIVED_LAST_PAGE);
+        } else {
           completer.complete(LoadMessageResult.RETREIVED_MESSAGES);
         }
       }
     } else {
-      debugPrint("failed to load ");
+      debugPrint("(CHUNK) Failed to load message chunk! Unknown chat!");
       completer.complete(LoadMessageResult.FAILED_TO_RETREIVE);
     }
+
     return completer.future;
   }
 
@@ -277,5 +280,6 @@ class MessageBloc {
 enum LoadMessageResult {
   RETREIVED_MESSAGES,
   RETREIVED_NO_MESSAGES,
-  FAILED_TO_RETREIVE
+  FAILED_TO_RETREIVE,
+  RETREIVED_LAST_PAGE
 }

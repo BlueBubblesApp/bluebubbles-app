@@ -160,11 +160,10 @@ class _MessageState extends State<MessageWidget> {
       if (lastRequestCount != attachments.length) {
         lastRequestCount = attachments.length;
         SocketManager().setup.startIncrementalSync(SettingsManager().settings,
-          chatGuid: CurrentChat().chat.guid, saveDate: false, onComplete: () {
-            if (this.mounted) setState(() {});
-          });
+            chatGuid: CurrentChat().chat.guid, saveDate: false, onComplete: () {
+          if (this.mounted) setState(() {});
+        });
       }
-      
     }
 
     bool hasChanges = false;
@@ -226,20 +225,13 @@ class _MessageState extends State<MessageWidget> {
     /// -> URL Previews
     /// -> Big Emojis??
     ////////// READ //////////
-    SavedAttachmentData savedAttachmentData =
-        CurrentChat().getSavedAttachmentData(widget.message);
-
-    List<Attachment> nonNullAttachments = this.attachments.where((item) => item.mimeType != null).toList();
 
     // Build the attachments widget
-    Widget widgetAttachments = savedAttachmentData != null && nonNullAttachments.length > 0
-        ? MessageAttachments(
-            message: widget.message,
-            savedAttachmentData: savedAttachmentData,
-            showTail: showTail,
-            showHandle: widget.showHandle,
-          )
-        : Container();
+    Widget widgetAttachments = MessageAttachments(
+      message: widget.message,
+      showTail: showTail,
+      showHandle: widget.showHandle,
+    );
 
     bool shouldShowBigEmoji =
         MessageHelper.shouldShowBigEmoji(widget.message.text);
@@ -254,13 +246,12 @@ class _MessageState extends State<MessageWidget> {
           olderMessage: widget.olderMessage,
           message: widget.message,
           urlPreviewWidget: UrlPreviewWidget(
-            key: new Key("preview-${widget.message.guid}"),
-            linkPreviews: this
-                .attachments
-                .where((item) => item.mimeType == null)
-                .toList(),
-            message: widget.message
-          ),
+              key: new Key("preview-${widget.message.guid}"),
+              linkPreviews: this
+                  .attachments
+                  .where((item) => item.mimeType == null)
+                  .toList(),
+              message: widget.message),
           stickersWidget: StickersWidget(
             key: new Key(
                 "stickers-${this.associatedMessages.length.toString()}"),
@@ -288,12 +279,15 @@ class _MessageState extends State<MessageWidget> {
         message: widget.message,
         showHandle: widget.showHandle,
         isGroup: widget.chat.participants.length > 1,
+        attachments:
+            this.attachments.where((item) => item.mimeType != null).toList(),
         urlPreviewWidget: UrlPreviewWidget(
-          key: new Key("preview-${widget.message.guid}"),
-          linkPreviews:
-              this.attachments.where((item) => item.mimeType == null).toList(),
-          message: widget.message
-        ),
+            key: new Key("preview-${widget.message.guid}"),
+            linkPreviews: this
+                .attachments
+                .where((item) => item.mimeType == null)
+                .toList(),
+            message: widget.message),
         stickersWidget: StickersWidget(
           key: new Key("stickers-${this.associatedMessages.length.toString()}"),
           messages: associatedMessages,

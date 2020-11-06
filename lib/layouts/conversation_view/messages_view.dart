@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:bluebubbles/blocs/message_bloc.dart';
@@ -28,16 +29,19 @@ class MessageView extends StatefulWidget {
 
 class _MessageViewState extends State<MessageView>
     with TickerProviderStateMixin {
-  Future<LoadMessageResult> loader;
-  bool reachedTopOfChat = false;
+  Completer<LoadMessageResult> loader;
+  bool noMoreMessages = false;
+  bool noMoreLocalMessages = false;
   List<Message> _messages = <Message>[];
+
   GlobalKey<SliverAnimatedListState> _listKey;
   final Duration animationDuration = Duration(milliseconds: 400);
   bool initializedList = false;
   double timeStampOffset = 0;
   ScrollController scrollController = new ScrollController();
   bool showScrollDown = false;
-  int scrollState = -1;  // -1: stopped, 0: start, 1: update
+  int scrollState = -1; // -1: stopped, 0: start, 1: update
+  List<int> loadedPages = [];
 
   @override
   void initState() {
@@ -84,6 +88,48 @@ class _MessageViewState extends State<MessageView>
     super.dispose();
   }
 
+  Future<void> loadNextChunk() {
+    if (noMoreMessages || loadedPages.contains(_messages.length)) return null;
+    int messageCount = _messages.length;
+
+    // If we already are loading a chunk, don't load again
+    if (loader != null && !loader.isCompleted) {
+      return loader.future;
+    }
+
+    // Create a new completer
+    loader = new Completer();
+    loadedPages.add(messageCount);
+
+    // Start loading the next chunk of messages
+    widget.messageBloc
+        .loadMessageChunk(_messages.length, checkLocal: !noMoreLocalMessages)
+        .then((LoadMessageResult val) {
+      if (val != LoadMessageResult.FAILED_TO_RETREIVE) {
+        if (val == LoadMessageResult.RETREIVED_NO_MESSAGES) {
+          noMoreMessages = true;
+          debugPrint("(CHUNK) No more messages to load");
+        } else if (val == LoadMessageResult.RETREIVED_LAST_PAGE) {
+          // Mark this chat saying we have no more messages to load
+          noMoreLocalMessages = true;
+        }
+      }
+
+      // Complete the future
+      loader.complete(val);
+
+      // Only update the state if there are messages that were added
+      if (val != LoadMessageResult.RETREIVED_NO_MESSAGES &&
+          val != LoadMessageResult.FAILED_TO_RETREIVE) {
+        if (this.mounted) setState(() {});
+      }
+    }).catchError((ex) {
+      loader.complete(LoadMessageResult.FAILED_TO_RETREIVE);
+    });
+
+    return loader.future;
+  }
+
   void handleNewMessage(MessageBlocEvent event) async {
     if (event.type == MessageBlocEventType.insert) {
       CurrentChat().getAttachmentsForMessage(event.message);
@@ -119,7 +165,9 @@ class _MessageViewState extends State<MessageView>
         _listKey.currentState.insertItem(
           event.index != null ? event.index : 0,
           duration: isNewMessage
-              ? event.outGoing ? Duration(milliseconds: 500) : animationDuration
+              ? event.outGoing
+                  ? Duration(milliseconds: 500)
+                  : animationDuration
               : Duration(milliseconds: 0),
         );
       }
@@ -227,11 +275,14 @@ class _MessageViewState extends State<MessageView>
       child: Stack(alignment: AlignmentDirectional.bottomCenter, children: [
         NotificationListener(
           onNotification: (scrollNotification) {
-            if (scrollNotification is ScrollStartNotification && scrollState != 0) {
+            if (scrollNotification is ScrollStartNotification &&
+                scrollState != 0) {
               scrollState = 0;
-            } else if (scrollNotification is ScrollUpdateNotification && scrollState != 1) {
+            } else if (scrollNotification is ScrollUpdateNotification &&
+                scrollState != 1) {
               scrollState = 1;
-            } else if (scrollNotification is ScrollEndNotification && scrollState != -1) {
+            } else if (scrollNotification is ScrollEndNotification &&
+                scrollState != -1) {
               scrollState = -1;
               setState(() {});
             }
@@ -244,37 +295,20 @@ class _MessageViewState extends State<MessageView>
             physics: AlwaysScrollableScrollPhysics(
                 parent: CustomBouncingScrollPhysics()),
             slivers: <Widget>[
-              _listKey != null
+              (_listKey != null)
                   ? SliverAnimatedList(
                       initialItemCount: _messages.length + 1,
                       key: _listKey,
                       itemBuilder: (BuildContext context, int index,
                           Animation<double> animation) {
-                        if (index == _messages.length) {
-                          if (loader == null && !reachedTopOfChat) {
-                            loader = widget.messageBloc
-                                .loadMessageChunk(_messages.length);
-                            loader.then((val) {
-                              if (val == LoadMessageResult.FAILED_TO_RETREIVE) {
-                                loader = widget.messageBloc
-                                    .loadMessageChunk(_messages.length);
-                              } else if (val ==
-                                  LoadMessageResult.RETREIVED_NO_MESSAGES) {
-                                reachedTopOfChat = true;
-                                loader = null;
-                              } else {
-                                loader = null;
-                              }
-                              if (this.mounted) setState(() {});
-                            });
-                          }
+                        // Load more messages if we are at the top and we aren't alrady loading
+                        // and we have more messages to load
+                        if (index >= _messages.length && !noMoreMessages) {
+                          loadNextChunk();
+                          return NewMessageLoader();
+                        }
 
-                          return NewMessageLoader(
-                            messageBloc: widget.messageBloc,
-                            offset: _messages.length,
-                            loader: loader,
-                          );
-                        } else if (index > _messages.length) {
+                        if (index >= _messages.length) {
                           return Container();
                         }
 
@@ -289,8 +323,9 @@ class _MessageViewState extends State<MessageView>
 
                         return SizeTransition(
                           axis: Axis.vertical,
-                          sizeFactor: animation.drive(Tween(begin: 0.0, end: 1.0)
-                              .chain(CurveTween(curve: Curves.easeInOut))),
+                          sizeFactor: animation.drive(
+                              Tween(begin: 0.0, end: 1.0)
+                                  .chain(CurveTween(curve: Curves.easeInOut))),
                           child: SlideTransition(
                             position: animation.drive(
                               Tween(

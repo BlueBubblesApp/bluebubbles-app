@@ -1,11 +1,11 @@
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
-import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_attachments.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_tail.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_time_stamp.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/material.dart';
 
@@ -18,6 +18,7 @@ class ReceivedMessage extends StatefulWidget {
   final bool isGroup;
   final bool hasReactions;
   final bool shouldShowBigEmoji;
+  final List<Attachment> attachments;
 
   // Sub-widgets
   final Widget stickersWidget;
@@ -34,6 +35,7 @@ class ReceivedMessage extends StatefulWidget {
     @required this.hasReactions,
     @required this.isGroup,
     @required this.shouldShowBigEmoji,
+    @required this.attachments,
 
     // Sub-widgets
     @required this.stickersWidget,
@@ -156,10 +158,8 @@ class _ReceivedMessageState extends State<ReceivedMessage>
       );
     }
 
-    SavedAttachmentData attachmentData = CurrentChat().getSavedAttachmentData(widget.message);
-
     // Second, add the attachments
-    if (attachmentData != null && attachmentData.attachments.length > 0) {
+    if (widget.attachments.length > 0) {
       messageColumn.add(
         addStickersToWidget(
           message: addReactionsToWidget(
@@ -194,7 +194,7 @@ class _ReceivedMessageState extends State<ReceivedMessage>
               messageWidget: message,
               reactions: widget.reactionsWidget,
               message: widget.message,
-              shouldShow: attachmentData == null || attachmentData.attachments.length == 0
+              shouldShow: widget.attachments.length == 0
           ),
           stickers: widget.stickersWidget,
           isFromMe: widget.message.isFromMe,

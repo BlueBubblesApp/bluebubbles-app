@@ -37,7 +37,7 @@ class MessageHelper {
     }
 
     // Iterate over each message to parse it
-    messages.forEach((item) async {
+    for (dynamic item in messages) {
       // Pull the chats out of the message, if there isnt a default
       Chat msgChat = chat;
       if (msgChat == null) {
@@ -54,7 +54,7 @@ class MessageHelper {
       }
 
       // If we can't get a chat from the data, skip the message
-      if (msgChat == null) return;
+      if (msgChat == null) continue;
 
       Message message = Message.fromMap(item);
       if (notifyForNewMessage) {
@@ -77,7 +77,7 @@ class MessageHelper {
 
       // Add message to the "master list"
       _messages.add(message);
-    });
+    }
 
     // Return all the synced messages
     return _messages;
