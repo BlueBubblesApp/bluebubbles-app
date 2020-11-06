@@ -36,9 +36,9 @@ class DBUpgradeItem {
   Function(Database) upgrade;
 
   DBUpgradeItem({
-    @required fromVersions,
-    @required toVersions,
-    @required upgrade
+    @required this.fromVersions,
+    @required this.toVersions,
+    @required this.upgrade
   });
 }
 
