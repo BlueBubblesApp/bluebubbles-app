@@ -1,8 +1,4 @@
 import 'dart:async';
-import 'package:bluebubbles/action_handler.dart';
-import 'package:bluebubbles/blocs/setup_bloc.dart';
-import 'package:bluebubbles/helpers/attachment_downloader.dart';
-import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/reaction.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -231,18 +227,13 @@ class _MessageState extends State<MessageWidget>
     /// -> URL Previews
     /// -> Big Emojis??
     ////////// READ //////////
-    SavedAttachmentData savedAttachmentData =
-        CurrentChat().getSavedAttachmentData(widget.message);
 
     // Build the attachments widget
-    Widget widgetAttachments = savedAttachmentData != null
-        ? MessageAttachments(
-            message: widget.message,
-            savedAttachmentData: savedAttachmentData,
-            showTail: showTail,
-            showHandle: widget.showHandle,
-          )
-        : Container();
+    Widget widgetAttachments = MessageAttachments(
+      message: widget.message,
+      showTail: showTail,
+      showHandle: widget.showHandle,
+    );
 
     bool shouldShowBigEmoji =
         MessageHelper.shouldShowBigEmoji(widget.message.text);
@@ -290,6 +281,8 @@ class _MessageState extends State<MessageWidget>
         message: widget.message,
         showHandle: widget.showHandle,
         isGroup: widget.chat.participants.length > 1,
+        attachments:
+            this.attachments.where((item) => item.mimeType != null).toList(),
         urlPreviewWidget: UrlPreviewWidget(
             key: new Key("preview-${widget.message.guid}"),
             linkPreviews: this

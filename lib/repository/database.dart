@@ -30,6 +30,18 @@ enum Tables {
   fcm,
 }
 
+class DBUpgradeItem {
+  List<int> fromVersions;  // If this is 0, it's any version
+  List<int> toVersions;
+  Function(Database) upgrade;
+
+  DBUpgradeItem({
+    @required fromVersions,
+    @required toVersions,
+    @required upgrade
+  });
+}
+
 class DBProvider {
   DBProvider._();
   static final DBProvider db = DBProvider._();
@@ -39,13 +51,24 @@ class DBProvider {
 
   /// Contains list of functions to invoke when going from a previous to the current database verison
   /// The previous version is always [key - 1], for example for key 2, it will be the upgrade scheme from version 1 to version 2
-  static final Map<int, Function(Database)> upgradeSchemes = {
-    2: (Database db) {
-      // From v1 -> v2, we added the hasDdResults column
-      db.execute(
-          "ALTER TABLE message ADD COLUMN hasDdResults INTEGER DEFAULT 0;");
-    },
-  };
+  static final List<DBUpgradeItem> upgradeSchemes = [
+    new DBUpgradeItem(
+      fromVersions: [1],
+      toVersions: [2],
+      upgrade: (Database db) {
+        db.execute(
+            "ALTER TABLE message ADD COLUMN hasDdResults INTEGER DEFAULT 0;");
+      }
+    ),
+    new DBUpgradeItem(
+      fromVersions: [1, 2],
+      toVersions: [3],
+      upgrade: (Database db) {
+        db.execute(
+            "ALTER TABLE message ADD COLUMN balloonBundleId TEXT DEFAULT NULL;");
+      }
+    )
+  ];
 
   Future<Database> get database async {
     if (_database != null) return _database;
@@ -60,7 +83,7 @@ class DBProvider {
   initDB() async {
     Directory documentsDirectory = await getApplicationDocumentsDirectory();
     _path = join(documentsDirectory.path, "chat.db");
-    return await openDatabase(_path, version: 2, onUpgrade: _onUpgrade,
+    return await openDatabase(_path, version: 3, onUpgrade: _onUpgrade,
         onOpen: (Database db) async {
       debugPrint("Database Opened");
       _database = db;
@@ -78,9 +101,12 @@ class DBProvider {
     // Run each upgrade scheme for every difference in version.
     // If the user is on version 1 and they need to upgrade to version 3,
     // then we will run every single scheme from 1 -> 2 and 2 -> 3
-    for (int i = oldVersion + 1; i <= newVersion; i++) {
-      debugPrint("UPGRADE FROM VERSION ${i - 1} TO VERSION $i");
-      await upgradeSchemes[i](db);
+
+    for (DBUpgradeItem item in upgradeSchemes) {
+      if (item.fromVersions.contains(oldVersion) && item.toVersions.contains(newVersion)) {
+        debugPrint("UPGRADING DB FROM VERSION $oldVersion TO VERSION $newVersion");
+        await item.upgrade(db);
+      }
     }
   }
 
@@ -218,6 +244,7 @@ class DBProvider {
         "groupTitle TEXT DEFAULT NULL,"
         "groupActionType INTEGER DEFAULT 0,"
         "isExpired INTEGER DEFAULT 0,"
+        "balloonBundleId INTEGER DEFAULT NULL,"
         "associatedMessageGuid TEXT DEFAULT NULL,"
         "associatedMessageType TEXT DEFAULT NULL,"
         "expressiveSendStyleId TEXT DEFAULT NULL,"

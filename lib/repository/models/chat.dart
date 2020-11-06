@@ -8,7 +8,6 @@ import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/socket_manager.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:intl/intl.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -484,6 +483,7 @@ class Chat {
         " message.groupTitle AS groupTitle,"
         " message.groupActionType AS groupActionType,"
         " message.isExpired AS isExpired,"
+        " message.balloonBundleId AS balloonBundleId,"
         " message.associatedMessageGuid AS associatedMessageGuid,"
         " message.associatedMessageType AS associatedMessageType,"
         " message.expressiveSendStyleId AS texexpressiveSendStyleIdt,"

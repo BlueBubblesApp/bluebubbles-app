@@ -46,6 +46,7 @@ class Message {
   String groupTitle;
   int groupActionType;
   bool isExpired;
+  String balloonBundleId;
   String associatedMessageGuid;
   String associatedMessageType;
   String expressiveSendStyleId;
@@ -82,6 +83,7 @@ class Message {
     this.groupTitle,
     this.groupActionType = 0,
     this.isExpired = false,
+    this.balloonBundleId,
     this.associatedMessageGuid,
     this.associatedMessageType,
     this.expressiveSendStyleId,
@@ -174,6 +176,9 @@ class Message {
       isExpired: (json["isExpired"] is bool)
           ? json['isExpired']
           : ((json['isExpired'] == 1) ? true : false),
+      balloonBundleId: json.containsKey("balloonBundleId")
+          ? json["balloonBundleId"]
+          : null,
       associatedMessageGuid: associatedMessageGuid,
       associatedMessageType: json.containsKey("associatedMessageType")
           ? json["associatedMessageType"]
@@ -495,6 +500,7 @@ class Message {
         "groupTitle": groupTitle,
         "groupActionType": groupActionType,
         "isExpired": isExpired ? 1 : 0,
+        "balloonBundleId": balloonBundleId,
         "associatedMessageGuid": associatedMessageGuid,
         "associatedMessageType": associatedMessageType,
         "expressiveSendStyleId": expressiveSendStyleId,

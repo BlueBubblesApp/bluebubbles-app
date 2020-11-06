@@ -169,7 +169,6 @@ extension DateHelpers on DateTime {
 String sanitizeString(String input) {
   if (input == null) return "";
   input = input.replaceAll(String.fromCharCode(65532), '');
-  input = input.trim();
   return input;
 }
 

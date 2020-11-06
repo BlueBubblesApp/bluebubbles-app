@@ -37,7 +37,7 @@ class MessageHelper {
     }
 
     // Iterate over each message to parse it
-    messages.forEach((item) async {
+    for (dynamic item in messages) {
       // Pull the chats out of the message, if there isnt a default
       Chat msgChat = chat;
       if (msgChat == null) {
@@ -54,7 +54,7 @@ class MessageHelper {
       }
 
       // If we can't get a chat from the data, skip the message
-      if (msgChat == null) return;
+      if (msgChat == null) continue;
 
       Message message = Message.fromMap(item);
       if (notifyForNewMessage) {
@@ -77,7 +77,7 @@ class MessageHelper {
 
       // Add message to the "master list"
       _messages.add(message);
-    });
+    }
 
     // Return all the synced messages
     return _messages;
@@ -265,6 +265,8 @@ class MessageHelper {
     RegExp pattern = new RegExp(
         r'(\u00a9|\u00ae|[\u2000-\u3300]|\ud83c[\ud000-\udfff]|\ud83d[\ud000-\udfff]|\ud83e[\ud000-\udfff])');
     List<RegExpMatch> matches = pattern.allMatches(text).toList();
+    if (matches.isEmpty) return false;
+
     List<String> items = matches.map((item) => item.group(0)).toList();
     items = items
         .map((item) => item.replaceAll(String.fromCharCode(8205), ""))

@@ -156,7 +156,10 @@ class _SettingsPanelState extends State<SettingsPanel> {
                       );
                       _settingsCopy.guidAuthKey = fcmData[0];
                       _settingsCopy.serverAddress = fcmData[1];
-                      needToReconnect = true;
+
+                      SettingsManager().saveSettings(_settingsCopy);
+                      SettingsManager().saveFCMData(_fcmDataCopy);
+                      SocketManager().authFCM();
                     }
                   },
                 ),

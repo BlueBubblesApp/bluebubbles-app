@@ -410,6 +410,30 @@ class SocketManager {
     return completer.future;
   }
 
+  Future<List<dynamic>> loadMessageChunk(Chat chat, int offset,
+      {limit = 25}) async {
+    Completer<List<dynamic>> completer = new Completer();
+
+    Map<String, dynamic> params = Map();
+    params["identifier"] = chat.guid;
+    params["limit"] = limit;
+    params["offset"] = offset;
+    params["withBlurhash"] = false;
+    params["where"] = [
+      {"statement": "message.service = 'iMessage'", "args": null}
+    ];
+
+    SocketManager().sendMessage("get-chat-messages", params, (data) async {
+      if (data['status'] != 200) {
+        completer.completeError(data['error']);
+      }
+
+      completer.complete(data["data"]);
+    });
+
+    return completer.future;
+  }
+
   Future<Map<String, dynamic>> sendMessage(String event,
       Map<String, dynamic> message, Function(Map<String, dynamic>) cb,
       {String reason, bool awaitResponse = true}) {
@@ -486,7 +510,8 @@ class SocketManager {
     debugPrint("Fetching new server URL from Firebase");
 
     if (MethodChannelInterface() == null) {
-      debugPrint("Method channel interface is null, not refreshing connection...");
+      debugPrint(
+          "Method channel interface is null, not refreshing connection...");
       return;
     }
 

@@ -5,6 +5,7 @@ import 'package:bluebubbles/layouts/widgets/message_widget/message_content/messa
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/material.dart';
 
@@ -17,6 +18,7 @@ class ReceivedMessage extends StatefulWidget {
   final bool isGroup;
   final bool hasReactions;
   final bool shouldShowBigEmoji;
+  final List<Attachment> attachments;
 
   // Sub-widgets
   final Widget stickersWidget;
@@ -33,6 +35,7 @@ class ReceivedMessage extends StatefulWidget {
     @required this.hasReactions,
     @required this.isGroup,
     @required this.shouldShowBigEmoji,
+    @required this.attachments,
 
     // Sub-widgets
     @required this.stickersWidget,
@@ -156,18 +159,20 @@ class _ReceivedMessageState extends State<ReceivedMessage>
     }
 
     // Second, add the attachments
-    messageColumn.add(
-      addStickersToWidget(
-        message: addReactionsToWidget(
-            messageWidget: widget.attachmentsWidget,
-            reactions: widget.reactionsWidget,
-            message: widget.message,
-            shouldShow: widget.message.hasAttachments
+    if (widget.attachments.length > 0) {
+      messageColumn.add(
+        addStickersToWidget(
+          message: addReactionsToWidget(
+              messageWidget: widget.attachmentsWidget,
+              reactions: widget.reactionsWidget,
+              message: widget.message,
+              shouldShow: widget.message.hasAttachments
+          ),
+          stickers: widget.stickersWidget,
+          isFromMe: widget.message.isFromMe,
         ),
-        stickers: widget.stickersWidget,
-        isFromMe: widget.message.isFromMe,
-      ),
-    );
+      );
+    }
 
     // Third, let's add the message or URL preview
     Widget message;
@@ -189,7 +194,7 @@ class _ReceivedMessageState extends State<ReceivedMessage>
               messageWidget: message,
               reactions: widget.reactionsWidget,
               message: widget.message,
-              shouldShow: !widget.message.hasAttachments
+              shouldShow: widget.attachments.length == 0
           ),
           stickers: widget.stickersWidget,
           isFromMe: widget.message.isFromMe,

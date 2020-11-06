@@ -1,14 +1,7 @@
-import 'dart:convert';
 
-import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/contstants.dart';
-import 'package:bluebubbles/helpers/themes.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/database.dart';
-import 'package:bluebubbles/repository/helpers/db_converter.dart';
 import 'package:bluebubbles/repository/models/config_entry.dart';
-import 'package:bluebubbles/repository/models/fcm_data.dart';
-import 'package:flutter/material.dart';
 import 'package:sqflite/sqflite.dart';
 
 class Settings {
