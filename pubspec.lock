@@ -1148,6 +1148,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.9.3"
+  statsfl:
+    dependency: "direct main"
+    description:
+      name: statsfl
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "1.1.0+3"
   stream_channel:
     dependency: transitive
     description:

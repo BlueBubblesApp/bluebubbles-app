@@ -36,7 +36,8 @@ class ConversationTile extends StatefulWidget {
   _ConversationTileState createState() => _ConversationTileState();
 }
 
-class _ConversationTileState extends State<ConversationTile> {
+class _ConversationTileState extends State<ConversationTile>
+    with AutomaticKeepAliveClientMixin {
   MemoryImage contactImage;
   bool isPressed = false;
   var initials;
@@ -44,6 +45,7 @@ class _ConversationTileState extends State<ConversationTile> {
   @override
   void initState() {
     super.initState();
+    debugPrint("initState");
 
     fetchAvatar();
     ContactManager().stream.listen((List<String> addresses) {
@@ -110,6 +112,7 @@ class _ConversationTileState extends State<ConversationTile> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     if (initials == null) {
       initials = getInitials(widget.chat.title, " ");
     }
@@ -328,4 +331,7 @@ class _ConversationTileState extends State<ConversationTile> {
       ),
     );
   }
+
+  @override
+  bool get wantKeepAlive => true;
 }

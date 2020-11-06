@@ -37,7 +37,7 @@ class _MessageViewState extends State<MessageView>
   double timeStampOffset = 0;
   ScrollController scrollController = new ScrollController();
   bool showScrollDown = false;
-  int scrollState = -1;  // -1: stopped, 0: start, 1: update
+  int scrollState = -1; // -1: stopped, 0: start, 1: update
 
   @override
   void initState() {
@@ -224,152 +224,161 @@ class _MessageViewState extends State<MessageView>
           timeStampOffset = 0;
         });
       },
-      child: Stack(alignment: AlignmentDirectional.bottomCenter, children: [
-        NotificationListener(
-          onNotification: (scrollNotification) {
-            if (scrollNotification is ScrollStartNotification && scrollState != 0) {
-              scrollState = 0;
-            } else if (scrollNotification is ScrollUpdateNotification && scrollState != 1) {
-              scrollState = 1;
-            } else if (scrollNotification is ScrollEndNotification && scrollState != -1) {
-              scrollState = -1;
-              setState(() {});
-            }
+      child: Stack(
+        alignment: AlignmentDirectional.bottomCenter,
+        children: [
+          NotificationListener(
+            onNotification: (scrollNotification) {
+              if (scrollNotification is ScrollStartNotification &&
+                  scrollState != 0) {
+                scrollState = 0;
+              } else if (scrollNotification is ScrollUpdateNotification &&
+                  scrollState != 1) {
+                scrollState = 1;
+              } else if (scrollNotification is ScrollEndNotification &&
+                  scrollState != -1) {
+                scrollState = -1;
+                setState(() {});
+              }
 
-            return true;
-          },
-          child: CustomScrollView(
-            controller: scrollController,
-            reverse: true,
-            physics: AlwaysScrollableScrollPhysics(
-                parent: CustomBouncingScrollPhysics()),
-            slivers: <Widget>[
-              _listKey != null
-                  ? SliverAnimatedList(
-                      initialItemCount: _messages.length + 1,
-                      key: _listKey,
-                      itemBuilder: (BuildContext context, int index,
-                          Animation<double> animation) {
-                        if (index == _messages.length) {
-                          if (loader == null && !reachedTopOfChat) {
-                            loader = widget.messageBloc
-                                .loadMessageChunk(_messages.length);
-                            loader.then((val) {
-                              if (val == LoadMessageResult.FAILED_TO_RETREIVE) {
-                                loader = widget.messageBloc
-                                    .loadMessageChunk(_messages.length);
-                              } else if (val ==
-                                  LoadMessageResult.RETREIVED_NO_MESSAGES) {
-                                reachedTopOfChat = true;
-                                loader = null;
-                              } else {
-                                loader = null;
-                              }
-                              if (this.mounted) setState(() {});
-                            });
+              return true;
+            },
+            child: CustomScrollView(
+              controller: scrollController,
+              reverse: true,
+              physics: AlwaysScrollableScrollPhysics(
+                  parent: CustomBouncingScrollPhysics()),
+              slivers: <Widget>[
+                _listKey != null
+                    ? SliverAnimatedList(
+                        initialItemCount: _messages.length + 1,
+                        key: _listKey,
+                        itemBuilder: (BuildContext context, int index,
+                            Animation<double> animation) {
+                          if (index == _messages.length) {
+                            if (loader == null && !reachedTopOfChat) {
+                              loader = widget.messageBloc
+                                  .loadMessageChunk(_messages.length);
+                              loader.then((val) {
+                                if (val ==
+                                    LoadMessageResult.FAILED_TO_RETREIVE) {
+                                  loader = widget.messageBloc
+                                      .loadMessageChunk(_messages.length);
+                                } else if (val ==
+                                    LoadMessageResult.RETREIVED_NO_MESSAGES) {
+                                  reachedTopOfChat = true;
+                                  loader = null;
+                                } else {
+                                  loader = null;
+                                }
+                                if (this.mounted) setState(() {});
+                              });
+                            }
+
+                            return NewMessageLoader(
+                              messageBloc: widget.messageBloc,
+                              offset: _messages.length,
+                              loader: loader,
+                            );
+                          } else if (index > _messages.length) {
+                            return Container();
                           }
 
-                          return NewMessageLoader(
-                            messageBloc: widget.messageBloc,
-                            offset: _messages.length,
-                            loader: loader,
-                          );
-                        } else if (index > _messages.length) {
-                          return Container();
-                        }
+                          Message olderMessage;
+                          Message newerMessage;
+                          if (index + 1 >= 0 && index + 1 < _messages.length) {
+                            olderMessage = _messages[index + 1];
+                          }
+                          if (index - 1 >= 0 && index - 1 < _messages.length) {
+                            newerMessage = _messages[index - 1];
+                          }
 
-                        Message olderMessage;
-                        Message newerMessage;
-                        if (index + 1 >= 0 && index + 1 < _messages.length) {
-                          olderMessage = _messages[index + 1];
-                        }
-                        if (index - 1 >= 0 && index - 1 < _messages.length) {
-                          newerMessage = _messages[index - 1];
-                        }
-
-                        return SizeTransition(
-                          axis: Axis.vertical,
-                          sizeFactor: animation.drive(Tween(begin: 0.0, end: 1.0)
-                              .chain(CurveTween(curve: Curves.easeInOut))),
-                          child: SlideTransition(
-                            position: animation.drive(
-                              Tween(
-                                begin: Offset(0.0, 1),
-                                end: Offset(0.0, 0.0),
-                              ).chain(
-                                CurveTween(
-                                  curve: Curves.easeInOut,
+                          return SizeTransition(
+                            axis: Axis.vertical,
+                            sizeFactor: animation.drive(Tween(
+                                    begin: 0.0, end: 1.0)
+                                .chain(CurveTween(curve: Curves.easeInOut))),
+                            child: SlideTransition(
+                              position: animation.drive(
+                                Tween(
+                                  begin: Offset(0.0, 1),
+                                  end: Offset(0.0, 0.0),
+                                ).chain(
+                                  CurveTween(
+                                    curve: Curves.easeInOut,
+                                  ),
+                                ),
+                              ),
+                              child: FadeTransition(
+                                opacity: animation,
+                                child: Padding(
+                                  padding:
+                                      EdgeInsets.only(left: 5.0, right: 5.0),
+                                  child: MessageWidget(
+                                    key: Key(_messages[index].guid),
+                                    offset: timeStampOffset,
+                                    message: _messages[index],
+                                    chat: widget.messageBloc.currentChat,
+                                    olderMessage: olderMessage,
+                                    newerMessage: newerMessage,
+                                    showHandle: widget.showHandle,
+                                    // shouldFadeIn:
+                                    //     sentMessages.contains(_messages[index].guid),
+                                    isFirstSentMessage:
+                                        widget.messageBloc.firstSentMessage ==
+                                            _messages[index].guid,
+                                    // savedAttachmentData:
+                                    //     attachments.containsKey(_messages[index].guid)
+                                    //         ? attachments[_messages[index].guid]
+                                    //         : null,
+                                    showHero: index == 0 &&
+                                        _messages[index].originalROWID == null,
+                                  ),
                                 ),
                               ),
                             ),
-                            child: FadeTransition(
-                              opacity: animation,
-                              child: Padding(
-                                padding: EdgeInsets.only(left: 5.0, right: 5.0),
-                                child: MessageWidget(
-                                  key: Key(_messages[index].guid),
-                                  offset: timeStampOffset,
-                                  message: _messages[index],
-                                  chat: widget.messageBloc.currentChat,
-                                  olderMessage: olderMessage,
-                                  newerMessage: newerMessage,
-                                  showHandle: widget.showHandle,
-                                  // shouldFadeIn:
-                                  //     sentMessages.contains(_messages[index].guid),
-                                  isFirstSentMessage:
-                                      widget.messageBloc.firstSentMessage ==
-                                          _messages[index].guid,
-                                  // savedAttachmentData:
-                                  //     attachments.containsKey(_messages[index].guid)
-                                  //         ? attachments[_messages[index].guid]
-                                  //         : null,
-                                  showHero: index == 0 &&
-                                      _messages[index].originalROWID == null,
-                                ),
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    )
-                  : SliverToBoxAdapter(child: Container()),
-              SliverPadding(
-                padding: EdgeInsets.all(70),
-              ),
-            ],
-          ),
-        ),
-        (showScrollDown && scrollState == -1)
-            ? ClipRRect(
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-                  child: Container(
-                    height: 35,
-                    width: 150,
-                    decoration: BoxDecoration(
-                        color: Theme.of(context).accentColor.withOpacity(0.7),
-                        borderRadius: BorderRadius.circular(10.0)),
-                    child: Center(
-                      child: GestureDetector(
-                        onTap: () {
-                          scrollController.animateTo(
-                            0.0,
-                            curve: Curves.easeOut,
-                            duration: const Duration(milliseconds: 300),
                           );
                         },
-                        child: Text(
-                          "\u{2193} Scroll to bottom \u{2193}",
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.bodyText1,
+                      )
+                    : SliverToBoxAdapter(child: Container()),
+                SliverPadding(
+                  padding: EdgeInsets.all(70),
+                ),
+              ],
+            ),
+          ),
+          (showScrollDown && scrollState == -1)
+              ? ClipRRect(
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+                    child: Container(
+                      height: 35,
+                      width: 150,
+                      decoration: BoxDecoration(
+                          color: Theme.of(context).accentColor.withOpacity(0.7),
+                          borderRadius: BorderRadius.circular(10.0)),
+                      child: Center(
+                        child: GestureDetector(
+                          onTap: () {
+                            scrollController.animateTo(
+                              0.0,
+                              curve: Curves.easeOut,
+                              duration: const Duration(milliseconds: 300),
+                            );
+                          },
+                          child: Text(
+                            "\u{2193} Scroll to bottom \u{2193}",
+                            textAlign: TextAlign.center,
+                            style: Theme.of(context).textTheme.bodyText1,
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
-              )
-            : Container()
-      ]),
+                )
+              : Container()
+        ],
+      ),
     );
   }
 }

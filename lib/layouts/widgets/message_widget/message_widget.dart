@@ -52,7 +52,8 @@ class MessageWidget extends StatefulWidget {
   _MessageState createState() => _MessageState();
 }
 
-class _MessageState extends State<MessageWidget> {
+class _MessageState extends State<MessageWidget>
+    with AutomaticKeepAliveClientMixin {
   List<Attachment> attachments = <Attachment>[];
   List<Message> associatedMessages = [];
   bool showTail = true;
@@ -164,11 +165,10 @@ class _MessageState extends State<MessageWidget> {
       if (lastRequestCount != attachments.length) {
         lastRequestCount = attachments.length;
         SocketManager().setup.startIncrementalSync(SettingsManager().settings,
-          chatGuid: CurrentChat().chat.guid, saveDate: false, onComplete: () {
-            if (this.mounted) setState(() {});
-          });
+            chatGuid: CurrentChat().chat.guid, saveDate: false, onComplete: () {
+          if (this.mounted) setState(() {});
+        });
       }
-      
     }
 
     bool hasChanges = false;
@@ -206,6 +206,7 @@ class _MessageState extends State<MessageWidget> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     if (widget.newerMessage != null) {
       showTail = withinTimeThreshold(widget.message, widget.newerMessage,
               threshold: 1) ||
@@ -256,13 +257,12 @@ class _MessageState extends State<MessageWidget> {
           olderMessage: widget.olderMessage,
           message: widget.message,
           urlPreviewWidget: UrlPreviewWidget(
-            key: new Key("preview-${widget.message.guid}"),
-            linkPreviews: this
-                .attachments
-                .where((item) => item.mimeType == null)
-                .toList(),
-            message: widget.message
-          ),
+              key: new Key("preview-${widget.message.guid}"),
+              linkPreviews: this
+                  .attachments
+                  .where((item) => item.mimeType == null)
+                  .toList(),
+              message: widget.message),
           stickersWidget: StickersWidget(
             key: new Key(
                 "stickers-${this.associatedMessages.length.toString()}"),
@@ -291,11 +291,12 @@ class _MessageState extends State<MessageWidget> {
         showHandle: widget.showHandle,
         isGroup: widget.chat.participants.length > 1,
         urlPreviewWidget: UrlPreviewWidget(
-          key: new Key("preview-${widget.message.guid}"),
-          linkPreviews:
-              this.attachments.where((item) => item.mimeType == null).toList(),
-          message: widget.message
-        ),
+            key: new Key("preview-${widget.message.guid}"),
+            linkPreviews: this
+                .attachments
+                .where((item) => item.mimeType == null)
+                .toList(),
+            message: widget.message),
         stickersWidget: StickersWidget(
           key: new Key("stickers-${this.associatedMessages.length.toString()}"),
           messages: associatedMessages,
@@ -351,4 +352,7 @@ class _MessageState extends State<MessageWidget> {
     );
     return _entry;
   }
+
+  @override
+  bool get wantKeepAlive => true;
 }
