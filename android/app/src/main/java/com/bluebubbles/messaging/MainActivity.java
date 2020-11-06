@@ -103,8 +103,11 @@ public class MainActivity extends FlutterActivity {
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == PICK_IMAGE) {
-
             if (resultCode == RESULT_OK) {
+                File sharedFiles = new File(getApplicationContext().getFilesDir().getAbsolutePath() + "/sharedFiles/");
+                if(!sharedFiles.exists()) {
+                    sharedFiles.mkdir();
+                }
                 File file = new File(getApplicationContext().getFilesDir().getAbsolutePath() + "/sharedFiles/" + getFileName(data.getData()));
                 try {
                     file.createNewFile();

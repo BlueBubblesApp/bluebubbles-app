@@ -213,6 +213,7 @@ class _SetupViewState extends State<SetupView> {
                         _settingsCopy.guidAuthKey = fcmData[0];
                         _settingsCopy.serverAddress = fcmData[1];
                         await SettingsManager().saveSettings(_settingsCopy);
+                        await SettingsManager().saveFCMData(_fcmDataCopy);
                         showDialog(
                           context: context,
                           builder: (context) => AlertDialog(
