@@ -229,8 +229,10 @@ class _MessageState extends State<MessageWidget> {
     SavedAttachmentData savedAttachmentData =
         CurrentChat().getSavedAttachmentData(widget.message);
 
+    List<Attachment> nonNullAttachments = this.attachments.where((item) => item.mimeType != null).toList();
+
     // Build the attachments widget
-    Widget widgetAttachments = savedAttachmentData != null && savedAttachmentData.attachments.length > 0
+    Widget widgetAttachments = savedAttachmentData != null && nonNullAttachments.length > 0
         ? MessageAttachments(
             message: widget.message,
             savedAttachmentData: savedAttachmentData,
