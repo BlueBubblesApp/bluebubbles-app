@@ -265,6 +265,8 @@ class MessageHelper {
     RegExp pattern = new RegExp(
         r'(\u00a9|\u00ae|[\u2000-\u3300]|\ud83c[\ud000-\udfff]|\ud83d[\ud000-\udfff]|\ud83e[\ud000-\udfff])');
     List<RegExpMatch> matches = pattern.allMatches(text).toList();
+    if (matches.isEmpty) return false;
+
     List<String> items = matches.map((item) => item.group(0)).toList();
     items = items
         .map((item) => item.replaceAll(String.fromCharCode(8205), ""))

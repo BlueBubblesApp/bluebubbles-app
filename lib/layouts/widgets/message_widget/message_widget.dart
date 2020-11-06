@@ -1,8 +1,4 @@
 import 'dart:async';
-import 'package:bluebubbles/action_handler.dart';
-import 'package:bluebubbles/blocs/setup_bloc.dart';
-import 'package:bluebubbles/helpers/attachment_downloader.dart';
-import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/reaction.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -234,7 +230,7 @@ class _MessageState extends State<MessageWidget> {
         CurrentChat().getSavedAttachmentData(widget.message);
 
     // Build the attachments widget
-    Widget widgetAttachments = savedAttachmentData != null
+    Widget widgetAttachments = savedAttachmentData != null && savedAttachmentData.attachments.length > 0
         ? MessageAttachments(
             message: widget.message,
             savedAttachmentData: savedAttachmentData,
