@@ -104,15 +104,16 @@ class ContactManager {
       Contact contact = handleToContact[address];
       if (contact == null) continue;
 
-      final avatar = await ContactsService.getAvatar(contact);
-      if (avatar == null) continue;
+      ContactsService.getAvatar(contact, photoHighRes: false).then((avatar) {
+        if (avatar == null) return;
 
-      // Update the avatar in the master list
-      contact.avatar = avatar;
-      handleToContact[address] = contact;
+        // Update the avatar in the master list
+        contact.avatar = avatar;
+        handleToContact[address] = contact;
 
-      // Add the handle to the stream to update the subscribers
-      _stream.sink.add([address]);
+        // Add the handle to the stream to update the subscribers
+        _stream.sink.add([address]);
+      });
     }
 
     getAvatarsFuture.complete();
