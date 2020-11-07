@@ -157,9 +157,10 @@ class _MessageState extends State<MessageWidget>
     List<Attachment> attachments = await Message.getAttachments(widget.message);
 
     // If hasDdResults is true, it means we have attachents, so if we don't, we should get em
-    if (widget.message.hasDdResults && attachments.length == 0) {
-      if (lastRequestCount != attachments.length) {
-        lastRequestCount = attachments.length;
+    List<Attachment> nonNullAttachments = attachments.where((item) => item.mimeType == null).toList();
+    if (widget.message.hasDdResults && nonNullAttachments.length == 0) {
+      if (lastRequestCount != nonNullAttachments.length) {
+        lastRequestCount = nonNullAttachments.length;
         SocketManager().setup.startIncrementalSync(SettingsManager().settings,
             chatGuid: CurrentChat().chat.guid, saveDate: false, onComplete: () {
           if (this.mounted) setState(() {});
@@ -215,7 +216,7 @@ class _MessageState extends State<MessageWidget>
 
     if (widget.message != null &&
         isEmptyString(widget.message.text) &&
-        !widget.message.hasAttachments) {
+        !widget.message.hasAttachments && widget.message.balloonBundleId == null) {
       return GroupEvent(message: widget.message);
     }
 

@@ -257,9 +257,9 @@ class MessageBloc {
         _messageController.sink.add(event);
 
         // Complete the execution
-        if (count < 25) {
+        if (count < 25 && !completer.isCompleted) {
           completer.complete(LoadMessageResult.RETREIVED_LAST_PAGE);
-        } else {
+        } else if (count >= 25 && !completer.isCompleted) {
           completer.complete(LoadMessageResult.RETREIVED_MESSAGES);
         }
       }

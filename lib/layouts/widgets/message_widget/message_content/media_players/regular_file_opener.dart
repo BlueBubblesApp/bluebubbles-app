@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:bluebubbles/helpers/attachment_helper.dart';
-import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:flutter/cupertino.dart';

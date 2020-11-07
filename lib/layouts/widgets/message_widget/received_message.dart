@@ -1,5 +1,6 @@
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
+import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/ballon_bundle_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_tail.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_time_stamp.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.dart';
@@ -102,9 +103,7 @@ class _ReceivedMessageState extends State<ReceivedMessage>
         if (widget.showTail) MessageTail(isFromMe: false),
         Container(
           margin: EdgeInsets.only(
-            top: widget.hasReactions && !widget.message.hasAttachments
-                ? 18
-                : 0,
+            top: widget.hasReactions && !widget.message.hasAttachments ? 18 : 0,
             left: 10,
             right: 10,
           ),
@@ -149,7 +148,8 @@ class _ReceivedMessageState extends State<ReceivedMessage>
             .isWithin(widget.olderMessage.dateCreated, minutes: 30)) {
       messageColumn.add(
         Padding(
-          padding: EdgeInsets.only(left: 15.0, top: 5.0, bottom: widget.hasReactions ? 0.0 : 3.0),
+          padding: EdgeInsets.only(
+              left: 15.0, top: 5.0, bottom: widget.hasReactions ? 0.0 : 3.0),
           child: Text(
             contactTitle,
             style: Theme.of(context).textTheme.subtitle1,
@@ -166,8 +166,7 @@ class _ReceivedMessageState extends State<ReceivedMessage>
               messageWidget: widget.attachmentsWidget,
               reactions: widget.reactionsWidget,
               message: widget.message,
-              shouldShow: widget.message.hasAttachments
-          ),
+              shouldShow: widget.message.hasAttachments),
           stickers: widget.stickersWidget,
           isFromMe: widget.message.isFromMe,
         ),
@@ -181,9 +180,13 @@ class _ReceivedMessageState extends State<ReceivedMessage>
         padding: EdgeInsets.only(left: 10.0),
         child: widget.urlPreviewWidget,
       );
+    } else if (widget.message.balloonBundleId != null &&
+        widget.message.balloonBundleId !=
+            'com.apple.messages.URLBalloonProvider') {
+      message = BalloonBundleWidget(message: widget.message);
     } else if (!isEmptyString(widget.message.text)) {
-      message = _buildMessageWithTail(widget.message, widget.shouldShowBigEmoji,
-          widget.hasReactions);
+      message = _buildMessageWithTail(
+          widget.message, widget.shouldShowBigEmoji, widget.hasReactions);
     }
 
     // Fourth, let's add any reactions or stickers to the widget
@@ -194,8 +197,7 @@ class _ReceivedMessageState extends State<ReceivedMessage>
               messageWidget: message,
               reactions: widget.reactionsWidget,
               message: widget.message,
-              shouldShow: widget.attachments.length == 0
-          ),
+              shouldShow: widget.attachments.length == 0),
           stickers: widget.stickersWidget,
           isFromMe: widget.message.isFromMe,
         ),
