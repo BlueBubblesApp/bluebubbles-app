@@ -90,7 +90,6 @@ getInitials(String name, String delimeter, {double size = 30}) {
       return array[0][0].toUpperCase();
       break;
     default:
-
       if (array.length - 1 < 0 || array[array.length - 1].length < 1) return "";
       String first = array[0][0].toUpperCase();
       String last = array[array.length - 1][0].toUpperCase();
@@ -162,6 +161,33 @@ extension DateHelpers on DateTime {
       return diff.inHours < hours;
     } else {
       throw new Exception("No timerange specified!");
+    }
+  }
+}
+
+extension ColorHelpers on Color {
+  Color darken([double percent = 10]) {
+    assert(1 <= percent && percent <= 100);
+    var f = 1 - percent / 100;
+    return Color.fromARGB(this.alpha, (this.red * f).round(),
+        (this.green * f).round(), (this.blue * f).round());
+  }
+
+  Color lighten([double percent = 10]) {
+    assert(1 <= percent && percent <= 100);
+    var p = percent / 100;
+    return Color.fromARGB(
+        this.alpha,
+        this.red + ((255 - this.red) * p).round(),
+        this.green + ((255 - this.green) * p).round(),
+        this.blue + ((255 - this.blue) * p).round());
+  }
+
+  Color lightenOrDarken([double percent = 10]) {
+    if (this.computeLuminance() >= 0.5) {
+      return this.darken(percent);
+    } else {
+      return this.lighten(percent);
     }
   }
 }

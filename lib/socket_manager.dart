@@ -516,16 +516,19 @@ class SocketManager {
     }
 
     // Get the server URL
-    String url = await MethodChannelInterface().invokeMethod("get-server-url");
-    debugPrint("New server URL: $url");
+    try {
+      String url =
+          await MethodChannelInterface().invokeMethod("get-server-url");
+      debugPrint("New server URL: $url");
 
-    // Set the server URL
-    Settings _settingsCopy = SettingsManager().settings;
-    if (_settingsCopy.serverAddress == url) return;
-    _settingsCopy.serverAddress = url;
-    await SettingsManager().saveSettings(_settingsCopy);
-    if (connectToSocket) {
-      startSocketIO(forceNewConnection: connectToSocket);
-    }
+      // Set the server URL
+      Settings _settingsCopy = SettingsManager().settings;
+      if (_settingsCopy.serverAddress == url) return;
+      _settingsCopy.serverAddress = url;
+      await SettingsManager().saveSettings(_settingsCopy);
+      if (connectToSocket) {
+        startSocketIO(forceNewConnection: connectToSocket);
+      }
+    } catch (e) {}
   }
 }

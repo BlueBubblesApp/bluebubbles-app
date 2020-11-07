@@ -168,7 +168,7 @@ class _ConversationTileState extends State<ConversationTile>
       child: Material(
         color: !isPressed
             ? Theme.of(context).backgroundColor
-            : Theme.of(context).buttonColor,
+            : Theme.of(context).backgroundColor.lightenOrDarken(30),
         child: GestureDetector(
           onTapDown: (details) {
             if (!this.mounted) return;

@@ -175,8 +175,19 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
                     onPressed: () async {
                       allThemes.removeWhere(
                           (element) => element == this.currentTheme);
-                      // currentTheme
                       await this.currentTheme.delete();
+                      this.currentTheme = widget.isDarkMode
+                          ? await ThemeObject.getDarkTheme()
+                          : await ThemeObject.getLightTheme();
+                      allThemes = await ThemeObject.getThemes();
+                      if (widget.isDarkMode) {
+                        await SettingsManager().saveSelectedTheme(context,
+                            selectedDarkTheme: currentTheme);
+                      } else {
+                        await SettingsManager().saveSelectedTheme(context,
+                            selectedLightTheme: currentTheme);
+                      }
+                      setState(() {});
                     },
                   ),
                 ),
