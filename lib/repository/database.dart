@@ -31,15 +31,14 @@ enum Tables {
 }
 
 class DBUpgradeItem {
-  List<int> fromVersions;  // If this is 0, it's any version
+  List<int> fromVersions; // If this is 0, it's any version
   List<int> toVersions;
   Function(Database) upgrade;
 
-  DBUpgradeItem({
-    @required this.fromVersions,
-    @required this.toVersions,
-    @required this.upgrade
-  });
+  DBUpgradeItem(
+      {@required this.fromVersions,
+      @required this.toVersions,
+      @required this.upgrade});
 }
 
 class DBProvider {
@@ -53,21 +52,19 @@ class DBProvider {
   /// The previous version is always [key - 1], for example for key 2, it will be the upgrade scheme from version 1 to version 2
   static final List<DBUpgradeItem> upgradeSchemes = [
     new DBUpgradeItem(
-      fromVersions: [1],
-      toVersions: [2],
-      upgrade: (Database db) {
-        db.execute(
-            "ALTER TABLE message ADD COLUMN hasDdResults INTEGER DEFAULT 0;");
-      }
-    ),
+        fromVersions: [1],
+        toVersions: [2],
+        upgrade: (Database db) {
+          db.execute(
+              "ALTER TABLE message ADD COLUMN hasDdResults INTEGER DEFAULT 0;");
+        }),
     new DBUpgradeItem(
-      fromVersions: [1, 2],
-      toVersions: [3],
-      upgrade: (Database db) {
-        db.execute(
-            "ALTER TABLE message ADD COLUMN balloonBundleId TEXT DEFAULT NULL;");
-      }
-    )
+        fromVersions: [1, 2],
+        toVersions: [3],
+        upgrade: (Database db) {
+          db.execute(
+              "ALTER TABLE message ADD COLUMN balloonBundleId TEXT DEFAULT NULL;");
+        })
   ];
 
   Future<Database> get database async {
@@ -103,8 +100,10 @@ class DBProvider {
     // then we will run every single scheme from 1 -> 2 and 2 -> 3
 
     for (DBUpgradeItem item in upgradeSchemes) {
-      if (item.fromVersions.contains(oldVersion) && item.toVersions.contains(newVersion)) {
-        debugPrint("UPGRADING DB FROM VERSION $oldVersion TO VERSION $newVersion");
+      if (item.fromVersions.contains(oldVersion) &&
+          item.toVersions.contains(newVersion)) {
+        debugPrint(
+            "UPGRADING DB FROM VERSION $oldVersion TO VERSION $newVersion");
         await item.upgrade(db);
       }
     }
@@ -365,43 +364,8 @@ class DBProvider {
   }
 
   static Future<void> setupConfigRows() async {
-    // Get the shared preferences and store it
-    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
-
-    // Get `Settings` from the shared preferences
-    String result = sharedPreferences.getString('Settings');
-
-    // Set those settings as the [settings] variable
-    if (result != null) {
-      Map resultMap = jsonDecode(result);
-      Settings settings = new Settings();
-      settings.serverAddress = resultMap["server_address"];
-      settings.guidAuthKey = resultMap["guidAuthKey"];
-      settings.finishedSetup = resultMap["finishedSetup"];
-      settings.chunkSize = resultMap["chunkSize"];
-      settings.autoOpenKeyboard = resultMap["autoOpenKeyboard"];
-      settings.autoDownload = resultMap["autoDownload"];
-      settings.onlyWifiDownload = resultMap["onlyWifiDownload"];
-      settings.hideTextPreviews = resultMap["hideTextPreviews"];
-      settings.showIncrementalSync = resultMap["showIncrementalSync"];
-      settings.lowMemoryMode = resultMap["lowMemoryMode"];
-      settings.lastIncrementalSync = resultMap["lastIncrementalSync"];
-      await settings.save();
-
-      Map resultFCM = resultMap["fcm_auth_data"];
-
-      FCMData fcmData = new FCMData();
-      fcmData.projectID = resultFCM["project_id"];
-      fcmData.storageBucket = resultFCM["storage_bucket"];
-      fcmData.apiKey = resultFCM["api_key"];
-      fcmData.firebaseURL = resultFCM["firebase_url"];
-      fcmData.clientID = resultFCM["client_id"];
-      fcmData.applicationID = resultFCM["application_id"];
-      await fcmData.save();
-    }
     for (ThemeObject theme in Themes.themes) {
       await theme.save(updateIfAbsent: false);
     }
-    // await sharedPreferences.remove('Settings');
   }
 }

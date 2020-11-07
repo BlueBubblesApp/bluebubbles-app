@@ -1,7 +1,7 @@
-
 import 'package:bluebubbles/helpers/contstants.dart';
 import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/models/config_entry.dart';
+import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:sqflite/sqflite.dart';
 
 class Settings {
@@ -16,8 +16,8 @@ class Settings {
   bool showIncrementalSync = false;
   bool lowMemoryMode = false;
   int lastIncrementalSync = 0;
-  // Map<String, dynamic> _lightColorTheme = {};
-  // Map<String, dynamic> _darkColorTheme = {};
+  int displayMode = 0;
+
   Skins skin = Skins.IOS;
 
   Settings();
@@ -45,15 +45,34 @@ class Settings {
         settings.lowMemoryMode = entry.value;
       } else if (entry.name == "lastIncrementalSync") {
         settings.lastIncrementalSync = entry.value;
+      } else if (entry.name == "displayMode") {
+        settings.displayMode = entry.value;
       }
     }
+    settings.save(updateIfAbsent: false);
     return settings;
   }
 
-  Future<Settings> save({Database database}) async {
+  Future<DisplayMode> getDisplayMode() async {
+    if (displayMode == null) return FlutterDisplayMode.current;
+
+    List<DisplayMode> modes = await FlutterDisplayMode.supported;
+    modes = modes.where((element) => element.id == displayMode).toList();
+
+    DisplayMode mode;
+    if (modes.isEmpty) {
+      mode = await FlutterDisplayMode.current;
+      this.displayMode = mode.id;
+    } else {
+      mode = modes.first;
+    }
+    return mode;
+  }
+
+  Future<Settings> save({bool updateIfAbsent = true}) async {
     List<ConfigEntry> entries = this.toEntries();
     for (ConfigEntry entry in entries) {
-      await entry.save("config", database: database);
+      await entry.save("config", updateIfAbsent: updateIfAbsent);
     }
     return this;
   }
@@ -115,5 +134,9 @@ class Settings {
             name: "lastIncrementalSync",
             value: this.lastIncrementalSync,
             type: this.lastIncrementalSync.runtimeType),
+        ConfigEntry(
+            name: "displayMode",
+            value: this.displayMode,
+            type: this.displayMode.runtimeType),
       ];
 }

@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:ui';
 
-// import 'package:bluebubbles/qr_code_scanner.dart';
+import "package:bluebubbles/helpers/string_extension.dart";
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/theming/theming_panel.dart';
@@ -12,15 +12,13 @@ import 'package:bluebubbles/repository/models/fcm_data.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter_displaymode/flutter_displaymode.dart';
 import '../../helpers/hex_color.dart';
 import 'package:flutter/material.dart';
 
 import '../setup/qr_code_scanner.dart';
 
 class SettingsPanel extends StatefulWidget {
-  // final Settings settings;
-  // final Function saveSettings;
-
   SettingsPanel({Key key}) : super(key: key);
 
   @override
@@ -31,12 +29,23 @@ class _SettingsPanelState extends State<SettingsPanel> {
   Settings _settingsCopy;
   FCMData _fcmDataCopy;
   bool needToReconnect = false;
+  List<DisplayMode> modes;
+  DisplayMode currentMode;
 
   @override
   void initState() {
     super.initState();
     _settingsCopy = SettingsManager().settings;
     _fcmDataCopy = SettingsManager().fcmData;
+  }
+
+  @override
+  void didChangeDependencies() async {
+    super.didChangeDependencies();
+    modes = await FlutterDisplayMode.supported;
+    modes.forEach((mode) => {debugPrint("Display mode: " + mode.toString())});
+    currentMode = await _settingsCopy.getDisplayMode();
+    setState(() {});
   }
 
   @override
@@ -211,10 +220,15 @@ class _SettingsPanelState extends State<SettingsPanel> {
                   initialVal: _settingsCopy.showIncrementalSync,
                   title: "Notify when incremental sync complete",
                 ),
-                SettingsOptions(
-                  onChanged: (AdaptiveThemeMode val) {
+                SettingsOptions<AdaptiveThemeMode>(
+                  initial: AdaptiveTheme.of(context).mode,
+                  onChanged: (val) {
                     AdaptiveTheme.of(context).setThemeMode(val);
                   },
+                  options: AdaptiveThemeMode.values,
+                  textProcessing: (dynamic val) =>
+                      val.toString().split(".").last,
+                  title: "App Theme",
                 ),
                 SettingsTile(
                   title: "Theming",
@@ -228,6 +242,17 @@ class _SettingsPanelState extends State<SettingsPanel> {
                     );
                   },
                 ),
+                if (currentMode != null && modes != null)
+                  SettingsOptions<DisplayMode>(
+                    initial: currentMode,
+                    onChanged: (val) async {
+                      currentMode = val;
+                      _settingsCopy.displayMode = currentMode.id;
+                    },
+                    options: modes,
+                    textProcessing: (dynamic val) => val.toString(),
+                    title: "Display",
+                  ),
                 SettingsTile(
                   onTap: () {
                     showDialog(
@@ -380,53 +405,86 @@ class _SettingsSwitchState extends State<SettingsSwitch> {
   }
 }
 
-class SettingsOptions extends StatefulWidget {
-  SettingsOptions({Key key, this.onChanged}) : super(key: key);
-  final Function(AdaptiveThemeMode) onChanged;
+class SettingsOptions<T> extends StatefulWidget {
+  SettingsOptions(
+      {Key key,
+      this.onChanged,
+      this.options,
+      this.initial,
+      this.textProcessing,
+      this.title})
+      : super(key: key);
+  final String title;
+  final Function(dynamic) onChanged;
+  final List<T> options;
+  final T initial;
+  final String Function(dynamic) textProcessing;
 
   @override
   _SettingsOptionsState createState() => _SettingsOptionsState();
 }
 
-class _SettingsOptionsState extends State<SettingsOptions> {
-  AdaptiveThemeMode initialVal;
+class _SettingsOptionsState<T> extends State<SettingsOptions<T>> {
+  T currentVal;
 
   @override
   void initState() {
     super.initState();
-    initialVal = AdaptiveTheme.of(context).mode;
+    currentVal = widget.initial;
   }
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: DropdownButton(
-        dropdownColor: Theme.of(context).accentColor,
-        icon: Icon(
-          Icons.arrow_drop_down,
-          color: Theme.of(context).textTheme.bodyText1.color,
-        ),
-        value: initialVal,
-        items: AdaptiveThemeMode.values
-            .map<DropdownMenuItem<AdaptiveThemeMode>>((e) {
-          return DropdownMenuItem(
-            value: e,
+      padding: const EdgeInsets.all(16.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Container(
             child: Text(
-              e.toString().split(".").last,
+              widget.title,
               style: Theme.of(context).textTheme.bodyText1,
             ),
-          );
-        }).toList(),
-        onChanged: (AdaptiveThemeMode val) {
-          widget.onChanged(val);
+          ),
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 9),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              color: Theme.of(context).accentColor,
+            ),
+            child: Center(
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<T>(
+                  dropdownColor: Theme.of(context).accentColor,
+                  icon: Icon(
+                    Icons.arrow_drop_down,
+                    color: Theme.of(context).textTheme.bodyText1.color,
+                  ),
+                  value: currentVal,
+                  items: widget.options.map<DropdownMenuItem<T>>((e) {
+                    return DropdownMenuItem(
+                      value: e,
+                      child: Text(
+                        widget.textProcessing(e).capitalize(),
+                        style: Theme.of(context).textTheme.bodyText1,
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: (T val) {
+                    widget.onChanged(val);
 
-          if (!this.mounted) return;
+                    if (!this.mounted) return;
 
-          setState(() {
-            initialVal = val;
-          });
-        },
+                    setState(() {
+                      currentVal = val;
+                    });
+                    //
+                  },
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -446,7 +504,6 @@ class _SettingsSliderState extends State<SettingsSlider> {
   double currentVal = 500;
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     if (widget.startingVal > 1 && widget.startingVal < 5000) {
       currentVal = widget.startingVal;

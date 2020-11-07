@@ -45,7 +45,6 @@ class _ConversationTileState extends State<ConversationTile>
   @override
   void initState() {
     super.initState();
-    debugPrint("initState");
 
     fetchAvatar();
     ContactManager().stream.listen((List<String> addresses) {
