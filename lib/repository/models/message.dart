@@ -176,9 +176,8 @@ class Message {
       isExpired: (json["isExpired"] is bool)
           ? json['isExpired']
           : ((json['isExpired'] == 1) ? true : false),
-      balloonBundleId: json.containsKey("balloonBundleId")
-          ? json["balloonBundleId"]
-          : null,
+      balloonBundleId:
+          json.containsKey("balloonBundleId") ? json["balloonBundleId"] : null,
       associatedMessageGuid: associatedMessageGuid,
       associatedMessageType: json.containsKey("associatedMessageType")
           ? json["associatedMessageType"]
@@ -213,12 +212,6 @@ class Message {
       await this.handle.save();
       this.handleId = this.handle.id;
     }
-    // QueueManager().logger.log(Level.info,
-    //     "this.handle == null ${this.handle == null}, this.handleId = ${this.handleId}");
-
-    // QueueManager()
-    //     .logger
-    //     .log(Level.info, "existing == null ${existing == null}");
     if (this.associatedMessageType != null &&
         this.associatedMessageGuid != null) {
       Message associatedMessage =
@@ -272,7 +265,6 @@ class Message {
           return newMessage;
         }
       }
-      // return null;
     }
 
     Map<String, dynamic> params = newMessage.toMap();

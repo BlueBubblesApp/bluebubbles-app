@@ -19,7 +19,7 @@ import 'package:flutter/material.dart';
 class SentMessageHelper {
   static Widget buildMessageWithTail(BuildContext context, Message message,
       bool showTail, bool hasReactions, bool bigEmoji,
-      {Widget customContent}) {
+      {Widget customContent, CurrentChat currentChat}) {
     Color blueColor;
     blueColor = message == null || message.guid.startsWith("temp")
         ? darken(Colors.blue[600], 0.2)
@@ -86,7 +86,11 @@ class SentMessageHelper {
       mainAxisSize: MainAxisSize.max,
       children: [
         msg,
-        getErrorWidget(context, message, CurrentChat().chat),
+        getErrorWidget(
+          context,
+          message,
+          currentChat != null ? currentChat.chat : CurrentChat.of(context).chat,
+        ),
       ],
     );
   }

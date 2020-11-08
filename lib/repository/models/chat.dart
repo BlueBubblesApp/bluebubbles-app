@@ -297,13 +297,18 @@ class Chat {
 
     // If the message was saved correctly, update this chat's latestMessage info,
     // but only if the incoming message's date is newer
-    if (newMessage.id != null &&
-        (this.latestMessageDate == null ||
-            this.latestMessageDate.millisecondsSinceEpoch <
-                message.dateCreated.millisecondsSinceEpoch)) {
+    if (newMessage.id != null) {
+      if (this.latestMessageDate == null) {
+        isNewer = true;
+      } else if (this.latestMessageDate.millisecondsSinceEpoch <
+          message.dateCreated.millisecondsSinceEpoch) {
+        isNewer = true;
+      }
+    }
+
+    if (isNewer) {
       this.latestMessageText = await MessageHelper.getNotificationText(message);
       this.latestMessageDate = message.dateCreated;
-      isNewer = true;
     }
 
     // Save any attachments

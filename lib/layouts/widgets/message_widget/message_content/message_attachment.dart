@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
+import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/attachment_downloader_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_file.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/audio_player_widget.dart';
@@ -20,12 +21,10 @@ import 'package:video_player/video_player.dart';
 class MessageAttachment extends StatefulWidget {
   MessageAttachment({
     Key key,
-    @required this.content,
     @required this.attachment,
     @required this.updateAttachment,
     @required this.message,
   }) : super(key: key);
-  final content;
   final Attachment attachment;
   final Function() updateAttachment;
   final Message message;
@@ -44,7 +43,7 @@ class _MessageAttachmentState extends State<MessageAttachment>
   @override
   void initState() {
     super.initState();
-    content = widget.content;
+    content = AttachmentHelper.getContent(widget.attachment);
     if (content is AttachmentDownloader) {
       (content as AttachmentDownloader).stream.listen((event) {
         if (event is File && this.mounted) {
@@ -134,8 +133,6 @@ class _MessageAttachmentState extends State<MessageAttachment>
         return MediaFile(
           attachment: widget.attachment,
           child: ImageWidget(
-            savedAttachmentData:
-                CurrentChat().getSavedAttachmentData(widget.message),
             attachment: widget.attachment,
             file: content,
           ),
@@ -146,8 +143,6 @@ class _MessageAttachmentState extends State<MessageAttachment>
           child: VideoWidget(
             attachment: widget.attachment,
             file: content,
-            savedAttachmentData:
-                CurrentChat().getSavedAttachmentData(widget.message),
           ),
         );
       } else if (mimeType == "audio" &&
@@ -191,7 +186,7 @@ class _MessageAttachmentState extends State<MessageAttachment>
       return AttachmentDownloaderWidget(
         onPressed: () {
           content = new AttachmentDownloader(content);
-          widget.updateAttachment();
+          // widget.updateAttachment();
           if (this.mounted) setState(() {});
         },
         attachment: content,

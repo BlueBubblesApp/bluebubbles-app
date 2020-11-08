@@ -11,12 +11,14 @@ import 'package:bluebubbles/repository/models/attachment.dart';
 import "package:flutter/material.dart";
 
 class AttachmentFullscreenViewer extends StatefulWidget {
-  AttachmentFullscreenViewer(
-      {Key key,
-      this.attachment,
-      this.allAttachments,
-      @required this.showInteractions})
-      : super(key: key);
+  AttachmentFullscreenViewer({
+    Key key,
+    @required this.attachment,
+    @required this.allAttachments,
+    @required this.showInteractions,
+    @required this.currentChat,
+  }) : super(key: key);
+  final CurrentChat currentChat;
   final List<Attachment> allAttachments;
   final Attachment attachment;
   final bool showInteractions;
@@ -44,7 +46,7 @@ class _AttachmentFullscreenViewerState
     // If the allAttachments is not updated
     if (startingIndex == null) {
       // Then fetch all of them and try again
-      await CurrentChat().updateChatAttachments();
+      await widget.currentChat.updateChatAttachments();
       getStartingIndex();
     }
 

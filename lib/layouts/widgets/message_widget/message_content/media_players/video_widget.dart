@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
@@ -21,11 +22,9 @@ class VideoWidget extends StatefulWidget {
     Key key,
     @required this.file,
     @required this.attachment,
-    @required this.savedAttachmentData,
   }) : super(key: key);
   final File file;
   final Attachment attachment;
-  final SavedAttachmentData savedAttachmentData;
 
   @override
   _VideoWidgetState createState() => _VideoWidgetState();
@@ -37,11 +36,12 @@ class _VideoWidgetState extends State<VideoWidget>
   bool isVisible = false;
   Timer hideOverlayTimer;
   bool navigated = false;
+  Uint8List thumbnail;
 
   @override
   void initState() {
     super.initState();
-    dynamic controllers = CurrentChat().currentPlayingVideo;
+    dynamic controllers = CurrentChat.of(context).currentPlayingVideo;
     showPlayPauseOverlay = controllers == null ||
         !controllers.containsKey(widget.attachment.guid) ||
         !controllers[widget.attachment.guid].value.isPlaying;
@@ -54,19 +54,16 @@ class _VideoWidgetState extends State<VideoWidget>
   }
 
   void getThumbnail() async {
-    if (widget.savedAttachmentData.imageData
-            .containsKey(widget.attachment.guid) &&
-        widget.savedAttachmentData.imageData[widget.attachment.guid] != null)
-      return;
-    widget.savedAttachmentData.imageData[widget.attachment.guid] =
-        await VideoThumbnail.thumbnailData(
+    thumbnail = CurrentChat.of(context).getImageData(widget.attachment);
+    if (thumbnail != null) return;
+    thumbnail = await VideoThumbnail.thumbnailData(
       video: widget.file.path,
       imageFormat: ImageFormat.JPEG,
       quality: SettingsManager().settings.lowMemoryMode ? 10 : 25,
     );
+    CurrentChat.of(context).saveImageData(thumbnail, widget.attachment);
     if (widget.attachment.width == null) {
-      Size size = ImageSizeGetter.getSize(MemoryInput(
-          widget.savedAttachmentData.imageData[widget.attachment.guid]));
+      Size size = ImageSizeGetter.getSize(MemoryInput(thumbnail));
       widget.attachment.width = size.width;
       widget.attachment.height = size.height;
     }
@@ -76,7 +73,7 @@ class _VideoWidgetState extends State<VideoWidget>
   @override
   Widget build(BuildContext context) {
     VideoPlayerController controller;
-    dynamic controllers = CurrentChat().currentPlayingVideo;
+    dynamic controllers = CurrentChat.of(context).currentPlayingVideo;
     if (controllers != null &&
         controllers.containsKey(widget.attachment.guid)) {
       controller = controllers[widget.attachment.guid];
@@ -87,12 +84,10 @@ class _VideoWidgetState extends State<VideoWidget>
           isVisible = false;
           if (controller != null) {
             controller = null;
-            CurrentChat().changeCurrentPlayingVideo(null);
+            CurrentChat.of(context).changeCurrentPlayingVideo(null);
           }
-          if (SettingsManager().settings.lowMemoryMode &&
-              widget.savedAttachmentData.imageData
-                  .containsKey(widget.attachment.guid)) {
-            widget.savedAttachmentData.imageData.remove(widget.attachment.guid);
+          if (SettingsManager().settings.lowMemoryMode) {
+            CurrentChat.of(context).clearImageData(widget.attachment);
           }
         } else if (!isVisible) {
           isVisible = true;
@@ -117,10 +112,12 @@ class _VideoWidgetState extends State<VideoWidget>
                     setState(() {
                       navigated = true;
                     });
+                    CurrentChat currentChat = CurrentChat.of(context);
                     await Navigator.of(context).push(
                       CupertinoPageRoute(
                         builder: (context) => AttachmentFullscreenViewer(
-                          allAttachments: CurrentChat().chatAttachments,
+                          allAttachments: currentChat.chatAttachments,
+                          currentChat: currentChat,
                           attachment: widget.attachment,
                           showInteractions: true,
                         ),
@@ -200,7 +197,7 @@ class _VideoWidgetState extends State<VideoWidget>
                       VideoPlayerController.file(widget.file);
                   await controller.initialize();
                   controller.play();
-                  CurrentChat().changeCurrentPlayingVideo(
+                  CurrentChat.of(context).changeCurrentPlayingVideo(
                       {widget.attachment.guid: controller});
                 },
                 child: Stack(
@@ -215,12 +212,8 @@ class _VideoWidgetState extends State<VideoWidget>
                           maxWidth: MediaQuery.of(context).size.width / 2,
                           maxHeight: MediaQuery.of(context).size.height / 2,
                         ),
-                        child: widget.savedAttachmentData.imageData
-                                .containsKey(widget.attachment.guid)
-                            ? Image.memory(
-                                widget.savedAttachmentData
-                                    .imageData[widget.attachment.guid],
-                              )
+                        child: thumbnail != null
+                            ? Image.memory(thumbnail)
                             : Container(
                                 height: 5,
                                 child: Center(

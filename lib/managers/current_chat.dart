@@ -1,6 +1,9 @@
 import 'dart:async';
+import 'dart:typed_data';
 
+import 'package:bluebubbles/layouts/conversation_view/messages_view.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_attachments.dart';
+import 'package:bluebubbles/managers/attachment_info_bloc.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
@@ -12,37 +15,45 @@ import 'package:video_player/video_player.dart';
 ///
 /// This allows us to get around passing data through the trees and we can just store it here
 class CurrentChat {
-  factory CurrentChat() {
-    return _manager;
-  }
-
-  static final CurrentChat _manager = CurrentChat._internal();
-
-  CurrentChat._internal();
-
   StreamController _stream = StreamController.broadcast();
 
   Stream get stream => _stream.stream;
 
+  StreamController<Map<String, List<Attachment>>> _attachmentStream =
+      StreamController.broadcast();
+
+  Stream get attachmentStream => _attachmentStream.stream;
+
   Chat chat;
 
-  Map<String, SavedAttachmentData> attachments;
-  Map<String, Metadata> urlPreviews;
-  Map<String, VideoPlayerController> currentPlayingVideo;
-  List<VideoPlayerController> controllersToDispose;
-  List<Attachment> chatAttachments;
-  List<String> sentMessages;
+  Map<String, Uint8List> imageData = {};
+  Map<String, Metadata> urlPreviews = {};
+  Map<String, VideoPlayerController> currentPlayingVideo = {};
+  List<VideoPlayerController> controllersToDispose = [];
+  List<Attachment> chatAttachments = [];
+  List<String> sentMessages = [];
   OverlayEntry entry;
+
+  Map<String, List<Attachment>> messageAttachments = {};
+
+  CurrentChat(this.chat);
+
+  factory CurrentChat.getCurrentChat(Chat chat) {
+    CurrentChat currentChat = AttachmentInfoBloc().getCurrentChat(chat.guid);
+    if (currentChat == null) {
+      currentChat = CurrentChat(chat);
+      AttachmentInfoBloc().addCurrentChat(currentChat);
+    }
+
+    return currentChat;
+  }
 
   /// Initialize all the values for the currently open chat
   /// @param [chat] the chat object you are initializing for
-  void init(Chat chat) {
-    // If we are reinitializing the same chat, do nothing
-    if (this.chat != null && this.chat.guid == chat.guid) return;
+  void init() {
     dispose();
 
-    this.chat = chat;
-    attachments = {};
+    imageData = {};
     currentPlayingVideo = {};
     urlPreviews = {};
     controllersToDispose = [];
@@ -51,24 +62,51 @@ class CurrentChat {
     entry = null;
   }
 
-  /// Fetch and store all of the attachments for a [message]
-  /// @param [message] the message you want to fetch for
-  void getAttachmentsForMessage(Message message) {
-    // If we have already disposed, do nothing
-    if (chat == null) return;
-    if (CurrentChat().attachments.containsKey(message.guid)) return;
-    if (message.hasAttachments) {
-      CurrentChat().attachments[message.guid] = new SavedAttachmentData();
-    }
+  static CurrentChat of(BuildContext context) {
+    assert(context != null);
+    return context.findAncestorStateOfType<MessageViewState>()?.currentChat ??
+        null;
   }
 
-  /// Fetch the attachment data for a particular message
-  SavedAttachmentData getSavedAttachmentData(Message message) {
-    if (attachments.containsKey(message.guid)) {
-      return attachments[message.guid];
+  /// Fetch and store all of the attachments for a [message]
+  /// @param [message] the message you want to fetch for
+  List<Attachment> getAttachmentsForMessage(Message message) {
+    // If we have already disposed, do nothing
+    if (chat == null) return [];
+    if (!messageAttachments.containsKey(message.guid)) {
+      preloadMessageAttachments(specificMessages: [message]).then(
+        (value) => _attachmentStream.sink.add(
+          {message.guid: messageAttachments[message.guid]},
+        ),
+      );
+      return [];
     }
+    return messageAttachments[message.guid];
+  }
 
-    return null;
+  Uint8List getImageData(Attachment attachment) {
+    if (!imageData.containsKey(attachment.guid)) return null;
+    return imageData[attachment.guid];
+  }
+
+  void saveImageData(Uint8List data, Attachment attachment) {
+    imageData[attachment.guid] = data;
+  }
+
+  void clearImageData(Attachment attachment) {}
+
+  Future<void> preloadMessageAttachments(
+      {List<Message> specificMessages}) async {
+    assert(chat != null);
+    List<Message> messages = specificMessages != null
+        ? specificMessages
+        : await Chat.getMessages(chat, limit: 25);
+    for (Message message in messages) {
+      if (message.hasAttachments) {
+        List<Attachment> attachments = await Message.getAttachments(message);
+        messageAttachments[message.guid] = attachments;
+      }
+    }
   }
 
   /// Retreive all of the attachments associated with a chat
@@ -89,12 +127,18 @@ class CurrentChat {
 
   /// Dispose all of the controllers and whatnot
   void dispose() {
-    chat = null;
     if (currentPlayingVideo != null && currentPlayingVideo.length > 0) {
       currentPlayingVideo.values.forEach((element) {
         element.dispose();
       });
     }
+
+    imageData = {};
+    currentPlayingVideo = {};
+    urlPreviews = {};
+    controllersToDispose = [];
+    chatAttachments = [];
+    sentMessages = [];
     if (entry != null) entry.remove();
   }
 

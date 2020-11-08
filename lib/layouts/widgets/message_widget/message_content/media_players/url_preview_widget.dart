@@ -16,11 +16,9 @@ import 'package:http/http.dart' as http;
 import 'package:html/dom.dart' as dom;
 
 class UrlPreviewWidget extends StatefulWidget {
-  UrlPreviewWidget({
-    Key key,
-    @required this.linkPreviews,
-    @required this.message
-  }) : super(key: key);
+  UrlPreviewWidget(
+      {Key key, @required this.linkPreviews, @required this.message})
+      : super(key: key);
   final List<Attachment> linkPreviews;
   final Message message;
 
@@ -96,8 +94,9 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
 
   Future<void> fetchPreview() async {
     // Try to get any already loaded attachment data
-    if (CurrentChat().urlPreviews?.containsKey(widget.message.text) != null) {
-      data = CurrentChat().urlPreviews[widget.message.text];
+    if (CurrentChat.of(context).urlPreviews?.containsKey(widget.message.text) !=
+        null) {
+      data = CurrentChat.of(context).urlPreviews[widget.message.text];
     }
 
     if (data != null || isEmptyString(widget.message.text) || isLoading) return;
@@ -156,7 +155,7 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
     }
 
     // Save the metadata
-    CurrentChat().urlPreviews[widget.message.text] = data;
+    CurrentChat.of(context).urlPreviews[widget.message.text] = data;
 
     // Let the UI know we are done loading
     if (this.mounted) {
@@ -210,8 +209,11 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
         padding: EdgeInsets.only(
           top: widget.message.hasReactions ? 18.0 : 4,
           bottom: 4,
-          right: !widget.message.isFromMe && widget.message.hasReactions ? 10.0 : 5.0,
-          left: widget.message.isFromMe && widget.message.hasReactions ? 5.0 : 0,
+          right: !widget.message.isFromMe && widget.message.hasReactions
+              ? 10.0
+              : 5.0,
+          left:
+              widget.message.isFromMe && widget.message.hasReactions ? 5.0 : 0,
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(20),

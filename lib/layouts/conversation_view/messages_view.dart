@@ -7,6 +7,7 @@ import 'package:bluebubbles/layouts/widgets/message_widget/new_message_loader.da
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
+import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -15,18 +16,20 @@ import 'package:bluebubbles/layouts/widgets/send_widget.dart';
 class MessageView extends StatefulWidget {
   final MessageBloc messageBloc;
   final bool showHandle;
+  final Chat chat;
 
   MessageView({
     Key key,
     this.messageBloc,
     this.showHandle,
+    this.chat,
   }) : super(key: key);
 
   @override
-  _MessageViewState createState() => _MessageViewState();
+  MessageViewState createState() => MessageViewState();
 }
 
-class _MessageViewState extends State<MessageView>
+class MessageViewState extends State<MessageView>
     with TickerProviderStateMixin {
   Future<LoadMessageResult> loader;
   bool reachedTopOfChat = false;
@@ -39,15 +42,20 @@ class _MessageViewState extends State<MessageView>
   bool showScrollDown = false;
   int scrollState = -1; // -1: stopped, 0: start, 1: update
 
+  /// [CurrentChat] holds all info about the conversation that widgets commonly access
+  CurrentChat currentChat;
+
   @override
   void initState() {
     super.initState();
     widget.messageBloc.stream.listen(handleNewMessage);
-    CurrentChat().init(widget.messageBloc.currentChat);
-    CurrentChat().updateChatAttachments().then((value) {
+    currentChat = CurrentChat.getCurrentChat(widget.messageBloc.currentChat);
+
+    currentChat.init();
+    currentChat.updateChatAttachments().then((value) {
       if (this.mounted) setState(() {});
     });
-    CurrentChat().stream.listen((event) {
+    currentChat.stream.listen((event) {
       if (this.mounted) setState(() {});
     });
 
@@ -81,17 +89,17 @@ class _MessageViewState extends State<MessageView>
 
   @override
   void dispose() {
+    currentChat.dispose();
     super.dispose();
   }
 
   void handleNewMessage(MessageBlocEvent event) async {
     if (event.type == MessageBlocEventType.insert) {
-      CurrentChat().getAttachmentsForMessage(event.message);
+      currentChat.getAttachmentsForMessage(event.message);
       if (event.outGoing) {
-        CurrentChat().sentMessages.add(event.message.guid);
+        currentChat.sentMessages.add(event.message.guid);
         Future.delayed(Duration(milliseconds: 500), () {
-          CurrentChat()
-              .sentMessages
+          currentChat.sentMessages
               .removeWhere((element) => element == event.message.guid);
           _listKey.currentState.setState(() {});
         });
@@ -101,6 +109,7 @@ class _MessageViewState extends State<MessageView>
               return SendWidget(
                 text: event.message.text,
                 tag: "first",
+                currentChat: currentChat,
               );
             },
           ),
@@ -124,22 +133,18 @@ class _MessageViewState extends State<MessageView>
         );
       }
       if (event.message.hasAttachments) {
-        await CurrentChat().updateChatAttachments();
+        await currentChat.updateChatAttachments();
         if (this.mounted) setState(() {});
       }
     } else if (event.type == MessageBlocEventType.update) {
-      if (CurrentChat().attachments.containsKey(event.oldGuid)) {
-        Message messageWithROWID =
-            await Message.findOne({"guid": event.message.guid});
-        List<Attachment> updatedAttachments =
-            await Message.getAttachments(messageWithROWID);
-        SavedAttachmentData data =
-            CurrentChat().attachments.remove(event.oldGuid);
+      // if (currentChat.imageAttachments.containsKey(event.oldGuid)) {
+      //   Message messageWithROWID =
+      //       await Message.findOne({"guid": event.message.guid});
+      //   List<Attachment> updatedAttachments =
+      //       await Message.getAttachments(messageWithROWID);
 
-        data.attachments =
-            updatedAttachments.where((item) => item.mimeType != null).toList();
-        CurrentChat().attachments[event.message.guid] = data;
-      }
+      //   currentChat.imageAttachments[event.message.guid] = data;
+      // }
       bool updatedAMessage = false;
       for (int i = 0; i < _messages.length; i++) {
         if (_messages[i].guid == event.oldGuid) {
@@ -166,8 +171,8 @@ class _MessageViewState extends State<MessageView>
     } else {
       int originalMessageLength = _messages.length;
       _messages = event.messages;
-      _messages.forEach(
-          (message) => CurrentChat().getAttachmentsForMessage(message));
+      _messages
+          .forEach((message) => currentChat.getAttachmentsForMessage(message));
       if (_listKey == null) _listKey = GlobalKey<SliverAnimatedListState>();
 
       if (originalMessageLength < _messages.length) {
@@ -198,7 +203,7 @@ class _MessageViewState extends State<MessageView>
 
   @override
   Widget build(BuildContext context) {
-    CurrentChat().disposeControllers();
+    currentChat.disposeControllers();
 
     return GestureDetector(
       behavior: HitTestBehavior.deferToChild,
@@ -255,12 +260,14 @@ class _MessageViewState extends State<MessageView>
                           Animation<double> animation) {
                         if (index == _messages.length) {
                           if (loader == null && !reachedTopOfChat) {
-                            loader = widget.messageBloc
-                                .loadMessageChunk(_messages.length);
+                            loader = widget.messageBloc.loadMessageChunk(
+                                _messages.length,
+                                currentChat: currentChat);
                             loader.then((val) {
                               if (val == LoadMessageResult.FAILED_TO_RETREIVE) {
-                                loader = widget.messageBloc
-                                    .loadMessageChunk(_messages.length);
+                                loader = widget.messageBloc.loadMessageChunk(
+                                    _messages.length,
+                                    currentChat: currentChat);
                               } else if (val ==
                                   LoadMessageResult.RETREIVED_NO_MESSAGES) {
                                 reachedTopOfChat = true;

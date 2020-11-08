@@ -8,13 +8,7 @@ import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/material.dart';
 import 'package:mime_type/mime_type.dart';
-import 'package:path/path.dart';
-
-class SavedAttachmentData {
-  List<Attachment> attachments = [];
-  Future<List<Attachment>> attachmentsFuture;
-  Map<String, Uint8List> imageData = {};
-}
+import 'package:path/path.dart' as p;
 
 class MessageAttachments extends StatefulWidget {
   MessageAttachments({
@@ -33,64 +27,13 @@ class MessageAttachments extends StatefulWidget {
 
 class _MessageAttachmentsState extends State<MessageAttachments>
     with TickerProviderStateMixin {
-  Map<String, dynamic> _attachments = new Map();
-  SavedAttachmentData savedAttachmentData;
-
   @override
   void initState() {
     super.initState();
-    savedAttachmentData = CurrentChat().getSavedAttachmentData(widget.message);
-
-    for (Attachment attachment in savedAttachmentData?.attachments ?? []) {
-      if (_attachments.containsKey(attachment.guid)) continue;
-      _attachments[attachment.guid] = AttachmentHelper.getContent(attachment);
-    }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (savedAttachmentData?.attachmentsFuture == null &&
-        savedAttachmentData?.attachments?.length == 0) {
-      savedAttachmentData?.attachmentsFuture =
-          Message.getAttachments(widget.message);
-    }
-
-    return FutureBuilder(
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) return Container();
-
-        // Fetch the current attachment list
-        List<Attachment> items = savedAttachmentData.attachments
-            .where((item) => item.mimeType != null)
-            .toList();
-
-        // If we have no attachment data, pull from the builder snapshot
-        if (items.length == 0) {
-          items = (snapshot.data as List<Attachment>)
-              .where((item) => item.mimeType != null)
-              .toList();
-          savedAttachmentData.attachments = items;
-        }
-
-        // Only create the widget if we have attachments
-        if (items.length > 0) {
-          for (Attachment attachment in items) {
-            if (_attachments.containsKey(attachment.guid)) continue;
-            _attachments[attachment.guid] =
-                AttachmentHelper.getContent(attachment);
-          }
-
-          return _buildActualWidget();
-        } else {
-          return Container();
-        }
-      },
-      future: savedAttachmentData?.attachmentsFuture,
-    );
-  }
-
-  Widget _buildActualWidget() {
-    // Calculate padding for the widget
     EdgeInsets padding = EdgeInsets.all(0.0);
     if (widget.message.hasReactions && widget.message.hasAttachments) {
       if (widget.message.isFromMe) {
@@ -126,11 +69,12 @@ class _MessageAttachmentsState extends State<MessageAttachments>
           alignment: Alignment.topRight,
           children: <Widget>[
             Padding(
-                padding: padding,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: _buildAttachments(),
-                )),
+              padding: padding,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: _buildAttachments(),
+              ),
+            ),
           ],
         ),
       ],
@@ -140,15 +84,15 @@ class _MessageAttachmentsState extends State<MessageAttachments>
   List<Widget> _buildAttachments() {
     List<Widget> content = <Widget>[];
 
-    for (Attachment attachment in savedAttachmentData.attachments) {
+    for (Attachment attachment
+        in CurrentChat.of(context).getAttachmentsForMessage(widget.message)) {
       if (attachment.mimeType != null) {
         content.add(
           MessageAttachment(
             message: widget.message,
             attachment: attachment,
-            content: _attachments[attachment.guid],
             updateAttachment: () {
-              attachment = AttachmentHelper.getContent(attachment);
+              // attachment = AttachmentHelper.getContent(attachment);
             },
           ),
         );
@@ -159,7 +103,7 @@ class _MessageAttachmentsState extends State<MessageAttachments>
   }
 
   String getMimeType(File attachment) {
-    String mimeType = mime(basename(attachment.path));
+    String mimeType = mime(p.basename(attachment.path));
     if (mimeType == null) return "";
     mimeType = mimeType.substring(0, mimeType.indexOf("/"));
     return mimeType;

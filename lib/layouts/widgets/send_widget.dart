@@ -1,4 +1,5 @@
 import 'package:bluebubbles/layouts/widgets/message_widget/sent_message.dart';
+import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 
@@ -25,9 +26,11 @@ class SendWidget extends StatefulWidget {
     Key key,
     this.text,
     this.tag,
+    this.currentChat,
   }) : super(key: key);
   final String text;
   final String tag;
+  final CurrentChat currentChat;
 
   @override
   _SendWidgetState createState() => _SendWidgetState();
@@ -75,6 +78,7 @@ class _SendWidgetState extends State<SendWidget> {
           ],
         ),
       ),
+      currentChat: widget.currentChat,
     );
 
     return Scaffold(
@@ -154,6 +158,7 @@ class _SendWidgetState extends State<SendWidget> {
                               ],
                             ),
                           ),
+                          currentChat: widget.currentChat,
                         ),
                       ),
                     );

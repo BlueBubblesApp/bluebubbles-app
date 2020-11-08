@@ -7,6 +7,7 @@ import 'package:bluebubbles/layouts/image_viewer/attachmet_fullscreen_viewer.dar
 import 'package:bluebubbles/layouts/image_viewer/image_viewer.dart';
 import 'package:bluebubbles/layouts/image_viewer/video_viewer.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/regular_file_opener.dart';
+import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/socket_manager.dart';
@@ -160,9 +161,11 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
             color: Colors.transparent,
             child: InkWell(
               onTap: () {
+                CurrentChat currentChat = CurrentChat.of(context);
                 Navigator.of(context).push(
                   CupertinoPageRoute(
                     builder: (context) => AttachmentFullscreenViewer(
+                      currentChat: currentChat,
                       allAttachments: widget.allAttachments,
                       attachment: widget.attachment,
                       showInteractions: true,
@@ -198,9 +201,11 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
             color: Colors.transparent,
             child: InkWell(
               onTap: () {
+                CurrentChat currentChat = CurrentChat.of(context);
                 Navigator.of(context).push(
                   CupertinoPageRoute(
                     builder: (context) => AttachmentFullscreenViewer(
+                      currentChat: currentChat,
                       allAttachments: widget.allAttachments,
                       attachment: widget.attachment,
                       showInteractions: true,

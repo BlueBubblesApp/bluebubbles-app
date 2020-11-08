@@ -81,13 +81,6 @@ class _ConversationViewState extends State<ConversationView> {
       // Only re-render if the newMessages count changes
       if (preLength != newMessages.length && this.mounted) setState(() {});
     });
-    // Future.delayed(Duration(milliseconds: 250), () {
-    //   if (this.mounted) NotificationManager().switchChat(widget.chat);
-    // });
-
-    // SchedulerBinding.instance.addPostFrameCallback((_) {
-    //   if (this.mounted) NotificationManager().switchChat(widget.chat);
-    // });
   }
 
   @override
@@ -233,7 +226,6 @@ class _ConversationViewState extends State<ConversationView> {
                           TextSpan(
                             text: chatTitle,
                             style: Theme.of(context).textTheme.bodyText1,
-
                           ),
                           TextSpan(
                             text: " >",
@@ -257,6 +249,7 @@ class _ConversationViewState extends State<ConversationView> {
             child: MessageView(
               messageBloc: widget.messageBloc,
               showHandle: chat.participants.length > 1,
+              chat: chat,
             ),
           ),
           BlueBubblesTextField(

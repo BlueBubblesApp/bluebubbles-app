@@ -73,11 +73,10 @@ class _ConversationDetailsState extends State<ConversationDetails> {
       child: Scaffold(
         backgroundColor: Theme.of(context).backgroundColor,
         appBar: CupertinoNavigationBar(
-          backgroundColor: HexColor('26262a').withOpacity(0.5),
+          backgroundColor: Theme.of(context).accentColor.withAlpha(125),
           middle: Text(
             "Details",
-            style:
-                TextStyle(color: Colors.white, fontWeight: FontWeight.normal),
+            style: Theme.of(context).textTheme.headline1,
           ),
         ),
         extendBodyBehindAppBar: true,

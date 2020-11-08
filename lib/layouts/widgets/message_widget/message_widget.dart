@@ -161,7 +161,8 @@ class _MessageState extends State<MessageWidget>
       if (lastRequestCount != attachments.length) {
         lastRequestCount = attachments.length;
         SocketManager().setup.startIncrementalSync(SettingsManager().settings,
-            chatGuid: CurrentChat().chat.guid, saveDate: false, onComplete: () {
+            chatGuid: CurrentChat.of(context).chat.guid,
+            saveDate: false, onComplete: () {
           if (this.mounted) setState(() {});
         });
       }
@@ -267,8 +268,9 @@ class _MessageState extends State<MessageWidget>
             associatedMessages: associatedMessages,
           ),
           chat: widget.chat,
-          shouldFadeIn:
-              CurrentChat().sentMessages.contains(widget.message.guid),
+          shouldFadeIn: CurrentChat.of(context)
+              .sentMessages
+              .contains(widget.message.guid),
           showHero: widget.showHero,
           showDeliveredReceipt: widget.isFirstSentMessage,
           shouldShowBigEmoji: shouldShowBigEmoji);

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:collection';
 
 import 'package:bluebubbles/helpers/message_helper.dart';
+import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
@@ -200,7 +201,9 @@ class MessageBloc {
   }
 
   Future<LoadMessageResult> loadMessageChunk(int offset,
-      {includeReactions = true, checkLocal = true}) async {
+      {bool includeReactions = true,
+      bool checkLocal = true,
+      CurrentChat currentChat}) async {
     int reactionCnt = includeReactions ? _reactions : 0;
     Completer<LoadMessageResult> completer = new Completer();
     if (_currentChat != null) {
@@ -248,6 +251,13 @@ class MessageBloc {
         } else {
           _reactions++;
         }
+      }
+
+      if (currentChat != null) {
+        List<Message> messagesWithAttachment =
+            messages.where((element) => element.hasAttachments).toList();
+        await currentChat.preloadMessageAttachments(
+            specificMessages: messagesWithAttachment);
       }
 
       // Emit messages to listeners

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:bluebubbles/managers/attachment_info_bloc.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
@@ -205,7 +206,11 @@ class ChatBloc {
   /// Get the values for the chat, specifically the title
   /// @param chat to initialize
   Future<void> initTileValsForChat(Chat chat) async {
-    if (chat.title == null) await chat.getTitle();
+    if (chat.title == null) {
+      await chat.getTitle();
+      AttachmentInfoBloc().initChat(chat);
+      // asldkfjalskdjf
+    }
   }
 
   void archiveChat(Chat chat) async {
@@ -248,7 +253,7 @@ class ChatBloc {
       Chat _chat = _chats[i];
       if (_chat.guid == chat.guid) {
         _chats[i] = chat;
-        await chats[i].getTitle();
+        await initTileValsForChat(chats[i]);
         _chatController.sink.add(_chats);
       }
     }
