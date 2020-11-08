@@ -1,5 +1,6 @@
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
+import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/ballon_bundle_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_tail.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_time_stamp.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.dart';
@@ -181,6 +182,10 @@ class _ReceivedMessageState extends State<ReceivedMessage>
         padding: EdgeInsets.only(left: 10.0),
         child: widget.urlPreviewWidget,
       );
+    } else if (widget.message.balloonBundleId != null &&
+        widget.message.balloonBundleId !=
+            'com.apple.messages.URLBalloonProvider') {
+      message = BalloonBundleWidget(message: widget.message);
     } else if (!isEmptyString(widget.message.text)) {
       message = _buildMessageWithTail(
           widget.message, widget.shouldShowBigEmoji, widget.hasReactions);

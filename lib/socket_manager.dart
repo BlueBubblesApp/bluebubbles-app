@@ -6,6 +6,7 @@ import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/blocs/setup_bloc.dart';
 import 'package:bluebubbles/helpers/contstants.dart';
+import 'package:bluebubbles/helpers/crypto.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/incoming_queue.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
@@ -452,8 +453,18 @@ class SocketManager {
         if (awaitResponse) _manager.finishSocketProcess(_processId);
       } else {
         _manager.socket.sendMessage(event, jsonEncode(message), (String data) {
-          cb(jsonDecode(data));
-          completer.complete(jsonDecode(data));
+          
+          Map<String, dynamic> response = jsonDecode(data);
+          if (response.containsKey('encrypted') && response['encrypted']) {
+            try {
+              response['data'] = jsonDecode(decryptAESCryptoJS(response['data'], SettingsManager().settings.guidAuthKey));
+            } catch (ex) {
+              response['data'] = decryptAESCryptoJS(response['data'], SettingsManager().settings.guidAuthKey);
+            }
+          }
+
+          cb(response);
+          completer.complete(response);
           if (awaitResponse) _manager.finishSocketProcess(_processId);
         });
       }

@@ -6,6 +6,7 @@ import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/delivered_receipt.dart';
+import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/ballon_bundle_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_tail.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_time_stamp.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.dart';
@@ -246,6 +247,10 @@ class _SentMessageState extends State<SentMessage>
         padding: EdgeInsets.only(left: 10.0),
         child: widget.urlPreviewWidget,
       );
+    } else if (widget.message.balloonBundleId != null &&
+        widget.message.balloonBundleId !=
+            'com.apple.messages.URLBalloonProvider') {
+      message = BalloonBundleWidget(message: widget.message);
     } else if (!isEmptyString(widget.message.text)) {
       message = SentMessageHelper.buildMessageWithTail(
         context,
