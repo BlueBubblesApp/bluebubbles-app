@@ -321,7 +321,7 @@ class MessageHelper {
     if (val.contains("gamepigeon")) {
       return "Game Pigeon";
     } else if (val.contains("contextoptional")) {
-      List<String> items = val.split(".").reversed;
+      List<String> items = val.split(".").reversed.toList();
       if (items.length >= 2) {
         return items[1];
       }
@@ -331,7 +331,7 @@ class MessageHelper {
       return "Payment Request";
     }
 
-    List<String> items = val.split(":").reversed;
+    List<String> items = val.split(":").reversed.toList();
     return (items.length > 0) ? items[0] : val;
   }
 }

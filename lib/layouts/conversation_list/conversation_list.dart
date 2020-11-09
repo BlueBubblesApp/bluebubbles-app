@@ -275,7 +275,7 @@ class _ConversationListState extends State<ConversationList> {
                           key: Key(_chats[index].guid.toString()),
                           chat: _chats[index]);
                     },
-                    childCount: _chats.length,
+                    childCount: _chats?.length ?? 0,
                   ),
                 );
               } else {

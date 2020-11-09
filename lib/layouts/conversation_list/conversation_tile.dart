@@ -115,6 +115,15 @@ class _ConversationTileState extends State<ConversationTile>
       initials = getInitials(widget.chat.title, " ");
     }
 
+    Color avatarColor;
+    if (shouldBeRainbow(chat: widget.chat)) {
+      if (!widget.chat.isGroup() && widget.chat.participants.length > 0) {
+        avatarColor = toColor(widget.chat.participants[0].address, context);
+      } else if (widget.chat.isGroup()) {
+        avatarColor = toColor(widget.chat.title, context);
+      }
+    }
+
     return Slidable(
       actionPane: SlidableStrechActionPane(),
       secondaryActions: <Widget>[
@@ -258,11 +267,7 @@ class _ConversationTileState extends State<ConversationTile>
                             overflow: TextOverflow.ellipsis,
                           ),
                     leading: ContactAvatarWidget(
-                      color: (!widget.chat.isGroup() &&
-                              widget.chat.participants.length > 0)
-                          ? toColor(
-                              widget.chat.participants[0].address, context)
-                          : null,
+                      color: avatarColor,
                       contactImage: contactImage,
                       initials: initials,
                     ),

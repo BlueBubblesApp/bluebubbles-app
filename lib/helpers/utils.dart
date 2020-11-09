@@ -318,8 +318,11 @@ Color toColor(String str, BuildContext context) {
     }
   }
 
-bool shouldBeRainbow() {
+bool shouldBeRainbow({Chat chat}) {
+  Chat theChat = chat ?? CurrentChat().chat;
+  if (theChat == null) return false;
   if (!SettingsManager().settings.rainbowBubbles) return false;
-  if (SettingsManager().settings.rainbowOnlyGroups && CurrentChat().chat.isGroup()) return true;
+  if (SettingsManager().settings.rainbowOnlyGroups && theChat.isGroup()) return true;
+  if (!SettingsManager().settings.rainbowOnlyGroups) return true;
   return false;
 }

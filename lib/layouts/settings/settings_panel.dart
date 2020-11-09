@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:ui';
 
+import 'package:bluebubbles/blocs/chat_bloc.dart';
 import "package:bluebubbles/helpers/string_extension.dart";
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -229,15 +230,17 @@ class _SettingsPanelState extends State<SettingsPanel> {
                 SettingsSwitch(
                   onChanged: (bool val) {
                     _settingsCopy.rainbowBubbles = val;
+                    ChatBloc().refreshChats();
                     setState(() {});
                   },
                   initialVal: _settingsCopy.rainbowBubbles,
-                  title: "Rainbow Bubbles",
+                  title: "Colorful Chats",
                 ),
                 (_settingsCopy.rainbowBubbles)
                   ? SettingsSwitch(
                     onChanged: (bool val) {
                       _settingsCopy.rainbowOnlyGroups = val;
+                      ChatBloc().refreshChats();
                     },
                     initialVal: _settingsCopy.rainbowOnlyGroups,
                     title: "    -> Only for groups",
