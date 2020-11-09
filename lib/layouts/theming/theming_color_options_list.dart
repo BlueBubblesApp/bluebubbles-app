@@ -1,6 +1,5 @@
 import 'package:bluebubbles/helpers/contstants.dart';
 import 'package:bluebubbles/helpers/themes.dart';
-import 'package:bluebubbles/layouts/settings/settings_panel.dart';
 import 'package:bluebubbles/layouts/theming/theming_color_selector.dart';
 import 'package:bluebubbles/layouts/theming/theming_panel.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
@@ -178,12 +177,6 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
                           (element) => element == this.currentTheme);
                       // currentTheme
                       await this.currentTheme.delete();
-
-                      Navigator.of(context).push(
-                        CupertinoPageRoute(
-                          builder: (context) => SettingsPanel(),
-                        ),
-                      );
                     },
                   ),
                 ),
