@@ -54,6 +54,10 @@ class _AudioPlayerWigetState extends State<AudioPlayerWiget> {
         setState(() {});
       }
     });
+
+    player.onReadyToPlay.listen((PlayingAudio _) {
+      setState(() {});
+    });
   }
 
   @override
