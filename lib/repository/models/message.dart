@@ -492,6 +492,10 @@ class Message {
     return !isEmptyString(this.text, stripWhitespace: stripWhitespace);
   }
 
+  bool isGroupEvent() {
+     return isEmptyString(this.text) && !this.hasAttachments && this.balloonBundleId == null;
+  }
+
   bool isBigEmoji() {
     // We are checking the variable first because we want to
     // avoid processing twice for this as it won't change

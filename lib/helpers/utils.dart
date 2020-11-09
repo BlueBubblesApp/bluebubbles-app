@@ -208,7 +208,7 @@ Future<String> getGroupEventText(Message message) async {
   } else if (message.itemType == 3) {
     text = "$handle left the conversation";
   } else if (message.itemType == 2 && message.groupTitle != null) {
-    text = "$handle renamed the conversation to \"${message.groupTitle}\"";
+    text = "$handle named the conversation \"${message.groupTitle}\"";
   }
 
   return text;

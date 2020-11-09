@@ -191,9 +191,7 @@ class _MessageState extends State<MessageWidget>
               widget.newerMessage.dateDelivered == null);
     }
 
-    if (widget.message != null &&
-        isEmptyString(widget.message.text) &&
-        !widget.message.hasAttachments && widget.message.balloonBundleId == null) {
+    if (widget.message.isGroupEvent()) {
       return GroupEvent(message: widget.message);
     }
 

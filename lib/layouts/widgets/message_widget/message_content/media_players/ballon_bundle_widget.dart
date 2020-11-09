@@ -1,10 +1,6 @@
+import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/material.dart';
-
-Map<String, String> nameMap = {
-  'com.apple.Handwriting.HandwritingProvider': 'Handwritten Message',
-  'com.apple.DigitalTouchBalloonProvider': 'Digital Touch'
-};
 
 Map<String, IconData> iconMap = {
   'com.apple.Handwriting.HandwritingProvider': Icons.brush,
@@ -29,6 +25,9 @@ class _BalloonBubbleState extends State<BalloonBundleWidget> {
   @override
   void initState() {
     super.initState();
+
+    bundleName = MessageHelper.getInteractiveText(widget.message);
+    bundleIcon = getIcon();
   }
 
   @override
@@ -36,34 +35,10 @@ class _BalloonBubbleState extends State<BalloonBundleWidget> {
     if (bundleName == null) {
       super.didChangeDependencies();
       setState(() {
-        bundleName = friendlyName();
+        bundleName = MessageHelper.getInteractiveText(widget.message);
         bundleIcon = getIcon();
       });
     }
-  }
-  
-  String friendlyName() {
-    if (widget.message.balloonBundleId == null) return "Null Balloon Bundle ID";
-    if (nameMap.containsKey(widget.message.balloonBundleId)) {
-      return nameMap[widget.message.balloonBundleId];
-    }
-
-    String val = widget.message.balloonBundleId.toLowerCase();
-    if (val.contains("gamepigeon")) {
-      return "Game Pigeon";
-    } else if (val.contains("contextoptional")) {
-      List<String> items = val.split(".").reversed;
-      if (items.length >= 2) {
-        return items[1];
-      }
-    } else if (val.contains("mobileslideshow")) {
-      return "Photo Slideshow";
-    } else if (val.contains("PeerPayment")) {
-      return "Payment Request";
-    }
-
-    List<String> items = val.split(":").reversed;
-    return (items.length > 0) ? items[0] : val;
   }
 
   IconData getIcon() {
