@@ -229,7 +229,7 @@ class _ConversationListState extends State<ConversationList> {
                                   ),
                                   child: Icon(
                                     Icons.more_horiz,
-                                    color: Colors.blue.withOpacity(0.75),
+                                    color: Theme.of(context).primaryColor,
                                     size: 15,
                                   ),
                                 ),
@@ -286,7 +286,7 @@ class _ConversationListState extends State<ConversationList> {
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        backgroundColor: Colors.blue,
+        backgroundColor: Theme.of(context).primaryColor,
         child: Icon(Icons.message, color: Colors.white, size: 25),
         onPressed: () {
           Navigator.of(context).push(

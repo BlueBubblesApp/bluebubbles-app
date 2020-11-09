@@ -306,7 +306,7 @@ class _ConversationTileState extends State<ConversationTile>
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(35),
                                 color: widget.chat.hasUnreadMessage
-                                    ? Colors.blue[500].withOpacity(0.8)
+                                    ? Theme.of(context).primaryColor.withOpacity(0.8)
                                     : Colors.transparent,
                               ),
                               width: 15,
@@ -315,7 +315,7 @@ class _ConversationTileState extends State<ConversationTile>
                           : SvgPicture.asset(
                               "assets/icon/moon.svg",
                               color: widget.chat.hasUnreadMessage
-                                  ? Colors.blue[500].withOpacity(0.8)
+                                  ? Theme.of(context).primaryColor.withOpacity(0.8)
                                   : Theme.of(context).textTheme.subtitle1.color,
                               width: 15,
                               height: 15,

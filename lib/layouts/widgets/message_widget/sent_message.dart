@@ -23,8 +23,8 @@ class SentMessageHelper {
       {Widget customContent}) {
     Color blueColor;
     blueColor = message == null || message.guid.startsWith("temp")
-        ? darken(Colors.blue[600], 0.2)
-        : Colors.blue[600];
+        ? darken(Theme.of(context).primaryColor, 0.2)
+        : Theme.of(context).primaryColor;
 
     Widget msg;
     bool hasReactions = (message?.getReactions() ?? []).length > 0 ?? false;

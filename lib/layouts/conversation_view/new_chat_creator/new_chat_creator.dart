@@ -251,7 +251,7 @@ class _NewChatCreatorState extends State<NewChatCreator> {
                             // color: Colors.black,
                             child: CircularProgressIndicator(
                               valueColor:
-                                  AlwaysStoppedAnimation<Color>(Colors.blue),
+                                  AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
                             ),
                           ),
                         ],
@@ -283,7 +283,7 @@ class _NewChatCreatorState extends State<NewChatCreator> {
                                   // color: Colors.black,
                                   child: CircularProgressIndicator(
                                     valueColor: AlwaysStoppedAnimation<Color>(
-                                      Colors.blue,
+                                      Theme.of(context).primaryColor,
                                     ),
                                   ),
                                 ),

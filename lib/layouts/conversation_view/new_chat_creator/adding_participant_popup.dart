@@ -83,7 +83,7 @@ class _AddingParticipantPopupState extends State<AddingParticipantPopup> {
         child: Center(
           child: LinearProgressIndicator(
             backgroundColor: Colors.grey,
-            valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+            valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
             value: (index) / widget.contacts.length,
           ),
         ),

@@ -1,4 +1,3 @@
-import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/contstants.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/layouts/theming/theming_color_selector.dart';
@@ -158,7 +157,7 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
                       editable: editable,
                     );
                   },
-                  childCount: 9, // ThemeColors.values.length,
+                  childCount: ThemeColors.Colors.length, // ThemeColors.values.length,
                 ),
                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 2,

@@ -109,7 +109,7 @@ class _WelcomePageState extends State<WelcomePage>
                 opacity: opacityButton,
                 child: ClipOval(
                   child: Material(
-                    color: Colors.blue, // button color
+                    color: Theme.of(context).primaryColor, // button color
                     child: InkWell(
                         child: SizedBox(
                             width: 60,

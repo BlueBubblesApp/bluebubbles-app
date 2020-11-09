@@ -94,7 +94,7 @@ class _SetupViewState extends State<SetupView> {
           Container(height: 20.0),
           ClipOval(
             child: Material(
-              color: Colors.blue, // button color
+              color: Theme.of(context).primaryColor, // button color
               child: InkWell(
                 child: SizedBox(
                     width: 60,
@@ -136,7 +136,7 @@ class _SetupViewState extends State<SetupView> {
             Container(height: 20.0),
             ClipOval(
               child: Material(
-                color: Colors.blue, // button color
+                color: Theme.of(context).primaryColor, // button color
                 child: InkWell(
                   child: SizedBox(
                       width: 60,
@@ -180,7 +180,7 @@ class _SetupViewState extends State<SetupView> {
             Container(height: 20.0),
             ClipOval(
               child: Material(
-                color: Colors.blue, // button color
+                color: Theme.of(context).primaryColor, // button color
                 child: InkWell(
                     child: SizedBox(
                         width: 60,
@@ -229,7 +229,7 @@ class _SetupViewState extends State<SetupView> {
                                 Container(
                                   child: CircularProgressIndicator(
                                     valueColor: AlwaysStoppedAnimation<Color>(
-                                      Colors.blue,
+                                      Theme.of(context).primaryColor,
                                     ),
                                   ),
                                 ),
@@ -306,7 +306,7 @@ class _SetupViewState extends State<SetupView> {
               padding: EdgeInsets.only(top: 15.0),
               child: ClipOval(
                 child: Material(
-                  color: Colors.blue, // button color
+                  color: Theme.of(context).primaryColor,
                   child: InkWell(
                     child: SizedBox(
                       width: 60,
@@ -565,7 +565,7 @@ class _SetupViewState extends State<SetupView> {
                             ? progress
                             : null,
                         backgroundColor: Colors.white,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                        valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
                       ),
                     ),
                     Spacer(
@@ -597,7 +597,7 @@ class _SetupViewState extends State<SetupView> {
                       borderRadius: BorderRadius.circular(20),
                       child: LinearProgressIndicator(
                         backgroundColor: Colors.white,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                        valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
                       ),
                     ),
                     Spacer(

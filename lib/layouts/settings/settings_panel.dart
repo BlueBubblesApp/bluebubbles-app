@@ -520,6 +520,8 @@ class _SettingsSliderState extends State<SettingsSlider> {
             style: Theme.of(context).textTheme.bodyText1,
           ),
           subtitle: Slider(
+            activeColor: Theme.of(context).primaryColor,
+            inactiveColor: Theme.of(context).primaryColor.withOpacity(0.2),
             value: currentVal,
             onChanged: (double value) {
               if (!this.mounted) return;

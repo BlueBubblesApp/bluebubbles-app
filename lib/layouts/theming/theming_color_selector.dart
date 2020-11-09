@@ -1,6 +1,3 @@
-import 'package:adaptive_theme/adaptive_theme.dart';
-import 'package:bluebubbles/helpers/contstants.dart';
-import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/layouts/theming/theming_color_picker_popup.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';

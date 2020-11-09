@@ -191,7 +191,7 @@ class _ContactTileState extends State<ContactTile> {
                         },
                         child: Icon(
                           Icons.call,
-                          color: Colors.blue,
+                          color: Theme.of(context).primaryColor,
                         ),
                       ),
                     )

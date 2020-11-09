@@ -112,7 +112,7 @@ class _TextInputURLState extends State<TextInputURL> {
             title: Text("Connecting..."),
             content: LinearProgressIndicator(
               backgroundColor: Colors.grey,
-              valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+              valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
             ),
           );
   }
