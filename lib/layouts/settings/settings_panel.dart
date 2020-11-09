@@ -31,6 +31,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
   bool needToReconnect = false;
   List<DisplayMode> modes;
   DisplayMode currentMode;
+  bool showUrl = false;
 
   @override
   void initState() {
@@ -98,19 +99,23 @@ class _SettingsPanelState extends State<SettingsPanel> {
 
                       switch (connectionStatus) {
                         case SocketState.CONNECTED:
-                          subtitle = "Connected";
+                          if (showUrl) {
+                            subtitle = "Connected (${this._settingsCopy.serverAddress})";
+                          } else {
+                            subtitle = "Connected (Tap to view URL)";
+                          }
                           break;
                         case SocketState.DISCONNECTED:
-                          subtitle = "Disconnected (Tap to retry)";
+                          subtitle = "Disconnected";
                           break;
                         case SocketState.ERROR:
-                          subtitle = "Error (Tap to retry)";
+                          subtitle = "Error";
                           break;
                         case SocketState.CONNECTING:
                           subtitle = "Connecting...";
                           break;
                         case SocketState.FAILED:
-                          subtitle = "Failed to connect (Tap to retry)";
+                          subtitle = "Failed to connect";
                           break;
                       }
 
@@ -118,10 +123,12 @@ class _SettingsPanelState extends State<SettingsPanel> {
                         title: "Connection Status",
                         subTitle: subtitle,
                         onTap: () async {
-                          if ([SocketState.CONNECTED, SocketState.CONNECTING]
-                              .contains(connectionStatus)) return;
-                          await SocketManager().refreshConnection();
-                          if (this.mounted) setState(() {});
+                          if (![SocketState.CONNECTED].contains(connectionStatus)) return;
+                          if (this.mounted) {
+                            setState(() {
+                              showUrl = !showUrl;
+                            });
+                          }
                         },
                         trailing: connectionStatus == SocketState.CONNECTED ||
                                 connectionStatus == SocketState.CONNECTING
@@ -233,7 +240,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                 SettingsTile(
                   title: "Theming",
                   trailing:
-                      Icon(Icons.arrow_forward_ios, color: HexColor('26262a')),
+                      Icon(Icons.arrow_forward_ios, color: Theme.of(context).primaryColor),
                   onTap: () async {
                     Navigator.of(context).push(
                       CupertinoPageRoute(
