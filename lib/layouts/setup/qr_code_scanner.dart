@@ -22,7 +22,7 @@ class _QRCodeScannerState extends State<QRCodeScanner> {
   void _onQRViewCreated(QRViewController controller) {
     this.controller = controller;
     controller.scannedDataStream.listen((scanData) {
-      if (qrText == "") {
+      if (qrText.isEmpty) {
         qrText = scanData;
         Navigator.of(context).pop(scanData);
       }

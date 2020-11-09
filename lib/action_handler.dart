@@ -36,7 +36,7 @@ class ActionHandler {
   /// ```
   static Future<void> sendMessage(Chat chat, String text,
       {List<Attachment> attachments = const []}) async {
-    if (text == null || text.trim().length == 0) return;
+    if (isNullOrEmpty(text, trimString: true)) return;
 
     List<Message> messages = <Message>[];
 
@@ -133,7 +133,7 @@ class ActionHandler {
     Chat chat = await Message.getChat(message);
     if (chat == null) throw ("Could not find chat!");
 
-    await Message.getAttachments(message);
+    await message.fetchAttachments();
     for (int i = 0; i < message.attachments.length; i++) {
       String appDocPath = SettingsManager().appDocDir.path;
       String pathName =
@@ -213,7 +213,7 @@ class ActionHandler {
 
     // If there are no messages, return
     debugPrint("Deleting ${items.length} messages");
-    if (items.length == 0) return;
+    if (isNullOrEmpty(items)) return;
 
     Batch batch = db.batch();
     for (Map<String, dynamic> message in items) {

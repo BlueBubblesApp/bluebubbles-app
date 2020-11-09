@@ -68,7 +68,7 @@ class FCMData {
     Database db = await DBProvider.db.database;
 
     List<Map<String, dynamic>> result = await db.query("fcm");
-    if (result.length == 0) return new FCMData();
+    if (result.isEmpty) return new FCMData();
     List<ConfigEntry> entries = [];
     for (Map<String, dynamic> setting in result) {
       entries.add(ConfigEntry.fromMap(setting));

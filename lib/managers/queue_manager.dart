@@ -24,7 +24,7 @@ abstract class QueueManager {
   /// Processes the next item in the queue
   Future<void> processNextItem() async {
     // If there are no queued items, we are done processing
-    if (this.queue.length == 0) {
+    if (this.queue.isEmpty) {
       this.isProcessing = false;
       MethodChannelInterface().closeThread();
       return;

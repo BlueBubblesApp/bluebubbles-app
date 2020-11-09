@@ -79,7 +79,7 @@ class _ConversationTileState extends State<ConversationTile>
   Future<void> fetchAvatar() async {
     // If our chat does not have any participants, get them
     if (widget.chat.participants == null ||
-        widget.chat.participants.length == 0) {
+        widget.chat.participants.isEmpty) {
       await widget.chat.getParticipants();
     }
 

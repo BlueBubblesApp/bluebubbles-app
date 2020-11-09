@@ -19,7 +19,7 @@ import 'package:flutter/material.dart';
 
 class SentMessageHelper {
   static Widget buildMessageWithTail(BuildContext context, Message message,
-      bool showTail, bool hasReactions, bool bigEmoji,
+      bool showTail,
       {Widget customContent}) {
     Color blueColor;
     blueColor = message == null || message.guid.startsWith("temp")
@@ -27,7 +27,8 @@ class SentMessageHelper {
         : Colors.blue[600];
 
     Widget msg;
-    if (bigEmoji) {
+    bool hasReactions = (message?.getReactions() ?? []).length > 0 ?? false;
+    if (message?.isBigEmoji() ?? false) {
       msg = Padding(
           padding: EdgeInsets.only(
               left: (hasReactions) ? 15.0 : 0.0,
@@ -172,8 +173,6 @@ class SentMessage extends StatefulWidget {
   final bool shouldFadeIn;
   final bool showDeliveredReceipt;
   final Chat chat;
-  final bool hasReactions;
-  final bool shouldShowBigEmoji;
 
   // Sub-widgets
   final Widget stickersWidget;
@@ -188,11 +187,9 @@ class SentMessage extends StatefulWidget {
     @required this.message,
     @required this.showHero,
     @required this.showDeliveredReceipt,
-    @required this.hasReactions,
     @required this.shouldFadeIn,
     @required this.offset,
     @required this.chat,
-    @required this.shouldShowBigEmoji,
 
     // Sub-widgets
     @required this.stickersWidget,
@@ -251,9 +248,7 @@ class _SentMessageState extends State<SentMessage>
       message = SentMessageHelper.buildMessageWithTail(
         context,
         widget.message,
-        widget.showTail,
-        widget.hasReactions,
-        widget.shouldShowBigEmoji,
+        widget.showTail
       );
       if (widget.showHero) {
         message = Hero(

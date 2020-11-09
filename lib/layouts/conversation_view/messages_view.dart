@@ -73,7 +73,7 @@ class _MessageViewState extends State<MessageView>
   @override
   void didChangeDependencies() async {
     super.didChangeDependencies();
-    if (_messages.length == 0) {
+    if (_messages.isEmpty) {
       widget.messageBloc.getMessages();
       if (this.mounted) setState(() {});
     }
@@ -131,13 +131,11 @@ class _MessageViewState extends State<MessageView>
       if (CurrentChat().attachments.containsKey(event.oldGuid)) {
         Message messageWithROWID =
             await Message.findOne({"guid": event.message.guid});
-        List<Attachment> updatedAttachments =
-            await Message.getAttachments(messageWithROWID);
+        await messageWithROWID.fetchAttachments();
         SavedAttachmentData data =
             CurrentChat().attachments.remove(event.oldGuid);
 
-        data.attachments =
-            updatedAttachments.where((item) => item.mimeType != null).toList();
+        data.attachments = messageWithROWID.getRealAttachments();
         CurrentChat().attachments[event.message.guid] = data;
       }
       bool updatedAMessage = false;

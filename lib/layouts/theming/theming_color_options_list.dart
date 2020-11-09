@@ -217,7 +217,7 @@ class _NewThemeCreateAlertState extends State<NewThemeCreateAlert> {
           onPressed: () async {
             if ((await ThemeObject.findOne({"name": controller.text})) !=
                     null ||
-                controller.text == "") {
+                controller.text.isEmpty) {
               setState(() {
                 showError = true;
               });

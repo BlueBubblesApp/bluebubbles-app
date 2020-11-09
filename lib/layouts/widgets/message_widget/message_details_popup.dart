@@ -56,22 +56,9 @@ class _MessageDetailsPopupState extends State<MessageDetailsPopup>
     // Create a new fetch request
     fetchRequest = new Completer();
 
-    // If reaction messages were provided, use those
-    List<Message> reactions =
-        (widget.reactions == null) ? [] : widget.reactions;
-
-    // Check if the message has reactions
-    if (widget.reactions == null && widget.message.hasReactions) {
-      // If it has reactions, fetch the associated messages (reactions)
-      reactions = await widget.message.getAssociatedMessages();
-      reactions = reactions
-          .where((element) =>
-              ReactionTypes.toList().contains(element.associatedMessageType))
-          .toList();
-    }
-
     // If there are no associated messages, return now
-    if (reactions.length == 0) return fetchRequest.complete();
+    List<Message> reactions = widget.message.getReactions();
+    if (reactions.isEmpty) return fetchRequest.complete();
 
     // Filter down the messages to the unique ones (one per user, newest)
     List<Message> reactionMessages =

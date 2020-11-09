@@ -113,7 +113,7 @@ class _ConversationViewState extends State<ConversationView> {
     };
 
     // If we don't have participants, get them
-    if (widget.chat.participants.length == 0) {
+    if (widget.chat.participants.isEmpty) {
       await widget.chat.getParticipants();
     }
 

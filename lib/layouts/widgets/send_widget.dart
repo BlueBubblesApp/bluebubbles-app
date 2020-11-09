@@ -49,8 +49,6 @@ class _SendWidgetState extends State<SendWidget> {
       context,
       null,
       true,
-      false,
-      false,
       customContent: Container(
         constraints: BoxConstraints(
           minWidth: MediaQuery.of(context).size.width * 3 / 4 + 37,
@@ -117,8 +115,6 @@ class _SendWidgetState extends State<SendWidget> {
                           context,
                           null,
                           true,
-                          false,
-                          false,
                           customContent: AnimatedBuilder(
                             animation: animation,
                             builder: (context, child) {

@@ -181,7 +181,7 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
   @override
   Widget build(BuildContext context) {
     IconData rightIcon = Icons.arrow_upward;
-    bool canRecord = _controller.text.isEmpty && pickedImages.length == 0;
+    bool canRecord = _controller.text.isEmpty && pickedImages.isEmpty;
     if (canRecord) rightIcon = Icons.mic;
 
     return Row(
@@ -386,7 +386,7 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                                     children: [
                                       AnimatedOpacity(
                                         opacity: _controller.text.isEmpty &&
-                                                pickedImages.length == 0
+                                                pickedImages.isEmpty
                                             ? 1.0
                                             : 0.0,
                                         duration: Duration(milliseconds: 150),

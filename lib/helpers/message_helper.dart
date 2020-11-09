@@ -204,7 +204,7 @@ class MessageHelper {
 
     // If there are attachments, return the number of attachments
     int aCount = (message.attachments ?? []).length;
-    if (message.hasAttachments && matches.length == 0) {
+    if (message.hasAttachments && matches.isEmpty) {
       // Build the attachment output by counting the attachments
       String output = "Attachment${aCount > 1 ? "s" : ""}";
       Map<String, int> counts = {};
@@ -283,5 +283,18 @@ class MessageHelper {
         .trim();
 
     return items.length <= 3 && replaced.isEmpty;
+  }
+
+  /// Removes duplicate associated message guids from a list of [associatedMessages]
+  static List<Message> normalizedAssociatedMessages(List<Message> associatedMessages) {
+    Set<int> guids = associatedMessages.map((e) => e.handleId ?? 0).toSet();
+    List<Message> normalized = [];
+
+    for (Message message in associatedMessages.reversed.toList()) {
+      if (guids.remove(message.handleId ?? 0)) {
+        normalized.add(message);
+      }
+    }
+    return normalized;
   }
 }

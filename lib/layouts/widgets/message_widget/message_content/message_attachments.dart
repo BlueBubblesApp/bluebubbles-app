@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:bluebubbles/helpers/attachment_helper.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_attachment.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
@@ -12,7 +13,7 @@ import 'package:path/path.dart';
 
 class SavedAttachmentData {
   List<Attachment> attachments = [];
-  Future<List<Attachment>> attachmentsFuture;
+  Future<Message> attachmentsFuture;
   Map<String, Uint8List> imageData = {};
 }
 
@@ -50,9 +51,9 @@ class _MessageAttachmentsState extends State<MessageAttachments>
   @override
   Widget build(BuildContext context) {
     if (savedAttachmentData?.attachmentsFuture == null &&
-        savedAttachmentData?.attachments?.length == 0) {
+        isNullOrEmpty(savedAttachmentData?.attachments)) {
       savedAttachmentData?.attachmentsFuture =
-          Message.getAttachments(widget.message);
+          widget.message.fetchAttachments();
     }
 
     return FutureBuilder(
@@ -65,10 +66,8 @@ class _MessageAttachmentsState extends State<MessageAttachments>
             .toList();
 
         // If we have no attachment data, pull from the builder snapshot
-        if (items.length == 0) {
-          items = (snapshot.data as List<Attachment>)
-              .where((item) => item.mimeType != null)
-              .toList();
+        if (items.isEmpty) {
+          items = (snapshot.data as Message).getRealAttachments();
           savedAttachmentData.attachments = items;
         }
 

@@ -6,6 +6,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:bluebubbles/helpers/attachment_helper.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
@@ -141,7 +142,7 @@ class AttachmentDownloader {
       debugPrint(
           "Attachment downloaded in ${stopwatch.elapsedMilliseconds} ms");
 
-      if (data == null || data.length == 0) {
+      if (isNullOrEmpty(data)) {
         SocketManager().finishDownloader(attachment.guid);
         // NotificationManager().finishProgressWithAttachment(
         //     "Failed to download", _attachment.id, _attachment);
@@ -166,7 +167,7 @@ class AttachmentDownloader {
       if (_onComplete != null) _onComplete();
 
       // Add attachment to sink based on if we got data
-      if (data == null || data.length == 0) {
+      if (isNullOrEmpty(data)) {
         _stream.sink.addError("unable to load");
       } else if (file != null) {
         _stream.sink.add(file);

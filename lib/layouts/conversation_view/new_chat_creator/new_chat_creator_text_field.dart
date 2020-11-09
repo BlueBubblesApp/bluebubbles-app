@@ -89,13 +89,13 @@ class _NewChatCreatorTextFieldState extends State<NewChatCreatorTextField> {
           focusNode: inputFieldNode,
           onSubmitted: (String done) {
             FocusScope.of(context).requestFocus(inputFieldNode);
-            if (done.length == 0) return;
+            if (done.isEmpty) return;
             if (validatePhoneNumber(done)) {
               widget.controller.clear();
               widget.selectedContacts
                   .add(new UniqueContact(address: done, displayName: done));
             } else {
-              if (widget.allContacts.length == 0) {
+              if (widget.allContacts.isEmpty) {
                 Scaffold.of(context).showSnackBar(SnackBar(
                   content: Text("Invalid Number $done"),
                   duration: Duration(milliseconds: 500),

@@ -55,8 +55,8 @@ class _StickersWidgetState extends State<StickersWidget> {
       if (msg.associatedMessageType != "sticker") continue;
 
       // Get the associated attachments
-      List<Attachment> attachments = await Message.getAttachments(msg);
-      for (Attachment attachment in attachments) {
+      await msg.fetchAttachments();
+      for (Attachment attachment in msg.attachments) {
         // If we've already loaded it, don't try again
         if (loaded.contains(attachment.guid)) continue;
 
@@ -88,7 +88,7 @@ class _StickersWidgetState extends State<StickersWidget> {
 
   @override
   Widget build(BuildContext context) {
-    if (this.stickers.length == 0) return Container();
+    if (this.stickers.isEmpty) return Container();
 
     // Turn the attachments into Image Widgets
     List<Widget> stickers = this.stickers.map((item) {

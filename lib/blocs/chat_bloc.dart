@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
@@ -80,7 +81,7 @@ class ChatBloc {
   /// Inserts a [chat] into the chat bloc based on the lastMessage data
   Future<void> updateChatPosition(Chat chat) async {
     if (chat == null) return;
-    if (_chats == null || _chats.length == 0) {
+    if (isNullOrEmpty(_chats)) {
       await this.refreshChats();
     }
 
@@ -111,7 +112,7 @@ class ChatBloc {
     // If we shouldn't update the bloc because the message is older, return here
     if (!shouldUpdate) return;
 
-    if (chat.title == null || chat.title == "") {
+    if (isNullOrEmpty(chat.title)) {
       await chat.getTitle();
     }
 

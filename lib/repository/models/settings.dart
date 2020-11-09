@@ -81,7 +81,7 @@ class Settings {
     Database db = await DBProvider.db.database;
 
     List<Map<String, dynamic>> result = await db.query("config");
-    if (result.length == 0) return new Settings();
+    if (result.isEmpty) return new Settings();
     List<ConfigEntry> entries = [];
     for (Map<String, dynamic> setting in result) {
       entries.add(ConfigEntry.fromMap(setting));

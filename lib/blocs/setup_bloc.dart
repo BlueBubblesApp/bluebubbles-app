@@ -65,7 +65,7 @@ class SetupBloc {
   void receivedChats(data) async {
     debugPrint("(Setup) -> Received initial chat list");
     chats = data["data"];
-    if (chats.length == 0) {
+    if (chats.isEmpty) {
       finishSetup();
     } else {
       getChatMessagesRecursive(chats, 0);
@@ -187,7 +187,7 @@ class SetupBloc {
 
       // Get the messages and add them to the DB
       List messages = data["data"];
-      if (messages.length == 0) {
+      if (messages.isEmpty) {
         debugPrint("(SYNC) No new messages found during incremental sync");
       } else {
         debugPrint(

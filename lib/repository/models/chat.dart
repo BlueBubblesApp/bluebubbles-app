@@ -28,11 +28,11 @@ String chatToJson(Chat data) {
 
 Future<String> getFullChatTitle(Chat _chat) async {
   String title = "";
-  if (_chat.displayName == null || _chat.displayName == "") {
+  if (isNullOrEmpty(_chat.displayName)) {
     Chat chat = await _chat.getParticipants();
 
     // If there are no participants, try to get them from the server
-    if (chat.participants.length == 0) {
+    if (chat.participants.isEmpty) {
       await ActionHandler.handleChat(chat: chat);
       chat = await chat.getParticipants();
     }
@@ -51,7 +51,7 @@ Future<String> getFullChatTitle(Chat _chat) async {
       titles.add(name);
     }
 
-    if (titles.length == 0) {
+    if (titles.isEmpty) {
       title = _chat.chatIdentifier;
     } else if (titles.length == 1) {
       title = titles[0];
@@ -94,7 +94,7 @@ class Chat {
   String latestMessageText;
   String title;
   String displayName;
-  List<Handle> participants;
+  List<Handle> participants = [];
 
   Chat({
     this.id,
@@ -105,7 +105,7 @@ class Chat {
     this.isMuted,
     this.hasUnreadMessage,
     this.displayName,
-    this.participants,
+    this.participants = const [],
     this.latestMessageDate,
     this.latestMessageText,
   });
@@ -682,6 +682,10 @@ class Chat {
         [archived ? 1 : 0]);
 
     return (res.isNotEmpty) ? res.map((c) => Chat.fromMap(c)).toList() : [];
+  }
+
+  bool isGroup() {
+    return this.participants.length > 0;
   }
 
   static flush() async {

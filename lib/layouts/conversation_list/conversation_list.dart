@@ -258,7 +258,7 @@ class _ConversationListState extends State<ConversationList> {
                   return -a.latestMessageDate.compareTo(b.latestMessageDate);
                 });
 
-                if (_chats.length == 0) {
+                if (_chats.isEmpty) {
                   return SliverToBoxAdapter(
                       child: Center(
                           child: Container(

@@ -19,6 +19,14 @@ DateTime parseDate(dynamic value) {
   return null;
 }
 
+bool isNullOrEmpty(dynamic input, {trimString = false}) {
+  if (input != null && input is String) {
+    input = input.trim();
+  }
+
+  return input == null || input.isEmpty;
+}
+
 Size textSize(String text, TextStyle style) {
   final TextPainter textPainter = TextPainter(
       text: TextSpan(text: text, style: style),
@@ -172,9 +180,13 @@ String sanitizeString(String input) {
   return input;
 }
 
-bool isEmptyString(String input) {
+bool isEmptyString(String input, {stripWhitespace = false}) {
   if (input == null) return true;
   input = sanitizeString(input);
+  if (stripWhitespace) {
+    input = input.trim();
+  }
+
   return input.isEmpty;
 }
 
@@ -203,8 +215,8 @@ Future<MemoryImage> loadAvatar(Chat chat, String address) async {
     if (chat.id == null) await chat.save();
 
     // If there are no participants, get them
-    if (chat.participants == null || chat.participants.length == 0) {
-      chat = await chat.getParticipants();
+    if (isNullOrEmpty(chat.participants)) {
+      await chat.getParticipants();
     }
 
     // If there are no participants, return
@@ -222,7 +234,7 @@ Future<MemoryImage> loadAvatar(Chat chat, String address) async {
 
   // Get the contact
   Contact contact = await ContactManager().getCachedContact(address);
-  if (contact == null || contact.avatar.length == 0) return null;
+  if (isNullOrEmpty(contact?.avatar)) return null;
 
   // Set the contact image
   // NOTE: Don't compress this. It will increase load time significantly

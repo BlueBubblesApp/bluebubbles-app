@@ -130,7 +130,7 @@ class DBProvider {
     for (Tables tableName in Tables.values) {
       var table = await db.rawQuery(
           "SELECT * FROM sqlite_master WHERE name ='${tableName.toString().split(".").last}' and type='table'; ");
-      if (table.length == 0) {
+      if (table.isEmpty) {
         switch (tableName) {
           case Tables.chat:
             await createChatTable(db);
