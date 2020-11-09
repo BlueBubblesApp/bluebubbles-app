@@ -24,6 +24,8 @@ dependencies:
     path: packages/flutter_socket_io-0.6.0
   qr_code_scanner: ^0.0.12
   connectivity: ^2.0.0
+  tuple: ^1.0.3
+  encrypt: ^4.0.0
   assorted_layout_widgets: ^2.0.0
   audio_recorder: any
   flutter_local_notifications: any
