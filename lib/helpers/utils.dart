@@ -77,6 +77,9 @@ getInitials(String name, String delimeter, {double size = 30}) {
   if (name.contains(", ") || name.contains(" & "))
     return Icon(Icons.people, color: Colors.white, size: size);
 
+  if (name.contains("@"))
+    return name[0].toUpperCase();
+
   // If there is an & character, it's 2 people, format accordingly
   if (name.contains(' & ')) {
     List names = name.split(' & ');

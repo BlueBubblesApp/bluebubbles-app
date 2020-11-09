@@ -78,8 +78,7 @@ class _ConversationTileState extends State<ConversationTile>
 
   Future<void> fetchAvatar() async {
     // If our chat does not have any participants, get them
-    if (widget.chat.participants == null ||
-        widget.chat.participants.isEmpty) {
+    if (widget.chat.participants == null || widget.chat.participants.isEmpty) {
       await widget.chat.getParticipants();
     }
 
@@ -92,7 +91,7 @@ class _ConversationTileState extends State<ConversationTile>
           .getCachedContact(widget.chat.participants[0].address)
           .then((Contact c) {
         if (c == null && this.mounted) {
-          initials = Icon(Icons.person, color: Colors.white, size: 30);
+          initials = getInitials(widget.chat.participants[0].address, "");
           setState(() {});
         } else {
           loadAvatar(widget.chat, widget.chat.participants[0].address)
@@ -259,6 +258,11 @@ class _ConversationTileState extends State<ConversationTile>
                             overflow: TextOverflow.ellipsis,
                           ),
                     leading: ContactAvatarWidget(
+                      color: (!widget.chat.isGroup() &&
+                              widget.chat.participants.length > 0)
+                          ? toColor(
+                              widget.chat.participants[0].address, context)
+                          : null,
                       contactImage: contactImage,
                       initials: initials,
                     ),
@@ -306,7 +310,9 @@ class _ConversationTileState extends State<ConversationTile>
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(35),
                                 color: widget.chat.hasUnreadMessage
-                                    ? Theme.of(context).primaryColor.withOpacity(0.8)
+                                    ? Theme.of(context)
+                                        .primaryColor
+                                        .withOpacity(0.8)
                                     : Colors.transparent,
                               ),
                               width: 15,
@@ -315,7 +321,9 @@ class _ConversationTileState extends State<ConversationTile>
                           : SvgPicture.asset(
                               "assets/icon/moon.svg",
                               color: widget.chat.hasUnreadMessage
-                                  ? Theme.of(context).primaryColor.withOpacity(0.8)
+                                  ? Theme.of(context)
+                                      .primaryColor
+                                      .withOpacity(0.8)
                                   : Theme.of(context).textTheme.subtitle1.color,
                               width: 15,
                               height: 15,
