@@ -398,8 +398,7 @@ class _SetupViewState extends State<SetupView> {
                 "Number of Messages to Sync Per Chat: $numberOfMessages",
                 style: Theme.of(context)
                     .textTheme
-                    .bodyText1
-                    .apply(fontSizeFactor: 1.0),
+                    .bodyText1,
                 textAlign: TextAlign.center,
               ),
             ),
@@ -431,8 +430,7 @@ class _SetupViewState extends State<SetupView> {
                     "Auto-download Attachments (long sync)",
                     style: Theme.of(context)
                         .textTheme
-                        .bodyText1
-                        .apply(fontSizeFactor: 1.0),
+                        .bodyText1,
                     textAlign: TextAlign.center,
                   ),
                   Switch(
@@ -462,7 +460,7 @@ class _SetupViewState extends State<SetupView> {
                 mainAxisSize: MainAxisSize.max,
                 children: [
                   Text(
-                    "Skip empty chats (no messages)",
+                    "Skip empty chats",
                     style: Theme.of(context)
                         .textTheme
                         .bodyText1,

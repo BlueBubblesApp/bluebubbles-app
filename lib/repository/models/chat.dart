@@ -88,6 +88,7 @@ class Chat {
   int style;
   String chatIdentifier;
   bool isArchived;
+  bool isFiltered;
   bool isMuted;
   bool hasUnreadMessage;
   DateTime latestMessageDate;
@@ -102,6 +103,7 @@ class Chat {
     this.style,
     this.chatIdentifier,
     this.isArchived,
+    this.isFiltered,
     this.isMuted,
     this.hasUnreadMessage,
     this.displayName,
@@ -126,6 +128,11 @@ class Chat {
       isArchived: (json["isArchived"] is bool)
           ? json['isArchived']
           : ((json['isArchived'] == 1) ? true : false),
+      isFiltered: json.containsKey("isFiltered")
+          ? (json["isFiltered"] is bool)
+              ? json['isFiltered']
+              : ((json['isFiltered'] == 1) ? true : false)
+          : false, 
       isMuted: json.containsKey("isMuted")
           ? (json["isMuted"] is bool)
               ? json['isMuted']
@@ -219,6 +226,7 @@ class Chat {
     Map<String, dynamic> params = {
       "isArchived": this.isArchived ? 1 : 0,
       "isMuted": this.isMuted ? 1 : 0,
+      "isFiltered": this.isFiltered ? 1 : 0
     };
 
     // Only update the latestMessage info if it's not null
@@ -663,14 +671,16 @@ class Chat {
   }
 
   static Future<List<Chat>> getChats(
-      {bool archived = false, int limit = 15, int offset = 0}) async {
+      {bool archived = false, int limit = 15, int offset = 0, bool getFiltered = false}) async {
     final Database db = await DBProvider.db.database;
+
     var res = await db.rawQuery(
         "SELECT"
         " chat.ROWID as ROWID,"
         " chat.guid as guid,"
         " chat.style as style,"
         " chat.chatIdentifier as chatIdentifier,"
+        " chat.isFiltered as isFiltered,"
         " chat.isArchived as isArchived,"
         " chat.isMuted as isMuted,"
         " chat.hasUnreadMessage as hasUnreadMessage,"
@@ -681,7 +691,14 @@ class Chat {
         " WHERE chat.isArchived = ? ORDER BY chat.latestMessageDate DESC LIMIT $limit OFFSET $offset;",
         [archived ? 1 : 0]);
 
-    return (res.isNotEmpty) ? res.map((c) => Chat.fromMap(c)).toList() : [];
+    if (res.isEmpty) return [];
+
+   Iterable<Chat> output = res.map((c) => Chat.fromMap(c));
+   if (!getFiltered) {
+     output = output.where((item) => item.isFiltered == false);
+   }
+
+    return output.toList();
   }
 
   bool isGroup() {
@@ -699,6 +716,7 @@ class Chat {
         "style": style,
         "chatIdentifier": chatIdentifier,
         "isArchived": isArchived ? 1 : 0,
+        "isFiltered": isFiltered ? 1 : 0,
         "isMuted": isMuted ? 1 : 0,
         "displayName": displayName,
         "participants": participants.map((item) => item.toMap()),

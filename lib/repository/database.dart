@@ -64,6 +64,13 @@ class DBProvider {
         upgrade: (Database db) {
           db.execute(
               "ALTER TABLE message ADD COLUMN balloonBundleId TEXT DEFAULT NULL;");
+        }),
+    new DBUpgradeItem(
+        fromVersions: [1, 2],
+        toVersions: [3],
+        upgrade: (Database db) {
+          db.execute(
+              "ALTER TABLE chat ADD COLUMN isFiltered INTEGER DEFAULT 0;");
         })
   ];
 
@@ -207,6 +214,7 @@ class DBProvider {
         "style INTEGER NOT NULL,"
         "chatIdentifier TEXT NOT NULL,"
         "isArchived INTEGER DEFAULT 0,"
+        "isFiltered INTEGER DEFAULT 0,"
         "isMuted INTEGER DEFAULT 0,"
         "hasUnreadMessage INTEGER DEFAULT 0,"
         "latestMessageDate INTEGER DEFAULT 0,"
