@@ -6,6 +6,7 @@ import 'package:bluebubbles/layouts/widgets/message_widget/message_content/messa
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/material.dart';
 
@@ -73,8 +74,7 @@ class _ReceivedMessageState extends State<ReceivedMessage>
   }
 
   /// Builds the message bubble with teh tail (if applicable)
-  Widget _buildMessageWithTail(
-      Message message) {
+  Widget _buildMessageWithTail(Message message) {
     if (message.isBigEmoji()) {
       bool hasReactions = (message?.getReactions() ?? []).length > 0 ?? false;
       return Padding(
@@ -92,7 +92,7 @@ class _ReceivedMessageState extends State<ReceivedMessage>
     return Stack(
       alignment: AlignmentDirectional.bottomStart,
       children: [
-        if (widget.showTail) MessageTail(isFromMe: false),
+        if (widget.showTail) MessageTail(message: message),
         Container(
           margin: EdgeInsets.only(
             top: widget.message.getReactions().length > 0 &&
@@ -112,7 +112,9 @@ class _ReceivedMessageState extends State<ReceivedMessage>
           ),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
-            color: Theme.of(context).accentColor,
+            color: shouldBeRainbow()
+                ? toColor(message.handle.address, context)
+                : Theme.of(context).accentColor,
           ),
           child: RichText(
             text: TextSpan(

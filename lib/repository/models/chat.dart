@@ -685,7 +685,7 @@ class Chat {
   }
 
   bool isGroup() {
-    return this.participants.length > 0;
+    return this.participants.length > 1;
   }
 
   static flush() async {

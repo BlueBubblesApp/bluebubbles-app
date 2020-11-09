@@ -226,6 +226,23 @@ class _SettingsPanelState extends State<SettingsPanel> {
                   initialVal: _settingsCopy.showIncrementalSync,
                   title: "Notify when incremental sync complete",
                 ),
+                SettingsSwitch(
+                  onChanged: (bool val) {
+                    _settingsCopy.rainbowBubbles = val;
+                    setState(() {});
+                  },
+                  initialVal: _settingsCopy.rainbowBubbles,
+                  title: "Rainbow Bubbles",
+                ),
+                (_settingsCopy.rainbowBubbles)
+                  ? SettingsSwitch(
+                    onChanged: (bool val) {
+                      _settingsCopy.rainbowOnlyGroups = val;
+                    },
+                    initialVal: _settingsCopy.rainbowOnlyGroups,
+                    title: "    -> Only for groups",
+                  )
+                  : Container(),
                 SettingsOptions<AdaptiveThemeMode>(
                   initial: AdaptiveTheme.of(context).mode,
                   onChanged: (val) {

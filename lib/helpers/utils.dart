@@ -1,6 +1,9 @@
 import 'dart:convert';
 import 'dart:math';
 import 'dart:typed_data';
+import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:blurhash_flutter/blurhash.dart';
@@ -98,7 +101,6 @@ getInitials(String name, String delimeter, {double size = 30}) {
       return array[0][0].toUpperCase();
       break;
     default:
-
       if (array.length - 1 < 0 || array[array.length - 1].length < 1) return "";
       String first = array[0][0].toUpperCase();
       String last = array[array.length - 1][0].toUpperCase();
@@ -285,4 +287,36 @@ String stripHtmlTags(String htmlString) {
   final String parsedString = parse(document.body.text).documentElement.text;
 
   return parsedString;
+}
+
+int _getInt(str) {
+  var hash = 5381;
+
+  for (var i = 0; i < str.length; i++) {
+    hash = ((hash << 4) + hash) + str.codeUnitAt(i);
+  }
+
+  return hash;
+}
+
+Color toColor(String str, BuildContext context) {
+    try {
+      var hash = _getInt(str);
+      var r = (hash & 0xFF0000) >> 16;
+      var g = (hash & 0x00FF00) >> 8;
+      var b = hash & 0x0000FF;
+      var rr = r.toString();
+      var gg = g.toString();
+      var bb = b.toString();
+      return Color(int.parse(
+          '0xFF' + rr.substring(rr.length - 2) + gg.substring(gg.length - 2) + bb.substring(bb.length - 2)));
+    } catch (err) {
+      return Theme.of(context).accentColor;
+    }
+  }
+
+bool shouldBeRainbow() {
+  if (!SettingsManager().settings.rainbowBubbles) return false;
+  if (SettingsManager().settings.rainbowOnlyGroups && CurrentChat().chat.isGroup()) return true;
+  return false;
 }

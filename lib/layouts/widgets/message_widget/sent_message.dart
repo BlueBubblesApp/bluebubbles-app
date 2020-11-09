@@ -21,8 +21,8 @@ class SentMessageHelper {
   static Widget buildMessageWithTail(BuildContext context, Message message,
       bool showTail,
       {Widget customContent}) {
-    Color blueColor;
-    blueColor = message == null || message.guid.startsWith("temp")
+    Color bubbleColor;
+    bubbleColor = message == null || message.guid.startsWith("temp")
         ? darken(Theme.of(context).primaryColor, 0.2)
         : Theme.of(context).primaryColor;
 
@@ -45,8 +45,8 @@ class SentMessageHelper {
         children: [
           if (showTail)
             MessageTail(
-              isFromMe: true,
-              blueColor: blueColor,
+              message: message,
+              color: bubbleColor,
             ),
           Container(
             margin: EdgeInsets.only(
@@ -65,7 +65,7 @@ class SentMessageHelper {
             ),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(20),
-              color: blueColor,
+              color: bubbleColor,
             ),
             child: customContent == null
                 ? RichText(
