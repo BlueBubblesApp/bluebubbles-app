@@ -44,7 +44,6 @@ class _SettingsPanelState extends State<SettingsPanel> {
   void didChangeDependencies() async {
     super.didChangeDependencies();
     modes = await FlutterDisplayMode.supported;
-    modes.forEach((mode) => {debugPrint("Display mode: " + mode.toString())});
     currentMode = await _settingsCopy.getDisplayMode();
     setState(() {});
   }
