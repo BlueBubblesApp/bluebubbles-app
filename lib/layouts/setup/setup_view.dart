@@ -28,6 +28,7 @@ class _SetupViewState extends State<SetupView> {
   FCMData _fcmDataCopy;
   double numberOfMessages = 25;
   bool downloadAttachments = false;
+  bool skipEmptyChats = true;
 
   @override
   void initState() {
@@ -454,6 +455,39 @@ class _SetupViewState extends State<SetupView> {
                 ],
               ),
             ),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 40.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                mainAxisSize: MainAxisSize.max,
+                children: [
+                  Text(
+                    "Skip empty chats (no messages)",
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodyText1,
+                    textAlign: TextAlign.center,
+                  ),
+                  Switch(
+                    value: skipEmptyChats,
+                    activeColor: Theme.of(context).primaryColor,
+                    activeTrackColor:
+                        Theme.of(context).primaryColor.withAlpha(200),
+                    inactiveTrackColor:
+                        Theme.of(context).primaryColor.withAlpha(75),
+                    inactiveThumbColor:
+                        Theme.of(context).textTheme.bodyText1.color,
+                    onChanged: (bool value) {
+                      if (!this.mounted) return;
+
+                      setState(() {
+                        skipEmptyChats = value;
+                      });
+                    },
+                  )
+                ],
+              ),
+            ),
             Container(height: 20.0),
             ClipOval(
               child: Material(
@@ -480,6 +514,8 @@ class _SetupViewState extends State<SetupView> {
                           numberOfMessages;
                       SocketManager().setup.downloadAttachments =
                           downloadAttachments;
+                      SocketManager().setup.skipEmptyChats =
+                          skipEmptyChats;
 
                       // Start syncing
                       SocketManager().setup.startSync(

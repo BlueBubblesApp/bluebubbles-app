@@ -19,6 +19,7 @@ class SetupBloc {
   bool isSyncing = false;
   double numberOfMessagesPerPage = 25;
   bool downloadAttachments = false;
+  bool skipEmptyChats = true;
 
   Stream<double> get stream => _stream.stream;
   double get progress => _progress;
@@ -109,13 +110,15 @@ class SetupBloc {
     // Since we got the messages in desc order, we want to reverse it.
     // Reversing it will add older messages before newer one. This should help fix
     // issues with associated message GUIDs
-    MessageHelper.bulkAddMessages(chat, messages.reversed.toList(),
-        notifyForNewMessage: false);
+    if (!skipEmptyChats || (skipEmptyChats && messages.length > 0)) {
+      MessageHelper.bulkAddMessages(chat, messages.reversed.toList(),
+          notifyForNewMessage: false);
 
-    // If we want to download the attachments, do it, and wait for them to finish before continuing
-    if (downloadAttachments) {
-      await MessageHelper.bulkDownloadAttachments(
-          chat, messages.reversed.toList());
+      // If we want to download the attachments, do it, and wait for them to finish before continuing
+      if (downloadAttachments) {
+        await MessageHelper.bulkDownloadAttachments(
+            chat, messages.reversed.toList());
+      }
     }
 
     _progress = (_currentIndex + 1) / chats.length;
