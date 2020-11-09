@@ -12,28 +12,29 @@ class MessageTail extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    bool isFromMe = message?.isFromMe ?? true;
     return Stack(
-      alignment: message?.isFromMe ?? true
+      alignment: isFromMe
           ? AlignmentDirectional.bottomEnd
           : AlignmentDirectional.bottomStart,
       children: [
         Container(
           margin: EdgeInsets.only(
-            left: message.isFromMe ? 0.0 : 4.0,
-            right: message.isFromMe ? 4.0 : 0.0,
+            left: isFromMe ? 0.0 : 4.0,
+            right: isFromMe ? 4.0 : 0.0,
             bottom: 1,
           ),
           width: 20,
           height: 15,
           decoration: BoxDecoration(
-            color: message.isFromMe
+            color:isFromMe
                 ? color
                 : (shouldBeRainbow()
                     ? toColor(message.handle.address, context)
                     : Theme.of(context).accentColor),
             borderRadius: BorderRadius.only(
-              bottomRight: message.isFromMe ? Radius.zero : Radius.circular(12),
-              bottomLeft: message.isFromMe ? Radius.circular(12) : Radius.zero,
+              bottomRight: isFromMe ? Radius.zero : Radius.circular(12),
+              bottomLeft: isFromMe ? Radius.circular(12) : Radius.zero,
             ),
           ),
         ),
@@ -44,8 +45,8 @@ class MessageTail extends StatelessWidget {
           decoration: BoxDecoration(
             color: Theme.of(context).backgroundColor,
             borderRadius: BorderRadius.only(
-              bottomRight: message.isFromMe ? Radius.zero : Radius.circular(8),
-              bottomLeft: message.isFromMe ? Radius.circular(8) : Radius.zero,
+              bottomRight:isFromMe ? Radius.zero : Radius.circular(8),
+              bottomLeft:isFromMe ? Radius.circular(8) : Radius.zero,
             ),
           ),
         ),
