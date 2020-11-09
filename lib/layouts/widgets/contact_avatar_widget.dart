@@ -26,10 +26,10 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> {
     Color color1 = widget.color;
     Color color2 = widget.color;
     if (color1 == null) {
-      color1 = HexColor('848894');
-      color2 = HexColor('a0a4af');
+      color1 = HexColor('a0a4af');
+      color2 = HexColor('848894');
     } else {
-      color2 = widget.color.withAlpha(225);
+      color2 = darken(widget.color, 0.1);
     }
 
     return CircleAvatar(
@@ -41,7 +41,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: AlignmentDirectional.topStart,
-                  colors: [color2, color1],
+                  colors: [color1, color2],
                 ),
                 borderRadius: BorderRadius.circular(30),
               ),
