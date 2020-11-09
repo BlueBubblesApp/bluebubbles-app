@@ -89,6 +89,7 @@ class _ReceivedMessageState extends State<ReceivedMessage>
                   .apply(fontSizeFactor: 4)));
     }
 
+    bool isRainbow = shouldBeRainbow();
     return Stack(
       alignment: AlignmentDirectional.bottomStart,
       children: [
@@ -112,7 +113,7 @@ class _ReceivedMessageState extends State<ReceivedMessage>
           ),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
-            color: shouldBeRainbow()
+            color: isRainbow
                 ? toColor(message.handle.address, context)
                 : Theme.of(context).accentColor,
           ),
@@ -120,7 +121,12 @@ class _ReceivedMessageState extends State<ReceivedMessage>
             text: TextSpan(
               children:
                   MessageWidgetMixin.buildMessageSpans(context, widget.message),
-              style: Theme.of(context).textTheme.bodyText1,
+              style: isRainbow
+                  ? Theme.of(context)
+                      .textTheme
+                      .bodyText1
+                      .apply(color: Colors.white.withAlpha(225))
+                  : Theme.of(context).textTheme.bodyText1,
             ),
           ),
         ),

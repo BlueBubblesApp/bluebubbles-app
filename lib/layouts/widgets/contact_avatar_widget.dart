@@ -26,8 +26,8 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> {
     Color color1 = widget.color;
     Color color2 = widget.color;
     if (color1 == null) {
-      color1 = HexColor('a0a4af');
-      color2 = HexColor('848894');
+      color1 = HexColor('848894');
+      color2 = HexColor('a0a4af');
     } else {
       color2 = widget.color.withAlpha(225);
     }
