@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:collection';
 
 import 'package:bluebubbles/helpers/message_helper.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
@@ -120,7 +121,7 @@ class MessageBloc {
     }
 
     int index = 0;
-    if (_allMessages.length == 0) {
+    if (_allMessages.isEmpty) {
       _allMessages.addAll({message.guid: message});
       if (!_messageController.isClosed && addToSink) {
         MessageBlocEvent event = MessageBlocEvent();
@@ -181,7 +182,7 @@ class MessageBloc {
   Future<LinkedHashMap<String, Message>> getMessages() async {
     List<Message> messages = await Chat.getMessages(_currentChat);
 
-    if (messages.length == 0) {
+    if (isNullOrEmpty(messages)) {
       _allMessages = new LinkedHashMap();
     } else {
       messages.forEach((element) {
@@ -217,7 +218,7 @@ class MessageBloc {
 
       // Fetch messages from the socket
       count = messages.length;
-      if (messages.length == 0) {
+      if (isNullOrEmpty(messages)) {
         try {
           // Fetch messages from the server
           List<dynamic> _messages = await SocketManager()
@@ -225,7 +226,7 @@ class MessageBloc {
           count = _messages.length;
 
           // Handle the messages
-          if (_messages.length == 0) {
+          if (isNullOrEmpty(_messages)) {
             debugPrint("(CHUNK) No message chunks left from server");
             completer.complete(LoadMessageResult.RETREIVED_NO_MESSAGES);
           } else {

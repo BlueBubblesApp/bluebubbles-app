@@ -50,7 +50,7 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker>
 
   @override
   Widget build(BuildContext context) {
-    if (widget.visible && _images.length == 0) {
+    if (widget.visible && _images.isEmpty) {
       getAttachments();
     }
     return AnimatedSize(

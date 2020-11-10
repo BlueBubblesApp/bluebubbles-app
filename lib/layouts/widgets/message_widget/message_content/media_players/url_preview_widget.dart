@@ -149,7 +149,7 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
     }
 
     // If the data or title was null, try to manually parse
-    if (data == null || data.title == null) {
+    if (isNullOrEmpty(data?.title)) {
       data = await this.manuallyGetMetadata(url);
       data.url = url;
     }

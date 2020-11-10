@@ -72,7 +72,7 @@ class _NewChatCreatorState extends State<NewChatCreator> {
 
   Future<void> loadEntries() async {
     if (!widget.isCreator) return;
-    if (ChatBloc().chats == null || ChatBloc().chats.length == 0) {
+    if (isNullOrEmpty(ChatBloc().chats)) {
       await ChatBloc().refreshChats();
     }
 
@@ -85,7 +85,7 @@ class _NewChatCreatorState extends State<NewChatCreator> {
   }
 
   String getTypeStr(String type) {
-    if (type == null || type.length == 0) return "";
+    if (isNullOrEmpty(type)) return "";
     return " ($type)";
   }
 
@@ -251,7 +251,7 @@ class _NewChatCreatorState extends State<NewChatCreator> {
                             // color: Colors.black,
                             child: CircularProgressIndicator(
                               valueColor:
-                                  AlwaysStoppedAnimation<Color>(Colors.blue),
+                                  AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
                             ),
                           ),
                         ],
@@ -283,7 +283,7 @@ class _NewChatCreatorState extends State<NewChatCreator> {
                                   // color: Colors.black,
                                   child: CircularProgressIndicator(
                                     valueColor: AlwaysStoppedAnimation<Color>(
-                                      Colors.blue,
+                                      Theme.of(context).primaryColor,
                                     ),
                                   ),
                                 ),

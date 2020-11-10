@@ -1,15 +1,18 @@
+import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 
 class MessageTail extends StatelessWidget {
-  final bool isFromMe;
-  final Color blueColor;
+  final Color color;
+  final Message message;
 
-  const MessageTail({Key key, @required this.isFromMe, this.blueColor})
+  const MessageTail({Key key, @required this.message, this.color})
       : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    bool isFromMe = message?.isFromMe ?? true;
     return Stack(
       alignment: isFromMe
           ? AlignmentDirectional.bottomEnd
@@ -24,7 +27,11 @@ class MessageTail extends StatelessWidget {
           width: 20,
           height: 15,
           decoration: BoxDecoration(
-            color: isFromMe ? blueColor : Theme.of(context).accentColor,
+            color:isFromMe
+                ? color
+                : (shouldBeRainbow()
+                    ? toColor(message.handle.address, context)
+                    : Theme.of(context).accentColor),
             borderRadius: BorderRadius.only(
               bottomRight: isFromMe ? Radius.zero : Radius.circular(12),
               bottomLeft: isFromMe ? Radius.circular(12) : Radius.zero,
@@ -38,8 +45,8 @@ class MessageTail extends StatelessWidget {
           decoration: BoxDecoration(
             color: Theme.of(context).backgroundColor,
             borderRadius: BorderRadius.only(
-              bottomRight: isFromMe ? Radius.zero : Radius.circular(8),
-              bottomLeft: isFromMe ? Radius.circular(8) : Radius.zero,
+              bottomRight:isFromMe ? Radius.zero : Radius.circular(8),
+              bottomLeft:isFromMe ? Radius.circular(8) : Radius.zero,
             ),
           ),
         ),

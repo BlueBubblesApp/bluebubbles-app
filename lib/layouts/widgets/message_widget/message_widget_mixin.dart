@@ -98,6 +98,24 @@ abstract class MessageWidgetMixin {
         linkIndexMatches.add(match.start);
         linkIndexMatches.add(match.end);
       });
+
+      if (!isNullOrEmpty(message.subject)) {
+        textSpans.add(
+          TextSpan(
+            text: "${message.subject}\n",
+            style: message.isFromMe
+                ? Theme.of(context)
+                    .textTheme
+                    .bodyText1
+                    .apply(color: Colors.white, fontWeightDelta: 2)
+                : Theme.of(context)
+                    .textTheme
+                    .bodyText1
+                    .apply(fontWeightDelta: 2),
+          )
+        );
+      }
+
       if (linkIndexMatches.length > 0) {
         for (int i = 0; i < linkIndexMatches.length + 1; i++) {
           if (i == 0) {

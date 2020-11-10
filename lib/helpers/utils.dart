@@ -1,6 +1,9 @@
 import 'dart:convert';
 import 'dart:math';
 import 'dart:typed_data';
+import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:blurhash_flutter/blurhash.dart';
@@ -17,6 +20,14 @@ DateTime parseDate(dynamic value) {
   if (value is int) return DateTime.fromMillisecondsSinceEpoch(value);
   if (value is DateTime) return value;
   return null;
+}
+
+bool isNullOrEmpty(dynamic input, {trimString = false}) {
+  if (input != null && input is String) {
+    input = input.trim();
+  }
+
+  return input == null || input.isEmpty;
 }
 
 Size textSize(String text, TextStyle style) {
@@ -65,6 +76,8 @@ getInitials(String name, String delimeter, {double size = 30}) {
   // If there is a comma, just return the "people" icon
   if (name.contains(", ") || name.contains(" & "))
     return Icon(Icons.people, color: Colors.white, size: size);
+
+  if (name.contains("@")) return name[0].toUpperCase();
 
   // If there is an & character, it's 2 people, format accordingly
   if (name.contains(' & ')) {
@@ -198,9 +211,13 @@ String sanitizeString(String input) {
   return input;
 }
 
-bool isEmptyString(String input) {
+bool isEmptyString(String input, {stripWhitespace = false}) {
   if (input == null) return true;
   input = sanitizeString(input);
+  if (stripWhitespace) {
+    input = input.trim();
+  }
+
   return input.isEmpty;
 }
 
@@ -217,7 +234,7 @@ Future<String> getGroupEventText(Message message) async {
   } else if (message.itemType == 3) {
     text = "$handle left the conversation";
   } else if (message.itemType == 2 && message.groupTitle != null) {
-    text = "$handle renamed the conversation to \"${message.groupTitle}\"";
+    text = "$handle named the conversation \"${message.groupTitle}\"";
   }
 
   return text;
@@ -229,8 +246,8 @@ Future<MemoryImage> loadAvatar(Chat chat, String address) async {
     if (chat.id == null) await chat.save();
 
     // If there are no participants, get them
-    if (chat.participants == null || chat.participants.length == 0) {
-      chat = await chat.getParticipants();
+    if (isNullOrEmpty(chat.participants)) {
+      await chat.getParticipants();
     }
 
     // If there are no participants, return
@@ -248,7 +265,7 @@ Future<MemoryImage> loadAvatar(Chat chat, String address) async {
 
   // Get the contact
   Contact contact = await ContactManager().getCachedContact(address);
-  if (contact == null || contact.avatar.length == 0) return null;
+  if (isNullOrEmpty(contact?.avatar)) return null;
 
   // Set the contact image
   // NOTE: Don't compress this. It will increase load time significantly
@@ -299,4 +316,42 @@ String stripHtmlTags(String htmlString) {
   final String parsedString = parse(document.body.text).documentElement.text;
 
   return parsedString;
+}
+
+int _getInt(str) {
+  var hash = 5381;
+
+  for (var i = 0; i < str.length; i++) {
+    hash = ((hash << 4) + hash) + str.codeUnitAt(i);
+  }
+
+  return hash;
+}
+
+Color toColor(String str, BuildContext context) {
+  try {
+    var hash = _getInt(str);
+    var r = (hash & 0xFF0000) >> 16;
+    var g = (hash & 0x00FF00) >> 8;
+    var b = hash & 0x0000FF;
+    var rr = r.toString();
+    var gg = g.toString();
+    var bb = b.toString();
+    return Color(int.parse('0xFF' +
+        rr.substring(rr.length - 2) +
+        gg.substring(gg.length - 2) +
+        bb.substring(bb.length - 2)));
+  } catch (err) {
+    return Theme.of(context).accentColor;
+  }
+}
+
+bool shouldBeRainbow({Chat chat}) {
+  Chat theChat = chat;
+  if (theChat == null) return false;
+  if (!SettingsManager().settings.rainbowBubbles) return false;
+  if (SettingsManager().settings.rainbowOnlyGroups && theChat.isGroup())
+    return true;
+  if (!SettingsManager().settings.rainbowOnlyGroups) return true;
+  return false;
 }

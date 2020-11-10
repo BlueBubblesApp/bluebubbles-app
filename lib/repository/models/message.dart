@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'package:bluebubbles/helpers/message_helper.dart';
+import 'package:bluebubbles/helpers/reaction.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:flutter/cupertino.dart';
@@ -54,7 +56,10 @@ class Message {
   Handle handle;
   bool hasAttachments;
   bool hasReactions;
-  List<Attachment> attachments;
+
+  List<Attachment> attachments = [];
+  List<Message> associatedMessages = [];
+  bool bigEmoji;
 
   Message({
     this.id,
@@ -91,7 +96,7 @@ class Message {
     this.handle,
     this.hasAttachments = false,
     this.hasReactions = false,
-    this.attachments,
+    this.attachments = const [],
   });
 
   factory Message.fromMap(Map<String, dynamic> json) {
@@ -326,15 +331,15 @@ class Message {
     return this;
   }
 
-  static Future<List<Attachment>> getAttachments(Message message) async {
-    if (message.hasAttachments &&
-        message.attachments != null &&
-        message.attachments.length != 0) {
-      return message.attachments ?? [];
+  Future<List<Attachment>> fetchAttachments() async {
+    if (this.hasAttachments &&
+        this.attachments != null &&
+        this.attachments.length != 0) {
+      return this.attachments;
     }
 
     final Database db = await DBProvider.db.database;
-    if (message.id == null) return [];
+    if (this.id == null) return [];
 
     var res = await db.rawQuery(
         "SELECT"
@@ -355,12 +360,12 @@ class Message {
         " JOIN attachment_message_join AS amj ON message.ROWID = amj.messageId"
         " JOIN attachment ON attachment.ROWID = amj.attachmentId"
         " WHERE message.ROWID = ?;",
-        [message.id]);
+        [this.id]);
 
-    message.attachments =
+    this.attachments =
         (res.isNotEmpty) ? res.map((c) => Attachment.fromMap(c)).toList() : [];
 
-    return message.attachments;
+    return this.attachments;
   }
 
   static Future<Chat> getChat(Message message) async {
@@ -383,10 +388,14 @@ class Message {
     return (res.isNotEmpty) ? Chat.fromMap(res[0]) : null;
   }
 
-  Future<List<Message>> getAssociatedMessages() async {
-    List<Message> res =
+  Future<Message> fetchAssociatedMessages() async {
+    associatedMessages =
         await Message.find({"associatedMessageGuid": this.guid});
-    return res;
+    associatedMessages
+        .sort((a, b) => a.originalROWID.compareTo(b.originalROWID));
+    associatedMessages =
+        MessageHelper.normalizedAssociatedMessages(associatedMessages);
+    return this;
   }
 
   Future<Handle> getHandle() async {
@@ -459,6 +468,53 @@ class Message {
   static flush() async {
     final Database db = await DBProvider.db.database;
     await db.delete("message");
+  }
+
+  bool isUrlPreview() {
+    return this.balloonBundleId != null &&
+        this.balloonBundleId == "com.apple.messages.URLBalloonProvider" &&
+        this.hasDdResults;
+  }
+
+  bool isInteractive() {
+    return this.balloonBundleId != null &&
+        this.balloonBundleId != "com.apple.messages.URLBalloonProvider";
+  }
+
+  bool hasText({stripWhitespace = false}) {
+    return !isEmptyString(this.text, stripWhitespace: stripWhitespace);
+  }
+
+  bool isGroupEvent() {
+    return isEmptyString(this.text) &&
+        !this.hasAttachments &&
+        this.balloonBundleId == null;
+  }
+
+  bool isBigEmoji() {
+    // We are checking the variable first because we want to
+    // avoid processing twice for this as it won't change
+    if (this.bigEmoji == null) {
+      this.bigEmoji = MessageHelper.shouldShowBigEmoji(this.text);
+    }
+
+    return this.bigEmoji;
+  }
+
+  List<Attachment> getRealAttachments() {
+    return this.attachments.where((item) => item.mimeType != null).toList();
+  }
+
+  List<Attachment> getPreviewAttachments() {
+    return this.attachments.where((item) => item.mimeType == null).toList();
+  }
+
+  List<Message> getReactions() {
+    return this
+        .associatedMessages
+        .where((item) =>
+            ReactionTypes.toList().contains(item.associatedMessageType))
+        .toList();
   }
 
   Map<String, dynamic> toMap() => {

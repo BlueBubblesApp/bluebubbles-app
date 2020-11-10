@@ -8,11 +8,13 @@ class ContactAvatarWidget extends StatefulWidget {
     this.contactImage,
     this.size,
     this.fontSize,
+    this.color,
   }) : super(key: key);
   final initials;
   final ImageProvider contactImage;
   final double size;
   final double fontSize;
+  final Color color;
 
   @override
   _ContactAvatarWidgetState createState() => _ContactAvatarWidgetState();
@@ -21,6 +23,15 @@ class ContactAvatarWidget extends StatefulWidget {
 class _ContactAvatarWidgetState extends State<ContactAvatarWidget> {
   @override
   Widget build(BuildContext context) {
+    Color color1 = widget.color;
+    Color color2 = widget.color;
+    if (color1 == null) {
+      color1 = HexColor('a0a4af');
+      color2 = HexColor('848894');
+    } else {
+      color2 = darken(widget.color, 0.1);
+    }
+
     return CircleAvatar(
       radius: (widget.size != null) ? widget.size / 2 : 20,
       child: widget.contactImage == null
@@ -30,7 +41,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: AlignmentDirectional.topStart,
-                  colors: [HexColor('a0a4af'), HexColor('848894')],
+                  colors: [color1, color2],
                 ),
                 borderRadius: BorderRadius.circular(30),
               ),

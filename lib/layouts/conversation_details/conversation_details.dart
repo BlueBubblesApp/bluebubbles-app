@@ -74,6 +74,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
         backgroundColor: Theme.of(context).backgroundColor,
         appBar: CupertinoNavigationBar(
           backgroundColor: Theme.of(context).accentColor.withAlpha(125),
+          actionsForegroundColor: Theme.of(context).primaryColor,
           middle: Text(
             "Details",
             style: Theme.of(context).textTheme.headline1,
@@ -103,7 +104,8 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                         autocorrect: false,
                         decoration: InputDecoration(
                           labelText: "NAME",
-                          labelStyle: TextStyle(color: Colors.blue),
+                          labelStyle:
+                              TextStyle(color: Theme.of(context).primaryColor),
                         ),
                       ),
                     ),
@@ -146,12 +148,12 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                         title: Text(
                           "Add Contact",
                           style: TextStyle(
-                            color: Colors.blue,
+                            color: Theme.of(context).primaryColor,
                           ),
                         ),
                         leading: Icon(
                           Icons.add,
-                          color: Colors.blue,
+                          color: Theme.of(context).primaryColor,
                         ),
                       ),
                     )
@@ -220,12 +222,12 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                   title: Text(
                     "Resync chat",
                     style: TextStyle(
-                      color: Colors.blue,
+                      color: Theme.of(context).primaryColor,
                     ),
                   ),
                   leading: Icon(
                     Icons.replay,
-                    color: Colors.blue,
+                    color: Theme.of(context).primaryColor,
                   ),
                 ),
               ),

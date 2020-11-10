@@ -27,7 +27,7 @@ class _ReactionsWidgetState extends State<ReactionsWidget>
         .toList();
 
     // If the reactions are empty, return nothing
-    if (reactions.length == 0) {
+    if (reactions.isEmpty) {
       return Container();
     }
 

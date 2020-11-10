@@ -28,6 +28,7 @@ abstract class ThemeColors {
   static const String AccentColor = "AccentColor";
   static const String DividerColor = "DividerColor";
   static const String BackgroundColor = "BackgroundColor";
+  static const String PrimaryColor = "PrimaryColor";
 
   static const List<String> Colors = [
     Headline1,
@@ -39,6 +40,7 @@ abstract class ThemeColors {
     AccentColor,
     DividerColor,
     BackgroundColor,
+    PrimaryColor
   ];
 }
 

@@ -181,7 +181,7 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
   @override
   Widget build(BuildContext context) {
     IconData rightIcon = Icons.arrow_upward;
-    bool canRecord = _controller.text.isEmpty && pickedImages.length == 0;
+    bool canRecord = _controller.text.isEmpty && pickedImages.isEmpty;
     if (canRecord) rightIcon = Icons.mic;
 
     return Row(
@@ -216,7 +216,7 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                             onTap: toggleShareMenu,
                             child: Icon(
                               Icons.share,
-                              color: Theme.of(context).textTheme.subtitle1.color,
+                              color: Colors.white.withAlpha(225),
                               size: 20,
                             ),
                           ),
@@ -314,7 +314,7 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                                   padding: EdgeInsets.symmetric(
                                     horizontal: 0,
                                   ),
-                                  color: Colors.blue,
+                                  color: Theme.of(context).primaryColor,
                                   onPressed: () async {
                                     if (isRecording) {
                                       HapticFeedback.heavyImpact();
@@ -386,7 +386,7 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                                     children: [
                                       AnimatedOpacity(
                                         opacity: _controller.text.isEmpty &&
-                                                pickedImages.length == 0
+                                                pickedImages.isEmpty
                                             ? 1.0
                                             : 0.0,
                                         duration: Duration(milliseconds: 150),

@@ -104,7 +104,7 @@ class CurrentChat {
         : await Chat.getMessages(chat, limit: 25);
     for (Message message in messages) {
       if (message.hasAttachments) {
-        List<Attachment> attachments = await Message.getAttachments(message);
+        List<Attachment> attachments = await message.fetchAttachments();
         for (Attachment element in attachments) {
           if (element.width == null) {
             String mimeType = element.mimeType;

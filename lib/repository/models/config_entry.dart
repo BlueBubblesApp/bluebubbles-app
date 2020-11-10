@@ -1,4 +1,3 @@
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/helpers/db_converter.dart';
 import 'package:sqflite/sqflite.dart';

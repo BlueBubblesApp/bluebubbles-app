@@ -17,6 +17,8 @@ class Settings {
   bool lowMemoryMode = false;
   int lastIncrementalSync = 0;
   int displayMode = 0;
+  bool rainbowBubbles = false;
+  bool rainbowOnlyGroups = true;
 
   Skins skin = Skins.IOS;
 
@@ -47,6 +49,10 @@ class Settings {
         settings.lastIncrementalSync = entry.value;
       } else if (entry.name == "displayMode") {
         settings.displayMode = entry.value;
+      } else if (entry.name == "rainbowBubbles") {
+        settings.rainbowBubbles = entry.value;
+      } else if (entry.name == "rainbowOnlyGroups") {
+        settings.rainbowOnlyGroups = entry.value;
       }
     }
     settings.save(updateIfAbsent: false);
@@ -81,7 +87,7 @@ class Settings {
     Database db = await DBProvider.db.database;
 
     List<Map<String, dynamic>> result = await db.query("config");
-    if (result.length == 0) return new Settings();
+    if (result.isEmpty) return new Settings();
     List<ConfigEntry> entries = [];
     for (Map<String, dynamic> setting in result) {
       entries.add(ConfigEntry.fromMap(setting));
@@ -138,5 +144,13 @@ class Settings {
             name: "displayMode",
             value: this.displayMode,
             type: this.displayMode.runtimeType),
+        ConfigEntry(
+            name: "rainbowBubbles",
+            value: this.rainbowBubbles,
+            type: this.rainbowBubbles.runtimeType),
+        ConfigEntry(
+            name: "rainbowOnlyGroups",
+            value: this.rainbowOnlyGroups,
+            type: this.rainbowOnlyGroups.runtimeType),
       ];
 }

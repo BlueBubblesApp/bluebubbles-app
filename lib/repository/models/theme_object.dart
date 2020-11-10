@@ -1,7 +1,5 @@
 import 'package:bluebubbles/helpers/contstants.dart';
-import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/themes.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/models/theme_entry.dart';
 import 'package:flutter/material.dart';
@@ -65,6 +63,10 @@ class ThemeObject {
         ThemeEntry(
             name: ThemeColors.BackgroundColor,
             color: data.backgroundColor,
+            isFont: false),
+        ThemeEntry(
+            name: ThemeColors.PrimaryColor,
+            color: data.primaryColor,
             isFont: false),
       ];
 
@@ -244,7 +246,7 @@ class ThemeObject {
       };
 
   ThemeData get themeData {
-    assert(entries.length == 9);
+    assert(entries.length == ThemeColors.Colors.length);
     Map<String, ThemeEntry> data = {};
     for (ThemeEntry entry in entries) {
       if (entry.name == ThemeColors.Headline1) {
@@ -265,6 +267,8 @@ class ThemeObject {
         data[ThemeColors.DividerColor] = entry;
       } else if (entry.name == ThemeColors.BackgroundColor) {
         data[ThemeColors.BackgroundColor] = entry;
+      } else if (entry.name == ThemeColors.PrimaryColor) {
+        data[ThemeColors.PrimaryColor] = entry;
       }
     }
 
@@ -280,6 +284,7 @@ class ThemeObject {
       accentColor: data[ThemeColors.AccentColor].style,
       dividerColor: data[ThemeColors.DividerColor].style,
       backgroundColor: data[ThemeColors.BackgroundColor].style,
+      primaryColor: data[ThemeColors.PrimaryColor].style
     );
   }
 

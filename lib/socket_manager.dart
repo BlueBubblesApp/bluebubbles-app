@@ -7,6 +7,7 @@ import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/blocs/setup_bloc.dart';
 import 'package:bluebubbles/helpers/contstants.dart';
 import 'package:bluebubbles/helpers/crypto.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/incoming_queue.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
@@ -287,7 +288,7 @@ class SocketManager {
 
         // If there are no chats, try to find it in the DB via the message
         Chat chat;
-        if (data["chats"].length == 0) {
+        if (isNullOrEmpty(data["chats"])) {
           chat = await Message.getChat(message);
         } else {
           chat = Chat.fromMap(data['chats'][0]);

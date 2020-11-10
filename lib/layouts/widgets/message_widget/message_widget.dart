@@ -50,13 +50,13 @@ class MessageWidget extends StatefulWidget {
 
 class _MessageState extends State<MessageWidget>
     with AutomaticKeepAliveClientMixin {
-  List<Attachment> attachments = <Attachment>[];
-  List<Message> associatedMessages = [];
   bool showTail = true;
   OverlayEntry _entry;
   Completer<void> associatedMessageRequest;
   Completer<void> attachmentsRequest;
   int lastRequestCount = -1;
+  int attachmentCount = 0;
+  int associatedCount = 0;
 
   @override
   void initState() {
@@ -113,15 +113,11 @@ class _MessageState extends State<MessageWidget>
 
     // Create a new request and get the messages
     associatedMessageRequest = new Completer();
-    List<Message> messages = await widget.message.getAssociatedMessages();
-
-    // Make sure the messages are in the correct order from oldest to newest
-    messages.sort((a, b) => a.originalROWID.compareTo(b.originalROWID));
-    messages = normalizedAssociatedMessages(messages);
+    await widget.message.fetchAssociatedMessages();
 
     bool hasChanges = false;
-    if (messages.length != associatedMessages.length || forceReload) {
-      associatedMessages = messages;
+    if (widget.message.associatedMessages.length != associatedCount || forceReload) {
+      associatedCount = widget.message.associatedMessages.length;
       hasChanges = true;
     }
 
@@ -129,13 +125,7 @@ class _MessageState extends State<MessageWidget>
     if (this.mounted && hasChanges) {
       // If we don't think there are reactions, and we found reactions,
       // Update the DB so it saves that we have reactions
-      if (!widget.message.hasReactions &&
-          associatedMessages
-                  .where((item) => ReactionTypes.toList()
-                      .contains(item.associatedMessageType))
-                  .toList()
-                  .length >
-              0) {
+      if (!widget.message.hasReactions && widget.message.getReactions().length > 0) {
         widget.message.hasReactions = true;
         widget.message.update();
       }
@@ -154,11 +144,11 @@ class _MessageState extends State<MessageWidget>
 
     // Create a new request and get the attachments
     attachmentsRequest = new Completer();
-    List<Attachment> attachments = await Message.getAttachments(widget.message);
+    await widget.message.fetchAttachments();
 
-    // If hasDdResults is true, it means we have attachents, so if we don't, we should get em
-    List<Attachment> nonNullAttachments = attachments.where((item) => item.mimeType == null).toList();
-    if (widget.message.hasDdResults && nonNullAttachments.length == 0) {
+    // If this is a URL preview and we don't have attachments, we need to get them
+    List<Attachment> nonNullAttachments = widget.message.getRealAttachments();
+    if (widget.message.isUrlPreview() && nonNullAttachments.isEmpty) {
       if (lastRequestCount != nonNullAttachments.length) {
         lastRequestCount = nonNullAttachments.length;
         SocketManager().setup.startIncrementalSync(SettingsManager().settings,
@@ -170,8 +160,8 @@ class _MessageState extends State<MessageWidget>
     }
 
     bool hasChanges = false;
-    if (attachments.length != this.attachments.length || forceReload) {
-      this.attachments = attachments;
+    if (widget.message.attachments.length != this.attachmentCount || forceReload) {
+      this.attachmentCount = widget.message.attachments.length;
       hasChanges = true;
     }
 
@@ -181,19 +171,6 @@ class _MessageState extends State<MessageWidget>
     }
 
     attachmentsRequest.complete();
-  }
-
-  /// Removes duplicate associated message guids from a list of [associatedMessages]
-  List<Message> normalizedAssociatedMessages(List<Message> associatedMessages) {
-    Set<int> guids = associatedMessages.map((e) => e.handleId ?? 0).toSet();
-    List<Message> normalized = [];
-
-    for (Message message in associatedMessages.reversed.toList()) {
-      if (guids.remove(message.handleId ?? 0)) {
-        normalized.add(message);
-      }
-    }
-    return normalized;
   }
 
   bool withinTimeThreshold(Message first, Message second, {threshold: 5}) {
@@ -215,9 +192,7 @@ class _MessageState extends State<MessageWidget>
               widget.newerMessage.dateDelivered == null);
     }
 
-    if (widget.message != null &&
-        isEmptyString(widget.message.text) &&
-        !widget.message.hasAttachments && widget.message.balloonBundleId == null) {
+    if (widget.message.isGroupEvent()) {
       return GroupEvent(message: widget.message);
     }
 
@@ -237,74 +212,49 @@ class _MessageState extends State<MessageWidget>
       showHandle: widget.showHandle,
     );
 
-    bool shouldShowBigEmoji =
-        MessageHelper.shouldShowBigEmoji(widget.message.text);
+    UrlPreviewWidget urlPreviewWidget = UrlPreviewWidget(
+      key: new Key("preview-${widget.message.guid}"),
+      linkPreviews: widget.message.getPreviewAttachments(),
+      message: widget.message);
+    StickersWidget stickersWidget = StickersWidget(
+      key: new Key(
+          "stickers-${associatedCount.toString()}"),
+      messages: widget.message.associatedMessages);
+    ReactionsWidget reactionsWidget =  ReactionsWidget(
+      key: new Key(
+          "reactions-${associatedCount.toString()}"),
+      message: widget.message,
+      associatedMessages: widget.message.associatedMessages);
 
     // Add the correct type of message to the message stack
     Widget message;
     if (widget.message.isFromMe) {
       message = SentMessage(
           offset: widget.offset,
-          hasReactions: associatedMessages.length > 0,
           showTail: showTail,
           olderMessage: widget.olderMessage,
           message: widget.message,
-          urlPreviewWidget: UrlPreviewWidget(
-              key: new Key("preview-${widget.message.guid}"),
-              linkPreviews: this
-                  .attachments
-                  .where((item) => item.mimeType == null)
-                  .toList(),
-              message: widget.message),
-          stickersWidget: StickersWidget(
-            key: new Key(
-                "stickers-${this.associatedMessages.length.toString()}"),
-            messages: this.associatedMessages,
-          ),
+          urlPreviewWidget: urlPreviewWidget,
+          stickersWidget: stickersWidget,
           attachmentsWidget: widgetAttachments,
-          reactionsWidget: ReactionsWidget(
-            key: new Key(
-                "reactions-${this.associatedMessages.length.toString()}"),
-            message: widget.message,
-            associatedMessages: associatedMessages,
-          ),
+          reactionsWidget: reactionsWidget,
           chat: widget.chat,
           shouldFadeIn: CurrentChat.of(context)
               .sentMessages
               .contains(widget.message.guid),
           showHero: widget.showHero,
-          showDeliveredReceipt: widget.isFirstSentMessage,
-          shouldShowBigEmoji: shouldShowBigEmoji);
+          showDeliveredReceipt: widget.isFirstSentMessage);
     } else {
       message = ReceivedMessage(
         offset: widget.offset,
-        hasReactions: associatedMessages.length > 0,
         showTail: showTail,
         olderMessage: widget.olderMessage,
         message: widget.message,
         showHandle: widget.showHandle,
-        isGroup: widget.chat.participants.length > 1,
-        attachments:
-            this.attachments.where((item) => item.mimeType != null).toList(),
-        urlPreviewWidget: UrlPreviewWidget(
-            key: new Key("preview-${widget.message.guid}"),
-            linkPreviews: this
-                .attachments
-                .where((item) => item.mimeType == null)
-                .toList(),
-            message: widget.message),
-        stickersWidget: StickersWidget(
-          key: new Key("stickers-${this.associatedMessages.length.toString()}"),
-          messages: associatedMessages,
-        ),
+        urlPreviewWidget: urlPreviewWidget,
+        stickersWidget: stickersWidget,
         attachmentsWidget: widgetAttachments,
-        shouldShowBigEmoji: shouldShowBigEmoji,
-        reactionsWidget: ReactionsWidget(
-          key:
-              new Key("reactions-${this.associatedMessages.length.toString()}"),
-          message: widget.message,
-          associatedMessages: associatedMessages,
-        ),
+        reactionsWidget: reactionsWidget
       );
     }
 

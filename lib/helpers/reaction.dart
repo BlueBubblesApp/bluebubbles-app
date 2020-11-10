@@ -121,7 +121,7 @@ class Reaction {
   }
 
   Widget getSmallWidget(BuildContext context) {
-    if (this.messages.length == 0) return null;
+    if (this.messages.isEmpty) return null;
     
 
     List<Widget> reactionList = [];

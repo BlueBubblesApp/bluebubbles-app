@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:bluebubbles/helpers/attachment_helper.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_attachment.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';

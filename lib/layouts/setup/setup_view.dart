@@ -28,6 +28,7 @@ class _SetupViewState extends State<SetupView> {
   FCMData _fcmDataCopy;
   double numberOfMessages = 25;
   bool downloadAttachments = false;
+  bool skipEmptyChats = true;
 
   @override
   void initState() {
@@ -94,7 +95,7 @@ class _SetupViewState extends State<SetupView> {
           Container(height: 20.0),
           ClipOval(
             child: Material(
-              color: Colors.blue, // button color
+              color: Theme.of(context).primaryColor, // button color
               child: InkWell(
                 child: SizedBox(
                     width: 60,
@@ -136,7 +137,7 @@ class _SetupViewState extends State<SetupView> {
             Container(height: 20.0),
             ClipOval(
               child: Material(
-                color: Colors.blue, // button color
+                color: Theme.of(context).primaryColor, // button color
                 child: InkWell(
                   child: SizedBox(
                       width: 60,
@@ -180,7 +181,7 @@ class _SetupViewState extends State<SetupView> {
             Container(height: 20.0),
             ClipOval(
               child: Material(
-                color: Colors.blue, // button color
+                color: Theme.of(context).primaryColor, // button color
                 child: InkWell(
                     child: SizedBox(
                         width: 60,
@@ -229,7 +230,7 @@ class _SetupViewState extends State<SetupView> {
                                 Container(
                                   child: CircularProgressIndicator(
                                     valueColor: AlwaysStoppedAnimation<Color>(
-                                      Colors.blue,
+                                      Theme.of(context).primaryColor,
                                     ),
                                   ),
                                 ),
@@ -306,7 +307,7 @@ class _SetupViewState extends State<SetupView> {
               padding: EdgeInsets.only(top: 15.0),
               child: ClipOval(
                 child: Material(
-                  color: Colors.blue, // button color
+                  color: Theme.of(context).primaryColor,
                   child: InkWell(
                     child: SizedBox(
                       width: 60,
@@ -454,6 +455,39 @@ class _SetupViewState extends State<SetupView> {
                 ],
               ),
             ),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 40.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                mainAxisSize: MainAxisSize.max,
+                children: [
+                  Text(
+                    "Skip empty chats (no messages)",
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodyText1,
+                    textAlign: TextAlign.center,
+                  ),
+                  Switch(
+                    value: skipEmptyChats,
+                    activeColor: Theme.of(context).primaryColor,
+                    activeTrackColor:
+                        Theme.of(context).primaryColor.withAlpha(200),
+                    inactiveTrackColor:
+                        Theme.of(context).primaryColor.withAlpha(75),
+                    inactiveThumbColor:
+                        Theme.of(context).textTheme.bodyText1.color,
+                    onChanged: (bool value) {
+                      if (!this.mounted) return;
+
+                      setState(() {
+                        skipEmptyChats = value;
+                      });
+                    },
+                  )
+                ],
+              ),
+            ),
             Container(height: 20.0),
             ClipOval(
               child: Material(
@@ -480,6 +514,8 @@ class _SetupViewState extends State<SetupView> {
                           numberOfMessages;
                       SocketManager().setup.downloadAttachments =
                           downloadAttachments;
+                      SocketManager().setup.skipEmptyChats =
+                          skipEmptyChats;
 
                       // Start syncing
                       SocketManager().setup.startSync(
@@ -565,7 +601,7 @@ class _SetupViewState extends State<SetupView> {
                             ? progress
                             : null,
                         backgroundColor: Colors.white,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                        valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
                       ),
                     ),
                     Spacer(
@@ -597,7 +633,7 @@ class _SetupViewState extends State<SetupView> {
                       borderRadius: BorderRadius.circular(20),
                       child: LinearProgressIndicator(
                         backgroundColor: Colors.white,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                        valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
                       ),
                     ),
                     Spacer(

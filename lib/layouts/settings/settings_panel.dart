@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:ui';
 
+import 'package:bluebubbles/blocs/chat_bloc.dart';
 import "package:bluebubbles/helpers/string_extension.dart";
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -31,6 +32,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
   bool needToReconnect = false;
   List<DisplayMode> modes;
   DisplayMode currentMode;
+  bool showUrl = false;
 
   @override
   void initState() {
@@ -97,19 +99,23 @@ class _SettingsPanelState extends State<SettingsPanel> {
 
                       switch (connectionStatus) {
                         case SocketState.CONNECTED:
-                          subtitle = "Connected";
+                          if (showUrl) {
+                            subtitle = "Connected (${this._settingsCopy.serverAddress})";
+                          } else {
+                            subtitle = "Connected (Tap to view URL)";
+                          }
                           break;
                         case SocketState.DISCONNECTED:
-                          subtitle = "Disconnected (Tap to retry)";
+                          subtitle = "Disconnected";
                           break;
                         case SocketState.ERROR:
-                          subtitle = "Error (Tap to retry)";
+                          subtitle = "Error";
                           break;
                         case SocketState.CONNECTING:
                           subtitle = "Connecting...";
                           break;
                         case SocketState.FAILED:
-                          subtitle = "Failed to connect (Tap to retry)";
+                          subtitle = "Failed to connect";
                           break;
                       }
 
@@ -117,10 +123,12 @@ class _SettingsPanelState extends State<SettingsPanel> {
                         title: "Connection Status",
                         subTitle: subtitle,
                         onTap: () async {
-                          if ([SocketState.CONNECTED, SocketState.CONNECTING]
-                              .contains(connectionStatus)) return;
-                          await SocketManager().refreshConnection();
-                          if (this.mounted) setState(() {});
+                          if (![SocketState.CONNECTED].contains(connectionStatus)) return;
+                          if (this.mounted) {
+                            setState(() {
+                              showUrl = !showUrl;
+                            });
+                          }
                         },
                         trailing: connectionStatus == SocketState.CONNECTED ||
                                 connectionStatus == SocketState.CONNECTING
@@ -219,6 +227,25 @@ class _SettingsPanelState extends State<SettingsPanel> {
                   initialVal: _settingsCopy.showIncrementalSync,
                   title: "Notify when incremental sync complete",
                 ),
+                SettingsSwitch(
+                  onChanged: (bool val) {
+                    _settingsCopy.rainbowBubbles = val;
+                    ChatBloc().refreshChats();
+                    setState(() {});
+                  },
+                  initialVal: _settingsCopy.rainbowBubbles,
+                  title: "Colorful Chats",
+                ),
+                (_settingsCopy.rainbowBubbles)
+                  ? SettingsSwitch(
+                    onChanged: (bool val) {
+                      _settingsCopy.rainbowOnlyGroups = val;
+                      ChatBloc().refreshChats();
+                    },
+                    initialVal: _settingsCopy.rainbowOnlyGroups,
+                    title: "    -> Only for groups",
+                  )
+                  : Container(),
                 SettingsOptions<AdaptiveThemeMode>(
                   initial: AdaptiveTheme.of(context).mode,
                   onChanged: (val) {
@@ -232,7 +259,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                 SettingsTile(
                   title: "Theming",
                   trailing:
-                      Icon(Icons.arrow_forward_ios, color: HexColor('26262a')),
+                      Icon(Icons.arrow_forward_ios, color: Theme.of(context).primaryColor),
                   onTap: () async {
                     Navigator.of(context).push(
                       CupertinoPageRoute(
@@ -519,6 +546,8 @@ class _SettingsSliderState extends State<SettingsSlider> {
             style: Theme.of(context).textTheme.bodyText1,
           ),
           subtitle: Slider(
+            activeColor: Theme.of(context).primaryColor,
+            inactiveColor: Theme.of(context).primaryColor.withOpacity(0.2),
             value: currentVal,
             onChanged: (double value) {
               if (!this.mounted) return;

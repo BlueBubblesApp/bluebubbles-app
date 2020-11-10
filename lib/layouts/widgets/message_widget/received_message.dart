@@ -6,7 +6,7 @@ import 'package:bluebubbles/layouts/widgets/message_widget/message_content/messa
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
-import 'package:bluebubbles/repository/models/attachment.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/material.dart';
 
@@ -16,10 +16,6 @@ class ReceivedMessage extends StatefulWidget {
   final Message message;
   final Message olderMessage;
   final bool showHandle;
-  final bool isGroup;
-  final bool hasReactions;
-  final bool shouldShowBigEmoji;
-  final List<Attachment> attachments;
 
   // Sub-widgets
   final Widget stickersWidget;
@@ -33,10 +29,6 @@ class ReceivedMessage extends StatefulWidget {
     @required this.olderMessage,
     @required this.message,
     @required this.showHandle,
-    @required this.hasReactions,
-    @required this.isGroup,
-    @required this.shouldShowBigEmoji,
-    @required this.attachments,
 
     // Sub-widgets
     @required this.stickersWidget,
@@ -82,16 +74,16 @@ class _ReceivedMessageState extends State<ReceivedMessage>
   }
 
   /// Builds the message bubble with teh tail (if applicable)
-  Widget _buildMessageWithTail(
-      Message message, bool bigEmoji, bool hasReactions) {
-    if (bigEmoji) {
+  Widget _buildMessageWithTail(Message message) {
+    if (message.isBigEmoji()) {
+      bool hasReactions = (message?.getReactions() ?? []).length > 0 ?? false;
       return Padding(
           padding: EdgeInsets.only(
               left: CurrentChat.of(context).chat.participants.length > 1
                   ? 5.0
                   : 0.0,
               right: (hasReactions) ? 15.0 : 0.0,
-              top: widget.hasReactions ? 15 : 0),
+              top: widget.message.getReactions().length > 0 ? 15 : 0),
           child: Text(message.text,
               style: Theme.of(context)
                   .textTheme
@@ -99,13 +91,17 @@ class _ReceivedMessageState extends State<ReceivedMessage>
                   .apply(fontSizeFactor: 4)));
     }
 
+    bool isRainbow = shouldBeRainbow();
     return Stack(
       alignment: AlignmentDirectional.bottomStart,
       children: [
-        if (widget.showTail) MessageTail(isFromMe: false),
+        if (widget.showTail) MessageTail(message: message),
         Container(
           margin: EdgeInsets.only(
-            top: widget.hasReactions && !widget.message.hasAttachments ? 18 : 0,
+            top: widget.message.getReactions().length > 0 &&
+                    !widget.message.hasAttachments
+                ? 18
+                : 0,
             left: 10,
             right: 10,
           ),
@@ -119,13 +115,20 @@ class _ReceivedMessageState extends State<ReceivedMessage>
           ),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
-            color: Theme.of(context).accentColor,
+            color: isRainbow
+                ? toColor(message.handle.address, context)
+                : Theme.of(context).accentColor,
           ),
           child: RichText(
             text: TextSpan(
               children:
                   MessageWidgetMixin.buildMessageSpans(context, widget.message),
-              style: Theme.of(context).textTheme.bodyText1,
+              style: isRainbow
+                  ? Theme.of(context)
+                      .textTheme
+                      .bodyText1
+                      .apply(color: Colors.white.withAlpha(225))
+                  : Theme.of(context).textTheme.bodyText1,
             ),
           ),
         ),
@@ -151,7 +154,9 @@ class _ReceivedMessageState extends State<ReceivedMessage>
       messageColumn.add(
         Padding(
           padding: EdgeInsets.only(
-              left: 15.0, top: 5.0, bottom: widget.hasReactions ? 0.0 : 3.0),
+              left: 15.0,
+              top: 5.0,
+              bottom: widget.message.getReactions().length > 0 ? 0.0 : 3.0),
           child: Text(
             contactTitle,
             style: Theme.of(context).textTheme.subtitle1,
@@ -161,7 +166,7 @@ class _ReceivedMessageState extends State<ReceivedMessage>
     }
 
     // Second, add the attachments
-    if (widget.attachments.length > 0) {
+    if (widget.message.getRealAttachments().length > 0) {
       messageColumn.add(
         addStickersToWidget(
           message: addReactionsToWidget(
@@ -175,20 +180,17 @@ class _ReceivedMessageState extends State<ReceivedMessage>
       );
     }
 
-    // Third, let's add the message or URL preview
+    // Third, let's add the actual message we want to show
     Widget message;
-    if (widget.message.hasDdResults && this.hasHyperlinks) {
+    if (widget.message.isUrlPreview()) {
       message = Padding(
         padding: EdgeInsets.only(left: 10.0),
         child: widget.urlPreviewWidget,
       );
-    } else if (widget.message.balloonBundleId != null &&
-        widget.message.balloonBundleId !=
-            'com.apple.messages.URLBalloonProvider') {
+    } else if (widget.message.isInteractive()) {
       message = BalloonBundleWidget(message: widget.message);
-    } else if (!isEmptyString(widget.message.text)) {
-      message = _buildMessageWithTail(
-          widget.message, widget.shouldShowBigEmoji, widget.hasReactions);
+    } else if (widget.message.hasText()) {
+      message = _buildMessageWithTail(widget.message);
     }
 
     // Fourth, let's add any reactions or stickers to the widget
@@ -199,7 +201,7 @@ class _ReceivedMessageState extends State<ReceivedMessage>
               messageWidget: message,
               reactions: widget.reactionsWidget,
               message: widget.message,
-              shouldShow: widget.attachments.length == 0),
+              shouldShow: widget.message.getRealAttachments().isEmpty),
           stickers: widget.stickersWidget,
           isFromMe: widget.message.isFromMe,
         ),
@@ -210,7 +212,7 @@ class _ReceivedMessageState extends State<ReceivedMessage>
     // -> Contact avatar
     // -> Message
     List<Widget> msgRow = [];
-    if (widget.showTail && widget.isGroup) {
+    if (widget.showTail && CurrentChat.of(context).chat.isGroup()) {
       msgRow.add(
         Padding(
           padding: EdgeInsets.only(
@@ -243,7 +245,9 @@ class _ReceivedMessageState extends State<ReceivedMessage>
     return Padding(
       // Add padding when we are showing the avatar
       padding: EdgeInsets.only(
-          left: (!widget.showTail && widget.isGroup) ? 35.0 : 0.0,
+          left: (!widget.showTail && CurrentChat.of(context).chat.isGroup())
+              ? 35.0
+              : 0.0,
           bottom: (widget.showTail) ? 10.0 : 0.0),
       child: Row(
         mainAxisSize: MainAxisSize.max,

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:bluebubbles/blocs/message_bloc.dart';
@@ -31,9 +32,11 @@ class MessageView extends StatefulWidget {
 
 class MessageViewState extends State<MessageView>
     with TickerProviderStateMixin {
-  Future<LoadMessageResult> loader;
-  bool reachedTopOfChat = false;
+  Completer<LoadMessageResult> loader;
+  bool noMoreMessages = false;
+  bool noMoreLocalMessages = false;
   List<Message> _messages = <Message>[];
+
   GlobalKey<SliverAnimatedListState> _listKey;
   final Duration animationDuration = Duration(milliseconds: 400);
   bool initializedList = false;
@@ -41,6 +44,7 @@ class MessageViewState extends State<MessageView>
   ScrollController scrollController = new ScrollController();
   bool showScrollDown = false;
   int scrollState = -1; // -1: stopped, 0: start, 1: update
+  List<int> loadedPages = [];
 
   /// [CurrentChat] holds all info about the conversation that widgets commonly access
   CurrentChat currentChat;
@@ -81,7 +85,7 @@ class MessageViewState extends State<MessageView>
   @override
   void didChangeDependencies() async {
     super.didChangeDependencies();
-    if (_messages.length == 0) {
+    if (_messages.isEmpty) {
       widget.messageBloc.getMessages();
       if (this.mounted) setState(() {});
     }
@@ -91,6 +95,48 @@ class MessageViewState extends State<MessageView>
   void dispose() {
     currentChat.dispose();
     super.dispose();
+  }
+
+  Future<void> loadNextChunk() {
+    if (noMoreMessages || loadedPages.contains(_messages.length)) return null;
+    int messageCount = _messages.length;
+
+    // If we already are loading a chunk, don't load again
+    if (loader != null && !loader.isCompleted) {
+      return loader.future;
+    }
+
+    // Create a new completer
+    loader = new Completer();
+    loadedPages.add(messageCount);
+
+    // Start loading the next chunk of messages
+    widget.messageBloc
+        .loadMessageChunk(_messages.length, checkLocal: !noMoreLocalMessages)
+        .then((LoadMessageResult val) {
+      if (val != LoadMessageResult.FAILED_TO_RETREIVE) {
+        if (val == LoadMessageResult.RETREIVED_NO_MESSAGES) {
+          noMoreMessages = true;
+          debugPrint("(CHUNK) No more messages to load");
+        } else if (val == LoadMessageResult.RETREIVED_LAST_PAGE) {
+          // Mark this chat saying we have no more messages to load
+          noMoreLocalMessages = true;
+        }
+      }
+
+      // Complete the future
+      loader.complete(val);
+
+      // Only update the state if there are messages that were added
+      if (val != LoadMessageResult.RETREIVED_NO_MESSAGES &&
+          val != LoadMessageResult.FAILED_TO_RETREIVE) {
+        if (this.mounted) setState(() {});
+      }
+    }).catchError((ex) {
+      loader.complete(LoadMessageResult.FAILED_TO_RETREIVE);
+    });
+
+    return loader.future;
   }
 
   void handleNewMessage(MessageBlocEvent event) async {
@@ -258,29 +304,14 @@ class MessageViewState extends State<MessageView>
                       key: _listKey,
                       itemBuilder: (BuildContext context, int index,
                           Animation<double> animation) {
-                        if (index == _messages.length) {
-                          if (loader == null && !reachedTopOfChat) {
-                            loader = widget.messageBloc.loadMessageChunk(
-                                _messages.length,
-                                currentChat: currentChat);
-                            loader.then((val) {
-                              if (val == LoadMessageResult.FAILED_TO_RETREIVE) {
-                                loader = widget.messageBloc.loadMessageChunk(
-                                    _messages.length,
-                                    currentChat: currentChat);
-                              } else if (val ==
-                                  LoadMessageResult.RETREIVED_NO_MESSAGES) {
-                                reachedTopOfChat = true;
-                                loader = null;
-                              } else {
-                                loader = null;
-                              }
-                              if (this.mounted) setState(() {});
-                            });
-                          }
-
+                        // Load more messages if we are at the top and we aren't alrady loading
+                        // and we have more messages to load
+                        if (index >= _messages.length && !noMoreMessages) {
+                          loadNextChunk();
                           return NewMessageLoader();
-                        } else if (index > _messages.length) {
+                        }
+
+                        if (index >= _messages.length) {
                           return Container();
                         }
 

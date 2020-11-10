@@ -19,6 +19,11 @@ class EmojiConst {
   static final String charEmpty = '';
 }
 
+Map<String, String> nameMap = {
+  'com.apple.Handwriting.HandwritingProvider': 'Handwritten Message',
+  'com.apple.DigitalTouchBalloonProvider': 'Digital Touch'
+};
+
 class MessageHelper {
   static Future<List<Message>> bulkAddMessages(
       Chat chat, List<dynamic> messages,
@@ -195,8 +200,16 @@ class MessageHelper {
 
   static Future<String> getNotificationText(Message message) async {
     // If the item type is not 0, it's a group event
-    if (message.itemType != 0) {
+    if (message.isGroupEvent()) {
       return await getGroupEventText(message);
+    }
+
+    if (message.isInteractive()) {
+      return "Interactive: ${MessageHelper.getInteractiveText(message)}";
+    }
+
+    if (isNullOrEmpty(message.text, trimString: true)) {
+      return "Empty message";
     }
 
     // Parse/search for links
@@ -204,7 +217,7 @@ class MessageHelper {
 
     // If there are attachments, return the number of attachments
     int aCount = (message.attachments ?? []).length;
-    if (message.hasAttachments && matches.length == 0) {
+    if (message.hasAttachments && matches.isEmpty) {
       // Build the attachment output by counting the attachments
       String output = "Attachment${aCount > 1 ? "s" : ""}";
       Map<String, int> counts = {};
@@ -283,5 +296,42 @@ class MessageHelper {
         .trim();
 
     return items.length <= 3 && replaced.isEmpty;
+  }
+
+  /// Removes duplicate associated message guids from a list of [associatedMessages]
+  static List<Message> normalizedAssociatedMessages(List<Message> associatedMessages) {
+    Set<int> guids = associatedMessages.map((e) => e.handleId ?? 0).toSet();
+    List<Message> normalized = [];
+
+    for (Message message in associatedMessages.reversed.toList()) {
+      if (guids.remove(message.handleId ?? 0)) {
+        normalized.add(message);
+      }
+    }
+    return normalized;
+  }
+
+  static String getInteractiveText(Message message) {
+    if (message.balloonBundleId == null) return "Null Balloon Bundle ID";
+    if (nameMap.containsKey(message.balloonBundleId)) {
+      return nameMap[message.balloonBundleId];
+    }
+
+    String val = message.balloonBundleId.toLowerCase();
+    if (val.contains("gamepigeon")) {
+      return "Game Pigeon";
+    } else if (val.contains("contextoptional")) {
+      List<String> items = val.split(".").reversed.toList();
+      if (items.length >= 2) {
+        return items[1];
+      }
+    } else if (val.contains("mobileslideshow")) {
+      return "Photo Slideshow";
+    } else if (val.contains("PeerPayment")) {
+      return "Payment Request";
+    }
+
+    List<String> items = val.split(":").reversed.toList();
+    return (items.length > 0) ? items[0] : val;
   }
 }
