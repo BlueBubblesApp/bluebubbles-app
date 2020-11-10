@@ -94,10 +94,6 @@ class Attachment {
       if (map.containsKey("participants")) {
         map.remove("participants");
       }
-      // if (message.id == null) {
-      //   //and here
-      //   await message.save();
-      // }
 
       this.id = await db.insert("attachment", map);
 
@@ -105,6 +101,21 @@ class Attachment {
         await db.insert("attachment_message_join",
             {"attachmentId": this.id, "messageId": message.id});
       }
+    }
+
+    return this;
+  }
+
+  Future<Attachment> update() async {
+    final Database db = await DBProvider.db.database;
+
+    Map<String, dynamic> params = {
+      "width": this.width,
+      "height": this.height,
+    };
+    if (this.id != null) {
+      await db.update("attachment", params,
+          where: "ROWID = ?", whereArgs: [this.id]);
     }
 
     return this;

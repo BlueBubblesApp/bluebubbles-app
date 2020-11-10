@@ -20,14 +20,8 @@ class AttachmentDownloader {
   int _currentChunk = 0;
   int _totalChunks = 0;
   int _chunkSize = 500; // Default to 500
-  List<int> _currentBytes = <int>[];
-  String _guid = "";
   Function _cb;
   Attachment _attachment;
-  String _title;
-  Chat _chat;
-  bool _createNotification;
-  int _socketProcessId;
   Function _onComplete;
   Function _onError;
 
@@ -35,11 +29,10 @@ class AttachmentDownloader {
   Attachment get attachment => _attachment;
 
   AttachmentDownloader(Attachment attachment,
-      {bool createNotification = false, Function onComplete, Function onError}) {
+      {Function onComplete, Function onError}) {
     // Set default chunk size based on the current settings
     _chunkSize = SettingsManager().settings.chunkSize * 1024;
     _attachment = attachment;
-    _createNotification = createNotification;
     _onComplete = onComplete;
     _onError = onError;
 
@@ -55,8 +48,6 @@ class AttachmentDownloader {
 
   getChunkRecursive(
       String guid, int index, int total, List<int> currentBytes, Function cb) {
-    _currentBytes = currentBytes;
-
     // if (index <= total) {
     Map<String, dynamic> params = new Map();
     params["identifier"] = guid;
@@ -86,7 +77,6 @@ class AttachmentDownloader {
 
         // Update the progress in stream
         _stream.sink.add({"Progress": progress});
-        _currentBytes = currentBytes;
         _currentChunk = index + 1;
 
         // Get the next chunk
@@ -96,17 +86,7 @@ class AttachmentDownloader {
         await cb(currentBytes);
       }
     }, reason: "Attachment downloader " + attachment.guid);
-    // }
   }
-
-  // void updateProgressNotif(double _progress) {
-  //   if (_createNotification && _attachment.mimeType != null) {
-  //     NotificationManager().updateProgressNotification(
-  //       _attachment.id,
-  //       _progress,
-  //     );
-  //   }
-  // }
 
   void fetchAttachment(Attachment attachment) async {
     if (SocketManager().attachmentDownloaders.containsKey(attachment.guid)) {
@@ -118,23 +98,7 @@ class AttachmentDownloader {
     Stopwatch stopwatch = new Stopwatch();
     stopwatch.start();
 
-    _guid = attachment.guid;
     _totalChunks = numOfChunks;
-
-    // if (_createNotification &&
-    //     _attachment.mimeType != null &&
-    //     _message != null) {
-    //   _chat = await Message.getChat(_message);
-    //   _title = await getFullChatTitle(_chat);
-    //   NotificationManager().createProgressNotification(
-    //     _title,
-    //     "Downloading Attachment",
-    //     _chat.guid,
-    //     _attachment.id,
-    //     _chat.id,
-    //     0.0,
-    //   );
-    // }
 
     _cb = (List<int> data) async {
       stopwatch.stop();
@@ -182,6 +146,11 @@ class AttachmentDownloader {
     }
 
     getChunkRecursive(attachment.guid, 0, numOfChunks, [], _cb);
+  }
+
+  Future<void> updateAttachmentDimensions() async {
+    String mimeType = attachment.mimeType;
+    // if()
   }
 
   Future<File> writeToFile(Uint8List data, String path) async {

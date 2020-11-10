@@ -41,7 +41,7 @@ class _BalloonBubbleState extends State<BalloonBundleWidget> {
       });
     }
   }
-  
+
   String friendlyName() {
     if (widget.message.balloonBundleId == null) return "Null Balloon Bundle ID";
     if (nameMap.containsKey(widget.message.balloonBundleId)) {
@@ -83,7 +83,7 @@ class _BalloonBubbleState extends State<BalloonBundleWidget> {
       return Icons.monetization_on;
     }
 
-    return Icons.app_blocking;
+    return Icons.apps;
   }
 
   @override
@@ -91,44 +91,39 @@ class _BalloonBubbleState extends State<BalloonBundleWidget> {
     return ClipRRect(
       borderRadius: BorderRadius.circular(20),
       child: Container(
-        constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 3 / 4,
-        ),
-        child: Container(
-          width: 200,
-          color: Theme.of(context).accentColor,
-          child: Padding(
-            padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 10.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                Text(
-                  bundleName ?? "Unknown Balloon Bundle",
-                  textAlign: TextAlign.center,
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.headline1
-                ),
-                Text(
-                  "Interactive Message",
-                  textAlign: TextAlign.center,
-                  maxLines: 1,
-                  style: Theme.of(context).textTheme.subtitle1
-                ),
-                Container(height: 10.0),
-                Icon(bundleIcon, color: Theme.of(context).textTheme.bodyText1.color, size: 48),
-                Container(height: 10.0),
-                Text(
-                  "(Cannot open on Android)",
-                  textAlign: TextAlign.center,
-                  maxLines: 1,
-                  style: Theme.of(context).textTheme.subtitle2
-                ),
-              ],
-            ),
+          constraints: BoxConstraints(
+            maxWidth: MediaQuery.of(context).size.width * 3 / 4,
           ),
-        )
-      ),
+          child: Container(
+            width: 200,
+            color: Theme.of(context).accentColor,
+            child: Padding(
+              padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 10.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  Text(bundleName ?? "Unknown Balloon Bundle",
+                      textAlign: TextAlign.center,
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.headline1),
+                  Text("Interactive Message",
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      style: Theme.of(context).textTheme.subtitle1),
+                  Container(height: 10.0),
+                  Icon(bundleIcon,
+                      color: Theme.of(context).textTheme.bodyText1.color,
+                      size: 48),
+                  Container(height: 10.0),
+                  Text("(Cannot open on Android)",
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      style: Theme.of(context).textTheme.subtitle2),
+                ],
+              ),
+            ),
+          )),
     );
   }
 }

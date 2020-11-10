@@ -10,6 +10,7 @@ import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/material.dart';
 import 'package:metadata_fetch/metadata_fetch.dart';
 import 'package:video_player/video_player.dart';
+import 'package:video_thumbnail/video_thumbnail.dart';
 
 /// Holds cached metadata for the currently opened chat
 ///
@@ -104,6 +105,21 @@ class CurrentChat {
     for (Message message in messages) {
       if (message.hasAttachments) {
         List<Attachment> attachments = await Message.getAttachments(message);
+        for (Attachment element in attachments) {
+          if (element.width == null) {
+            String mimeType = element.mimeType;
+            if (mimeType != null)
+              mimeType = mimeType.substring(0, mimeType.indexOf("/"));
+            if (mimeType == "image") {
+            } else if (mimeType == "video") {
+              // Uint8List thumbnail = await VideoThumbnail.thumbnailData(
+              //   video: element.,
+              //   imageFormat: ImageFormat.JPEG,
+              //   quality: SettingsManager().settings.lowMemoryMode ? 10 : 25,
+              // );
+            }
+          }
+        }
         messageAttachments[message.guid] = attachments;
       }
     }

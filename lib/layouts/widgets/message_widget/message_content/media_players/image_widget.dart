@@ -91,32 +91,23 @@ class _ImageWidgetState extends State<ImageWidget>
               maxWidth: MediaQuery.of(context).size.width / 2,
               maxHeight: MediaQuery.of(context).size.height / 2,
             ),
-            child: data == null
-                ? Container(
-                    height: 5,
-                    child: Center(
-                      child: LinearProgressIndicator(
-                        backgroundColor: Colors.grey,
-                        valueColor: AlwaysStoppedAnimation(
-                            Theme.of(context).primaryColor),
-                      ),
-                    ),
-                  )
-                : Container(
-                    child: Hero(
-                      tag: widget.attachment.guid,
-                      child: AnimatedSize(
-                        vsync: this,
-                        curve: Curves.easeInOut,
-                        alignment: Alignment.center,
-                        duration: Duration(milliseconds: 250),
-                        child: Image.memory(data),
-                      ),
-                    ),
-                    constraints: BoxConstraints(
-                      maxHeight: MediaQuery.of(context).size.height / 3,
-                    ),
-                  ),
+            child: Container(
+              child: Hero(
+                tag: widget.attachment.guid,
+                child: AspectRatio(
+                  aspectRatio: widget.attachment.width != null &&
+                          widget.attachment.height != null
+                      ? (widget.attachment.width / widget.attachment.height)
+                          .toDouble()
+                      : 0,
+                  child: buildSwitcher(),
+                ),
+              ),
+              color: Colors.transparent,
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height / 3,
+              ),
+            ),
           ),
           Positioned.fill(
             child: Material(
@@ -150,4 +141,9 @@ class _ImageWidgetState extends State<ImageWidget>
       ),
     );
   }
+
+  Widget buildSwitcher() => AnimatedSwitcher(
+        duration: Duration(milliseconds: 150),
+        child: data != null ? Image.memory(data) : Container(),
+      );
 }
