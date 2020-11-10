@@ -328,30 +328,37 @@ int _getInt(str) {
   return hash;
 }
 
-Color toColor(String str, BuildContext context) {
-  try {
-    var hash = _getInt(str);
-    var r = (hash & 0xFF0000) >> 16;
-    var g = (hash & 0x00FF00) >> 8;
-    var b = hash & 0x0000FF;
-    var rr = r.toString();
-    var gg = g.toString();
-    var bb = b.toString();
-    return Color(int.parse('0xFF' +
-        rr.substring(rr.length - 2) +
-        gg.substring(gg.length - 2) +
-        bb.substring(bb.length - 2)));
-  } catch (err) {
-    return Theme.of(context).accentColor;
+List<Color> toColorGradient(String str) {
+  int total = 0;
+  for (int i = 0; i < (str ?? "").length; i++) {
+    total += str.codeUnitAt(i);
+  }
+
+  // 3000 is relatively random
+  // I picked it because 99% of all totals were less than 3000
+  double seed = total / 3000;
+
+  if (seed < 0.125) {
+    return [HexColor("fd678d"), HexColor("ff8aa8")];
+  } else if (seed >= 0.125 && seed < 0.25) {
+    return [HexColor("ff534d"), HexColor("fd726a")];
+  } else if (seed >= 0.25 && seed < 0.375) {
+    return [HexColor("ff534d"), HexColor("fd726a")];
+  } else if (seed >= 0.375 && seed < 0.5) {
+    return [HexColor("fea21c"), HexColor("feb854")];
+  } else if (seed >= 0.5 && seed < 0.625) {
+    return [HexColor("ffca1c"), HexColor("fcd752")];
+  } else if (seed >= 0.625 && seed < 0.75) {
+    return [HexColor("5ede79"), HexColor("8de798")];
+  } else if (seed >= 0.75 && seed < 0.875) {
+    return [HexColor("6bcff6"), HexColor("94ddfd")];
+  } else {
+    return [HexColor("a78df3"), HexColor("bcabfc")];
   }
 }
 
-bool shouldBeRainbow({Chat chat}) {
+bool shouldBeRainbow(Chat chat) {
   Chat theChat = chat;
   if (theChat == null) return false;
-  if (!SettingsManager().settings.rainbowBubbles) return false;
-  if (SettingsManager().settings.rainbowOnlyGroups && theChat.isGroup())
-    return true;
-  if (!SettingsManager().settings.rainbowOnlyGroups) return true;
-  return false;
+  return SettingsManager().settings.rainbowBubbles;
 }

@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/attachment_info_bloc.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
-import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:flutter/material.dart';
 
@@ -169,6 +168,7 @@ class ChatBloc {
 
   void recursiveGetChats() async {
     // Get more chats
+    int len = _chats.length;
     List<Chat> newChats = await Chat.getChats(limit: 10, offset: _chats.length);
 
     // If there were indeed results, then continue
@@ -184,12 +184,17 @@ class ChatBloc {
             break;
           }
         }
+
         if (existingChat) continue;
         _chats.add(newChat);
         await initTileValsForChat(newChat);
       }
-      _chatController.sink.add(_chats);
-      recursiveGetChats();
+
+      // Only keep going if the last request added new chats
+      if (_chats.length > len) {
+        _chatController.sink.add(_chats);
+        recursiveGetChats();
+      }
     }
   }
 

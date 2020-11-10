@@ -1,18 +1,14 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
-import 'package:bluebubbles/repository/models/fcm_data.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/repository/models/message.dart';
-import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:bluebubbles/repository/models/theme_object.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
 
 enum Tables {
@@ -64,6 +60,13 @@ class DBProvider {
         upgrade: (Database db) {
           db.execute(
               "ALTER TABLE message ADD COLUMN balloonBundleId TEXT DEFAULT NULL;");
+        }),
+    new DBUpgradeItem(
+        fromVersions: [1, 2],
+        toVersions: [3],
+        upgrade: (Database db) {
+          db.execute(
+              "ALTER TABLE chat ADD COLUMN isFiltered INTEGER DEFAULT 0;");
         })
   ];
 
@@ -207,6 +210,7 @@ class DBProvider {
         "style INTEGER NOT NULL,"
         "chatIdentifier TEXT NOT NULL,"
         "isArchived INTEGER DEFAULT 0,"
+        "isFiltered INTEGER DEFAULT 0,"
         "isMuted INTEGER DEFAULT 0,"
         "hasUnreadMessage INTEGER DEFAULT 0,"
         "latestMessageDate INTEGER DEFAULT 0,"
