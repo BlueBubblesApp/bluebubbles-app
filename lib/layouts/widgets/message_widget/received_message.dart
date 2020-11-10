@@ -6,7 +6,6 @@ import 'package:bluebubbles/layouts/widgets/message_widget/message_content/messa
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/material.dart';
 
@@ -89,7 +88,6 @@ class _ReceivedMessageState extends State<ReceivedMessage>
                   .apply(fontSizeFactor: 4)));
     }
 
-    bool isRainbow = shouldBeRainbow();
     return Stack(
       alignment: AlignmentDirectional.bottomStart,
       children: [
@@ -113,20 +111,13 @@ class _ReceivedMessageState extends State<ReceivedMessage>
           ),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
-            color: isRainbow
-                ? toColor(message.handle.address, context)
-                : Theme.of(context).accentColor,
+            color: Theme.of(context).accentColor,
           ),
           child: RichText(
             text: TextSpan(
               children:
                   MessageWidgetMixin.buildMessageSpans(context, widget.message),
-              style: isRainbow
-                  ? Theme.of(context)
-                      .textTheme
-                      .bodyText1
-                      .apply(color: Colors.white.withAlpha(225))
-                  : Theme.of(context).textTheme.bodyText1,
+              style: Theme.of(context).textTheme.bodyText1,
             ),
           ),
         ),
@@ -211,6 +202,7 @@ class _ReceivedMessageState extends State<ReceivedMessage>
     // -> Message
     List<Widget> msgRow = [];
     if (widget.showTail && CurrentChat().chat.isGroup()) {
+      List<Color> colors = toColorGradient(widget.message.handle.address);
       msgRow.add(
         Padding(
           padding: EdgeInsets.only(
@@ -221,6 +213,8 @@ class _ReceivedMessageState extends State<ReceivedMessage>
             initials: initials,
             size: 30,
             fontSize: 14,
+            color1: colors.length > 0 ? colors[0] : null,
+            color2: colors.length > 0 ? colors[1] : null
           ),
         ),
       );

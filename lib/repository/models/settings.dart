@@ -18,7 +18,6 @@ class Settings {
   int lastIncrementalSync = 0;
   int displayMode = 0;
   bool rainbowBubbles = false;
-  bool rainbowOnlyGroups = true;
 
   Skins skin = Skins.IOS;
 
@@ -51,8 +50,6 @@ class Settings {
         settings.displayMode = entry.value;
       } else if (entry.name == "rainbowBubbles") {
         settings.rainbowBubbles = entry.value;
-      } else if (entry.name == "rainbowOnlyGroups") {
-        settings.rainbowOnlyGroups = entry.value;
       }
     }
     settings.save(updateIfAbsent: false);
@@ -148,9 +145,5 @@ class Settings {
             name: "rainbowBubbles",
             value: this.rainbowBubbles,
             type: this.rainbowBubbles.runtimeType),
-        ConfigEntry(
-            name: "rainbowOnlyGroups",
-            value: this.rainbowOnlyGroups,
-            type: this.rainbowOnlyGroups.runtimeType),
       ];
 }

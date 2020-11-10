@@ -172,6 +172,7 @@ class _ConversationViewState extends State<ConversationView> {
     // Build the stack
     List<Widget> avatars = [];
     avatarStack.forEach((address, info) {
+      List<Color> colors = toColorGradient(address);
       avatars.add(
         Container(
           height: 42.0, // 2 px larger than the diameter
@@ -182,6 +183,8 @@ class _ConversationViewState extends State<ConversationView> {
             child: ContactAvatarWidget(
               contactImage: info["avatar"],
               initials: info["initials"],
+              color1: colors.length > 0 ? colors[0] : null,
+              color2: colors.length > 0 ? colors[1] : null
             ),
           ),
         ),

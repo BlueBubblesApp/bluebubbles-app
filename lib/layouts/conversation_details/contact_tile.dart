@@ -111,6 +111,8 @@ class _ContactTileState extends State<ContactTile> {
     dynamic initials = getInitials(
         contact?.displayName ?? widget.handle?.address ?? "", " ",
         size: 25);
+
+    List<Color> colors = toColorGradient(widget.handle?.address ?? "");
     return InkWell(
       onLongPress: () {
         Clipboard.setData(new ClipboardData(text: widget.handle.address));
@@ -132,6 +134,8 @@ class _ContactTileState extends State<ContactTile> {
         leading: ContactAvatarWidget(
           contactImage: contactImage,
           initials: initials,
+          color1: colors.length > 0 ? colors[0] : null,
+          color2: colors.length > 0 ? colors[1] : null
         ),
         trailing: SizedBox(
           width: MediaQuery.of(context).size.width / 3,

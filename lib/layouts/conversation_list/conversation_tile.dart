@@ -115,12 +115,18 @@ class _ConversationTileState extends State<ConversationTile>
       initials = getInitials(widget.chat.title, " ");
     }
 
-    Color avatarColor;
+    Color color1, color2;
     if (shouldBeRainbow(chat: widget.chat)) {
+      List<Color> colors = [];
       if (!widget.chat.isGroup() && widget.chat.participants.length > 0) {
-        avatarColor = toColor(widget.chat.participants[0].address, context);
+        colors.addAll(toColorGradient(widget.chat.participants[0].address));
       } else if (widget.chat.isGroup()) {
-        avatarColor = toColor(widget.chat.title, context);
+        colors.addAll(toColorGradient(widget.chat.title));
+      }
+
+      if (colors.isNotEmpty) {
+        color1 = colors[0];
+        color2 = colors[1];
       }
     }
 
@@ -267,7 +273,8 @@ class _ConversationTileState extends State<ConversationTile>
                             overflow: TextOverflow.ellipsis,
                           ),
                     leading: ContactAvatarWidget(
-                      color: avatarColor,
+                      color1: color1,
+                      color2: color2,
                       contactImage: contactImage,
                       initials: initials,
                     ),

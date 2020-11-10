@@ -230,22 +230,12 @@ class _SettingsPanelState extends State<SettingsPanel> {
                 SettingsSwitch(
                   onChanged: (bool val) {
                     _settingsCopy.rainbowBubbles = val;
-                    ChatBloc().refreshChats();
+                    ChatBloc().initTileVals(ChatBloc().chats);
                     setState(() {});
                   },
                   initialVal: _settingsCopy.rainbowBubbles,
                   title: "Colorful Chats",
                 ),
-                (_settingsCopy.rainbowBubbles)
-                  ? SettingsSwitch(
-                    onChanged: (bool val) {
-                      _settingsCopy.rainbowOnlyGroups = val;
-                      ChatBloc().refreshChats();
-                    },
-                    initialVal: _settingsCopy.rainbowOnlyGroups,
-                    title: "    -> Only for groups",
-                  )
-                  : Container(),
                 SettingsOptions<AdaptiveThemeMode>(
                   initial: AdaptiveTheme.of(context).mode,
                   onChanged: (val) {
