@@ -288,31 +288,29 @@ String stripHtmlTags(String htmlString) {
 // }
 
 List<Color> toColorGradient(String str) {
+  if (str.length == 0) return [HexColor("686868"), HexColor("928E8E")];
+
   int total = 0;
   for (int i = 0; i < (str ?? "").length; i++) {
     total += str.codeUnitAt(i);
   }
 
-  // 3000 is relatively random
-  // I picked it because 99% of all totals were less than 3000
-  double seed = total / 3000;
+  int seed = (total * str.length / 8).round();
 
-  if (seed < 0.125) {
-    return [HexColor("fd678d"), HexColor("ff8aa8")];
-  } else if (seed >= 0.125 && seed < 0.25) {
-    return [HexColor("ff534d"), HexColor("fd726a")];
-  } else if (seed >= 0.25 && seed < 0.375) {
-    return [HexColor("ff534d"), HexColor("fd726a")];
-  } else if (seed >= 0.375 && seed < 0.5) {
-    return [HexColor("fea21c"), HexColor("feb854")];
-  } else if (seed >= 0.5 && seed < 0.625) {
-    return [HexColor("ffca1c"), HexColor("fcd752")];
-  } else if (seed >= 0.625 && seed < 0.75) {
-    return [HexColor("5ede79"), HexColor("8de798")];
-  } else if (seed >= 0.75 && seed < 0.875) {
-    return [HexColor("6bcff6"), HexColor("94ddfd")];
+  if (seed < 901) {
+    return [HexColor("fd678d"), HexColor("ff8aa8")];  // Pink
+  } else if (seed >= 901 && seed < 915) {
+    return [HexColor("6bcff6"), HexColor("94ddfd")];  // Blue
+  } else if (seed >= 915 && seed < 925) {
+    return [HexColor("fea21c"), HexColor("feb854")];  // Orange
+  } else if (seed >= 925 && seed < 935) {
+    return [HexColor("5ede79"), HexColor("8de798")];  // Green
+  } else if (seed >= 935 && seed < 950) {
+    return [HexColor("ffca1c"), HexColor("fcd752")];  // Yellow
+  } else if (seed >= 950 && seed < 5000) {
+    return [HexColor("ff534d"), HexColor("fd726a")];  // Red
   } else {
-    return [HexColor("a78df3"), HexColor("bcabfc")];
+    return [HexColor("a78df3"), HexColor("bcabfc")];  // Purple
   }
 }
 
