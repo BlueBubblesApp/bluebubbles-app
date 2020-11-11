@@ -1,5 +1,7 @@
 import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/material.dart';
@@ -9,15 +11,13 @@ class ContactAvatarWidget extends StatefulWidget {
     Key key,
     this.size,
     this.fontSize,
-    this.color1,
-    this.color2,
     @required this.handle,
+    this.showBorder,
   }) : super(key: key);
   final Handle handle;
   final double size;
   final double fontSize;
-  final Color color1;
-  final Color color2;
+  final bool showBorder;
 
   @override
   _ContactAvatarWidgetState createState() => _ContactAvatarWidgetState();
@@ -26,6 +26,7 @@ class ContactAvatarWidget extends StatefulWidget {
 class _ContactAvatarWidgetState extends State<ContactAvatarWidget> {
   MemoryImage contactImage;
   String initials;
+  List<Color> colors;
 
   bool get isInvalid => (widget.handle?.address ?? null) == null;
 
@@ -33,6 +34,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> {
   void initState() {
     super.initState();
     if (isInvalid) return;
+    colors = toColorGradient(widget.handle.address);
     ContactManager().stream.listen((event) {
       for (String address in event) {
         if (address == widget.handle.address) {
@@ -94,9 +96,11 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> {
         height: widget.size ?? 40,
       );
     }
-    Color color1 = widget.color1;
-    Color color2 = widget.color2;
-    if (color1 == null || color2 == null) {
+    Color color1 = colors.length > 0 ? colors[0] : null;
+    Color color2 = colors.length > 0 ? colors[1] : null;
+    if (color1 == null ||
+        color2 == null ||
+        !SettingsManager().settings.rainbowBubbles) {
       color1 = HexColor("686868");
       color2 = HexColor("928E8E");
     }

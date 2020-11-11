@@ -191,7 +191,6 @@ class _ReceivedMessageState extends State<ReceivedMessage>
     // -> Message
     List<Widget> msgRow = [];
     if (widget.showTail && CurrentChat.of(context).chat.isGroup()) {
-      List<Color> colors = toColorGradient(widget.message.handle.address);
       msgRow.add(
         Padding(
           padding: EdgeInsets.only(
@@ -201,8 +200,6 @@ class _ReceivedMessageState extends State<ReceivedMessage>
             handle: widget.message.handle,
             size: 30,
             fontSize: 14,
-            color1: colors.length > 0 ? colors[0] : null,
-            color2: colors.length > 0 ? colors[1] : null,
           ),
         ),
       );

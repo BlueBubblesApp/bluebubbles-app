@@ -129,7 +129,6 @@ class _ConversationViewState extends State<ConversationView> {
     // Build the stack
     List<Widget> avatars = [];
     widget.chat.participants.forEach((Handle participant) {
-      List<Color> colors = toColorGradient(participant.address);
       avatars.add(
         Container(
           height: 42.0, // 2 px larger than the diameter
@@ -139,8 +138,6 @@ class _ConversationViewState extends State<ConversationView> {
             backgroundColor: Theme.of(context).accentColor,
             child: ContactAvatarWidget(
               handle: participant,
-              color1: colors.length > 0 ? colors[0] : null,
-              color2: colors.length > 0 ? colors[1] : null,
             ),
           ),
         ),

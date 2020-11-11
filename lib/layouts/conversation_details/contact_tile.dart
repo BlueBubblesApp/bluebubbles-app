@@ -129,8 +129,6 @@ class _ContactTileState extends State<ContactTile> {
         ),
         leading: ContactAvatarWidget(
           handle: widget.handle,
-          color1: colors.length > 0 ? colors[0] : null,
-          color2: colors.length > 0 ? colors[1] : null,
         ),
         trailing: SizedBox(
           width: MediaQuery.of(context).size.width / 3,

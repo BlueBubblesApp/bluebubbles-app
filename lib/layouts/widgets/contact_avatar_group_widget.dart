@@ -47,7 +47,7 @@ class _ContactAvatarGroupWidgetState extends State<ContactAvatarGroupWidget> {
                   alignment: Alignment.topRight,
                   child: ContactAvatarWidget(
                     handle: widget.participants[0],
-                    size: 30,
+                    size: 26,
                     fontSize: 12,
                   ),
                 ),
@@ -55,7 +55,7 @@ class _ContactAvatarGroupWidgetState extends State<ContactAvatarGroupWidget> {
                   alignment: Alignment.bottomLeft,
                   child: ContactAvatarWidget(
                     handle: widget.participants[1],
-                    size: 30,
+                    size: 26,
                     fontSize: 12,
                   ),
                 ),
