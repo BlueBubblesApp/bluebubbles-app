@@ -1,15 +1,16 @@
 import 'dart:io';
+import 'dart:typed_data';
 
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/image_viewer/attachmet_fullscreen_viewer.dart';
-import 'package:bluebubbles/layouts/image_viewer/image_viewer.dart';
-import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_attachments.dart';
+import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
-import 'package:image_size_getter/image_size_getter.dart';
+import 'package:image_size_getter/file_input.dart';
 import 'package:visibility_detector/visibility_detector.dart';
 
 class ImageWidget extends StatefulWidget {
@@ -17,13 +18,9 @@ class ImageWidget extends StatefulWidget {
     Key key,
     this.file,
     this.attachment,
-    this.savedAttachmentData,
-    this.allAttachments,
   }) : super(key: key);
   final File file;
   final Attachment attachment;
-  final SavedAttachmentData savedAttachmentData;
-  final List<Attachment> allAttachments;
 
   @override
   _ImageWidgetState createState() => _ImageWidgetState();
@@ -33,56 +30,44 @@ class _ImageWidgetState extends State<ImageWidget>
     with TickerProviderStateMixin {
   bool navigated = false;
   bool visible = true;
+  Uint8List data;
 
   @override
   void didChangeDependencies() async {
     super.didChangeDependencies();
-    _initializeBytes();
   }
 
   void _initializeBytes() async {
-    if (!widget.savedAttachmentData.imageData
-        .containsKey(widget.attachment.guid)) {
+    if (data != null) return;
+    data = CurrentChat.of(context).getImageData(widget.attachment);
+    if (data == null) {
       // If it's an image, compress the image when loading it
       if (AttachmentHelper.canCompress(widget.attachment)) {
-        widget.savedAttachmentData.imageData[widget.attachment.guid] =
-            await FlutterImageCompress.compressWithFile(
-                widget.file.absolute.path,
-                quality: SettingsManager().settings.lowMemoryMode
-                    ? 15
-                    : 25 // This is arbitrary
-                );
+        data = await FlutterImageCompress.compressWithFile(
+            widget.file.absolute.path,
+            quality: 25 // This is arbitrary
+            );
 
         // All other attachments can be held in memory as bytes
       } else {
-        widget.savedAttachmentData.imageData[widget.attachment.guid] =
-            await widget.file.readAsBytes();
+        data = await widget.file.readAsBytes();
       }
+      CurrentChat.of(context).saveImageData(data, widget.attachment);
       if (this.mounted) setState(() {});
     }
-    if (widget.attachment.width == 0 ||
-        widget.attachment.height == 0 ||
-        widget.attachment.width == null ||
-        widget.attachment.height == null) {
-      Size size = ImageSizeGetter.getSize(MemoryInput(
-          widget.savedAttachmentData.imageData[widget.attachment.guid]));
-      widget.attachment.width = size.width;
-      widget.attachment.height = size.height;
-      if (this.mounted) setState(() {});
-    }
+    widget.attachment.updateDimensions(data);
   }
 
   @override
   Widget build(BuildContext context) {
+    _initializeBytes();
     return VisibilityDetector(
       key: Key(widget.attachment.guid),
       onVisibilityChanged: (info) {
         if (!SettingsManager().settings.lowMemoryMode) return;
         if (info.visibleFraction == 0 && visible && !navigated) {
           visible = false;
-          if (widget.savedAttachmentData.imageData
-              .containsKey(widget.attachment.guid))
-            widget.savedAttachmentData.imageData.remove(widget.attachment.guid);
+          CurrentChat.of(context).clearImageData(widget.attachment);
           if (this.mounted) setState(() {});
         } else if (!visible) {
           visible = true;
@@ -91,56 +76,35 @@ class _ImageWidgetState extends State<ImageWidget>
       },
       child: Stack(
         children: <Widget>[
-          Container(
-            constraints: BoxConstraints(
-              maxWidth: MediaQuery.of(context).size.width / 2,
-              maxHeight: MediaQuery.of(context).size.height / 2,
+          AnimatedSize(
+            vsync: this,
+            duration: Duration(milliseconds: 250),
+            child: Container(
+              constraints: BoxConstraints(
+                maxWidth: MediaQuery.of(context).size.width / 2,
+                maxHeight: MediaQuery.of(context).size.height / 2,
+              ),
+              child: buildSwitcher(),
             ),
-            child:
-                widget.savedAttachmentData.imageData[widget.attachment.guid] ==
-                        null
-                    ? Container(
-                        height: 5,
-                        child: Center(
-                          child: LinearProgressIndicator(
-                            backgroundColor: Colors.grey,
-                            valueColor: AlwaysStoppedAnimation(
-                                Theme.of(context).primaryColor),
-                          ),
-                        ),
-                      )
-                    : Container(
-                        child: Hero(
-                          tag: widget.attachment.guid,
-                          child: AnimatedSize(
-                            vsync: this,
-                            curve: Curves.easeInOut,
-                            alignment: Alignment.center,
-                            duration: Duration(milliseconds: 250),
-                            child: Image.memory(
-                              widget.savedAttachmentData
-                                  .imageData[widget.attachment.guid],
-                            ),
-                          ),
-                        ),
-                        constraints: BoxConstraints(
-                          maxHeight: MediaQuery.of(context).size.height / 3,
-                        ),
-                      ),
           ),
           Positioned.fill(
             child: Material(
               color: Colors.transparent,
               child: InkWell(
                 onTap: () async {
+                  if (!this.mounted) return;
+
                   setState(() {
                     navigated = true;
                   });
+                  CurrentChat currentChat = CurrentChat.of(context);
                   await Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (context) => AttachmentFullscreenViewer(
-                        allAttachments: widget.allAttachments,
+                        currentChat: currentChat,
+                        allAttachments: currentChat.chatAttachments,
                         attachment: widget.attachment,
+                        showInteractions: true,
                       ),
                     ),
                   );
@@ -154,5 +118,28 @@ class _ImageWidgetState extends State<ImageWidget>
         ],
       ),
     );
+  }
+
+  Widget buildSwitcher() => AnimatedSwitcher(
+        duration: Duration(milliseconds: 150),
+        child: data != null ? Image.memory(data) : buildPlaceHolder(),
+      );
+
+  Widget buildPlaceHolder() {
+    if (widget.attachment.hasValidSize) {
+      return AspectRatio(
+        aspectRatio: widget.attachment.width.toDouble() /
+            widget.attachment.height.toDouble(),
+        child: Container(
+          width: widget.attachment.width.toDouble(),
+          height: widget.attachment.height.toDouble(),
+        ),
+      );
+    } else {
+      return Container(
+        width: 0,
+        height: 0,
+      );
+    }
   }
 }

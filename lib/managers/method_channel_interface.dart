@@ -1,12 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
-import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/new_chat_creator.dart';
+import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/chat_selector.dart';
 import 'package:bluebubbles/managers/incoming_queue.dart';
 import 'package:bluebubbles/managers/navigator_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
@@ -17,8 +16,6 @@ import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:path/path.dart';
-import 'package:permission_handler/permission_handler.dart';
 
 /// [MethodChannelInterface] is a manager used to talk to native code via a flutter MethodChannel
 ///
@@ -148,19 +145,9 @@ class MethodChannelInterface {
         debugPrint("shareAttachments " + sharedFilesPath);
 
         // Loop through all of the attachments sent by native code
-        call.arguments.forEach((key, element) {
-          // Create the sharedFilesPath if it hasn't been already created
-          Directory(sharedFilesPath).createSync();
-
-          // Create a new path for each file
-          // [key] is the file name
-          String pathName = "$sharedFilesPath/$key";
-
-          // Create the file in that directory
-          File file = File(pathName);
-
-          // Write all of the bytes to that file
-          file.writeAsBytesSync(element.toList());
+        call.arguments.forEach((element) {
+          // Get the file in that directory
+          File file = File(element);
 
           // Add each file to the attachment list
           attachments.add(file);
@@ -169,9 +156,10 @@ class MethodChannelInterface {
         // Go to the new chat creator with all of these attachments to select a chat
         NavigatorManager().navigatorKey.currentState.pushAndRemoveUntil(
               CupertinoPageRoute(
-                builder: (context) => NewChatCreator(
+                builder: (context) => ChatSelector(
                   attachments: attachments,
                   isCreator: true,
+                  onTapGoToChat: true,
                 ),
               ),
               (route) => route.isFirst,
@@ -186,7 +174,7 @@ class MethodChannelInterface {
         // Navigate to the new chat creator with the specified text
         NavigatorManager().navigatorKey.currentState.pushAndRemoveUntil(
               CupertinoPageRoute(
-                builder: (context) => NewChatCreator(
+                builder: (context) => ChatSelector(
                   existingText: text,
                   isCreator: true,
                 ),
@@ -242,10 +230,12 @@ class MethodChannelInterface {
           (route) => route.isFirst,
         );
 
-      // // We have a delay, just in case the first [switchChat] did not work.
-      // Future.delayed(Duration(milliseconds: 500), () {
-      //   NotificationManager().switchChat(openedChat);
-      // });
+      // We have a delay, because the first [switchChat] does not work.
+      // Because we are pushing AND removing until it is the first route,
+      // the [dispose] methods of the previous conversation views will be called and thus will override the switch chat we just called
+      // Thus we need to add a delay here to wait for the animation to finish
+      await Future.delayed(Duration(milliseconds: 500));
+      NotificationManager().switchChat(openedChat);
     } else {
       debugPrint("(OpenChat) -> Failed to find chat");
     }

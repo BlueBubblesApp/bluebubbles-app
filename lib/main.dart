@@ -22,7 +22,7 @@ import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 import 'package:sentry/sentry.dart';
 
 import './layouts/conversation_list/conversation_list.dart';
-import 'layouts/conversation_view/new_chat_creator/new_chat_creator.dart';
+import 'layouts/conversation_view/new_chat_creator/chat_selector.dart';
 import 'socket_manager.dart';
 
 final SentryClient _sentry = SentryClient(
@@ -168,7 +168,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
       // Go to the new chat creator, with all of our attachments
       Navigator.of(context).pushAndRemoveUntil(
         CupertinoPageRoute(
-          builder: (context) => NewChatCreator(
+          builder: (context) => ChatSelector(
             attachments: attachments,
             isCreator: true,
           ),
@@ -184,7 +184,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
       // Go to the new chat creator, with all of our text
       Navigator.of(context).pushAndRemoveUntil(
         CupertinoPageRoute(
-          builder: (context) => NewChatCreator(
+          builder: (context) => ChatSelector(
             existingText: text,
             isCreator: true,
           ),
@@ -259,7 +259,10 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
               SystemChrome.setPreferredOrientations([
                 DeviceOrientation.portraitUp,
               ]);
-              return SetupView();
+              return WillPopScope(
+                onWillPop: () async => false,
+                child: SetupView(),
+              );
             }
           } else {
             return Container();

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/setup_bloc.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
@@ -21,11 +23,14 @@ class LifeCycleManager {
 
   bool get isAlive => _isAlive;
 
+  StreamController<bool> _stream = new StreamController.broadcast();
+  Stream get stream => _stream.stream;
+
   LifeCycleManager._internal() {
     // Listen to the socket processes that are updated
     SocketManager().socketProcessUpdater.listen((event) {
       // If there are no more socket processes, then we can safely close the socket
-      if (event.length == 0 && !_isAlive) {
+      if (event.isEmpty && !_isAlive) {
         SocketManager().closeSocket();
       }
     });
@@ -40,7 +45,7 @@ class LifeCycleManager {
     }
 
     // Set the app as open and start the socket
-    _isAlive = true;
+    updateStatus(true);
     SocketManager().startSocketIO();
 
     // Refresh all the chats assuming that the app has already finished setup
@@ -54,12 +59,21 @@ class LifeCycleManager {
       //
       // NOTE: [closeSocket] does not necessarily close the socket, it simply requests the SocketManager to attempt to do so
       // If there are socket processes using the socket, then it will not close, and will wait until those tasks are done
-      _isAlive = false;
+      updateStatus(false);
       SocketManager().closeSocket();
 
       // Closes the backgroun thread when the app is fully closed
       // This does not necessarily mean that the isolate will be closed (such as if the app is not fully closed), but it will attempt to do so
       MethodChannelInterface().closeThread();
+    }
+  }
+
+  /// Helper method to update the alive status and send the new status to the stream
+  updateStatus(bool newStatus) {
+    // We don't want to send things to the stream unless they are new
+    if (_isAlive != newStatus) {
+      _isAlive = newStatus;
+      _stream.sink.add(_isAlive);
     }
   }
 }

@@ -1,25 +1,29 @@
 import 'dart:convert';
 import 'dart:ui';
 
-// import 'package:bluebubbles/qr_code_scanner.dart';
+import 'package:bluebubbles/blocs/chat_bloc.dart';
+import "package:bluebubbles/helpers/string_extension.dart";
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/layouts/settings/scheduler_panel.dart';
+import 'package:bluebubbles/layouts/settings/scheduling_panel.dart';
 import 'package:bluebubbles/layouts/theming/theming_panel.dart';
-import 'package:bluebubbles/managers/method_channel_interface.dart';
+import 'package:bluebubbles/layouts/widgets/CustomCupertinoTextField.dart';
+import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/database.dart';
-import 'package:bluebubbles/settings.dart';
+import 'package:bluebubbles/repository/models/fcm_data.dart';
+import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_displaymode/flutter_displaymode.dart';
 import '../../helpers/hex_color.dart';
 import 'package:flutter/material.dart';
 
 import '../setup/qr_code_scanner.dart';
 
 class SettingsPanel extends StatefulWidget {
-  // final Settings settings;
-  // final Function saveSettings;
-
   SettingsPanel({Key key}) : super(key: key);
 
   @override
@@ -28,12 +32,25 @@ class SettingsPanel extends StatefulWidget {
 
 class _SettingsPanelState extends State<SettingsPanel> {
   Settings _settingsCopy;
+  FCMData _fcmDataCopy;
   bool needToReconnect = false;
+  List<DisplayMode> modes;
+  DisplayMode currentMode;
+  bool showUrl = false;
 
   @override
   void initState() {
     super.initState();
     _settingsCopy = SettingsManager().settings;
+    _fcmDataCopy = SettingsManager().fcmData;
+  }
+
+  @override
+  void didChangeDependencies() async {
+    super.didChangeDependencies();
+    modes = await FlutterDisplayMode.supported;
+    currentMode = await _settingsCopy.getDisplayMode();
+    setState(() {});
   }
 
   @override
@@ -66,7 +83,9 @@ class _SettingsPanelState extends State<SettingsPanel> {
         ),
       ),
       body: CustomScrollView(
-        physics: AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+        physics: AlwaysScrollableScrollPhysics(
+          parent: CustomBouncingScrollPhysics(),
+        ),
         slivers: <Widget>[
           SliverList(
             delegate: SliverChildListDelegate(
@@ -84,19 +103,24 @@ class _SettingsPanelState extends State<SettingsPanel> {
 
                       switch (connectionStatus) {
                         case SocketState.CONNECTED:
-                          subtitle = "Connected";
+                          if (showUrl) {
+                            subtitle =
+                                "Connected (${this._settingsCopy.serverAddress})";
+                          } else {
+                            subtitle = "Connected (Tap to view URL)";
+                          }
                           break;
                         case SocketState.DISCONNECTED:
-                          subtitle = "Disconnected (Tap to retry)";
+                          subtitle = "Disconnected";
                           break;
                         case SocketState.ERROR:
-                          subtitle = "Error (Tap to retry)";
+                          subtitle = "Error";
                           break;
                         case SocketState.CONNECTING:
                           subtitle = "Connecting...";
                           break;
                         case SocketState.FAILED:
-                          subtitle = "Failed to connect (Tap to retry)";
+                          subtitle = "Failed to connect";
                           break;
                       }
 
@@ -104,10 +128,13 @@ class _SettingsPanelState extends State<SettingsPanel> {
                         title: "Connection Status",
                         subTitle: subtitle,
                         onTap: () async {
-                          if ([SocketState.CONNECTED, SocketState.CONNECTING]
+                          if (![SocketState.CONNECTED]
                               .contains(connectionStatus)) return;
-                          await SocketManager().refreshConnection();
-                          setState(() {});
+                          if (this.mounted) {
+                            setState(() {
+                              showUrl = !showUrl;
+                            });
+                          }
                         },
                         trailing: connectionStatus == SocketState.CONNECTED ||
                                 connectionStatus == SocketState.CONNECTING
@@ -121,70 +148,6 @@ class _SettingsPanelState extends State<SettingsPanel> {
                               ),
                       );
                     }),
-                SettingsTile(
-                  onTap: () {
-                    showDialog(
-                      context: context,
-                      builder: (BuildContext context) {
-                        TextEditingController _controller =
-                            TextEditingController(
-                          text: "https://.ngrok.io",
-                        );
-                        _controller.selection =
-                            TextSelection.fromPosition(TextPosition(offset: 8));
-
-                        return AlertDialog(
-                          title: Text(
-                            "Server address:",
-                            style: Theme.of(context).textTheme.bodyText1,
-                          ),
-                          content: Container(
-                            child: TextField(
-                              autofocus: true,
-                              controller: _controller,
-                              // autofocus: true,
-                              scrollPhysics: BouncingScrollPhysics(),
-                              style: Theme.of(context).textTheme.bodyText1,
-                              keyboardType: TextInputType.multiline,
-                              maxLines: null,
-                              decoration: InputDecoration(
-                                contentPadding:
-                                    EdgeInsets.only(top: 5, bottom: 5),
-                                // border: InputBorder.none,
-                                // border: OutlineInputBorder(),
-                                // hintText: 'https://<some-id>.ngrok.com',
-                                hintStyle:
-                                    Theme.of(context).textTheme.subtitle1,
-                              ),
-                            ),
-                          ),
-                          backgroundColor: HexColor('26262a'),
-                          actions: <Widget>[
-                            FlatButton(
-                              child: Text("Ok"),
-                              onPressed: () {
-                                _settingsCopy.serverAddress = _controller.text;
-                                needToReconnect = true;
-                                // Singleton().saveSettings(_settingsCopy);
-                                Navigator.of(context).pop();
-                              },
-                            ),
-                            FlatButton(
-                              child: Text("Cancel"),
-                              onPressed: () {
-                                Navigator.of(context).pop();
-                              },
-                            ),
-                          ],
-                        );
-                      },
-                    );
-                  },
-                  title: "Connection Address",
-                  subTitle: _settingsCopy.serverAddress,
-                  trailing: Icon(Icons.edit,
-                      color: Theme.of(context).primaryColor.withAlpha(200)),
-                ),
                 SettingsTile(
                   title: "Re-configure with MacOS Server",
                   trailing: Icon(Icons.camera,
@@ -205,17 +168,20 @@ class _SettingsPanelState extends State<SettingsPanel> {
                       return;
                     }
                     if (fcmData != null) {
-                      _settingsCopy.fcmAuthData = {
-                        "project_id": fcmData[2],
-                        "storage_bucket": fcmData[3],
-                        "api_key": fcmData[4],
-                        "firebase_url": fcmData[5],
-                        "client_id": fcmData[6],
-                        "application_id": fcmData[7],
-                      };
+                      _fcmDataCopy = FCMData(
+                        projectID: fcmData[2],
+                        storageBucket: fcmData[3],
+                        apiKey: fcmData[4],
+                        firebaseURL: fcmData[5],
+                        clientID: fcmData[6],
+                        applicationID: fcmData[7],
+                      );
                       _settingsCopy.guidAuthKey = fcmData[0];
                       _settingsCopy.serverAddress = fcmData[1];
-                      needToReconnect = true;
+
+                      SettingsManager().saveSettings(_settingsCopy);
+                      SettingsManager().saveFCMData(_fcmDataCopy);
+                      SocketManager().authFCM();
                     }
                   },
                 ),
@@ -248,6 +214,13 @@ class _SettingsPanelState extends State<SettingsPanel> {
                 ),
                 SettingsSwitch(
                   onChanged: (bool val) {
+                    _settingsCopy.onlyWifiDownload = val;
+                  },
+                  initialVal: _settingsCopy.onlyWifiDownload,
+                  title: "Only Auto-download Attachments on WiFi",
+                ),
+                SettingsSwitch(
+                  onChanged: (bool val) {
                     _settingsCopy.lowMemoryMode = val;
                   },
                   initialVal: _settingsCopy.lowMemoryMode,
@@ -260,19 +233,61 @@ class _SettingsPanelState extends State<SettingsPanel> {
                   initialVal: _settingsCopy.showIncrementalSync,
                   title: "Notify when incremental sync complete",
                 ),
-                SettingsOptions(
-                  onChanged: (AdaptiveThemeMode val) {
+                Divider(
+                  color: Theme.of(context).accentColor.withOpacity(0.5),
+                  thickness: 1,
+                ),
+                SettingsSwitch(
+                  onChanged: (bool val) {
+                    _settingsCopy.rainbowBubbles = val;
+                    ChatBloc().initTileVals(ChatBloc().chats);
+                    setState(() {});
+                  },
+                  initialVal: _settingsCopy.rainbowBubbles,
+                  title: "Colorful Chats",
+                ),
+                SettingsOptions<AdaptiveThemeMode>(
+                  initial: AdaptiveTheme.of(context).mode,
+                  onChanged: (val) {
                     AdaptiveTheme.of(context).setThemeMode(val);
                   },
+                  options: AdaptiveThemeMode.values,
+                  textProcessing: (dynamic val) =>
+                      val.toString().split(".").last,
+                  title: "App Theme",
+                  showDivider: false,
                 ),
                 SettingsTile(
                   title: "Theming",
-                  trailing:
-                      Icon(Icons.arrow_forward_ios, color: HexColor('26262a')),
+                  trailing: Icon(Icons.arrow_forward_ios,
+                      color: Theme.of(context).primaryColor),
                   onTap: () async {
                     Navigator.of(context).push(
                       CupertinoPageRoute(
                         builder: (context) => ThemingPanel(),
+                      ),
+                    );
+                  },
+                ),
+                if (currentMode != null && modes != null)
+                  SettingsOptions<DisplayMode>(
+                    initial: currentMode,
+                    onChanged: (val) async {
+                      currentMode = val;
+                      _settingsCopy.displayMode = currentMode.id;
+                    },
+                    options: modes,
+                    textProcessing: (dynamic val) => val.toString(),
+                    title: "Display",
+                  ),
+                SettingsTile(
+                  title: "Message Scheduling",
+                  trailing: Icon(Icons.arrow_forward_ios,
+                      color: Theme.of(context).primaryColor),
+                  onTap: () async {
+                    Navigator.of(context).push(
+                      CupertinoPageRoute(
+                        builder: (context) => SchedulingPanel(),
                       ),
                     );
                   },
@@ -330,11 +345,10 @@ class _SettingsPanelState extends State<SettingsPanel> {
 
   @override
   void dispose() {
-    // if (_settingsCopy != Singleton().settings) {
-    debugPrint("saving settings");
-    SettingsManager()
-        .saveSettings(_settingsCopy, connectToSocket: needToReconnect);
-    // }
+    SettingsManager().saveSettings(_settingsCopy);
+    if (needToReconnect) {
+      SocketManager().startSocketIO(forceNewConnection: true);
+    }
     super.dispose();
   }
 }
@@ -369,6 +383,94 @@ class SettingsTile extends StatelessWidget {
                       style: Theme.of(context).textTheme.subtitle1,
                     )
                   : null,
+            ),
+            Divider(
+              color: Theme.of(context).accentColor.withOpacity(0.5),
+              thickness: 1,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class SettingsTextField extends StatelessWidget {
+  const SettingsTextField(
+      {Key key,
+      this.onTap,
+      this.title,
+      this.trailing,
+      @required this.controller,
+      this.placeholder,
+      this.maxLines = 14,
+      this.keyboardType = TextInputType.multiline,
+      this.inputFormatters = const []
+    })
+      : super(key: key);
+
+  final TextEditingController controller;
+  final Function onTap;
+  final String title;
+  final String placeholder;
+  final Widget trailing;
+  final int maxLines;
+  final TextInputType keyboardType;
+  final List<TextInputFormatter> inputFormatters;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Theme.of(context).backgroundColor,
+      child: InkWell(
+        onTap: this.onTap,
+        child: Column(
+          children: <Widget>[
+            ListTile(
+              title: Text(
+                this.title,
+                style: Theme.of(context).textTheme.bodyText1,
+              ),
+              trailing: this.trailing,
+              subtitle: Padding(
+                padding: EdgeInsets.only(top: 10.0),
+                child: CustomCupertinoTextField(
+                  onLongPressStart: () {
+                    Feedback.forLongPress(context);
+                  },
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                  },
+                  textCapitalization: TextCapitalization.sentences,
+                  inputFormatters: inputFormatters,
+                  autocorrect: true,
+                  controller: controller,
+                  scrollPhysics: CustomBouncingScrollPhysics(),
+                  style: Theme.of(context).textTheme.bodyText1.apply(
+                      color: ThemeData.estimateBrightnessForColor(
+                                  Theme.of(context).backgroundColor) ==
+                              Brightness.light
+                          ? Colors.black
+                          : Colors.white,
+                      fontSizeDelta: -0.25),
+                  keyboardType: keyboardType,
+                  maxLines: maxLines,
+                  minLines: 1,
+                  placeholder: placeholder ?? "Enter your text here",
+                  padding:
+                      EdgeInsets.only(left: 10, top: 10, right: 40, bottom: 10),
+                  placeholderStyle: Theme.of(context).textTheme.subtitle1,
+                  autofocus: SettingsManager().settings.autoOpenKeyboard,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).backgroundColor,
+                    border: Border.all(
+                      color: Theme.of(context).dividerColor,
+                      width: 1.5,
+                    ),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                ),
+              ),
             ),
             Divider(
               color: Theme.of(context).accentColor.withOpacity(0.5),
@@ -419,6 +521,9 @@ class _SettingsSwitchState extends State<SettingsSwitch> {
       inactiveThumbColor: Theme.of(context).accentColor,
       onChanged: (bool val) {
         widget.onChanged(val);
+
+        if (!this.mounted) return;
+
         setState(() {
           _value = val;
         });
@@ -427,52 +532,117 @@ class _SettingsSwitchState extends State<SettingsSwitch> {
   }
 }
 
-class SettingsOptions extends StatefulWidget {
-  SettingsOptions({Key key, this.onChanged}) : super(key: key);
-  final Function(AdaptiveThemeMode) onChanged;
+class SettingsOptions<T> extends StatefulWidget {
+  SettingsOptions({
+    Key key,
+    this.onChanged,
+    this.options,
+    this.initial,
+    this.textProcessing,
+    this.title,
+    this.subtitle,
+    this.showDivider = true,
+  }) : super(key: key);
+  final String title;
+  final Function(dynamic) onChanged;
+  final List<T> options;
+  final T initial;
+  final String Function(dynamic) textProcessing;
+  final bool showDivider;
+  final String subtitle;
 
   @override
   _SettingsOptionsState createState() => _SettingsOptionsState();
 }
 
-class _SettingsOptionsState extends State<SettingsOptions> {
-  AdaptiveThemeMode initialVal;
+class _SettingsOptionsState<T> extends State<SettingsOptions<T>> {
+  T currentVal;
 
   @override
   void initState() {
     super.initState();
-    initialVal = AdaptiveTheme.of(context).mode;
+    currentVal = widget.initial;
   }
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: DropdownButton(
-        dropdownColor: Theme.of(context).accentColor,
-        icon: Icon(
-          Icons.arrow_drop_down,
-          color: Theme.of(context).textTheme.bodyText1.color,
-        ),
-        value: initialVal,
-        items: AdaptiveThemeMode.values
-            .map<DropdownMenuItem<AdaptiveThemeMode>>((e) {
-          return DropdownMenuItem(
-            value: e,
-            child: Text(
-              e.toString().split(".").last,
-              style: Theme.of(context).textTheme.bodyText1,
+    return Column(children: [
+      Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  child: Text(
+                    widget.title,
+                    style: Theme.of(context).textTheme.bodyText1,
+                  ),
+                ),
+                (widget.subtitle != null)
+                  ? Container(
+                    child: Padding(
+                      padding: EdgeInsets.only(top: 3.0),
+                      child: Text(
+                        widget.subtitle ?? "",
+                        style: Theme.of(context).textTheme.subtitle1,
+                      ),
+                    ),
+                  )
+                : Container(),
+              ]
             ),
-          );
-        }).toList(),
-        onChanged: (AdaptiveThemeMode val) {
-          widget.onChanged(val);
-          setState(() {
-            initialVal = val;
-          });
-        },
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 9),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                color: Theme.of(context).accentColor,
+              ),
+              child: Center(
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<T>(
+                    dropdownColor: Theme.of(context).accentColor,
+                    icon: Icon(
+                      Icons.arrow_drop_down,
+                      color: Theme.of(context).textTheme.bodyText1.color,
+                    ),
+                    value: currentVal,
+                    items: widget.options.map<DropdownMenuItem<T>>((e) {
+                      return DropdownMenuItem(
+                        value: e,
+                        child: Text(
+                          widget.textProcessing(e).capitalize(),
+                          style: Theme.of(context).textTheme.bodyText1,
+                        ),
+                      );
+                    }).toList(),
+                    onChanged: (T val) {
+                      widget.onChanged(val);
+
+                      if (!this.mounted) return;
+
+                      setState(() {
+                        currentVal = val;
+                      });
+                      //
+                    },
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
-    );
+      (widget.showDivider)
+          ? Divider(
+              color: Theme.of(context).accentColor.withOpacity(0.5),
+              thickness: 1,
+            )
+          : Container()
+    ]);
   }
 }
 
@@ -490,7 +660,6 @@ class _SettingsSliderState extends State<SettingsSlider> {
   double currentVal = 500;
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     if (widget.startingVal > 1 && widget.startingVal < 5000) {
       currentVal = widget.startingVal;
@@ -507,8 +676,12 @@ class _SettingsSliderState extends State<SettingsSlider> {
             style: Theme.of(context).textTheme.bodyText1,
           ),
           subtitle: Slider(
+            activeColor: Theme.of(context).primaryColor,
+            inactiveColor: Theme.of(context).primaryColor.withOpacity(0.2),
             value: currentVal,
             onChanged: (double value) {
+              if (!this.mounted) return;
+
               setState(() {
                 currentVal = value;
                 widget.update(currentVal.floor());

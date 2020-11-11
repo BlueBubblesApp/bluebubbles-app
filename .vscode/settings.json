@@ -8,5 +8,6 @@
         "**/assets/**": true,
         "**/.git/objects/**": true,
         "**/.git/subtree-cache/**": true
-    }
+    },
+    "java.configuration.updateBuildConfiguration": "automatic"
 }

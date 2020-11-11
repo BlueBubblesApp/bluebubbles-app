@@ -6,7 +6,8 @@ import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/layouts/conversation_details/attachment_details_card.dart';
 import 'package:bluebubbles/layouts/conversation_details/contact_tile.dart';
-import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/new_chat_creator.dart';
+import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/chat_selector.dart';
+import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/socket_manager.dart';
@@ -72,17 +73,18 @@ class _ConversationDetailsState extends State<ConversationDetails> {
       child: Scaffold(
         backgroundColor: Theme.of(context).backgroundColor,
         appBar: CupertinoNavigationBar(
-          backgroundColor: HexColor('26262a').withOpacity(0.5),
+          backgroundColor: Theme.of(context).accentColor.withAlpha(125),
+          actionsForegroundColor: Theme.of(context).primaryColor,
           middle: Text(
             "Details",
-            style:
-                TextStyle(color: Colors.white, fontWeight: FontWeight.normal),
+            style: Theme.of(context).textTheme.headline1,
           ),
         ),
         extendBodyBehindAppBar: true,
         body: CustomScrollView(
-          physics:
-              AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+          physics: AlwaysScrollableScrollPhysics(
+            parent: CustomBouncingScrollPhysics(),
+          ),
           slivers: <Widget>[
             SliverToBoxAdapter(
               child: Container(
@@ -102,7 +104,8 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                         autocorrect: false,
                         decoration: InputDecoration(
                           labelText: "NAME",
-                          labelStyle: TextStyle(color: Colors.blue),
+                          labelStyle:
+                              TextStyle(color: Theme.of(context).primaryColor),
                         ),
                       ),
                     ),
@@ -130,7 +133,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                       onTap: () async {
                         Chat result = await Navigator.of(context).push(
                           CupertinoPageRoute(
-                            builder: (context) => NewChatCreator(
+                            builder: (context) => ChatSelector(
                               currentChat: chat,
                               isCreator: false,
                             ),
@@ -145,12 +148,12 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                         title: Text(
                           "Add Contact",
                           style: TextStyle(
-                            color: Colors.blue,
+                            color: Theme.of(context).primaryColor,
                           ),
                         ),
                         leading: Icon(
                           Icons.add,
-                          color: Colors.blue,
+                          color: Theme.of(context).primaryColor,
                         ),
                       ),
                     )
@@ -171,43 +174,47 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                                 "Are you sure you want to resync this chat? All messages/attachments will be removed and the last 25 messages will be pre-loaded."),
                             actions: <Widget>[
                               new FlatButton(
-                                  child: new Text("Yes, I'm sure!"),
-                                  onPressed: () {
-                                    // Remove the OG alert dialog
-                                    Navigator.of(context).pop();
-
-                                    // Show the next dialog
-                                    showDialog(
-                                        context: context,
-                                        builder: (BuildContext context) {
-                                          // Resync the chat, then return to the first page
-                                          ActionHandler.resyncChat(
-                                                  chat, widget.messageBloc)
-                                              .then((value) {
-                                            Navigator.of(context).popUntil(
-                                                (Route<dynamic> route) {
-                                              return route.isFirst;
-                                            });
-                                          });
-
-                                          // Show a loading dialog
-                                          return AlertDialog(
-                                              title:
-                                                  new Text("Resyncing Chat..."),
-                                              content: Container(
-                                                  alignment: Alignment.center,
-                                                  height: 100,
-                                                  width: 100,
-                                                  child: new Container(
-                                                      child:
-                                                          CircularProgressIndicator())));
+                                child: new Text("Yes, I'm sure!"),
+                                onPressed: () async {
+                                  // Remove the OG alert dialog
+                                  Navigator.of(context).pop();
+                                  // Show the next dialog
+                                  showDialog(
+                                    context: context,
+                                    barrierDismissible: false,
+                                    builder: (BuildContext context) {
+                                      // Resync the chat, then return to the first page
+                                      ActionHandler.resyncChat(
+                                              chat, widget.messageBloc)
+                                          .then((value) {
+                                        Navigator.of(context)
+                                            .popUntil((Route<dynamic> route) {
+                                          return route.isFirst;
                                         });
-                                  }),
+                                      });
+
+                                      // Show a loading dialog
+                                      return AlertDialog(
+                                        title: new Text("Resyncing Chat..."),
+                                        content: Container(
+                                          alignment: Alignment.center,
+                                          height: 100,
+                                          width: 100,
+                                          child: new Container(
+                                            child: CircularProgressIndicator(),
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  );
+                                },
+                              ),
                               new FlatButton(
-                                  child: new Text("Cancel"),
-                                  onPressed: () {
-                                    Navigator.of(context).pop();
-                                  })
+                                child: new Text("Cancel"),
+                                onPressed: () {
+                                  Navigator.of(context).pop();
+                                },
+                              )
                             ]);
                       });
                 },
@@ -215,12 +222,12 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                   title: Text(
                     "Resync chat",
                     style: TextStyle(
-                      color: Colors.blue,
+                      color: Theme.of(context).primaryColor,
                     ),
                   ),
                   leading: Icon(
                     Icons.replay,
-                    color: Colors.blue,
+                    color: Theme.of(context).primaryColor,
                   ),
                 ),
               ),

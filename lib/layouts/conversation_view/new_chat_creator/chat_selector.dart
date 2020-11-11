@@ -7,7 +7,8 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_list/conversation_tile.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/adding_participant_popup.dart';
-import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/new_chat_creator_text_field.dart';
+import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/chat_selector_text_field.dart';
+import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:contacts_service/contacts_service.dart';
@@ -27,24 +28,32 @@ class UniqueContact {
       {this.isChat, this.displayName, this.label, this.address, this.chat});
 }
 
-class NewChatCreator extends StatefulWidget {
+class ChatSelector extends StatefulWidget {
   final bool isCreator;
   final Chat currentChat;
   final List<File> attachments;
   final String existingText;
-  NewChatCreator({
+  final String heading;
+  final bool onlyExistingChats;
+  final Function onSelection;
+  final bool onTapGoToChat;
+  ChatSelector({
     Key key,
     this.isCreator,
     this.currentChat,
     this.attachments,
     this.existingText,
+    this.heading,
+    this.onlyExistingChats = false,
+    this.onSelection,
+    this.onTapGoToChat = false,
   }) : super(key: key);
 
   @override
-  _NewChatCreatorState createState() => _NewChatCreatorState();
+  _ChatSelectorState createState() => _ChatSelectorState();
 }
 
-class _NewChatCreatorState extends State<NewChatCreator> {
+class _ChatSelectorState extends State<ChatSelector> {
   List<Chat> conversations = [];
   List<UniqueContact> contacts = [];
   List<UniqueContact> selected = [];
@@ -71,7 +80,7 @@ class _NewChatCreatorState extends State<NewChatCreator> {
 
   Future<void> loadEntries() async {
     if (!widget.isCreator) return;
-    if (ChatBloc().chats == null || ChatBloc().chats.length == 0) {
+    if (isNullOrEmpty(ChatBloc().chats)) {
       await ChatBloc().refreshChats();
     }
 
@@ -84,7 +93,7 @@ class _NewChatCreatorState extends State<NewChatCreator> {
   }
 
   String getTypeStr(String type) {
-    if (type == null || type.length == 0) return "";
+    if (isNullOrEmpty(type)) return "";
     return " ($type)";
   }
 
@@ -140,7 +149,7 @@ class _NewChatCreatorState extends State<NewChatCreator> {
     }
 
     List<UniqueContact> _conversations = [];
-    if (!controller.text.contains(",")) {
+    if (selected.length == 0 || widget.onlyExistingChats) {
       for (Chat chat in conversations) {
         String title = (chat?.title ?? "").toLowerCase();
         if (title.contains(searchQuery.toLowerCase())) {
@@ -158,8 +167,9 @@ class _NewChatCreatorState extends State<NewChatCreator> {
       }
     }
 
-    _conversations.addAll(_contacts);
-    contacts = _conversations;
+    if (!widget.onlyExistingChats) {
+      _conversations.addAll(_contacts);
+    }
 
     if (this.mounted)
       setState(() {
@@ -175,7 +185,7 @@ class _NewChatCreatorState extends State<NewChatCreator> {
         backgroundColor: Theme.of(context).accentColor.withOpacity(0.5),
         middle: Container(
           child: Text(
-            "New Message",
+            widget.heading ?? "New Message",
             style: Theme.of(context).textTheme.headline2,
           ),
         ),
@@ -188,7 +198,7 @@ class _NewChatCreatorState extends State<NewChatCreator> {
           Expanded(
               child: ListView.builder(
             physics: AlwaysScrollableScrollPhysics(
-              parent: BouncingScrollPhysics(),
+              parent: CustomBouncingScrollPhysics(),
             ),
             itemCount: contacts.length,
             itemBuilder: (BuildContext context, int index) {
@@ -197,11 +207,15 @@ class _NewChatCreatorState extends State<NewChatCreator> {
                   ? ListTile(
                       key: new Key(item.address),
                       onTap: () {
-                        // Reset the controller text
-                        controller.clear();
-
                         // Add the selected item
                         selected.add(item);
+
+                        if (widget.onSelection != null) {
+                          return widget.onSelection(selected);
+                        }
+
+                        // Reset the controller text
+                        controller.clear();
                         if (this.mounted) setState(() {});
                       },
                       title: Text(
@@ -218,12 +232,21 @@ class _NewChatCreatorState extends State<NewChatCreator> {
                       existingAttachments: widget.attachments,
                       existingText: widget.existingText,
                       chat: item.chat,
-                      replaceOnTap: true,
+                      onTapGoToChat: widget.onTapGoToChat,
+                      onTapCallback: () {
+                        // Add the selected item
+                        selected.add(item);
+
+                        if (widget.onSelection != null) {
+                          return widget.onSelection(selected);
+                        }
+                      },
                     );
             },
           )),
-          NewChatCreatorTextField(
-              allContacts: this.contacts.where((element) => !element.isChat).toList(),
+          ChatSelectorTextField(
+              allContacts:
+                  this.contacts.where((element) => !element.isChat).toList(),
               isCreator: widget.isCreator,
               controller: controller,
               onCreate: () {
@@ -248,8 +271,8 @@ class _NewChatCreatorState extends State<NewChatCreator> {
                             // height: 70,
                             // color: Colors.black,
                             child: CircularProgressIndicator(
-                              valueColor:
-                                  AlwaysStoppedAnimation<Color>(Colors.blue),
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                  Theme.of(context).primaryColor),
                             ),
                           ),
                         ],
@@ -281,7 +304,7 @@ class _NewChatCreatorState extends State<NewChatCreator> {
                                   // color: Colors.black,
                                   child: CircularProgressIndicator(
                                     valueColor: AlwaysStoppedAnimation<Color>(
-                                      Colors.blue,
+                                      Theme.of(context).primaryColor,
                                     ),
                                   ),
                                 ),
@@ -326,6 +349,7 @@ class _NewChatCreatorState extends State<NewChatCreator> {
               },
               onRemove: (UniqueContact contact) {
                 selected.remove(contact);
+                filterContacts();
                 if (this.mounted) setState(() {});
               },
               selectedContacts: selected)

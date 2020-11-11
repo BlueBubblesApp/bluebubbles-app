@@ -1,92 +1,152 @@
+import 'dart:async';
+import 'dart:ui';
+
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_attachments.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/new_message_loader.dart';
+import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
+import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:bluebubbles/layouts/widgets/send_widget.dart';
-import 'package:video_player/video_player.dart';
 
 class MessageView extends StatefulWidget {
   final MessageBloc messageBloc;
   final bool showHandle;
+  final Chat chat;
 
   MessageView({
     Key key,
     this.messageBloc,
     this.showHandle,
+    this.chat,
   }) : super(key: key);
 
   @override
-  _MessageViewState createState() => _MessageViewState();
+  MessageViewState createState() => MessageViewState();
 }
 
-class _MessageViewState extends State<MessageView>
+class MessageViewState extends State<MessageView>
     with TickerProviderStateMixin {
-  Future<LoadMessageResult> loader;
-  bool reachedTopOfChat = false;
+  Completer<LoadMessageResult> loader;
+  bool noMoreMessages = false;
+  bool noMoreLocalMessages = false;
   List<Message> _messages = <Message>[];
+
   GlobalKey<SliverAnimatedListState> _listKey;
   final Duration animationDuration = Duration(milliseconds: 400);
-  OverlayEntry entry;
-  List<String> sentMessages = <String>[];
-  Map<String, SavedAttachmentData> attachments = Map();
   bool initializedList = false;
   double timeStampOffset = 0;
-  Map<String, VideoPlayerController> currentPlayingVideo;
-  List<VideoPlayerController> controllersToDispose = [];
+  ScrollController scrollController = new ScrollController();
+  bool showScrollDown = false;
+  int scrollState = -1; // -1: stopped, 0: start, 1: update
+  List<int> loadedPages = [];
 
-  List<Attachment> allAttachments = [];
+  /// [CurrentChat] holds all info about the conversation that widgets commonly access
+  CurrentChat currentChat;
 
   @override
   void initState() {
     super.initState();
     widget.messageBloc.stream.listen(handleNewMessage);
-    updateAllAttachments();
+    currentChat = CurrentChat.getCurrentChat(widget.messageBloc.currentChat);
+
+    currentChat.init();
+    currentChat.updateChatAttachments().then((value) {
+      if (this.mounted) setState(() {});
+    });
+    currentChat.stream.listen((event) {
+      if (this.mounted) setState(() {});
+    });
+
+    scrollController.addListener(() {
+      if (scrollController.hasClients &&
+          scrollController.offset >= 500 &&
+          !showScrollDown) {
+        if (this.mounted)
+          setState(() {
+            showScrollDown = true;
+          });
+      } else if (scrollController.hasClients &&
+          scrollController.offset < 500 &&
+          showScrollDown) {
+        if (this.mounted)
+          setState(() {
+            showScrollDown = false;
+          });
+      }
+    });
   }
 
   @override
   void didChangeDependencies() async {
     super.didChangeDependencies();
-    if (_messages.length == 0) {
+    if (_messages.isEmpty) {
       widget.messageBloc.getMessages();
-      setState(() {});
+      if (this.mounted) setState(() {});
     }
-  }
-
-  void getAttachmentsForMessage(Message message) {
-    if (attachments.containsKey(message.guid)) return;
-    if (message.hasAttachments) {
-      attachments[message.guid] = new SavedAttachmentData();
-    }
-  }
-
-  Future<void> updateAllAttachments() async {
-    allAttachments = await Chat.getAttachments(widget.messageBloc.currentChat);
-    if (this.mounted) setState(() {});
   }
 
   @override
   void dispose() {
-    if (currentPlayingVideo != null && currentPlayingVideo.length > 0) {
-      currentPlayingVideo.values.forEach((element) {
-        element.dispose();
-      });
-    }
-    if (entry != null) entry.remove();
+    currentChat.dispose();
     super.dispose();
+  }
+
+  Future<void> loadNextChunk() {
+    if (noMoreMessages || loadedPages.contains(_messages.length)) return null;
+    int messageCount = _messages.length;
+
+    // If we already are loading a chunk, don't load again
+    if (loader != null && !loader.isCompleted) {
+      return loader.future;
+    }
+
+    // Create a new completer
+    loader = new Completer();
+    loadedPages.add(messageCount);
+
+    // Start loading the next chunk of messages
+    widget.messageBloc
+        .loadMessageChunk(_messages.length, checkLocal: !noMoreLocalMessages)
+        .then((LoadMessageResult val) {
+      if (val != LoadMessageResult.FAILED_TO_RETREIVE) {
+        if (val == LoadMessageResult.RETREIVED_NO_MESSAGES) {
+          noMoreMessages = true;
+          debugPrint("(CHUNK) No more messages to load");
+        } else if (val == LoadMessageResult.RETREIVED_LAST_PAGE) {
+          // Mark this chat saying we have no more messages to load
+          noMoreLocalMessages = true;
+        }
+      }
+
+      // Complete the future
+      loader.complete(val);
+
+      // Only update the state if there are messages that were added
+      if (val != LoadMessageResult.RETREIVED_NO_MESSAGES &&
+          val != LoadMessageResult.FAILED_TO_RETREIVE) {
+        if (this.mounted) setState(() {});
+      }
+    }).catchError((ex) {
+      loader.complete(LoadMessageResult.FAILED_TO_RETREIVE);
+    });
+
+    return loader.future;
   }
 
   void handleNewMessage(MessageBlocEvent event) async {
     if (event.type == MessageBlocEventType.insert) {
-      getAttachmentsForMessage(event.message);
+      currentChat.getAttachmentsForMessage(event.message);
       if (event.outGoing) {
-        sentMessages.add(event.message.guid);
+        currentChat.sentMessages.add(event.message);
         Future.delayed(Duration(milliseconds: 500), () {
-          sentMessages.removeWhere((element) => element == event.message.guid);
+          currentChat.sentMessages
+              .removeWhere((element) => element.guid == event.message.guid);
           _listKey.currentState.setState(() {});
         });
         Navigator.of(context).push(
@@ -95,6 +155,7 @@ class _MessageViewState extends State<MessageView>
               return SendWidget(
                 text: event.message.text,
                 tag: "first",
+                currentChat: currentChat,
               );
             },
           ),
@@ -117,17 +178,12 @@ class _MessageViewState extends State<MessageView>
               : Duration(milliseconds: 0),
         );
       }
-      if (event.message.hasAttachments) updateAllAttachments();
-    } else if (event.type == MessageBlocEventType.update) {
-      if (attachments.containsKey(event.oldGuid)) {
-        Message messageWithROWID =
-            await Message.findOne({"guid": event.message.guid});
-        List<Attachment> updatedAttachments =
-            await Message.getAttachments(messageWithROWID);
-        SavedAttachmentData data = attachments.remove(event.oldGuid);
-        data.attachments = updatedAttachments;
-        attachments[event.message.guid] = data;
+      if (event.message.hasAttachments) {
+        await currentChat.updateChatAttachments();
+        if (this.mounted) setState(() {});
       }
+    } else if (event.type == MessageBlocEventType.update) {
+      currentChat.updateExistingAttachments(event);
       bool updatedAMessage = false;
       for (int i = 0; i < _messages.length; i++) {
         if (_messages[i].guid == event.oldGuid) {
@@ -154,7 +210,8 @@ class _MessageViewState extends State<MessageView>
     } else {
       int originalMessageLength = _messages.length;
       _messages = event.messages;
-      _messages.forEach((message) => getAttachmentsForMessage(message));
+      _messages
+          .forEach((message) => currentChat.getAttachmentsForMessage(message));
       if (_listKey == null) _listKey = GlobalKey<SliverAnimatedListState>();
 
       if (originalMessageLength < _messages.length) {
@@ -185,134 +242,159 @@ class _MessageViewState extends State<MessageView>
 
   @override
   Widget build(BuildContext context) {
-    controllersToDispose.forEach((element) {
-      element.dispose();
-    });
-    controllersToDispose = [];
+    currentChat.disposeControllers();
 
     return GestureDetector(
       behavior: HitTestBehavior.deferToChild,
       onHorizontalDragStart: (details) {},
       onHorizontalDragUpdate: (details) {
+        if (!this.mounted) return;
+
         setState(() {
           timeStampOffset += details.delta.dx * 0.3;
         });
       },
       onHorizontalDragEnd: (details) {
+        if (!this.mounted) return;
+
         setState(() {
           timeStampOffset = 0;
         });
       },
       onHorizontalDragCancel: () {
+        if (!this.mounted) return;
+
         setState(() {
           timeStampOffset = 0;
         });
       },
-      child: CustomScrollView(
-        reverse: true,
-        physics: AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-        slivers: <Widget>[
-          _listKey != null
-              ? SliverAnimatedList(
-                  initialItemCount: _messages.length + 1,
-                  key: _listKey,
-                  itemBuilder: (BuildContext context, int index,
-                      Animation<double> animation) {
-                    if (index == _messages.length) {
-                      if (loader == null && !reachedTopOfChat) {
-                        loader = widget.messageBloc
-                            .loadMessageChunk(_messages.length);
-                        loader.then((val) {
-                          if (val == LoadMessageResult.FAILED_TO_RETREIVE) {
-                            loader = widget.messageBloc
-                                .loadMessageChunk(_messages.length);
-                          } else if (val ==
-                              LoadMessageResult.RETREIVED_NO_MESSAGES) {
-                            reachedTopOfChat = true;
-                            loader = null;
-                          } else {
-                            loader = null;
-                          }
-                          setState(() {});
-                        });
-                      }
+      child: Stack(alignment: AlignmentDirectional.bottomCenter, children: [
+        NotificationListener(
+          onNotification: (scrollNotification) {
+            if (scrollNotification is ScrollStartNotification &&
+                scrollState != 0) {
+              scrollState = 0;
+            } else if (scrollNotification is ScrollUpdateNotification &&
+                scrollState != 1) {
+              scrollState = 1;
+            } else if (scrollNotification is ScrollEndNotification &&
+                scrollState != -1) {
+              scrollState = -1;
+              setState(() {});
+            }
 
-                      return NewMessageLoader(
-                        messageBloc: widget.messageBloc,
-                        offset: _messages.length,
-                        loader: loader,
-                      );
-                    } else if (index > _messages.length) {
-                      return Container();
-                    }
+            return true;
+          },
+          child: CustomScrollView(
+            controller: scrollController,
+            reverse: true,
+            physics: AlwaysScrollableScrollPhysics(
+                parent: CustomBouncingScrollPhysics()),
+            slivers: <Widget>[
+              _listKey != null
+                  ? SliverAnimatedList(
+                      initialItemCount: _messages.length + 1,
+                      key: _listKey,
+                      itemBuilder: (BuildContext context, int index,
+                          Animation<double> animation) {
+                        // Load more messages if we are at the top and we aren't alrady loading
+                        // and we have more messages to load
+                        if (index >= _messages.length && !noMoreMessages) {
+                          loadNextChunk();
+                          return NewMessageLoader();
+                        }
 
-                    Message olderMessage;
-                    Message newerMessage;
-                    if (index + 1 >= 0 && index + 1 < _messages.length) {
-                      olderMessage = _messages[index + 1];
-                    }
-                    if (index - 1 >= 0 && index - 1 < _messages.length) {
-                      newerMessage = _messages[index - 1];
-                    }
+                        if (index >= _messages.length) {
+                          return Container();
+                        }
 
-                    return SizeTransition(
-                      axis: Axis.vertical,
-                      sizeFactor: animation.drive(Tween(begin: 0.0, end: 1.0)
-                          .chain(CurveTween(curve: Curves.easeInOut))),
-                      child: SlideTransition(
-                        position: animation.drive(
-                            Tween(begin: Offset(0.0, 1), end: Offset(0.0, 0.0))
-                                .chain(CurveTween(curve: Curves.easeInOut))),
-                        child: FadeTransition(
-                          opacity: animation,
-                          child: MessageWidget(
-                            key: Key(_messages[index].guid),
-                            offset: timeStampOffset,
-                            fromSelf: _messages[index].isFromMe,
-                            message: _messages[index],
-                            chat: widget.messageBloc.currentChat,
-                            olderMessage: olderMessage,
-                            newerMessage: newerMessage,
-                            showHandle: widget.showHandle,
-                            shouldFadeIn:
-                                sentMessages.contains(_messages[index].guid),
-                            isFirstSentMessage:
-                                widget.messageBloc.firstSentMessage ==
-                                    _messages[index].guid,
-                            savedAttachmentData:
-                                attachments.containsKey(_messages[index].guid)
-                                    ? attachments[_messages[index].guid]
-                                    : null,
-                            showHero: index == 0 &&
-                                _messages[index].originalROWID == null,
-                            currentPlayingVideo: currentPlayingVideo,
-                            changeCurrentPlayingVideo:
-                                (Map<String, VideoPlayerController> video) {
-                              if (currentPlayingVideo != null &&
-                                  currentPlayingVideo.length > 0) {
-                                currentPlayingVideo.values.forEach((element) {
-                                  controllersToDispose.add(element);
-                                  element = null;
-                                });
-                              }
-                              if (this.mounted)
-                                setState(() {
-                                  currentPlayingVideo = video;
-                                });
-                            },
-                            allAttachments: allAttachments.reversed.toList(),
+                        Message olderMessage;
+                        Message newerMessage;
+                        if (index + 1 >= 0 && index + 1 < _messages.length) {
+                          olderMessage = _messages[index + 1];
+                        }
+                        if (index - 1 >= 0 && index - 1 < _messages.length) {
+                          newerMessage = _messages[index - 1];
+                        }
+
+                        return SizeTransition(
+                          axis: Axis.vertical,
+                          sizeFactor: animation.drive(
+                              Tween(begin: 0.0, end: 1.0)
+                                  .chain(CurveTween(curve: Curves.easeInOut))),
+                          child: SlideTransition(
+                            position: animation.drive(
+                              Tween(
+                                begin: Offset(0.0, 1),
+                                end: Offset(0.0, 0.0),
+                              ).chain(
+                                CurveTween(
+                                  curve: Curves.easeInOut,
+                                ),
+                              ),
+                            ),
+                            child: FadeTransition(
+                              opacity: animation,
+                              child: Padding(
+                                padding: EdgeInsets.only(left: 5.0, right: 5.0),
+                                child: MessageWidget(
+                                  key: Key(_messages[index].guid),
+                                  offset: timeStampOffset,
+                                  message: _messages[index],
+                                  chat: widget.messageBloc.currentChat,
+                                  olderMessage: olderMessage,
+                                  newerMessage: newerMessage,
+                                  showHandle: widget.showHandle,
+                                  isFirstSentMessage:
+                                      widget.messageBloc.firstSentMessage ==
+                                          _messages[index].guid,
+                                  showHero: index == 0 &&
+                                      _messages[index].originalROWID == null,
+                                ),
+                              ),
+                            ),
                           ),
+                        );
+                      },
+                    )
+                  : SliverToBoxAdapter(child: Container()),
+              SliverPadding(
+                padding: EdgeInsets.all(70),
+              ),
+            ],
+          ),
+        ),
+        (showScrollDown && scrollState == -1)
+            ? ClipRRect(
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+                  child: Container(
+                    height: 35,
+                    width: 150,
+                    decoration: BoxDecoration(
+                        color: Theme.of(context).accentColor.withOpacity(0.7),
+                        borderRadius: BorderRadius.circular(10.0)),
+                    child: Center(
+                      child: GestureDetector(
+                        onTap: () {
+                          scrollController.animateTo(
+                            0.0,
+                            curve: Curves.easeOut,
+                            duration: const Duration(milliseconds: 300),
+                          );
+                        },
+                        child: Text(
+                          "\u{2193} Scroll to bottom \u{2193}",
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.bodyText1,
                         ),
                       ),
-                    );
-                  },
-                )
-              : SliverToBoxAdapter(child: Container()),
-          SliverPadding(
-            padding: EdgeInsets.all(70),
-          ),
-        ],
-      ),
+                    ),
+                  ),
+                ),
+              )
+            : Container()
+      ]),
     );
   }
 }

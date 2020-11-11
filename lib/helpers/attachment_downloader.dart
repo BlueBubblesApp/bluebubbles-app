@@ -5,12 +5,14 @@ import 'dart:io';
 
 import 'dart:typed_data';
 
-import 'package:bluebubbles/managers/life_cycle_manager.dart';
+import 'package:bluebubbles/helpers/attachment_helper.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/material.dart';
+import 'package:video_thumbnail/video_thumbnail.dart';
 
 class AttachmentDownloader {
   final _stream = StreamController<dynamic>.broadcast();
@@ -20,26 +22,21 @@ class AttachmentDownloader {
   int _currentChunk = 0;
   int _totalChunks = 0;
   int _chunkSize = 500; // Default to 500
-  List<int> _currentBytes = <int>[];
-  String _guid = "";
   Function _cb;
   Attachment _attachment;
-  String _title;
-  Chat _chat;
-  bool _createNotification;
-  int _socketProcessId;
   Function _onComplete;
+  Function _onError;
 
   double get progress => (_currentChunk) / _totalChunks;
   Attachment get attachment => _attachment;
 
   AttachmentDownloader(Attachment attachment,
-      {bool createNotification = false, Function onComplete}) {
+      {Function onComplete, Function onError, bool autoFetch = true}) {
     // Set default chunk size based on the current settings
     _chunkSize = SettingsManager().settings.chunkSize * 1024;
     _attachment = attachment;
-    _createNotification = createNotification;
     _onComplete = onComplete;
+    _onError = onError;
 
     String appDocPath = SettingsManager().appDocDir.path;
     String pathName =
@@ -48,13 +45,11 @@ class AttachmentDownloader {
       return;
     }
 
-    fetchAttachment(attachment);
+    if (autoFetch) fetchAttachment(attachment);
   }
 
   getChunkRecursive(
       String guid, int index, int total, List<int> currentBytes, Function cb) {
-    _currentBytes = currentBytes;
-
     // if (index <= total) {
     Map<String, dynamic> params = new Map();
     params["identifier"] = guid;
@@ -65,6 +60,7 @@ class AttachmentDownloader {
         (attachmentResponse) async {
       if (attachmentResponse['status'] != 200) {
         cb(null);
+        _onError(attachmentResponse);
         return;
       }
       if (!attachmentResponse.containsKey("data") ||
@@ -83,7 +79,6 @@ class AttachmentDownloader {
 
         // Update the progress in stream
         _stream.sink.add({"Progress": progress});
-        _currentBytes = currentBytes;
         _currentChunk = index + 1;
 
         // Get the next chunk
@@ -93,19 +88,9 @@ class AttachmentDownloader {
         await cb(currentBytes);
       }
     }, reason: "Attachment downloader " + attachment.guid);
-    // }
   }
 
-  // void updateProgressNotif(double _progress) {
-  //   if (_createNotification && _attachment.mimeType != null) {
-  //     NotificationManager().updateProgressNotification(
-  //       _attachment.id,
-  //       _progress,
-  //     );
-  //   }
-  // }
-
-  void fetchAttachment(Attachment attachment) async {
+  Future<void> fetchAttachment(Attachment attachment) async {
     if (SocketManager().attachmentDownloaders.containsKey(attachment.guid)) {
       _stream.close();
       return;
@@ -115,30 +100,14 @@ class AttachmentDownloader {
     Stopwatch stopwatch = new Stopwatch();
     stopwatch.start();
 
-    _guid = attachment.guid;
     _totalChunks = numOfChunks;
-
-    // if (_createNotification &&
-    //     _attachment.mimeType != null &&
-    //     _message != null) {
-    //   _chat = await Message.getChat(_message);
-    //   _title = await getFullChatTitle(_chat);
-    //   NotificationManager().createProgressNotification(
-    //     _title,
-    //     "Downloading Attachment",
-    //     _chat.guid,
-    //     _attachment.id,
-    //     _chat.id,
-    //     0.0,
-    //   );
-    // }
 
     _cb = (List<int> data) async {
       stopwatch.stop();
       debugPrint(
           "Attachment downloaded in ${stopwatch.elapsedMilliseconds} ms");
 
-      if (data == null || data.length == 0) {
+      if (isNullOrEmpty(data)) {
         SocketManager().finishDownloader(attachment.guid);
         // NotificationManager().finishProgressWithAttachment(
         //     "Failed to download", _attachment.id, _attachment);
@@ -163,7 +132,7 @@ class AttachmentDownloader {
       if (_onComplete != null) _onComplete();
 
       // Add attachment to sink based on if we got data
-      if (data == null || data.length == 0) {
+      if (isNullOrEmpty(data)) {
         _stream.sink.addError("unable to load");
       } else if (file != null) {
         _stream.sink.add(file);
@@ -173,13 +142,32 @@ class AttachmentDownloader {
       _stream.close();
     };
 
-    SocketManager().addAttachmentDownloader(attachment.guid, this);
+    // Only donwload if auto download is on or the wifi stars align
+    if ((await AttachmentHelper.canAutoDownload())) {
+      SocketManager().addAttachmentDownloader(attachment.guid, this);
+    }
 
     getChunkRecursive(attachment.guid, 0, numOfChunks, [], _cb);
   }
 
   Future<File> writeToFile(Uint8List data, String path) async {
     File file = await new File(path).create(recursive: true);
-    return file.writeAsBytes(data);
+    await file.writeAsBytes(data);
+
+    Uint8List thumbnail;
+    if (attachment.mimeStart == "video") {
+      await VideoThumbnail.thumbnailData(
+        video: path,
+        imageFormat: ImageFormat.JPEG,
+        quality: 25,
+      );
+    } else if (attachment.mimeStart == "image") {
+      thumbnail = data;
+    }
+    if (thumbnail != null) {
+      await attachment.updateDimensions(thumbnail);
+    }
+
+    return file;
   }
 }

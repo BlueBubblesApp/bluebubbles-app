@@ -1,7 +1,8 @@
 import 'dart:async';
 
+import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/managers/attachment_info_bloc.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
-import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:flutter/material.dart';
 
@@ -24,7 +25,7 @@ class ChatBloc {
   final _archivedChatController = StreamController<List<Chat>>.broadcast();
   Stream<List<Chat>> get archivedChatStream => _archivedChatController.stream;
 
-  static StreamSubscription<Map<String, dynamic>> _messageSubscription;
+  static StreamSubscription<NewMessageEvent> _messageSubscription;
 
   List<Chat> _chats;
   List<Chat> get chats => _chats;
@@ -80,7 +81,7 @@ class ChatBloc {
   /// Inserts a [chat] into the chat bloc based on the lastMessage data
   Future<void> updateChatPosition(Chat chat) async {
     if (chat == null) return;
-    if (_chats == null || _chats.length == 0) {
+    if (isNullOrEmpty(_chats)) {
       await this.refreshChats();
     }
 
@@ -111,7 +112,7 @@ class ChatBloc {
     // If we shouldn't update the bloc because the message is older, return here
     if (!shouldUpdate) return;
 
-    if (chat.title == null || chat.title == "") {
+    if (isNullOrEmpty(chat.title)) {
       await chat.getTitle();
     }
 
@@ -137,12 +138,11 @@ class ChatBloc {
     _chatController.sink.add(_chats);
   }
 
-  Future<void> handleMessageAction(
-      String chatGuid, String actionType, Map<String, dynamic> action) async {
+  Future<void> handleMessageAction(NewMessageEvent event) async {
     // Only handle the "add" action right now
-    if (actionType == NewMessageAction.ADD) {
+    if (event.type == NewMessageType.ADD) {
       // Find the chat to update
-      Chat updatedChat = action["chat"];
+      Chat updatedChat = event.event["chat"];
 
       // Update the tile values for the chat (basically just the title)
       await initTileValsForChat(updatedChat);
@@ -152,21 +152,14 @@ class ChatBloc {
     }
   }
 
-  StreamSubscription<Map<String, dynamic>> setupMessageListener() {
+  StreamSubscription<NewMessageEvent> setupMessageListener() {
     // Listen for new messages
-    return NewMessageManager().stream.listen((msgEvent) {
-      msgEvent.forEach((chatGuid, actionData) {
-        actionData.forEach((actionType, actions) async {
-          for (Map<String, dynamic> action in actions) {
-            await handleMessageAction(chatGuid, actionType, action);
-          }
-        });
-      });
-    });
+    return NewMessageManager().stream.listen(handleMessageAction);
   }
 
   void recursiveGetChats() async {
     // Get more chats
+    int len = _chats.length;
     List<Chat> newChats = await Chat.getChats(limit: 10, offset: _chats.length);
 
     // If there were indeed results, then continue
@@ -182,12 +175,17 @@ class ChatBloc {
             break;
           }
         }
+
         if (existingChat) continue;
         _chats.add(newChat);
         await initTileValsForChat(newChat);
       }
-      _chatController.sink.add(_chats);
-      recursiveGetChats();
+
+      // Only keep going if the last request added new chats
+      if (_chats.length > len) {
+        _chatController.sink.add(_chats);
+        recursiveGetChats();
+      }
     }
   }
 
@@ -205,7 +203,11 @@ class ChatBloc {
   /// Get the values for the chat, specifically the title
   /// @param chat to initialize
   Future<void> initTileValsForChat(Chat chat) async {
-    if (chat.title == null) await chat.getTitle();
+    if (chat.title == null) {
+      await chat.getTitle();
+      AttachmentInfoBloc().initChat(chat);
+      // asldkfjalskdjf
+    }
   }
 
   void archiveChat(Chat chat) async {
@@ -248,7 +250,7 @@ class ChatBloc {
       Chat _chat = _chats[i];
       if (_chat.guid == chat.guid) {
         _chats[i] = chat;
-        await chats[i].getTitle();
+        await initTileValsForChat(chats[i]);
         _chatController.sink.add(_chats);
       }
     }

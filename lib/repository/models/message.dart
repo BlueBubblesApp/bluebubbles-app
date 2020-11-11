@@ -1,4 +1,7 @@
 import 'dart:convert';
+import 'package:bluebubbles/helpers/message_helper.dart';
+import 'package:bluebubbles/helpers/reaction.dart';
+import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:flutter/cupertino.dart';
@@ -46,6 +49,7 @@ class Message {
   String groupTitle;
   int groupActionType;
   bool isExpired;
+  String balloonBundleId;
   String associatedMessageGuid;
   String associatedMessageType;
   String expressiveSendStyleId;
@@ -53,7 +57,10 @@ class Message {
   Handle handle;
   bool hasAttachments;
   bool hasReactions;
-  List<Attachment> attachments;
+
+  List<Attachment> attachments = [];
+  List<Message> associatedMessages = [];
+  bool bigEmoji;
 
   Message({
     this.id,
@@ -82,6 +89,7 @@ class Message {
     this.groupTitle,
     this.groupActionType = 0,
     this.isExpired = false,
+    this.balloonBundleId,
     this.associatedMessageGuid,
     this.associatedMessageType,
     this.expressiveSendStyleId,
@@ -89,7 +97,7 @@ class Message {
     this.handle,
     this.hasAttachments = false,
     this.hasReactions = false,
-    this.attachments,
+    this.attachments = const [],
   });
 
   factory Message.fromMap(Map<String, dynamic> json) {
@@ -174,6 +182,8 @@ class Message {
       isExpired: (json["isExpired"] is bool)
           ? json['isExpired']
           : ((json['isExpired'] == 1) ? true : false),
+      balloonBundleId:
+          json.containsKey("balloonBundleId") ? json["balloonBundleId"] : null,
       associatedMessageGuid: associatedMessageGuid,
       associatedMessageType: json.containsKey("associatedMessageType")
           ? json["associatedMessageType"]
@@ -208,12 +218,6 @@ class Message {
       await this.handle.save();
       this.handleId = this.handle.id;
     }
-    // QueueManager().logger.log(Level.info,
-    //     "this.handle == null ${this.handle == null}, this.handleId = ${this.handleId}");
-
-    // QueueManager()
-    //     .logger
-    //     .log(Level.info, "existing == null ${existing == null}");
     if (this.associatedMessageType != null &&
         this.associatedMessageGuid != null) {
       Message associatedMessage =
@@ -261,13 +265,11 @@ class Message {
             awaitNewMessageEvent: false, chat: chat);
       } else {
         if (chat != null) {
-          debugPrint("adding message to chat");
           await chat.addMessage(newMessage);
           NewMessageManager().addMessage(chat, newMessage, outgoing: false);
           return newMessage;
         }
       }
-      // return null;
     }
 
     Map<String, dynamic> params = newMessage.toMap();
@@ -293,6 +295,7 @@ class Message {
 
     await db.update("message", params,
         where: "ROWID = ?", whereArgs: [existing.id]);
+
     return newMessage;
   }
 
@@ -328,15 +331,20 @@ class Message {
     return this;
   }
 
-  static Future<List<Attachment>> getAttachments(Message message) async {
-    if (message.hasAttachments &&
-        message.attachments != null &&
-        message.attachments.length != 0) {
-      return message.attachments ?? [];
+  Future<List<Attachment>> fetchAttachments({CurrentChat currentChat}) async {
+    if (this.hasAttachments &&
+        this.attachments != null &&
+        this.attachments.length != 0) {
+      return this.attachments;
+    }
+
+    if (currentChat != null) {
+      this.attachments = currentChat.getAttachmentsForMessage(this);
+      if (this.attachments.length != 0) return this.attachments;
     }
 
     final Database db = await DBProvider.db.database;
-    if (message.id == null) return [];
+    if (this.id == null) return [];
 
     var res = await db.rawQuery(
         "SELECT"
@@ -357,12 +365,12 @@ class Message {
         " JOIN attachment_message_join AS amj ON message.ROWID = amj.messageId"
         " JOIN attachment ON attachment.ROWID = amj.attachmentId"
         " WHERE message.ROWID = ?;",
-        [message.id]);
+        [this.id]);
 
-    message.attachments =
+    this.attachments =
         (res.isNotEmpty) ? res.map((c) => Attachment.fromMap(c)).toList() : [];
 
-    return message.attachments;
+    return this.attachments;
   }
 
   static Future<Chat> getChat(Message message) async {
@@ -385,9 +393,14 @@ class Message {
     return (res.isNotEmpty) ? Chat.fromMap(res[0]) : null;
   }
 
-  Future<List<Message>> getAssociatedMessages() async {
-    List<Message> res = await Message.find({"associatedMessageGuid": this.guid});
-    return res;
+  Future<Message> fetchAssociatedMessages() async {
+    associatedMessages =
+        await Message.find({"associatedMessageGuid": this.guid});
+    associatedMessages
+        .sort((a, b) => a.originalROWID.compareTo(b.originalROWID));
+    associatedMessages =
+        MessageHelper.normalizedAssociatedMessages(associatedMessages);
+    return this;
   }
 
   Future<Handle> getHandle() async {
@@ -451,7 +464,8 @@ class Message {
 
     List<Message> toDelete = await Message.find(where);
     for (Message msg in toDelete) {
-      await db.delete("chat_message_join", where: "messageId = ?", whereArgs: [msg.id]);
+      await db.delete("chat_message_join",
+          where: "messageId = ?", whereArgs: [msg.id]);
       await db.delete("message", where: "ROWID = ?", whereArgs: [msg.id]);
     }
   }
@@ -459,6 +473,53 @@ class Message {
   static flush() async {
     final Database db = await DBProvider.db.database;
     await db.delete("message");
+  }
+
+  bool isUrlPreview() {
+    return this.balloonBundleId != null &&
+        this.balloonBundleId == "com.apple.messages.URLBalloonProvider" &&
+        this.hasDdResults;
+  }
+
+  bool isInteractive() {
+    return this.balloonBundleId != null &&
+        this.balloonBundleId != "com.apple.messages.URLBalloonProvider";
+  }
+
+  bool hasText({stripWhitespace = false}) {
+    return !isEmptyString(this.text, stripWhitespace: stripWhitespace);
+  }
+
+  bool isGroupEvent() {
+    return isEmptyString(this.text) &&
+        !this.hasAttachments &&
+        this.balloonBundleId == null;
+  }
+
+  bool isBigEmoji() {
+    // We are checking the variable first because we want to
+    // avoid processing twice for this as it won't change
+    if (this.bigEmoji == null) {
+      this.bigEmoji = MessageHelper.shouldShowBigEmoji(this.text);
+    }
+
+    return this.bigEmoji;
+  }
+
+  List<Attachment> getRealAttachments() {
+    return this.attachments.where((item) => item.mimeType != null).toList();
+  }
+
+  List<Attachment> getPreviewAttachments() {
+    return this.attachments.where((item) => item.mimeType == null).toList();
+  }
+
+  List<Message> getReactions() {
+    return this
+        .associatedMessages
+        .where((item) =>
+            ReactionTypes.toList().contains(item.associatedMessageType))
+        .toList();
   }
 
   Map<String, dynamic> toMap() => {
@@ -492,6 +553,7 @@ class Message {
         "groupTitle": groupTitle,
         "groupActionType": groupActionType,
         "isExpired": isExpired ? 1 : 0,
+        "balloonBundleId": balloonBundleId,
         "associatedMessageGuid": associatedMessageGuid,
         "associatedMessageType": associatedMessageType,
         "expressiveSendStyleId": expressiveSendStyleId,

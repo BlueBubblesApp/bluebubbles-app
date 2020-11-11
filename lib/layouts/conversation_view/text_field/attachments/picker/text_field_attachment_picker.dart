@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:bluebubbles/helpers/share.dart';
 import 'package:bluebubbles/layouts/conversation_view/camera_widget.dart';
 import 'package:bluebubbles/layouts/conversation_view/text_field/attachments/picker/attachment_picked.dart';
+import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
+import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:flutter/material.dart';
@@ -30,10 +32,14 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker>
   @override
   void initState() {
     super.initState();
-    getAttachments();
+    // If the app is reopened, then update the attachments
+    LifeCycleManager().stream.listen((event) async {
+      if (event && widget.visible) getAttachments();
+    });
   }
 
   Future<void> getAttachments() async {
+    if (!this.mounted) return;
     List<AssetPathEntity> list =
         await PhotoManager.getAssetPathList(onlyAll: true);
     List<AssetEntity> images =
@@ -44,6 +50,9 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker>
 
   @override
   Widget build(BuildContext context) {
+    if (widget.visible && _images.isEmpty) {
+      getAttachments();
+    }
     return AnimatedSize(
       duration: Duration(milliseconds: 100),
       vsync: this,
@@ -52,7 +61,7 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker>
           ? SizedBox(
               child: CustomScrollView(
                 physics: AlwaysScrollableScrollPhysics(
-                  parent: BouncingScrollPhysics(),
+                  parent: CustomBouncingScrollPhysics(),
                 ),
                 scrollDirection: Axis.horizontal,
                 slivers: <Widget>[
@@ -63,56 +72,15 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker>
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: <Widget>[
                           SizedBox(
-                            width: 85,
-                            height: 80,
+                            width: 90,
+                            height: 120,
                             child: RaisedButton(
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(18),
                               ),
                               onPressed: () async {
                                 String res = await MethodChannelInterface()
-                                    .invokeMethod("pick-image");
-                                if (res == null) return;
-                                widget.onAddAttachment(File(res));
-                              },
-                              color: Theme.of(context).accentColor,
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: <Widget>[
-                                  Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: Icon(
-                                      Icons.photo_library,
-                                      color: Theme.of(context)
-                                          .textTheme
-                                          .bodyText1
-                                          .color,
-                                    ),
-                                  ),
-                                  Text(
-                                    "Images",
-                                    style: TextStyle(
-                                      color: Theme.of(context)
-                                          .textTheme
-                                          .bodyText1
-                                          .color,
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          SizedBox(
-                            width: 85,
-                            height: 80,
-                            child: RaisedButton(
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(18),
-                              ),
-                              onPressed: () async {
-                                String res = await MethodChannelInterface()
-                                    .invokeMethod("pick-video");
+                                    .invokeMethod("pick-file");
                                 if (res == null) return;
                                 widget.onAddAttachment(File(res));
                               },
@@ -131,7 +99,7 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker>
                                     ),
                                   ),
                                   Text(
-                                    "Videos",
+                                    "Files",
                                     style: TextStyle(
                                       color: Theme.of(context)
                                           .textTheme
@@ -145,8 +113,8 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker>
                             ),
                           ),
                           SizedBox(
-                            width: 85,
-                            height: 80,
+                            width: 90,
+                            height: 120,
                             child: RaisedButton(
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(18),

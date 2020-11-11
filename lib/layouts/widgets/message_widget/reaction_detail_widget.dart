@@ -21,7 +21,6 @@ class ReactionDetailWidget extends StatefulWidget {
 }
 
 class _ReactionDetailWidgetState extends State<ReactionDetailWidget> {
-  ImageProvider contactImage;
   String contactTitle;
 
   @override
@@ -36,14 +35,9 @@ class _ReactionDetailWidgetState extends State<ReactionDetailWidget> {
     super.didChangeDependencies();
     if (widget.message.isFromMe || widget.handle == null) return;
 
-    ContactManager().getCachedContact(widget.handle.address).then((Contact contact) {
-      if (contact != null && contact.avatar.length > 0) {
-        contactImage = MemoryImage(contact.avatar);
-        if (this.mounted) setState(() {});
-      }
-    });
-
-    ContactManager().getContactTitle(widget.handle.address).then((String title) {
+    ContactManager()
+        .getContactTitle(widget.handle.address)
+        .then((String title) {
       if (title != contactTitle) {
         contactTitle = title;
         if (this.mounted) setState(() {});
@@ -53,12 +47,13 @@ class _ReactionDetailWidgetState extends State<ReactionDetailWidget> {
 
   @override
   Widget build(BuildContext context) {
-    String handleAddress = widget.handle == null || widget.message.isFromMe ? null : widget.handle.address;
-    final initials = getInitials(handleAddress, " ");
+    String handleAddress = widget.handle == null || widget.message.isFromMe
+        ? null
+        : widget.handle.address;
 
     Color iconColor = Colors.white;
     if (Theme.of(context).accentColor.computeLuminance() >= 0.179) {
-        iconColor = Colors.black.withAlpha(95);
+      iconColor = Colors.black.withAlpha(95);
     }
 
     return Column(
@@ -67,17 +62,15 @@ class _ReactionDetailWidgetState extends State<ReactionDetailWidget> {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 25.0, vertical: 10),
           child: ContactAvatarWidget(
-            contactImage: contactImage,
-            initials: initials,
+            handle: widget.handle,
           ),
         ),
         Padding(
           padding: EdgeInsets.only(bottom: 8.0),
-          child: Text(contactTitle,
-            style: Theme.of(context)
-                .textTheme
-                .bodyText1
-                .apply(fontSizeDelta: -5),
+          child: Text(
+            contactTitle,
+            style:
+                Theme.of(context).textTheme.bodyText1.apply(fontSizeDelta: -5),
           ),
         ),
         Container(
@@ -94,7 +87,8 @@ class _ReactionDetailWidgetState extends State<ReactionDetailWidget> {
             ],
           ),
           child: Padding(
-            padding: const EdgeInsets.only(top: 8.0, left: 7.0, right: 7.0, bottom: 7.0),
+            padding: const EdgeInsets.only(
+                top: 8.0, left: 7.0, right: 7.0, bottom: 7.0),
             child: SvgPicture.asset(
               'assets/reactions/${widget.message.associatedMessageType}-black.svg',
               color: widget.message.associatedMessageType == "love"

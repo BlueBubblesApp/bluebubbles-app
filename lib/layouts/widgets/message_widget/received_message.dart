@@ -1,35 +1,39 @@
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/helpers/widget_helper.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
-import 'package:bluebubbles/layouts/widgets/message_widget/reactions.dart';
+import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/ballon_bundle_widget.dart';
+import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_tail.dart';
+import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_time_stamp.dart';
+import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
+import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
-import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/material.dart';
 
 class ReceivedMessage extends StatefulWidget {
+  final double offset;
   final bool showTail;
   final Message message;
   final Message olderMessage;
-  final double offset;
-  // final OverlayEntry overlayEntry;
-  final Map<String, String> timeStamp;
   final bool showHandle;
-  final List<Widget> customContent;
-  final bool isFromMe;
-  final Widget attachments;
+
+  // Sub-widgets
+  final Widget stickersWidget;
+  final Widget attachmentsWidget;
+  final Widget reactionsWidget;
+  final Widget urlPreviewWidget;
 
   ReceivedMessage({
     Key key,
     @required this.showTail,
     @required this.olderMessage,
     @required this.message,
-    // @required this.overlayEntry,
-    @required this.timeStamp,
     @required this.showHandle,
-    @required this.customContent,
-    @required this.isFromMe,
-    @required this.attachments,
+
+    // Sub-widgets
+    @required this.stickersWidget,
+    @required this.attachmentsWidget,
+    @required this.reactionsWidget,
+    @required this.urlPreviewWidget,
     this.offset,
   }) : super(key: key);
 
@@ -37,248 +41,207 @@ class ReceivedMessage extends StatefulWidget {
   _ReceivedMessageState createState() => _ReceivedMessageState();
 }
 
-class _ReceivedMessageState extends State<ReceivedMessage> {
-  String contactTitle = "";
-  MemoryImage contactImage;
-  Contact contact;
-  bool hasHyperlinks = false;
-
+class _ReceivedMessageState extends State<ReceivedMessage>
+    with MessageWidgetMixin {
   @override
   initState() {
     super.initState();
-    getContactTitle();
-    this.hasHyperlinks = parseLinks(widget.message.text).isNotEmpty;
+    initMessageState(widget.message, widget.showHandle)
+        .then((value) => {if (this.mounted) setState(() {})});
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    getContactTitle();
-    getContact();
-    fetchAvatar();
-    ContactManager().stream.listen((List<String> addresses) {
-      // Check if any of the addresses are members of the chat
-      if (!addresses.contains(widget.message.handle.address)) return;
-      fetchAvatar();
-    });
+    didChangeMessageDependencies(widget.message, widget.showHandle);
   }
 
-  void fetchAvatar() async {
-    MemoryImage avatar = await loadAvatar(null, widget.message.handle.address);
-    if (contactImage == null ||
-        contactImage.bytes.length != avatar.bytes.length) {
-      contactImage = avatar;
-      if (this.mounted) setState(() {});
-    }
+  Future<void> didChangeMessageDependencies(
+      Message message, bool showHandle) async {
+    await getContactTitle(message, showHandle);
+    // await fetchAvatar(message);
+    if (this.mounted) setState(() {});
   }
 
-  void getContact() {
-    ContactManager()
-        .getCachedContact(widget.message.handle.address)
-        .then((Contact contact) {
-      if (contact != null) {
-        if (this.contact == null ||
-            this.contact.identifier != contact.identifier) {
-          this.contact = contact;
-          if (this.mounted) setState(() {});
-        }
-      }
-    });
-  }
-
-  void getContactTitle() {
-    if (widget.message.handle == null || !widget.showHandle) return;
-
-    ContactManager()
-        .getContactTitle(widget.message.handle.address)
-        .then((String title) {
-      if (title != contactTitle) {
-        contactTitle = title;
-        if (this.mounted) setState(() {});
-      }
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    var initials = getInitials(contact?.displayName ?? "", " ", size: 25);
-
-    List<Widget> tail = <Widget>[
-      Container(
-        margin: EdgeInsets.only(bottom: 1),
-        width: 20,
-        height: 15,
-        decoration: BoxDecoration(
-          color: Theme.of(context).accentColor,
-          borderRadius: BorderRadius.only(bottomRight: Radius.circular(12)),
+  /// Builds the message bubble with teh tail (if applicable)
+  Widget _buildMessageWithTail(Message message) {
+    if (message.isBigEmoji()) {
+      bool hasReactions = (message?.getReactions() ?? []).length > 0 ?? false;
+      return Padding(
+        padding: EdgeInsets.only(
+          left:
+              CurrentChat.of(context).chat.participants.length > 1 ? 5.0 : 0.0,
+          right: (hasReactions) ? 15.0 : 0.0,
+          top: widget.message.getReactions().length > 0 ? 15 : 0,
         ),
-      ),
-      Container(
-        margin: EdgeInsets.only(bottom: 2),
-        height: 28,
-        width: 11,
-        decoration: BoxDecoration(
-            color: Theme.of(context).backgroundColor,
-            borderRadius: BorderRadius.only(bottomRight: Radius.circular(8))),
-      ),
-    ];
-
-    List<Widget> stack = <Widget>[
-      Container(
-        height: 30,
-        width: 6,
-        color: Theme.of(context).backgroundColor,
-      )
-    ];
-    if (widget.showTail) {
-      stack.insertAll(0, tail);
-    }
-
-    List<Widget> messageWidget = [
-      widget.message != null && !isEmptyString(widget.message.text)
-          ? Stack(
-              alignment: AlignmentDirectional.bottomStart,
-              children: <Widget>[
-                Stack(
-                  alignment: AlignmentDirectional.bottomStart,
-                  children: stack,
-                ),
-                Container(
-                    margin: EdgeInsets.symmetric(
-                      horizontal: 10,
-                    ),
-                    constraints: BoxConstraints(
-                      maxWidth: MediaQuery.of(context).size.width * 3 / 4.5,
-                    ),
-                    padding: EdgeInsets.symmetric(
-                      vertical: 8,
-                      horizontal: 14,
-                    ),
-                    decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(20),
-                        color: Theme.of(context).accentColor),
-                    child: RichText(
-                        text: TextSpan(
-                      children: WidgetHelper.buildMessageSpans(context, widget.message),
-                      style: Theme.of(context).textTheme.bodyText1,
-                    ))),
-              ],
-            )
-          : Container()
-    ];
-
-    Widget contactItem = new Container(width: 0, height: 0);
-    if (!sameSender(widget.message, widget.olderMessage) ||
-        !widget.message.dateCreated
-            .isWithin(widget.olderMessage.dateCreated, minutes: 30)) {
-      contactItem = Padding(
-        padding: EdgeInsets.only(left: 50.0, top: 5.0, bottom: 3.0),
         child: Text(
-          contactTitle,
-          style: Theme.of(context).textTheme.subtitle1,
+          message.text,
+          style: Theme.of(context).textTheme.bodyText1.apply(fontSizeFactor: 4),
         ),
       );
     }
 
-    List<Widget> msgItems = [];
-    if (widget.showTail && widget.showHandle) {
-      msgItems.add(Padding(
-          padding: EdgeInsets.only(
-              left: 5.0,
-              bottom: (isEmptyString(sanitizeString(widget.message.text)))
-                  ? 5.0
-                  : 10.0),
-          child: ContactAvatarWidget(
-              contactImage: contactImage,
-              initials: initials,
-              size: 30,
-              fontSize: 14)));
-    }
-    
-    msgItems.add(
-        new Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Padding(padding: EdgeInsets.only(bottom: 1.0), child: widget.attachments),
-      (!this.hasHyperlinks || !widget.message.hasDdResults)
-        ? Padding(
-          padding: EdgeInsets.only(
-              bottom: widget.showTail ? 10.0 : 3.0,
-              left: widget.showTail || !widget.showHandle ? 0.0 : 35.0),
-          child: Stack(
-            alignment: Alignment.topRight,
-            children: <Widget>[
-              AnimatedPadding(
-                duration: Duration(milliseconds: 250),
-                curve: Curves.easeInOut,
-                padding: EdgeInsets.only(
-                  right: widget.message != null &&
-                          widget.message.hasReactions &&
-                          !widget.message.hasAttachments
-                      ? 6.0
-                      : 0.0,
-                  top: widget.message != null &&
-                          widget.message.hasReactions &&
-                          !widget.message.hasAttachments
-                      ? 14.0
-                      : 0.0,
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: messageWidget,
-                ),
-              ),
-              !widget.message.hasAttachments
-                  ? Reactions(
-                      message: widget.message,
-                    )
-                  : Container(),
-            ],
+    return Stack(
+      alignment: AlignmentDirectional.bottomStart,
+      children: [
+        if (widget.showTail) MessageTail(message: message),
+        Container(
+          margin: EdgeInsets.only(
+            top: widget.message.getReactions().length > 0 &&
+                    !widget.message.hasAttachments
+                ? 18
+                : 0,
+            left: 10,
+            right: 10,
           ),
-        )
-      : Container()
-    ]));
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        contactItem,
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: <Widget>[
-            Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: msgItems,
+          constraints: BoxConstraints(
+            maxWidth:
+                MediaQuery.of(context).size.width * MessageWidgetMixin.maxSize,
+          ),
+          padding: EdgeInsets.symmetric(
+            vertical: 8,
+            horizontal: 14,
+          ),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            color: Theme.of(context).accentColor,
+          ),
+          child: RichText(
+            text: TextSpan(
+              children:
+                  MessageWidgetMixin.buildMessageSpans(context, widget.message),
+              style: Theme.of(context).textTheme.bodyText1,
             ),
-            WidgetHelper.buildMessageTimestamp(context, widget.message, widget.offset)
-          ],
+          ),
         ),
-        widget.timeStamp != null
-            ? Padding(
-                padding: const EdgeInsets.all(14.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[
-                    RichText(
-                      text: TextSpan(
-                        style: Theme.of(context).textTheme.subtitle2,
-                        children: [
-                          TextSpan(
-                            text: "${widget.timeStamp["date"]}, ",
-                            style: Theme.of(context)
-                                .textTheme
-                                .subtitle2
-                                .apply(fontWeightDelta: 10),
-                          ),
-                          TextSpan(text: "${widget.timeStamp["time"]}")
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              )
-            : Container()
       ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.message == null) return Container();
+
+    // The column that holds all the "messages"
+    List<Widget> messageColumn = [];
+
+    // First, add the message sender (if applicable)
+    if (!sameSender(widget.message, widget.olderMessage) ||
+        !widget.message.dateCreated
+            .isWithin(widget.olderMessage.dateCreated, minutes: 30)) {
+      messageColumn.add(
+        Padding(
+          padding: EdgeInsets.only(
+              left: 15.0,
+              top: 5.0,
+              bottom: widget.message.getReactions().length > 0 ? 0.0 : 3.0),
+          child: Text(
+            contactTitle,
+            style: Theme.of(context).textTheme.subtitle1,
+          ),
+        ),
+      );
+    }
+
+    // Second, add the attachments
+    if (widget.message.getRealAttachments().length > 0) {
+      messageColumn.add(
+        addStickersToWidget(
+          message: addReactionsToWidget(
+              messageWidget: widget.attachmentsWidget,
+              reactions: widget.reactionsWidget,
+              message: widget.message,
+              shouldShow: widget.message.hasAttachments),
+          stickers: widget.stickersWidget,
+          isFromMe: widget.message.isFromMe,
+        ),
+      );
+    }
+
+    // Third, let's add the actual message we want to show
+    Widget message;
+    if (widget.message.isUrlPreview()) {
+      message = Padding(
+        padding: EdgeInsets.only(left: 10.0),
+        child: widget.urlPreviewWidget,
+      );
+    } else if (widget.message.isInteractive()) {
+      message = BalloonBundleWidget(message: widget.message);
+    } else if (widget.message.hasText()) {
+      message = _buildMessageWithTail(widget.message);
+    }
+
+    // Fourth, let's add any reactions or stickers to the widget
+    if (message != null) {
+      messageColumn.add(
+        addStickersToWidget(
+          message: addReactionsToWidget(
+              messageWidget: message,
+              reactions: widget.reactionsWidget,
+              message: widget.message,
+              shouldShow: widget.message.getRealAttachments().isEmpty),
+          stickers: widget.stickersWidget,
+          isFromMe: widget.message.isFromMe,
+        ),
+      );
+    }
+
+    // Now, let's create a row that will be the row with the following:
+    // -> Contact avatar
+    // -> Message
+    List<Widget> msgRow = [];
+    if (widget.showTail && CurrentChat.of(context).chat.isGroup()) {
+      msgRow.add(
+        Padding(
+          padding: EdgeInsets.only(
+            left: 5.0,
+          ),
+          child: ContactAvatarWidget(
+            handle: widget.message.handle,
+            size: 30,
+            fontSize: 14,
+          ),
+        ),
+      );
+    }
+
+    // Add the message column to the row
+    msgRow.add(
+      Padding(
+        // Padding to shift the bubble up a bit, relative to the avatar
+        padding: EdgeInsets.only(bottom: widget.showTail ? 0.0 : 5.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: messageColumn,
+        ),
+      ),
+    );
+
+    // Finally, create a container row so we can have the swipe timestamp
+    return Padding(
+      // Add padding when we are showing the avatar
+      padding: EdgeInsets.only(
+          left: (!widget.showTail && CurrentChat.of(context).chat.isGroup())
+              ? 35.0
+              : 0.0,
+          bottom: (widget.showTail) ? 10.0 : 0.0),
+      child: Row(
+        mainAxisSize: MainAxisSize.max,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: msgRow,
+          ),
+          MessageTimeStamp(
+            message: widget.message,
+            offset: widget.offset,
+          )
+        ],
+      ),
     );
   }
 }

@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
+import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/attachment_downloader_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_file.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/audio_player_widget.dart';
@@ -9,33 +10,21 @@ import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/location_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/regular_file_opener.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/video_widget.dart';
-import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_attachments.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:video_player/video_player.dart';
 
 class MessageAttachment extends StatefulWidget {
   MessageAttachment({
     Key key,
-    @required this.content,
     @required this.attachment,
     @required this.updateAttachment,
     @required this.message,
-    @required this.savedAttachmentData,
-    @required this.controllers,
-    @required this.changeCurrentPlayingVideo,
-    @required this.allAttachments,
   }) : super(key: key);
-  final content;
   final Attachment attachment;
-  final List<Attachment> allAttachments;
   final Function() updateAttachment;
   final Message message;
-  final SavedAttachmentData savedAttachmentData;
-  final Map<String, VideoPlayerController> controllers;
-  final Function(Map<String, VideoPlayerController>) changeCurrentPlayingVideo;
 
   @override
   _MessageAttachmentState createState() => _MessageAttachmentState();
@@ -44,77 +33,22 @@ class MessageAttachment extends StatefulWidget {
 class _MessageAttachmentState extends State<MessageAttachment>
     with AutomaticKeepAliveClientMixin {
   String blurhash;
-  Widget placeHolder;
   Widget attachmentWidget;
   var content;
 
   @override
   void initState() {
     super.initState();
-    content = widget.content;
+    content = AttachmentHelper.getContent(widget.attachment);
     if (content is AttachmentDownloader) {
       (content as AttachmentDownloader).stream.listen((event) {
-        if (event is File) {
-          if (this.mounted)
-            setState(() {
-              content = event;
-            });
+        if (event is File && this.mounted) {
+          setState(() {
+            content = event;
+          });
         }
       });
     }
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-
-    // Pull the blurhash from the attachment, based on the class type
-    int width;
-    int height;
-    String blurhash;
-
-    if (content is AttachmentDownloader) {
-      blurhash = (content as AttachmentDownloader).attachment.blurhash;
-      width = (content as AttachmentDownloader).attachment.width;
-      height = (content as AttachmentDownloader).attachment.height;
-    } else if (content is Attachment) {
-      blurhash = (content as Attachment).blurhash;
-      width = (content as Attachment).width;
-      height = (content as Attachment).height;
-    }
-
-    placeHolder = ClipRRect(
-      borderRadius: BorderRadius.circular(8.0),
-      child: Container(
-        height: 150,
-        width: 200,
-        color: Theme.of(context).accentColor,
-      ),
-    );
-    // (blurhash == null ||
-    //         width == null ||
-    //         height == null ||
-    //         width == 0 ||
-    //         height == 0)
-    //     ?
-    // : Container(
-    //     constraints: BoxConstraints(
-    //       maxWidth: MediaQuery.of(context).size.width * 3 / 4,
-    //     ),
-    //     child: ClipRRect(
-    //       borderRadius: BorderRadius.circular(8.0),
-    //       child: AspectRatio(
-    //         aspectRatio: widget.attachment.width / widget.attachment.height,
-    //         child: BlurHash(
-    //           hash: blurhash,
-    //           decodingWidth: (widget.attachment.width ~/ 200)
-    //               .clamp(1, double.infinity),
-    //           decodingHeight: (widget.attachment.height ~/ 200)
-    //               .clamp(1, double.infinity),
-    //         ),
-    //       ),
-    //     ),
-    //   );
   }
 
   @override
@@ -142,22 +76,16 @@ class _MessageAttachmentState extends State<MessageAttachment>
         return MediaFile(
           attachment: widget.attachment,
           child: ImageWidget(
-            savedAttachmentData: widget.savedAttachmentData,
             attachment: widget.attachment,
             file: content,
-            allAttachments: widget.allAttachments,
           ),
         );
       } else if (mimeType == "video") {
         return MediaFile(
           attachment: widget.attachment,
           child: VideoWidget(
-            changeCurrentPlayingVideo: widget.changeCurrentPlayingVideo,
-            controllers: widget.controllers,
             attachment: widget.attachment,
             file: content,
-            savedAttachmentData: widget.savedAttachmentData,
-            allAttachments: widget.allAttachments,
           ),
         );
       } else if (mimeType == "audio" &&
@@ -201,11 +129,11 @@ class _MessageAttachmentState extends State<MessageAttachment>
       return AttachmentDownloaderWidget(
         onPressed: () {
           content = new AttachmentDownloader(content);
-          widget.updateAttachment();
-          setState(() {});
+          // widget.updateAttachment();
+          if (this.mounted) setState(() {});
         },
         attachment: content,
-        placeHolder: placeHolder,
+        placeHolder: buildPlaceHolder(),
       );
 
       // If it's an AttachmentDownloader, it is currently being downloaded
@@ -244,7 +172,7 @@ class _MessageAttachmentState extends State<MessageAttachment>
             return Stack(
               alignment: Alignment.center,
               children: <Widget>[
-                placeHolder,
+                buildPlaceHolder(),
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
@@ -284,6 +212,15 @@ class _MessageAttachmentState extends State<MessageAttachment>
       //     return Container();
     }
   }
+
+  Widget buildPlaceHolder() => ClipRRect(
+        borderRadius: BorderRadius.circular(8.0),
+        child: Container(
+          height: 150,
+          width: 200,
+          color: Theme.of(context).accentColor,
+        ),
+      );
 
   @override
   bool get wantKeepAlive => true;

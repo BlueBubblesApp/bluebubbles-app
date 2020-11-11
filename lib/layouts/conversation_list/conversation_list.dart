@@ -1,10 +1,12 @@
 import 'dart:ui';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
-import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/new_chat_creator.dart';
+import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/chat_selector.dart';
+import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
+import 'package:bluebubbles/managers/theme_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 
 import './conversation_tile.dart';
@@ -29,9 +31,11 @@ class _ConversationListState extends State<ConversationList> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    setState(() {
-      _theme = Colors.transparent;
-    });
+    if (this.mounted) {
+      setState(() {
+        _theme = Colors.transparent;
+      });
+    }
   }
 
   void scrollListener() {
@@ -79,6 +83,7 @@ class _ConversationListState extends State<ConversationList> {
           NotificationManager().chat != null ||
           context == null) return;
       final snackBar = SnackBar(content: Text(event["data"]["text"]));
+      Scaffold.of(context).hideCurrentSnackBar();
       Scaffold.of(context).showSnackBar(snackBar);
     });
   }
@@ -131,7 +136,7 @@ class _ConversationListState extends State<ConversationList> {
       extendBodyBehindAppBar: true,
       body: CustomScrollView(
         controller: _scrollController,
-        physics: AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+        physics: ThemeManager().scrollPhysics,
         slivers: <Widget>[
           SliverAppBar(
             leading: new Container(),
@@ -224,7 +229,7 @@ class _ConversationListState extends State<ConversationList> {
                                   ),
                                   child: Icon(
                                     Icons.more_horiz,
-                                    color: Colors.blue.withOpacity(0.75),
+                                    color: Theme.of(context).primaryColor,
                                     size: 15,
                                   ),
                                 ),
@@ -253,7 +258,7 @@ class _ConversationListState extends State<ConversationList> {
                   return -a.latestMessageDate.compareTo(b.latestMessageDate);
                 });
 
-                if (_chats.length == 0) {
+                if (_chats.isEmpty) {
                   return SliverToBoxAdapter(
                       child: Center(
                           child: Container(
@@ -270,7 +275,7 @@ class _ConversationListState extends State<ConversationList> {
                           key: Key(_chats[index].guid.toString()),
                           chat: _chats[index]);
                     },
-                    childCount: _chats.length,
+                    childCount: _chats?.length ?? 0,
                   ),
                 );
               } else {
@@ -281,13 +286,13 @@ class _ConversationListState extends State<ConversationList> {
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        backgroundColor: Colors.blue,
+        backgroundColor: Theme.of(context).primaryColor,
         child: Icon(Icons.message, color: Colors.white, size: 25),
         onPressed: () {
           Navigator.of(context).push(
             CupertinoPageRoute(
               builder: (BuildContext context) {
-                return NewChatCreator(
+                return ChatSelector(
                   isCreator: true,
                 );
               },

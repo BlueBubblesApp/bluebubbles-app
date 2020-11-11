@@ -108,7 +108,7 @@ class _ContactTileState extends State<ContactTile> {
   }
 
   Widget _buildContactTile() {
-    var initials = getInitials(contact?.displayName ?? "", " ");
+    List<Color> colors = toColorGradient(widget.handle?.address ?? "");
     return InkWell(
       onLongPress: () {
         Clipboard.setData(new ClipboardData(text: widget.handle.address));
@@ -128,8 +128,7 @@ class _ContactTileState extends State<ContactTile> {
           style: Theme.of(context).textTheme.bodyText1,
         ),
         leading: ContactAvatarWidget(
-          contactImage: contactImage,
-          initials: initials,
+          handle: widget.handle,
         ),
         trailing: SizedBox(
           width: MediaQuery.of(context).size.width / 3,
@@ -189,7 +188,7 @@ class _ContactTileState extends State<ContactTile> {
                         },
                         child: Icon(
                           Icons.call,
-                          color: Colors.blue,
+                          color: Theme.of(context).primaryColor,
                         ),
                       ),
                     )

@@ -122,4 +122,7 @@ dependencies {
     // for workmanager
     implementation "androidx.work:work-runtime:2.4.0"
 
+    // Why won't it fucking compile
+    implementation 'com.google.guava:guava:27.0.1-android'
+
 }

@@ -22,22 +22,24 @@ import android.util.Log;
 
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
-import androidx.core.app.NotificationCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.work.WorkManager;
 
 import com.bluebubbles.messaging.method_call_handler.MethodCallHandler;
-import com.google.android.gms.location.FusedLocationProviderClient;
+import com.bluebubbles.messaging.sharing.ShareShortcutManager;
 import com.itsclicking.clickapp.fluttersocketio.SocketIOManager;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 
@@ -54,6 +56,7 @@ public class MainActivity extends FlutterActivity {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState, @Nullable PersistableBundle persistentState) {
         super.onCreate(savedInstanceState, persistentState);
+        ShareShortcutManager.publishShareTarget(getApplicationContext());
     }
 
 
@@ -65,10 +68,8 @@ public class MainActivity extends FlutterActivity {
         engine = flutterEngine;
 
         new MethodChannel(flutterEngine.getDartExecutor().getBinaryMessenger(), CHANNEL)
-                .setMethodCallHandler(((call, result) -> MethodCallHandler.methodCallHandler(call, result, MainActivity.this,   null)));
+                .setMethodCallHandler(((call, result) -> MethodCallHandler.methodCallHandler(call, result, MainActivity.this, null)));
     }
-
-
 
 
     protected void onNewIntent(Intent intent) {
@@ -78,25 +79,13 @@ public class MainActivity extends FlutterActivity {
         if (type == null) return;
 
         if (Intent.ACTION_SEND.equals(action)) {
-            if ("text/plain".equals(type)) {
+            if (type.equals("text/plain")) {
                 handleSendText(intent); // Handle text being sent
-            } else if("text/x-vcard".equals(type)) {
-                handleShareFile(intent);
-            } else if (type.startsWith("image/")) {
-                handleShareFile(intent); // Handle single image being sent
-            } else if (type.startsWith("video/")) {
-                handleShareFile(intent);
             } else {
-                Log.d("ShareImage", "type not found " + type);
+                handleShareFile(intent);
             }
         } else if (Intent.ACTION_SEND_MULTIPLE.equals(action) && type != null) {
-            if (type.startsWith("image/")) {
-                handleSendMultipleImages(intent); // Handle multiple images being sent
-            } else if (type.startsWith("video/")) {
-                handleSendMultipleImages(intent);
-            } else {
-                Log.d("ShareImage", "type not found " + type);
-            }
+            handleSendMultipleImages(intent);
         } else {
             if (type.equals("NotificationOpen")) {
                 Log.d("Notifications", "tapped on notification by id " + intent.getExtras().getInt("id"));
@@ -114,12 +103,15 @@ public class MainActivity extends FlutterActivity {
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == PICK_IMAGE) {
-
             if (resultCode == RESULT_OK) {
+                File sharedFiles = new File(getApplicationContext().getFilesDir().getAbsolutePath() + "/sharedFiles/");
+                if(!sharedFiles.exists()) {
+                    sharedFiles.mkdir();
+                }
                 File file = new File(getApplicationContext().getFilesDir().getAbsolutePath() + "/sharedFiles/" + getFileName(data.getData()));
                 try {
                     file.createNewFile();
-                    Files.write(Paths.get(file.getAbsolutePath()), getBytesFromUri(data.getData()));
+                    writeBytesFromURI(data.getData(), file);
                     if (result != null) {
                         result.success(file.getAbsolutePath());
                         Log.d("PICK_FILE", "Result is okay! " + file.getAbsolutePath());
@@ -145,26 +137,47 @@ public class MainActivity extends FlutterActivity {
     }
 
     void handleShareFile(Intent intent) {
-        Map<String, byte[]> imagePaths = new HashMap<String, byte[]>();
+        List<String> images = new ArrayList<>();
         Uri imageUri = (Uri) intent.getParcelableExtra(Intent.EXTRA_STREAM);
         if (imageUri != null) {
-            imagePaths.put(getFileName(imageUri), getBytesFromUri(imageUri));
-            new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod("shareAttachments", imagePaths);
+            try {
+                File filesDir = new File(getFilesDir().getPath() + "/sharedFiles/");
+                if (!filesDir.exists()) {
+                    filesDir.mkdir();
+                }
+                File file = new File(getFilesDir().getPath() + "/sharedFiles/" + getFileName(imageUri));
+                file.createNewFile();
+                writeBytesFromURI(imageUri, file);
+                images.add(file.getPath());
+                new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod("shareAttachments", images);
+            } catch (Exception e) {
+                Log.d("ShareImage", "FAILURE");
+                e.printStackTrace();
+            }
         }
     }
 
-    public byte[] getBytesFromUri(Uri contentUri) {
+    public void writeBytesFromURI(Uri contentUri, File file) {
+        final int buffer_size = 4096;
         try {
-            InputStream stream = getContentResolver().openInputStream(contentUri);
-            byte[] bytes = new byte[stream.available()];
-            stream.read(bytes);
-            return bytes;
+            InputStream inputStream = getContentResolver().openInputStream(contentUri);
+            BufferedOutputStream outputStream = new BufferedOutputStream(new FileOutputStream(file));
+            byte[] bytes = new byte[buffer_size];
+            for (int count = 0, prog = 0; count != -1; ) {
+                count = inputStream.read(bytes);
+                if (count != -1) {
+                    outputStream.write(bytes, 0, count);
+                    prog = prog + count;
+                }
+            }
+            outputStream.flush();
+            inputStream.close();
+            outputStream.close();
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return null;
     }
 
     public String getFileName(Uri uri) {
@@ -191,18 +204,27 @@ public class MainActivity extends FlutterActivity {
 
     void handleSendMultipleImages(Intent intent) {
         ArrayList<Uri> imageUris = intent.getParcelableArrayListExtra(Intent.EXTRA_STREAM);
-        Map<String, byte[]> imagePaths = new HashMap<String, byte[]>();
+        List<String> images = new ArrayList<>();
+        File filesDir = new File(getFilesDir().getPath() + "/sharedFiles/");
+        if (!filesDir.exists()) {
+            filesDir.mkdir();
+        }
         if (imageUris != null) {
             for (Uri imageUri : imageUris) {
-                imagePaths.put(getFileName(imageUri), getBytesFromUri(imageUri));
+                try {
+                    File file = new File(getFilesDir().getPath() + "/sharedFiles/" + getFileName(imageUri));
+                    file.createNewFile();
+                    images.add(file.getPath());
+                    writeBytesFromURI(imageUri, file);
+                } catch (Exception e) {
+                    Log.d("share", "FAILURE");
+                    e.printStackTrace();
+                }
             }
-            new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod("shareAttachments", imagePaths);
-            Log.d("ShareImage", imagePaths.toString());
-            // Update UI to reflect multiple images being shared
+            Log.d("share", images.toString());
+            new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod("shareAttachments", images);
         }
     }
-
-
 
 
     @Override

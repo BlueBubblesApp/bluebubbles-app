@@ -54,7 +54,10 @@ class _DeliveredReceiptState extends State<DeliveredReceipt>
       text = "Read " + _buildDate();
 
     Widget timestampWidget = Container();
-    if (widget.message != null && showReceipt && (widget.message.dateRead != null || widget.message.dateDelivered != null)) {
+    if (widget.message != null &&
+        showReceipt &&
+        (widget.message.dateRead != null ||
+            widget.message.dateDelivered != null)) {
       timestampWidget = Padding(
         padding: const EdgeInsets.symmetric(horizontal: 8.0),
         child: Row(
@@ -62,25 +65,27 @@ class _DeliveredReceiptState extends State<DeliveredReceipt>
           children: <Widget>[
             Text(
               text,
-              style: Theme.of(context)
-                  .textTheme
-                  .subtitle2,
+              style: Theme.of(context).textTheme.subtitle2,
             )
           ],
         ),
       );
     }
-
+    Widget item;
     if (widget.shouldAnimate) {
-      return AnimatedSize(
-        vsync: this,
-        curve: Curves.easeInOut,
-        alignment: Alignment.bottomLeft,
-        duration: Duration(milliseconds: 250),
-        child: timestampWidget
-      ); 
+      item = AnimatedSize(
+          vsync: this,
+          curve: Curves.easeInOut,
+          alignment: Alignment.bottomLeft,
+          duration: Duration(milliseconds: 250),
+          child: timestampWidget);
     } else {
-      return timestampWidget;
+      item = timestampWidget;
     }
+    return Padding(
+      padding:
+          EdgeInsets.symmetric(vertical: widget.showDeliveredReceipt ? 4 : 0),
+      child: item,
+    );
   }
 }

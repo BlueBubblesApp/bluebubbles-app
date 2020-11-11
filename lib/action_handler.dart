@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
+import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/attachment_sender.dart';
 import 'package:bluebubbles/helpers/contstants.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
@@ -35,7 +36,7 @@ class ActionHandler {
   /// ```
   static Future<void> sendMessage(Chat chat, String text,
       {List<Attachment> attachments = const []}) async {
-    if (text == null || text.trim().length == 0) return;
+    if (isNullOrEmpty(text, trimString: true)) return;
 
     List<Message> messages = <Message>[];
 
@@ -66,7 +67,6 @@ class ActionHandler {
     if (shouldSplit) {
       messages.add(Message(
         guid: "temp-${randomString(8)}",
-        hasDdResults: true,
         text: text.substring(linkMatch.start, linkMatch.end),
         dateCreated: DateTime.now(),
         hasAttachments: false,
@@ -133,7 +133,7 @@ class ActionHandler {
     Chat chat = await Message.getChat(message);
     if (chat == null) throw ("Could not find chat!");
 
-    await Message.getAttachments(message);
+    await message.fetchAttachments();
     for (int i = 0; i < message.attachments.length; i++) {
       String appDocPath = SettingsManager().appDocDir.path;
       String pathName =
@@ -199,6 +199,7 @@ class ActionHandler {
   /// ```
   static Future<void> resyncChat(Chat chat, MessageBloc messageBloc) async {
     final Database db = await DBProvider.db.database;
+    await chat.save();
 
     // Fetch messages associated with the chat
     var items = await db.rawQuery(
@@ -212,7 +213,7 @@ class ActionHandler {
 
     // If there are no messages, return
     debugPrint("Deleting ${items.length} messages");
-    if (items.length == 0) return;
+    if (isNullOrEmpty(items)) return;
 
     Batch batch = db.batch();
     for (Map<String, dynamic> message in items) {
@@ -289,7 +290,10 @@ class ActionHandler {
   /// ```dart
   /// handleChatStatusChange(chatGuid, status)
   /// ```
-  static Future<void> handleChatStatusChange(String chatGuid, bool status) async {
+  static Future<void> handleChatStatusChange(
+      String chatGuid, bool status) async {
+    if (chatGuid == null) return;
+
     Chat chat = await Chat.findOne({"guid": chatGuid});
     if (chat == null) return;
 
@@ -363,7 +367,8 @@ class ActionHandler {
   /// ```
   static Future<void> handleMessage(Map<String, dynamic> data,
       {bool createAttachmentNotification = false,
-      bool isHeadless = false}) async {
+      bool isHeadless = false,
+      bool forceProcess = false}) async {
     Message message = Message.fromMap(data);
     List<Chat> chats = MessageHelper.parseChats(data);
 
@@ -382,6 +387,7 @@ class ActionHandler {
             chat: chats.first);
         List<dynamic> attachments =
             data.containsKey("attachments") ? data['attachments'] : [];
+        message.attachments = [];
         for (dynamic attachmentItem in attachments) {
           Attachment file = Attachment.fromMap(attachmentItem);
 
@@ -390,14 +396,17 @@ class ActionHandler {
           } catch (ex) {
             debugPrint("Attachment's Old GUID doesn't exist. Skipping");
           }
+          message.attachments.add(file);
         }
         debugPrint(
             "(Message status) -> Message match: [${data["text"]}] - ${data["guid"]} - ${data["tempGuid"]}");
+
         if (!isHeadless)
           NewMessageManager()
               .updateMessage(chats.first, data['tempGuid'], message);
       }
-    } else if (!NotificationManager().hasProcessed(data["guid"])) {
+    } else if (forceProcess ||
+        !NotificationManager().hasProcessed(data["guid"])) {
       // Add the message to the chats
       for (int i = 0; i < chats.length; i++) {
         debugPrint("Client received new message " + chats[i].guid);
@@ -410,6 +419,7 @@ class ActionHandler {
           chat = chats[i];
         }
 
+        await chat.getParticipants();
         // Handle the notification based on the message and chat
         await MessageHelper.handleNotification(message, chat);
 
@@ -433,12 +443,12 @@ class ActionHandler {
         Attachment file = Attachment.fromMap(attachmentItem);
         await file.save(message);
 
-        if (SettingsManager().settings.autoDownload &&
+        if ((await AttachmentHelper.canAutoDownload()) &&
             file.mimeType != null &&
             !SocketManager().attachmentDownloaders.containsKey(file.guid)) {
-          new AttachmentDownloader(file,
-              createNotification:
-                  createAttachmentNotification && file.mimeType != null);
+          new AttachmentDownloader(
+            file,
+          );
         }
       }
 

@@ -1,11 +1,15 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:bluebubbles/layouts/settings/settings_panel.dart';
 import 'package:bluebubbles/layouts/setup/qr_code_scanner.dart';
+import 'package:bluebubbles/layouts/setup/text_input_url.dart';
 import 'package:bluebubbles/layouts/setup/welcome_page.dart';
+import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/settings.dart';
+import 'package:bluebubbles/repository/models/fcm_data.dart';
+import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -21,11 +25,16 @@ class _SetupViewState extends State<SetupView> {
   final controller = PageController(initialPage: 0);
   int currentPage = 1;
   Settings _settingsCopy;
+  FCMData _fcmDataCopy;
+  double numberOfMessages = 25;
+  bool downloadAttachments = false;
+  bool skipEmptyChats = true;
 
   @override
   void initState() {
     super.initState();
     _settingsCopy = SettingsManager().settings;
+    _fcmDataCopy = SettingsManager().fcmData;
   }
 
   @override
@@ -36,10 +45,9 @@ class _SetupViewState extends State<SetupView> {
         PageView(
           onPageChanged: (int page) {
             currentPage = page + 1;
-            setState(() {});
+            if (this.mounted) setState(() {});
           },
-          physics:
-              AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+          physics: NeverScrollableScrollPhysics(),
           controller: controller,
           children: <Widget>[
             WelcomePage(
@@ -87,7 +95,7 @@ class _SetupViewState extends State<SetupView> {
           Container(height: 20.0),
           ClipOval(
             child: Material(
-              color: Colors.blue, // button color
+              color: Theme.of(context).primaryColor, // button color
               child: InkWell(
                 child: SizedBox(
                     width: 60,
@@ -129,7 +137,7 @@ class _SetupViewState extends State<SetupView> {
             Container(height: 20.0),
             ClipOval(
               child: Material(
-                color: Colors.blue, // button color
+                color: Theme.of(context).primaryColor, // button color
                 child: InkWell(
                   child: SizedBox(
                       width: 60,
@@ -173,7 +181,7 @@ class _SetupViewState extends State<SetupView> {
             Container(height: 20.0),
             ClipOval(
               child: Material(
-                color: Colors.blue, // button color
+                color: Theme.of(context).primaryColor, // button color
                 child: InkWell(
                     child: SizedBox(
                         width: 60,
@@ -195,21 +203,18 @@ class _SetupViewState extends State<SetupView> {
                         return;
                       }
                       if (fcmData != null) {
-                        _settingsCopy.fcmAuthData = {
-                          "project_id": fcmData[2],
-                          "storage_bucket": fcmData[3],
-                          "api_key": fcmData[4],
-                          "firebase_url": fcmData[5],
-                          "client_id": fcmData[6],
-                          "application_id": fcmData[7],
-                        };
+                        _fcmDataCopy = FCMData(
+                          projectID: fcmData[2],
+                          storageBucket: fcmData[3],
+                          apiKey: fcmData[4],
+                          firebaseURL: fcmData[5],
+                          clientID: fcmData[6],
+                          applicationID: fcmData[7],
+                        );
                         _settingsCopy.guidAuthKey = fcmData[0];
                         _settingsCopy.serverAddress = fcmData[1];
-                        await SettingsManager().saveSettings(
-                          _settingsCopy,
-                          connectToSocket: false,
-                          authorizeFCM: false,
-                        );
+                        await SettingsManager().saveSettings(_settingsCopy);
+                        await SettingsManager().saveFCMData(_fcmDataCopy);
                         showDialog(
                           context: context,
                           builder: (context) => AlertDialog(
@@ -225,7 +230,8 @@ class _SetupViewState extends State<SetupView> {
                                 Container(
                                   child: CircularProgressIndicator(
                                     valueColor: AlwaysStoppedAnimation<Color>(
-                                        Colors.blue),
+                                      Theme.of(context).primaryColor,
+                                    ),
                                   ),
                                 ),
                               ],
@@ -289,88 +295,64 @@ class _SetupViewState extends State<SetupView> {
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 20.0),
               child: Text(
-                "Or alternatively... you can enter in your ngrok url here: ",
+                "Or alternatively... you can enter in your url here",
                 style: Theme.of(context)
                     .textTheme
                     .bodyText1
-                    .apply(fontSizeFactor: 1.25),
+                    .apply(fontSizeFactor: 1.15),
                 textAlign: TextAlign.center,
               ),
             ),
             Padding(
               padding: EdgeInsets.only(top: 15.0),
-              child: Row(
-                mainAxisSize: MainAxisSize.max,
-                children: [
-                  Spacer(
-                    flex: 3,
-                  ),
-                  Text("https://"),
-                  Flexible(
-                    child: CupertinoTextField(
-                      controller: textController,
-                      maxLength: 10,
-                      maxLengthEnforced: false,
-                      maxLines: 1,
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).backgroundColor,
-                        borderRadius: BorderRadius.circular(7),
+              child: ClipOval(
+                child: Material(
+                  color: Theme.of(context).primaryColor,
+                  child: InkWell(
+                    child: SizedBox(
+                      width: 60,
+                      height: 60,
+                      child: Icon(
+                        Icons.input,
+                        color: Colors.white,
                       ),
-                      style: Theme.of(context).textTheme.bodyText1,
                     ),
-                    flex: 4,
-                  ),
-                  Text(".ngrok.io"),
-                  Flexible(
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 16.0),
-                      child: FlatButton(
-                        child: Icon(
-                          Icons.arrow_forward,
-                          color: Theme.of(context).textTheme.bodyText1.color,
-                        ),
-                        color: Colors.blue,
-                        onPressed: () {
-                          showDialog(
-                            context: context,
-                            barrierDismissible: false,
-                            builder: (context) => AlertDialog(
-                              title: Text(
-                                "Connecting",
-                                style: Theme.of(context).textTheme.bodyText1,
-                              ),
-                              backgroundColor:
-                                  Theme.of(context).backgroundColor,
-                              content: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: <Widget>[
-                                  Container(
-                                    child: CircularProgressIndicator(
-                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                        Colors.blue,
-                                      ),
-                                    ),
-                                  ),
+                    onTap: () async {
+                      showDialog(
+                        context: context,
+                        builder: (context) => TextInputURL(
+                          onError: () {
+                            showDialog(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                title:
+                                    Text("An error occured trying to connect"),
+                                actions: [
+                                  FlatButton(
+                                    child: Text("OK"),
+                                    onPressed: () {
+                                      Navigator.of(context).pop();
+                                    },
+                                  )
                                 ],
                               ),
-                            ),
-                          );
-                          if (SocketManager().state == SocketState.CONNECTED) {
+                            );
+                          },
+                          onConnect: () {
                             Navigator.of(context).pop();
                             controller.nextPage(
                               duration: Duration(milliseconds: 300),
                               curve: Curves.easeInOut,
                             );
-                          }
-
-                          SocketManager().startSocketIO();
-                        },
-                      ),
-                    ),
-                    flex: 3,
+                          },
+                          onClose: () {
+                            Navigator.of(context).pop();
+                          },
+                        ),
+                      );
+                    },
                   ),
-                ],
+                ),
               ),
             )
           ],
@@ -409,56 +391,172 @@ class _SetupViewState extends State<SetupView> {
                 textAlign: TextAlign.center,
               ),
             ),
+            Container(height: 50.0),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20.0),
+              child: Text(
+                "Number of Messages to Sync Per Chat: $numberOfMessages",
+                style: Theme.of(context)
+                    .textTheme
+                    .bodyText1,
+                textAlign: TextAlign.center,
+              ),
+            ),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20.0),
+              child: Slider(
+                value: numberOfMessages,
+                onChanged: (double value) {
+                  if (!this.mounted) return;
+
+                  setState(() {
+                    numberOfMessages = value;
+                  });
+                },
+                label: numberOfMessages.toString(),
+                divisions: 9,
+                min: 25,
+                max: 250,
+              ),
+            ),
+            Container(height: 20.0),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 40.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                mainAxisSize: MainAxisSize.max,
+                children: [
+                  Text(
+                    "Auto-download Attachments (long sync)",
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodyText1,
+                    textAlign: TextAlign.center,
+                  ),
+                  Switch(
+                    value: downloadAttachments,
+                    activeColor: Theme.of(context).primaryColor,
+                    activeTrackColor:
+                        Theme.of(context).primaryColor.withAlpha(200),
+                    inactiveTrackColor:
+                        Theme.of(context).primaryColor.withAlpha(75),
+                    inactiveThumbColor:
+                        Theme.of(context).textTheme.bodyText1.color,
+                    onChanged: (bool value) {
+                      if (!this.mounted) return;
+
+                      setState(() {
+                        downloadAttachments = value;
+                      });
+                    },
+                  )
+                ],
+              ),
+            ),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 40.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                mainAxisSize: MainAxisSize.max,
+                children: [
+                  Text(
+                    "Skip empty chats",
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodyText1,
+                    textAlign: TextAlign.center,
+                  ),
+                  Switch(
+                    value: skipEmptyChats,
+                    activeColor: Theme.of(context).primaryColor,
+                    activeTrackColor:
+                        Theme.of(context).primaryColor.withAlpha(200),
+                    inactiveTrackColor:
+                        Theme.of(context).primaryColor.withAlpha(75),
+                    inactiveThumbColor:
+                        Theme.of(context).textTheme.bodyText1.color,
+                    onChanged: (bool value) {
+                      if (!this.mounted) return;
+
+                      setState(() {
+                        skipEmptyChats = value;
+                      });
+                    },
+                  )
+                ],
+              ),
+            ),
             Container(height: 20.0),
             ClipOval(
-                child: Material(
-                    color: Colors.green.withAlpha(200), // button color
-                    child: InkWell(
-                        child: SizedBox(
-                            width: 60,
-                            height: 60,
-                            child: Icon(Icons.cloud_download,
-                                color: Colors.white)),
-                        onTap: () async {
-                          if (_settingsCopy == null) {
-                            controller.animateToPage(3,
-                                duration: Duration(milliseconds: 3),
-                                curve: Curves.easeInOut);
-                          } else {
-                            SocketManager().setup.startSync(_settingsCopy, () {
-                              showDialog(
-                                context: context,
-                                builder: (context) => AlertDialog(
-                                  backgroundColor:
-                                      Theme.of(context).backgroundColor,
-                                  title: Text(
-                                    "The socket connection failed, please check the server",
-                                    style:
-                                        Theme.of(context).textTheme.bodyText1,
-                                  ),
-                                  actions: <Widget>[
-                                    FlatButton(
-                                      child: Text("Ok",
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .bodyText1),
-                                      onPressed: () {
-                                        Navigator.of(context).pop();
-                                      },
-                                    )
-                                  ],
-                                ),
-                              );
-                              controller.animateToPage(3,
-                                  duration: Duration(milliseconds: 500),
-                                  curve: Curves.easeInOut);
-                            });
-                            controller.nextPage(
-                              duration: Duration(milliseconds: 300),
-                              curve: Curves.easeInOut,
-                            );
-                          }
-                        })))
+              child: Material(
+                color: Colors.green.withAlpha(200), // button color
+                child: InkWell(
+                  child: SizedBox(
+                    width: 60,
+                    height: 60,
+                    child: Icon(
+                      Icons.cloud_download,
+                      color: Colors.white,
+                    ),
+                  ),
+                  onTap: () async {
+                    if (_settingsCopy == null) {
+                      controller.animateToPage(
+                        3,
+                        duration: Duration(milliseconds: 3),
+                        curve: Curves.easeInOut,
+                      );
+                    } else {
+                      // Set the number of messages to sync
+                      SocketManager().setup.numberOfMessagesPerPage =
+                          numberOfMessages;
+                      SocketManager().setup.downloadAttachments =
+                          downloadAttachments;
+                      SocketManager().setup.skipEmptyChats =
+                          skipEmptyChats;
+
+                      // Start syncing
+                      SocketManager().setup.startSync(
+                        _settingsCopy,
+                        () {
+                          showDialog(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              backgroundColor:
+                                  Theme.of(context).backgroundColor,
+                              title: Text(
+                                "The socket connection failed, please check the server",
+                                style: Theme.of(context).textTheme.bodyText1,
+                              ),
+                              actions: <Widget>[
+                                FlatButton(
+                                  child: Text("Ok",
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyText1),
+                                  onPressed: () {
+                                    Navigator.of(context).pop();
+                                  },
+                                )
+                              ],
+                            ),
+                          );
+                          controller.animateToPage(
+                            3,
+                            duration: Duration(milliseconds: 500),
+                            curve: Curves.easeInOut,
+                          );
+                        },
+                      );
+                      controller.nextPage(
+                        duration: Duration(milliseconds: 300),
+                        curve: Curves.easeInOut,
+                      );
+                    }
+                  },
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -501,7 +599,7 @@ class _SetupViewState extends State<SetupView> {
                             ? progress
                             : null,
                         backgroundColor: Colors.white,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                        valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
                       ),
                     ),
                     Spacer(
@@ -533,7 +631,7 @@ class _SetupViewState extends State<SetupView> {
                       borderRadius: BorderRadius.circular(20),
                       child: LinearProgressIndicator(
                         backgroundColor: Colors.white,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                        valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
                       ),
                     ),
                     Spacer(

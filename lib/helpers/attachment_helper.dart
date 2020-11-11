@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:connectivity/connectivity.dart';
 
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -128,9 +129,16 @@ class AttachmentHelper {
     return "$appDocPath/attachments/${attachment.guid}/$fileName";
   }
 
-  static dynamic getContent(Attachment attachment) {
+  /// Checks to see if an [attachment] exists in our attachment filesystem
+  static bool attachmentExists(Attachment attachment) {
+    String pathName = AttachmentHelper.getAttachmentPath(attachment);
+    return !(FileSystemEntity.typeSync(pathName) ==
+        FileSystemEntityType.notFound);
+  }
+
+  static dynamic getContent(Attachment attachment, {String path}) {
     String appDocPath = SettingsManager().appDocDir.path;
-    String pathName =
+    String pathName = path ??
         "$appDocPath/attachments/${attachment.guid}/${attachment.transferName}";
 
     /**
@@ -170,5 +178,17 @@ class AttachmentHelper {
       return Icons.note;
     }
     return Icons.open_in_new;
+  }
+
+  static Future<bool> canAutoDownload() async {
+    ConnectivityResult status = await (Connectivity().checkConnectivity());
+
+    // If auto-download is enabled
+    // and (only wifi download is disabled or
+    // only wifi download enabled, and we have wifi)
+    return (SettingsManager().settings.autoDownload &&
+        (!SettingsManager().settings.onlyWifiDownload ||
+            (SettingsManager().settings.onlyWifiDownload &&
+                status == ConnectivityResult.wifi)));
   }
 }

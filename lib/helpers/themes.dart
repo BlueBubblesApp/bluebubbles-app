@@ -1,4 +1,5 @@
 import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/repository/models/theme_object.dart';
 import 'package:flutter/material.dart';
 
 enum DarkThemes {
@@ -8,6 +9,14 @@ enum DarkThemes {
 
 enum LightThemes {
   Bright_White,
+}
+
+class Themes {
+  static List<ThemeObject> get themes => [
+        ThemeObject.fromData(oledDarkTheme, "OLED Dark", isPreset: true),
+        ThemeObject.fromData(whiteLightTheme, "Bright White", isPreset: true),
+        ThemeObject.fromData(nordDarkTheme, "Nord Theme", isPreset: true),
+      ];
 }
 
 ThemeData oledDarkTheme = ThemeData(
@@ -27,10 +36,12 @@ ThemeData oledDarkTheme = ThemeData(
     bodyText1: TextStyle(
       color: Colors.white,
       fontWeight: FontWeight.normal,
+      fontSize: 14,
     ),
     bodyText2: TextStyle(
       color: Colors.white,
       fontWeight: FontWeight.normal,
+      fontSize: 14,
     ),
     subtitle1: TextStyle(
       color: HexColor('919191'),
@@ -67,10 +78,12 @@ ThemeData nordDarkTheme = ThemeData(
     bodyText1: TextStyle(
       color: HexColor('ECEFF4'),
       fontWeight: FontWeight.normal,
+      fontSize: 14,
     ),
     bodyText2: TextStyle(
       color: HexColor('E5E9F0'),
       fontWeight: FontWeight.normal,
+      fontSize: 14,
     ),
     subtitle1: TextStyle(
       color: HexColor('a5a5a5'),
@@ -96,7 +109,7 @@ ThemeData whiteLightTheme = ThemeData(
   textTheme: TextTheme(
     headline1: TextStyle(
       color: Colors.black,
-      fontWeight: FontWeight.bold,
+      fontWeight: FontWeight.normal,
       fontSize: 18,
     ),
     headline2: TextStyle(
@@ -107,10 +120,12 @@ ThemeData whiteLightTheme = ThemeData(
     bodyText1: TextStyle(
       color: Colors.black,
       fontWeight: FontWeight.normal,
+      fontSize: 14,
     ),
     bodyText2: TextStyle(
       color: Colors.white,
       fontWeight: FontWeight.normal,
+      fontSize: 14,
     ),
     subtitle1: TextStyle(
       color: HexColor('9a9a9f'),

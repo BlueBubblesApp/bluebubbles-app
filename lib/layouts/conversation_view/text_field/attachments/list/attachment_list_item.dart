@@ -2,6 +2,8 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:bluebubbles/helpers/attachment_helper.dart';
+import 'package:bluebubbles/layouts/image_viewer/attachmet_fullscreen_viewer.dart';
+import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:flutter/material.dart';
@@ -43,22 +45,41 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
         maxHeight: 100,
         quality: 25,
       );
-      setState(() {});
+      if (this.mounted) setState(() {});
     } else if (mimeType.startsWith("image/")) {
       preview = await FlutterImageCompress.compressWithFile(
           widget.file.absolute.path,
           quality: SettingsManager().settings.lowMemoryMode ? 5 : 10);
-      setState(() {});
+      if (this.mounted) setState(() {});
     }
   }
 
   Widget getThumbnail() {
     if (preview != null) {
-      // If there is a preview, we can show it
-      return Image.memory(
-        preview,
-        height: 100,
-        fit: BoxFit.fill,
+      return InkWell(
+        child: Image.memory(
+          preview,
+          height: 100,
+          width: 100,
+          fit: BoxFit.cover,
+        ),
+        onTap: () async {
+          if (!this.mounted) return;
+
+          Attachment fakeAttachment = new Attachment(
+              transferName: widget.file.path, mimeType: mimeType);
+          CurrentChat currentChat = CurrentChat.of(context);
+          await Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => AttachmentFullscreenViewer(
+                allAttachments: [fakeAttachment],
+                currentChat: currentChat,
+                attachment: fakeAttachment,
+                showInteractions: false,
+              ),
+            ),
+          );
+        },
       );
     } else {
       if (mimeType.startsWith("video/") || mimeType.startsWith("image/")) {
@@ -106,37 +127,40 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: <Widget>[
-        getThumbnail(),
-        if (mimeType.startsWith("video/"))
-          Align(
-            alignment: Alignment.bottomRight,
-            child: Icon(
-              Icons.play_arrow,
-              color: Colors.white,
-            ),
-          ),
-        Align(
-          alignment: Alignment.topRight,
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(80),
-              color: Colors.black,
-            ),
-            width: 25,
-            height: 25,
-            child: GestureDetector(
-              onTap: widget.onRemove,
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(15),
+      child: Stack(
+        children: <Widget>[
+          getThumbnail(),
+          if (mimeType.startsWith("video/"))
+            Align(
+              alignment: Alignment.bottomRight,
               child: Icon(
-                Icons.close,
+                Icons.play_arrow,
                 color: Colors.white,
-                size: 15,
               ),
             ),
-          ),
-        )
-      ],
+          Align(
+            alignment: Alignment.topRight,
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(80),
+                color: Colors.black,
+              ),
+              width: 25,
+              height: 25,
+              child: GestureDetector(
+                onTap: widget.onRemove,
+                child: Icon(
+                  Icons.close,
+                  color: Colors.white,
+                  size: 15,
+                ),
+              ),
+            ),
+          )
+        ],
+      ),
     );
   }
 }

@@ -1,11 +1,13 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/layouts/image_viewer/attachmet_fullscreen_viewer.dart';
 import 'package:bluebubbles/layouts/image_viewer/video_viewer.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_attachments.dart';
+import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:flutter/cupertino.dart';
@@ -20,17 +22,9 @@ class VideoWidget extends StatefulWidget {
     Key key,
     @required this.file,
     @required this.attachment,
-    @required this.savedAttachmentData,
-    @required this.controllers,
-    @required this.changeCurrentPlayingVideo,
-    @required this.allAttachments,
   }) : super(key: key);
   final File file;
-  final List<Attachment> allAttachments;
   final Attachment attachment;
-  final SavedAttachmentData savedAttachmentData;
-  final Map<String, VideoPlayerController> controllers;
-  final Function(Map<String, VideoPlayerController>) changeCurrentPlayingVideo;
 
   @override
   _VideoWidgetState createState() => _VideoWidgetState();
@@ -38,19 +32,19 @@ class VideoWidget extends StatefulWidget {
 
 class _VideoWidgetState extends State<VideoWidget>
     with TickerProviderStateMixin {
-  // VideoPlayerController widget.savedAttachmentData.controller;
-
   bool showPlayPauseOverlay = true;
   bool isVisible = false;
   Timer hideOverlayTimer;
   bool navigated = false;
+  Uint8List thumbnail;
 
   @override
   void initState() {
     super.initState();
-    showPlayPauseOverlay = widget.controllers == null ||
-        !widget.controllers.containsKey(widget.attachment.guid) ||
-        !widget.controllers[widget.attachment.guid].value.isPlaying;
+    dynamic controllers = CurrentChat.of(context).currentPlayingVideo;
+    showPlayPauseOverlay = controllers == null ||
+        !controllers.containsKey(widget.attachment.guid) ||
+        !controllers[widget.attachment.guid].value.isPlaying;
   }
 
   @override
@@ -60,31 +54,28 @@ class _VideoWidgetState extends State<VideoWidget>
   }
 
   void getThumbnail() async {
-    if (widget.savedAttachmentData.imageData
-            .containsKey(widget.attachment.guid) &&
-        widget.savedAttachmentData.imageData[widget.attachment.guid] != null)
-      return;
-    widget.savedAttachmentData.imageData[widget.attachment.guid] =
-        await VideoThumbnail.thumbnailData(
+    thumbnail = CurrentChat.of(context).getImageData(widget.attachment);
+    if (thumbnail != null) return;
+    thumbnail = await VideoThumbnail.thumbnailData(
       video: widget.file.path,
       imageFormat: ImageFormat.JPEG,
-      quality: SettingsManager().settings.lowMemoryMode ? 10 : 25,
+      quality: 25,
     );
-    if (widget.attachment.width == null) {
-      Size size = ImageSizeGetter.getSize(MemoryInput(
-          widget.savedAttachmentData.imageData[widget.attachment.guid]));
-      widget.attachment.width = size.width;
-      widget.attachment.height = size.height;
-    }
+    CurrentChat.of(context).saveImageData(thumbnail, widget.attachment);
+
+    widget.attachment.updateDimensions(thumbnail);
     if (this.mounted) this.setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
     VideoPlayerController controller;
-    if (widget.controllers != null &&
-        widget.controllers.containsKey(widget.attachment.guid)) {
-      controller = widget.controllers[widget.attachment.guid];
+    Map<String, VideoPlayerController> controllers =
+        CurrentChat.of(context).currentPlayingVideo;
+    // If the currently playing video is this attachment guid
+    if (controllers != null &&
+        controllers.containsKey(widget.attachment.guid)) {
+      controller = controllers[widget.attachment.guid];
     }
     return VisibilityDetector(
       onVisibilityChanged: (info) {
@@ -92,12 +83,10 @@ class _VideoWidgetState extends State<VideoWidget>
           isVisible = false;
           if (controller != null) {
             controller = null;
-            widget.changeCurrentPlayingVideo(null);
+            CurrentChat.of(context).changeCurrentPlayingVideo(null);
           }
-          if (SettingsManager().settings.lowMemoryMode &&
-              widget.savedAttachmentData.imageData
-                  .containsKey(widget.attachment.guid)) {
-            widget.savedAttachmentData.imageData.remove(widget.attachment.guid);
+          if (SettingsManager().settings.lowMemoryMode) {
+            CurrentChat.of(context).clearImageData(widget.attachment);
           }
         } else if (!isVisible) {
           isVisible = true;
@@ -110,152 +99,163 @@ class _VideoWidgetState extends State<VideoWidget>
       key: Key(widget.attachment.guid),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(8.0),
-        child: controller != null
-            ? GestureDetector(
-                onTap: () async {
-                  if (controller.value.isPlaying) {
-                    controller.pause();
-                    setState(() {
-                      showPlayPauseOverlay = true;
-                    });
-                  } else {
-                    setState(() {
-                      navigated = true;
-                    });
-                    await Navigator.of(context).push(
-                      CupertinoPageRoute(
-                        builder: (context) => AttachmentFullscreenViewer(
-                          allAttachments: widget.allAttachments,
-                          attachment: widget.attachment,
-                        ),
-                      ),
-                    );
-                    setState(() {
-                      navigated = false;
-                    });
-                  }
-                },
-                child: controller.value.aspectRatio != null
-                    ? Container(
-                        constraints: BoxConstraints(
-                          maxWidth: MediaQuery.of(context).size.width / 2,
-                          maxHeight: MediaQuery.of(context).size.height / 2,
-                        ),
-                        child: Hero(
-                          tag: widget.attachment.guid,
-                          child: Stack(
-                            alignment: Alignment.center,
-                            children: <Widget>[
-                              AspectRatio(
-                                aspectRatio: controller.value.aspectRatio,
-                                child: Stack(
-                                  children: <Widget>[
-                                    VideoPlayer(controller),
-                                  ],
-                                ),
-                              ),
-                              AnimatedOpacity(
-                                opacity: showPlayPauseOverlay ? 1 : 0,
-                                duration: Duration(milliseconds: 250),
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color: HexColor('26262a').withOpacity(0.5),
-                                    borderRadius: BorderRadius.circular(40),
-                                  ),
-                                  padding: EdgeInsets.all(10),
-                                  child: controller.value.isPlaying
-                                      ? GestureDetector(
-                                          child: Icon(
-                                            Icons.pause,
-                                            color: Colors.white,
-                                            size: 45,
-                                          ),
-                                          onTap: () {
-                                            controller.pause();
-                                            setState(() {
-                                              showPlayPauseOverlay = true;
-                                            });
-                                          },
-                                        )
-                                      : GestureDetector(
-                                          child: Icon(
-                                            Icons.play_arrow,
-                                            color: Colors.white,
-                                            size: 45,
-                                          ),
-                                          onTap: () {
-                                            controller.play();
-                                            setState(() {
-                                              showPlayPauseOverlay = false;
-                                            });
-                                          },
-                                        ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      )
-                    : Container(),
-              )
-            : GestureDetector(
-                onTap: () async {
-                  VideoPlayerController controller =
-                      VideoPlayerController.file(widget.file);
-                  await controller.initialize();
-                  controller.play();
-                  widget.changeCurrentPlayingVideo(
-                      {widget.attachment.guid: controller});
-                },
-                child: Stack(
-                  children: [
-                    AnimatedSize(
-                      vsync: this,
-                      curve: Curves.easeInOut,
-                      alignment: Alignment.center,
-                      duration: Duration(milliseconds: 250),
-                      child: Container(
-                        constraints: BoxConstraints(
-                          maxWidth: MediaQuery.of(context).size.width / 2,
-                          maxHeight: MediaQuery.of(context).size.height / 2,
-                        ),
-                        child: widget.savedAttachmentData.imageData
-                                .containsKey(widget.attachment.guid)
-                            ? Image.memory(
-                                widget.savedAttachmentData
-                                    .imageData[widget.attachment.guid],
-                              )
-                            : Container(
-                                height: 5,
-                                child: Center(
-                                  child: LinearProgressIndicator(
-                                    backgroundColor: Colors.grey,
-                                    valueColor: AlwaysStoppedAnimation(
-                                      Theme.of(context).primaryColor,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                      ),
-                      // child: Image.file(widget.file),
-                    ),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: HexColor('26262a').withOpacity(0.5),
-                        borderRadius: BorderRadius.circular(40),
-                      ),
-                      padding: EdgeInsets.all(10),
-                      child: Icon(
-                        Icons.play_arrow,
-                        color: Colors.white,
-                        size: 45,
-                      ),
-                    ),
-                  ],
-                  alignment: Alignment.center,
-                ),
-              ),
+        child: AnimatedSize(
+          vsync: this,
+          curve: Curves.easeInOut,
+          alignment: Alignment.center,
+          duration: Duration(milliseconds: 250),
+          child: controller != null ? buildPlayer(controller) : buildPreview(),
+        ),
       ),
     );
+  }
+
+  Widget buildPlayer(VideoPlayerController controller) => GestureDetector(
+        onTap: () async {
+          if (controller.value.isPlaying) {
+            controller.pause();
+            setState(() {
+              showPlayPauseOverlay = true;
+            });
+          } else {
+            setState(() {
+              navigated = true;
+            });
+            CurrentChat currentChat = CurrentChat.of(context);
+            await Navigator.of(context).push(
+              CupertinoPageRoute(
+                builder: (context) => AttachmentFullscreenViewer(
+                  allAttachments: currentChat.chatAttachments,
+                  currentChat: currentChat,
+                  attachment: widget.attachment,
+                  showInteractions: true,
+                ),
+              ),
+            );
+            setState(() {
+              navigated = false;
+            });
+          }
+        },
+        child: controller.value.aspectRatio != null
+            ? Container(
+                constraints: BoxConstraints(
+                  maxWidth: MediaQuery.of(context).size.width / 2,
+                  maxHeight: MediaQuery.of(context).size.height / 2,
+                ),
+                child: Hero(
+                  tag: widget.attachment.guid,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: <Widget>[
+                      AspectRatio(
+                        aspectRatio: controller.value.aspectRatio,
+                        child: Stack(
+                          children: <Widget>[
+                            VideoPlayer(controller),
+                          ],
+                        ),
+                      ),
+                      AnimatedOpacity(
+                        opacity: showPlayPauseOverlay ? 1 : 0,
+                        duration: Duration(milliseconds: 250),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: HexColor('26262a').withOpacity(0.5),
+                            borderRadius: BorderRadius.circular(40),
+                          ),
+                          padding: EdgeInsets.all(10),
+                          child: controller.value.isPlaying
+                              ? GestureDetector(
+                                  child: Icon(
+                                    Icons.pause,
+                                    color: Colors.white,
+                                    size: 45,
+                                  ),
+                                  onTap: () {
+                                    controller.pause();
+                                    setState(() {
+                                      showPlayPauseOverlay = true;
+                                    });
+                                  },
+                                )
+                              : GestureDetector(
+                                  child: Icon(
+                                    Icons.play_arrow,
+                                    color: Colors.white,
+                                    size: 45,
+                                  ),
+                                  onTap: () {
+                                    controller.play();
+                                    setState(() {
+                                      showPlayPauseOverlay = false;
+                                    });
+                                  },
+                                ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            : Container(),
+      );
+
+  Widget buildPreview() => GestureDetector(
+        onTap: () async {
+          VideoPlayerController controller =
+              VideoPlayerController.file(widget.file);
+          await controller.initialize();
+          controller.play();
+          CurrentChat.of(context)
+              .changeCurrentPlayingVideo({widget.attachment.guid: controller});
+        },
+        child: Stack(
+          children: [
+            Container(
+              constraints: BoxConstraints(
+                maxWidth: MediaQuery.of(context).size.width / 2,
+                maxHeight: MediaQuery.of(context).size.height / 2,
+              ),
+              child: buildSwitcher(),
+            ),
+            Container(
+              decoration: BoxDecoration(
+                color: HexColor('26262a').withOpacity(0.5),
+                borderRadius: BorderRadius.circular(40),
+              ),
+              padding: EdgeInsets.all(10),
+              child: Icon(
+                Icons.play_arrow,
+                color: Colors.white,
+                size: 45,
+              ),
+            ),
+          ],
+          alignment: Alignment.center,
+        ),
+      );
+
+  Widget buildSwitcher() => AnimatedSwitcher(
+        duration: Duration(milliseconds: 150),
+        child: thumbnail != null ? Image.memory(thumbnail) : buildPlaceHolder(),
+      );
+
+  Widget buildPlaceHolder() {
+    if (widget.attachment.hasValidSize) {
+      return AspectRatio(
+        aspectRatio: widget.attachment.width.toDouble() /
+            widget.attachment.height.toDouble(),
+        child: Container(
+          width: widget.attachment.width.toDouble(),
+          height: widget.attachment.height.toDouble(),
+        ),
+      );
+    } else {
+      return Container(
+        width: 0,
+        height: 0,
+      );
+    }
   }
 }

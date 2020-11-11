@@ -1,30 +1,29 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
+import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/blocs/setup_bloc.dart';
 import 'package:bluebubbles/helpers/contstants.dart';
+import 'package:bluebubbles/helpers/crypto.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/incoming_queue.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/database.dart';
-import 'package:bluebubbles/settings.dart';
+import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:flutter_socket_io/socket_io_manager.dart';
 import 'package:flutter_socket_io/flutter_socket_io.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:sqflite/sqflite.dart';
 
 import 'helpers/attachment_sender.dart';
 import 'managers/method_channel_interface.dart';
-import 'repository/models/attachment.dart';
 import 'repository/models/message.dart';
 import './repository/models/chat.dart';
-import './repository/models/handle.dart';
 
 enum SocketState {
   CONNECTED,
@@ -126,14 +125,6 @@ class SocketManager {
 
   String token;
 
-  void disconnectCallback(Function cb, String guid) {
-    _manager.disconnectSubscribers[guid] = cb;
-  }
-
-  void unSubscribeDisconnectCallback(String guid) {
-    _manager.disconnectSubscribers.remove(guid);
-  }
-
   void socketStatusUpdate(data) {
     switch (data) {
       case "connect":
@@ -149,7 +140,8 @@ class SocketManager {
           element();
         });
         if (SettingsManager().settings.finishedSetup)
-          setup.startIncrementalSync(SettingsManager().settings, (String err) {
+          setup.startIncrementalSync(SettingsManager().settings,
+              onConnectionError: (String err) {
             debugPrint(
                 "(SYNC) Error performing incremental sync. Not saving last sync date.");
             debugPrint(err);
@@ -288,7 +280,7 @@ class SocketManager {
 
         // If there are no chats, try to find it in the DB via the message
         Chat chat;
-        if (data["chats"].length == 0) {
+        if (isNullOrEmpty(data["chats"])) {
           chat = await Message.getChat(message);
         } else {
           chat = Chat.fromMap(data['chats'][0]);
@@ -348,7 +340,7 @@ class SocketManager {
   }
 
   Future<void> authFCM() async {
-    if (SettingsManager().settings.fcmAuthData == null) {
+    if (SettingsManager().fcmData.isNull) {
       debugPrint("No FCM Auth data found. Skipping FCM authentication");
       return;
     } else if (token != null) {
@@ -363,7 +355,7 @@ class SocketManager {
 
     try {
       final String result = await MethodChannelInterface()
-          .invokeMethod('auth', SettingsManager().settings.fcmAuthData);
+          .invokeMethod('auth', SettingsManager().fcmData.toMap());
       token = result;
       if (_manager.socket != null) {
         _manager.sendMessage("add-fcm-device",
@@ -375,6 +367,65 @@ class SocketManager {
       token = "Failed to get token: " + e.toString();
       debugPrint(token);
     }
+  }
+
+  Future<void> getAttachments(String chatGuid, String messageGuid,
+      {Function cb}) {
+    Completer<void> completer = new Completer();
+
+    dynamic params = {
+      'after': 1,
+      'identifier': chatGuid,
+      'limit': 1,
+      'withAttachments': true,
+      'withChats': true,
+      'where': [
+        {
+          'statement': 'message.guid = :guid',
+          'args': {'guid': messageGuid}
+        }
+      ]
+    };
+
+    _manager.socket.sendMessage("get-messages", jsonEncode(params),
+        (String data) async {
+      dynamic json = jsonDecode(data);
+      if (json["status"] != 200) return completer.completeError(json);
+
+      if (json.containsKey("data") && json["data"].length > 0) {
+        await ActionHandler.handleMessage(json["data"][0], forceProcess: true);
+      }
+
+      completer.complete();
+
+      if (cb != null) cb(json);
+    });
+
+    return completer.future;
+  }
+
+  Future<List<dynamic>> loadMessageChunk(Chat chat, int offset,
+      {limit = 25}) async {
+    Completer<List<dynamic>> completer = new Completer();
+
+    Map<String, dynamic> params = Map();
+    params["identifier"] = chat.guid;
+    params["limit"] = limit;
+    params["offset"] = offset;
+    params["withBlurhash"] = false;
+    params["where"] = [
+      {"statement": "message.service = 'iMessage'", "args": null}
+    ];
+
+    SocketManager().sendMessage("get-chat-messages", params, (data) async {
+      if (data['status'] != 200) {
+        completer.completeError(data['error']);
+      }
+
+      completer.complete(data["data"]);
+    });
+
+    return completer.future;
   }
 
   Future<Map<String, dynamic>> sendMessage(String event,
@@ -395,8 +446,19 @@ class SocketManager {
         if (awaitResponse) _manager.finishSocketProcess(_processId);
       } else {
         _manager.socket.sendMessage(event, jsonEncode(message), (String data) {
-          cb(jsonDecode(data));
-          completer.complete(jsonDecode(data));
+          Map<String, dynamic> response = jsonDecode(data);
+          if (response.containsKey('encrypted') && response['encrypted']) {
+            try {
+              response['data'] = jsonDecode(decryptAESCryptoJS(
+                  response['data'], SettingsManager().settings.guidAuthKey));
+            } catch (ex) {
+              response['data'] = decryptAESCryptoJS(
+                  response['data'], SettingsManager().settings.guidAuthKey);
+            }
+          }
+
+          cb(response);
+          completer.complete(response);
           if (awaitResponse) _manager.finishSocketProcess(_processId);
         });
       }
@@ -433,8 +495,7 @@ class SocketManager {
     // And then save to disk
     // NOTE: we do not automatically connect to the socket or authorize fcm,
     //       because we need to do that manually with a forced connection
-    await SettingsManager().saveSettings(settingsCopy,
-        connectToSocket: false, authorizeFCM: false);
+    await SettingsManager().saveSettings(settingsCopy);
 
     // Then we connect to the socket.
     // We force a connection because the socket may still be attempting to connect to the socket,
@@ -453,15 +514,26 @@ class SocketManager {
   Future<void> refreshConnection({bool connectToSocket = true}) async {
     debugPrint("Fetching new server URL from Firebase");
 
-    // Get the server URL
-    String url = await MethodChannelInterface().invokeMethod("get-server-url");
-    debugPrint("New server URL: $url");
+    if (MethodChannelInterface() == null) {
+      debugPrint(
+          "Method channel interface is null, not refreshing connection...");
+      return;
+    }
 
-    // Set the server URL
-    Settings _settingsCopy = SettingsManager().settings;
-    if (_settingsCopy.serverAddress == url) return;
-    _settingsCopy.serverAddress = url;
-    await SettingsManager()
-        .saveSettings(_settingsCopy, connectToSocket: connectToSocket);
+    // Get the server URL
+    try {
+      String url =
+          await MethodChannelInterface().invokeMethod("get-server-url");
+      debugPrint("New server URL: $url");
+
+      // Set the server URL
+      Settings _settingsCopy = SettingsManager().settings;
+      if (_settingsCopy.serverAddress == url) return;
+      _settingsCopy.serverAddress = url;
+      await SettingsManager().saveSettings(_settingsCopy);
+      if (connectToSocket) {
+        startSocketIO(forceNewConnection: connectToSocket);
+      }
+    } catch (e) {}
   }
 }

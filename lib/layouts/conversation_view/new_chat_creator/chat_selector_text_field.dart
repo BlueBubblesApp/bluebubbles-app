@@ -1,16 +1,16 @@
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/new_chat_creator.dart';
+import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/chat_selector.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-class NewChatCreatorTextField extends StatefulWidget {
+class ChatSelectorTextField extends StatefulWidget {
   final TextEditingController controller;
   final Function onCreate;
   final Function(UniqueContact) onRemove;
   final bool isCreator;
   final List<UniqueContact> selectedContacts;
   final List<UniqueContact> allContacts;
-  NewChatCreatorTextField(
+  ChatSelectorTextField(
       {Key key,
       @required this.controller,
       @required this.onCreate,
@@ -21,11 +21,11 @@ class NewChatCreatorTextField extends StatefulWidget {
       : super(key: key);
 
   @override
-  _NewChatCreatorTextFieldState createState() =>
-      _NewChatCreatorTextFieldState();
+  _ChatSelectorTextFieldState createState() =>
+      _ChatSelectorTextFieldState();
 }
 
-class _NewChatCreatorTextFieldState extends State<NewChatCreatorTextField> {
+class _ChatSelectorTextFieldState extends State<ChatSelectorTextField> {
   FocusNode inputFieldNode;
 
   @override
@@ -68,11 +68,10 @@ class _NewChatCreatorTextFieldState extends State<NewChatCreatorTextField> {
                       width: 5.0,
                     ),
                     InkWell(
-                      child: Icon(
-                        Icons.close,
-                        size: 15.0,
-                      )
-                    )
+                        child: Icon(
+                      Icons.close,
+                      size: 15.0,
+                    ))
                   ],
                 ),
               ),
@@ -85,28 +84,25 @@ class _NewChatCreatorTextFieldState extends State<NewChatCreatorTextField> {
     // Add the next text field
     items.add(
       ConstrainedBox(
-        constraints: BoxConstraints(
-          maxWidth: 255.0
-        ),
+        constraints: BoxConstraints(maxWidth: 255.0),
         child: CupertinoTextField(
           focusNode: inputFieldNode,
           onSubmitted: (String done) {
             FocusScope.of(context).requestFocus(inputFieldNode);
-            if (done.length == 0) return;
+            if (done.isEmpty) return;
             if (validatePhoneNumber(done)) {
               widget.controller.clear();
               widget.selectedContacts
                   .add(new UniqueContact(address: done, displayName: done));
             } else {
-              if (widget.allContacts.length == 0) {
+              if (widget.allContacts.isEmpty) {
                 Scaffold.of(context).showSnackBar(SnackBar(
                   content: Text("Invalid Number $done"),
                   duration: Duration(milliseconds: 500),
                 ));
               } else {
                 widget.controller.clear();
-                widget.selectedContacts
-                  .add(widget.allContacts[0]);
+                widget.selectedContacts.add(widget.allContacts[0]);
               }
             }
           },
@@ -118,7 +114,7 @@ class _NewChatCreatorTextFieldState extends State<NewChatCreatorTextField> {
           placeholderStyle: Theme.of(context).textTheme.subtitle1,
           padding: EdgeInsets.only(right: 5.0, top: 2.0, bottom: 2.0),
           autofocus: true,
-          style: Theme.of(context).textTheme.bodyText2.apply(
+          style: Theme.of(context).textTheme.bodyText1.apply(
                 color: ThemeData.estimateBrightnessForColor(
                             Theme.of(context).backgroundColor) ==
                         Brightness.light

@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/new_chat_creator.dart';
+import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/chat_selector.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/material.dart';
@@ -29,7 +29,8 @@ class _AddingParticipantPopupState extends State<AddingParticipantPopup> {
   void recursiveAddParticipants(int i) {
     index = i;
     title = "Adding participant ${widget.contacts[i].displayName}";
-    setState(() {});
+    if (this.mounted) setState(() {});
+
     Map<String, dynamic> params = {};
     params["identifier"] = widget.chat.guid;
     params["address"] = cleansePhoneNumber(widget.contacts[i].address);
@@ -82,7 +83,7 @@ class _AddingParticipantPopupState extends State<AddingParticipantPopup> {
         child: Center(
           child: LinearProgressIndicator(
             backgroundColor: Colors.grey,
-            valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+            valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
             value: (index) / widget.contacts.length,
           ),
         ),

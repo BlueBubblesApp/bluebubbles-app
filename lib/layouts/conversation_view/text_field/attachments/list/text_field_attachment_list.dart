@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:bluebubbles/layouts/conversation_view/text_field/attachments/list/attachment_list_item.dart';
+import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
@@ -24,7 +25,7 @@ class _TextFieldAttachmentListState extends State<TextFieldAttachmentList>
   Widget build(BuildContext context) {
     return AnimatedSize(
       vsync: this,
-      duration: Duration(milliseconds: 100),
+      duration: Duration(milliseconds: 300),
       curve: Curves.easeInOut,
       child: ConstrainedBox(
         constraints: BoxConstraints(
@@ -34,7 +35,7 @@ class _TextFieldAttachmentListState extends State<TextFieldAttachmentList>
           itemCount: widget.attachments.length,
           scrollDirection: Axis.horizontal,
           physics: AlwaysScrollableScrollPhysics(
-            parent: BouncingScrollPhysics(),
+            parent: CustomBouncingScrollPhysics(),
           ),
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 1,

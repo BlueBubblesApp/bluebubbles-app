@@ -5,7 +5,7 @@ import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
-import 'package:bluebubbles/settings.dart';
+import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/material.dart';
 
@@ -17,6 +17,9 @@ class SetupBloc {
   int _currentIndex = 0;
   List chats = [];
   bool isSyncing = false;
+  double numberOfMessagesPerPage = 25;
+  bool downloadAttachments = false;
+  bool skipEmptyChats = true;
 
   Stream<double> get stream => _stream.stream;
   double get progress => _progress;
@@ -41,14 +44,14 @@ class SetupBloc {
     processId =
         SocketManager().addSocketProcess(([bool finishWithError = false]) {});
     onConnectionError = _onConnectionError;
-    debugPrint(settings.toJson().toString());
     isSyncing = true;
 
     // Set the last sync date (for incremental, even though this isn't incremental)
     // We won't try an incremental sync until the last (full) sync date is set
     Settings _settingsCopy = SettingsManager().settings;
     _settingsCopy.lastIncrementalSync = DateTime.now().millisecondsSinceEpoch;
-    SettingsManager().saveSettings(_settingsCopy, connectToSocket: false);
+
+    SettingsManager().saveSettings(_settingsCopy);
 
     // Get the chats to sync
     SocketManager().sendMessage("get-chats", {}, (data) {
@@ -63,7 +66,7 @@ class SetupBloc {
   void receivedChats(data) async {
     debugPrint("(Setup) -> Received initial chat list");
     chats = data["data"];
-    if (chats.length == 0) {
+    if (chats.isEmpty) {
       finishSetup();
     } else {
       getChatMessagesRecursive(chats, 0);
@@ -78,16 +81,19 @@ class SetupBloc {
     Map<String, dynamic> params = Map();
     params["identifier"] = chat.guid;
     params["withBlurhash"] = false;
+    params["limit"] = numberOfMessagesPerPage.round();
     params["where"] = [
       {"statement": "message.service = 'iMessage'", "args": null}
     ];
 
-    SocketManager().sendMessage("get-chat-messages", params, (data) {
+    SocketManager().sendMessage("get-chat-messages", params, (data) async {
       if (data['status'] != 200) {
         handleError();
         return;
       }
-      receivedMessagesForChat(chat, data);
+
+      await receivedMessagesForChat(chat, data);
+
       if (index + 1 < chats.length) {
         _currentIndex = index + 1;
         getChatMessagesRecursive(chats, index + 1);
@@ -97,13 +103,23 @@ class SetupBloc {
     });
   }
 
-  void receivedMessagesForChat(Chat chat, Map<String, dynamic> data) async {
+  Future<void> receivedMessagesForChat(
+      Chat chat, Map<String, dynamic> data) async {
     List messages = data["data"];
 
     // Since we got the messages in desc order, we want to reverse it.
     // Reversing it will add older messages before newer one. This should help fix
     // issues with associated message GUIDs
-    MessageHelper.bulkAddMessages(chat, messages.reversed.toList(), notifyForNewMessage: false);
+    if (!skipEmptyChats || (skipEmptyChats && messages.length > 0)) {
+      MessageHelper.bulkAddMessages(chat, messages.reversed.toList(),
+          notifyForNewMessage: false);
+
+      // If we want to download the attachments, do it, and wait for them to finish before continuing
+      if (downloadAttachments) {
+        await MessageHelper.bulkDownloadAttachments(
+            chat, messages.reversed.toList());
+      }
+    }
 
     _progress = (_currentIndex + 1) / chats.length;
     _stream.sink.add(_progress);
@@ -118,11 +134,15 @@ class SetupBloc {
     _finishedSetup = true;
     ContactManager().contacts = [];
     await ContactManager().getContacts();
-    SettingsManager().saveSettings(_settingsCopy, connectToSocket: false);
+    SettingsManager().saveSettings(_settingsCopy);
     SocketManager().finishSetup();
   }
 
-  void startIncrementalSync(Settings settings, Function _onConnectionError) {
+  void startIncrementalSync(Settings settings,
+      {String chatGuid,
+      bool saveDate = true,
+      Function onConnectionError,
+      Function onComplete}) {
     // If we are already syncing, don't sync again
     // If the last sync date is empty, then we've never synced, so don't.
     if (isSyncing ||
@@ -132,7 +152,8 @@ class SetupBloc {
     // Setup the socket process and error handler
     processId =
         SocketManager().addSocketProcess(([bool finishWithError = false]) {});
-    onConnectionError = _onConnectionError;
+
+    if (onConnectionError != null) this.onConnectionError = onConnectionError;
     isSyncing = true;
 
     // Store the time we started syncing
@@ -142,6 +163,10 @@ class SetupBloc {
 
     // Build request params. We want all details on the messages
     Map<String, dynamic> params = Map();
+    if (chatGuid != null) {
+      params["chatGuid"] = chatGuid;
+    }
+
     params["withBlurhash"] = false; // Maybe we want it?
     params["limit"] =
         1000; // This is arbitrary, hopefully there aren't more messages
@@ -165,26 +190,36 @@ class SetupBloc {
 
       // Get the messages and add them to the DB
       List messages = data["data"];
-      debugPrint(
-          "(SYNC) Incremental sync found ${messages.length} messages. Syncing...");
+      if (messages.isEmpty) {
+        debugPrint("(SYNC) No new messages found during incremental sync");
+      } else {
+        debugPrint(
+            "(SYNC) Incremental sync found ${messages.length} messages. Syncing...");
+      }
 
       if (messages.length > 0) {
         await MessageHelper.bulkAddMessages(null, messages,
             notifyForNewMessage: true);
       }
 
-      debugPrint(
-          "(SYNC) Finished incremental sync. Saving last sync date: $syncStart");
-
       // Once we have added everything, save the last sync date
-      Settings _settingsCopy = SettingsManager().settings;
-      _settingsCopy.lastIncrementalSync = syncStart;
-      SettingsManager().saveSettings(_settingsCopy, connectToSocket: false);
+      if (saveDate) {
+        debugPrint(
+            "(SYNC) Finished incremental sync. Saving last sync date: $syncStart");
+
+        Settings _settingsCopy = SettingsManager().settings;
+        _settingsCopy.lastIncrementalSync = syncStart;
+        SettingsManager().saveSettings(_settingsCopy);
+      }
 
       if (SettingsManager().settings.showIncrementalSync)
         // Show a nice lil toast/snackbar
         EventDispatcher()
             .emit("show-snackbar", {"text": "🔄 Incremental sync complete 🔄"});
+
+      if (onComplete != null) {
+        onComplete();
+      }
 
       // End the sync
       closeSync();

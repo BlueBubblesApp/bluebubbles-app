@@ -1,0 +1,177 @@
+import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/managers/contact_manager.dart';
+import 'package:bluebubbles/managers/method_channel_interface.dart';
+import 'package:bluebubbles/repository/models/message.dart';
+import 'package:contacts_service/contacts_service.dart';
+import 'package:flutter/gestures.dart';
+import 'package:flutter/material.dart';
+
+// Mixin just for commonly shared functions and properties between the SentMessage and ReceivedMessage
+abstract class MessageWidgetMixin {
+  String contactTitle = "";
+  bool hasHyperlinks = false;
+  static const double maxSize = 3 / 5;
+
+  Future<void> initMessageState(Message message, bool showHandle) async {
+    this.hasHyperlinks = parseLinks(message.text).isNotEmpty;
+    await getContactTitle(message, showHandle);
+  }
+
+  Future<void> getContactTitle(Message message, bool showHandle) async {
+    if (message.handle == null || !showHandle) return;
+
+    String title =
+        await ContactManager().getContactTitle(message.handle.address);
+
+    if (title != contactTitle) {
+      contactTitle = title;
+    }
+  }
+
+  /// Adds reacts to a [message] widget
+  Widget addReactionsToWidget(
+      {@required Widget messageWidget,
+      @required Widget reactions,
+      @required Message message,
+      bool shouldShow = true}) {
+    if (!shouldShow) return messageWidget;
+
+    return Stack(
+      alignment: message.isFromMe
+          ? AlignmentDirectional.topStart
+          : AlignmentDirectional.topEnd,
+      children: [
+        messageWidget,
+        reactions,
+      ],
+    );
+  }
+
+  /// Adds reacts to a [message] widget
+  Widget addStickersToWidget(
+      {@required Widget message,
+      @required Widget stickers,
+      @required bool isFromMe}) {
+    return Stack(
+      alignment: (isFromMe)
+          ? AlignmentDirectional.bottomEnd
+          : AlignmentDirectional.bottomStart,
+      children: [
+        message,
+        stickers,
+      ],
+    );
+  }
+
+  static List<InlineSpan> buildMessageSpans(
+      BuildContext context, Message message) {
+    List<InlineSpan> textSpans = <InlineSpan>[];
+
+    if (message != null && !isEmptyString(message.text)) {
+      RegExp exp = new RegExp(
+          r'((https?:\/\/)|(www\.))[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}([-a-zA-Z0-9\/()@:%_.~#?&=\*\[\]]{0,})\b');
+      List<RegExpMatch> matches = exp.allMatches(message.text).toList();
+
+      List<int> linkIndexMatches = <int>[];
+      matches.forEach((match) {
+        linkIndexMatches.add(match.start);
+        linkIndexMatches.add(match.end);
+      });
+
+      if (!isNullOrEmpty(message.subject)) {
+        textSpans.add(TextSpan(
+          text: "${message.subject}\n",
+          style: message.isFromMe
+              ? Theme.of(context)
+                  .textTheme
+                  .bodyText1
+                  .apply(color: Colors.white, fontWeightDelta: 2)
+              : Theme.of(context).textTheme.bodyText1.apply(fontWeightDelta: 2),
+        ));
+      }
+
+      if (linkIndexMatches.length > 0) {
+        for (int i = 0; i < linkIndexMatches.length + 1; i++) {
+          if (i == 0) {
+            textSpans.add(
+              TextSpan(
+                text: message.text.substring(0, linkIndexMatches[i]),
+                style: message.isFromMe
+                    ? Theme.of(context)
+                        .textTheme
+                        .bodyText1
+                        .apply(color: Colors.white)
+                    : null,
+              ),
+            );
+          } else if (i == linkIndexMatches.length && i - 1 >= 0) {
+            textSpans.add(
+              TextSpan(
+                text: message.text
+                    .substring(linkIndexMatches[i - 1], message.text.length),
+                style: message.isFromMe
+                    ? Theme.of(context)
+                        .textTheme
+                        .bodyText1
+                        .apply(color: Colors.white)
+                    : null,
+              ),
+            );
+          } else if (i - 1 >= 0) {
+            String text = message.text
+                .substring(linkIndexMatches[i - 1], linkIndexMatches[i]);
+            if (exp.hasMatch(text)) {
+              textSpans.add(
+                TextSpan(
+                  text: text,
+                  recognizer: new TapGestureRecognizer()
+                    ..onTap = () async {
+                      String url = text;
+                      if (!url.startsWith("http://") &&
+                          !url.startsWith("https://")) {
+                        url = "http://" + url;
+                      }
+                      debugPrint(
+                          "open url " + text.startsWith("http://").toString());
+                      MethodChannelInterface()
+                          .invokeMethod("open-link", {"link": url});
+                    },
+                  style: Theme.of(context).textTheme.bodyText1.apply(
+                        decoration: TextDecoration.underline,
+                        color: message.isFromMe ? Colors.white : null,
+                      ),
+                ),
+              );
+            } else {
+              textSpans.add(
+                TextSpan(
+                  text: text,
+                  style: message.isFromMe
+                      ? Theme.of(context)
+                          .textTheme
+                          .bodyText1
+                          .apply(color: Colors.white)
+                      : null,
+                ),
+              );
+            }
+          }
+        }
+      } else {
+        textSpans.add(
+          TextSpan(
+            text: message.text,
+            style: message.isFromMe
+                ? Theme.of(context)
+                    .textTheme
+                    .bodyText1
+                    .apply(color: Colors.white)
+                : null,
+          ),
+        );
+      }
+    }
+
+    return textSpans;
+  }
+}

@@ -1,9 +1,11 @@
 import 'dart:io';
 
+import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/repository/models/message.dart';
+import 'package:bluebubbles/repository/models/theme_object.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
@@ -16,7 +18,24 @@ enum Tables {
   attachment,
   chat_handle_join,
   chat_message_join,
-  attachment_message_join
+  attachment_message_join,
+  themes,
+  theme_values,
+  theme_value_join,
+  config,
+  fcm,
+  scheduled
+}
+
+class DBUpgradeItem {
+  List<int> fromVersions; // If this is 0, it's any version
+  List<int> toVersions;
+  Function(Database) upgrade;
+
+  DBUpgradeItem(
+      {@required this.fromVersions,
+      @required this.toVersions,
+      @required this.upgrade});
 }
 
 class DBProvider {
@@ -28,13 +47,29 @@ class DBProvider {
 
   /// Contains list of functions to invoke when going from a previous to the current database verison
   /// The previous version is always [key - 1], for example for key 2, it will be the upgrade scheme from version 1 to version 2
-  static final Map<int, Function(Database)> upgradeSchemes = {
-    2: (Database db) {
-      // From v1 -> v2, we added the hasDdResults column
-      db.execute(
-          "ALTER TABLE message ADD COLUMN hasDdResults INTEGER DEFAULT 0;");
-    },
-  };
+  static final List<DBUpgradeItem> upgradeSchemes = [
+    new DBUpgradeItem(
+        fromVersions: [1],
+        toVersions: [2],
+        upgrade: (Database db) {
+          db.execute(
+              "ALTER TABLE message ADD COLUMN hasDdResults INTEGER DEFAULT 0;");
+        }),
+    new DBUpgradeItem(
+        fromVersions: [1, 2],
+        toVersions: [3],
+        upgrade: (Database db) {
+          db.execute(
+              "ALTER TABLE message ADD COLUMN balloonBundleId TEXT DEFAULT NULL;");
+        }),
+    new DBUpgradeItem(
+        fromVersions: [1, 2],
+        toVersions: [3],
+        upgrade: (Database db) {
+          db.execute(
+              "ALTER TABLE chat ADD COLUMN isFiltered INTEGER DEFAULT 0;");
+        })
+  ];
 
   Future<Database> get database async {
     if (_database != null) return _database;
@@ -49,13 +84,17 @@ class DBProvider {
   initDB() async {
     Directory documentsDirectory = await getApplicationDocumentsDirectory();
     _path = join(documentsDirectory.path, "chat.db");
-    return await openDatabase(_path, version: 2, onUpgrade: _onUpgrade,
+    return await openDatabase(_path, version: 3, onUpgrade: _onUpgrade,
         onOpen: (Database db) async {
       debugPrint("Database Opened");
+      _database = db;
       await checkTableExistenceAndCreate(db);
+      _database = null;
     }, onCreate: (Database db, int version) async {
       debugPrint("creating database");
+      _database = db;
       await this.buildDatabase(db);
+      _database = null;
     });
   }
 
@@ -63,9 +102,14 @@ class DBProvider {
     // Run each upgrade scheme for every difference in version.
     // If the user is on version 1 and they need to upgrade to version 3,
     // then we will run every single scheme from 1 -> 2 and 2 -> 3
-    for (int i = oldVersion + 1; i <= newVersion; i++) {
-      debugPrint("UPGRADE FROM VERSION ${i - 1} TO VERSION $i");
-      await upgradeSchemes[i](db);
+
+    for (DBUpgradeItem item in upgradeSchemes) {
+      if (item.fromVersions.contains(oldVersion) &&
+          item.toVersions.contains(newVersion)) {
+        debugPrint(
+            "UPGRADING DB FROM VERSION $oldVersion TO VERSION $newVersion");
+        await item.upgrade(db);
+      }
     }
   }
 
@@ -90,7 +134,7 @@ class DBProvider {
     for (Tables tableName in Tables.values) {
       var table = await db.rawQuery(
           "SELECT * FROM sqlite_master WHERE name ='${tableName.toString().split(".").last}' and type='table'; ");
-      if (table.length == 0) {
+      if (table.isEmpty) {
         switch (tableName) {
           case Tables.chat:
             await createChatTable(db);
@@ -113,6 +157,24 @@ class DBProvider {
           case Tables.attachment_message_join:
             await createAttachmentMessageJoinTable(db);
             break;
+          case Tables.themes:
+            await createThemeTable(db);
+            break;
+          case Tables.theme_values:
+            await createThemeValuesTable(db);
+            break;
+          case Tables.theme_value_join:
+            await createThemeValueJoin(db);
+            break;
+          case Tables.config:
+            await createConfigTable(db);
+            break;
+          case Tables.fcm:
+            await createFCMTable(db);
+            break;
+          case Tables.scheduled:
+            await createScheduledTable(db);
+            break;
         }
         debugPrint(
             "creating missing table " + tableName.toString().split(".").last);
@@ -129,6 +191,12 @@ class DBProvider {
     await createChatHandleJoinTable(db);
     await createChatMessageJoinTable(db);
     await createIndexes(db);
+    await createConfigTable(db);
+    await createFCMTable(db);
+    await createThemeTable(db);
+    await createThemeValuesTable(db);
+    await createThemeValueJoin(db);
+    await createScheduledTable(db);
   }
 
   static Future<void> createHandleTable(Database db) async {
@@ -147,6 +215,7 @@ class DBProvider {
         "style INTEGER NOT NULL,"
         "chatIdentifier TEXT NOT NULL,"
         "isArchived INTEGER DEFAULT 0,"
+        "isFiltered INTEGER DEFAULT 0,"
         "isMuted INTEGER DEFAULT 0,"
         "hasUnreadMessage INTEGER DEFAULT 0,"
         "latestMessageDate INTEGER DEFAULT 0,"
@@ -183,6 +252,7 @@ class DBProvider {
         "groupTitle TEXT DEFAULT NULL,"
         "groupActionType INTEGER DEFAULT 0,"
         "isExpired INTEGER DEFAULT 0,"
+        "balloonBundleId INTEGER DEFAULT NULL,"
         "associatedMessageGuid TEXT DEFAULT NULL,"
         "associatedMessageType TEXT DEFAULT NULL,"
         "expressiveSendStyleId TEXT DEFAULT NULL,"
@@ -251,5 +321,71 @@ class DBProvider {
     await db.execute("CREATE UNIQUE INDEX idx_chat_guid ON chat (guid);");
     await db.execute(
         "CREATE UNIQUE INDEX idx_attachment_guid ON attachment (guid);");
+  }
+
+  static Future<void> createConfigTable(Database db) async {
+    await db.execute("CREATE TABLE config ("
+        "ROWID INTEGER PRIMARY KEY AUTOINCREMENT,"
+        "name TEXT,"
+        "value TEXT,"
+        "type TEXT NOT NULL"
+        ");");
+  }
+
+  static Future<void> createFCMTable(Database db) async {
+    await db.execute("CREATE TABLE fcm ("
+        "ROWID INTEGER PRIMARY KEY AUTOINCREMENT,"
+        "name TEXT,"
+        "value TEXT,"
+        "type TEXT NOT NULL"
+        ");");
+  }
+
+  static Future<void> createThemeValuesTable(Database db) async {
+    await db.execute("CREATE TABLE theme_values ("
+        "ROWID INTEGER PRIMARY KEY AUTOINCREMENT,"
+        "themeId INTEGER NOT NULL,"
+        "name TEXT NOT NULL,"
+        "color TEXT NOT NULL,"
+        "isFont INTEGER DEFAULT 0,"
+        "fontSize INTEGER"
+        ");");
+  }
+
+  static Future<void> createThemeTable(Database db) async {
+    await db.execute("CREATE TABLE themes ("
+        "ROWID INTEGER PRIMARY KEY AUTOINCREMENT,"
+        "name TEXT UNIQUE,"
+        "selectedLightTheme INTEGER DEFAULT 0,"
+        "selectedDarkTheme INTEGER DEFAULT 0"
+        ");");
+  }
+
+  static Future<void> createThemeValueJoin(Database db) async {
+    await db.execute("CREATE TABLE theme_value_join ("
+        "ROWID INTEGER PRIMARY KEY AUTOINCREMENT,"
+        "themeId INTEGER NOT NULL,"
+        "themeValueId INTEGER NOT NULL,"
+        "FOREIGN KEY(themeId) REFERENCES theme_values(ROWID),"
+        "FOREIGN KEY(themeValueId) REFERENCES themes(ROWID),"
+        "UNIQUE (themeId, themeValueId)"
+        ");");
+  }
+
+  static Future<void> createScheduledTable(Database db) async {
+    await db.execute("CREATE TABLE scheduled ("
+        "ROWID INTEGER PRIMARY KEY AUTOINCREMENT,"
+        "chatGuid TEXT NOT NULL,"
+        "message TEXT NOT NULL,"
+        "epochTime INTEGER NOT NULL,"
+        "completed INTEGER DEFAULT 0,"
+        "UNIQUE (chatGuid, message, epochTime)"
+        ");");
+  }
+
+  static Future<void> setupConfigRows() async {
+    for (ThemeObject theme in Themes.themes) {
+      await theme.save(updateIfAbsent: false);
+    }
   }
 }

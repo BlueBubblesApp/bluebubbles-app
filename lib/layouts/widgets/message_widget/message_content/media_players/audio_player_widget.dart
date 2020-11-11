@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:assets_audio_player/assets_audio_player.dart';
-import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:flutter/material.dart';
 
 class AudioPlayerWiget extends StatefulWidget {
@@ -55,6 +54,10 @@ class _AudioPlayerWigetState extends State<AudioPlayerWiget> {
         setState(() {});
       }
     });
+
+    player.onReadyToPlay.listen((PlayingAudio _) {
+      if (this.mounted) setState(() {});
+    });
   }
 
   @override
@@ -82,7 +85,7 @@ class _AudioPlayerWigetState extends State<AudioPlayerWiget> {
         constraints: new BoxConstraints(maxHeight: 100.0, maxWidth: 200.0),
         child: GestureDetector(
             onTap: () async {
-              if (!isPlaying) {
+              if (!isPlaying && this.mounted) {
                 setState(() {
                   isPlaying = true;
                 });

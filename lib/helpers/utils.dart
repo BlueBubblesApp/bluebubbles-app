@@ -1,12 +1,16 @@
 import 'dart:convert';
 import 'dart:math';
 import 'dart:typed_data';
+import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:blurhash_flutter/blurhash.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:html/parser.dart';
+import 'package:convert/convert.dart';
 
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:contacts_service/contacts_service.dart';
@@ -17,6 +21,14 @@ DateTime parseDate(dynamic value) {
   if (value is int) return DateTime.fromMillisecondsSinceEpoch(value);
   if (value is DateTime) return value;
   return null;
+}
+
+bool isNullOrEmpty(dynamic input, {trimString = false}) {
+  if (input != null && input is String) {
+    input = input.trim();
+  }
+
+  return input == null || input.isEmpty;
 }
 
 Size textSize(String text, TextStyle style) {
@@ -57,47 +69,6 @@ bool sameAddress(String address1, String address2) {
   return formattedNumber == address2 ||
       "+1" + formattedNumber == address2 ||
       "+" + formattedNumber == address2;
-}
-
-getInitials(String name, String delimeter, {double size = 30}) {
-  if (name == null) return Icon(Icons.person, color: Colors.white, size: size);
-  List<String> array = name.split(delimeter);
-  // If there is a comma, just return the "people" icon
-  if (name.contains(", ") || name.contains(" & "))
-    return Icon(Icons.people, color: Colors.white, size: size);
-
-  // If there is an & character, it's 2 people, format accordingly
-  if (name.contains(' & ')) {
-    List names = name.split(' & ');
-    String first = names[0].startsWith("+") ? null : names[0][0];
-    String second = names[1].startsWith("+") ? null : names[1][0];
-
-    // If either first or second name is null, return the people icon
-    if (first == null || second == null) {
-      return Icon(Icons.people, color: Colors.white, size: size);
-    } else {
-      return "${first.toUpperCase()}&${second.toUpperCase()}";
-    }
-  }
-
-  // If the name is a phone number, return the "person" icon
-  if (name.startsWith("+") || array[0].length < 1)
-    return Icon(Icons.person, color: Colors.white, size: size);
-
-  array = array.where((element) => element.isNotEmpty).toList();
-  switch (array.length) {
-    case 1:
-      return array[0][0].toUpperCase();
-      break;
-    default:
-
-      if (array.length - 1 < 0 || array[array.length - 1].length < 1) return "";
-      String first = array[0][0].toUpperCase();
-      String last = array[array.length - 1][0].toUpperCase();
-      if (!last.contains(new RegExp('[A-Za-z]'))) last = array[1][0];
-      if (!last.contains(new RegExp('[A-Za-z]'))) last = "";
-      return first + last;
-  }
 }
 
 Future<Uint8List> blurHashDecode(String blurhash, int width, int height) async {
@@ -166,16 +137,46 @@ extension DateHelpers on DateTime {
   }
 }
 
+extension ColorHelpers on Color {
+  Color darken([double percent = 10]) {
+    assert(1 <= percent && percent <= 100);
+    var f = 1 - percent / 100;
+    return Color.fromARGB(this.alpha, (this.red * f).round(),
+        (this.green * f).round(), (this.blue * f).round());
+  }
+
+  Color lighten([double percent = 10]) {
+    assert(1 <= percent && percent <= 100);
+    var p = percent / 100;
+    return Color.fromARGB(
+        this.alpha,
+        this.red + ((255 - this.red) * p).round(),
+        this.green + ((255 - this.green) * p).round(),
+        this.blue + ((255 - this.blue) * p).round());
+  }
+
+  Color lightenOrDarken([double percent = 10]) {
+    if (this.computeLuminance() >= 0.5) {
+      return this.darken(percent);
+    } else {
+      return this.lighten(percent);
+    }
+  }
+}
+
 String sanitizeString(String input) {
   if (input == null) return "";
   input = input.replaceAll(String.fromCharCode(65532), '');
-  input = input.trim();
   return input;
 }
 
-bool isEmptyString(String input) {
+bool isEmptyString(String input, {stripWhitespace = false}) {
   if (input == null) return true;
   input = sanitizeString(input);
+  if (stripWhitespace) {
+    input = input.trim();
+  }
+
   return input.isEmpty;
 }
 
@@ -192,7 +193,7 @@ Future<String> getGroupEventText(Message message) async {
   } else if (message.itemType == 3) {
     text = "$handle left the conversation";
   } else if (message.itemType == 2 && message.groupTitle != null) {
-    text = "$handle renamed the conversation to \"${message.groupTitle}\"";
+    text = "$handle named the conversation \"${message.groupTitle}\"";
   }
 
   return text;
@@ -204,8 +205,8 @@ Future<MemoryImage> loadAvatar(Chat chat, String address) async {
     if (chat.id == null) await chat.save();
 
     // If there are no participants, get them
-    if (chat.participants == null || chat.participants.length == 0) {
-      chat = await chat.getParticipants();
+    if (isNullOrEmpty(chat.participants)) {
+      await chat.getParticipants();
     }
 
     // If there are no participants, return
@@ -223,7 +224,7 @@ Future<MemoryImage> loadAvatar(Chat chat, String address) async {
 
   // Get the contact
   Contact contact = await ContactManager().getCachedContact(address);
-  if (contact == null || contact.avatar.length == 0) return null;
+  if (isNullOrEmpty(contact?.avatar)) return null;
 
   // Set the contact image
   // NOTE: Don't compress this. It will increase load time significantly
@@ -274,4 +275,69 @@ String stripHtmlTags(String htmlString) {
   final String parsedString = parse(document.body.text).documentElement.text;
 
   return parsedString;
+}
+
+// int _getInt(str) {
+//   var hash = 5381;
+
+//   for (var i = 0; i < str.length; i++) {
+//     hash = ((hash << 4) + hash) + str.codeUnitAt(i);
+//   }
+
+//   return hash;
+// }
+
+List<Color> toColorGradient(String str) {
+  if (str.length == 0) return [HexColor("686868"), HexColor("928E8E")];
+
+  int total = 0;
+  for (int i = 0; i < (str ?? "").length; i++) {
+    total += str.codeUnitAt(i);
+  }
+
+  int seed = (total * str.length / 8).round();
+
+  // These are my arbitrary weights. It's based on what I found
+  // to be a good amount of each color
+  if (seed < 901) {
+    return [HexColor("fd678d"), HexColor("ff8aa8")];  // Pink
+  } else if (seed >= 901 && seed < 915) {
+    return [HexColor("6bcff6"), HexColor("94ddfd")];  // Blue
+  } else if (seed >= 915 && seed < 925) {
+    return [HexColor("fea21c"), HexColor("feb854")];  // Orange
+  } else if (seed >= 925 && seed < 935) {
+    return [HexColor("5ede79"), HexColor("8de798")];  // Green
+  } else if (seed >= 935 && seed < 950) {
+    return [HexColor("ffca1c"), HexColor("fcd752")];  // Yellow
+  } else if (seed >= 950 && seed < 3000) {
+    return [HexColor("ff534d"), HexColor("fd726a")];  // Red
+  } else {
+    return [HexColor("a78df3"), HexColor("bcabfc")];  // Purple
+  }
+}
+
+bool shouldBeRainbow(Chat chat) {
+  Chat theChat = chat;
+  if (theChat == null) return false;
+  return SettingsManager().settings.rainbowBubbles;
+}
+
+Size getGifDimensions(Uint8List bytes) {
+  String hexString = "";
+
+  // Bytes 6 and 7 are the height bytes of a gif
+  hexString += hex.encode(bytes.sublist(7, 8));
+  hexString += hex.encode(bytes.sublist(6, 7));
+  int width = int.parse(hexString, radix: 16);
+
+  hexString = "";
+  // Bytes 8 and 9 are the height bytes of a gif
+  hexString += hex.encode(bytes.sublist(9, 10));
+  hexString += hex.encode(bytes.sublist(8, 9));
+  int height = int.parse(hexString, radix: 16);
+
+  debugPrint("GIF width: $width");
+  debugPrint("GIF height: $height");
+  Size size = new Size(width.toDouble(), height.toDouble());
+  return size;
 }

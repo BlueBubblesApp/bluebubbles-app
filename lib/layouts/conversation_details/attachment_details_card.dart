@@ -7,6 +7,7 @@ import 'package:bluebubbles/layouts/image_viewer/attachmet_fullscreen_viewer.dar
 import 'package:bluebubbles/layouts/image_viewer/image_viewer.dart';
 import 'package:bluebubbles/layouts/image_viewer/video_viewer.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/regular_file_opener.dart';
+import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/socket_manager.dart';
@@ -33,6 +34,12 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
   double aspectRatio = 4 / 3;
 
   @override
+  void initState() {
+    super.initState();
+    subscribeToDownloadStream();
+  }
+
+  @override
   void dispose() {
     if (downloadStream != null) downloadStream.cancel();
     super.dispose();
@@ -43,12 +50,16 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
             .attachmentDownloaders
             .containsKey(widget.attachment.guid) &&
         downloadStream == null) {
+      debugPrint("HERE 1");
       downloadStream = SocketManager()
           .attachmentDownloaders[widget.attachment.guid]
           .stream
           .listen((event) {
         if (event is File && this.mounted) {
-          setState(() {});
+          debugPrint("test");
+          Future.delayed(Duration(milliseconds: 500), () {
+            setState(() {});
+          });
         }
       });
     }
@@ -76,8 +87,11 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
                   ? CupertinoButton(
                       padding: EdgeInsets.only(
                           left: 20, right: 20, top: 10, bottom: 10),
-                      onPressed: () {
-                        new AttachmentDownloader(attachment);
+                      onPressed: () async {
+                        AttachmentDownloader downloader =
+                            new AttachmentDownloader(attachment,
+                                autoFetch: false);
+                        await downloader.fetchAttachment(attachment);
                         subscribeToDownloadStream();
                         if (this.mounted) setState(() {});
                       },
@@ -136,7 +150,7 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
     widget.attachment.width = size.width;
     widget.attachment.height = size.height;
     aspectRatio = size.width / size.height;
-    setState(() {});
+    if (this.mounted) setState(() {});
   }
 
   Widget _buildPreview(File file, BuildContext context) {
@@ -160,11 +174,14 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
             color: Colors.transparent,
             child: InkWell(
               onTap: () {
+                CurrentChat currentChat = CurrentChat.of(context);
                 Navigator.of(context).push(
                   CupertinoPageRoute(
                     builder: (context) => AttachmentFullscreenViewer(
+                      currentChat: currentChat,
                       allAttachments: widget.allAttachments,
                       attachment: widget.attachment,
+                      showInteractions: true,
                     ),
                   ),
                 );
@@ -197,11 +214,14 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
             color: Colors.transparent,
             child: InkWell(
               onTap: () {
+                CurrentChat currentChat = CurrentChat.of(context);
                 Navigator.of(context).push(
                   CupertinoPageRoute(
                     builder: (context) => AttachmentFullscreenViewer(
+                      currentChat: currentChat,
                       allAttachments: widget.allAttachments,
                       attachment: widget.attachment,
+                      showInteractions: true,
                     ),
                   ),
                 );

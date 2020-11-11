@@ -1,11 +1,13 @@
+import 'package:bluebubbles/helpers/themes.dart';
+import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
+import 'package:bluebubbles/repository/models/theme_entry.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 
 class ThemingColorPickerPopup extends StatefulWidget {
-  ThemingColorPickerPopup({Key key, this.initialColor, this.onSet})
-      : super(key: key);
-  final Color initialColor;
-  final Function(Color) onSet;
+  ThemingColorPickerPopup({Key key, this.onSet, this.entry}) : super(key: key);
+  final ThemeEntry entry;
+  final Function(Color color, {int fontSize}) onSet;
 
   @override
   _ThemingColorPickerPopupState createState() =>
@@ -14,11 +16,13 @@ class ThemingColorPickerPopup extends StatefulWidget {
 
 class _ThemingColorPickerPopupState extends State<ThemingColorPickerPopup> {
   Color currentColor;
+  int currentFontSize;
 
   @override
   void initState() {
     super.initState();
-    currentColor = widget.initialColor;
+    currentColor = widget.entry.color;
+    if (widget.entry.isFont) currentFontSize = widget.entry.fontSize;
   }
 
   @override
@@ -28,19 +32,43 @@ class _ThemingColorPickerPopupState extends State<ThemingColorPickerPopup> {
       title:
           Text("Choose a Color", style: Theme.of(context).textTheme.headline1),
       content: SingleChildScrollView(
-        physics: AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-        child: ColorPicker(
-          pickerColor: widget.initialColor,
-          onColorChanged: (Color color) => currentColor = color,
-          showLabel: true,
-          pickerAreaHeightPercent: 0.8,
+        physics: AlwaysScrollableScrollPhysics(
+            parent: CustomBouncingScrollPhysics()),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ColorPicker(
+              pickerColor: widget.entry.color,
+              onColorChanged: (Color color) => currentColor = color,
+              showLabel: true,
+              pickerAreaHeightPercent: 0.8,
+            ),
+            if (widget.entry.isFont)
+              Text(
+                "Font Size",
+                style: whiteLightTheme.textTheme.bodyText1,
+              ),
+            if (widget.entry.isFont)
+              Slider(
+                onChanged: (double value) {
+                  setState(() {
+                    currentFontSize = value.floor();
+                  });
+                },
+                value: currentFontSize.toDouble(),
+                min: 5,
+                max: 30,
+                divisions: 25,
+                label: currentFontSize.toString(),
+              ),
+          ],
         ),
       ),
       actions: <Widget>[
         FlatButton(
           child: Text("OK", style: Theme.of(context).textTheme.bodyText1),
           onPressed: () {
-            widget.onSet(currentColor);
+            widget.onSet(currentColor, fontSize: currentFontSize);
             Navigator.of(context).pop();
           },
         )

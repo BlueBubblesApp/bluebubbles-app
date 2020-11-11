@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/layouts/widgets/contact_avatar_group_widget.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:contacts_service/contacts_service.dart';
@@ -20,35 +21,36 @@ import '../../helpers/utils.dart';
 
 class ConversationTile extends StatefulWidget {
   final Chat chat;
-  final bool replaceOnTap;
+  final bool onTapGoToChat;
+  final Function onTapCallback;
   final List<File> existingAttachments;
   final String existingText;
 
   ConversationTile({
     Key key,
     this.chat,
-    this.replaceOnTap,
+    this.onTapGoToChat,
     this.existingAttachments,
     this.existingText,
+    this.onTapCallback,
   }) : super(key: key);
 
   @override
   _ConversationTileState createState() => _ConversationTileState();
 }
 
-class _ConversationTileState extends State<ConversationTile> {
-  MemoryImage contactImage;
+class _ConversationTileState extends State<ConversationTile>
+    with AutomaticKeepAliveClientMixin {
   bool isPressed = false;
-  var initials;
 
   @override
   void initState() {
     super.initState();
 
-    fetchAvatar();
-    ContactManager().stream.listen((List<String> addresses) {
-      fetchAvatar();
-    });
+    fetchParticipants();
+    // ContactManager().stream.listen((List<String> addresses) {
+    //   fetchParticipants();
+    // });
   }
 
   void setNewChatTitle() async {
@@ -62,56 +64,32 @@ class _ConversationTileState extends State<ConversationTile> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    fetchAvatar();
+    fetchParticipants();
   }
 
-  void setContactImage(MemoryImage image) {
-    if (image != null) {
-      if (contactImage == null ||
-          contactImage.bytes.length != image.bytes.length) {
-        contactImage = image;
-        if (this.mounted) setState(() {});
-      }
-    }
-  }
-
-  Future<void> fetchAvatar() async {
+  Future<void> fetchParticipants() async {
     // If our chat does not have any participants, get them
-    if (widget.chat.participants == null ||
-        widget.chat.participants.length == 0) {
+    if (widget.chat.participants == null || widget.chat.participants.isEmpty) {
       await widget.chat.getParticipants();
-    }
-
-    if (widget.chat.participants.length > 1 ||
-        (widget.chat.displayName != null && widget.chat.displayName != "")) {
-      initials = Icon(Icons.people, color: Colors.white, size: 30);
       if (this.mounted) setState(() {});
-    } else if (widget.chat.participants.length == 1) {
-      ContactManager()
-          .getCachedContact(widget.chat.participants[0].address)
-          .then((Contact c) {
-        if (c == null && this.mounted) {
-          initials = Icon(Icons.person, color: Colors.white, size: 30);
-          setState(() {});
-        } else {
-          loadAvatar(widget.chat, widget.chat.participants[0].address)
-              .then((MemoryImage image) {
-            setContactImage(image);
-          });
-        }
-      });
-    } else {
-      loadAvatar(widget.chat, widget.chat.participants[0].address)
-          .then((MemoryImage image) {
-        setContactImage(image);
-      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (initials == null) {
-      initials = getInitials(widget.chat.title, " ");
+    super.build(context);
+
+    Color color1, color2;
+    if (shouldBeRainbow(widget.chat)) {
+      List<Color> colors = [];
+      if (!widget.chat.isGroup() && widget.chat.participants.length > 0) {
+        colors.addAll(toColorGradient(widget.chat.participants[0].address));
+      }
+
+      if (colors.isNotEmpty) {
+        color1 = colors[0];
+        color2 = colors[1];
+      }
     }
 
     return Slidable(
@@ -166,16 +144,18 @@ class _ConversationTileState extends State<ConversationTile> {
       child: Material(
         color: !isPressed
             ? Theme.of(context).backgroundColor
-            : Theme.of(context).buttonColor,
+            : Theme.of(context).backgroundColor.lightenOrDarken(30),
         child: GestureDetector(
           onTapDown: (details) {
+            if (!this.mounted) return;
+
             setState(() {
               isPressed = true;
             });
           },
           onTapUp: (details) {
             MessageBloc messageBloc = new MessageBloc(widget.chat);
-            if (widget.replaceOnTap != null && widget.replaceOnTap) {
+            if (widget.onTapGoToChat != null && widget.onTapGoToChat) {
               Navigator.of(context).pushAndRemoveUntil(
                 CupertinoPageRoute(
                   builder: (BuildContext context) {
@@ -190,6 +170,8 @@ class _ConversationTileState extends State<ConversationTile> {
                 ),
                 (route) => route.isFirst,
               );
+            } else if (widget.onTapCallback != null) {
+              widget.onTapCallback();
             } else {
               Navigator.of(context).push(
                 CupertinoPageRoute(
@@ -213,14 +195,17 @@ class _ConversationTileState extends State<ConversationTile> {
             });
           },
           onTapCancel: () {
+            if (!this.mounted) return;
+
             setState(() {
               isPressed = false;
             });
           },
           child: Stack(
+            alignment: Alignment.centerLeft,
             children: <Widget>[
               Padding(
-                padding: const EdgeInsets.only(left: 35.0),
+                padding: const EdgeInsets.only(left: 30.0),
                 child: Container(
                   decoration: BoxDecoration(
                       border: Border(
@@ -251,9 +236,11 @@ class _ConversationTileState extends State<ConversationTile> {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
-                    leading: ContactAvatarWidget(
-                      contactImage: contactImage,
-                      initials: initials,
+                    leading: ContactAvatarGroupWidget(
+                      participants: widget.chat.participants,
+                      chat: widget.chat,
+                      width: 40,
+                      height: 40,
                     ),
                     trailing: Container(
                       padding: EdgeInsets.only(right: 3),
@@ -291,7 +278,6 @@ class _ConversationTileState extends State<ConversationTile> {
               Padding(
                 padding: const EdgeInsets.only(left: 8.0),
                 child: Container(
-                  height: 70,
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: <Widget>[
@@ -300,7 +286,9 @@ class _ConversationTileState extends State<ConversationTile> {
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(35),
                                 color: widget.chat.hasUnreadMessage
-                                    ? Colors.blue[500].withOpacity(0.8)
+                                    ? Theme.of(context)
+                                        .primaryColor
+                                        .withOpacity(0.8)
                                     : Colors.transparent,
                               ),
                               width: 15,
@@ -309,12 +297,13 @@ class _ConversationTileState extends State<ConversationTile> {
                           : SvgPicture.asset(
                               "assets/icon/moon.svg",
                               color: widget.chat.hasUnreadMessage
-                                  ? Colors.blue[500].withOpacity(0.8)
+                                  ? Theme.of(context)
+                                      .primaryColor
+                                      .withOpacity(0.8)
                                   : Theme.of(context).textTheme.subtitle1.color,
                               width: 15,
                               height: 15,
                             ),
-                      Text("")
                     ],
                   ),
                 ),
@@ -325,4 +314,7 @@ class _ConversationTileState extends State<ConversationTile> {
       ),
     );
   }
+
+  @override
+  bool get wantKeepAlive => true;
 }
