@@ -38,12 +38,15 @@ class BlueBubblesTextField extends StatefulWidget {
     this.existingText,
     this.saveText,
   }) : super(key: key);
+  static BlueBubblesTextFieldState of(BuildContext context) {
+    return context.findAncestorStateOfType<BlueBubblesTextFieldState>();
+  }
 
   @override
-  _BlueBubblesTextFieldState createState() => _BlueBubblesTextFieldState();
+  BlueBubblesTextFieldState createState() => BlueBubblesTextFieldState();
 }
 
-class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
+class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
     with TickerProviderStateMixin {
   TextEditingController _controller;
   FocusNode _focusNode;
@@ -51,6 +54,10 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
   List<File> pickedImages = <File>[];
   bool isRecording = false;
   TextFieldData textFieldData;
+  StreamController _streamController = new StreamController.broadcast();
+
+  Stream get stream => _streamController.stream;
+
   static final GlobalKey<FormFieldState<String>> _searchFormKey =
       GlobalKey<FormFieldState<String>>();
 
@@ -83,7 +90,10 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
   }
 
   void updateTextFieldAttachments() {
-    if (textFieldData != null) textFieldData.attachments = pickedImages;
+    if (textFieldData != null) {
+      textFieldData.attachments = pickedImages;
+      _streamController.sink.add(null);
+    }
   }
 
   @override
@@ -193,13 +203,16 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
-                TextFieldAttachmentList(
-                  attachments: pickedImages,
-                  onRemove: (File attachment) {
-                    pickedImages.removeWhere(
-                        (element) => element.path == attachment.path);
-                    if (this.mounted) setState(() {});
-                  },
+                Padding(
+                  padding: const EdgeInsets.only(left: 50.0),
+                  child: TextFieldAttachmentList(
+                    attachments: pickedImages,
+                    onRemove: (File attachment) {
+                      pickedImages.removeWhere(
+                          (element) => element.path == attachment.path);
+                      if (this.mounted) setState(() {});
+                    },
+                  ),
                 ),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -427,7 +440,13 @@ class _BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                   visible: showImagePicker,
                   onAddAttachment: (File file) {
                     for (File image in pickedImages) {
-                      if (image.path == file.path) return;
+                      if (image.path == file.path) {
+                        pickedImages.removeWhere(
+                            (element) => element.path == file.path);
+                        updateTextFieldAttachments();
+                        if (this.mounted) setState(() {});
+                        return;
+                      }
                     }
                     pickedImages.add(file);
                     updateTextFieldAttachments();

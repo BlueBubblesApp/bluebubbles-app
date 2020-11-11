@@ -127,37 +127,40 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: <Widget>[
-        getThumbnail(),
-        if (mimeType.startsWith("video/"))
-          Align(
-            alignment: Alignment.bottomRight,
-            child: Icon(
-              Icons.play_arrow,
-              color: Colors.white,
-            ),
-          ),
-        Align(
-          alignment: Alignment.topRight,
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(80),
-              color: Colors.black,
-            ),
-            width: 25,
-            height: 25,
-            child: GestureDetector(
-              onTap: widget.onRemove,
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(15),
+      child: Stack(
+        children: <Widget>[
+          getThumbnail(),
+          if (mimeType.startsWith("video/"))
+            Align(
+              alignment: Alignment.bottomRight,
               child: Icon(
-                Icons.close,
+                Icons.play_arrow,
                 color: Colors.white,
-                size: 15,
               ),
             ),
-          ),
-        )
-      ],
+          Align(
+            alignment: Alignment.topRight,
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(80),
+                color: Colors.black,
+              ),
+              width: 25,
+              height: 25,
+              child: GestureDetector(
+                onTap: widget.onRemove,
+                child: Icon(
+                  Icons.close,
+                  color: Colors.white,
+                  size: 15,
+                ),
+              ),
+            ),
+          )
+        ],
+      ),
     );
   }
 }
