@@ -19,13 +19,10 @@ class ScheduledMessage {
   String chatGuid;
   String message;
   int epochTime;
+  bool completed;
 
-  ScheduledMessage({
-    this.id,
-    this.chatGuid,
-    this.message,
-    this.epochTime,
-  });
+  ScheduledMessage(
+      {this.id, this.chatGuid, this.message, this.epochTime, this.completed});
 
   factory ScheduledMessage.fromMap(Map<String, dynamic> json) {
     return new ScheduledMessage(
@@ -33,6 +30,7 @@ class ScheduledMessage {
       chatGuid: json["chatGuid"],
       message: json["message"],
       epochTime: json["epochTime"],
+      completed: json["completed"] == 0 ? false : true
     );
   }
 
@@ -40,7 +38,11 @@ class ScheduledMessage {
     final Database db = await DBProvider.db.database;
 
     // Try to find an existing handle before saving it
-    ScheduledMessage existing = await ScheduledMessage.findOne({"chatGuid": this.chatGuid, "message": this.message, "epochTime": this.epochTime});
+    ScheduledMessage existing = await ScheduledMessage.findOne({
+      "chatGuid": this.chatGuid,
+      "message": this.message,
+      "epochTime": this.epochTime
+    });
     if (existing != null) {
       this.id = existing.id;
     }
@@ -72,7 +74,8 @@ class ScheduledMessage {
           {
             "chatGuid": this.chatGuid,
             "message": this.message,
-            "epochTime": this.epochTime
+            "epochTime": this.epochTime,
+            "completed": this.completed ? 1 : 0
           },
           where: "ROWID = ?",
           whereArgs: [this.id]);
@@ -112,7 +115,9 @@ class ScheduledMessage {
         where: (whereParams.length > 0) ? whereParams.join(" AND ") : null,
         whereArgs: (whereArgs.length > 0) ? whereArgs : null);
 
-    return (res.isNotEmpty) ? res.map((c) => ScheduledMessage.fromMap(c)).toList() : [];
+    return (res.isNotEmpty)
+        ? res.map((c) => ScheduledMessage.fromMap(c)).toList()
+        : [];
   }
 
   static Future<List<ScheduledMessage>> getScheduledMessages(Chat chat) async {
@@ -124,11 +129,14 @@ class ScheduledMessage {
         " scheduled.chatGuid AS chatGuid,"
         " scheduled.message AS message,"
         " scheduled.epochTime AS epochTime,"
+        " scheduled.completed AS completed,"
         " FROM scheduled"
         " WHERE scheduled.chatGuid = ?;",
         [chat.guid]);
 
-    return (res.isNotEmpty) ? res.map((c) => ScheduledMessage.fromMap(c)).toList() : [];
+    return (res.isNotEmpty)
+        ? res.map((c) => ScheduledMessage.fromMap(c)).toList()
+        : [];
   }
 
   static flush() async {
@@ -141,5 +149,6 @@ class ScheduledMessage {
         "chatGuid": chatGuid,
         "message": message,
         "epochTime": epochTime,
+        "completed": completed ? 1 : 0
       };
 }

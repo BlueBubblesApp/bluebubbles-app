@@ -49,8 +49,18 @@ class _SchedulingPanelState extends State<SchedulingPanel> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text("Chat", style: Theme.of(context).textTheme.bodyText1),
-                Text(msg.message, style: Theme.of(context).textTheme.subtitle1)
+                Text(
+                  "Chat",
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodyText1,
+                ),
+                Text(
+                  msg.message,
+                  maxLines: 4,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.subtitle1
+                )
               ],
             ),
           ),

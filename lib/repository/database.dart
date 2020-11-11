@@ -378,6 +378,7 @@ class DBProvider {
         "chatGuid TEXT NOT NULL,"
         "message TEXT NOT NULL,"
         "epochTime INTEGER NOT NULL,"
+        "completed INTEGER DEFAULT 0,"
         "UNIQUE (chatGuid, message, epochTime)"
         ");");
   }
