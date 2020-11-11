@@ -31,7 +31,7 @@ class AttachmentDownloader {
   Attachment get attachment => _attachment;
 
   AttachmentDownloader(Attachment attachment,
-      {Function onComplete, Function onError}) {
+      {Function onComplete, Function onError, bool autoFetch = true}) {
     // Set default chunk size based on the current settings
     _chunkSize = SettingsManager().settings.chunkSize * 1024;
     _attachment = attachment;
@@ -45,7 +45,7 @@ class AttachmentDownloader {
       return;
     }
 
-    fetchAttachment(attachment);
+    if (autoFetch) fetchAttachment(attachment);
   }
 
   getChunkRecursive(
@@ -90,7 +90,7 @@ class AttachmentDownloader {
     }, reason: "Attachment downloader " + attachment.guid);
   }
 
-  void fetchAttachment(Attachment attachment) async {
+  Future<void> fetchAttachment(Attachment attachment) async {
     if (SocketManager().attachmentDownloaders.containsKey(attachment.guid)) {
       _stream.close();
       return;

@@ -132,7 +132,8 @@ class AttachmentHelper {
   /// Checks to see if an [attachment] exists in our attachment filesystem
   static bool attachmentExists(Attachment attachment) {
     String pathName = AttachmentHelper.getAttachmentPath(attachment);
-    return !(FileSystemEntity.typeSync(pathName) == FileSystemEntityType.notFound);
+    return !(FileSystemEntity.typeSync(pathName) ==
+        FileSystemEntityType.notFound);
   }
 
   static dynamic getContent(Attachment attachment, {String path}) {
@@ -185,13 +186,9 @@ class AttachmentHelper {
     // If auto-download is enabled
     // and (only wifi download is disabled or
     // only wifi download enabled, and we have wifi)
-    return (
-      SettingsManager().settings.autoDownload && (
-        !SettingsManager().settings.onlyWifiDownload || (
-          SettingsManager().settings.onlyWifiDownload &&
-          status == ConnectivityResult.wifi
-        )
-      )
-    );
+    return (SettingsManager().settings.autoDownload &&
+        (!SettingsManager().settings.onlyWifiDownload ||
+            (SettingsManager().settings.onlyWifiDownload &&
+                status == ConnectivityResult.wifi)));
   }
 }

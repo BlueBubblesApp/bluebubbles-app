@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/cupertino.dart';
@@ -20,6 +21,7 @@ class ContactManager {
   ContactManager._internal();
   List<Contact> contacts;
   Map<String, Contact> handleToContact = new Map();
+  Map<String, ContactAvatarWidgetState> contactWidgetStates = new Map();
 
   // We need these so we don't have threads fetching at the same time
   Completer getContactsFuture;
@@ -161,6 +163,14 @@ class ContactManager {
       return formatPhoneNumber(contactTitle);
     }
     return contactTitle;
+  }
+
+  ContactAvatarWidgetState getState(String key) {
+    if (contactWidgetStates.containsKey(key)) {
+      return contactWidgetStates[key];
+    }
+    contactWidgetStates[key] = ContactAvatarWidgetState();
+    return contactWidgetStates[key];
   }
 
   dispose() {

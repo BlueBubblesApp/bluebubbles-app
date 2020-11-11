@@ -238,6 +238,7 @@ class _ConversationTileState extends State<ConversationTile>
                           ),
                     leading: ContactAvatarGroupWidget(
                       participants: widget.chat.participants,
+                      chat: widget.chat,
                       width: 40,
                       height: 40,
                     ),

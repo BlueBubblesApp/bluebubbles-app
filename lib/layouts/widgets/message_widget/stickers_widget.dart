@@ -8,10 +8,7 @@ import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/material.dart';
 
 class StickersWidget extends StatefulWidget {
-  StickersWidget({
-    Key key,
-    @required this.messages
-  }) : super(key: key);
+  StickersWidget({Key key, @required this.messages}) : super(key: key);
   final List<Message> messages;
 
   @override
@@ -38,7 +35,9 @@ class _StickersWidgetState extends State<StickersWidget> {
 
   void toggleShow() {
     if (!this.mounted) return;
-    setState(() { _visible = !_visible; });
+    setState(() {
+      _visible = !_visible;
+    });
   }
 
   Future<void> loadStickers() async {
@@ -64,12 +63,13 @@ class _StickersWidgetState extends State<StickersWidget> {
         String pathName = AttachmentHelper.getAttachmentPath(attachment);
 
         // Check if the attachment exists
-        if (FileSystemEntity.typeSync(pathName) == FileSystemEntityType.notFound) {
+        if (FileSystemEntity.typeSync(pathName) ==
+            FileSystemEntityType.notFound) {
           // Download the attachment and when complete, re-render the UI
           AttachmentDownloader(attachment, onComplete: () {
             // Make sure it downloaded correctly
-            if (FileSystemEntity.typeSync(pathName) == FileSystemEntityType.notFound) {
-
+            if (FileSystemEntity.typeSync(pathName) ==
+                FileSystemEntityType.notFound) {
               // Add the attachment as a sticker, and re-render the UI
               stickers.add(attachment);
               if (this.mounted) setState(() {});
@@ -80,7 +80,7 @@ class _StickersWidgetState extends State<StickersWidget> {
         }
       }
     }
-    
+
     // Fulfill/Complete any outstanding requests
     if (this.mounted) setState(() {});
     request.complete();
@@ -95,20 +95,14 @@ class _StickersWidgetState extends State<StickersWidget> {
       String pathName = AttachmentHelper.getAttachmentPath(item);
       return Image.file(new File(pathName),
           width: MediaQuery.of(context).size.width * 2 / 3,
-          height: MediaQuery.of(context).size.width * 2 / 4
-      );
+          height: MediaQuery.of(context).size.width * 2 / 4);
     }).toList();
 
     return GestureDetector(
-      onTap: toggleShow,
-      child: Opacity(
-        key: new Key(this.stickers.first.guid),
-        opacity: _visible ? 1.0 : 0.25,
-        child: Stack(
-          children: stickers,
-          alignment: Alignment.center
-        )
-      )
-    );
+        onTap: toggleShow,
+        child: Opacity(
+            key: new Key(this.stickers.first.guid),
+            opacity: _visible ? 1.0 : 0.25,
+            child: Stack(children: stickers, alignment: Alignment.center)));
   }
 }

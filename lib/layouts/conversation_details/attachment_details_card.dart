@@ -34,6 +34,12 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
   double aspectRatio = 4 / 3;
 
   @override
+  void initState() {
+    super.initState();
+    subscribeToDownloadStream();
+  }
+
+  @override
   void dispose() {
     if (downloadStream != null) downloadStream.cancel();
     super.dispose();
@@ -44,12 +50,16 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
             .attachmentDownloaders
             .containsKey(widget.attachment.guid) &&
         downloadStream == null) {
+      debugPrint("HERE 1");
       downloadStream = SocketManager()
           .attachmentDownloaders[widget.attachment.guid]
           .stream
           .listen((event) {
         if (event is File && this.mounted) {
-          setState(() {});
+          debugPrint("test");
+          Future.delayed(Duration(milliseconds: 500), () {
+            setState(() {});
+          });
         }
       });
     }
@@ -77,8 +87,11 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
                   ? CupertinoButton(
                       padding: EdgeInsets.only(
                           left: 20, right: 20, top: 10, bottom: 10),
-                      onPressed: () {
-                        new AttachmentDownloader(attachment);
+                      onPressed: () async {
+                        AttachmentDownloader downloader =
+                            new AttachmentDownloader(attachment,
+                                autoFetch: false);
+                        await downloader.fetchAttachment(attachment);
                         subscribeToDownloadStream();
                         if (this.mounted) setState(() {});
                       },

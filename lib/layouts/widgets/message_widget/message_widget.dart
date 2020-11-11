@@ -76,6 +76,7 @@ class _MessageState extends State<MessageWidget>
       bool fetchAssoc = false;
       bool fetchAttach = false;
       Message message = data.event["message"];
+      if (message == null) return;
       if (message.associatedMessageGuid == widget.message.guid) {
         fetchAssoc = true;
       }
@@ -143,7 +144,9 @@ class _MessageState extends State<MessageWidget>
 
     // Create a new request and get the attachments
     attachmentsRequest = new Completer();
-    await widget.message.fetchAttachments(currentChat: CurrentChat.of(context));
+    if (context != null)
+      await widget.message
+          .fetchAttachments(currentChat: CurrentChat.of(context));
 
     // If this is a URL preview and we don't have attachments, we need to get them
     List<Attachment> nonNullAttachments = widget.message.getRealAttachments();

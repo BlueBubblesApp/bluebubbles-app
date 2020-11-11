@@ -208,7 +208,8 @@ class MessageHelper {
       return "Interactive: ${MessageHelper.getInteractiveText(message)}";
     }
 
-    if (isNullOrEmpty(message.text, trimString: true)) {
+    if (isNullOrEmpty(message.text, trimString: true) &&
+        !message.hasAttachments) {
       return "Empty message";
     }
 
@@ -299,7 +300,8 @@ class MessageHelper {
   }
 
   /// Removes duplicate associated message guids from a list of [associatedMessages]
-  static List<Message> normalizedAssociatedMessages(List<Message> associatedMessages) {
+  static List<Message> normalizedAssociatedMessages(
+      List<Message> associatedMessages) {
     Set<int> guids = associatedMessages.map((e) => e.handleId ?? 0).toSet();
     List<Message> normalized = [];
 

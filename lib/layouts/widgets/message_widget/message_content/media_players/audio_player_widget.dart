@@ -56,7 +56,7 @@ class _AudioPlayerWigetState extends State<AudioPlayerWiget> {
     });
 
     player.onReadyToPlay.listen((PlayingAudio _) {
-      setState(() {});
+      if (this.mounted) setState(() {});
     });
   }
 

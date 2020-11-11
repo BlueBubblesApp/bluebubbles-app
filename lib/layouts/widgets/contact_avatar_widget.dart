@@ -6,6 +6,15 @@ import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/material.dart';
 
+class ContactAvatarWidgetState {
+  MemoryImage contactImage;
+  String initials;
+  ContactAvatarWidgetState({
+    this.initials,
+    this.contactImage,
+  });
+}
+
 class ContactAvatarWidget extends StatefulWidget {
   ContactAvatarWidget({
     Key key,
@@ -23,9 +32,9 @@ class ContactAvatarWidget extends StatefulWidget {
   _ContactAvatarWidgetState createState() => _ContactAvatarWidgetState();
 }
 
-class _ContactAvatarWidgetState extends State<ContactAvatarWidget> {
-  MemoryImage contactImage;
-  String initials;
+class _ContactAvatarWidgetState extends State<ContactAvatarWidget>
+    with AutomaticKeepAliveClientMixin {
+  ContactAvatarWidgetState state;
   List<Color> colors;
 
   bool get isInvalid => (widget.handle?.address ?? null) == null;
@@ -34,6 +43,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> {
   void initState() {
     super.initState();
     if (isInvalid) return;
+    state = ContactManager().getState(widget.handle.address);
     colors = toColorGradient(widget.handle.address);
     ContactManager().stream.listen((event) {
       for (String address in event) {
@@ -46,18 +56,24 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> {
     refresh();
   }
 
+  @override
+  void dispose() {
+    super.dispose();
+  }
+
   Future<void> refresh() async {
     if (isInvalid) return;
-    initials = await getInitials(handle: widget.handle);
+    if (state.initials != null) return;
+    state.initials = await getInitials(handle: widget.handle);
     Contact contact =
         await ContactManager().getCachedContact(widget.handle.address);
 
     if (contact != null &&
         contact.avatar != null &&
         contact.avatar.isNotEmpty &&
-        contactImage == null) {
+        state.contactImage == null) {
       try {
-        contactImage = MemoryImage(contact.avatar);
+        state.contactImage = MemoryImage(contact.avatar);
       } catch (e) {}
     }
     if (this.mounted) setState(() {});
@@ -90,6 +106,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     if (isInvalid) {
       return Container(
         width: widget.size ?? 40,
@@ -115,7 +132,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> {
       ),
       child: CircleAvatar(
         radius: (widget.size != null) ? widget.size / 2 : 20,
-        child: contactImage == null
+        child: state.contactImage == null
             ? Container(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
@@ -125,10 +142,10 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> {
                   borderRadius: BorderRadius.circular(30),
                 ),
                 child: Container(
-                  child: initials == null
+                  child: state.initials == null
                       ? Icon(Icons.person)
                       : Text(
-                          initials,
+                          state.initials,
                           style: TextStyle(
                             fontSize: (widget.fontSize == null)
                                 ? 18
@@ -140,9 +157,12 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> {
                 ),
               )
             : CircleAvatar(
-                backgroundImage: contactImage,
+                backgroundImage: state.contactImage,
               ),
       ),
     );
   }
+
+  @override
+  bool get wantKeepAlive => true;
 }

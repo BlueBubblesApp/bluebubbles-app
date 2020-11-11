@@ -1,15 +1,21 @@
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
+import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/material.dart';
 
 class ContactAvatarGroupWidget extends StatefulWidget {
   ContactAvatarGroupWidget(
-      {Key key, this.participants, this.width, this.height})
+      {Key key,
+      @required this.participants,
+      this.width,
+      this.height,
+      @required this.chat})
       : super(key: key);
   final List<Handle> participants;
+  final Chat chat;
   final double width;
   final double height;
 
@@ -18,7 +24,8 @@ class ContactAvatarGroupWidget extends StatefulWidget {
       _ContactAvatarGroupWidgetState();
 }
 
-class _ContactAvatarGroupWidgetState extends State<ContactAvatarGroupWidget> {
+class _ContactAvatarGroupWidgetState extends State<ContactAvatarGroupWidget>
+    with AutomaticKeepAliveClientMixin {
   List<dynamic> icons;
   List<Handle> participants;
 
@@ -32,6 +39,7 @@ class _ContactAvatarGroupWidgetState extends State<ContactAvatarGroupWidget> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     if (widget.participants.length == 0)
       return Container(
         width: widget.width ?? 40,
@@ -66,4 +74,7 @@ class _ContactAvatarGroupWidgetState extends State<ContactAvatarGroupWidget> {
             ),
     );
   }
+
+  @override
+  bool get wantKeepAlive => true;
 }
