@@ -36,6 +36,7 @@ class ChatSelector extends StatefulWidget {
   final String heading;
   final bool onlyExistingChats;
   final Function onSelection;
+  final bool onTapGoToChat;
   ChatSelector({
     Key key,
     this.isCreator,
@@ -45,6 +46,7 @@ class ChatSelector extends StatefulWidget {
     this.heading,
     this.onlyExistingChats = false,
     this.onSelection,
+    this.onTapGoToChat = false,
   }) : super(key: key);
 
   @override
@@ -230,6 +232,7 @@ class _ChatSelectorState extends State<ChatSelector> {
                       existingAttachments: widget.attachments,
                       existingText: widget.existingText,
                       chat: item.chat,
+                      onTapGoToChat: widget.onTapGoToChat,
                       onTapCallback: () {
                         // Add the selected item
                         selected.add(item);

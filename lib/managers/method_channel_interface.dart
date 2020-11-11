@@ -159,6 +159,7 @@ class MethodChannelInterface {
                 builder: (context) => ChatSelector(
                   attachments: attachments,
                   isCreator: true,
+                  onTapGoToChat: true,
                 ),
               ),
               (route) => route.isFirst,
