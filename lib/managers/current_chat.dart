@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'dart:typed_data';
 
+import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/layouts/conversation_view/messages_view.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_attachments.dart';
 import 'package:bluebubbles/managers/attachment_info_bloc.dart';
+import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
@@ -61,6 +63,9 @@ class CurrentChat {
     chatAttachments = [];
     sentMessages = [];
     entry = null;
+    NewMessageManager().stream.listen((event) {
+      if (event.type == NewMessageType.UPDATE) {}
+    });
   }
 
   static CurrentChat of(BuildContext context) {
@@ -85,6 +90,27 @@ class CurrentChat {
     return messageAttachments[message.guid];
   }
 
+  List<Attachment> updateExistingAttachments(MessageBlocEvent event) {
+    String oldGuid = event.oldGuid;
+    if (!messageAttachments.containsKey(oldGuid)) return [];
+    Message message = event.message;
+
+    messageAttachments.remove(oldGuid);
+    messageAttachments[message.guid] = message.attachments;
+    String newAttachmentGuid = message.attachments.first.guid;
+    if (imageData.containsKey(oldGuid)) {
+      Uint8List data = imageData.remove(oldGuid);
+      imageData[newAttachmentGuid] = data;
+    } else if (currentPlayingVideo.containsKey(oldGuid)) {
+      VideoPlayerController data = currentPlayingVideo.remove(oldGuid);
+      currentPlayingVideo[newAttachmentGuid] = data;
+    } else if (urlPreviews.containsKey(oldGuid)) {
+      Metadata data = urlPreviews.remove(oldGuid);
+      urlPreviews[newAttachmentGuid] = data;
+    }
+    return message.attachments;
+  }
+
   Uint8List getImageData(Attachment attachment) {
     if (!imageData.containsKey(attachment.guid)) return null;
     return imageData[attachment.guid];
@@ -105,21 +131,6 @@ class CurrentChat {
     for (Message message in messages) {
       if (message.hasAttachments) {
         List<Attachment> attachments = await message.fetchAttachments();
-        for (Attachment element in attachments) {
-          if (element.width == null) {
-            String mimeType = element.mimeType;
-            if (mimeType != null)
-              mimeType = mimeType.substring(0, mimeType.indexOf("/"));
-            if (mimeType == "image") {
-            } else if (mimeType == "video") {
-              // Uint8List thumbnail = await VideoThumbnail.thumbnailData(
-              //   video: element.,
-              //   imageFormat: ImageFormat.JPEG,
-              //   quality: SettingsManager().settings.lowMemoryMode ? 10 : 25,
-              // );
-            }
-          }
-        }
         messageAttachments[message.guid] = attachments;
       }
     }

@@ -183,14 +183,7 @@ class MessageViewState extends State<MessageView>
         if (this.mounted) setState(() {});
       }
     } else if (event.type == MessageBlocEventType.update) {
-      // if (currentChat.imageAttachments.containsKey(event.oldGuid)) {
-      //   Message messageWithROWID =
-      //       await Message.findOne({"guid": event.message.guid});
-      //   List<Attachment> updatedAttachments =
-      //       await Message.getAttachments(messageWithROWID);
-
-      //   currentChat.imageAttachments[event.message.guid] = data;
-      // }
+      currentChat.updateExistingAttachments(event);
       bool updatedAMessage = false;
       for (int i = 0; i < _messages.length; i++) {
         if (_messages[i].guid == event.oldGuid) {

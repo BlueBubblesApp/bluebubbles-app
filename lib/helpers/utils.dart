@@ -10,6 +10,7 @@ import 'package:blurhash_flutter/blurhash.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:html/parser.dart';
+import 'package:convert/convert.dart';
 
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:contacts_service/contacts_service.dart';
@@ -361,4 +362,24 @@ bool shouldBeRainbow(Chat chat) {
   Chat theChat = chat;
   if (theChat == null) return false;
   return SettingsManager().settings.rainbowBubbles;
+}
+
+Size getGifDimensions(Uint8List bytes) {
+  String hexString = "";
+
+  // Bytes 6 and 7 are the height bytes of a gif
+  hexString += hex.encode(bytes.sublist(7, 8));
+  hexString += hex.encode(bytes.sublist(6, 7));
+  int width = int.parse(hexString, radix: 16);
+
+  hexString = "";
+  // Bytes 8 and 9 are the height bytes of a gif
+  hexString += hex.encode(bytes.sublist(9, 10));
+  hexString += hex.encode(bytes.sublist(8, 9));
+  int height = int.parse(hexString, radix: 16);
+
+  debugPrint("GIF width: $width");
+  debugPrint("GIF height: $height");
+  Size size = new Size(width.toDouble(), height.toDouble());
+  return size;
 }

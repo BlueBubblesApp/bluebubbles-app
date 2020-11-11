@@ -387,6 +387,7 @@ class ActionHandler {
             chat: chats.first);
         List<dynamic> attachments =
             data.containsKey("attachments") ? data['attachments'] : [];
+        message.attachments = [];
         for (dynamic attachmentItem in attachments) {
           Attachment file = Attachment.fromMap(attachmentItem);
 
@@ -395,6 +396,7 @@ class ActionHandler {
           } catch (ex) {
             debugPrint("Attachment's Old GUID doesn't exist. Skipping");
           }
+          message.attachments.add(file);
         }
         debugPrint(
             "(Message status) -> Message match: [${data["text"]}] - ${data["guid"]} - ${data["tempGuid"]}");

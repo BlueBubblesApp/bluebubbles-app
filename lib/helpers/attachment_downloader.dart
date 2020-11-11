@@ -12,6 +12,7 @@ import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/material.dart';
+import 'package:video_thumbnail/video_thumbnail.dart';
 
 class AttachmentDownloader {
   final _stream = StreamController<dynamic>.broadcast();
@@ -149,13 +150,24 @@ class AttachmentDownloader {
     getChunkRecursive(attachment.guid, 0, numOfChunks, [], _cb);
   }
 
-  Future<void> updateAttachmentDimensions() async {
-    String mimeType = attachment.mimeType;
-    // if()
-  }
-
   Future<File> writeToFile(Uint8List data, String path) async {
     File file = await new File(path).create(recursive: true);
-    return file.writeAsBytes(data);
+    await file.writeAsBytes(data);
+
+    Uint8List thumbnail;
+    if (attachment.mimeStart == "video") {
+      await VideoThumbnail.thumbnailData(
+        video: path,
+        imageFormat: ImageFormat.JPEG,
+        quality: 25,
+      );
+    } else if (attachment.mimeStart == "image") {
+      thumbnail = data;
+    }
+    if (thumbnail != null) {
+      await attachment.updateDimensions(thumbnail);
+    }
+
+    return file;
   }
 }

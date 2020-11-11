@@ -59,43 +59,40 @@ class MessageBloc {
       if (_messageController.isClosed) return;
 
       // Ignore any events that don't have to do with the current chat
-      if (!msgEvent.containsKey(_currentChat.guid)) return;
+      if (msgEvent.chatGuid != currentChat.guid) return;
 
       // Iterate over each action that needs to take place on the chat
-      msgEvent[_currentChat.guid].forEach((actionType, actions) {
-        for (Map<String, dynamic> action in actions) {
-          bool addToSink = true;
-          MessageBlocEvent baseEvent = new MessageBlocEvent();
+      bool addToSink = true;
+      MessageBlocEvent baseEvent = new MessageBlocEvent();
 
-          // If we want to remove something, set the event data correctly
-          if (actionType == NewMessageType.REMOVE &&
-              _allMessages.containsKey(action["guid"])) {
-            _allMessages.remove(action["guid"]);
-            baseEvent.remove = action["guid"];
-            baseEvent.type = MessageBlocEventType.remove;
-          } else if (actionType == NewMessageType.UPDATE &&
-              _allMessages.containsKey(action["oldGuid"])) {
-            // If we want to updating an existing message, remove the old one, and add the new one
-            _allMessages.remove(action["oldGuid"]);
-            insert(action["message"], addToSink: false);
-            baseEvent.message = action["message"];
-            baseEvent.oldGuid = action["oldGuid"];
-            baseEvent.type = MessageBlocEventType.update;
-          } else if (actionType == NewMessageType.ADD) {
-            // If we want to add a message, just add it through `insert`
-            addToSink = false;
-            insert(action["message"], sentFromThisClient: action["outgoing"]);
-            baseEvent.message = action["message"];
-            baseEvent.type = MessageBlocEventType.insert;
-          }
+      // If we want to remove something, set the event data correctly
+      if (msgEvent.type == NewMessageType.REMOVE &&
+          _allMessages.containsKey(msgEvent.event["guid"])) {
+        _allMessages.remove(msgEvent.event["guid"]);
+        baseEvent.remove = msgEvent.event["guid"];
+        baseEvent.type = MessageBlocEventType.remove;
+      } else if (msgEvent.type == NewMessageType.UPDATE &&
+          _allMessages.containsKey(msgEvent.event["oldGuid"])) {
+        // If we want to updating an existing message, remove the old one, and add the new one
+        _allMessages.remove(msgEvent.event["oldGuid"]);
+        insert(msgEvent.event["message"], addToSink: false);
+        baseEvent.message = msgEvent.event["message"];
+        baseEvent.oldGuid = msgEvent.event["oldGuid"];
+        baseEvent.type = MessageBlocEventType.update;
+      } else if (msgEvent.type == NewMessageType.ADD) {
+        // If we want to add a message, just add it through `insert`
+        addToSink = false;
+        insert(msgEvent.event["message"],
+            sentFromThisClient: msgEvent.event["outgoing"]);
+        baseEvent.message = msgEvent.event["message"];
+        baseEvent.type = MessageBlocEventType.insert;
+      }
 
-          // As long as the controller isn't closed and it's not an `add`, update the listeners
-          if (addToSink && !_messageController.isClosed) {
-            baseEvent.messages = _allMessages.values.toList();
-            _messageController.sink.add(baseEvent);
-          }
-        }
-      });
+      // As long as the controller isn't closed and it's not an `add`, update the listeners
+      if (addToSink && !_messageController.isClosed) {
+        baseEvent.messages = _allMessages.values.toList();
+        _messageController.sink.add(baseEvent);
+      }
     });
   }
 

@@ -125,14 +125,6 @@ class SocketManager {
 
   String token;
 
-  void disconnectCallback(Function cb, String guid) {
-    _manager.disconnectSubscribers[guid] = cb;
-  }
-
-  void unSubscribeDisconnectCallback(String guid) {
-    _manager.disconnectSubscribers.remove(guid);
-  }
-
   void socketStatusUpdate(data) {
     switch (data) {
       case "connect":
@@ -454,13 +446,14 @@ class SocketManager {
         if (awaitResponse) _manager.finishSocketProcess(_processId);
       } else {
         _manager.socket.sendMessage(event, jsonEncode(message), (String data) {
-          
           Map<String, dynamic> response = jsonDecode(data);
           if (response.containsKey('encrypted') && response['encrypted']) {
             try {
-              response['data'] = jsonDecode(decryptAESCryptoJS(response['data'], SettingsManager().settings.guidAuthKey));
+              response['data'] = jsonDecode(decryptAESCryptoJS(
+                  response['data'], SettingsManager().settings.guidAuthKey));
             } catch (ex) {
-              response['data'] = decryptAESCryptoJS(response['data'], SettingsManager().settings.guidAuthKey);
+              response['data'] = decryptAESCryptoJS(
+                  response['data'], SettingsManager().settings.guidAuthKey);
             }
           }
 

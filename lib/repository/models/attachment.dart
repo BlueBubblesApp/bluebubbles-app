@@ -1,8 +1,13 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
+import 'dart:ui';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/message.dart';
+import 'package:mime_type/mime_type.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:image_size_getter/image_size_getter.dart' as IMG;
 
 import '../database.dart';
 
@@ -133,8 +138,11 @@ class Attachment {
     if (params.containsKey("ROWID")) {
       params.remove("ROWID");
     }
-    if (params.containsKey("handle")) {
-      params.remove("handle");
+    if (params.containsKey("width")) {
+      params.remove("width");
+    }
+    if (params.containsKey("height")) {
+      params.remove("height");
     }
 
     await db.update("attachment", params,
@@ -143,7 +151,10 @@ class Attachment {
     String pathName = "$appDocPath/attachments/$oldGuid";
     Directory directory = Directory(pathName);
     await directory.rename("$appDocPath/attachments/${newAttachment.guid}");
-    return existing;
+    newAttachment.id = existing.id;
+    newAttachment.width = existing.width;
+    newAttachment.height = existing.height;
+    return newAttachment;
   }
 
   static Future<Attachment> findOne(Map<String, dynamic> filters) async {
@@ -197,6 +208,40 @@ class Attachment {
     }
 
     return "${size.toStringAsFixed(decimals)} $postfix";
+  }
+
+  bool get hasValidSize =>
+      width != null && height != null && width != 0 && height != 0;
+
+  String get mimeStart {
+    if (this.mimeType == null) return null;
+    String _mimeType = this.mimeType;
+    _mimeType = _mimeType.substring(0, _mimeType.indexOf("/"));
+    return _mimeType;
+  }
+
+  Future<Attachment> updateDimensions(Uint8List data) async {
+    if (mimeType == "image/gif") {
+      Size size = getGifDimensions(data);
+
+      if (size.width != 0 && size.height != 0) {
+        width = size.width.toInt();
+        height = size.height.toInt();
+        await update();
+      }
+    } else if (mimeStart == "image" || mimeStart == "video") {
+      IMG.Size size = IMG.ImageSizeGetter.getSize(IMG.MemoryInput(data));
+      if (size.width != 0 && size.height != 0) {
+        width = size.width;
+        height = size.height;
+        await update();
+      }
+    } else {
+      width = null;
+      height = null;
+      await update();
+    }
+    return this;
   }
 
   Map<String, dynamic> toMap() => {

@@ -77,17 +77,17 @@ class _ReceivedMessageState extends State<ReceivedMessage>
     if (message.isBigEmoji()) {
       bool hasReactions = (message?.getReactions() ?? []).length > 0 ?? false;
       return Padding(
-          padding: EdgeInsets.only(
-              left: CurrentChat.of(context).chat.participants.length > 1
-                  ? 5.0
-                  : 0.0,
-              right: (hasReactions) ? 15.0 : 0.0,
-              top: widget.message.getReactions().length > 0 ? 15 : 0),
-          child: Text(message.text,
-              style: Theme.of(context)
-                  .textTheme
-                  .bodyText1
-                  .apply(fontSizeFactor: 4)));
+        padding: EdgeInsets.only(
+            left: CurrentChat.of(context).chat.participants.length > 1
+                ? 5.0
+                : 0.0,
+            right: (hasReactions) ? 15.0 : 0.0,
+            top: widget.message.getReactions().length > 0 ? 15 : 0),
+        child: Text(
+          message.text,
+          style: Theme.of(context).textTheme.bodyText1.apply(fontSizeFactor: 4),
+        ),
+      );
     }
 
     return Stack(

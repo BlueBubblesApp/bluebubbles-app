@@ -59,44 +59,43 @@ class _MessageState extends State<MessageWidget>
   int associatedCount = 0;
 
   @override
-  void initState() {
-    super.initState();
-    fetchAssociatedMessages();
-    fetchAttachments();
+  // void initState() {
+  //   super.initState();
+  //   fetchAssociatedMessages();
+  //   fetchAttachments();
 
-    // Listen for new messages
-    NewMessageManager().stream.listen((data) {
-      // If the message doesn't apply to this chat, ignore it
-      if (!data.containsKey(widget.chat.guid)) return;
-      dynamic chatData = data[widget.chat.guid];
+  // // Listen for new messages
+  // NewMessageManager().stream.listen((data) {
+  //   // If the message doesn't apply to this chat, ignore it
+  //   if (!data.containsKey(widget.chat.guid)) return;
+  //   dynamic chatData = data[widget.chat.guid];
 
-      // If it's not an ADD event, ignore it
-      if (!chatData.containsKey(NewMessageType.ADD)) return;
+  //   // If it's not an ADD event, ignore it
+  //   if (!chatData.containsKey(NewMessageType.ADD)) return;
 
-      // Check if the new message has an associated GUID that matches this message
-      bool fetchAssoc = false;
-      bool fetchAttach = false;
-      chatData[NewMessageType.ADD].forEach((item) {
-        Message message = item["message"];
-        if (message.associatedMessageGuid == widget.message.guid) {
-          fetchAssoc = true;
-        }
-        if (message.hasAttachments) {
-          fetchAttach = true;
-        }
-      });
+  //   // Check if the new message has an associated GUID that matches this message
+  //   bool fetchAssoc = false;
+  //   bool fetchAttach = false;
+  //   chatData[NewMessageType.ADD].forEach((item) {
+  //     Message message = item["message"];
+  //     if (message.associatedMessageGuid == widget.message.guid) {
+  //       fetchAssoc = true;
+  //     }
+  //     if (message.hasAttachments) {
+  //       fetchAttach = true;
+  //     }
+  //   });
 
-      // If the associated message GUID matches this one, fetch associated messages
-      if (fetchAssoc) {
-        fetchAssociatedMessages(forceReload: true);
-      }
+  //   // If the associated message GUID matches this one, fetch associated messages
+  //   if (fetchAssoc) {
+  //     fetchAssociatedMessages(forceReload: true);
+  //   }
 
-      if (fetchAttach) {
-        fetchAttachments(forceReload: true);
-      }
-    });
-  }
-
+  //   if (fetchAttach) {
+  //     fetchAttachments(forceReload: true);
+  //   }
+  // });
+  // }
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -116,7 +115,8 @@ class _MessageState extends State<MessageWidget>
     await widget.message.fetchAssociatedMessages();
 
     bool hasChanges = false;
-    if (widget.message.associatedMessages.length != associatedCount || forceReload) {
+    if (widget.message.associatedMessages.length != associatedCount ||
+        forceReload) {
       associatedCount = widget.message.associatedMessages.length;
       hasChanges = true;
     }
@@ -125,7 +125,8 @@ class _MessageState extends State<MessageWidget>
     if (this.mounted && hasChanges) {
       // If we don't think there are reactions, and we found reactions,
       // Update the DB so it saves that we have reactions
-      if (!widget.message.hasReactions && widget.message.getReactions().length > 0) {
+      if (!widget.message.hasReactions &&
+          widget.message.getReactions().length > 0) {
         widget.message.hasReactions = true;
         widget.message.update();
       }
@@ -144,7 +145,7 @@ class _MessageState extends State<MessageWidget>
 
     // Create a new request and get the attachments
     attachmentsRequest = new Completer();
-    await widget.message.fetchAttachments();
+    await widget.message.fetchAttachments(currentChat: CurrentChat.of(context));
 
     // If this is a URL preview and we don't have attachments, we need to get them
     List<Attachment> nonNullAttachments = widget.message.getRealAttachments();
@@ -160,7 +161,8 @@ class _MessageState extends State<MessageWidget>
     }
 
     bool hasChanges = false;
-    if (widget.message.attachments.length != this.attachmentCount || forceReload) {
+    if (widget.message.attachments.length != this.attachmentCount ||
+        forceReload) {
       this.attachmentCount = widget.message.attachments.length;
       hasChanges = true;
     }
@@ -213,18 +215,16 @@ class _MessageState extends State<MessageWidget>
     );
 
     UrlPreviewWidget urlPreviewWidget = UrlPreviewWidget(
-      key: new Key("preview-${widget.message.guid}"),
-      linkPreviews: widget.message.getPreviewAttachments(),
-      message: widget.message);
+        key: new Key("preview-${widget.message.guid}"),
+        linkPreviews: widget.message.getPreviewAttachments(),
+        message: widget.message);
     StickersWidget stickersWidget = StickersWidget(
-      key: new Key(
-          "stickers-${associatedCount.toString()}"),
-      messages: widget.message.associatedMessages);
-    ReactionsWidget reactionsWidget =  ReactionsWidget(
-      key: new Key(
-          "reactions-${associatedCount.toString()}"),
-      message: widget.message,
-      associatedMessages: widget.message.associatedMessages);
+        key: new Key("stickers-${associatedCount.toString()}"),
+        messages: widget.message.associatedMessages);
+    ReactionsWidget reactionsWidget = ReactionsWidget(
+        key: new Key("reactions-${associatedCount.toString()}"),
+        message: widget.message,
+        associatedMessages: widget.message.associatedMessages);
 
     // Add the correct type of message to the message stack
     Widget message;
@@ -246,16 +246,15 @@ class _MessageState extends State<MessageWidget>
           showDeliveredReceipt: widget.isFirstSentMessage);
     } else {
       message = ReceivedMessage(
-        offset: widget.offset,
-        showTail: showTail,
-        olderMessage: widget.olderMessage,
-        message: widget.message,
-        showHandle: widget.showHandle,
-        urlPreviewWidget: urlPreviewWidget,
-        stickersWidget: stickersWidget,
-        attachmentsWidget: widgetAttachments,
-        reactionsWidget: reactionsWidget
-      );
+          offset: widget.offset,
+          showTail: showTail,
+          olderMessage: widget.olderMessage,
+          message: widget.message,
+          showHandle: widget.showHandle,
+          urlPreviewWidget: urlPreviewWidget,
+          stickersWidget: stickersWidget,
+          attachmentsWidget: widgetAttachments,
+          reactionsWidget: reactionsWidget);
     }
 
     return WillPopScope(

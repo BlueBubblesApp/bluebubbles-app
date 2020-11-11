@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/reaction.dart';
+import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:flutter/cupertino.dart';
@@ -264,7 +265,6 @@ class Message {
             awaitNewMessageEvent: false, chat: chat);
       } else {
         if (chat != null) {
-          debugPrint("adding message to chat");
           await chat.addMessage(newMessage);
           NewMessageManager().addMessage(chat, newMessage, outgoing: false);
           return newMessage;
@@ -331,11 +331,16 @@ class Message {
     return this;
   }
 
-  Future<List<Attachment>> fetchAttachments() async {
+  Future<List<Attachment>> fetchAttachments({CurrentChat currentChat}) async {
     if (this.hasAttachments &&
         this.attachments != null &&
         this.attachments.length != 0) {
       return this.attachments;
+    }
+
+    if (currentChat != null) {
+      this.attachments = currentChat.getAttachmentsForMessage(this);
+      if (this.attachments.length != 0) return this.attachments;
     }
 
     final Database db = await DBProvider.db.database;

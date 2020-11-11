@@ -59,23 +59,21 @@ class _VideoWidgetState extends State<VideoWidget>
     thumbnail = await VideoThumbnail.thumbnailData(
       video: widget.file.path,
       imageFormat: ImageFormat.JPEG,
-      quality: SettingsManager().settings.lowMemoryMode ? 10 : 25,
+      quality: 25,
     );
     CurrentChat.of(context).saveImageData(thumbnail, widget.attachment);
-    if (widget.attachment.width == null) {
-      Size size = ImageSizeGetter.getSize(MemoryInput(thumbnail));
-      widget.attachment.width = size.width;
-      widget.attachment.height = size.height;
-    }
+
+    widget.attachment.updateDimensions(thumbnail);
     if (this.mounted) this.setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
     VideoPlayerController controller;
-    dynamic controllers = CurrentChat.of(context).currentPlayingVideo;
-    if (controllers != null &&
-        controllers.containsKey(widget.attachment.guid)) {
+    Map<String, VideoPlayerController> controllers =
+        CurrentChat.of(context).currentPlayingVideo;
+    // If the currently playing video is this attachment guid
+    if (controllers.containsKey(widget.attachment.guid)) {
       controller = controllers[widget.attachment.guid];
     }
     return VisibilityDetector(
@@ -100,151 +98,163 @@ class _VideoWidgetState extends State<VideoWidget>
       key: Key(widget.attachment.guid),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(8.0),
-        child: controller != null
-            ? GestureDetector(
-                onTap: () async {
-                  if (controller.value.isPlaying) {
-                    controller.pause();
-                    setState(() {
-                      showPlayPauseOverlay = true;
-                    });
-                  } else {
-                    setState(() {
-                      navigated = true;
-                    });
-                    CurrentChat currentChat = CurrentChat.of(context);
-                    await Navigator.of(context).push(
-                      CupertinoPageRoute(
-                        builder: (context) => AttachmentFullscreenViewer(
-                          allAttachments: currentChat.chatAttachments,
-                          currentChat: currentChat,
-                          attachment: widget.attachment,
-                          showInteractions: true,
-                        ),
-                      ),
-                    );
-                    setState(() {
-                      navigated = false;
-                    });
-                  }
-                },
-                child: controller.value.aspectRatio != null
-                    ? Container(
-                        constraints: BoxConstraints(
-                          maxWidth: MediaQuery.of(context).size.width / 2,
-                          maxHeight: MediaQuery.of(context).size.height / 2,
-                        ),
-                        child: Hero(
-                          tag: widget.attachment.guid,
-                          child: Stack(
-                            alignment: Alignment.center,
-                            children: <Widget>[
-                              AspectRatio(
-                                aspectRatio: controller.value.aspectRatio,
-                                child: Stack(
-                                  children: <Widget>[
-                                    VideoPlayer(controller),
-                                  ],
-                                ),
-                              ),
-                              AnimatedOpacity(
-                                opacity: showPlayPauseOverlay ? 1 : 0,
-                                duration: Duration(milliseconds: 250),
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color: HexColor('26262a').withOpacity(0.5),
-                                    borderRadius: BorderRadius.circular(40),
-                                  ),
-                                  padding: EdgeInsets.all(10),
-                                  child: controller.value.isPlaying
-                                      ? GestureDetector(
-                                          child: Icon(
-                                            Icons.pause,
-                                            color: Colors.white,
-                                            size: 45,
-                                          ),
-                                          onTap: () {
-                                            controller.pause();
-                                            setState(() {
-                                              showPlayPauseOverlay = true;
-                                            });
-                                          },
-                                        )
-                                      : GestureDetector(
-                                          child: Icon(
-                                            Icons.play_arrow,
-                                            color: Colors.white,
-                                            size: 45,
-                                          ),
-                                          onTap: () {
-                                            controller.play();
-                                            setState(() {
-                                              showPlayPauseOverlay = false;
-                                            });
-                                          },
-                                        ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      )
-                    : Container(),
-              )
-            : GestureDetector(
-                onTap: () async {
-                  VideoPlayerController controller =
-                      VideoPlayerController.file(widget.file);
-                  await controller.initialize();
-                  controller.play();
-                  CurrentChat.of(context).changeCurrentPlayingVideo(
-                      {widget.attachment.guid: controller});
-                },
-                child: Stack(
-                  children: [
-                    AnimatedSize(
-                      vsync: this,
-                      curve: Curves.easeInOut,
-                      alignment: Alignment.center,
-                      duration: Duration(milliseconds: 250),
-                      child: Container(
-                        constraints: BoxConstraints(
-                          maxWidth: MediaQuery.of(context).size.width / 2,
-                          maxHeight: MediaQuery.of(context).size.height / 2,
-                        ),
-                        child: thumbnail != null
-                            ? Image.memory(thumbnail)
-                            : Container(
-                                height: 5,
-                                child: Center(
-                                  child: LinearProgressIndicator(
-                                    backgroundColor: Colors.grey,
-                                    valueColor: AlwaysStoppedAnimation(
-                                      Theme.of(context).primaryColor,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                      ),
-                      // child: Image.file(widget.file),
-                    ),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: HexColor('26262a').withOpacity(0.5),
-                        borderRadius: BorderRadius.circular(40),
-                      ),
-                      padding: EdgeInsets.all(10),
-                      child: Icon(
-                        Icons.play_arrow,
-                        color: Colors.white,
-                        size: 45,
-                      ),
-                    ),
-                  ],
-                  alignment: Alignment.center,
-                ),
-              ),
+        child: AnimatedSize(
+          vsync: this,
+          curve: Curves.easeInOut,
+          alignment: Alignment.center,
+          duration: Duration(milliseconds: 250),
+          child: controller != null ? buildPlayer(controller) : buildPreview(),
+        ),
       ),
     );
+  }
+
+  Widget buildPlayer(VideoPlayerController controller) => GestureDetector(
+        onTap: () async {
+          if (controller.value.isPlaying) {
+            controller.pause();
+            setState(() {
+              showPlayPauseOverlay = true;
+            });
+          } else {
+            setState(() {
+              navigated = true;
+            });
+            CurrentChat currentChat = CurrentChat.of(context);
+            await Navigator.of(context).push(
+              CupertinoPageRoute(
+                builder: (context) => AttachmentFullscreenViewer(
+                  allAttachments: currentChat.chatAttachments,
+                  currentChat: currentChat,
+                  attachment: widget.attachment,
+                  showInteractions: true,
+                ),
+              ),
+            );
+            setState(() {
+              navigated = false;
+            });
+          }
+        },
+        child: controller.value.aspectRatio != null
+            ? Container(
+                constraints: BoxConstraints(
+                  maxWidth: MediaQuery.of(context).size.width / 2,
+                  maxHeight: MediaQuery.of(context).size.height / 2,
+                ),
+                child: Hero(
+                  tag: widget.attachment.guid,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: <Widget>[
+                      AspectRatio(
+                        aspectRatio: controller.value.aspectRatio,
+                        child: Stack(
+                          children: <Widget>[
+                            VideoPlayer(controller),
+                          ],
+                        ),
+                      ),
+                      AnimatedOpacity(
+                        opacity: showPlayPauseOverlay ? 1 : 0,
+                        duration: Duration(milliseconds: 250),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: HexColor('26262a').withOpacity(0.5),
+                            borderRadius: BorderRadius.circular(40),
+                          ),
+                          padding: EdgeInsets.all(10),
+                          child: controller.value.isPlaying
+                              ? GestureDetector(
+                                  child: Icon(
+                                    Icons.pause,
+                                    color: Colors.white,
+                                    size: 45,
+                                  ),
+                                  onTap: () {
+                                    controller.pause();
+                                    setState(() {
+                                      showPlayPauseOverlay = true;
+                                    });
+                                  },
+                                )
+                              : GestureDetector(
+                                  child: Icon(
+                                    Icons.play_arrow,
+                                    color: Colors.white,
+                                    size: 45,
+                                  ),
+                                  onTap: () {
+                                    controller.play();
+                                    setState(() {
+                                      showPlayPauseOverlay = false;
+                                    });
+                                  },
+                                ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            : Container(),
+      );
+
+  Widget buildPreview() => GestureDetector(
+        onTap: () async {
+          VideoPlayerController controller =
+              VideoPlayerController.file(widget.file);
+          await controller.initialize();
+          controller.play();
+          CurrentChat.of(context)
+              .changeCurrentPlayingVideo({widget.attachment.guid: controller});
+        },
+        child: Stack(
+          children: [
+            Container(
+              constraints: BoxConstraints(
+                maxWidth: MediaQuery.of(context).size.width / 2,
+                maxHeight: MediaQuery.of(context).size.height / 2,
+              ),
+              child: buildSwitcher(),
+            ),
+            Container(
+              decoration: BoxDecoration(
+                color: HexColor('26262a').withOpacity(0.5),
+                borderRadius: BorderRadius.circular(40),
+              ),
+              padding: EdgeInsets.all(10),
+              child: Icon(
+                Icons.play_arrow,
+                color: Colors.white,
+                size: 45,
+              ),
+            ),
+          ],
+          alignment: Alignment.center,
+        ),
+      );
+
+  Widget buildSwitcher() => AnimatedSwitcher(
+        duration: Duration(milliseconds: 150),
+        child: thumbnail != null ? Image.memory(thumbnail) : buildPlaceHolder(),
+      );
+
+  Widget buildPlaceHolder() {
+    if (widget.attachment.hasValidSize) {
+      return AspectRatio(
+        aspectRatio: widget.attachment.width.toDouble() /
+            widget.attachment.height.toDouble(),
+        child: Container(
+          width: widget.attachment.width.toDouble(),
+          height: widget.attachment.height.toDouble(),
+        ),
+      );
+    } else {
+      return Container(
+        width: 0,
+        height: 0,
+      );
+    }
   }
 }

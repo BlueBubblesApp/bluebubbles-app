@@ -1,9 +1,8 @@
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/image_viewer/attachmet_fullscreen_viewer.dart';
-import 'package:bluebubbles/layouts/image_viewer/image_viewer.dart';
-import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_attachments.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
@@ -11,7 +10,7 @@ import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
-import 'package:image_size_getter/image_size_getter.dart';
+import 'package:image_size_getter/file_input.dart';
 import 'package:visibility_detector/visibility_detector.dart';
 
 class ImageWidget extends StatefulWidget {
@@ -36,19 +35,17 @@ class _ImageWidgetState extends State<ImageWidget>
   @override
   void didChangeDependencies() async {
     super.didChangeDependencies();
-    _initializeBytes();
   }
 
   void _initializeBytes() async {
+    if (data != null) return;
     data = CurrentChat.of(context).getImageData(widget.attachment);
     if (data == null) {
       // If it's an image, compress the image when loading it
       if (AttachmentHelper.canCompress(widget.attachment)) {
         data = await FlutterImageCompress.compressWithFile(
             widget.file.absolute.path,
-            quality: SettingsManager().settings.lowMemoryMode
-                ? 15
-                : 25 // This is arbitrary
+            quality: 25 // This is arbitrary
             );
 
         // All other attachments can be held in memory as bytes
@@ -58,19 +55,12 @@ class _ImageWidgetState extends State<ImageWidget>
       CurrentChat.of(context).saveImageData(data, widget.attachment);
       if (this.mounted) setState(() {});
     }
-    if (widget.attachment.width == 0 ||
-        widget.attachment.height == 0 ||
-        widget.attachment.width == null ||
-        widget.attachment.height == null) {
-      Size size = ImageSizeGetter.getSize(MemoryInput(data));
-      widget.attachment.width = size.width;
-      widget.attachment.height = size.height;
-      if (this.mounted) setState(() {});
-    }
+    widget.attachment.updateDimensions(data);
   }
 
   @override
   Widget build(BuildContext context) {
+    _initializeBytes();
     return VisibilityDetector(
       key: Key(widget.attachment.guid),
       onVisibilityChanged: (info) {
@@ -86,27 +76,15 @@ class _ImageWidgetState extends State<ImageWidget>
       },
       child: Stack(
         children: <Widget>[
-          Container(
-            constraints: BoxConstraints(
-              maxWidth: MediaQuery.of(context).size.width / 2,
-              maxHeight: MediaQuery.of(context).size.height / 2,
-            ),
+          AnimatedSize(
+            vsync: this,
+            duration: Duration(milliseconds: 2000),
             child: Container(
-              child: Hero(
-                tag: widget.attachment.guid,
-                child: AspectRatio(
-                  aspectRatio: widget.attachment.width != null &&
-                          widget.attachment.height != null
-                      ? (widget.attachment.width / widget.attachment.height)
-                          .toDouble()
-                      : 0,
-                  child: buildSwitcher(),
-                ),
-              ),
-              color: Colors.transparent,
               constraints: BoxConstraints(
-                maxHeight: MediaQuery.of(context).size.height / 3,
+                maxWidth: MediaQuery.of(context).size.width / 2,
+                maxHeight: MediaQuery.of(context).size.height / 2,
               ),
+              child: buildSwitcher(),
             ),
           ),
           Positioned.fill(
@@ -144,6 +122,24 @@ class _ImageWidgetState extends State<ImageWidget>
 
   Widget buildSwitcher() => AnimatedSwitcher(
         duration: Duration(milliseconds: 150),
-        child: data != null ? Image.memory(data) : Container(),
+        child: data != null ? Image.memory(data) : buildPlaceHolder(),
       );
+
+  Widget buildPlaceHolder() {
+    if (widget.attachment.hasValidSize) {
+      return AspectRatio(
+        aspectRatio: widget.attachment.width.toDouble() /
+            widget.attachment.height.toDouble(),
+        child: Container(
+          width: widget.attachment.width.toDouble(),
+          height: widget.attachment.height.toDouble(),
+        ),
+      );
+    } else {
+      return Container(
+        width: 0,
+        height: 0,
+      );
+    }
+  }
 }

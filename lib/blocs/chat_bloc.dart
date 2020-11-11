@@ -25,7 +25,7 @@ class ChatBloc {
   final _archivedChatController = StreamController<List<Chat>>.broadcast();
   Stream<List<Chat>> get archivedChatStream => _archivedChatController.stream;
 
-  static StreamSubscription<Map<String, dynamic>> _messageSubscription;
+  static StreamSubscription<NewMessageEvent> _messageSubscription;
 
   List<Chat> _chats;
   List<Chat> get chats => _chats;
@@ -138,12 +138,11 @@ class ChatBloc {
     _chatController.sink.add(_chats);
   }
 
-  Future<void> handleMessageAction(
-      String chatGuid, String actionType, Map<String, dynamic> action) async {
+  Future<void> handleMessageAction(NewMessageEvent event) async {
     // Only handle the "add" action right now
-    if (actionType == NewMessageType.ADD) {
+    if (event.type == NewMessageType.ADD) {
       // Find the chat to update
-      Chat updatedChat = action["chat"];
+      Chat updatedChat = event.event["chat"];
 
       // Update the tile values for the chat (basically just the title)
       await initTileValsForChat(updatedChat);
@@ -153,17 +152,9 @@ class ChatBloc {
     }
   }
 
-  StreamSubscription<Map<String, dynamic>> setupMessageListener() {
+  StreamSubscription<NewMessageEvent> setupMessageListener() {
     // Listen for new messages
-    return NewMessageManager().stream.listen((msgEvent) {
-      msgEvent.forEach((chatGuid, actionData) {
-        actionData.forEach((actionType, actions) async {
-          for (Map<String, dynamic> action in actions) {
-            await handleMessageAction(chatGuid, actionType, action);
-          }
-        });
-      });
-    });
+    return NewMessageManager().stream.listen(handleMessageAction);
   }
 
   void recursiveGetChats() async {
