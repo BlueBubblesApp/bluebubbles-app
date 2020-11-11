@@ -71,48 +71,6 @@ bool sameAddress(String address1, String address2) {
       "+" + formattedNumber == address2;
 }
 
-// getInitials(String name, String delimeter, {double size = 30}) {
-//   if (name == null) return Icon(Icons.person, color: Colors.white, size: size);
-//   List<String> array = name.split(delimeter);
-//   // If there is a comma, just return the "people" icon
-//   if (name.contains(", ") || name.contains(" & "))
-//     return Icon(Icons.people, color: Colors.white, size: size);
-
-//   if (name.contains("@")) return name[0].toUpperCase();
-
-//   // If there is an & character, it's 2 people, format accordingly
-//   if (name.contains(' & ')) {
-//     List names = name.split(' & ');
-//     String first = names[0].startsWith("+") ? null : names[0][0];
-//     String second = names[1].startsWith("+") ? null : names[1][0];
-
-//     // If either first or second name is null, return the people icon
-//     if (first == null || second == null) {
-//       return Icon(Icons.people, color: Colors.white, size: size);
-//     } else {
-//       return "${first.toUpperCase()}&${second.toUpperCase()}";
-//     }
-//   }
-
-//   // If the name is a phone number, return the "person" icon
-//   if (name.startsWith("+") || array[0].length < 1)
-//     return Icon(Icons.person, color: Colors.white, size: size);
-
-//   array = array.where((element) => element.isNotEmpty).toList();
-//   switch (array.length) {
-//     case 1:
-//       return array[0][0].toUpperCase();
-//       break;
-//     default:
-//       if (array.length - 1 < 0 || array[array.length - 1].length < 1) return "";
-//       String first = array[0][0].toUpperCase();
-//       String last = array[array.length - 1][0].toUpperCase();
-//       if (!last.contains(new RegExp('[A-Za-z]'))) last = array[1][0];
-//       if (!last.contains(new RegExp('[A-Za-z]'))) last = "";
-//       return first + last;
-//   }
-// }
-
 Future<Uint8List> blurHashDecode(String blurhash, int width, int height) async {
   List<int> result = await compute(blurHashDecodeCompute,
       jsonEncode({"hash": blurhash, "width": width, "height": height}));
