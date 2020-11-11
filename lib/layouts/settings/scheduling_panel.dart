@@ -1,0 +1,207 @@
+import 'dart:ui';
+
+import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/chat_selector.dart';
+import 'package:bluebubbles/layouts/settings/scheduler_panel.dart';
+import 'package:bluebubbles/layouts/settings/settings_panel.dart';
+import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
+import 'package:bluebubbles/repository/models/chat.dart';
+import 'package:bluebubbles/repository/models/scheduled.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+
+
+class SchedulingPanel extends StatefulWidget {
+  SchedulingPanel({Key key}) : super(key: key);
+
+  @override
+  _SchedulingPanelState createState() => _SchedulingPanelState();
+}
+
+class _SchedulingPanelState extends State<SchedulingPanel> {
+  List<ScheduledMessage> scheduled = [];
+
+  @override
+  void initState() {
+    super.initState();
+    
+    ScheduledMessage.find().then((List<ScheduledMessage> messages) {
+      if (this.mounted) {
+        setState(() {
+          scheduled = messages;
+        });
+      }
+    });
+  }
+
+  List<TableRow> _buildRows(Iterable<ScheduledMessage> messages) {
+    List<TableRow> rows = [];
+
+    for (ScheduledMessage msg in messages) {
+      DateTime time = DateTime.fromMillisecondsSinceEpoch(msg.epochTime);
+      String timeStr = DateFormat.yMd().add_jm().format(time).replaceFirst(" ", "\n");
+      rows.add(TableRow(
+        children: [
+          Padding(
+            padding: EdgeInsets.all(10.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text("Chat", style: Theme.of(context).textTheme.bodyText1),
+                Text(msg.message, style: Theme.of(context).textTheme.subtitle1)
+              ],
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.all(10.0),
+            child: Text(
+              timeStr,
+              textAlign: TextAlign.right,
+            )
+          ),
+        ]
+      ));
+    }
+
+    return rows;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    DateTime now = DateTime.now();
+    Iterable<ScheduledMessage> upcoming = (scheduled ?? []).where((item) => now.millisecondsSinceEpoch <= item.epochTime);
+    Iterable<ScheduledMessage> old = (scheduled ?? []).where((item) => now.millisecondsSinceEpoch > item.epochTime);
+
+    return Scaffold(
+      // extendBodyBehindAppBar: true,
+      backgroundColor: Theme.of(context).backgroundColor,
+      appBar: PreferredSize(
+        preferredSize: Size(MediaQuery.of(context).size.width, 80),
+        child: ClipRRect(
+          child: BackdropFilter(
+            child: AppBar(
+              toolbarHeight: 100.0,
+              elevation: 0,
+              leading: IconButton(
+                icon: Icon(Icons.arrow_back_ios,
+                    color: Theme.of(context).primaryColor),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+              backgroundColor: Theme.of(context).accentColor.withOpacity(0.5),
+              title: Text(
+                "Message Scheduling",
+                style: Theme.of(context).textTheme.headline1,
+              ),
+            ),
+            filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+          ),
+        ),
+      ),
+      body: CustomScrollView(
+        physics: AlwaysScrollableScrollPhysics(
+          parent: CustomBouncingScrollPhysics(),
+        ),
+        slivers: <Widget>[
+          SliverList(
+            delegate: SliverChildListDelegate(
+              <Widget>[
+                Padding(
+                  padding: EdgeInsets.fromLTRB(25.0, 25.0, 25.0, 0.0),
+                  child: Text(
+                    "Upcoming Messages",
+                    style: Theme.of(context).textTheme.headline1
+                  )
+                ),
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 25.0, vertical: 25.0),
+                  child: (upcoming.length > 0)
+                    ? Container(
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color: Theme.of(context).accentColor,
+                            width: 1,
+                          ),
+                          borderRadius: BorderRadius.all(Radius.circular(10)),
+                        ),
+                        child: Table(
+                          columnWidths: {
+                            0: FractionColumnWidth(.6),
+                            1: FractionColumnWidth(.4),
+                          },
+                          border: TableBorder.symmetric(
+                            inside: BorderSide(width: 1, color: Theme.of(context).accentColor),
+                          ),
+                          children: _buildRows(upcoming)
+                        )
+                      )
+                    : Text(
+                      "No upcoming messages to send",
+                      textAlign: TextAlign.left,
+                      style: Theme.of(context).textTheme.subtitle1
+                    ),
+                ),
+                Padding(
+                  padding: EdgeInsets.fromLTRB(25.0, 25.0, 25.0, 0.0),
+                  child: Text(
+                    "Past Messages",
+                    style: Theme.of(context).textTheme.headline1
+                  )
+                ),
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 25.0, vertical: 25.0),
+                  child: (old.length > 0)
+                    ? Container(
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color: Theme.of(context).accentColor,
+                            width: 1,
+                          ),
+                          borderRadius: BorderRadius.all(Radius.circular(10)),
+                        ),
+                        child: Table(
+                          columnWidths: {
+                            0: FractionColumnWidth(.6),
+                            1: FractionColumnWidth(.4),
+                          },
+                          border: TableBorder.symmetric(
+                            inside: BorderSide(width: 1, color: Theme.of(context).accentColor),
+                          ),
+                          children: _buildRows(old)
+                        )
+                      )
+                    : Text(
+                      "No scheduled messages have been sent",
+                      textAlign: TextAlign.left,
+                      style: Theme.of(context).textTheme.subtitle1
+                    )
+                ),
+              ],
+            ),
+          ),
+          SliverList(
+            delegate: SliverChildListDelegate(
+              <Widget>[],
+            ),
+          )
+        ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: Theme.of(context).primaryColor,
+        child: Icon(Icons.create, color: Colors.white, size: 25),
+        onPressed: () async {
+          Navigator.of(context).push(
+            CupertinoPageRoute(
+              builder: (BuildContext context) {
+                return SchedulePanel();
+              },
+            ),
+          );
+        }
+      ),
+    );
+  }
+}

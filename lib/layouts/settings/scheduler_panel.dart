@@ -5,6 +5,7 @@ import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/chat_sele
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
+import 'package:bluebubbles/repository/models/scheduled.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -33,12 +34,21 @@ class _SchedulePanelState extends State<SchedulePanel> {
   int scheduleSeconds = 300;
   TimeOfDay messageTime;
   DateTime messageDate;
+  List<String> errors = [];
 
   @override
   void initState() {
     super.initState();
     setChat(widget.chat);
+
     messageController = new TextEditingController();
+    messageController.addListener(() {
+      if (messageController.text.length > 0 && errors.length > 0 && this.mounted) {
+        setState(() {
+          errors = [];
+        });
+      }
+    });
   }
 
   void fetchChatTitle(Chat chat) {
@@ -150,6 +160,7 @@ class _SchedulePanelState extends State<SchedulePanel> {
                                       this.mounted) {
                                     setState(() {
                                       setChat(selection[0].chat);
+                                      errors = [];
                                     });
                                   }
                                 },
@@ -177,13 +188,22 @@ class _SchedulePanelState extends State<SchedulePanel> {
                           context: context, initialTime: TimeOfDay.now());
                     }
 
-                    if (this.mounted) setState(() {});
+                    if (this.mounted) setState(() {
+                      errors = [];
+                    });
                   },
                   options: timeOptions,
                   textProcessing: (val) => val[1],
                   title: "When should we send it?",
                   showDivider: (scheduleSeconds != -1),
                 ),
+                Center(
+                  child: Text(
+                    isNullOrEmpty(errors) ? "" : errors.join("\n"),
+                    style: Theme.of(context).textTheme.bodyText1.apply(color: Colors.red[300]),
+                    textAlign: TextAlign.center,
+                  )
+                )
               ],
             ),
           ),
@@ -193,6 +213,39 @@ class _SchedulePanelState extends State<SchedulePanel> {
             ),
           )
         ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: Theme.of(context).primaryColor,
+        child: Icon(Icons.done, color: Colors.white, size: 25),
+        onPressed: () async {
+          errors = [];
+          if (_chat == null)
+            errors.add("Please select a chat!");
+          if (scheduleSeconds == -1 && (messageDate == null || messageTime == null))
+            errors.add("Please set a date and time!");
+          if (messageController.text.length == 0)
+            errors.add("Please enter a message!");
+
+          if (errors.length > 0 && this.mounted) {
+            setState(() {});
+          } else {
+            DateTime occurs;
+            if (scheduleSeconds == -1) {
+              occurs = new DateTime(messageDate.year, messageDate.month, messageDate.day, messageTime.hour, messageTime.minute);
+            } else {
+              occurs = DateTime.now().add(Duration(seconds: scheduleSeconds));
+            }
+  
+            ScheduledMessage scheduled = new ScheduledMessage(
+              chatGuid: _chat.guid,
+              message: messageController.text,
+              epochTime: occurs.millisecondsSinceEpoch
+            );
+
+            await scheduled.save();
+            Navigator.of(context).pop();
+          }
+        },
       ),
     );
   }

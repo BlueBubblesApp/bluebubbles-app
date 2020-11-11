@@ -5,7 +5,8 @@ import 'package:bluebubbles/blocs/chat_bloc.dart';
 import "package:bluebubbles/helpers/string_extension.dart";
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/layouts/settings/schedule_panel.dart';
+import 'package:bluebubbles/layouts/settings/scheduler_panel.dart';
+import 'package:bluebubbles/layouts/settings/scheduling_panel.dart';
 import 'package:bluebubbles/layouts/theming/theming_panel.dart';
 import 'package:bluebubbles/layouts/widgets/CustomCupertinoTextField.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
@@ -286,7 +287,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                   onTap: () async {
                     Navigator.of(context).push(
                       CupertinoPageRoute(
-                        builder: (context) => SchedulePanel(),
+                        builder: (context) => SchedulingPanel(),
                       ),
                     );
                   },

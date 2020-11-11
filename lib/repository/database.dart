@@ -24,6 +24,7 @@ enum Tables {
   theme_value_join,
   config,
   fcm,
+  scheduled
 }
 
 class DBUpgradeItem {
@@ -171,6 +172,9 @@ class DBProvider {
           case Tables.fcm:
             await createFCMTable(db);
             break;
+          case Tables.scheduled:
+            await createScheduledTable(db);
+            break;
         }
         debugPrint(
             "creating missing table " + tableName.toString().split(".").last);
@@ -192,6 +196,7 @@ class DBProvider {
     await createThemeTable(db);
     await createThemeValuesTable(db);
     await createThemeValueJoin(db);
+    await createScheduledTable(db);
   }
 
   static Future<void> createHandleTable(Database db) async {
@@ -364,6 +369,16 @@ class DBProvider {
         "FOREIGN KEY(themeId) REFERENCES theme_values(ROWID),"
         "FOREIGN KEY(themeValueId) REFERENCES themes(ROWID),"
         "UNIQUE (themeId, themeValueId)"
+        ");");
+  }
+
+  static Future<void> createScheduledTable(Database db) async {
+    await db.execute("CREATE TABLE scheduled ("
+        "ROWID INTEGER PRIMARY KEY AUTOINCREMENT,"
+        "chatGuid TEXT NOT NULL,"
+        "message TEXT NOT NULL,"
+        "epochTime INTEGER NOT NULL,"
+        "UNIQUE (chatGuid, message, epochTime)"
         ");");
   }
 
