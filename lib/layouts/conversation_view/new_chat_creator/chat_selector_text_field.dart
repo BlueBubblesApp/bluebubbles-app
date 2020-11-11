@@ -1,16 +1,16 @@
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/new_chat_creator.dart';
+import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/chat_selector.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-class NewChatCreatorTextField extends StatefulWidget {
+class ChatSelectorTextField extends StatefulWidget {
   final TextEditingController controller;
   final Function onCreate;
   final Function(UniqueContact) onRemove;
   final bool isCreator;
   final List<UniqueContact> selectedContacts;
   final List<UniqueContact> allContacts;
-  NewChatCreatorTextField(
+  ChatSelectorTextField(
       {Key key,
       @required this.controller,
       @required this.onCreate,
@@ -21,11 +21,11 @@ class NewChatCreatorTextField extends StatefulWidget {
       : super(key: key);
 
   @override
-  _NewChatCreatorTextFieldState createState() =>
-      _NewChatCreatorTextFieldState();
+  _ChatSelectorTextFieldState createState() =>
+      _ChatSelectorTextFieldState();
 }
 
-class _NewChatCreatorTextFieldState extends State<NewChatCreatorTextField> {
+class _ChatSelectorTextFieldState extends State<ChatSelectorTextField> {
   FocusNode inputFieldNode;
 
   @override

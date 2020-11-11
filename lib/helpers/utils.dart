@@ -319,15 +319,15 @@ String stripHtmlTags(String htmlString) {
   return parsedString;
 }
 
-int _getInt(str) {
-  var hash = 5381;
+// int _getInt(str) {
+//   var hash = 5381;
 
-  for (var i = 0; i < str.length; i++) {
-    hash = ((hash << 4) + hash) + str.codeUnitAt(i);
-  }
+//   for (var i = 0; i < str.length; i++) {
+//     hash = ((hash << 4) + hash) + str.codeUnitAt(i);
+//   }
 
-  return hash;
-}
+//   return hash;
+// }
 
 List<Color> toColorGradient(String str) {
   int total = 0;

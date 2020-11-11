@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/new_chat_creator.dart';
+import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/chat_selector.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/material.dart';

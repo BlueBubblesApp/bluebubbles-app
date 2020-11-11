@@ -6,7 +6,7 @@ import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/layouts/conversation_details/attachment_details_card.dart';
 import 'package:bluebubbles/layouts/conversation_details/contact_tile.dart';
-import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/new_chat_creator.dart';
+import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/chat_selector.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
@@ -133,7 +133,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                       onTap: () async {
                         Chat result = await Navigator.of(context).push(
                           CupertinoPageRoute(
-                            builder: (context) => NewChatCreator(
+                            builder: (context) => ChatSelector(
                               currentChat: chat,
                               isCreator: false,
                             ),

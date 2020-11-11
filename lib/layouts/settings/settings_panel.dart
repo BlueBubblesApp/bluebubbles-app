@@ -5,7 +5,9 @@ import 'package:bluebubbles/blocs/chat_bloc.dart';
 import "package:bluebubbles/helpers/string_extension.dart";
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/layouts/settings/schedule_panel.dart';
 import 'package:bluebubbles/layouts/theming/theming_panel.dart';
+import 'package:bluebubbles/layouts/widgets/CustomCupertinoTextField.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/database.dart';
@@ -13,6 +15,7 @@ import 'package:bluebubbles/repository/models/fcm_data.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
 import '../../helpers/hex_color.dart';
 import 'package:flutter/material.dart';
@@ -100,7 +103,8 @@ class _SettingsPanelState extends State<SettingsPanel> {
                       switch (connectionStatus) {
                         case SocketState.CONNECTED:
                           if (showUrl) {
-                            subtitle = "Connected (${this._settingsCopy.serverAddress})";
+                            subtitle =
+                                "Connected (${this._settingsCopy.serverAddress})";
                           } else {
                             subtitle = "Connected (Tap to view URL)";
                           }
@@ -123,7 +127,8 @@ class _SettingsPanelState extends State<SettingsPanel> {
                         title: "Connection Status",
                         subTitle: subtitle,
                         onTap: () async {
-                          if (![SocketState.CONNECTED].contains(connectionStatus)) return;
+                          if (![SocketState.CONNECTED]
+                              .contains(connectionStatus)) return;
                           if (this.mounted) {
                             setState(() {
                               showUrl = !showUrl;
@@ -227,6 +232,10 @@ class _SettingsPanelState extends State<SettingsPanel> {
                   initialVal: _settingsCopy.showIncrementalSync,
                   title: "Notify when incremental sync complete",
                 ),
+                Divider(
+                  color: Theme.of(context).accentColor.withOpacity(0.5),
+                  thickness: 1,
+                ),
                 SettingsSwitch(
                   onChanged: (bool val) {
                     _settingsCopy.rainbowBubbles = val;
@@ -245,11 +254,12 @@ class _SettingsPanelState extends State<SettingsPanel> {
                   textProcessing: (dynamic val) =>
                       val.toString().split(".").last,
                   title: "App Theme",
+                  showDivider: false,
                 ),
                 SettingsTile(
                   title: "Theming",
-                  trailing:
-                      Icon(Icons.arrow_forward_ios, color: Theme.of(context).primaryColor),
+                  trailing: Icon(Icons.arrow_forward_ios,
+                      color: Theme.of(context).primaryColor),
                   onTap: () async {
                     Navigator.of(context).push(
                       CupertinoPageRoute(
@@ -269,6 +279,18 @@ class _SettingsPanelState extends State<SettingsPanel> {
                     textProcessing: (dynamic val) => val.toString(),
                     title: "Display",
                   ),
+                SettingsTile(
+                  title: "Message Scheduling",
+                  trailing: Icon(Icons.arrow_forward_ios,
+                      color: Theme.of(context).primaryColor),
+                  onTap: () async {
+                    Navigator.of(context).push(
+                      CupertinoPageRoute(
+                        builder: (context) => SchedulePanel(),
+                      ),
+                    );
+                  },
+                ),
                 SettingsTile(
                   onTap: () {
                     showDialog(
@@ -372,6 +394,94 @@ class SettingsTile extends StatelessWidget {
   }
 }
 
+class SettingsTextField extends StatelessWidget {
+  const SettingsTextField(
+      {Key key,
+      this.onTap,
+      this.title,
+      this.trailing,
+      @required this.controller,
+      this.placeholder,
+      this.maxLines = 14,
+      this.keyboardType = TextInputType.multiline,
+      this.inputFormatters = const []
+    })
+      : super(key: key);
+
+  final TextEditingController controller;
+  final Function onTap;
+  final String title;
+  final String placeholder;
+  final Widget trailing;
+  final int maxLines;
+  final TextInputType keyboardType;
+  final List<TextInputFormatter> inputFormatters;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Theme.of(context).backgroundColor,
+      child: InkWell(
+        onTap: this.onTap,
+        child: Column(
+          children: <Widget>[
+            ListTile(
+              title: Text(
+                this.title,
+                style: Theme.of(context).textTheme.bodyText1,
+              ),
+              trailing: this.trailing,
+              subtitle: Padding(
+                padding: EdgeInsets.only(top: 10.0),
+                child: CustomCupertinoTextField(
+                  onLongPressStart: () {
+                    Feedback.forLongPress(context);
+                  },
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                  },
+                  textCapitalization: TextCapitalization.sentences,
+                  inputFormatters: inputFormatters,
+                  autocorrect: true,
+                  controller: controller,
+                  scrollPhysics: CustomBouncingScrollPhysics(),
+                  style: Theme.of(context).textTheme.bodyText1.apply(
+                      color: ThemeData.estimateBrightnessForColor(
+                                  Theme.of(context).backgroundColor) ==
+                              Brightness.light
+                          ? Colors.black
+                          : Colors.white,
+                      fontSizeDelta: -0.25),
+                  keyboardType: keyboardType,
+                  maxLines: maxLines,
+                  minLines: 1,
+                  placeholder: placeholder ?? "Enter your text here",
+                  padding:
+                      EdgeInsets.only(left: 10, top: 10, right: 40, bottom: 10),
+                  placeholderStyle: Theme.of(context).textTheme.subtitle1,
+                  autofocus: SettingsManager().settings.autoOpenKeyboard,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).backgroundColor,
+                    border: Border.all(
+                      color: Theme.of(context).dividerColor,
+                      width: 1.5,
+                    ),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                ),
+              ),
+            ),
+            Divider(
+              color: Theme.of(context).accentColor.withOpacity(0.5),
+              thickness: 1,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class SettingsSwitch extends StatefulWidget {
   SettingsSwitch({
     Key key,
@@ -422,19 +532,23 @@ class _SettingsSwitchState extends State<SettingsSwitch> {
 }
 
 class SettingsOptions<T> extends StatefulWidget {
-  SettingsOptions(
-      {Key key,
-      this.onChanged,
-      this.options,
-      this.initial,
-      this.textProcessing,
-      this.title})
-      : super(key: key);
+  SettingsOptions({
+    Key key,
+    this.onChanged,
+    this.options,
+    this.initial,
+    this.textProcessing,
+    this.title,
+    this.subtitle,
+    this.showDivider = true,
+  }) : super(key: key);
   final String title;
   final Function(dynamic) onChanged;
   final List<T> options;
   final T initial;
   final String Function(dynamic) textProcessing;
+  final bool showDivider;
+  final String subtitle;
 
   @override
   _SettingsOptionsState createState() => _SettingsOptionsState();
@@ -451,58 +565,83 @@ class _SettingsOptionsState<T> extends State<SettingsOptions<T>> {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Container(
-            child: Text(
-              widget.title,
-              style: Theme.of(context).textTheme.bodyText1,
-            ),
-          ),
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 9),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
-              color: Theme.of(context).accentColor,
-            ),
-            child: Center(
-              child: DropdownButtonHideUnderline(
-                child: DropdownButton<T>(
-                  dropdownColor: Theme.of(context).accentColor,
-                  icon: Icon(
-                    Icons.arrow_drop_down,
-                    color: Theme.of(context).textTheme.bodyText1.color,
+    return Column(children: [
+      Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  child: Text(
+                    widget.title,
+                    style: Theme.of(context).textTheme.bodyText1,
                   ),
-                  value: currentVal,
-                  items: widget.options.map<DropdownMenuItem<T>>((e) {
-                    return DropdownMenuItem(
-                      value: e,
+                ),
+                (widget.subtitle != null)
+                  ? Container(
+                    child: Padding(
+                      padding: EdgeInsets.only(top: 3.0),
                       child: Text(
-                        widget.textProcessing(e).capitalize(),
-                        style: Theme.of(context).textTheme.bodyText1,
+                        widget.subtitle ?? "",
+                        style: Theme.of(context).textTheme.subtitle1,
                       ),
-                    );
-                  }).toList(),
-                  onChanged: (T val) {
-                    widget.onChanged(val);
+                    ),
+                  )
+                : Container(),
+              ]
+            ),
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 9),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                color: Theme.of(context).accentColor,
+              ),
+              child: Center(
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<T>(
+                    dropdownColor: Theme.of(context).accentColor,
+                    icon: Icon(
+                      Icons.arrow_drop_down,
+                      color: Theme.of(context).textTheme.bodyText1.color,
+                    ),
+                    value: currentVal,
+                    items: widget.options.map<DropdownMenuItem<T>>((e) {
+                      return DropdownMenuItem(
+                        value: e,
+                        child: Text(
+                          widget.textProcessing(e).capitalize(),
+                          style: Theme.of(context).textTheme.bodyText1,
+                        ),
+                      );
+                    }).toList(),
+                    onChanged: (T val) {
+                      widget.onChanged(val);
 
-                    if (!this.mounted) return;
+                      if (!this.mounted) return;
 
-                    setState(() {
-                      currentVal = val;
-                    });
-                    //
-                  },
+                      setState(() {
+                        currentVal = val;
+                      });
+                      //
+                    },
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
-    );
+      (widget.showDivider)
+          ? Divider(
+              color: Theme.of(context).accentColor.withOpacity(0.5),
+              thickness: 1,
+            )
+          : Container()
+    ]);
   }
 }
 
