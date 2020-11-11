@@ -143,10 +143,10 @@ class MessageViewState extends State<MessageView>
     if (event.type == MessageBlocEventType.insert) {
       currentChat.getAttachmentsForMessage(event.message);
       if (event.outGoing) {
-        currentChat.sentMessages.add(event.message.guid);
+        currentChat.sentMessages.add(event.message);
         Future.delayed(Duration(milliseconds: 500), () {
           currentChat.sentMessages
-              .removeWhere((element) => element == event.message.guid);
+              .removeWhere((element) => element.guid == event.message.guid);
           _listKey.currentState.setState(() {});
         });
         Navigator.of(context).push(
@@ -345,15 +345,9 @@ class MessageViewState extends State<MessageView>
                                   olderMessage: olderMessage,
                                   newerMessage: newerMessage,
                                   showHandle: widget.showHandle,
-                                  // shouldFadeIn:
-                                  //     sentMessages.contains(_messages[index].guid),
                                   isFirstSentMessage:
                                       widget.messageBloc.firstSentMessage ==
                                           _messages[index].guid,
-                                  // savedAttachmentData:
-                                  //     attachments.containsKey(_messages[index].guid)
-                                  //         ? attachments[_messages[index].guid]
-                                  //         : null,
                                   showHero: index == 0 &&
                                       _messages[index].originalROWID == null,
                                 ),

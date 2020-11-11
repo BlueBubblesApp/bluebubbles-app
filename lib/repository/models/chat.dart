@@ -132,7 +132,7 @@ class Chat {
           ? (json["isFiltered"] is bool)
               ? json['isFiltered']
               : ((json['isFiltered'] == 1) ? true : false)
-          : false, 
+          : false,
       isMuted: json.containsKey("isMuted")
           ? (json["isMuted"] is bool)
               ? json['isMuted']
@@ -676,7 +676,10 @@ class Chat {
   }
 
   static Future<List<Chat>> getChats(
-      {bool archived = false, int limit = 15, int offset = 0, bool getFiltered = false}) async {
+      {bool archived = false,
+      int limit = 15,
+      int offset = 0,
+      bool getFiltered = false}) async {
     final Database db = await DBProvider.db.database;
 
     var res = await db.rawQuery(
@@ -698,10 +701,10 @@ class Chat {
 
     if (res.isEmpty) return [];
 
-   Iterable<Chat> output = res.map((c) => Chat.fromMap(c));
-   if (!getFiltered) {
-     output = output.where((item) => item.isFiltered == false);
-   }
+    Iterable<Chat> output = res.map((c) => Chat.fromMap(c));
+    if (!getFiltered) {
+      output = output.where((item) => item.isFiltered == false);
+    }
 
     return output.toList();
   }

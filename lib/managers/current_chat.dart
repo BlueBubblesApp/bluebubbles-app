@@ -34,7 +34,7 @@ class CurrentChat {
   Map<String, VideoPlayerController> currentPlayingVideo = {};
   List<VideoPlayerController> controllersToDispose = [];
   List<Attachment> chatAttachments = [];
-  List<String> sentMessages = [];
+  List<Message> sentMessages = [];
   OverlayEntry entry;
 
   Map<String, List<Attachment>> messageAttachments = {};
