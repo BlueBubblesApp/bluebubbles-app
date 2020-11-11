@@ -78,7 +78,7 @@ class _ImageWidgetState extends State<ImageWidget>
         children: <Widget>[
           AnimatedSize(
             vsync: this,
-            duration: Duration(milliseconds: 2000),
+            duration: Duration(milliseconds: 250),
             child: Container(
               constraints: BoxConstraints(
                 maxWidth: MediaQuery.of(context).size.width / 2,

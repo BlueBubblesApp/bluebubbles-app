@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:async';
 
 import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 
 class AttachmentInfoBloc {
@@ -11,10 +12,6 @@ class AttachmentInfoBloc {
 
   static final AttachmentInfoBloc _manager = AttachmentInfoBloc._internal();
 
-  StreamController<List<CurrentChat>> _stream =
-      new StreamController.broadcast();
-
-  Stream<List<CurrentChat>> get stream => _stream.stream;
   AttachmentInfoBloc._internal();
 
   Map<String, CurrentChat> _chatData = {};

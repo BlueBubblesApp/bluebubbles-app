@@ -73,7 +73,8 @@ class _VideoWidgetState extends State<VideoWidget>
     Map<String, VideoPlayerController> controllers =
         CurrentChat.of(context).currentPlayingVideo;
     // If the currently playing video is this attachment guid
-    if (controllers.containsKey(widget.attachment.guid)) {
+    if (controllers != null &&
+        controllers.containsKey(widget.attachment.guid)) {
       controller = controllers[widget.attachment.guid];
     }
     return VisibilityDetector(

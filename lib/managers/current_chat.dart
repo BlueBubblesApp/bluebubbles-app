@@ -63,9 +63,6 @@ class CurrentChat {
     chatAttachments = [];
     sentMessages = [];
     entry = null;
-    NewMessageManager().stream.listen((event) {
-      if (event.type == NewMessageType.UPDATE) {}
-    });
   }
 
   static CurrentChat of(BuildContext context) {
