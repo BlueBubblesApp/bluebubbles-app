@@ -18,6 +18,7 @@ class Settings {
   int lastIncrementalSync = 0;
   int displayMode = 0;
   bool rainbowBubbles = false;
+  bool hideDividers = false;
 
   Skins skin = Skins.IOS;
 
@@ -50,6 +51,8 @@ class Settings {
         settings.displayMode = entry.value;
       } else if (entry.name == "rainbowBubbles") {
         settings.rainbowBubbles = entry.value;
+      } else if (entry.name == "hideDividers") {
+        settings.hideDividers = entry.value;
       }
     }
     settings.save(updateIfAbsent: false);
@@ -145,5 +148,9 @@ class Settings {
             name: "rainbowBubbles",
             value: this.rainbowBubbles,
             type: this.rainbowBubbles.runtimeType),
+        ConfigEntry(
+            name: "hideDividers",
+            value: this.hideDividers,
+            type: this.hideDividers.runtimeType),
       ];
 }

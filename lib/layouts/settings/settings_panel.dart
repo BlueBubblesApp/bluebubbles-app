@@ -239,6 +239,13 @@ class _SettingsPanelState extends State<SettingsPanel> {
                 ),
                 SettingsSwitch(
                   onChanged: (bool val) {
+                    _settingsCopy.hideDividers = val;
+                  },
+                  initialVal: _settingsCopy.hideDividers,
+                  title: "Hide Dividers",
+                ),
+                SettingsSwitch(
+                  onChanged: (bool val) {
                     _settingsCopy.rainbowBubbles = val;
                     ChatBloc().initTileVals(ChatBloc().chats);
                     setState(() {});

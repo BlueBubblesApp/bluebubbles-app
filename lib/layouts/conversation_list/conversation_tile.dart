@@ -5,6 +5,8 @@ import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_group_widget.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -39,6 +41,7 @@ class ConversationTile extends StatefulWidget {
 class _ConversationTileState extends State<ConversationTile>
     with AutomaticKeepAliveClientMixin {
   bool isPressed = false;
+  bool hideDividers = false;
 
   @override
   void initState() {
@@ -48,6 +51,16 @@ class _ConversationTileState extends State<ConversationTile>
     // ContactManager().stream.listen((List<String> addresses) {
     //   fetchParticipants();
     // });
+
+    hideDividers = SettingsManager().settings.hideDividers;
+    SettingsManager().stream.listen((Settings newSettings) {
+      print("NEW SETTINGS");
+      if (newSettings.hideDividers != hideDividers && this.mounted) {
+        setState(() {
+          hideDividers = newSettings.hideDividers;
+        });
+      }
+    });
   }
 
   void setNewChatTitle() async {
@@ -192,10 +205,14 @@ class _ConversationTileState extends State<ConversationTile>
                 padding: const EdgeInsets.only(left: 30.0),
                 child: Container(
                   decoration: BoxDecoration(
-                      border: Border(
+                      border: (!hideDividers) 
+                        ? Border(
                           top: BorderSide(
                               color: Theme.of(context).dividerColor,
-                              width: 0.5))),
+                              width: 0.5)
+                          )
+                        : null
+                  ),
                   child: ListTile(
                     contentPadding: EdgeInsets.only(left: 0),
                     title: Text(
