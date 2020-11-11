@@ -710,6 +710,7 @@ class Chat {
   }
 
   bool isGroup() {
+    return true;
     return this.participants.length > 1;
   }
 

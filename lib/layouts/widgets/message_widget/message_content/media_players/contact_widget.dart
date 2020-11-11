@@ -24,7 +24,6 @@ class ContactWidget extends StatefulWidget {
 
 class _ContactWidgetState extends State<ContactWidget> {
   Contact contact;
-  var initials;
 
   @override
   void initState() {
@@ -37,8 +36,7 @@ class _ContactWidgetState extends State<ContactWidget> {
     } catch (ex) {
       contact = new Contact(displayName: "Invalid Contact");
     }
-  
-    initials = getInitials(contact.displayName, " ");
+
     if (this.mounted) setState(() {});
   }
 
@@ -72,22 +70,21 @@ class _ContactWidgetState extends State<ContactWidget> {
                   Flexible(
                     fit: FlexFit.loose,
                     child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "Contact Card",
-                          style: Theme.of(context).textTheme.subtitle2,
-                        ),
-                        Text(
-                          contact?.displayName ?? "No Name",
-                          style: Theme.of(context).textTheme.bodyText1,
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 2,
-                          softWrap: true,
-                        )
-                      ]
-                    ),
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Contact Card",
+                            style: Theme.of(context).textTheme.subtitle2,
+                          ),
+                          Text(
+                            contact?.displayName ?? "No Name",
+                            style: Theme.of(context).textTheme.bodyText1,
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 2,
+                            softWrap: true,
+                          )
+                        ]),
                   ),
                   Row(
                     children: [
@@ -102,12 +99,12 @@ class _ContactWidgetState extends State<ContactWidget> {
                           borderRadius: BorderRadius.circular(30),
                         ),
                         child: Container(
-                          child: (initials is Icon)
-                              ? initials
-                              : Text(
-                                  initials,
-                                  style: Theme.of(context).textTheme.headline1,
-                                ),
+                          // child: (initials is Icon)
+                          //     ? initials
+                          //     : Text(
+                          //         initials,
+                          //         style: Theme.of(context).textTheme.headline1,
+                          //       ),
                           alignment: AlignmentDirectional.center,
                         ),
                       ),

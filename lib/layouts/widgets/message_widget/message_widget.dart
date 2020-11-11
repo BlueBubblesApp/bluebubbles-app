@@ -250,7 +250,7 @@ class _MessageState extends State<MessageWidget>
           showTail: showTail,
           olderMessage: widget.olderMessage,
           message: widget.message,
-          showHandle: widget.showHandle,
+          showHandle: true, // widget.showHandle,
           urlPreviewWidget: urlPreviewWidget,
           stickersWidget: stickersWidget,
           attachmentsWidget: widgetAttachments,

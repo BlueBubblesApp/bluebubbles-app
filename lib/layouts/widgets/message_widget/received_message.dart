@@ -54,21 +54,12 @@ class _ReceivedMessageState extends State<ReceivedMessage>
   void didChangeDependencies() {
     super.didChangeDependencies();
     didChangeMessageDependencies(widget.message, widget.showHandle);
-
-    ContactManager().stream.listen((List<String> addresses) {
-      // Check if any of the addresses are members of the chat
-      if (!addresses.contains(widget.message.handle.address)) return;
-      fetchAvatar(widget.message).then((value) {
-        if (this.mounted) setState(() {});
-      });
-    });
   }
 
   Future<void> didChangeMessageDependencies(
       Message message, bool showHandle) async {
     await getContactTitle(message, showHandle);
-    await getContact(message);
-    await fetchAvatar(message);
+    // await fetchAvatar(message);
     if (this.mounted) setState(() {});
   }
 
@@ -78,11 +69,11 @@ class _ReceivedMessageState extends State<ReceivedMessage>
       bool hasReactions = (message?.getReactions() ?? []).length > 0 ?? false;
       return Padding(
         padding: EdgeInsets.only(
-            left: CurrentChat.of(context).chat.participants.length > 1
-                ? 5.0
-                : 0.0,
-            right: (hasReactions) ? 15.0 : 0.0,
-            top: widget.message.getReactions().length > 0 ? 15 : 0),
+          left:
+              CurrentChat.of(context).chat.participants.length > 1 ? 5.0 : 0.0,
+          right: (hasReactions) ? 15.0 : 0.0,
+          top: widget.message.getReactions().length > 0 ? 15 : 0,
+        ),
         child: Text(
           message.text,
           style: Theme.of(context).textTheme.bodyText1.apply(fontSizeFactor: 4),
@@ -130,10 +121,6 @@ class _ReceivedMessageState extends State<ReceivedMessage>
   @override
   Widget build(BuildContext context) {
     if (widget.message == null) return Container();
-
-    dynamic initials = getInitials(
-        contact?.displayName ?? widget.message.handle?.address ?? "", " ",
-        size: 25);
 
     // The column that holds all the "messages"
     List<Widget> messageColumn = [];
@@ -211,12 +198,12 @@ class _ReceivedMessageState extends State<ReceivedMessage>
             left: 5.0,
           ),
           child: ContactAvatarWidget(
-              contactImage: contactImage,
-              initials: initials,
-              size: 30,
-              fontSize: 14,
-              color1: colors.length > 0 ? colors[0] : null,
-              color2: colors.length > 0 ? colors[1] : null),
+            handle: widget.message.handle,
+            size: 30,
+            fontSize: 14,
+            color1: colors.length > 0 ? colors[0] : null,
+            color2: colors.length > 0 ? colors[1] : null,
+          ),
         ),
       );
     }

@@ -108,10 +108,6 @@ class _ContactTileState extends State<ContactTile> {
   }
 
   Widget _buildContactTile() {
-    dynamic initials = getInitials(
-        contact?.displayName ?? widget.handle?.address ?? "", " ",
-        size: 25);
-
     List<Color> colors = toColorGradient(widget.handle?.address ?? "");
     return InkWell(
       onLongPress: () {
@@ -132,10 +128,9 @@ class _ContactTileState extends State<ContactTile> {
           style: Theme.of(context).textTheme.bodyText1,
         ),
         leading: ContactAvatarWidget(
-          contactImage: contactImage,
-          initials: initials,
+          handle: widget.handle,
           color1: colors.length > 0 ? colors[0] : null,
-          color2: colors.length > 0 ? colors[1] : null
+          color2: colors.length > 0 ? colors[1] : null,
         ),
         trailing: SizedBox(
           width: MediaQuery.of(context).size.width / 3,

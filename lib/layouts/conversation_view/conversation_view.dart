@@ -44,7 +44,6 @@ class _ConversationViewState extends State<ConversationView> {
   OverlayEntry entry;
   LayerLink layerLink = LayerLink();
   String chatTitle;
-  Map<String, dynamic> avatarStack = {};
   List<String> newMessages = [];
 
   @override
@@ -55,9 +54,9 @@ class _ConversationViewState extends State<ConversationView> {
     NotificationManager().switchChat(chat);
 
     getChatTitle();
-    fetchAvatars();
+    fetchParticipants();
     ContactManager().stream.listen((List<String> addresses) async {
-      fetchAvatars();
+      fetchParticipants();
     });
 
     EventDispatcher().stream.listen((Map<String, dynamic> event) {
@@ -87,7 +86,7 @@ class _ConversationViewState extends State<ConversationView> {
   void didChangeDependencies() async {
     super.didChangeDependencies();
     SocketManager().removeChatNotification(chat);
-    fetchAvatars();
+    fetchParticipants();
     getChatTitle();
   }
 
@@ -100,46 +99,11 @@ class _ConversationViewState extends State<ConversationView> {
     });
   }
 
-  Future<void> fetchAvatars() async {
-    Function cb = () {
-      if (this.mounted) setState(() {});
-    };
-
+  Future<void> fetchParticipants() async {
     // If we don't have participants, get them
     if (widget.chat.participants.isEmpty) {
       await widget.chat.getParticipants();
-    }
-
-    // Loop over the participants
-    for (Handle handle in widget.chat.participants) {
-      // Since we only want to update if we've made changes, check a flag
-      bool existed = avatarStack.containsKey(handle.address);
-
-      // If the avatar doesnt exist yet, add it as null
-      dynamic currentVal = avatarStack.putIfAbsent(handle.address,
-          () => {"avatar": null, "initials": getInitials(null, "", size: 40)});
-
-      // Update the UI with the placeholders
-      if (!existed) cb();
-
-      // Get the latest avatar
-      if (currentVal["avatar"] == null) {
-        MemoryImage avatar = await loadAvatar(widget.chat, handle.address);
-        String tile = await ContactManager().getContactTitle(handle.address);
-        dynamic initials = getInitials(tile, " ", size: 40);
-
-        // Only update if there is a change
-        if (avatarStack[handle.address]["initials"] != initials) {
-          avatarStack[handle.address]["initials"] = initials;
-        }
-
-        if (avatar != null) {
-          avatarStack[handle.address]["avatar"] = avatar;
-        }
-
-        // Update the UI with the actual avatars
-        cb();
-      }
+      if (this.mounted) setState(() {});
     }
   }
 
@@ -164,8 +128,8 @@ class _ConversationViewState extends State<ConversationView> {
 
     // Build the stack
     List<Widget> avatars = [];
-    avatarStack.forEach((address, info) {
-      List<Color> colors = toColorGradient(address);
+    widget.chat.participants.forEach((Handle participant) {
+      List<Color> colors = toColorGradient(participant.address);
       avatars.add(
         Container(
           height: 42.0, // 2 px larger than the diameter
@@ -174,10 +138,9 @@ class _ConversationViewState extends State<ConversationView> {
             radius: 20,
             backgroundColor: Theme.of(context).accentColor,
             child: ContactAvatarWidget(
-              contactImage: info["avatar"],
-              initials: info["initials"],
+              handle: participant,
               color1: colors.length > 0 ? colors[0] : null,
-              color2: colors.length > 0 ? colors[1] : null
+              color2: colors.length > 0 ? colors[1] : null,
             ),
           ),
         ),

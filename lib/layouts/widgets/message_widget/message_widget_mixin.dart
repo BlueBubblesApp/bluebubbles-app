@@ -8,26 +8,13 @@ import 'package:flutter/material.dart';
 
 // Mixin just for commonly shared functions and properties between the SentMessage and ReceivedMessage
 abstract class MessageWidgetMixin {
-  Contact contact;
   String contactTitle = "";
-  MemoryImage contactImage;
   bool hasHyperlinks = false;
   static const double maxSize = 3 / 5;
 
   Future<void> initMessageState(Message message, bool showHandle) async {
     this.hasHyperlinks = parseLinks(message.text).isNotEmpty;
     await getContactTitle(message, showHandle);
-  }
-
-  Future<void> getContact(Message message) async {
-    Contact contact =
-        await ContactManager().getCachedContact(message.handle.address);
-    if (contact != null) {
-      if (this.contact == null ||
-          this.contact.identifier != contact.identifier) {
-        this.contact = contact;
-      }
-    }
   }
 
   Future<void> getContactTitle(Message message, bool showHandle) async {
@@ -38,14 +25,6 @@ abstract class MessageWidgetMixin {
 
     if (title != contactTitle) {
       contactTitle = title;
-    }
-  }
-
-  Future<void> fetchAvatar(Message message) async {
-    MemoryImage avatar = await loadAvatar(null, message.handle.address);
-    if (contactImage == null ||
-        contactImage.bytes.length != avatar.bytes.length) {
-      contactImage = avatar;
     }
   }
 
@@ -100,20 +79,15 @@ abstract class MessageWidgetMixin {
       });
 
       if (!isNullOrEmpty(message.subject)) {
-        textSpans.add(
-          TextSpan(
-            text: "${message.subject}\n",
-            style: message.isFromMe
-                ? Theme.of(context)
-                    .textTheme
-                    .bodyText1
-                    .apply(color: Colors.white, fontWeightDelta: 2)
-                : Theme.of(context)
-                    .textTheme
-                    .bodyText1
-                    .apply(fontWeightDelta: 2),
-          )
-        );
+        textSpans.add(TextSpan(
+          text: "${message.subject}\n",
+          style: message.isFromMe
+              ? Theme.of(context)
+                  .textTheme
+                  .bodyText1
+                  .apply(color: Colors.white, fontWeightDelta: 2)
+              : Theme.of(context).textTheme.bodyText1.apply(fontWeightDelta: 2),
+        ));
       }
 
       if (linkIndexMatches.length > 0) {

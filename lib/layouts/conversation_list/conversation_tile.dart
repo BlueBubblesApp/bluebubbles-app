@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/layouts/widgets/contact_avatar_group_widget.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:contacts_service/contacts_service.dart';
@@ -40,18 +41,16 @@ class ConversationTile extends StatefulWidget {
 
 class _ConversationTileState extends State<ConversationTile>
     with AutomaticKeepAliveClientMixin {
-  MemoryImage contactImage;
   bool isPressed = false;
-  var initials;
 
   @override
   void initState() {
     super.initState();
 
-    fetchAvatar();
-    ContactManager().stream.listen((List<String> addresses) {
-      fetchAvatar();
-    });
+    fetchParticipants();
+    // ContactManager().stream.listen((List<String> addresses) {
+    //   fetchParticipants();
+    // });
   }
 
   void setNewChatTitle() async {
@@ -65,65 +64,26 @@ class _ConversationTileState extends State<ConversationTile>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    fetchAvatar();
+    fetchParticipants();
   }
 
-  void setContactImage(MemoryImage image) {
-    if (image != null) {
-      if (contactImage == null ||
-          contactImage.bytes.length != image.bytes.length) {
-        contactImage = image;
-        if (this.mounted) setState(() {});
-      }
-    }
-  }
-
-  Future<void> fetchAvatar() async {
+  Future<void> fetchParticipants() async {
     // If our chat does not have any participants, get them
     if (widget.chat.participants == null || widget.chat.participants.isEmpty) {
       await widget.chat.getParticipants();
-    }
-
-    if (widget.chat.participants.length > 1 ||
-        (widget.chat.displayName != null && widget.chat.displayName != "")) {
-      initials = Icon(Icons.people, color: Colors.white, size: 30);
       if (this.mounted) setState(() {});
-    } else if (widget.chat.participants.length == 1) {
-      ContactManager()
-          .getCachedContact(widget.chat.participants[0].address)
-          .then((Contact c) {
-        if (c == null && this.mounted) {
-          initials = getInitials(widget.chat.participants[0].address, "");
-          setState(() {});
-        } else {
-          loadAvatar(widget.chat, widget.chat.participants[0].address)
-              .then((MemoryImage image) {
-            setContactImage(image);
-          });
-        }
-      });
-    } else {
-      loadAvatar(widget.chat, widget.chat.participants[0].address)
-          .then((MemoryImage image) {
-        setContactImage(image);
-      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    if (initials == null) {
-      initials = getInitials(widget.chat.title, " ");
-    }
 
     Color color1, color2;
     if (shouldBeRainbow(widget.chat)) {
       List<Color> colors = [];
       if (!widget.chat.isGroup() && widget.chat.participants.length > 0) {
         colors.addAll(toColorGradient(widget.chat.participants[0].address));
-      } else if (widget.chat.isGroup()) {
-        colors.addAll(toColorGradient(widget.chat.title));
       }
 
       if (colors.isNotEmpty) {
@@ -276,11 +236,10 @@ class _ConversationTileState extends State<ConversationTile>
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
-                    leading: ContactAvatarWidget(
-                      color1: color1,
-                      color2: color2,
-                      contactImage: contactImage,
-                      initials: initials,
+                    leading: ContactAvatarGroupWidget(
+                      participants: widget.chat.participants,
+                      width: 40,
+                      height: 40,
                     ),
                     trailing: Container(
                       padding: EdgeInsets.only(right: 3),
