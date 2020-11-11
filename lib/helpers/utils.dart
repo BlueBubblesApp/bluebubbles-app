@@ -297,6 +297,8 @@ List<Color> toColorGradient(String str) {
 
   int seed = (total * str.length / 8).round();
 
+  // These are my arbitrary weights. It's based on what I found
+  // to be a good amount of each color
   if (seed < 901) {
     return [HexColor("fd678d"), HexColor("ff8aa8")];  // Pink
   } else if (seed >= 901 && seed < 915) {
@@ -307,7 +309,7 @@ List<Color> toColorGradient(String str) {
     return [HexColor("5ede79"), HexColor("8de798")];  // Green
   } else if (seed >= 935 && seed < 950) {
     return [HexColor("ffca1c"), HexColor("fcd752")];  // Yellow
-  } else if (seed >= 950 && seed < 5000) {
+  } else if (seed >= 950 && seed < 3000) {
     return [HexColor("ff534d"), HexColor("fd726a")];  // Red
   } else {
     return [HexColor("a78df3"), HexColor("bcabfc")];  // Purple
