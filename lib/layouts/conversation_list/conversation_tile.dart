@@ -20,16 +20,18 @@ import '../../helpers/utils.dart';
 
 class ConversationTile extends StatefulWidget {
   final Chat chat;
-  final bool replaceOnTap;
+  final bool onTapGoToChat;
+  final Function onTapCallback;
   final List<File> existingAttachments;
   final String existingText;
 
   ConversationTile({
     Key key,
     this.chat,
-    this.replaceOnTap,
+    this.onTapGoToChat,
     this.existingAttachments,
     this.existingText,
+    this.onTapCallback,
   }) : super(key: key);
 
   @override
@@ -193,7 +195,7 @@ class _ConversationTileState extends State<ConversationTile>
           },
           onTapUp: (details) {
             MessageBloc messageBloc = new MessageBloc(widget.chat);
-            if (widget.replaceOnTap != null && widget.replaceOnTap) {
+            if (widget.onTapGoToChat != null && widget.onTapGoToChat) {
               Navigator.of(context).pushAndRemoveUntil(
                 CupertinoPageRoute(
                   builder: (BuildContext context) {
@@ -208,6 +210,8 @@ class _ConversationTileState extends State<ConversationTile>
                 ),
                 (route) => route.isFirst,
               );
+            } else if (widget.onTapCallback != null) {
+              widget.onTapCallback();
             } else {
               Navigator.of(context).push(
                 CupertinoPageRoute(
