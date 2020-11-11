@@ -11,11 +11,13 @@ class ContactAvatarWidget extends StatefulWidget {
     Key key,
     this.size,
     this.fontSize,
+    this.borderThickness = 2.0,
     @required this.handle,
   }) : super(key: key);
   final Handle handle;
   final double size;
   final double fontSize;
+  final double borderThickness;
 
   @override
   _ContactAvatarWidgetState createState() => _ContactAvatarWidgetState();
@@ -106,7 +108,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> {
     return Container(
       width: widget.size ?? 40,
       height: widget.size ?? 40,
-      padding: const EdgeInsets.all(2.0), // borde width
+      padding: EdgeInsets.all(widget.borderThickness), // borde width
       decoration: new BoxDecoration(
         color: Theme.of(context).backgroundColor, // border color
         shape: BoxShape.circle,

@@ -138,6 +138,7 @@ class _ConversationViewState extends State<ConversationView> {
             backgroundColor: Theme.of(context).accentColor,
             child: ContactAvatarWidget(
               handle: participant,
+              borderThickness: 0.5,
             ),
           ),
         ),
