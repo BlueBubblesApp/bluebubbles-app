@@ -86,6 +86,7 @@ class _ChatSelectorTextFieldState extends State<ChatSelectorTextField> {
       ConstrainedBox(
         constraints: BoxConstraints(maxWidth: 255.0),
         child: CupertinoTextField(
+          cursorColor: Theme.of(context).primaryColor,
           focusNode: inputFieldNode,
           onSubmitted: (String done) {
             FocusScope.of(context).requestFocus(inputFieldNode);

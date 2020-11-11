@@ -5,9 +5,6 @@ import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_group_widget.dart';
-import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
-import 'package:bluebubbles/managers/contact_manager.dart';
-import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -78,19 +75,6 @@ class _ConversationTileState extends State<ConversationTile>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-
-    Color color1, color2;
-    if (shouldBeRainbow(widget.chat)) {
-      List<Color> colors = [];
-      if (!widget.chat.isGroup() && widget.chat.participants.length > 0) {
-        colors.addAll(toColorGradient(widget.chat.participants[0].address));
-      }
-
-      if (colors.isNotEmpty) {
-        color1 = colors[0];
-        color2 = colors[1];
-      }
-    }
 
     return Slidable(
       actionPane: SlidableStrechActionPane(),

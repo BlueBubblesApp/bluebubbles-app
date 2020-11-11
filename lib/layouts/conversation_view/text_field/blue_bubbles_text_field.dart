@@ -248,6 +248,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                               vsync: this,
                               curve: Curves.easeInOut,
                               child: CustomCupertinoTextField(
+                                cursorColor: Theme.of(context).primaryColor,
                                 onLongPressStart: () {
                                   Feedback.forLongPress(context);
                                 },

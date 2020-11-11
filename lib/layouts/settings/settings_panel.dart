@@ -435,6 +435,7 @@ class SettingsTextField extends StatelessWidget {
               subtitle: Padding(
                 padding: EdgeInsets.only(top: 10.0),
                 child: CustomCupertinoTextField(
+                  cursorColor: Theme.of(context).primaryColor,
                   onLongPressStart: () {
                     Feedback.forLongPress(context);
                   },
