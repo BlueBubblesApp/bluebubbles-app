@@ -12,12 +12,10 @@ class ContactAvatarWidget extends StatefulWidget {
     this.size,
     this.fontSize,
     @required this.handle,
-    this.showBorder,
   }) : super(key: key);
   final Handle handle;
   final double size;
   final double fontSize;
-  final bool showBorder;
 
   @override
   _ContactAvatarWidgetState createState() => _ContactAvatarWidgetState();
@@ -105,35 +103,43 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> {
       color2 = HexColor("928E8E");
     }
 
-    return CircleAvatar(
-      radius: (widget.size != null) ? widget.size / 2 : 20,
-      child: contactImage == null
-          ? Container(
-              width: widget.size ?? 40,
-              height: widget.size ?? 40,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: AlignmentDirectional.topStart,
-                  colors: [color2, color1],
+    return Container(
+      width: widget.size ?? 40,
+      height: widget.size ?? 40,
+      padding: const EdgeInsets.all(2.0), // borde width
+      decoration: new BoxDecoration(
+        color: Theme.of(context).backgroundColor, // border color
+        shape: BoxShape.circle,
+      ),
+      child: CircleAvatar(
+        radius: (widget.size != null) ? widget.size / 2 : 20,
+        child: contactImage == null
+            ? Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: AlignmentDirectional.topStart,
+                    colors: [color2, color1],
+                  ),
+                  borderRadius: BorderRadius.circular(30),
                 ),
-                borderRadius: BorderRadius.circular(30),
-              ),
-              child: Container(
-                child: initials == null
-                    ? Icon(Icons.person)
-                    : Text(
-                        initials,
-                        style: TextStyle(
-                          fontSize:
-                              (widget.fontSize == null) ? 18 : widget.fontSize,
+                child: Container(
+                  child: initials == null
+                      ? Icon(Icons.person)
+                      : Text(
+                          initials,
+                          style: TextStyle(
+                            fontSize: (widget.fontSize == null)
+                                ? 18
+                                : widget.fontSize,
+                          ),
                         ),
-                      ),
-                alignment: AlignmentDirectional.center,
+                  alignment: AlignmentDirectional.center,
+                ),
+              )
+            : CircleAvatar(
+                backgroundImage: contactImage,
               ),
-            )
-          : CircleAvatar(
-              backgroundImage: contactImage,
-            ),
+      ),
     );
   }
 }
