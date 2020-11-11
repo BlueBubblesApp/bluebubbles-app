@@ -240,6 +240,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                 SettingsSwitch(
                   onChanged: (bool val) {
                     _settingsCopy.hideDividers = val;
+                    saveSettings();
                   },
                   initialVal: _settingsCopy.hideDividers,
                   title: "Hide Dividers",
@@ -247,8 +248,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                 SettingsSwitch(
                   onChanged: (bool val) {
                     _settingsCopy.rainbowBubbles = val;
-                    ChatBloc().initTileVals(ChatBloc().chats);
-                    setState(() {});
+                    saveSettings();
                   },
                   initialVal: _settingsCopy.rainbowBubbles,
                   title: "Colorful Chats",
@@ -350,12 +350,16 @@ class _SettingsPanelState extends State<SettingsPanel> {
     );
   }
 
-  @override
-  void dispose() {
+  void saveSettings() {
     SettingsManager().saveSettings(_settingsCopy);
     if (needToReconnect) {
       SocketManager().startSocketIO(forceNewConnection: true);
     }
+  }
+
+  @override
+  void dispose() {
+    saveSettings();
     super.dispose();
   }
 }

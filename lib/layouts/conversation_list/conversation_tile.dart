@@ -54,7 +54,6 @@ class _ConversationTileState extends State<ConversationTile>
 
     hideDividers = SettingsManager().settings.hideDividers;
     SettingsManager().stream.listen((Settings newSettings) {
-      print("NEW SETTINGS");
       if (newSettings.hideDividers != hideDividers && this.mounted) {
         setState(() {
           hideDividers = newSettings.hideDividers;
