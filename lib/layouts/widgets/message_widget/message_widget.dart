@@ -59,43 +59,41 @@ class _MessageState extends State<MessageWidget>
   int associatedCount = 0;
 
   @override
-  // void initState() {
-  //   super.initState();
-  //   fetchAssociatedMessages();
-  //   fetchAttachments();
+  void initState() {
+    super.initState();
+    fetchAssociatedMessages();
+    fetchAttachments();
 
-  // // Listen for new messages
-  // NewMessageManager().stream.listen((data) {
-  //   // If the message doesn't apply to this chat, ignore it
-  //   if (!data.containsKey(widget.chat.guid)) return;
-  //   dynamic chatData = data[widget.chat.guid];
+    // Listen for new messages
+    NewMessageManager().stream.listen((data) {
+      // If the message doesn't apply to this chat, ignore it
+      if (data.chatGuid != widget.chat.guid) return;
 
-  //   // If it's not an ADD event, ignore it
-  //   if (!chatData.containsKey(NewMessageType.ADD)) return;
+      // If it's not an ADD event, ignore it
+      if (data.type != NewMessageType.ADD) return;
 
-  //   // Check if the new message has an associated GUID that matches this message
-  //   bool fetchAssoc = false;
-  //   bool fetchAttach = false;
-  //   chatData[NewMessageType.ADD].forEach((item) {
-  //     Message message = item["message"];
-  //     if (message.associatedMessageGuid == widget.message.guid) {
-  //       fetchAssoc = true;
-  //     }
-  //     if (message.hasAttachments) {
-  //       fetchAttach = true;
-  //     }
-  //   });
+      // Check if the new message has an associated GUID that matches this message
+      bool fetchAssoc = false;
+      bool fetchAttach = false;
+      Message message = data.event["message"];
+      if (message.associatedMessageGuid == widget.message.guid) {
+        fetchAssoc = true;
+      }
+      if (message.hasAttachments) {
+        fetchAttach = true;
+      }
 
-  //   // If the associated message GUID matches this one, fetch associated messages
-  //   if (fetchAssoc) {
-  //     fetchAssociatedMessages(forceReload: true);
-  //   }
+      // If the associated message GUID matches this one, fetch associated messages
+      if (fetchAssoc) {
+        fetchAssociatedMessages(forceReload: true);
+      }
 
-  //   if (fetchAttach) {
-  //     fetchAttachments(forceReload: true);
-  //   }
-  // });
-  // }
+      if (fetchAttach) {
+        fetchAttachments(forceReload: true);
+      }
+    });
+  }
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
