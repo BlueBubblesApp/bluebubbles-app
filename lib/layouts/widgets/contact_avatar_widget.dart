@@ -132,6 +132,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> {
                                 ? 18
                                 : widget.fontSize,
                           ),
+                          textAlign: TextAlign.center,
                         ),
                   alignment: AlignmentDirectional.center,
                 ),
