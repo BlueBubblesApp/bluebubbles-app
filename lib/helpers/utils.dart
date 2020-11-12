@@ -64,11 +64,14 @@ String formatPhoneNumber(String str) {
 }
 
 bool sameAddress(String address1, String address2) {
-  String formattedNumber = address1.replaceAll(RegExp(r'[-() ]'), '');
+  String formattedNumber1 = address1.replaceAll(RegExp(r'[-() ]'), '');
+  String formattedNumber2 = address2.replaceAll(RegExp(r'[-() ]'), '');
 
-  return formattedNumber == address2 ||
-      "+1" + formattedNumber == address2 ||
-      "+" + formattedNumber == address2;
+  return formattedNumber1 == formattedNumber2 ||
+      "+1" + formattedNumber1 == formattedNumber2 ||
+      "+" + formattedNumber1 == formattedNumber2 ||
+      "+1" + formattedNumber2 == formattedNumber1 ||
+      "+" + formattedNumber2 == formattedNumber1;
 }
 
 Future<Uint8List> blurHashDecode(String blurhash, int width, int height) async {
@@ -300,19 +303,19 @@ List<Color> toColorGradient(String str) {
   // These are my arbitrary weights. It's based on what I found
   // to be a good amount of each color
   if (seed < 901) {
-    return [HexColor("fd678d"), HexColor("ff8aa8")];  // Pink
+    return [HexColor("fd678d"), HexColor("ff8aa8")]; // Pink
   } else if (seed >= 901 && seed < 915) {
-    return [HexColor("6bcff6"), HexColor("94ddfd")];  // Blue
+    return [HexColor("6bcff6"), HexColor("94ddfd")]; // Blue
   } else if (seed >= 915 && seed < 925) {
-    return [HexColor("fea21c"), HexColor("feb854")];  // Orange
+    return [HexColor("fea21c"), HexColor("feb854")]; // Orange
   } else if (seed >= 925 && seed < 935) {
-    return [HexColor("5ede79"), HexColor("8de798")];  // Green
+    return [HexColor("5ede79"), HexColor("8de798")]; // Green
   } else if (seed >= 935 && seed < 950) {
-    return [HexColor("ffca1c"), HexColor("fcd752")];  // Yellow
+    return [HexColor("ffca1c"), HexColor("fcd752")]; // Yellow
   } else if (seed >= 950 && seed < 3000) {
-    return [HexColor("ff534d"), HexColor("fd726a")];  // Red
+    return [HexColor("ff534d"), HexColor("fd726a")]; // Red
   } else {
-    return [HexColor("a78df3"), HexColor("bcabfc")];  // Purple
+    return [HexColor("a78df3"), HexColor("bcabfc")]; // Purple
   }
 }
 

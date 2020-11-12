@@ -34,6 +34,11 @@ class ContactManager {
     return handleToContact[address];
   }
 
+  Contact getCachedContactSync(String address) {
+    if (!handleToContact.containsKey(address)) return null;
+    return handleToContact[address];
+  }
+
   Future<bool> canAccessContacts() async {
     bool output = false;
 
@@ -158,6 +163,9 @@ class ContactManager {
     if (handleToContact.containsKey(address) &&
         handleToContact[address] != null)
       return handleToContact[address].displayName;
+    Contact contact = await getContact(address);
+    if (contact != null && contact.displayName != null)
+      return contact.displayName;
     String contactTitle = address;
     if (contactTitle == address && !contactTitle.contains("@")) {
       return formatPhoneNumber(contactTitle);

@@ -65,8 +65,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget>
     if (isInvalid) return;
     if (state.initials != null) return;
     state.initials = await getInitials(handle: widget.handle);
-    Contact contact =
-        await ContactManager().getCachedContact(widget.handle.address);
+    Contact contact = await ContactManager().getContact(widget.handle.address);
 
     if (contact != null &&
         contact.avatar != null &&
@@ -143,7 +142,10 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget>
                 ),
                 child: Container(
                   child: state.initials == null
-                      ? Icon(Icons.person)
+                      ? Icon(
+                          Icons.person,
+                          size: (widget.size ?? 40) / 2,
+                        )
                       : Text(
                           state.initials,
                           style: TextStyle(

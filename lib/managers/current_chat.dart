@@ -67,7 +67,7 @@ class CurrentChat {
 
   static CurrentChat of(BuildContext context) {
     assert(context != null);
-    return context.findAncestorStateOfType<MessageViewState>()?.currentChat ??
+    return context.findAncestorStateOfType<MessagesViewState>()?.currentChat ??
         null;
   }
 

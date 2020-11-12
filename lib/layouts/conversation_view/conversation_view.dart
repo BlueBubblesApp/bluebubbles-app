@@ -210,7 +210,7 @@ class _ConversationViewState extends State<ConversationView> {
         mainAxisAlignment: MainAxisAlignment.end,
         children: <Widget>[
           Expanded(
-            child: MessageView(
+            child: MessagesView(
               messageBloc: widget.messageBloc,
               showHandle: chat.participants.length > 1,
               chat: chat,

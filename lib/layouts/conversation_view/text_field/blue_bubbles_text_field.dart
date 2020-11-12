@@ -26,7 +26,7 @@ import 'package:photo_manager/photo_manager.dart';
 
 class BlueBubblesTextField extends StatefulWidget {
   final Chat chat;
-  final Function customSend;
+  final Function(BlueBubblesTextFieldState state) customSend;
   final List<File> existingAttachments;
   final String existingText;
   final Function saveText;
@@ -137,9 +137,12 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                   Navigator.of(context).pop();
                 }),
             new FlatButton(
-              child: new Text("Send",
-                  style: Theme.of(context).textTheme.bodyText1),
+              child: new Text(
+                "Send",
+                style: Theme.of(context).textTheme.bodyText1,
+              ),
               onPressed: () {
+                if (widget.chat == null) return;
                 OutgoingQueue().add(
                   new QueueItem(
                     event: "send-attachment",
@@ -190,10 +193,6 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
 
   @override
   Widget build(BuildContext context) {
-    IconData rightIcon = Icons.arrow_upward;
-    bool canRecord = _controller.text.isEmpty && pickedImages.isEmpty;
-    if (canRecord) rightIcon = Icons.mic;
-
     return Row(
       mainAxisSize: MainAxisSize.max,
       children: [
@@ -203,257 +202,9 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
-                Padding(
-                  padding: const EdgeInsets.only(left: 50.0),
-                  child: TextFieldAttachmentList(
-                    attachments: pickedImages,
-                    onRemove: (File attachment) {
-                      pickedImages.removeWhere(
-                          (element) => element.path == attachment.path);
-                      if (this.mounted) setState(() {});
-                    },
-                  ),
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: <Widget>[
-                    Container(
-                      height: 35,
-                      width: 35,
-                      margin: EdgeInsets.only(left: 5.0, right: 5.0),
-                      child: ClipOval(
-                        child: Material(
-                          color: Theme.of(context).accentColor,
-                          child: InkWell(
-                            onTap: toggleShareMenu,
-                            child: Icon(
-                              Icons.share,
-                              color: Colors.white.withAlpha(225),
-                              size: 20,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    Flexible(
-                      flex: 1,
-                      fit: FlexFit.loose,
-                      child: Container(
-                        child: Stack(
-                          alignment: AlignmentDirectional.centerEnd,
-                          children: <Widget>[
-                            AnimatedSize(
-                              duration: Duration(milliseconds: 100),
-                              vsync: this,
-                              curve: Curves.easeInOut,
-                              child: CustomCupertinoTextField(
-                                onLongPressStart: () {
-                                  Feedback.forLongPress(context);
-                                },
-                                onTap: () {
-                                  HapticFeedback.selectionClick();
-                                },
-                                key: _searchFormKey,
-                                onChanged: (String value) {
-                                  if (value.isEmpty && this.mounted) {
-                                    setState(() {
-                                      rightIcon = Icons.mic;
-                                    });
-                                  } else if (value.isNotEmpty &&
-                                      rightIcon == Icons.mic &&
-                                      this.mounted) {
-                                    setState(() {
-                                      rightIcon = Icons.arrow_upward;
-                                    });
-                                  }
-                                },
-                                onContentCommited: (String url) async {
-                                  debugPrint("got attachment " + url);
-                                  List<String> fnParts = url.split("/");
-                                  fnParts = (fnParts.length > 2)
-                                      ? fnParts.sublist(fnParts.length - 2)
-                                      : fnParts.last;
-                                  File file = await _downloadFile(
-                                      url, fnParts.join("_"));
-                                  pickedImages.add(file);
-                                  updateTextFieldAttachments();
-                                  if (this.mounted) setState(() {});
-                                },
-                                textCapitalization:
-                                    TextCapitalization.sentences,
-                                focusNode: _focusNode,
-                                autocorrect: true,
-                                controller: _controller,
-                                scrollPhysics: CustomBouncingScrollPhysics(),
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodyText1
-                                    .apply(
-                                        color: ThemeData
-                                                    .estimateBrightnessForColor(
-                                                        Theme.of(context)
-                                                            .backgroundColor) ==
-                                                Brightness.light
-                                            ? Colors.black
-                                            : Colors.white,
-                                        fontSizeDelta: -0.25),
-                                keyboardType: TextInputType.multiline,
-                                maxLines: 14,
-                                minLines: 1,
-                                placeholder: "BlueBubbles",
-                                padding: EdgeInsets.only(
-                                    left: 10, top: 10, right: 40, bottom: 10),
-                                placeholderStyle:
-                                    Theme.of(context).textTheme.subtitle1,
-                                autofocus:
-                                    SettingsManager().settings.autoOpenKeyboard,
-                                decoration: BoxDecoration(
-                                  color: Theme.of(context).backgroundColor,
-                                  border: Border.all(
-                                    color: Theme.of(context).dividerColor,
-                                    width: 1.5,
-                                  ),
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                              ),
-                            ),
-                            Align(
-                              alignment: Alignment.bottomRight,
-                              child: ButtonTheme(
-                                minWidth: 30,
-                                height: 30,
-                                child: RaisedButton(
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: 0,
-                                  ),
-                                  color: Theme.of(context).primaryColor,
-                                  onPressed: () async {
-                                    if (isRecording) {
-                                      HapticFeedback.heavyImpact();
-                                      Recording recording =
-                                          await AudioRecorder.stop();
-                                      if (this.mounted) {
-                                        setState(() {
-                                          isRecording = false;
-                                        });
-                                      }
-
-                                      reviewAudio(
-                                          context, new File(recording.path));
-                                    } else if (canRecord &&
-                                        !isRecording &&
-                                        await Permission.microphone
-                                            .request()
-                                            .isGranted) {
-                                      HapticFeedback.heavyImpact();
-                                      String appDocPath =
-                                          SettingsManager().appDocDir.path;
-                                      String pathName =
-                                          "$appDocPath/attachments/tmp.m4a";
-                                      File file = new File(pathName);
-                                      if (file.existsSync()) file.deleteSync();
-                                      await AudioRecorder.start(
-                                          path: pathName,
-                                          audioOutputFormat:
-                                              AudioOutputFormat.AAC);
-                                      if (this.mounted) {
-                                        setState(() {
-                                          isRecording = true;
-                                        });
-                                      }
-                                    } else if (widget.customSend != null) {
-                                      widget.customSend(
-                                          pickedImages, _controller.text);
-                                    } else {
-                                      if (pickedImages.length > 0) {
-                                        for (int i = 0;
-                                            i < pickedImages.length;
-                                            i++) {
-                                          OutgoingQueue().add(
-                                            new QueueItem(
-                                              event: "send-attachment",
-                                              item: new AttachmentSender(
-                                                pickedImages[i],
-                                                widget.chat,
-                                                i == pickedImages.length - 1
-                                                    ? _controller.text
-                                                    : "",
-                                              ),
-                                            ),
-                                          );
-                                        }
-                                      } else {
-                                        ActionHandler.sendMessage(
-                                            widget.chat, _controller.text);
-                                      }
-                                    }
-
-                                    _controller.text = "";
-                                    pickedImages = <File>[];
-                                    updateTextFieldAttachments();
-                                    if (this.mounted) setState(() {});
-                                  },
-                                  child: Stack(
-                                    alignment: Alignment.center,
-                                    children: [
-                                      AnimatedOpacity(
-                                        opacity: _controller.text.isEmpty &&
-                                                pickedImages.isEmpty
-                                            ? 1.0
-                                            : 0.0,
-                                        duration: Duration(milliseconds: 150),
-                                        child: Icon(
-                                          Icons.mic,
-                                          color: (isRecording)
-                                              ? Colors.red
-                                              : Colors.white,
-                                          size: 20,
-                                        ),
-                                      ),
-                                      AnimatedOpacity(
-                                          opacity:
-                                              (_controller.text.isNotEmpty ||
-                                                          pickedImages.length >
-                                                              0) &&
-                                                      !isRecording
-                                                  ? 1.0
-                                                  : 0.0,
-                                          duration: Duration(milliseconds: 150),
-                                          child: Icon(Icons.arrow_upward,
-                                              color: Colors.white, size: 20)),
-                                    ],
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(40),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                TextFieldAttachmentPicker(
-                  visible: showImagePicker,
-                  onAddAttachment: (File file) {
-                    for (File image in pickedImages) {
-                      if (image.path == file.path) {
-                        pickedImages.removeWhere(
-                            (element) => element.path == file.path);
-                        updateTextFieldAttachments();
-                        if (this.mounted) setState(() {});
-                        return;
-                      }
-                    }
-                    pickedImages.add(file);
-                    updateTextFieldAttachments();
-                    if (this.mounted) setState(() {});
-                  },
-                  chat: widget.chat,
-                ),
+                buildAttachmentList(),
+                buildTextFieldAlwaysVisible(),
+                buildAttachmentPicker(),
               ],
             ),
           ),
@@ -461,4 +212,267 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
       ],
     );
   }
+
+  Widget buildAttachmentList() => Padding(
+        padding: const EdgeInsets.only(left: 50.0),
+        child: TextFieldAttachmentList(
+          attachments: pickedImages,
+          onRemove: (File attachment) {
+            pickedImages
+                .removeWhere((element) => element.path == attachment.path);
+            if (this.mounted) setState(() {});
+          },
+        ),
+      );
+
+  Widget buildTextFieldAlwaysVisible() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: <Widget>[
+        buildShareButton(),
+        buildActualTextField(),
+      ],
+    );
+  }
+
+  Widget buildShareButton() => Container(
+        height: 35,
+        width: 35,
+        margin: EdgeInsets.only(left: 5.0, right: 5.0),
+        child: ClipOval(
+          child: Material(
+            color: Theme.of(context).accentColor,
+            child: InkWell(
+              onTap: toggleShareMenu,
+              child: Icon(
+                Icons.share,
+                color: Colors.white.withAlpha(225),
+                size: 20,
+              ),
+            ),
+          ),
+        ),
+      );
+
+  Widget buildActualTextField() {
+    IconData rightIcon = Icons.arrow_upward;
+    bool canRecord = _controller.text.isEmpty && pickedImages.isEmpty;
+    if (canRecord) rightIcon = Icons.mic;
+    return Flexible(
+      flex: 1,
+      fit: FlexFit.loose,
+      child: Container(
+        child: Stack(
+          alignment: AlignmentDirectional.centerEnd,
+          children: <Widget>[
+            AnimatedSize(
+              duration: Duration(milliseconds: 100),
+              vsync: this,
+              curve: Curves.easeInOut,
+              child: CustomCupertinoTextField(
+                onLongPressStart: () {
+                  Feedback.forLongPress(context);
+                },
+                onTap: () {
+                  HapticFeedback.selectionClick();
+                },
+                key: _searchFormKey,
+                onChanged: (String value) {
+                  if (value.isEmpty && this.mounted) {
+                    setState(() {
+                      rightIcon = Icons.mic;
+                    });
+                  } else if (value.isNotEmpty &&
+                      rightIcon == Icons.mic &&
+                      this.mounted) {
+                    setState(() {
+                      rightIcon = Icons.arrow_upward;
+                    });
+                  }
+                },
+                onContentCommited: (String url) async {
+                  debugPrint("got attachment " + url);
+                  List<String> fnParts = url.split("/");
+                  fnParts = (fnParts.length > 2)
+                      ? fnParts.sublist(fnParts.length - 2)
+                      : fnParts.last;
+                  File file = await _downloadFile(url, fnParts.join("_"));
+                  pickedImages.add(file);
+                  updateTextFieldAttachments();
+                  if (this.mounted) setState(() {});
+                },
+                textCapitalization: TextCapitalization.sentences,
+                focusNode: _focusNode,
+                autocorrect: true,
+                controller: _controller,
+                scrollPhysics: CustomBouncingScrollPhysics(),
+                style: Theme.of(context).textTheme.bodyText1.apply(
+                      color: ThemeData.estimateBrightnessForColor(
+                                  Theme.of(context).backgroundColor) ==
+                              Brightness.light
+                          ? Colors.black
+                          : Colors.white,
+                      fontSizeDelta: -0.25,
+                    ),
+                keyboardType: TextInputType.multiline,
+                maxLines: 14,
+                minLines: 1,
+                placeholder: "BlueBubbles",
+                padding:
+                    EdgeInsets.only(left: 10, top: 10, right: 40, bottom: 10),
+                placeholderStyle: Theme.of(context).textTheme.subtitle1,
+                autofocus: SettingsManager().settings.autoOpenKeyboard,
+                decoration: BoxDecoration(
+                  color: Theme.of(context).backgroundColor,
+                  border: Border.all(
+                    color: Theme.of(context).dividerColor,
+                    width: 1.5,
+                  ),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
+            ),
+            buildSendButton(canRecord),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> startRecording() async {
+    HapticFeedback.heavyImpact();
+    String appDocPath = SettingsManager().appDocDir.path;
+    String pathName = "$appDocPath/attachments/tmp.m4a";
+    File file = new File(pathName);
+    if (file.existsSync()) file.deleteSync();
+    await AudioRecorder.start(
+        path: pathName, audioOutputFormat: AudioOutputFormat.AAC);
+    if (this.mounted) {
+      setState(() {
+        isRecording = true;
+      });
+    }
+  }
+
+  Future<void> stopRecording() async {
+    HapticFeedback.heavyImpact();
+    Recording recording = await AudioRecorder.stop();
+    if (this.mounted) {
+      setState(() {
+        isRecording = false;
+      });
+    }
+
+    reviewAudio(context, new File(recording.path));
+  }
+
+  void send({Chat chat}) {
+    if (widget.chat == null && chat == null) return;
+    if (pickedImages.length > 0) {
+      for (int i = 0; i < pickedImages.length; i++) {
+        OutgoingQueue().add(
+          new QueueItem(
+            event: "send-attachment",
+            item: new AttachmentSender(
+              pickedImages[i],
+              chat ?? widget.chat,
+              i == pickedImages.length - 1 ? _controller.text : "",
+            ),
+          ),
+        );
+      }
+    } else {
+      ActionHandler.sendMessage(chat ?? widget.chat, _controller.text);
+    }
+    if (chat != null) {
+      _controller.text = "";
+      pickedImages = <File>[];
+      updateTextFieldAttachments();
+      if (this.mounted) setState(() {});
+    }
+  }
+
+  Widget buildSendButton(bool canRecord) => Align(
+        alignment: Alignment.bottomRight,
+        child: ButtonTheme(
+          minWidth: 30,
+          height: 30,
+          child: RaisedButton(
+            padding: EdgeInsets.symmetric(
+              horizontal: 0,
+            ),
+            color: Theme.of(context).primaryColor,
+            onPressed: () async {
+              if (isRecording) {
+                await stopRecording();
+              } else if (canRecord &&
+                  !isRecording &&
+                  await Permission.microphone.request().isGranted) {
+                await startRecording();
+              } else if (widget.customSend != null) {
+                widget.customSend(this);
+              } else {
+                await send();
+              }
+              if (widget.customSend == null) {
+                _controller.text = "";
+                pickedImages = <File>[];
+                updateTextFieldAttachments();
+              }
+              if (this.mounted) setState(() {});
+            },
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                AnimatedOpacity(
+                  opacity: _controller.text.isEmpty && pickedImages.isEmpty
+                      ? 1.0
+                      : 0.0,
+                  duration: Duration(milliseconds: 150),
+                  child: Icon(
+                    Icons.mic,
+                    color: (isRecording) ? Colors.red : Colors.white,
+                    size: 20,
+                  ),
+                ),
+                AnimatedOpacity(
+                  opacity: (_controller.text.isNotEmpty ||
+                              pickedImages.length > 0) &&
+                          !isRecording
+                      ? 1.0
+                      : 0.0,
+                  duration: Duration(milliseconds: 150),
+                  child: Icon(
+                    Icons.arrow_upward,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                ),
+              ],
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(40),
+            ),
+          ),
+        ),
+      );
+
+  Widget buildAttachmentPicker() => TextFieldAttachmentPicker(
+        visible: showImagePicker,
+        onAddAttachment: (File file) {
+          for (File image in pickedImages) {
+            if (image.path == file.path) {
+              pickedImages.removeWhere((element) => element.path == file.path);
+              updateTextFieldAttachments();
+              if (this.mounted) setState(() {});
+              return;
+            }
+          }
+          pickedImages.add(file);
+          updateTextFieldAttachments();
+          if (this.mounted) setState(() {});
+        },
+        chat: widget.chat,
+      );
 }

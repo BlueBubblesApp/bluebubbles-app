@@ -14,12 +14,12 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:bluebubbles/layouts/widgets/send_widget.dart';
 
-class MessageView extends StatefulWidget {
+class MessagesView extends StatefulWidget {
   final MessageBloc messageBloc;
   final bool showHandle;
   final Chat chat;
 
-  MessageView({
+  MessagesView({
     Key key,
     this.messageBloc,
     this.showHandle,
@@ -27,10 +27,10 @@ class MessageView extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  MessageViewState createState() => MessageViewState();
+  MessagesViewState createState() => MessagesViewState();
 }
 
-class MessageViewState extends State<MessageView>
+class MessagesViewState extends State<MessagesView>
     with TickerProviderStateMixin {
   Completer<LoadMessageResult> loader;
   bool noMoreMessages = false;

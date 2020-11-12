@@ -1,28 +1,26 @@
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/chat_selector.dart';
+import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/contact_selector_custom_cupertino_textfield.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class ChatSelectorTextField extends StatefulWidget {
+  ChatSelectorTextField({
+    Key key,
+    @required this.controller,
+    @required this.onRemove,
+    @required this.selectedContacts,
+    @required this.allContacts,
+    @required this.isCreator,
+  }) : super(key: key);
   final TextEditingController controller;
-  final Function onCreate;
   final Function(UniqueContact) onRemove;
   final bool isCreator;
   final List<UniqueContact> selectedContacts;
   final List<UniqueContact> allContacts;
-  ChatSelectorTextField(
-      {Key key,
-      @required this.controller,
-      @required this.onCreate,
-      @required this.onRemove,
-      @required this.selectedContacts,
-      @required this.allContacts,
-      @required this.isCreator})
-      : super(key: key);
 
   @override
-  _ChatSelectorTextFieldState createState() =>
-      _ChatSelectorTextFieldState();
+  _ChatSelectorTextFieldState createState() => _ChatSelectorTextFieldState();
 }
 
 class _ChatSelectorTextFieldState extends State<ChatSelectorTextField> {
@@ -43,7 +41,7 @@ class _ChatSelectorTextFieldState extends State<ChatSelectorTextField> {
   @override
   Widget build(BuildContext context) {
     List<Widget> items = [];
-    for (UniqueContact contact in widget.selectedContacts) {
+    for (UniqueContact contact in ChatSelector.of(context).selected) {
       items.add(
         GestureDetector(
           onTap: () {
@@ -62,7 +60,6 @@ class _ChatSelectorTextFieldState extends State<ChatSelectorTextField> {
                   children: <Widget>[
                     Text(
                       contact.displayName.trim(),
-                      //style: textStyle?.copyWith(color: Colors.orange),
                     ),
                     SizedBox(
                       width: 5.0,
@@ -85,7 +82,7 @@ class _ChatSelectorTextFieldState extends State<ChatSelectorTextField> {
     items.add(
       ConstrainedBox(
         constraints: BoxConstraints(maxWidth: 255.0),
-        child: CupertinoTextField(
+        child: ContactSelectorCustomCupertinoTextfield(
           focusNode: inputFieldNode,
           onSubmitted: (String done) {
             FocusScope.of(context).requestFocus(inputFieldNode);
@@ -110,7 +107,7 @@ class _ChatSelectorTextFieldState extends State<ChatSelectorTextField> {
           maxLength: 50,
           maxLines: 1,
           autocorrect: false,
-          placeholder: "Type a name...",
+          placeholder: "  Type a name...",
           placeholderStyle: Theme.of(context).textTheme.subtitle1,
           padding: EdgeInsets.only(right: 5.0, top: 2.0, bottom: 2.0),
           autofocus: true,
@@ -130,7 +127,7 @@ class _ChatSelectorTextFieldState extends State<ChatSelectorTextField> {
     );
 
     return Padding(
-      padding: EdgeInsets.only(left: 12.0, bottom: 10),
+      padding: EdgeInsets.only(left: 12.0, bottom: 10, top: 10),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -154,19 +151,19 @@ class _ChatSelectorTextFieldState extends State<ChatSelectorTextField> {
               ),
             ),
           ),
-          Padding(
-            padding: EdgeInsets.only(left: 12, right: 10.0),
-            child: FlatButton(
-              color: Theme.of(context).accentColor,
-              onPressed: () async {
-                widget.onCreate();
-              },
-              child: Text(
-                widget.isCreator ? "Create" : "Add",
-                style: Theme.of(context).textTheme.bodyText1,
-              ),
-            ),
-          )
+          // Padding(
+          //   padding: EdgeInsets.only(left: 12, right: 10.0),
+          //   child: FlatButton(
+          //     color: Theme.of(context).accentColor,
+          //     onPressed: () async {
+          //       // widget.onCreate();
+          //     },
+          //     child: Text(
+          //       ChatSelector.of(context).widget.isCreator ? "Create" : "Add",
+          //       style: Theme.of(context).textTheme.bodyText1,
+          //     ),
+          //   ),
+          // )
         ],
       ),
     );
