@@ -328,32 +328,18 @@ class ActionHandler {
 
     // Save the new chat only if current chat isn't found
     if (currentChat == null) {
-      debugPrint("current chat == null, saving");
+      debugPrint("(Handle Chat) Chat did not exist. Saving.");
       await newChat.save();
     }
 
     // If we already have a chat, don't fetch the participants
     if (currentChat != null) return;
 
-    Map<String, dynamic> params = Map();
-    params["chatGuid"] = newChat.guid;
-    params["withParticipants"] = true;
-    SocketManager().sendMessage("get-chat", params, (data) async {
-      if (data['status'] != 200) return;
-
-      Map<String, dynamic> chatData = data["data"];
-      if (chatData != null) {
-        debugPrint("got chat data " + chatData.toString());
-        newChat = Chat.fromMap(chatData);
-
-        // Resave the chat after we've got the participants
-        await newChat.save();
-        debugPrint("saved chat " + newChat.toMap().toString());
-
-        // Update the main view
-        await ChatBloc().updateChatPosition(newChat);
-      }
-    });
+    // Fetch chat data from server
+    newChat = await SocketManager().fetchChat(newChat.guid);
+    if (newChat != null) {
+      await ChatBloc().updateChatPosition(newChat);
+    }
   }
 
   /// Handles the ingestion of a 'new-message' event from the server.

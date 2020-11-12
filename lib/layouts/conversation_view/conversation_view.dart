@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'package:assorted_layout_widgets/assorted_layout_widgets.dart';
-import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/layouts/conversation_details/conversation_details.dart';
 import 'package:bluebubbles/layouts/conversation_view/messages_view.dart';
@@ -45,6 +44,7 @@ class _ConversationViewState extends State<ConversationView> {
   LayerLink layerLink = LayerLink();
   String chatTitle;
   List<String> newMessages = [];
+  bool processingParticipants = false;
 
   @override
   void initState() {
@@ -90,7 +90,7 @@ class _ConversationViewState extends State<ConversationView> {
     getChatTitle();
   }
 
-  void getChatTitle() {
+  void getChatTitle() async {
     getShortChatTitle(widget.chat).then((String title) {
       if (title != chatTitle) {
         chatTitle = title;
@@ -100,11 +100,42 @@ class _ConversationViewState extends State<ConversationView> {
   }
 
   Future<void> fetchParticipants() async {
+    // Prevent multiple calls to fetch participants
+    if (processingParticipants) return;
+    processingParticipants = true;
+
     // If we don't have participants, get them
     if (widget.chat.participants.isEmpty) {
       await widget.chat.getParticipants();
-      if (this.mounted) setState(() {});
+
+      // If we have participants, refresh the state
+      if (widget.chat.participants.isNotEmpty) {
+        if (this.mounted) setState(() {});
+        return;
+      }
+
+      debugPrint("(Convo View) No participants found for chat, fetching...");
+
+      try {
+        // If we don't have participants, we should fetch them from the server
+        Chat data = await SocketManager().fetchChat(widget.chat.guid);
+        // If we got data back, fetch the participants and update the state
+        if (data != null) {
+          await widget.chat.getParticipants();
+          if (widget.chat.participants.isNotEmpty) {
+            debugPrint("(Convo View) Got new chat participants. Updating state.");
+            if (this.mounted) setState(() {});
+          } else {
+            debugPrint("(Convo View) Participants list is still empty, please contact support!");
+          }
+        }
+      } catch (ex) {
+        debugPrint("There was an error fetching the chat");
+        debugPrint(ex.toString());
+      }
     }
+
+    processingParticipants = false;
   }
 
   @override
