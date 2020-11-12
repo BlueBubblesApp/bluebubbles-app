@@ -65,9 +65,12 @@ class _ConversationTileState extends State<ConversationTile>
   void setNewChatTitle() async {
     String tmpTitle = await getFullChatTitle(widget.chat);
     if (tmpTitle != widget.chat.title) {
-      if (this.mounted) setState(() {});
+      if (this.mounted) {
+        setState(() {
+          widget.chat.title = tmpTitle;
+        });
+      }
     }
-    widget.chat.title = tmpTitle;
   }
 
   @override
@@ -78,9 +81,11 @@ class _ConversationTileState extends State<ConversationTile>
 
   Future<void> fetchParticipants() async {
     // If our chat does not have any participants, get them
-    if (widget.chat.participants == null || widget.chat.participants.isEmpty) {
+    if (isNullOrEmpty(widget.chat.participants)) {
       await widget.chat.getParticipants();
-      if (this.mounted) setState(() {});
+      if (!isNullOrEmpty(widget.chat.participants) && this.mounted) {
+        setState(() {});
+      }
     }
   }
 

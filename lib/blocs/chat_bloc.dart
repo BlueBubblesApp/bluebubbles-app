@@ -75,7 +75,7 @@ class ChatBloc {
     initTileVals(_archivedChats);
 
     // Update the sink so all listeners get the new chat list
-    _chatController.sink.add(_chats);
+    await this.addToSink(_chats);
   }
 
   /// Inserts a [chat] into the chat bloc based on the lastMessage data
@@ -135,7 +135,7 @@ class ChatBloc {
     }
 
     // Update the sink so all listeners get the new chat list
-    _chatController.sink.add(_chats);
+    await this.addToSink(_chats);
   }
 
   Future<void> handleMessageAction(NewMessageEvent event) async {
@@ -183,7 +183,7 @@ class ChatBloc {
 
       // Only keep going if the last request added new chats
       if (_chats.length > len) {
-        _chatController.sink.add(_chats);
+        await this.addToSink(_chats);
         recursiveGetChats();
       }
     }
@@ -197,7 +197,9 @@ class ChatBloc {
       await initTileValsForChat(chats[i]);
     }
 
-    if (addToSink) _chatController.sink.add(_chats);
+    if (addToSink) {
+      await this.addToSink(_chats);
+    }
   }
 
   /// Get the values for the chat, specifically the title
@@ -216,7 +218,7 @@ class ChatBloc {
     chat.isArchived = true;
     await chat.save(updateLocalVals: true);
     initTileValsForChat(chat);
-    _chatController.sink.add(_chats);
+    await this.addToSink(_chats);
     _archivedChatController.sink.add(_archivedChats);
   }
 
@@ -227,14 +229,14 @@ class ChatBloc {
     await initTileValsForChat(chat);
     _chats.add(chat);
     _archivedChatController.sink.add(_archivedChats);
-    _chatController.sink.add(_chats);
+    await this.addToSink(_chats);
   }
 
   void deleteChat(Chat chat) async {
     _archivedChats.removeWhere((element) => element.id == chat.id);
     _chats.removeWhere((element) => element.id == chat.id);
     _archivedChatController.sink.add(_archivedChats);
-    _chatController.sink.add(_chats);
+    await this.addToSink(_chats);
   }
 
   void updateTileVals(Chat chat, Map<String, dynamic> chatMap,
@@ -251,7 +253,7 @@ class ChatBloc {
       if (_chat.guid == chat.guid) {
         _chats[i] = chat;
         await initTileValsForChat(chats[i]);
-        _chatController.sink.add(_chats);
+        await this.addToSink(_chats);
       }
     }
   }
@@ -273,6 +275,16 @@ class ChatBloc {
     await chat.removeParticipant(participant);
     chat.participants.remove(participant);
     refreshChats();
+  }
+
+  Future<void> addToSink(List<Chat> chats) async {
+    for (Chat chat in chats) {
+      if (isNullOrEmpty(chat.participants)) {
+        await chat.getParticipants();
+      }
+    }
+
+    _chatController.sink.add(chats);
   }
 
   dispose() {
