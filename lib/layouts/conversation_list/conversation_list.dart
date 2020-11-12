@@ -2,12 +2,13 @@ import 'dart:ui';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/chat_selector.dart';
-import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/managers/theme_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
+import 'package:bluebubbles/repository/models/settings.dart';
 
 import './conversation_tile.dart';
 import 'package:flutter/cupertino.dart';
@@ -27,6 +28,7 @@ class _ConversationListState extends State<ConversationList> {
   ScrollController _scrollController;
   Color _theme;
   List<Chat> _chats = <Chat>[];
+  bool colorfulChats = false;
 
   @override
   void didChangeDependencies() {
@@ -70,6 +72,15 @@ class _ConversationListState extends State<ConversationList> {
       });
       _chats = ChatBloc().archivedChats;
     }
+
+    colorfulChats = SettingsManager().settings.rainbowBubbles;
+    SettingsManager().stream.listen((Settings newSettings) {
+      if (newSettings.rainbowBubbles != colorfulChats && this.mounted) {
+        setState(() {
+          colorfulChats = newSettings.rainbowBubbles;
+        });
+      }
+    });
 
     _scrollController = ScrollController()..addListener(scrollListener);
 

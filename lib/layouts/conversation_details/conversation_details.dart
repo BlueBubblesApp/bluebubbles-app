@@ -97,6 +97,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                   : Padding(
                       padding: const EdgeInsets.all(16.0),
                       child: TextField(
+                        cursorColor: Theme.of(context).primaryColor,
                         readOnly: readOnly,
                         controller: controller,
                         style: Theme.of(context).textTheme.bodyText1,

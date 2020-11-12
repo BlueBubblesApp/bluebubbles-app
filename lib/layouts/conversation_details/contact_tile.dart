@@ -108,7 +108,6 @@ class _ContactTileState extends State<ContactTile> {
   }
 
   Widget _buildContactTile() {
-    List<Color> colors = toColorGradient(widget.handle?.address ?? "");
     return InkWell(
       onLongPress: () {
         Clipboard.setData(new ClipboardData(text: widget.handle.address));
