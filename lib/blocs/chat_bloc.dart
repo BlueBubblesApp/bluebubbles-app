@@ -252,10 +252,11 @@ class ChatBloc {
       Chat _chat = _chats[i];
       if (_chat.guid == chat.guid) {
         _chats[i] = chat;
-        await initTileValsForChat(chats[i]);
-        await this.addToSink(_chats);
+        await initTileValsForChat(chats[i]); 
       }
     }
+
+    await this.addToSink(_chats);
   }
 
   addChat(Chat chat) async {
@@ -278,9 +279,9 @@ class ChatBloc {
   }
 
   Future<void> addToSink(List<Chat> chats) async {
-    for (Chat chat in chats) {
-      if (isNullOrEmpty(chat.participants)) {
-        await chat.getParticipants();
+    for (int i = 0; i < chats.length; i++) {
+      if (isNullOrEmpty(chats[i].participants)) {
+        await chats[i].getParticipants();
       }
     }
 
