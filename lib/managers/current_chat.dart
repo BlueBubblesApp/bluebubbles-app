@@ -3,16 +3,13 @@ import 'dart:typed_data';
 
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/layouts/conversation_view/messages_view.dart';
-import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_attachments.dart';
 import 'package:bluebubbles/managers/attachment_info_bloc.dart';
-import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/material.dart';
 import 'package:metadata_fetch/metadata_fetch.dart';
 import 'package:video_player/video_player.dart';
-import 'package:video_thumbnail/video_thumbnail.dart';
 
 /// Holds cached metadata for the currently opened chat
 ///
@@ -94,6 +91,8 @@ class CurrentChat {
 
     messageAttachments.remove(oldGuid);
     messageAttachments[message.guid] = message.attachments;
+    if (message.attachments.isEmpty) return [];
+
     String newAttachmentGuid = message.attachments.first.guid;
     if (imageData.containsKey(oldGuid)) {
       Uint8List data = imageData.remove(oldGuid);
