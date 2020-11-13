@@ -5,7 +5,6 @@ import 'dart:io';
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
-import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/chat_selector.dart';
 import 'package:bluebubbles/managers/incoming_queue.dart';
 import 'package:bluebubbles/managers/navigator_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
@@ -156,10 +155,10 @@ class MethodChannelInterface {
         // Go to the new chat creator with all of these attachments to select a chat
         NavigatorManager().navigatorKey.currentState.pushAndRemoveUntil(
               CupertinoPageRoute(
-                builder: (context) => ChatSelector(
-                  attachments: attachments,
+                builder: (context) => ConversationView(
+                  existingAttachments: attachments,
                   isCreator: true,
-                  onTapGoToChat: true,
+                  // onTapGoToChat: true,
                 ),
               ),
               (route) => route.isFirst,
@@ -174,7 +173,7 @@ class MethodChannelInterface {
         // Navigate to the new chat creator with the specified text
         NavigatorManager().navigatorKey.currentState.pushAndRemoveUntil(
               CupertinoPageRoute(
-                builder: (context) => ChatSelector(
+                builder: (context) => ConversationView(
                   existingText: text,
                   isCreator: true,
                 ),
@@ -209,10 +208,7 @@ class MethodChannelInterface {
       await openedChat.getParticipants();
 
       // Make sure that the title is set
-      String title = await openedChat.getTitle();
-
-      // Create a new [MessageBloc] for this chat
-      MessageBloc messageBloc = new MessageBloc(openedChat);
+      await openedChat.getTitle();
 
       // Clear all notifications for this chat
       NotificationManager().switchChat(openedChat);
@@ -223,8 +219,6 @@ class MethodChannelInterface {
           CupertinoPageRoute(
             builder: (context) => ConversationView(
               chat: openedChat,
-              messageBloc: messageBloc,
-              title: title,
             ),
           ),
           (route) => route.isFirst,

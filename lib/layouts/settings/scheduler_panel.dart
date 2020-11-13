@@ -1,7 +1,8 @@
 import 'dart:ui';
 
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/chat_selector.dart';
+import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
+import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/chat_selector_mixin.dart';
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
@@ -43,7 +44,9 @@ class _SchedulePanelState extends State<SchedulePanel> {
 
     messageController = new TextEditingController();
     messageController.addListener(() {
-      if (messageController.text.length > 0 && errors.length > 0 && this.mounted) {
+      if (messageController.text.length > 0 &&
+          errors.length > 0 &&
+          this.mounted) {
         setState(() {
           errors = [];
         });
@@ -86,7 +89,8 @@ class _SchedulePanelState extends State<SchedulePanel> {
 
     if (scheduleSeconds == -1) {
       if (messageDate != null && messageTime != null) {
-        output = "${messageDate.year}-${messageDate.month}-${messageDate.day} ${messageTime.format(context)}";
+        output =
+            "${messageDate.year}-${messageDate.month}-${messageDate.day} ${messageTime.format(context)}";
       }
       return "Custom: $output";
     } else {
@@ -97,7 +101,6 @@ class _SchedulePanelState extends State<SchedulePanel> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // extendBodyBehindAppBar: true,
       backgroundColor: Theme.of(context).backgroundColor,
       appBar: PreferredSize(
         preferredSize: Size(MediaQuery.of(context).size.width, 80),
@@ -149,11 +152,11 @@ class _SchedulePanelState extends State<SchedulePanel> {
                         onTap: () async {
                           Navigator.of(context).push(
                             CupertinoPageRoute(
-                              builder: (context) => ChatSelector(
+                              builder: (context) => ConversationView(
                                 isCreator: true,
-                                heading: "Select a chat",
-                                onlyExistingChats: true,
-                                onSelection: (List<UniqueContact> selection) {
+                                customHeading: "Select a chat",
+                                type: ChatSelectorTypes.ONLY_EXISTING,
+                                onSelect: (List<UniqueContact> selection) {
                                   Navigator.of(context).pop();
                                   if (selection.length > 0 &&
                                       selection[0].isChat &&
@@ -162,6 +165,8 @@ class _SchedulePanelState extends State<SchedulePanel> {
                                       setChat(selection[0].chat);
                                       errors = [];
                                     });
+                                  } else {
+                                    debugPrint("ERROR");
                                   }
                                 },
                               ),
@@ -188,9 +193,10 @@ class _SchedulePanelState extends State<SchedulePanel> {
                           context: context, initialTime: TimeOfDay.now());
                     }
 
-                    if (this.mounted) setState(() {
-                      errors = [];
-                    });
+                    if (this.mounted)
+                      setState(() {
+                        errors = [];
+                      });
                   },
                   options: timeOptions,
                   textProcessing: (val) => val[1],
@@ -198,12 +204,14 @@ class _SchedulePanelState extends State<SchedulePanel> {
                   showDivider: (scheduleSeconds != -1),
                 ),
                 Center(
-                  child: Text(
-                    isNullOrEmpty(errors) ? "" : errors.join("\n"),
-                    style: Theme.of(context).textTheme.bodyText1.apply(color: Colors.red[300]),
-                    textAlign: TextAlign.center,
-                  )
-                )
+                    child: Text(
+                  isNullOrEmpty(errors) ? "" : errors.join("\n"),
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodyText1
+                      .apply(color: Colors.red[300]),
+                  textAlign: TextAlign.center,
+                ))
               ],
             ),
           ),
@@ -219,9 +227,9 @@ class _SchedulePanelState extends State<SchedulePanel> {
         child: Icon(Icons.done, color: Colors.white, size: 25),
         onPressed: () async {
           errors = [];
-          if (_chat == null)
-            errors.add("Please select a chat!");
-          if (scheduleSeconds == -1 && (messageDate == null || messageTime == null))
+          if (_chat == null) errors.add("Please select a chat!");
+          if (scheduleSeconds == -1 &&
+              (messageDate == null || messageTime == null))
             errors.add("Please set a date and time!");
           if (messageController.text.length == 0)
             errors.add("Please enter a message!");
@@ -231,16 +239,16 @@ class _SchedulePanelState extends State<SchedulePanel> {
           } else {
             DateTime occurs;
             if (scheduleSeconds == -1) {
-              occurs = new DateTime(messageDate.year, messageDate.month, messageDate.day, messageTime.hour, messageTime.minute);
+              occurs = new DateTime(messageDate.year, messageDate.month,
+                  messageDate.day, messageTime.hour, messageTime.minute);
             } else {
               occurs = DateTime.now().add(Duration(seconds: scheduleSeconds));
             }
-  
+
             ScheduledMessage scheduled = new ScheduledMessage(
-              chatGuid: _chat.guid,
-              message: messageController.text,
-              epochTime: occurs.millisecondsSinceEpoch
-            );
+                chatGuid: _chat.guid,
+                message: messageController.text,
+                epochTime: occurs.millisecondsSinceEpoch);
 
             await scheduled.save();
             Navigator.of(context).pop();

@@ -1,7 +1,7 @@
 import 'dart:ui';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
-import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/chat_selector.dart';
+import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
@@ -303,7 +303,7 @@ class _ConversationListState extends State<ConversationList> {
           Navigator.of(context).push(
             CupertinoPageRoute(
               builder: (BuildContext context) {
-                return ChatSelector(
+                return ConversationView(
                   isCreator: true,
                 );
               },

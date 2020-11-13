@@ -26,17 +26,17 @@ import 'package:photo_manager/photo_manager.dart';
 
 class BlueBubblesTextField extends StatefulWidget {
   final Chat chat;
-  final Function(BlueBubblesTextFieldState state) customSend;
   final List<File> existingAttachments;
   final String existingText;
-  final Function saveText;
+  final bool isCreator;
+  final Future<bool> Function(List<File> attachments, String text) onSend;
   BlueBubblesTextField({
     Key key,
     this.chat,
-    this.customSend,
     this.existingAttachments,
     this.existingText,
-    this.saveText,
+    @required this.isCreator,
+    @required this.onSend,
   }) : super(key: key);
   static BlueBubblesTextFieldState of(BuildContext context) {
     return context.findAncestorStateOfType<BlueBubblesTextFieldState>();
@@ -48,8 +48,8 @@ class BlueBubblesTextField extends StatefulWidget {
 
 class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
     with TickerProviderStateMixin {
-  TextEditingController _controller;
-  FocusNode _focusNode;
+  TextEditingController controller;
+  FocusNode focusNode;
   bool showImagePicker = false;
   List<File> pickedImages = <File>[];
   bool isRecording = false;
@@ -67,16 +67,16 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
     if (widget.chat != null) {
       textFieldData = TextFieldBloc().getTextField(widget.chat.guid);
     }
-    _controller = textFieldData != null
+    controller = textFieldData != null
         ? textFieldData.controller
         : new TextEditingController();
 
     if (widget.existingText != null) {
-      _controller.text = widget.existingText;
+      controller.text = widget.existingText;
     }
-    _focusNode = new FocusNode();
-    _focusNode.addListener(() {
-      if (_focusNode.hasFocus && this.mounted) {
+    focusNode = new FocusNode();
+    focusNode.addListener(() {
+      if (focusNode.hasFocus && this.mounted) {
         showImagePicker = false;
         setState(() {});
       }
@@ -98,8 +98,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
 
   @override
   void dispose() {
-    _focusNode.dispose();
-    if (widget.chat == null) _controller.dispose();
+    focusNode.dispose();
+    if (widget.chat == null) controller.dispose();
     String dir = SettingsManager().appDocDir.path;
     Directory tempAssets = Directory("$dir/tempAssets");
     tempAssets.exists().then((value) {
@@ -141,18 +141,19 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                 "Send",
                 style: Theme.of(context).textTheme.bodyText1,
               ),
-              onPressed: () {
-                if (widget.chat == null) return;
-                OutgoingQueue().add(
-                  new QueueItem(
-                    event: "send-attachment",
-                    item: new AttachmentSender(
-                      file,
-                      widget.chat,
-                      "",
-                    ),
-                  ),
-                );
+              onPressed: () async {
+                // if (widget.chat == null) return;
+                // OutgoingQueue().add(
+                //   new QueueItem(
+                //     event: "send-attachment",
+                //     item: new AttachmentSender(
+                //       file,
+                //       widget.chat,
+                //       "",
+                //     ),
+                //   ),
+                // );
+                widget.onSend([file], "");
 
                 // Remove the OG alert dialog
                 Navigator.of(context).pop();
@@ -257,7 +258,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
 
   Widget buildActualTextField() {
     IconData rightIcon = Icons.arrow_upward;
-    bool canRecord = _controller.text.isEmpty && pickedImages.isEmpty;
+    bool canRecord = controller.text.isEmpty && pickedImages.isEmpty;
     if (canRecord) rightIcon = Icons.mic;
     return Flexible(
       flex: 1,
@@ -304,9 +305,9 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                   if (this.mounted) setState(() {});
                 },
                 textCapitalization: TextCapitalization.sentences,
-                focusNode: _focusNode,
+                focusNode: focusNode,
                 autocorrect: true,
-                controller: _controller,
+                controller: controller,
                 scrollPhysics: CustomBouncingScrollPhysics(),
                 style: Theme.of(context).textTheme.bodyText1.apply(
                       color: ThemeData.estimateBrightnessForColor(
@@ -368,32 +369,6 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
     reviewAudio(context, new File(recording.path));
   }
 
-  void send({Chat chat}) {
-    if (widget.chat == null && chat == null) return;
-    if (pickedImages.length > 0) {
-      for (int i = 0; i < pickedImages.length; i++) {
-        OutgoingQueue().add(
-          new QueueItem(
-            event: "send-attachment",
-            item: new AttachmentSender(
-              pickedImages[i],
-              chat ?? widget.chat,
-              i == pickedImages.length - 1 ? _controller.text : "",
-            ),
-          ),
-        );
-      }
-    } else {
-      ActionHandler.sendMessage(chat ?? widget.chat, _controller.text);
-    }
-    if (chat != null) {
-      _controller.text = "";
-      pickedImages = <File>[];
-      updateTextFieldAttachments();
-      if (this.mounted) setState(() {});
-    }
-  }
-
   Widget buildSendButton(bool canRecord) => Align(
         alignment: Alignment.bottomRight,
         child: ButtonTheme(
@@ -411,15 +386,12 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                   !isRecording &&
                   await Permission.microphone.request().isGranted) {
                 await startRecording();
-              } else if (widget.customSend != null) {
-                widget.customSend(this);
               } else {
-                await send();
-              }
-              if (widget.customSend == null) {
-                _controller.text = "";
-                pickedImages = <File>[];
-                updateTextFieldAttachments();
+                if (await widget.onSend(pickedImages, controller.text)) {
+                  controller.text = "";
+                  pickedImages = <File>[];
+                  updateTextFieldAttachments();
+                }
               }
               if (this.mounted) setState(() {});
             },
@@ -427,7 +399,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
               alignment: Alignment.center,
               children: [
                 AnimatedOpacity(
-                  opacity: _controller.text.isEmpty && pickedImages.isEmpty
+                  opacity: controller.text.isEmpty && pickedImages.isEmpty
                       ? 1.0
                       : 0.0,
                   duration: Duration(milliseconds: 150),
@@ -438,11 +410,11 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                   ),
                 ),
                 AnimatedOpacity(
-                  opacity: (_controller.text.isNotEmpty ||
-                              pickedImages.length > 0) &&
-                          !isRecording
-                      ? 1.0
-                      : 0.0,
+                  opacity:
+                      (controller.text.isNotEmpty || pickedImages.length > 0) &&
+                              !isRecording
+                          ? 1.0
+                          : 0.0,
                   duration: Duration(milliseconds: 150),
                   child: Icon(
                     Icons.arrow_upward,

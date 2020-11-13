@@ -155,15 +155,12 @@ class _ConversationTileState extends State<ConversationTile>
             });
           },
           onTapUp: (details) {
-            MessageBloc messageBloc = new MessageBloc(widget.chat);
             if (widget.onTapGoToChat != null && widget.onTapGoToChat) {
               Navigator.of(context).pushAndRemoveUntil(
                 CupertinoPageRoute(
                   builder: (BuildContext context) {
                     return ConversationView(
                       chat: widget.chat,
-                      title: widget.chat.title,
-                      messageBloc: messageBloc,
                       existingAttachments: widget.existingAttachments,
                       existingText: widget.existingText,
                     );
@@ -179,8 +176,6 @@ class _ConversationTileState extends State<ConversationTile>
                   builder: (BuildContext context) {
                     return ConversationView(
                       chat: widget.chat,
-                      title: widget.chat.title,
-                      messageBloc: messageBloc,
                       existingAttachments: widget.existingAttachments,
                       existingText: widget.existingText,
                     );
@@ -209,14 +204,12 @@ class _ConversationTileState extends State<ConversationTile>
                 padding: const EdgeInsets.only(left: 30.0),
                 child: Container(
                   decoration: BoxDecoration(
-                      border: (!hideDividers) 
-                        ? Border(
-                          top: BorderSide(
-                              color: Theme.of(context).dividerColor,
-                              width: 0.5)
-                          )
-                        : null
-                  ),
+                      border: (!hideDividers)
+                          ? Border(
+                              top: BorderSide(
+                                  color: Theme.of(context).dividerColor,
+                                  width: 0.5))
+                          : null),
                   child: ListTile(
                     contentPadding: EdgeInsets.only(left: 0),
                     title: Text(

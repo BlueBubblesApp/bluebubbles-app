@@ -94,7 +94,7 @@ class _SendWidgetState extends State<SendWidget> {
                 fillColor: Colors.transparent,
                 border: InputBorder.none,
               ),
-              autofocus: true,
+              autofocus: MediaQuery.of(context).viewInsets.bottom > 0,
             ),
           ),
           Padding(

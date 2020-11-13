@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/themes.dart';
+import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/managers/background_isolate.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
@@ -22,7 +23,6 @@ import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 import 'package:sentry/sentry.dart';
 
 import './layouts/conversation_list/conversation_list.dart';
-import 'layouts/conversation_view/new_chat_creator/chat_selector.dart';
 import 'socket_manager.dart';
 
 final SentryClient _sentry = SentryClient(
@@ -168,8 +168,8 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
       // Go to the new chat creator, with all of our attachments
       Navigator.of(context).pushAndRemoveUntil(
         CupertinoPageRoute(
-          builder: (context) => ChatSelector(
-            attachments: attachments,
+          builder: (context) => ConversationView(
+            existingAttachments: attachments,
             isCreator: true,
           ),
         ),
@@ -184,7 +184,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
       // Go to the new chat creator, with all of our text
       Navigator.of(context).pushAndRemoveUntil(
         CupertinoPageRoute(
-          builder: (context) => ChatSelector(
+          builder: (context) => ConversationView(
             existingText: text,
             isCreator: true,
           ),

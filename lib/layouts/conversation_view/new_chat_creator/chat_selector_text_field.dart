@@ -1,5 +1,5 @@
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/chat_selector.dart';
+import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/chat_selector_mixin.dart';
 import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/contact_selector_custom_cupertino_textfield.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -12,12 +12,14 @@ class ChatSelectorTextField extends StatefulWidget {
     @required this.selectedContacts,
     @required this.allContacts,
     @required this.isCreator,
+    @required this.onSelected,
   }) : super(key: key);
   final TextEditingController controller;
   final Function(UniqueContact) onRemove;
   final bool isCreator;
   final List<UniqueContact> selectedContacts;
   final List<UniqueContact> allContacts;
+  final Function(UniqueContact item) onSelected;
 
   @override
   _ChatSelectorTextFieldState createState() => _ChatSelectorTextFieldState();
@@ -41,7 +43,7 @@ class _ChatSelectorTextFieldState extends State<ChatSelectorTextField> {
   @override
   Widget build(BuildContext context) {
     List<Widget> items = [];
-    for (UniqueContact contact in ChatSelector.of(context).selected) {
+    for (UniqueContact contact in widget.selectedContacts) {
       items.add(
         GestureDetector(
           onTap: () {
@@ -89,9 +91,8 @@ class _ChatSelectorTextFieldState extends State<ChatSelectorTextField> {
             FocusScope.of(context).requestFocus(inputFieldNode);
             if (done.isEmpty) return;
             if (validatePhoneNumber(done)) {
-              widget.controller.clear();
-              widget.selectedContacts
-                  .add(new UniqueContact(address: done, displayName: done));
+              widget.onSelected(
+                  new UniqueContact(address: done, displayName: done));
             } else {
               if (widget.allContacts.isEmpty) {
                 Scaffold.of(context).showSnackBar(SnackBar(
@@ -99,8 +100,7 @@ class _ChatSelectorTextFieldState extends State<ChatSelectorTextField> {
                   duration: Duration(milliseconds: 500),
                 ));
               } else {
-                widget.controller.clear();
-                widget.selectedContacts.add(widget.allContacts[0]);
+                widget.onSelected(widget.allContacts[0]);
               }
             }
           },
