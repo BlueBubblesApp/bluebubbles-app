@@ -28,6 +28,8 @@ class _AudioPlayerWigetState extends State<AudioPlayerWiget> {
 
     if (context != null && CurrentChat.of(context).currentPlayingAudio.containsKey(widget.file.path)) {
       player = CurrentChat.of(context).currentPlayingAudio[widget.file.path];
+      isPlaying = player.isPlaying.value;
+      current = player.currentPosition.value;
     } else {
       player = new AssetsAudioPlayer();
       player.open(Audio.file(widget.file.path), autoStart: false);
@@ -66,12 +68,6 @@ class _AudioPlayerWigetState extends State<AudioPlayerWiget> {
     player.onReadyToPlay.listen((PlayingAudio _) {
       if (this.mounted) setState(() {});
     });
-  }
-
-  @override
-  void dispose() {
-    player.dispose();
-    super.dispose();
   }
 
   String formatDuration(Duration duration) {
