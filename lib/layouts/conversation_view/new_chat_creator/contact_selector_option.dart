@@ -4,7 +4,6 @@ import 'package:bluebubbles/layouts/widgets/contact_avatar_group_widget.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
-import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/material.dart';
 
 class ContactSelectorOption extends StatelessWidget {
@@ -33,7 +32,7 @@ class ContactSelectorOption extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      key: new Key(item.address),
+      key: new Key("chat-${item.displayName}"),
       onTap: () => onSelected(item),
       title: Text(
         !item.isChat
@@ -58,7 +57,7 @@ class ContactSelectorOption extends StatelessWidget {
       trailing: item.isChat
           ? Icon(
               Icons.arrow_forward_ios,
-              color: Theme.of(context).accentColor,
+              color: Theme.of(context).primaryColor,
             )
           : null,
     );

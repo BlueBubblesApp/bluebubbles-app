@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
-import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/contact_selector_option.dart';
@@ -350,6 +349,7 @@ mixin ChatSelectorMixin<ConvrsationViewState extends StatefulWidget>
         physics: AlwaysScrollableScrollPhysics(
             parent: CustomBouncingScrollPhysics()),
         itemBuilder: (BuildContext context, int index) => ContactSelectorOption(
+          key: new Key("selector-${contacts[index].displayName}"),
           item: contacts[index],
           onSelected: onSelected,
         ),
