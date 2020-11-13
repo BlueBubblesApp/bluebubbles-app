@@ -147,7 +147,10 @@ class MessagesViewState extends State<MessagesView>
         Future.delayed(Duration(milliseconds: 500), () {
           currentChat.sentMessages
               .removeWhere((element) => element.guid == event.message.guid);
-          _listKey.currentState.setState(() {});
+
+          if (_listKey?.currentState != null && _listKey.currentState.mounted) {
+            _listKey.currentState.setState(() {});
+          }
         });
         Navigator.of(context).push(
           SendPageBuilder(

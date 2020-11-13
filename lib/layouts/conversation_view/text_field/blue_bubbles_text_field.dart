@@ -39,6 +39,7 @@ class BlueBubblesTextField extends StatefulWidget {
     @required this.onSend,
   }) : super(key: key);
   static BlueBubblesTextFieldState of(BuildContext context) {
+    assert(context != null);
     return context.findAncestorStateOfType<BlueBubblesTextFieldState>();
   }
 

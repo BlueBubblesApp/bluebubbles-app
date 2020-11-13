@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:assets_audio_player/assets_audio_player.dart';
+import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:flutter/material.dart';
 
 class AudioPlayerWiget extends StatefulWidget {
@@ -19,12 +20,19 @@ class _AudioPlayerWigetState extends State<AudioPlayerWiget> {
   bool isPlaying = false;
   Duration current;
 
-  AssetsAudioPlayer player = AssetsAudioPlayer();
+  AssetsAudioPlayer player;
 
   @override
   void initState() {
     super.initState();
-    player.open(Audio.file(widget.file.path), autoStart: false);
+
+    if (context != null && CurrentChat.of(context).currentPlayingAudio.containsKey(widget.file.path)) {
+      player = CurrentChat.of(context).currentPlayingAudio[widget.file.path];
+    } else {
+      player = new AssetsAudioPlayer();
+      player.open(Audio.file(widget.file.path), autoStart: false);
+      CurrentChat.of(context).currentPlayingAudio[widget.file.path] = player;
+    }
 
     // Listen for when the audio is finished
     player.playlistFinished.listen((bool finished) async {
