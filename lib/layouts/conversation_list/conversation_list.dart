@@ -301,16 +301,15 @@ class _ConversationListState extends State<ConversationList> {
         backgroundColor: Theme.of(context).primaryColor,
         child: Icon(Icons.message, color: Colors.white, size: 25),
         onPressed: () {
-          // Navigator.of(context).push(
-          //   CupertinoPageRoute(
-          //     builder: (BuildContext context) {
-          //       return ConversationView(
-          //         isCreator: true,
-          //       );
-          //     },
-          //   ),
-          // );
-          AlarmManager().setAlarm(0, DateTime.now().add(Duration(seconds: 5)));
+          Navigator.of(context).push(
+            CupertinoPageRoute(
+              builder: (BuildContext context) {
+                return ConversationView(
+                  isCreator: true,
+                );
+              },
+            ),
+          );
         },
       ),
     );
