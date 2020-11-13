@@ -56,7 +56,7 @@ public class NotificationWorker extends Worker implements DartWorker {
 
         String type = getInputData().getString("type");
         Log.d("work", "type: " + type);
-        if (type.equals("reply") || type.equals("markAsRead")) {
+        if (type.equals("reply") || type.equals("markAsRead") || type.equals("alarm-wake")) {
             getBackgroundChannel();
             invokeMethod();
 
@@ -77,7 +77,7 @@ public class NotificationWorker extends Worker implements DartWorker {
         super.onStopped();
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.O)
+    @RequiresApi(api = Build.VERSION_CODES.P)
     private void initHeadlessThread() {
         if (backgroundView == null) {
             FlutterMain.ensureInitializationComplete(getApplicationContext(), null);

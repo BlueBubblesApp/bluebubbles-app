@@ -45,7 +45,7 @@ public class NewMessageNotification implements Handler{
     }
 
     @SuppressLint("RestrictedApi")
-    @RequiresApi(api = Build.VERSION_CODES.O)
+    @RequiresApi(api = Build.VERSION_CODES.P)
     @Override
     public void Handle() {
         // Find any notifications that match the same chat

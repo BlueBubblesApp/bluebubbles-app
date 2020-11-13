@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
+import 'package:bluebubbles/managers/alarm_manager.dart';
 import 'package:bluebubbles/managers/incoming_queue.dart';
 import 'package:bluebubbles/managers/navigator_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
@@ -181,6 +182,9 @@ class MethodChannelInterface {
               (route) => route.isFirst,
             );
 
+        return new Future.value("");
+      case "alarm-wake":
+        AlarmManager().onReceiveAlarm(call.arguments["id"]);
         return new Future.value("");
       default:
         return new Future.value("");

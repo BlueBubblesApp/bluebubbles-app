@@ -1,12 +1,14 @@
 package com.bluebubbles.messaging.method_call_handler;
 
 import android.annotation.SuppressLint;
+import android.app.AlarmManager;
 import android.content.Context;
 import android.os.Build;
 
 import androidx.annotation.RequiresApi;
 
 import com.bluebubbles.messaging.MainActivity;
+import com.bluebubbles.messaging.method_call_handler.handlers.AlarmScheduler;
 import com.bluebubbles.messaging.method_call_handler.handlers.ClearChatNotifs;
 import com.bluebubbles.messaging.method_call_handler.handlers.ClearSocketIssue;
 import com.bluebubbles.messaging.method_call_handler.handlers.CreateNotificationChannel;
@@ -29,7 +31,7 @@ import io.flutter.plugin.common.MethodChannel;
 
 public class MethodCallHandler {
     @SuppressLint("RestrictedApi")
-    @RequiresApi(api = Build.VERSION_CODES.O)
+    @RequiresApi(api = Build.VERSION_CODES.P)
     public static void methodCallHandler(MethodCall call, MethodChannel.Result result, Context context, DartWorker worker) {
         if (call.method.equals(FirebaseAuth.TAG)) {
             new FirebaseAuth(context, call, result).Handle();
@@ -66,6 +68,8 @@ public class MethodCallHandler {
             new ShareFile(context, call, result).Handle();
         }  else if (call.method.equals(PickFile.TAG)) {
             new PickFile(context, call, result).Handle();
+        } else if(call.method.equals(AlarmScheduler.TAG)) {
+            new AlarmScheduler(context, call, result) .Handle();
         } else {
             result.notImplemented();
         }

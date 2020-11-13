@@ -46,7 +46,7 @@ public class FCMWorker extends Worker implements DartWorker {
         super(appContext, workerParams);
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.O)
+    @RequiresApi(api = Build.VERSION_CODES.P)
     @NonNull
     @Override
     public Result doWork() {
@@ -74,7 +74,7 @@ public class FCMWorker extends Worker implements DartWorker {
         super.onStopped();
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.O)
+    @RequiresApi(api = Build.VERSION_CODES.P)
     private void initHeadlessThread() {
         if (backgroundView == null) {
             FlutterMain.ensureInitializationComplete(getApplicationContext(), null);
@@ -139,7 +139,7 @@ public class FCMWorker extends Worker implements DartWorker {
     }
 
 
-    @RequiresApi(api = Build.VERSION_CODES.O)
+    @RequiresApi(api = Build.VERSION_CODES.P)
     public MethodChannel getBackgroundChannel() {
         if (backgroundChannel == null) {
 

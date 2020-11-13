@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
+import 'package:bluebubbles/managers/alarm_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
@@ -300,15 +301,16 @@ class _ConversationListState extends State<ConversationList> {
         backgroundColor: Theme.of(context).primaryColor,
         child: Icon(Icons.message, color: Colors.white, size: 25),
         onPressed: () {
-          Navigator.of(context).push(
-            CupertinoPageRoute(
-              builder: (BuildContext context) {
-                return ConversationView(
-                  isCreator: true,
-                );
-              },
-            ),
-          );
+          // Navigator.of(context).push(
+          //   CupertinoPageRoute(
+          //     builder: (BuildContext context) {
+          //       return ConversationView(
+          //         isCreator: true,
+          //       );
+          //     },
+          //   ),
+          // );
+          AlarmManager().setAlarm(0, DateTime.now().add(Duration(seconds: 5)));
         },
       ),
     );
