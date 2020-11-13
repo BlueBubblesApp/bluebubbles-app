@@ -182,7 +182,7 @@ class MessageHelper {
     String title = await getFullChatTitle(chat);
     String notification = await MessageHelper.getNotificationText(message);
     if (SettingsManager().settings.hideTextPreviews) {
-      notification = "New Message (unlock to view)";
+      notification = "iMessage";
     }
     NotificationManager().createNewNotification(
       title,
