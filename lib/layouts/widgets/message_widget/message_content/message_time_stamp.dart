@@ -11,13 +11,24 @@ class MessageTimeStamp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AnimatedContainer(
-      width: (-offset).clamp(0, 70).toDouble(),
       duration: Duration(milliseconds: offset == 0 ? 150 : 0),
-      child: Text(
-        DateFormat('h:mm a').format(message.dateCreated).toLowerCase(),
-        style: Theme.of(context).textTheme.subtitle1,
-        overflow: TextOverflow.clip,
-        maxLines: 1,
+      width: (-offset).clamp(0, 70).toDouble(),
+      height: 20,
+      child: Stack(
+        children: [
+          AnimatedPositioned(
+            // width: ,
+            width: 70,
+            left: (offset).clamp(0, 70).toDouble(),
+            duration: Duration(milliseconds: offset == 0 ? 150 : 0),
+            child: Text(
+              DateFormat('h:mm a').format(message.dateCreated).toLowerCase(),
+              style: Theme.of(context).textTheme.subtitle1,
+              overflow: TextOverflow.visible,
+              maxLines: 1,
+            ),
+          ),
+        ],
       ),
     );
   }
