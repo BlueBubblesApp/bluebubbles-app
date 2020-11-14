@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:assets_audio_player/assets_audio_player.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:flutter/material.dart';
 
 class AudioPlayerWiget extends StatefulWidget {
@@ -27,14 +28,12 @@ class _AudioPlayerWigetState extends State<AudioPlayerWiget> {
     super.initState();
 
     if (context != null &&
-        CurrentChat.of(context)
-            .currentPlayingAudio
-            .containsKey(widget.file.path)) {
-      player = CurrentChat.of(context).currentPlayingAudio[widget.file.path];
+        CurrentChat.of(context).audioPlayers.containsKey(widget.file.path)) {
+      player = CurrentChat.of(context).audioPlayers[widget.file.path];
     } else {
       player = new AssetsAudioPlayer();
       player.open(Audio.file(widget.file.path), autoStart: false);
-      CurrentChat.of(context).currentPlayingAudio[widget.file.path] = player;
+      CurrentChat.of(context).audioPlayers[widget.file.path] = player;
     }
 
     isPlaying = player.isPlaying.value;
@@ -92,74 +91,75 @@ class _AudioPlayerWigetState extends State<AudioPlayerWiget> {
   Widget build(BuildContext context) {
     Playing playing = player.current.value;
     return Container(
-        alignment: Alignment.center,
-        width: 200,
-        color: Theme.of(context).accentColor,
-        constraints: new BoxConstraints(maxWidth: 200.0),
-        child: GestureDetector(
-            onTap: () async {
-              if (!isPlaying && this.mounted) {
-                setState(() {
-                  isPlaying = true;
-                });
-                await player.play();
-              } else {
-                await player.pause();
-              }
-            },
-            child: Padding(
-                padding: EdgeInsets.only(left: 15.0, top: 15.0, bottom: 10.0),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    (playing == null)
-                        ? Text("00:00 / 00:00",
-                            style: Theme.of(context).textTheme.bodyText1)
-                        : Text(
-                            (playing.audio.duration == null ||
-                                    playing.audio.duration.inSeconds == 0)
-                                ? formatDuration(current)
-                                : "${formatDuration(current)} / ${formatDuration(playing.audio.duration)}",
-                            style: Theme.of(context).textTheme.bodyText1),
-                    Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          (isPlaying)
-                              ? Icon(Icons.pause_circle_outline,
-                                  size: 50.0,
-                                  color: Theme.of(context)
-                                      .textTheme
-                                      .subtitle1
-                                      .color)
-                              : Icon(Icons.play_circle_filled,
-                                  size: 50.0,
-                                  color: Theme.of(context)
-                                      .textTheme
-                                      .subtitle1
-                                      .color),
-                          Flexible(
-                            child: Slider(
-                                activeColor: Theme.of(context).primaryColor,
-                                inactiveColor:
-                                    Theme.of(context).backgroundColor,
-                                value: current.inSeconds.toDouble(),
-                                min: 0.0,
-                                max:
-                                    (playing?.audio?.duration ?? new Duration())
-                                        .inSeconds
-                                        .toDouble(),
-                                onChanged: (double value) {
-                                  setState(() {
-                                    seekToSecond(value.toInt());
-                                    value = value;
-                                  });
-                                }),
-                          )
-                        ]),
-                  ],
-                ))));
+      alignment: Alignment.center,
+      width: 200,
+      color: Theme.of(context).accentColor,
+      constraints: new BoxConstraints(maxWidth: 200.0),
+      child: GestureDetector(
+        onTap: () async {
+          if (!isPlaying && this.mounted) {
+            setState(() {
+              isPlaying = true;
+            });
+            await player.play();
+          } else {
+            await player.pause();
+          }
+        },
+        child: Padding(
+          padding: EdgeInsets.only(left: 15.0, top: 15.0, bottom: 10.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              (playing == null)
+                  ? Text("00:00 / 00:00",
+                      style: Theme.of(context).textTheme.bodyText1)
+                  : Text(
+                      (playing.audio.duration == null ||
+                              playing.audio.duration.inSeconds == 0)
+                          ? formatDuration(current)
+                          : "${formatDuration(current)} / ${formatDuration(playing.audio.duration)}",
+                      style: Theme.of(context).textTheme.bodyText1),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  (isPlaying)
+                      ? Icon(
+                          Icons.pause_circle_outline,
+                          size: 50.0,
+                          color: Theme.of(context).textTheme.subtitle1.color,
+                        )
+                      : Icon(
+                          Icons.play_circle_filled,
+                          size: 50.0,
+                          color: Theme.of(context).textTheme.subtitle1.color,
+                        ),
+                  Flexible(
+                    child: Slider(
+                      activeColor: Theme.of(context).primaryColor,
+                      inactiveColor: Theme.of(context).backgroundColor,
+                      value: current.inSeconds.toDouble(),
+                      min: 0.0,
+                      max: (playing?.audio?.duration ?? new Duration())
+                          .inSeconds
+                          .toDouble(),
+                      onChanged: (double value) {
+                        setState(() {
+                          seekToSecond(value.toInt());
+                          value = value;
+                        });
+                      },
+                    ),
+                  )
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

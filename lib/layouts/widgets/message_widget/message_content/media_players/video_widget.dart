@@ -41,7 +41,8 @@ class _VideoWidgetState extends State<VideoWidget>
   @override
   void initState() {
     super.initState();
-    dynamic controllers = CurrentChat.of(context).currentPlayingVideo;
+    Map<String, VideoPlayerController> controllers =
+        CurrentChat.of(context).currentPlayingVideo;
     showPlayPauseOverlay = controllers == null ||
         !controllers.containsKey(widget.attachment.guid) ||
         !controllers[widget.attachment.guid].value.isPlaying;

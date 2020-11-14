@@ -31,9 +31,8 @@ class CurrentChat {
   Map<String, Uint8List> imageData = {};
   Map<String, Metadata> urlPreviews = {};
   Map<String, VideoPlayerController> currentPlayingVideo = {};
-  Map<String, AssetsAudioPlayer> currentPlayingAudio = {};
+  Map<String, AssetsAudioPlayer> audioPlayers = {};
   List<VideoPlayerController> videoControllersToDispose = [];
-  List<AssetsAudioPlayer> audioControllersToDispose = [];
   List<Attachment> chatAttachments = [];
   List<Message> sentMessages = [];
   OverlayEntry entry;
@@ -59,10 +58,9 @@ class CurrentChat {
 
     imageData = {};
     currentPlayingVideo = {};
-    currentPlayingAudio = {};
+    audioPlayers = {};
     urlPreviews = {};
     videoControllersToDispose = [];
-    audioControllersToDispose = [];
     chatAttachments = [];
     sentMessages = [];
     entry = null;
@@ -106,9 +104,9 @@ class CurrentChat {
     } else if (currentPlayingVideo.containsKey(oldGuid)) {
       VideoPlayerController data = currentPlayingVideo.remove(oldGuid);
       currentPlayingVideo[newAttachmentGuid] = data;
-    } else if (currentPlayingAudio.containsKey(oldGuid)) {
-      AssetsAudioPlayer data = currentPlayingAudio.remove(oldGuid);
-      currentPlayingAudio[newAttachmentGuid] = data;
+    } else if (audioPlayers.containsKey(oldGuid)) {
+      AssetsAudioPlayer data = audioPlayers.remove(oldGuid);
+      audioPlayers[newAttachmentGuid] = data;
     } else if (urlPreviews.containsKey(oldGuid)) {
       Metadata data = urlPreviews.remove(oldGuid);
       urlPreviews[newAttachmentGuid] = data;
@@ -125,7 +123,10 @@ class CurrentChat {
     imageData[attachment.guid] = data;
   }
 
-  void clearImageData(Attachment attachment) {}
+  void clearImageData(Attachment attachment) {
+    if (!imageData.containsKey(attachment.guid)) return;
+    imageData.remove(attachment.guid);
+  }
 
   Future<void> preloadMessageAttachments(
       {List<Message> specificMessages}) async {
@@ -157,17 +158,6 @@ class CurrentChat {
     _stream.sink.add(null);
   }
 
-  void changeCurrentPlayingAudio(Map<String, AssetsAudioPlayer> audio) {
-    if (!isNullOrEmpty(currentPlayingAudio)) {
-      currentPlayingAudio.values.forEach((element) {
-        audioControllersToDispose.add(element);
-        element = null;
-      });
-    }
-    currentPlayingAudio = audio;
-    _stream.sink.add(null);
-  }
-
   /// Dispose all of the controllers and whatnot
   void dispose() {
     if (!isNullOrEmpty(currentPlayingVideo)) {
@@ -176,18 +166,21 @@ class CurrentChat {
       });
     }
 
-    if (!isNullOrEmpty(currentPlayingAudio)) {
-      currentPlayingAudio.values.forEach((element) {
+    if (!isNullOrEmpty(audioPlayers)) {
+      audioPlayers.values.forEach((element) {
         element.dispose();
       });
     }
 
     imageData = {};
     currentPlayingVideo = {};
-    currentPlayingAudio = {};
+    audioPlayers = {};
     urlPreviews = {};
     videoControllersToDispose = [];
-    audioControllersToDispose = [];
+    audioPlayers.forEach((key, value) async {
+      await value?.dispose();
+      audioPlayers.remove(key);
+    });
     chatAttachments = [];
     sentMessages = [];
     if (entry != null) entry.remove();
@@ -199,10 +192,5 @@ class CurrentChat {
       element.dispose();
     });
     videoControllersToDispose = [];
-
-    audioControllersToDispose.forEach((element) {
-      element.dispose();
-    });
-    audioControllersToDispose = [];
   }
 }
