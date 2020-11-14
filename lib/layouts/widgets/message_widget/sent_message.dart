@@ -20,7 +20,11 @@ import 'package:flutter/material.dart';
 class SentMessageHelper {
   static Widget buildMessageWithTail(BuildContext context, Message message,
       bool showTail, bool hasReactions, bool bigEmoji,
-      {Widget customContent, CurrentChat currentChat}) {
+      {Widget customContent,
+      CurrentChat currentChat,
+      Color customColor,
+      bool padding = true,
+      bool margin = true}) {
     Color bubbleColor;
     bubbleColor = message == null || message.guid.startsWith("temp")
         ? darken(Theme.of(context).primaryColor, 0.2)
@@ -47,26 +51,26 @@ class SentMessageHelper {
           if (showTail)
             MessageTail(
               message: message,
-              color: bubbleColor,
+              color: customColor ?? bubbleColor,
             ),
           Container(
             margin: EdgeInsets.only(
-              top: hasReactions ? 18 : 0,
-              left: 10,
-              right: 10,
+              top: hasReactions && margin ? 18 : 0,
+              left: margin ? 10 : 0,
+              right: margin ? 10 : 0,
             ),
             constraints: BoxConstraints(
               maxWidth: MediaQuery.of(context).size.width *
                       MessageWidgetMixin.maxSize +
-                  (customContent != null ? 100 : 0),
+                  (!padding ? 100 : 0),
             ),
             padding: EdgeInsets.symmetric(
-              vertical: 8,
-              horizontal: 14,
+              vertical: padding ? 8 : 0,
+              horizontal: padding ? 14 : 0,
             ),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(20),
-              color: bubbleColor,
+              color: customColor ?? bubbleColor,
             ),
             child: customContent == null
                 ? RichText(
@@ -84,6 +88,7 @@ class SentMessageHelper {
         ],
       );
     }
+    if (!padding) return msg;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       mainAxisSize: MainAxisSize.max,

@@ -144,7 +144,7 @@ class MessagesViewState extends State<MessagesView>
       currentChat.getAttachmentsForMessage(event.message);
       if (event.outGoing) {
         currentChat.sentMessages.add(event.message);
-        Future.delayed(Duration(milliseconds: 500), () {
+        Future.delayed(SendWidget.SEND_DURATION * 2, () {
           currentChat.sentMessages
               .removeWhere((element) => element.guid == event.message.guid);
 
