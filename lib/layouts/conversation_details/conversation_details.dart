@@ -8,7 +8,7 @@ import 'package:bluebubbles/layouts/conversation_details/attachment_details_card
 import 'package:bluebubbles/layouts/conversation_details/contact_tile.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/adding_participant_popup.dart';
-import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/chat_selector_mixin.dart';
+import 'package:bluebubbles/layouts/conversation_view/conversation_view_mixin.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/chat.dart';

@@ -1,5 +1,5 @@
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/chat_selector_mixin.dart';
+import 'package:bluebubbles/layouts/conversation_view/conversation_view_mixin.dart';
 import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/contact_selector_custom_cupertino_textfield.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';

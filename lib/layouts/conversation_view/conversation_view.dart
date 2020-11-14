@@ -1,26 +1,13 @@
 import 'dart:io';
-import 'package:assorted_layout_widgets/assorted_layout_widgets.dart';
 import 'package:bluebubbles/action_handler.dart';
-import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/attachment_sender.dart';
-import 'package:bluebubbles/layouts/conversation_details/conversation_details.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view_mixin.dart';
 import 'package:bluebubbles/layouts/conversation_view/messages_view.dart';
-import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/chat_selector_mixin.dart';
 import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/chat_selector_text_field.dart';
 import 'package:bluebubbles/layouts/conversation_view/text_field/blue_bubbles_text_field.dart';
-import 'package:bluebubbles/layouts/widgets/CustomCupertinoNavBackButton.dart';
-import 'package:bluebubbles/layouts/widgets/CustomCupertinoNavBar.dart';
-import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
-import 'package:bluebubbles/managers/contact_manager.dart';
-import 'package:bluebubbles/managers/event_dispatcher.dart';
-import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/outgoing_queue.dart';
 import 'package:bluebubbles/managers/queue_manager.dart';
-import 'package:bluebubbles/repository/models/handle.dart';
-import 'package:bluebubbles/socket_manager.dart';
-import 'package:flutter/cupertino.dart' as Cupertino;
 import 'package:flutter/material.dart';
 
 import '../../repository/models/chat.dart';
@@ -44,9 +31,7 @@ class ConversationView extends StatefulWidget {
     this.selectIcon,
     this.customHeading,
     this.type = ChatSelectorTypes.ALL,
-  })  : localIsCreator = isCreator ?? false,
-        localChat = chat,
-        super(key: key);
+  }) : super(key: key);
 
   final Chat chat;
   final Function(List<UniqueContact> items) onSelect;
@@ -55,19 +40,17 @@ class ConversationView extends StatefulWidget {
   final String type;
   final bool isCreator;
 
-  bool localIsCreator;
-  Chat localChat;
-  MessageBloc messageBloc;
-
   @override
   ConversationViewState createState() => ConversationViewState();
 }
 
 class ConversationViewState extends State<ConversationView>
-    with ChatSelectorMixin, ConversationViewMixin {
+    with ConversationViewMixin {
   @override
   void initState() {
     super.initState();
+    isCreator = widget.isCreator ?? false;
+    chat = widget.chat;
     initChatSelector();
     initConversationViewState();
   }
@@ -79,9 +62,9 @@ class ConversationViewState extends State<ConversationView>
   }
 
   Future<bool> send(List<File> attachments, String text) async {
-    if (widget.localIsCreator && widget.localChat == null) {
-      widget.localChat = await createChat();
-      if (widget.localChat == null) return false;
+    if (isCreator && chat == null) {
+      chat = await createChat();
+      if (chat == null) return false;
     }
     if (attachments.length > 0) {
       for (int i = 0; i < attachments.length; i++) {
@@ -90,17 +73,17 @@ class ConversationViewState extends State<ConversationView>
             event: "send-attachment",
             item: new AttachmentSender(
               attachments[i],
-              widget.localChat,
+              chat,
               i == attachments.length - 1 ? text : "",
             ),
           ),
         );
       }
     } else {
-      ActionHandler.sendMessage(widget.localChat, text);
+      ActionHandler.sendMessage(chat, text);
     }
-    if (widget.localIsCreator) {
-      widget.localIsCreator = false;
+    if (isCreator) {
+      isCreator = false;
       setState(() {});
     }
     return true;
@@ -110,14 +93,14 @@ class ConversationViewState extends State<ConversationView>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).backgroundColor,
-      extendBodyBehindAppBar: !widget.localIsCreator,
-      appBar: !widget.localIsCreator
+      extendBodyBehindAppBar: !isCreator,
+      appBar: !isCreator
           ? buildConversationViewHeader()
           : buildChatSelectorHeader(),
       body: Column(
         mainAxisAlignment: MainAxisAlignment.end,
         children: <Widget>[
-          if (widget.localIsCreator)
+          if (isCreator)
             ChatSelectorTextField(
               controller: chatSelectorController,
               onRemove: (UniqueContact item) {
@@ -138,23 +121,22 @@ class ConversationViewState extends State<ConversationView>
               selectedContacts: selected,
             ),
           Expanded(
-            child: widget.localChat != null &&
-                    (searchQuery.length == 0 || !widget.localIsCreator)
+            child: (searchQuery.length == 0 || !isCreator) && chat != null
                 ? MessagesView(
-                    messageBloc: widget.messageBloc ?? initMessageBloc(),
-                    showHandle: widget.localChat.participants.length > 1,
-                    chat: widget.localChat,
+                    messageBloc: messageBloc ?? initMessageBloc(),
+                    showHandle: chat.participants.length > 1,
+                    chat: chat,
                   )
                 : buildChatSelectorBody(),
           ),
           if (widget.onSelect == null)
             BlueBubblesTextField(
-              chat: widget.localChat,
+              chat: chat,
               onSend: send,
-              isCreator: widget.localIsCreator,
+              isCreator: isCreator,
               existingAttachments:
-                  widget.localIsCreator ? widget.existingAttachments : null,
-              existingText: widget.localIsCreator ? widget.existingText : null,
+                  isCreator ? widget.existingAttachments : null,
+              existingText: isCreator ? widget.existingText : null,
             ),
         ],
       ),

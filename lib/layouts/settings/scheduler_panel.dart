@@ -2,7 +2,7 @@ import 'dart:ui';
 
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
-import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/chat_selector_mixin.dart';
+import 'package:bluebubbles/layouts/conversation_view/conversation_view_mixin.dart';
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
