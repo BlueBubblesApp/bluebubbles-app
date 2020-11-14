@@ -47,7 +47,6 @@ class _AddingParticipantPopupState extends State<AddingParticipantPopup> {
           } else {
             if (this.mounted) {
               Navigator.pop(context);
-              Navigator.pop(context);
             }
           }
         });
