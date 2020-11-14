@@ -48,12 +48,12 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget>
     ContactManager().stream.listen((event) {
       for (String address in event) {
         if (address == widget.handle.address) {
-          refresh();
+          refreshInitials(force: true);
           break;
         }
       }
     });
-    refresh();
+    refreshInitials();
   }
 
   @override
@@ -61,9 +61,9 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget>
     super.dispose();
   }
 
-  Future<void> refresh() async {
+  Future<void> refreshInitials({bool force = false}) async {
     if (isInvalid) return;
-    if (state.initials != null) return;
+    if (state.initials != null && !force) return;
     state.initials = await getInitials(handle: widget.handle);
     Contact contact = await ContactManager().getContact(widget.handle.address);
 

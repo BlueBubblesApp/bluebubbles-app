@@ -109,14 +109,15 @@ class ContactManager {
     debugPrint("ContactManager -> Fetching Avatars");
     for (String address in handleToContact.keys) {
       Contact contact = handleToContact[address];
-      if (contact == null) continue;
+      if (handleToContact[address] == null) continue;
 
-      ContactsService.getAvatar(contact, photoHighRes: false).then((avatar) {
+      ContactsService.getAvatar(handleToContact[address], photoHighRes: false)
+          .then((avatar) {
         if (avatar == null) return;
 
         // Update the avatar in the master list
         contact.avatar = avatar;
-        handleToContact[address] = contact;
+        handleToContact[address].avatar = avatar;
 
         // Add the handle to the stream to update the subscribers
         _stream.sink.add([address]);
@@ -126,7 +127,7 @@ class ContactManager {
     getAvatarsFuture.complete();
   }
 
-  Future<Contact> getContact(String address) async {
+  Future<Contact> getContact(String address, {bool fetchAvatar = false}) async {
     if (address == null) return null;
     Contact contact;
 
@@ -151,6 +152,10 @@ class ContactManager {
 
       // If we have a match, break out of the loop
       if (contact != null) break;
+    }
+    if (fetchAvatar) {
+      contact.avatar =
+          await ContactsService.getAvatar(contact, photoHighRes: false);
     }
 
     return contact;
