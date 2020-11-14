@@ -155,7 +155,9 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
     }
 
     // Save the metadata
-    CurrentChat.of(context).urlPreviews[widget.message.text] = data;
+    if (context != null) {
+      CurrentChat.of(context).urlPreviews[widget.message.text] = data;
+    }
 
     // Let the UI know we are done loading
     if (this.mounted) {

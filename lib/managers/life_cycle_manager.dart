@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
-import 'package:bluebubbles/blocs/setup_bloc.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -49,7 +48,9 @@ class LifeCycleManager {
     SocketManager().startSocketIO();
 
     // Refresh all the chats assuming that the app has already finished setup
-    if (SetupBloc().finishedSetup) ChatBloc().refreshChats();
+    if (SettingsManager().settings.finishedSetup) {
+      ChatBloc().refreshChats();
+    }
   }
 
   /// Public method called from [Home] when the app is closed or paused

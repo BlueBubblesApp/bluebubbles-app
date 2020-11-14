@@ -3,7 +3,6 @@ import 'dart:ui';
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
-import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/layouts/conversation_details/attachment_details_card.dart';
 import 'package:bluebubbles/layouts/conversation_details/contact_tile.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
@@ -188,12 +187,31 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                       context: context,
                       builder: (BuildContext context) {
                         return AlertDialog(
-                            title: new Text("Resync Chat"),
+                            backgroundColor: Theme.of(context).accentColor,
+                            title: new Text("Resync Chat",
+                                style: Theme.of(context).textTheme.headline1),
                             content: new Text(
-                                "Are you sure you want to resync this chat? All messages/attachments will be removed and the last 25 messages will be pre-loaded."),
+                                "Are you sure you want to resync this chat? All messages/attachments will be removed and the last 25 messages will be pre-loaded.",
+                                style: Theme.of(context).textTheme.bodyText1),
                             actions: <Widget>[
                               new FlatButton(
-                                child: new Text("Yes, I'm sure!"),
+                                child: new Text("Cancel",
+                                    style: TextStyle(
+                                        color: Theme.of(context)
+                                            .textTheme
+                                            .subtitle1
+                                            .color)),
+                                onPressed: () {
+                                  Navigator.of(context).pop();
+                                },
+                              ),
+                              new FlatButton(
+                                child: new Text("Yes, I'm sure!",
+                                    style: TextStyle(
+                                        color: Theme.of(context)
+                                            .textTheme
+                                            .bodyText1
+                                            .color)),
                                 onPressed: () async {
                                   // Remove the OG alert dialog
                                   Navigator.of(context).pop();
@@ -206,21 +224,30 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                                       ActionHandler.resyncChat(
                                               chat, widget.messageBloc)
                                           .then((value) {
-                                        Navigator.of(context)
-                                            .popUntil((Route<dynamic> route) {
-                                          return route.isFirst;
-                                        });
+                                        Navigator.popUntil(context, (route) => route.isFirst);
                                       });
 
                                       // Show a loading dialog
                                       return AlertDialog(
-                                        title: new Text("Resyncing Chat..."),
+                                        backgroundColor:
+                                            Theme.of(context).accentColor,
+                                        title: new Text("Resyncing Chat...",
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodyText1),
                                         content: Container(
                                           alignment: Alignment.center,
                                           height: 100,
                                           width: 100,
                                           child: new Container(
-                                            child: CircularProgressIndicator(),
+                                            child: CircularProgressIndicator(
+                                                valueColor:
+                                                    new AlwaysStoppedAnimation<
+                                                            Color>(
+                                                        Theme.of(context)
+                                                            .textTheme
+                                                            .bodyText1
+                                                            .color)),
                                           ),
                                         ),
                                       );
@@ -228,12 +255,6 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                                   );
                                 },
                               ),
-                              new FlatButton(
-                                child: new Text("Cancel"),
-                                onPressed: () {
-                                  Navigator.of(context).pop();
-                                },
-                              )
                             ]);
                       });
                 },
