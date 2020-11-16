@@ -94,6 +94,8 @@ class _MessageAttachmentState extends State<MessageAttachment>
           attachment: widget.attachment,
           child: AudioPlayerWiget(
             file: content,
+            context: context,
+            width: 250
           ),
         );
       } else if (widget.attachment.mimeType == "text/x-vlocation") {

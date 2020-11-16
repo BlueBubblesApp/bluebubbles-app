@@ -185,7 +185,6 @@ class SentMessage extends StatefulWidget {
   final bool showHero;
   final bool shouldFadeIn;
   final bool showDeliveredReceipt;
-  final Chat chat;
 
   // Sub-widgets
   final Widget stickersWidget;
@@ -202,7 +201,6 @@ class SentMessage extends StatefulWidget {
     @required this.showDeliveredReceipt,
     @required this.shouldFadeIn,
     @required this.offset,
-    @required this.chat,
 
     // Sub-widgets
     @required this.stickersWidget,

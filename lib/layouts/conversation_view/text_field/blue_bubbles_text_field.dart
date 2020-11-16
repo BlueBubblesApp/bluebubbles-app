@@ -2,19 +2,13 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:ui';
 
-import 'package:audio_recorder/audio_recorder.dart';
-import 'package:bluebubbles/action_handler.dart';
-import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/blocs/text_field_bloc.dart';
-import 'package:bluebubbles/helpers/attachment_sender.dart';
-import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/layouts/conversation_view/text_field/attachments/list/text_field_attachment_list.dart';
 import 'package:bluebubbles/layouts/conversation_view/text_field/attachments/picker/text_field_attachment_picker.dart';
 import 'package:bluebubbles/layouts/widgets/CustomCupertinoTextField.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/audio_player_widget.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
-import 'package:bluebubbles/managers/outgoing_queue.dart';
-import 'package:bluebubbles/managers/queue_manager.dart';
+import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:flutter/cupertino.dart';
@@ -23,16 +17,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:photo_manager/photo_manager.dart';
+import 'package:record/record.dart';
 
 class BlueBubblesTextField extends StatefulWidget {
-  final Chat chat;
   final List<File> existingAttachments;
   final String existingText;
   final bool isCreator;
   final Future<bool> Function(List<File> attachments, String text) onSend;
   BlueBubblesTextField({
     Key key,
-    this.chat,
     this.existingAttachments,
     this.existingText,
     @required this.isCreator,
@@ -56,6 +49,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
   bool isRecording = false;
   TextFieldData textFieldData;
   StreamController _streamController = new StreamController.broadcast();
+  CurrentChat safeChat;
 
   Stream get stream => _streamController.stream;
 
@@ -65,9 +59,11 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
   @override
   void initState() {
     super.initState();
-    if (widget.chat != null) {
-      textFieldData = TextFieldBloc().getTextField(widget.chat.guid);
+
+    if (CurrentChat.of(context)?.chat != null) {
+      textFieldData = TextFieldBloc().getTextField(CurrentChat.of(context).chat.guid);
     }
+
     controller = textFieldData != null
         ? textFieldData.controller
         : new TextEditingController();
@@ -98,9 +94,17 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    safeChat = CurrentChat.of(context);
+  }
+
+  @override
   void dispose() {
     focusNode.dispose();
-    if (widget.chat == null) controller.dispose();
+    _streamController.close();
+    if (safeChat?.chat == null) controller.dispose();
+  
     String dir = SettingsManager().appDocDir.path;
     Directory tempAssets = Directory("$dir/tempAssets");
     tempAssets.exists().then((value) {
@@ -112,9 +116,9 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
     super.dispose();
   }
 
-  Future<void> reviewAudio(BuildContext context, File file) async {
+  Future<void> reviewAudio(BuildContext originalContext, File file) async {
     showDialog(
-      context: context,
+      context: originalContext,
       builder: (BuildContext context) {
         return AlertDialog(
           backgroundColor: Theme.of(context).accentColor,
@@ -126,7 +130,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
               Text("Review your audio snippet before sending it",
                   style: Theme.of(context).textTheme.subtitle1),
               Container(height: 10.0),
-              AudioPlayerWiget(file: file)
+              AudioPlayerWiget(file: file, context: originalContext)
             ],
           ),
           actions: <Widget>[
@@ -157,7 +161,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                 widget.onSend([file], "");
 
                 // Remove the OG alert dialog
-                Navigator.of(context).pop();
+                Navigator.of(originalContext).pop();
               },
             ),
           ],
@@ -349,25 +353,39 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
     String pathName = "$appDocPath/attachments/tmp.m4a";
     File file = new File(pathName);
     if (file.existsSync()) file.deleteSync();
-    await AudioRecorder.start(
-        path: pathName, audioOutputFormat: AudioOutputFormat.AAC);
-    if (this.mounted) {
-      setState(() {
-        isRecording = true;
-      });
+
+    if (!isRecording) {
+      await Record.start(
+        path: pathName, // required
+        encoder: AudioEncoder.AAC, // by default
+        bitRate: 196000, // by default
+        samplingRate: 44100, // by default
+      );
+
+      if (this.mounted) {
+        setState(() {
+          isRecording = true;
+        });
+      }
     }
   }
 
   Future<void> stopRecording() async {
     HapticFeedback.heavyImpact();
-    Recording recording = await AudioRecorder.stop();
-    if (this.mounted) {
-      setState(() {
-        isRecording = false;
-      });
-    }
 
-    reviewAudio(context, new File(recording.path));
+    if (isRecording) {
+      await Record.stop();
+
+      if (this.mounted) {
+        setState(() {
+          isRecording = false;
+        });
+      }
+
+      String appDocPath = SettingsManager().appDocDir.path;
+      String pathName = "$appDocPath/attachments/tmp.m4a";
+      reviewAudio(context, new File(pathName));
+    }
   }
 
   Widget buildSendButton(bool canRecord) => Align(
@@ -447,6 +465,5 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
           updateTextFieldAttachments();
           if (this.mounted) setState(() {});
         },
-        chat: widget.chat,
       );
 }

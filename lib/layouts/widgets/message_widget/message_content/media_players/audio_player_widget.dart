@@ -2,16 +2,19 @@ import 'dart:io';
 
 import 'package:assets_audio_player/assets_audio_player.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
-import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:flutter/material.dart';
 
 class AudioPlayerWiget extends StatefulWidget {
   AudioPlayerWiget({
     Key key,
-    this.file,
+    @required this.file,
+    @required this.context,
+    this.width,
   }) : super(key: key);
 
   final File file;
+  final BuildContext context;
+  final double width;
 
   @override
   _AudioPlayerWigetState createState() => _AudioPlayerWigetState();
@@ -28,12 +31,12 @@ class _AudioPlayerWigetState extends State<AudioPlayerWiget> {
     super.initState();
 
     if (context != null &&
-        CurrentChat.of(context).audioPlayers.containsKey(widget.file.path)) {
-      player = CurrentChat.of(context).audioPlayers[widget.file.path];
+        CurrentChat.of(widget.context).audioPlayers.containsKey(widget.file.path)) {
+      player = CurrentChat.of(widget.context).audioPlayers[widget.file.path];
     } else {
       player = new AssetsAudioPlayer();
       player.open(Audio.file(widget.file.path), autoStart: false);
-      CurrentChat.of(context).audioPlayers[widget.file.path] = player;
+      CurrentChat.of(widget.context).audioPlayers[widget.file.path] = player;
     }
 
     isPlaying = player.isPlaying.value;
@@ -45,7 +48,9 @@ class _AudioPlayerWigetState extends State<AudioPlayerWiget> {
       if (!finished) return;
 
       // Restart the clip
-      await player.seek(Duration());
+      player.open(Audio.file(widget.file.path), autoStart: false).catchError((err) {
+        // Do nothing
+      });
 
       // Set isPlaying and re-render
       isPlaying = false;
@@ -90,11 +95,12 @@ class _AudioPlayerWigetState extends State<AudioPlayerWiget> {
   @override
   Widget build(BuildContext context) {
     Playing playing = player.current.value;
+    double maxWidth = widget.width ?? MediaQuery.of(context).size.width * 3 / 4;
+
     return Container(
       alignment: Alignment.center,
-      width: 200,
       color: Theme.of(context).accentColor,
-      constraints: new BoxConstraints(maxWidth: 200.0),
+      constraints: new BoxConstraints(maxWidth: maxWidth),
       child: GestureDetector(
         onTap: () async {
           if (!isPlaying && this.mounted) {
@@ -110,9 +116,11 @@ class _AudioPlayerWigetState extends State<AudioPlayerWiget> {
           padding: EdgeInsets.only(left: 15.0, top: 15.0, bottom: 10.0),
           child: Column(
             mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              (playing == null)
+              Padding(
+                padding: EdgeInsets.only(right: 20.0),
+                child: (playing == null)
                   ? Text("00:00 / 00:00",
                       style: Theme.of(context).textTheme.bodyText1)
                   : Text(
@@ -121,6 +129,7 @@ class _AudioPlayerWigetState extends State<AudioPlayerWiget> {
                           ? formatDuration(current)
                           : "${formatDuration(current)} / ${formatDuration(playing.audio.duration)}",
                       style: Theme.of(context).textTheme.bodyText1),
+              ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.center,
@@ -143,7 +152,7 @@ class _AudioPlayerWigetState extends State<AudioPlayerWiget> {
                       inactiveColor: Theme.of(context).backgroundColor,
                       value: current.inSeconds.toDouble(),
                       min: 0.0,
-                      max: (playing?.audio?.duration ?? new Duration())
+                      max: (playing?.audio?.duration ?? current)
                           .inSeconds
                           .toDouble(),
                       onChanged: (double value) {

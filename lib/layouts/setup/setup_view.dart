@@ -427,7 +427,7 @@ class _SetupViewState extends State<SetupView> {
                 mainAxisSize: MainAxisSize.max,
                 children: [
                   Text(
-                    "Auto-download Attachments (long sync)",
+                    "Download Attachments (long sync)",
                     style: Theme.of(context)
                         .textTheme
                         .bodyText1,

@@ -46,7 +46,7 @@ class _ThemingColorPickerPopupState extends State<ThemingColorPickerPopup> {
             if (widget.entry.isFont)
               Text(
                 "Font Size",
-                style: whiteLightTheme.textTheme.bodyText1,
+                style: Theme.of(context).textTheme.bodyText1,
               ),
             if (widget.entry.isFont)
               Slider(

@@ -12,6 +12,7 @@ import 'package:bluebubbles/layouts/widgets/CustomCupertinoNavBar.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
+import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
@@ -41,6 +42,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
   List<UniqueContact> prevSelected = [];
   String searchQuery = "";
   bool currentlyProcessingDeleteKey = false;
+  CurrentChat currentChat;
 
   TextEditingController chatSelectorController =
       new TextEditingController(text: " ");
@@ -164,7 +166,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
             backgroundColor: Theme.of(context).accentColor,
             child: ContactAvatarWidget(
               handle: participant,
-              borderThickness: 0.5,
+              borderThickness: 0.1,
             ),
           ),
         ),
@@ -317,6 +319,8 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
     cache
         .sort((a, b) => a.participants.length.compareTo(b.participants.length));
     chat = cache.first;
+    currentChat = CurrentChat.getCurrentChat(chat);
+
     NotificationManager().switchChat(chat);
     messageBloc = null;
     if (this.mounted) setState(() {});

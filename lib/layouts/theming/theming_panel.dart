@@ -32,7 +32,10 @@ class _ThemingPanelState extends State<ThemingPanel>
     } else {
       controller = TabController(vsync: this, initialIndex: 0, length: 2);
     }
-    editController = new EditController();
+
+    if (editController == null) {
+      editController = new EditController();
+    }
   }
 
   @override

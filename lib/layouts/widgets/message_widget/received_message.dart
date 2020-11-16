@@ -170,7 +170,10 @@ class _ReceivedMessageState extends State<ReceivedMessage>
         child: widget.urlPreviewWidget,
       );
     } else if (widget.message.isInteractive()) {
-      message = BalloonBundleWidget(message: widget.message);
+      message = Padding(
+        padding: EdgeInsets.only(left: 10.0),
+        child: BalloonBundleWidget(message: widget.message)
+      );
     } else if (widget.message.hasText()) {
       message = _buildMessageWithTail(widget.message);
     }
@@ -204,6 +207,7 @@ class _ReceivedMessageState extends State<ReceivedMessage>
             handle: widget.message.handle,
             size: 30,
             fontSize: 14,
+            borderThickness: 0.1,
           ),
         ),
       );
