@@ -135,17 +135,19 @@ class MessagesViewState extends State<MessagesView>
             _listKey.currentState.setState(() {});
           }
         });
-        Navigator.of(context).push(
-          SendPageBuilder(
-            builder: (context) {
-              return SendWidget(
-                text: event.message.text,
-                tag: "first",
-                currentChat: currentChat,
-              );
-            },
-          ),
-        );
+
+        if (context != null)
+          Navigator.of(context).push(
+            SendPageBuilder(
+              builder: (context) {
+                return SendWidget(
+                  text: event.message.text,
+                  tag: "first",
+                  currentChat: currentChat,
+                );
+              },
+            ),
+          );
       }
 
       bool isNewMessage = true;
