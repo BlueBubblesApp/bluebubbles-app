@@ -46,6 +46,8 @@ class _AudioPlayerWigetState extends State<AudioPlayerWiget> {
 
       // Restart the clip
       await player.seek(Duration());
+      await player.play();
+      await player.pause();
 
       // Set isPlaying and re-render
       isPlaying = false;
@@ -110,9 +112,11 @@ class _AudioPlayerWigetState extends State<AudioPlayerWiget> {
           padding: EdgeInsets.only(left: 15.0, top: 15.0, bottom: 10.0),
           child: Column(
             mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              (playing == null)
+              Padding(
+                padding: EdgeInsets.only(right: 20.0),
+                child: (playing == null)
                   ? Text("00:00 / 00:00",
                       style: Theme.of(context).textTheme.bodyText1)
                   : Text(
@@ -121,6 +125,7 @@ class _AudioPlayerWigetState extends State<AudioPlayerWiget> {
                           ? formatDuration(current)
                           : "${formatDuration(current)} / ${formatDuration(playing.audio.duration)}",
                       style: Theme.of(context).textTheme.bodyText1),
+              ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.center,
@@ -143,7 +148,7 @@ class _AudioPlayerWigetState extends State<AudioPlayerWiget> {
                       inactiveColor: Theme.of(context).backgroundColor,
                       value: current.inSeconds.toDouble(),
                       min: 0.0,
-                      max: (playing?.audio?.duration ?? new Duration())
+                      max: (playing?.audio?.duration ?? current)
                           .inSeconds
                           .toDouble(),
                       onChanged: (double value) {
