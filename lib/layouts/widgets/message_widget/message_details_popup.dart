@@ -271,72 +271,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
             //                                   ],
             //                                 ),
             //                                 onPressed: () {
-            //                                   if (!isEmptyString(
-            //                                       widget.message.text))
-            //                                     FlutterClipboard.copy(
-            //                                         widget.message.text);
-            //                                   FlutterToast flutterToast =
-            //                                       FlutterToast(context);
-            //                                   Widget toast = ClipRRect(
-            //                                     borderRadius:
-            //                                         BorderRadius.circular(25.0),
-            //                                     child: BackdropFilter(
-            //                                       filter: ImageFilter.blur(
-            //                                           sigmaX: 15, sigmaY: 15),
-            //                                       child: Container(
-            //                                         padding: const EdgeInsets
-            //                                                 .symmetric(
-            //                                             horizontal: 24.0,
-            //                                             vertical: 12.0),
-            //                                         decoration: BoxDecoration(
-            //                                           borderRadius:
-            //                                               BorderRadius.circular(
-            //                                                   25.0),
-            //                                           color: Theme.of(context)
-            //                                               .accentColor
-            //                                               .withOpacity(0.1),
-            //                                         ),
-            //                                         child: Row(
-            //                                           mainAxisSize:
-            //                                               MainAxisSize.min,
-            //                                           children: [
-            //                                             Icon(
-            //                                               !isEmptyString(widget
-            //                                                       .message.text)
-            //                                                   ? Icons.check
-            //                                                   : Icons.close,
-            //                                               color:
-            //                                                   Theme.of(context)
-            //                                                       .textTheme
-            //                                                       .bodyText1
-            //                                                       .color,
-            //                                             ),
-            //                                             SizedBox(
-            //                                               width: 12.0,
-            //                                             ),
-            //                                             Text(
-            //                                               !isEmptyString(widget
-            //                                                       .message.text)
-            //                                                   ? "Copied to clipboard"
-            //                                                   : "Failed to copy empty message",
-            //                                               style:
-            //                                                   Theme.of(context)
-            //                                                       .textTheme
-            //                                                       .bodyText1,
-            //                                             ),
-            //                                           ],
-            //                                         ),
-            //                                       ),
-            //                                     ),
-            //                                   );
-
-            //                                   flutterToast.showToast(
-            //                                     child: toast,
-            //                                     gravity: ToastGravity.BOTTOM,
-            //                                     toastDuration:
-            //                                         Duration(seconds: 2),
-            //                                   );
-            //                                 },
+// },
             //                               ),
             //                               FlatButton(
             //                                 splashColor:
@@ -368,65 +303,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
             //                                   ],
             //                                 ),
             //                                 onPressed: () {
-            //                                   if (isEmptyString(
-            //                                       widget.message.text)) return;
-            //                                   widget.entry.remove();
-            //                                   showDialog(
-            //                                     context: context,
-            //                                     builder: (context) =>
-            //                                         AlertDialog(
-            //                                       backgroundColor:
-            //                                           Theme.of(context)
-            //                                               .accentColor,
-            //                                       title: Text(
-            //                                         "Copy",
-            //                                         style: Theme.of(context)
-            //                                             .textTheme
-            //                                             .headline1,
-            //                                       ),
-            //                                       content: Container(
-            //                                         constraints: BoxConstraints(
-            //                                             maxHeight:
-            //                                                 MediaQuery.of(
-            //                                                             context)
-            //                                                         .size
-            //                                                         .height *
-            //                                                     2 /
-            //                                                     3),
-            //                                         child:
-            //                                             SingleChildScrollView(
-            //                                           physics:
-            //                                               AlwaysScrollableScrollPhysics(
-            //                                             parent:
-            //                                                 CustomBouncingScrollPhysics(),
-            //                                           ),
-            //                                           child: SelectableText(
-            //                                             widget.message.text,
-            //                                             style: Theme.of(context)
-            //                                                 .textTheme
-            //                                                 .bodyText1,
-            //                                           ),
-            //                                         ),
-            //                                       ),
-            //                                       actions: <Widget>[
-            //                                         FlatButton(
-            //                                           child: Text(
-            //                                             "Done",
-            //                                             style: Theme.of(context)
-            //                                                 .textTheme
-            //                                                 .bodyText1,
-            //                                           ),
-            //                                           onPressed: () {
-            //                                             Navigator.of(context,
-            //                                                     rootNavigator:
-            //                                                         true)
-            //                                                 .pop('dialog');
-            //                                           },
-            //                                         )
-            //                                       ],
-            //                                     ),
-            //                                   );
-            //                                 },
+// },
             //                               ),
             //                             ],
             //                           ),
@@ -529,7 +406,53 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
               Material(
                 color: Colors.transparent,
                 child: InkWell(
-                  onTap: () {},
+                  onTap: () {
+                    if (!isEmptyString(widget.message.text))
+                      FlutterClipboard.copy(widget.message.text);
+                    FlutterToast flutterToast = FlutterToast(context);
+                    Widget toast = ClipRRect(
+                      borderRadius: BorderRadius.circular(25.0),
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 24.0, vertical: 12.0),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(25.0),
+                            color:
+                                Theme.of(context).accentColor.withOpacity(0.1),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                !isEmptyString(widget.message.text)
+                                    ? Icons.check
+                                    : Icons.close,
+                                color:
+                                    Theme.of(context).textTheme.bodyText1.color,
+                              ),
+                              SizedBox(
+                                width: 12.0,
+                              ),
+                              Text(
+                                !isEmptyString(widget.message.text)
+                                    ? "Copied to clipboard"
+                                    : "Failed to copy empty message",
+                                style: Theme.of(context).textTheme.bodyText1,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+
+                    flutterToast.showToast(
+                      child: toast,
+                      gravity: ToastGravity.BOTTOM,
+                      toastDuration: Duration(seconds: 2),
+                    );
+                  },
                   child: ListTile(
                     title: Text("Copy",
                         style: Theme.of(context).textTheme.bodyText1),
@@ -543,7 +466,45 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
               Material(
                 color: Colors.transparent,
                 child: InkWell(
-                  onTap: () {},
+                  onTap: () {
+                    if (isEmptyString(widget.message.text)) return;
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        backgroundColor: Theme.of(context).accentColor,
+                        title: Text(
+                          "Copy",
+                          style: Theme.of(context).textTheme.headline1,
+                        ),
+                        content: Container(
+                          constraints: BoxConstraints(
+                              maxHeight:
+                                  MediaQuery.of(context).size.height * 2 / 3),
+                          child: SingleChildScrollView(
+                            physics: AlwaysScrollableScrollPhysics(
+                              parent: CustomBouncingScrollPhysics(),
+                            ),
+                            child: SelectableText(
+                              widget.message.text,
+                              style: Theme.of(context).textTheme.bodyText1,
+                            ),
+                          ),
+                        ),
+                        actions: <Widget>[
+                          FlatButton(
+                            child: Text(
+                              "Done",
+                              style: Theme.of(context).textTheme.bodyText1,
+                            ),
+                            onPressed: () {
+                              Navigator.of(context, rootNavigator: true)
+                                  .pop('dialog');
+                            },
+                          )
+                        ],
+                      ),
+                    );
+                  },
                   child: ListTile(
                     title: Text("Copy Selection",
                         style: Theme.of(context).textTheme.bodyText1),
