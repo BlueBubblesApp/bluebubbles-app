@@ -60,9 +60,10 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
   void initState() {
     super.initState();
 
-    if (CurrentChat.of(context).chat != null) {
+    if (CurrentChat.of(context)?.chat != null) {
       textFieldData = TextFieldBloc().getTextField(CurrentChat.of(context).chat.guid);
     }
+
     controller = textFieldData != null
         ? textFieldData.controller
         : new TextEditingController();

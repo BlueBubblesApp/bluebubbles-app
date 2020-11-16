@@ -228,7 +228,9 @@ class MessagesViewState extends State<MessagesView>
 
   @override
   Widget build(BuildContext context) {
-    CurrentChat.of(context).disposeControllers();
+    if (CurrentChat.of(context) != null) {
+      CurrentChat.of(context).disposeControllers();
+    }
 
     return GestureDetector(
       behavior: HitTestBehavior.deferToChild,

@@ -47,21 +47,20 @@ class ConversationView extends StatefulWidget {
 class ConversationViewState extends State<ConversationView>
     with ConversationViewMixin {
 
-  /// [CurrentChat] holds all info about the conversation that widgets commonly access
-  CurrentChat currentChat;
-
   @override
   void initState() {
     super.initState();
 
-    currentChat = CurrentChat.getCurrentChat(widget.chat);
-    currentChat.init();
-    currentChat.updateChatAttachments().then((value) {
-      if (this.mounted) setState(() {});
-    });
-    currentChat.stream.listen((event) {
-      if (this.mounted) setState(() {});
-    });
+    if (widget.chat != null) {
+      currentChat = CurrentChat.getCurrentChat(widget.chat);
+      currentChat.init();
+      currentChat.updateChatAttachments().then((value) {
+        if (this.mounted) setState(() {});
+      });
+      currentChat.stream.listen((event) {
+        if (this.mounted) setState(() {});
+      });
+    }
 
     isCreator = widget.isCreator ?? false;
     chat = widget.chat;
