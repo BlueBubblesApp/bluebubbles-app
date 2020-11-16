@@ -9,7 +9,7 @@ import 'package:flutter/material.dart';
 abstract class MessageWidgetMixin {
   String contactTitle = "";
   bool hasHyperlinks = false;
-  static const double maxSize = 3 / 5;
+  static const double MAX_SIZE = 3 / 5;
 
   Future<void> initMessageState(Message message, bool showHandle) async {
     this.hasHyperlinks = parseLinks(message.text).isNotEmpty;

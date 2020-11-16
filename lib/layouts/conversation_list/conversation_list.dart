@@ -10,6 +10,7 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/managers/theme_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
+import 'package:flutter/services.dart';
 
 import './conversation_tile.dart';
 import 'package:flutter/cupertino.dart';
@@ -125,6 +126,7 @@ class _ConversationListState extends State<ConversationList> {
               secondChild: AppBar(
                 elevation: 0,
                 backgroundColor: _theme,
+                brightness: Theme.of(context).brightness,
                 centerTitle: true,
                 title: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -138,7 +140,8 @@ class _ConversationListState extends State<ConversationList> {
               ),
               firstChild: AppBar(
                 elevation: 0,
-                backgroundColor: Colors.transparent,
+                backgroundColor: Theme.of(context).backgroundColor,
+                brightness: Theme.of(context).brightness,
               ),
             ),
           ),

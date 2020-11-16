@@ -5,6 +5,7 @@ import 'package:assets_audio_player/assets_audio_player.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/messages_view.dart';
+import 'package:bluebubbles/layouts/widgets/message_widget/message_details_popup.dart';
 import 'package:bluebubbles/managers/attachment_info_bloc.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
@@ -68,7 +69,11 @@ class CurrentChat {
 
   static CurrentChat of(BuildContext context) {
     assert(context != null);
+
     return context.findAncestorStateOfType<MessagesViewState>()?.currentChat ??
+        context
+            .findAncestorStateOfType<MessageDetailsPopupState>()
+            ?.currentChat ??
         null;
   }
 

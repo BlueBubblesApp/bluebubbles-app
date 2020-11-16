@@ -86,7 +86,8 @@ class _MessageAttachmentsState extends State<MessageAttachments>
     List<Widget> content = <Widget>[];
 
     for (Attachment attachment
-        in CurrentChat.of(context).getAttachmentsForMessage(widget.message)) {
+        in CurrentChat.of(context)?.getAttachmentsForMessage(widget.message) ??
+            []) {
       if (attachment.mimeType != null) {
         content.add(
           MessageAttachment(

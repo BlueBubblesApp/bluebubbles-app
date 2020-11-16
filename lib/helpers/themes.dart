@@ -36,16 +36,16 @@ ThemeData oledDarkTheme = ThemeData(
     bodyText1: TextStyle(
       color: Colors.white,
       fontWeight: FontWeight.normal,
-      fontSize: 14,
+      fontSize: 16,
     ),
     bodyText2: TextStyle(
       color: Colors.white,
       fontWeight: FontWeight.normal,
-      fontSize: 14,
+      fontSize: 16,
     ),
     subtitle1: TextStyle(
       color: HexColor('919191'),
-      fontSize: 13,
+      fontSize: 14,
       fontWeight: FontWeight.normal,
     ),
     subtitle2: TextStyle(
@@ -78,16 +78,16 @@ ThemeData nordDarkTheme = ThemeData(
     bodyText1: TextStyle(
       color: HexColor('ECEFF4'),
       fontWeight: FontWeight.normal,
-      fontSize: 14,
+      fontSize: 16,
     ),
     bodyText2: TextStyle(
       color: HexColor('E5E9F0'),
       fontWeight: FontWeight.normal,
-      fontSize: 14,
+      fontSize: 16,
     ),
     subtitle1: TextStyle(
       color: HexColor('a5a5a5'),
-      fontSize: 13,
+      fontSize: 14,
       fontWeight: FontWeight.normal,
     ),
     subtitle2: TextStyle(
@@ -120,16 +120,16 @@ ThemeData whiteLightTheme = ThemeData(
     bodyText1: TextStyle(
       color: Colors.black,
       fontWeight: FontWeight.normal,
-      fontSize: 14,
+      fontSize: 16,
     ),
     bodyText2: TextStyle(
       color: Colors.white,
       fontWeight: FontWeight.normal,
-      fontSize: 14,
+      fontSize: 16,
     ),
     subtitle1: TextStyle(
       color: HexColor('9a9a9f'),
-      fontSize: 13,
+      fontSize: 14,
       fontWeight: FontWeight.normal,
     ),
     subtitle2: TextStyle(

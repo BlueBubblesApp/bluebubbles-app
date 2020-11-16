@@ -169,7 +169,7 @@ class _SendWidgetState extends State<SendWidget> {
                       minWidth: animation.value,
                       maxWidth: animation.value.clamp(
                         MediaQuery.of(context).size.width *
-                            MessageWidgetMixin.maxSize,
+                            MessageWidgetMixin.MAX_SIZE,
                         MediaQuery.of(context).size.width * 3 / 4 + 37,
                       ),
                     ),

@@ -7,6 +7,7 @@ import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_attachments.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_time_stamp_separator.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_details_popup.dart';
+import 'package:bluebubbles/layouts/widgets/message_widget/message_popup_holder.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/reactions_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/received_message.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/sent_message.dart';
@@ -51,7 +52,6 @@ class MessageWidget extends StatefulWidget {
 class _MessageState extends State<MessageWidget>
     with AutomaticKeepAliveClientMixin {
   bool showTail = true;
-  OverlayEntry _entry;
   Completer<void> associatedMessageRequest;
   Completer<void> attachmentsRequest;
   int lastRequestCount = -1;
@@ -231,72 +231,43 @@ class _MessageState extends State<MessageWidget>
     Widget message;
     if (widget.message.isFromMe) {
       message = SentMessage(
-          offset: widget.offset,
-          showTail: showTail,
-          olderMessage: widget.olderMessage,
-          message: widget.message,
-          urlPreviewWidget: urlPreviewWidget,
-          stickersWidget: stickersWidget,
-          attachmentsWidget: widgetAttachments,
-          reactionsWidget: reactionsWidget,
-          chat: widget.chat,
-          shouldFadeIn: CurrentChat.of(context)
-              .sentMessages
-              .contains(widget.message.guid),
-          showHero: widget.showHero,
-          showDeliveredReceipt: widget.isFirstSentMessage);
+        offset: widget.offset,
+        showTail: showTail,
+        olderMessage: widget.olderMessage,
+        message: widget.message,
+        urlPreviewWidget: urlPreviewWidget,
+        stickersWidget: stickersWidget,
+        attachmentsWidget: widgetAttachments,
+        reactionsWidget: reactionsWidget,
+        chat: widget.chat,
+        shouldFadeIn:
+            CurrentChat.of(context).sentMessages.contains(widget.message.guid),
+        showHero: widget.showHero,
+        showDeliveredReceipt: widget.isFirstSentMessage,
+      );
     } else {
       message = ReceivedMessage(
-          offset: widget.offset,
-          showTail: showTail,
-          olderMessage: widget.olderMessage,
-          message: widget.message,
-          showHandle: widget.showHandle,
-          urlPreviewWidget: urlPreviewWidget,
-          stickersWidget: stickersWidget,
-          attachmentsWidget: widgetAttachments,
-          reactionsWidget: reactionsWidget);
+        offset: widget.offset,
+        showTail: showTail,
+        olderMessage: widget.olderMessage,
+        message: widget.message,
+        showHandle: widget.showHandle,
+        urlPreviewWidget: urlPreviewWidget,
+        stickersWidget: stickersWidget,
+        attachmentsWidget: widgetAttachments,
+        reactionsWidget: reactionsWidget,
+      );
     }
 
-    return WillPopScope(
-      onWillPop: () async {
-        if (_entry != null) {
-          try {
-            _entry.remove();
-          } catch (e) {}
-          _entry = null;
-          return true;
-        } else {
-          return true;
-        }
-      },
-      child: GestureDetector(
-        behavior: HitTestBehavior.translucent,
-        onLongPress: () async {
-          Feedback.forLongPress(context);
-          Overlay.of(context).insert(_createMessageDetailsPopup());
-        },
-        child: Column(
-          children: [
-            message,
-            MessageTimeStampSeparator(
-              newerMessage: widget.newerMessage,
-              message: widget.message,
-            )
-          ],
-        ),
-      ),
+    return Column(
+      children: [
+        message,
+        MessageTimeStampSeparator(
+          newerMessage: widget.newerMessage,
+          message: widget.message,
+        )
+      ],
     );
-  }
-
-  OverlayEntry _createMessageDetailsPopup() {
-    _entry = OverlayEntry(
-      builder: (context) => MessageDetailsPopup(
-        entry: _entry,
-        message: widget.message,
-      ),
-    );
-    return _entry;
   }
 
   @override

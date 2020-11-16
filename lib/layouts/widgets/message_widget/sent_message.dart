@@ -61,7 +61,7 @@ class SentMessageHelper {
             ),
             constraints: BoxConstraints(
               maxWidth: MediaQuery.of(context).size.width *
-                      MessageWidgetMixin.maxSize +
+                      MessageWidgetMixin.MAX_SIZE +
                   (!padding ? 100 : 0),
             ),
             padding: EdgeInsets.symmetric(
@@ -97,7 +97,9 @@ class SentMessageHelper {
         getErrorWidget(
           context,
           message,
-          currentChat != null ? currentChat.chat : CurrentChat.of(context).chat,
+          currentChat != null
+              ? currentChat.chat
+              : CurrentChat.of(context)?.chat,
         ),
       ],
     );

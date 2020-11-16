@@ -65,6 +65,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
             child: AppBar(
               toolbarHeight: 100.0,
               elevation: 0,
+              brightness: Theme.of(context).brightness,
               leading: IconButton(
                 icon: Icon(Icons.arrow_back_ios,
                     color: Theme.of(context).primaryColor),
@@ -416,8 +417,7 @@ class SettingsTextField extends StatelessWidget {
       this.placeholder,
       this.maxLines = 14,
       this.keyboardType = TextInputType.multiline,
-      this.inputFormatters = const []
-    })
+      this.inputFormatters = const []})
       : super(key: key);
 
   final TextEditingController controller;
@@ -585,28 +585,27 @@ class _SettingsOptionsState<T> extends State<SettingsOptions<T>> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  child: Text(
-                    widget.title,
-                    style: Theme.of(context).textTheme.bodyText1,
-                  ),
-                ),
-                (widget.subtitle != null)
-                  ? Container(
-                    child: Padding(
-                      padding: EdgeInsets.only(top: 3.0),
-                      child: Text(
-                        widget.subtitle ?? "",
-                        style: Theme.of(context).textTheme.subtitle1,
-                      ),
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    child: Text(
+                      widget.title,
+                      style: Theme.of(context).textTheme.bodyText1,
                     ),
-                  )
-                : Container(),
-              ]
-            ),
+                  ),
+                  (widget.subtitle != null)
+                      ? Container(
+                          child: Padding(
+                            padding: EdgeInsets.only(top: 3.0),
+                            child: Text(
+                              widget.subtitle ?? "",
+                              style: Theme.of(context).textTheme.subtitle1,
+                            ),
+                          ),
+                        )
+                      : Container(),
+                ]),
             Container(
               padding: EdgeInsets.symmetric(horizontal: 9),
               decoration: BoxDecoration(

@@ -83,6 +83,8 @@ dependencies:
     path: packages/extended_text_field
   visibility_detector: ^0.1.5
   flutter_displaymode: 0.1.1
+  keyboard_visibility: ^0.5.6
+
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^0.1.2

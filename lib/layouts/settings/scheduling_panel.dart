@@ -90,6 +90,7 @@ class _SchedulingPanelState extends State<SchedulingPanel> {
             child: AppBar(
               toolbarHeight: 100.0,
               elevation: 0,
+              brightness: Theme.of(context).brightness,
               leading: IconButton(
                 icon: Icon(Icons.arrow_back_ios,
                     color: Theme.of(context).primaryColor),
