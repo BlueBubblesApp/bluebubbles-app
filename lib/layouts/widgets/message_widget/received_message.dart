@@ -207,6 +207,7 @@ class _ReceivedMessageState extends State<ReceivedMessage>
             handle: widget.message.handle,
             size: 30,
             fontSize: 14,
+            borderThickness: 0.1,
           ),
         ),
       );

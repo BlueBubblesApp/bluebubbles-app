@@ -29,7 +29,7 @@ dependencies:
   tuple: ^1.0.3
   encrypt: ^4.0.0
   assorted_layout_widgets: ^2.0.0
-  audio_recorder: any
+  record: ^1.0.2
   flutter_local_notifications: any
   contacts_service: ^0.4.6
   permission_handler: ^5.0.1+1

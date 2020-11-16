@@ -128,6 +128,7 @@ class _ContactTileState extends State<ContactTile> {
         ),
         leading: ContactAvatarWidget(
           handle: widget.handle,
+          borderThickness: 0.1,
         ),
         trailing: SizedBox(
           width: MediaQuery.of(context).size.width / 3,

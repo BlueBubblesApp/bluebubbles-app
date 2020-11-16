@@ -68,6 +68,7 @@ class _ContactAvatarGroupWidgetState extends State<ContactAvatarGroupWidget>
             )
           : ContactAvatarWidget(
               handle: participants.first,
+              borderThickness: 0.1,
             ),
     );
   }

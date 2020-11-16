@@ -1,11 +1,11 @@
 import 'dart:io';
 import 'package:bluebubbles/action_handler.dart';
-import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/attachment_sender.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view_mixin.dart';
 import 'package:bluebubbles/layouts/conversation_view/messages_view.dart';
 import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/chat_selector_text_field.dart';
 import 'package:bluebubbles/layouts/conversation_view/text_field/blue_bubbles_text_field.dart';
+import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/outgoing_queue.dart';
 import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:flutter/material.dart';
@@ -46,9 +46,23 @@ class ConversationView extends StatefulWidget {
 
 class ConversationViewState extends State<ConversationView>
     with ConversationViewMixin {
+
+  /// [CurrentChat] holds all info about the conversation that widgets commonly access
+  CurrentChat currentChat;
+
   @override
   void initState() {
     super.initState();
+
+    currentChat = CurrentChat.getCurrentChat(widget.chat);
+    currentChat.init();
+    currentChat.updateChatAttachments().then((value) {
+      if (this.mounted) setState(() {});
+    });
+    currentChat.stream.listen((event) {
+      if (this.mounted) setState(() {});
+    });
+
     isCreator = widget.isCreator ?? false;
     chat = widget.chat;
     initChatSelector();
@@ -59,6 +73,15 @@ class ConversationViewState extends State<ConversationView>
   void didChangeDependencies() async {
     super.didChangeDependencies();
     didChangeDependenciesConversationView();
+  }
+
+  @override
+  void dispose() {
+    if (currentChat != null) {
+      currentChat.dispose();
+    }
+
+    super.dispose();
   }
 
   Future<bool> send(List<File> attachments, String text) async {
@@ -131,7 +154,6 @@ class ConversationViewState extends State<ConversationView>
           ),
           if (widget.onSelect == null)
             BlueBubblesTextField(
-              chat: chat,
               onSend: send,
               isCreator: isCreator,
               existingAttachments:

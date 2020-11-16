@@ -63,6 +63,7 @@ class _ReactionDetailWidgetState extends State<ReactionDetailWidget> {
           padding: const EdgeInsets.symmetric(horizontal: 25.0, vertical: 10),
           child: ContactAvatarWidget(
             handle: widget.handle,
+            borderThickness: 0.1,
           ),
         ),
         Padding(

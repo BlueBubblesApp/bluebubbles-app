@@ -49,6 +49,7 @@ class ContactSelectorOption extends StatelessWidget {
       leading: !item.isChat
           ? ContactAvatarWidget(
               handle: Handle(address: item.address),
+              borderThickness: 0.1,
             )
           : ContactAvatarGroupWidget(
               chat: item.chat,

@@ -164,7 +164,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
             backgroundColor: Theme.of(context).accentColor,
             child: ContactAvatarWidget(
               handle: participant,
-              borderThickness: 0.5,
+              borderThickness: 0.1,
             ),
           ),
         ),
