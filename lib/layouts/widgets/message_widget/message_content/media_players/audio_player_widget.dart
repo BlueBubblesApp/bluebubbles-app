@@ -48,9 +48,7 @@ class _AudioPlayerWigetState extends State<AudioPlayerWiget> {
       if (!finished) return;
 
       // Restart the clip
-      await player.seek(Duration());
-      await player.play();
-      await player.pause();
+      player.open(Audio.file(widget.file.path), autoStart: false);
 
       // Set isPlaying and re-render
       isPlaying = false;
@@ -96,6 +94,7 @@ class _AudioPlayerWigetState extends State<AudioPlayerWiget> {
   Widget build(BuildContext context) {
     Playing playing = player.current.value;
     double maxWidth = widget.width ?? MediaQuery.of(context).size.width * 3 / 4;
+
     return Container(
       alignment: Alignment.center,
       color: Theme.of(context).accentColor,
