@@ -73,7 +73,7 @@ class MessagesViewState extends State<MessagesView>
   void didChangeDependencies() async {
     super.didChangeDependencies();
     currentChat = CurrentChat.of(context);
-  
+
     if (_messages.isEmpty) {
       widget.messageBloc.getMessages();
       if (this.mounted) setState(() {});
@@ -160,7 +160,9 @@ class MessagesViewState extends State<MessagesView>
         _listKey.currentState.insertItem(
           event.index != null ? event.index : 0,
           duration: isNewMessage
-              ? event.outGoing ? Duration(milliseconds: 500) : animationDuration
+              ? event.outGoing
+                  ? Duration(milliseconds: 500)
+                  : animationDuration
               : Duration(milliseconds: 0),
         );
       }
@@ -287,12 +289,15 @@ class MessagesViewState extends State<MessagesView>
                           Animation<double> animation) {
                         // Load more messages if we are at the top and we aren't alrady loading
                         // and we have more messages to load
-                        if (index >= _messages.length && !noMoreMessages) {
-                          loadNextChunk();
-                          return NewMessageLoader();
-                        }
-
                         if (index >= _messages.length) {
+                          if (!noMoreMessages &&
+                              (loader == null ||
+                                  !loader.isCompleted ||
+                                  !loadedPages.contains(_messages.length))) {
+                            loadNextChunk();
+                            return NewMessageLoader();
+                          }
+
                           return Container();
                         }
 
