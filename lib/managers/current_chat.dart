@@ -198,4 +198,11 @@ class CurrentChat {
     });
     videoControllersToDispose = [];
   }
+
+  void disposeAudioControllers() {
+    audioPlayers.forEach((guid, player) {
+      player.dispose();
+    });
+    audioPlayers = {};
+  }
 }

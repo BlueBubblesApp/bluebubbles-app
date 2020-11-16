@@ -48,7 +48,9 @@ class _AudioPlayerWigetState extends State<AudioPlayerWiget> {
       if (!finished) return;
 
       // Restart the clip
-      await player.open(Audio.file(widget.file.path), autoStart: false);
+      player.open(Audio.file(widget.file.path), autoStart: false).catchError((err) {
+        // Do nothing
+      });
 
       // Set isPlaying and re-render
       isPlaying = false;
