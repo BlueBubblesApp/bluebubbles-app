@@ -46,7 +46,6 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
 
   double messageTopOffset;
   double topMinimum;
-  double bottomMaximum;
 
   @override
   void initState() {
@@ -71,21 +70,28 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
           showTools = true;
         });
     });
-
-    SchedulerBinding.instance.addPostFrameCallback((_) {
-      if (this.mounted) {
-        setState(() {
-          messageTopOffset =
-              widget.childOffset.dy.clamp(topMinimum + 40, double.infinity);
-        });
-      }
-    });
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     fetchReactions();
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      if (this.mounted) {
+        setState(() {
+          double totalHeight = MediaQuery.of(context).size.height -
+              MediaQuery.of(context).viewInsets.bottom -
+              120;
+          double offset =
+              (widget.childOffset.dy + widget.childSize.height) - totalHeight;
+          messageTopOffset =
+              widget.childOffset.dy.clamp(topMinimum + 40, double.infinity);
+          if (offset > 0) {
+            messageTopOffset -= offset;
+          }
+        });
+      }
+    });
   }
 
   Future<void> fetchReactions() async {
