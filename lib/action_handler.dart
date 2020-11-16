@@ -119,6 +119,52 @@ class ActionHandler {
     return completer.future;
   }
 
+  static Future<void> sendReaction(
+      Chat chat, Message message, String reaction) async {
+    // Create params for the queue item
+    Map<String, dynamic> params = {
+      "chat": chat,
+      "message": message,
+      "reaction": reaction
+    };
+
+    // Add the message send to the queue
+    await OutgoingQueue()
+        .add(new QueueItem(event: "send-reaction", item: params));
+  }
+
+  static Future<void> sendReactionHelper(
+      Chat chat, Message message, String reaction) async {
+    Completer<void> completer = new Completer<void>();
+    Map<String, dynamic> params = new Map();
+    params["chatGuid"] = chat.guid;
+    params["message"] = {
+      "guid": "temp-${randomString(8)}",
+      "text": reaction + " " + message.text
+    };
+    params["actionMessage"] = message.toMap();
+    params["tapback"] = reaction.toLowerCase();
+
+    SocketManager().sendMessage("send-reaction", params, (response) async {
+      // String tempGuid = message.guid;
+
+      // If there is an error, replace the temp value with an error
+      if (response['status'] != 200) {
+        // message.guid = message.guid
+        //     .replaceAll("temp", "error-${response['error']['message']}");
+        // message.error = response['status'] == 400
+        //     ? MessageError.BAD_REQUEST.code
+        //     : MessageError.SERVER_ERROR.code;
+
+        // await Message.replaceMessage(tempGuid, message);
+        // NewMessageManager().updateMessage(chat, tempGuid, message);
+        debugPrint("NOT WORKING: " + response['error']['message']);
+      }
+
+      completer.complete();
+    });
+  }
+
   /// Try to resents a [message] that has errored during the
   /// previous attempts to send the message
   ///

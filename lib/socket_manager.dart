@@ -306,6 +306,7 @@ class SocketManager {
         Map<String, dynamic> data = jsonDecode(_data);
 
         Message message = await Message.findOne({"guid": data["tempGuid"]});
+        if (message == null) return new Future.value("");
         message.error = 1003;
         message.guid = message.guid.replaceAll("temp", "error-Message Timeout");
         await Message.replaceMessage(data["tempGuid"], message);

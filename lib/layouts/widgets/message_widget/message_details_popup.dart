@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:ui';
 
+import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/helpers/reaction.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -10,6 +11,7 @@ import 'package:bluebubbles/layouts/widgets/message_widget/reaction_detail_widge
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
+import 'package:bluebubbles/socket_manager.dart';
 import 'package:clipboard/clipboard.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
@@ -41,6 +43,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
     with TickerProviderStateMixin {
   List<Widget> reactionWidgets = <Widget>[];
   bool showTools = false;
+  String selfReaction;
   Completer fetchRequest;
   CurrentChat currentChat;
 
@@ -88,6 +91,8 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
               widget.childOffset.dy.clamp(topMinimum + 40, double.infinity);
           if (offset > 0) {
             messageTopOffset -= offset;
+            messageTopOffset =
+                messageTopOffset.clamp(topMinimum + 40, double.infinity);
           }
         });
       }
@@ -113,6 +118,9 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
     reactionWidgets = [];
     for (Message reaction in reactionMessages) {
       await reaction.getHandle();
+      if (reaction.isFromMe) {
+        selfReaction = reaction.associatedMessageType;
+      }
       reactionWidgets.add(
         ReactionDetailWidget(
           handle: reaction.handle,
@@ -127,6 +135,11 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
     // Tell the component to re-render
     this.setState(() {});
     return fetchRequest.complete();
+  }
+
+  void sendReaction(String type) {
+    if (isEmptyString(widget.message.text)) return;
+    ActionHandler.sendReaction(widget.currentChat.chat, widget.message, type);
   }
 
   @override
@@ -217,6 +230,9 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
   }
 
   Widget buildReactionMenu() {
+    if (isEmptyString(widget.message.text)) {
+      return Container();
+    }
     Size size = MediaQuery.of(context).size;
 
     double reactionIconSize = ((MessageWidgetMixin.MAX_SIZE * size.width) /
@@ -263,9 +279,20 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
                     (e) => Container(
                       width: reactionIconSize,
                       height: reactionIconSize,
-                      child: Padding(
-                        padding: const EdgeInsets.all(6),
-                        child: Reaction.getReactionIcon(e, iconColor),
+                      decoration: BoxDecoration(
+                        color: selfReaction == e
+                            ? Theme.of(context).primaryColor
+                            : Theme.of(context).accentColor.withAlpha(150),
+                        borderRadius: BorderRadius.circular(
+                          20,
+                        ),
+                      ),
+                      child: GestureDetector(
+                        onTap: () => sendReaction(e),
+                        child: Padding(
+                          padding: const EdgeInsets.all(6),
+                          child: Reaction.getReactionIcon(e, iconColor),
+                        ),
                       ),
                     ),
                   )
