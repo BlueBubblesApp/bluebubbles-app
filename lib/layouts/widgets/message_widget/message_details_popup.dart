@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:ui';
 
 import 'package:bluebubbles/helpers/reaction.dart';
+import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/CustomCupertinoNavBar.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.dart';
@@ -51,14 +52,15 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
   void initState() {
     super.initState();
     currentChat = widget.currentChat;
-    // KeyboardVisibilityNotification().addNewListener(
-    //   onHide: () {
-    //     Navigator.of(context).pop();
-    //   },
-    // );
+    KeyboardVisibilityNotification().addNewListener(
+      onHide: () {
+        Navigator.of(context).pop();
+      },
+    );
 
     messageTopOffset = widget.childOffset.dy;
-    topMinimum = CupertinoNavigationBar().preferredSize.height + 20;
+    topMinimum = CupertinoNavigationBar().preferredSize.height +
+        (widget.message.hasReactions ? 100 : 40);
 
     fetchReactions();
 
@@ -129,30 +131,31 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
         child: Stack(
           fit: StackFit.expand,
           children: <Widget>[
-            // Material(
-            //   color: Colors.transparent,
-            //   child: TextField(
-            //     cursorColor: Colors.transparent,
-            //     decoration: InputDecoration(
-            //       fillColor: Colors.transparent,
-            //       border: InputBorder.none,
-            //     ),
-            //     autofocus: MediaQuery.of(context).viewInsets.bottom > 0,
-            //   ),
-            // ),
+            Material(
+              color: Colors.transparent,
+              child: TextField(
+                cursorColor: Colors.transparent,
+                decoration: InputDecoration(
+                  fillColor: Colors.transparent,
+                  border: InputBorder.none,
+                ),
+                autofocus: MediaQuery.of(context).viewInsets.bottom > 0,
+              ),
+            ),
             GestureDetector(
               onTap: () {
                 Navigator.of(context).pop();
               },
               child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 2, sigmaY: 2),
+                filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
                 child: Container(
-                  color: Colors.black.withOpacity(0.7),
+                  color: oledDarkTheme.accentColor.withOpacity(0.3),
                 ),
               ),
             ),
             AnimatedPositioned(
               duration: Duration(milliseconds: 250),
+              curve: Curves.easeOut,
               top: messageTopOffset,
               left: widget.childOffset.dx,
               child: Container(
@@ -161,9 +164,48 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
                 child: widget.child,
               ),
             ),
+            Positioned(
+              top: 40,
+              left: 10,
+              child: AnimatedSize(
+                vsync: this,
+                duration: Duration(milliseconds: 500),
+                curve: Sprung(damped: Damped.under),
+                alignment: Alignment.center,
+                child: reactionWidgets.length > 0
+                    ? ClipRRect(
+                        borderRadius: BorderRadius.circular(20),
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                          child: Container(
+                            alignment: Alignment.center,
+                            height: 120,
+                            width: MediaQuery.of(context).size.width - 20,
+                            color: Theme.of(context).accentColor,
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 0),
+                              child: ListView.builder(
+                                shrinkWrap: true,
+                                physics: AlwaysScrollableScrollPhysics(
+                                  parent: CustomBouncingScrollPhysics(),
+                                ),
+                                scrollDirection: Axis.horizontal,
+                                itemBuilder: (context, index) {
+                                  return reactionWidgets[index];
+                                },
+                                itemCount: reactionWidgets.length,
+                              ),
+                            ),
+                          ),
+                        ),
+                      )
+                    : Container(),
+              ),
+            ),
             buildReactionMenu(),
             buildCopyPasteMenu(),
 
+            // ReactionDetailWidget()
             // Positioned.fill(
             //   child: GestureDetector(
             //     behavior: HitTestBehavior.deferToChild,
@@ -175,43 +217,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
             //       child: Column(
             //         children: <Widget>[
             //           Container(height: 45.0),
-            //           AnimatedSize(
-            //             vsync: this,
-            //             duration: Duration(milliseconds: 500),
-            //             curve: Sprung(damped: Damped.under),
-            //             alignment: Alignment.center,
-            //             child: reactionWidgets.length > 0
-            //                 ? ClipRRect(
-            //                     borderRadius: BorderRadius.circular(20),
-            //                     child: BackdropFilter(
-            //                       filter:
-            //                           ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-            //                       child: Container(
-            //                         alignment: Alignment.center,
-            //                         height: 120,
-            //                         width:
-            //                             MediaQuery.of(context).size.width - 20,
-            //                         color: Theme.of(context).accentColor,
-            //                         child: Padding(
-            //                           padding:
-            //                               EdgeInsets.symmetric(horizontal: 0),
-            //                           child: ListView.builder(
-            //                             shrinkWrap: true,
-            //                             physics: AlwaysScrollableScrollPhysics(
-            //                               parent: CustomBouncingScrollPhysics(),
-            //                             ),
-            //                             scrollDirection: Axis.horizontal,
-            //                             itemBuilder: (context, index) {
-            //                               return reactionWidgets[index];
-            //                             },
-            //                             itemCount: reactionWidgets.length,
-            //                           ),
-            //                         ),
-            //                       ),
-            //                     ),
-            //                   )
-            //                 : Container(),
-            //           ),
+            //
             //           Container(
             //             height: 10.0,
             //           ),
@@ -455,7 +461,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
 
     double topPadding = -5;
 
-    double topOffset = (widget.childOffset.dy - menuHeight).toDouble().clamp(
+    double topOffset = (messageTopOffset - menuHeight).toDouble().clamp(
         topMinimum,
         size.height -
             MediaQuery.of(context).viewInsets.bottom -
@@ -556,7 +562,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
 
     double menuHeight = 100;
 
-    double topOffset = (widget.childOffset.dy + widget.childSize.height)
+    double topOffset = (messageTopOffset + widget.childSize.height)
         .toDouble()
         .clamp(
             topMinimum,
@@ -569,7 +575,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
             : 25 + (currentChat.chat.isGroup() ? 20 : 0))
         .toDouble();
     return Positioned(
-      top: topOffset,
+      top: topOffset + 5,
       left: leftOffset,
       child: menu,
     );
