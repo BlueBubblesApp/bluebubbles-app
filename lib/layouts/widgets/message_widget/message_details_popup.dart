@@ -46,7 +46,6 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
 
   double messageTopOffset;
   double topMinimum;
-  double bottomMaximum;
 
   @override
   void initState() {
@@ -71,21 +70,28 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
           showTools = true;
         });
     });
-
-    SchedulerBinding.instance.addPostFrameCallback((_) {
-      if (this.mounted) {
-        setState(() {
-          messageTopOffset =
-              widget.childOffset.dy.clamp(topMinimum + 40, double.infinity);
-        });
-      }
-    });
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     fetchReactions();
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      if (this.mounted) {
+        setState(() {
+          double totalHeight = MediaQuery.of(context).size.height -
+              MediaQuery.of(context).viewInsets.bottom -
+              120;
+          double offset =
+              (widget.childOffset.dy + widget.childSize.height) - totalHeight;
+          messageTopOffset =
+              widget.childOffset.dy.clamp(topMinimum + 40, double.infinity);
+          if (offset > 0) {
+            messageTopOffset -= offset;
+          }
+        });
+      }
+    });
   }
 
   Future<void> fetchReactions() async {
@@ -204,123 +210,6 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
             ),
             buildReactionMenu(),
             buildCopyPasteMenu(),
-
-            // ReactionDetailWidget()
-            // Positioned.fill(
-            //   child: GestureDetector(
-            //     behavior: HitTestBehavior.deferToChild,
-            //     onTap: () {
-            //       widget.entry.remove();
-            //     },
-            //     child: Container(
-            //       color: Colors.black.withAlpha(200),
-            //       child: Column(
-            //         children: <Widget>[
-            //           Container(height: 45.0),
-            //
-            //           Container(
-            //             height: 10.0,
-            //           ),
-            //           AnimatedSize(
-            //             duration: Duration(milliseconds: 500),
-            //             curve: Sprung(damped: Damped.under),
-            //             vsync: this,
-            //             child: showTools
-            //                 ? ClipRRect(
-            //                     borderRadius: BorderRadius.circular(20),
-            //                     child: BackdropFilter(
-            //                       filter:
-            //                           ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-            //                       child: Container(
-            //                         alignment: Alignment.center,
-            //                         height: 60,
-            //                         width:
-            //                             MediaQuery.of(context).size.width - 20,
-            //                         color: Theme.of(context).accentColor,
-            //                         child: Container(
-            //                           width: MediaQuery.of(context).size.width -
-            //                               20,
-            //                           child: Row(
-            //                             mainAxisAlignment:
-            //                                 MainAxisAlignment.spaceEvenly,
-            //                             mainAxisSize: MainAxisSize.max,
-            //                             children: <Widget>[
-            //                               FlatButton(
-            //                                 splashColor:
-            //                                     Theme.of(context).splashColor,
-            //                                 child: Row(
-            //                                   mainAxisSize: MainAxisSize.min,
-            //                                   children: <Widget>[
-            //                                     Padding(
-            //                                       padding:
-            //                                           const EdgeInsets.all(8.0),
-            //                                       child: Icon(
-            //                                         Icons.content_paste,
-            //                                         color: Theme.of(context)
-            //                                             .textTheme
-            //                                             .bodyText1
-            //                                             .color,
-            //                                       ),
-            //                                     ),
-            //                                     Text(
-            //                                       "Copy",
-            //                                       style: Theme.of(context)
-            //                                           .textTheme
-            //                                           .bodyText1,
-            //                                     ),
-            //                                   ],
-            //                                 ),
-            //                                 onPressed: () {
-// },
-            //                               ),
-            //                               FlatButton(
-            //                                 splashColor:
-            //                                     Theme.of(context).splashColor,
-            //                                 child: Row(
-            //                                   mainAxisSize: MainAxisSize.min,
-            //                                   children: <Widget>[
-            //                                     Padding(
-            //                                       padding:
-            //                                           const EdgeInsets.all(8.0),
-            //                                       child: Icon(
-            //                                         Icons.content_paste,
-            //                                         color: Theme.of(context)
-            //                                             .textTheme
-            //                                             .bodyText1
-            //                                             .color,
-            //                                       ),
-            //                                     ),
-            //                                     Container(
-            //                                       width: 70,
-            //                                       child: Text(
-            //                                         "Copy Section",
-            //                                         textAlign: TextAlign.center,
-            //                                         style: Theme.of(context)
-            //                                             .textTheme
-            //                                             .bodyText1,
-            //                                       ),
-            //                                     ),
-            //                                   ],
-            //                                 ),
-            //                                 onPressed: () {
-// },
-            //                               ),
-            //                             ],
-            //                           ),
-            //                         ),
-            //                       ),
-            //                     ),
-            //                   )
-            //                 : Container(),
-            //           ),
-            //           Spacer(
-            //             flex: 20,
-            //           ),
-            //         ],
-            //       ),
-            //     ),
-            //   ),
-            // ),
           ],
         ),
       ),
