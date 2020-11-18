@@ -1,11 +1,10 @@
 import 'dart:convert';
 import 'dart:ui';
 
-import 'package:bluebubbles/blocs/chat_bloc.dart';
+import 'package:bluebubbles/helpers/mappings.dart';
 import "package:bluebubbles/helpers/string_extension.dart";
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/layouts/settings/scheduler_panel.dart';
 import 'package:bluebubbles/layouts/settings/scheduling_panel.dart';
 import 'package:bluebubbles/layouts/theming/theming_panel.dart';
 import 'package:bluebubbles/layouts/widgets/CustomCupertinoTextField.dart';
@@ -253,6 +252,18 @@ class _SettingsPanelState extends State<SettingsPanel> {
                   },
                   initialVal: _settingsCopy.rainbowBubbles,
                   title: "Colorful Chats",
+                ),
+                SettingsOptions<String>(
+                  initial: _settingsCopy.emojiFontFamily == null
+                      ? "System"
+                      : fontFamilyToString[_settingsCopy.emojiFontFamily],
+                  onChanged: (val) {
+                    _settingsCopy.emojiFontFamily = stringToFontFamily[val];
+                  },
+                  options: stringToFontFamily.keys.toList(),
+                  textProcessing: (dynamic val) => val,
+                  title: "Emoji Style",
+                  showDivider: false,
                 ),
                 SettingsOptions<AdaptiveThemeMode>(
                   initial: AdaptiveTheme.of(context).mode,

@@ -1,3 +1,4 @@
+import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/ballon_bundle_widget.dart';
@@ -5,7 +6,6 @@ import 'package:bluebubbles/layouts/widgets/message_widget/message_content/messa
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_time_stamp.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_popup_holder.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.dart';
-import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/material.dart';
@@ -78,10 +78,14 @@ class _ReceivedMessageState extends State<ReceivedMessage>
           right: (hasReactions) ? 15.0 : 0.0,
           top: widget.message.getReactions().length > 0 ? 15 : 0,
         ),
-        child: Text(
-          message.text,
-          style: Theme.of(context).textTheme.bodyText1.apply(fontSizeFactor: 4),
-        ),
+        child: RichText(
+            text: TextSpan(
+                children: MessageHelper.buildEmojiText(
+                    message.text,
+                    Theme.of(context)
+                        .textTheme
+                        .bodyText1
+                        .apply(fontSizeFactor: 4)))),
       );
     }
 
@@ -171,9 +175,8 @@ class _ReceivedMessageState extends State<ReceivedMessage>
       );
     } else if (widget.message.isInteractive()) {
       message = Padding(
-        padding: EdgeInsets.only(left: 10.0),
-        child: BalloonBundleWidget(message: widget.message)
-      );
+          padding: EdgeInsets.only(left: 10.0),
+          child: BalloonBundleWidget(message: widget.message));
     } else if (widget.message.hasText()) {
       message = _buildMessageWithTail(widget.message);
     }

@@ -12,6 +12,7 @@ import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:contacts_service/contacts_service.dart';
+import 'package:flutter/widgets.dart';
 
 class EmojiConst {
   static final String charNonSpacingMark = String.fromCharCode(0xfe0f);
@@ -335,5 +336,35 @@ class MessageHelper {
 
     List<String> items = val.split(":").reversed.toList();
     return (items.length > 0) ? items[0] : val;
+  }
+
+  static List<TextSpan> buildEmojiText(String text, TextStyle style) {
+    final children = <TextSpan>[];
+    final runes = text.runes;
+
+    for (int i = 0; i < runes.length; /* empty */) {
+      int current = runes.elementAt(i);
+      final isEmoji = current > 255;
+      final shouldBreak = isEmoji ? (x) => x <= 255 : (x) => x > 255;
+
+      final chunk = <int>[];
+      while (!shouldBreak(current)) {
+        chunk.add(current);
+        if (++i >= runes.length) break;
+        current = runes.elementAt(i);
+      }
+
+      children.add(
+        TextSpan(
+          text: String.fromCharCodes(chunk),
+          style: style.apply(
+              fontFamily: (isEmoji)
+                  ? SettingsManager().settings.emojiFontFamily
+                  : null),
+        ),
+      );
+    }
+
+    return children;
   }
 }

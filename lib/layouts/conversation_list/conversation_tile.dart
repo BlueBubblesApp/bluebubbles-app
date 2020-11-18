@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
-import 'package:bluebubbles/blocs/message_bloc.dart';
+import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_group_widget.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -215,28 +215,33 @@ class _ConversationTileState extends State<ConversationTile>
                   ),
                   child: ListTile(
                     contentPadding: EdgeInsets.only(left: 0),
-                    title: Text(
-                      widget.chat.title != null ? widget.chat.title : "",
-                      style: Theme.of(context).textTheme.bodyText1,
+                    title: RichText(
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
+                      text: TextSpan(
+                        children: MessageHelper.buildEmojiText(
+                            widget.chat.title != null ? widget.chat.title : "",
+                            Theme.of(context).textTheme.bodyText1,
+                        )
+                      )
                     ),
                     subtitle: widget.chat.latestMessageText != null &&
                             !(widget.chat.latestMessageText is String)
                         ? widget.chat.latestMessageText
-                        : Text(
-                            widget.chat.latestMessageText != null
-                                ? widget.chat.latestMessageText
-                                : "",
-                            style: Theme.of(context).textTheme.subtitle1.apply(
-                                color: Theme.of(context)
-                                    .textTheme
-                                    .subtitle1
-                                    .color
-                                    .withOpacity(0.85)),
+                        : RichText(
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                          ),
+                            text: TextSpan(
+                                children: MessageHelper.buildEmojiText(
+                                    widget.chat.latestMessageText != null
+                                        ? widget.chat.latestMessageText
+                                        : "",
+                                    Theme.of(context).textTheme.subtitle1.apply(
+                                        color: Theme.of(context)
+                                            .textTheme
+                                            .subtitle1
+                                            .color
+                                            .withOpacity(0.85))))),
                     leading: ContactAvatarGroupWidget(
                       participants: widget.chat.participants,
                       chat: widget.chat,
