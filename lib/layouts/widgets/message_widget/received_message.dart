@@ -134,9 +134,9 @@ class _ReceivedMessageState extends State<ReceivedMessage>
     List<Widget> messageColumn = [];
 
     // First, add the message sender (if applicable)
-    if (!sameSender(widget.message, widget.olderMessage) ||
+    if (CurrentChat.of(context).chat.isGroup() && (!sameSender(widget.message, widget.olderMessage) ||
         !widget.message.dateCreated
-            .isWithin(widget.olderMessage.dateCreated, minutes: 30)) {
+            .isWithin(widget.olderMessage.dateCreated, minutes: 30))) {
       messageColumn.add(
         Padding(
           padding: EdgeInsets.only(
