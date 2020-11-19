@@ -1,3 +1,4 @@
+import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
@@ -78,44 +79,40 @@ abstract class MessageWidgetMixin {
       });
 
       if (!isNullOrEmpty(message.subject)) {
-        textSpans.add(TextSpan(
-          text: "${message.subject}\n",
-          style: message.isFromMe
-              ? Theme.of(context)
-                  .textTheme
-                  .bodyText1
-                  .apply(color: Colors.white, fontWeightDelta: 2)
-              : Theme.of(context).textTheme.bodyText1.apply(fontWeightDelta: 2),
-        ));
+        textSpans.addAll(MessageHelper.buildEmojiText(
+            "${message.subject}\n",
+            message.isFromMe
+                ? Theme.of(context)
+                    .textTheme
+                    .bodyText1
+                    .apply(color: Colors.white, fontWeightDelta: 2)
+                : Theme.of(context)
+                    .textTheme
+                    .bodyText1
+                    .apply(fontWeightDelta: 2)));
       }
 
       if (linkIndexMatches.length > 0) {
         for (int i = 0; i < linkIndexMatches.length + 1; i++) {
           if (i == 0) {
-            textSpans.add(
-              TextSpan(
-                text: message.text.substring(0, linkIndexMatches[i]),
-                style: message.isFromMe
+            textSpans.addAll(MessageHelper.buildEmojiText(
+                message.text.substring(0, linkIndexMatches[i]),
+                message.isFromMe
                     ? Theme.of(context)
                         .textTheme
                         .bodyText1
                         .apply(color: Colors.white)
-                    : null,
-              ),
-            );
+                    : Theme.of(context).textTheme.bodyText1));
           } else if (i == linkIndexMatches.length && i - 1 >= 0) {
-            textSpans.add(
-              TextSpan(
-                text: message.text
+            textSpans.addAll(MessageHelper.buildEmojiText(
+                message.text
                     .substring(linkIndexMatches[i - 1], message.text.length),
-                style: message.isFromMe
+                message.isFromMe
                     ? Theme.of(context)
                         .textTheme
                         .bodyText1
                         .apply(color: Colors.white)
-                    : null,
-              ),
-            );
+                    : Theme.of(context).textTheme.bodyText1));
           } else if (i - 1 >= 0) {
             String text = message.text
                 .substring(linkIndexMatches[i - 1], linkIndexMatches[i]);
@@ -142,32 +139,26 @@ abstract class MessageWidgetMixin {
                 ),
               );
             } else {
-              textSpans.add(
-                TextSpan(
-                  text: text,
-                  style: message.isFromMe
+              textSpans.addAll(MessageHelper.buildEmojiText(
+                  text,
+                  message.isFromMe
                       ? Theme.of(context)
                           .textTheme
                           .bodyText1
                           .apply(color: Colors.white)
-                      : null,
-                ),
-              );
+                      : Theme.of(context).textTheme.bodyText1));
             }
           }
         }
       } else {
-        textSpans.add(
-          TextSpan(
-            text: message.text,
-            style: message.isFromMe
+        textSpans.addAll(MessageHelper.buildEmojiText(
+            message.text,
+            message.isFromMe
                 ? Theme.of(context)
                     .textTheme
                     .bodyText1
                     .apply(color: Colors.white)
-                : null,
-          ),
-        );
+                : Theme.of(context).textTheme.bodyText1));
       }
     }
 

@@ -99,7 +99,9 @@ class _ChatSelectorTextFieldState extends State<ChatSelectorTextField> {
                   content: Text("Invalid Number $done"),
                   duration: Duration(milliseconds: 500),
                 ));
-              } else {
+
+              // This is 4 chars due to invisible character
+              } else if (widget.controller.text.length >= 4) {
                 widget.onSelected(widget.allContacts[0]);
               }
             }

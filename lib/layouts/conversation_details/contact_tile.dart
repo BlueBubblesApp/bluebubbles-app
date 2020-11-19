@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
+import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
@@ -122,9 +123,13 @@ class _ContactTileState extends State<ContactTile> {
         }
       },
       child: ListTile(
-        title: Text(
-          contact != null ? contact.displayName : widget.handle.address,
-          style: Theme.of(context).textTheme.bodyText1,
+        title: RichText(
+          text: TextSpan(
+            children: MessageHelper.buildEmojiText(
+              contact != null ? contact.displayName : widget.handle.address,
+              Theme.of(context).textTheme.bodyText1
+            )
+          )
         ),
         leading: ContactAvatarWidget(
           handle: widget.handle,

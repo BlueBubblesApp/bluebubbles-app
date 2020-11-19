@@ -40,10 +40,14 @@ class SentMessageHelper {
           top: (hasReactions) ? 15.0 : 0.0,
           right: 5,
         ),
-        child: Text(
-          message.text,
-          style: Theme.of(context).textTheme.bodyText1.apply(fontSizeFactor: 4),
-        ),
+        child: RichText(
+            text: TextSpan(
+                children: MessageHelper.buildEmojiText(
+                    message.text,
+                    Theme.of(context)
+                        .textTheme
+                        .bodyText1
+                        .apply(fontSizeFactor: 4)))),
       );
     } else {
       msg = Stack(

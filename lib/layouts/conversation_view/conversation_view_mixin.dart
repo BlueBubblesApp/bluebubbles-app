@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:assorted_layout_widgets/assorted_layout_widgets.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
+import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_details/conversation_details.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
@@ -211,10 +212,10 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
                     text: TextSpan(
                       style: Theme.of(context).textTheme.headline2,
                       children: [
-                        TextSpan(
-                          text: chat.title,
-                          style: Theme.of(context).textTheme.bodyText1,
-                        ),
+                        ...MessageHelper.buildEmojiText(
+                            chat.title,
+                            Theme.of(context).textTheme.bodyText1,
+                          ),
                         TextSpan(
                           text: " >",
                           style: Theme.of(context).textTheme.subtitle1,
