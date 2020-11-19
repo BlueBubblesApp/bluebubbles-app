@@ -15,8 +15,8 @@ import 'package:bluebubbles/socket_manager.dart';
 import 'package:clipboard/clipboard.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:keyboard_visibility/keyboard_visibility.dart';
 import 'package:sprung/sprung.dart';
 
 class MessageDetailsPopup extends StatefulWidget {
@@ -54,9 +54,9 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
   void initState() {
     super.initState();
     currentChat = widget.currentChat;
-    KeyboardVisibilityNotification().addNewListener(
-      onHide: () {
-        Navigator.of(context).pop();
+    KeyboardVisibility.onChange.listen(
+      (bool visible) {
+        if (!visible) Navigator.of(context).pop();
       },
     );
 
