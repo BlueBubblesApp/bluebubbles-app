@@ -6,6 +6,7 @@ import 'package:bluebubbles/layouts/conversation_view/messages_view.dart';
 import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/chat_selector_text_field.dart';
 import 'package:bluebubbles/layouts/conversation_view/text_field/blue_bubbles_text_field.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/outgoing_queue.dart';
 import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:flutter/material.dart';
@@ -81,6 +82,8 @@ class ConversationViewState extends State<ConversationView>
       currentChat.dispose();
     }
 
+    // Switching chat to null will clear the currently active chat
+    NotificationManager().switchChat(null);
     super.dispose();
   }
 
