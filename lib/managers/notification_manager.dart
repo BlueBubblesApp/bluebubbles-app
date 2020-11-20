@@ -56,9 +56,9 @@ class NotificationManager {
   /// the chat will be marked as read, and the notifications
   /// for the chat will be cleared
   void switchChat(Chat chat) async {
+    _currentChat = chat;
     if (chat == null) return;
 
-    _currentChat = chat;
     await chat.setUnreadStatus(false);
     MethodChannelInterface()
         .invokeMethod("clear-chat-notifs", {"chatGuid": _currentChat.guid});
