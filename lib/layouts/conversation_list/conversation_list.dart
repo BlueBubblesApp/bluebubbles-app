@@ -275,20 +275,29 @@ class _ConversationListState extends State<ConversationList> {
 
                 if (_chats.isEmpty) {
                   return SliverToBoxAdapter(
-                      child: Center(
-                          child: Container(
-                              padding: EdgeInsets.only(top: 50.0),
-                              child: Text("You have no chats :(",
-                                  style:
-                                      Theme.of(context).textTheme.subtitle1))));
+                    child: Center(
+                      child: Container(
+                        padding: EdgeInsets.only(top: 50.0),
+                        child: Text(
+                          "You have no chats :(",
+                          style: Theme.of(context).textTheme.subtitle1,
+                        ),
+                      ),
+                    ),
+                  );
                 }
 
                 return SliverList(
                   delegate: SliverChildBuilderDelegate(
                     (context, index) {
+                      if (!widget.showArchivedChats && _chats[index].isArchived)
+                        return Container();
+                      if (widget.showArchivedChats && !_chats[index].isArchived)
+                        return Container();
                       return ConversationTile(
-                          key: Key(_chats[index].guid.toString()),
-                          chat: _chats[index]);
+                        key: Key(_chats[index].guid.toString()),
+                        chat: _chats[index],
+                      );
                     },
                     childCount: _chats?.length ?? 0,
                   ),
