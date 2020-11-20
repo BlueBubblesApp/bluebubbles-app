@@ -248,6 +248,8 @@ class ChatBloc {
   }
 
   void updateChat(Chat chat) async {
+    if (_chats == null) await refreshChats();
+
     for (int i = 0; i < _chats.length; i++) {
       Chat _chat = _chats[i];
       if (_chat.guid == chat.guid) {
