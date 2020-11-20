@@ -30,17 +30,10 @@ class _ConversationListState extends State<ConversationList> {
   Color _theme;
   List<Chat> _chats = <Chat>[];
   bool colorfulChats = false;
-  Future<void> avatarRequest;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-
-    if (avatarRequest == null) {
-      avatarRequest = ContactManager().getAvatars().then((_) {
-        avatarRequest = null;
-      });
-    }
 
     if (this.mounted) {
       setState(() {
