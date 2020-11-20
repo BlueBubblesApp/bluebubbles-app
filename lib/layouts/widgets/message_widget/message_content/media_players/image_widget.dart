@@ -52,7 +52,7 @@ class _ImageWidgetState extends State<ImageWidget>
       } else {
         data = await widget.file.readAsBytes();
       }
-      CurrentChat.of(context).saveImageData(data, widget.attachment);
+      CurrentChat.of(context)?.saveImageData(data, widget.attachment);
       if (this.mounted) setState(() {});
     }
     widget.attachment.updateDimensions(data);
@@ -67,7 +67,7 @@ class _ImageWidgetState extends State<ImageWidget>
         if (!SettingsManager().settings.lowMemoryMode) return;
         if (info.visibleFraction == 0 && visible && !navigated) {
           visible = false;
-          CurrentChat.of(context).clearImageData(widget.attachment);
+          CurrentChat.of(context)?.clearImageData(widget.attachment);
           if (this.mounted) setState(() {});
         } else if (!visible) {
           visible = true;
