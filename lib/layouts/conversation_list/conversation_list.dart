@@ -266,11 +266,11 @@ class _ConversationListState extends State<ConversationList> {
                 (BuildContext context, AsyncSnapshot<List<Chat>> snapshot) {
               if (snapshot.hasData || widget.showArchivedChats) {
                 _chats.sort((a, b) {
-                  if (a.latestMessageDate == null &&
-                      b.latestMessageDate == null) return 0;
-                  if (a.latestMessageDate == null) return 1;
-                  if (b.latestMessageDate == null) return -1;
-                  return -a.latestMessageDate.compareTo(b.latestMessageDate);
+                  if (a.unsavedMessageDate == null &&
+                      b.unsavedMessageDate == null) return 0;
+                  if (a.unsavedMessageDate == null) return 1;
+                  if (b.unsavedMessageDate == null) return -1;
+                  return -a.unsavedMessageDate.compareTo(b.unsavedMessageDate);
                 });
 
                 if (_chats.isEmpty) {

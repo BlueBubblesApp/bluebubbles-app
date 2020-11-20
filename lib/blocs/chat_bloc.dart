@@ -95,11 +95,11 @@ class ChatBloc {
       if (_chats[i].guid != chat.guid) continue;
 
       // Don't move/update the chat if the latest message for it is newer than the incoming one
-      int latest = chat.latestMessageDate != null
-          ? chat.latestMessageDate.millisecondsSinceEpoch
+      int latest = chat.unsavedMessageDate != null
+          ? chat.unsavedMessageDate.millisecondsSinceEpoch
           : 0;
-      if (_chats[i].latestMessageDate != null &&
-              _chats[i].latestMessageDate.millisecondsSinceEpoch > latest ??
+      if (_chats[i].unsavedMessageDate != null &&
+              _chats[i].unsavedMessageDate.millisecondsSinceEpoch > latest ??
           0) {
         shouldUpdate = false;
       }
@@ -120,10 +120,10 @@ class ChatBloc {
     if (currentIndex == -1) {
       for (int i = 0; i < _chats.length; i++) {
         // If the chat is older, that's where we want to insert
-        if (_chats[i].latestMessageDate == null ||
-                chat.latestMessageDate == null ||
-                _chats[i].latestMessageDate.millisecondsSinceEpoch <
-                    chat.latestMessageDate.millisecondsSinceEpoch ??
+        if (_chats[i].unsavedMessageDate == null ||
+                chat.unsavedMessageDate == null ||
+                _chats[i].unsavedMessageDate.millisecondsSinceEpoch <
+                    chat.unsavedMessageDate.millisecondsSinceEpoch ??
             0) {
           _chats.insert(i, chat);
           break;
@@ -207,9 +207,9 @@ class ChatBloc {
   Future<void> initTileValsForChat(Chat chat) async {
     if (chat.title == null) {
       await chat.getTitle();
-      AttachmentInfoBloc().initChat(chat);
-      // asldkfjalskdjf
     }
+    await chat.updateLocalVals();
+    AttachmentInfoBloc().initChat(chat);
   }
 
   void archiveChat(Chat chat) async {
@@ -254,7 +254,7 @@ class ChatBloc {
       Chat _chat = _chats[i];
       if (_chat.guid == chat.guid) {
         _chats[i] = chat;
-        await initTileValsForChat(chats[i]); 
+        await initTileValsForChat(chats[i]);
       }
     }
 
