@@ -5,7 +5,6 @@ import 'dart:ui';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/message.dart';
-import 'package:mime_type/mime_type.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:image_size_getter/image_size_getter.dart' as IMG;
 
