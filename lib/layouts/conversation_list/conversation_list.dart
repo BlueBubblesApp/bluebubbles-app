@@ -2,7 +2,7 @@ import 'dart:ui';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
-import 'package:bluebubbles/managers/alarm_manager.dart';
+import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
@@ -10,7 +10,6 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/managers/theme_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
-import 'package:flutter/services.dart';
 
 import './conversation_tile.dart';
 import 'package:flutter/cupertino.dart';
@@ -31,10 +30,18 @@ class _ConversationListState extends State<ConversationList> {
   Color _theme;
   List<Chat> _chats = <Chat>[];
   bool colorfulChats = false;
+  Future<void> avatarRequest;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+
+    if (avatarRequest == null) {
+      avatarRequest = ContactManager().getAvatars().then((_) {
+        avatarRequest = null;
+      });
+    }
+
     if (this.mounted) {
       setState(() {
         _theme = Colors.transparent;
