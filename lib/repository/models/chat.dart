@@ -579,6 +579,7 @@ class Chat {
 
   Future<Chat> getParticipants() async {
     final Database db = await DBProvider.db.database;
+    if (this.id == null) return this;
 
     var res = await db.rawQuery(
         "SELECT"

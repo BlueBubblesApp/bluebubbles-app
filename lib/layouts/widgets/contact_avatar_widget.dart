@@ -43,8 +43,10 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget>
   void initState() {
     super.initState();
     if (isInvalid) return;
+
     state = ContactManager().getState(widget.handle.address);
     colors = toColorGradient(widget.handle.address);
+
     ContactManager().stream.listen((event) {
       for (String address in event) {
         if (address == widget.handle.address) {
