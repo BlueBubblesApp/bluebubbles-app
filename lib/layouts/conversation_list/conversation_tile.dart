@@ -217,10 +217,10 @@ class _ConversationTileState extends State<ConversationTile>
                       overflow: TextOverflow.ellipsis,
                       text: TextSpan(
                         children: MessageHelper.buildEmojiText(
-                          widget.chat.title != null ? widget.chat.title : "",
-                          Theme.of(context).textTheme.bodyText1,
-                        ),
-                      ),
+                            widget.chat.title != null ? widget.chat.title : "",
+                            Theme.of(context).textTheme.bodyText1,
+                        )
+                      )
                     ),
                     subtitle: widget.chat.latestMessageText != null &&
                             !(widget.chat.latestMessageText is String)
@@ -229,22 +229,16 @@ class _ConversationTileState extends State<ConversationTile>
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             text: TextSpan(
-                              children: MessageHelper.buildEmojiText(
-                                widget.chat.latestMessageText != null
-                                    ? widget.chat.latestMessageText
-                                    : "",
-                                Theme.of(context).textTheme.subtitle1.apply(
-                                      color: Theme.of(context)
-                                          .textTheme
-                                          .subtitle1
-                                          .color
-                                          .withOpacity(
-                                            0.85,
-                                          ),
-                                    ),
-                              ),
-                            ),
-                          ),
+                                children: MessageHelper.buildEmojiText(
+                                    widget.chat.latestMessageText != null
+                                        ? widget.chat.latestMessageText
+                                        : "",
+                                    Theme.of(context).textTheme.subtitle1.apply(
+                                        color: Theme.of(context)
+                                            .textTheme
+                                            .subtitle1
+                                            .color
+                                            .withOpacity(0.85))))),
                     leading: ContactAvatarGroupWidget(
                       participants: widget.chat.participants,
                       chat: widget.chat,

@@ -30,10 +30,17 @@ class _ConversationListState extends State<ConversationList> {
   Color _theme;
   List<Chat> _chats = <Chat>[];
   bool colorfulChats = false;
+  Future<void> avatarRequest;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+
+    if (avatarRequest == null) {
+      avatarRequest = ContactManager().getAvatars().then((_) {
+        avatarRequest = null;
+      });
+    }
 
     if (this.mounted) {
       setState(() {
@@ -266,11 +273,11 @@ class _ConversationListState extends State<ConversationList> {
                 (BuildContext context, AsyncSnapshot<List<Chat>> snapshot) {
               if (snapshot.hasData || widget.showArchivedChats) {
                 _chats.sort((a, b) {
-                  if (a.latestMessageDate == null &&
-                      b.latestMessageDate == null) return 0;
-                  if (a.latestMessageDate == null) return 1;
-                  if (b.latestMessageDate == null) return -1;
-                  return -a.latestMessageDate.compareTo(b.latestMessageDate);
+                  if (a.unsavedMessageDate == null &&
+                      b.unsavedMessageDate == null) return 0;
+                  if (a.unsavedMessageDate == null) return 1;
+                  if (b.unsavedMessageDate == null) return -1;
+                  return -a.unsavedMessageDate.compareTo(b.unsavedMessageDate);
                 });
 
                 if (_chats.isEmpty) {
@@ -294,10 +301,6 @@ class _ConversationListState extends State<ConversationList> {
                         return Container();
                       if (widget.showArchivedChats && !_chats[index].isArchived)
                         return Container();
-                      if (index == 0) {
-                        debugPrint("Latest Message text is: " +
-                            _chats[index].latestMessageText);
-                      }
                       return ConversationTile(
                         key: Key(_chats[index].guid.toString()),
                         chat: _chats[index],
