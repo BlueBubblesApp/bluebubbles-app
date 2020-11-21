@@ -27,7 +27,7 @@ class ImageWidget extends StatefulWidget {
 }
 
 class _ImageWidgetState extends State<ImageWidget>
-    with TickerProviderStateMixin {
+    with TickerProviderStateMixin, AutomaticKeepAliveClientMixin {
   bool navigated = false;
   bool visible = true;
   Uint8List data;
@@ -53,9 +53,9 @@ class _ImageWidgetState extends State<ImageWidget>
         data = await widget.file.readAsBytes();
       }
       CurrentChat.of(context)?.saveImageData(data, widget.attachment);
+      await widget.attachment.updateDimensions(data);
       if (this.mounted) setState(() {});
     }
-    widget.attachment.updateDimensions(data);
   }
 
   @override
@@ -142,4 +142,7 @@ class _ImageWidgetState extends State<ImageWidget>
       );
     }
   }
+
+  @override
+  bool get wantKeepAlive => true;
 }

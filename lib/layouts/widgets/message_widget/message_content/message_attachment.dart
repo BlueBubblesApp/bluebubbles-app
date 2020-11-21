@@ -39,6 +39,10 @@ class _MessageAttachmentState extends State<MessageAttachment>
   @override
   void initState() {
     super.initState();
+    updateContent();
+  }
+
+  void updateContent() {
     content = AttachmentHelper.getContent(widget.attachment);
     if (content is AttachmentDownloader) {
       (content as AttachmentDownloader).stream.listen((event) {
@@ -54,6 +58,7 @@ class _MessageAttachmentState extends State<MessageAttachment>
   @override
   Widget build(BuildContext context) {
     super.build(context);
+    updateContent();
     return ClipRRect(
       borderRadius: BorderRadius.circular(20),
       child: Container(
@@ -92,11 +97,7 @@ class _MessageAttachmentState extends State<MessageAttachment>
           !widget.attachment.mimeType.contains("caf")) {
         return MediaFile(
           attachment: widget.attachment,
-          child: AudioPlayerWiget(
-            file: content,
-            context: context,
-            width: 250
-          ),
+          child: AudioPlayerWiget(file: content, context: context, width: 250),
         );
       } else if (widget.attachment.mimeType == "text/x-vlocation") {
         return MediaFile(
