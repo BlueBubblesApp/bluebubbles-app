@@ -148,15 +148,15 @@ class SentMessageHelper {
                         NewMessageManager().removeMessage(chat, message.guid);
 
                         // Get the "new" latest info
-                        // List<Message> latest =
-                        //     await Chat.getMessages(chat, limit: 1);
-                        // chat.latestMessageDate = latest.first != null
-                        //     ? latest.first.dateCreated
-                        //     : null;
-                        // chat.latestMessageText = latest.first != null
-                        //     ? await MessageHelper.getNotificationText(
-                        //         latest.first)
-                        //     : null;
+                        List<Message> latest =
+                            await Chat.getMessages(chat, limit: 1);
+                        chat.latestMessageDate = latest.first != null
+                            ? latest.first.dateCreated
+                            : null;
+                        chat.latestMessageText = latest.first != null
+                            ? await MessageHelper.getNotificationText(
+                                latest.first)
+                            : null;
 
                         // Update it in the Bloc
                         await ChatBloc().updateChatPosition(chat);

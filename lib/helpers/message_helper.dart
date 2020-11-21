@@ -67,6 +67,8 @@ class MessageHelper {
 
       Message message = Message.fromMap(item);
       Message existing = await Message.findOne({"guid": message.guid});
+      await msgChat.addMessage(message,
+          changeUnreadStatus: notifyForNewMessage);
       if (existing == null) {
         if (limit) {
           if (!notificationMessages.containsValue(msgChat.guid)) {
@@ -76,8 +78,6 @@ class MessageHelper {
           notificationMessages[message] = msgChat.guid;
         }
       }
-      await msgChat.addMessage(message,
-          changeUnreadStatus: notifyForNewMessage);
 
       // Create the attachments
       List<dynamic> attachments = item['attachments'];

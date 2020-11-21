@@ -92,7 +92,6 @@ class Chat {
   bool isMuted;
   bool hasUnreadMessage;
   DateTime latestMessageDate;
-  DateTime unsavedMessageDate;
   String latestMessageText;
   String title;
   String displayName;
@@ -144,6 +143,9 @@ class Chat {
               ? json['hasUnreadMessage']
               : ((json['hasUnreadMessage'] == 1) ? true : false)
           : false,
+      latestMessageText: json.containsKey("latestMessageText")
+          ? json["latestMessageText"]
+          : null,
       latestMessageDate: json.containsKey("latestMessageDate") &&
               json['latestMessageDate'] != null
           ? new DateTime.fromMillisecondsSinceEpoch(
@@ -207,14 +209,14 @@ class Chat {
   }
 
   String getDateText() {
-    if (this.unsavedMessageDate == null ||
-        this.unsavedMessageDate.millisecondsSinceEpoch == 0) return "";
-    if (this.unsavedMessageDate.isToday()) {
-      return new DateFormat.jm().format(this.unsavedMessageDate);
-    } else if (this.unsavedMessageDate.isYesterday()) {
+    if (this.latestMessageDate == null ||
+        this.latestMessageDate.millisecondsSinceEpoch == 0) return "";
+    if (this.latestMessageDate.isToday()) {
+      return new DateFormat.jm().format(this.latestMessageDate);
+    } else if (this.latestMessageDate.isYesterday()) {
       return "Yesterday";
     } else {
-      return "${this.unsavedMessageDate.month.toString()}/${this.unsavedMessageDate.day.toString()}/${this.unsavedMessageDate.year.toString()}";
+      return "${this.latestMessageDate.month.toString()}/${this.latestMessageDate.day.toString()}/${this.latestMessageDate.year.toString()}";
     }
   }
 
@@ -229,8 +231,9 @@ class Chat {
 
     // Only update the latestMessage info if it's not null
     if (this.latestMessageDate != null) {
+      params["latestMessageText"] = this.latestMessageText;
       params["latestMessageDate"] =
-          this.unsavedMessageDate?.millisecondsSinceEpoch ?? 0;
+          this.latestMessageDate.millisecondsSinceEpoch;
     }
 
     // Add display name if it's been updated
@@ -312,6 +315,7 @@ class Chat {
     }
 
     if (isNewer) {
+      this.latestMessageText = await MessageHelper.getNotificationText(message);
       this.latestMessageDate = message.dateCreated;
     }
 
@@ -358,22 +362,6 @@ class Chat {
 
     // Return the current chat instance (with updated vals)
     return this;
-  }
-
-  Future<void> updateLocalVals() async {
-    if (this.id == null) {
-      await this.save();
-    }
-    List<Message> messages = await getMessages(this, limit: 1);
-    if (messages.isEmpty) {
-      this.unsavedMessageDate = null;
-      this.latestMessageText = null;
-      return;
-    }
-
-    this.unsavedMessageDate = messages.first.dateCreated;
-    this.latestMessageText =
-        await MessageHelper.getNotificationText(messages.first);
   }
 
   void serverSyncParticipants() {
@@ -472,6 +460,19 @@ class Chat {
     // String reactionQualifier = reactionsOnly ? "IS NOT" : "IS";
     String query = ("SELECT"
         " message.ROWID AS ROWID,"
+        // " '[' || GROUP_CONCAT( '\"' || attachment.ROWID || '\"') || ']' AS attachmentId,"
+        // " '[' || GROUP_CONCAT( '\"' || attachment.guid || '\"') || ']' AS attachmentGuid,"
+        // "	'[' || GROUP_CONCAT( '\"' || attachment.blurhash || '\"') || ']' AS attachmentBlurhash,"
+        // " '[' || GROUP_CONCAT( '\"' || attachment.height || '\"') || ']' AS attachmentHeight,"
+        // " '[' || GROUP_CONCAT( '\"' || attachment.width || '\"') || ']' AS attachmentWidth,"
+        // " '[' || GROUP_CONCAT( '\"' || attachment.hideAttachment || '\"') || ']' AS attachmentHideAttachment,"
+        // " '[' || GROUP_CONCAT( '\"' || attachment.isOutgoing || '\"') || ']' AS attachmentIsOutgoing,"
+        // " '[' || GROUP_CONCAT( '\"' || attachment.isSticker || '\"') || ']' AS attachmentIsSticker,"
+        // " '[' || GROUP_CONCAT( '\"' || attachment.mimeType || '\"') || ']' AS attachmentMimeType,"
+        // " '[' || GROUP_CONCAT( '\"' || attachment.totalBytes || '\"') || ']' AS attachmentTotalBytes,"
+        // " '[' || GROUP_CONCAT( '\"' || attachment.transferName || '\"') || ']' AS attachmentTransferName,"
+        // " '[' || GROUP_CONCAT( '\"' || attachment.transferState || '\"') || ']' AS attachmentTransferState,"
+        // " '[' || GROUP_CONCAT( '\"' || attachment.uti || '\"') || ']' AS attachmentUti,"
         " message.originalROWID AS originalROWID,"
         " message.guid AS guid,"
         " message.handleId AS handleId,"
@@ -693,6 +694,7 @@ class Chat {
         " chat.isMuted as isMuted,"
         " chat.hasUnreadMessage as hasUnreadMessage,"
         " chat.latestMessageDate as latestMessageDate,"
+        " chat.latestMessageText as latestMessageText,"
         " chat.displayName as displayName"
         " FROM chat"
         " WHERE chat.isArchived = ? ORDER BY chat.latestMessageDate DESC LIMIT $limit OFFSET $offset;",
@@ -728,6 +730,9 @@ class Chat {
         "displayName": displayName,
         "participants": participants.map((item) => item.toMap()),
         "hasUnreadMessage": hasUnreadMessage ? 1 : 0,
-        "latestMessageDate": unsavedMessageDate ?? 0,
+        "latestMessageDate": latestMessageDate != null
+            ? latestMessageDate.millisecondsSinceEpoch
+            : 0,
+        "latestMessageText": latestMessageText
       };
 }
