@@ -294,10 +294,6 @@ class _ConversationListState extends State<ConversationList> {
                         return Container();
                       if (widget.showArchivedChats && !_chats[index].isArchived)
                         return Container();
-                      if (index == 0) {
-                        debugPrint("Latest Message text is: " +
-                            _chats[index].latestMessageText);
-                      }
                       return ConversationTile(
                         key: Key(_chats[index].guid.toString()),
                         chat: _chats[index],
