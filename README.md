@@ -1,12 +1,19 @@
-# BlueBubbles
+# BlueBubbles Android App
 
-iMessage for android solution, open source and free. It uses a Mac server to send messages through iMessage.
+For those of you that do not know; BlueBubbles is an open-source and cross-platform ecosystem of apps aimed to bring iMessage to all of your devices. That includes Android, Windows, Linux, etc. As such, this app allows you to bring iMessage to your Android device! With BlueBubbles, you'll be able to send messages, images, audio, GIFs, and much more to your friends and family.
 
-You will need a mac to set this up
+We want to be more than just another iMessage app. We want to be community-driven and as open as possible to show that we encourage all forms of help to improve the ecosystem. All help is appreciated! Of course, we will add our _touch_ to it as much as possible to make your experience as flawless and as enjoyable as it possibly can. This means quality of life updates that even our Apple OS app-counterparts do not support. The only requirement is that you have access to a device running macOS High Sierra or later. We hope you enjoy using the app!
 
-## Contacting us!
+If you would like to find out more, you can visit our website: https://bluebubbles.app
 
-Join our discord [here](https://discord.gg/4F7nbf3)!
+## Useful links
+
+* Our Website: [here](https://bluebubbles.app)
+* Discord: [here](https://discord.gg/4F7nbf3)!
+    - We highly encourage users to join to get in direct communication with the developers and community
+* GitHub: [here](https://github.com/BlueBubblesApp)
+    - Please submit any issues with the app here so we can properly track them! Remember to search before opening a ticket :)
+    - Contribution is *always* appreciated and needed! Feel free to download our source, make changes, and submit a pull request.
 
 ## Getting Started
 
@@ -16,14 +23,6 @@ All server builds can be found in [here](https://github.com/BlueBubblesApp/BlueB
 
 After downloading both, follow our tutorial [here](https://bluebubbles.app/install/)
 
-## Building from source
-
-Because of a few limitations with flutter and gif insertion in the textfield, we have had to modify both the flutter framework and the engine. It is a pain to setup. At the moment, you will be unable to setup the app from source, however a tutorial is coming soon
-
 ## Contributing
 
-We have very simple requirements to contribute.
-
-- Write clean code
-- Comment your code
-- Follow [dart doc guidelines](https://dart.dev/guides/language/effective-dart)
+Please check out our contribution guide here: [Contribution Guide](https://github.com/BlueBubblesApp/BlueBubbles-Android-App/wiki/Contribution-Guide)
