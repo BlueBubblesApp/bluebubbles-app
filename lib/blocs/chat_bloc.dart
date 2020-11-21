@@ -207,9 +207,8 @@ class ChatBloc {
   Future<void> initTileValsForChat(Chat chat) async {
     if (chat.title == null) {
       await chat.getTitle();
-      AttachmentInfoBloc().initChat(chat);
-      // asldkfjalskdjf
     }
+    AttachmentInfoBloc().initChat(chat);
   }
 
   void archiveChat(Chat chat) async {
@@ -254,7 +253,7 @@ class ChatBloc {
       Chat _chat = _chats[i];
       if (_chat.guid == chat.guid) {
         _chats[i] = chat;
-        await initTileValsForChat(chats[i]); 
+        await initTileValsForChat(chats[i]);
       }
     }
 
