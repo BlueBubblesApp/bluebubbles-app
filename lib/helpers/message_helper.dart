@@ -30,8 +30,11 @@ class MessageHelper {
       Chat chat, List<dynamic> messages,
       {bool notifyForNewMessage = false,
       bool notifyMessageManager = true}) async {
+    bool limit = messages.length > 20;
+
     // Create master list for all the messages and a chat cache
     List<Message> _messages = <Message>[];
+    Map<Message, String> notificationMessages = <Message, String>{};
     Map<String, Chat> chats = <String, Chat>{};
 
     // Add the chat in the cache and save it if it hasn't been saved yet
@@ -63,13 +66,15 @@ class MessageHelper {
       if (msgChat == null) continue;
 
       Message message = Message.fromMap(item);
-      if (notifyForNewMessage) {
-        await MessageHelper.handleNotification(message, msgChat);
-      }
-
-      // Tell all listeners that we have a new message, and save the message
-      if (notifyMessageManager) {
-        NewMessageManager().addMessage(msgChat, message);
+      Message existing = await Message.findOne({"guid": message.guid});
+      if (existing == null) {
+        if (limit) {
+          if (!notificationMessages.containsValue(msgChat.guid)) {
+            notificationMessages[message] = msgChat.guid;
+          }
+        } else {
+          notificationMessages[message] = msgChat.guid;
+        }
       }
       await msgChat.addMessage(message,
           changeUnreadStatus: notifyForNewMessage);
@@ -84,6 +89,18 @@ class MessageHelper {
       // Add message to the "master list"
       _messages.add(message);
     }
+    notificationMessages.forEach((message, value) async {
+      Chat msgChat = chats[value];
+
+      if (notifyForNewMessage) {
+        await MessageHelper.handleNotification(message, msgChat, force: true);
+      }
+
+      // Tell all listeners that we have a new message, and save the message
+      if (notifyMessageManager) {
+        NewMessageManager().addMessage(msgChat, message);
+      }
+    });
 
     // Return all the synced messages
     return _messages;
@@ -156,9 +173,11 @@ class MessageHelper {
     return chats;
   }
 
-  static Future<void> handleNotification(Message message, Chat chat) async {
+  static Future<void> handleNotification(Message message, Chat chat,
+      {bool force = false}) async {
     // See if there is an existing message for the given GUID
-    Message existingMessage = await Message.findOne({"guid": message.guid});
+    Message existingMessage;
+    if (!force) existingMessage = await Message.findOne({"guid": message.guid});
 
     // If we've already processed the GUID, skip it
     if (NotificationManager().hasProcessed(message.guid)) return;
