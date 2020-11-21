@@ -48,11 +48,8 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget>
     colors = toColorGradient(widget.handle.address);
 
     ContactManager().stream.listen((event) {
-      for (String address in event) {
-        if (address == widget.handle.address) {
-          refreshInitials(force: true);
-          break;
-        }
+      if (event.any((element) => element == widget?.handle?.address)) {
+        refreshInitials(force: true);
       }
     });
     refreshInitials();
@@ -67,7 +64,9 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget>
     if (isInvalid) return;
     if (state.initials != null && !force) return;
     state.initials = await getInitials(handle: widget.handle);
-    Contact contact = await ContactManager().getContact(widget.handle.address);
+
+    Contact contact =
+        await ContactManager().getCachedContact(widget.handle.address);
 
     if (contact != null &&
         contact.avatar != null &&
