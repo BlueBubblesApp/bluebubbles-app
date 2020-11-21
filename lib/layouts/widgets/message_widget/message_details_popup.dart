@@ -56,7 +56,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
     currentChat = widget.currentChat;
     KeyboardVisibility.onChange.listen(
       (bool visible) {
-        if (!visible) Navigator.of(context).pop();
+        if (!visible && context != null) Navigator.of(context)?.pop();
       },
     );
 
