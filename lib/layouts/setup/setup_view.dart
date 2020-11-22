@@ -1,11 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:bluebubbles/layouts/settings/settings_panel.dart';
 import 'package:bluebubbles/layouts/setup/qr_code_scanner.dart';
 import 'package:bluebubbles/layouts/setup/text_input_url.dart';
 import 'package:bluebubbles/layouts/setup/welcome_page.dart';
-import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/fcm_data.dart';
@@ -202,7 +200,7 @@ class _SetupViewState extends State<SetupView> {
                       } catch (e) {
                         return;
                       }
-                      if (fcmData != null) {
+                      if (fcmData != null && fcmData.length > 0) {
                         _fcmDataCopy = FCMData(
                           projectID: fcmData[2],
                           storageBucket: fcmData[3],
@@ -213,6 +211,11 @@ class _SetupViewState extends State<SetupView> {
                         );
                         _settingsCopy.guidAuthKey = fcmData[0];
                         _settingsCopy.serverAddress = fcmData[1];
+
+                        if (!(fcmData[1] as String).startsWith("http")) {
+                          _settingsCopy.serverAddress = "http://${fcmData[1]}";
+                        }
+
                         await SettingsManager().saveSettings(_settingsCopy);
                         await SettingsManager().saveFCMData(_fcmDataCopy);
                         showDialog(
