@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
+import 'package:bluebubbles/layouts/setup/failure_to_start.dart';
 import 'package:bluebubbles/managers/background_isolate.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
@@ -70,15 +71,24 @@ Future<Null> main() async {
   };
 
   WidgetsFlutterBinding.ensureInitialized();
-  await DBProvider.db.initDB();
-  await initializeDateFormatting('fr_FR', null);
-  runZonedGuarded<Future<Null>>(() async {
-    runApp(Main());
-  }, (Object error, StackTrace stackTrace) async {
-    // Whenever an error occurs, call the `_reportError` function. This sends
-    // Dart errors to the dev console or Sentry depending on the environment.
-    await _reportError(error, stackTrace);
-  });
+  dynamic exception;
+  try {
+    await DBProvider.db.initDB();
+    await initializeDateFormatting('fr_FR', null);
+  } catch (e) {
+    exception = e;
+  }
+  if (exception == null) {
+    runZonedGuarded<Future<Null>>(() async {
+      runApp(Main());
+    }, (Object error, StackTrace stackTrace) async {
+      // Whenever an error occurs, call the `_reportError` function. This sends
+      // Dart errors to the dev console or Sentry depending on the environment.
+      await _reportError(error, stackTrace);
+    });
+  } else {
+    runApp(FailureToStrt(e: exception));
+  }
 }
 
 /// The [Main] app.
