@@ -5,7 +5,6 @@ import 'package:bluebubbles/helpers/mappings.dart';
 import "package:bluebubbles/helpers/string_extension.dart";
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/layouts/settings/scheduling_panel.dart';
 import 'package:bluebubbles/layouts/theming/theming_panel.dart';
 import 'package:bluebubbles/layouts/widgets/CustomCupertinoTextField.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
@@ -137,6 +136,11 @@ class _SettingsPanelState extends State<SettingsPanel> {
                               showUrl = !showUrl;
                             });
                           }
+                        },
+                        onLongPress: () {
+                          Clipboard.setData(new ClipboardData(text: _settingsCopy.serverAddress));
+                          final snackBar = SnackBar(content: Text("Address copied to clipboard"));
+                          Scaffold.of(context).showSnackBar(snackBar);
                         },
                         trailing: connectionStatus == SocketState.CONNECTED ||
                                 connectionStatus == SocketState.CONNECTING
@@ -562,10 +566,11 @@ class _SettingsPanelState extends State<SettingsPanel> {
 
 class SettingsTile extends StatelessWidget {
   const SettingsTile(
-      {Key key, this.onTap, this.title, this.trailing, this.subTitle})
+      {Key key, this.onTap, this.onLongPress, this.title, this.trailing, this.subTitle})
       : super(key: key);
 
   final Function onTap;
+  final Function onLongPress;
   final String subTitle;
   final String title;
   final Widget trailing;
@@ -575,6 +580,7 @@ class SettingsTile extends StatelessWidget {
     return Material(
       color: Theme.of(context).backgroundColor,
       child: InkWell(
+        onLongPress: this.onLongPress,
         onTap: this.onTap,
         child: Column(
           children: <Widget>[
