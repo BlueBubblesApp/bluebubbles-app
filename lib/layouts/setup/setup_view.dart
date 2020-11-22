@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:bluebubbles/blocs/setup_bloc.dart';
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
 import 'package:bluebubbles/layouts/setup/qr_code_scanner.dart';
 import 'package:bluebubbles/layouts/setup/text_input_url.dart';
@@ -261,7 +262,7 @@ class _SetupViewState extends State<SetupView> {
                             connectionStateSubscription.cancel();
                           } else if (event == SocketState.ERROR ||
                               event == SocketState.DISCONNECTED) {
-                            Navigator.of(context).pop();
+                            // Navigator.of(context).pop();
                             showDialog(
                               context: context,
                               builder: (context) => AlertDialog(
@@ -396,9 +397,7 @@ class _SetupViewState extends State<SetupView> {
               padding: EdgeInsets.symmetric(horizontal: 20.0),
               child: Text(
                 "Number of Messages to Sync Per Chat: $numberOfMessages",
-                style: Theme.of(context)
-                    .textTheme
-                    .bodyText1,
+                style: Theme.of(context).textTheme.bodyText1,
                 textAlign: TextAlign.center,
               ),
             ),
@@ -428,9 +427,7 @@ class _SetupViewState extends State<SetupView> {
                 children: [
                   Text(
                     "Download Attachments (long sync)",
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodyText1,
+                    style: Theme.of(context).textTheme.bodyText1,
                     textAlign: TextAlign.center,
                   ),
                   Switch(
@@ -461,9 +458,7 @@ class _SetupViewState extends State<SetupView> {
                 children: [
                   Text(
                     "Skip empty chats",
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodyText1,
+                    style: Theme.of(context).textTheme.bodyText1,
                     textAlign: TextAlign.center,
                   ),
                   Switch(
@@ -512,8 +507,7 @@ class _SetupViewState extends State<SetupView> {
                           numberOfMessages;
                       SocketManager().setup.downloadAttachments =
                           downloadAttachments;
-                      SocketManager().setup.skipEmptyChats =
-                          skipEmptyChats;
+                      SocketManager().setup.skipEmptyChats = skipEmptyChats;
 
                       // Start syncing
                       SocketManager().setup.startSync(
@@ -568,45 +562,78 @@ class _SetupViewState extends State<SetupView> {
       backgroundColor: Theme.of(context).accentColor,
       body: StreamBuilder(
         stream: SocketManager().setup.stream,
-        builder: (BuildContext context, AsyncSnapshot<double> snapshot) {
+        builder: (BuildContext context, AsyncSnapshot<SetupData> snapshot) {
           double progress = SocketManager().setup.progress;
           if (snapshot.hasData) {
-            progress = snapshot.data;
+            progress = snapshot.data.progress;
             return Center(
-              child: Padding(
-                padding: EdgeInsets.symmetric(
-                    horizontal: MediaQuery.of(context).size.width / 4),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[
-                    Spacer(
-                      flex: 100,
-                    ),
-                    Text(
-                      "${(progress * 100).floor()}%",
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodyText1
-                          .apply(fontSizeFactor: 1.5),
-                    ),
-                    Spacer(
-                      flex: 5,
-                    ),
-                    ClipRRect(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  Spacer(
+                    flex: 100,
+                  ),
+                  Text(
+                    "${(progress * 100).floor()}%",
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodyText1
+                        .apply(fontSizeFactor: 1.5),
+                  ),
+                  Spacer(
+                    flex: 5,
+                  ),
+                  Padding(
+                    padding: EdgeInsets.symmetric(
+                        horizontal: MediaQuery.of(context).size.width / 4),
+                    child: ClipRRect(
                       borderRadius: BorderRadius.circular(20),
                       child: LinearProgressIndicator(
                         value: progress != 1.0 && progress != 0.0
                             ? progress
                             : null,
                         backgroundColor: Colors.white,
-                        valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                            Theme.of(context).primaryColor),
                       ),
                     ),
-                    Spacer(
-                      flex: 100,
+                  ),
+                  Spacer(
+                    flex: 20,
+                  ),
+                  SizedBox(
+                    width: MediaQuery.of(context).size.width * 4 / 5,
+                    height: MediaQuery.of(context).size.height * 1 / 3,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.black,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      padding: EdgeInsets.all(10),
+                      child: ListView.builder(
+                        physics: AlwaysScrollableScrollPhysics(
+                            parent: BouncingScrollPhysics()),
+                        itemBuilder: (context, index) {
+                          SetupOutputData data =
+                              snapshot.data.output.reversed.toList()[index];
+                          return Text(
+                            data.text,
+                            style: TextStyle(
+                              color: data.type == SetupOutputType.LOG
+                                  ? Colors.grey
+                                  : Colors.red,
+                              fontSize: 10,
+                            ),
+                          );
+                        },
+                        itemCount: snapshot.data.output.length,
+                      ),
                     ),
-                  ],
-                ),
+                  ),
+                  Spacer(
+                    flex: 100,
+                  ),
+                ],
               ),
             );
           } else {
@@ -631,7 +658,8 @@ class _SetupViewState extends State<SetupView> {
                       borderRadius: BorderRadius.circular(20),
                       child: LinearProgressIndicator(
                         backgroundColor: Colors.white,
-                        valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                            Theme.of(context).primaryColor),
                       ),
                     ),
                     Spacer(

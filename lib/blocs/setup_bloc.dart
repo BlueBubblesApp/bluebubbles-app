@@ -9,8 +9,24 @@ import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/material.dart';
 
+enum SetupOutputType { ERROR, LOG }
+
+class SetupData {
+  double progress;
+  List<SetupOutputData> output = [];
+
+  SetupData(this.progress, this.output);
+}
+
+class SetupOutputData {
+  String text;
+  SetupOutputType type;
+
+  SetupOutputData(this.text, this.type);
+}
+
 class SetupBloc {
-  final _stream = StreamController<double>.broadcast();
+  final _stream = StreamController<SetupData>.broadcast();
 
   bool _finishedSetup = false;
   double _progress = 0.0;
@@ -21,12 +37,13 @@ class SetupBloc {
   bool downloadAttachments = false;
   bool skipEmptyChats = true;
 
-  Stream<double> get stream => _stream.stream;
+  Stream<SetupData> get stream => _stream.stream;
   double get progress => _progress;
   bool get finishedSetup => false;
   int processId;
 
   Function onConnectionError;
+  List<SetupOutputData> output = [];
 
   SetupBloc();
 
@@ -54,29 +71,48 @@ class SetupBloc {
     SettingsManager().saveSettings(_settingsCopy);
 
     // Get the chats to sync
+    Timer timer = Timer(Duration(seconds: 15), () {
+      if (_progress == 0) {
+        addOutput(
+            "This is taking a while! Please Ensure that System Disk Access is granted on the mac!",
+            SetupOutputType.ERROR);
+      }
+    });
+
+    addOutput("Getting Chats...", SetupOutputType.LOG);
     SocketManager().sendMessage("get-chats", {}, (data) {
       if (data['status'] == 200) {
         receivedChats(data);
+        timer.cancel();
       } else {
         handleError();
       }
     });
   }
 
+  void addOutput(String _output, SetupOutputType type) {
+    output.add(SetupOutputData(_output, type));
+    _stream.sink.add(SetupData(_progress, output));
+  }
+
   void receivedChats(data) async {
     debugPrint("(Setup) -> Received initial chat list");
     chats = data["data"];
     if (chats.isEmpty) {
+      addOutput("Received all chats, cleaning up...", SetupOutputType.LOG);
       finishSetup();
     } else {
       getChatMessagesRecursive(chats, 0);
-      _stream.sink.add(_progress);
+      _stream.sink.add(SetupData(_progress, output));
     }
   }
 
   void getChatMessagesRecursive(List chats, int index) async {
     Chat chat = Chat.fromMap(chats[index]);
     await chat.save();
+    addOutput(
+        "Received data for chat ${chat?.guid}, fetching ${numberOfMessagesPerPage.round()} messages...",
+        SetupOutputType.LOG);
 
     Map<String, dynamic> params = Map();
     params["identifier"] = chat.guid;
@@ -106,6 +142,8 @@ class SetupBloc {
   Future<void> receivedMessagesForChat(
       Chat chat, Map<String, dynamic> data) async {
     List messages = data["data"];
+    addOutput(
+        "Received ${messages?.length} messages for chat!", SetupOutputType.LOG);
 
     // Since we got the messages in desc order, we want to reverse it.
     // Reversing it will add older messages before newer one. This should help fix
@@ -122,10 +160,11 @@ class SetupBloc {
     }
 
     _progress = (_currentIndex + 1) / chats.length;
-    _stream.sink.add(_progress);
+    _stream.sink.add(SetupData(_progress, output));
   }
 
   void finishSetup() async {
+    addOutput("Finished Setup! Cleaning up...", SetupOutputType.LOG);
     isSyncing = false;
     if (processId != null) SocketManager().finishSocketProcess(processId);
 
