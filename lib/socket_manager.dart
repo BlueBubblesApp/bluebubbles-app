@@ -272,17 +272,17 @@ class SocketManager {
       _manager.socket.subscribe("participant-left", handleNewMessage);
       _manager.socket
           .subscribe("chat-read-status-changed", handleChatStatusChange);
-      // _manager.socket.subscribe("typing-indicator", (_data) {
-      //   Map<String, dynamic> data = jsonDecode(_data);
-      //   CurrentChat currentChat =
-      //       AttachmentInfoBloc().getCurrentChat(data["guid"]);
-      //   if (currentChat == null) return;
-      //   if (data["display"]) {
-      //     currentChat.displayTypingIndicator();
-      //   } else {
-      //     currentChat.hideTypingIndicator();
-      //   }
-      // });
+      _manager.socket.subscribe("typing-indicator", (_data) {
+        Map<String, dynamic> data = jsonDecode(_data);
+        CurrentChat currentChat =
+            AttachmentInfoBloc().getCurrentChat(data["guid"]);
+        if (currentChat == null) return;
+        if (data["display"]) {
+          currentChat.displayTypingIndicator();
+        } else {
+          currentChat.hideTypingIndicator();
+        }
+      });
 
       /**
        * Handle errors sent by the server

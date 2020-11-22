@@ -52,7 +52,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
   StreamController _streamController = new StreamController.broadcast();
   CurrentChat safeChat;
 
-  // bool selfTyping = false;
+  bool selfTyping = false;
 
   Stream get stream => _streamController.stream;
 
@@ -71,21 +71,21 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
     controller = textFieldData != null
         ? textFieldData.controller
         : new TextEditingController();
-    // controller.addListener(() {
-    //   if (CurrentChat.of(context)?.chat == null) return;
-    //   if (controller.text.length == 0 &&
-    //       pickedImages.length == 0 &&
-    //       selfTyping) {
-    //     selfTyping = false;
-    //     SocketManager().sendMessage("stopped-typing",
-    //         {"chatGuid": CurrentChat.of(context).chat.guid}, (data) => null);
-    //   } else if (!selfTyping &&
-    //       (controller.text.length > 0 || pickedImages.length > 0)) {
-    //     selfTyping = true;
-    //     SocketManager().sendMessage("started-typing",
-    //         {"chatGuid": CurrentChat.of(context).chat.guid}, (data) => null);
-    //   }
-    // });
+    controller.addListener(() {
+      if (CurrentChat.of(context)?.chat == null) return;
+      if (controller.text.length == 0 &&
+          pickedImages.length == 0 &&
+          selfTyping) {
+        selfTyping = false;
+        SocketManager().sendMessage("stopped-typing",
+            {"chatGuid": CurrentChat.of(context).chat.guid}, (data) => null);
+      } else if (!selfTyping &&
+          (controller.text.length > 0 || pickedImages.length > 0)) {
+        selfTyping = true;
+        SocketManager().sendMessage("started-typing",
+            {"chatGuid": CurrentChat.of(context).chat.guid}, (data) => null);
+      }
+    });
 
     if (widget.existingText != null) {
       controller.text = widget.existingText;
