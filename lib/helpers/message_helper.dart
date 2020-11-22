@@ -377,9 +377,9 @@ class MessageHelper {
         TextSpan(
           text: String.fromCharCodes(chunk),
           style: style.apply(
-              fontFamily: (isEmoji)
-                  ? SettingsManager().settings.emojiFontFamily
-                  : null),
+            fontFamily:
+                (isEmoji) ? SettingsManager().settings.emojiFontFamily : null,
+          ),
         ),
       );
     }
