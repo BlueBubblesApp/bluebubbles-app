@@ -54,7 +54,7 @@ class _ThemingPanelState extends State<ThemingPanel>
         child: ClipRRect(
           child: BackdropFilter(
             child: AppBar(
-              brightness: Theme.of(context).brightness,
+              brightness: (Theme.of(context).textTheme.bodyText1.color == Colors.black) ? Brightness.light : Brightness.dark,
               toolbarHeight: 100.0,
               elevation: 0,
               leading: IconButton(
