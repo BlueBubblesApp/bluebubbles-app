@@ -74,9 +74,9 @@ class MessagesViewState extends State<MessagesView>
   void didChangeDependencies() async {
     super.didChangeDependencies();
     currentChat = CurrentChat.of(context);
-    currentChat.stream.listen((event) {
-      if (this.mounted) setState(() {});
-    });
+    // currentChat.stream.listen((event) {
+    //   if (this.mounted) setState(() {});
+    // });
 
     if (_messages.isEmpty) {
       widget.messageBloc.getMessages();
@@ -285,11 +285,11 @@ class MessagesViewState extends State<MessagesView>
             physics: AlwaysScrollableScrollPhysics(
                 parent: CustomBouncingScrollPhysics()),
             slivers: <Widget>[
-              SliverToBoxAdapter(
-                child: TypingIndicator(
-                  visible: currentChat.showTypingIndicator,
-                ),
-              ),
+              // SliverToBoxAdapter(
+              //   child: TypingIndicator(
+              //     visible: currentChat.showTypingIndicator,
+              //   ),
+              // ),
               _listKey != null
                   ? SliverAnimatedList(
                       initialItemCount: _messages.length + 1,

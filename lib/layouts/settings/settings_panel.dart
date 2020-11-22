@@ -299,18 +299,18 @@ class _SettingsPanelState extends State<SettingsPanel> {
                     textProcessing: (dynamic val) => val.toString(),
                     title: "Display",
                   ),
-                SettingsTile(
-                  title: "Message Scheduling",
-                  trailing: Icon(Icons.arrow_forward_ios,
-                      color: Theme.of(context).primaryColor),
-                  onTap: () async {
-                    Navigator.of(context).push(
-                      CupertinoPageRoute(
-                        builder: (context) => SchedulingPanel(),
-                      ),
-                    );
-                  },
-                ),
+                // SettingsTile(
+                //   title: "Message Scheduling",
+                //   trailing: Icon(Icons.arrow_forward_ios,
+                //       color: Theme.of(context).primaryColor),
+                //   onTap: () async {
+                //     Navigator.of(context).push(
+                //       CupertinoPageRoute(
+                //         builder: (context) => SchedulingPanel(),
+                //       ),
+                //     );
+                //   },
+                // ),
                 SettingsTile(
                   onTap: () {
                     showDialog(
