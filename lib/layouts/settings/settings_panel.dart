@@ -18,6 +18,7 @@ import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import '../../helpers/hex_color.dart';
 import 'package:flutter/material.dart';
 
@@ -384,6 +385,133 @@ class _SettingsPanelState extends State<SettingsPanel> {
                   },
                   trailing: Icon(
                     Icons.code,
+                    color: Theme.of(context).primaryColor,
+                  ),
+                ),
+                SettingsTile(
+                  title: "Changelog",
+                  onTap: () async {
+                    String changelog = await DefaultAssetBundle.of(context)
+                        .loadString('assets/changelog/changelog.txt');
+                    Navigator.of(context).push(
+                      CupertinoPageRoute(
+                        builder: (context) => Scaffold(
+                          body: Markdown(
+                            data: changelog,
+                            physics: AlwaysScrollableScrollPhysics(
+                              parent: BouncingScrollPhysics(),
+                            ),
+                            styleSheet: MarkdownStyleSheet.fromTheme(
+                              Theme.of(context)
+                                ..textTheme.copyWith(
+                                  headline1: TextStyle(
+                                    color: Colors.white,
+                                  ),
+                                ),
+                            ).copyWith(
+                              h1: Theme.of(context)
+                                  .textTheme
+                                  .headline1
+                                  .copyWith(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold),
+                              h2: Theme.of(context)
+                                  .textTheme
+                                  .headline2
+                                  .copyWith(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold),
+                              h3: Theme.of(context)
+                                  .textTheme
+                                  .headline3
+                                  .copyWith(
+                                      fontSize: 17,
+                                      fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                          backgroundColor: Theme.of(context).backgroundColor,
+                          appBar: CupertinoNavigationBar(
+                            backgroundColor: Theme.of(context).accentColor,
+                            middle: Text(
+                              "Changelog",
+                              style: Theme.of(context).textTheme.headline1,
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                  trailing: Icon(
+                    Icons.code,
+                    color: Theme.of(context).primaryColor,
+                  ),
+                ),
+                SettingsTile(
+                  title: "Developers",
+                  onTap: () {
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: Text(
+                          "Developers! Developers!",
+                          style: Theme.of(context).textTheme.headline1,
+                          textAlign: TextAlign.center,
+                        ),
+                        backgroundColor: Theme.of(context).accentColor,
+                        content: SizedBox(
+                          width: MediaQuery.of(context).size.width * 3 / 5,
+                          height: MediaQuery.of(context).size.height * 1 / 9,
+                          child: ListView(
+                            physics: AlwaysScrollableScrollPhysics(
+                              parent: BouncingScrollPhysics(),
+                            ),
+                            children: [
+                              Container(
+                                alignment: Alignment.center,
+                                padding: EdgeInsets.all(8),
+                                child: Text(
+                                  "Zach",
+                                  style: Theme.of(context).textTheme.bodyText1,
+                                ),
+                              ),
+                              Container(
+                                alignment: Alignment.center,
+                                padding: EdgeInsets.all(8),
+                                child: Text(
+                                  "Brandon",
+                                  style: Theme.of(context).textTheme.bodyText1,
+                                ),
+                              ),
+                              Container(
+                                alignment: Alignment.center,
+                                padding: EdgeInsets.all(8),
+                                child: Text(
+                                  "Maxwell",
+                                  style: Theme.of(context).textTheme.bodyText1,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        actions: [
+                          FlatButton(
+                            child: Text(
+                              "Close",
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyText1
+                                  .copyWith(
+                                    color: Theme.of(context).primaryColor,
+                                  ),
+                            ),
+                            onPressed: () => Navigator.of(context).pop(),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                  trailing: Icon(
+                    Icons.info_outline,
                     color: Theme.of(context).primaryColor,
                   ),
                 ),
