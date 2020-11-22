@@ -11,6 +11,7 @@ import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scrol
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
+import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -51,6 +52,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
   StreamController _streamController = new StreamController.broadcast();
   CurrentChat safeChat;
 
+  bool selfTyping = false;
+
   Stream get stream => _streamController.stream;
 
   static final GlobalKey<FormFieldState<String>> _searchFormKey =
@@ -61,12 +64,28 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
     super.initState();
 
     if (CurrentChat.of(context)?.chat != null) {
-      textFieldData = TextFieldBloc().getTextField(CurrentChat.of(context).chat.guid);
+      textFieldData =
+          TextFieldBloc().getTextField(CurrentChat.of(context).chat.guid);
     }
 
     controller = textFieldData != null
         ? textFieldData.controller
         : new TextEditingController();
+    controller.addListener(() {
+      if (CurrentChat.of(context)?.chat == null) return;
+      if (controller.text.length == 0 &&
+          pickedImages.length == 0 &&
+          selfTyping) {
+        selfTyping = false;
+        SocketManager().sendMessage("stopped-typing",
+            {"chatGuid": CurrentChat.of(context).chat.guid}, (data) => null);
+      } else if (!selfTyping &&
+          (controller.text.length > 0 || pickedImages.length > 0)) {
+        selfTyping = true;
+        SocketManager().sendMessage("started-typing",
+            {"chatGuid": CurrentChat.of(context).chat.guid}, (data) => null);
+      }
+    });
 
     if (widget.existingText != null) {
       controller.text = widget.existingText;
@@ -104,7 +123,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
     focusNode.dispose();
     _streamController.close();
     if (safeChat?.chat == null) controller.dispose();
-  
+
     String dir = SettingsManager().appDocDir.path;
     Directory tempAssets = Directory("$dir/tempAssets");
     tempAssets.exists().then((value) {

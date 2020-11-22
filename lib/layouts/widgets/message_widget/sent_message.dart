@@ -41,13 +41,13 @@ class SentMessageHelper {
           right: 5,
         ),
         child: RichText(
-            text: TextSpan(
-                children: MessageHelper.buildEmojiText(
-                    message.text,
-                    Theme.of(context)
-                        .textTheme
-                        .bodyText1
-                        .apply(fontSizeFactor: 4)))),
+          text: TextSpan(
+            children: MessageHelper.buildEmojiText(
+              message.text,
+              Theme.of(context).textTheme.bodyText1.apply(fontSizeFactor: 4),
+            ),
+          ),
+        ),
       );
     } else {
       msg = Stack(

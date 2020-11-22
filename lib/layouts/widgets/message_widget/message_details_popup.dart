@@ -221,7 +221,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
                     : Container(),
               ),
             ),
-            buildReactionMenu(),
+            // buildReactionMenu(),
             buildCopyPasteMenu(),
           ],
         ),

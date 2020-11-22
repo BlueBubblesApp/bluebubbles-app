@@ -10,6 +10,7 @@ import 'package:bluebubbles/managers/attachment_info_bloc.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
+import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:metadata_fetch/metadata_fetch.dart';
 import 'package:video_player/video_player.dart';
@@ -36,6 +37,8 @@ class CurrentChat {
   List<VideoPlayerController> videoControllersToDispose = [];
   List<Attachment> chatAttachments = [];
   List<Message> sentMessages = [];
+  bool showTypingIndicator = false;
+  Timer indicatorHideTimer;
   OverlayEntry entry;
 
   Map<String, List<Attachment>> messageAttachments = {};
@@ -65,12 +68,17 @@ class CurrentChat {
     chatAttachments = [];
     sentMessages = [];
     entry = null;
+    showTypingIndicator = false;
+    indicatorHideTimer = null;
+    checkTypingIndicator();
   }
 
   static CurrentChat of(BuildContext context) {
     if (context == null) return null;
 
-    return context.findAncestorStateOfType<ConversationViewState>()?.currentChat ??
+    return context
+            .findAncestorStateOfType<ConversationViewState>()
+            ?.currentChat ??
         context
             .findAncestorStateOfType<MessageDetailsPopupState>()
             ?.currentChat ??
@@ -147,6 +155,37 @@ class CurrentChat {
     }
   }
 
+  void checkTypingIndicator() {
+    if (chat == null) return;
+    SocketManager().sendMessage("get-typing-indicator", {"guid": chat.guid},
+        (data) {
+      if (data['status'] == 200) {
+        if (data['data']['isTyping']) {
+          displayTypingIndicator();
+        } else {
+          hideTypingIndicator();
+        }
+      } else {
+        hideTypingIndicator();
+      }
+    });
+  }
+
+  void displayTypingIndicator() {
+    showTypingIndicator = true;
+    indicatorHideTimer = new Timer(Duration(seconds: 5), () {
+      checkTypingIndicator();
+    });
+    _stream.sink.add(null);
+  }
+
+  void hideTypingIndicator() {
+    indicatorHideTimer.cancel();
+    indicatorHideTimer = null;
+    showTypingIndicator = false;
+    _stream.sink.add(null);
+  }
+
   /// Retreive all of the attachments associated with a chat
   Future<void> updateChatAttachments() async {
     chatAttachments = await Chat.getAttachments(chat);
@@ -188,6 +227,7 @@ class CurrentChat {
     });
     chatAttachments = [];
     sentMessages = [];
+    showTypingIndicator = false;
     if (entry != null) entry.remove();
   }
 

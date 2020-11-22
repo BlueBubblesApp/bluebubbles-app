@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/new_message_loader.dart';
+import 'package:bluebubbles/layouts/widgets/message_widget/typing_indicator.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
@@ -73,6 +74,9 @@ class MessagesViewState extends State<MessagesView>
   void didChangeDependencies() async {
     super.didChangeDependencies();
     currentChat = CurrentChat.of(context);
+    currentChat.stream.listen((event) {
+      if (this.mounted) setState(() {});
+    });
 
     if (_messages.isEmpty) {
       widget.messageBloc.getMessages();
@@ -162,9 +166,7 @@ class MessagesViewState extends State<MessagesView>
         _listKey.currentState.insertItem(
           event.index != null ? event.index : 0,
           duration: isNewMessage
-              ? event.outGoing
-                  ? Duration(milliseconds: 500)
-                  : animationDuration
+              ? event.outGoing ? Duration(milliseconds: 500) : animationDuration
               : Duration(milliseconds: 0),
         );
       }
@@ -283,6 +285,11 @@ class MessagesViewState extends State<MessagesView>
             physics: AlwaysScrollableScrollPhysics(
                 parent: CustomBouncingScrollPhysics()),
             slivers: <Widget>[
+              SliverToBoxAdapter(
+                child: TypingIndicator(
+                  visible: currentChat.showTypingIndicator,
+                ),
+              ),
               _listKey != null
                   ? SliverAnimatedList(
                       initialItemCount: _messages.length + 1,
