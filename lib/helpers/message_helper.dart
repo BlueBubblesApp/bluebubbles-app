@@ -374,13 +374,7 @@ class MessageHelper {
       }
 
       children.add(
-        TextSpan(
-          text: String.fromCharCodes(chunk),
-          style: style.apply(
-            fontFamily:
-                (isEmoji) ? SettingsManager().settings.emojiFontFamily : null,
-          ),
-        ),
+        TextSpan(text: String.fromCharCodes(chunk), style: style),
       );
     }
 

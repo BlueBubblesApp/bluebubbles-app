@@ -19,7 +19,7 @@ class Settings {
   int displayMode = 0;
   bool rainbowBubbles = false;
   bool hideDividers = false;
-  String emojiFontFamily;
+  // String emojiFontFamily;
 
   Skins skin = Skins.IOS;
 
@@ -54,9 +54,10 @@ class Settings {
         settings.rainbowBubbles = entry.value;
       } else if (entry.name == "hideDividers") {
         settings.hideDividers = entry.value;
-      } else if (entry.name == "emojiFontFamily") {
-        settings.emojiFontFamily = entry.value;
       }
+      // else if (entry.name == "emojiFontFamily") {
+      //   settings.emojiFontFamily = entry.value;
+      // }
     }
     settings.save(updateIfAbsent: false);
     return settings;
@@ -155,9 +156,9 @@ class Settings {
             name: "hideDividers",
             value: this.hideDividers,
             type: this.hideDividers.runtimeType),
-        ConfigEntry(
-            name: "emojiFontFamily",
-            value: this.emojiFontFamily,
-            type: this.emojiFontFamily.runtimeType),
+        // ConfigEntry(
+        //     name: "emojiFontFamily",
+        //     value: this.emojiFontFamily,
+        //     type: this.emojiFontFamily.runtimeType),
       ];
 }
