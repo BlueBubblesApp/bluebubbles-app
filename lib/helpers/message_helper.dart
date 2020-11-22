@@ -357,27 +357,27 @@ class MessageHelper {
     return (items.length > 0) ? items[0] : val;
   }
 
-  static List<TextSpan> buildEmojiText(String text, TextStyle style) {
-    final children = <TextSpan>[];
-    final runes = text.runes;
+  // static List<TextSpan> buildEmojiText(String text, TextStyle style) {
+  //   final children = <TextSpan>[];
+  //   final runes = text.runes;
 
-    for (int i = 0; i < runes.length; /* empty */) {
-      int current = runes.elementAt(i);
-      final isEmoji = current > 255;
-      final shouldBreak = isEmoji ? (x) => x <= 255 : (x) => x > 255;
+  //   for (int i = 0; i < runes.length; /* empty */) {
+  //     int current = runes.elementAt(i);
+  //     final isEmoji = current > 255;
+  //     final shouldBreak = isEmoji ? (x) => x <= 255 : (x) => x > 255;
 
-      final chunk = <int>[];
-      while (!shouldBreak(current)) {
-        chunk.add(current);
-        if (++i >= runes.length) break;
-        current = runes.elementAt(i);
-      }
+  //     final chunk = <int>[];
+  //     while (!shouldBreak(current)) {
+  //       chunk.add(current);
+  //       if (++i >= runes.length) break;
+  //       current = runes.elementAt(i);
+  //     }
 
-      children.add(
-        TextSpan(text: String.fromCharCodes(chunk), style: style),
-      );
-    }
+  //     children.add(
+  //       TextSpan(text: String.fromCharCodes(chunk), style: style),
+  //     );
+  //   }
 
-    return children;
-  }
+  //   return children;
+  // }
 }
