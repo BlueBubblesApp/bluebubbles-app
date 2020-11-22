@@ -79,9 +79,10 @@ abstract class MessageWidgetMixin {
       });
 
       if (!isNullOrEmpty(message.subject)) {
-        textSpans.addAll(MessageHelper.buildEmojiText(
-            "${message.subject}\n",
-            message.isFromMe
+        textSpans.add(
+          TextSpan(
+            text: "${message.subject}\n",
+            style: message.isFromMe
                 ? Theme.of(context)
                     .textTheme
                     .bodyText1
@@ -89,30 +90,38 @@ abstract class MessageWidgetMixin {
                 : Theme.of(context)
                     .textTheme
                     .bodyText1
-                    .apply(fontWeightDelta: 2)));
+                    .apply(fontWeightDelta: 2),
+          ),
+        );
       }
 
       if (linkIndexMatches.length > 0) {
         for (int i = 0; i < linkIndexMatches.length + 1; i++) {
           if (i == 0) {
-            textSpans.addAll(MessageHelper.buildEmojiText(
-                message.text.substring(0, linkIndexMatches[i]),
-                message.isFromMe
+            textSpans.add(
+              TextSpan(
+                text: message.text.substring(0, linkIndexMatches[i]),
+                style: message.isFromMe
                     ? Theme.of(context)
                         .textTheme
                         .bodyText1
                         .apply(color: Colors.white)
-                    : Theme.of(context).textTheme.bodyText1));
+                    : Theme.of(context).textTheme.bodyText1,
+              ),
+            );
           } else if (i == linkIndexMatches.length && i - 1 >= 0) {
-            textSpans.addAll(MessageHelper.buildEmojiText(
-                message.text
+            textSpans.add(
+              TextSpan(
+                text: message.text
                     .substring(linkIndexMatches[i - 1], message.text.length),
-                message.isFromMe
+                style: message.isFromMe
                     ? Theme.of(context)
                         .textTheme
                         .bodyText1
                         .apply(color: Colors.white)
-                    : Theme.of(context).textTheme.bodyText1));
+                    : Theme.of(context).textTheme.bodyText1,
+              ),
+            );
           } else if (i - 1 >= 0) {
             String text = message.text
                 .substring(linkIndexMatches[i - 1], linkIndexMatches[i]);
@@ -139,26 +148,32 @@ abstract class MessageWidgetMixin {
                 ),
               );
             } else {
-              textSpans.addAll(MessageHelper.buildEmojiText(
-                  text,
-                  message.isFromMe
+              textSpans.add(
+                TextSpan(
+                  text: text,
+                  style: message.isFromMe
                       ? Theme.of(context)
                           .textTheme
                           .bodyText1
                           .apply(color: Colors.white)
-                      : Theme.of(context).textTheme.bodyText1));
+                      : Theme.of(context).textTheme.bodyText1,
+                ),
+              );
             }
           }
         }
       } else {
-        textSpans.addAll(MessageHelper.buildEmojiText(
-            message.text,
-            message.isFromMe
+        textSpans.add(
+          TextSpan(
+            text: message.text,
+            style: message.isFromMe
                 ? Theme.of(context)
                     .textTheme
                     .bodyText1
                     .apply(color: Colors.white)
-                : Theme.of(context).textTheme.bodyText1));
+                : Theme.of(context).textTheme.bodyText1,
+          ),
+        );
       }
     }
 

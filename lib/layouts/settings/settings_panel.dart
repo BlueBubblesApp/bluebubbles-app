@@ -258,18 +258,18 @@ class _SettingsPanelState extends State<SettingsPanel> {
                   initialVal: _settingsCopy.rainbowBubbles,
                   title: "Colorful Chats",
                 ),
-                SettingsOptions<String>(
-                  initial: _settingsCopy.emojiFontFamily == null
-                      ? "System"
-                      : fontFamilyToString[_settingsCopy.emojiFontFamily],
-                  onChanged: (val) {
-                    _settingsCopy.emojiFontFamily = stringToFontFamily[val];
-                  },
-                  options: stringToFontFamily.keys.toList(),
-                  textProcessing: (dynamic val) => val,
-                  title: "Emoji Style",
-                  showDivider: false,
-                ),
+                // SettingsOptions<String>(
+                //   initial: _settingsCopy.emojiFontFamily == null
+                //       ? "System"
+                //       : fontFamilyToString[_settingsCopy.emojiFontFamily],
+                //   onChanged: (val) {
+                //     _settingsCopy.emojiFontFamily = stringToFontFamily[val];
+                //   },
+                //   options: stringToFontFamily.keys.toList(),
+                //   textProcessing: (dynamic val) => val,
+                //   title: "Emoji Style",
+                //   showDivider: false,
+                // ),
                 SettingsOptions<AdaptiveThemeMode>(
                   initial: AdaptiveTheme.of(context).mode,
                   onChanged: (val) {

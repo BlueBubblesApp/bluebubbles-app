@@ -123,13 +123,9 @@ class _ContactTileState extends State<ContactTile> {
         }
       },
       child: ListTile(
-        title: RichText(
-          text: TextSpan(
-            children: MessageHelper.buildEmojiText(
-              contact != null ? contact.displayName : widget.handle.address,
-              Theme.of(context).textTheme.bodyText1
-            )
-          )
+        title: Text(
+          contact != null ? contact.displayName : widget.handle.address,
+          style: Theme.of(context).textTheme.bodyText1,
         ),
         leading: ContactAvatarWidget(
           handle: widget.handle,

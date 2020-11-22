@@ -78,14 +78,10 @@ class _ReceivedMessageState extends State<ReceivedMessage>
           right: (hasReactions) ? 15.0 : 0.0,
           top: widget.message.getReactions().length > 0 ? 15 : 0,
         ),
-        child: RichText(
-            text: TextSpan(
-                children: MessageHelper.buildEmojiText(
-                    message.text,
-                    Theme.of(context)
-                        .textTheme
-                        .bodyText1
-                        .apply(fontSizeFactor: 4)))),
+        child: Text(
+          message.text,
+          style: Theme.of(context).textTheme.bodyText1.apply(fontSizeFactor: 4),
+        ),
       );
     }
 
@@ -134,9 +130,10 @@ class _ReceivedMessageState extends State<ReceivedMessage>
     List<Widget> messageColumn = [];
 
     // First, add the message sender (if applicable)
-    if (CurrentChat.of(context).chat.isGroup() && (!sameSender(widget.message, widget.olderMessage) ||
-        !widget.message.dateCreated
-            .isWithin(widget.olderMessage.dateCreated, minutes: 30))) {
+    if (CurrentChat.of(context).chat.isGroup() &&
+        (!sameSender(widget.message, widget.olderMessage) ||
+            !widget.message.dateCreated
+                .isWithin(widget.olderMessage.dateCreated, minutes: 30))) {
       messageColumn.add(
         Padding(
           padding: EdgeInsets.only(

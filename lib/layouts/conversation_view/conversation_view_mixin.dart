@@ -212,10 +212,10 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
                     text: TextSpan(
                       style: Theme.of(context).textTheme.headline2,
                       children: [
-                        ...MessageHelper.buildEmojiText(
-                            chat.title,
-                            Theme.of(context).textTheme.bodyText1,
-                          ),
+                        TextSpan(
+                          text: chat.title,
+                          style: Theme.of(context).textTheme.bodyText1,
+                        ),
                         TextSpan(
                           text: " >",
                           style: Theme.of(context).textTheme.subtitle1,
