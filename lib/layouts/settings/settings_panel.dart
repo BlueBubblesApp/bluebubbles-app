@@ -9,6 +9,7 @@ import 'package:bluebubbles/layouts/settings/scheduling_panel.dart';
 import 'package:bluebubbles/layouts/theming/theming_panel.dart';
 import 'package:bluebubbles/layouts/widgets/CustomCupertinoTextField.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
+import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/models/fcm_data.dart';
@@ -349,6 +350,61 @@ class _SettingsPanelState extends State<SettingsPanel> {
                   },
                   title: "Reset DB",
                 ),
+                Divider(
+                  color: Theme.of(context).accentColor.withOpacity(0.5),
+                  thickness: 1,
+                ),
+                SettingsTile(
+                  title: "Donations",
+                  onTap: () {
+                    MethodChannelInterface().invokeMethod("open-link",
+                        {"link": "https://bluebubbles.app/donate/"});
+                  },
+                  trailing: Icon(
+                    Icons.attach_money,
+                    color: Theme.of(context).primaryColor,
+                  ),
+                ),
+                SettingsTile(
+                  title: "Website",
+                  onTap: () {
+                    MethodChannelInterface().invokeMethod(
+                        "open-link", {"link": "https://bluebubbles.app/"});
+                  },
+                  trailing: Icon(
+                    Icons.link,
+                    color: Theme.of(context).primaryColor,
+                  ),
+                ),
+                SettingsTile(
+                  title: "Source Code",
+                  onTap: () {
+                    MethodChannelInterface().invokeMethod("open-link",
+                        {"link": "https://github.com/BlueBubblesApp"});
+                  },
+                  trailing: Icon(
+                    Icons.code,
+                    color: Theme.of(context).primaryColor,
+                  ),
+                ),
+                SettingsTile(
+                  title: "About",
+                  onTap: () {
+                    showAboutDialog(
+                      context: context,
+                      applicationName: "BlueBubbles",
+                      applicationIcon: Image.asset(
+                        "assets/icon/icon.png",
+                        width: 30,
+                        height: 30,
+                      ),
+                    );
+                  },
+                  trailing: Icon(
+                    Icons.info_outline,
+                    color: Theme.of(context).primaryColor,
+                  ),
+                )
               ],
             ),
           ),
