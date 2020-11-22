@@ -37,8 +37,8 @@ class CurrentChat {
   List<VideoPlayerController> videoControllersToDispose = [];
   List<Attachment> chatAttachments = [];
   List<Message> sentMessages = [];
-  bool showTypingIndicator = false;
-  Timer indicatorHideTimer;
+  // bool showTypingIndicator = false;
+  // Timer indicatorHideTimer;
   OverlayEntry entry;
 
   Map<String, List<Attachment>> messageAttachments = {};
@@ -68,9 +68,9 @@ class CurrentChat {
     chatAttachments = [];
     sentMessages = [];
     entry = null;
-    showTypingIndicator = false;
-    indicatorHideTimer = null;
-    checkTypingIndicator();
+    // showTypingIndicator = false;
+    // indicatorHideTimer = null;
+    // checkTypingIndicator();
   }
 
   static CurrentChat of(BuildContext context) {
@@ -155,36 +155,36 @@ class CurrentChat {
     }
   }
 
-  void checkTypingIndicator() {
-    if (chat == null) return;
-    SocketManager().sendMessage("get-typing-indicator", {"guid": chat.guid},
-        (data) {
-      if (data['status'] == 200) {
-        if (data['data']['isTyping']) {
-          displayTypingIndicator();
-        } else {
-          hideTypingIndicator();
-        }
-      } else {
-        hideTypingIndicator();
-      }
-    });
-  }
+  // void checkTypingIndicator() {
+  //   if (chat == null) return;
+  //   SocketManager().sendMessage("get-typing-indicator", {"guid": chat.guid},
+  //       (data) {
+  //     if (data['status'] == 200) {
+  //       if (data['data']['isTyping']) {
+  //         displayTypingIndicator();
+  //       } else {
+  //         hideTypingIndicator();
+  //       }
+  //     } else {
+  //       hideTypingIndicator();
+  //     }
+  //   });
+  // }
 
-  void displayTypingIndicator() {
-    showTypingIndicator = true;
-    indicatorHideTimer = new Timer(Duration(seconds: 5), () {
-      checkTypingIndicator();
-    });
-    _stream.sink.add(null);
-  }
+  // void displayTypingIndicator() {
+  //   showTypingIndicator = true;
+  //   indicatorHideTimer = new Timer(Duration(seconds: 5), () {
+  //     checkTypingIndicator();
+  //   });
+  //   _stream.sink.add(null);
+  // }
 
-  void hideTypingIndicator() {
-    indicatorHideTimer.cancel();
-    indicatorHideTimer = null;
-    showTypingIndicator = false;
-    _stream.sink.add(null);
-  }
+  // void hideTypingIndicator() {
+  //   indicatorHideTimer.cancel();
+  //   indicatorHideTimer = null;
+  //   showTypingIndicator = false;
+  //   _stream.sink.add(null);
+  // }
 
   /// Retreive all of the attachments associated with a chat
   Future<void> updateChatAttachments() async {
@@ -227,7 +227,7 @@ class CurrentChat {
     });
     chatAttachments = [];
     sentMessages = [];
-    showTypingIndicator = false;
+    // showTypingIndicator = false;
     if (entry != null) entry.remove();
   }
 
