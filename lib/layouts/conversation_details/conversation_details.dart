@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
+import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/layouts/conversation_details/attachment_details_card.dart';
 import 'package:bluebubbles/layouts/conversation_details/contact_tile.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
@@ -181,98 +182,104 @@ class _ConversationDetailsState extends State<ConversationDetails> {
           SliverPadding(
             padding: EdgeInsets.symmetric(vertical: 20),
           ),
-          // SliverToBoxAdapter(
-          //   child: InkWell(
-          //     onTap: () async {
-          //       showDialog(
-          //           context: context,
-          //           builder: (BuildContext context) {
-          //             return AlertDialog(
-          //                 backgroundColor: Theme.of(context).accentColor,
-          //                 title: new Text("Resync Chat",
-          //                     style: Theme.of(context).textTheme.headline1),
-          //                 content: new Text(
-          //                     "Are you sure you want to resync this chat? All messages/attachments will be removed and the last 25 messages will be pre-loaded.",
-          //                     style: Theme.of(context).textTheme.bodyText1),
-          //                 actions: <Widget>[
-          //                   new FlatButton(
-          //                     child: new Text("Cancel",
-          //                         style: TextStyle(
-          //                             color: Theme.of(context)
-          //                                 .textTheme
-          //                                 .subtitle1
-          //                                 .color)),
-          //                     onPressed: () {
-          //                       Navigator.of(context).pop();
-          //                     },
-          //                   ),
-          //                   new FlatButton(
-          //                     child: new Text("Yes, I'm sure!",
-          //                         style: TextStyle(
-          //                             color: Theme.of(context)
-          //                                 .textTheme
-          //                                 .bodyText1
-          //                                 .color)),
-          //                     onPressed: () async {
-          //                       // Remove the OG alert dialog
-          //                       Navigator.of(context).pop();
-          //                       // Show the next dialog
-          //                       showDialog(
-          //                         context: context,
-          //                         barrierDismissible: false,
-          //                         builder: (BuildContext context) {
-          //                           // Resync the chat, then return to the first page
-          //                           ActionHandler.resyncChat(
-          //                                   chat, widget.messageBloc)
-          //                               .then((value) {
-          //                             Navigator.popUntil(context, (route) => route.isFirst);
-          //                           });
+          SliverToBoxAdapter(
+            child: InkWell(
+              onTap: () async {
+                // showDialog(
+                //     context: context,
+                //     builder: (BuildContext context) {
+                //       return AlertDialog(
+                //           backgroundColor: Theme.of(context).accentColor,
+                //           title: new Text("Resync Chat",
+                //               style: Theme.of(context).textTheme.headline1),
+                //           content: new Text(
+                //               "Are you sure you want to resync this chat? All messages/attachments will be removed and the last 25 messages will be pre-loaded.",
+                //               style: Theme.of(context).textTheme.bodyText1),
+                //           actions: <Widget>[
+                //             new FlatButton(
+                //               child: new Text("Cancel",
+                //                   style: TextStyle(
+                //                       color: Theme.of(context)
+                //                           .textTheme
+                //                           .subtitle1
+                //                           .color)),
+                //               onPressed: () {
+                //                 Navigator.of(context).pop();
+                //               },
+                //             ),
+                //             new FlatButton(
+                //               child: new Text("Yes, I'm sure!",
+                //                   style: TextStyle(
+                //                       color: Theme.of(context)
+                //                           .textTheme
+                //                           .bodyText1
+                //                           .color)),
+                //               onPressed: () async {
+                //                 // Remove the OG alert dialog
+                //                 Navigator.of(context).pop();
+                //                 // Show the next dialog
+                //                 showDialog(
+                //                   context: context,
+                //                   barrierDismissible: false,
+                //                   builder: (BuildContext context) {
+                //                     // Resync the chat, then return to the first page
+                //                     ActionHandler.resyncChat(
+                //                             chat, widget.messageBloc)
+                //                         .then((value) {
+                //                       Navigator.popUntil(context, (route) => route.isFirst);
+                //                     });
 
-          //                           // Show a loading dialog
-          //                           return AlertDialog(
-          //                             backgroundColor:
-          //                                 Theme.of(context).accentColor,
-          //                             title: new Text("Resyncing Chat...",
-          //                                 style: Theme.of(context)
-          //                                     .textTheme
-          //                                     .bodyText1),
-          //                             content: Container(
-          //                               alignment: Alignment.center,
-          //                               height: 100,
-          //                               width: 100,
-          //                               child: new Container(
-          //                                 child: CircularProgressIndicator(
-          //                                     valueColor:
-          //                                         new AlwaysStoppedAnimation<
-          //                                                 Color>(
-          //                                             Theme.of(context)
-          //                                                 .textTheme
-          //                                                 .bodyText1
-          //                                                 .color)),
-          //                               ),
-          //                             ),
-          //                           );
-          //                         },
-          //                       );
-          //                     },
-          //                   ),
-          //                 ]);
-          //           });
-          //     },
-          //     child: ListTile(
-          //       title: Text(
-          //         "Resync chat",
-          //         style: TextStyle(
-          //           color: Theme.of(context).primaryColor,
-          //         ),
-          //       ),
-          //       leading: Icon(
-          //         Icons.replay,
-          //         color: Theme.of(context).primaryColor,
-          //       ),
-          //     ),
-          //   ),
-          // ),
+                //                     // Show a loading dialog
+                //                     return AlertDialog(
+                //                       backgroundColor:
+                //                           Theme.of(context).accentColor,
+                //                       title: new Text("Resyncing Chat...",
+                //                           style: Theme.of(context)
+                //                               .textTheme
+                //                               .bodyText1),
+                //                       content: Container(
+                //                         alignment: Alignment.center,
+                //                         height: 100,
+                //                         width: 100,
+                //                         child: new Container(
+                //                           child: CircularProgressIndicator(
+                //                               valueColor:
+                //                                   new AlwaysStoppedAnimation<
+                //                                           Color>(
+                //                                       Theme.of(context)
+                //                                           .textTheme
+                //                                           .bodyText1
+                //                                           .color)),
+                //                         ),
+                //                       ),
+                //                     );
+                //                   },
+                //                 );
+                //               },
+                //             ),
+                //           ]);
+                //     });
+                showDialog(
+                  context: context,
+                  builder: (context) => SyncDialog(
+                    chat: chat,
+                  ),
+                );
+              },
+              child: ListTile(
+                title: Text(
+                  "Sync last 25 messages",
+                  style: TextStyle(
+                    color: Theme.of(context).primaryColor,
+                  ),
+                ),
+                leading: Icon(
+                  Icons.replay,
+                  color: Theme.of(context).primaryColor,
+                ),
+              ),
+            ),
+          ),
           SliverGrid(
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
@@ -296,6 +303,82 @@ class _ConversationDetailsState extends State<ConversationDetails> {
         ],
       ),
       // ),
+    );
+  }
+}
+
+class SyncDialog extends StatefulWidget {
+  SyncDialog({Key key, this.chat}) : super(key: key);
+  final Chat chat;
+
+  @override
+  _SyncDialogState createState() => _SyncDialogState();
+}
+
+class _SyncDialogState extends State<SyncDialog> {
+  String errorCode;
+  bool finished = false;
+
+  @override
+  void initState() {
+    super.initState();
+    Map<String, dynamic> params = Map();
+    params["identifier"] = widget.chat.guid;
+    params["withBlurhash"] = false;
+    params["limit"] = 25;
+    params["where"] = [
+      {"statement": "message.service = 'iMessage'", "args": null}
+    ];
+
+    SocketManager().sendMessage("get-chat-messages", params, (data) async {
+      if (data['status'] != 200) {
+        onFinish(false);
+        errorCode = data['error']['message'];
+        return;
+      }
+      List messages = data["data"];
+      await MessageHelper.bulkAddMessages(
+          widget.chat, messages.reversed.toList(),
+          notifyForNewMessage: false);
+      onFinish();
+    });
+  }
+
+  void onFinish([bool success = true]) {
+    if (!this.mounted) return;
+    if (success) Navigator.of(context).pop();
+    if (!success) setState(() {});
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(errorCode != null ? "Error!" : "Syncing messages..."),
+      content: errorCode != null
+          ? Text(errorCode)
+          : Container(
+              height: 5,
+              child: Center(
+                child: LinearProgressIndicator(
+                  backgroundColor: Colors.white,
+                  valueColor:
+                      AlwaysStoppedAnimation(Theme.of(context).primaryColor),
+                ),
+              ),
+            ),
+      actions: [
+        FlatButton(
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+          child: Text(
+            "Ok",
+            style: Theme.of(context).textTheme.bodyText1.apply(
+                  color: Theme.of(context).primaryColor,
+                ),
+          ),
+        )
+      ],
     );
   }
 }
