@@ -250,7 +250,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
       SystemUiOverlayStyle(
         systemNavigationBarColor:
             Theme.of(context).backgroundColor, // navigation bar color
-        systemNavigationBarIconBrightness: (Theme.of(context).textTheme.bodyText1.color == Colors.black) ? Brightness.light : Brightness.dark,
+        systemNavigationBarIconBrightness: Theme.of(context).brightness,
         statusBarColor: Colors.transparent, // status bar color
       ),
     );

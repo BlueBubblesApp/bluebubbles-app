@@ -65,7 +65,6 @@ class _SettingsPanelState extends State<SettingsPanel> {
             child: AppBar(
               toolbarHeight: 100.0,
               elevation: 0,
-              brightness: (Theme.of(context).textTheme.bodyText1.color == Colors.black) ? Brightness.light : Brightness.dark,
               leading: IconButton(
                 icon: Icon(Icons.arrow_back_ios,
                     color: Theme.of(context).primaryColor),

@@ -126,7 +126,6 @@ class _ConversationListState extends State<ConversationList> {
               secondChild: AppBar(
                 elevation: 0,
                 backgroundColor: _theme,
-                brightness: (Theme.of(context).textTheme.bodyText1.color == Colors.black) ? Brightness.light : Brightness.dark,
                 centerTitle: true,
                 title: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -141,7 +140,6 @@ class _ConversationListState extends State<ConversationList> {
               firstChild: AppBar(
                 elevation: 0,
                 backgroundColor: Theme.of(context).backgroundColor,
-                brightness: (Theme.of(context).textTheme.bodyText1.color == Colors.black) ? Brightness.light : Brightness.dark,
               ),
             ),
           ),
