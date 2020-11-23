@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
-import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:contacts_service/contacts_service.dart';

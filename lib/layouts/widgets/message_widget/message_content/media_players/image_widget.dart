@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/image_viewer/attachmet_fullscreen_viewer.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -10,7 +9,6 @@ import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
-import 'package:image_size_getter/file_input.dart';
 import 'package:visibility_detector/visibility_detector.dart';
 
 class ImageWidget extends StatefulWidget {
@@ -77,16 +75,12 @@ class _ImageWidgetState extends State<ImageWidget>
       },
       child: Stack(
         children: <Widget>[
-          AnimatedSize(
-            vsync: this,
-            duration: Duration(milliseconds: 250),
-            child: Container(
-              constraints: BoxConstraints(
-                maxWidth: MediaQuery.of(context).size.width / 2,
-                maxHeight: MediaQuery.of(context).size.height / 2,
-              ),
-              child: buildSwitcher(),
+          Container(
+            constraints: BoxConstraints(
+              maxWidth: MediaQuery.of(context).size.width / 2,
+              maxHeight: MediaQuery.of(context).size.height / 2,
             ),
+            child: buildSwitcher(),
           ),
           Positioned.fill(
             child: Material(
@@ -126,8 +120,21 @@ class _ImageWidgetState extends State<ImageWidget>
         child: data != null
             ? Image.memory(
                 data,
-                width: widget.attachment.width.toDouble(),
-                height: widget.attachment.height.toDouble(),
+                //width: widget.attachment.width.toDouble(),
+                //height: widget.attachment.height.toDouble(),
+                frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+                  if (wasSynchronouslyLoaded) return child;
+
+                  return Stack(children: [
+                    buildPlaceHolder(),
+                    AnimatedOpacity(
+                      opacity: (frame == null) ? 0 : 1,
+                      child: child,
+                      duration: const Duration(milliseconds: 250),
+                      curve: Curves.easeInOut,
+                    )
+                  ]);
+                },
               )
             : buildPlaceHolder(),
       );
@@ -138,9 +145,13 @@ class _ImageWidgetState extends State<ImageWidget>
         aspectRatio: widget.attachment.width.toDouble() /
             widget.attachment.height.toDouble(),
         child: Container(
-          width: widget.attachment.width.toDouble(),
-          height: widget.attachment.height.toDouble(),
-        ),
+            width: widget.attachment.width.toDouble(),
+            height: widget.attachment.height.toDouble(),
+            color: Theme.of(context).accentColor,
+            child: Center(
+                child: CircularProgressIndicator(
+                    valueColor: new AlwaysStoppedAnimation<Color>(
+                        Theme.of(context).primaryColor)))),
       );
     } else {
       return Container(

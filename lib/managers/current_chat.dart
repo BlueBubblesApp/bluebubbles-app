@@ -10,7 +10,6 @@ import 'package:bluebubbles/managers/attachment_info_bloc.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
-import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:metadata_fetch/metadata_fetch.dart';
 import 'package:video_player/video_player.dart';

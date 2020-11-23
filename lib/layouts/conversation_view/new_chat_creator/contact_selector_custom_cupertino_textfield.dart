@@ -775,7 +775,6 @@ class _CupertinoTextFieldState
     }
   }
 
-  @override
   String get restorationId => widget.restorationId;
 
   @override

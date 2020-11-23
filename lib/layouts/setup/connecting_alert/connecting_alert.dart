@@ -1,9 +1,7 @@
-import 'dart:async';
 
 import 'package:bluebubbles/layouts/setup/connecting_alert/failed_to_connect_dialog.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_socket_io/socket_io_manager.dart';
 
 class ConnectingAlert extends StatefulWidget {
   ConnectingAlert({Key key, @required this.onConnect}) : super(key: key);

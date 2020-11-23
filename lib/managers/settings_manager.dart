@@ -147,4 +147,8 @@ class SettingsManager {
     await fcmData.save();
     SocketManager().authFCM();
   }
+
+  void dispose() {
+    _stream.close();
+  }
 }

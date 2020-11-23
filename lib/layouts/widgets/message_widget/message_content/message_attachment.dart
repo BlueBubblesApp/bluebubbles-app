@@ -58,7 +58,6 @@ class _MessageAttachmentState extends State<MessageAttachment>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    updateContent();
     return ClipRRect(
       borderRadius: BorderRadius.circular(20),
       child: Container(
@@ -132,7 +131,6 @@ class _MessageAttachmentState extends State<MessageAttachment>
       return AttachmentDownloaderWidget(
         onPressed: () {
           content = new AttachmentDownloader(content);
-          // widget.updateAttachment();
           if (this.mounted) setState(() {});
         },
         attachment: content,
