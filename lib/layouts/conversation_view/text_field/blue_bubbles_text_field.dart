@@ -367,8 +367,12 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
   }
 
   Future<void> startRecording() async {
-    HapticFeedback.heavyImpact();
+    HapticFeedback.lightImpact();
     String appDocPath = SettingsManager().appDocDir.path;
+    Directory directory = Directory("$appDocPath/attachments/");
+    if (!await directory.exists()) {
+      directory.createSync();
+    }
     String pathName = "$appDocPath/attachments/tmp.m4a";
     File file = new File(pathName);
     if (file.existsSync()) file.deleteSync();
@@ -390,7 +394,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
   }
 
   Future<void> stopRecording() async {
-    HapticFeedback.heavyImpact();
+    HapticFeedback.lightImpact();
 
     if (isRecording) {
       await Record.stop();

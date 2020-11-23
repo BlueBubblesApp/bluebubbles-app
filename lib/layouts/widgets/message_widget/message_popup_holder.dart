@@ -2,6 +2,7 @@ import 'package:bluebubbles/layouts/widgets/message_widget/message_details_popup
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class MessagePopupHolder extends StatefulWidget {
   final Widget child;
@@ -37,6 +38,7 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
     return GestureDetector(
       key: containerKey,
       onLongPress: () async {
+        HapticFeedback.lightImpact();
         getOffset();
         CurrentChat currentChat = CurrentChat.of(context);
         if (this.mounted) {
