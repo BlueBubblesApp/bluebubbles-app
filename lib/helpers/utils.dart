@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:math';
 import 'dart:typed_data';
+import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
@@ -342,4 +343,8 @@ Size getGifDimensions(Uint8List bytes) {
   debugPrint("GIF height: $height");
   Size size = new Size(width.toDouble(), height.toDouble());
   return size;
+}
+
+Brightness getBrightness(BuildContext context) {
+  return AdaptiveTheme.of(context).mode == AdaptiveThemeMode.dark ? Brightness.dark : Brightness.light;
 }
