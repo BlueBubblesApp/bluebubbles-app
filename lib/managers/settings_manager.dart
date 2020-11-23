@@ -85,6 +85,9 @@ class SettingsManager {
     } catch (e) {}
 
     // Change the [finishedSetup] status to that of the settings
+    if (!settings.finishedSetup) {
+      await DBProvider.deleteDB();
+    }
     SocketManager().finishedSetup.sink.add(settings.finishedSetup);
 
     // If we aren't running in the background, then we should auto start the socket and authorize fcm just in case we haven't

@@ -58,8 +58,8 @@ class ContactManager {
     return output;
   }
 
-  Future<void> getContacts({bool headless = false}) async {
-    if (!(await canAccessContacts())) return;
+  Future<bool> getContacts({bool headless = false}) async {
+    if (!(await canAccessContacts())) return false;
 
     // If we are fetching the contacts, return the current future so we can await it
     if (getContactsFuture != null && !getContactsFuture.isCompleted) {
@@ -96,6 +96,7 @@ class ContactManager {
 
     // Lazy load thumbnails after rendering initial contacts.
     getAvatars();
+    return true;
   }
 
   Future<void> getAvatars() async {

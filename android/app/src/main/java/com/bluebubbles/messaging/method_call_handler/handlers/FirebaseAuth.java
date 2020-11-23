@@ -74,7 +74,6 @@ public class FirebaseAuth implements Handler {
                             try {
                                 result.success(token);
                             } catch (IllegalStateException e) {
-
                             }
                         }
                     }

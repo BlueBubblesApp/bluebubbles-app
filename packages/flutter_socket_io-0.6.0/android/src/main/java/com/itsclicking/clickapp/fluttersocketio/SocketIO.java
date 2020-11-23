@@ -146,7 +146,6 @@ public class SocketIO {
         }
 
         _socket = getSocket();
-
         Utils.log(TAG, "connecting..." + _socket.id());
 
         //start listen connection events

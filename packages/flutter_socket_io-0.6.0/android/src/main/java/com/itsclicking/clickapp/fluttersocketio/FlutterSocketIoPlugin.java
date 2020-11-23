@@ -3,6 +3,7 @@ package com.itsclicking.clickapp.fluttersocketio;
 import com.google.gson.Gson;
 
 import java.util.Map;
+import android.util.Log;
 
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
@@ -38,58 +39,72 @@ public class FlutterSocketIoPlugin implements MethodCallHandler {
 
         Utils.log(TAG, "onMethodCall: " + call.method + " - domain: " + socketDomain + " - with namespace: " + socketNameSpace);
 
-        switch (call.method) {
-            case SocketIOManager.MethodCallName.SOCKET_INIT:
-                String query = call.argument(SocketIOManager.MethodCallArgumentsName.SOCKET_QUERY);
-                SocketIOManager.getInstance().init(_channel, socketDomain, socketNameSpace, query, callback);
-                break;
+        try {
 
-            case SocketIOManager.MethodCallName.SOCKET_CONNECT:
-                SocketIOManager.getInstance().connect(socketDomain, socketNameSpace);
-                break;
+            switch (call.method) {
+                case SocketIOManager.MethodCallName.SOCKET_INIT:
+                    String query = call.argument(SocketIOManager.MethodCallArgumentsName.SOCKET_QUERY);
+                    SocketIOManager.getInstance().init(_channel, socketDomain, socketNameSpace, query, callback);
+                    result.success(null);
+                    break;
 
-            case SocketIOManager.MethodCallName.SOCKET_DISCONNECT:
-                SocketIOManager.getInstance().disconnect(socketDomain, socketNameSpace);
-                break;
+                case SocketIOManager.MethodCallName.SOCKET_CONNECT:
+                    SocketIOManager.getInstance().connect(socketDomain, socketNameSpace);
+                    result.success(null);
+                    break;
 
-            case SocketIOManager.MethodCallName.SOCKET_SUBSCRIBES:
-                String socketData = call.argument(SocketIOManager.MethodCallArgumentsName.SOCKET_DATA);
-                Map<String, String> map = Utils.convertJsonToMap(socketData);
-                Utils.log(TAG, "socketData: " + new Gson().toJson(map));
-                SocketIOManager.getInstance().subscribes(socketDomain, socketNameSpace, map);
-                break;
+                case SocketIOManager.MethodCallName.SOCKET_DISCONNECT:
+                    SocketIOManager.getInstance().disconnect(socketDomain, socketNameSpace);
+                    break;
 
-            case SocketIOManager.MethodCallName.SOCKET_UNSUBSCRIBES_ALL:
-                SocketIOManager.getInstance().unSubscribesAll(socketDomain, socketNameSpace);
-                break;
+                case SocketIOManager.MethodCallName.SOCKET_SUBSCRIBES:
+                    String socketData = call.argument(SocketIOManager.MethodCallArgumentsName.SOCKET_DATA);
+                    Map<String, String> map = Utils.convertJsonToMap(socketData);
+                    Utils.log(TAG, "socketData: " + new Gson().toJson(map));
+                    SocketIOManager.getInstance().subscribes(socketDomain, socketNameSpace, map);
+                    result.success(null);
+                    break;
 
-            case SocketIOManager.MethodCallName.SOCKET_UNSUBSCRIBES:
-                String jsonData = call.argument(SocketIOManager.MethodCallArgumentsName.SOCKET_DATA);
-                Map<String, String> params = Utils.convertJsonToMap(jsonData);
-                SocketIOManager.getInstance().unSubscribes(socketDomain, socketNameSpace, params);
-                break;
+                case SocketIOManager.MethodCallName.SOCKET_UNSUBSCRIBES_ALL:
+                    SocketIOManager.getInstance().unSubscribesAll(socketDomain, socketNameSpace);
+                    result.success(null);
+                    break;
 
-            case SocketIOManager.MethodCallName.SOCKET_SEND_MESSAGE:
-                String event = call.argument(SocketIOManager.MethodCallArgumentsName.SOCKET_EVENT);
-                String message = call.argument(SocketIOManager.MethodCallArgumentsName.SOCKET_MESSAGE);
-                if (!Utils.isNullOrEmpty(event) && message != null) {
-                    SocketIOManager.getInstance().sendMessage(socketDomain, socketNameSpace, event, message, callback);
-                } else {
-                    Utils.log(TAG, "send message with invalid params:" + "Event: " + event + " - with message: " + new Gson().toJson(message));
-                }
-                break;
+                case SocketIOManager.MethodCallName.SOCKET_UNSUBSCRIBES:
+                    String jsonData = call.argument(SocketIOManager.MethodCallArgumentsName.SOCKET_DATA);
+                    Map<String, String> params = Utils.convertJsonToMap(jsonData);
+                    SocketIOManager.getInstance().unSubscribes(socketDomain, socketNameSpace, params);
+                    result.success(null);
+                    break;
 
-            case SocketIOManager.MethodCallName.SOCKET_DESTROY:
-                SocketIOManager.getInstance().destroySocket(socketDomain, socketNameSpace);
-                break;
+                case SocketIOManager.MethodCallName.SOCKET_SEND_MESSAGE:
+                    String event = call.argument(SocketIOManager.MethodCallArgumentsName.SOCKET_EVENT);
+                    String message = call.argument(SocketIOManager.MethodCallArgumentsName.SOCKET_MESSAGE);
+                    if (!Utils.isNullOrEmpty(event) && message != null) {
+                        SocketIOManager.getInstance().sendMessage(socketDomain, socketNameSpace, event, message, callback);
+                    } else {
+                        Utils.log(TAG, "send message with invalid params:" + "Event: " + event + " - with message: " + new Gson().toJson(message));
+                    }
+                    result.success(null);
+                    break;
 
-            case SocketIOManager.MethodCallName.SOCKET_DESTROY_ALL:
-                SocketIOManager.getInstance().destroyAllSockets();
-                break;
+                case SocketIOManager.MethodCallName.SOCKET_DESTROY:
+                    SocketIOManager.getInstance().destroySocket(socketDomain, socketNameSpace);
+                    result.success(null);
+                    break;
 
-            default:
-                result.notImplemented();
-                break;
+                case SocketIOManager.MethodCallName.SOCKET_DESTROY_ALL:
+                    SocketIOManager.getInstance().destroyAllSockets();
+                    result.success(null);
+                    break;
+
+                default:
+                    result.notImplemented();
+                    break;
+            }
+        } catch (Exception e) {
+            String stackTrace = Log.getStackTraceString(e);
+            result.error("FAILURE", stackTrace, null);
         }
     }
 }

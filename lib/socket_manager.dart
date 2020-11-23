@@ -206,7 +206,8 @@ class SocketManager {
     return new Future.value("");
   }
 
-  startSocketIO({bool forceNewConnection = false}) async {
+  Future<void> startSocketIO(
+      {bool forceNewConnection = false, bool catchException = true}) async {
     if (SettingsManager().settings == null) {
       debugPrint("Settings have not loaded yet, not starting socket...");
       return;
@@ -241,7 +242,7 @@ class SocketManager {
         return;
       }
 
-      _manager.socket.init();
+      await _manager.socket.init();
       _manager.socket.connect();
       _manager.socket.unSubscribesAll();
 
@@ -336,7 +337,11 @@ class SocketManager {
             item: {"data": jsonDecode(_data)}));
       });
     } catch (e) {
-      debugPrint("FAILED TO CONNECT");
+      if (!catchException) {
+        throw (("(SocketManager) -> ") + e.toString());
+      } else {
+        debugPrint("FAILED TO CONNECT");
+      }
     }
   }
 
@@ -353,11 +358,11 @@ class SocketManager {
     state = SocketState.DISCONNECTED;
   }
 
-  Future<void> authFCM() async {
+  Future<void> authFCM({bool catchException = true, bool force = false}) async {
     if (SettingsManager().fcmData.isNull) {
       debugPrint("No FCM Auth data found. Skipping FCM authentication");
       return;
-    } else if (token != null) {
+    } else if (token != null && !force) {
       debugPrint("already authorized fcm " + token);
       if (_manager.socket != null) {
         _manager.sendMessage("add-fcm-device",
@@ -378,8 +383,12 @@ class SocketManager {
         debugPrint(token);
       }
     } on PlatformException catch (e) {
-      token = "Failed to get token: " + e.toString();
-      debugPrint(token);
+      if (!catchException) {
+        throw ("(AuthFCM) -> " + e.toString());
+      } else {
+        token = "Failed to get token: " + e.toString();
+        debugPrint(token);
+      }
     }
   }
 

@@ -75,6 +75,10 @@ class MethodChannelInterface {
         // We remove the brackets from the formatting
         address = address.substring(1, address.length - 1);
 
+        if (!(address).startsWith("http")) {
+          address = "http://$address";
+        }
+
         // And then tell the socket to set the new server address
         await SocketManager().newServer(address);
 

@@ -52,14 +52,15 @@ class _ImageWidgetState extends State<ImageWidget>
       } else {
         data = await widget.file.readAsBytes();
       }
-      CurrentChat.of(context)?.saveImageData(data, widget.attachment);
       await widget.attachment.updateDimensions(data);
+      CurrentChat.of(context)?.saveImageData(data, widget.attachment);
       if (this.mounted) setState(() {});
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     _initializeBytes();
     return VisibilityDetector(
       key: Key(widget.attachment.guid),
@@ -122,7 +123,13 @@ class _ImageWidgetState extends State<ImageWidget>
 
   Widget buildSwitcher() => AnimatedSwitcher(
         duration: Duration(milliseconds: 150),
-        child: data != null ? Image.memory(data) : buildPlaceHolder(),
+        child: data != null
+            ? Image.memory(
+                data,
+                width: widget.attachment.width.toDouble(),
+                height: widget.attachment.height.toDouble(),
+              )
+            : buildPlaceHolder(),
       );
 
   Widget buildPlaceHolder() {

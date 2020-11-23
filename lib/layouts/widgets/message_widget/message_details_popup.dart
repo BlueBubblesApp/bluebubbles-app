@@ -422,8 +422,10 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
                     );
                   },
                   child: ListTile(
-                    title: Text("Copy Selection",
-                        style: Theme.of(context).textTheme.bodyText1),
+                    title: Text(
+                      "Copy Selection",
+                      style: Theme.of(context).textTheme.bodyText1,
+                    ),
                     trailing: Icon(
                       Icons.content_copy,
                       color: Theme.of(context).textTheme.bodyText1.color,
