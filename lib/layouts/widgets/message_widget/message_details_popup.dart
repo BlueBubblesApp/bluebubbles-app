@@ -260,7 +260,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
       top: topOffset + topPadding,
       left: leftOffset,
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(25.0),
+        borderRadius: BorderRadius.circular(20.0),
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
           child: Container(
@@ -308,7 +308,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
 
     double maxMenuWidth = size.width * 2 / 3;
     Widget menu = ClipRRect(
-      borderRadius: BorderRadius.circular(25.0),
+      borderRadius: BorderRadius.circular(20.0),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
         child: Container(
@@ -450,7 +450,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
                 20);
     double leftOffset = (widget.message.isFromMe
             ? size.width - maxMenuWidth - 15
-            : 25 + (currentChat.chat.isGroup() ? 20 : 0))
+            : 15 + (currentChat.chat.isGroup() ? 35 : 0))
         .toDouble();
     return Positioned(
       top: topOffset + 5,

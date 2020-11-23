@@ -62,6 +62,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
         child: ClipRRect(
           child: BackdropFilter(
             child: AppBar(
+              brightness: getBrightness(context),
               toolbarHeight: 100.0,
               elevation: 0,
               leading: IconButton(

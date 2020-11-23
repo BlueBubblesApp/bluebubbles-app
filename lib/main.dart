@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/themes.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/setup/failure_to_start.dart';
 import 'package:bluebubbles/managers/background_isolate.dart';
@@ -223,6 +224,15 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
 
     // Bind the lifecycle events
     WidgetsBinding.instance.addObserver(this);
+
+    SystemChrome.setSystemUIOverlayStyle(
+      SystemUiOverlayStyle(
+        systemNavigationBarColor:
+            Theme.of(context).backgroundColor, // navigation bar color
+        systemNavigationBarIconBrightness: getBrightness(context),
+        statusBarColor: Colors.transparent, // status bar color
+      )
+    );
   }
 
   @override
@@ -246,14 +256,6 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   /// Render
   @override
   Widget build(BuildContext context) {
-    SystemChrome.setSystemUIOverlayStyle(
-      SystemUiOverlayStyle(
-        systemNavigationBarColor:
-            Theme.of(context).backgroundColor, // navigation bar color
-        systemNavigationBarIconBrightness: Theme.of(context).brightness,
-        statusBarColor: Colors.transparent, // status bar color
-      ),
-    );
     return Scaffold(
       backgroundColor: Colors.black,
       // The stream builder connects to the [SocketManager] to check if the app has finished the setup or not

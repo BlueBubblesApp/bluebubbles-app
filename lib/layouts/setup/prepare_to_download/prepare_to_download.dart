@@ -73,37 +73,37 @@ class _PrepareToDownloadState extends State<PrepareToDownload> {
               ),
             ),
             Container(height: 20.0),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 40.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                mainAxisSize: MainAxisSize.max,
-                children: [
-                  Text(
-                    "Download Attachments (long sync)",
-                    style: Theme.of(context).textTheme.bodyText1,
-                    textAlign: TextAlign.center,
-                  ),
-                  Switch(
-                    value: downloadAttachments,
-                    activeColor: Theme.of(context).primaryColor,
-                    activeTrackColor:
-                        Theme.of(context).primaryColor.withAlpha(200),
-                    inactiveTrackColor:
-                        Theme.of(context).primaryColor.withAlpha(75),
-                    inactiveThumbColor:
-                        Theme.of(context).textTheme.bodyText1.color,
-                    onChanged: (bool value) {
-                      if (!this.mounted) return;
+            // Padding(
+            //   padding: EdgeInsets.symmetric(horizontal: 40.0),
+            //   child: Row(
+            //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            //     mainAxisSize: MainAxisSize.max,
+            //     children: [
+            //       Text(
+            //         "Download Attachments (long sync)",
+            //         style: Theme.of(context).textTheme.bodyText1,
+            //         textAlign: TextAlign.center,
+            //       ),
+            //       Switch(
+            //         value: downloadAttachments,
+            //         activeColor: Theme.of(context).primaryColor,
+            //         activeTrackColor:
+            //             Theme.of(context).primaryColor.withAlpha(200),
+            //         inactiveTrackColor:
+            //             Theme.of(context).primaryColor.withAlpha(75),
+            //         inactiveThumbColor:
+            //             Theme.of(context).textTheme.bodyText1.color,
+            //         onChanged: (bool value) {
+            //           if (!this.mounted) return;
 
-                      setState(() {
-                        downloadAttachments = value;
-                      });
-                    },
-                  )
-                ],
-              ),
-            ),
+            //           setState(() {
+            //             downloadAttachments = value;
+            //           });
+            //         },
+            //       )
+            //     ],
+            //   ),
+            // ),
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 40.0),
               child: Row(

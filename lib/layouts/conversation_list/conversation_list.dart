@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
@@ -126,6 +127,7 @@ class _ConversationListState extends State<ConversationList> {
                 elevation: 0,
                 backgroundColor: _theme,
                 centerTitle: true,
+                brightness: getBrightness(context),
                 title: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: <Widget>[
@@ -138,6 +140,7 @@ class _ConversationListState extends State<ConversationList> {
               ),
               firstChild: AppBar(
                 elevation: 0,
+                brightness: getBrightness(context),
                 backgroundColor: Theme.of(context).backgroundColor,
               ),
             ),
