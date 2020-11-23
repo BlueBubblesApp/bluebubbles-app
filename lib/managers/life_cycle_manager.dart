@@ -77,4 +77,8 @@ class LifeCycleManager {
       _stream.sink.add(_isAlive);
     }
   }
+
+  dipose() {
+    _stream.close();
+  }
 }

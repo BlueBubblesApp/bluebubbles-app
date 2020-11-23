@@ -1,5 +1,3 @@
-import 'package:bluebubbles/helpers/hex_color.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';

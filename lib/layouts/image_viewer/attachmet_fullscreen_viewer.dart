@@ -204,6 +204,8 @@ class _AttachmentFullscreenViewerState
                     ],
                   );
                 }
+
+                return Container();
               },
               controller: controller,
             )

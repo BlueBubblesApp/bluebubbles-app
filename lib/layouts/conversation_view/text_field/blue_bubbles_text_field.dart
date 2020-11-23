@@ -10,8 +10,6 @@ import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/chat.dart';
-import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -373,7 +371,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
     if (!await directory.exists()) {
       directory.createSync();
     }
-    String pathName = "$appDocPath/attachments/tmp.m4a";
+    String pathName = "$appDocPath/attachments/AudioMessage.m4a";
     File file = new File(pathName);
     if (file.existsSync()) file.deleteSync();
 
@@ -406,7 +404,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
       }
 
       String appDocPath = SettingsManager().appDocDir.path;
-      String pathName = "$appDocPath/attachments/tmp.m4a";
+      String pathName = "$appDocPath/attachments/AudioMessage.m4a";
       reviewAudio(context, new File(pathName));
     }
   }

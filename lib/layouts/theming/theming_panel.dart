@@ -40,7 +40,6 @@ class _ThemingPanelState extends State<ThemingPanel>
 
   @override
   void dispose() {
-    // SettingsManager().saveSelectedTheme(, selectedDarkTheme, context)
     super.dispose();
   }
 

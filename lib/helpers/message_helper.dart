@@ -12,7 +12,6 @@ import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:contacts_service/contacts_service.dart';
-import 'package:flutter/widgets.dart';
 
 class EmojiConst {
   static final String charNonSpacingMark = String.fromCharCode(0xfe0f);

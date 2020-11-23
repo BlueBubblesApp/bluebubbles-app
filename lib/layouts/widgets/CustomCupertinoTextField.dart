@@ -773,7 +773,6 @@ class _CupertinoTextFieldState extends State<CustomCupertinoTextField>
     }
   }
 
-  @override
   String get restorationId => widget.restorationId;
 
   @override

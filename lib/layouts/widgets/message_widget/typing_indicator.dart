@@ -1,7 +1,4 @@
-import 'package:assorted_layout_widgets/assorted_layout_widgets.dart';
-import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.dart';
-import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/material.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'dart:math' as Math;

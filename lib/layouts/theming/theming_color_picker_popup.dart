@@ -1,4 +1,3 @@
-import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/repository/models/theme_entry.dart';
 import 'package:flutter/material.dart';
