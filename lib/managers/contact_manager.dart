@@ -67,7 +67,7 @@ class ContactManager {
     }
 
     // Start a new completer
-    getContactsFuture = new Completer();
+    getContactsFuture = new Completer<bool>();
 
     // Fetch the current list of contacts
     debugPrint("ContactManager -> Fetching Contacts");
@@ -92,7 +92,7 @@ class ContactManager {
       }
     }
 
-    getContactsFuture.complete();
+    getContactsFuture.complete(true);
 
     // Lazy load thumbnails after rendering initial contacts.
     getAvatars();
