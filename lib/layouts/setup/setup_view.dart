@@ -1,22 +1,11 @@
-import 'dart:async';
-import 'dart:convert';
-
-import 'package:bluebubbles/blocs/setup_bloc.dart';
-import 'package:bluebubbles/layouts/settings/settings_panel.dart';
 import 'package:bluebubbles/layouts/setup/connecting_alert/failed_to_connect_dialog.dart';
 import 'package:bluebubbles/layouts/setup/prepare_to_download/prepare_to_download.dart';
-import 'package:bluebubbles/layouts/setup/qr_code_scanner.dart';
-import 'package:bluebubbles/layouts/setup/qr_scan/failed_to_scan_dialog.dart';
 import 'package:bluebubbles/layouts/setup/qr_scan/qr_scan.dart';
 import 'package:bluebubbles/layouts/setup/request_contact/request_contacts.dart';
 import 'package:bluebubbles/layouts/setup/setup_mac_app/setup_mac_app.dart';
 import 'package:bluebubbles/layouts/setup/syncing_messages/syncing_messages.dart';
-import 'package:bluebubbles/layouts/setup/qr_scan/text_input_url.dart';
 import 'package:bluebubbles/layouts/setup/welcome_page/welcome_page.dart';
-import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/fcm_data.dart';
-import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';

@@ -46,7 +46,7 @@ class _ImageWidgetState extends State<ImageWidget>
         data = await FlutterImageCompress.compressWithFile(
             widget.file.absolute.path,
             quality: 25 // This is arbitrary
-            );
+        );
 
         // All other attachments can be held in memory as bytes
       } else {
@@ -126,8 +126,8 @@ class _ImageWidgetState extends State<ImageWidget>
         child: data != null
             ? Image.memory(
                 data,
-                width: widget.attachment.width.toDouble(),
-                height: widget.attachment.height.toDouble(),
+                //width: widget.attachment.width.toDouble(),
+                //height: widget.attachment.height.toDouble(),
               )
             : buildPlaceHolder(),
       );
