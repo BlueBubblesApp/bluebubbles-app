@@ -48,7 +48,8 @@ class NotificationManager {
   /// for the chat will be cleared
   void switchChat(Chat chat) async {
     if (chat == null) return;
-    CurrentChat.getCurrentChat(chat)?.isAlive = true;
+    if (CurrentChat.getCurrentChat(chat) != null)
+      CurrentChat.getCurrentChat(chat).isAlive = true;
 
     await chat.setUnreadStatus(false);
     MethodChannelInterface()

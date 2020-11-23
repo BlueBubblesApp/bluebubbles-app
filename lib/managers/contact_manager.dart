@@ -58,7 +58,7 @@ class ContactManager {
     return output;
   }
 
-  Future<bool> getContacts({bool headless = false}) async {
+  Future getContacts({bool headless = false}) async {
     if (!(await canAccessContacts())) return false;
 
     // If we are fetching the contacts, return the current future so we can await it

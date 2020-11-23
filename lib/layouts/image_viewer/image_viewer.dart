@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:ui';
 import 'package:bluebubbles/helpers/share.dart';
+import 'package:bluebubbles/layouts/image_viewer/attachmet_fullscreen_viewer.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -36,6 +37,31 @@ class _ImageViewerState extends State<ImageViewer> {
   void initState() {
     super.initState();
     controller = new PhotoViewController();
+    // controller.outputStateStream.listen((event) {
+    //   if (AttachmentFullscreenViewer.of(context) == null) return;
+    //   if (this.mounted) {
+    //     AttachmentFullscreenViewerState state =
+    //         AttachmentFullscreenViewer.of(context);
+    //     debugPrint("Scale: ${event.scale}");
+    //     if (event.scale > controller.initial.scale) {
+    //       if (state.physics != NeverScrollableScrollPhysics()) {
+    //         AttachmentFullscreenViewer.of(context).setState(() {
+    //           AttachmentFullscreenViewer.of(context).physics =
+    //               NeverScrollableScrollPhysics();
+    //         });
+    //       }
+    //     } else {
+    //       if (state.physics !=
+    //           AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics())) {
+    //         AttachmentFullscreenViewer.of(context).setState(() {
+    //           AttachmentFullscreenViewer.of(context).physics =
+    //               AlwaysScrollableScrollPhysics(
+    //                   parent: BouncingScrollPhysics());
+    //         });
+    //       }
+    //     }
+    //   }
+    // });
   }
 
   @override
@@ -142,18 +168,19 @@ class _ImageViewerState extends State<ImageViewer> {
         child: Stack(
           children: <Widget>[
             PhotoView(
-                minScale: PhotoViewComputedScale.contained,
-                maxScale: PhotoViewComputedScale.contained * 13,
-                controller: controller,
-                imageProvider: FileImage(widget.file),
-                loadingBuilder: (BuildContext context, ImageChunkEvent ev) {
-                  return PhotoView(
-                    minScale: PhotoViewComputedScale.contained,
-                    maxScale: PhotoViewComputedScale.contained * 13,
-                    controller: controller,
-                    imageProvider: FileImage(widget.file),
-                  );
-                }),
+              minScale: PhotoViewComputedScale.contained,
+              maxScale: PhotoViewComputedScale.contained * 13,
+              controller: controller,
+              imageProvider: FileImage(widget.file),
+              loadingBuilder: (BuildContext context, ImageChunkEvent ev) {
+                return PhotoView(
+                  minScale: PhotoViewComputedScale.contained,
+                  maxScale: PhotoViewComputedScale.contained * 13,
+                  controller: controller,
+                  imageProvider: FileImage(widget.file),
+                );
+              },
+            ),
             overlay
           ],
         ),

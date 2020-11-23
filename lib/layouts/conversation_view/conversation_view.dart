@@ -81,7 +81,7 @@ class ConversationViewState extends State<ConversationView>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (!this.mounted) return;
-    currentChat.isAlive = true;
+    currentChat?.isAlive = true;
   }
 
   @override
@@ -127,7 +127,7 @@ class ConversationViewState extends State<ConversationView>
 
   @override
   Widget build(BuildContext context) {
-    currentChat.isAlive = true;
+    currentChat?.isAlive = true;
     return Scaffold(
       backgroundColor: Theme.of(context).backgroundColor,
       extendBodyBehindAppBar: !isCreator,

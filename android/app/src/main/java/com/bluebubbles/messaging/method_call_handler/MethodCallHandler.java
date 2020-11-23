@@ -59,17 +59,19 @@ public class MethodCallHandler {
         } else if (call.method.equals(SaveToFile.TAG)) {
             new SaveToFile(context, call, result).Handle();
         } else if (call.method.equals("get-starting-intent")) {
-            result.success(((MainActivity) context).getIntent().getStringExtra("chatGUID"));
+            String intent = ((MainActivity) context).getIntent().getStringExtra("chatGUID");
+            ((MainActivity) context).getIntent().putExtra("chatGUID", (String) null);
+            result.success(intent);
         } else if (call.method.equals(InitializeBackgroundHandle.TAG)) {
             new InitializeBackgroundHandle(context, call, result).Handle();
         } else if (call.method.equals(GetServerUrl.TAG)) {
             new GetServerUrl(context, call, result).Handle();
         } else if (call.method.equals(ShareFile.TAG)) {
             new ShareFile(context, call, result).Handle();
-        }  else if (call.method.equals(PickFile.TAG)) {
+        } else if (call.method.equals(PickFile.TAG)) {
             new PickFile(context, call, result).Handle();
-        } else if(call.method.equals(AlarmScheduler.TAG)) {
-            new AlarmScheduler(context, call, result) .Handle();
+        } else if (call.method.equals(AlarmScheduler.TAG)) {
+            new AlarmScheduler(context, call, result).Handle();
         } else {
             result.notImplemented();
         }
