@@ -81,7 +81,7 @@ class _ImageWidgetState extends State<ImageWidget>
             child: Container(
               constraints: BoxConstraints(
                 maxWidth: MediaQuery.of(context).size.width / 2,
-                maxHeight: MediaQuery.of(context).size.height / 2,
+                maxHeight: (MediaQuery.of(context).size.height * 2) / 5,
               ),
               child: buildSwitcher(),
             ),

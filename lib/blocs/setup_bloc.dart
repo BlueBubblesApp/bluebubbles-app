@@ -329,7 +329,7 @@ class SetupBloc {
     processId = null;
 
     output = [];
-    connectionSubscription.cancel();
+    connectionSubscription?.cancel();
   }
 
   void dispose() {
