@@ -40,6 +40,8 @@ class CurrentChat {
   // Timer indicatorHideTimer;
   OverlayEntry entry;
 
+  bool isAlive = false;
+
   Map<String, List<Attachment>> messageAttachments = {};
 
   CurrentChat(this.chat);
@@ -54,6 +56,16 @@ class CurrentChat {
     return currentChat;
   }
 
+  static bool isActive(String chatGuid) =>
+      AttachmentInfoBloc().getCurrentChat(chatGuid)?.isAlive ?? false;
+
+  static CurrentChat get activeChat => AttachmentInfoBloc().chatData.isNotEmpty
+      ? AttachmentInfoBloc()
+          .chatData
+          .values
+          .firstWhere((element) => element.isAlive, orElse: null)
+      : null;
+
   /// Initialize all the values for the currently open chat
   /// @param [chat] the chat object you are initializing for
   void init() {
@@ -67,6 +79,7 @@ class CurrentChat {
     chatAttachments = [];
     sentMessages = [];
     entry = null;
+    isAlive = true;
     // showTypingIndicator = false;
     // indicatorHideTimer = null;
     // checkTypingIndicator();
@@ -226,6 +239,7 @@ class CurrentChat {
     });
     chatAttachments = [];
     sentMessages = [];
+    isAlive = false;
     // showTypingIndicator = false;
     if (entry != null) entry.remove();
   }

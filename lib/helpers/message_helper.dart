@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
+import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
@@ -187,8 +188,9 @@ class MessageHelper {
     // Handle all the cases that would mean we don't show the notification
     if (existingMessage != null || chat.isMuted) return;
     if (message.isFromMe || message.handle == null) return;
-    if (LifeCycleManager().isAlive &&
-        NotificationManager().chatGuid == chat.guid) return;
+    if (LifeCycleManager().isAlive && CurrentChat.isActive(chat.guid)) {
+      return;
+    }
 
     String handleAddress;
     if (message.handle != null) {

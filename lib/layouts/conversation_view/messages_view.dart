@@ -126,6 +126,9 @@ class MessagesViewState extends State<MessagesView>
   }
 
   void handleNewMessage(MessageBlocEvent event) async {
+    if (this.mounted) {
+      CurrentChat.of(context).isAlive = true;
+    }
     if (event.type == MessageBlocEventType.insert) {
       currentChat.getAttachmentsForMessage(event.message);
       if (event.outGoing) {

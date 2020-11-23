@@ -46,8 +46,7 @@ class ConversationView extends StatefulWidget {
 }
 
 class ConversationViewState extends State<ConversationView>
-    with ConversationViewMixin {
-
+    with ConversationViewMixin, WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
@@ -67,6 +66,9 @@ class ConversationViewState extends State<ConversationView>
     chat = widget.chat;
     initChatSelector();
     initConversationViewState();
+
+    // Bind the lifecycle events
+    WidgetsBinding.instance.addObserver(this);
   }
 
   @override
@@ -75,12 +77,20 @@ class ConversationViewState extends State<ConversationView>
     didChangeDependenciesConversationView();
   }
 
+  /// Called when the app is either closed or opened or paused
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (!this.mounted) return;
+    currentChat.isAlive = true;
+  }
+
   @override
   void dispose() {
     if (currentChat != null) {
       currentChat.disposeAudioControllers();
       currentChat.dispose();
     }
+    WidgetsBinding.instance.removeObserver(this);
 
     // Switching chat to null will clear the currently active chat
     NotificationManager().switchChat(null);
@@ -117,6 +127,7 @@ class ConversationViewState extends State<ConversationView>
 
   @override
   Widget build(BuildContext context) {
+    currentChat.isAlive = true;
     return Scaffold(
       backgroundColor: Theme.of(context).backgroundColor,
       extendBodyBehindAppBar: !isCreator,

@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
@@ -17,15 +18,6 @@ class NotificationManager {
 
   static final NotificationManager _manager = NotificationManager._internal();
   NotificationManager._internal();
-
-  /// [_currentChat] holds the current chat that is open.
-  /// This will allow us to check things such as "should we show this notification"
-  /// because if the chat is open, then we should not show a notification
-  Chat _currentChat;
-  Chat get chat => _currentChat;
-
-  /// Helper getter to try and get the guid of the [_currentChat]
-  String get chatGuid => _currentChat != null ? _currentChat.guid : null;
 
   /// [processedItems] holds all of the notifications that have already been notified / processed
   /// This ensures that items don't get processed twice
@@ -55,18 +47,12 @@ class NotificationManager {
   /// the chat will be marked as read, and the notifications
   /// for the chat will be cleared
   void switchChat(Chat chat) async {
-    _currentChat = chat;
     if (chat == null) return;
+    CurrentChat.getCurrentChat(chat)?.isAlive = true;
 
     await chat.setUnreadStatus(false);
     MethodChannelInterface()
-        .invokeMethod("clear-chat-notifs", {"chatGuid": _currentChat.guid});
-  }
-
-  /// Sets the currently active chat to null because
-  /// there is no active chat.
-  void leaveChat() {
-    _currentChat = null;
+        .invokeMethod("clear-chat-notifs", {"chatGuid": chat.guid});
   }
 
   /// Creates notification channel for android

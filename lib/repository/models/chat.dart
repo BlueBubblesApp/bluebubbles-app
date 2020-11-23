@@ -4,6 +4,7 @@ import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/group_event.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
+import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
@@ -268,7 +269,7 @@ class Chat {
   Future<Chat> setUnreadStatus(bool hasUnreadMessage) async {
     final Database db = await DBProvider.db.database;
     if (hasUnreadMessage) {
-      if (NotificationManager().chatGuid == this.guid) {
+      if (CurrentChat.isActive(this.guid)) {
         return this;
       }
     }
@@ -344,7 +345,7 @@ class Chat {
       if (message.isFromMe) {
         await this.setUnreadStatus(false);
         EventDispatcher().emit("remove-unread-chat", {"chatGuid": this.guid});
-      } else if (NotificationManager().chatGuid != this.guid) {
+      } else if (!CurrentChat.isActive(this.guid)) {
         await this.setUnreadStatus(true);
         EventDispatcher().emit("add-unread-chat", {"chatGuid": this.guid});
       }

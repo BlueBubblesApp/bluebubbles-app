@@ -95,7 +95,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
 
   void disposeConversationView() {
     messageBloc?.dispose();
-    NotificationManager().leaveChat();
+    // NotificationManager().leaveChat();
     super.dispose();
   }
 
