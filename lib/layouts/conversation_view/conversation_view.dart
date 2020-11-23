@@ -101,6 +101,8 @@ class ConversationViewState extends State<ConversationView>
     if (isCreator && chat == null) {
       chat = await createChat();
       if (chat == null) return false;
+      initConversationViewState();
+      initChatSelector();
     }
     if (attachments.length > 0) {
       for (int i = 0; i < attachments.length; i++) {
