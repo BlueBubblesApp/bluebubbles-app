@@ -44,7 +44,7 @@ class _ImageWidgetState extends State<ImageWidget>
         data = await FlutterImageCompress.compressWithFile(
             widget.file.absolute.path,
             quality: 25 // This is arbitrary
-        );
+            );
 
         // All other attachments can be held in memory as bytes
       } else {
@@ -75,16 +75,12 @@ class _ImageWidgetState extends State<ImageWidget>
       },
       child: Stack(
         children: <Widget>[
-          AnimatedSize(
-            vsync: this,
-            duration: Duration(milliseconds: 250),
-            child: Container(
-              constraints: BoxConstraints(
-                maxWidth: MediaQuery.of(context).size.width / 2,
-                maxHeight: (MediaQuery.of(context).size.height * 2) / 5,
-              ),
-              child: buildSwitcher(),
+          Container(
+            constraints: BoxConstraints(
+              maxWidth: MediaQuery.of(context).size.width / 2,
+              maxHeight: MediaQuery.of(context).size.height / 2,
             ),
+            child: buildSwitcher(),
           ),
           Positioned.fill(
             child: Material(
@@ -126,6 +122,19 @@ class _ImageWidgetState extends State<ImageWidget>
                 data,
                 //width: widget.attachment.width.toDouble(),
                 //height: widget.attachment.height.toDouble(),
+                frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+                  if (wasSynchronouslyLoaded) return child;
+
+                  return Stack(children: [
+                    buildPlaceHolder(),
+                    AnimatedOpacity(
+                      opacity: (frame == null) ? 0 : 1,
+                      child: child,
+                      duration: const Duration(milliseconds: 250),
+                      curve: Curves.easeInOut,
+                    )
+                  ]);
+                },
               )
             : buildPlaceHolder(),
       );
@@ -136,9 +145,13 @@ class _ImageWidgetState extends State<ImageWidget>
         aspectRatio: widget.attachment.width.toDouble() /
             widget.attachment.height.toDouble(),
         child: Container(
-          width: widget.attachment.width.toDouble(),
-          height: widget.attachment.height.toDouble(),
-        ),
+            width: widget.attachment.width.toDouble(),
+            height: widget.attachment.height.toDouble(),
+            color: Theme.of(context).accentColor,
+            child: Center(
+                child: CircularProgressIndicator(
+                    valueColor: new AlwaysStoppedAnimation<Color>(
+                        Theme.of(context).primaryColor)))),
       );
     } else {
       return Container(
