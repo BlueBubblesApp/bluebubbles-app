@@ -247,14 +247,12 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   /// Render
   @override
   Widget build(BuildContext context) {
-    SystemChrome.setSystemUIOverlayStyle(
-      SystemUiOverlayStyle(
-        systemNavigationBarColor:
-            Theme.of(context).backgroundColor, // navigation bar color
-        systemNavigationBarIconBrightness: getBrightness(context),
-        statusBarColor: Colors.transparent, // status bar color
-      )
-    );
+    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+      systemNavigationBarColor:
+          Theme.of(context).backgroundColor, // navigation bar color
+      systemNavigationBarIconBrightness: getBrightness(context),
+      statusBarColor: Colors.transparent, // status bar color
+    ));
 
     return Scaffold(
       backgroundColor: Colors.black,
