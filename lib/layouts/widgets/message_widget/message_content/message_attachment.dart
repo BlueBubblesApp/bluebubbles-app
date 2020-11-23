@@ -43,6 +43,8 @@ class _MessageAttachmentState extends State<MessageAttachment>
   }
 
   void updateContent() {
+    if (content is AttachmentDownloader) return;
+
     content = AttachmentHelper.getContent(widget.attachment);
     if (content is AttachmentDownloader) {
       (content as AttachmentDownloader).stream.listen((event) {
@@ -58,6 +60,7 @@ class _MessageAttachmentState extends State<MessageAttachment>
   @override
   Widget build(BuildContext context) {
     super.build(context);
+    updateContent();
     return ClipRRect(
       borderRadius: BorderRadius.circular(20),
       child: Container(
