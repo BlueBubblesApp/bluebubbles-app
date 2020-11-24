@@ -87,7 +87,7 @@ class _ImageViewerState extends State<ImageViewer> {
               child: CupertinoButton(
                 onPressed: () async {
                   if (await Permission.storage.request().isGranted) {
-                    await ImageGallerySaver.saveFile(widget.file.path);
+                    await ImageGallerySaver.saveFile(widget.file.absolute.path);
                     FlutterToast(context).showToast(
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(25.0),

@@ -76,7 +76,7 @@ dependencies:
   flutter_colorpicker: ^0.3.4
   giftextfield:
     path: packages/gif_text_field
-  image_gallery_saver: ^1.5.0
+  image_gallery_saver: ^1.6.6
   sentry: ^3.0.1
   flutter_image_compress: ^0.7.0
   extended_text_field:

@@ -32,6 +32,7 @@
         android:name=".Application"
         android:icon="@mipmap/ic_launcher"
         android:label="BlueBubbles"
+        android:requestLegacyExternalStorage="true"
         android:usesCleartextTraffic="true">
 
         <meta-data
