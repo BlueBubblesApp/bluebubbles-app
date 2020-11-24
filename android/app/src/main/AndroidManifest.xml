@@ -6,21 +6,21 @@
          In most cases you can leave this as-is, but you if you want to provide
          additional functionality it is fine to subclass or reimplement
          FlutterApplication and put your custom class here. -->
-    <uses-permission android:name="android.permission.CAMERA" android:requiredFeature="false" />
+    <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.VIBRATE" android:requiredFeature="false" />
+    <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.READ_CONTACTS" />
     <uses-permission android:name="android.permission.WRITE_CONTACTS" />
-    <uses-permission android:name="android.permission.CALL_PHONE" android:requiredFeature="false" />
+    <uses-permission android:name="android.permission.CALL_PHONE" />
     <uses-feature
         android:name="android.hardware.telephony"
         android:required="false" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" android:requiredFeature="false" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
-    <uses-permission android:name="android.permission.RECORD_AUDIO" android:requiredFeature="false" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
     <supports-screens

@@ -6,6 +6,7 @@ import 'package:bluebubbles/layouts/conversation_view/messages_view.dart';
 import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/chat_selector_text_field.dart';
 import 'package:bluebubbles/layouts/conversation_view/text_field/blue_bubbles_text_field.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/outgoing_queue.dart';
 import 'package:bluebubbles/managers/queue_manager.dart';
@@ -46,7 +47,7 @@ class ConversationView extends StatefulWidget {
 }
 
 class ConversationViewState extends State<ConversationView>
-    with ConversationViewMixin, WidgetsBindingObserver {
+    with ConversationViewMixin {
   @override
   void initState() {
     super.initState();
@@ -67,8 +68,10 @@ class ConversationViewState extends State<ConversationView>
     initChatSelector();
     initConversationViewState();
 
-    // Bind the lifecycle events
-    WidgetsBinding.instance.addObserver(this);
+    LifeCycleManager().stream.listen((event) {
+      if (!this.mounted) return;
+      currentChat?.isAlive = true;
+    });
   }
 
   @override
@@ -77,20 +80,12 @@ class ConversationViewState extends State<ConversationView>
     didChangeDependenciesConversationView();
   }
 
-  /// Called when the app is either closed or opened or paused
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (!this.mounted) return;
-    currentChat?.isAlive = true;
-  }
-
   @override
   void dispose() {
     if (currentChat != null) {
       currentChat.disposeAudioControllers();
       currentChat.dispose();
     }
-    WidgetsBinding.instance.removeObserver(this);
 
     // Switching chat to null will clear the currently active chat
     NotificationManager().switchChat(null);

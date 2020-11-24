@@ -46,10 +46,10 @@ android {
         minSdkVersion 21
         targetSdkVersion 30
         //               v0.1.0  armv7 OR arm64
-        // version code:   010    070      064
+        // version code:   10    070      064
 
         //noinspection AccidentalOctal
-        versionCode 015070
+        versionCode 19064
         versionName flutterVersionName
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
