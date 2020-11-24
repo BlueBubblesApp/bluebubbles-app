@@ -6,7 +6,6 @@ import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
-import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/managers/theme_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
@@ -89,16 +88,20 @@ class _ConversationListState extends State<ConversationList> {
 
     // Listen for any incoming events
     EventDispatcher().stream.listen((Map<String, dynamic> event) {
-      if (!event.containsKey("type") || event["type"] != "show-snackbar")
+      if (!event.containsKey("type"))
         return;
 
-      // Make sure that the app is open and the conversation list is present
-      if (!LifeCycleManager().isAlive ||
-          CurrentChat.activeChat != null ||
-          context == null) return;
-      final snackBar = SnackBar(content: Text(event["data"]["text"]));
-      Scaffold.of(context).hideCurrentSnackBar();
-      Scaffold.of(context).showSnackBar(snackBar);
+      if (event["type"] == 'show-snackbar') {
+        // Make sure that the app is open and the conversation list is present
+        if (!LifeCycleManager().isAlive ||
+            CurrentChat.activeChat != null ||
+            context == null) return;
+        final snackBar = SnackBar(content: Text(event["data"]["text"]));
+        Scaffold.of(context).hideCurrentSnackBar();
+        Scaffold.of(context).showSnackBar(snackBar);
+      } else if (event["type"] == 'refresh' && this.mounted) {
+        setState(() {});
+      }
     });
   }
 
