@@ -59,12 +59,13 @@ class CurrentChat {
   static bool isActive(String chatGuid) =>
       AttachmentInfoBloc().getCurrentChat(chatGuid)?.isAlive ?? false;
 
-  static CurrentChat get activeChat => AttachmentInfoBloc().chatData.isNotEmpty
-      ? AttachmentInfoBloc()
-          .chatData
-          .values
-          .firstWhere((element) => element.isAlive, orElse: null)
-      : null;
+  static CurrentChat get activeChat =>
+      AttachmentInfoBloc().chatData.values.isNotEmpty
+          ? AttachmentInfoBloc()
+              .chatData
+              .values
+              .firstWhere((element) => element.isAlive, orElse: null)
+          : null;
 
   /// Initialize all the values for the currently open chat
   /// @param [chat] the chat object you are initializing for
