@@ -54,6 +54,8 @@ class Settings {
         settings.rainbowBubbles = entry.value;
       } else if (entry.name == "hideDividers") {
         settings.hideDividers = entry.value;
+      } else if (entry.name == "skin") {
+        settings.skin = Skins.values[entry.value];
       }
       // else if (entry.name == "emojiFontFamily") {
       //   settings.emojiFontFamily = entry.value;
@@ -156,6 +158,10 @@ class Settings {
             name: "hideDividers",
             value: this.hideDividers,
             type: this.hideDividers.runtimeType),
+        ConfigEntry(
+            name: "skin",
+            value: this.skin.index,
+            type: this.skin.index.runtimeType),
         // ConfigEntry(
         //     name: "emojiFontFamily",
         //     value: this.emojiFontFamily,

@@ -1,8 +1,8 @@
 import 'dart:ui';
 
-import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
+import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
@@ -26,9 +26,9 @@ class ConversationList extends StatefulWidget {
 }
 
 class _ConversationListState extends State<ConversationList> {
-  ScrollController _scrollController;
-  Color _theme;
-  List<Chat> _chats = <Chat>[];
+  ScrollController scrollController;
+  Color theme;
+  List<Chat> chats = <Chat>[];
   bool colorfulChats = false;
 
   Brightness brightness = Brightness.light;
@@ -40,21 +40,21 @@ class _ConversationListState extends State<ConversationList> {
 
     if (this.mounted) {
       setState(() {
-        _theme = Colors.transparent;
+        theme = Colors.transparent;
       });
     }
   }
 
   void scrollListener() {
     return !_isAppBarExpanded
-        ? _theme != Colors.transparent
+        ? theme != Colors.transparent
             ? setState(() {
-                _theme = Colors.transparent;
+                theme = Colors.transparent;
               })
             : {}
-        : _theme != Theme.of(context).accentColor.withOpacity(0.5)
+        : theme != Theme.of(context).accentColor.withOpacity(0.5)
             ? setState(() {
-                _theme = Theme.of(context).accentColor.withOpacity(0.5);
+                theme = Theme.of(context).accentColor.withOpacity(0.5);
               })
             : {};
   }
@@ -64,17 +64,17 @@ class _ConversationListState extends State<ConversationList> {
     super.initState();
     if (!widget.showArchivedChats) {
       ChatBloc().chatStream.listen((List<Chat> chats) {
-        _chats = chats;
+        this.chats = chats;
         if (this.mounted) setState(() {});
       });
 
       ChatBloc().refreshChats();
     } else {
       ChatBloc().archivedChatStream.listen((List<Chat> chats) {
-        _chats = chats;
+        this.chats = chats;
         if (this.mounted) setState(() {});
       });
-      _chats = ChatBloc().archivedChats;
+      this.chats = ChatBloc().archivedChats;
     }
 
     colorfulChats = SettingsManager().settings.rainbowBubbles;
@@ -86,7 +86,7 @@ class _ConversationListState extends State<ConversationList> {
       }
     });
 
-    _scrollController = ScrollController()..addListener(scrollListener);
+    scrollController = ScrollController()..addListener(scrollListener);
 
     // Listen for any incoming events
     EventDispatcher().stream.listen((Map<String, dynamic> event) {
@@ -125,15 +125,45 @@ class _ConversationListState extends State<ConversationList> {
   }
 
   bool get _isAppBarExpanded {
-    return _scrollController != null &&
-        _scrollController.hasClients &&
-        _scrollController.offset > (125 - kToolbarHeight);
+    return scrollController != null &&
+        scrollController.hasClients &&
+        scrollController.offset > (125 - kToolbarHeight);
+  }
+
+  void sortChats() {
+    chats.sort((a, b) {
+      if (a.latestMessageDate == null && b.latestMessageDate == null) return 0;
+      if (a.latestMessageDate == null) return 1;
+      if (b.latestMessageDate == null) return -1;
+      return -a.latestMessageDate.compareTo(b.latestMessageDate);
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     loadBrightness();
 
+    return ThemeSwitcher(
+      iOSSkin: _Cupertino(parent: this),
+      materialSkin: _Material(parent: this),
+    );
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+
+    // Remove the scroll listener from the state
+    if (scrollController != null)
+      scrollController.removeListener(scrollListener);
+  }
+}
+
+class _Cupertino extends StatelessWidget {
+  const _Cupertino({Key key, @required this.parent}) : super(key: key);
+  final _ConversationListState parent;
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: PreferredSize(
         preferredSize: Size(
@@ -144,20 +174,20 @@ class _ConversationListState extends State<ConversationList> {
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
             child: AnimatedCrossFade(
-              crossFadeState: _theme == Colors.transparent
+              crossFadeState: parent.theme == Colors.transparent
                   ? CrossFadeState.showFirst
                   : CrossFadeState.showSecond,
               duration: Duration(milliseconds: 250),
               secondChild: AppBar(
                 elevation: 0,
-                backgroundColor: _theme,
+                backgroundColor: parent.theme,
                 centerTitle: true,
-                brightness: this.brightness,
+                brightness: parent.brightness,
                 title: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: <Widget>[
                     Text(
-                      widget.showArchivedChats ? "Archive" : "Messages",
+                      parent.widget.showArchivedChats ? "Archive" : "Messages",
                       style: Theme.of(context).textTheme.bodyText1,
                     ),
                   ],
@@ -165,7 +195,7 @@ class _ConversationListState extends State<ConversationList> {
               ),
               firstChild: AppBar(
                 elevation: 0,
-                brightness: this.brightness,
+                brightness: parent.brightness,
                 backgroundColor: Theme.of(context).backgroundColor,
               ),
             ),
@@ -175,7 +205,7 @@ class _ConversationListState extends State<ConversationList> {
       backgroundColor: Theme.of(context).backgroundColor,
       extendBodyBehindAppBar: true,
       body: CustomScrollView(
-        controller: _scrollController,
+        controller: parent.scrollController,
         physics: ThemeManager().scrollPhysics,
         slivers: <Widget>[
           SliverAppBar(
@@ -206,18 +236,17 @@ class _ConversationListState extends State<ConversationList> {
                         ),
                         Container(
                           child: Text(
-                            widget.showArchivedChats ? "Archive" : "Messages",
+                            parent.widget.showArchivedChats
+                                ? "Archive"
+                                : "Messages",
                             style: Theme.of(context).textTheme.headline1,
                           ),
                         ),
                         Spacer(
                           flex: 25,
                         ),
-                        !widget.showArchivedChats
+                        !parent.widget.showArchivedChats
                             ? PopupMenuButton(
-                                // shape: RoundedRectangleBorder(
-                                //   borderRadius: BorderRadius.circular(40),
-                                // ),
                                 color: Theme.of(context).accentColor,
                                 onSelected: (value) {
                                   if (value == 0) {
@@ -289,16 +318,9 @@ class _ConversationListState extends State<ConversationList> {
             stream: ChatBloc().chatStream,
             builder:
                 (BuildContext context, AsyncSnapshot<List<Chat>> snapshot) {
-              if (snapshot.hasData || widget.showArchivedChats) {
-                _chats.sort((a, b) {
-                  if (a.latestMessageDate == null &&
-                      b.latestMessageDate == null) return 0;
-                  if (a.latestMessageDate == null) return 1;
-                  if (b.latestMessageDate == null) return -1;
-                  return -a.latestMessageDate.compareTo(b.latestMessageDate);
-                });
-
-                if (_chats.isEmpty) {
+              if (snapshot.hasData || parent.widget.showArchivedChats) {
+                parent.sortChats();
+                if (parent.chats.isEmpty) {
                   return SliverToBoxAdapter(
                     child: Center(
                       child: Container(
@@ -315,16 +337,16 @@ class _ConversationListState extends State<ConversationList> {
                 return SliverList(
                   delegate: SliverChildBuilderDelegate(
                     (context, index) {
-                      if (!widget.showArchivedChats && _chats[index].isArchived)
-                        return Container();
-                      if (widget.showArchivedChats && !_chats[index].isArchived)
-                        return Container();
+                      if (!parent.widget.showArchivedChats &&
+                          parent.chats[index].isArchived) return Container();
+                      if (parent.widget.showArchivedChats &&
+                          !parent.chats[index].isArchived) return Container();
                       return ConversationTile(
-                        key: Key(_chats[index].guid.toString()),
-                        chat: _chats[index],
+                        key: Key(parent.chats[index].guid.toString()),
+                        chat: parent.chats[index],
                       );
                     },
-                    childCount: _chats?.length ?? 0,
+                    childCount: parent.chats?.length ?? 0,
                   ),
                 );
               } else {
@@ -351,13 +373,62 @@ class _ConversationListState extends State<ConversationList> {
       ),
     );
   }
+}
+
+class _Material extends StatelessWidget {
+  const _Material({Key key, @required this.parent}) : super(key: key);
+
+  final _ConversationListState parent;
 
   @override
-  void dispose() {
-    super.dispose();
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          "Messages",
+          style: Theme.of(context).textTheme.headline1,
+        ),
+        backgroundColor: Theme.of(context).backgroundColor,
+      ),
+      backgroundColor: Theme.of(context).backgroundColor,
+      body: StreamBuilder(
+        stream: ChatBloc().chatStream,
+        builder: (context, snapshot) {
+          if (snapshot.hasData || parent.widget.showArchivedChats) {
+            parent.sortChats();
+            if (parent.chats.isEmpty) {
+              return Center(
+                child: Container(
+                  padding: EdgeInsets.only(top: 50.0),
+                  child: Text(
+                    "You have no chats :(",
+                    style: Theme.of(context).textTheme.subtitle1,
+                  ),
+                ),
+              );
+            }
 
-    // Remove the scroll listener from the state
-    if (_scrollController != null)
-      _scrollController.removeListener(scrollListener);
+            return ListView.builder(
+              physics: AlwaysScrollableScrollPhysics(
+                parent: ClampingScrollPhysics(),
+              ),
+              itemBuilder: (context, index) {
+                if (!parent.widget.showArchivedChats &&
+                    parent.chats[index].isArchived) return Container();
+                if (parent.widget.showArchivedChats &&
+                    !parent.chats[index].isArchived) return Container();
+                return ConversationTile(
+                  key: Key(parent.chats[index].guid.toString()),
+                  chat: parent.chats[index],
+                );
+              },
+              itemCount: parent.chats?.length ?? 0,
+            );
+          } else {
+            return Container();
+          }
+        },
+      ),
+    );
   }
 }

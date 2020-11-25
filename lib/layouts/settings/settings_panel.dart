@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:ui';
 
+import 'package:bluebubbles/helpers/contstants.dart';
 import "package:bluebubbles/helpers/string_extension.dart";
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -167,8 +168,10 @@ class _SettingsPanelState extends State<SettingsPanel> {
                           }
                         },
                         onLongPress: () {
-                          Clipboard.setData(new ClipboardData(text: _settingsCopy.serverAddress));
-                          final snackBar = SnackBar(content: Text("Address copied to clipboard"));
+                          Clipboard.setData(new ClipboardData(
+                              text: _settingsCopy.serverAddress));
+                          final snackBar = SnackBar(
+                              content: Text("Address copied to clipboard"));
                           Scaffold.of(context).showSnackBar(snackBar);
                         },
                         trailing: connectionStatus == SocketState.CONNECTED ||
@@ -306,12 +309,24 @@ class _SettingsPanelState extends State<SettingsPanel> {
                     AdaptiveTheme.of(context).setThemeMode(val);
 
                     // This needs to be on a delay so the background color has time to change
-                    Timer(Duration(seconds: 1), () => EventDispatcher().emit('theme-update', null));
+                    Timer(Duration(seconds: 1),
+                        () => EventDispatcher().emit('theme-update', null));
                   },
                   options: AdaptiveThemeMode.values,
                   textProcessing: (dynamic val) =>
                       val.toString().split(".").last,
                   title: "App Theme",
+                  showDivider: false,
+                ),
+                SettingsOptions<Skins>(
+                  initial: _settingsCopy.skin,
+                  onChanged: (val) {
+                    _settingsCopy.skin = val;
+                  },
+                  options: Skins.values,
+                  textProcessing: (dynamic val) =>
+                      val.toString().split(".").last,
+                  title: "App Skin",
                   showDivider: false,
                 ),
                 SettingsTile(
@@ -598,7 +613,12 @@ class _SettingsPanelState extends State<SettingsPanel> {
 
 class SettingsTile extends StatelessWidget {
   const SettingsTile(
-      {Key key, this.onTap, this.onLongPress, this.title, this.trailing, this.subTitle})
+      {Key key,
+      this.onTap,
+      this.onLongPress,
+      this.title,
+      this.trailing,
+      this.subTitle})
       : super(key: key);
 
   final Function onTap;
