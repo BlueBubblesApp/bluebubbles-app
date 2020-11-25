@@ -186,9 +186,14 @@ class MessageHelper {
     NotificationManager().addProcessed(message.guid);
 
     // Handle all the cases that would mean we don't show the notification
-    if (existingMessage != null || chat.isMuted) return;
-    if (message.isFromMe || message.handle == null) return;
+    if (!SettingsManager().settings.finishedSetup)
+      return; // Don't notify if not fully setup
+    if (existingMessage != null || chat.isMuted)
+      return; // Don''t notify if the chat is muted
+    if (message.isFromMe || message.handle == null)
+      return; // Don't notify if the text is from me
     if (LifeCycleManager().isAlive && CurrentChat.isActive(chat.guid)) {
+      // Don't notify if the the chat is the active chat
       return;
     }
 
