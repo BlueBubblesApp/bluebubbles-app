@@ -24,7 +24,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 import 'package:sentry/sentry.dart';
 
-import './layouts/conversation_list/conversation_list.dart';
+import 'layouts/conversation_list/conversation_list/material/conversation_list.dart';
 import 'socket_manager.dart';
 
 final SentryClient _sentry = SentryClient(
@@ -270,7 +270,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                 DeviceOrientation.portraitUp,
                 DeviceOrientation.portraitDown,
               ]);
-              return ConversationList(
+              return MaterialConversationList(
                 showArchivedChats: false,
               );
             } else {
