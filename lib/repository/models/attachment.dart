@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'dart:ui';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:image_size_getter/image_size_getter.dart' as IMG;
@@ -241,6 +242,26 @@ class Attachment {
       await update();
     }
     return this;
+  }
+
+  static Future<int> countForChat(Chat chat) async {
+    final Database db = await DBProvider.db.database;
+    if (chat == null || chat.id == null) return 0;
+
+    String query = ("SELECT"
+        " count(attachment.ROWID) AS count"
+        " FROM attachment"
+        " JOIN attachment_message_join AS amj ON amj.attachmentId = attachment.ROWID"
+        " JOIN message ON amj.messageId = message.ROWID"
+        " JOIN chat_message_join AS cmj ON cmj.messageId = message.ROWID"
+        " JOIN chat ON chat.ROWID = cmj.chatId"
+        " WHERE chat.ROWID = ? AND attachment.mimeType IS NOT NULL");
+
+    // Execute the query
+    var res = await db.rawQuery("$query;", [chat.id]);
+    if (res == null || res.length == 0) return 0;
+
+    return res[0]["count"];
   }
 
   Map<String, dynamic> toMap() => {

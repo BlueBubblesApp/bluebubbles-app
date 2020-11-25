@@ -521,6 +521,24 @@ class Message {
         .toList();
   }
 
+  static Future<int> countForChat(Chat chat) async {
+    final Database db = await DBProvider.db.database;
+    if (chat == null || chat.id == null) return 0;
+
+    String query = ("SELECT"
+        " count(message.ROWID) AS count"
+        " FROM message"
+        " JOIN chat_message_join AS cmj ON cmj.messageId = message.ROWID"
+        " JOIN chat ON chat.ROWID = cmj.chatId"
+        " WHERE chat.ROWID = ?");
+
+    // Execute the query
+    var res = await db.rawQuery("$query;", [chat.id]);
+    if (res == null || res.length == 0) return 0;
+
+    return res[0]["count"];
+  }
+
   Map<String, dynamic> toMap() => {
         "ROWID": id,
         "originalROWID": originalROWID,

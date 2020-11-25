@@ -265,7 +265,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
         margin: EdgeInsets.only(left: 5.0, right: 5.0),
         child: ClipOval(
           child: Material(
-            color: Theme.of(context).accentColor,
+            color: Theme.of(context).primaryColor,
             child: InkWell(
               onTap: toggleShareMenu,
               child: Icon(
