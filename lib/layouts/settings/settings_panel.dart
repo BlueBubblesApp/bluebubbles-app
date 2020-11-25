@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:ui';
 
@@ -7,6 +8,7 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/theming/theming_panel.dart';
 import 'package:bluebubbles/layouts/widgets/CustomCupertinoTextField.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
+import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/database.dart';
@@ -36,12 +38,25 @@ class _SettingsPanelState extends State<SettingsPanel> {
   List<DisplayMode> modes;
   DisplayMode currentMode;
   bool showUrl = false;
+  Brightness brightness;
+  bool gotBrightness = false;
 
   @override
   void initState() {
     super.initState();
     _settingsCopy = SettingsManager().settings;
     _fcmDataCopy = SettingsManager().fcmData;
+
+    // Listen for any incoming events
+    EventDispatcher().stream.listen((Map<String, dynamic> event) {
+      if (!event.containsKey("type")) return;
+
+      if (event["type"] == 'theme-update' && this.mounted) {
+        setState(() {
+          gotBrightness = false;
+        });
+      }
+    });
   }
 
   @override
@@ -52,8 +67,23 @@ class _SettingsPanelState extends State<SettingsPanel> {
     setState(() {});
   }
 
+  void loadBrightness() {
+    if (gotBrightness) return;
+    if (context == null) {
+      brightness = Brightness.light;
+      gotBrightness = true;
+      return;
+    }
+
+    bool isDark = Theme.of(context).accentColor.computeLuminance() < 0.179;
+    brightness = isDark ? Brightness.dark : Brightness.light;
+    gotBrightness = true;
+  }
+
   @override
   Widget build(BuildContext context) {
+    loadBrightness();
+
     return Scaffold(
       // extendBodyBehindAppBar: true,
       backgroundColor: Theme.of(context).backgroundColor,
@@ -62,7 +92,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
         child: ClipRRect(
           child: BackdropFilter(
             child: AppBar(
-              brightness: getBrightness(context),
+              brightness: brightness,
               toolbarHeight: 100.0,
               elevation: 0,
               leading: IconButton(
@@ -274,6 +304,9 @@ class _SettingsPanelState extends State<SettingsPanel> {
                   initial: AdaptiveTheme.of(context).mode,
                   onChanged: (val) {
                     AdaptiveTheme.of(context).setThemeMode(val);
+
+                    // This needs to be on a delay so the background color has time to change
+                    Timer(Duration(seconds: 1), () => EventDispatcher().emit('theme-update', null));
                   },
                   options: AdaptiveThemeMode.values,
                   textProcessing: (dynamic val) =>

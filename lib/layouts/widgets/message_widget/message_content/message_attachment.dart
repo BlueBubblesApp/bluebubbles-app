@@ -32,7 +32,6 @@ class MessageAttachment extends StatefulWidget {
 
 class _MessageAttachmentState extends State<MessageAttachment>
     with AutomaticKeepAliveClientMixin {
-  String blurhash;
   Widget attachmentWidget;
   var content;
 
@@ -42,10 +41,14 @@ class _MessageAttachmentState extends State<MessageAttachment>
     updateContent();
   }
 
-  void updateContent() {
+  void updateContent() async {
     if (content is AttachmentDownloader) return;
 
     content = AttachmentHelper.getContent(widget.attachment);
+    if (content is Attachment && (await AttachmentHelper.canAutoDownload())) {
+      content = new AttachmentDownloader(content);
+    }
+
     if (content is AttachmentDownloader) {
       (content as AttachmentDownloader).stream.listen((event) {
         if (event is File && this.mounted) {

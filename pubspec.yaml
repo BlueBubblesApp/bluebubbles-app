@@ -11,7 +11,7 @@ description: Send iMessages on Android using BlueBubbles!
 # In iOS, build-name is used as CFBundleShortVersionString while build-number used as CFBundleVersion.
 # Read more about iOS versioning at
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
-version: 0.1.0
+version: 0.1.8
 
 environment:
   sdk: ">=2.6.0 <3.0.0"
@@ -76,7 +76,7 @@ dependencies:
   flutter_colorpicker: ^0.3.4
   giftextfield:
     path: packages/gif_text_field
-  image_gallery_saver: ^1.5.0
+  image_gallery_saver: ^1.6.6
   sentry: ^3.0.1
   flutter_image_compress: ^0.7.0
   extended_text_field:

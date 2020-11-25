@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/layouts/conversation_details/attachment_details_card.dart';
@@ -8,6 +9,7 @@ import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/adding_participant_popup.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view_mixin.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
+import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/socket_manager.dart';
@@ -183,80 +185,6 @@ class _ConversationDetailsState extends State<ConversationDetails> {
           SliverToBoxAdapter(
             child: InkWell(
               onTap: () async {
-                // showDialog(
-                //     context: context,
-                //     builder: (BuildContext context) {
-                //       return AlertDialog(
-                //           backgroundColor: Theme.of(context).accentColor,
-                //           title: new Text("Resync Chat",
-                //               style: Theme.of(context).textTheme.headline1),
-                //           content: new Text(
-                //               "Are you sure you want to resync this chat? All messages/attachments will be removed and the last 25 messages will be pre-loaded.",
-                //               style: Theme.of(context).textTheme.bodyText1),
-                //           actions: <Widget>[
-                //             new FlatButton(
-                //               child: new Text("Cancel",
-                //                   style: TextStyle(
-                //                       color: Theme.of(context)
-                //                           .textTheme
-                //                           .subtitle1
-                //                           .color)),
-                //               onPressed: () {
-                //                 Navigator.of(context).pop();
-                //               },
-                //             ),
-                //             new FlatButton(
-                //               child: new Text("Yes, I'm sure!",
-                //                   style: TextStyle(
-                //                       color: Theme.of(context)
-                //                           .textTheme
-                //                           .bodyText1
-                //                           .color)),
-                //               onPressed: () async {
-                //                 // Remove the OG alert dialog
-                //                 Navigator.of(context).pop();
-                //                 // Show the next dialog
-                //                 showDialog(
-                //                   context: context,
-                //                   barrierDismissible: false,
-                //                   builder: (BuildContext context) {
-                //                     // Resync the chat, then return to the first page
-                //                     ActionHandler.resyncChat(
-                //                             chat, widget.messageBloc)
-                //                         .then((value) {
-                //                       Navigator.popUntil(context, (route) => route.isFirst);
-                //                     });
-
-                //                     // Show a loading dialog
-                //                     return AlertDialog(
-                //                       backgroundColor:
-                //                           Theme.of(context).accentColor,
-                //                       title: new Text("Resyncing Chat...",
-                //                           style: Theme.of(context)
-                //                               .textTheme
-                //                               .bodyText1),
-                //                       content: Container(
-                //                         alignment: Alignment.center,
-                //                         height: 100,
-                //                         width: 100,
-                //                         child: new Container(
-                //                           child: CircularProgressIndicator(
-                //                               valueColor:
-                //                                   new AlwaysStoppedAnimation<
-                //                                           Color>(
-                //                                       Theme.of(context)
-                //                                           .textTheme
-                //                                           .bodyText1
-                //                                           .color)),
-                //                         ),
-                //                       ),
-                //                     );
-                //                   },
-                //                 );
-                //               },
-                //             ),
-                //           ]);
-                //     });
                 showDialog(
                   context: context,
                   builder: (context) => SyncDialog(
@@ -265,18 +193,72 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                 );
               },
               child: ListTile(
-                title: Text(
+                leading: Text(
                   "Sync last 25 messages",
                   style: TextStyle(
                     color: Theme.of(context).primaryColor,
                   ),
                 ),
-                leading: Icon(
-                  Icons.replay,
-                  color: Theme.of(context).primaryColor,
+                trailing: Padding(
+                  padding: EdgeInsets.only(right: 15),
+                  child: Icon(
+                    Icons.replay,
+                    color: Theme.of(context).primaryColor,
+                  ),
                 ),
               ),
             ),
+          ),
+          SliverToBoxAdapter(
+            child: ListTile(
+              leading: Text(
+                "Mute Conversation",
+                style: TextStyle(
+                  color: Theme.of(context).primaryColor,
+                )
+              ),
+              trailing: Switch(
+                value: widget.chat.isMuted,
+                activeColor: Theme.of(context).primaryColor,
+                activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
+                inactiveTrackColor: Theme.of(context).accentColor.withOpacity(0.6),
+                inactiveThumbColor: Theme.of(context).accentColor,
+                onChanged: (value) async {
+                  widget.chat.isMuted = value;
+                  await widget.chat.save(updateLocalVals: true);
+                  EventDispatcher().emit("refresh", null);
+
+                  if (this.mounted) setState(() {});
+                }
+              )
+            )
+          ),
+          SliverToBoxAdapter(
+            child: ListTile(
+              leading: Text(
+                "Archive Conversation",
+                style: TextStyle(
+                  color: Theme.of(context).primaryColor,
+                )
+              ),
+              trailing: Switch(
+                value: widget.chat.isArchived,
+                activeColor: Theme.of(context).primaryColor,
+                activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
+                inactiveTrackColor: Theme.of(context).accentColor.withOpacity(0.6),
+                inactiveThumbColor: Theme.of(context).accentColor,
+                onChanged: (value) {
+                  if (value) {
+                    ChatBloc().archiveChat(widget.chat);
+                  } else {
+                    ChatBloc().unArchiveChat(widget.chat);
+                  }
+
+                  EventDispatcher().emit("refresh", null);
+                  if (this.mounted) setState(() {});
+                }
+              )
+            )
           ),
           SliverGrid(
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(

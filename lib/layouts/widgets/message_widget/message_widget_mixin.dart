@@ -105,7 +105,7 @@ abstract class MessageWidgetMixin {
                         .textTheme
                         .bodyText1
                         .apply(color: Colors.white)
-                    : Theme.of(context).textTheme.bodyText1,
+                    : Theme.of(context).textTheme.bodyText2,
               ),
             );
           } else if (i == linkIndexMatches.length && i - 1 >= 0) {
@@ -118,7 +118,7 @@ abstract class MessageWidgetMixin {
                         .textTheme
                         .bodyText1
                         .apply(color: Colors.white)
-                    : Theme.of(context).textTheme.bodyText1,
+                    : Theme.of(context).textTheme.bodyText2,
               ),
             );
           } else if (i - 1 >= 0) {
@@ -140,7 +140,7 @@ abstract class MessageWidgetMixin {
                       MethodChannelInterface()
                           .invokeMethod("open-link", {"link": url});
                     },
-                  style: Theme.of(context).textTheme.bodyText1.apply(
+                  style: Theme.of(context).textTheme.bodyText2.apply(
                         decoration: TextDecoration.underline,
                         color: message.isFromMe ? Colors.white : null,
                       ),
@@ -153,9 +153,9 @@ abstract class MessageWidgetMixin {
                   style: message.isFromMe
                       ? Theme.of(context)
                           .textTheme
-                          .bodyText1
+                          .bodyText2
                           .apply(color: Colors.white)
-                      : Theme.of(context).textTheme.bodyText1,
+                      : Theme.of(context).textTheme.bodyText2,
                 ),
               );
             }
@@ -170,7 +170,7 @@ abstract class MessageWidgetMixin {
                     .textTheme
                     .bodyText1
                     .apply(color: Colors.white)
-                : Theme.of(context).textTheme.bodyText1,
+                : Theme.of(context).textTheme.bodyText2,
           ),
         );
       }

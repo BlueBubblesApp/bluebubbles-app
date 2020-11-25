@@ -1,12 +1,11 @@
 import 'dart:ui';
 
+import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
-import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
-import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/managers/theme_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
@@ -31,6 +30,9 @@ class _ConversationListState extends State<ConversationList> {
   Color _theme;
   List<Chat> _chats = <Chat>[];
   bool colorfulChats = false;
+
+  Brightness brightness = Brightness.light;
+  bool gotBrightness = false;
 
   @override
   void didChangeDependencies() {
@@ -60,7 +62,6 @@ class _ConversationListState extends State<ConversationList> {
   @override
   void initState() {
     super.initState();
-
     if (!widget.showArchivedChats) {
       ChatBloc().chatStream.listen((List<Chat> chats) {
         _chats = chats;
@@ -89,17 +90,38 @@ class _ConversationListState extends State<ConversationList> {
 
     // Listen for any incoming events
     EventDispatcher().stream.listen((Map<String, dynamic> event) {
-      if (!event.containsKey("type") || event["type"] != "show-snackbar")
-        return;
+      if (!event.containsKey("type")) return;
 
-      // Make sure that the app is open and the conversation list is present
-      if (!LifeCycleManager().isAlive ||
-          CurrentChat.activeChat != null ||
-          context == null) return;
-      final snackBar = SnackBar(content: Text(event["data"]["text"]));
-      Scaffold.of(context).hideCurrentSnackBar();
-      Scaffold.of(context).showSnackBar(snackBar);
+      if (event["type"] == 'show-snackbar') {
+        // Make sure that the app is open and the conversation list is present
+        if (!LifeCycleManager().isAlive ||
+            CurrentChat.activeChat != null ||
+            context == null) return;
+        final snackBar = SnackBar(content: Text(event["data"]["text"]));
+        Scaffold.of(context).hideCurrentSnackBar();
+        Scaffold.of(context).showSnackBar(snackBar);
+      } else if (event["type"] == 'refresh' && this.mounted) {
+        setState(() {});
+      } else if (event["type"] == 'theme-update' && this.mounted) {
+        setState(() {
+          gotBrightness = false;
+        });
+      }
     });
+  }
+
+  void loadBrightness() {
+    if (gotBrightness) return;
+
+    if (this.context == null) {
+      brightness = Brightness.light;
+      gotBrightness = true;
+      return;
+    }
+
+    bool isDark = Theme.of(context).accentColor.computeLuminance() < 0.179;
+    brightness = isDark ? Brightness.dark : Brightness.light;
+    gotBrightness = true;
   }
 
   bool get _isAppBarExpanded {
@@ -110,6 +132,8 @@ class _ConversationListState extends State<ConversationList> {
 
   @override
   Widget build(BuildContext context) {
+    loadBrightness();
+
     return Scaffold(
       appBar: PreferredSize(
         preferredSize: Size(
@@ -128,7 +152,7 @@ class _ConversationListState extends State<ConversationList> {
                 elevation: 0,
                 backgroundColor: _theme,
                 centerTitle: true,
-                brightness: getBrightness(context),
+                brightness: this.brightness,
                 title: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: <Widget>[
@@ -141,7 +165,7 @@ class _ConversationListState extends State<ConversationList> {
               ),
               firstChild: AppBar(
                 elevation: 0,
-                brightness: getBrightness(context),
+                brightness: this.brightness,
                 backgroundColor: Theme.of(context).backgroundColor,
               ),
             ),
