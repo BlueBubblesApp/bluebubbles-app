@@ -54,7 +54,6 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
           .stream
           .listen((event) {
         if (event is File && this.mounted) {
-          debugPrint("test");
           Future.delayed(Duration(milliseconds: 500), () {
             setState(() {});
           });

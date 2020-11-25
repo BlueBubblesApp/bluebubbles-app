@@ -131,7 +131,7 @@ class _ContactTileState extends State<ContactTile> {
           borderThickness: 0.1,
         ),
         trailing: SizedBox(
-          width: MediaQuery.of(context).size.width / 3,
+          width: MediaQuery.of(context).size.width / 5,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: <Widget>[
