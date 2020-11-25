@@ -181,6 +181,13 @@ bool isEmptyString(String input, {stripWhitespace = false}) {
   return input.isEmpty;
 }
 
+bool isParticipantEvent(Message message) {
+  if (message == null) return false;
+  if (message.itemType == 1 && [0, 1].contains(message.groupActionType)) return true;
+  if ([2, 3].contains(message.itemType)) return true;
+  return false;
+}
+
 Future<String> getGroupEventText(Message message) async {
   String text = "Unknown group event";
   String handle = "You";

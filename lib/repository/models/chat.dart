@@ -2,11 +2,9 @@ import 'dart:convert';
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
-import 'package:bluebubbles/layouts/widgets/message_widget/group_event.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
-import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:intl/intl.dart';
@@ -354,10 +352,9 @@ class Chat {
     // Update the chat position
     ChatBloc().updateChatPosition(this);
 
-    // If the message is for adding or removing participants, we need to ensure that all of the chat participants are correct by syncing with the server
-    if ((message.itemType == ItemTypes.participantRemoved.index ||
-            message.itemType == ItemTypes.participantAdded.index) &&
-        isEmptyString(message.text)) {
+    // If the message is for adding or removing participants,
+    // we need to ensure that all of the chat participants are correct by syncing with the server
+    if (isParticipantEvent(message)) {
       serverSyncParticipants();
     }
 
