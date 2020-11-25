@@ -3,9 +3,8 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
+import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/layouts/image_viewer/attachmet_fullscreen_viewer.dart';
-import 'package:bluebubbles/layouts/image_viewer/image_viewer.dart';
-import 'package:bluebubbles/layouts/image_viewer/video_viewer.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/regular_file_opener.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -13,9 +12,9 @@ import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:image_size_getter/image_size_getter.dart';
 import 'package:path/path.dart';
-import 'package:video_player/video_player.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
 
 class AttachmentDetailsCard extends StatefulWidget {
@@ -50,7 +49,6 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
             .attachmentDownloaders
             .containsKey(widget.attachment.guid) &&
         downloadStream == null) {
-      debugPrint("HERE 1");
       downloadStream = SocketManager()
           .attachmentDownloaders[widget.attachment.guid]
           .stream
@@ -65,12 +63,24 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
     }
   }
 
+  void getCompressedImage() {
+    String path = AttachmentHelper.getAttachmentPath(widget.attachment);
+    FlutterImageCompress.compressWithFile(path, quality: 20).then((data) {
+      if (this.mounted) {
+        setState(() {
+          previewImage = data;
+        });
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     Attachment attachment = widget.attachment;
     File file = new File(
       "${SettingsManager().appDocDir.path}/attachments/${attachment.guid}/${attachment.transferName}",
     );
+    
     if (!file.existsSync()) {
       return Stack(
         alignment: Alignment.center,
@@ -155,17 +165,23 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
 
   Widget _buildPreview(File file, BuildContext context) {
     if (widget.attachment.mimeType.startsWith("image/")) {
+      if (previewImage == null) {
+        getCompressedImage();
+      }
+
       return Stack(
         children: <Widget>[
           SizedBox(
             child: Hero(
               tag: widget.attachment.guid,
-              child: Image.file(
-                file,
-                fit: BoxFit.cover,
-                filterQuality: FilterQuality.low,
-                alignment: Alignment.center,
-              ),
+              child: (previewImage != null)
+                ? Image.memory(
+                    previewImage,
+                    fit: BoxFit.cover,
+                    filterQuality: FilterQuality.low,
+                    alignment: Alignment.center,
+                  )
+                : Container()
             ),
             width: MediaQuery.of(context).size.width / 2,
             height: MediaQuery.of(context).size.width / 2,

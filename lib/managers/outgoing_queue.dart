@@ -15,19 +15,30 @@ class OutgoingQueue extends QueueManager {
   @override
   Future<void> handleQueueItem(QueueItem item) async {
     switch (item.event) {
-      case "send-message": {
-        Map<String, dynamic> params = item.item;
-        await ActionHandler.sendMessageHelper(params["chat"], params["message"]);
-        break;
-      }
-      case "send-attachment": {
-        AttachmentSender sender = item.item;
-        await sender.send();
-        break;
-      }
-      default: {
-        debugPrint("Unhandled queue event: ${item.event}");
-      }
+      case "send-message":
+        {
+          Map<String, dynamic> params = item.item;
+          await ActionHandler.sendMessageHelper(
+              params["chat"], params["message"]);
+          break;
+        }
+      case "send-attachment":
+        {
+          AttachmentSender sender = item.item;
+          await sender.send();
+          break;
+        }
+      case "send-reaction":
+        {
+          Map<String, dynamic> params = item.item;
+          await ActionHandler.sendReactionHelper(
+              params["chat"], params["message"], params["reaction"]);
+          break;
+        }
+      default:
+        {
+          debugPrint("Unhandled queue event: ${item.event}");
+        }
     }
   }
 }

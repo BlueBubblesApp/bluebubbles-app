@@ -43,17 +43,16 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget>
   void initState() {
     super.initState();
     if (isInvalid) return;
+
     state = ContactManager().getState(widget.handle.address);
     colors = toColorGradient(widget.handle.address);
+
     ContactManager().stream.listen((event) {
-      for (String address in event) {
-        if (address == widget.handle.address) {
-          refresh();
-          break;
-        }
+      if (event.any((element) => element == widget?.handle?.address)) {
+        refreshInitials(force: true);
       }
     });
-    refresh();
+    refreshInitials();
   }
 
   @override
@@ -61,10 +60,11 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget>
     super.dispose();
   }
 
-  Future<void> refresh() async {
+  Future<void> refreshInitials({bool force = false}) async {
     if (isInvalid) return;
-    if (state.initials != null) return;
+    if (state.initials != null && !force) return;
     state.initials = await getInitials(handle: widget.handle);
+
     Contact contact =
         await ContactManager().getCachedContact(widget.handle.address);
 
@@ -143,7 +143,10 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget>
                 ),
                 child: Container(
                   child: state.initials == null
-                      ? Icon(Icons.person)
+                      ? Icon(
+                          Icons.person,
+                          size: (widget.size ?? 40) / 2,
+                        )
                       : Text(
                           state.initials,
                           style: TextStyle(

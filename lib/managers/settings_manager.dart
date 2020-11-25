@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
@@ -24,6 +25,9 @@ class SettingsManager {
   static final SettingsManager _manager = SettingsManager._internal();
 
   SettingsManager._internal();
+
+  StreamController<Settings> _stream = new StreamController.broadcast();
+  Stream<Settings> get stream => _stream.stream;
 
   /// [appDocDir] is just a directory that is commonly used
   /// It cannot be accessed by the user, and is private to the app
@@ -81,6 +85,9 @@ class SettingsManager {
     } catch (e) {}
 
     // Change the [finishedSetup] status to that of the settings
+    if (!settings.finishedSetup) {
+      await DBProvider.deleteDB();
+    }
     SocketManager().finishedSetup.sink.add(settings.finishedSetup);
 
     // If we aren't running in the background, then we should auto start the socket and authorize fcm just in case we haven't
@@ -101,6 +108,8 @@ class SettingsManager {
       // Set the [displayMode] to that saved in settings
       await FlutterDisplayMode.setMode(await settings.getDisplayMode());
     } catch (e) {}
+
+    _stream.sink.add(newSettings);
   }
 
   /// Updates the selected theme for the app
@@ -137,5 +146,9 @@ class SettingsManager {
     fcmData = data;
     await fcmData.save();
     SocketManager().authFCM();
+  }
+
+  void dispose() {
+    _stream.close();
   }
 }

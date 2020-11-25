@@ -1,3 +1,4 @@
+import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/sent_message.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:flutter/material.dart';
@@ -22,6 +23,7 @@ import 'package:flutter/scheduler.dart';
 /// @param [tag] is the tag of the hero widget. This is typically "first"
 
 class SendWidget extends StatefulWidget {
+  static const Duration SEND_DURATION = Duration(milliseconds: 300);
   SendWidget({
     Key key,
     this.text,
@@ -42,8 +44,9 @@ class _SendWidgetState extends State<SendWidget> {
     super.initState();
 
     // We need to pop the "invisible" after the first frame renders
-    SchedulerBinding.instance
-        .addPostFrameCallback((_) => Navigator.of(context).pop());
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      Navigator.of(context).pop();
+    });
   }
 
   @override
@@ -54,18 +57,24 @@ class _SendWidgetState extends State<SendWidget> {
       true,
       false,
       false,
-      customContent: Container(
-        constraints: BoxConstraints(
-          minWidth: MediaQuery.of(context).size.width * 3 / 4 + 37,
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: <Widget>[
-            Container(
-              constraints: BoxConstraints(
-                maxWidth: MediaQuery.of(context).size.width * 3 / 4 - 30,
-              ),
-              child: RichText(
+      padding: false,
+      customContent: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Container(
+            constraints: BoxConstraints(
+              minWidth: MediaQuery.of(context).size.width * 3 / 37,
+            ),
+            child: SentMessageHelper.buildMessageWithTail(
+              context,
+              null,
+              false,
+              false,
+              false,
+              customColor: Colors.transparent,
+              currentChat: widget.currentChat,
+              margin: false,
+              customContent: RichText(
                 text: TextSpan(
                   text: widget.text,
                   style: Theme.of(context)
@@ -75,8 +84,8 @@ class _SendWidgetState extends State<SendWidget> {
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
       currentChat: widget.currentChat,
     );
@@ -94,81 +103,29 @@ class _SendWidgetState extends State<SendWidget> {
                 fillColor: Colors.transparent,
                 border: InputBorder.none,
               ),
-              autofocus: true,
+              autofocus: MediaQuery.of(context).viewInsets.bottom > 0,
             ),
           ),
           Padding(
             padding: const EdgeInsets.only(bottom: 12, right: 4),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.end,
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: <Widget>[
                 Hero(
-                  flightShuttleBuilder: (flightContext, _animation,
-                      flightDirection, fromHeroContext, toHeroContext) {
-                    Animation animation = _animation.drive(
-                      Tween<double>(
-                        end: MediaQuery.of(context).size.width * 3 / 4 + 40,
-                        begin: 0,
-                      ),
-                    );
-                    return Material(
-                      type: MaterialType.transparency,
-                      child: FadeTransition(
-                        opacity: _animation.drive(
-                          Tween<double>(end: 0, begin: 2),
-                        ),
-                        child: SentMessageHelper.buildMessageWithTail(
-                          context,
-                          null,
-                          true,
-                          false,
-                          false,
-                          customContent: AnimatedBuilder(
-                            animation: animation,
-                            builder: (context, child) {
-                              return Container(
-                                constraints: BoxConstraints(
-                                  minWidth: animation.value,
-                                ),
-                                child: child,
-                              );
-                            },
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              mainAxisSize: MainAxisSize.min,
-                              children: <Widget>[
-                                Container(
-                                  constraints: BoxConstraints(
-                                    maxWidth:
-                                        MediaQuery.of(context).size.width *
-                                                3 /
-                                                4 -
-                                            30,
-                                  ),
-                                  child: RichText(
-                                    text: TextSpan(
-                                      text: widget.text,
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodyText2
-                                          .apply(color: Colors.white),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          currentChat: widget.currentChat,
-                        ),
-                      ),
-                    );
-                  },
+                  flightShuttleBuilder: buildAnimation,
                   tag: widget.tag,
                   child: Material(
                     type: MaterialType.transparency,
-                    child: Opacity(
-                      child: messageWidget,
-                      opacity: 0,
+                    child: Row(
+                      children: [
+                        Opacity(
+                          child: messageWidget,
+                          opacity: 0,
+                        )
+                      ],
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      mainAxisSize: MainAxisSize.max,
                     ),
                   ),
                 )
@@ -176,6 +133,73 @@ class _SendWidgetState extends State<SendWidget> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget buildAnimation(flightContext, _animation, flightDirection,
+      fromHeroContext, toHeroContext) {
+    Animation<double> animation = _animation.drive(
+      Tween<double>(
+        end: MediaQuery.of(context).size.width * 3 / 4 + 37,
+        begin: 0,
+      ),
+    );
+    return Material(
+      type: MaterialType.transparency,
+      child: FadeTransition(
+        opacity: _animation.drive(
+          Tween<double>(end: 0, begin: 10),
+        ),
+        child: SentMessageHelper.buildMessageWithTail(
+          context,
+          null,
+          true,
+          false,
+          false,
+          padding: false,
+          customContent: AnimatedBuilder(
+            animation: animation,
+            builder: (context, child) {
+              return Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                    constraints: BoxConstraints(
+                      minWidth: animation.value,
+                      maxWidth: animation.value.clamp(
+                        MediaQuery.of(context).size.width *
+                            MessageWidgetMixin.MAX_SIZE,
+                        MediaQuery.of(context).size.width * 3 / 4 + 37,
+                      ),
+                    ),
+                    child: child,
+                  ),
+                ],
+              );
+            },
+            child: SentMessageHelper.buildMessageWithTail(
+              context,
+              null,
+              false,
+              false,
+              false,
+              customColor: Colors.transparent,
+              currentChat: widget.currentChat,
+              margin: false,
+              customContent: RichText(
+                text: TextSpan(
+                  text: widget.text,
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodyText2
+                      .apply(color: Colors.white),
+                ),
+              ),
+            ),
+          ),
+          currentChat: widget.currentChat,
+        ),
       ),
     );
   }
@@ -213,5 +237,5 @@ class SendPageBuilder extends PageRoute<void> {
   Duration get transitionDuration => Duration(milliseconds: 0);
 
   @override
-  Duration get reverseTransitionDuration => Duration(milliseconds: 300);
+  Duration get reverseTransitionDuration => SendWidget.SEND_DURATION;
 }

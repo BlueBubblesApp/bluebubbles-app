@@ -1,8 +1,8 @@
 import 'dart:async';
 
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/chat_selector.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
+import 'package:bluebubbles/layouts/conversation_view/conversation_view_mixin.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/material.dart';
 
@@ -47,7 +47,6 @@ class _AddingParticipantPopupState extends State<AddingParticipantPopup> {
           } else {
             if (this.mounted) {
               Navigator.pop(context);
-              Navigator.pop(context);
             }
           }
         });
@@ -83,7 +82,8 @@ class _AddingParticipantPopupState extends State<AddingParticipantPopup> {
         child: Center(
           child: LinearProgressIndicator(
             backgroundColor: Colors.grey,
-            valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
+            valueColor:
+                AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
             value: (index) / widget.contacts.length,
           ),
         ),

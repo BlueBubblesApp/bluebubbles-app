@@ -1,13 +1,15 @@
 import 'dart:ui';
 
+import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
-import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/chat_selector.dart';
-import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
+import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
+import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
-import 'package:bluebubbles/managers/notification_manager.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/managers/theme_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
+import 'package:bluebubbles/repository/models/settings.dart';
 
 import './conversation_tile.dart';
 import 'package:flutter/cupertino.dart';
@@ -27,10 +29,15 @@ class _ConversationListState extends State<ConversationList> {
   ScrollController _scrollController;
   Color _theme;
   List<Chat> _chats = <Chat>[];
+  bool colorfulChats = false;
+
+  Brightness brightness = Brightness.light;
+  bool gotBrightness = false;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+
     if (this.mounted) {
       setState(() {
         _theme = Colors.transparent;
@@ -55,7 +62,6 @@ class _ConversationListState extends State<ConversationList> {
   @override
   void initState() {
     super.initState();
-
     if (!widget.showArchivedChats) {
       ChatBloc().chatStream.listen((List<Chat> chats) {
         _chats = chats;
@@ -71,21 +77,51 @@ class _ConversationListState extends State<ConversationList> {
       _chats = ChatBloc().archivedChats;
     }
 
+    colorfulChats = SettingsManager().settings.rainbowBubbles;
+    SettingsManager().stream.listen((Settings newSettings) {
+      if (newSettings.rainbowBubbles != colorfulChats && this.mounted) {
+        setState(() {
+          colorfulChats = newSettings.rainbowBubbles;
+        });
+      }
+    });
+
     _scrollController = ScrollController()..addListener(scrollListener);
 
     // Listen for any incoming events
     EventDispatcher().stream.listen((Map<String, dynamic> event) {
-      if (!event.containsKey("type") || event["type"] != "show-snackbar")
-        return;
+      if (!event.containsKey("type")) return;
 
-      // Make sure that the app is open and the conversation list is present
-      if (!LifeCycleManager().isAlive ||
-          NotificationManager().chat != null ||
-          context == null) return;
-      final snackBar = SnackBar(content: Text(event["data"]["text"]));
-      Scaffold.of(context).hideCurrentSnackBar();
-      Scaffold.of(context).showSnackBar(snackBar);
+      if (event["type"] == 'show-snackbar') {
+        // Make sure that the app is open and the conversation list is present
+        if (!LifeCycleManager().isAlive ||
+            CurrentChat.activeChat != null ||
+            context == null) return;
+        final snackBar = SnackBar(content: Text(event["data"]["text"]));
+        Scaffold.of(context).hideCurrentSnackBar();
+        Scaffold.of(context).showSnackBar(snackBar);
+      } else if (event["type"] == 'refresh' && this.mounted) {
+        setState(() {});
+      } else if (event["type"] == 'theme-update' && this.mounted) {
+        setState(() {
+          gotBrightness = false;
+        });
+      }
     });
+  }
+
+  void loadBrightness() {
+    if (gotBrightness) return;
+
+    if (this.context == null) {
+      brightness = Brightness.light;
+      gotBrightness = true;
+      return;
+    }
+
+    bool isDark = Theme.of(context).accentColor.computeLuminance() < 0.179;
+    brightness = isDark ? Brightness.dark : Brightness.light;
+    gotBrightness = true;
   }
 
   bool get _isAppBarExpanded {
@@ -96,6 +132,8 @@ class _ConversationListState extends State<ConversationList> {
 
   @override
   Widget build(BuildContext context) {
+    loadBrightness();
+
     return Scaffold(
       appBar: PreferredSize(
         preferredSize: Size(
@@ -114,6 +152,7 @@ class _ConversationListState extends State<ConversationList> {
                 elevation: 0,
                 backgroundColor: _theme,
                 centerTitle: true,
+                brightness: this.brightness,
                 title: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: <Widget>[
@@ -126,7 +165,8 @@ class _ConversationListState extends State<ConversationList> {
               ),
               firstChild: AppBar(
                 elevation: 0,
-                backgroundColor: Colors.transparent,
+                brightness: this.brightness,
+                backgroundColor: Theme.of(context).backgroundColor,
               ),
             ),
           ),
@@ -260,20 +300,29 @@ class _ConversationListState extends State<ConversationList> {
 
                 if (_chats.isEmpty) {
                   return SliverToBoxAdapter(
-                      child: Center(
-                          child: Container(
-                              padding: EdgeInsets.only(top: 50.0),
-                              child: Text("You have no chats :(",
-                                  style:
-                                      Theme.of(context).textTheme.subtitle1))));
+                    child: Center(
+                      child: Container(
+                        padding: EdgeInsets.only(top: 50.0),
+                        child: Text(
+                          "You have no chats :(",
+                          style: Theme.of(context).textTheme.subtitle1,
+                        ),
+                      ),
+                    ),
+                  );
                 }
 
                 return SliverList(
                   delegate: SliverChildBuilderDelegate(
                     (context, index) {
+                      if (!widget.showArchivedChats && _chats[index].isArchived)
+                        return Container();
+                      if (widget.showArchivedChats && !_chats[index].isArchived)
+                        return Container();
                       return ConversationTile(
-                          key: Key(_chats[index].guid.toString()),
-                          chat: _chats[index]);
+                        key: Key(_chats[index].guid.toString()),
+                        chat: _chats[index],
+                      );
                     },
                     childCount: _chats?.length ?? 0,
                   ),
@@ -292,7 +341,7 @@ class _ConversationListState extends State<ConversationList> {
           Navigator.of(context).push(
             CupertinoPageRoute(
               builder: (BuildContext context) {
-                return ChatSelector(
+                return ConversationView(
                   isCreator: true,
                 );
               },

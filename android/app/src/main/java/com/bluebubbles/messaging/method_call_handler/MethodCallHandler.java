@@ -1,12 +1,14 @@
 package com.bluebubbles.messaging.method_call_handler;
 
 import android.annotation.SuppressLint;
+import android.app.AlarmManager;
 import android.content.Context;
 import android.os.Build;
 
 import androidx.annotation.RequiresApi;
 
 import com.bluebubbles.messaging.MainActivity;
+import com.bluebubbles.messaging.method_call_handler.handlers.AlarmScheduler;
 import com.bluebubbles.messaging.method_call_handler.handlers.ClearChatNotifs;
 import com.bluebubbles.messaging.method_call_handler.handlers.ClearSocketIssue;
 import com.bluebubbles.messaging.method_call_handler.handlers.CreateNotificationChannel;
@@ -29,7 +31,7 @@ import io.flutter.plugin.common.MethodChannel;
 
 public class MethodCallHandler {
     @SuppressLint("RestrictedApi")
-    @RequiresApi(api = Build.VERSION_CODES.O)
+    @RequiresApi(api = Build.VERSION_CODES.P)
     public static void methodCallHandler(MethodCall call, MethodChannel.Result result, Context context, DartWorker worker) {
         if (call.method.equals(FirebaseAuth.TAG)) {
             new FirebaseAuth(context, call, result).Handle();
@@ -57,15 +59,19 @@ public class MethodCallHandler {
         } else if (call.method.equals(SaveToFile.TAG)) {
             new SaveToFile(context, call, result).Handle();
         } else if (call.method.equals("get-starting-intent")) {
-            result.success(((MainActivity) context).getIntent().getStringExtra("chatGUID"));
+            String intent = ((MainActivity) context).getIntent().getStringExtra("chatGUID");
+            ((MainActivity) context).getIntent().putExtra("chatGUID", (String) null);
+            result.success(intent);
         } else if (call.method.equals(InitializeBackgroundHandle.TAG)) {
             new InitializeBackgroundHandle(context, call, result).Handle();
         } else if (call.method.equals(GetServerUrl.TAG)) {
             new GetServerUrl(context, call, result).Handle();
         } else if (call.method.equals(ShareFile.TAG)) {
             new ShareFile(context, call, result).Handle();
-        }  else if (call.method.equals(PickFile.TAG)) {
+        } else if (call.method.equals(PickFile.TAG)) {
             new PickFile(context, call, result).Handle();
+        } else if (call.method.equals(AlarmScheduler.TAG)) {
+            new AlarmScheduler(context, call, result).Handle();
         } else {
             result.notImplemented();
         }

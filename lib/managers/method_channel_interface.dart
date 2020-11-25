@@ -3,9 +3,9 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:bluebubbles/action_handler.dart';
-import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
-import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/chat_selector.dart';
+import 'package:bluebubbles/managers/alarm_manager.dart';
+import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/incoming_queue.dart';
 import 'package:bluebubbles/managers/navigator_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
@@ -74,6 +74,10 @@ class MethodChannelInterface {
 
         // We remove the brackets from the formatting
         address = address.substring(1, address.length - 1);
+
+        if (!(address).startsWith("http")) {
+          address = "http://$address";
+        }
 
         // And then tell the socket to set the new server address
         await SocketManager().newServer(address);
@@ -156,10 +160,10 @@ class MethodChannelInterface {
         // Go to the new chat creator with all of these attachments to select a chat
         NavigatorManager().navigatorKey.currentState.pushAndRemoveUntil(
               CupertinoPageRoute(
-                builder: (context) => ChatSelector(
-                  attachments: attachments,
+                builder: (context) => ConversationView(
+                  existingAttachments: attachments,
                   isCreator: true,
-                  onTapGoToChat: true,
+                  // onTapGoToChat: true,
                 ),
               ),
               (route) => route.isFirst,
@@ -174,7 +178,7 @@ class MethodChannelInterface {
         // Navigate to the new chat creator with the specified text
         NavigatorManager().navigatorKey.currentState.pushAndRemoveUntil(
               CupertinoPageRoute(
-                builder: (context) => ChatSelector(
+                builder: (context) => ConversationView(
                   existingText: text,
                   isCreator: true,
                 ),
@@ -182,6 +186,9 @@ class MethodChannelInterface {
               (route) => route.isFirst,
             );
 
+        return new Future.value("");
+      case "alarm-wake":
+        AlarmManager().onReceiveAlarm(call.arguments["id"]);
         return new Future.value("");
       default:
         return new Future.value("");
@@ -209,22 +216,18 @@ class MethodChannelInterface {
       await openedChat.getParticipants();
 
       // Make sure that the title is set
-      String title = await openedChat.getTitle();
-
-      // Create a new [MessageBloc] for this chat
-      MessageBloc messageBloc = new MessageBloc(openedChat);
+      await openedChat.getTitle();
 
       // Clear all notifications for this chat
       NotificationManager().switchChat(openedChat);
 
+      // if (!CurrentChat.isActive(openedChat.guid))
       // Actually navigate to the chat page
       NavigatorManager().navigatorKey.currentState
         ..pushAndRemoveUntil(
           CupertinoPageRoute(
             builder: (context) => ConversationView(
               chat: openedChat,
-              messageBloc: messageBloc,
-              title: title,
             ),
           ),
           (route) => route.isFirst,

@@ -1,12 +1,9 @@
 import 'dart:async';
-import 'package:bluebubbles/helpers/message_helper.dart';
-import 'package:bluebubbles/helpers/reaction.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/group_event.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/url_preview_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_attachments.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_time_stamp_separator.dart';
-import 'package:bluebubbles/layouts/widgets/message_widget/message_details_popup.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/reactions_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/received_message.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/sent_message.dart';
@@ -15,7 +12,6 @@ import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
-import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -26,7 +22,6 @@ class MessageWidget extends StatefulWidget {
   MessageWidget({
     Key key,
     this.message,
-    this.chat,
     this.olderMessage,
     this.newerMessage,
     this.showHandle,
@@ -36,7 +31,6 @@ class MessageWidget extends StatefulWidget {
   }) : super(key: key);
 
   final Message message;
-  final Chat chat;
   final Message newerMessage;
   final Message olderMessage;
   final bool showHandle;
@@ -51,12 +45,12 @@ class MessageWidget extends StatefulWidget {
 class _MessageState extends State<MessageWidget>
     with AutomaticKeepAliveClientMixin {
   bool showTail = true;
-  OverlayEntry _entry;
   Completer<void> associatedMessageRequest;
   Completer<void> attachmentsRequest;
   int lastRequestCount = -1;
   int attachmentCount = 0;
   int associatedCount = 0;
+  CurrentChat currentChat;
 
   @override
   void initState() {
@@ -67,7 +61,7 @@ class _MessageState extends State<MessageWidget>
     // Listen for new messages
     NewMessageManager().stream.listen((data) {
       // If the message doesn't apply to this chat, ignore it
-      if (data.chatGuid != widget.chat.guid) return;
+      if (data.chatGuid != currentChat?.chat?.guid) return;
 
       // If it's not an ADD event, ignore it
       if (data.type != NewMessageType.ADD) return;
@@ -98,6 +92,8 @@ class _MessageState extends State<MessageWidget>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    currentChat = CurrentChat.of(context);
+
     fetchAssociatedMessages();
     fetchAttachments();
   }
@@ -231,72 +227,42 @@ class _MessageState extends State<MessageWidget>
     Widget message;
     if (widget.message.isFromMe) {
       message = SentMessage(
-          offset: widget.offset,
-          showTail: showTail,
-          olderMessage: widget.olderMessage,
-          message: widget.message,
-          urlPreviewWidget: urlPreviewWidget,
-          stickersWidget: stickersWidget,
-          attachmentsWidget: widgetAttachments,
-          reactionsWidget: reactionsWidget,
-          chat: widget.chat,
-          shouldFadeIn: CurrentChat.of(context)
-              .sentMessages
-              .contains(widget.message.guid),
-          showHero: widget.showHero,
-          showDeliveredReceipt: widget.isFirstSentMessage);
+        offset: widget.offset,
+        showTail: showTail,
+        olderMessage: widget.olderMessage,
+        message: widget.message,
+        urlPreviewWidget: urlPreviewWidget,
+        stickersWidget: stickersWidget,
+        attachmentsWidget: widgetAttachments,
+        reactionsWidget: reactionsWidget,
+        shouldFadeIn:
+            CurrentChat.of(context).sentMessages.contains(widget.message.guid),
+        showHero: widget.showHero,
+        showDeliveredReceipt: widget.isFirstSentMessage,
+      );
     } else {
       message = ReceivedMessage(
-          offset: widget.offset,
-          showTail: showTail,
-          olderMessage: widget.olderMessage,
-          message: widget.message,
-          showHandle: widget.showHandle,
-          urlPreviewWidget: urlPreviewWidget,
-          stickersWidget: stickersWidget,
-          attachmentsWidget: widgetAttachments,
-          reactionsWidget: reactionsWidget);
+        offset: widget.offset,
+        showTail: showTail,
+        olderMessage: widget.olderMessage,
+        message: widget.message,
+        showHandle: widget.showHandle,
+        urlPreviewWidget: urlPreviewWidget,
+        stickersWidget: stickersWidget,
+        attachmentsWidget: widgetAttachments,
+        reactionsWidget: reactionsWidget,
+      );
     }
 
-    return WillPopScope(
-      onWillPop: () async {
-        if (_entry != null) {
-          try {
-            _entry.remove();
-          } catch (e) {}
-          _entry = null;
-          return true;
-        } else {
-          return true;
-        }
-      },
-      child: GestureDetector(
-        behavior: HitTestBehavior.translucent,
-        onLongPress: () async {
-          Feedback.forLongPress(context);
-          Overlay.of(context).insert(_createMessageDetailsPopup());
-        },
-        child: Column(
-          children: [
-            message,
-            MessageTimeStampSeparator(
-              newerMessage: widget.newerMessage,
-              message: widget.message,
-            )
-          ],
-        ),
-      ),
+    return Column(
+      children: [
+        message,
+        MessageTimeStampSeparator(
+          newerMessage: widget.newerMessage,
+          message: widget.message,
+        )
+      ],
     );
-  }
-
-  OverlayEntry _createMessageDetailsPopup() {
-    _entry = OverlayEntry(
-      builder: (context) => MessageDetailsPopup(
-        entry: _entry,
-        message: widget.message,
-      ),
-    );
-    return _entry;
   }
 
   @override

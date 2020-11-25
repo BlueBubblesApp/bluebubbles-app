@@ -34,6 +34,11 @@ class ContactManager {
     return handleToContact[address];
   }
 
+  Contact getCachedContactSync(String address) {
+    if (!handleToContact.containsKey(address)) return null;
+    return handleToContact[address];
+  }
+
   Future<bool> canAccessContacts() async {
     bool output = false;
 
@@ -53,8 +58,8 @@ class ContactManager {
     return output;
   }
 
-  Future<void> getContacts({bool headless = false}) async {
-    if (!(await canAccessContacts())) return;
+  Future getContacts({bool headless = false}) async {
+    if (!(await canAccessContacts())) return false;
 
     // If we are fetching the contacts, return the current future so we can await it
     if (getContactsFuture != null && !getContactsFuture.isCompleted) {
@@ -62,7 +67,7 @@ class ContactManager {
     }
 
     // Start a new completer
-    getContactsFuture = new Completer();
+    getContactsFuture = new Completer<bool>();
 
     // Fetch the current list of contacts
     debugPrint("ContactManager -> Fetching Contacts");
@@ -87,10 +92,11 @@ class ContactManager {
       }
     }
 
-    getContactsFuture.complete();
+    getContactsFuture.complete(true);
 
     // Lazy load thumbnails after rendering initial contacts.
     getAvatars();
+    return true;
   }
 
   Future<void> getAvatars() async {
@@ -104,14 +110,15 @@ class ContactManager {
     debugPrint("ContactManager -> Fetching Avatars");
     for (String address in handleToContact.keys) {
       Contact contact = handleToContact[address];
-      if (contact == null) continue;
+      if (handleToContact[address] == null) continue;
 
-      ContactsService.getAvatar(contact, photoHighRes: false).then((avatar) {
+      ContactsService.getAvatar(handleToContact[address], photoHighRes: false)
+          .then((avatar) {
         if (avatar == null) return;
 
         // Update the avatar in the master list
         contact.avatar = avatar;
-        handleToContact[address] = contact;
+        handleToContact[address].avatar = avatar;
 
         // Add the handle to the stream to update the subscribers
         _stream.sink.add([address]);
@@ -121,7 +128,7 @@ class ContactManager {
     getAvatarsFuture.complete();
   }
 
-  Future<Contact> getContact(String address) async {
+  Future<Contact> getContact(String address, {bool fetchAvatar = false}) async {
     if (address == null) return null;
     Contact contact;
 
@@ -147,6 +154,10 @@ class ContactManager {
       // If we have a match, break out of the loop
       if (contact != null) break;
     }
+    if (fetchAvatar) {
+      contact.avatar =
+          await ContactsService.getAvatar(contact, photoHighRes: false);
+    }
 
     return contact;
   }
@@ -158,6 +169,9 @@ class ContactManager {
     if (handleToContact.containsKey(address) &&
         handleToContact[address] != null)
       return handleToContact[address].displayName;
+    Contact contact = await getContact(address);
+    if (contact != null && contact.displayName != null)
+      return contact.displayName;
     String contactTitle = address;
     if (contactTitle == address && !contactTitle.contains("@")) {
       return formatPhoneNumber(contactTitle);

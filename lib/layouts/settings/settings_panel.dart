@@ -1,15 +1,15 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:ui';
 
-import 'package:bluebubbles/blocs/chat_bloc.dart';
 import "package:bluebubbles/helpers/string_extension.dart";
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/layouts/settings/scheduler_panel.dart';
-import 'package:bluebubbles/layouts/settings/scheduling_panel.dart';
 import 'package:bluebubbles/layouts/theming/theming_panel.dart';
 import 'package:bluebubbles/layouts/widgets/CustomCupertinoTextField.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
+import 'package:bluebubbles/managers/event_dispatcher.dart';
+import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/models/fcm_data.dart';
@@ -18,6 +18,7 @@ import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import '../../helpers/hex_color.dart';
 import 'package:flutter/material.dart';
 
@@ -37,12 +38,25 @@ class _SettingsPanelState extends State<SettingsPanel> {
   List<DisplayMode> modes;
   DisplayMode currentMode;
   bool showUrl = false;
+  Brightness brightness;
+  bool gotBrightness = false;
 
   @override
   void initState() {
     super.initState();
     _settingsCopy = SettingsManager().settings;
     _fcmDataCopy = SettingsManager().fcmData;
+
+    // Listen for any incoming events
+    EventDispatcher().stream.listen((Map<String, dynamic> event) {
+      if (!event.containsKey("type")) return;
+
+      if (event["type"] == 'theme-update' && this.mounted) {
+        setState(() {
+          gotBrightness = false;
+        });
+      }
+    });
   }
 
   @override
@@ -53,8 +67,23 @@ class _SettingsPanelState extends State<SettingsPanel> {
     setState(() {});
   }
 
+  void loadBrightness() {
+    if (gotBrightness) return;
+    if (context == null) {
+      brightness = Brightness.light;
+      gotBrightness = true;
+      return;
+    }
+
+    bool isDark = Theme.of(context).accentColor.computeLuminance() < 0.179;
+    brightness = isDark ? Brightness.dark : Brightness.light;
+    gotBrightness = true;
+  }
+
   @override
   Widget build(BuildContext context) {
+    loadBrightness();
+
     return Scaffold(
       // extendBodyBehindAppBar: true,
       backgroundColor: Theme.of(context).backgroundColor,
@@ -63,6 +92,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
         child: ClipRRect(
           child: BackdropFilter(
             child: AppBar(
+              brightness: brightness,
               toolbarHeight: 100.0,
               elevation: 0,
               leading: IconButton(
@@ -135,6 +165,11 @@ class _SettingsPanelState extends State<SettingsPanel> {
                               showUrl = !showUrl;
                             });
                           }
+                        },
+                        onLongPress: () {
+                          Clipboard.setData(new ClipboardData(text: _settingsCopy.serverAddress));
+                          final snackBar = SnackBar(content: Text("Address copied to clipboard"));
+                          Scaffold.of(context).showSnackBar(snackBar);
                         },
                         trailing: connectionStatus == SocketState.CONNECTED ||
                                 connectionStatus == SocketState.CONNECTING
@@ -239,17 +274,39 @@ class _SettingsPanelState extends State<SettingsPanel> {
                 ),
                 SettingsSwitch(
                   onChanged: (bool val) {
+                    _settingsCopy.hideDividers = val;
+                    saveSettings();
+                  },
+                  initialVal: _settingsCopy.hideDividers,
+                  title: "Hide Dividers",
+                ),
+                SettingsSwitch(
+                  onChanged: (bool val) {
                     _settingsCopy.rainbowBubbles = val;
-                    ChatBloc().initTileVals(ChatBloc().chats);
-                    setState(() {});
+                    saveSettings();
                   },
                   initialVal: _settingsCopy.rainbowBubbles,
                   title: "Colorful Chats",
                 ),
+                // SettingsOptions<String>(
+                //   initial: _settingsCopy.emojiFontFamily == null
+                //       ? "System"
+                //       : fontFamilyToString[_settingsCopy.emojiFontFamily],
+                //   onChanged: (val) {
+                //     _settingsCopy.emojiFontFamily = stringToFontFamily[val];
+                //   },
+                //   options: stringToFontFamily.keys.toList(),
+                //   textProcessing: (dynamic val) => val,
+                //   title: "Emoji Style",
+                //   showDivider: false,
+                // ),
                 SettingsOptions<AdaptiveThemeMode>(
                   initial: AdaptiveTheme.of(context).mode,
                   onChanged: (val) {
                     AdaptiveTheme.of(context).setThemeMode(val);
+
+                    // This needs to be on a delay so the background color has time to change
+                    Timer(Duration(seconds: 1), () => EventDispatcher().emit('theme-update', null));
                   },
                   options: AdaptiveThemeMode.values,
                   textProcessing: (dynamic val) =>
@@ -280,18 +337,18 @@ class _SettingsPanelState extends State<SettingsPanel> {
                     textProcessing: (dynamic val) => val.toString(),
                     title: "Display",
                   ),
-                SettingsTile(
-                  title: "Message Scheduling",
-                  trailing: Icon(Icons.arrow_forward_ios,
-                      color: Theme.of(context).primaryColor),
-                  onTap: () async {
-                    Navigator.of(context).push(
-                      CupertinoPageRoute(
-                        builder: (context) => SchedulingPanel(),
-                      ),
-                    );
-                  },
-                ),
+                // SettingsTile(
+                //   title: "Message Scheduling",
+                //   trailing: Icon(Icons.arrow_forward_ios,
+                //       color: Theme.of(context).primaryColor),
+                //   onTap: () async {
+                //     Navigator.of(context).push(
+                //       CupertinoPageRoute(
+                //         builder: (context) => SchedulingPanel(),
+                //       ),
+                //     );
+                //   },
+                // ),
                 SettingsTile(
                   onTap: () {
                     showDialog(
@@ -330,6 +387,188 @@ class _SettingsPanelState extends State<SettingsPanel> {
                   },
                   title: "Reset DB",
                 ),
+                Divider(
+                  color: Theme.of(context).accentColor.withOpacity(0.5),
+                  thickness: 1,
+                ),
+                SettingsTile(
+                  title: "Donations",
+                  onTap: () {
+                    MethodChannelInterface().invokeMethod("open-link",
+                        {"link": "https://bluebubbles.app/donate/"});
+                  },
+                  trailing: Icon(
+                    Icons.attach_money,
+                    color: Theme.of(context).primaryColor,
+                  ),
+                ),
+                SettingsTile(
+                  title: "Website",
+                  onTap: () {
+                    MethodChannelInterface().invokeMethod(
+                        "open-link", {"link": "https://bluebubbles.app/"});
+                  },
+                  trailing: Icon(
+                    Icons.link,
+                    color: Theme.of(context).primaryColor,
+                  ),
+                ),
+                SettingsTile(
+                  title: "Source Code",
+                  onTap: () {
+                    MethodChannelInterface().invokeMethod("open-link",
+                        {"link": "https://github.com/BlueBubblesApp"});
+                  },
+                  trailing: Icon(
+                    Icons.code,
+                    color: Theme.of(context).primaryColor,
+                  ),
+                ),
+                SettingsTile(
+                  title: "Changelog",
+                  onTap: () async {
+                    String changelog = await DefaultAssetBundle.of(context)
+                        .loadString('assets/changelog/changelog.txt');
+                    Navigator.of(context).push(
+                      CupertinoPageRoute(
+                        builder: (context) => Scaffold(
+                          body: Markdown(
+                            data: changelog,
+                            physics: AlwaysScrollableScrollPhysics(
+                              parent: BouncingScrollPhysics(),
+                            ),
+                            styleSheet: MarkdownStyleSheet.fromTheme(
+                              Theme.of(context)
+                                ..textTheme.copyWith(
+                                  headline1: TextStyle(
+                                    color: Colors.white,
+                                  ),
+                                ),
+                            ).copyWith(
+                              h1: Theme.of(context)
+                                  .textTheme
+                                  .headline1
+                                  .copyWith(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold),
+                              h2: Theme.of(context)
+                                  .textTheme
+                                  .headline2
+                                  .copyWith(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold),
+                              h3: Theme.of(context)
+                                  .textTheme
+                                  .headline3
+                                  .copyWith(
+                                      fontSize: 17,
+                                      fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                          backgroundColor: Theme.of(context).backgroundColor,
+                          appBar: CupertinoNavigationBar(
+                            backgroundColor: Theme.of(context).accentColor,
+                            middle: Text(
+                              "Changelog",
+                              style: Theme.of(context).textTheme.headline1,
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                  trailing: Icon(
+                    Icons.code,
+                    color: Theme.of(context).primaryColor,
+                  ),
+                ),
+                SettingsTile(
+                  title: "Developers",
+                  onTap: () {
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: Text(
+                          "Developers! Developers!",
+                          style: Theme.of(context).textTheme.headline1,
+                          textAlign: TextAlign.center,
+                        ),
+                        backgroundColor: Theme.of(context).accentColor,
+                        content: SizedBox(
+                          width: MediaQuery.of(context).size.width * 3 / 5,
+                          height: MediaQuery.of(context).size.height * 1 / 9,
+                          child: ListView(
+                            physics: AlwaysScrollableScrollPhysics(
+                              parent: BouncingScrollPhysics(),
+                            ),
+                            children: [
+                              Container(
+                                alignment: Alignment.center,
+                                padding: EdgeInsets.all(8),
+                                child: Text(
+                                  "Zach",
+                                  style: Theme.of(context).textTheme.bodyText1,
+                                ),
+                              ),
+                              Container(
+                                alignment: Alignment.center,
+                                padding: EdgeInsets.all(8),
+                                child: Text(
+                                  "Brandon",
+                                  style: Theme.of(context).textTheme.bodyText1,
+                                ),
+                              ),
+                              Container(
+                                alignment: Alignment.center,
+                                padding: EdgeInsets.all(8),
+                                child: Text(
+                                  "Maxwell",
+                                  style: Theme.of(context).textTheme.bodyText1,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        actions: [
+                          FlatButton(
+                            child: Text(
+                              "Close",
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyText1
+                                  .copyWith(
+                                    color: Theme.of(context).primaryColor,
+                                  ),
+                            ),
+                            onPressed: () => Navigator.of(context).pop(),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                  trailing: Icon(
+                    Icons.info_outline,
+                    color: Theme.of(context).primaryColor,
+                  ),
+                ),
+                SettingsTile(
+                  title: "About",
+                  onTap: () {
+                    showAboutDialog(
+                      context: context,
+                      applicationName: "BlueBubbles",
+                      applicationIcon: Image.asset(
+                        "assets/icon/icon.png",
+                        width: 30,
+                        height: 30,
+                      ),
+                    );
+                  },
+                  trailing: Icon(
+                    Icons.info_outline,
+                    color: Theme.of(context).primaryColor,
+                  ),
+                )
               ],
             ),
           ),
@@ -343,22 +582,27 @@ class _SettingsPanelState extends State<SettingsPanel> {
     );
   }
 
-  @override
-  void dispose() {
+  void saveSettings() {
     SettingsManager().saveSettings(_settingsCopy);
     if (needToReconnect) {
       SocketManager().startSocketIO(forceNewConnection: true);
     }
+  }
+
+  @override
+  void dispose() {
+    saveSettings();
     super.dispose();
   }
 }
 
 class SettingsTile extends StatelessWidget {
   const SettingsTile(
-      {Key key, this.onTap, this.title, this.trailing, this.subTitle})
+      {Key key, this.onTap, this.onLongPress, this.title, this.trailing, this.subTitle})
       : super(key: key);
 
   final Function onTap;
+  final Function onLongPress;
   final String subTitle;
   final String title;
   final Widget trailing;
@@ -368,6 +612,7 @@ class SettingsTile extends StatelessWidget {
     return Material(
       color: Theme.of(context).backgroundColor,
       child: InkWell(
+        onLongPress: this.onLongPress,
         onTap: this.onTap,
         child: Column(
           children: <Widget>[
@@ -405,8 +650,7 @@ class SettingsTextField extends StatelessWidget {
       this.placeholder,
       this.maxLines = 14,
       this.keyboardType = TextInputType.multiline,
-      this.inputFormatters = const []
-    })
+      this.inputFormatters = const []})
       : super(key: key);
 
   final TextEditingController controller;
@@ -435,6 +679,7 @@ class SettingsTextField extends StatelessWidget {
               subtitle: Padding(
                 padding: EdgeInsets.only(top: 10.0),
                 child: CustomCupertinoTextField(
+                  cursorColor: Theme.of(context).primaryColor,
                   onLongPressStart: () {
                     Feedback.forLongPress(context);
                   },
@@ -573,28 +818,27 @@ class _SettingsOptionsState<T> extends State<SettingsOptions<T>> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  child: Text(
-                    widget.title,
-                    style: Theme.of(context).textTheme.bodyText1,
-                  ),
-                ),
-                (widget.subtitle != null)
-                  ? Container(
-                    child: Padding(
-                      padding: EdgeInsets.only(top: 3.0),
-                      child: Text(
-                        widget.subtitle ?? "",
-                        style: Theme.of(context).textTheme.subtitle1,
-                      ),
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    child: Text(
+                      widget.title,
+                      style: Theme.of(context).textTheme.bodyText1,
                     ),
-                  )
-                : Container(),
-              ]
-            ),
+                  ),
+                  (widget.subtitle != null)
+                      ? Container(
+                          child: Padding(
+                            padding: EdgeInsets.only(top: 3.0),
+                            child: Text(
+                              widget.subtitle ?? "",
+                              style: Theme.of(context).textTheme.subtitle1,
+                            ),
+                          ),
+                        )
+                      : Container(),
+                ]),
             Container(
               padding: EdgeInsets.symmetric(horizontal: 9),
               decoration: BoxDecoration(

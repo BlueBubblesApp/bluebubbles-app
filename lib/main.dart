@@ -3,6 +3,9 @@ import 'dart:io';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/themes.dart';
+import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
+import 'package:bluebubbles/layouts/setup/failure_to_start.dart';
 import 'package:bluebubbles/managers/background_isolate.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
@@ -22,7 +25,6 @@ import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 import 'package:sentry/sentry.dart';
 
 import './layouts/conversation_list/conversation_list.dart';
-import 'layouts/conversation_view/new_chat_creator/chat_selector.dart';
 import 'socket_manager.dart';
 
 final SentryClient _sentry = SentryClient(
@@ -70,15 +72,24 @@ Future<Null> main() async {
   };
 
   WidgetsFlutterBinding.ensureInitialized();
-  await DBProvider.db.initDB();
-  await initializeDateFormatting('fr_FR', null);
-  runZonedGuarded<Future<Null>>(() async {
-    runApp(Main());
-  }, (Object error, StackTrace stackTrace) async {
-    // Whenever an error occurs, call the `_reportError` function. This sends
-    // Dart errors to the dev console or Sentry depending on the environment.
-    await _reportError(error, stackTrace);
-  });
+  dynamic exception;
+  try {
+    await DBProvider.db.initDB();
+    await initializeDateFormatting('fr_FR', null);
+  } catch (e) {
+    exception = e;
+  }
+  if (exception == null) {
+    runZonedGuarded<Future<Null>>(() async {
+      runApp(Main());
+    }, (Object error, StackTrace stackTrace) async {
+      // Whenever an error occurs, call the `_reportError` function. This sends
+      // Dart errors to the dev console or Sentry depending on the environment.
+      await _reportError(error, stackTrace);
+    });
+  } else {
+    runApp(FailureToStrt(e: exception));
+  }
 }
 
 /// The [Main] app.
@@ -168,8 +179,8 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
       // Go to the new chat creator, with all of our attachments
       Navigator.of(context).pushAndRemoveUntil(
         CupertinoPageRoute(
-          builder: (context) => ChatSelector(
-            attachments: attachments,
+          builder: (context) => ConversationView(
+            existingAttachments: attachments,
             isCreator: true,
           ),
         ),
@@ -184,7 +195,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
       // Go to the new chat creator, with all of our text
       Navigator.of(context).pushAndRemoveUntil(
         CupertinoPageRoute(
-          builder: (context) => ChatSelector(
+          builder: (context) => ConversationView(
             existingText: text,
             isCreator: true,
           ),
@@ -236,6 +247,13 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   /// Render
   @override
   Widget build(BuildContext context) {
+    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+      systemNavigationBarColor:
+          Theme.of(context).backgroundColor, // navigation bar color
+      systemNavigationBarIconBrightness: getBrightness(context),
+      statusBarColor: Colors.transparent, // status bar color
+    ));
+
     return Scaffold(
       backgroundColor: Colors.black,
       // The stream builder connects to the [SocketManager] to check if the app has finished the setup or not

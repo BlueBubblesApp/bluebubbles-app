@@ -1,4 +1,3 @@
-import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/repository/models/theme_entry.dart';
 import 'package:flutter/material.dart';
@@ -28,9 +27,9 @@ class _ThemingColorPickerPopupState extends State<ThemingColorPickerPopup> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      backgroundColor: Theme.of(context).accentColor,
+      backgroundColor: Colors.black.withOpacity(0.8),
       title:
-          Text("Choose a Color", style: Theme.of(context).textTheme.headline1),
+          Text("Choose a Color", style: Theme.of(context).textTheme.headline1.apply(color: Colors.white)),
       content: SingleChildScrollView(
         physics: AlwaysScrollableScrollPhysics(
             parent: CustomBouncingScrollPhysics()),
@@ -42,11 +41,15 @@ class _ThemingColorPickerPopupState extends State<ThemingColorPickerPopup> {
               onColorChanged: (Color color) => currentColor = color,
               showLabel: true,
               pickerAreaHeightPercent: 0.8,
+              labelTextStyle: Theme.of(context).textTheme.bodyText1.apply(color: Colors.white)
             ),
             if (widget.entry.isFont)
               Text(
                 "Font Size",
-                style: whiteLightTheme.textTheme.bodyText1,
+                style: Theme.of(context)
+                    .textTheme
+                    .bodyText1
+                    .apply(color: Colors.white),
               ),
             if (widget.entry.isFont)
               Slider(
@@ -66,7 +69,11 @@ class _ThemingColorPickerPopupState extends State<ThemingColorPickerPopup> {
       ),
       actions: <Widget>[
         FlatButton(
-          child: Text("OK", style: Theme.of(context).textTheme.bodyText1),
+          child: Text("OK",
+              style: Theme.of(context)
+                  .textTheme
+                  .bodyText1
+                  .apply(color: Colors.white)),
           onPressed: () {
             widget.onSet(currentColor, fontSize: currentFontSize);
             Navigator.of(context).pop();

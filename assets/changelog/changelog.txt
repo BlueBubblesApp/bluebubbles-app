@@ -1,0 +1,7 @@
+# What's new?
+
+Below are the last few BlueBubbles App release changelogs
+
+## v0.1.0
+
+* Initial Release

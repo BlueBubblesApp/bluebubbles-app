@@ -9,6 +9,7 @@ import 'package:bluebubbles/layouts/widgets/message_widget/message_content/deliv
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/ballon_bundle_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_tail.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_time_stamp.dart';
+import 'package:bluebubbles/layouts/widgets/message_widget/message_popup_holder.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
@@ -20,7 +21,11 @@ import 'package:flutter/material.dart';
 class SentMessageHelper {
   static Widget buildMessageWithTail(BuildContext context, Message message,
       bool showTail, bool hasReactions, bool bigEmoji,
-      {Widget customContent, CurrentChat currentChat}) {
+      {Widget customContent,
+      CurrentChat currentChat,
+      Color customColor,
+      bool padding = true,
+      bool margin = true}) {
     Color bubbleColor;
     bubbleColor = message == null || message.guid.startsWith("temp")
         ? darken(Theme.of(context).primaryColor, 0.2)
@@ -37,7 +42,7 @@ class SentMessageHelper {
         ),
         child: Text(
           message.text,
-          style: Theme.of(context).textTheme.bodyText1.apply(fontSizeFactor: 4),
+          style: Theme.of(context).textTheme.bodyText2.apply(fontSizeFactor: 4),
         ),
       );
     } else {
@@ -47,26 +52,26 @@ class SentMessageHelper {
           if (showTail)
             MessageTail(
               message: message,
-              color: bubbleColor,
+              color: customColor ?? bubbleColor,
             ),
           Container(
             margin: EdgeInsets.only(
-              top: hasReactions ? 18 : 0,
-              left: 10,
-              right: 10,
+              top: hasReactions && margin ? 18 : 0,
+              left: margin ? 10 : 0,
+              right: margin ? 10 : 0,
             ),
             constraints: BoxConstraints(
               maxWidth: MediaQuery.of(context).size.width *
-                      MessageWidgetMixin.maxSize +
-                  (customContent != null ? 100 : 0),
+                      MessageWidgetMixin.MAX_SIZE +
+                  (!padding ? 100 : 0),
             ),
             padding: EdgeInsets.symmetric(
-              vertical: 8,
-              horizontal: 14,
+              vertical: padding ? 8 : 0,
+              horizontal: padding ? 14 : 0,
             ),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(20),
-              color: bubbleColor,
+              color: customColor ?? bubbleColor,
             ),
             child: customContent == null
                 ? RichText(
@@ -84,6 +89,7 @@ class SentMessageHelper {
         ],
       );
     }
+    if (!padding) return msg;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       mainAxisSize: MainAxisSize.max,
@@ -92,7 +98,9 @@ class SentMessageHelper {
         getErrorWidget(
           context,
           message,
-          currentChat != null ? currentChat.chat : CurrentChat.of(context).chat,
+          currentChat != null
+              ? currentChat.chat
+              : CurrentChat.of(context)?.chat,
         ),
       ],
     );
@@ -177,7 +185,6 @@ class SentMessage extends StatefulWidget {
   final bool showHero;
   final bool shouldFadeIn;
   final bool showDeliveredReceipt;
-  final Chat chat;
 
   // Sub-widgets
   final Widget stickersWidget;
@@ -194,7 +201,6 @@ class SentMessage extends StatefulWidget {
     @required this.showDeliveredReceipt,
     @required this.shouldFadeIn,
     @required this.offset,
-    @required this.chat,
 
     // Sub-widgets
     @required this.stickersWidget,
@@ -318,11 +324,14 @@ class _SentMessageState extends State<SentMessage>
       mainAxisSize: MainAxisSize.max,
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.end,
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: msgRow,
+        MessagePopupHolder(
+          message: widget.message,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.end,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: msgRow,
+          ),
         ),
         MessageTimeStamp(
           message: widget.message,

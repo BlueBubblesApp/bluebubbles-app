@@ -3,8 +3,8 @@ import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/ballon_bundle_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_tail.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_time_stamp.dart';
+import 'package:bluebubbles/layouts/widgets/message_widget/message_popup_holder.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.dart';
-import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/material.dart';
@@ -22,6 +22,8 @@ class ReceivedMessage extends StatefulWidget {
   final Widget reactionsWidget;
   final Widget urlPreviewWidget;
 
+  final bool isGroup;
+
   ReceivedMessage({
     Key key,
     @required this.showTail,
@@ -35,6 +37,7 @@ class ReceivedMessage extends StatefulWidget {
     @required this.reactionsWidget,
     @required this.urlPreviewWidget,
     this.offset,
+    this.isGroup = false,
   }) : super(key: key);
 
   @override
@@ -76,7 +79,7 @@ class _ReceivedMessageState extends State<ReceivedMessage>
         ),
         child: Text(
           message.text,
-          style: Theme.of(context).textTheme.bodyText1.apply(fontSizeFactor: 4),
+          style: Theme.of(context).textTheme.bodyText2.apply(fontSizeFactor: 4),
         ),
       );
     }
@@ -96,7 +99,7 @@ class _ReceivedMessageState extends State<ReceivedMessage>
           ),
           constraints: BoxConstraints(
             maxWidth:
-                MediaQuery.of(context).size.width * MessageWidgetMixin.maxSize,
+                MediaQuery.of(context).size.width * MessageWidgetMixin.MAX_SIZE,
           ),
           padding: EdgeInsets.symmetric(
             vertical: 8,
@@ -110,7 +113,7 @@ class _ReceivedMessageState extends State<ReceivedMessage>
             text: TextSpan(
               children:
                   MessageWidgetMixin.buildMessageSpans(context, widget.message),
-              style: Theme.of(context).textTheme.bodyText1,
+              style: Theme.of(context).textTheme.bodyText2,
             ),
           ),
         ),
@@ -126,9 +129,10 @@ class _ReceivedMessageState extends State<ReceivedMessage>
     List<Widget> messageColumn = [];
 
     // First, add the message sender (if applicable)
-    if (!sameSender(widget.message, widget.olderMessage) ||
-        !widget.message.dateCreated
-            .isWithin(widget.olderMessage.dateCreated, minutes: 30)) {
+    if (CurrentChat.of(context).chat.isGroup() &&
+        (!sameSender(widget.message, widget.olderMessage) ||
+            !widget.message.dateCreated
+                .isWithin(widget.olderMessage.dateCreated, minutes: 30))) {
       messageColumn.add(
         Padding(
           padding: EdgeInsets.only(
@@ -166,7 +170,9 @@ class _ReceivedMessageState extends State<ReceivedMessage>
         child: widget.urlPreviewWidget,
       );
     } else if (widget.message.isInteractive()) {
-      message = BalloonBundleWidget(message: widget.message);
+      message = Padding(
+          padding: EdgeInsets.only(left: 10.0),
+          child: BalloonBundleWidget(message: widget.message));
     } else if (widget.message.hasText()) {
       message = _buildMessageWithTail(widget.message);
     }
@@ -200,6 +206,7 @@ class _ReceivedMessageState extends State<ReceivedMessage>
             handle: widget.message.handle,
             size: 30,
             fontSize: 14,
+            borderThickness: 0.1,
           ),
         ),
       );
@@ -222,7 +229,8 @@ class _ReceivedMessageState extends State<ReceivedMessage>
     return Padding(
       // Add padding when we are showing the avatar
       padding: EdgeInsets.only(
-          left: (!widget.showTail && CurrentChat.of(context).chat.isGroup())
+          left: (!widget.showTail &&
+                  (CurrentChat.of(context).chat.isGroup() || widget.isGroup))
               ? 35.0
               : 0.0,
           bottom: (widget.showTail) ? 10.0 : 0.0),
@@ -230,11 +238,14 @@ class _ReceivedMessageState extends State<ReceivedMessage>
         mainAxisSize: MainAxisSize.max,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: msgRow,
+          MessagePopupHolder(
+            message: widget.message,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: msgRow,
+            ),
           ),
           MessageTimeStamp(
             message: widget.message,

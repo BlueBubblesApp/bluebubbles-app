@@ -1,12 +1,10 @@
-import 'dart:convert';
 import 'dart:math';
 import 'dart:typed_data';
+import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
-import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
-import 'package:blurhash_flutter/blurhash.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:html/parser.dart';
@@ -64,27 +62,30 @@ String formatPhoneNumber(String str) {
 }
 
 bool sameAddress(String address1, String address2) {
-  String formattedNumber = address1.replaceAll(RegExp(r'[-() ]'), '');
+  String formattedNumber1 = address1.replaceAll(RegExp(r'[-() ]'), '');
+  String formattedNumber2 = address2.replaceAll(RegExp(r'[-() ]'), '');
 
-  return formattedNumber == address2 ||
-      "+1" + formattedNumber == address2 ||
-      "+" + formattedNumber == address2;
+  return formattedNumber1 == formattedNumber2 ||
+      "+1" + formattedNumber1 == formattedNumber2 ||
+      "+" + formattedNumber1 == formattedNumber2 ||
+      "+1" + formattedNumber2 == formattedNumber1 ||
+      "+" + formattedNumber2 == formattedNumber1;
 }
 
-Future<Uint8List> blurHashDecode(String blurhash, int width, int height) async {
-  List<int> result = await compute(blurHashDecodeCompute,
-      jsonEncode({"hash": blurhash, "width": width, "height": height}));
-  return Uint8List.fromList(result);
-}
+// Future<Uint8List> blurHashDecode(String blurhash, int width, int height) async {
+//   List<int> result = await compute(blurHashDecodeCompute,
+//       jsonEncode({"hash": blurhash, "width": width, "height": height}));
+//   return Uint8List.fromList(result);
+// }
 
-List<int> blurHashDecodeCompute(String data) {
-  Map<String, dynamic> map = jsonDecode(data);
-  Uint8List imageDataBytes = Decoder.decode(
-      map["hash"],
-      ((map["width"] / 200) as double).toInt(),
-      ((map["height"] / 200) as double).toInt());
-  return imageDataBytes.toList();
-}
+// List<int> blurHashDecodeCompute(String data) {
+//   Map<String, dynamic> map = jsonDecode(data);
+//   Uint8List imageDataBytes = Decoder.decode(
+//       map["hash"],
+//       ((map["width"] / 200) as double).toInt(),
+//       ((map["height"] / 200) as double).toInt());
+//   return imageDataBytes.toList();
+// }
 
 String randomString(int length) {
   var rand = new Random();
@@ -234,7 +235,7 @@ Future<MemoryImage> loadAvatar(Chat chat, String address) async {
 
 List<RegExpMatch> parseLinks(String text) {
   RegExp exp = new RegExp(
-      r'(((h|H)ttps?:\/\/)|(www\.))[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}([-a-zA-Z0-9\/()@:%_.~#?&=\*\[\]]{0,})\b');
+      r'(((h|H)ttps?:\/\/)|(www\.))[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}([-a-zA-Z0-9\/()@:%_.~#?&=\*\[\]]{0,})');
   return exp.allMatches(text).toList();
 }
 
@@ -300,19 +301,19 @@ List<Color> toColorGradient(String str) {
   // These are my arbitrary weights. It's based on what I found
   // to be a good amount of each color
   if (seed < 901) {
-    return [HexColor("fd678d"), HexColor("ff8aa8")];  // Pink
+    return [HexColor("fd678d"), HexColor("ff8aa8")]; // Pink
   } else if (seed >= 901 && seed < 915) {
-    return [HexColor("6bcff6"), HexColor("94ddfd")];  // Blue
+    return [HexColor("6bcff6"), HexColor("94ddfd")]; // Blue
   } else if (seed >= 915 && seed < 925) {
-    return [HexColor("fea21c"), HexColor("feb854")];  // Orange
+    return [HexColor("fea21c"), HexColor("feb854")]; // Orange
   } else if (seed >= 925 && seed < 935) {
-    return [HexColor("5ede79"), HexColor("8de798")];  // Green
+    return [HexColor("5ede79"), HexColor("8de798")]; // Green
   } else if (seed >= 935 && seed < 950) {
-    return [HexColor("ffca1c"), HexColor("fcd752")];  // Yellow
+    return [HexColor("ffca1c"), HexColor("fcd752")]; // Yellow
   } else if (seed >= 950 && seed < 3000) {
-    return [HexColor("ff534d"), HexColor("fd726a")];  // Red
+    return [HexColor("ff534d"), HexColor("fd726a")]; // Red
   } else {
-    return [HexColor("a78df3"), HexColor("bcabfc")];  // Purple
+    return [HexColor("a78df3"), HexColor("bcabfc")]; // Purple
   }
 }
 
@@ -340,4 +341,8 @@ Size getGifDimensions(Uint8List bytes) {
   debugPrint("GIF height: $height");
   Size size = new Size(width.toDouble(), height.toDouble());
   return size;
+}
+
+Brightness getBrightness(BuildContext context) {
+  return AdaptiveTheme.of(context).mode == AdaptiveThemeMode.dark ? Brightness.dark : Brightness.light;
 }

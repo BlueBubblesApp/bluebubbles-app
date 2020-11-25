@@ -11,7 +11,7 @@ description: Send iMessages on Android using BlueBubbles!
 # In iOS, build-name is used as CFBundleShortVersionString while build-number used as CFBundleVersion.
 # Read more about iOS versioning at
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
-version: 0.0.8
+version: 0.1.8
 
 environment:
   sdk: ">=2.6.0 <3.0.0"
@@ -29,7 +29,7 @@ dependencies:
   tuple: ^1.0.3
   encrypt: ^4.0.0
   assorted_layout_widgets: ^2.0.0
-  audio_recorder: any
+  record: ^1.0.2
   flutter_local_notifications: any
   contacts_service: ^0.4.6
   permission_handler: ^5.0.1+1
@@ -76,13 +76,16 @@ dependencies:
   flutter_colorpicker: ^0.3.4
   giftextfield:
     path: packages/gif_text_field
-  image_gallery_saver: ^1.5.0
+  image_gallery_saver: ^1.6.6
   sentry: ^3.0.1
   flutter_image_compress: ^0.7.0
   extended_text_field:
     path: packages/extended_text_field
   visibility_detector: ^0.1.5
   flutter_displaymode: 0.1.1
+  flutter_keyboard_visibility: ^3.3.0
+  flutter_markdown: ^0.5.1
+
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^0.1.2
@@ -105,6 +108,11 @@ flutter_icons:
 
 # The following section is specific to Flutter.
 flutter:
+  # fonts:
+  # - family: AppleColorEmoji
+  #   fonts:
+  #     - asset: assets/fonts/AppleColorEmoji.ttf
+
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
@@ -125,6 +133,8 @@ flutter:
     - assets/reactions/love-black.svg
     - assets/icon/moon.svg
     - assets/images/person.png
+    - assets/icon/icon.png
+    - assets/changelog/changelog.txt
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware.
   # For details regarding adding assets from package dependencies, see

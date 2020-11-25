@@ -1,9 +1,7 @@
-import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/repository/models/message.dart';
-import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -47,10 +45,6 @@ class _ReactionDetailWidgetState extends State<ReactionDetailWidget> {
 
   @override
   Widget build(BuildContext context) {
-    String handleAddress = widget.handle == null || widget.message.isFromMe
-        ? null
-        : widget.handle.address;
-
     Color iconColor = Colors.white;
     if (Theme.of(context).accentColor.computeLuminance() >= 0.179) {
       iconColor = Colors.black.withAlpha(95);
@@ -63,6 +57,7 @@ class _ReactionDetailWidgetState extends State<ReactionDetailWidget> {
           padding: const EdgeInsets.symmetric(horizontal: 25.0, vertical: 10),
           child: ContactAvatarWidget(
             handle: widget.handle,
+            borderThickness: 0.1,
           ),
         ),
         Padding(

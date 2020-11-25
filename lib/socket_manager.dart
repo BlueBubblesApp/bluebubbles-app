@@ -204,7 +204,8 @@ class SocketManager {
     return new Future.value("");
   }
 
-  startSocketIO({bool forceNewConnection = false}) async {
+  Future<void> startSocketIO(
+      {bool forceNewConnection = false, bool catchException = true}) async {
     if (SettingsManager().settings == null) {
       debugPrint("Settings have not loaded yet, not starting socket...");
       return;
@@ -239,7 +240,7 @@ class SocketManager {
         return;
       }
 
-      _manager.socket.init();
+      await _manager.socket.init();
       _manager.socket.connect();
       _manager.socket.unSubscribesAll();
 
@@ -270,6 +271,17 @@ class SocketManager {
       _manager.socket.subscribe("participant-left", handleNewMessage);
       _manager.socket
           .subscribe("chat-read-status-changed", handleChatStatusChange);
+      // _manager.socket.subscribe("typing-indicator", (_data) {
+      //   Map<String, dynamic> data = jsonDecode(_data);
+      //   CurrentChat currentChat =
+      //       AttachmentInfoBloc().getCurrentChat(data["guid"]);
+      //   if (currentChat == null) return;
+      //   if (data["display"]) {
+      //     currentChat.displayTypingIndicator();
+      //   } else {
+      //     currentChat.hideTypingIndicator();
+      //   }
+      // });
 
       /**
        * Handle errors sent by the server
@@ -306,6 +318,7 @@ class SocketManager {
         Map<String, dynamic> data = jsonDecode(_data);
 
         Message message = await Message.findOne({"guid": data["tempGuid"]});
+        if (message == null) return new Future.value("");
         message.error = 1003;
         message.guid = message.guid.replaceAll("temp", "error-Message Timeout");
         await Message.replaceMessage(data["tempGuid"], message);
@@ -322,7 +335,11 @@ class SocketManager {
             item: {"data": jsonDecode(_data)}));
       });
     } catch (e) {
-      debugPrint("FAILED TO CONNECT");
+      if (!catchException) {
+        throw (("(SocketManager) -> ") + e.toString());
+      } else {
+        debugPrint("FAILED TO CONNECT");
+      }
     }
   }
 
@@ -339,11 +356,11 @@ class SocketManager {
     state = SocketState.DISCONNECTED;
   }
 
-  Future<void> authFCM() async {
+  Future<void> authFCM({bool catchException = true, bool force = false}) async {
     if (SettingsManager().fcmData.isNull) {
       debugPrint("No FCM Auth data found. Skipping FCM authentication");
       return;
-    } else if (token != null) {
+    } else if (token != null && !force) {
       debugPrint("already authorized fcm " + token);
       if (_manager.socket != null) {
         _manager.sendMessage("add-fcm-device",
@@ -364,8 +381,12 @@ class SocketManager {
         debugPrint(token);
       }
     } on PlatformException catch (e) {
-      token = "Failed to get token: " + e.toString();
-      debugPrint(token);
+      if (!catchException) {
+        throw ("(AuthFCM) -> " + e.toString());
+      } else {
+        token = "Failed to get token: " + e.toString();
+        debugPrint(token);
+      }
     }
   }
 
@@ -423,6 +444,35 @@ class SocketManager {
       }
 
       completer.complete(data["data"]);
+    });
+
+    return completer.future;
+  }
+
+  Future<Chat> fetchChat(String chatGuid, {withParticipants = true}) async {
+    Completer<Chat> completer = new Completer();
+    debugPrint("(Fetch Chat) Fetching full chat metadata from server.");
+
+    Map<String, dynamic> params = Map();
+    params["chatGuid"] = chatGuid;
+    params["withParticipants"] = withParticipants;
+    SocketManager().sendMessage("get-chat", params, (data) async {
+      if (data['status'] != 200) {
+        return completer.completeError(new Exception(data['error']['message']));
+      }
+
+      Map<String, dynamic> chatData = data["data"];
+      if (chatData == null) {
+        debugPrint("(Fetch Chat) Server returned no metadata for chat.");
+        return completer.complete(null);
+      }
+
+      debugPrint("(Fetch Chat) Got updated chat metadata from server. Saving.");
+      Chat newChat = Chat.fromMap(chatData);
+
+      // Resave the chat after we've got the participants
+      await newChat.save();
+      completer.complete(newChat);
     });
 
     return completer.future;

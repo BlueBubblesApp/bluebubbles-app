@@ -26,7 +26,7 @@ import static com.bluebubbles.messaging.MainActivity.engine;
 
 public class ReplyReceiver extends BroadcastReceiver {
 
-    @RequiresApi(api = Build.VERSION_CODES.O)
+    @RequiresApi(api = Build.VERSION_CODES.P)
     @Override
     public void onReceive(Context context, Intent intent) {
         if (intent == null) return;
@@ -67,6 +67,15 @@ public class ReplyReceiver extends BroadcastReceiver {
             } else {
                 NotificationWorker.createWorker(context.getApplicationContext(), "markAsRead", params);
 
+            }
+        } else if(intent.getType().equals("alarm")) {
+
+            Map<String, Object> params = new HashMap<>();
+            params.put("id", intent.getExtras().getInt("id"));
+            if (engine != null) {
+                new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod("alarm-wake", params);
+            } else {
+                NotificationWorker.createWorker(context.getApplicationContext(), "alarm-wake", params);
             }
         }
     }

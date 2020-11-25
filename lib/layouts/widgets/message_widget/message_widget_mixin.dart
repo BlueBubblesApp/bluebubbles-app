@@ -2,7 +2,6 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/repository/models/message.dart';
-import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
@@ -10,7 +9,7 @@ import 'package:flutter/material.dart';
 abstract class MessageWidgetMixin {
   String contactTitle = "";
   bool hasHyperlinks = false;
-  static const double maxSize = 3 / 5;
+  static const double MAX_SIZE = 3 / 5;
 
   Future<void> initMessageState(Message message, bool showHandle) async {
     this.hasHyperlinks = parseLinks(message.text).isNotEmpty;
@@ -79,15 +78,20 @@ abstract class MessageWidgetMixin {
       });
 
       if (!isNullOrEmpty(message.subject)) {
-        textSpans.add(TextSpan(
-          text: "${message.subject}\n",
-          style: message.isFromMe
-              ? Theme.of(context)
-                  .textTheme
-                  .bodyText1
-                  .apply(color: Colors.white, fontWeightDelta: 2)
-              : Theme.of(context).textTheme.bodyText1.apply(fontWeightDelta: 2),
-        ));
+        textSpans.add(
+          TextSpan(
+            text: "${message.subject}\n",
+            style: message.isFromMe
+                ? Theme.of(context)
+                    .textTheme
+                    .bodyText1
+                    .apply(color: Colors.white, fontWeightDelta: 2)
+                : Theme.of(context)
+                    .textTheme
+                    .bodyText1
+                    .apply(fontWeightDelta: 2),
+          ),
+        );
       }
 
       if (linkIndexMatches.length > 0) {
@@ -101,7 +105,7 @@ abstract class MessageWidgetMixin {
                         .textTheme
                         .bodyText1
                         .apply(color: Colors.white)
-                    : null,
+                    : Theme.of(context).textTheme.bodyText2,
               ),
             );
           } else if (i == linkIndexMatches.length && i - 1 >= 0) {
@@ -114,7 +118,7 @@ abstract class MessageWidgetMixin {
                         .textTheme
                         .bodyText1
                         .apply(color: Colors.white)
-                    : null,
+                    : Theme.of(context).textTheme.bodyText2,
               ),
             );
           } else if (i - 1 >= 0) {
@@ -136,7 +140,7 @@ abstract class MessageWidgetMixin {
                       MethodChannelInterface()
                           .invokeMethod("open-link", {"link": url});
                     },
-                  style: Theme.of(context).textTheme.bodyText1.apply(
+                  style: Theme.of(context).textTheme.bodyText2.apply(
                         decoration: TextDecoration.underline,
                         color: message.isFromMe ? Colors.white : null,
                       ),
@@ -149,9 +153,9 @@ abstract class MessageWidgetMixin {
                   style: message.isFromMe
                       ? Theme.of(context)
                           .textTheme
-                          .bodyText1
+                          .bodyText2
                           .apply(color: Colors.white)
-                      : null,
+                      : Theme.of(context).textTheme.bodyText2,
                 ),
               );
             }
@@ -166,7 +170,7 @@ abstract class MessageWidgetMixin {
                     .textTheme
                     .bodyText1
                     .apply(color: Colors.white)
-                : null,
+                : Theme.of(context).textTheme.bodyText2,
           ),
         );
       }

@@ -5,14 +5,35 @@ import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
+import 'package:bluebubbles/repository/models/fcm_data.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/material.dart';
 
-class SetupBloc {
-  final _stream = StreamController<double>.broadcast();
+enum SetupOutputType { ERROR, LOG }
 
-  bool _finishedSetup = false;
+class SetupData {
+  double progress;
+  List<SetupOutputData> output = [];
+
+  SetupData(this.progress, this.output);
+}
+
+class SetupOutputData {
+  String text;
+  SetupOutputType type;
+
+  SetupOutputData(this.text, this.type);
+}
+
+class SetupBloc {
+  StreamController<SetupData> _stream = StreamController<SetupData>.broadcast();
+  StreamController<SocketState> _connectionStatusStream =
+      StreamController<SocketState>.broadcast();
+  StreamSubscription connectionSubscription;
+
+  Stream<SocketState> get conenctionStatus => _connectionStatusStream.stream;
+
   double _progress = 0.0;
   int _currentIndex = 0;
   List chats = [];
@@ -21,29 +42,67 @@ class SetupBloc {
   bool downloadAttachments = false;
   bool skipEmptyChats = true;
 
-  Stream<double> get stream => _stream.stream;
+  Stream<SetupData> get stream => _stream.stream;
   double get progress => _progress;
-  bool get finishedSetup => false;
   int processId;
 
-  Function onConnectionError;
+  List<SetupOutputData> output = [];
 
   SetupBloc();
 
-  void handleError({String error = ""}) {
-    closeSync();
+  Future<void> connectToServer(
+      FCMData data, String serverURL, String password) async {
+    Settings settingsCopy = SettingsManager().settings;
+    settingsCopy.serverAddress = serverURL;
+    settingsCopy.guidAuthKey = password;
 
-    if (onConnectionError != null) onConnectionError(error);
+    await SettingsManager().saveSettings(settingsCopy);
+    await SettingsManager().saveFCMData(data);
+    await SocketManager().authFCM(catchException: false, force: true);
+    await SocketManager()
+        .startSocketIO(forceNewConnection: true, catchException: false);
+    connectionSubscription =
+        SocketManager().connectionStateStream.listen((event) {
+      if (_connectionStatusStream.isClosed) return;
+      _connectionStatusStream.sink.add(event);
+      if (isSyncing) {
+        switch (event) {
+          case SocketState.DISCONNECTED:
+            addOutput("Disconnected from socket!", SetupOutputType.ERROR);
+            break;
+          case SocketState.ERROR:
+            addOutput("Socket connection error!", SetupOutputType.ERROR);
+            break;
+          case SocketState.CONNECTING:
+            addOutput("Reconnecting to socket...", SetupOutputType.LOG);
+            break;
+          case SocketState.FAILED:
+            addOutput("Connection failed, cancelling download.",
+                SetupOutputType.ERROR);
+            closeSync();
+            break;
+          default:
+            break;
+        }
+      }
+    });
   }
 
-  void startSync(Settings settings, Function _onConnectionError) {
+  void handleError(String error) {
+    if (!_stream.isClosed) {
+      addOutput(error, SetupOutputType.ERROR);
+      _stream.sink.add(SetupData(-1, output));
+    }
+    closeSync();
+  }
+
+  void startSync(Settings settings) {
     // Make sure we aren't already syncing
     if (isSyncing) return;
 
     // Setup syncing process
     processId =
         SocketManager().addSocketProcess(([bool finishWithError = false]) {});
-    onConnectionError = _onConnectionError;
     isSyncing = true;
 
     // Set the last sync date (for incremental, even though this isn't incremental)
@@ -54,29 +113,49 @@ class SetupBloc {
     SettingsManager().saveSettings(_settingsCopy);
 
     // Get the chats to sync
+    Timer timer = Timer(Duration(seconds: 15), () {
+      if (_progress == 0) {
+        addOutput(
+            "This is taking a while! Please Ensure that System Disk Access is granted on the mac!",
+            SetupOutputType.ERROR);
+      }
+    });
+
+    addOutput("Getting Chats...", SetupOutputType.LOG);
     SocketManager().sendMessage("get-chats", {}, (data) {
       if (data['status'] == 200) {
         receivedChats(data);
+        timer.cancel();
       } else {
-        handleError();
+        handleError(
+            "An error occured while getting the chats, cancelling setup: ${data['error']['message']}");
       }
     });
+  }
+
+  void addOutput(String _output, SetupOutputType type) {
+    output.add(SetupOutputData(_output, type));
+    _stream.sink.add(SetupData(_progress, output));
   }
 
   void receivedChats(data) async {
     debugPrint("(Setup) -> Received initial chat list");
     chats = data["data"];
     if (chats.isEmpty) {
+      addOutput("Received all chats, cleaning up...", SetupOutputType.LOG);
       finishSetup();
     } else {
       getChatMessagesRecursive(chats, 0);
-      _stream.sink.add(_progress);
+      _stream.sink.add(SetupData(_progress, output));
     }
   }
 
   void getChatMessagesRecursive(List chats, int index) async {
     Chat chat = Chat.fromMap(chats[index]);
     await chat.save();
+    addOutput(
+        "Received data for chat ${chat?.guid}, fetching ${numberOfMessagesPerPage.round()} messages...",
+        SetupOutputType.LOG);
 
     Map<String, dynamic> params = Map();
     params["identifier"] = chat.guid;
@@ -88,7 +167,9 @@ class SetupBloc {
 
     SocketManager().sendMessage("get-chat-messages", params, (data) async {
       if (data['status'] != 200) {
-        handleError();
+        addOutput(
+            "An error occured when getting messages for chat ${chat.guid}, skipping: ${data['error']['message']}",
+            SetupOutputType.ERROR);
         return;
       }
 
@@ -106,6 +187,8 @@ class SetupBloc {
   Future<void> receivedMessagesForChat(
       Chat chat, Map<String, dynamic> data) async {
     List messages = data["data"];
+    addOutput(
+        "Received ${messages?.length} messages for chat!", SetupOutputType.LOG);
 
     // Since we got the messages in desc order, we want to reverse it.
     // Reversing it will add older messages before newer one. This should help fix
@@ -122,16 +205,16 @@ class SetupBloc {
     }
 
     _progress = (_currentIndex + 1) / chats.length;
-    _stream.sink.add(_progress);
+    _stream.sink.add(SetupData(_progress, output));
   }
 
   void finishSetup() async {
+    addOutput("Finished Setup! Cleaning up...", SetupOutputType.LOG);
     isSyncing = false;
     if (processId != null) SocketManager().finishSocketProcess(processId);
 
     Settings _settingsCopy = SettingsManager().settings;
     _settingsCopy.finishedSetup = true;
-    _finishedSetup = true;
     ContactManager().contacts = [];
     await ContactManager().getContacts();
     SettingsManager().saveSettings(_settingsCopy);
@@ -153,7 +236,7 @@ class SetupBloc {
     processId =
         SocketManager().addSocketProcess(([bool finishWithError = false]) {});
 
-    if (onConnectionError != null) this.onConnectionError = onConnectionError;
+    // if (onConnectionError != null) this.onConnectionError = onConnectionError;
     isSyncing = true;
 
     // Store the time we started syncing
@@ -184,7 +267,9 @@ class SetupBloc {
 
     SocketManager().sendMessage("get-messages", params, (data) async {
       if (data['status'] != 200) {
-        handleError(error: data['error']['message']);
+        addOutput(
+            "An error occured in incremental sync, cancelling: ${data['error']['message']}",
+            SetupOutputType.ERROR);
         return;
       }
 
@@ -229,6 +314,22 @@ class SetupBloc {
   void closeSync() {
     isSyncing = false;
     if (processId != null) SocketManager().finishSocketProcess(processId);
+    _stream.close();
+    _connectionStatusStream.close();
+    _stream = StreamController<SetupData>.broadcast();
+    _connectionStatusStream = StreamController<SocketState>.broadcast();
+
+    _progress = 0.0;
+    _currentIndex = 0;
+    chats = [];
+    isSyncing = false;
+    numberOfMessagesPerPage = 25;
+    downloadAttachments = false;
+    skipEmptyChats = true;
+    processId = null;
+
+    output = [];
+    connectionSubscription?.cancel();
   }
 
   void dispose() {

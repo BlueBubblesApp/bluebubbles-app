@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
-import 'package:bluebubbles/blocs/setup_bloc.dart';
+import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -40,8 +40,8 @@ class LifeCycleManager {
   opened() {
     // If the app is not alive (was previously closed) and the curent chat is not null (a chat is already open)
     // Then mark the current chat as read.
-    if (!_isAlive && NotificationManager().chat != null) {
-      NotificationManager().switchChat(NotificationManager().chat);
+    if (!_isAlive && CurrentChat.activeChat != null) {
+      NotificationManager().switchChat(CurrentChat.activeChat.chat);
     }
 
     // Set the app as open and start the socket
@@ -49,7 +49,9 @@ class LifeCycleManager {
     SocketManager().startSocketIO();
 
     // Refresh all the chats assuming that the app has already finished setup
-    if (SetupBloc().finishedSetup) ChatBloc().refreshChats();
+    if (SettingsManager().settings.finishedSetup) {
+      ChatBloc().refreshChats();
+    }
   }
 
   /// Public method called from [Home] when the app is closed or paused
@@ -75,5 +77,9 @@ class LifeCycleManager {
       _isAlive = newStatus;
       _stream.sink.add(_isAlive);
     }
+  }
+
+  dipose() {
+    _stream.close();
   }
 }

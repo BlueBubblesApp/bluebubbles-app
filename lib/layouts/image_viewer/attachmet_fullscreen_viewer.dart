@@ -23,16 +23,24 @@ class AttachmentFullscreenViewer extends StatefulWidget {
   final Attachment attachment;
   final bool showInteractions;
 
+  static AttachmentFullscreenViewerState of(BuildContext context) {
+    if (context == null) return null;
+
+    return context.findAncestorStateOfType<AttachmentFullscreenViewerState>() ??
+        null;
+  }
+
   @override
-  _AttachmentFullscreenViewerState createState() =>
-      _AttachmentFullscreenViewerState();
+  AttachmentFullscreenViewerState createState() =>
+      AttachmentFullscreenViewerState();
 }
 
-class _AttachmentFullscreenViewerState
+class AttachmentFullscreenViewerState
     extends State<AttachmentFullscreenViewer> {
   PageController controller;
   int startingIndex;
   Widget placeHolder;
+  ScrollPhysics physics;
 
   @override
   void initState() {
@@ -63,6 +71,15 @@ class _AttachmentFullscreenViewerState
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    physics = AlwaysScrollableScrollPhysics(
+      parent: CustomBouncingScrollPhysics(),
+    );
+    if (this.mounted) setState(() {});
+  }
+
+  @override
   Widget build(BuildContext context) {
     placeHolder = ClipRRect(
       borderRadius: BorderRadius.circular(8.0),
@@ -76,9 +93,7 @@ class _AttachmentFullscreenViewerState
       backgroundColor: Colors.black,
       body: controller != null
           ? PageView.builder(
-              physics: AlwaysScrollableScrollPhysics(
-                parent: CustomBouncingScrollPhysics(),
-              ),
+              physics: physics,
               itemCount: widget.allAttachments.length,
               itemBuilder: (BuildContext context, int index) {
                 Attachment attachment = widget.allAttachments[index];
@@ -204,6 +219,8 @@ class _AttachmentFullscreenViewerState
                     ],
                   );
                 }
+
+                return Container();
               },
               controller: controller,
             )

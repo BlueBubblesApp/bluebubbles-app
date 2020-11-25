@@ -1,4 +1,3 @@
-import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';

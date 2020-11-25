@@ -32,14 +32,23 @@ class MessageAttachment extends StatefulWidget {
 
 class _MessageAttachmentState extends State<MessageAttachment>
     with AutomaticKeepAliveClientMixin {
-  String blurhash;
   Widget attachmentWidget;
   var content;
 
   @override
   void initState() {
     super.initState();
+    updateContent();
+  }
+
+  void updateContent() async {
+    if (content is AttachmentDownloader) return;
+
     content = AttachmentHelper.getContent(widget.attachment);
+    if (content is Attachment && (await AttachmentHelper.canAutoDownload())) {
+      content = new AttachmentDownloader(content);
+    }
+
     if (content is AttachmentDownloader) {
       (content as AttachmentDownloader).stream.listen((event) {
         if (event is File && this.mounted) {
@@ -54,6 +63,7 @@ class _MessageAttachmentState extends State<MessageAttachment>
   @override
   Widget build(BuildContext context) {
     super.build(context);
+    updateContent();
     return ClipRRect(
       borderRadius: BorderRadius.circular(20),
       child: Container(
@@ -92,9 +102,7 @@ class _MessageAttachmentState extends State<MessageAttachment>
           !widget.attachment.mimeType.contains("caf")) {
         return MediaFile(
           attachment: widget.attachment,
-          child: AudioPlayerWiget(
-            file: content,
-          ),
+          child: AudioPlayerWiget(file: content, context: context, width: 250),
         );
       } else if (widget.attachment.mimeType == "text/x-vlocation") {
         return MediaFile(
@@ -129,7 +137,6 @@ class _MessageAttachmentState extends State<MessageAttachment>
       return AttachmentDownloaderWidget(
         onPressed: () {
           content = new AttachmentDownloader(content);
-          // widget.updateAttachment();
           if (this.mounted) setState(() {});
         },
         attachment: content,

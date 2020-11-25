@@ -2,12 +2,10 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
-import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_group_widget.dart';
-import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
-import 'package:bluebubbles/managers/contact_manager.dart';
-import 'package:contacts_service/contacts_service.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -42,55 +40,53 @@ class ConversationTile extends StatefulWidget {
 class _ConversationTileState extends State<ConversationTile>
     with AutomaticKeepAliveClientMixin {
   bool isPressed = false;
+  bool hideDividers = false;
+  bool isFetching = false;
 
   @override
   void initState() {
     super.initState();
-
     fetchParticipants();
-    // ContactManager().stream.listen((List<String> addresses) {
-    //   fetchParticipants();
-    // });
+
+    hideDividers = SettingsManager().settings.hideDividers;
+    SettingsManager().stream.listen((Settings newSettings) {
+      if (newSettings.hideDividers != hideDividers && this.mounted) {
+        setState(() {
+          hideDividers = newSettings.hideDividers;
+        });
+      }
+    });
   }
 
   void setNewChatTitle() async {
     String tmpTitle = await getFullChatTitle(widget.chat);
     if (tmpTitle != widget.chat.title) {
-      if (this.mounted) setState(() {});
+      if (this.mounted) {
+        setState(() {
+          widget.chat.title = tmpTitle;
+        });
+      }
     }
-    widget.chat.title = tmpTitle;
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    fetchParticipants();
   }
 
   Future<void> fetchParticipants() async {
+    if (isFetching) return;
+    isFetching = true;
+
     // If our chat does not have any participants, get them
-    if (widget.chat.participants == null || widget.chat.participants.isEmpty) {
+    if (isNullOrEmpty(widget.chat.participants)) {
       await widget.chat.getParticipants();
-      if (this.mounted) setState(() {});
+      if (!isNullOrEmpty(widget.chat.participants) && this.mounted) {
+        setState(() {});
+      }
     }
+
+    isFetching = false;
   }
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
-
-    Color color1, color2;
-    if (shouldBeRainbow(widget.chat)) {
-      List<Color> colors = [];
-      if (!widget.chat.isGroup() && widget.chat.participants.length > 0) {
-        colors.addAll(toColorGradient(widget.chat.participants[0].address));
-      }
-
-      if (colors.isNotEmpty) {
-        color1 = colors[0];
-        color2 = colors[1];
-      }
-    }
 
     return Slidable(
       actionPane: SlidableStrechActionPane(),
@@ -154,15 +150,12 @@ class _ConversationTileState extends State<ConversationTile>
             });
           },
           onTapUp: (details) {
-            MessageBloc messageBloc = new MessageBloc(widget.chat);
             if (widget.onTapGoToChat != null && widget.onTapGoToChat) {
               Navigator.of(context).pushAndRemoveUntil(
                 CupertinoPageRoute(
                   builder: (BuildContext context) {
                     return ConversationView(
                       chat: widget.chat,
-                      title: widget.chat.title,
-                      messageBloc: messageBloc,
                       existingAttachments: widget.existingAttachments,
                       existingText: widget.existingText,
                     );
@@ -178,8 +171,6 @@ class _ConversationTileState extends State<ConversationTile>
                   builder: (BuildContext context) {
                     return ConversationView(
                       chat: widget.chat,
-                      title: widget.chat.title,
-                      messageBloc: messageBloc,
                       existingAttachments: widget.existingAttachments,
                       existingText: widget.existingText,
                     );
@@ -208,17 +199,21 @@ class _ConversationTileState extends State<ConversationTile>
                 padding: const EdgeInsets.only(left: 30.0),
                 child: Container(
                   decoration: BoxDecoration(
-                      border: Border(
-                          top: BorderSide(
+                    border: (!hideDividers)
+                        ? Border(
+                            top: BorderSide(
                               color: Theme.of(context).dividerColor,
-                              width: 0.5))),
+                              width: 0.5,
+                            ),
+                          )
+                        : null,
+                  ),
                   child: ListTile(
                     contentPadding: EdgeInsets.only(left: 0),
                     title: Text(
                       widget.chat.title != null ? widget.chat.title : "",
                       style: Theme.of(context).textTheme.bodyText1,
                       maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
                     subtitle: widget.chat.latestMessageText != null &&
                             !(widget.chat.latestMessageText is String)
@@ -228,13 +223,15 @@ class _ConversationTileState extends State<ConversationTile>
                                 ? widget.chat.latestMessageText
                                 : "",
                             style: Theme.of(context).textTheme.subtitle1.apply(
-                                color: Theme.of(context)
-                                    .textTheme
-                                    .subtitle1
-                                    .color
-                                    .withOpacity(0.85)),
+                                  color: Theme.of(context)
+                                      .textTheme
+                                      .subtitle1
+                                      .color
+                                      .withOpacity(
+                                        0.85,
+                                      ),
+                                ),
                             maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                           ),
                     leading: ContactAvatarGroupWidget(
                       participants: widget.chat.participants,

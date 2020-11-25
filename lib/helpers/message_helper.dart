@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
+import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
@@ -29,8 +30,11 @@ class MessageHelper {
       Chat chat, List<dynamic> messages,
       {bool notifyForNewMessage = false,
       bool notifyMessageManager = true}) async {
+    bool limit = messages.length > 20;
+
     // Create master list for all the messages and a chat cache
     List<Message> _messages = <Message>[];
+    Map<Message, String> notificationMessages = <Message, String>{};
     Map<String, Chat> chats = <String, Chat>{};
 
     // Add the chat in the cache and save it if it hasn't been saved yet
@@ -62,16 +66,18 @@ class MessageHelper {
       if (msgChat == null) continue;
 
       Message message = Message.fromMap(item);
-      if (notifyForNewMessage) {
-        await MessageHelper.handleNotification(message, msgChat);
-      }
-
-      // Tell all listeners that we have a new message, and save the message
-      if (notifyMessageManager) {
-        NewMessageManager().addMessage(msgChat, message);
-      }
+      Message existing = await Message.findOne({"guid": message.guid});
       await msgChat.addMessage(message,
           changeUnreadStatus: notifyForNewMessage);
+      if (existing == null) {
+        if (limit) {
+          if (!notificationMessages.containsValue(msgChat.guid)) {
+            notificationMessages[message] = msgChat.guid;
+          }
+        } else {
+          notificationMessages[message] = msgChat.guid;
+        }
+      }
 
       // Create the attachments
       List<dynamic> attachments = item['attachments'];
@@ -83,6 +89,18 @@ class MessageHelper {
       // Add message to the "master list"
       _messages.add(message);
     }
+    notificationMessages.forEach((message, value) async {
+      Chat msgChat = chats[value];
+
+      if (notifyForNewMessage) {
+        await MessageHelper.handleNotification(message, msgChat, force: true);
+      }
+
+      // Tell all listeners that we have a new message, and save the message
+      if (notifyMessageManager) {
+        NewMessageManager().addMessage(msgChat, message);
+      }
+    });
 
     // Return all the synced messages
     return _messages;
@@ -155,9 +173,11 @@ class MessageHelper {
     return chats;
   }
 
-  static Future<void> handleNotification(Message message, Chat chat) async {
+  static Future<void> handleNotification(Message message, Chat chat,
+      {bool force = false}) async {
     // See if there is an existing message for the given GUID
-    Message existingMessage = await Message.findOne({"guid": message.guid});
+    Message existingMessage;
+    if (!force) existingMessage = await Message.findOne({"guid": message.guid});
 
     // If we've already processed the GUID, skip it
     if (NotificationManager().hasProcessed(message.guid)) return;
@@ -166,10 +186,16 @@ class MessageHelper {
     NotificationManager().addProcessed(message.guid);
 
     // Handle all the cases that would mean we don't show the notification
-    if (existingMessage != null || chat.isMuted) return;
-    if (message.isFromMe || message.handle == null) return;
-    if (LifeCycleManager().isAlive &&
-        NotificationManager().chatGuid == chat.guid) return;
+    if (!SettingsManager().settings.finishedSetup)
+      return; // Don't notify if not fully setup
+    if (existingMessage != null || chat.isMuted)
+      return; // Don''t notify if the chat is muted
+    if (message.isFromMe || message.handle == null)
+      return; // Don't notify if the text is from me
+    if (LifeCycleManager().isAlive && CurrentChat.isActive(chat.guid)) {
+      // Don't notify if the the chat is the active chat
+      return;
+    }
 
     String handleAddress;
     if (message.handle != null) {
@@ -182,7 +208,7 @@ class MessageHelper {
     String title = await getFullChatTitle(chat);
     String notification = await MessageHelper.getNotificationText(message);
     if (SettingsManager().settings.hideTextPreviews) {
-      notification = "New Message (unlock to view)";
+      notification = "iMessage";
     }
     NotificationManager().createNewNotification(
       title,
@@ -336,4 +362,28 @@ class MessageHelper {
     List<String> items = val.split(":").reversed.toList();
     return (items.length > 0) ? items[0] : val;
   }
+
+  // static List<TextSpan> buildEmojiText(String text, TextStyle style) {
+  //   final children = <TextSpan>[];
+  //   final runes = text.runes;
+
+  //   for (int i = 0; i < runes.length; /* empty */) {
+  //     int current = runes.elementAt(i);
+  //     final isEmoji = current > 255;
+  //     final shouldBreak = isEmoji ? (x) => x <= 255 : (x) => x > 255;
+
+  //     final chunk = <int>[];
+  //     while (!shouldBreak(current)) {
+  //       chunk.add(current);
+  //       if (++i >= runes.length) break;
+  //       current = runes.elementAt(i);
+  //     }
+
+  //     children.add(
+  //       TextSpan(text: String.fromCharCodes(chunk), style: style),
+  //     );
+  //   }
+
+  //   return children;
+  // }
 }

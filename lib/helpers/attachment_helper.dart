@@ -141,13 +141,6 @@ class AttachmentHelper {
     String pathName = path ??
         "$appDocPath/attachments/${attachment.guid}/${attachment.transferName}";
 
-    /**
-           * Case 1: If the file exists (we can get the type), add the file to the chat's attachments
-           * Case 2: If the attachment is currently being downloaded, get the AttachmentDownloader object and add it to the chat's attachments
-           * Case 3: If the attachment is a text-based one, automatically auto-download
-           * Case 4: Otherwise, add the attachment, as is, meaning it needs to be downloaded
-           */
-
     if (FileSystemEntity.typeSync(pathName) != FileSystemEntityType.notFound) {
       return File(pathName);
     } else if (SocketManager()

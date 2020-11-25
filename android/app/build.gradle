@@ -35,7 +35,7 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
-    compileSdkVersion 28
+    compileSdkVersion 30
 
     lintOptions {
         disable 'InvalidPackage'
@@ -44,8 +44,12 @@ android {
     defaultConfig {
         applicationId "com.bluebubbles.messaging"
         minSdkVersion 21
-        targetSdkVersion 28
-        versionCode flutterVersionCode.toInteger()
+        targetSdkVersion 30
+        //                 v0.1.8 armv7 OR arm64
+        // version code: 1  018     070      064
+
+        //noinspection AccidentalOctal
+        versionCode 1018070
         versionName flutterVersionName
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 

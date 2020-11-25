@@ -2,24 +2,24 @@ import 'dart:async';
 import 'dart:ui';
 
 import 'package:bluebubbles/blocs/message_bloc.dart';
-import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_attachments.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/new_message_loader.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
-import 'package:bluebubbles/repository/models/attachment.dart';
+import 'package:bluebubbles/managers/life_cycle_manager.dart';
+import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:bluebubbles/layouts/widgets/send_widget.dart';
 
-class MessageView extends StatefulWidget {
+class MessagesView extends StatefulWidget {
   final MessageBloc messageBloc;
   final bool showHandle;
   final Chat chat;
 
-  MessageView({
+  MessagesView({
     Key key,
     this.messageBloc,
     this.showHandle,
@@ -27,10 +27,10 @@ class MessageView extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  MessageViewState createState() => MessageViewState();
+  MessagesViewState createState() => MessagesViewState();
 }
 
-class MessageViewState extends State<MessageView>
+class MessagesViewState extends State<MessagesView>
     with TickerProviderStateMixin {
   Completer<LoadMessageResult> loader;
   bool noMoreMessages = false;
@@ -45,23 +45,12 @@ class MessageViewState extends State<MessageView>
   bool showScrollDown = false;
   int scrollState = -1; // -1: stopped, 0: start, 1: update
   List<int> loadedPages = [];
-
-  /// [CurrentChat] holds all info about the conversation that widgets commonly access
   CurrentChat currentChat;
 
   @override
   void initState() {
     super.initState();
     widget.messageBloc.stream.listen(handleNewMessage);
-    currentChat = CurrentChat.getCurrentChat(widget.messageBloc.currentChat);
-
-    currentChat.init();
-    currentChat.updateChatAttachments().then((value) {
-      if (this.mounted) setState(() {});
-    });
-    currentChat.stream.listen((event) {
-      if (this.mounted) setState(() {});
-    });
 
     scrollController.addListener(() {
       if (scrollController.hasClients &&
@@ -85,16 +74,15 @@ class MessageViewState extends State<MessageView>
   @override
   void didChangeDependencies() async {
     super.didChangeDependencies();
+    currentChat = CurrentChat.of(context);
+    // currentChat.stream.listen((event) {
+    //   if (this.mounted) setState(() {});
+    // });
+
     if (_messages.isEmpty) {
       widget.messageBloc.getMessages();
       if (this.mounted) setState(() {});
     }
-  }
-
-  @override
-  void dispose() {
-    currentChat.dispose();
-    super.dispose();
   }
 
   Future<void> loadNextChunk() {
@@ -141,25 +129,33 @@ class MessageViewState extends State<MessageView>
 
   void handleNewMessage(MessageBlocEvent event) async {
     if (event.type == MessageBlocEventType.insert) {
+      if (this.mounted && LifeCycleManager().isAlive) {
+        NotificationManager().switchChat(CurrentChat.of(context).chat);
+      }
       currentChat.getAttachmentsForMessage(event.message);
       if (event.outGoing) {
         currentChat.sentMessages.add(event.message);
-        Future.delayed(Duration(milliseconds: 500), () {
+        Future.delayed(SendWidget.SEND_DURATION * 2, () {
           currentChat.sentMessages
               .removeWhere((element) => element.guid == event.message.guid);
-          _listKey.currentState.setState(() {});
+
+          if (_listKey?.currentState != null && _listKey.currentState.mounted) {
+            _listKey.currentState.setState(() {});
+          }
         });
-        Navigator.of(context).push(
-          SendPageBuilder(
-            builder: (context) {
-              return SendWidget(
-                text: event.message.text,
-                tag: "first",
-                currentChat: currentChat,
-              );
-            },
-          ),
-        );
+
+        if (context != null)
+          Navigator.of(context).push(
+            SendPageBuilder(
+              builder: (context) {
+                return SendWidget(
+                  text: event.message.text,
+                  tag: "first",
+                  currentChat: currentChat,
+                );
+              },
+            ),
+          );
       }
 
       bool isNewMessage = true;
@@ -242,7 +238,9 @@ class MessageViewState extends State<MessageView>
 
   @override
   Widget build(BuildContext context) {
-    currentChat.disposeControllers();
+    if (CurrentChat.of(context) != null) {
+      CurrentChat.of(context).disposeControllers();
+    }
 
     return GestureDetector(
       behavior: HitTestBehavior.deferToChild,
@@ -291,6 +289,11 @@ class MessageViewState extends State<MessageView>
             physics: AlwaysScrollableScrollPhysics(
                 parent: CustomBouncingScrollPhysics()),
             slivers: <Widget>[
+              // SliverToBoxAdapter(
+              //   child: TypingIndicator(
+              //     visible: currentChat.showTypingIndicator,
+              //   ),
+              // ),
               _listKey != null
                   ? SliverAnimatedList(
                       initialItemCount: _messages.length + 1,
@@ -299,12 +302,15 @@ class MessageViewState extends State<MessageView>
                           Animation<double> animation) {
                         // Load more messages if we are at the top and we aren't alrady loading
                         // and we have more messages to load
-                        if (index >= _messages.length && !noMoreMessages) {
-                          loadNextChunk();
-                          return NewMessageLoader();
-                        }
-
                         if (index >= _messages.length) {
+                          if (!noMoreMessages &&
+                              (loader == null ||
+                                  !loader.isCompleted ||
+                                  !loadedPages.contains(_messages.length))) {
+                            loadNextChunk();
+                            return NewMessageLoader();
+                          }
+
                           return Container();
                         }
 
@@ -341,7 +347,6 @@ class MessageViewState extends State<MessageView>
                                   key: Key(_messages[index].guid),
                                   offset: timeStampOffset,
                                   message: _messages[index],
-                                  chat: widget.messageBloc.currentChat,
                                   olderMessage: olderMessage,
                                   newerMessage: newerMessage,
                                   showHandle: widget.showHandle,
