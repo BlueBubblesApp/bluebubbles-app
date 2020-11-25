@@ -79,7 +79,7 @@ class _ReceivedMessageState extends State<ReceivedMessage>
         ),
         child: Text(
           message.text,
-          style: Theme.of(context).textTheme.bodyText1.apply(fontSizeFactor: 4),
+          style: Theme.of(context).textTheme.bodyText2.apply(fontSizeFactor: 4),
         ),
       );
     }
@@ -113,7 +113,7 @@ class _ReceivedMessageState extends State<ReceivedMessage>
             text: TextSpan(
               children:
                   MessageWidgetMixin.buildMessageSpans(context, widget.message),
-              style: Theme.of(context).textTheme.bodyText1,
+              style: Theme.of(context).textTheme.bodyText2,
             ),
           ),
         ),

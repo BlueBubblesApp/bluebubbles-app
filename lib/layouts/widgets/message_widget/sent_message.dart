@@ -42,7 +42,7 @@ class SentMessageHelper {
         ),
         child: Text(
           message.text,
-          style: Theme.of(context).textTheme.bodyText1.apply(fontSizeFactor: 4),
+          style: Theme.of(context).textTheme.bodyText2.apply(fontSizeFactor: 4),
         ),
       );
     } else {
