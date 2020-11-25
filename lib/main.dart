@@ -238,10 +238,8 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     // Call the [LifeCycleManager] events based on the [state]
     if (state == AppLifecycleState.paused) {
-      debugPrint("Paused");
       LifeCycleManager().close();
     } else if (state == AppLifecycleState.resumed) {
-      debugPrint("Resumed");
       LifeCycleManager().opened();
     }
   }
