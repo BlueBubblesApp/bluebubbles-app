@@ -32,7 +32,6 @@ class MessageAttachment extends StatefulWidget {
 
 class _MessageAttachmentState extends State<MessageAttachment>
     with AutomaticKeepAliveClientMixin {
-  String blurhash;
   Widget attachmentWidget;
   var content;
 

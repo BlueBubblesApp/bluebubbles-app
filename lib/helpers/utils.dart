@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:math';
 import 'dart:typed_data';
 import 'package:adaptive_theme/adaptive_theme.dart';
@@ -6,7 +5,6 @@ import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
-import 'package:blurhash_flutter/blurhash.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:html/parser.dart';
@@ -74,20 +72,20 @@ bool sameAddress(String address1, String address2) {
       "+" + formattedNumber2 == formattedNumber1;
 }
 
-Future<Uint8List> blurHashDecode(String blurhash, int width, int height) async {
-  List<int> result = await compute(blurHashDecodeCompute,
-      jsonEncode({"hash": blurhash, "width": width, "height": height}));
-  return Uint8List.fromList(result);
-}
+// Future<Uint8List> blurHashDecode(String blurhash, int width, int height) async {
+//   List<int> result = await compute(blurHashDecodeCompute,
+//       jsonEncode({"hash": blurhash, "width": width, "height": height}));
+//   return Uint8List.fromList(result);
+// }
 
-List<int> blurHashDecodeCompute(String data) {
-  Map<String, dynamic> map = jsonDecode(data);
-  Uint8List imageDataBytes = Decoder.decode(
-      map["hash"],
-      ((map["width"] / 200) as double).toInt(),
-      ((map["height"] / 200) as double).toInt());
-  return imageDataBytes.toList();
-}
+// List<int> blurHashDecodeCompute(String data) {
+//   Map<String, dynamic> map = jsonDecode(data);
+//   Uint8List imageDataBytes = Decoder.decode(
+//       map["hash"],
+//       ((map["width"] / 200) as double).toInt(),
+//       ((map["height"] / 200) as double).toInt());
+//   return imageDataBytes.toList();
+// }
 
 String randomString(int length) {
   var rand = new Random();
