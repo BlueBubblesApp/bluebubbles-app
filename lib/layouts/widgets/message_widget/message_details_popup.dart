@@ -53,11 +53,6 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
   void initState() {
     super.initState();
     currentChat = widget.currentChat;
-    KeyboardVisibility.onChange.listen(
-      (bool visible) {
-        if (!visible && context != null) Navigator.of(context)?.pop();
-      },
-    );
 
     messageTopOffset = widget.childOffset.dy;
     topMinimum = CupertinoNavigationBar().preferredSize.height +
@@ -149,17 +144,6 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
         child: Stack(
           fit: StackFit.expand,
           children: <Widget>[
-            Material(
-              color: Colors.transparent,
-              child: TextField(
-                cursorColor: Colors.transparent,
-                decoration: InputDecoration(
-                  fillColor: Colors.transparent,
-                  border: InputBorder.none,
-                ),
-                autofocus: MediaQuery.of(context).viewInsets.bottom > 0,
-              ),
-            ),
             GestureDetector(
               onTap: () {
                 Navigator.of(context).pop();
