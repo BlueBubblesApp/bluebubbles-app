@@ -478,6 +478,49 @@ class SocketManager {
     return completer.future;
   }
 
+  Future<List<dynamic>> fetchMessages(Chat chat,
+      {int offset: 0,
+      int limit: 100,
+      bool onlyAttachments: false}) async {
+    Completer<List<dynamic>> completer = new Completer();
+    debugPrint("(Fetch Messages) Fetching data.");
+
+    Map<String, dynamic> params = Map();
+    params["chatGuid"] = chat.guid;
+    params["offset"] = offset;
+    params["limit"] = limit;
+    params["withAttachments"] = true;
+    params["withHandle"] = true;
+    params["sort"] = "DESC";
+    params["where"] = [];
+
+    if (onlyAttachments) {
+      params["where"] = [
+        {
+          "statement": "message.cache_has_attachments = :flag",
+          "args": {"flag": 1}
+        }
+      ];
+    }
+
+    SocketManager().sendMessage("get-messages", params, (data) async {
+      if (data['status'] != 200) {
+        return completer.completeError(new Exception(data['error']['message']));
+      }
+
+      List<dynamic> messageData = data["data"];
+      if (messageData == null) {
+        debugPrint("(Fetch Messages) Server returned no messages.");
+        return completer.complete(null);
+      }
+
+      debugPrint("(Fetch Messages) Got ${messageData.length} messages");
+      completer.complete(messageData);
+    });
+
+    return completer.future;
+  }
+
   Future<Map<String, dynamic>> sendMessage(String event,
       Map<String, dynamic> message, Function(Map<String, dynamic>) cb,
       {String reason, bool awaitResponse = true}) {
