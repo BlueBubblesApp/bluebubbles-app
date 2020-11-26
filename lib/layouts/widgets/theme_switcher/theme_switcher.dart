@@ -1,5 +1,7 @@
 import 'package:bluebubbles/helpers/contstants.dart';
+import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class ThemeSwitcher extends StatefulWidget {
@@ -7,6 +9,33 @@ class ThemeSwitcher extends StatefulWidget {
       : super(key: key);
   final Widget iOSSkin;
   final Widget materialSkin;
+
+  static PageRoute buildPageRoute(
+      {@required Function(BuildContext context) builder}) {
+    switch (SettingsManager().settings.skin) {
+      case Skins.IOS:
+        return CupertinoPageRoute(builder: builder);
+        break;
+      case Skins.Material:
+        return MaterialPageRoute(builder: builder);
+        break;
+    }
+  }
+
+  static ScrollPhysics getScrollPhysics() {
+    switch (SettingsManager().settings.skin) {
+      case Skins.IOS:
+        return AlwaysScrollableScrollPhysics(
+          parent: CustomBouncingScrollPhysics(),
+        );
+        break;
+      case Skins.Material:
+        return AlwaysScrollableScrollPhysics(
+          parent: ClampingScrollPhysics(),
+        );
+        break;
+    }
+  }
 
   @override
   _ThemeSwitcherState createState() => _ThemeSwitcherState();

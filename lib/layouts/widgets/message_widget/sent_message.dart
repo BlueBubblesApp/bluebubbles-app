@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
+import 'package:bluebubbles/helpers/contstants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -13,6 +14,7 @@ import 'package:bluebubbles/layouts/widgets/message_widget/message_popup_holder.
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/cupertino.dart';
@@ -22,6 +24,7 @@ class SentMessageHelper {
   static Widget buildMessageWithTail(BuildContext context, Message message,
       bool showTail, bool hasReactions, bool bigEmoji,
       {Widget customContent,
+      Message olderMessage,
       CurrentChat currentChat,
       Color customColor,
       bool padding = true,
@@ -49,7 +52,7 @@ class SentMessageHelper {
       msg = Stack(
         alignment: AlignmentDirectional.bottomEnd,
         children: [
-          if (showTail)
+          if (showTail && SettingsManager().settings.skin == Skins.IOS)
             MessageTail(
               message: message,
               color: customColor ?? bubbleColor,
@@ -70,7 +73,17 @@ class SentMessageHelper {
               horizontal: padding ? 14 : 0,
             ),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: SettingsManager().settings.skin == Skins.IOS
+                  ? BorderRadius.circular(20)
+                  : BorderRadius.only(
+                      topLeft: Radius.circular(20),
+                      topRight: olderMessage == null ||
+                              MessageHelper.getShowTail(olderMessage, message)
+                          ? Radius.circular(20)
+                          : Radius.circular(5),
+                      bottomLeft: Radius.circular(20),
+                      bottomRight: Radius.circular(showTail ? 20 : 5),
+                    ),
               color: customColor ?? bubbleColor,
             ),
             child: customContent == null
@@ -256,12 +269,9 @@ class _SentMessageState extends State<SentMessage>
             'com.apple.messages.URLBalloonProvider') {
       message = BalloonBundleWidget(message: widget.message);
     } else if (!isEmptyString(widget.message.text)) {
-      message = SentMessageHelper.buildMessageWithTail(
-          context,
-          widget.message,
-          widget.showTail,
-          widget.message.hasReactions,
-          widget.message.bigEmoji);
+      message = SentMessageHelper.buildMessageWithTail(context, widget.message,
+          widget.showTail, widget.message.hasReactions, widget.message.bigEmoji,
+          olderMessage: widget.olderMessage);
       if (widget.showHero) {
         message = Hero(
           tag: "first",

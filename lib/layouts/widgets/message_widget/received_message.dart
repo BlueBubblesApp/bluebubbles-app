@@ -1,3 +1,5 @@
+import 'package:bluebubbles/helpers/contstants.dart';
+import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/ballon_bundle_widget.dart';
@@ -6,6 +8,7 @@ import 'package:bluebubbles/layouts/widgets/message_widget/message_content/messa
 import 'package:bluebubbles/layouts/widgets/message_widget/message_popup_holder.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/material.dart';
 
@@ -87,7 +90,8 @@ class _ReceivedMessageState extends State<ReceivedMessage>
     return Stack(
       alignment: AlignmentDirectional.bottomStart,
       children: [
-        if (widget.showTail) MessageTail(message: message),
+        if (widget.showTail && SettingsManager().settings.skin == Skins.IOS)
+          MessageTail(message: message),
         Container(
           margin: EdgeInsets.only(
             top: widget.message.getReactions().length > 0 &&
@@ -106,7 +110,18 @@ class _ReceivedMessageState extends State<ReceivedMessage>
             horizontal: 14,
           ),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: SettingsManager().settings.skin == Skins.IOS
+                ? BorderRadius.circular(20)
+                : BorderRadius.only(
+                    topLeft: widget.olderMessage == null ||
+                            MessageHelper.getShowTail(
+                                widget.olderMessage, widget.message)
+                        ? Radius.circular(20)
+                        : Radius.circular(5),
+                    topRight: Radius.circular(20),
+                    bottomRight: Radius.circular(20),
+                    bottomLeft: Radius.circular(widget.showTail ? 20 : 5),
+                  ),
             color: Theme.of(context).accentColor,
           ),
           child: RichText(

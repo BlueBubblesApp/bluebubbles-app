@@ -2,12 +2,15 @@ import 'dart:async';
 import 'dart:ui';
 
 import 'package:bluebubbles/blocs/message_bloc.dart';
+import 'package:bluebubbles/helpers/contstants.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/new_message_loader.dart';
+import 'package:bluebubbles/layouts/widgets/message_widget/typing_indicator.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/cupertino.dart';
@@ -75,9 +78,6 @@ class MessagesViewState extends State<MessagesView>
   void didChangeDependencies() async {
     super.didChangeDependencies();
     currentChat = CurrentChat.of(context);
-    // currentChat.stream.listen((event) {
-    //   if (this.mounted) setState(() {});
-    // });
 
     if (_messages.isEmpty) {
       widget.messageBloc.getMessages();
@@ -266,140 +266,147 @@ class MessagesViewState extends State<MessagesView>
           timeStampOffset = 0;
         });
       },
-      child: Stack(alignment: AlignmentDirectional.bottomCenter, children: [
-        NotificationListener(
-          onNotification: (scrollNotification) {
-            if (scrollNotification is ScrollStartNotification &&
-                scrollState != 0) {
-              scrollState = 0;
-            } else if (scrollNotification is ScrollUpdateNotification &&
-                scrollState != 1) {
-              scrollState = 1;
-            } else if (scrollNotification is ScrollEndNotification &&
-                scrollState != -1) {
-              scrollState = -1;
-              setState(() {});
-            }
+      child: Stack(
+        alignment: AlignmentDirectional.bottomCenter,
+        children: [
+          NotificationListener(
+            onNotification: (scrollNotification) {
+              if (scrollNotification is ScrollStartNotification &&
+                  scrollState != 0) {
+                scrollState = 0;
+              } else if (scrollNotification is ScrollUpdateNotification &&
+                  scrollState != 1) {
+                scrollState = 1;
+              } else if (scrollNotification is ScrollEndNotification &&
+                  scrollState != -1) {
+                scrollState = -1;
+                setState(() {});
+              }
 
-            return true;
-          },
-          child: CustomScrollView(
-            controller: scrollController,
-            reverse: true,
-            physics: AlwaysScrollableScrollPhysics(
-                parent: CustomBouncingScrollPhysics()),
-            slivers: <Widget>[
-              // SliverToBoxAdapter(
-              //   child: TypingIndicator(
-              //     visible: currentChat.showTypingIndicator,
-              //   ),
-              // ),
-              _listKey != null
-                  ? SliverAnimatedList(
-                      initialItemCount: _messages.length + 1,
-                      key: _listKey,
-                      itemBuilder: (BuildContext context, int index,
-                          Animation<double> animation) {
-                        // Load more messages if we are at the top and we aren't alrady loading
-                        // and we have more messages to load
-                        if (index >= _messages.length) {
-                          if (!noMoreMessages &&
-                              (loader == null ||
-                                  !loader.isCompleted ||
-                                  !loadedPages.contains(_messages.length))) {
-                            loadNextChunk();
-                            return NewMessageLoader();
+              return true;
+            },
+            child: CustomScrollView(
+              controller: scrollController,
+              reverse: true,
+              physics: SettingsManager().settings.skin == Skins.IOS
+                  ? AlwaysScrollableScrollPhysics(
+                      parent: CustomBouncingScrollPhysics(),
+                    )
+                  : ClampingScrollPhysics(),
+              slivers: <Widget>[
+                SliverToBoxAdapter(
+                  child: TypingIndicator(
+                    visible: currentChat.showTypingIndicator,
+                  ),
+                ),
+                _listKey != null
+                    ? SliverAnimatedList(
+                        initialItemCount: _messages.length + 1,
+                        key: _listKey,
+                        itemBuilder: (BuildContext context, int index,
+                            Animation<double> animation) {
+                          // Load more messages if we are at the top and we aren't alrady loading
+                          // and we have more messages to load
+                          if (index >= _messages.length) {
+                            if (!noMoreMessages &&
+                                (loader == null ||
+                                    !loader.isCompleted ||
+                                    !loadedPages.contains(_messages.length))) {
+                              loadNextChunk();
+                              return NewMessageLoader();
+                            }
+
+                            return Container();
                           }
 
-                          return Container();
-                        }
+                          Message olderMessage;
+                          Message newerMessage;
+                          if (index + 1 >= 0 && index + 1 < _messages.length) {
+                            olderMessage = _messages[index + 1];
+                          }
+                          if (index - 1 >= 0 && index - 1 < _messages.length) {
+                            newerMessage = _messages[index - 1];
+                          }
 
-                        Message olderMessage;
-                        Message newerMessage;
-                        if (index + 1 >= 0 && index + 1 < _messages.length) {
-                          olderMessage = _messages[index + 1];
-                        }
-                        if (index - 1 >= 0 && index - 1 < _messages.length) {
-                          newerMessage = _messages[index - 1];
-                        }
-
-                        return SizeTransition(
-                          axis: Axis.vertical,
-                          sizeFactor: animation.drive(
-                              Tween(begin: 0.0, end: 1.0)
-                                  .chain(CurveTween(curve: Curves.easeInOut))),
-                          child: SlideTransition(
-                            position: animation.drive(
-                              Tween(
-                                begin: Offset(0.0, 1),
-                                end: Offset(0.0, 0.0),
-                              ).chain(
-                                CurveTween(
-                                  curve: Curves.easeInOut,
+                          return SizeTransition(
+                            axis: Axis.vertical,
+                            sizeFactor: animation.drive(Tween(
+                                    begin: 0.0, end: 1.0)
+                                .chain(CurveTween(curve: Curves.easeInOut))),
+                            child: SlideTransition(
+                              position: animation.drive(
+                                Tween(
+                                  begin: Offset(0.0, 1),
+                                  end: Offset(0.0, 0.0),
+                                ).chain(
+                                  CurveTween(
+                                    curve: Curves.easeInOut,
+                                  ),
+                                ),
+                              ),
+                              child: FadeTransition(
+                                opacity: animation,
+                                child: Padding(
+                                  padding:
+                                      EdgeInsets.only(left: 5.0, right: 5.0),
+                                  child: MessageWidget(
+                                    key: Key(_messages[index].guid),
+                                    offset: timeStampOffset,
+                                    message: _messages[index],
+                                    olderMessage: olderMessage,
+                                    newerMessage: newerMessage,
+                                    showHandle: widget.showHandle,
+                                    isFirstSentMessage:
+                                        widget.messageBloc.firstSentMessage ==
+                                            _messages[index].guid,
+                                    showHero: index == 0 &&
+                                        _messages[index].originalROWID == null,
+                                  ),
                                 ),
                               ),
                             ),
-                            child: FadeTransition(
-                              opacity: animation,
-                              child: Padding(
-                                padding: EdgeInsets.only(left: 5.0, right: 5.0),
-                                child: MessageWidget(
-                                  key: Key(_messages[index].guid),
-                                  offset: timeStampOffset,
-                                  message: _messages[index],
-                                  olderMessage: olderMessage,
-                                  newerMessage: newerMessage,
-                                  showHandle: widget.showHandle,
-                                  isFirstSentMessage:
-                                      widget.messageBloc.firstSentMessage ==
-                                          _messages[index].guid,
-                                  showHero: index == 0 &&
-                                      _messages[index].originalROWID == null,
-                                ),
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    )
-                  : SliverToBoxAdapter(child: Container()),
-              SliverPadding(
-                padding: EdgeInsets.all(70),
-              ),
-            ],
-          ),
-        ),
-        (showScrollDown && scrollState == -1)
-            ? ClipRRect(
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-                  child: Container(
-                    height: 35,
-                    width: 150,
-                    decoration: BoxDecoration(
-                        color: Theme.of(context).accentColor.withOpacity(0.7),
-                        borderRadius: BorderRadius.circular(10.0)),
-                    child: Center(
-                      child: GestureDetector(
-                        onTap: () {
-                          scrollController.animateTo(
-                            0.0,
-                            curve: Curves.easeOut,
-                            duration: const Duration(milliseconds: 300),
                           );
                         },
-                        child: Text(
-                          "\u{2193} Scroll to bottom \u{2193}",
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.bodyText1,
+                      )
+                    : SliverToBoxAdapter(child: Container()),
+                SliverPadding(
+                  padding: EdgeInsets.all(70),
+                ),
+              ],
+            ),
+          ),
+          (showScrollDown && scrollState == -1)
+              ? ClipRRect(
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+                    child: Container(
+                      height: 35,
+                      width: 150,
+                      decoration: BoxDecoration(
+                          color: Theme.of(context).accentColor.withOpacity(0.7),
+                          borderRadius: BorderRadius.circular(10.0)),
+                      child: Center(
+                        child: GestureDetector(
+                          onTap: () {
+                            scrollController.animateTo(
+                              0.0,
+                              curve: Curves.easeOut,
+                              duration: const Duration(milliseconds: 300),
+                            );
+                          },
+                          child: Text(
+                            "\u{2193} Scroll to bottom \u{2193}",
+                            textAlign: TextAlign.center,
+                            style: Theme.of(context).textTheme.bodyText1,
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
-              )
-            : Container()
-      ]),
+                )
+              : Container()
+        ],
+      ),
     );
   }
 }

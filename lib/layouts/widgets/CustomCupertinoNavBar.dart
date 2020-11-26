@@ -291,7 +291,6 @@ class CupertinoNavigationBar extends StatefulWidget
   /// {@endtemplate}
   final Widget trailing;
 
-  // TODO(xster): https://github.com/flutter/flutter/issues/10469 implement
   // support for double row navigation bars.
 
   /// {@template flutter.cupertino.navBar.backgroundColor}

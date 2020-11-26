@@ -22,6 +22,7 @@ import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import '../../helpers/hex_color.dart';
 import 'package:flutter/material.dart';
+import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 
 import '../setup/qr_code_scanner.dart';
 
@@ -322,6 +323,12 @@ class _SettingsPanelState extends State<SettingsPanel> {
                   initial: _settingsCopy.skin,
                   onChanged: (val) {
                     _settingsCopy.skin = val;
+                    if (val == Skins.Material) {
+                      _settingsCopy.hideDividers = true;
+                    } else {
+                      _settingsCopy.hideDividers = false;
+                    }
+                    setState(() {});
                   },
                   options: Skins.values,
                   textProcessing: (dynamic val) =>
@@ -335,7 +342,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                       color: Theme.of(context).primaryColor),
                   onTap: () async {
                     Navigator.of(context).push(
-                      CupertinoPageRoute(
+                      ThemeSwitcher.buildPageRoute(
                         builder: (context) => ThemingPanel(),
                       ),
                     );
@@ -358,7 +365,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                 //       color: Theme.of(context).primaryColor),
                 //   onTap: () async {
                 //     Navigator.of(context).push(
-                //       CupertinoPageRoute(
+                //       ThemeSwitcher.buildPageRoute(
                 //         builder: (context) => SchedulingPanel(),
                 //       ),
                 //     );
@@ -445,7 +452,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                     String changelog = await DefaultAssetBundle.of(context)
                         .loadString('assets/changelog/changelog.txt');
                     Navigator.of(context).push(
-                      CupertinoPageRoute(
+                      ThemeSwitcher.buildPageRoute(
                         builder: (context) => Scaffold(
                           body: Markdown(
                             data: changelog,

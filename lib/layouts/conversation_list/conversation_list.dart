@@ -139,6 +139,78 @@ class _ConversationListState extends State<ConversationList> {
     });
   }
 
+  Widget buildSettingsButton() => !widget.showArchivedChats
+      ? PopupMenuButton(
+          color: Theme.of(context).accentColor,
+          onSelected: (value) {
+            if (value == 0) {
+              Navigator.of(context).push(
+                ThemeSwitcher.buildPageRoute(
+                  builder: (context) => ConversationList(
+                    showArchivedChats: true,
+                  ),
+                ),
+              );
+            } else if (value == 1) {
+              Navigator.of(context).push(
+                ThemeSwitcher.buildPageRoute(
+                  builder: (BuildContext context) {
+                    return SettingsPanel();
+                  },
+                ),
+              );
+            }
+          },
+          itemBuilder: (context) {
+            return <PopupMenuItem>[
+              PopupMenuItem(
+                value: 0,
+                child: Text(
+                  'Archived',
+                  style: Theme.of(context).textTheme.bodyText1,
+                ),
+              ),
+              PopupMenuItem(
+                value: 1,
+                child: Text(
+                  'Settings',
+                  style: Theme.of(context).textTheme.bodyText1,
+                ),
+              ),
+            ];
+          },
+          child: Container(
+            width: 20,
+            height: 20,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(40),
+              color: Theme.of(context).accentColor,
+            ),
+            child: Icon(
+              Icons.more_horiz,
+              color: Theme.of(context).primaryColor,
+              size: 15,
+            ),
+          ),
+        )
+      : Container();
+
+  FloatingActionButton buildFloatinActionButton() => FloatingActionButton(
+        backgroundColor: Theme.of(context).primaryColor,
+        child: Icon(Icons.message, color: Colors.white, size: 25),
+        onPressed: () {
+          Navigator.of(context).push(
+            ThemeSwitcher.buildPageRoute(
+              builder: (BuildContext context) {
+                return ConversationView(
+                  isCreator: true,
+                );
+              },
+            ),
+          );
+        },
+      );
+
   @override
   Widget build(BuildContext context) {
     loadBrightness();
@@ -245,65 +317,7 @@ class _Cupertino extends StatelessWidget {
                         Spacer(
                           flex: 25,
                         ),
-                        !parent.widget.showArchivedChats
-                            ? PopupMenuButton(
-                                color: Theme.of(context).accentColor,
-                                onSelected: (value) {
-                                  if (value == 0) {
-                                    Navigator.of(context).push(
-                                      CupertinoPageRoute(
-                                        builder: (context) => ConversationList(
-                                          showArchivedChats: true,
-                                        ),
-                                      ),
-                                    );
-                                  } else if (value == 1) {
-                                    Navigator.of(context).push(
-                                      CupertinoPageRoute(
-                                        builder: (BuildContext context) {
-                                          return SettingsPanel();
-                                        },
-                                      ),
-                                    );
-                                  }
-                                },
-                                itemBuilder: (context) {
-                                  return <PopupMenuItem>[
-                                    PopupMenuItem(
-                                      value: 0,
-                                      child: Text(
-                                        'Archived',
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .bodyText1,
-                                      ),
-                                    ),
-                                    PopupMenuItem(
-                                      value: 1,
-                                      child: Text(
-                                        'Settings',
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .bodyText1,
-                                      ),
-                                    ),
-                                  ];
-                                },
-                                child: Container(
-                                  width: 20,
-                                  height: 20,
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(40),
-                                    color: Theme.of(context).accentColor,
-                                  ),
-                                  child: Icon(
-                                    Icons.more_horiz,
-                                    color: Theme.of(context).primaryColor,
-                                    size: 15,
-                                  ),
-                                ),
-                              )
-                            : Container(),
+                        parent.buildSettingsButton(),
                         Spacer(
                           flex: 1,
                         ),
@@ -318,7 +332,9 @@ class _Cupertino extends StatelessWidget {
             stream: ChatBloc().chatStream,
             builder:
                 (BuildContext context, AsyncSnapshot<List<Chat>> snapshot) {
-              if (snapshot.hasData || parent.widget.showArchivedChats) {
+              if (snapshot.hasData ||
+                  parent.widget.showArchivedChats ||
+                  parent.chats.isNotEmpty) {
                 parent.sortChats();
                 if (parent.chats.isEmpty) {
                   return SliverToBoxAdapter(
@@ -356,47 +372,122 @@ class _Cupertino extends StatelessWidget {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: Theme.of(context).primaryColor,
-        child: Icon(Icons.message, color: Colors.white, size: 25),
-        onPressed: () {
-          Navigator.of(context).push(
-            CupertinoPageRoute(
-              builder: (BuildContext context) {
-                return ConversationView(
-                  isCreator: true,
-                );
-              },
-            ),
-          );
-        },
-      ),
+      floatingActionButton: parent.buildFloatinActionButton(),
     );
   }
 }
 
-class _Material extends StatelessWidget {
-  const _Material({Key key, @required this.parent}) : super(key: key);
-
+class _Material extends StatefulWidget {
+  _Material({Key key, @required this.parent}) : super(key: key);
   final _ConversationListState parent;
+
+  @override
+  __MaterialState createState() => __MaterialState();
+}
+
+class __MaterialState extends State<_Material> {
+  List<Chat> selected = [];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          "Messages",
-          style: Theme.of(context).textTheme.headline1,
+      appBar: PreferredSize(
+        preferredSize: Size.fromHeight(60),
+        child: AnimatedSwitcher(
+          duration: Duration(milliseconds: 500),
+          child: selected.isEmpty
+              ? AppBar(
+                  title: Text(
+                    "Messages",
+                    style: Theme.of(context)
+                        .textTheme
+                        .headline1
+                        .copyWith(fontSize: 20),
+                  ),
+                  actions: [
+                    Padding(
+                      padding: EdgeInsets.only(right: 20),
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(vertical: 15.5),
+                        child: Container(
+                          width: 25,
+                          child: widget.parent.buildSettingsButton(),
+                        ),
+                      ),
+                    ),
+                  ],
+                  backgroundColor: Theme.of(context).backgroundColor,
+                )
+              : Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.max,
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          if (selected.length <= 1)
+                            GestureDetector(
+                              onTap: () {
+                                selected.forEach((element) async {
+                                  element.isMuted = !element.isMuted;
+                                  await element.save(updateLocalVals: true);
+                                });
+                                if (this.mounted) setState(() {});
+                                selected = [];
+                                setState(() {});
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Icon(
+                                  Icons.notifications_off,
+                                  color: Theme.of(context)
+                                      .textTheme
+                                      .bodyText1
+                                      .color,
+                                ),
+                              ),
+                            ),
+                          GestureDetector(
+                            onTap: () {
+                              selected.forEach((element) {
+                                if (element.isArchived) {
+                                  ChatBloc().unArchiveChat(element);
+                                } else {
+                                  ChatBloc().archiveChat(element);
+                                }
+                              });
+                              selected = [];
+                              setState(() {});
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Icon(
+                                widget.parent.widget.showArchivedChats
+                                    ? Icons.restore_from_trash
+                                    : Icons.delete,
+                                color:
+                                    Theme.of(context).textTheme.bodyText1.color,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
         ),
-        backgroundColor: Theme.of(context).backgroundColor,
       ),
       backgroundColor: Theme.of(context).backgroundColor,
       body: StreamBuilder(
         stream: ChatBloc().chatStream,
         builder: (context, snapshot) {
-          if (snapshot.hasData || parent.widget.showArchivedChats) {
-            parent.sortChats();
-            if (parent.chats.isEmpty) {
+          if (snapshot.hasData ||
+              widget.parent.widget.showArchivedChats ||
+              widget.parent.chats.isNotEmpty) {
+            widget.parent.sortChats();
+            if (widget.parent.chats.isEmpty) {
               return Center(
                 child: Container(
                   padding: EdgeInsets.only(top: 50.0),
@@ -413,22 +504,36 @@ class _Material extends StatelessWidget {
                 parent: ClampingScrollPhysics(),
               ),
               itemBuilder: (context, index) {
-                if (!parent.widget.showArchivedChats &&
-                    parent.chats[index].isArchived) return Container();
-                if (parent.widget.showArchivedChats &&
-                    !parent.chats[index].isArchived) return Container();
+                if (!widget.parent.widget.showArchivedChats &&
+                    widget.parent.chats[index].isArchived) return Container();
+                if (widget.parent.widget.showArchivedChats &&
+                    !widget.parent.chats[index].isArchived) return Container();
                 return ConversationTile(
-                  key: Key(parent.chats[index].guid.toString()),
-                  chat: parent.chats[index],
+                  key: Key(widget.parent.chats[index].guid.toString()),
+                  chat: widget.parent.chats[index],
+                  inSelectMode: selected.isNotEmpty,
+                  selected: selected,
+                  onSelect: (bool selected) {
+                    if (selected) {
+                      this.selected.add(widget.parent.chats[index]);
+                      setState(() {});
+                    } else {
+                      this.selected.removeWhere((element) =>
+                          element.guid == widget.parent.chats[index].guid);
+                      setState(() {});
+                    }
+                  },
                 );
               },
-              itemCount: parent.chats?.length ?? 0,
+              itemCount: widget.parent.chats?.length ?? 0,
             );
           } else {
             return Container();
           }
         },
       ),
+      floatingActionButton:
+          selected.isEmpty ? widget.parent.buildFloatinActionButton() : null,
     );
   }
 }

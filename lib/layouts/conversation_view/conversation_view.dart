@@ -10,6 +10,7 @@ import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/outgoing_queue.dart';
 import 'package:bluebubbles/managers/queue_manager.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/material.dart';
 
 import '../../repository/models/chat.dart';
@@ -125,6 +126,7 @@ class ConversationViewState extends State<ConversationView>
   @override
   Widget build(BuildContext context) {
     currentChat?.isAlive = true;
+
     return Scaffold(
       backgroundColor: Theme.of(context).backgroundColor,
       extendBodyBehindAppBar: !isCreator,

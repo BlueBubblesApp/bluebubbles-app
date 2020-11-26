@@ -8,6 +8,8 @@ import 'package:bluebubbles/blocs/setup_bloc.dart';
 import 'package:bluebubbles/helpers/contstants.dart';
 import 'package:bluebubbles/helpers/crypto.dart';
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/managers/attachment_info_bloc.dart';
+import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/incoming_queue.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
@@ -151,7 +153,7 @@ class SocketManager {
         debugPrint("CONNECT ERROR");
         if (state != SocketState.ERROR && state != SocketState.FAILED) {
           state = SocketState.ERROR;
-          Timer(Duration(seconds: 10), () {
+          Timer(Duration(seconds: 20), () {
             if (state != SocketState.ERROR) return;
             debugPrint("UNABLE TO CONNECT");
             NotificationManager().createSocketWarningNotification();
@@ -271,17 +273,17 @@ class SocketManager {
       _manager.socket.subscribe("participant-left", handleNewMessage);
       _manager.socket
           .subscribe("chat-read-status-changed", handleChatStatusChange);
-      // _manager.socket.subscribe("typing-indicator", (_data) {
-      //   Map<String, dynamic> data = jsonDecode(_data);
-      //   CurrentChat currentChat =
-      //       AttachmentInfoBloc().getCurrentChat(data["guid"]);
-      //   if (currentChat == null) return;
-      //   if (data["display"]) {
-      //     currentChat.displayTypingIndicator();
-      //   } else {
-      //     currentChat.hideTypingIndicator();
-      //   }
-      // });
+      _manager.socket.subscribe("typing-indicator", (_data) {
+        Map<String, dynamic> data = jsonDecode(_data);
+        CurrentChat currentChat =
+            AttachmentInfoBloc().getCurrentChat(data["guid"]);
+        if (currentChat == null) return;
+        if (data["display"]) {
+          currentChat.displayTypingIndicator();
+        } else {
+          currentChat.hideTypingIndicator();
+        }
+      });
 
       /**
        * Handle errors sent by the server
@@ -479,9 +481,7 @@ class SocketManager {
   }
 
   Future<List<dynamic>> fetchMessages(Chat chat,
-      {int offset: 0,
-      int limit: 100,
-      bool onlyAttachments: false}) async {
+      {int offset: 0, int limit: 100, bool onlyAttachments: false}) async {
     Completer<List<dynamic>> completer = new Completer();
     debugPrint("(Fetch Messages) Fetching data.");
 

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/group_event.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/url_preview_widget.dart';
@@ -172,23 +173,11 @@ class _MessageState extends State<MessageWidget>
     attachmentsRequest.complete();
   }
 
-  bool withinTimeThreshold(Message first, Message second, {threshold: 5}) {
-    if (first == null || second == null) return false;
-    return second.dateCreated.difference(first.dateCreated).inMinutes.abs() >
-        threshold;
-  }
-
   @override
   Widget build(BuildContext context) {
     super.build(context);
     if (widget.newerMessage != null) {
-      showTail = withinTimeThreshold(widget.message, widget.newerMessage,
-              threshold: 1) ||
-          !sameSender(widget.message, widget.newerMessage) ||
-          (widget.message.isFromMe &&
-              widget.newerMessage.isFromMe &&
-              widget.message.dateDelivered != null &&
-              widget.newerMessage.dateDelivered == null);
+      showTail = MessageHelper.getShowTail(widget.message, widget.newerMessage);
     }
 
     if (widget.message.isGroupEvent()) {

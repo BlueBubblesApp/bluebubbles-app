@@ -78,7 +78,6 @@ class _TypingIndicatorState extends State<TypingIndicator>
                     ),
                     Container(
                       margin: EdgeInsets.only(
-                        top: 18,
                         left: 10,
                         right: 10,
                         bottom: 13,

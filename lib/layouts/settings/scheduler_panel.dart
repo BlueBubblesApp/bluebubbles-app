@@ -5,6 +5,7 @@ import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view_mixin.dart';
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
+import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/scheduled.dart';
 import 'package:flutter/cupertino.dart';
@@ -152,7 +153,7 @@ class _SchedulePanelState extends State<SchedulePanel> {
                                 Theme.of(context).primaryColor.withAlpha(200)),
                         onTap: () async {
                           Navigator.of(context).push(
-                            CupertinoPageRoute(
+                            ThemeSwitcher.buildPageRoute(
                               builder: (context) => ConversationView(
                                 isCreator: true,
                                 customHeading: "Select a chat",

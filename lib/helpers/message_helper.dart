@@ -363,6 +363,21 @@ class MessageHelper {
     return (items.length > 0) ? items[0] : val;
   }
 
+  static bool withinTimeThreshold(Message first, Message second,
+      {threshold: 5}) {
+    if (first == null || second == null) return false;
+    return second.dateCreated.difference(first.dateCreated).inMinutes.abs() >
+        threshold;
+  }
+
+  static bool getShowTail(Message message, Message newerMessage) =>
+      MessageHelper.withinTimeThreshold(message, newerMessage, threshold: 1) ||
+      !sameSender(message, newerMessage) ||
+      (message.isFromMe &&
+          newerMessage.isFromMe &&
+          message.dateDelivered != null &&
+          newerMessage.dateDelivered == null);
+
   // static List<TextSpan> buildEmojiText(String text, TextStyle style) {
   //   final children = <TextSpan>[];
   //   final runes = text.runes;

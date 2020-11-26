@@ -6,6 +6,7 @@ import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/setup/failure_to_start.dart';
+import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/background_isolate.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
@@ -178,7 +179,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
 
       // Go to the new chat creator, with all of our attachments
       Navigator.of(context).pushAndRemoveUntil(
-        CupertinoPageRoute(
+        ThemeSwitcher.buildPageRoute(
           builder: (context) => ConversationView(
             existingAttachments: attachments,
             isCreator: true,
@@ -194,7 +195,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
 
       // Go to the new chat creator, with all of our text
       Navigator.of(context).pushAndRemoveUntil(
-        CupertinoPageRoute(
+        ThemeSwitcher.buildPageRoute(
           builder: (context) => ConversationView(
             existingText: text,
             isCreator: true,

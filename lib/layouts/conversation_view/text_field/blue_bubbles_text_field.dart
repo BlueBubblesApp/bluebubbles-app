@@ -8,8 +8,10 @@ import 'package:bluebubbles/layouts/conversation_view/text_field/attachments/pic
 import 'package:bluebubbles/layouts/widgets/CustomCupertinoTextField.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/audio_player_widget.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
+import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -50,7 +52,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
   StreamController _streamController = new StreamController.broadcast();
   CurrentChat safeChat;
 
-  // bool selfTyping = false;
+  bool selfTyping = false;
 
   Stream get stream => _streamController.stream;
 
@@ -69,21 +71,22 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
     controller = textFieldData != null
         ? textFieldData.controller
         : new TextEditingController();
-    // controller.addListener(() {
-    //   if (CurrentChat.of(context)?.chat == null) return;
-    //   if (controller.text.length == 0 &&
-    //       pickedImages.length == 0 &&
-    //       selfTyping) {
-    //     selfTyping = false;
-    //     SocketManager().sendMessage("stopped-typing",
-    //         {"chatGuid": CurrentChat.of(context).chat.guid}, (data) => null);
-    //   } else if (!selfTyping &&
-    //       (controller.text.length > 0 || pickedImages.length > 0)) {
-    //     selfTyping = true;
-    //     SocketManager().sendMessage("started-typing",
-    //         {"chatGuid": CurrentChat.of(context).chat.guid}, (data) => null);
-    //   }
-    // });
+    controller.addListener(() {
+      if (CurrentChat.of(context)?.chat == null) return;
+      if (controller.text.length == 0 &&
+          pickedImages.length == 0 &&
+          selfTyping) {
+        selfTyping = false;
+        SocketManager().sendMessage("stopped-typing",
+            {"chatGuid": CurrentChat.of(context).chat.guid}, (data) => null);
+      } else if (!selfTyping &&
+          (controller.text.length > 0 || pickedImages.length > 0)) {
+        selfTyping = true;
+        SocketManager().sendMessage("started-typing",
+            {"chatGuid": CurrentChat.of(context).chat.guid}, (data) => null);
+      }
+      if (this.mounted) setState(() {});
+    });
 
     if (widget.existingText != null) {
       controller.text = widget.existingText;
@@ -131,6 +134,18 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
     });
     pickedImages = [];
     super.dispose();
+  }
+
+  void onContentCommit(String url) async {
+    debugPrint("got attachment " + url);
+    List<String> fnParts = url.split("/");
+    fnParts = (fnParts.length > 2)
+        ? fnParts.sublist(fnParts.length - 2)
+        : fnParts.last;
+    File file = await _downloadFile(url, fnParts.join("_"));
+    pickedImages.add(file);
+    updateTextFieldAttachments();
+    if (this.mounted) setState(() {});
   }
 
   Future<void> reviewAudio(BuildContext originalContext, File file) async {
@@ -280,7 +295,9 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
 
   Widget buildActualTextField() {
     IconData rightIcon = Icons.arrow_upward;
+
     bool canRecord = controller.text.isEmpty && pickedImages.isEmpty;
+
     if (canRecord) rightIcon = Icons.mic;
     return Flexible(
       flex: 1,
@@ -293,67 +310,109 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
               duration: Duration(milliseconds: 100),
               vsync: this,
               curve: Curves.easeInOut,
-              child: CustomCupertinoTextField(
-                cursorColor: Theme.of(context).primaryColor,
-                onLongPressStart: () {
-                  Feedback.forLongPress(context);
-                },
-                onTap: () {
-                  HapticFeedback.selectionClick();
-                },
-                key: _searchFormKey,
-                onChanged: (String value) {
-                  if (value.isEmpty && this.mounted) {
-                    setState(() {
-                      rightIcon = Icons.mic;
-                    });
-                  } else if (value.isNotEmpty &&
-                      rightIcon == Icons.mic &&
-                      this.mounted) {
-                    setState(() {
-                      rightIcon = Icons.arrow_upward;
-                    });
-                  }
-                },
-                onContentCommited: (String url) async {
-                  debugPrint("got attachment " + url);
-                  List<String> fnParts = url.split("/");
-                  fnParts = (fnParts.length > 2)
-                      ? fnParts.sublist(fnParts.length - 2)
-                      : fnParts.last;
-                  File file = await _downloadFile(url, fnParts.join("_"));
-                  pickedImages.add(file);
-                  updateTextFieldAttachments();
-                  if (this.mounted) setState(() {});
-                },
-                textCapitalization: TextCapitalization.sentences,
-                focusNode: focusNode,
-                autocorrect: true,
-                controller: controller,
-                scrollPhysics: CustomBouncingScrollPhysics(),
-                style: Theme.of(context).textTheme.bodyText1.apply(
-                      color: ThemeData.estimateBrightnessForColor(
-                                  Theme.of(context).backgroundColor) ==
-                              Brightness.light
-                          ? Colors.black
-                          : Colors.white,
-                      fontSizeDelta: -0.25,
+              child: ThemeSwitcher(
+                iOSSkin: CustomCupertinoTextField(
+                  cursorColor: Theme.of(context).primaryColor,
+                  onLongPressStart: () {
+                    Feedback.forLongPress(context);
+                  },
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                  },
+                  key: _searchFormKey,
+                  onChanged: (String value) {
+                    if (value.isEmpty && this.mounted) {
+                      setState(() {
+                        rightIcon = Icons.mic;
+                      });
+                    } else if (value.isNotEmpty &&
+                        rightIcon == Icons.mic &&
+                        this.mounted) {
+                      setState(() {
+                        rightIcon = Icons.arrow_upward;
+                      });
+                    }
+                  },
+                  onContentCommited: onContentCommit,
+                  textCapitalization: TextCapitalization.sentences,
+                  focusNode: focusNode,
+                  autocorrect: true,
+                  controller: controller,
+                  scrollPhysics: CustomBouncingScrollPhysics(),
+                  style: Theme.of(context).textTheme.bodyText1.apply(
+                        color: ThemeData.estimateBrightnessForColor(
+                                    Theme.of(context).backgroundColor) ==
+                                Brightness.light
+                            ? Colors.black
+                            : Colors.white,
+                        fontSizeDelta: -0.25,
+                      ),
+                  keyboardType: TextInputType.multiline,
+                  maxLines: 14,
+                  minLines: 1,
+                  placeholder: "BlueBubbles",
+                  padding:
+                      EdgeInsets.only(left: 10, top: 10, right: 40, bottom: 10),
+                  placeholderStyle: Theme.of(context).textTheme.subtitle1,
+                  autofocus: SettingsManager().settings.autoOpenKeyboard,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).backgroundColor,
+                    border: Border.all(
+                      color: Theme.of(context).dividerColor,
+                      width: 1.5,
                     ),
-                keyboardType: TextInputType.multiline,
-                maxLines: 14,
-                minLines: 1,
-                placeholder: "BlueBubbles",
-                padding:
-                    EdgeInsets.only(left: 10, top: 10, right: 40, bottom: 10),
-                placeholderStyle: Theme.of(context).textTheme.subtitle1,
-                autofocus: SettingsManager().settings.autoOpenKeyboard,
-                decoration: BoxDecoration(
-                  color: Theme.of(context).backgroundColor,
-                  border: Border.all(
-                    color: Theme.of(context).dividerColor,
-                    width: 1.5,
+                    borderRadius: BorderRadius.circular(20),
                   ),
-                  borderRadius: BorderRadius.circular(20),
+                ),
+                materialSkin: TextField(
+                  controller: controller,
+                  focusNode: focusNode,
+                  textCapitalization: TextCapitalization.sentences,
+                  autocorrect: true,
+                  autofocus: SettingsManager().settings.autoOpenKeyboard,
+                  cursorColor: Theme.of(context).primaryColor,
+                  key: _searchFormKey,
+                  style: Theme.of(context).textTheme.bodyText1.apply(
+                        color: ThemeData.estimateBrightnessForColor(
+                                    Theme.of(context).backgroundColor) ==
+                                Brightness.light
+                            ? Colors.black
+                            : Colors.white,
+                        fontSizeDelta: -0.25,
+                      ),
+                  onContentCommited: onContentCommit,
+                  decoration: InputDecoration(
+                    isDense: true,
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(
+                        color: Theme.of(context).dividerColor,
+                        width: 1.5,
+                        style: BorderStyle.solid,
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    disabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(
+                        color: Theme.of(context).dividerColor,
+                        width: 1.5,
+                        style: BorderStyle.solid,
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(
+                        color: Theme.of(context).dividerColor,
+                        width: 1.5,
+                        style: BorderStyle.solid,
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    hintText: "BlueBubbles",
+                    hintStyle: Theme.of(context).textTheme.subtitle1,
+                  ),
+                  keyboardType: TextInputType.multiline,
+                  maxLines: 14,
+                  minLines: 1,
                 ),
               ),
             ),

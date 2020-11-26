@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
+import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/alarm_manager.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/incoming_queue.dart';
@@ -159,7 +160,7 @@ class MethodChannelInterface {
 
         // Go to the new chat creator with all of these attachments to select a chat
         NavigatorManager().navigatorKey.currentState.pushAndRemoveUntil(
-              CupertinoPageRoute(
+              ThemeSwitcher.buildPageRoute(
                 builder: (context) => ConversationView(
                   existingAttachments: attachments,
                   isCreator: true,
@@ -177,7 +178,7 @@ class MethodChannelInterface {
 
         // Navigate to the new chat creator with the specified text
         NavigatorManager().navigatorKey.currentState.pushAndRemoveUntil(
-              CupertinoPageRoute(
+              ThemeSwitcher.buildPageRoute(
                 builder: (context) => ConversationView(
                   existingText: text,
                   isCreator: true,
@@ -225,7 +226,7 @@ class MethodChannelInterface {
       // Actually navigate to the chat page
       NavigatorManager().navigatorKey.currentState
         ..pushAndRemoveUntil(
-          CupertinoPageRoute(
+          ThemeSwitcher.buildPageRoute(
             builder: (context) => ConversationView(
               chat: openedChat,
             ),

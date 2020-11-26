@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:bluebubbles/layouts/conversation_view/text_field/attachments/list/attachment_list_item.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
+import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:flutter/material.dart';
 
 class TextFieldAttachmentList extends StatefulWidget {
@@ -30,9 +31,7 @@ class _TextFieldAttachmentListState extends State<TextFieldAttachmentList>
         child: GridView.builder(
           itemCount: widget.attachments.length,
           scrollDirection: Axis.horizontal,
-          physics: AlwaysScrollableScrollPhysics(
-            parent: CustomBouncingScrollPhysics(),
-          ),
+          physics: ThemeSwitcher.getScrollPhysics(),
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 1,
           ),
