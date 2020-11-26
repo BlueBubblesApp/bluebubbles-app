@@ -45,8 +45,10 @@ class _MessageAttachmentState extends State<MessageAttachment>
     if (content is AttachmentDownloader) return;
 
     content = AttachmentHelper.getContent(widget.attachment);
-    if (content is Attachment && (await AttachmentHelper.canAutoDownload())) {
-      content = new AttachmentDownloader(content);
+    if (await AttachmentHelper.canAutoDownload()) {
+      if (content is Attachment) {
+        content = new AttachmentDownloader(content);
+      }
     }
 
     if (content is AttachmentDownloader) {
@@ -185,10 +187,12 @@ class _MessageAttachmentState extends State<MessageAttachment>
                   children: <Widget>[
                     Column(
                       children: <Widget>[
-                        CircularProgressIndicator(
-                          value: progress,
-                          backgroundColor: Colors.grey,
-                          valueColor: AlwaysStoppedAnimation(Colors.white),
+                        Center(
+                          child: CircularProgressIndicator(
+                            value: progress ?? 0,
+                            backgroundColor: Colors.grey,
+                            valueColor: AlwaysStoppedAnimation(Colors.white),
+                          ),
                         ),
                         ((content as AttachmentDownloader)
                                     .attachment

@@ -185,7 +185,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                 trailing: Padding(
                   padding: EdgeInsets.only(right: 15),
                   child: Icon(
-                    Icons.download_rounded,
+                    Icons.file_download,
                     color: Theme.of(context).primaryColor,
                   ),
                 ),
@@ -330,7 +330,6 @@ class _SyncDialogState extends State<SyncDialog> {
     SocketManager()
         .fetchMessages(widget.chat, offset: offset, limit: widget.limit)
         .then((List<dynamic> messages) {
-
       if (this.mounted) {
         setState(() {
           message = "Adding ${messages.length} messages...";
