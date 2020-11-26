@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'dart:ui';
 import 'package:bluebubbles/helpers/share.dart';
 import 'package:bluebubbles/layouts/image_viewer/attachmet_fullscreen_viewer.dart';
@@ -27,16 +28,19 @@ class ImageViewer extends StatefulWidget {
   _ImageViewerState createState() => _ImageViewerState();
 }
 
-class _ImageViewerState extends State<ImageViewer> {
+class _ImageViewerState extends State<ImageViewer>
+    with AutomaticKeepAliveClientMixin {
   double top = 0;
   int duration = 0;
   PhotoViewController controller;
   bool showOverlay = false;
+  Uint8List bytes;
 
   @override
   void initState() {
     super.initState();
     controller = new PhotoViewController();
+
     // controller.outputStateStream.listen((event) {
     //   if (AttachmentFullscreenViewer.of(context) == null) return;
     //   if (this.mounted) {
@@ -65,6 +69,13 @@ class _ImageViewerState extends State<ImageViewer> {
   }
 
   @override
+  void didChangeDependencies() async {
+    super.didChangeDependencies();
+    bytes = await widget.file.readAsBytes();
+    if (this.mounted) setState(() {});
+  }
+
+  @override
   void dispose() {
     controller.dispose();
     super.dispose();
@@ -72,6 +83,7 @@ class _ImageViewerState extends State<ImageViewer> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     Widget overlay = AnimatedOpacity(
       opacity: showOverlay ? 1.0 : 0.0,
       duration: Duration(milliseconds: 125),
@@ -167,24 +179,35 @@ class _ImageViewerState extends State<ImageViewer> {
         },
         child: Stack(
           children: <Widget>[
-            PhotoView(
-              minScale: PhotoViewComputedScale.contained,
-              maxScale: PhotoViewComputedScale.contained * 13,
-              controller: controller,
-              imageProvider: FileImage(widget.file),
-              loadingBuilder: (BuildContext context, ImageChunkEvent ev) {
-                return PhotoView(
-                  minScale: PhotoViewComputedScale.contained,
-                  maxScale: PhotoViewComputedScale.contained * 13,
-                  controller: controller,
-                  imageProvider: FileImage(widget.file),
-                );
-              },
-            ),
+            bytes != null
+                ? PhotoView(
+                    minScale: PhotoViewComputedScale.contained,
+                    maxScale: PhotoViewComputedScale.contained * 13,
+                    controller: controller,
+                    imageProvider: MemoryImage(bytes),
+                    loadingBuilder: (BuildContext context, ImageChunkEvent ev) {
+                      return PhotoView(
+                        minScale: PhotoViewComputedScale.contained,
+                        maxScale: PhotoViewComputedScale.contained * 13,
+                        controller: controller,
+                        imageProvider: FileImage(widget.file),
+                      );
+                    },
+                  )
+                : Center(
+                    child: CircularProgressIndicator(
+                      backgroundColor: Colors.grey,
+                      valueColor: AlwaysStoppedAnimation(
+                          Theme.of(context).primaryColor),
+                    ),
+                  ),
             overlay
           ],
         ),
       ),
     );
   }
+
+  @override
+  bool get wantKeepAlive => true;
 }
