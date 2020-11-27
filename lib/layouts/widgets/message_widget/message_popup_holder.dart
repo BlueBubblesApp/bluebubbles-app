@@ -3,6 +3,7 @@ import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 
 class MessagePopupHolder extends StatefulWidget {
   final Widget child;

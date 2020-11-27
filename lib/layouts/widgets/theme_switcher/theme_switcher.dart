@@ -65,7 +65,6 @@ class _ThemeSwitcherState extends State<ThemeSwitcher> {
       case Skins.IOS:
         return widget.iOSSkin;
       case Skins.Material:
-        return widget.materialSkin;
     }
     return Container();
   }

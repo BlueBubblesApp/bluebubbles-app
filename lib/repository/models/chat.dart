@@ -282,6 +282,11 @@ class Chat {
     } else {
       await this.save(updateIfAbsent: false);
     }
+    if (hasUnreadMessage) {
+      EventDispatcher().emit("add-unread-chat", {"chatGuid": this.guid});
+    } else {
+      EventDispatcher().emit("remove-unread-chat", {"chatGuid": this.guid});
+    }
 
     return this;
   }
@@ -342,10 +347,8 @@ class Chat {
       // If the message is not from the same chat as the current chat, mark unread
       if (message.isFromMe) {
         await this.setUnreadStatus(false);
-        EventDispatcher().emit("remove-unread-chat", {"chatGuid": this.guid});
       } else if (!CurrentChat.isActive(this.guid)) {
         await this.setUnreadStatus(true);
-        EventDispatcher().emit("add-unread-chat", {"chatGuid": this.guid});
       }
     }
 
