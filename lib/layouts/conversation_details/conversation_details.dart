@@ -42,6 +42,14 @@ class _ConversationDetailsState extends State<ConversationDetails> {
       attachmentsForChat = value;
       if (this.mounted) setState(() {});
     });
+    ChatBloc().chatStream.listen((event) async {
+      if (this.mounted) {
+        Chat _chat = await Chat.findOne({"guid": widget.chat.guid});
+        await _chat.getParticipants();
+        chat = _chat;
+        setState(() {});
+      }
+    });
   }
 
   @override
@@ -99,6 +107,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
             delegate: SliverChildBuilderDelegate(
               (context, index) {
                 return ContactTile(
+                  key: Key(chat.participants[index].id.toString()),
                   address: chat.participants[index].address,
                   handle: chat.participants[index],
                   chat: chat,

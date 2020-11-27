@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:bluebubbles/action_handler.dart';
+import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/attachment_sender.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view_mixin.dart';
 import 'package:bluebubbles/layouts/conversation_view/messages_view.dart';
@@ -71,6 +72,15 @@ class ConversationViewState extends State<ConversationView>
     LifeCycleManager().stream.listen((event) {
       if (!this.mounted) return;
       currentChat?.isAlive = true;
+    });
+
+    ChatBloc().chatStream.listen((event) async {
+      if (this.mounted) {
+        Chat _chat = await Chat.findOne({"guid": currentChat.chat.guid});
+        await _chat.getParticipants();
+        currentChat.chat = _chat;
+        setState(() {});
+      }
     });
   }
 
