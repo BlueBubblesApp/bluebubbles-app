@@ -143,7 +143,7 @@ class SentMessageHelper {
                       onPressed: () async {
                         Navigator.of(context).pop();
                         // Delete the message from the DB
-                        await Message.delete({'guid': message.guid});
+                        await Message.softDelete({'guid': message.guid});
 
                         // Remove the message from the Bloc
                         NewMessageManager().removeMessage(chat, message.guid);
