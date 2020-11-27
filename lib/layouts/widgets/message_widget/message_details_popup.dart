@@ -12,6 +12,7 @@ import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.
 import 'package:bluebubbles/layouts/widgets/message_widget/reaction_detail_widget.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:clipboard/clipboard.dart';
@@ -428,6 +429,27 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
                   ),
                 ),
               ),
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () async {
+                    NewMessageManager().removeMessage(
+                        widget.currentChat.chat, widget.message.guid);
+                    await Message.delete({"guid": widget.message.guid});
+                    Navigator.of(context).pop();
+                  },
+                  child: ListTile(
+                    title: Text(
+                      "Delete",
+                      style: Theme.of(context).textTheme.bodyText1,
+                    ),
+                    trailing: Icon(
+                      Icons.delete,
+                      color: Theme.of(context).textTheme.bodyText1.color,
+                    ),
+                  ),
+                ),
+              ),
               if (showDownload)
                 Material(
                   color: Colors.transparent,
@@ -447,7 +469,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
                         style: Theme.of(context).textTheme.bodyText1,
                       ),
                       trailing: Icon(
-                        Icons.content_copy,
+                        Icons.file_download,
                         color: Theme.of(context).textTheme.bodyText1.color,
                       ),
                     ),
@@ -459,7 +481,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
       ),
     );
 
-    double menuHeight = 100;
+    double menuHeight = 150;
     if (showDownload) {
       menuHeight += 70;
     }
