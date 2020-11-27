@@ -172,35 +172,35 @@ class _ConversationDetailsState extends State<ConversationDetails> {
           SliverPadding(
             padding: EdgeInsets.symmetric(vertical: 20),
           ),
-          SliverToBoxAdapter(
-            child: InkWell(
-              onTap: () async {
-                showDialog(
-                  context: context,
-                  builder: (context) => SyncDialog(
-                    chat: chat,
-                    withOffset: true,
-                    initialMessage: "Downloading messages...",
-                  ),
-                );
-              },
-              child: ListTile(
-                leading: Text(
-                  "Fetch more messages",
-                  style: TextStyle(
-                    color: Theme.of(context).primaryColor,
-                  ),
-                ),
-                trailing: Padding(
-                  padding: EdgeInsets.only(right: 15),
-                  child: Icon(
-                    Icons.file_download,
-                    color: Theme.of(context).primaryColor,
-                  ),
-                ),
-              ),
-            ),
-          ),
+          // SliverToBoxAdapter(
+          //   child: InkWell(
+          //     onTap: () async {
+          //       showDialog(
+          //         context: context,
+          //         builder: (context) => SyncDialog(
+          //           chat: chat,
+          //           withOffset: true,
+          //           initialMessage: "Downloading messages...",
+          //         ),
+          //       );
+          //     },
+          //     child: ListTile(
+          //       leading: Text(
+          //         "Fetch more messages",
+          //         style: TextStyle(
+          //           color: Theme.of(context).primaryColor,
+          //         ),
+          //       ),
+          //       trailing: Padding(
+          //         padding: EdgeInsets.only(right: 15),
+          //         child: Icon(
+          //           Icons.file_download,
+          //           color: Theme.of(context).primaryColor,
+          //         ),
+          //       ),
+          //     ),
+          //   ),
+          // ),
           SliverToBoxAdapter(
             child: InkWell(
               onTap: () async {
