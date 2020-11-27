@@ -1,11 +1,14 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_group_widget.dart';
+import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -90,6 +93,24 @@ class _ConversationTileState extends State<ConversationTile>
 
     return Slidable(
       actionPane: SlidableStrechActionPane(),
+      actions: [
+        IconSlideAction(
+          caption: widget.chat.isPinned ? 'Un-pin' : 'Pin',
+          color: Colors.yellow[800],
+          foregroundColor: Theme.of(context).textTheme.bodyText1.color,
+          icon: Icons.push_pin,
+          onTap: () async {
+            if (widget.chat.isPinned) {
+              await widget.chat.unpin();
+            } else {
+              await widget.chat.pin();
+            }
+
+            EventDispatcher().emit("refresh", null);
+            if (this.mounted) setState(() {});
+          },
+        ),
+      ],
       secondaryActions: <Widget>[
         if (!widget.chat.isArchived)
           IconSlideAction(
@@ -192,6 +213,11 @@ class _ConversationTileState extends State<ConversationTile>
               isPressed = false;
             });
           },
+          onLongPress: () async {
+            HapticFeedback.mediumImpact();
+            await widget.chat.setUnreadStatus(!widget.chat.hasUnreadMessage);
+            if (this.mounted) setState(() {});
+          },
           child: Stack(
             alignment: Alignment.centerLeft,
             children: <Widget>[
@@ -276,22 +302,36 @@ class _ConversationTileState extends State<ConversationTile>
                 padding: const EdgeInsets.only(left: 8.0),
                 child: Container(
                   child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
-                      !widget.chat.isMuted
-                          ? Container(
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(35),
-                                color: widget.chat.hasUnreadMessage
-                                    ? Theme.of(context)
-                                        .primaryColor
-                                        .withOpacity(0.8)
-                                    : Colors.transparent,
-                              ),
-                              width: 15,
-                              height: 15,
-                            )
-                          : SvgPicture.asset(
+                      Stack(
+                          alignment: AlignmentDirectional.centerStart,
+                          children: [
+                            (!widget.chat.isMuted &&
+                                    widget.chat.hasUnreadMessage)
+                                ? Container(
+                                    decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(35),
+                                        color: Theme.of(context)
+                                            .primaryColor
+                                            .withOpacity(0.8)),
+                                    width: 15,
+                                    height: 15,
+                                  )
+                                : Container(),
+                            (widget.chat.isPinned)
+                                ? Icon(Icons.star,
+                                    size: 15,
+                                    color: Colors.yellow[
+                                        AdaptiveTheme.of(context).mode ==
+                                                AdaptiveThemeMode.dark
+                                            ? 100
+                                            : 700])
+                                : Container(),
+                          ]),
+                      (widget.chat.isMuted)
+                          ? SvgPicture.asset(
                               "assets/icon/moon.svg",
                               color: widget.chat.hasUnreadMessage
                                   ? Theme.of(context)
@@ -300,7 +340,8 @@ class _ConversationTileState extends State<ConversationTile>
                                   : Theme.of(context).textTheme.subtitle1.color,
                               width: 15,
                               height: 15,
-                            ),
+                            )
+                          : Container()
                     ],
                   ),
                 ),
