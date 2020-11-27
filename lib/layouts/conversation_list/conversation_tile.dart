@@ -8,6 +8,7 @@ import 'package:bluebubbles/layouts/widgets/contact_avatar_group_widget.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -211,6 +212,11 @@ class _ConversationTileState extends State<ConversationTile>
             setState(() {
               isPressed = false;
             });
+          },
+          onLongPress: () async {
+            HapticFeedback.mediumImpact();
+            await widget.chat.setUnreadStatus(!widget.chat.hasUnreadMessage);
+            if (this.mounted) setState(() {});
           },
           child: Stack(
             alignment: Alignment.centerLeft,
