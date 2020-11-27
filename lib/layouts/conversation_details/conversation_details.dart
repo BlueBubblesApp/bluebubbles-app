@@ -186,6 +186,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                     chat: chat,
                     withOffset: true,
                     initialMessage: "Fetching messages...",
+                    limit: 100
                   ),
                 );
 
