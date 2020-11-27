@@ -348,7 +348,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
       await conversations[i].getParticipants();
     }
 
-    if (widget.type != ChatSelectorTypes.ONLY_EXISTING) {
+    if (chatSelectorController.text.length > 1) {
       conversations.retainWhere((element) => element.participants.length > 1);
     }
 
