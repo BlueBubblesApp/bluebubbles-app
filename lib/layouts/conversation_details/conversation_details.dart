@@ -240,6 +240,31 @@ class _ConversationDetailsState extends State<ConversationDetails> {
           ),
           SliverToBoxAdapter(
               child: ListTile(
+                  leading: Text("Pin Conversation",
+                      style: TextStyle(
+                        color: Theme.of(context).primaryColor,
+                      )),
+                  trailing: Switch(
+                      value: widget.chat.isPinned,
+                      activeColor: Theme.of(context).primaryColor,
+                      activeTrackColor:
+                          Theme.of(context).primaryColor.withAlpha(200),
+                      inactiveTrackColor:
+                          Theme.of(context).accentColor.withOpacity(0.6),
+                      inactiveThumbColor: Theme.of(context).accentColor,
+                      onChanged: (value) async {
+                        if (value) {
+                          await widget.chat.pin();
+                        } else {
+                          await widget.chat.unpin();
+                        }
+                        
+                        EventDispatcher().emit("refresh", null);
+
+                        if (this.mounted) setState(() {});
+                      }))),
+          SliverToBoxAdapter(
+              child: ListTile(
                   leading: Text("Mute Conversation",
                       style: TextStyle(
                         color: Theme.of(context).primaryColor,

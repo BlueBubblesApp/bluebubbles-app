@@ -89,6 +89,7 @@ class Chat {
   bool isArchived;
   bool isFiltered;
   bool isMuted;
+  bool isPinned;
   bool hasUnreadMessage;
   DateTime latestMessageDate;
   String latestMessageText;
@@ -103,6 +104,7 @@ class Chat {
     this.chatIdentifier,
     this.isArchived,
     this.isFiltered,
+    this.isPinned,
     this.isMuted,
     this.hasUnreadMessage,
     this.displayName,
@@ -136,6 +138,11 @@ class Chat {
           ? (json["isMuted"] is bool)
               ? json['isMuted']
               : ((json['isMuted'] == 1) ? true : false)
+          : false,
+      isPinned: json.containsKey("isPinned")
+          ? (json["isPinned"] is bool)
+              ? json['isPinned']
+              : ((json['isPinned'] == 1) ? true : false)
           : false,
       hasUnreadMessage: json.containsKey("hasUnreadMessage")
           ? (json["hasUnreadMessage"] is bool)
@@ -638,6 +645,28 @@ class Chat {
     return this;
   }
 
+  Future<Chat> pin() async {
+    final Database db = await DBProvider.db.database;
+    if (this.id == null) return this;
+
+    this.isPinned = true;
+    await db.update("chat", {
+      "isPinned": 1
+    }, where: "ROWID = ?", whereArgs: [this.id]);
+    return this;
+  }
+
+  Future<Chat> unpin() async {
+    final Database db = await DBProvider.db.database;
+    if (this.id == null) return this;
+
+    this.isPinned = false;
+    await db.update("chat", {
+      "isPinned": 0
+    }, where: "ROWID = ?", whereArgs: [this.id]);
+    return this;
+  }
+
   static Future<Chat> findOne(Map<String, dynamic> filters) async {
     final Database db = await DBProvider.db.database;
 
@@ -686,6 +715,7 @@ class Chat {
         " chat.style as style,"
         " chat.chatIdentifier as chatIdentifier,"
         " chat.isFiltered as isFiltered,"
+        " chat.isPinned as isPinned,"
         " chat.isArchived as isArchived,"
         " chat.isMuted as isMuted,"
         " chat.hasUnreadMessage as hasUnreadMessage,"
@@ -723,6 +753,7 @@ class Chat {
         "isArchived": isArchived ? 1 : 0,
         "isFiltered": isFiltered ? 1 : 0,
         "isMuted": isMuted ? 1 : 0,
+        "isPinned": isPinned ? 1 : 0,
         "displayName": displayName,
         "participants": participants.map((item) => item.toMap()),
         "hasUnreadMessage": hasUnreadMessage ? 1 : 0,
