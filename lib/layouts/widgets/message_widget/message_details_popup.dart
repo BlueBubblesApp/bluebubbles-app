@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:ui';
 
 import 'package:bluebubbles/action_handler.dart';
+import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/reaction.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -10,11 +12,11 @@ import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.
 import 'package:bluebubbles/layouts/widgets/message_widget/reaction_detail_widget.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:clipboard/clipboard.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
-import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:sprung/sprung.dart';
 
@@ -289,6 +291,16 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
 
   Widget buildCopyPasteMenu() {
     Size size = MediaQuery.of(context).size;
+    bool showDownload = widget.message.hasAttachments &&
+        widget.message.attachments
+                .where((element) => element.mimeStart != null)
+                .length >
+            0 &&
+        widget.message.attachments
+                .where(
+                    (element) => AttachmentHelper.getContent(element) is File)
+                .length >
+            0;
 
     double maxMenuWidth = size.width * 2 / 3;
     Widget menu = ClipRRect(
@@ -416,6 +428,31 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
                   ),
                 ),
               ),
+              if (showDownload)
+                Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () async {
+                      for (Attachment element in widget.message.attachments) {
+                        dynamic content = AttachmentHelper.getContent(element);
+                        if (content is File) {
+                          await AttachmentHelper.saveToGallery(
+                              context, content);
+                        }
+                      }
+                    },
+                    child: ListTile(
+                      title: Text(
+                        "Download",
+                        style: Theme.of(context).textTheme.bodyText1,
+                      ),
+                      trailing: Icon(
+                        Icons.content_copy,
+                        color: Theme.of(context).textTheme.bodyText1.color,
+                      ),
+                    ),
+                  ),
+                ),
             ],
           ),
         ),
@@ -423,6 +460,9 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
     );
 
     double menuHeight = 100;
+    if (showDownload) {
+      menuHeight += 70;
+    }
 
     double topOffset = (messageTopOffset + widget.childSize.height)
         .toDouble()

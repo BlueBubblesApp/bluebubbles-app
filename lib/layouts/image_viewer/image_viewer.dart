@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui';
+import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/share.dart';
 import 'package:bluebubbles/layouts/image_viewer/attachmet_fullscreen_viewer.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
@@ -100,46 +101,7 @@ class _ImageViewerState extends State<ImageViewer>
               padding: EdgeInsets.only(top: 40.0),
               child: CupertinoButton(
                 onPressed: () async {
-                  if (await Permission.storage.request().isGranted) {
-                    await ImageGallerySaver.saveFile(widget.file.absolute.path);
-                    FlutterToast(context).showToast(
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(25.0),
-                        child: BackdropFilter(
-                          filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 24.0, vertical: 12.0),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(25.0),
-                              color: Theme.of(context)
-                                  .accentColor
-                                  .withOpacity(0.1),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.check,
-                                  color: Theme.of(context)
-                                      .textTheme
-                                      .bodyText1
-                                      .color,
-                                ),
-                                SizedBox(
-                                  width: 12.0,
-                                ),
-                                Text(
-                                  "Saved to gallery",
-                                  style: Theme.of(context).textTheme.bodyText1,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    );
-                  }
+                  await AttachmentHelper.saveToGallery(context, widget.file);
                 },
                 child: Icon(
                   Icons.file_download,
