@@ -96,7 +96,7 @@ class _ChatSelectorTextFieldState extends State<ChatSelectorTextField> {
             } else {
               if (widget.allContacts.isEmpty) {
                 Scaffold.of(context).showSnackBar(SnackBar(
-                  content: Text("Invalid Number $done"),
+                  content: Text("Invalid Number/Email, $done"),
                   duration: Duration(milliseconds: 500),
                 ));
 

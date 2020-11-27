@@ -129,6 +129,9 @@ class MessagesViewState extends State<MessagesView>
   }
 
   void handleNewMessage(MessageBlocEvent event) async {
+    // Get outta here if we don't have a chat "open"
+    if (currentChat == null) return;
+
     // Skip deleted messages
     if (event.message != null && event.message.dateDeleted != null) return;
     if (!isNullOrEmpty(event.messages)) {

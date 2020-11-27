@@ -88,6 +88,17 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
     SocketManager().removeChatNotification(chat);
   }
 
+  void initCurrentChat(Chat chat) {
+    currentChat = CurrentChat.getCurrentChat(chat);
+    currentChat.init();
+    currentChat.updateChatAttachments().then((value) {
+      if (this.mounted) setState(() {});
+    });
+    currentChat.stream.listen((event) {
+      if (this.mounted) setState(() {});
+    });
+  }
+
   MessageBloc initMessageBloc() {
     messageBloc = new MessageBloc(chat);
     return messageBloc;
@@ -333,8 +344,8 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
     }
 
     conversations = ChatBloc().chats.sublist(0);
-    for (Chat element in conversations) {
-      await element.getParticipants();
+    for (int i = 0; i < conversations.length; i++) {
+      await conversations[i].getParticipants();
     }
 
     if (widget.type != ChatSelectorTypes.ONLY_EXISTING) {

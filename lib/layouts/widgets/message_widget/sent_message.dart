@@ -111,7 +111,12 @@ class SentMessageHelper {
     if (chat == null) return Container();
     if (message != null && message.error > 0) {
       int errorCode = message != null ? message.error : 0;
-      String errorText = message != null ? message.guid.split('-')[1] : "";
+      String errorText = "Server Error. Contact Support.";
+      if (errorCode == 22) {
+        errorText = "The recipient is not registered with iMessage!";
+      } else if (message != null && message.guid.startsWith("error-")) {
+        errorText = message.guid.split('-')[1];
+      }
 
       return Padding(
         padding: EdgeInsets.only(right: 8.0),
