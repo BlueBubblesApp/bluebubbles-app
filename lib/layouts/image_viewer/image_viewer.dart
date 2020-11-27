@@ -41,31 +41,33 @@ class _ImageViewerState extends State<ImageViewer>
     super.initState();
     controller = new PhotoViewController();
 
-    // controller.outputStateStream.listen((event) {
-    //   if (AttachmentFullscreenViewer.of(context) == null) return;
-    //   if (this.mounted) {
-    //     AttachmentFullscreenViewerState state =
-    //         AttachmentFullscreenViewer.of(context);
-    //     debugPrint("Scale: ${event.scale}");
-    //     if (event.scale > controller.initial.scale) {
-    //       if (state.physics != NeverScrollableScrollPhysics()) {
-    //         AttachmentFullscreenViewer.of(context).setState(() {
-    //           AttachmentFullscreenViewer.of(context).physics =
-    //               NeverScrollableScrollPhysics();
-    //         });
-    //       }
-    //     } else {
-    //       if (state.physics !=
-    //           AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics())) {
-    //         AttachmentFullscreenViewer.of(context).setState(() {
-    //           AttachmentFullscreenViewer.of(context).physics =
-    //               AlwaysScrollableScrollPhysics(
-    //                   parent: BouncingScrollPhysics());
-    //         });
-    //       }
-    //     }
-    //   }
-    // });
+    controller.outputStateStream.listen((event) {
+      if (AttachmentFullscreenViewer.of(context) == null ||
+          event.boundaries == null ||
+          event.scale == null) return;
+      if (this.mounted) {
+        AttachmentFullscreenViewerState state =
+            AttachmentFullscreenViewer.of(context);
+        if (event.scale > event.boundaries.minScale) {
+          if (state.physics != NeverScrollableScrollPhysics()) {
+            AttachmentFullscreenViewer.of(context).setState(() {
+              AttachmentFullscreenViewer.of(context).physics =
+                  NeverScrollableScrollPhysics();
+            });
+          }
+        } else {
+          if (state.physics !=
+              AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics())) {
+            AttachmentFullscreenViewer.of(context).setState(() {
+              AttachmentFullscreenViewer.of(context).physics =
+                  AlwaysScrollableScrollPhysics(
+                parent: BouncingScrollPhysics(),
+              );
+            });
+          }
+        }
+      }
+    });
   }
 
   @override
