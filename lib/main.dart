@@ -23,13 +23,13 @@ import 'package:flutter/services.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
-import 'package:sentry/sentry.dart';
+// import 'package:sentry/sentry.dart';
 
 import 'socket_manager.dart';
 
-final SentryClient _sentry = SentryClient(
-    dsn:
-        "https://3123d4f0d82d405190cb599d0e904adc@o373132.ingest.sentry.io/5372783");
+// final SentryClient _sentry = SentryClient(
+//     dsn:
+//         "https://3123d4f0d82d405190cb599d0e904adc@o373132.ingest.sentry.io/5372783");
 
 bool get isInDebugMode {
   // Assume you're in production mode.
@@ -50,11 +50,12 @@ Future<Null> _reportError(dynamic error, dynamic stackTrace) async {
     // Print the full stacktrace in debug mode.
     debugPrint(stackTrace.toString());
   } else {
+    debugPrint(stackTrace.toString());
     // Send the Exception and Stacktrace to Sentry in Production mode.
-    _sentry.captureException(
-      exception: error,
-      stackTrace: stackTrace,
-    );
+    // _sentry.captureException(
+    //   exception: error,
+    //   stackTrace: stackTrace,
+    // );
   }
 }
 

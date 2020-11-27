@@ -35,9 +35,9 @@
         android:requestLegacyExternalStorage="true"
         android:usesCleartextTraffic="true">
 
-        <meta-data
+        <!-- <meta-data
             android:name="io.sentry.dsn"
-            android:value="https://3123d4f0d82d405190cb599d0e904adc@o373132.ingest.sentry.io/5372783" />
+            android:value="https://3123d4f0d82d405190cb599d0e904adc@o373132.ingest.sentry.io/5372783" /> -->
 
         <receiver android:name=".services.ReplyReceiver"></receiver>
 
