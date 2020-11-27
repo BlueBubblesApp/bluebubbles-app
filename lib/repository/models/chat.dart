@@ -454,7 +454,10 @@ class Chat {
   }
 
   static Future<List<Message>> getMessages(Chat chat,
-      {bool reactionsOnly = false, int offset = 0, int limit = 25}) async {
+      {bool reactionsOnly = false,
+      int offset = 0,
+      int limit = 25,
+      bool includeDeleted: false}) async {
     final Database db = await DBProvider.db.database;
     if (chat.id == null) return [];
 
@@ -470,6 +473,7 @@ class Chat {
         " message.error AS error,"
         " message.dateCreated AS dateCreated,"
         " message.dateDelivered AS dateDelivered,"
+        " message.dateDeleted AS dateDeleted,"
         " message.dateRead AS dateRead,"
         " message.isFromMe AS isFromMe,"
         " message.isDelayed AS isDelayed,"
@@ -503,6 +507,10 @@ class Chat {
         // " LEFT JOIN attachment ON attachment.ROWID = attachment_message_join.attachmentId"
         " LEFT OUTER JOIN handle ON handle.ROWID = message.handleId"
         " WHERE chat.ROWID = ?");
+
+    if (!includeDeleted) {
+      query += " AND message.dateDeleted IS NULL";
+    }
 
     // Add pagination
     String pagination =

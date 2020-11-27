@@ -68,6 +68,13 @@ class DBProvider {
         upgrade: (Database db) {
           db.execute(
               "ALTER TABLE chat ADD COLUMN isFiltered INTEGER DEFAULT 0;");
+        }),
+    new DBUpgradeItem(
+        fromVersions: [1, 2, 3],
+        toVersions: [4],
+        upgrade: (Database db) {
+          db.execute(
+              "ALTER TABLE message ADD COLUMN dateDeleted INTEGER DEFAULT NULL;");
         })
   ];
 
@@ -84,7 +91,7 @@ class DBProvider {
   initDB() async {
     Directory documentsDirectory = await getApplicationDocumentsDirectory();
     _path = join(documentsDirectory.path, "chat.db");
-    return await openDatabase(_path, version: 3, onUpgrade: _onUpgrade,
+    return await openDatabase(_path, version: 4, onUpgrade: _onUpgrade,
         onOpen: (Database db) async {
       debugPrint("Database Opened");
       _database = db;
@@ -259,6 +266,7 @@ class DBProvider {
         "timeExpressiveSendStyleId INTEGER DEFAULT 0,"
         "hasAttachments INTEGER DEFAULT 0,"
         "hasReactions INTEGER DEFAULT 0,"
+        "dateDeleted INTEGER DEFAULT NULL,"
         "FOREIGN KEY(handleId) REFERENCES handle(ROWID)"
         ");");
   }
