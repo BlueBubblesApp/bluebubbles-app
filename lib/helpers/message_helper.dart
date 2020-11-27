@@ -77,6 +77,8 @@ class MessageHelper {
         } else {
           notificationMessages[message] = msgChat.guid;
         }
+      } else {
+        message = existing;
       }
 
       // Create the attachments
@@ -89,6 +91,7 @@ class MessageHelper {
       // Add message to the "master list"
       _messages.add(message);
     }
+
     notificationMessages.forEach((message, value) async {
       Chat msgChat = chats[value];
 

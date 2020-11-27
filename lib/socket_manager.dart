@@ -303,8 +303,15 @@ class SocketManager {
           await chat.save();
         }
 
-        // Lastly, save the message
-        await message.save();
+        // Lastly, find the message
+        Message msg = await Message.findOne({'guid': message.guid});
+
+        // Check if we already have an error, and save if we don't
+        if (msg.error == 0) {
+          // TODO: ADD NOTIFICATION TO USER IF FAILURE
+          await message.save();
+        }
+
         return new Future.value("");
       });
 

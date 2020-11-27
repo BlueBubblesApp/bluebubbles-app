@@ -53,15 +53,9 @@ class ConversationViewState extends State<ConversationView>
   void initState() {
     super.initState();
 
+    // Initialize the current chat state
     if (widget.chat != null) {
-      currentChat = CurrentChat.getCurrentChat(widget.chat);
-      currentChat.init();
-      currentChat.updateChatAttachments().then((value) {
-        if (this.mounted) setState(() {});
-      });
-      currentChat.stream.listen((event) {
-        if (this.mounted) setState(() {});
-      });
+      initCurrentChat(widget.chat);
     }
 
     isCreator = widget.isCreator ?? false;
@@ -75,7 +69,11 @@ class ConversationViewState extends State<ConversationView>
     });
 
     ChatBloc().chatStream.listen((event) async {
-      if (this.mounted) {
+      if (currentChat == null) {
+        currentChat = CurrentChat.getCurrentChat(widget.chat);
+      }
+
+      if (this.mounted && currentChat != null) {
         Chat _chat = await Chat.findOne({"guid": currentChat.chat.guid});
         await _chat.getParticipants();
         currentChat.chat = _chat;
@@ -105,10 +103,17 @@ class ConversationViewState extends State<ConversationView>
   Future<bool> send(List<File> attachments, String text) async {
     if (isCreator && chat == null) {
       chat = await createChat();
+
       if (chat == null) return false;
+      initCurrentChat(chat);
       initConversationViewState();
       initChatSelector();
-    }
+
+      // Fetch messages
+      messageBloc = initMessageBloc();
+      messageBloc.getMessages();
+    }    
+
     if (attachments.length > 0) {
       for (int i = 0; i < attachments.length; i++) {
         OutgoingQueue().add(
@@ -167,6 +172,7 @@ class ConversationViewState extends State<ConversationView>
           Expanded(
             child: (searchQuery.length == 0 || !isCreator) && chat != null
                 ? MessagesView(
+                    key: new Key(chat?.guid ?? "unknown-chat"),
                     messageBloc: messageBloc ?? initMessageBloc(),
                     showHandle: chat.participants.length > 1,
                     chat: chat,
