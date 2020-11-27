@@ -5,6 +5,7 @@ import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_group_widget.dart';
+import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
@@ -91,6 +92,24 @@ class _ConversationTileState extends State<ConversationTile>
 
     return Slidable(
       actionPane: SlidableStrechActionPane(),
+      actions: [
+        IconSlideAction(
+          caption: widget.chat.isPinned ? 'Un-pin' : 'Pin',
+          color: Colors.yellow[800],
+          foregroundColor: Theme.of(context).textTheme.bodyText1.color,
+          icon: Icons.push_pin,
+          onTap: () async {
+            if (widget.chat.isPinned) {
+              await widget.chat.unpin();
+            } else {
+              await widget.chat.pin();
+            }
+
+            EventDispatcher().emit("refresh", null);
+            if (this.mounted) setState(() {});
+          },
+        ),
+      ],
       secondaryActions: <Widget>[
         if (!widget.chat.isArchived)
           IconSlideAction(
