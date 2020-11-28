@@ -31,7 +31,8 @@ dependencies:
   assorted_layout_widgets: ^2.0.0
   record: ^1.0.2
   flutter_local_notifications: any
-  contacts_service: ^0.4.6
+  contacts_service:
+    path: packages/flutter_contacts
   permission_handler: ^5.0.1+1
   path_provider: ^1.6.7
   sqflite: ^1.3.0
@@ -66,8 +67,6 @@ dependencies:
   adaptive_theme: ^0.1.1
   flutter_lock_screen: ^1.0.6
   local_auth: ^0.6.2+3
-  flutter_blurhash: ^0.5.0
-  blurhash_flutter: ^0.1.0
   sprung: ^1.1.0+11
   metadata_fetch: ^0.3.3
   clipboard: ^0.1.2+8
@@ -78,7 +77,7 @@ dependencies:
   giftextfield:
     path: packages/gif_text_field
   image_gallery_saver: ^1.6.6
-  sentry: ^3.0.1
+  # sentry: ^3.0.1
   flutter_image_compress: ^0.7.0
   extended_text_field:
     path: packages/extended_text_field

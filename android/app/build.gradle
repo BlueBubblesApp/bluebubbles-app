@@ -120,7 +120,7 @@ dependencies {
     implementation 'com.google.code.gson:gson:2.8.6'
 
     //for crash reporting
-    implementation 'io.sentry:sentry-android:2.2.2'
+    // implementation 'io.sentry:sentry-android:2.2.2'
 
     // for workmanager
     implementation "androidx.work:work-runtime:2.4.0"

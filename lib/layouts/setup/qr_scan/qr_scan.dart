@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/setup/connecting_alert/connecting_alert.dart';
 import 'package:bluebubbles/layouts/setup/qr_code_scanner.dart';
 import 'package:bluebubbles/layouts/setup/qr_scan/failed_to_scan_dialog.dart';
@@ -19,18 +20,23 @@ class QRScan extends StatefulWidget {
 }
 
 class _QRScanState extends State<QRScan> {
+
   Future<void> scanQRCode() async {
     var result;
     try {
-      result = jsonDecode(
-        await Navigator.of(context).push(
-          CupertinoPageRoute(
-            builder: (BuildContext context) {
-              return QRCodeScanner();
-            },
-          ),
+      result = await Navigator.of(context).push(
+        CupertinoPageRoute(
+          builder: (BuildContext context) {
+            return QRCodeScanner();
+          },
         ),
       );
+
+      if (isNullOrEmpty(result)) {
+        throw new Exception("No data was scanned! Please re-scan your QRCode!");
+      }
+      
+      result = jsonDecode(result);
     } catch (e) {
       showDialog(
         context: context,

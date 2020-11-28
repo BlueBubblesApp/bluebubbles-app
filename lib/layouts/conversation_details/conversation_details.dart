@@ -38,10 +38,8 @@ class _ConversationDetailsState extends State<ConversationDetails> {
     super.initState();
     chat = widget.chat;
     controller = new TextEditingController(text: chat.displayName);
-    Chat.getAttachments(chat).then((value) {
-      attachmentsForChat = value;
-      if (this.mounted) setState(() {});
-    });
+    
+    fetchAttachments();
     ChatBloc().chatStream.listen((event) async {
       if (this.mounted) {
         Chat _chat = await Chat.findOne({"guid": widget.chat.guid});
@@ -58,6 +56,13 @@ class _ConversationDetailsState extends State<ConversationDetails> {
     readOnly = !((await chat.getParticipants()).participants.length > 1);
     debugPrint("updated readonly $readOnly");
     if (this.mounted) setState(() {});
+  }
+
+  void fetchAttachments() {
+    Chat.getAttachments(chat).then((value) {
+      attachmentsForChat = value;
+      if (this.mounted) setState(() {});
+    });
   }
 
   @override
@@ -172,35 +177,38 @@ class _ConversationDetailsState extends State<ConversationDetails> {
           SliverPadding(
             padding: EdgeInsets.symmetric(vertical: 20),
           ),
-          // SliverToBoxAdapter(
-          //   child: InkWell(
-          //     onTap: () async {
-          //       showDialog(
-          //         context: context,
-          //         builder: (context) => SyncDialog(
-          //           chat: chat,
-          //           withOffset: true,
-          //           initialMessage: "Downloading messages...",
-          //         ),
-          //       );
-          //     },
-          //     child: ListTile(
-          //       leading: Text(
-          //         "Fetch more messages",
-          //         style: TextStyle(
-          //           color: Theme.of(context).primaryColor,
-          //         ),
-          //       ),
-          //       trailing: Padding(
-          //         padding: EdgeInsets.only(right: 15),
-          //         child: Icon(
-          //           Icons.file_download,
-          //           color: Theme.of(context).primaryColor,
-          //         ),
-          //       ),
-          //     ),
-          //   ),
-          // ),
+          SliverToBoxAdapter(
+            child: InkWell(
+              onTap: () async {
+                await showDialog(
+                  context: context,
+                  builder: (context) => SyncDialog(
+                    chat: chat,
+                    withOffset: true,
+                    initialMessage: "Fetching messages...",
+                    limit: 100
+                  ),
+                );
+
+                fetchAttachments();
+              },
+              child: ListTile(
+                leading: Text(
+                  "Fetch more messages",
+                  style: TextStyle(
+                    color: Theme.of(context).primaryColor,
+                  ),
+                ),
+                trailing: Padding(
+                  padding: EdgeInsets.only(right: 15),
+                  child: Icon(
+                    Icons.file_download,
+                    color: Theme.of(context).primaryColor,
+                  ),
+                ),
+              ),
+            ),
+          ),
           SliverToBoxAdapter(
             child: InkWell(
               onTap: () async {
@@ -209,6 +217,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                   builder: (context) => SyncDialog(
                     chat: chat,
                     initialMessage: "Syncing messages...",
+                    limit: 25
                   ),
                 );
               },
@@ -229,6 +238,31 @@ class _ConversationDetailsState extends State<ConversationDetails> {
               ),
             ),
           ),
+          SliverToBoxAdapter(
+              child: ListTile(
+                  leading: Text("Pin Conversation",
+                      style: TextStyle(
+                        color: Theme.of(context).primaryColor,
+                      )),
+                  trailing: Switch(
+                      value: widget.chat.isPinned,
+                      activeColor: Theme.of(context).primaryColor,
+                      activeTrackColor:
+                          Theme.of(context).primaryColor.withAlpha(200),
+                      inactiveTrackColor:
+                          Theme.of(context).accentColor.withOpacity(0.6),
+                      inactiveThumbColor: Theme.of(context).accentColor,
+                      onChanged: (value) async {
+                        if (value) {
+                          await widget.chat.pin();
+                        } else {
+                          await widget.chat.unpin();
+                        }
+                        
+                        EventDispatcher().emit("refresh", null);
+
+                        if (this.mounted) setState(() {});
+                      }))),
           SliverToBoxAdapter(
               child: ListTile(
                   leading: Text("Mute Conversation",
@@ -322,6 +356,7 @@ class _SyncDialogState extends State<SyncDialog> {
   String errorCode;
   bool finished = false;
   String message;
+  double progress;
 
   @override
   void initState() {
@@ -345,7 +380,18 @@ class _SyncDialogState extends State<SyncDialog> {
         });
       }
 
-      MessageHelper.bulkAddMessages(widget.chat, messages)
+      MessageHelper.bulkAddMessages(
+        widget.chat,
+        messages,
+        onProgress: (int progress, int length) {
+          if (progress == 0 || length  == 0) {
+            this.progress = null;
+          } else {
+            this.progress = progress / length;
+          }
+
+          if (this.mounted) setState(() {});
+        })
           .then((List<Message> __) {
         onFinish(true);
       });
@@ -368,6 +414,7 @@ class _SyncDialogState extends State<SyncDialog> {
               height: 5,
               child: Center(
                 child: LinearProgressIndicator(
+                  value: progress,
                   backgroundColor: Colors.white,
                   valueColor:
                       AlwaysStoppedAnimation(Theme.of(context).primaryColor),

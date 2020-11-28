@@ -47,6 +47,8 @@ class CurrentChat {
   CurrentChat(this.chat);
 
   factory CurrentChat.getCurrentChat(Chat chat) {
+    if (chat == null) return null;
+
     CurrentChat currentChat = AttachmentInfoBloc().getCurrentChat(chat.guid);
     if (currentChat == null) {
       currentChat = CurrentChat(chat);

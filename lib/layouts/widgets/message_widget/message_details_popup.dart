@@ -441,7 +441,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
                   onTap: () async {
                     NewMessageManager().removeMessage(
                         widget.currentChat.chat, widget.message.guid);
-                    await Message.delete({"guid": widget.message.guid});
+                    await Message.softDelete({"guid": widget.message.guid});
                     Navigator.of(context).pop();
                   },
                   child: ListTile(

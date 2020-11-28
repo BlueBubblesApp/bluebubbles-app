@@ -29,7 +29,8 @@ class MessageHelper {
   static Future<List<Message>> bulkAddMessages(
       Chat chat, List<dynamic> messages,
       {bool notifyForNewMessage = false,
-      bool notifyMessageManager = true}) async {
+      bool notifyMessageManager = true,
+      Function(int progress, int length) onProgress}) async {
     bool limit = messages.length > 20;
 
     // Create master list for all the messages and a chat cache
@@ -47,6 +48,10 @@ class MessageHelper {
 
     // Iterate over each message to parse it
     for (dynamic item in messages) {
+      if (onProgress != null) {
+        onProgress(_messages.length, messages.length);
+      }
+  
       // Pull the chats out of the message, if there isnt a default
       Chat msgChat = chat;
       if (msgChat == null) {
@@ -77,6 +82,8 @@ class MessageHelper {
         } else {
           notificationMessages[message] = msgChat.guid;
         }
+      } else {
+        message = existing;
       }
 
       // Create the attachments
@@ -89,6 +96,7 @@ class MessageHelper {
       // Add message to the "master list"
       _messages.add(message);
     }
+
     notificationMessages.forEach((message, value) async {
       Chat msgChat = chats[value];
 
