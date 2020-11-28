@@ -116,9 +116,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
         ),
       ),
       body: CustomScrollView(
-        physics: AlwaysScrollableScrollPhysics(
-          parent: CustomBouncingScrollPhysics(),
-        ),
+        physics: ThemeSwitcher.getScrollPhysics(),
         slivers: <Widget>[
           SliverList(
             delegate: SliverChildListDelegate(
@@ -457,9 +455,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                         builder: (context) => Scaffold(
                           body: Markdown(
                             data: changelog,
-                            physics: AlwaysScrollableScrollPhysics(
-                              parent: BouncingScrollPhysics(),
-                            ),
+                            physics: ThemeSwitcher.getScrollPhysics(),
                             styleSheet: MarkdownStyleSheet.fromTheme(
                               Theme.of(context)
                                 ..textTheme.copyWith(
@@ -534,9 +530,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                           width: MediaQuery.of(context).size.width * 3 / 5,
                           height: MediaQuery.of(context).size.height * 1 / 9,
                           child: ListView(
-                            physics: AlwaysScrollableScrollPhysics(
-                              parent: BouncingScrollPhysics(),
-                            ),
+                            physics: ThemeSwitcher.getScrollPhysics(),
                             children: [
                               Container(
                                 alignment: Alignment.center,

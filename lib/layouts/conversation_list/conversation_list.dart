@@ -399,6 +399,13 @@ class __MaterialState extends State<_Material> {
           duration: Duration(milliseconds: 500),
           child: selected.isEmpty
               ? AppBar(
+                  bottom: PreferredSize(
+                    child: Container(
+                      color: Theme.of(context).dividerColor,
+                      height: 0.5,
+                    ),
+                    preferredSize: Size.fromHeight(0.5),
+                  ),
                   title: Text(
                     "Messages",
                     style: Theme.of(context)
@@ -502,9 +509,7 @@ class __MaterialState extends State<_Material> {
             }
 
             return ListView.builder(
-              physics: AlwaysScrollableScrollPhysics(
-                parent: ClampingScrollPhysics(),
-              ),
+              physics: ThemeSwitcher.getScrollPhysics(),
               itemBuilder: (context, index) {
                 if (!widget.parent.widget.showArchivedChats &&
                     widget.parent.chats[index].isArchived) return Container();

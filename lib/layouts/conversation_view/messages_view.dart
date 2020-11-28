@@ -8,6 +8,7 @@ import 'package:bluebubbles/layouts/widgets/message_widget/message_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/new_message_loader.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/typing_indicator.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
+import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
@@ -302,11 +303,7 @@ class MessagesViewState extends State<MessagesView>
             child: CustomScrollView(
               controller: scrollController,
               reverse: true,
-              physics: SettingsManager().settings.skin == Skins.IOS
-                  ? AlwaysScrollableScrollPhysics(
-                      parent: CustomBouncingScrollPhysics(),
-                    )
-                  : ClampingScrollPhysics(),
+              physics: ThemeSwitcher.getScrollPhysics(),
               slivers: <Widget>[
                 SliverToBoxAdapter(
                   child: TypingIndicator(

@@ -1,5 +1,6 @@
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
+import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/repository/models/theme_entry.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
@@ -33,8 +34,7 @@ class _ThemingColorPickerPopupState extends State<ThemingColorPickerPopup> {
           style:
               whiteLightTheme.textTheme.headline1.apply(color: Colors.white)),
       content: SingleChildScrollView(
-        physics: AlwaysScrollableScrollPhysics(
-            parent: CustomBouncingScrollPhysics()),
+        physics: ThemeSwitcher.getScrollPhysics(),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [

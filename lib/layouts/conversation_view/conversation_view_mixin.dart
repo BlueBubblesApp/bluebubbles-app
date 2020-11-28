@@ -174,6 +174,13 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
           chat.title,
           style: Theme.of(context).textTheme.headline1,
         ),
+        bottom: PreferredSize(
+          child: Container(
+            color: Theme.of(context).dividerColor,
+            height: 0.5,
+          ),
+          preferredSize: Size.fromHeight(0.5),
+        ),
         backgroundColor: Theme.of(context).backgroundColor,
         actionsIconTheme: IconThemeData(color: Theme.of(context).primaryColor),
         actions: [

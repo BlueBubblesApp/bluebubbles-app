@@ -129,9 +129,7 @@ class _SchedulePanelState extends State<SchedulePanel> {
         ),
       ),
       body: CustomScrollView(
-        physics: AlwaysScrollableScrollPhysics(
-          parent: CustomBouncingScrollPhysics(),
-        ),
+        physics: ThemeSwitcher.getScrollPhysics(),
         slivers: <Widget>[
           SliverList(
             delegate: SliverChildListDelegate(

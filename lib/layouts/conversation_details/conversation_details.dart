@@ -41,7 +41,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
     super.initState();
     chat = widget.chat;
     controller = new TextEditingController(text: chat.displayName);
-    
+
     fetchAttachments();
     ChatBloc().chatStream.listen((event) async {
       if (this.mounted) {
@@ -86,7 +86,14 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                 "Details",
                 style: Theme.of(context).textTheme.headline1,
               ),
-              backgroundColor: Theme.of(context).accentColor,
+              backgroundColor: Theme.of(context).backgroundColor,
+              bottom: PreferredSize(
+                child: Container(
+                  color: Theme.of(context).dividerColor,
+                  height: 0.5,
+                ),
+                preferredSize: Size.fromHeight(0.5),
+              ),
             ),
       extendBodyBehindAppBar:
           SettingsManager().settings.skin == Skins.IOS ? true : false,
@@ -194,11 +201,10 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                 await showDialog(
                   context: context,
                   builder: (context) => SyncDialog(
-                    chat: chat,
-                    withOffset: true,
-                    initialMessage: "Fetching messages...",
-                    limit: 100
-                  ),
+                      chat: chat,
+                      withOffset: true,
+                      initialMessage: "Fetching messages...",
+                      limit: 100),
                 );
 
                 fetchAttachments();
@@ -226,10 +232,9 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                 showDialog(
                   context: context,
                   builder: (context) => SyncDialog(
-                    chat: chat,
-                    initialMessage: "Syncing messages...",
-                    limit: 25
-                  ),
+                      chat: chat,
+                      initialMessage: "Syncing messages...",
+                      limit: 25),
                 );
               },
               child: ListTile(
@@ -269,7 +274,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                         } else {
                           await widget.chat.unpin();
                         }
-                        
+
                         EventDispatcher().emit("refresh", null);
 
                         if (this.mounted) setState(() {});
@@ -391,19 +396,16 @@ class _SyncDialogState extends State<SyncDialog> {
         });
       }
 
-      MessageHelper.bulkAddMessages(
-        widget.chat,
-        messages,
-        onProgress: (int progress, int length) {
-          if (progress == 0 || length  == 0) {
-            this.progress = null;
-          } else {
-            this.progress = progress / length;
-          }
+      MessageHelper.bulkAddMessages(widget.chat, messages,
+          onProgress: (int progress, int length) {
+        if (progress == 0 || length == 0) {
+          this.progress = null;
+        } else {
+          this.progress = progress / length;
+        }
 
-          if (this.mounted) setState(() {});
-        })
-          .then((List<Message> __) {
+        if (this.mounted) setState(() {});
+      }).then((List<Message> __) {
         onFinish(true);
       });
     }).catchError((_) => onFinish(false));

@@ -11,6 +11,7 @@ import 'package:bluebubbles/layouts/widgets/CustomCupertinoNavBar.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/reaction_detail_widget.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
+import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
@@ -196,9 +197,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
                               padding: EdgeInsets.symmetric(horizontal: 0),
                               child: ListView.builder(
                                 shrinkWrap: true,
-                                physics: AlwaysScrollableScrollPhysics(
-                                  parent: CustomBouncingScrollPhysics(),
-                                ),
+                                physics: ThemeSwitcher.getScrollPhysics(),
                                 scrollDirection: Axis.horizontal,
                                 itemBuilder: (context, index) {
                                   return reactionWidgets[index];
@@ -399,9 +398,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
                               maxHeight:
                                   MediaQuery.of(context).size.height * 2 / 3),
                           child: SingleChildScrollView(
-                            physics: AlwaysScrollableScrollPhysics(
-                              parent: CustomBouncingScrollPhysics(),
-                            ),
+                            physics: ThemeSwitcher.getScrollPhysics(),
                             child: SelectableText(
                               widget.message.text,
                               style: Theme.of(context).textTheme.bodyText1,
