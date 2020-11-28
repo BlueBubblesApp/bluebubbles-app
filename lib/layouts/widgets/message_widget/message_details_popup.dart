@@ -78,10 +78,15 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
     fetchReactions();
     SchedulerBinding.instance.addPostFrameCallback((_) {
       if (this.mounted) {
+        double menuHeight = 150;
+        if (showDownload) {
+          menuHeight += 70;
+        }
         setState(() {
           double totalHeight = MediaQuery.of(context).size.height -
               MediaQuery.of(context).viewInsets.bottom -
-              120;
+              menuHeight -
+              20;
           double offset =
               (widget.childOffset.dy + widget.childSize.height) - totalHeight;
           messageTopOffset =
@@ -290,18 +295,19 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
     );
   }
 
+  bool get showDownload =>
+      widget.message.hasAttachments &&
+      widget.message.attachments
+              .where((element) => element.mimeStart != null)
+              .length >
+          0 &&
+      widget.message.attachments
+              .where((element) => AttachmentHelper.getContent(element) is File)
+              .length >
+          0;
+
   Widget buildCopyPasteMenu() {
     Size size = MediaQuery.of(context).size;
-    bool showDownload = widget.message.hasAttachments &&
-        widget.message.attachments
-                .where((element) => element.mimeStart != null)
-                .length >
-            0 &&
-        widget.message.attachments
-                .where(
-                    (element) => AttachmentHelper.getContent(element) is File)
-                .length >
-            0;
 
     double maxMenuWidth = size.width * 2 / 3;
     Widget menu = ClipRRect(

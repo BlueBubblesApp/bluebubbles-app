@@ -44,17 +44,17 @@ android {
         applicationId "com.bluebubbles.messaging"
         minSdkVersion 21
         targetSdkVersion 30
-        //                 v0.1.8 armv7 OR arm64
-        // version code: 1  018     070      064
+        //                 v0.1.10 armv7 OR arm64
+        // version code: 1  0110     070      064
 
         //noinspection AccidentalOctal
-        versionCode 1018064
+        versionCode 10110064
         versionName flutterVersionName
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
-        // ndk {
-        //     abiFilters 'armeabi-v7a'
-        // }
+//        ndk {
+//            abiFilters 'armeabi-v7a', 'arm64-v8a'
+//        }
     }
 
     compileOptions {
