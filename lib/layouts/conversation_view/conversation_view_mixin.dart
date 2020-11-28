@@ -348,7 +348,8 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
       await conversations[i].getParticipants();
     }
 
-    if (chatSelectorController.text.length > 1) {
+    if (widget.type == ChatSelectorTypes.ONLY_EXISTING ||
+        chatSelectorController.text.length > 1) {
       conversations.retainWhere((element) => element.participants.length > 1);
     }
 
@@ -419,6 +420,10 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
         widget.type != ChatSelectorTypes.ONLY_CONTACTS) {
       for (Chat chat in conversations) {
         String title = (chat?.title ?? "").toLowerCase();
+        if (widget.type != ChatSelectorTypes.ONLY_EXISTING &&
+            chatSelectorController.text.length > 1) {
+          if (chat.participants.length == 1) continue;
+        }
         if (title.contains(searchQuery.toLowerCase())) {
           if (!cache.contains(chat.guid)) {
             cache.add(chat.guid);
@@ -432,7 +437,6 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
         }
       }
     }
-
     _conversations.addAll(_contacts);
     if (searchQuery.length > 0)
       _conversations.sort((a, b) {

@@ -98,7 +98,7 @@ class _ConversationTileState extends State<ConversationTile>
           caption: widget.chat.isPinned ? 'Un-pin' : 'Pin',
           color: Colors.yellow[800],
           foregroundColor: Theme.of(context).textTheme.bodyText1.color,
-          icon: Icons.push_pin,
+          icon: Icons.star,
           onTap: () async {
             if (widget.chat.isPinned) {
               await widget.chat.unpin();

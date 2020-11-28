@@ -132,6 +132,7 @@ flutter:
     - assets/reactions/question-black.svg
     - assets/reactions/love-black.svg
     - assets/icon/moon.svg
+    - assets/icon/discord.svg
     - assets/images/person.png
     - assets/icon/icon.png
     - assets/changelog/changelog.txt

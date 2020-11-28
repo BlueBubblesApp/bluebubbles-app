@@ -19,6 +19,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../../helpers/hex_color.dart';
 import 'package:flutter/material.dart';
 
@@ -167,8 +168,10 @@ class _SettingsPanelState extends State<SettingsPanel> {
                           }
                         },
                         onLongPress: () {
-                          Clipboard.setData(new ClipboardData(text: _settingsCopy.serverAddress));
-                          final snackBar = SnackBar(content: Text("Address copied to clipboard"));
+                          Clipboard.setData(new ClipboardData(
+                              text: _settingsCopy.serverAddress));
+                          final snackBar = SnackBar(
+                              content: Text("Address copied to clipboard"));
                           Scaffold.of(context).showSnackBar(snackBar);
                         },
                         trailing: connectionStatus == SocketState.CONNECTED ||
@@ -306,7 +309,8 @@ class _SettingsPanelState extends State<SettingsPanel> {
                     AdaptiveTheme.of(context).setThemeMode(val);
 
                     // This needs to be on a delay so the background color has time to change
-                    Timer(Duration(seconds: 1), () => EventDispatcher().emit('theme-update', null));
+                    Timer(Duration(seconds: 1),
+                        () => EventDispatcher().emit('theme-update', null));
                   },
                   options: AdaptiveThemeMode.values,
                   textProcessing: (dynamic val) =>
@@ -483,6 +487,19 @@ class _SettingsPanelState extends State<SettingsPanel> {
                   ),
                 ),
                 SettingsTile(
+                  title: "Join Our Discord",
+                  onTap: () {
+                    MethodChannelInterface().invokeMethod(
+                        "open-link", {"link": "https://discord.gg/hbx7EhNFjp"});
+                  },
+                  trailing: SvgPicture.asset(
+                    "assets/icon/discord.svg",
+                    color: HexColor("#7289DA"),
+                    alignment: Alignment.centerRight,
+                    width: 30,
+                  ),
+                ),
+                SettingsTile(
                   title: "Developers",
                   onTap: () {
                     showDialog(
@@ -598,7 +615,12 @@ class _SettingsPanelState extends State<SettingsPanel> {
 
 class SettingsTile extends StatelessWidget {
   const SettingsTile(
-      {Key key, this.onTap, this.onLongPress, this.title, this.trailing, this.subTitle})
+      {Key key,
+      this.onTap,
+      this.onLongPress,
+      this.title,
+      this.trailing,
+      this.subTitle})
       : super(key: key);
 
   final Function onTap;
