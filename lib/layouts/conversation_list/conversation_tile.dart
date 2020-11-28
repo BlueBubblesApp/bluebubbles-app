@@ -1,10 +1,12 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_group_widget.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
+import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:flutter/services.dart';
@@ -101,6 +103,24 @@ class _ConversationTileState extends State<ConversationTile>
   Widget buildSlider(Widget child) {
     return Slidable(
       actionPane: SlidableStrechActionPane(),
+      actions: [
+        IconSlideAction(
+          caption: widget.chat.isPinned ? 'Un-pin' : 'Pin',
+          color: Colors.yellow[800],
+          foregroundColor: Theme.of(context).textTheme.bodyText1.color,
+          icon: Icons.star,
+          onTap: () async {
+            if (widget.chat.isPinned) {
+              await widget.chat.unpin();
+            } else {
+              await widget.chat.pin();
+            }
+
+            EventDispatcher().emit("refresh", null);
+            if (this.mounted) setState(() {});
+          },
+        ),
+      ],
       secondaryActions: <Widget>[
         if (!widget.chat.isArchived)
           IconSlideAction(
@@ -306,6 +326,12 @@ class __CupertinoState extends State<_Cupertino> {
               isPressed = false;
             });
           },
+          onLongPress: () async {
+            HapticFeedback.mediumImpact();
+            await widget.parent.widget.chat
+                .setUnreadStatus(!widget.parent.widget.chat.hasUnreadMessage);
+            if (this.mounted) setState(() {});
+          },
           child: Stack(
             alignment: Alignment.centerLeft,
             children: <Widget>[
@@ -353,22 +379,36 @@ class __CupertinoState extends State<_Cupertino> {
                 padding: const EdgeInsets.only(left: 8.0),
                 child: Container(
                   child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
-                      !widget.parentProps.chat.isMuted
-                          ? Container(
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(35),
-                                color: widget.parentProps.chat.hasUnreadMessage
-                                    ? Theme.of(context)
-                                        .primaryColor
-                                        .withOpacity(0.8)
-                                    : Colors.transparent,
-                              ),
-                              width: 15,
-                              height: 15,
-                            )
-                          : SvgPicture.asset(
+                      Stack(
+                          alignment: AlignmentDirectional.centerStart,
+                          children: [
+                            (!widget.parent.widget.chat.isMuted &&
+                                    widget.parent.widget.chat.hasUnreadMessage)
+                                ? Container(
+                                    decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(35),
+                                        color: Theme.of(context)
+                                            .primaryColor
+                                            .withOpacity(0.8)),
+                                    width: 15,
+                                    height: 15,
+                                  )
+                                : Container(),
+                            (widget.parent.widget.chat.isPinned)
+                                ? Icon(Icons.star,
+                                    size: 15,
+                                    color: Colors.yellow[
+                                        AdaptiveTheme.of(context).mode ==
+                                                AdaptiveThemeMode.dark
+                                            ? 100
+                                            : 700])
+                                : Container(),
+                          ]),
+                      (widget.parent.widget.chat.isMuted)
+                          ? SvgPicture.asset(
                               "assets/icon/moon.svg",
                               color: widget.parentProps.chat.hasUnreadMessage
                                   ? Theme.of(context)
@@ -377,7 +417,8 @@ class __CupertinoState extends State<_Cupertino> {
                                   : Theme.of(context).textTheme.subtitle1.color,
                               width: 15,
                               height: 15,
-                            ),
+                            )
+                          : Container()
                     ],
                   ),
                 ),

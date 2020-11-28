@@ -132,6 +132,8 @@ class _ConversationListState extends State<ConversationList> {
 
   void sortChats() {
     chats.sort((a, b) {
+      if (!a.isPinned && b.isPinned) return 1;
+      if (a.isPinned && !b.isPinned) return -1;
       if (a.latestMessageDate == null && b.latestMessageDate == null) return 0;
       if (a.latestMessageDate == null) return 1;
       if (b.latestMessageDate == null) return -1;

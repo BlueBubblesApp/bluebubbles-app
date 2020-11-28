@@ -3,6 +3,7 @@ import 'dart:ui';
 
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/contstants.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/new_message_loader.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/typing_indicator.dart';
@@ -128,6 +129,17 @@ class MessagesViewState extends State<MessagesView>
   }
 
   void handleNewMessage(MessageBlocEvent event) async {
+    // Get outta here if we don't have a chat "open"
+    if (currentChat == null) return;
+
+    // Skip deleted messages
+    if (event.message != null && event.message.dateDeleted != null) return;
+    if (!isNullOrEmpty(event.messages)) {
+      event.messages = event.messages
+          .where((element) => element.dateDeleted == null)
+          .toList();
+    }
+
     if (event.type == MessageBlocEventType.insert) {
       if (this.mounted && LifeCycleManager().isAlive) {
         NotificationManager().switchChat(CurrentChat.of(context).chat);
@@ -165,6 +177,7 @@ class MessagesViewState extends State<MessagesView>
           break;
         }
       }
+
       _messages = event.messages;
       if (_listKey != null && _listKey.currentState != null) {
         _listKey.currentState.insertItem(
@@ -197,7 +210,8 @@ class MessagesViewState extends State<MessagesView>
       }
     } else if (event.type == MessageBlocEventType.remove) {
       for (int i = 0; i < _messages.length; i++) {
-        if (_messages[i].guid == event.remove) {
+        if (_messages[i].guid == event.remove &&
+            _listKey.currentState != null) {
           _messages.removeAt(i);
           _listKey.currentState
               .removeItem(i, (context, animation) => Container());

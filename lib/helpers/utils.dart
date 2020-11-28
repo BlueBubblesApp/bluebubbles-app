@@ -270,8 +270,10 @@ Future<dynamic> loadAsset(String path) {
 }
 
 bool validatePhoneNumber(String value) {
+  value = value.trim();
+
   String phonePattern =
-      r'^(\+?\d{1,2}\s?)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}$';
+      r'^\+?(\+?\d{1,2}\s?)?\-?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}$';
   String emailPattern = r'^\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$';
   RegExp regExpPhone = new RegExp(phonePattern);
   RegExp regExpEmail = new RegExp(emailPattern);

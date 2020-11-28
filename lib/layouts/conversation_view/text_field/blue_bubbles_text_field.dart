@@ -283,10 +283,13 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
             color: Theme.of(context).primaryColor,
             child: InkWell(
               onTap: toggleShareMenu,
-              child: Icon(
-                Icons.share,
-                color: Colors.white.withAlpha(225),
-                size: 20,
+              child: Padding(
+                padding: EdgeInsets.only(right: 1),
+                child: Icon(
+                  Icons.share,
+                  color: Colors.white.withAlpha(225),
+                  size: 20,
+                ),
               ),
             ),
           ),

@@ -22,15 +22,12 @@ class ContactAvatarGroupWidget extends StatefulWidget {
       _ContactAvatarGroupWidgetState();
 }
 
-class _ContactAvatarGroupWidgetState extends State<ContactAvatarGroupWidget>
-    with AutomaticKeepAliveClientMixin {
+class _ContactAvatarGroupWidgetState extends State<ContactAvatarGroupWidget> {
   List<dynamic> icons;
   List<Handle> participants = [];
 
   @override
   Widget build(BuildContext context) {
-    super.build(context);
-
     participants = widget.participants;
     // if (participants.length > 2) {
     //   participants = participants.sublist(0, 2);
@@ -167,7 +164,4 @@ class _ContactAvatarGroupWidgetState extends State<ContactAvatarGroupWidget>
             ),
     );
   }
-
-  @override
-  bool get wantKeepAlive => true;
 }
