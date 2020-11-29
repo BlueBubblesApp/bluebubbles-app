@@ -271,6 +271,13 @@ class _SettingsPanelState extends State<SettingsPanel> {
                   initialVal: _settingsCopy.showIncrementalSync,
                   title: "Notify when incremental sync complete",
                 ),
+                SettingsSwitch(
+                  onChanged: (bool val) {
+                    _settingsCopy.sendTypingIndicators = val;
+                  },
+                  initialVal: _settingsCopy.sendTypingIndicators,
+                  title: "Send typing indicators (BlueBubblesHelper ONLY)",
+                ),
                 Divider(
                   color: Theme.of(context).accentColor.withOpacity(0.5),
                   thickness: 1,

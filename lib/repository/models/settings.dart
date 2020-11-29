@@ -19,6 +19,7 @@ class Settings {
   int displayMode = 0;
   bool rainbowBubbles = false;
   bool hideDividers = false;
+  bool sendTypingIndicators = true;
   // String emojiFontFamily;
 
   Skins skin = Skins.IOS;
@@ -58,6 +59,8 @@ class Settings {
         settings.hideDividers = entry.value;
       } else if (entry.name == "skin") {
         settings.skin = Skins.values[entry.value];
+      } else if (entry.name == "sendTypingIndicators") {
+        settings.sendTypingIndicators = entry.value;
       }
       // else if (entry.name == "emojiFontFamily") {
       //   settings.emojiFontFamily = entry.value;
@@ -164,6 +167,10 @@ class Settings {
             name: "skin",
             value: this.skin.index,
             type: this.skin.index.runtimeType),
+        ConfigEntry(
+            name: "sendTypingIndicators",
+            value: this.sendTypingIndicators,
+            type: this.sendTypingIndicators.runtimeType),
         // ConfigEntry(
         //     name: "emojiFontFamily",
         //     value: this.emojiFontFamily,
