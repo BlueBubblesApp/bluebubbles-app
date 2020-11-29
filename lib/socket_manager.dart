@@ -44,7 +44,7 @@ class SocketManager {
 
   SocketManager._internal();
 
-  void removeChatNotification(Chat chat) async {
+  Future<void> removeChatNotification(Chat chat) async {
     await chat.setUnreadStatus(false);
     ChatBloc().updateChat(chat);
   }
@@ -153,6 +153,10 @@ class SocketManager {
         debugPrint("CONNECT ERROR");
         if (state != SocketState.ERROR && state != SocketState.FAILED) {
           state = SocketState.ERROR;
+          Timer(Duration(seconds: 5), () {
+            if (state != SocketState.ERROR) return;
+            refreshConnection(connectToSocket: true);
+          });
           Timer(Duration(seconds: 20), () {
             if (state != SocketState.ERROR) return;
             debugPrint("UNABLE TO CONNECT");

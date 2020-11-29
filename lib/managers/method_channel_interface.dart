@@ -134,7 +134,10 @@ class MethodChannelInterface {
         }
 
         // Remove the notificaiton from that chat
-        SocketManager().removeChatNotification(chat);
+        await SocketManager().removeChatNotification(chat);
+
+        SocketManager().sendMessage(
+            "mark-chat-read", {"chatGuid": chat.guid}, (data) => null);
 
         // In case this method is called when the app is in a background isolate
         closeThread();
