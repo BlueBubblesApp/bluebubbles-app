@@ -223,11 +223,30 @@ class _SettingsPanelState extends State<SettingsPanel> {
                     }
                   },
                 ),
-                SettingsSlider(
-                  startingVal: _settingsCopy.chunkSize.toDouble(),
-                  update: (int val) {
-                    _settingsCopy.chunkSize = val;
+                SettingsSwitch(
+                  onChanged: (bool val) {
+                    _settingsCopy.autoDownload = val;
                   },
+                  initialVal: _settingsCopy.autoDownload,
+                  title: "Auto-download Attachments",
+                ),
+                SettingsSwitch(
+                  onChanged: (bool val) {
+                    _settingsCopy.onlyWifiDownload = val;
+                  },
+                  initialVal: _settingsCopy.onlyWifiDownload,
+                  title: "Only Auto-download Attachments on WiFi",
+                ),
+                SettingsSlider(
+                  text: "Attachment Chunk Size",
+                  startingVal: _settingsCopy.chunkSize.toDouble(),
+                  update: (double val) {
+                    _settingsCopy.chunkSize = val.floor();
+                  },
+                  formatValue: ((double val) => getSizeString(val)),
+                  min: 100,
+                  max: 3000,
+                  divisions: 29
                 ),
                 SettingsSwitch(
                   onChanged: (bool val) {
@@ -245,20 +264,6 @@ class _SettingsPanelState extends State<SettingsPanel> {
                 ),
                 SettingsSwitch(
                   onChanged: (bool val) {
-                    _settingsCopy.autoDownload = val;
-                  },
-                  initialVal: _settingsCopy.autoDownload,
-                  title: "Auto-download Attachments",
-                ),
-                SettingsSwitch(
-                  onChanged: (bool val) {
-                    _settingsCopy.onlyWifiDownload = val;
-                  },
-                  initialVal: _settingsCopy.onlyWifiDownload,
-                  title: "Only Auto-download Attachments on WiFi",
-                ),
-                SettingsSwitch(
-                  onChanged: (bool val) {
                     _settingsCopy.lowMemoryMode = val;
                   },
                   initialVal: _settingsCopy.lowMemoryMode,
@@ -271,9 +276,16 @@ class _SettingsPanelState extends State<SettingsPanel> {
                   initialVal: _settingsCopy.showIncrementalSync,
                   title: "Notify when incremental sync complete",
                 ),
-                Divider(
-                  color: Theme.of(context).accentColor.withOpacity(0.5),
-                  thickness: 1,
+                SettingsSlider(
+                  text: "Scroll Speed Multiplier",
+                  startingVal: _settingsCopy.scrollVelocity,
+                  update: (double val) {
+                    _settingsCopy.scrollVelocity = double.parse(val.toStringAsFixed(2));
+                  },
+                  formatValue: ((double val) => val.toStringAsFixed(2)),
+                  min: 0.20,
+                  max: 2,
+                  divisions: 18
                 ),
                 SettingsSwitch(
                   onChanged: (bool val) {
@@ -913,10 +925,26 @@ class _SettingsOptionsState<T> extends State<SettingsOptions<T>> {
 }
 
 class SettingsSlider extends StatefulWidget {
-  SettingsSlider({this.startingVal, this.update, Key key}) : super(key: key);
+  SettingsSlider(
+      {
+        @required this.startingVal,
+        this.update,
+        @required this.text,
+        this.formatValue,
+        @required this.min,
+        @required this.max,
+        @required this.divisions,
+        Key key
+      })
+      : super(key: key);
 
   final double startingVal;
-  final Function update;
+  final Function(double val) update;
+  final String text;
+  final Function(double value) formatValue;
+  final double min;
+  final double max;
+  final int divisions;
 
   @override
   _SettingsSliderState createState() => _SettingsSliderState();
@@ -927,18 +955,23 @@ class _SettingsSliderState extends State<SettingsSlider> {
   @override
   void initState() {
     super.initState();
-    if (widget.startingVal > 1 && widget.startingVal < 5000) {
+    if (widget.startingVal > 0 && widget.startingVal < 5000) {
       currentVal = widget.startingVal;
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    String value = currentVal.toString();
+    if (widget.formatValue != null) {
+      value = widget.formatValue(currentVal);
+    }
+
     return Column(
       children: <Widget>[
         ListTile(
           title: Text(
-            "Attachment Chunk Size: ${getSizeString(currentVal)}",
+            "${widget.text}: $value",
             style: Theme.of(context).textTheme.bodyText1,
           ),
           subtitle: Slider(
@@ -950,13 +983,13 @@ class _SettingsSliderState extends State<SettingsSlider> {
 
               setState(() {
                 currentVal = value;
-                widget.update(currentVal.floor());
+                widget.update(currentVal);
               });
             },
-            label: getSizeString(currentVal),
-            divisions: 29,
-            min: 100,
-            max: 3000,
+            label: value,
+            divisions: widget.divisions,
+            min: widget.min,
+            max: widget.max,
           ),
         ),
         Divider(
