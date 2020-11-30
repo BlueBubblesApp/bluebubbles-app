@@ -6,6 +6,7 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/settings/scheduler_panel.dart';
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
+import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
@@ -186,7 +187,18 @@ class _DebugPanelState extends State<DebugPanel> {
                           });
                         },
                       );
-                    })
+                    }),
+                SettingsTile(
+                  title: "Restart Server",
+                  subTitle: "Instruct the server to restart. This will disconnect you briefly.",
+                  onTap: () async {
+                    MethodChannelInterface().invokeMethod("set-next-restart", {
+                      "value": DateTime.now().toUtc().millisecondsSinceEpoch
+                    });
+                  },
+                  trailing: Icon(Icons.refresh,
+                      color: Theme.of(context).primaryColor),
+                )
               ],
             ),
           ),

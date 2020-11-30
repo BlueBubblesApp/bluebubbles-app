@@ -19,7 +19,7 @@ class Settings {
   int displayMode = 0;
   bool rainbowBubbles = false;
   bool hideDividers = false;
-  double scrollVelocity = 0.90;
+  double scrollVelocity = 1.00;
   // String emojiFontFamily;
 
   Skins skin = Skins.IOS;

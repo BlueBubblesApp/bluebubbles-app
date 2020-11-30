@@ -60,19 +60,19 @@ public class SocketIO {
     }
 
     private void dumpChannelsCount() {
-        if (!Utils.isNullOrEmpty(_subscribes)) {
-            Utils.log("socketInfo", "SUBSCRIBES SIZES: " + _subscribes.size());
-            for (Map.Entry<String, ConcurrentLinkedQueue<SocketListener>> item : _subscribes.entrySet()) {
-                ConcurrentLinkedQueue<SocketListener> listeners = item.getValue();
-                if (listeners == null) {
-                    Utils.log("socketInfo", "CHANNEL: " + item.getKey() + " with TOTAL LISTENERS: NULL");
-                } else {
-                    Utils.log("socketInfo", "CHANNEL: " + item.getKey() + " with TOTAL LISTENERS: " + listeners.size());
-                }
-            }
-        } else {
-            Utils.log("socketInfo", "SUBSCRIBES SIZES: NULL or EMPTY");
-        }
+        // if (!Utils.isNullOrEmpty(_subscribes)) {
+        //     Utils.log("socketInfo", "SUBSCRIBES SIZES: " + _subscribes.size());
+        //     for (Map.Entry<String, ConcurrentLinkedQueue<SocketListener>> item : _subscribes.entrySet()) {
+        //         ConcurrentLinkedQueue<SocketListener> listeners = item.getValue();
+        //         if (listeners == null) {
+        //             Utils.log("socketInfo", "CHANNEL: " + item.getKey() + " with TOTAL LISTENERS: NULL");
+        //         } else {
+        //             Utils.log("socketInfo", "CHANNEL: " + item.getKey() + " with TOTAL LISTENERS: " + listeners.size());
+        //         }
+        //     }
+        // } else {
+        //     Utils.log("socketInfo", "SUBSCRIBES SIZES: NULL or EMPTY");
+        // }
     }
 
     private Socket getSocket() {
@@ -237,7 +237,7 @@ public class SocketIO {
     }
 
     public void subscribe(String event, final String callback) {
-        Utils.log("subscribe", "channel: " + event + " - with callback: " + callback);
+        //Utils.log("subscribe", "channel: " + event + " - with callback: " + callback);
         if (Utils.isNullOrEmpty(event)) {
             Utils.log("subscribe", "Invalid params: event is NULL/EMPTY!");
         } else {
@@ -269,7 +269,7 @@ public class SocketIO {
         if (Utils.isNullOrEmpty(subscribes)) {
             Utils.log("subscribes", "Subscribes list is NULL or EMPTY!");
         } else if (_socket != null) {
-            Utils.log(TAG, "--- subscribes ---" + new Gson().toJson(subscribes));
+            // Utils.log(TAG, "--- subscribes ---" + new Gson().toJson(subscribes));
             for (Map.Entry<String, String> sub : subscribes.entrySet()) {
                 if (!Utils.isNullOrEmpty(sub.getKey())) {
                     subscribe(sub.getKey(), sub.getValue());
@@ -279,7 +279,7 @@ public class SocketIO {
     }
 
     public void unSubscribe(String eventName, final String callback) {
-        Utils.log("unSubscribe", "channel: " + eventName + " - with callback: " + callback);
+        //Utils.log("unSubscribe", "channel: " + eventName + " - with callback: " + callback);
         if (Utils.isNullOrEmpty(eventName)) {
             Utils.log("unSubscribe", "Invalid params: event is NULL or EMPTY!");
         } else {

@@ -60,7 +60,7 @@ public class FlutterSocketIoPlugin implements MethodCallHandler {
                 case SocketIOManager.MethodCallName.SOCKET_SUBSCRIBES:
                     String socketData = call.argument(SocketIOManager.MethodCallArgumentsName.SOCKET_DATA);
                     Map<String, String> map = Utils.convertJsonToMap(socketData);
-                    Utils.log(TAG, "socketData: " + new Gson().toJson(map));
+                    //Utils.log(TAG, "socketData: " + new Gson().toJson(map));
                     SocketIOManager.getInstance().subscribes(socketDomain, socketNameSpace, map);
                     result.success(null);
                     break;

@@ -7,7 +7,7 @@ import android.net.Uri;
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 
-public class OpenLink implements Handler{
+public class OpenLink implements Handler {
     public static String TAG = "open-link";
 
     private Context context;
