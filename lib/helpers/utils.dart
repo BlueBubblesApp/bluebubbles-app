@@ -305,21 +305,22 @@ List<Color> toColorGradient(String str) {
     total += str.codeUnitAt(i);
   }
 
-  int seed = (total * str.length / 8).round();
+  Random random = new Random(total);
+  int seed = random.nextInt(7);
 
   // These are my arbitrary weights. It's based on what I found
   // to be a good amount of each color
-  if (seed < 901) {
+  if (seed == 0) {
     return [HexColor("fd678d"), HexColor("ff8aa8")]; // Pink
-  } else if (seed >= 901 && seed < 915) {
+  } else if (seed == 1) {
     return [HexColor("6bcff6"), HexColor("94ddfd")]; // Blue
-  } else if (seed >= 915 && seed < 925) {
+  } else if (seed == 2) {
     return [HexColor("fea21c"), HexColor("feb854")]; // Orange
-  } else if (seed >= 925 && seed < 935) {
+  } else if (seed == 3) {
     return [HexColor("5ede79"), HexColor("8de798")]; // Green
-  } else if (seed >= 935 && seed < 950) {
+  } else if (seed == 4) {
     return [HexColor("ffca1c"), HexColor("fcd752")]; // Yellow
-  } else if (seed >= 950 && seed < 3000) {
+  } else if (seed == 5) {
     return [HexColor("ff534d"), HexColor("fd726a")]; // Red
   } else {
     return [HexColor("a78df3"), HexColor("bcabfc")]; // Purple
