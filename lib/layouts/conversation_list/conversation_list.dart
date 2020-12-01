@@ -28,7 +28,7 @@ class _ConversationListState extends State<ConversationList> {
   ScrollController _scrollController;
   Color _theme;
   List<Chat> _chats = <Chat>[];
-  bool colorfulChats = false;
+  bool colorfulAvatars = false;
 
   Brightness brightness = Brightness.light;
   bool gotBrightness = false;
@@ -76,11 +76,11 @@ class _ConversationListState extends State<ConversationList> {
       _chats = ChatBloc().archivedChats;
     }
 
-    colorfulChats = SettingsManager().settings.rainbowBubbles;
+    colorfulAvatars = SettingsManager().settings.colorfulAvatars;
     SettingsManager().stream.listen((Settings newSettings) {
-      if (newSettings.rainbowBubbles != colorfulChats && this.mounted) {
+      if (newSettings.colorfulAvatars != colorfulAvatars && this.mounted) {
         setState(() {
-          colorfulChats = newSettings.rainbowBubbles;
+          colorfulAvatars = newSettings.colorfulAvatars;
         });
       }
     });

@@ -298,11 +298,18 @@ class _SettingsPanelState extends State<SettingsPanel> {
                 ),
                 SettingsSwitch(
                   onChanged: (bool val) {
-                    _settingsCopy.rainbowBubbles = val;
+                    _settingsCopy.colorfulAvatars = val;
                     saveSettings();
                   },
-                  initialVal: _settingsCopy.rainbowBubbles,
-                  title: "Colorful Chats",
+                  initialVal: _settingsCopy.colorfulAvatars,
+                  title: "Colorful Avatars",
+                ),
+                SettingsSwitch(
+                  onChanged: (bool val) {
+                    _settingsCopy.colorfulBubbles = val;
+                  },
+                  initialVal: _settingsCopy.colorfulBubbles,
+                  title: "Colorful Bubbles",
                 ),
                 // SettingsOptions<String>(
                 //   initial: _settingsCopy.emojiFontFamily == null

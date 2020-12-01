@@ -330,7 +330,7 @@ List<Color> toColorGradient(String str) {
 bool shouldBeRainbow(Chat chat) {
   Chat theChat = chat;
   if (theChat == null) return false;
-  return SettingsManager().settings.rainbowBubbles;
+  return SettingsManager().settings.colorfulAvatars;
 }
 
 Size getGifDimensions(Uint8List bytes) {

@@ -6,6 +6,7 @@ import 'package:bluebubbles/layouts/widgets/message_widget/message_content/messa
 import 'package:bluebubbles/layouts/widgets/message_widget/message_popup_holder.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/material.dart';
 
@@ -84,10 +85,15 @@ class _ReceivedMessageState extends State<ReceivedMessage>
       );
     }
 
+    Color bubbleColor = Theme.of(context).accentColor;
+    if (SettingsManager().settings.colorfulBubbles) {
+      bubbleColor = toColorGradient(message?.handle?.address)[0];
+    }
+
     return Stack(
       alignment: AlignmentDirectional.bottomStart,
       children: [
-        if (widget.showTail) MessageTail(message: message),
+        if (widget.showTail) MessageTail(message: message, color: bubbleColor),
         Container(
           margin: EdgeInsets.only(
             top: widget.message.getReactions().length > 0 &&
@@ -107,7 +113,7 @@ class _ReceivedMessageState extends State<ReceivedMessage>
           ),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
-            color: Theme.of(context).accentColor,
+            color: bubbleColor,
           ),
           child: RichText(
             text: TextSpan(
