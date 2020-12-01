@@ -288,16 +288,17 @@ class _SettingsPanelState extends State<SettingsPanel> {
                   thickness: 1,
                 ),
                 SettingsSlider(
-                    text: "Scroll Speed Multiplier",
-                    startingVal: _settingsCopy.scrollVelocity,
-                    update: (double val) {
-                      _settingsCopy.scrollVelocity =
-                          double.parse(val.toStringAsFixed(2));
-                    },
-                    formatValue: ((double val) => val.toStringAsFixed(2)),
-                    min: 0.20,
-                    max: 2,
-                    divisions: 18),
+                  text: "Scroll Speed Multiplier",
+                  startingVal: _settingsCopy.scrollVelocity,
+                  update: (double val) {
+                    _settingsCopy.scrollVelocity =
+                        double.parse(val.toStringAsFixed(2));
+                  },
+                  formatValue: ((double val) => val.toStringAsFixed(2)),
+                  min: 0.20,
+                  max: 2,
+                  divisions: 18,
+                ),
                 SettingsSwitch(
                   onChanged: (bool val) {
                     _settingsCopy.hideDividers = val;

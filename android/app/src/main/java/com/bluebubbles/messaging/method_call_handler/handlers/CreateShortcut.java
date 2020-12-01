@@ -27,15 +27,15 @@ public class CreateShortcut implements Handler {
 
     @Override
     public void Handle() {
-        Icon contactIcon = Icon.createWithData();
-        IconCompat icon = IconCompat.createFromIcon();
-        Person.Builder person = new Person.Builder()
-                .setName(call.argument("name"))
-                .setIcon(call.argument());
-
-        ShortcutManagerCompat.pushDynamicShortcut(context, new ShortcutInfoCompat.Builder(context, (String) call.argument("id") )
-                .setPerson(person.build())
-                .setLongLived(true)
-                .build());
+//        Icon contactIcon = Icon.createWithData();
+//        IconCompat icon = IconCompat.createFromIcon();
+//        Person.Builder person = new Person.Builder()
+//                .setName(call.argument("name"))
+//                .setIcon(call.argument());
+//
+//        ShortcutManagerCompat.pushDynamicShortcut(context, new ShortcutInfoCompat.Builder(context, (String) call.argument("id") )
+//                .setPerson(person.build())
+//                .setLongLived(true)
+//                .build());
     }
 }

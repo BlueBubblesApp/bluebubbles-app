@@ -54,6 +54,11 @@ class NotificationManager {
     await chat.setUnreadStatus(false);
     SocketManager()
         .sendMessage("mark-chat-read", {"chatGuid": chat.guid}, (data) => null);
+
+    if (!MethodChannelInterface().headless) {
+      SocketManager().sendMessage(
+          "update-typing-status", {"chatGuid": chat.guid}, (data) => null);
+    }
     MethodChannelInterface()
         .invokeMethod("clear-chat-notifs", {"chatGuid": chat.guid});
   }

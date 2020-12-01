@@ -178,9 +178,5 @@ class Settings {
             name: "scrollVelocity",
             value: this.scrollVelocity,
             type: this.scrollVelocity.runtimeType),
-        // ConfigEntry(
-        //     name: "emojiFontFamily",
-        //     value: this.emojiFontFamily,
-        //     type: this.emojiFontFamily.runtimeType),
       ];
 }
