@@ -20,6 +20,7 @@ class Settings {
   bool rainbowBubbles = false;
   bool hideDividers = false;
   bool sendTypingIndicators = true;
+  double scrollVelocity = 1.00;
   // String emojiFontFamily;
 
   Skins skin = Skins.IOS;
@@ -61,6 +62,8 @@ class Settings {
         settings.skin = Skins.values[entry.value];
       } else if (entry.name == "sendTypingIndicators") {
         settings.sendTypingIndicators = entry.value;
+      } else if (entry.name == "scrollVelocity") {
+        settings.scrollVelocity = entry.value;
       }
       // else if (entry.name == "emojiFontFamily") {
       //   settings.emojiFontFamily = entry.value;
@@ -171,6 +174,10 @@ class Settings {
             name: "sendTypingIndicators",
             value: this.sendTypingIndicators,
             type: this.sendTypingIndicators.runtimeType),
+        ConfigEntry(
+            name: "scrollVelocity",
+            value: this.scrollVelocity,
+            type: this.scrollVelocity.runtimeType),
         // ConfigEntry(
         //     name: "emojiFontFamily",
         //     value: this.emojiFontFamily,

@@ -25,10 +25,10 @@ public class SocketIOManager implements ISocketIOManager {
 
     private SocketIO getSocket(String socketId) {
         if(mSockets != null && !Utils.isNullOrEmpty(socketId)) {
-            Utils.log("TOTAL SOCKETS: ", String.valueOf(mSockets.size()));
+            //Utils.log("TOTAL SOCKETS: ", String.valueOf(mSockets.size()));
             return mSockets.get(socketId);
         } else {
-            Utils.log("TOTAL SOCKETS: ", "NULL");
+            //Utils.log("TOTAL SOCKETS: ", "NULL");
         }
         return null;
     }

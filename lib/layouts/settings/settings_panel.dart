@@ -6,6 +6,7 @@ import 'package:bluebubbles/helpers/contstants.dart';
 import "package:bluebubbles/helpers/string_extension.dart";
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/layouts/settings/debug_panel.dart';
 import 'package:bluebubbles/layouts/theming/theming_panel.dart';
 import 'package:bluebubbles/layouts/widgets/CustomCupertinoTextField.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
@@ -223,26 +224,6 @@ class _SettingsPanelState extends State<SettingsPanel> {
                     }
                   },
                 ),
-                SettingsSlider(
-                  startingVal: _settingsCopy.chunkSize.toDouble(),
-                  update: (int val) {
-                    _settingsCopy.chunkSize = val;
-                  },
-                ),
-                SettingsSwitch(
-                  onChanged: (bool val) {
-                    _settingsCopy.hideTextPreviews = val;
-                  },
-                  initialVal: _settingsCopy.hideTextPreviews,
-                  title: "Hide Text Previews (in notifications)",
-                ),
-                SettingsSwitch(
-                  onChanged: (bool val) {
-                    _settingsCopy.autoOpenKeyboard = val;
-                  },
-                  initialVal: _settingsCopy.autoOpenKeyboard,
-                  title: "Auto-open Keyboard",
-                ),
                 SettingsSwitch(
                   onChanged: (bool val) {
                     _settingsCopy.autoDownload = val;
@@ -256,6 +237,30 @@ class _SettingsPanelState extends State<SettingsPanel> {
                   },
                   initialVal: _settingsCopy.onlyWifiDownload,
                   title: "Only Auto-download Attachments on WiFi",
+                ),
+                SettingsSlider(
+                    text: "Attachment Chunk Size",
+                    startingVal: _settingsCopy.chunkSize.toDouble(),
+                    update: (double val) {
+                      _settingsCopy.chunkSize = val.floor();
+                    },
+                    formatValue: ((double val) => getSizeString(val)),
+                    min: 100,
+                    max: 3000,
+                    divisions: 29),
+                SettingsSwitch(
+                  onChanged: (bool val) {
+                    _settingsCopy.hideTextPreviews = val;
+                  },
+                  initialVal: _settingsCopy.hideTextPreviews,
+                  title: "Hide Text Previews (in notifications)",
+                ),
+                SettingsSwitch(
+                  onChanged: (bool val) {
+                    _settingsCopy.autoOpenKeyboard = val;
+                  },
+                  initialVal: _settingsCopy.autoOpenKeyboard,
+                  title: "Auto-open Keyboard",
                 ),
                 SettingsSwitch(
                   onChanged: (bool val) {
@@ -282,6 +287,17 @@ class _SettingsPanelState extends State<SettingsPanel> {
                   color: Theme.of(context).accentColor.withOpacity(0.5),
                   thickness: 1,
                 ),
+                SettingsSlider(
+                    text: "Scroll Speed Multiplier",
+                    startingVal: _settingsCopy.scrollVelocity,
+                    update: (double val) {
+                      _settingsCopy.scrollVelocity =
+                          double.parse(val.toStringAsFixed(2));
+                    },
+                    formatValue: ((double val) => val.toStringAsFixed(2)),
+                    min: 0.20,
+                    max: 2,
+                    divisions: 18),
                 SettingsSwitch(
                   onChanged: (bool val) {
                     _settingsCopy.hideDividers = val;
@@ -378,46 +394,16 @@ class _SettingsPanelState extends State<SettingsPanel> {
                 //   },
                 // ),
                 SettingsTile(
-                  onTap: () {
-                    showDialog(
-                      barrierDismissible: false,
-                      context: context,
-                      builder: (BuildContext context) {
-                        return AlertDialog(
-                          title: Text(
-                            "Are you sure?",
-                            style: Theme.of(context).textTheme.bodyText1,
-                          ),
-                          backgroundColor: Theme.of(context).backgroundColor,
-                          actions: <Widget>[
-                            FlatButton(
-                              child: Text("Yes"),
-                              onPressed: () async {
-                                await DBProvider.deleteDB();
-                                Settings temp = SettingsManager().settings;
-                                temp.finishedSetup = false;
-                                await SettingsManager().saveSettings(temp);
-                                SocketManager().finishedSetup.sink.add(false);
-                                Navigator.of(context)
-                                    .popUntil((route) => route.isFirst);
-                              },
-                            ),
-                            FlatButton(
-                              child: Text("Cancel"),
-                              onPressed: () {
-                                Navigator.of(context).pop();
-                              },
-                            ),
-                          ],
-                        );
-                      },
+                  title: "Debugging",
+                  trailing: Icon(Icons.arrow_forward_ios,
+                      color: Theme.of(context).primaryColor),
+                  onTap: () async {
+                    Navigator.of(context).push(
+                      CupertinoPageRoute(
+                        builder: (context) => DebugPanel(),
+                      ),
                     );
                   },
-                  title: "Reset DB",
-                ),
-                Divider(
-                  color: Theme.of(context).accentColor.withOpacity(0.5),
-                  thickness: 1,
                 ),
                 SettingsTile(
                   title: "Donations",
@@ -605,7 +591,45 @@ class _SettingsPanelState extends State<SettingsPanel> {
                     Icons.info_outline,
                     color: Theme.of(context).primaryColor,
                   ),
-                )
+                ),
+                SettingsTile(
+                  onTap: () {
+                    showDialog(
+                      barrierDismissible: false,
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          title: Text(
+                            "Are you sure?",
+                            style: Theme.of(context).textTheme.bodyText1,
+                          ),
+                          backgroundColor: Theme.of(context).backgroundColor,
+                          actions: <Widget>[
+                            FlatButton(
+                              child: Text("Yes"),
+                              onPressed: () async {
+                                await DBProvider.deleteDB();
+                                Settings temp = SettingsManager().settings;
+                                temp.finishedSetup = false;
+                                await SettingsManager().saveSettings(temp);
+                                SocketManager().finishedSetup.sink.add(false);
+                                Navigator.of(context)
+                                    .popUntil((route) => route.isFirst);
+                              },
+                            ),
+                            FlatButton(
+                              child: Text("Cancel"),
+                              onPressed: () {
+                                Navigator.of(context).pop();
+                              },
+                            ),
+                          ],
+                        );
+                      },
+                    );
+                  },
+                  title: "Reset DB",
+                ),
               ],
             ),
           ),
@@ -933,10 +957,24 @@ class _SettingsOptionsState<T> extends State<SettingsOptions<T>> {
 }
 
 class SettingsSlider extends StatefulWidget {
-  SettingsSlider({this.startingVal, this.update, Key key}) : super(key: key);
+  SettingsSlider(
+      {@required this.startingVal,
+      this.update,
+      @required this.text,
+      this.formatValue,
+      @required this.min,
+      @required this.max,
+      @required this.divisions,
+      Key key})
+      : super(key: key);
 
   final double startingVal;
-  final Function update;
+  final Function(double val) update;
+  final String text;
+  final Function(double value) formatValue;
+  final double min;
+  final double max;
+  final int divisions;
 
   @override
   _SettingsSliderState createState() => _SettingsSliderState();
@@ -947,18 +985,23 @@ class _SettingsSliderState extends State<SettingsSlider> {
   @override
   void initState() {
     super.initState();
-    if (widget.startingVal > 1 && widget.startingVal < 5000) {
+    if (widget.startingVal > 0 && widget.startingVal < 5000) {
       currentVal = widget.startingVal;
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    String value = currentVal.toString();
+    if (widget.formatValue != null) {
+      value = widget.formatValue(currentVal);
+    }
+
     return Column(
       children: <Widget>[
         ListTile(
           title: Text(
-            "Attachment Chunk Size: ${getSizeString(currentVal)}",
+            "${widget.text}: $value",
             style: Theme.of(context).textTheme.bodyText1,
           ),
           subtitle: Slider(
@@ -970,13 +1013,13 @@ class _SettingsSliderState extends State<SettingsSlider> {
 
               setState(() {
                 currentVal = value;
-                widget.update(currentVal.floor());
+                widget.update(currentVal);
               });
             },
-            label: getSizeString(currentVal),
-            divisions: 29,
-            min: 100,
-            max: 3000,
+            label: value,
+            divisions: widget.divisions,
+            min: widget.min,
+            max: widget.max,
           ),
         ),
         Divider(
