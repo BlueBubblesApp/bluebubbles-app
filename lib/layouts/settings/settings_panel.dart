@@ -593,9 +593,8 @@ class _SettingsPanelState extends State<SettingsPanel> {
                               child: Text("Yes"),
                               onPressed: () async {
                                 await DBProvider.deleteDB();
-                                Settings temp = SettingsManager().settings;
-                                temp.finishedSetup = false;
-                                await SettingsManager().saveSettings(temp);
+                                await SettingsManager().resetConnection();
+                                
                                 SocketManager().finishedSetup.sink.add(false);
                                 Navigator.of(context)
                                     .popUntil((route) => route.isFirst);
