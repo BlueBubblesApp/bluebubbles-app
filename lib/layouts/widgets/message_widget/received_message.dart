@@ -100,15 +100,15 @@ class _ReceivedMessageState extends State<ReceivedMessage>
       );
     }
 
-    Color bubbleColor = Theme.of(context).accentColor;
+    List<Color> bubbleColors = [Theme.of(context).accentColor, Theme.of(context).accentColor];
     if (SettingsManager().settings.colorfulBubbles) {
-      bubbleColor = toColorGradient(message?.handle?.address)[0];
+      bubbleColors = toColorGradient(message?.handle?.address);
     }
 
     return Stack(
       alignment: AlignmentDirectional.bottomStart,
       children: [
-        if (widget.showTail) MessageTail(message: message, color: bubbleColor),
+        if (widget.showTail) MessageTail(message: message, color: bubbleColors[0]),
         Container(
           margin: EdgeInsets.only(
             top: widget.message.getReactions().length > 0 &&
@@ -128,7 +128,10 @@ class _ReceivedMessageState extends State<ReceivedMessage>
           ),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
-            color: bubbleColor,
+            gradient: LinearGradient(
+              begin: AlignmentDirectional.topStart,
+              colors: bubbleColors,
+            ),
           ),
           child: RichText(
             text: TextSpan(
