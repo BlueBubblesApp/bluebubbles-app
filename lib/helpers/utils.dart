@@ -298,7 +298,7 @@ String stripHtmlTags(String htmlString) {
 // }
 
 List<Color> toColorGradient(String str) {
-  if (str.length == 0) return [HexColor("686868"), HexColor("928E8E")];
+  if (isNullOrEmpty(str)) return [HexColor("686868"), HexColor("928E8E")];
 
   int total = 0;
   for (int i = 0; i < (str ?? "").length; i++) {

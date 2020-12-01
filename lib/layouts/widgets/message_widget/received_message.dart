@@ -47,17 +47,32 @@ class ReceivedMessage extends StatefulWidget {
 
 class _ReceivedMessageState extends State<ReceivedMessage>
     with MessageWidgetMixin {
+
+  bool checkedHandle = false;
   @override
   initState() {
     super.initState();
     initMessageState(widget.message, widget.showHandle)
         .then((value) => {if (this.mounted) setState(() {})});
+
+    checkHandle();
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     didChangeMessageDependencies(widget.message, widget.showHandle);
+  }
+
+  void checkHandle() {
+    // If we've already checked it, don't do it again
+    if (widget.message.handle != null || checkedHandle) return;
+    checkedHandle = true;
+
+    // Fetch the handle and update the state
+    widget.message.getHandle().then((handle) {
+      if (this.mounted) setState(() {});
+    });
   }
 
   Future<void> didChangeMessageDependencies(
