@@ -54,25 +54,12 @@ class _ReceivedMessageState extends State<ReceivedMessage>
     super.initState();
     initMessageState(widget.message, widget.showHandle)
         .then((value) => {if (this.mounted) setState(() {})});
-
-    checkHandle();
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     didChangeMessageDependencies(widget.message, widget.showHandle);
-  }
-
-  void checkHandle() {
-    // If we've already checked it, don't do it again
-    if (widget.message.handle != null || checkedHandle) return;
-    checkedHandle = true;
-
-    // Fetch the handle and update the state
-    widget.message.getHandle().then((handle) {
-      if (this.mounted) setState(() {});
-    });
   }
 
   Future<void> didChangeMessageDependencies(
@@ -128,8 +115,9 @@ class _ReceivedMessageState extends State<ReceivedMessage>
           ),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
-            gradient: LinearGradient(
+            gradient:  LinearGradient(
               begin: AlignmentDirectional.topStart,
+              end: AlignmentDirectional.bottomEnd,
               colors: bubbleColors,
             ),
           ),
