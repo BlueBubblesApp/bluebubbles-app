@@ -73,11 +73,11 @@ class ConversationViewState extends State<ConversationView>
         currentChat = CurrentChat.getCurrentChat(widget.chat);
       }
 
-      if (this.mounted && currentChat != null) {
+      if (currentChat != null) {
         Chat _chat = await Chat.findOne({"guid": currentChat.chat.guid});
         await _chat.getParticipants();
         currentChat.chat = _chat;
-        setState(() {});
+        if (this.mounted) setState(() {});
       }
     });
   }
