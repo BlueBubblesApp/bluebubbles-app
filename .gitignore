@@ -42,5 +42,3 @@ lib/generated_plugin_registrant.dart
 **/android/.settings
 *.xcconfig
 ios/Podfile
-ios/Flutter/Release.xcconfig
-ios/Flutter/Debug.xcconfig
