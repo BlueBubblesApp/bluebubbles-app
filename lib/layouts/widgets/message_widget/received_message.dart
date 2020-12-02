@@ -49,17 +49,32 @@ class ReceivedMessage extends StatefulWidget {
 
 class _ReceivedMessageState extends State<ReceivedMessage>
     with MessageWidgetMixin {
+
+  bool checkedHandle = false;
   @override
   initState() {
     super.initState();
     initMessageState(widget.message, widget.showHandle)
         .then((value) => {if (this.mounted) setState(() {})});
+
+    checkHandle();
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     didChangeMessageDependencies(widget.message, widget.showHandle);
+  }
+
+  void checkHandle() {
+    // If we've already checked it, don't do it again
+    if (widget.message.handle != null || checkedHandle) return;
+    checkedHandle = true;
+
+    // Fetch the handle and update the state
+    widget.message.getHandle().then((handle) {
+      if (this.mounted) setState(() {});
+    });
   }
 
   Future<void> didChangeMessageDependencies(
@@ -76,7 +91,7 @@ class _ReceivedMessageState extends State<ReceivedMessage>
       return Padding(
         padding: EdgeInsets.only(
           left:
-              CurrentChat.of(context).chat.participants.length > 1 ? 5.0 : 0.0,
+          CurrentChat.of(context).chat.participants.length > 1 ? 5.0 : 0.0,
           right: (hasReactions) ? 15.0 : 0.0,
           top: widget.message.getReactions().length > 0 ? 15 : 0,
         ),
@@ -87,15 +102,20 @@ class _ReceivedMessageState extends State<ReceivedMessage>
       );
     }
 
+    List<Color> bubbleColors = [Theme.of(context).accentColor, Theme.of(context).accentColor];
+    if (SettingsManager().settings.rainbowBubbles) {
+      bubbleColors = toColorGradient(message?.handle?.address);
+    }
+
     return Stack(
       alignment: AlignmentDirectional.bottomStart,
       children: [
         if (widget.showTail && SettingsManager().settings.skin == Skins.IOS)
-          MessageTail(message: message),
+          MessageTail(message: message, color: bubbleColors[0]),
         Container(
           margin: EdgeInsets.only(
             top: widget.message.getReactions().length > 0 &&
-                    !widget.message.hasAttachments
+                !widget.message.hasAttachments
                 ? 18
                 : 0,
             left: 10,
@@ -103,7 +123,7 @@ class _ReceivedMessageState extends State<ReceivedMessage>
           ),
           constraints: BoxConstraints(
             maxWidth:
-                MediaQuery.of(context).size.width * MessageWidgetMixin.MAX_SIZE,
+            MediaQuery.of(context).size.width * MessageWidgetMixin.MAX_SIZE,
           ),
           padding: EdgeInsets.symmetric(
             vertical: 8,
@@ -113,21 +133,24 @@ class _ReceivedMessageState extends State<ReceivedMessage>
             borderRadius: SettingsManager().settings.skin == Skins.IOS
                 ? BorderRadius.circular(20)
                 : BorderRadius.only(
-                    topLeft: widget.olderMessage == null ||
-                            MessageHelper.getShowTail(
-                                widget.olderMessage, widget.message)
-                        ? Radius.circular(20)
-                        : Radius.circular(5),
-                    topRight: Radius.circular(20),
-                    bottomRight: Radius.circular(20),
-                    bottomLeft: Radius.circular(widget.showTail ? 20 : 5),
-                  ),
-            color: Theme.of(context).accentColor,
+              topLeft: widget.olderMessage == null ||
+                  MessageHelper.getShowTail(
+                      widget.olderMessage, widget.message)
+                  ? Radius.circular(20)
+                  : Radius.circular(5),
+              topRight: Radius.circular(20),
+              bottomRight: Radius.circular(20),
+              bottomLeft: Radius.circular(widget.showTail ? 20 : 5),
+            ),
+            gradient: LinearGradient(
+              begin: AlignmentDirectional.topStart,
+              colors: bubbleColors,
+            ),
           ),
           child: RichText(
             text: TextSpan(
               children:
-                  MessageWidgetMixin.buildMessageSpans(context, widget.message),
+              MessageWidgetMixin.buildMessageSpans(context, widget.message),
               style: Theme.of(context).textTheme.bodyText2,
             ),
           ),
@@ -245,7 +268,7 @@ class _ReceivedMessageState extends State<ReceivedMessage>
       // Add padding when we are showing the avatar
       padding: EdgeInsets.only(
           left: (!widget.showTail &&
-                  (CurrentChat.of(context).chat.isGroup() || widget.isGroup))
+              (CurrentChat.of(context).chat.isGroup() || widget.isGroup))
               ? 35.0
               : 0.0,
           bottom: (widget.showTail) ? 10.0 : 0.0),

@@ -40,3 +40,5 @@ lib/generated_plugin_registrant.dart
 #signing
 **/android/key.properties
 **/android/.settings
+*.xcconfig
+ios/Podfile

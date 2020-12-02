@@ -183,7 +183,8 @@ bool isEmptyString(String input, {stripWhitespace = false}) {
 
 bool isParticipantEvent(Message message) {
   if (message == null) return false;
-  if (message.itemType == 1 && [0, 1].contains(message.groupActionType)) return true;
+  if (message.itemType == 1 && [0, 1].contains(message.groupActionType))
+    return true;
   if ([2, 3].contains(message.itemType)) return true;
   return false;
 }
@@ -354,5 +355,7 @@ Size getGifDimensions(Uint8List bytes) {
 }
 
 Brightness getBrightness(BuildContext context) {
-  return AdaptiveTheme.of(context).mode == AdaptiveThemeMode.dark ? Brightness.dark : Brightness.light;
+  return AdaptiveTheme.of(context).mode == AdaptiveThemeMode.dark
+      ? Brightness.dark
+      : Brightness.light;
 }

@@ -184,7 +184,9 @@ class MessagesViewState extends State<MessagesView>
         _listKey.currentState.insertItem(
           event.index != null ? event.index : 0,
           duration: isNewMessage
-              ? event.outGoing ? Duration(milliseconds: 500) : animationDuration
+              ? event.outGoing
+                  ? Duration(milliseconds: 500)
+                  : animationDuration
               : Duration(milliseconds: 0),
         );
       }
@@ -282,7 +284,9 @@ class MessagesViewState extends State<MessagesView>
         });
       },
       child: Stack(
-        alignment: AlignmentDirectional.bottomCenter,
+        alignment: SettingsManager().settings.skin == Skins.IOS
+            ? AlignmentDirectional.bottomCenter
+            : Alignment.bottomRight,
         children: [
           NotificationListener(
             onNotification: (scrollNotification) {
@@ -386,16 +390,34 @@ class MessagesViewState extends State<MessagesView>
               ],
             ),
           ),
-          (showScrollDown && scrollState == -1)
+          (SettingsManager().settings.skin == Skins.IOS
+                  ? showScrollDown && scrollState == -1
+                  : showScrollDown)
               ? ClipRRect(
                   child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+                    filter: ImageFilter.blur(
+                        sigmaX: SettingsManager().settings.skin == Skins.IOS
+                            ? 5
+                            : 0,
+                        sigmaY: SettingsManager().settings.skin == Skins.IOS
+                            ? 5
+                            : 0),
                     child: Container(
-                      height: 35,
-                      width: 150,
+                      height: SettingsManager().settings.skin == Skins.IOS
+                          ? 35
+                          : 50,
+                      width: SettingsManager().settings.skin == Skins.IOS
+                          ? 150
+                          : 50,
                       decoration: BoxDecoration(
-                          color: Theme.of(context).accentColor.withOpacity(0.7),
-                          borderRadius: BorderRadius.circular(10.0)),
+                          color: Theme.of(context).accentColor.withOpacity(
+                              SettingsManager().settings.skin == Skins.IOS
+                                  ? 0.7
+                                  : 1.0),
+                          borderRadius: BorderRadius.circular(
+                              SettingsManager().settings.skin == Skins.IOS
+                                  ? 10.0
+                                  : 1000)),
                       child: Center(
                         child: GestureDetector(
                           onTap: () {
@@ -406,7 +428,9 @@ class MessagesViewState extends State<MessagesView>
                             );
                           },
                           child: Text(
-                            "\u{2193} Scroll to bottom \u{2193}",
+                            SettingsManager().settings.skin == Skins.IOS
+                                ? "\u{2193} Scroll to bottom \u{2193}"
+                                : "\u{2193}",
                             textAlign: TextAlign.center,
                             style: Theme.of(context).textTheme.bodyText1,
                           ),
