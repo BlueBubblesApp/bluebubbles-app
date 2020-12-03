@@ -103,17 +103,17 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
       }
     }
 
+    this.results = _results;
+    _listKey = new GlobalKey<AnimatedListState>();
+
+    // Let the animated list know it should update
+    _listKey?.currentState?.setState(() {});
+
     // Update the UI with the results
     if (this.mounted) {
       setState(() {
         isSearching = false;
-        this.results = _results;
       });
-    }
-
-    // Let the animated list know it should update
-    if (_listKey.currentState.mounted) {
-      _listKey.currentState.setState(() {});
     }
   }
 
@@ -215,45 +215,49 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
                 List<InlineSpan> spans = [];
 
                 // Get the current position of the search term
-                int termIndex =
-                    (message.text ?? "").indexOf(textEditingController.text);
+                int termIndex = (message.text ?? "")
+                    .toLowerCase()
+                    .indexOf(textEditingController.text.toLowerCase());
                 int termEnd = termIndex + textEditingController.text.length;
 
-                // We only want a snippet of the text, so only get a 50x50 range
-                // of characters from the string, with the search term in the middle
-                String subText = message.text.substring(
-                    (termIndex - 50 >= 0) ? termIndex - 50 : 0,
-                    (termEnd + 50 < message.text.length)
-                        ? termEnd + 50
-                        : message.text.length);
+                if (termIndex >= 0) {
+                  // We only want a snippet of the text, so only get a 50x50 range
+                  // of characters from the string, with the search term in the middle
+                  String subText = message.text.substring(
+                      (termIndex - 50 >= 0) ? termIndex - 50 : 0,
+                      (termEnd + 50 < message.text.length)
+                          ? termEnd + 50
+                          : message.text.length);
 
-                // Recarculate the term position in the snippet
-                termIndex =
-                    subText.indexOf(textEditingController.text);
-                termEnd = termIndex + textEditingController.text.length;
+                  // Recarculate the term position in the snippet
+                  termIndex = subText.toLowerCase()
+                    .indexOf(textEditingController.text.toLowerCase());
+                  termEnd = termIndex + textEditingController.text.length;
 
-                print(subText);
-                print(subText.substring(0, termIndex));
+                  // Add the beginning string
+                  spans.add(TextSpan(
+                      text: subText.substring(0, termIndex),
+                      style: Theme.of(context).textTheme.subtitle1));
 
-                // Add the beginning string
-                spans.add(TextSpan(
-                    text: subText.substring(0, termIndex),
-                    style: Theme.of(context).textTheme.subtitle1));
+                  // Add the search term
+                  spans.add(TextSpan(
+                      text: subText.substring(termIndex, termEnd),
+                      style: Theme.of(context).textTheme.subtitle1.apply(
+                          color: Theme.of(context).primaryColor,
+                          fontWeightDelta: 2)));
 
-                // Add the search term
-                spans.add(TextSpan(
-                    text: subText.substring(termIndex, termEnd),
-                    style: Theme.of(context).textTheme.subtitle1.apply(
-                        color: Theme.of(context).primaryColor,
-                        fontWeightDelta: 2)));
-
-                // Add the ending string
-                spans.add(TextSpan(
-                  text: subText.substring(termEnd, subText.length),
-                  style: Theme.of(context).textTheme.subtitle1
-                ));
+                  // Add the ending string
+                  spans.add(TextSpan(
+                      text: subText.substring(termEnd, subText.length),
+                      style: Theme.of(context).textTheme.subtitle1));
+                } else {
+                  spans.add(TextSpan(
+                      text: message.text,
+                      style: Theme.of(context).textTheme.subtitle1));
+                }
 
                 return Column(
+                    key: new Key("result-${message.guid}"),
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
                       ListTile(
@@ -264,7 +268,8 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
                               padding: EdgeInsets.only(top: 5.0),
                               child: RichText(text: TextSpan(children: spans))),
                           trailing: Icon(Icons.arrow_forward_ios,
-                              color: Theme.of(context).textTheme.bodyText1.color)),
+                              color:
+                                  Theme.of(context).textTheme.bodyText1.color)),
                       Divider(color: Theme.of(context).accentColor)
                     ]);
               },
