@@ -54,6 +54,8 @@ class MessagesViewState extends State<MessagesView>
     widget.messageBloc.stream.listen(handleNewMessage);
 
     scrollController.addListener(() {
+      if (scrollController == null) return;
+
       if (scrollController.hasClients &&
           scrollController.offset >= 500 &&
           !showScrollDown) {
