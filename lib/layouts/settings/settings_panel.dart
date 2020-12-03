@@ -216,7 +216,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                         applicationID: fcmData[7],
                       );
                       _settingsCopy.guidAuthKey = fcmData[0];
-                      _settingsCopy.serverAddress = fcmData[1];
+                      _settingsCopy.serverAddress = getServerAddress(address: fcmData[1]);
 
                       SettingsManager().saveSettings(_settingsCopy);
                       SettingsManager().saveFCMData(_fcmDataCopy);

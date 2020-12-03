@@ -225,13 +225,14 @@ class SocketManager {
       _manager.socket.destroy();
     }
 
+    String serverAddress = getServerAddress();
     debugPrint(
-        "Starting socket io with the server: ${SettingsManager().settings.serverAddress}");
+        "Starting socket io with the server: $serverAddress");
 
     try {
       // Create a new socket connection
       _manager.socket = SocketIOManager().createSocketIO(
-          SettingsManager().settings.serverAddress, "/",
+          serverAddress, "/",
           query: "guid=${SettingsManager().settings.guidAuthKey}",
           socketStatusCallback: (data) => socketStatusUpdate(data));
 
@@ -590,7 +591,7 @@ class SocketManager {
     // We copy the settings to a local variable
     Settings settingsCopy = SettingsManager().settings;
     // Update the address of the copied settings
-    settingsCopy.serverAddress = serverAddress;
+    settingsCopy.serverAddress = getServerAddress(address: serverAddress);
 
     // And then save to disk
     // NOTE: we do not automatically connect to the socket or authorize fcm,
@@ -624,6 +625,8 @@ class SocketManager {
     try {
       String url =
           await MethodChannelInterface().invokeMethod("get-server-url");
+      url = getServerAddress(address: url);
+
       debugPrint("New server URL: $url");
 
       // Set the server URL

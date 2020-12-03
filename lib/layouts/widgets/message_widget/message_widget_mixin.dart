@@ -138,8 +138,7 @@ abstract class MessageWidgetMixin {
                           !url.startsWith("https://")) {
                         url = "http://" + url;
                       }
-                      debugPrint(
-                          "open url " + text.startsWith("http://").toString());
+
                       MethodChannelInterface()
                           .invokeMethod("open-link", {"link": url});
                     },

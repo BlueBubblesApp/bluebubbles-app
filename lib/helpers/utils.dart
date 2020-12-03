@@ -356,3 +356,21 @@ Size getGifDimensions(Uint8List bytes) {
 Brightness getBrightness(BuildContext context) {
   return AdaptiveTheme.of(context).mode == AdaptiveThemeMode.dark ? Brightness.dark : Brightness.light;
 }
+
+/// Take the passed [address] or serverAddress from Settings
+/// and sanitize it, making sure it includes an http schema
+String getServerAddress({String address}) {
+  String serverAddress = address ?? SettingsManager().settings.serverAddress;
+
+  // If the serverAddress doesn't start with HTTP, modify it
+  if (!serverAddress.startsWith("http")) {
+    // If it''s an ngrok address, use HTTPS, otherwise, just use HTTP
+    if (serverAddress.contains("ngrok.io")) {
+      serverAddress = "https://$serverAddress";
+    } else {
+      serverAddress = "http://$serverAddress";
+    }
+  }
+
+  return serverAddress;
+}
