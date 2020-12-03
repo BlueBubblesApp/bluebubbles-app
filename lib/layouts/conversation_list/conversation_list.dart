@@ -148,12 +148,9 @@ class _ConversationListState extends State<ConversationList> {
                   : CrossFadeState.showSecond,
               duration: Duration(milliseconds: 250),
               secondChild: AppBar(
-                leading: (widget.showArchivedChats)
-                  ? IconButton(
-                      icon: Icon(Icons.arrow_back_ios, color: Theme.of(context).primaryColor),
-                      onPressed: () => Navigator.of(context).pop(),
-                    )
-                  : Container(),
+                iconTheme: IconThemeData(
+                  color: Theme.of(context).primaryColor
+                ),
                 elevation: 0,
                 backgroundColor: _theme,
                 centerTitle: true,
@@ -169,6 +166,7 @@ class _ConversationListState extends State<ConversationList> {
                 ),
               ),
               firstChild: AppBar(
+                leading: new Container(),
                 elevation: 0,
                 brightness: this.brightness,
                 backgroundColor: Theme.of(context).backgroundColor,
@@ -184,12 +182,9 @@ class _ConversationListState extends State<ConversationList> {
         physics: ThemeManager().scrollPhysics,
         slivers: <Widget>[
           SliverAppBar(
-            leading: (widget.showArchivedChats)
-              ? IconButton(
-                  icon: Icon(Icons.arrow_back_ios, color: Theme.of(context).primaryColor),
-                  onPressed: () => Navigator.of(context).pop(),
-                )
-              : Container(),
+            iconTheme: IconThemeData(
+              color: Theme.of(context).textTheme.headline1.color
+            ),
             stretch: true,
             onStretchTrigger: () {
               return null;
