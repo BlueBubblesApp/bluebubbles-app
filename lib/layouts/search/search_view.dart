@@ -231,13 +231,14 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
                           : message.text.length);
 
                   // Recarculate the term position in the snippet
-                  termIndex = subText.toLowerCase()
-                    .indexOf(textEditingController.text.toLowerCase());
+                  termIndex = subText
+                      .toLowerCase()
+                      .indexOf(textEditingController.text.toLowerCase());
                   termEnd = termIndex + textEditingController.text.length;
 
                   // Add the beginning string
                   spans.add(TextSpan(
-                      text: subText.substring(0, termIndex),
+                      text: subText.substring(0, termIndex).trimLeft(),
                       style: Theme.of(context).textTheme.subtitle1));
 
                   // Add the search term
@@ -249,7 +250,7 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
 
                   // Add the ending string
                   spans.add(TextSpan(
-                      text: subText.substring(termEnd, subText.length),
+                      text: subText.substring(termEnd, subText.length).trimRight(),
                       style: Theme.of(context).textTheme.subtitle1));
                 } else {
                   spans.add(TextSpan(
@@ -263,8 +264,22 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
                     children: [
                       ListTile(
                           dense: true,
-                          title: Text(chat?.title,
-                              style: Theme.of(context).textTheme.bodyText1),
+                          title: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: [
+                              Text(
+                                "${dateToShortString(message.dateCreated)}",
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .subtitle1
+                                    .apply(fontSizeDelta: -2)),
+                              Container(height: 5.0),
+                              Text(
+                                chat?.title,
+                                style: Theme.of(context).textTheme.bodyText1),
+                            ],     
+                          ),
                           subtitle: Padding(
                               padding: EdgeInsets.only(top: 5.0),
                               child: RichText(text: TextSpan(children: spans))),

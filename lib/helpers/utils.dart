@@ -13,6 +13,7 @@ import 'package:convert/convert.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart' as intl;
 
 DateTime parseDate(dynamic value) {
   if (value == null) return null;
@@ -373,4 +374,15 @@ String getServerAddress({String address}) {
   }
 
   return serverAddress;
+}
+
+String dateToShortString(DateTime timestamp) {
+  if (timestamp == null || timestamp.millisecondsSinceEpoch == 0) return "";
+  if (timestamp.isToday()) {
+    return new intl.DateFormat.jm().format(timestamp);
+  } else if (timestamp.isYesterday()) {
+    return "Yesterday";
+  } else {
+    return "${timestamp.month.toString()}/${timestamp.day.toString()}/${timestamp.year.toString()}";
+  }
 }
