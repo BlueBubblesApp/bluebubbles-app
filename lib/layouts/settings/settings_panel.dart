@@ -5,6 +5,7 @@ import 'dart:ui';
 import "package:bluebubbles/helpers/string_extension.dart";
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/layouts/search/search_view.dart';
 import 'package:bluebubbles/layouts/settings/debug_panel.dart';
 import 'package:bluebubbles/layouts/theming/theming_panel.dart';
 import 'package:bluebubbles/layouts/widgets/CustomCupertinoTextField.dart';
@@ -77,7 +78,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
       return;
     }
 
-    bool isDark = Theme.of(context).accentColor.computeLuminance() < 0.179;
+    bool isDark = Theme.of(context).backgroundColor.computeLuminance() < 0.179;
     brightness = isDark ? Brightness.dark : Brightness.light;
     gotBrightness = true;
   }
@@ -380,6 +381,18 @@ class _SettingsPanelState extends State<SettingsPanel> {
                 //     );
                 //   },
                 // ),
+                SettingsTile(
+                  title: "Search",
+                  trailing: Icon(Icons.arrow_forward_ios,
+                      color: Theme.of(context).primaryColor),
+                  onTap: () async {
+                    Navigator.of(context).push(
+                      CupertinoPageRoute(
+                        builder: (context) => SearchView(),
+                      ),
+                    );
+                  },
+                ),
                 SettingsTile(
                   title: "Debugging",
                   trailing: Icon(Icons.arrow_forward_ios,

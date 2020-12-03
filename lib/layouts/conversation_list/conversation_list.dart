@@ -118,7 +118,7 @@ class _ConversationListState extends State<ConversationList> {
       return;
     }
 
-    bool isDark = Theme.of(context).accentColor.computeLuminance() < 0.179;
+    bool isDark = Theme.of(context).backgroundColor.computeLuminance() < 0.179;
     brightness = isDark ? Brightness.dark : Brightness.light;
     gotBrightness = true;
   }

@@ -489,27 +489,30 @@ class SocketManager {
   Future<List<dynamic>> fetchMessages(Chat chat,
       {int offset: 0,
       int limit: 100,
-      bool onlyAttachments: false}) async {
+      bool onlyAttachments: false,
+      List<Map<String, dynamic>> where: const []}) async {
     Completer<List<dynamic>> completer = new Completer();
     debugPrint("(Fetch Messages) Fetching data.");
 
     Map<String, dynamic> params = Map();
-    params["chatGuid"] = chat.guid;
+    params["chatGuid"] = chat?.guid;
     params["offset"] = offset;
     params["limit"] = limit;
     params["withAttachments"] = true;
     params["withHandle"] = true;
     params["sort"] = "DESC";
-    params["where"] = [];
+    params["where"] = where;
 
     if (onlyAttachments) {
-      params["where"] = [
+      params["where"].add(
         {
           "statement": "message.cache_has_attachments = :flag",
           "args": {"flag": 1}
         }
-      ];
+      );
     }
+
+    print(params);
 
     SocketManager().sendMessage("get-messages", params, (data) async {
       if (data['status'] != 200) {
