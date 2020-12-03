@@ -152,6 +152,7 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
           ),
         ),
         body: Column(children: [
+          Container(padding: EdgeInsets.only(top: 8.0)),
           Container(
               padding: EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
               child: Row(
