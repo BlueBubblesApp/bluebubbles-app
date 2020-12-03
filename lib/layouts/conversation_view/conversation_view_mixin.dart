@@ -170,6 +170,10 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
   Widget buildConversationViewHeader() {
     if (SettingsManager().settings.skin == Skins.Material) {
       return AppBar(
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: Theme.of(context).primaryColor),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
         title: Text(
           chat.title,
           style: Theme.of(context).textTheme.headline1,
