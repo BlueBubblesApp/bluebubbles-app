@@ -101,7 +101,7 @@ abstract class MessageWidgetMixin {
         if (SettingsManager().settings.colorfulBubbles) {
           textStyle = Theme.of(context).textTheme.bodyText2.apply(
               color:
-                  darken(toColorGradient(message?.handle?.address ?? "")[0], 0.4));
+                  darken(toColorGradient(message?.handle?.address ?? "")[0], 0.35));
         } else {
           Theme.of(context).textTheme.bodyText1.apply(color: Colors.white);
         }
