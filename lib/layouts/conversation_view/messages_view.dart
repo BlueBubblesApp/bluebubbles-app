@@ -382,6 +382,7 @@ class MessagesViewState extends State<MessagesView>
         ),
         (showScrollDown && scrollState == -1)
             ? ClipRRect(
+                borderRadius: BorderRadius.circular(10.0),
                 child: BackdropFilter(
                   filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
                   child: Container(
