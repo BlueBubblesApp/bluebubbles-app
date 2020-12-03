@@ -21,6 +21,7 @@ class Settings {
   bool colorfulBubbles = false;
   bool hideDividers = false;
   double scrollVelocity = 1.00;
+  bool sendWithReturn = false;
   // String emojiFontFamily;
 
   Skins skin = Skins.IOS;
@@ -60,6 +61,8 @@ class Settings {
         settings.hideDividers = entry.value;
       } else if (entry.name == "scrollVelocity") {
         settings.scrollVelocity = entry.value;
+      } else if (entry.name == "sendWithReturn") {
+        settings.sendWithReturn = entry.value;
       }
       // else if (entry.name == "emojiFontFamily") {
       //   settings.emojiFontFamily = entry.value;
@@ -170,6 +173,10 @@ class Settings {
             name: "scrollVelocity",
             value: this.scrollVelocity,
             type: this.scrollVelocity.runtimeType),
+        ConfigEntry(
+            name: "sendWithReturn",
+            value: this.sendWithReturn,
+            type: this.sendWithReturn.runtimeType),
         // ConfigEntry(
         //     name: "emojiFontFamily",
         //     value: this.emojiFontFamily,

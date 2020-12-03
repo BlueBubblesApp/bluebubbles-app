@@ -265,6 +265,13 @@ class _SettingsPanelState extends State<SettingsPanel> {
                 ),
                 SettingsSwitch(
                   onChanged: (bool val) {
+                    _settingsCopy.sendWithReturn = val;
+                  },
+                  initialVal: _settingsCopy.sendWithReturn,
+                  title: "Send Message with Return Key",
+                ),
+                SettingsSwitch(
+                  onChanged: (bool val) {
                     _settingsCopy.lowMemoryMode = val;
                   },
                   initialVal: _settingsCopy.lowMemoryMode,
