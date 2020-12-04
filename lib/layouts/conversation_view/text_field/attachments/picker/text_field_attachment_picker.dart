@@ -138,7 +138,8 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker>
                                               .bodyText1,
                                         ),
                                         onPressed: () async {
-                                          Share.location(CurrentChat.of(context).chat);
+                                          Share.location(
+                                              CurrentChat.of(context).chat);
                                           Navigator.of(context).pop();
                                         },
                                       ),
@@ -190,13 +191,13 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker>
                       ),
                     ),
                   ),
-                  SliverToBoxAdapter(
-                    child: CameraWidget(
-                      addAttachment: (File attachment) {
-                        widget.onAddAttachment(attachment);
-                      },
-                    ),
-                  ),
+                  // SliverToBoxAdapter(
+                  //   child: CameraWidget(
+                  //     addAttachment: (File attachment) {
+                  //       widget.onAddAttachment(attachment);
+                  //     },
+                  //   ),
+                  // ),
                   SliverGrid(
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 2,

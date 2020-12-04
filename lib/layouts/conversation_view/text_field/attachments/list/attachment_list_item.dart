@@ -37,6 +37,7 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
   }
 
   Future<void> loadPreview() async {
+    debugPrint("File path ${widget.file.path}");
     String mimeType = mime(widget.file.path);
     if (mimeType.startsWith("video/")) {
       preview = await VideoThumbnail.thumbnailData(
