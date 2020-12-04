@@ -1,13 +1,12 @@
-import 'dart:async';
 import 'dart:convert';
 import 'dart:ui';
 
 import "package:bluebubbles/helpers/string_extension.dart";
-import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/layouts/search/search_view.dart';
-import 'package:bluebubbles/layouts/settings/debug_panel.dart';
-import 'package:bluebubbles/layouts/theming/theming_panel.dart';
+import 'package:bluebubbles/layouts/settings/about_panel.dart';
+import 'package:bluebubbles/layouts/settings/server_management_panel.dart';
+import 'package:bluebubbles/layouts/settings/theme_panel.dart';
+import 'package:bluebubbles/layouts/settings/ux_panel.dart';
 import 'package:bluebubbles/layouts/widgets/CustomCupertinoTextField.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
@@ -19,9 +18,6 @@ import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_displaymode/flutter_displaymode.dart';
-import 'package:flutter_markdown/flutter_markdown.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import '../../helpers/hex_color.dart';
 import 'package:flutter/material.dart';
 
@@ -38,8 +34,6 @@ class _SettingsPanelState extends State<SettingsPanel> {
   Settings _settingsCopy;
   FCMData _fcmDataCopy;
   bool needToReconnect = false;
-  List<DisplayMode> modes;
-  DisplayMode currentMode;
   bool showUrl = false;
   Brightness brightness;
   bool gotBrightness = false;
@@ -60,14 +54,6 @@ class _SettingsPanelState extends State<SettingsPanel> {
         });
       }
     });
-  }
-
-  @override
-  void didChangeDependencies() async {
-    super.didChangeDependencies();
-    modes = await FlutterDisplayMode.supported;
-    currentMode = await _settingsCopy.getDisplayMode();
-    setState(() {});
   }
 
   void loadBrightness() {
@@ -123,6 +109,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
           SliverList(
             delegate: SliverChildListDelegate(
               <Widget>[
+                Container(padding: EdgeInsets.only(top: 5.0)),
                 StreamBuilder(
                     stream: SocketManager().connectionStateStream,
                     builder: (context, AsyncSnapshot<SocketState> snapshot) {
@@ -250,125 +237,6 @@ class _SettingsPanelState extends State<SettingsPanel> {
                   max: 3000,
                   divisions: 29
                 ),
-                SettingsSwitch(
-                  onChanged: (bool val) {
-                    _settingsCopy.hideTextPreviews = val;
-                  },
-                  initialVal: _settingsCopy.hideTextPreviews,
-                  title: "Hide Text Previews (in notifications)",
-                ),
-                SettingsSwitch(
-                  onChanged: (bool val) {
-                    _settingsCopy.autoOpenKeyboard = val;
-                  },
-                  initialVal: _settingsCopy.autoOpenKeyboard,
-                  title: "Auto-open Keyboard",
-                ),
-                SettingsSwitch(
-                  onChanged: (bool val) {
-                    _settingsCopy.sendWithReturn = val;
-                  },
-                  initialVal: _settingsCopy.sendWithReturn,
-                  title: "Send Message with Return Key",
-                ),
-                SettingsSwitch(
-                  onChanged: (bool val) {
-                    _settingsCopy.lowMemoryMode = val;
-                  },
-                  initialVal: _settingsCopy.lowMemoryMode,
-                  title: "Low Memory Mode",
-                ),
-                SettingsSwitch(
-                  onChanged: (bool val) {
-                    _settingsCopy.showIncrementalSync = val;
-                  },
-                  initialVal: _settingsCopy.showIncrementalSync,
-                  title: "Notify when incremental sync complete",
-                ),
-                SettingsSlider(
-                  text: "Scroll Speed Multiplier",
-                  startingVal: _settingsCopy.scrollVelocity,
-                  update: (double val) {
-                    _settingsCopy.scrollVelocity = double.parse(val.toStringAsFixed(2));
-                  },
-                  formatValue: ((double val) => val.toStringAsFixed(2)),
-                  min: 0.20,
-                  max: 2,
-                  divisions: 18
-                ),
-                SettingsSwitch(
-                  onChanged: (bool val) {
-                    _settingsCopy.hideDividers = val;
-                    saveSettings();
-                  },
-                  initialVal: _settingsCopy.hideDividers,
-                  title: "Hide Dividers",
-                ),
-                SettingsSwitch(
-                  onChanged: (bool val) {
-                    _settingsCopy.colorfulAvatars = val;
-                    saveSettings();
-                  },
-                  initialVal: _settingsCopy.colorfulAvatars,
-                  title: "Colorful Avatars",
-                ),
-                SettingsSwitch(
-                  onChanged: (bool val) {
-                    _settingsCopy.colorfulBubbles = val;
-                  },
-                  initialVal: _settingsCopy.colorfulBubbles,
-                  title: "Colorful Bubbles",
-                ),
-                // SettingsOptions<String>(
-                //   initial: _settingsCopy.emojiFontFamily == null
-                //       ? "System"
-                //       : fontFamilyToString[_settingsCopy.emojiFontFamily],
-                //   onChanged: (val) {
-                //     _settingsCopy.emojiFontFamily = stringToFontFamily[val];
-                //   },
-                //   options: stringToFontFamily.keys.toList(),
-                //   textProcessing: (dynamic val) => val,
-                //   title: "Emoji Style",
-                //   showDivider: false,
-                // ),
-                SettingsOptions<AdaptiveThemeMode>(
-                  initial: AdaptiveTheme.of(context).mode,
-                  onChanged: (val) {
-                    AdaptiveTheme.of(context).setThemeMode(val);
-
-                    // This needs to be on a delay so the background color has time to change
-                    Timer(Duration(seconds: 1),
-                        () => EventDispatcher().emit('theme-update', null));
-                  },
-                  options: AdaptiveThemeMode.values,
-                  textProcessing: (dynamic val) =>
-                      val.toString().split(".").last,
-                  title: "App Theme",
-                  showDivider: false,
-                ),
-                SettingsTile(
-                  title: "Theming",
-                  trailing: Icon(Icons.arrow_forward_ios,
-                      color: Theme.of(context).primaryColor),
-                  onTap: () async {
-                    Navigator.of(context).push(
-                      CupertinoPageRoute(
-                        builder: (context) => ThemingPanel(),
-                      ),
-                    );
-                  },
-                ),
-                if (currentMode != null && modes != null)
-                  SettingsOptions<DisplayMode>(
-                    initial: currentMode,
-                    onChanged: (val) async {
-                      currentMode = val;
-                      _settingsCopy.displayMode = currentMode.id;
-                    },
-                    options: modes,
-                    textProcessing: (dynamic val) => val.toString(),
-                    title: "Display",
-                  ),
                 // SettingsTile(
                 //   title: "Message Scheduling",
                 //   trailing: Icon(Icons.arrow_forward_ios,
@@ -394,205 +262,67 @@ class _SettingsPanelState extends State<SettingsPanel> {
                 //   },
                 // ),
                 SettingsTile(
-                  title: "Debugging",
+                  title: "Theme Settings",
+                  onTap: () {
+                    Navigator.of(context).push(
+                      CupertinoPageRoute(
+                        builder: (context) => ThemePanel(),
+                      ),
+                    );
+                  },
+                  trailing: Icon(
+                    Icons.arrow_forward_ios,
+                    color: Theme.of(context).primaryColor,
+                  ),
+                ),
+                SettingsTile(
+                  title: "User Experience Settings",
+                  onTap: () {
+                    Navigator.of(context).push(
+                      CupertinoPageRoute(
+                        builder: (context) => UXPanel(),
+                      ),
+                    );
+                  },
+                  trailing: Icon(
+                    Icons.arrow_forward_ios,
+                    color: Theme.of(context).primaryColor,
+                  ),
+                ),
+                SettingsTile(
+                  title: "Server Management",
                   trailing: Icon(Icons.arrow_forward_ios,
                       color: Theme.of(context).primaryColor),
                   onTap: () async {
                     Navigator.of(context).push(
                       CupertinoPageRoute(
-                        builder: (context) => DebugPanel(),
+                        builder: (context) => ServerManagementPanel(),
                       ),
                     );
                   },
                 ),
                 SettingsTile(
-                  title: "Donations",
+                  title: "About & Links",
+                  onTap: () {
+                    Navigator.of(context).push(
+                      CupertinoPageRoute(
+                        builder: (context) => AboutPanel(),
+                      ),
+                    );
+                  },
+                  trailing: Icon(
+                    Icons.arrow_forward_ios,
+                    color: Theme.of(context).primaryColor,
+                  ),
+                ),
+                SettingsTile(
+                  title: "Support the Developers!",
                   onTap: () {
                     MethodChannelInterface().invokeMethod("open-link",
                         {"link": "https://bluebubbles.app/donate/"});
                   },
                   trailing: Icon(
                     Icons.attach_money,
-                    color: Theme.of(context).primaryColor,
-                  ),
-                ),
-                SettingsTile(
-                  title: "Website",
-                  onTap: () {
-                    MethodChannelInterface().invokeMethod(
-                        "open-link", {"link": "https://bluebubbles.app/"});
-                  },
-                  trailing: Icon(
-                    Icons.link,
-                    color: Theme.of(context).primaryColor,
-                  ),
-                ),
-                SettingsTile(
-                  title: "Source Code",
-                  onTap: () {
-                    MethodChannelInterface().invokeMethod("open-link",
-                        {"link": "https://github.com/BlueBubblesApp"});
-                  },
-                  trailing: Icon(
-                    Icons.code,
-                    color: Theme.of(context).primaryColor,
-                  ),
-                ),
-                SettingsTile(
-                  title: "Changelog",
-                  onTap: () async {
-                    String changelog = await DefaultAssetBundle.of(context)
-                        .loadString('assets/changelog/changelog.txt');
-                    Navigator.of(context).push(
-                      CupertinoPageRoute(
-                        builder: (context) => Scaffold(
-                          body: Markdown(
-                            data: changelog,
-                            physics: AlwaysScrollableScrollPhysics(
-                              parent: BouncingScrollPhysics(),
-                            ),
-                            styleSheet: MarkdownStyleSheet.fromTheme(
-                              Theme.of(context)
-                                ..textTheme.copyWith(
-                                  headline1: TextStyle(
-                                    color: Colors.white,
-                                  ),
-                                ),
-                            ).copyWith(
-                              h1: Theme.of(context)
-                                  .textTheme
-                                  .headline1
-                                  .copyWith(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold),
-                              h2: Theme.of(context)
-                                  .textTheme
-                                  .headline2
-                                  .copyWith(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold),
-                              h3: Theme.of(context)
-                                  .textTheme
-                                  .headline3
-                                  .copyWith(
-                                      fontSize: 17,
-                                      fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                          backgroundColor: Theme.of(context).backgroundColor,
-                          appBar: CupertinoNavigationBar(
-                            backgroundColor: Theme.of(context).accentColor,
-                            middle: Text(
-                              "Changelog",
-                              style: Theme.of(context).textTheme.headline1,
-                            ),
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                  trailing: Icon(
-                    Icons.code,
-                    color: Theme.of(context).primaryColor,
-                  ),
-                ),
-                SettingsTile(
-                  title: "Join Our Discord",
-                  onTap: () {
-                    MethodChannelInterface().invokeMethod(
-                        "open-link", {"link": "https://discord.gg/hbx7EhNFjp"});
-                  },
-                  trailing: SvgPicture.asset(
-                    "assets/icon/discord.svg",
-                    color: HexColor("#7289DA"),
-                    alignment: Alignment.centerRight,
-                    width: 30,
-                  ),
-                ),
-                SettingsTile(
-                  title: "Developers",
-                  onTap: () {
-                    showDialog(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        title: Text(
-                          "Developers! Developers!",
-                          style: Theme.of(context).textTheme.headline1,
-                          textAlign: TextAlign.center,
-                        ),
-                        backgroundColor: Theme.of(context).accentColor,
-                        content: SizedBox(
-                          width: MediaQuery.of(context).size.width * 3 / 5,
-                          height: MediaQuery.of(context).size.height * 1 / 9,
-                          child: ListView(
-                            physics: AlwaysScrollableScrollPhysics(
-                              parent: BouncingScrollPhysics(),
-                            ),
-                            children: [
-                              Container(
-                                alignment: Alignment.center,
-                                padding: EdgeInsets.all(8),
-                                child: Text(
-                                  "Zach",
-                                  style: Theme.of(context).textTheme.bodyText1,
-                                ),
-                              ),
-                              Container(
-                                alignment: Alignment.center,
-                                padding: EdgeInsets.all(8),
-                                child: Text(
-                                  "Brandon",
-                                  style: Theme.of(context).textTheme.bodyText1,
-                                ),
-                              ),
-                              Container(
-                                alignment: Alignment.center,
-                                padding: EdgeInsets.all(8),
-                                child: Text(
-                                  "Maxwell",
-                                  style: Theme.of(context).textTheme.bodyText1,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        actions: [
-                          FlatButton(
-                            child: Text(
-                              "Close",
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodyText1
-                                  .copyWith(
-                                    color: Theme.of(context).primaryColor,
-                                  ),
-                            ),
-                            onPressed: () => Navigator.of(context).pop(),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                  trailing: Icon(
-                    Icons.info_outline,
-                    color: Theme.of(context).primaryColor,
-                  ),
-                ),
-                SettingsTile(
-                  title: "About",
-                  onTap: () {
-                    showAboutDialog(
-                      context: context,
-                      applicationName: "BlueBubbles",
-                      applicationIcon: Image.asset(
-                        "assets/icon/icon.png",
-                        width: 30,
-                        height: 30,
-                      ),
-                    );
-                  },
-                  trailing: Icon(
-                    Icons.info_outline,
                     color: Theme.of(context).primaryColor,
                   ),
                 ),
