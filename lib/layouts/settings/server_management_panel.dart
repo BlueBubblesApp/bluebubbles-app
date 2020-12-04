@@ -12,14 +12,14 @@ import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-class DebugPanel extends StatefulWidget {
-  DebugPanel({Key key}) : super(key: key);
+class ServerManagementPanel extends StatefulWidget {
+  ServerManagementPanel({Key key}) : super(key: key);
 
   @override
-  _DebugPanelState createState() => _DebugPanelState();
+  _ServerManagementPanelState createState() => _ServerManagementPanelState();
 }
 
-class _DebugPanelState extends State<DebugPanel> {
+class _ServerManagementPanelState extends State<ServerManagementPanel> {
   int latency;
   String fetchStatus;
 
@@ -45,7 +45,7 @@ class _DebugPanelState extends State<DebugPanel> {
               ),
               backgroundColor: Theme.of(context).accentColor.withOpacity(0.5),
               title: Text(
-                "Debugging",
+                "Server Management",
                 style: Theme.of(context).textTheme.headline1,
               ),
             ),
@@ -61,6 +61,7 @@ class _DebugPanelState extends State<DebugPanel> {
           SliverList(
             delegate: SliverChildListDelegate(
               <Widget>[
+                Container(padding: EdgeInsets.only(top: 5.0)),
                 StreamBuilder(
                     stream: SocketManager().connectionStateStream,
                     builder: (context, AsyncSnapshot<SocketState> snapshot) {
