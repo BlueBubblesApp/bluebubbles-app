@@ -17,9 +17,11 @@ class Settings {
   bool lowMemoryMode = false;
   int lastIncrementalSync = 0;
   int displayMode = 0;
-  bool rainbowBubbles = false;
+  bool colorfulAvatars = false;
+  bool colorfulBubbles = false;
   bool hideDividers = false;
   double scrollVelocity = 1.00;
+  bool sendWithReturn = false;
   // String emojiFontFamily;
 
   Skins skin = Skins.IOS;
@@ -52,11 +54,15 @@ class Settings {
       } else if (entry.name == "displayMode") {
         settings.displayMode = entry.value;
       } else if (entry.name == "rainbowBubbles") {
-        settings.rainbowBubbles = entry.value;
+        settings.colorfulAvatars = entry.value;
+      } else if (entry.name == "colorfulBubbles") {
+        settings.colorfulBubbles = entry.value;
       } else if (entry.name == "hideDividers") {
         settings.hideDividers = entry.value;
       } else if (entry.name == "scrollVelocity") {
         settings.scrollVelocity = entry.value;
+      } else if (entry.name == "sendWithReturn") {
+        settings.sendWithReturn = entry.value;
       }
       // else if (entry.name == "emojiFontFamily") {
       //   settings.emojiFontFamily = entry.value;
@@ -153,8 +159,12 @@ class Settings {
             type: this.displayMode.runtimeType),
         ConfigEntry(
             name: "rainbowBubbles",
-            value: this.rainbowBubbles,
-            type: this.rainbowBubbles.runtimeType),
+            value: this.colorfulAvatars,
+            type: this.colorfulAvatars.runtimeType),
+        ConfigEntry(
+            name: "colorfulBubbles",
+            value: this.colorfulBubbles,
+            type: this.colorfulBubbles.runtimeType),
         ConfigEntry(
             name: "hideDividers",
             value: this.hideDividers,
@@ -163,6 +173,10 @@ class Settings {
             name: "scrollVelocity",
             value: this.scrollVelocity,
             type: this.scrollVelocity.runtimeType),
+        ConfigEntry(
+            name: "sendWithReturn",
+            value: this.sendWithReturn,
+            type: this.sendWithReturn.runtimeType),
         // ConfigEntry(
         //     name: "emojiFontFamily",
         //     value: this.emojiFontFamily,

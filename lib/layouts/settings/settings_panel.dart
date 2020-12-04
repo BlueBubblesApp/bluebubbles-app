@@ -5,6 +5,7 @@ import 'dart:ui';
 import "package:bluebubbles/helpers/string_extension.dart";
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/layouts/search/search_view.dart';
 import 'package:bluebubbles/layouts/settings/debug_panel.dart';
 import 'package:bluebubbles/layouts/theming/theming_panel.dart';
 import 'package:bluebubbles/layouts/widgets/CustomCupertinoTextField.dart';
@@ -77,7 +78,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
       return;
     }
 
-    bool isDark = Theme.of(context).accentColor.computeLuminance() < 0.179;
+    bool isDark = Theme.of(context).backgroundColor.computeLuminance() < 0.179;
     brightness = isDark ? Brightness.dark : Brightness.light;
     gotBrightness = true;
   }
@@ -216,7 +217,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                         applicationID: fcmData[7],
                       );
                       _settingsCopy.guidAuthKey = fcmData[0];
-                      _settingsCopy.serverAddress = fcmData[1];
+                      _settingsCopy.serverAddress = getServerAddress(address: fcmData[1]);
 
                       SettingsManager().saveSettings(_settingsCopy);
                       SettingsManager().saveFCMData(_fcmDataCopy);
@@ -265,6 +266,13 @@ class _SettingsPanelState extends State<SettingsPanel> {
                 ),
                 SettingsSwitch(
                   onChanged: (bool val) {
+                    _settingsCopy.sendWithReturn = val;
+                  },
+                  initialVal: _settingsCopy.sendWithReturn,
+                  title: "Send Message with Return Key",
+                ),
+                SettingsSwitch(
+                  onChanged: (bool val) {
                     _settingsCopy.lowMemoryMode = val;
                   },
                   initialVal: _settingsCopy.lowMemoryMode,
@@ -298,11 +306,18 @@ class _SettingsPanelState extends State<SettingsPanel> {
                 ),
                 SettingsSwitch(
                   onChanged: (bool val) {
-                    _settingsCopy.rainbowBubbles = val;
+                    _settingsCopy.colorfulAvatars = val;
                     saveSettings();
                   },
-                  initialVal: _settingsCopy.rainbowBubbles,
-                  title: "Colorful Chats",
+                  initialVal: _settingsCopy.colorfulAvatars,
+                  title: "Colorful Avatars",
+                ),
+                SettingsSwitch(
+                  onChanged: (bool val) {
+                    _settingsCopy.colorfulBubbles = val;
+                  },
+                  initialVal: _settingsCopy.colorfulBubbles,
+                  title: "Colorful Bubbles",
                 ),
                 // SettingsOptions<String>(
                 //   initial: _settingsCopy.emojiFontFamily == null
@@ -362,6 +377,18 @@ class _SettingsPanelState extends State<SettingsPanel> {
                 //     Navigator.of(context).push(
                 //       CupertinoPageRoute(
                 //         builder: (context) => SchedulingPanel(),
+                //       ),
+                //     );
+                //   },
+                // ),
+                // SettingsTile(
+                //   title: "Search",
+                //   trailing: Icon(Icons.arrow_forward_ios,
+                //       color: Theme.of(context).primaryColor),
+                //   onTap: () async {
+                //     Navigator.of(context).push(
+                //       CupertinoPageRoute(
+                //         builder: (context) => SearchView(),
                 //       ),
                 //     );
                 //   },
@@ -586,9 +613,8 @@ class _SettingsPanelState extends State<SettingsPanel> {
                               child: Text("Yes"),
                               onPressed: () async {
                                 await DBProvider.deleteDB();
-                                Settings temp = SettingsManager().settings;
-                                temp.finishedSetup = false;
-                                await SettingsManager().saveSettings(temp);
+                                await SettingsManager().resetConnection();
+                                
                                 SocketManager().finishedSetup.sink.add(false);
                                 Navigator.of(context)
                                     .popUntil((route) => route.isFirst);

@@ -1,4 +1,5 @@
 
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/setup/connecting_alert/connecting_alert.dart';
 import 'package:bluebubbles/layouts/setup/qr_scan/failed_to_scan_dialog.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -33,10 +34,7 @@ class _TextInputURLState extends State<TextInputURL> {
   void connect(String url, String password) async {
     SocketManager().closeSocket(force: true);
     Settings copy = SettingsManager().settings;
-    copy.serverAddress = url;
-    if (!(url).startsWith("http")) {
-      copy.serverAddress = "http://$url";
-    }
+    copy.serverAddress = getServerAddress(address: url);
     copy.guidAuthKey = password;
     await SettingsManager().saveSettings(copy);
     try {
@@ -124,7 +122,7 @@ class _TextInputURLState extends State<TextInputURL> {
             if (this.mounted)
               setState(() {
                 error =
-                    "Failed to connect to ${SettingsManager().settings.serverAddress}! Please check that the url is correct (including http://) and the server logs for more info.";
+                    "Failed to connect to ${getServerAddress()}! Please check that the url is correct (including http://) and the server logs for more info.";
               });
           }
         },

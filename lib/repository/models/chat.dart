@@ -653,6 +653,8 @@ class Chat {
     await db.update("chat", {
       "isPinned": 1
     }, where: "ROWID = ?", whereArgs: [this.id]);
+
+    ChatBloc()?.updateChat(this);
     return this;
   }
 
@@ -664,6 +666,8 @@ class Chat {
     await db.update("chat", {
       "isPinned": 0
     }, where: "ROWID = ?", whereArgs: [this.id]);
+
+    ChatBloc()?.updateChat(this);
     return this;
   }
 

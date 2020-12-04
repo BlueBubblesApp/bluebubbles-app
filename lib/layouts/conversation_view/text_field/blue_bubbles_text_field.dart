@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:ui';
 
 import 'package:bluebubbles/blocs/text_field_bloc.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/text_field/attachments/list/text_field_attachment_list.dart';
 import 'package:bluebubbles/layouts/conversation_view/text_field/attachments/picker/text_field_attachment_picker.dart';
 import 'package:bluebubbles/layouts/widgets/CustomCupertinoTextField.dart';
@@ -297,6 +298,21 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
               vsync: this,
               curve: Curves.easeInOut,
               child: CustomCupertinoTextField(
+                textInputAction: SettingsManager().settings.sendWithReturn
+                    ? TextInputAction.send
+                    : TextInputAction.newline,
+                onSubmitted: (String value) async {
+                  if (!SettingsManager().settings.sendWithReturn ||
+                      isNullOrEmpty(value)) return;
+
+                  if (await widget.onSend(pickedImages, value)) {
+                    controller.text = "";
+                    pickedImages = <File>[];
+                    updateTextFieldAttachments();
+                  }
+
+                  if (this.mounted) setState(() {});
+                },
                 cursorColor: Theme.of(context).primaryColor,
                 onLongPressStart: () {
                   Feedback.forLongPress(context);

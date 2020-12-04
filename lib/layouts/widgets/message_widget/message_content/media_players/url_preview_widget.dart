@@ -191,7 +191,8 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
     if (data != null &&
         data.image != null &&
         data.image.isNotEmpty &&
-        !data.image.contains("renderTimingPixel.png")) {
+        !data.image.contains("renderTimingPixel.png") &&
+        !data.image.contains("fls-na.amazon.com")) {
       mainImage = Image.network(data.image,
           filterQuality: FilterQuality.low,
           errorBuilder: (context, error, stackTrace) => Container());
@@ -250,6 +251,8 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
                                           padding: EdgeInsets.only(top: 5.0),
                                           child: Text(
                                             data.description,
+                                            maxLines: 3,
+                                            overflow: TextOverflow.ellipsis,
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .bodyText1
