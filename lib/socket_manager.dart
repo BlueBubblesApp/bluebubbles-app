@@ -352,7 +352,7 @@ class SocketManager {
 
   void closeSocket({bool force = false}) {
     if (!force && _manager.socketProcesses.length != 0) {
-      debugPrint("won't close " + socketProcesses.toString());
+      debugPrint("won't close " + socketProcesses.length.toString());
       return;
     }
     if (_manager.socket != null) {
