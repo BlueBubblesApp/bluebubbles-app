@@ -381,18 +381,18 @@ class _SettingsPanelState extends State<SettingsPanel> {
                 //     );
                 //   },
                 // ),
-                SettingsTile(
-                  title: "Search",
-                  trailing: Icon(Icons.arrow_forward_ios,
-                      color: Theme.of(context).primaryColor),
-                  onTap: () async {
-                    Navigator.of(context).push(
-                      CupertinoPageRoute(
-                        builder: (context) => SearchView(),
-                      ),
-                    );
-                  },
-                ),
+                // SettingsTile(
+                //   title: "Search",
+                //   trailing: Icon(Icons.arrow_forward_ios,
+                //       color: Theme.of(context).primaryColor),
+                //   onTap: () async {
+                //     Navigator.of(context).push(
+                //       CupertinoPageRoute(
+                //         builder: (context) => SearchView(),
+                //       ),
+                //     );
+                //   },
+                // ),
                 SettingsTile(
                   title: "Debugging",
                   trailing: Icon(Icons.arrow_forward_ios,
