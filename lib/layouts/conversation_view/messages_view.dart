@@ -54,6 +54,8 @@ class MessagesViewState extends State<MessagesView>
     widget.messageBloc.stream.listen(handleNewMessage);
 
     scrollController.addListener(() {
+      if (scrollController == null) return;
+
       if (scrollController.hasClients &&
           scrollController.offset >= 500 &&
           !showScrollDown) {
@@ -382,6 +384,7 @@ class MessagesViewState extends State<MessagesView>
         ),
         (showScrollDown && scrollState == -1)
             ? ClipRRect(
+                borderRadius: BorderRadius.circular(10.0),
                 child: BackdropFilter(
                   filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
                   child: Container(

@@ -239,6 +239,12 @@ class MessageBloc {
             messages = await MessageHelper.bulkAddMessages(
                 _currentChat, _messages,
                 notifyMessageManager: false);
+
+            // If the handle is empty, load it
+            for (Message msg in messages) {
+              if (msg.isFromMe || msg.handle != null) continue;
+              await msg.getHandle();
+            }
           }
         } catch (ex) {
           debugPrint("(CHUNK) Failed to load message chunk!");

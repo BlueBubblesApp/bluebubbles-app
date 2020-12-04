@@ -225,13 +225,14 @@ class SocketManager {
       _manager.socket.destroy();
     }
 
+    String serverAddress = getServerAddress();
     debugPrint(
-        "Starting socket io with the server: ${SettingsManager().settings.serverAddress}");
+        "Starting socket io with the server: $serverAddress");
 
     try {
       // Create a new socket connection
       _manager.socket = SocketIOManager().createSocketIO(
-          SettingsManager().settings.serverAddress, "/",
+          serverAddress, "/",
           query: "guid=${SettingsManager().settings.guidAuthKey}",
           socketStatusCallback: (data) => socketStatusUpdate(data));
 
@@ -488,27 +489,30 @@ class SocketManager {
   Future<List<dynamic>> fetchMessages(Chat chat,
       {int offset: 0,
       int limit: 100,
-      bool onlyAttachments: false}) async {
+      bool onlyAttachments: false,
+      List<Map<String, dynamic>> where: const []}) async {
     Completer<List<dynamic>> completer = new Completer();
     debugPrint("(Fetch Messages) Fetching data.");
 
     Map<String, dynamic> params = Map();
-    params["chatGuid"] = chat.guid;
+    params["chatGuid"] = chat?.guid;
     params["offset"] = offset;
     params["limit"] = limit;
     params["withAttachments"] = true;
     params["withHandle"] = true;
     params["sort"] = "DESC";
-    params["where"] = [];
+    params["where"] = where;
 
     if (onlyAttachments) {
-      params["where"] = [
+      params["where"].add(
         {
           "statement": "message.cache_has_attachments = :flag",
           "args": {"flag": 1}
         }
-      ];
+      );
     }
+
+    print(params);
 
     SocketManager().sendMessage("get-messages", params, (data) async {
       if (data['status'] != 200) {
@@ -590,7 +594,7 @@ class SocketManager {
     // We copy the settings to a local variable
     Settings settingsCopy = SettingsManager().settings;
     // Update the address of the copied settings
-    settingsCopy.serverAddress = serverAddress;
+    settingsCopy.serverAddress = getServerAddress(address: serverAddress);
 
     // And then save to disk
     // NOTE: we do not automatically connect to the socket or authorize fcm,
@@ -624,6 +628,8 @@ class SocketManager {
     try {
       String url =
           await MethodChannelInterface().invokeMethod("get-server-url");
+      url = getServerAddress(address: url);
+
       debugPrint("New server URL: $url");
 
       // Set the server URL

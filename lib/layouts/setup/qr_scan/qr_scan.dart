@@ -57,11 +57,7 @@ class _QRScanState extends State<QRScan> {
         applicationID: result[7],
       );
       String password = result[0];
-      String serverURL = result[1];
-
-      if (!(result[1] as String).startsWith("http")) {
-        serverURL = "http://${result[1]}";
-      }
+      String serverURL = getServerAddress(address: result[1]);
 
       showDialog(
         context: context,

@@ -28,7 +28,7 @@ class _ConversationListState extends State<ConversationList> {
   ScrollController _scrollController;
   Color _theme;
   List<Chat> _chats = <Chat>[];
-  bool colorfulChats = false;
+  bool colorfulAvatars = false;
 
   Brightness brightness = Brightness.light;
   bool gotBrightness = false;
@@ -76,11 +76,11 @@ class _ConversationListState extends State<ConversationList> {
       _chats = ChatBloc().archivedChats;
     }
 
-    colorfulChats = SettingsManager().settings.rainbowBubbles;
+    colorfulAvatars = SettingsManager().settings.colorfulAvatars;
     SettingsManager().stream.listen((Settings newSettings) {
-      if (newSettings.rainbowBubbles != colorfulChats && this.mounted) {
+      if (newSettings.colorfulAvatars != colorfulAvatars && this.mounted) {
         setState(() {
-          colorfulChats = newSettings.rainbowBubbles;
+          colorfulAvatars = newSettings.colorfulAvatars;
         });
       }
     });
@@ -118,7 +118,7 @@ class _ConversationListState extends State<ConversationList> {
       return;
     }
 
-    bool isDark = Theme.of(context).accentColor.computeLuminance() < 0.179;
+    bool isDark = Theme.of(context).backgroundColor.computeLuminance() < 0.179;
     brightness = isDark ? Brightness.dark : Brightness.light;
     gotBrightness = true;
   }
@@ -148,6 +148,9 @@ class _ConversationListState extends State<ConversationList> {
                   : CrossFadeState.showSecond,
               duration: Duration(milliseconds: 250),
               secondChild: AppBar(
+                iconTheme: IconThemeData(
+                  color: Theme.of(context).primaryColor
+                ),
                 elevation: 0,
                 backgroundColor: _theme,
                 centerTitle: true,
@@ -163,6 +166,7 @@ class _ConversationListState extends State<ConversationList> {
                 ),
               ),
               firstChild: AppBar(
+                leading: new Container(),
                 elevation: 0,
                 brightness: this.brightness,
                 backgroundColor: Theme.of(context).backgroundColor,
@@ -178,7 +182,9 @@ class _ConversationListState extends State<ConversationList> {
         physics: ThemeManager().scrollPhysics,
         slivers: <Widget>[
           SliverAppBar(
-            leading: new Container(),
+            iconTheme: IconThemeData(
+              color: Theme.of(context).textTheme.headline1.color
+            ),
             stretch: true,
             onStretchTrigger: () {
               return null;

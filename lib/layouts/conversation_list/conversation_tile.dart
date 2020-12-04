@@ -258,6 +258,7 @@ class _ConversationTileState extends State<ConversationTile>
                                       ),
                                 ),
                             maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                     leading: ContactAvatarGroupWidget(
                       participants: widget.chat.participants,
