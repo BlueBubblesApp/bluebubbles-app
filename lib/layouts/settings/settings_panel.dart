@@ -18,6 +18,7 @@ import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../../helpers/hex_color.dart';
 import 'package:flutter/material.dart';
 
@@ -313,6 +314,19 @@ class _SettingsPanelState extends State<SettingsPanel> {
                   trailing: Icon(
                     Icons.arrow_forward_ios,
                     color: Theme.of(context).primaryColor,
+                  ),
+                ),
+                SettingsTile(
+                  title: "Join Our Discord",
+                  onTap: () {
+                    MethodChannelInterface().invokeMethod(
+                        "open-link", {"link": "https://discord.gg/hbx7EhNFjp"});
+                  },
+                  trailing: SvgPicture.asset(
+                    "assets/icon/discord.svg",
+                    color: HexColor("#7289DA"),
+                    alignment: Alignment.centerRight,
+                    width: 30,
                   ),
                 ),
                 SettingsTile(
