@@ -138,11 +138,10 @@ class ActionHandler {
     Completer<void> completer = new Completer<void>();
     Map<String, dynamic> params = new Map();
     params["chatGuid"] = chat.guid;
-    params["message"] = {
-      "guid": "temp-${randomString(8)}",
-      "text": reaction + " " + message.text
-    };
-    params["actionMessage"] = message.toMap();
+    params["messageGuid"] = "temp-${randomString(8)}";
+    params["messageText"] = message.text;
+    params["actionMessageGuid"] = message.guid;
+    params["actionMessageText"] = message.text;
     params["tapback"] = reaction.toLowerCase();
 
     SocketManager().sendMessage("send-reaction", params, (response) async {

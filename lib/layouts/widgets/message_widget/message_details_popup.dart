@@ -143,6 +143,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
   void sendReaction(String type) {
     if (isEmptyString(widget.message.text)) return;
     ActionHandler.sendReaction(widget.currentChat.chat, widget.message, type);
+    Navigator.of(context).pop();
   }
 
   @override
@@ -211,7 +212,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
                     : Container(),
               ),
             ),
-            // buildReactionMenu(),
+            buildReactionMenu(),
             buildCopyPasteMenu(),
           ],
         ),
