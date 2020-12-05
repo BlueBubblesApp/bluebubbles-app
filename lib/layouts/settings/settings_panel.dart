@@ -255,7 +255,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                 //       color: Theme.of(context).primaryColor),
                 //   onTap: () async {
                 //     Navigator.of(context).push(
-                //       CupertinoPageRoute(
+                //       ThemeSwitcher.buildPageRoute(
                 //         builder: (context) => SearchView(),
                 //       ),
                 //     );
@@ -265,7 +265,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                   title: "Theme Settings",
                   onTap: () {
                     Navigator.of(context).push(
-                      CupertinoPageRoute(
+                      ThemeSwitcher.buildPageRoute(
                         builder: (context) => ThemePanel(),
                       ),
                     );
@@ -279,7 +279,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                   title: "User Experience Settings",
                   onTap: () {
                     Navigator.of(context).push(
-                      CupertinoPageRoute(
+                      ThemeSwitcher.buildPageRoute(
                         builder: (context) => UXPanel(),
                       ),
                     );
@@ -295,7 +295,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                       color: Theme.of(context).primaryColor),
                   onTap: () async {
                     Navigator.of(context).push(
-                      CupertinoPageRoute(
+                      ThemeSwitcher.buildPageRoute(
                         builder: (context) => ServerManagementPanel(),
                       ),
                     );
@@ -305,7 +305,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                   title: "About & Links",
                   onTap: () {
                     Navigator.of(context).push(
-                      CupertinoPageRoute(
+                      ThemeSwitcher.buildPageRoute(
                         builder: (context) => AboutPanel(),
                       ),
                     );

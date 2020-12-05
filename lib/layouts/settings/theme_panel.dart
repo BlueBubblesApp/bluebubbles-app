@@ -2,9 +2,11 @@ import 'dart:async';
 import 'dart:ui';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
+import 'package:bluebubbles/helpers/contstants.dart';
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
 import 'package:bluebubbles/layouts/theming/theming_panel.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
+import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
@@ -139,11 +141,28 @@ class _ThemePanelState extends State<ThemePanel> {
                       color: Theme.of(context).primaryColor),
                   onTap: () async {
                     Navigator.of(context).push(
-                      CupertinoPageRoute(
+                      ThemeSwitcher.buildPageRoute(
                         builder: (context) => ThemingPanel(),
                       ),
                     );
                   },
+                ),
+                SettingsOptions<Skins>(
+                  initial: _settingsCopy.skin,
+                  onChanged: (val) {
+                    _settingsCopy.skin = val;
+                    if (val == Skins.Material) {
+                      _settingsCopy.hideDividers = true;
+                    } else {
+                      _settingsCopy.hideDividers = false;
+                    }
+                    setState(() {});
+                  },
+                  options: Skins.values,
+                  textProcessing: (dynamic val) =>
+                      val.toString().split(".").last,
+                  title: "App Skin",
+                  showDivider: false,
                 ),
                 SettingsSwitch(
                   onChanged: (bool val) {
