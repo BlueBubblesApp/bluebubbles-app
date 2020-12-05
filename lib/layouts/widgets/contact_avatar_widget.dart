@@ -117,7 +117,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget>
     Color color2 = colors.length > 0 ? colors[1] : null;
     if (color1 == null ||
         color2 == null ||
-        !SettingsManager().settings.rainbowBubbles) {
+        !SettingsManager().settings.colorfulAvatars) {
       color1 = HexColor("686868");
       color2 = HexColor("928E8E");
     }

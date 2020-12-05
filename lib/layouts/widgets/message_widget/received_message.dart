@@ -49,6 +49,7 @@ class ReceivedMessage extends StatefulWidget {
 
 class _ReceivedMessageState extends State<ReceivedMessage>
     with MessageWidgetMixin {
+  bool checkedHandle = false;
   @override
   initState() {
     super.initState();
@@ -87,11 +88,22 @@ class _ReceivedMessageState extends State<ReceivedMessage>
       );
     }
 
+    List<Color> bubbleColors = [
+      Theme.of(context).accentColor,
+      Theme.of(context).accentColor
+    ];
+    if (SettingsManager().settings.colorfulBubbles) {
+      bubbleColors = toColorGradient(message?.handle?.address);
+    }
+
     return Stack(
       alignment: AlignmentDirectional.bottomStart,
       children: [
         if (widget.showTail && SettingsManager().settings.skin == Skins.IOS)
-          MessageTail(message: message),
+          MessageTail(
+            message: message,
+            color: bubbleColors[0],
+          ),
         Container(
           margin: EdgeInsets.only(
             top: widget.message.getReactions().length > 0 &&
@@ -122,7 +134,11 @@ class _ReceivedMessageState extends State<ReceivedMessage>
                     bottomRight: Radius.circular(20),
                     bottomLeft: Radius.circular(widget.showTail ? 20 : 5),
                   ),
-            color: Theme.of(context).accentColor,
+            gradient: LinearGradient(
+              begin: AlignmentDirectional.topStart,
+              end: AlignmentDirectional.bottomEnd,
+              colors: bubbleColors,
+            ),
           ),
           child: RichText(
             text: TextSpan(

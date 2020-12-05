@@ -52,10 +52,12 @@ class _MessageState extends State<MessageWidget>
   int attachmentCount = 0;
   int associatedCount = 0;
   CurrentChat currentChat;
+  bool checkedHandle = false;
 
   @override
   void initState() {
     super.initState();
+    checkHandle();
     fetchAssociatedMessages();
     fetchAttachments();
 
@@ -95,8 +97,21 @@ class _MessageState extends State<MessageWidget>
     super.didChangeDependencies();
     currentChat = CurrentChat.of(context);
 
+    checkHandle();
     fetchAssociatedMessages();
     fetchAttachments();
+  }
+
+  void checkHandle() {
+    // If we've already checked it, don't do it again
+    if (widget.message.isFromMe || widget.message.handle != null ||
+        checkedHandle) return;
+    checkedHandle = true;
+
+    // Fetch the handle and update the state
+    widget.message.getHandle().then((handle) {
+      if (this.mounted) setState(() {});
+    });
   }
 
   Future<void> fetchAssociatedMessages({bool forceReload = false}) async {

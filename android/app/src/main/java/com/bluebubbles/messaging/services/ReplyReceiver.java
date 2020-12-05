@@ -41,6 +41,7 @@ public class ReplyReceiver extends BroadcastReceiver {
                     Notification.MessagingStyle style = (Notification.MessagingStyle) builder.getStyle();
                     style.addMessage(new Notification.MessagingStyle.Message(remoteInput.getString("key_text_reply"), System.currentTimeMillis() / 1000, "You"));
                     builder.setStyle(style);
+                    builder.setOnlyAlertOnce(true);
 
 
                     notificationManagerCompat.notify(notification.getId(), builder.build());

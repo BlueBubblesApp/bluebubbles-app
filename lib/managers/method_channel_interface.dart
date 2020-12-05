@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:bluebubbles/action_handler.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/alarm_manager.dart';
@@ -73,11 +74,7 @@ class MethodChannelInterface {
         String address = call.arguments.toString();
 
         // We remove the brackets from the formatting
-        address = address.substring(1, address.length - 1);
-
-        if (!(address).startsWith("http")) {
-          address = "http://$address";
-        }
+        address = getServerAddress(address: address.substring(1, address.length - 1));
 
         // And then tell the socket to set the new server address
         await SocketManager().newServer(address);

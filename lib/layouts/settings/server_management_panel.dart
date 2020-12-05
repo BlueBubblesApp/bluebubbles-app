@@ -12,14 +12,14 @@ import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-class DebugPanel extends StatefulWidget {
-  DebugPanel({Key key}) : super(key: key);
+class ServerManagementPanel extends StatefulWidget {
+  ServerManagementPanel({Key key}) : super(key: key);
 
   @override
-  _DebugPanelState createState() => _DebugPanelState();
+  _ServerManagementPanelState createState() => _ServerManagementPanelState();
 }
 
-class _DebugPanelState extends State<DebugPanel> {
+class _ServerManagementPanelState extends State<ServerManagementPanel> {
   int latency;
   String fetchStatus;
 
@@ -45,7 +45,7 @@ class _DebugPanelState extends State<DebugPanel> {
               ),
               backgroundColor: Theme.of(context).accentColor.withOpacity(0.5),
               title: Text(
-                "Debugging",
+                "Server Management",
                 style: Theme.of(context).textTheme.headline1,
               ),
             ),
@@ -61,6 +61,7 @@ class _DebugPanelState extends State<DebugPanel> {
           SliverList(
             delegate: SliverChildListDelegate(
               <Widget>[
+                Container(padding: EdgeInsets.only(top: 5.0)),
                 StreamBuilder(
                     stream: SocketManager().connectionStateStream,
                     builder: (context, AsyncSnapshot<SocketState> snapshot) {
@@ -165,11 +166,8 @@ class _DebugPanelState extends State<DebugPanel> {
                             logFile.writeAsStringSync(res['data']);
 
                             try {
-                              Share.file(
-                                  "BlueBubbles Server Log",
-                                  "main.log",
-                                  logFile.absolute.path,
-                                  "text/log");
+                              Share.file("BlueBubbles Server Log", "main.log",
+                                  logFile.absolute.path, "text/log");
 
                               if (this.mounted) {
                                 setState(() {
@@ -190,7 +188,8 @@ class _DebugPanelState extends State<DebugPanel> {
                     }),
                 SettingsTile(
                   title: "Restart Server",
-                  subTitle: "Instruct the server to restart. This will disconnect you briefly.",
+                  subTitle:
+                      "Instruct the server to restart. This will disconnect you briefly.",
                   onTap: () async {
                     MethodChannelInterface().invokeMethod("set-next-restart", {
                       "value": DateTime.now().toUtc().millisecondsSinceEpoch
@@ -209,18 +208,18 @@ class _DebugPanelState extends State<DebugPanel> {
           )
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-          backgroundColor: Theme.of(context).primaryColor,
-          child: Icon(Icons.create, color: Colors.white, size: 25),
-          onPressed: () async {
-            Navigator.of(context).push(
-              CupertinoPageRoute(
-                builder: (BuildContext context) {
-                  return SchedulePanel();
-                },
-              ),
-            );
-          }),
+      // floatingActionButton: FloatingActionButton(
+      //     backgroundColor: Theme.of(context).primaryColor,
+      //     child: Icon(Icons.create, color: Colors.white, size: 25),
+      //     onPressed: () async {
+      //       Navigator.of(context).push(
+      //         CupertinoPageRoute(
+      //           builder: (BuildContext context) {
+      //             return SchedulePanel();
+      //           },
+      //         ),
+      //       );
+      //     }),
     );
   }
 }
