@@ -11,10 +11,12 @@ import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:camera/camera.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:mime_type/mime_type.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:photo_manager/photo_manager.dart';
 import 'package:record/record.dart';
@@ -50,6 +52,10 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
   TextFieldData textFieldData;
   StreamController _streamController = new StreamController.broadcast();
   CurrentChat safeChat;
+
+  CameraController cameraController;
+  int cameraIndex = 0;
+  List<CameraDescription> cameras;
 
   // bool selfTyping = false;
 
@@ -106,7 +112,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
 
   void updateTextFieldAttachments() {
     if (textFieldData != null) {
-      textFieldData.attachments = pickedImages;
+      textFieldData.attachments =
+          pickedImages.where((element) => mime(element.path) != null).toList();
       _streamController.sink.add(null);
     }
   }
@@ -186,6 +193,13 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
         );
       },
     );
+  }
+
+  Future<void> initializeCameraController() async {
+    cameras = await availableCameras();
+    cameraController =
+        CameraController(cameras[cameraIndex], ResolutionPreset.max);
+    await cameraController.initialize();
   }
 
   Future<void> toggleShareMenu() async {
@@ -335,7 +349,6 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                   }
                 },
                 onContentCommited: (String url) async {
-                  debugPrint("got attachment " + url);
                   List<String> fnParts = url.split("/");
                   fnParts = (fnParts.length > 2)
                       ? fnParts.sublist(fnParts.length - 2)

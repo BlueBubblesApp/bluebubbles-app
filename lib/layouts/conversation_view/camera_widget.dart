@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:bluebubbles/layouts/conversation_view/text_field/blue_bubbles_text_field.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
@@ -15,32 +16,31 @@ class CameraWidget extends StatefulWidget {
 }
 
 class _CameraWidgetState extends State<CameraWidget> {
-  List<CameraDescription> cameras;
-  CameraController controller;
-  int cameraIndex = 0;
-
   @override
   void initState() {
     super.initState();
     initCameras();
   }
 
-  void initCameras() async {
-    cameras = await availableCameras();
-    controller = CameraController(cameras[cameraIndex], ResolutionPreset.max);
-    await controller.initialize();
+  Future<void> initCameras() async {
+    if (BlueBubblesTextField.of(context) == null) return;
+    await BlueBubblesTextField.of(context).initializeCameraController();
     if (this.mounted) setState(() {});
   }
 
   @override
   void dispose() {
-    controller.dispose();
+    BlueBubblesTextField.of(context).cameraController?.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    if (controller == null) return Container();
+    if (BlueBubblesTextField.of(context) == null) return Container();
+    CameraController controller =
+        BlueBubblesTextField.of(context).cameraController;
+    if (controller == null || !controller.value.isInitialized)
+      return Container();
     return AspectRatio(
       aspectRatio: MediaQuery.of(context).orientation == Orientation.portrait
           ? controller.value.aspectRatio
@@ -89,12 +89,13 @@ class _CameraWidgetState extends State<CameraWidget> {
             child: FlatButton(
               color: Colors.transparent,
               onPressed: () async {
-                cameraIndex = (cameraIndex - 1).abs();
-                controller = CameraController(
-                  cameras[cameraIndex],
-                  ResolutionPreset.max,
-                );
-                await controller.initialize();
+                if (BlueBubblesTextField.of(context) == null) return;
+
+                BlueBubblesTextField.of(context).cameraIndex =
+                    (BlueBubblesTextField.of(context).cameraIndex - 1).abs();
+
+                await BlueBubblesTextField.of(context)
+                    .initializeCameraController();
                 if (this.mounted) setState(() {});
               },
               child: Icon(
