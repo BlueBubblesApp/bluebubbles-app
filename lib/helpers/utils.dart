@@ -13,6 +13,7 @@ import 'package:convert/convert.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart' as intl;
 
 DateTime parseDate(dynamic value) {
   if (value == null) return null;
@@ -299,7 +300,7 @@ String stripHtmlTags(String htmlString) {
 // }
 
 List<Color> toColorGradient(String str) {
-  if (str.length == 0) return [HexColor("686868"), HexColor("928E8E")];
+  if (isNullOrEmpty(str)) return [HexColor("686868"), HexColor("928E8E")];
 
   int total = 0;
   for (int i = 0; i < (str ?? "").length; i++) {
@@ -331,7 +332,7 @@ List<Color> toColorGradient(String str) {
 bool shouldBeRainbow(Chat chat) {
   Chat theChat = chat;
   if (theChat == null) return false;
-  return SettingsManager().settings.rainbowBubbles;
+  return SettingsManager().settings.colorfulAvatars;
 }
 
 Size getGifDimensions(Uint8List bytes) {
@@ -359,3 +360,36 @@ Brightness getBrightness(BuildContext context) {
       ? Brightness.dark
       : Brightness.light;
 }
+=======
+  return AdaptiveTheme.of(context).mode == AdaptiveThemeMode.dark ? Brightness.dark : Brightness.light;
+}
+
+/// Take the passed [address] or serverAddress from Settings
+/// and sanitize it, making sure it includes an http schema
+String getServerAddress({String address}) {
+  String serverAddress = address ?? SettingsManager().settings.serverAddress;
+
+  // If the serverAddress doesn't start with HTTP, modify it
+  if (!serverAddress.startsWith("http")) {
+    // If it''s an ngrok address, use HTTPS, otherwise, just use HTTP
+    if (serverAddress.contains("ngrok.io")) {
+      serverAddress = "https://$serverAddress";
+    } else {
+      serverAddress = "http://$serverAddress";
+    }
+  }
+
+  return serverAddress;
+}
+
+String dateToShortString(DateTime timestamp) {
+  if (timestamp == null || timestamp.millisecondsSinceEpoch == 0) return "";
+  if (timestamp.isToday()) {
+    return new intl.DateFormat.jm().format(timestamp);
+  } else if (timestamp.isYesterday()) {
+    return "Yesterday";
+  } else {
+    return "${timestamp.month.toString()}/${timestamp.day.toString()}/${timestamp.year.toString()}";
+  }
+}
+

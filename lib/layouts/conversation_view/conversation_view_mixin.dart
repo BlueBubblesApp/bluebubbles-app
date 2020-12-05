@@ -380,9 +380,11 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
       await ChatBloc().refreshChats();
     }
 
-    conversations = ChatBloc().chats.sublist(0);
+    conversations = ChatBloc().chats;
     for (int i = 0; i < conversations.length; i++) {
-      await conversations[i].getParticipants();
+      if (isNullOrEmpty(conversations[i].participants)) {
+        await conversations[i].getParticipants();
+      }
     }
 
     if (widget.type == ChatSelectorTypes.ONLY_EXISTING ||
@@ -461,6 +463,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
             chatSelectorController.text.length > 1) {
           if (chat.participants.length == 1) continue;
         }
+
         if (title.contains(searchQuery.toLowerCase())) {
           if (!cache.contains(chat.guid)) {
             cache.add(chat.guid);

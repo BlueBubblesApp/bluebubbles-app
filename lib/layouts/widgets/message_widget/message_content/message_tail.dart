@@ -29,6 +29,9 @@ class MessageTail extends StatelessWidget {
             color:isFromMe
                 ? color
                 : color,
+=======
+            color: color
+                ?? Theme.of(context).primaryColor,
             borderRadius: BorderRadius.only(
               bottomRight: isFromMe ? Radius.zero : Radius.circular(12),
               bottomLeft: isFromMe ? Radius.circular(12) : Radius.zero,

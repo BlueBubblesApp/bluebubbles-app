@@ -148,6 +148,15 @@ class SettingsManager {
     SocketManager().authFCM();
   }
 
+  Future<void> resetConnection() async {
+    Settings temp = this.settings;
+    temp.finishedSetup = false;
+    temp.guidAuthKey = "";
+    temp.serverAddress = "";
+    temp.lastIncrementalSync = 0;
+    await this.saveSettings(temp);
+  }
+
   void dispose() {
     _stream.close();
   }

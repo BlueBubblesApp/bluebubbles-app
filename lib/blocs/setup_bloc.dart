@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:bluebubbles/helpers/message_helper.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -53,7 +54,7 @@ class SetupBloc {
   Future<void> connectToServer(
       FCMData data, String serverURL, String password) async {
     Settings settingsCopy = SettingsManager().settings;
-    settingsCopy.serverAddress = serverURL;
+    settingsCopy.serverAddress = getServerAddress(address: serverURL);
     settingsCopy.guidAuthKey = password;
 
     await SettingsManager().saveSettings(settingsCopy);

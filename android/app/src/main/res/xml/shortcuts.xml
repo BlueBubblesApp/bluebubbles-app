@@ -2,6 +2,6 @@
 <shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
     <share-target android:targetClass="com.bluebubbles.messaging.MainActivity">
         <data android:mimeType="image/*" />
-        <category android:name="com.bluebubble.messaging.sharingshortcut" />
+        <category android:name="com.bluebubbles.messaging.sharingshortcut" />
     </share-target>
 </shortcuts>

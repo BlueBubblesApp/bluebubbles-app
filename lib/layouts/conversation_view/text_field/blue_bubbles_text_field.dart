@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:ui';
 
 import 'package:bluebubbles/blocs/text_field_bloc.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/text_field/attachments/list/text_field_attachment_list.dart';
 import 'package:bluebubbles/layouts/conversation_view/text_field/attachments/picker/text_field_attachment_picker.dart';
 import 'package:bluebubbles/layouts/widgets/CustomCupertinoTextField.dart';
@@ -12,10 +13,12 @@ import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/socket_manager.dart';
+import 'package:camera/camera.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:mime_type/mime_type.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:photo_manager/photo_manager.dart';
 import 'package:record/record.dart';
@@ -53,6 +56,11 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
   CurrentChat safeChat;
 
   bool selfTyping = false;
+  CameraController cameraController;
+  int cameraIndex = 0;
+  List<CameraDescription> cameras;
+
+  // bool selfTyping = false;
 
   Stream get stream => _streamController.stream;
 
@@ -109,7 +117,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
 
   void updateTextFieldAttachments() {
     if (textFieldData != null) {
-      textFieldData.attachments = pickedImages;
+      textFieldData.attachments =
+          pickedImages.where((element) => mime(element.path) != null).toList();
       _streamController.sink.add(null);
     }
   }
@@ -124,6 +133,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
   void dispose() {
     focusNode.dispose();
     _streamController.close();
+    cameraController?.dispose();
     if (safeChat?.chat == null) controller.dispose();
 
     String dir = SettingsManager().appDocDir.path;
@@ -201,6 +211,13 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
         );
       },
     );
+  }
+
+  Future<void> initializeCameraController() async {
+    cameras = await availableCameras();
+    cameraController =
+        CameraController(cameras[cameraIndex], ResolutionPreset.max);
+    await cameraController.initialize();
   }
 
   Future<void> toggleShareMenu() async {

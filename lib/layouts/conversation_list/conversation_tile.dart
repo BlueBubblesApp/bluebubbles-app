@@ -385,30 +385,33 @@ class __CupertinoState extends State<_Cupertino> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
                       Stack(
-                          alignment: AlignmentDirectional.centerStart,
-                          children: [
-                            (!widget.parent.widget.chat.isMuted &&
-                                    widget.parent.widget.chat.hasUnreadMessage)
-                                ? Container(
-                                    decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(35),
-                                        color: Theme.of(context)
-                                            .primaryColor
-                                            .withOpacity(0.8)),
-                                    width: 15,
-                                    height: 15,
-                                  )
-                                : Container(),
-                            (widget.parent.widget.chat.isPinned)
-                                ? Icon(Icons.star,
-                                    size: 15,
-                                    color: Colors.yellow[
-                                        AdaptiveTheme.of(context).mode ==
-                                                AdaptiveThemeMode.dark
-                                            ? 100
-                                            : 700])
-                                : Container(),
-                          ]),
+                        alignment: AlignmentDirectional.centerStart,
+                        children: [
+                          (!widget.parent.widget.chat.isMuted &&
+                                  widget.parent.widget.chat.hasUnreadMessage)
+                              ? Container(
+                                  decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(35),
+                                      color: Theme.of(context)
+                                          .primaryColor
+                                          .withOpacity(0.8)),
+                                  width: 15,
+                                  height: 15,
+                                )
+                              : Container(),
+                          (widget.parent.widget.chat.isPinned)
+                              ? Icon(
+                                  Icons.star,
+                                  size: 15,
+                                  color: Colors.yellow[
+                                      AdaptiveTheme.of(context).mode ==
+                                              AdaptiveThemeMode.dark
+                                          ? 100
+                                          : 700],
+                                )
+                              : Container(),
+                        ],
+                      ),
                       (widget.parent.widget.chat.isMuted)
                           ? SvgPicture.asset(
                               "assets/icon/moon.svg",

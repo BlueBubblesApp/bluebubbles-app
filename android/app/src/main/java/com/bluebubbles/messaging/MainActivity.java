@@ -22,6 +22,8 @@ import android.util.Log;
 
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
+import androidx.core.content.pm.ShortcutInfoCompat;
+import androidx.core.content.pm.ShortcutManagerCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.work.WorkManager;
 
@@ -53,10 +55,22 @@ public class MainActivity extends FlutterActivity {
     public MethodChannel.Result result = null;
 
 
+    @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState, @Nullable PersistableBundle persistentState) {
         super.onCreate(savedInstanceState, persistentState);
-        ShareShortcutManager.publishShareTarget(getApplicationContext());
+//        ShareShortcutManager.publishShareTarget(getApplicationContext());
+
+        ShortcutInfoCompat shortcutInfoCompat = new ShortcutInfoCompat.Builder(getApplicationContext(), "id1")
+                .setShortLabel("Website")
+                .setLongLabel("Open the website")
+                .setIntent(new Intent(Intent.ACTION_VIEW,
+                        Uri.parse("https://bluebubbles.app/")))
+
+                .build();
+
+
+        ShortcutManagerCompat.pushDynamicShortcut(getApplicationContext(), shortcutInfoCompat);
     }
 
 
@@ -105,7 +119,7 @@ public class MainActivity extends FlutterActivity {
         if (requestCode == PICK_IMAGE) {
             if (resultCode == RESULT_OK) {
                 File sharedFiles = new File(getApplicationContext().getFilesDir().getAbsolutePath() + "/sharedFiles/");
-                if(!sharedFiles.exists()) {
+                if (!sharedFiles.exists()) {
                     sharedFiles.mkdir();
                 }
                 File file = new File(getApplicationContext().getFilesDir().getAbsolutePath() + "/sharedFiles/" + getFileName(data.getData()));
