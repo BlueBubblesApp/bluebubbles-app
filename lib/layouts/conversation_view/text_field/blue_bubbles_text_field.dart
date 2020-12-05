@@ -128,6 +128,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
   void dispose() {
     focusNode.dispose();
     _streamController.close();
+    cameraController?.dispose();
     if (safeChat?.chat == null) controller.dispose();
 
     String dir = SettingsManager().appDocDir.path;
