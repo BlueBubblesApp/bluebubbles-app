@@ -336,23 +336,23 @@ class _Cupertino extends StatelessWidget {
               ),
             ),
           ),
-          SliverToBoxAdapter(
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 30, vertical: 5),
-              child: GestureDetector(
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => SearchView(),
-                    ),
-                  );
-                },
-                child: AbsorbPointer(
-                  child: SearchTextBox(),
-                ),
-              ),
-            ),
-          ),
+          // SliverToBoxAdapter(
+          //   child: Container(
+          //     padding: EdgeInsets.symmetric(horizontal: 30, vertical: 5),
+          //     child: GestureDetector(
+          //       onTap: () {
+          //         Navigator.of(context).push(
+          //           MaterialPageRoute(
+          //             builder: (context) => SearchView(),
+          //           ),
+          //         );
+          //       },
+          //       child: AbsorbPointer(
+          //         child: SearchTextBox(),
+          //       ),
+          //     ),
+          //   ),
+          // ),
           StreamBuilder(
             stream: ChatBloc().chatStream,
             builder:
