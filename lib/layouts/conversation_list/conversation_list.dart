@@ -423,11 +423,6 @@ class __MaterialState extends State<_Material> {
           duration: Duration(milliseconds: 500),
           child: selected.isEmpty
               ? AppBar(
-                  leading: IconButton(
-                    icon: Icon(Icons.arrow_back,
-                        color: Theme.of(context).primaryColor),
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
                   bottom: PreferredSize(
                       child: Container(
                         color: Theme.of(context).dividerColor,
