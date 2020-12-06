@@ -87,7 +87,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
               toolbarHeight: 100.0,
               elevation: 0,
               leading: IconButton(
-                icon: Icon(Icons.arrow_back_ios,
+                icon: Icon(SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_back_ios : Icons.arrow_back,
                     color: Theme.of(context).primaryColor),
                 onPressed: () {
                   Navigator.of(context).pop();

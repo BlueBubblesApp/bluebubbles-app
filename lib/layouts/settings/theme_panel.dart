@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:ui';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
+import 'package:bluebubbles/helpers/contstants.dart';
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
 import 'package:bluebubbles/layouts/theming/theming_panel.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
@@ -81,7 +82,7 @@ class _ThemePanelState extends State<ThemePanel> {
               toolbarHeight: 100.0,
               elevation: 0,
               leading: IconButton(
-                icon: Icon(Icons.arrow_back_ios,
+                icon: Icon(SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_back_ios : Icons.arrow_back,
                     color: Theme.of(context).primaryColor),
                 onPressed: () {
                   Navigator.of(context).pop();
@@ -131,6 +132,23 @@ class _ThemePanelState extends State<ThemePanel> {
                   textProcessing: (dynamic val) =>
                       val.toString().split(".").last,
                   title: "App Theme",
+                  showDivider: false,
+                ),
+                SettingsOptions<Skins>(
+                  initial: _settingsCopy.skin,
+                  onChanged: (val) {
+                    _settingsCopy.skin = val;
+                    if (val == Skins.Material) {
+                      _settingsCopy.hideDividers = true;
+                    } else {
+                      _settingsCopy.hideDividers = false;
+                    }
+                    setState(() {});
+                  },
+                  options: Skins.values,
+                  textProcessing: (dynamic val) =>
+                      val.toString().split(".").last,
+                  title: "App Skin",
                   showDivider: false,
                 ),
                 SettingsTile(

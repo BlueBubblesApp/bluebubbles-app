@@ -3,6 +3,8 @@ import 'dart:ui';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/themes.dart';
+import 'package:bluebubbles/helpers/contstants.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/layouts/theming/theming_color_options_list.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
@@ -58,7 +60,7 @@ class _ThemingPanelState extends State<ThemingPanel>
               toolbarHeight: 100.0,
               elevation: 0,
               leading: IconButton(
-                icon: Icon(Icons.arrow_back_ios,
+                icon: Icon(SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_back_ios : Icons.arrow_back,
                     color: whiteLightTheme.primaryColor),
                 onPressed: () {
                   Navigator.of(context).pop();

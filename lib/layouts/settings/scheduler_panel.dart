@@ -1,6 +1,8 @@
 import 'dart:ui';
 
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/helpers/contstants.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view_mixin.dart';
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
@@ -112,7 +114,7 @@ class _SchedulePanelState extends State<SchedulePanel> {
               toolbarHeight: 100.0,
               elevation: 0,
               leading: IconButton(
-                icon: Icon(Icons.arrow_back_ios,
+                icon: Icon(SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_back_ios : Icons.arrow_back,
                     color: Theme.of(context).primaryColor),
                 onPressed: () {
                   Navigator.of(context).pop();
