@@ -429,6 +429,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                       borderRadius: BorderRadius.circular(20),
                     ),
                     hintText: "BlueBubbles",
+                    contentPadding: EdgeInsets.only(
+                        left: 10, top: 15, right: 40, bottom: 10),
                     hintStyle: Theme.of(context).textTheme.subtitle1,
                   ),
                   keyboardType: TextInputType.multiline,

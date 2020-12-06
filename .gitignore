@@ -40,3 +40,5 @@ pubspeck.lock
 #signing
 **/android/key.properties
 **/android/.settings
+*.xcconfig
+ios/Podfile

@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
+import 'package:bluebubbles/helpers/contstants.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/search/search_text_box.dart';
 import 'package:bluebubbles/layouts/search/search_view.dart';
@@ -423,12 +424,13 @@ class __MaterialState extends State<_Material> {
           child: selected.isEmpty
               ? AppBar(
                   bottom: PreferredSize(
-                    child: Container(
-                      color: Theme.of(context).dividerColor,
-                      height: 0.5,
-                    ),
-                    preferredSize: Size.fromHeight(0.5),
-                  ),
+                      child: Container(
+                        color: Theme.of(context).dividerColor,
+                        height: SettingsManager().settings.skin == Skins.IOS
+                            ? 0.0
+                            : 0.5,
+                      ),
+                      preferredSize: Size.fromHeight(0.5)),
                   title: Text(
                     "Messages",
                     style: Theme.of(context)

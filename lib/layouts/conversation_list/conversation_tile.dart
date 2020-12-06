@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
+import 'package:bluebubbles/helpers/contstants.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_group_widget.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
@@ -355,7 +356,8 @@ class __CupertinoState extends State<_Cupertino> {
                     leading: widget.parent.buildLeading(),
                     trailing: Container(
                       padding: EdgeInsets.only(right: 3),
-                      width: 80,
+                      width: SettingsManager().settings.skin == Skins.IOS ? 81 : 80
+                      ,
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         mainAxisAlignment: MainAxisAlignment.end,
