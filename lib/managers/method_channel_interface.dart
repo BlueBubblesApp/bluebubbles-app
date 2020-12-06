@@ -74,7 +74,8 @@ class MethodChannelInterface {
         String address = call.arguments.toString();
 
         // We remove the brackets from the formatting
-        address = getServerAddress(address: address.substring(1, address.length - 1));
+        address =
+            getServerAddress(address: address.substring(1, address.length - 1));
 
         // And then tell the socket to set the new server address
         await SocketManager().newServer(address);
@@ -133,8 +134,8 @@ class MethodChannelInterface {
         // Remove the notificaiton from that chat
         await SocketManager().removeChatNotification(chat);
 
-        SocketManager().sendMessage(
-            "mark-chat-read", {"chatGuid": chat.guid}, (data) => null);
+        SocketManager()
+            .sendMessage("mark-chat-read", {"chatGuid": chat.guid}, (data) {});
 
         // In case this method is called when the app is in a background isolate
         closeThread();

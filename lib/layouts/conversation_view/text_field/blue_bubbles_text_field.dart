@@ -86,13 +86,13 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
           selfTyping) {
         selfTyping = false;
         SocketManager().sendMessage("stopped-typing",
-            {"chatGuid": CurrentChat.of(context).chat.guid}, (data) => null);
+            {"chatGuid": CurrentChat.of(context).chat.guid}, (data) {});
       } else if (!selfTyping &&
           (controller.text.length > 0 || pickedImages.length > 0)) {
         selfTyping = true;
         if (SettingsManager().settings.sendTypingIndicators)
           SocketManager().sendMessage("started-typing",
-              {"chatGuid": CurrentChat.of(context).chat.guid}, (data) => null);
+              {"chatGuid": CurrentChat.of(context).chat.guid}, (data) {});
       }
       if (this.mounted) setState(() {});
     });

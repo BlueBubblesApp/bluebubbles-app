@@ -93,7 +93,6 @@ class CurrentChat {
     isAlive = true;
     showTypingIndicator = false;
     indicatorHideTimer = null;
-    checkTypingIndicator();
   }
 
   static CurrentChat of(BuildContext context) {
@@ -178,27 +177,8 @@ class CurrentChat {
     }
   }
 
-  void checkTypingIndicator() {
-    if (chat == null) return;
-    SocketManager().sendMessage("get-typing-indicator", {"guid": chat.guid},
-        (data) {
-      if (data['status'] == 200) {
-        if (data['data']['isTyping']) {
-          displayTypingIndicator();
-        } else {
-          hideTypingIndicator();
-        }
-      } else {
-        hideTypingIndicator();
-      }
-    });
-  }
-
   void displayTypingIndicator() {
     showTypingIndicator = true;
-    indicatorHideTimer = new Timer(Duration(seconds: 5), () {
-      checkTypingIndicator();
-    });
     _stream.sink.add(null);
   }
 
