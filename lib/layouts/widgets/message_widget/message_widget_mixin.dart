@@ -100,11 +100,11 @@ abstract class MessageWidgetMixin {
       if (!message.isFromMe) {
         if (SettingsManager().settings.colorfulBubbles) {
           textStyle = Theme.of(context).textTheme.bodyText2.apply(
-              color:
-                  darken(toColorGradient(message?.handle?.address ?? "")[0], 0.35));
-        } else {
-          Theme.of(context).textTheme.bodyText1.apply(color: Colors.white);
+              color: darken(
+                  toColorGradient(message?.handle?.address ?? "")[0], 0.35));
         }
+      } else {
+        textStyle = textStyle.apply(color: Colors.white);
       }
 
       if (linkIndexMatches.length > 0) {
@@ -142,8 +142,7 @@ abstract class MessageWidgetMixin {
                       MethodChannelInterface()
                           .invokeMethod("open-link", {"link": url});
                     },
-                  style: textStyle.apply(
-                        decoration: TextDecoration.underline),
+                  style: textStyle.apply(decoration: TextDecoration.underline),
                 ),
               );
             } else {
