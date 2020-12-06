@@ -360,9 +360,6 @@ Brightness getBrightness(BuildContext context) {
       ? Brightness.dark
       : Brightness.light;
 }
-=======
-  return AdaptiveTheme.of(context).mode == AdaptiveThemeMode.dark ? Brightness.dark : Brightness.light;
-}
 
 /// Take the passed [address] or serverAddress from Settings
 /// and sanitize it, making sure it includes an http schema
