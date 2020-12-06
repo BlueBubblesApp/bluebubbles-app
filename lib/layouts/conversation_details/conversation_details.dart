@@ -82,6 +82,11 @@ class _ConversationDetailsState extends State<ConversationDetails> {
               ),
             )
           : AppBar(
+              leading: IconButton(
+                icon: Icon(Icons.arrow_back,
+                    color: Theme.of(context).primaryColor),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
               title: Text(
                 "Details",
                 style: Theme.of(context).textTheme.headline1,
