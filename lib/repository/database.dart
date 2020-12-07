@@ -88,6 +88,8 @@ class DBProvider {
               "ALTER TABLE chat ADD COLUMN originalROWID INTEGER DEFAULT NULL;");
           db.execute(
               "ALTER TABLE attachment ADD COLUMN originalROWID INTEGER DEFAULT NULL;");
+          db.execute(
+              "ALTER TABLE message ADD COLUMN otherHandle INTEGER DEFAULT NULL;");
         }),
   ];
 
@@ -252,6 +254,7 @@ class DBProvider {
         "ROWID INTEGER PRIMARY KEY AUTOINCREMENT,"
         "originalROWID INTEGER DEFAULT NULL,"
         "handleId INTEGER NOT NULL,"
+        "otherHandle INTEGER DEFAULT NULL,"
         "guid TEXT UNIQUE NOT NULL,"
         "text TEXT,"
         "subject TEXT DEFAULT NULL,"

@@ -7,6 +7,7 @@ import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/socket_manager.dart';
+import 'package:flutter/widgets.dart';
 import 'package:intl/intl.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -311,13 +312,15 @@ class Chat {
 
     // Save the message
     Message existing = await Message.findOne({"guid": message.guid});
-
     Message newMessage;
 
     try {
       newMessage = await message.save();
     } catch (ex) {
       newMessage = await Message.findOne({"guid": message.guid});
+      if (newMessage == null) {
+        debugPrint(ex.toString());
+      }
     }
     bool isNewer = false;
 
@@ -482,6 +485,7 @@ class Chat {
         " message.originalROWID AS originalROWID,"
         " message.guid AS guid,"
         " message.handleId AS handleId,"
+        " message.otherHandle AS otherHandle,"
         " message.text AS text,"
         " message.subject AS subject,"
         " message.country AS country,"

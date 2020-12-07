@@ -26,6 +26,7 @@ class Message {
   int originalROWID;
   String guid;
   int handleId;
+  int otherHandle;
   String text;
   String subject;
   String country;
@@ -67,6 +68,7 @@ class Message {
     this.originalROWID,
     this.guid,
     this.handleId,
+    this.otherHandle,
     this.text,
     this.subject,
     this.country,
@@ -133,6 +135,7 @@ class Message {
           json.containsKey("originalROWID") ? json["originalROWID"] : null,
       guid: json["guid"],
       handleId: (json["handleId"] != null) ? json["handleId"] : 0,
+      otherHandle: (json["otherHandle"] != null) ? json["otherHandle"] : null,
       text: sanitizeString(json["text"]),
       subject: json.containsKey("subject") ? json["subject"] : null,
       country: json.containsKey("country") ? json["country"] : null,
@@ -580,6 +583,7 @@ class Message {
         "originalROWID": originalROWID,
         "guid": guid,
         "handleId": handleId,
+        "otherHandle": otherHandle,
         "text": sanitizeString(text),
         "subject": subject,
         "country": country,

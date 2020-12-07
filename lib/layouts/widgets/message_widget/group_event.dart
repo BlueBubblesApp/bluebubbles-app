@@ -22,6 +22,7 @@ class GroupEvent extends StatefulWidget {
 
 class _GroupEventState extends State<GroupEvent> {
   String text = "";
+  bool complete = false;
 
   @override
   initState() {
@@ -29,17 +30,17 @@ class _GroupEventState extends State<GroupEvent> {
     getEventText();
   }
 
-  @override
-  didChangeDependencies() {
-    super.didChangeDependencies();
-    getEventText();
-  }
-
   void getEventText() {
+    if (complete) return;
+
     getGroupEventText(widget.message).then((String text) {
       if (this.text != text) {
         this.text = text;
-        if (this.mounted) setState(() {});
+        if (this.mounted) {
+          setState(() {
+            complete = true;
+          });
+        }
       }
     });
   }
