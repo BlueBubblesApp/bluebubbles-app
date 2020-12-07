@@ -98,12 +98,10 @@ class _ContactWidgetState extends State<ContactWidget> {
                           borderRadius: BorderRadius.circular(30),
                         ),
                         child: Container(
-                          // child: (initials is Icon)
-                          //     ? initials
-                          //     : Text(
-                          //         initials,
-                          //         style: Theme.of(context).textTheme.headline1,
-                          //       ),
+                          child: Text(
+                            contact?.initials() ?? "?",
+                            style: Theme.of(context).textTheme.headline1,
+                          ),
                           alignment: AlignmentDirectional.center,
                         ),
                       ),
