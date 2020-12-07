@@ -283,6 +283,14 @@ class Message {
       params.remove("handle");
     }
 
+    if (existing.toMap().containsKey("originalROWID")) {
+      params["originalROWID"] = existing.toMap()["originalROWID"];
+
+      if (existing.originalROWID != null) {
+        newMessage.originalROWID = existing.originalROWID;
+      }
+    }
+
     if (existing.toMap().containsKey("handleId")) {
       params["handleId"] = existing.toMap()["handleId"];
       newMessage.handleId = existing.handleId;
@@ -323,6 +331,10 @@ class Message {
       "hasDdResults": this.hasDdResults ? 1 : 0,
     };
 
+    if (this.originalROWID != null) {
+      params["originalROWID"] = this.originalROWID;
+    }
+
     // If it already exists, update it
     if (this.id != null) {
       await db
@@ -352,6 +364,7 @@ class Message {
     var res = await db.rawQuery(
         "SELECT"
         " attachment.ROWID AS ROWID,"
+        " attachment.originalROWID AS originalROWID,"
         " attachment.guid AS guid,"
         " attachment.uti AS uti,"
         " attachment.mimeType AS mimeType,"
@@ -382,6 +395,7 @@ class Message {
     var res = await db.rawQuery(
         "SELECT"
         " chat.ROWID AS ROWID,"
+        " chat.originalROWID AS originalROWID,"
         " chat.guid AS guid,"
         " chat.style AS style,"
         " chat.chatIdentifier AS chatIdentifier,"
@@ -412,6 +426,7 @@ class Message {
     var res = await db.rawQuery(
         "SELECT"
         " handle.ROWID AS ROWID,"
+        " handle.originalROWID AS originalROWID,"
         " handle.address AS address,"
         " handle.country AS country,"
         " handle.uncanonicalizedId AS uncanonicalizedId"

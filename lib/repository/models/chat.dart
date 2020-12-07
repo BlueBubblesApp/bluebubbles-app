@@ -83,6 +83,7 @@ Future<String> getShortChatTitle(Chat _chat) async {
 
 class Chat {
   int id;
+  int originalROWID;
   String guid;
   int style;
   String chatIdentifier;
@@ -99,6 +100,7 @@ class Chat {
 
   Chat({
     this.id,
+    this.originalROWID,
     this.guid,
     this.style,
     this.chatIdentifier,
@@ -122,6 +124,7 @@ class Chat {
     }
     return new Chat(
       id: json.containsKey("ROWID") ? json["ROWID"] : null,
+      originalROWID: json.containsKey("originalROWID") ? json["originalROWID"] : null,
       guid: json["guid"],
       style: json['style'],
       chatIdentifier:
@@ -234,6 +237,10 @@ class Chat {
       "isMuted": this.isMuted ? 1 : 0,
       "isFiltered": this.isFiltered ? 1 : 0
     };
+
+    if (this.originalROWID != null) {
+      params["originalROWID"] = this.originalROWID;
+    }
 
     // Only update the latestMessage info if it's not null
     if (this.latestMessageDate != null) {
@@ -426,6 +433,7 @@ class Chat {
 
     String query = ("SELECT"
         " attachment.ROWID AS ROWID,"
+        " attachment.originalROWID AS originalROWID,"
         " attachment.guid AS guid,"
         " attachment.uti AS uti,"
         " attachment.mimeType AS mimeType,"
@@ -504,6 +512,7 @@ class Chat {
         " message.hasReactions AS hasReactions,"
         " message.hasDdResults AS hasDdResults,"
         " handle.ROWID AS handleId,"
+        " handle.originalROWID AS handleOriginalROWID,"
         " handle.address AS handleAddress,"
         " handle.country AS handleCountry,"
         " handle.uncanonicalizedId AS handleUncanonicalizedId"
@@ -542,6 +551,7 @@ class Chat {
           res[i]['handleAddress'] != null) {
         msg.handle = Handle.fromMap({
           'id': res[i]['handleId'],
+          'originalROWID': res[i]['handleOriginalROWID'],
           'address': res[i]['handleAddress'],
           'country': res[i]['handleCountry'],
           'uncanonicalizedId': res[i]['handleUncanonicalizedId']
@@ -564,6 +574,7 @@ class Chat {
           res2[i]['handleAddress'] != null) {
         msg.handle = Handle.fromMap({
           'id': res2[i]['handleId'],
+          'originalROWID': res2[i]['handleOriginalROWID'],
           'address': res2[i]['handleAddress'],
           'country': res2[i]['handleCountry'],
           'uncanonicalizedId': res2[i]['handleUncanonicalizedId']
@@ -587,6 +598,7 @@ class Chat {
     var res = await db.rawQuery(
         "SELECT"
         " handle.ROWID AS ROWID,"
+        " handle.originalROWID as originalROWID,"
         " handle.address AS address,"
         " handle.country AS country,"
         " handle.uncanonicalizedId AS uncanonicalizedId"
@@ -715,6 +727,7 @@ class Chat {
     var res = await db.rawQuery(
         "SELECT"
         " chat.ROWID as ROWID,"
+        " chat.originalROWID as originalROWID,"
         " chat.guid as guid,"
         " chat.style as style,"
         " chat.chatIdentifier as chatIdentifier,"
@@ -751,6 +764,7 @@ class Chat {
 
   Map<String, dynamic> toMap() => {
         "ROWID": id,
+        "originalROWID": originalROWID,
         "guid": guid,
         "style": style,
         "chatIdentifier": chatIdentifier,

@@ -77,7 +77,18 @@ class DBProvider {
               "ALTER TABLE message ADD COLUMN dateDeleted INTEGER DEFAULT NULL;");
           db.execute(
               "ALTER TABLE chat ADD COLUMN isPinned INTEGER DEFAULT 0;");
-        })
+        }),
+    new DBUpgradeItem(
+        fromVersions: [1, 2, 3, 4],
+        toVersions: [5],
+        upgrade: (Database db) {
+          db.execute(
+              "ALTER TABLE handle ADD COLUMN originalROWID INTEGER DEFAULT NULL;");
+          db.execute(
+              "ALTER TABLE chat ADD COLUMN originalROWID INTEGER DEFAULT NULL;");
+          db.execute(
+              "ALTER TABLE attachment ADD COLUMN originalROWID INTEGER DEFAULT NULL;");
+        }),
   ];
 
   Future<Database> get database async {
@@ -93,7 +104,7 @@ class DBProvider {
   initDB() async {
     Directory documentsDirectory = await getApplicationDocumentsDirectory();
     _path = join(documentsDirectory.path, "chat.db");
-    return await openDatabase(_path, version: 4, onUpgrade: _onUpgrade,
+    return await openDatabase(_path, version: 5, onUpgrade: _onUpgrade,
         onOpen: (Database db) async {
       debugPrint("Database Opened");
       _database = db;
@@ -211,6 +222,7 @@ class DBProvider {
   static Future<void> createHandleTable(Database db) async {
     await db.execute("CREATE TABLE handle ("
         "ROWID INTEGER PRIMARY KEY AUTOINCREMENT,"
+        "originalROWID INTEGER DEFAULT NULL,"
         "address TEXT UNIQUE NOT NULL,"
         "country TEXT DEFAULT NULL,"
         "uncanonicalizedId TEXT DEFAULT NULL"
@@ -220,6 +232,7 @@ class DBProvider {
   static Future<void> createChatTable(Database db) async {
     await db.execute("CREATE TABLE chat ("
         "ROWID INTEGER PRIMARY KEY AUTOINCREMENT,"
+        "originalROWID INTEGER DEFAULT NULL,"
         "guid TEXT UNIQUE NOT NULL,"
         "style INTEGER NOT NULL,"
         "chatIdentifier TEXT NOT NULL,"
@@ -277,6 +290,7 @@ class DBProvider {
   static Future<void> createAttachmentTable(Database db) async {
     await db.execute("CREATE TABLE attachment ("
         "ROWID INTEGER PRIMARY KEY AUTOINCREMENT,"
+        "originalROWID INTEGER DEFAULT NULL,"
         "guid TEXT UNIQUE NOT NULL,"
         "uti TEXT NOT NULL,"
         "mimeType TEXT DEFAULT NULL,"
