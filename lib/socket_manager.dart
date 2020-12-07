@@ -154,7 +154,12 @@ class SocketManager {
           Timer(Duration(seconds: 10), () {
             if (state != SocketState.ERROR) return;
             debugPrint("UNABLE TO CONNECT");
-            NotificationManager().createSocketWarningNotification();
+
+            // Only show the notification if setup is finished
+            if (SettingsManager().settings.finishedSetup) {
+              NotificationManager().createSocketWarningNotification();
+            }
+
             state = SocketState.FAILED;
             List processes = socketProcesses.values.toList();
             processes.forEach((value) {
