@@ -1,13 +1,11 @@
 import 'dart:io';
-import 'dart:ui';
+import 'dart:typed_data';
+import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/share.dart';
 import 'package:bluebubbles/layouts/image_viewer/attachmet_fullscreen_viewer.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:fluttertoast/fluttertoast.dart';
-import 'package:image_gallery_saver/image_gallery_saver.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:photo_view/photo_view.dart';
 
 class ImageViewer extends StatefulWidget {
@@ -27,41 +25,53 @@ class ImageViewer extends StatefulWidget {
   _ImageViewerState createState() => _ImageViewerState();
 }
 
-class _ImageViewerState extends State<ImageViewer> {
+class _ImageViewerState extends State<ImageViewer>
+    with AutomaticKeepAliveClientMixin {
   double top = 0;
   int duration = 0;
   PhotoViewController controller;
   bool showOverlay = false;
+  Uint8List bytes;
 
   @override
   void initState() {
     super.initState();
     controller = new PhotoViewController();
-    // controller.outputStateStream.listen((event) {
-    //   if (AttachmentFullscreenViewer.of(context) == null) return;
-    //   if (this.mounted) {
-    //     AttachmentFullscreenViewerState state =
-    //         AttachmentFullscreenViewer.of(context);
-    //     debugPrint("Scale: ${event.scale}");
-    //     if (event.scale > controller.initial.scale) {
-    //       if (state.physics != NeverScrollableScrollPhysics()) {
-    //         AttachmentFullscreenViewer.of(context).setState(() {
-    //           AttachmentFullscreenViewer.of(context).physics =
-    //               NeverScrollableScrollPhysics();
-    //         });
-    //       }
-    //     } else {
-    //       if (state.physics !=
-    //           AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics())) {
-    //         AttachmentFullscreenViewer.of(context).setState(() {
-    //           AttachmentFullscreenViewer.of(context).physics =
-    //               AlwaysScrollableScrollPhysics(
-    //                   parent: BouncingScrollPhysics());
-    //         });
-    //       }
-    //     }
-    //   }
-    // });
+
+    controller.outputStateStream.listen((event) {
+      if (AttachmentFullscreenViewer.of(context) == null ||
+          event.boundaries == null ||
+          event.scale == null) return;
+      if (this.mounted) {
+        AttachmentFullscreenViewerState state =
+            AttachmentFullscreenViewer.of(context);
+        if (event.scale > event.boundaries.minScale) {
+          if (state.physics != NeverScrollableScrollPhysics()) {
+            AttachmentFullscreenViewer.of(context).setState(() {
+              AttachmentFullscreenViewer.of(context).physics =
+                  NeverScrollableScrollPhysics();
+            });
+          }
+        } else {
+          if (state.physics !=
+              AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics())) {
+            AttachmentFullscreenViewer.of(context).setState(() {
+              AttachmentFullscreenViewer.of(context).physics =
+                  AlwaysScrollableScrollPhysics(
+                parent: BouncingScrollPhysics(),
+              );
+            });
+          }
+        }
+      }
+    });
+  }
+
+  @override
+  void didChangeDependencies() async {
+    super.didChangeDependencies();
+    bytes = await widget.file.readAsBytes();
+    if (this.mounted) setState(() {});
   }
 
   @override
@@ -72,6 +82,7 @@ class _ImageViewerState extends State<ImageViewer> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     Widget overlay = AnimatedOpacity(
       opacity: showOverlay ? 1.0 : 0.0,
       duration: Duration(milliseconds: 125),
@@ -86,46 +97,7 @@ class _ImageViewerState extends State<ImageViewer> {
               padding: EdgeInsets.only(top: 40.0),
               child: CupertinoButton(
                 onPressed: () async {
-                  if (await Permission.storage.request().isGranted) {
-                    await ImageGallerySaver.saveFile(widget.file.absolute.path);
-                    FlutterToast(context).showToast(
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(25.0),
-                        child: BackdropFilter(
-                          filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 24.0, vertical: 12.0),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(25.0),
-                              color: Theme.of(context)
-                                  .accentColor
-                                  .withOpacity(0.1),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.check,
-                                  color: Theme.of(context)
-                                      .textTheme
-                                      .bodyText1
-                                      .color,
-                                ),
-                                SizedBox(
-                                  width: 12.0,
-                                ),
-                                Text(
-                                  "Saved to gallery",
-                                  style: Theme.of(context).textTheme.bodyText1,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    );
-                  }
+                  await AttachmentHelper.saveToGallery(context, widget.file);
                 },
                 child: Icon(
                   Icons.file_download,
@@ -167,24 +139,35 @@ class _ImageViewerState extends State<ImageViewer> {
         },
         child: Stack(
           children: <Widget>[
-            PhotoView(
-              minScale: PhotoViewComputedScale.contained,
-              maxScale: PhotoViewComputedScale.contained * 13,
-              controller: controller,
-              imageProvider: FileImage(widget.file),
-              loadingBuilder: (BuildContext context, ImageChunkEvent ev) {
-                return PhotoView(
-                  minScale: PhotoViewComputedScale.contained,
-                  maxScale: PhotoViewComputedScale.contained * 13,
-                  controller: controller,
-                  imageProvider: FileImage(widget.file),
-                );
-              },
-            ),
+            bytes != null
+                ? PhotoView(
+                    minScale: PhotoViewComputedScale.contained,
+                    maxScale: PhotoViewComputedScale.contained * 13,
+                    controller: controller,
+                    imageProvider: MemoryImage(bytes),
+                    loadingBuilder: (BuildContext context, ImageChunkEvent ev) {
+                      return PhotoView(
+                        minScale: PhotoViewComputedScale.contained,
+                        maxScale: PhotoViewComputedScale.contained * 13,
+                        controller: controller,
+                        imageProvider: FileImage(widget.file),
+                      );
+                    },
+                  )
+                : Center(
+                    child: CircularProgressIndicator(
+                      backgroundColor: Colors.grey,
+                      valueColor: AlwaysStoppedAnimation(
+                          Theme.of(context).primaryColor),
+                    ),
+                  ),
             overlay
           ],
         ),
       ),
     );
   }
+
+  @override
+  bool get wantKeepAlive => true;
 }

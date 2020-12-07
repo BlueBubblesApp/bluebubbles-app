@@ -123,7 +123,7 @@ ThemeData whiteLightTheme = ThemeData(
       fontSize: 15,
     ),
     bodyText2: TextStyle(
-      color: Colors.white,
+      color: Colors.black,
       fontWeight: FontWeight.normal,
       fontSize: 15,
     ),

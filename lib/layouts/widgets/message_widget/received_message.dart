@@ -6,6 +6,7 @@ import 'package:bluebubbles/layouts/widgets/message_widget/message_content/messa
 import 'package:bluebubbles/layouts/widgets/message_widget/message_popup_holder.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/material.dart';
 
@@ -46,6 +47,8 @@ class ReceivedMessage extends StatefulWidget {
 
 class _ReceivedMessageState extends State<ReceivedMessage>
     with MessageWidgetMixin {
+
+  bool checkedHandle = false;
   @override
   initState() {
     super.initState();
@@ -84,10 +87,15 @@ class _ReceivedMessageState extends State<ReceivedMessage>
       );
     }
 
+    List<Color> bubbleColors = [Theme.of(context).accentColor, Theme.of(context).accentColor];
+    if (SettingsManager().settings.colorfulBubbles) {
+      bubbleColors = toColorGradient(message?.handle?.address);
+    }
+
     return Stack(
       alignment: AlignmentDirectional.bottomStart,
       children: [
-        if (widget.showTail) MessageTail(message: message),
+        if (widget.showTail) MessageTail(message: message, color: bubbleColors[0]),
         Container(
           margin: EdgeInsets.only(
             top: widget.message.getReactions().length > 0 &&
@@ -107,7 +115,11 @@ class _ReceivedMessageState extends State<ReceivedMessage>
           ),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
-            color: Theme.of(context).accentColor,
+            gradient:  LinearGradient(
+              begin: AlignmentDirectional.topStart,
+              end: AlignmentDirectional.bottomEnd,
+              colors: bubbleColors,
+            ),
           ),
           child: RichText(
             text: TextSpan(

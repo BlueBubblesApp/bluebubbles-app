@@ -2,11 +2,9 @@ import 'dart:convert';
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
-import 'package:bluebubbles/layouts/widgets/message_widget/group_event.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
-import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:intl/intl.dart';
@@ -91,6 +89,7 @@ class Chat {
   bool isArchived;
   bool isFiltered;
   bool isMuted;
+  bool isPinned;
   bool hasUnreadMessage;
   DateTime latestMessageDate;
   String latestMessageText;
@@ -105,6 +104,7 @@ class Chat {
     this.chatIdentifier,
     this.isArchived,
     this.isFiltered,
+    this.isPinned,
     this.isMuted,
     this.hasUnreadMessage,
     this.displayName,
@@ -138,6 +138,11 @@ class Chat {
           ? (json["isMuted"] is bool)
               ? json['isMuted']
               : ((json['isMuted'] == 1) ? true : false)
+          : false,
+      isPinned: json.containsKey("isPinned")
+          ? (json["isPinned"] is bool)
+              ? json['isPinned']
+              : ((json['isPinned'] == 1) ? true : false)
           : false,
       hasUnreadMessage: json.containsKey("hasUnreadMessage")
           ? (json["hasUnreadMessage"] is bool)
@@ -284,6 +289,11 @@ class Chat {
     } else {
       await this.save(updateIfAbsent: false);
     }
+    if (hasUnreadMessage) {
+      EventDispatcher().emit("add-unread-chat", {"chatGuid": this.guid});
+    } else {
+      EventDispatcher().emit("remove-unread-chat", {"chatGuid": this.guid});
+    }
 
     return this;
   }
@@ -344,20 +354,17 @@ class Chat {
       // If the message is not from the same chat as the current chat, mark unread
       if (message.isFromMe) {
         await this.setUnreadStatus(false);
-        EventDispatcher().emit("remove-unread-chat", {"chatGuid": this.guid});
       } else if (!CurrentChat.isActive(this.guid)) {
         await this.setUnreadStatus(true);
-        EventDispatcher().emit("add-unread-chat", {"chatGuid": this.guid});
       }
     }
 
     // Update the chat position
     ChatBloc().updateChatPosition(this);
 
-    // If the message is for adding or removing participants, we need to ensure that all of the chat participants are correct by syncing with the server
-    if ((message.itemType == ItemTypes.participantRemoved.index ||
-            message.itemType == ItemTypes.participantAdded.index) &&
-        isEmptyString(message.text)) {
+    // If the message is for adding or removing participants,
+    // we need to ensure that all of the chat participants are correct by syncing with the server
+    if (isParticipantEvent(message)) {
       serverSyncParticipants();
     }
 
@@ -454,7 +461,10 @@ class Chat {
   }
 
   static Future<List<Message>> getMessages(Chat chat,
-      {bool reactionsOnly = false, int offset = 0, int limit = 25}) async {
+      {bool reactionsOnly = false,
+      int offset = 0,
+      int limit = 25,
+      bool includeDeleted: false}) async {
     final Database db = await DBProvider.db.database;
     if (chat.id == null) return [];
 
@@ -470,6 +480,7 @@ class Chat {
         " message.error AS error,"
         " message.dateCreated AS dateCreated,"
         " message.dateDelivered AS dateDelivered,"
+        " message.dateDeleted AS dateDeleted,"
         " message.dateRead AS dateRead,"
         " message.isFromMe AS isFromMe,"
         " message.isDelayed AS isDelayed,"
@@ -503,6 +514,10 @@ class Chat {
         // " LEFT JOIN attachment ON attachment.ROWID = attachment_message_join.attachmentId"
         " LEFT OUTER JOIN handle ON handle.ROWID = message.handleId"
         " WHERE chat.ROWID = ?");
+
+    if (!includeDeleted) {
+      query += " AND message.dateDeleted IS NULL";
+    }
 
     // Add pagination
     String pagination =
@@ -630,6 +645,32 @@ class Chat {
     return this;
   }
 
+  Future<Chat> pin() async {
+    final Database db = await DBProvider.db.database;
+    if (this.id == null) return this;
+
+    this.isPinned = true;
+    await db.update("chat", {
+      "isPinned": 1
+    }, where: "ROWID = ?", whereArgs: [this.id]);
+
+    ChatBloc()?.updateChat(this);
+    return this;
+  }
+
+  Future<Chat> unpin() async {
+    final Database db = await DBProvider.db.database;
+    if (this.id == null) return this;
+
+    this.isPinned = false;
+    await db.update("chat", {
+      "isPinned": 0
+    }, where: "ROWID = ?", whereArgs: [this.id]);
+
+    ChatBloc()?.updateChat(this);
+    return this;
+  }
+
   static Future<Chat> findOne(Map<String, dynamic> filters) async {
     final Database db = await DBProvider.db.database;
 
@@ -678,6 +719,7 @@ class Chat {
         " chat.style as style,"
         " chat.chatIdentifier as chatIdentifier,"
         " chat.isFiltered as isFiltered,"
+        " chat.isPinned as isPinned,"
         " chat.isArchived as isArchived,"
         " chat.isMuted as isMuted,"
         " chat.hasUnreadMessage as hasUnreadMessage,"
@@ -715,6 +757,7 @@ class Chat {
         "isArchived": isArchived ? 1 : 0,
         "isFiltered": isFiltered ? 1 : 0,
         "isMuted": isMuted ? 1 : 0,
+        "isPinned": isPinned ? 1 : 0,
         "displayName": displayName,
         "participants": participants.map((item) => item.toMap()),
         "hasUnreadMessage": hasUnreadMessage ? 1 : 0,

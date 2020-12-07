@@ -88,6 +88,17 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
     SocketManager().removeChatNotification(chat);
   }
 
+  void initCurrentChat(Chat chat) {
+    currentChat = CurrentChat.getCurrentChat(chat);
+    currentChat.init();
+    currentChat.updateChatAttachments().then((value) {
+      if (this.mounted) setState(() {});
+    });
+    currentChat.stream.listen((event) {
+      if (this.mounted) setState(() {});
+    });
+  }
+
   MessageBloc initMessageBloc() {
     messageBloc = new MessageBloc(chat);
     return messageBloc;
@@ -332,12 +343,15 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
       await ChatBloc().refreshChats();
     }
 
-    conversations = ChatBloc().chats.sublist(0);
-    for (Chat element in conversations) {
-      await element.getParticipants();
+    conversations = ChatBloc().chats;
+    for (int i = 0; i < conversations.length; i++) {
+      if (isNullOrEmpty(conversations[i].participants)) {
+        await conversations[i].getParticipants();
+      }
     }
 
-    if (widget.type != ChatSelectorTypes.ONLY_EXISTING) {
+    if (widget.type == ChatSelectorTypes.ONLY_EXISTING ||
+        chatSelectorController.text.length > 1) {
       conversations.retainWhere((element) => element.participants.length > 1);
     }
 
@@ -408,6 +422,11 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
         widget.type != ChatSelectorTypes.ONLY_CONTACTS) {
       for (Chat chat in conversations) {
         String title = (chat?.title ?? "").toLowerCase();
+        if (widget.type != ChatSelectorTypes.ONLY_EXISTING &&
+            chatSelectorController.text.length > 1) {
+          if (chat.participants.length == 1) continue;
+        }
+
         if (title.contains(searchQuery.toLowerCase())) {
           if (!cache.contains(chat.guid)) {
             cache.add(chat.guid);
@@ -421,7 +440,6 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
         }
       }
     }
-
     _conversations.addAll(_contacts);
     if (searchQuery.length > 0)
       _conversations.sort((a, b) {

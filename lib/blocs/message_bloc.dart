@@ -31,16 +31,22 @@ class MessageBlocEvent {
 
 class MessageBloc {
   final _messageController = StreamController<MessageBlocEvent>.broadcast();
-
   Stream<MessageBlocEvent> get stream => _messageController.stream;
-
   LinkedHashMap<String, Message> _allMessages = new LinkedHashMap();
 
   int _reactions = 0;
+  bool showDeleted = false;
 
-  LinkedHashMap<String, Message> get messages => _allMessages;
+  LinkedHashMap<String, Message> get messages {
+    if (!showDeleted) {
+      _allMessages.removeWhere((key, value) => value.dateDeleted != null);
+    }
+
+    return _allMessages;
+  }
 
   Chat _currentChat;
+  
 
   Chat get currentChat => _currentChat;
 
@@ -233,6 +239,12 @@ class MessageBloc {
             messages = await MessageHelper.bulkAddMessages(
                 _currentChat, _messages,
                 notifyMessageManager: false);
+
+            // If the handle is empty, load it
+            for (Message msg in messages) {
+              if (msg.isFromMe || msg.handle != null) continue;
+              await msg.getHandle();
+            }
           }
         } catch (ex) {
           debugPrint("(CHUNK) Failed to load message chunk!");

@@ -135,6 +135,7 @@ class _SchedulePanelState extends State<SchedulePanel> {
           SliverList(
             delegate: SliverChildListDelegate(
               <Widget>[
+                Container(padding: EdgeInsets.only(top: 5.0)),
                 // Show a top tile
                 (_chat != null)
                     ? SettingsTile(

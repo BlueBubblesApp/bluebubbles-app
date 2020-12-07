@@ -1,3 +1,4 @@
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
 
@@ -98,7 +99,7 @@ class CustomBouncingScrollPhysics extends ScrollPhysics {
       return BouncingScrollSimulation(
         spring: spring,
         position: position.pixels,
-        velocity: velocity * 0.91,
+        velocity: velocity * SettingsManager().settings.scrollVelocity ?? 0.90,  // 0.90 is the default
         leadingExtent: position.minScrollExtent,
         trailingExtent: position.maxScrollExtent,
         tolerance: tolerance,

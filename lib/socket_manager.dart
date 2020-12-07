@@ -225,13 +225,14 @@ class SocketManager {
       _manager.socket.destroy();
     }
 
+    String serverAddress = getServerAddress();
     debugPrint(
-        "Starting socket io with the server: ${SettingsManager().settings.serverAddress}");
+        "Starting socket io with the server: $serverAddress");
 
     try {
       // Create a new socket connection
       _manager.socket = SocketIOManager().createSocketIO(
-          SettingsManager().settings.serverAddress, "/",
+          serverAddress, "/",
           query: "guid=${SettingsManager().settings.guidAuthKey}",
           socketStatusCallback: (data) => socketStatusUpdate(data));
 
@@ -303,8 +304,15 @@ class SocketManager {
           await chat.save();
         }
 
-        // Lastly, save the message
-        await message.save();
+        // Lastly, find the message
+        Message msg = await Message.findOne({'guid': message.guid});
+
+        // Check if we already have an error, and save if we don't
+        if (msg.error == 0) {
+          // TODO: ADD NOTIFICATION TO USER IF FAILURE
+          await message.save();
+        }
+
         return new Future.value("");
       });
 
@@ -345,7 +353,7 @@ class SocketManager {
 
   void closeSocket({bool force = false}) {
     if (!force && _manager.socketProcesses.length != 0) {
-      debugPrint("won't close " + socketProcesses.toString());
+      debugPrint("won't close " + socketProcesses.length.toString());
       return;
     }
     if (_manager.socket != null) {
@@ -478,6 +486,52 @@ class SocketManager {
     return completer.future;
   }
 
+  Future<List<dynamic>> fetchMessages(Chat chat,
+      {int offset: 0,
+      int limit: 100,
+      bool onlyAttachments: false,
+      List<Map<String, dynamic>> where: const []}) async {
+    Completer<List<dynamic>> completer = new Completer();
+    debugPrint("(Fetch Messages) Fetching data.");
+
+    Map<String, dynamic> params = Map();
+    params["chatGuid"] = chat?.guid;
+    params["offset"] = offset;
+    params["limit"] = limit;
+    params["withAttachments"] = true;
+    params["withHandle"] = true;
+    params["sort"] = "DESC";
+    params["where"] = where;
+
+    if (onlyAttachments) {
+      params["where"].add(
+        {
+          "statement": "message.cache_has_attachments = :flag",
+          "args": {"flag": 1}
+        }
+      );
+    }
+
+    print(params);
+
+    SocketManager().sendMessage("get-messages", params, (data) async {
+      if (data['status'] != 200) {
+        return completer.completeError(new Exception(data['error']['message']));
+      }
+
+      List<dynamic> messageData = data["data"];
+      if (messageData == null) {
+        debugPrint("(Fetch Messages) Server returned no messages.");
+        return completer.complete(null);
+      }
+
+      debugPrint("(Fetch Messages) Got ${messageData.length} messages");
+      completer.complete(messageData);
+    });
+
+    return completer.future;
+  }
+
   Future<Map<String, dynamic>> sendMessage(String event,
       Map<String, dynamic> message, Function(Map<String, dynamic>) cb,
       {String reason, bool awaitResponse = true}) {
@@ -540,7 +594,7 @@ class SocketManager {
     // We copy the settings to a local variable
     Settings settingsCopy = SettingsManager().settings;
     // Update the address of the copied settings
-    settingsCopy.serverAddress = serverAddress;
+    settingsCopy.serverAddress = getServerAddress(address: serverAddress);
 
     // And then save to disk
     // NOTE: we do not automatically connect to the socket or authorize fcm,
@@ -574,6 +628,8 @@ class SocketManager {
     try {
       String url =
           await MethodChannelInterface().invokeMethod("get-server-url");
+      url = getServerAddress(address: url);
+
       debugPrint("New server URL: $url");
 
       // Set the server URL

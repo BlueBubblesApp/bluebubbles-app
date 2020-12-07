@@ -11,7 +11,7 @@ description: Send iMessages on Android using BlueBubbles!
 # In iOS, build-name is used as CFBundleShortVersionString while build-number used as CFBundleVersion.
 # Read more about iOS versioning at
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
-version: 0.1.8
+version: 0.1.12
 
 environment:
   sdk: ">=2.6.0 <3.0.0"
@@ -31,7 +31,8 @@ dependencies:
   assorted_layout_widgets: ^2.0.0
   record: ^1.0.2
   flutter_local_notifications: any
-  contacts_service: ^0.4.6
+  contacts_service:
+    path: packages/flutter_contacts
   permission_handler: ^5.0.1+1
   path_provider: ^1.6.7
   sqflite: ^1.3.0
@@ -56,7 +57,8 @@ dependencies:
   android_intent: ^0.3.7+2
   flutter_slidable: ^0.5.4
   image_size_getter: ^0.2.0
-  photo_view: ^0.9.2
+  photo_view:
+    path: packages/photo_view-0.9.2
   logger: ^0.9.1
   flutter_linkify: ^3.1.3
   link_previewer: ^1.2.1
@@ -65,8 +67,6 @@ dependencies:
   adaptive_theme: ^0.1.1
   flutter_lock_screen: ^1.0.6
   local_auth: ^0.6.2+3
-  flutter_blurhash: ^0.5.0
-  blurhash_flutter: ^0.1.0
   sprung: ^1.1.0+11
   metadata_fetch: ^0.3.3
   clipboard: ^0.1.2+8
@@ -77,7 +77,7 @@ dependencies:
   giftextfield:
     path: packages/gif_text_field
   image_gallery_saver: ^1.6.6
-  sentry: ^3.0.1
+  # sentry: ^3.0.1
   flutter_image_compress: ^0.7.0
   extended_text_field:
     path: packages/extended_text_field
@@ -85,6 +85,7 @@ dependencies:
   flutter_displaymode: 0.1.1
   flutter_keyboard_visibility: ^3.3.0
   flutter_markdown: ^0.5.1
+  keyboard_attachable: ^1.0.3
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -132,9 +133,10 @@ flutter:
     - assets/reactions/question-black.svg
     - assets/reactions/love-black.svg
     - assets/icon/moon.svg
+    - assets/icon/discord.svg
     - assets/images/person.png
     - assets/icon/icon.png
-    - assets/changelog/changelog.txt
+    - assets/changelog/changelog.md
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware.
   # For details regarding adding assets from package dependencies, see

@@ -63,12 +63,12 @@ class _PrepareToDownloadState extends State<PrepareToDownload> {
                   if (!this.mounted) return;
 
                   setState(() {
-                    numberOfMessages = value;
+                    numberOfMessages = value == 0 ? 1 : value;
                   });
                 },
-                label: numberOfMessages.toString(),
-                divisions: 9,
-                min: 25,
+                label: numberOfMessages == 0 ? "1" : numberOfMessages.toString(),
+                divisions: 50,
+                min: 0,
                 max: 250,
               ),
             ),

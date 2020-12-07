@@ -1,6 +1,8 @@
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -94,18 +96,24 @@ abstract class MessageWidgetMixin {
         );
       }
 
+      TextStyle textStyle = Theme.of(context).textTheme.bodyText2;
+      if (!message.isFromMe) {
+        if (SettingsManager().settings.colorfulBubbles) {
+          textStyle = Theme.of(context).textTheme.bodyText2.apply(
+              color: darken(
+                  toColorGradient(message?.handle?.address ?? "")[0], 0.35));
+        }
+      } else {
+        textStyle = textStyle.apply(color: Colors.white);
+      }
+
       if (linkIndexMatches.length > 0) {
         for (int i = 0; i < linkIndexMatches.length + 1; i++) {
           if (i == 0) {
             textSpans.add(
               TextSpan(
                 text: message.text.substring(0, linkIndexMatches[i]),
-                style: message.isFromMe
-                    ? Theme.of(context)
-                        .textTheme
-                        .bodyText1
-                        .apply(color: Colors.white)
-                    : Theme.of(context).textTheme.bodyText2,
+                style: textStyle,
               ),
             );
           } else if (i == linkIndexMatches.length && i - 1 >= 0) {
@@ -113,12 +121,7 @@ abstract class MessageWidgetMixin {
               TextSpan(
                 text: message.text
                     .substring(linkIndexMatches[i - 1], message.text.length),
-                style: message.isFromMe
-                    ? Theme.of(context)
-                        .textTheme
-                        .bodyText1
-                        .apply(color: Colors.white)
-                    : Theme.of(context).textTheme.bodyText2,
+                style: textStyle,
               ),
             );
           } else if (i - 1 >= 0) {
@@ -135,27 +138,18 @@ abstract class MessageWidgetMixin {
                           !url.startsWith("https://")) {
                         url = "http://" + url;
                       }
-                      debugPrint(
-                          "open url " + text.startsWith("http://").toString());
+
                       MethodChannelInterface()
                           .invokeMethod("open-link", {"link": url});
                     },
-                  style: Theme.of(context).textTheme.bodyText2.apply(
-                        decoration: TextDecoration.underline,
-                        color: message.isFromMe ? Colors.white : null,
-                      ),
+                  style: textStyle.apply(decoration: TextDecoration.underline),
                 ),
               );
             } else {
               textSpans.add(
                 TextSpan(
                   text: text,
-                  style: message.isFromMe
-                      ? Theme.of(context)
-                          .textTheme
-                          .bodyText2
-                          .apply(color: Colors.white)
-                      : Theme.of(context).textTheme.bodyText2,
+                  style: textStyle,
                 ),
               );
             }
@@ -165,12 +159,7 @@ abstract class MessageWidgetMixin {
         textSpans.add(
           TextSpan(
             text: message.text,
-            style: message.isFromMe
-                ? Theme.of(context)
-                    .textTheme
-                    .bodyText1
-                    .apply(color: Colors.white)
-                : Theme.of(context).textTheme.bodyText2,
+            style: textStyle,
           ),
         );
       }

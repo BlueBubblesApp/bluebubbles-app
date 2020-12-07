@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:ui';
 
 import 'package:bluebubbles/action_handler.dart';
+import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/reaction.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -10,11 +12,12 @@ import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.
 import 'package:bluebubbles/layouts/widgets/message_widget/reaction_detail_widget.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/new_message_manager.dart';
+import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:clipboard/clipboard.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
-import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:sprung/sprung.dart';
 
@@ -53,11 +56,6 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
   void initState() {
     super.initState();
     currentChat = widget.currentChat;
-    KeyboardVisibility.onChange.listen(
-      (bool visible) {
-        if (!visible && context != null) Navigator.of(context)?.pop();
-      },
-    );
 
     messageTopOffset = widget.childOffset.dy;
     topMinimum = CupertinoNavigationBar().preferredSize.height +
@@ -80,10 +78,15 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
     fetchReactions();
     SchedulerBinding.instance.addPostFrameCallback((_) {
       if (this.mounted) {
+        double menuHeight = 150;
+        if (showDownload) {
+          menuHeight += 70;
+        }
         setState(() {
           double totalHeight = MediaQuery.of(context).size.height -
               MediaQuery.of(context).viewInsets.bottom -
-              120;
+              menuHeight -
+              20;
           double offset =
               (widget.childOffset.dy + widget.childSize.height) - totalHeight;
           messageTopOffset =
@@ -149,17 +152,6 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
         child: Stack(
           fit: StackFit.expand,
           children: <Widget>[
-            Material(
-              color: Colors.transparent,
-              child: TextField(
-                cursorColor: Colors.transparent,
-                decoration: InputDecoration(
-                  fillColor: Colors.transparent,
-                  border: InputBorder.none,
-                ),
-                autofocus: MediaQuery.of(context).viewInsets.bottom > 0,
-              ),
-            ),
             GestureDetector(
               onTap: () {
                 Navigator.of(context).pop();
@@ -303,6 +295,17 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
     );
   }
 
+  bool get showDownload =>
+      widget.message.hasAttachments &&
+      widget.message.attachments
+              .where((element) => element.mimeStart != null)
+              .length >
+          0 &&
+      widget.message.attachments
+              .where((element) => AttachmentHelper.getContent(element) is File)
+              .length >
+          0;
+
   Widget buildCopyPasteMenu() {
     Size size = MediaQuery.of(context).size;
 
@@ -432,13 +435,62 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
                   ),
                 ),
               ),
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () async {
+                    NewMessageManager().removeMessage(
+                        widget.currentChat.chat, widget.message.guid);
+                    await Message.softDelete({"guid": widget.message.guid});
+                    Navigator.of(context).pop();
+                  },
+                  child: ListTile(
+                    title: Text(
+                      "Delete",
+                      style: Theme.of(context).textTheme.bodyText1,
+                    ),
+                    trailing: Icon(
+                      Icons.delete,
+                      color: Theme.of(context).textTheme.bodyText1.color,
+                    ),
+                  ),
+                ),
+              ),
+              if (showDownload)
+                Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () async {
+                      for (Attachment element in widget.message.attachments) {
+                        dynamic content = AttachmentHelper.getContent(element);
+                        if (content is File) {
+                          await AttachmentHelper.saveToGallery(
+                              context, content);
+                        }
+                      }
+                    },
+                    child: ListTile(
+                      title: Text(
+                        "Download",
+                        style: Theme.of(context).textTheme.bodyText1,
+                      ),
+                      trailing: Icon(
+                        Icons.file_download,
+                        color: Theme.of(context).textTheme.bodyText1.color,
+                      ),
+                    ),
+                  ),
+                ),
             ],
           ),
         ),
       ),
     );
 
-    double menuHeight = 100;
+    double menuHeight = 150;
+    if (showDownload) {
+      menuHeight += 70;
+    }
 
     double topOffset = (messageTopOffset + widget.childSize.height)
         .toDouble()

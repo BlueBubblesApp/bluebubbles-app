@@ -12,6 +12,7 @@ import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scrol
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
+import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -37,9 +38,15 @@ class _ConversationDetailsState extends State<ConversationDetails> {
     super.initState();
     chat = widget.chat;
     controller = new TextEditingController(text: chat.displayName);
-    Chat.getAttachments(chat).then((value) {
-      attachmentsForChat = value;
-      if (this.mounted) setState(() {});
+    
+    fetchAttachments();
+    ChatBloc().chatStream.listen((event) async {
+      if (this.mounted) {
+        Chat _chat = await Chat.findOne({"guid": widget.chat.guid});
+        await _chat.getParticipants();
+        chat = _chat;
+        setState(() {});
+      }
     });
   }
 
@@ -51,29 +58,16 @@ class _ConversationDetailsState extends State<ConversationDetails> {
     if (this.mounted) setState(() {});
   }
 
+  void fetchAttachments() {
+    Chat.getAttachments(chat).then((value) {
+      attachmentsForChat = value;
+      if (this.mounted) setState(() {});
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    return
-        // WillPopScope(
-        //   onWillPop: () async {
-        //     if (chat.displayName != controller.text &&
-        //         (await chat.getParticipants()).participants.length > 1) {
-        //       Map<String, dynamic> params = new Map();
-        //       params["identifier"] = chat.guid;
-        //       params["newName"] = controller.text;
-        //       SocketManager().sendMessage("rename-group", params, (data) async {
-        //         if (data["status"] == 200) {
-        //           Chat updatedChat = Chat.fromMap(data["data"]);
-        //           await updatedChat.save();
-        //           await ChatBloc().updateChatPosition(updatedChat);
-        //         }
-        //         debugPrint("renamed group chat " + data.toString());
-        //       });
-        //     }
-        //     return true;
-        //   },
-        //   child:
-        Scaffold(
+    return Scaffold(
       backgroundColor: Theme.of(context).backgroundColor,
       appBar: CupertinoNavigationBar(
         backgroundColor: Theme.of(context).accentColor.withAlpha(125),
@@ -118,6 +112,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
             delegate: SliverChildBuilderDelegate(
               (context, index) {
                 return ContactTile(
+                  key: Key(chat.participants[index].id.toString()),
                   address: chat.participants[index].address,
                   handle: chat.participants[index],
                   chat: chat,
@@ -185,10 +180,44 @@ class _ConversationDetailsState extends State<ConversationDetails> {
           SliverToBoxAdapter(
             child: InkWell(
               onTap: () async {
+                await showDialog(
+                  context: context,
+                  builder: (context) => SyncDialog(
+                    chat: chat,
+                    withOffset: true,
+                    initialMessage: "Fetching messages...",
+                    limit: 100
+                  ),
+                );
+
+                fetchAttachments();
+              },
+              child: ListTile(
+                leading: Text(
+                  "Fetch more messages",
+                  style: TextStyle(
+                    color: Theme.of(context).primaryColor,
+                  ),
+                ),
+                trailing: Padding(
+                  padding: EdgeInsets.only(right: 15),
+                  child: Icon(
+                    Icons.file_download,
+                    color: Theme.of(context).primaryColor,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          SliverToBoxAdapter(
+            child: InkWell(
+              onTap: () async {
                 showDialog(
                   context: context,
                   builder: (context) => SyncDialog(
                     chat: chat,
+                    initialMessage: "Syncing messages...",
+                    limit: 25
                   ),
                 );
               },
@@ -210,56 +239,75 @@ class _ConversationDetailsState extends State<ConversationDetails> {
             ),
           ),
           SliverToBoxAdapter(
-            child: ListTile(
-              leading: Text(
-                "Mute Conversation",
-                style: TextStyle(
-                  color: Theme.of(context).primaryColor,
-                )
-              ),
-              trailing: Switch(
-                value: widget.chat.isMuted,
-                activeColor: Theme.of(context).primaryColor,
-                activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
-                inactiveTrackColor: Theme.of(context).accentColor.withOpacity(0.6),
-                inactiveThumbColor: Theme.of(context).accentColor,
-                onChanged: (value) async {
-                  widget.chat.isMuted = value;
-                  await widget.chat.save(updateLocalVals: true);
-                  EventDispatcher().emit("refresh", null);
+              child: ListTile(
+                  leading: Text("Pin Conversation",
+                      style: TextStyle(
+                        color: Theme.of(context).primaryColor,
+                      )),
+                  trailing: Switch(
+                      value: widget.chat.isPinned,
+                      activeColor: Theme.of(context).primaryColor,
+                      activeTrackColor:
+                          Theme.of(context).primaryColor.withAlpha(200),
+                      inactiveTrackColor:
+                          Theme.of(context).accentColor.withOpacity(0.6),
+                      inactiveThumbColor: Theme.of(context).accentColor,
+                      onChanged: (value) async {
+                        if (value) {
+                          await widget.chat.pin();
+                        } else {
+                          await widget.chat.unpin();
+                        }
+                        
+                        EventDispatcher().emit("refresh", null);
 
-                  if (this.mounted) setState(() {});
-                }
-              )
-            )
-          ),
+                        if (this.mounted) setState(() {});
+                      }))),
           SliverToBoxAdapter(
-            child: ListTile(
-              leading: Text(
-                "Archive Conversation",
-                style: TextStyle(
-                  color: Theme.of(context).primaryColor,
-                )
-              ),
-              trailing: Switch(
-                value: widget.chat.isArchived,
-                activeColor: Theme.of(context).primaryColor,
-                activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
-                inactiveTrackColor: Theme.of(context).accentColor.withOpacity(0.6),
-                inactiveThumbColor: Theme.of(context).accentColor,
-                onChanged: (value) {
-                  if (value) {
-                    ChatBloc().archiveChat(widget.chat);
-                  } else {
-                    ChatBloc().unArchiveChat(widget.chat);
-                  }
+              child: ListTile(
+                  leading: Text("Mute Conversation",
+                      style: TextStyle(
+                        color: Theme.of(context).primaryColor,
+                      )),
+                  trailing: Switch(
+                      value: widget.chat.isMuted,
+                      activeColor: Theme.of(context).primaryColor,
+                      activeTrackColor:
+                          Theme.of(context).primaryColor.withAlpha(200),
+                      inactiveTrackColor:
+                          Theme.of(context).accentColor.withOpacity(0.6),
+                      inactiveThumbColor: Theme.of(context).accentColor,
+                      onChanged: (value) async {
+                        widget.chat.isMuted = value;
+                        await widget.chat.save(updateLocalVals: true);
+                        EventDispatcher().emit("refresh", null);
 
-                  EventDispatcher().emit("refresh", null);
-                  if (this.mounted) setState(() {});
-                }
-              )
-            )
-          ),
+                        if (this.mounted) setState(() {});
+                      }))),
+          SliverToBoxAdapter(
+              child: ListTile(
+                  leading: Text("Archive Conversation",
+                      style: TextStyle(
+                        color: Theme.of(context).primaryColor,
+                      )),
+                  trailing: Switch(
+                      value: widget.chat.isArchived,
+                      activeColor: Theme.of(context).primaryColor,
+                      activeTrackColor:
+                          Theme.of(context).primaryColor.withAlpha(200),
+                      inactiveTrackColor:
+                          Theme.of(context).accentColor.withOpacity(0.6),
+                      inactiveThumbColor: Theme.of(context).accentColor,
+                      onChanged: (value) {
+                        if (value) {
+                          ChatBloc().archiveChat(widget.chat);
+                        } else {
+                          ChatBloc().unArchiveChat(widget.chat);
+                        }
+
+                        EventDispatcher().emit("refresh", null);
+                        if (this.mounted) setState(() {});
+                      }))),
           SliverGrid(
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
@@ -288,8 +336,17 @@ class _ConversationDetailsState extends State<ConversationDetails> {
 }
 
 class SyncDialog extends StatefulWidget {
-  SyncDialog({Key key, this.chat}) : super(key: key);
+  SyncDialog(
+      {Key key,
+      this.chat,
+      this.initialMessage,
+      this.withOffset = false,
+      this.limit = 100})
+      : super(key: key);
   final Chat chat;
+  final String initialMessage;
+  final bool withOffset;
+  final int limit;
 
   @override
   _SyncDialogState createState() => _SyncDialogState();
@@ -298,30 +355,47 @@ class SyncDialog extends StatefulWidget {
 class _SyncDialogState extends State<SyncDialog> {
   String errorCode;
   bool finished = false;
+  String message;
+  double progress;
 
   @override
   void initState() {
     super.initState();
-    Map<String, dynamic> params = Map();
-    params["identifier"] = widget.chat.guid;
-    params["withBlurhash"] = false;
-    params["limit"] = 25;
-    params["where"] = [
-      {"statement": "message.service = 'iMessage'", "args": null}
-    ];
+    message = widget.initialMessage;
+    syncMessages();
+  }
 
-    SocketManager().sendMessage("get-chat-messages", params, (data) async {
-      if (data['status'] != 200) {
-        onFinish(false);
-        errorCode = data['error']['message'];
-        return;
+  void syncMessages() async {
+    int offset = 0;
+    if (widget.withOffset) {
+      offset = await Message.countForChat(widget.chat);
+    }
+
+    SocketManager()
+        .fetchMessages(widget.chat, offset: offset, limit: widget.limit)
+        .then((List<dynamic> messages) {
+      if (this.mounted) {
+        setState(() {
+          message = "Adding ${messages.length} messages...";
+        });
       }
-      List messages = data["data"];
-      await MessageHelper.bulkAddMessages(
-          widget.chat, messages.reversed.toList(),
-          notifyForNewMessage: false);
-      onFinish();
-    });
+
+      MessageHelper.bulkAddMessages(
+        widget.chat,
+        messages,
+        onProgress: (int progress, int length) {
+          if (progress == 0 || length  == 0) {
+            this.progress = null;
+          } else {
+            this.progress = progress / length;
+          }
+
+          if (this.mounted) setState(() {});
+        })
+          .then((List<Message> __) {
+        onFinish(true);
+      });
+    }).catchError((_) => onFinish(false));
   }
 
   void onFinish([bool success = true]) {
@@ -333,13 +407,14 @@ class _SyncDialogState extends State<SyncDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(errorCode != null ? "Error!" : "Syncing messages..."),
+      title: Text(errorCode != null ? "Error!" : message),
       content: errorCode != null
           ? Text(errorCode)
           : Container(
               height: 5,
               child: Center(
                 child: LinearProgressIndicator(
+                  value: progress,
                   backgroundColor: Colors.white,
                   valueColor:
                       AlwaysStoppedAnimation(Theme.of(context).primaryColor),

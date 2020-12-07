@@ -22,7 +22,6 @@ if (flutterVersionName == null) {
 }
 
 
-
 apply plugin: 'com.android.application'
 apply from: "$flutterRoot/packages/flutter_tools/gradle/flutter.gradle"
 //apply plugin: 'com.google.gms.google-services'  // Google Services plugin
@@ -35,7 +34,7 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
-    compileSdkVersion 30
+    compileSdkVersion 29
 
     lintOptions {
         disable 'InvalidPackage'
@@ -44,18 +43,18 @@ android {
     defaultConfig {
         applicationId "com.bluebubbles.messaging"
         minSdkVersion 21
-        targetSdkVersion 30
-        //                 v0.1.8 armv7 OR arm64
-        // version code: 1  018     070      064
+        targetSdkVersion 29
+        //                 v0.1.12        hotfix version (0-9)      armv7 OR arm64
+        // version code: 1  0112                    1                70      64
 
         //noinspection AccidentalOctal
-        versionCode 1018070
+        versionCode 10112270
         versionName flutterVersionName
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
-        // ndk {
-        //     abiFilters 'armeabi-v7a'
-        // }
+//        ndk {
+//            abiFilters 'armeabi-v7a', 'arm64-v8a'
+//        }
     }
 
     compileOptions {
@@ -70,7 +69,7 @@ android {
             storeFile keystoreProperties['storeFile'] ? file(keystoreProperties['storeFile']) : null
             storePassword keystoreProperties['storePassword']
         }
-   }
+    }
 
     buildTypes {
         release {
@@ -121,7 +120,7 @@ dependencies {
     implementation 'com.google.code.gson:gson:2.8.6'
 
     //for crash reporting
-    implementation 'io.sentry:sentry-android:2.2.2'
+    // implementation 'io.sentry:sentry-android:2.2.2'
 
     // for workmanager
     implementation "androidx.work:work-runtime:2.4.0"

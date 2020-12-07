@@ -13,6 +13,7 @@ import 'package:convert/convert.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart' as intl;
 
 DateTime parseDate(dynamic value) {
   if (value == null) return null;
@@ -181,6 +182,13 @@ bool isEmptyString(String input, {stripWhitespace = false}) {
   return input.isEmpty;
 }
 
+bool isParticipantEvent(Message message) {
+  if (message == null) return false;
+  if (message.itemType == 1 && [0, 1].contains(message.groupActionType)) return true;
+  if ([2, 3].contains(message.itemType)) return true;
+  return false;
+}
+
 Future<String> getGroupEventText(Message message) async {
   String text = "Unknown group event";
   String handle = "You";
@@ -263,8 +271,10 @@ Future<dynamic> loadAsset(String path) {
 }
 
 bool validatePhoneNumber(String value) {
+  value = value.trim();
+
   String phonePattern =
-      r'^(\+?\d{1,2}\s?)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}$';
+      r'^\+?(\+?\d{1,2}\s?)?\-?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}$';
   String emailPattern = r'^\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$';
   RegExp regExpPhone = new RegExp(phonePattern);
   RegExp regExpEmail = new RegExp(emailPattern);
@@ -289,28 +299,29 @@ String stripHtmlTags(String htmlString) {
 // }
 
 List<Color> toColorGradient(String str) {
-  if (str.length == 0) return [HexColor("686868"), HexColor("928E8E")];
+  if (isNullOrEmpty(str)) return [HexColor("686868"), HexColor("928E8E")];
 
   int total = 0;
   for (int i = 0; i < (str ?? "").length; i++) {
     total += str.codeUnitAt(i);
   }
 
-  int seed = (total * str.length / 8).round();
+  Random random = new Random(total);
+  int seed = random.nextInt(7);
 
   // These are my arbitrary weights. It's based on what I found
   // to be a good amount of each color
-  if (seed < 901) {
+  if (seed == 0) {
     return [HexColor("fd678d"), HexColor("ff8aa8")]; // Pink
-  } else if (seed >= 901 && seed < 915) {
+  } else if (seed == 1) {
     return [HexColor("6bcff6"), HexColor("94ddfd")]; // Blue
-  } else if (seed >= 915 && seed < 925) {
+  } else if (seed == 2) {
     return [HexColor("fea21c"), HexColor("feb854")]; // Orange
-  } else if (seed >= 925 && seed < 935) {
+  } else if (seed == 3) {
     return [HexColor("5ede79"), HexColor("8de798")]; // Green
-  } else if (seed >= 935 && seed < 950) {
+  } else if (seed == 4) {
     return [HexColor("ffca1c"), HexColor("fcd752")]; // Yellow
-  } else if (seed >= 950 && seed < 3000) {
+  } else if (seed == 5) {
     return [HexColor("ff534d"), HexColor("fd726a")]; // Red
   } else {
     return [HexColor("a78df3"), HexColor("bcabfc")]; // Purple
@@ -320,7 +331,7 @@ List<Color> toColorGradient(String str) {
 bool shouldBeRainbow(Chat chat) {
   Chat theChat = chat;
   if (theChat == null) return false;
-  return SettingsManager().settings.rainbowBubbles;
+  return SettingsManager().settings.colorfulAvatars;
 }
 
 Size getGifDimensions(Uint8List bytes) {
@@ -345,4 +356,33 @@ Size getGifDimensions(Uint8List bytes) {
 
 Brightness getBrightness(BuildContext context) {
   return AdaptiveTheme.of(context).mode == AdaptiveThemeMode.dark ? Brightness.dark : Brightness.light;
+}
+
+/// Take the passed [address] or serverAddress from Settings
+/// and sanitize it, making sure it includes an http schema
+String getServerAddress({String address}) {
+  String serverAddress = address ?? SettingsManager().settings.serverAddress;
+
+  // If the serverAddress doesn't start with HTTP, modify it
+  if (!serverAddress.startsWith("http")) {
+    // If it''s an ngrok address, use HTTPS, otherwise, just use HTTP
+    if (serverAddress.contains("ngrok.io")) {
+      serverAddress = "https://$serverAddress";
+    } else {
+      serverAddress = "http://$serverAddress";
+    }
+  }
+
+  return serverAddress;
+}
+
+String dateToShortString(DateTime timestamp) {
+  if (timestamp == null || timestamp.millisecondsSinceEpoch == 0) return "";
+  if (timestamp.isToday()) {
+    return new intl.DateFormat.jm().format(timestamp);
+  } else if (timestamp.isYesterday()) {
+    return "Yesterday";
+  } else {
+    return "${timestamp.month.toString()}/${timestamp.day.toString()}/${timestamp.year.toString()}";
+  }
 }

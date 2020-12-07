@@ -1,11 +1,12 @@
-import 'dart:async';
 import 'dart:convert';
 import 'dart:ui';
 
 import "package:bluebubbles/helpers/string_extension.dart";
-import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/layouts/theming/theming_panel.dart';
+import 'package:bluebubbles/layouts/settings/about_panel.dart';
+import 'package:bluebubbles/layouts/settings/server_management_panel.dart';
+import 'package:bluebubbles/layouts/settings/theme_panel.dart';
+import 'package:bluebubbles/layouts/settings/ux_panel.dart';
 import 'package:bluebubbles/layouts/widgets/CustomCupertinoTextField.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
@@ -17,8 +18,6 @@ import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_displaymode/flutter_displaymode.dart';
-import 'package:flutter_markdown/flutter_markdown.dart';
 import '../../helpers/hex_color.dart';
 import 'package:flutter/material.dart';
 
@@ -35,8 +34,6 @@ class _SettingsPanelState extends State<SettingsPanel> {
   Settings _settingsCopy;
   FCMData _fcmDataCopy;
   bool needToReconnect = false;
-  List<DisplayMode> modes;
-  DisplayMode currentMode;
   bool showUrl = false;
   Brightness brightness;
   bool gotBrightness = false;
@@ -59,14 +56,6 @@ class _SettingsPanelState extends State<SettingsPanel> {
     });
   }
 
-  @override
-  void didChangeDependencies() async {
-    super.didChangeDependencies();
-    modes = await FlutterDisplayMode.supported;
-    currentMode = await _settingsCopy.getDisplayMode();
-    setState(() {});
-  }
-
   void loadBrightness() {
     if (gotBrightness) return;
     if (context == null) {
@@ -75,7 +64,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
       return;
     }
 
-    bool isDark = Theme.of(context).accentColor.computeLuminance() < 0.179;
+    bool isDark = Theme.of(context).backgroundColor.computeLuminance() < 0.179;
     brightness = isDark ? Brightness.dark : Brightness.light;
     gotBrightness = true;
   }
@@ -120,6 +109,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
           SliverList(
             delegate: SliverChildListDelegate(
               <Widget>[
+                Container(padding: EdgeInsets.only(top: 5.0)),
                 StreamBuilder(
                     stream: SocketManager().connectionStateStream,
                     builder: (context, AsyncSnapshot<SocketState> snapshot) {
@@ -167,8 +157,10 @@ class _SettingsPanelState extends State<SettingsPanel> {
                           }
                         },
                         onLongPress: () {
-                          Clipboard.setData(new ClipboardData(text: _settingsCopy.serverAddress));
-                          final snackBar = SnackBar(content: Text("Address copied to clipboard"));
+                          Clipboard.setData(new ClipboardData(
+                              text: _settingsCopy.serverAddress));
+                          final snackBar = SnackBar(
+                              content: Text("Address copied to clipboard"));
                           Scaffold.of(context).showSnackBar(snackBar);
                         },
                         trailing: connectionStatus == SocketState.CONNECTED ||
@@ -212,33 +204,13 @@ class _SettingsPanelState extends State<SettingsPanel> {
                         applicationID: fcmData[7],
                       );
                       _settingsCopy.guidAuthKey = fcmData[0];
-                      _settingsCopy.serverAddress = fcmData[1];
+                      _settingsCopy.serverAddress = getServerAddress(address: fcmData[1]);
 
                       SettingsManager().saveSettings(_settingsCopy);
                       SettingsManager().saveFCMData(_fcmDataCopy);
                       SocketManager().authFCM();
                     }
                   },
-                ),
-                SettingsSlider(
-                  startingVal: _settingsCopy.chunkSize.toDouble(),
-                  update: (int val) {
-                    _settingsCopy.chunkSize = val;
-                  },
-                ),
-                SettingsSwitch(
-                  onChanged: (bool val) {
-                    _settingsCopy.hideTextPreviews = val;
-                  },
-                  initialVal: _settingsCopy.hideTextPreviews,
-                  title: "Hide Text Previews (in notifications)",
-                ),
-                SettingsSwitch(
-                  onChanged: (bool val) {
-                    _settingsCopy.autoOpenKeyboard = val;
-                  },
-                  initialVal: _settingsCopy.autoOpenKeyboard,
-                  title: "Auto-open Keyboard",
                 ),
                 SettingsSwitch(
                   onChanged: (bool val) {
@@ -254,89 +226,17 @@ class _SettingsPanelState extends State<SettingsPanel> {
                   initialVal: _settingsCopy.onlyWifiDownload,
                   title: "Only Auto-download Attachments on WiFi",
                 ),
-                SettingsSwitch(
-                  onChanged: (bool val) {
-                    _settingsCopy.lowMemoryMode = val;
+                SettingsSlider(
+                  text: "Attachment Chunk Size",
+                  startingVal: _settingsCopy.chunkSize.toDouble(),
+                  update: (double val) {
+                    _settingsCopy.chunkSize = val.floor();
                   },
-                  initialVal: _settingsCopy.lowMemoryMode,
-                  title: "Low Memory Mode",
+                  formatValue: ((double val) => getSizeString(val)),
+                  min: 100,
+                  max: 3000,
+                  divisions: 29
                 ),
-                SettingsSwitch(
-                  onChanged: (bool val) {
-                    _settingsCopy.showIncrementalSync = val;
-                  },
-                  initialVal: _settingsCopy.showIncrementalSync,
-                  title: "Notify when incremental sync complete",
-                ),
-                Divider(
-                  color: Theme.of(context).accentColor.withOpacity(0.5),
-                  thickness: 1,
-                ),
-                SettingsSwitch(
-                  onChanged: (bool val) {
-                    _settingsCopy.hideDividers = val;
-                    saveSettings();
-                  },
-                  initialVal: _settingsCopy.hideDividers,
-                  title: "Hide Dividers",
-                ),
-                SettingsSwitch(
-                  onChanged: (bool val) {
-                    _settingsCopy.rainbowBubbles = val;
-                    saveSettings();
-                  },
-                  initialVal: _settingsCopy.rainbowBubbles,
-                  title: "Colorful Chats",
-                ),
-                // SettingsOptions<String>(
-                //   initial: _settingsCopy.emojiFontFamily == null
-                //       ? "System"
-                //       : fontFamilyToString[_settingsCopy.emojiFontFamily],
-                //   onChanged: (val) {
-                //     _settingsCopy.emojiFontFamily = stringToFontFamily[val];
-                //   },
-                //   options: stringToFontFamily.keys.toList(),
-                //   textProcessing: (dynamic val) => val,
-                //   title: "Emoji Style",
-                //   showDivider: false,
-                // ),
-                SettingsOptions<AdaptiveThemeMode>(
-                  initial: AdaptiveTheme.of(context).mode,
-                  onChanged: (val) {
-                    AdaptiveTheme.of(context).setThemeMode(val);
-
-                    // This needs to be on a delay so the background color has time to change
-                    Timer(Duration(seconds: 1), () => EventDispatcher().emit('theme-update', null));
-                  },
-                  options: AdaptiveThemeMode.values,
-                  textProcessing: (dynamic val) =>
-                      val.toString().split(".").last,
-                  title: "App Theme",
-                  showDivider: false,
-                ),
-                SettingsTile(
-                  title: "Theming",
-                  trailing: Icon(Icons.arrow_forward_ios,
-                      color: Theme.of(context).primaryColor),
-                  onTap: () async {
-                    Navigator.of(context).push(
-                      CupertinoPageRoute(
-                        builder: (context) => ThemingPanel(),
-                      ),
-                    );
-                  },
-                ),
-                if (currentMode != null && modes != null)
-                  SettingsOptions<DisplayMode>(
-                    initial: currentMode,
-                    onChanged: (val) async {
-                      currentMode = val;
-                      _settingsCopy.displayMode = currentMode.id;
-                    },
-                    options: modes,
-                    textProcessing: (dynamic val) => val.toString(),
-                    title: "Display",
-                  ),
                 // SettingsTile(
                 //   title: "Message Scheduling",
                 //   trailing: Icon(Icons.arrow_forward_ios,
@@ -349,6 +249,83 @@ class _SettingsPanelState extends State<SettingsPanel> {
                 //     );
                 //   },
                 // ),
+                // SettingsTile(
+                //   title: "Search",
+                //   trailing: Icon(Icons.arrow_forward_ios,
+                //       color: Theme.of(context).primaryColor),
+                //   onTap: () async {
+                //     Navigator.of(context).push(
+                //       CupertinoPageRoute(
+                //         builder: (context) => SearchView(),
+                //       ),
+                //     );
+                //   },
+                // ),
+                SettingsTile(
+                  title: "Theme Settings",
+                  onTap: () {
+                    Navigator.of(context).push(
+                      CupertinoPageRoute(
+                        builder: (context) => ThemePanel(),
+                      ),
+                    );
+                  },
+                  trailing: Icon(
+                    Icons.arrow_forward_ios,
+                    color: Theme.of(context).primaryColor,
+                  ),
+                ),
+                SettingsTile(
+                  title: "User Experience Settings",
+                  onTap: () {
+                    Navigator.of(context).push(
+                      CupertinoPageRoute(
+                        builder: (context) => UXPanel(),
+                      ),
+                    );
+                  },
+                  trailing: Icon(
+                    Icons.arrow_forward_ios,
+                    color: Theme.of(context).primaryColor,
+                  ),
+                ),
+                SettingsTile(
+                  title: "Server Management",
+                  trailing: Icon(Icons.arrow_forward_ios,
+                      color: Theme.of(context).primaryColor),
+                  onTap: () async {
+                    Navigator.of(context).push(
+                      CupertinoPageRoute(
+                        builder: (context) => ServerManagementPanel(),
+                      ),
+                    );
+                  },
+                ),
+                SettingsTile(
+                  title: "About & Links",
+                  onTap: () {
+                    Navigator.of(context).push(
+                      CupertinoPageRoute(
+                        builder: (context) => AboutPanel(),
+                      ),
+                    );
+                  },
+                  trailing: Icon(
+                    Icons.arrow_forward_ios,
+                    color: Theme.of(context).primaryColor,
+                  ),
+                ),
+                SettingsTile(
+                  title: "Support the Developers!",
+                  onTap: () {
+                    MethodChannelInterface().invokeMethod("open-link",
+                        {"link": "https://bluebubbles.app/donate/"});
+                  },
+                  trailing: Icon(
+                    Icons.attach_money,
+                    color: Theme.of(context).primaryColor,
+                  ),
+                ),
                 SettingsTile(
                   onTap: () {
                     showDialog(
@@ -366,9 +343,8 @@ class _SettingsPanelState extends State<SettingsPanel> {
                               child: Text("Yes"),
                               onPressed: () async {
                                 await DBProvider.deleteDB();
-                                Settings temp = SettingsManager().settings;
-                                temp.finishedSetup = false;
-                                await SettingsManager().saveSettings(temp);
+                                await SettingsManager().resetConnection();
+                                
                                 SocketManager().finishedSetup.sink.add(false);
                                 Navigator.of(context)
                                     .popUntil((route) => route.isFirst);
@@ -387,188 +363,6 @@ class _SettingsPanelState extends State<SettingsPanel> {
                   },
                   title: "Reset DB",
                 ),
-                Divider(
-                  color: Theme.of(context).accentColor.withOpacity(0.5),
-                  thickness: 1,
-                ),
-                SettingsTile(
-                  title: "Donations",
-                  onTap: () {
-                    MethodChannelInterface().invokeMethod("open-link",
-                        {"link": "https://bluebubbles.app/donate/"});
-                  },
-                  trailing: Icon(
-                    Icons.attach_money,
-                    color: Theme.of(context).primaryColor,
-                  ),
-                ),
-                SettingsTile(
-                  title: "Website",
-                  onTap: () {
-                    MethodChannelInterface().invokeMethod(
-                        "open-link", {"link": "https://bluebubbles.app/"});
-                  },
-                  trailing: Icon(
-                    Icons.link,
-                    color: Theme.of(context).primaryColor,
-                  ),
-                ),
-                SettingsTile(
-                  title: "Source Code",
-                  onTap: () {
-                    MethodChannelInterface().invokeMethod("open-link",
-                        {"link": "https://github.com/BlueBubblesApp"});
-                  },
-                  trailing: Icon(
-                    Icons.code,
-                    color: Theme.of(context).primaryColor,
-                  ),
-                ),
-                SettingsTile(
-                  title: "Changelog",
-                  onTap: () async {
-                    String changelog = await DefaultAssetBundle.of(context)
-                        .loadString('assets/changelog/changelog.txt');
-                    Navigator.of(context).push(
-                      CupertinoPageRoute(
-                        builder: (context) => Scaffold(
-                          body: Markdown(
-                            data: changelog,
-                            physics: AlwaysScrollableScrollPhysics(
-                              parent: BouncingScrollPhysics(),
-                            ),
-                            styleSheet: MarkdownStyleSheet.fromTheme(
-                              Theme.of(context)
-                                ..textTheme.copyWith(
-                                  headline1: TextStyle(
-                                    color: Colors.white,
-                                  ),
-                                ),
-                            ).copyWith(
-                              h1: Theme.of(context)
-                                  .textTheme
-                                  .headline1
-                                  .copyWith(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold),
-                              h2: Theme.of(context)
-                                  .textTheme
-                                  .headline2
-                                  .copyWith(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold),
-                              h3: Theme.of(context)
-                                  .textTheme
-                                  .headline3
-                                  .copyWith(
-                                      fontSize: 17,
-                                      fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                          backgroundColor: Theme.of(context).backgroundColor,
-                          appBar: CupertinoNavigationBar(
-                            backgroundColor: Theme.of(context).accentColor,
-                            middle: Text(
-                              "Changelog",
-                              style: Theme.of(context).textTheme.headline1,
-                            ),
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                  trailing: Icon(
-                    Icons.code,
-                    color: Theme.of(context).primaryColor,
-                  ),
-                ),
-                SettingsTile(
-                  title: "Developers",
-                  onTap: () {
-                    showDialog(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        title: Text(
-                          "Developers! Developers!",
-                          style: Theme.of(context).textTheme.headline1,
-                          textAlign: TextAlign.center,
-                        ),
-                        backgroundColor: Theme.of(context).accentColor,
-                        content: SizedBox(
-                          width: MediaQuery.of(context).size.width * 3 / 5,
-                          height: MediaQuery.of(context).size.height * 1 / 9,
-                          child: ListView(
-                            physics: AlwaysScrollableScrollPhysics(
-                              parent: BouncingScrollPhysics(),
-                            ),
-                            children: [
-                              Container(
-                                alignment: Alignment.center,
-                                padding: EdgeInsets.all(8),
-                                child: Text(
-                                  "Zach",
-                                  style: Theme.of(context).textTheme.bodyText1,
-                                ),
-                              ),
-                              Container(
-                                alignment: Alignment.center,
-                                padding: EdgeInsets.all(8),
-                                child: Text(
-                                  "Brandon",
-                                  style: Theme.of(context).textTheme.bodyText1,
-                                ),
-                              ),
-                              Container(
-                                alignment: Alignment.center,
-                                padding: EdgeInsets.all(8),
-                                child: Text(
-                                  "Maxwell",
-                                  style: Theme.of(context).textTheme.bodyText1,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        actions: [
-                          FlatButton(
-                            child: Text(
-                              "Close",
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodyText1
-                                  .copyWith(
-                                    color: Theme.of(context).primaryColor,
-                                  ),
-                            ),
-                            onPressed: () => Navigator.of(context).pop(),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                  trailing: Icon(
-                    Icons.info_outline,
-                    color: Theme.of(context).primaryColor,
-                  ),
-                ),
-                SettingsTile(
-                  title: "About",
-                  onTap: () {
-                    showAboutDialog(
-                      context: context,
-                      applicationName: "BlueBubbles",
-                      applicationIcon: Image.asset(
-                        "assets/icon/icon.png",
-                        width: 30,
-                        height: 30,
-                      ),
-                    );
-                  },
-                  trailing: Icon(
-                    Icons.info_outline,
-                    color: Theme.of(context).primaryColor,
-                  ),
-                )
               ],
             ),
           ),
@@ -598,7 +392,12 @@ class _SettingsPanelState extends State<SettingsPanel> {
 
 class SettingsTile extends StatelessWidget {
   const SettingsTile(
-      {Key key, this.onTap, this.onLongPress, this.title, this.trailing, this.subTitle})
+      {Key key,
+      this.onTap,
+      this.onLongPress,
+      this.title,
+      this.trailing,
+      this.subTitle})
       : super(key: key);
 
   final Function onTap;
@@ -891,10 +690,26 @@ class _SettingsOptionsState<T> extends State<SettingsOptions<T>> {
 }
 
 class SettingsSlider extends StatefulWidget {
-  SettingsSlider({this.startingVal, this.update, Key key}) : super(key: key);
+  SettingsSlider(
+      {
+        @required this.startingVal,
+        this.update,
+        @required this.text,
+        this.formatValue,
+        @required this.min,
+        @required this.max,
+        @required this.divisions,
+        Key key
+      })
+      : super(key: key);
 
   final double startingVal;
-  final Function update;
+  final Function(double val) update;
+  final String text;
+  final Function(double value) formatValue;
+  final double min;
+  final double max;
+  final int divisions;
 
   @override
   _SettingsSliderState createState() => _SettingsSliderState();
@@ -905,18 +720,23 @@ class _SettingsSliderState extends State<SettingsSlider> {
   @override
   void initState() {
     super.initState();
-    if (widget.startingVal > 1 && widget.startingVal < 5000) {
+    if (widget.startingVal > 0 && widget.startingVal < 5000) {
       currentVal = widget.startingVal;
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    String value = currentVal.toString();
+    if (widget.formatValue != null) {
+      value = widget.formatValue(currentVal);
+    }
+
     return Column(
       children: <Widget>[
         ListTile(
           title: Text(
-            "Attachment Chunk Size: ${getSizeString(currentVal)}",
+            "${widget.text}: $value",
             style: Theme.of(context).textTheme.bodyText1,
           ),
           subtitle: Slider(
@@ -928,13 +748,13 @@ class _SettingsSliderState extends State<SettingsSlider> {
 
               setState(() {
                 currentVal = value;
-                widget.update(currentVal.floor());
+                widget.update(currentVal);
               });
             },
-            label: getSizeString(currentVal),
-            divisions: 29,
-            min: 100,
-            max: 3000,
+            label: value,
+            divisions: widget.divisions,
+            min: widget.min,
+            max: widget.max,
           ),
         ),
         Divider(

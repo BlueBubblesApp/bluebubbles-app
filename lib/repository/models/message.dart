@@ -56,6 +56,7 @@ class Message {
   Handle handle;
   bool hasAttachments;
   bool hasReactions;
+  DateTime dateDeleted;
 
   List<Attachment> attachments = [];
   List<Message> associatedMessages = [];
@@ -97,6 +98,7 @@ class Message {
     this.hasAttachments = false,
     this.hasReactions = false,
     this.attachments = const [],
+    this.dateDeleted
   });
 
   factory Message.fromMap(Map<String, dynamic> json) {
@@ -201,6 +203,8 @@ class Message {
       hasReactions: json.containsKey('hasReactions')
           ? ((json['hasReactions'] == 1) ? true : false)
           : false,
+      dateDeleted:
+          json.containsKey("dateDeleted") ? parseDate(json["dateDeleted"]) : null,
     );
   }
 
@@ -469,6 +473,23 @@ class Message {
     }
   }
 
+  static Future<void> softDelete(Map<String, dynamic> where) async {
+    final Database db = await DBProvider.db.database;
+
+    List<String> whereParams = [];
+    where.keys.forEach((filter) => whereParams.add('$filter = ?'));
+    List<dynamic> whereArgs = [];
+    where.values.forEach((filter) => whereArgs.add(filter));
+
+    List<Message> toDelete = await Message.find(where);
+    for (Message msg in toDelete ?? []) {
+      await db
+          .update("message", {
+            'dateDeleted': DateTime.now().toUtc().millisecondsSinceEpoch
+          }, where: "ROWID = ?", whereArgs: [msg.id]);
+    }
+  }
+
   static flush() async {
     final Database db = await DBProvider.db.database;
     await db.delete("message");
@@ -521,6 +542,24 @@ class Message {
         .toList();
   }
 
+  static Future<int> countForChat(Chat chat) async {
+    final Database db = await DBProvider.db.database;
+    if (chat == null || chat.id == null) return 0;
+
+    String query = ("SELECT"
+        " count(message.ROWID) AS count"
+        " FROM message"
+        " JOIN chat_message_join AS cmj ON cmj.messageId = message.ROWID"
+        " JOIN chat ON chat.ROWID = cmj.chatId"
+        " WHERE chat.ROWID = ?");
+
+    // Execute the query
+    var res = await db.rawQuery("$query;", [chat.id]);
+    if (res == null || res.length == 0) return 0;
+
+    return res[0]["count"];
+  }
+
   Map<String, dynamic> toMap() => {
         "ROWID": id,
         "originalROWID": originalROWID,
@@ -561,6 +600,8 @@ class Message {
             : timeExpressiveSendStyleId.millisecondsSinceEpoch,
         "handle": (handle != null) ? handle.toMap() : null,
         "hasAttachments": hasAttachments ? 1 : 0,
-        "hasReactions": hasReactions ? 1 : 0
+        "hasReactions": hasReactions ? 1 : 0,
+        "dateDeleted":
+            (dateDeleted == null) ? null : dateDeleted.millisecondsSinceEpoch,
       };
 }
