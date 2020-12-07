@@ -37,9 +37,8 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
   }
 
   Future<void> loadPreview() async {
-    debugPrint("File path ${widget.file.path}");
     String mimeType = mime(widget.file.path);
-    if (mimeType.startsWith("video/")) {
+    if (mimeType != null && mimeType.startsWith("video/")) {
       preview = await VideoThumbnail.thumbnailData(
         video: widget.file.path,
         imageFormat: ImageFormat.PNG,
@@ -47,7 +46,7 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
         quality: 25,
       );
       if (this.mounted) setState(() {});
-    } else if (mimeType.startsWith("image/")) {
+    } else if (mimeType == null || mimeType.startsWith("image/")) {
       preview = await FlutterImageCompress.compressWithFile(
           widget.file.absolute.path,
           quality: SettingsManager().settings.lowMemoryMode ? 5 : 10);
@@ -65,6 +64,7 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
           fit: BoxFit.cover,
         ),
         onTap: () async {
+          if (mime(widget.file.path) == null) return;
           if (!this.mounted) return;
 
           Attachment fakeAttachment = new Attachment(
@@ -83,7 +83,9 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
         },
       );
     } else {
-      if (mimeType.startsWith("video/") || mimeType.startsWith("image/")) {
+      if (mimeType == null ||
+          mimeType.startsWith("video/") ||
+          mimeType.startsWith("image/")) {
         // If the preview is null and the mimetype is video or image,
         // then that means that we are in the process of loading things
         return Container(
@@ -133,7 +135,7 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
       child: Stack(
         children: <Widget>[
           getThumbnail(),
-          if (mimeType.startsWith("video/"))
+          if (mimeType != null && mimeType.startsWith("video/"))
             Align(
               alignment: Alignment.bottomRight,
               child: Icon(

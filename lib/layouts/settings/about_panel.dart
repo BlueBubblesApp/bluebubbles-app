@@ -129,7 +129,7 @@ class _AboutPanelState extends State<AboutPanel> {
                   title: "Changelog",
                   onTap: () async {
                     String changelog = await DefaultAssetBundle.of(context)
-                        .loadString('assets/changelog/changelog.txt');
+                        .loadString('assets/changelog/changelog.md');
                     Navigator.of(context).push(
                       CupertinoPageRoute(
                         builder: (context) => Scaffold(

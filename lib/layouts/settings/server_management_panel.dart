@@ -166,11 +166,8 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                             logFile.writeAsStringSync(res['data']);
 
                             try {
-                              Share.file(
-                                  "BlueBubbles Server Log",
-                                  "main.log",
-                                  logFile.absolute.path,
-                                  "text/log");
+                              Share.file("BlueBubbles Server Log", "main.log",
+                                  logFile.absolute.path, "text/log");
 
                               if (this.mounted) {
                                 setState(() {
@@ -191,7 +188,8 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                     }),
                 SettingsTile(
                   title: "Restart Server",
-                  subTitle: "Instruct the server to restart. This will disconnect you briefly.",
+                  subTitle:
+                      "Instruct the server to restart. This will disconnect you briefly.",
                   onTap: () async {
                     MethodChannelInterface().invokeMethod("set-next-restart", {
                       "value": DateTime.now().toUtc().millisecondsSinceEpoch
@@ -210,18 +208,18 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
           )
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-          backgroundColor: Theme.of(context).primaryColor,
-          child: Icon(Icons.create, color: Colors.white, size: 25),
-          onPressed: () async {
-            Navigator.of(context).push(
-              CupertinoPageRoute(
-                builder: (BuildContext context) {
-                  return SchedulePanel();
-                },
-              ),
-            );
-          }),
+      // floatingActionButton: FloatingActionButton(
+      //     backgroundColor: Theme.of(context).primaryColor,
+      //     child: Icon(Icons.create, color: Colors.white, size: 25),
+      //     onPressed: () async {
+      //       Navigator.of(context).push(
+      //         CupertinoPageRoute(
+      //           builder: (BuildContext context) {
+      //             return SchedulePanel();
+      //           },
+      //         ),
+      //       );
+      //     }),
     );
   }
 }

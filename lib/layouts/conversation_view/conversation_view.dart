@@ -12,6 +12,7 @@ import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/outgoing_queue.dart';
 import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:flutter/material.dart';
+import 'package:keyboard_attachable/keyboard_attachable.dart';
 
 import '../../repository/models/chat.dart';
 
@@ -112,7 +113,7 @@ class ConversationViewState extends State<ConversationView>
       // Fetch messages
       messageBloc = initMessageBloc();
       messageBloc.getMessages();
-    }    
+    }
 
     if (attachments.length > 0) {
       for (int i = 0; i < attachments.length; i++) {
@@ -146,48 +147,54 @@ class ConversationViewState extends State<ConversationView>
       appBar: !isCreator
           ? buildConversationViewHeader()
           : buildChatSelectorHeader(),
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: <Widget>[
-          if (isCreator)
-            ChatSelectorTextField(
-              controller: chatSelectorController,
-              onRemove: (UniqueContact item) {
-                if (item.isChat) {
-                  selected.removeWhere(
-                      (e) => (e.chat?.guid ?? null) == item.chat.guid);
-                } else {
-                  selected.removeWhere((e) => e.address == item.address);
-                }
-                fetchCurrentChat();
-                filterContacts();
-                resetCursor();
-                if (this.mounted) setState(() {});
-              },
-              onSelected: onSelected,
-              isCreator: widget.isCreator,
-              allContacts: contacts,
-              selectedContacts: selected,
+      resizeToAvoidBottomInset: false,
+      body: FooterLayout(
+        footer: KeyboardAttachable(
+          child: widget.onSelect == null
+              ? BlueBubblesTextField(
+                  onSend: send,
+                  isCreator: isCreator,
+                  existingAttachments:
+                      isCreator ? widget.existingAttachments : null,
+                  existingText: isCreator ? widget.existingText : null,
+                )
+              : Container(),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: <Widget>[
+            if (isCreator)
+              ChatSelectorTextField(
+                controller: chatSelectorController,
+                onRemove: (UniqueContact item) {
+                  if (item.isChat) {
+                    selected.removeWhere(
+                        (e) => (e.chat?.guid ?? null) == item.chat.guid);
+                  } else {
+                    selected.removeWhere((e) => e.address == item.address);
+                  }
+                  fetchCurrentChat();
+                  filterContacts();
+                  resetCursor();
+                  if (this.mounted) setState(() {});
+                },
+                onSelected: onSelected,
+                isCreator: widget.isCreator,
+                allContacts: contacts,
+                selectedContacts: selected,
+              ),
+            Expanded(
+              child: (searchQuery.length == 0 || !isCreator) && chat != null
+                  ? MessagesView(
+                      key: new Key(chat?.guid ?? "unknown-chat"),
+                      messageBloc: messageBloc ?? initMessageBloc(),
+                      showHandle: chat.participants.length > 1,
+                      chat: chat,
+                    )
+                  : buildChatSelectorBody(),
             ),
-          Expanded(
-            child: (searchQuery.length == 0 || !isCreator) && chat != null
-                ? MessagesView(
-                    key: new Key(chat?.guid ?? "unknown-chat"),
-                    messageBloc: messageBloc ?? initMessageBloc(),
-                    showHandle: chat.participants.length > 1,
-                    chat: chat,
-                  )
-                : buildChatSelectorBody(),
-          ),
-          if (widget.onSelect == null)
-            BlueBubblesTextField(
-              onSend: send,
-              isCreator: isCreator,
-              existingAttachments:
-                  isCreator ? widget.existingAttachments : null,
-              existingText: isCreator ? widget.existingText : null,
-            ),
-        ],
+          ],
+        ),
       ),
       floatingActionButton: widget.onSelect != null
           ? FloatingActionButton(
