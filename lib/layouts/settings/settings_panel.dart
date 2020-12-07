@@ -24,6 +24,12 @@ import 'package:flutter/material.dart';
 
 import '../setup/qr_code_scanner.dart';
 
+List disconnectedStates = [
+  SocketState.DISCONNECTED,
+  SocketState.ERROR,
+  SocketState.FAILED
+];
+
 class SettingsPanel extends StatefulWidget {
   SettingsPanel({Key key}) : super(key: key);
 
@@ -132,16 +138,16 @@ class _SettingsPanelState extends State<SettingsPanel> {
                           }
                           break;
                         case SocketState.DISCONNECTED:
-                          subtitle = "Disconnected";
+                          subtitle = "Disconnected (Tap to restart Server)";
                           break;
                         case SocketState.ERROR:
-                          subtitle = "Error";
+                          subtitle = "Error (Tap to restart Server)";
                           break;
                         case SocketState.CONNECTING:
                           subtitle = "Connecting...";
                           break;
                         case SocketState.FAILED:
-                          subtitle = "Failed to connect";
+                          subtitle = "Failed to connect (Tap to restart Server)";
                           break;
                       }
 
@@ -149,12 +155,20 @@ class _SettingsPanelState extends State<SettingsPanel> {
                         title: "Connection Status",
                         subTitle: subtitle,
                         onTap: () async {
-                          if (![SocketState.CONNECTED]
-                              .contains(connectionStatus)) return;
-                          if (this.mounted) {
-                            setState(() {
-                              showUrl = !showUrl;
+                          // If we are disconnected, tap to restart server
+                          if (disconnectedStates.contains(connectionStatus)) {
+                            MethodChannelInterface().invokeMethod("set-next-restart", {
+                              "value": DateTime.now().toUtc().millisecondsSinceEpoch
                             });
+                          }
+
+                          // If we are connected, tap to show the URL
+                          if ([SocketState.CONNECTED].contains(connectionStatus)) {
+                            if (this.mounted) {
+                              setState(() {
+                                showUrl = !showUrl;
+                              });
+                            }
                           }
                         },
                         onLongPress: () {
