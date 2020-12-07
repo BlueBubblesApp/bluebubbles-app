@@ -226,14 +226,13 @@ class SocketManager {
     }
 
     String serverAddress = getServerAddress();
-    debugPrint(
-        "Starting socket io with the server: $serverAddress");
+    debugPrint("Starting socket io with the server: $serverAddress");
 
     try {
       // Create a new socket connection
-      _manager.socket = SocketIOManager().createSocketIO(
-          serverAddress, "/",
-          query: "guid=${SettingsManager().settings.guidAuthKey}",
+      _manager.socket = SocketIOManager().createSocketIO(serverAddress, "/",
+          query:
+              "guid=${Uri.encodeFull(SettingsManager().settings.guidAuthKey)}",
           socketStatusCallback: (data) => socketStatusUpdate(data));
 
       if (_manager.socket == null) {
@@ -504,12 +503,10 @@ class SocketManager {
     params["where"] = where;
 
     if (onlyAttachments) {
-      params["where"].add(
-        {
-          "statement": "message.cache_has_attachments = :flag",
-          "args": {"flag": 1}
-        }
-      );
+      params["where"].add({
+        "statement": "message.cache_has_attachments = :flag",
+        "args": {"flag": 1}
+      });
     }
 
     print(params);
