@@ -100,12 +100,18 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
           ),
         );
       } else {
+        String name = path.basename(widget.file.path);
+        if (mimeType == "text/x-vcard") {
+          name = "Contact: ${name.split(".")[0]}";
+        }
+
         return Container(
           height: 100,
           width: 100,
           color: Theme.of(context).accentColor,
-          child: Stack(
-            alignment: Alignment.center,
+          padding: EdgeInsets.only(top: 20),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(
                 AttachmentHelper.getIcon(mimeType),
@@ -114,10 +120,13 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
               Align(
                 alignment: Alignment.bottomCenter,
                 child: Padding(
-                  padding: const EdgeInsets.only(bottom: 8.0),
+                  padding: const EdgeInsets.fromLTRB(8, 0, 8, 10),
                   child: Text(
-                    path.basename(widget.file.path),
-                    style: Theme.of(context).textTheme.bodyText1,
+                    name,
+                    style: Theme.of(context).textTheme.bodyText1.apply(fontSizeDelta: -2),
+                    textAlign: TextAlign.center,
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ),
