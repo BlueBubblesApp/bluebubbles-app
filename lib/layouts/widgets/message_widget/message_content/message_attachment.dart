@@ -42,23 +42,16 @@ class _MessageAttachmentState extends State<MessageAttachment>
   }
 
   void updateContent() async {
-    if (content is AttachmentDownloader) return;
-
+    // Ge the current attachment content (status)
     content = AttachmentHelper.getContent(widget.attachment);
-    if (await AttachmentHelper.canAutoDownload()) {
-      if (content is Attachment) {
-        content = new AttachmentDownloader(content);
-      }
-    }
 
-    if (content is AttachmentDownloader) {
-      (content as AttachmentDownloader).stream.listen((event) {
-        if (event is File && this.mounted) {
-          setState(() {
-            content = event;
-          });
-        }
-      });
+    // If we can download it, do so
+    if (await AttachmentHelper.canAutoDownload() && content is Attachment) {
+      if (this.mounted) {
+        setState(() {
+          content = new AttachmentDownloader(content);
+        });
+      }
     }
   }
 
@@ -66,6 +59,7 @@ class _MessageAttachmentState extends State<MessageAttachment>
   Widget build(BuildContext context) {
     super.build(context);
     updateContent();
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(20),
       child: Container(
@@ -148,71 +142,67 @@ class _MessageAttachmentState extends State<MessageAttachment>
       // If it's an AttachmentDownloader, it is currently being downloaded
     } else if (content is AttachmentDownloader) {
       if (widget.attachment.mimeType == null) return Container();
-      (content as AttachmentDownloader).stream.listen((event) {
-        if (event is File) {
-          content = event;
-          if (this.mounted) setState(() {});
-        }
-      }, onError: (error) {
-        content = widget.attachment;
-        if (this.mounted) setState(() {});
-      });
       return StreamBuilder(
         stream: content.stream,
         builder: (BuildContext context, AsyncSnapshot snapshot) {
+          // If there is an error, return an error text
           if (snapshot.hasError) {
-            return Text(
-              "Error loading",
-              style: Theme.of(context).textTheme.bodyText1,
+            return Padding(
+              padding: EdgeInsets.symmetric(horizontal: 5.0, vertical: 10.0),
+              child: Text(
+                "Error loading Attachment",
+                style: Theme.of(context).textTheme.bodyText1,
+              )
             );
           }
-          if (snapshot.data is File) {
-            // widget.updateAttachment();
-            content = snapshot.data;
-            return Container();
-          } else {
-            double progress = 0.0;
-            if (snapshot.hasData) {
-              progress = snapshot.data["Progress"];
-            } else {
-              progress = content.progress;
-            }
 
-            return Stack(
-              alignment: Alignment.center,
-              children: <Widget>[
-                buildPlaceHolder(),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    Column(
-                      children: <Widget>[
-                        Center(
-                          child: CircularProgressIndicator(
-                            value: progress ?? 0,
-                            backgroundColor: Colors.grey,
-                            valueColor: AlwaysStoppedAnimation(Colors.white),
-                          ),
-                        ),
-                        ((content as AttachmentDownloader)
-                                    .attachment
-                                    .mimeType !=
-                                null)
-                            ? Container(height: 5.0)
-                            : Container(),
-                        (content.attachment.mimeType != null)
-                            ? Text(
-                                content.attachment.mimeType,
-                                style: Theme.of(context).textTheme.bodyText1,
-                              )
-                            : Container()
-                      ],
-                    ),
-                  ],
-                ),
-              ],
-            );
+          // If the snapshot data is a file, we have finished downloading
+          if (snapshot.data is File) {
+            content = snapshot.data;
+            return _buildAttachmentWidget();
           }
+
+          double progress = 0.0;
+          if (snapshot.hasData) {
+            progress = snapshot.data["progress"];
+          } else {
+            progress = content.progress;
+          }
+
+          return Stack(
+            alignment: Alignment.center,
+            children: <Widget>[
+              buildPlaceHolder(),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Column(
+                    children: <Widget>[
+                      Center(
+                        child: CircularProgressIndicator(
+                          value: progress ?? 0,
+                          backgroundColor: Colors.grey,
+                          valueColor: AlwaysStoppedAnimation(Colors.white),
+                        ),
+                      ),
+                      ((content as AttachmentDownloader)
+                                  .attachment
+                                  .mimeType !=
+                              null)
+                          ? Container(height: 5.0)
+                          : Container(),
+                      (content.attachment.mimeType != null)
+                          ? Text(
+                              content.attachment.mimeType,
+                              style: Theme.of(context).textTheme.bodyText1,
+                            )
+                          : Container()
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          );
         },
       );
     } else {

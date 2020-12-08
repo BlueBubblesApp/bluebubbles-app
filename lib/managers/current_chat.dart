@@ -256,6 +256,11 @@ class CurrentChat {
 
   /// Dipose of the controllers which we no longer need
   void disposeControllers() {
+    disposeVideoControllers();
+    disposeAudioControllers();
+  }
+
+  void disposeVideoControllers() {
     videoControllersToDispose.forEach((element) {
       element.dispose();
     });

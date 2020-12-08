@@ -7,6 +7,7 @@ import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/socket_manager.dart';
+import 'package:flutter/widgets.dart';
 import 'package:intl/intl.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -83,6 +84,7 @@ Future<String> getShortChatTitle(Chat _chat) async {
 
 class Chat {
   int id;
+  int originalROWID;
   String guid;
   int style;
   String chatIdentifier;
@@ -99,6 +101,7 @@ class Chat {
 
   Chat({
     this.id,
+    this.originalROWID,
     this.guid,
     this.style,
     this.chatIdentifier,
@@ -122,6 +125,7 @@ class Chat {
     }
     return new Chat(
       id: json.containsKey("ROWID") ? json["ROWID"] : null,
+      originalROWID: json.containsKey("originalROWID") ? json["originalROWID"] : null,
       guid: json["guid"],
       style: json['style'],
       chatIdentifier:
@@ -235,6 +239,10 @@ class Chat {
       "isFiltered": this.isFiltered ? 1 : 0
     };
 
+    if (this.originalROWID != null) {
+      params["originalROWID"] = this.originalROWID;
+    }
+
     // Only update the latestMessage info if it's not null
     if (this.latestMessageDate != null) {
       params["latestMessageText"] = this.latestMessageText;
@@ -304,13 +312,15 @@ class Chat {
 
     // Save the message
     Message existing = await Message.findOne({"guid": message.guid});
-
     Message newMessage;
 
     try {
       newMessage = await message.save();
     } catch (ex) {
       newMessage = await Message.findOne({"guid": message.guid});
+      if (newMessage == null) {
+        debugPrint(ex.toString());
+      }
     }
     bool isNewer = false;
 
@@ -426,6 +436,7 @@ class Chat {
 
     String query = ("SELECT"
         " attachment.ROWID AS ROWID,"
+        " attachment.originalROWID AS originalROWID,"
         " attachment.guid AS guid,"
         " attachment.uti AS uti,"
         " attachment.mimeType AS mimeType,"
@@ -474,6 +485,7 @@ class Chat {
         " message.originalROWID AS originalROWID,"
         " message.guid AS guid,"
         " message.handleId AS handleId,"
+        " message.otherHandle AS otherHandle,"
         " message.text AS text,"
         " message.subject AS subject,"
         " message.country AS country,"
@@ -504,6 +516,7 @@ class Chat {
         " message.hasReactions AS hasReactions,"
         " message.hasDdResults AS hasDdResults,"
         " handle.ROWID AS handleId,"
+        " handle.originalROWID AS handleOriginalROWID,"
         " handle.address AS handleAddress,"
         " handle.country AS handleCountry,"
         " handle.uncanonicalizedId AS handleUncanonicalizedId"
@@ -542,6 +555,7 @@ class Chat {
           res[i]['handleAddress'] != null) {
         msg.handle = Handle.fromMap({
           'id': res[i]['handleId'],
+          'originalROWID': res[i]['handleOriginalROWID'],
           'address': res[i]['handleAddress'],
           'country': res[i]['handleCountry'],
           'uncanonicalizedId': res[i]['handleUncanonicalizedId']
@@ -564,6 +578,7 @@ class Chat {
           res2[i]['handleAddress'] != null) {
         msg.handle = Handle.fromMap({
           'id': res2[i]['handleId'],
+          'originalROWID': res2[i]['handleOriginalROWID'],
           'address': res2[i]['handleAddress'],
           'country': res2[i]['handleCountry'],
           'uncanonicalizedId': res2[i]['handleUncanonicalizedId']
@@ -587,6 +602,7 @@ class Chat {
     var res = await db.rawQuery(
         "SELECT"
         " handle.ROWID AS ROWID,"
+        " handle.originalROWID as originalROWID,"
         " handle.address AS address,"
         " handle.country AS country,"
         " handle.uncanonicalizedId AS uncanonicalizedId"
@@ -715,6 +731,7 @@ class Chat {
     var res = await db.rawQuery(
         "SELECT"
         " chat.ROWID as ROWID,"
+        " chat.originalROWID as originalROWID,"
         " chat.guid as guid,"
         " chat.style as style,"
         " chat.chatIdentifier as chatIdentifier,"
@@ -744,6 +761,24 @@ class Chat {
     return this.participants.length > 1;
   }
 
+  Future<void> clearTranscript() async {
+    final Database db = await DBProvider.db.database;
+    await db.rawQuery(
+      "UPDATE message "
+      "SET dateDeleted = ${DateTime.now().toUtc().millisecondsSinceEpoch} "
+      "WHERE ROWID IN ("
+      "    SELECT m.ROWID "
+      "    FROM message m"
+      "    INNER JOIN chat_message_join cmj ON cmj.messageId = m.ROWID "
+      "    INNER JOIN chat c ON cmj.chatId = c.ROWID "
+      "    WHERE c.guid = ?"
+      ");",
+      [
+        this.guid
+      ]
+    );
+  }
+
   static flush() async {
     final Database db = await DBProvider.db.database;
     await db.delete("chat");
@@ -751,6 +786,7 @@ class Chat {
 
   Map<String, dynamic> toMap() => {
         "ROWID": id,
+        "originalROWID": originalROWID,
         "guid": guid,
         "style": style,
         "chatIdentifier": chatIdentifier,

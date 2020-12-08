@@ -29,19 +29,12 @@ class UrlPreviewWidget extends StatefulWidget {
 class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
     with TickerProviderStateMixin {
   Metadata data;
-  String url;
   bool isLoading = false;
   bool fetchedMissing = false;
 
   @override
   void initState() {
     super.initState();
-    fetchPreview();
-  }
-
-  @override
-  void didChangeDependencies() async {
-    super.didChangeDependencies();
     fetchPreview();
   }
 
@@ -109,7 +102,7 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
     }
 
     // Make sure there is a schema with the URL
-    url = widget.message.text;
+    String url = widget.message.text;
     if (!widget.message.text.toLowerCase().startsWith("http://") &&
         !widget.message.text.toLowerCase().startsWith("https://")) {
       url = "https://" + widget.message.text;
@@ -226,7 +219,7 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
               borderRadius: BorderRadius.circular(20),
               onTap: () {
                 MethodChannelInterface()
-                    .invokeMethod("open-link", {"link": url});
+                    .invokeMethod("open-link", {"link": data?.url ?? widget.message.text});
               },
               child: Container(
                 width: MediaQuery.of(context).size.width * 2 / 3,

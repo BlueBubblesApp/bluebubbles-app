@@ -184,9 +184,16 @@ class Contact {
   DateTime birthday;
 
   String initials() {
-    return ((this.givenName?.isNotEmpty == true ? this.givenName[0] : "") +
-            (this.familyName?.isNotEmpty == true ? this.familyName[0] : ""))
-        .toUpperCase();
+    // Set default initials
+    String initials = (this.givenName?.isNotEmpty == true ? this.givenName[0] : "") +
+            (this.familyName?.isNotEmpty == true ? this.familyName[0] : "");
+    
+    // If the initials are empty, get them from the display name
+    if (initials.trim().isEmpty) {
+      initials = this.displayName != null ? this.displayName[0] : "";
+    }
+
+    return initials.toUpperCase();
   }
 
   Contact.fromMap(Map m) {
