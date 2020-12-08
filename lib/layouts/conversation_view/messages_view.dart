@@ -7,6 +7,7 @@ import 'package:bluebubbles/layouts/widgets/message_widget/message_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/new_message_loader.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
@@ -70,6 +71,31 @@ class MessagesViewState extends State<MessagesView>
           setState(() {
             showScrollDown = false;
           });
+      }
+    });
+
+    EventDispatcher().stream.listen((Map<String, dynamic> event) {
+      if (!["refresh-messagebloc"].contains(event["type"]))
+        return;
+      if (!event["data"].containsKey("chatGuid")) return;
+
+      // Handle event's that require a matching guid
+      String chatGuid = event["data"]["chatGuid"];
+      if (widget.chat.guid == chatGuid) {
+        if (event["type"] == "refresh-messagebloc") {
+          // Clear state items 
+          noMoreLocalMessages = false;
+          noMoreMessages = false;
+          _messages = [];
+          loadedPages = [];
+
+          // Reload the state after refreshing
+          widget.messageBloc.refresh().then((_) {
+            if (this.mounted) {
+              setState(() {});
+            }
+          });
+        }
       }
     });
   }

@@ -290,6 +290,13 @@ class MessageBloc {
 
     return completer.future;
   }
+  
+  Future<void> refresh() async {
+    _allMessages = new LinkedHashMap();
+    _reactions = 0;
+
+    await this.getMessages();
+  }
 
   void dispose() {
     _allMessages = new LinkedHashMap();

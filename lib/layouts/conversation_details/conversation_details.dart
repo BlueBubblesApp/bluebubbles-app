@@ -40,15 +40,13 @@ class _ConversationDetailsState extends State<ConversationDetails> {
     super.initState();
     chat = widget.chat;
     controller = new TextEditingController(text: chat.displayName);
-    
+
     fetchAttachments();
     ChatBloc().chatStream.listen((event) async {
-      if (this.mounted) {
-        Chat _chat = await Chat.findOne({"guid": widget.chat.guid});
-        await _chat.getParticipants();
-        chat = _chat;
-        setState(() {});
-      }
+      Chat _chat = await Chat.findOne({"guid": widget.chat.guid});
+      await _chat.getParticipants();
+      chat = _chat;
+      if (this.mounted) setState(() {});
     });
   }
 
@@ -185,11 +183,10 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                 await showDialog(
                   context: context,
                   builder: (context) => SyncDialog(
-                    chat: chat,
-                    withOffset: true,
-                    initialMessage: "Fetching messages...",
-                    limit: 100
-                  ),
+                      chat: chat,
+                      withOffset: true,
+                      initialMessage: "Fetching messages...",
+                      limit: 100),
                 );
 
                 fetchAttachments();
@@ -217,10 +214,9 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                 showDialog(
                   context: context,
                   builder: (context) => SyncDialog(
-                    chat: chat,
-                    initialMessage: "Syncing messages...",
-                    limit: 25
-                  ),
+                      chat: chat,
+                      initialMessage: "Syncing messages...",
+                      limit: 25),
                 );
               },
               child: ListTile(
@@ -260,7 +256,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                         } else {
                           await widget.chat.unpin();
                         }
-                        
+
                         EventDispatcher().emit("refresh", null);
 
                         if (this.mounted) setState(() {});
@@ -313,13 +309,26 @@ class _ConversationDetailsState extends State<ConversationDetails> {
           SliverToBoxAdapter(
             child: InkWell(
               onTap: () async {
-                if (this.mounted) setState(() { isClearing = true; });
+                if (this.mounted)
+                  setState(() {
+                    isClearing = true;
+                  });
 
                 try {
                   await widget.chat.clearTranscript();
-                  if (this.mounted) setState(() { isClearing = false; isCleared = true; });
+                  EventDispatcher().emit(
+                      "refresh-messagebloc", {"chatGuid": widget.chat.guid});
+                  if (this.mounted)
+                    setState(() {
+                      isClearing = false;
+                      isCleared = true;
+                    });
                 } catch (ex) {
-                  if (this.mounted) setState(() { isClearing = false; isCleared = false; });
+                  if (this.mounted)
+                    setState(() {
+                      isClearing = false;
+                      isCleared = false;
+                    });
                 }
               },
               child: ListTile(
@@ -332,19 +341,19 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                 trailing: Padding(
                   padding: EdgeInsets.only(right: 15),
                   child: (isClearing)
-                  ? CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                          Theme.of(context).primaryColor),
-                    )
-                  : (isCleared)
-                    ? Icon(
-                        Icons.done,
-                        color: Theme.of(context).primaryColor,
-                      )
-                    : Icon(
-                        Icons.delete_forever,
-                        color: Theme.of(context).primaryColor,
-                      ),
+                      ? CircularProgressIndicator(
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                              Theme.of(context).primaryColor),
+                        )
+                      : (isCleared)
+                          ? Icon(
+                              Icons.done,
+                              color: Theme.of(context).primaryColor,
+                            )
+                          : Icon(
+                              Icons.delete_forever,
+                              color: Theme.of(context).primaryColor,
+                            ),
                 ),
               ),
             ),
@@ -421,19 +430,16 @@ class _SyncDialogState extends State<SyncDialog> {
         });
       }
 
-      MessageHelper.bulkAddMessages(
-        widget.chat,
-        messages,
-        onProgress: (int progress, int length) {
-          if (progress == 0 || length  == 0) {
-            this.progress = null;
-          } else {
-            this.progress = progress / length;
-          }
+      MessageHelper.bulkAddMessages(widget.chat, messages,
+          onProgress: (int progress, int length) {
+        if (progress == 0 || length == 0) {
+          this.progress = null;
+        } else {
+          this.progress = progress / length;
+        }
 
-          if (this.mounted) setState(() {});
-        })
-          .then((List<Message> __) {
+        if (this.mounted) setState(() {});
+      }).then((List<Message> __) {
         onFinish(true);
       });
     }).catchError((_) => onFinish(false));

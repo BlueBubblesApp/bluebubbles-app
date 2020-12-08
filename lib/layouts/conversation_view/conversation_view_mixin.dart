@@ -63,8 +63,8 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
     });
 
     EventDispatcher().stream.listen((Map<String, dynamic> event) {
-      if (!["add-unread-chat", "remove-unread-chat"].contains(event["type"]))
-        return;
+      if (!["add-unread-chat", "remove-unread-chat", "refresh-messagebloc"]
+          .contains(event["type"])) return;
       if (!event["data"].containsKey("chatGuid")) return;
 
       // Ignore any events having to do with this chat
