@@ -137,8 +137,8 @@ class _UXPanelState extends State<UXPanel> {
                   },
                   formatValue: ((double val) => val.toStringAsFixed(2)),
                   min: 0.20,
-                  max: 2,
-                  divisions: 18
+                  max: 1,
+                  divisions: 8
                 ),
               ],
             ),
