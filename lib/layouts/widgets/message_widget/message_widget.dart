@@ -197,14 +197,19 @@ class _MessageState extends State<MessageWidget>
   Widget build(BuildContext context) {
     super.build(context);
     if (widget.newerMessage != null) {
-      showTail = withinTimeThreshold(widget.message, widget.newerMessage,
-              threshold: 1) ||
-          !sameSender(widget.message, widget.newerMessage) ||
-          (widget.message.isFromMe &&
-              widget.newerMessage.isFromMe &&
-              widget.message.dateDelivered != null &&
-              widget.newerMessage.dateDelivered == null);
+      if (widget.newerMessage.isGroupEvent()) {
+        showTail = true;
+      } else {
+        showTail = withinTimeThreshold(widget.message, widget.newerMessage,
+                threshold: 1) ||
+            !sameSender(widget.message, widget.newerMessage) ||
+            (widget.message.isFromMe &&
+                widget.newerMessage.isFromMe &&
+                widget.message.dateDelivered != null &&
+                widget.newerMessage.dateDelivered == null);
+      }
     }
+    
 
     if (widget.message.isGroupEvent()) {
       return GroupEvent(message: widget.message);
