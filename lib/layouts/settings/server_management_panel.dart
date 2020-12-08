@@ -3,7 +3,6 @@ import 'dart:ui';
 
 import 'package:bluebubbles/helpers/share.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/layouts/settings/scheduler_panel.dart';
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
@@ -22,6 +21,7 @@ class ServerManagementPanel extends StatefulWidget {
 class _ServerManagementPanelState extends State<ServerManagementPanel> {
   int latency;
   String fetchStatus;
+  int lastRestart;
 
   @override
   Widget build(BuildContext context) {
@@ -78,7 +78,7 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                           subtitle = "Connected (Tap to test latency)";
                           break;
                         default:
-                          subtitle = "";
+                          subtitle = "Disconnected (Nothing to do)";
                       }
 
                       return SettingsTile(
@@ -122,7 +122,7 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                             subtitle = "Connected (Tap to fetch logs)";
                             break;
                           default:
-                            subtitle = "";
+                            subtitle = "Disconnected (Nothing to do)";
                         }
                       } else {
                         subtitle = fetchStatus;
@@ -191,9 +191,17 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                   subTitle:
                       "Instruct the server to restart. This will disconnect you briefly.",
                   onTap: () async {
+                    // Prevent restarting more than once every 30 seconds
+                    int now = DateTime.now().toUtc().millisecondsSinceEpoch;
+                    if (lastRestart != null && now - lastRestart < 1000 * 30 ) return;
+
+                    // Perform the restart
                     MethodChannelInterface().invokeMethod("set-next-restart", {
                       "value": DateTime.now().toUtc().millisecondsSinceEpoch
                     });
+
+                    // Save the last time we restarted
+                    lastRestart = now;
                   },
                   trailing: Icon(Icons.refresh,
                       color: Theme.of(context).primaryColor),

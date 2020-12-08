@@ -164,8 +164,8 @@ class MessagesViewState extends State<MessagesView>
     }
 
     if (event.type == MessageBlocEventType.insert) {
-      if (this.mounted && LifeCycleManager().isAlive) {
-        NotificationManager().switchChat(CurrentChat.of(context).chat);
+      if (this.mounted && LifeCycleManager().isAlive && context != null) {
+        NotificationManager().switchChat(CurrentChat.of(context)?.chat);
       }
       currentChat.getAttachmentsForMessage(event.message);
       if (event.outGoing) {

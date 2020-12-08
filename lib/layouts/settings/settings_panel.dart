@@ -44,6 +44,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
   bool showUrl = false;
   Brightness brightness;
   bool gotBrightness = false;
+  int lastRestart;
 
   @override
   void initState() {
@@ -157,9 +158,16 @@ class _SettingsPanelState extends State<SettingsPanel> {
                         onTap: () async {
                           // If we are disconnected, tap to restart server
                           if (disconnectedStates.contains(connectionStatus)) {
+                            // Prevent restarting more than once per 30 seconds
+                            int now = DateTime.now().toUtc().millisecondsSinceEpoch;
+                            if (lastRestart != null && now - lastRestart < 1000 * 30 ) return;
+
+                            // Restart the server
                             MethodChannelInterface().invokeMethod("set-next-restart", {
                               "value": DateTime.now().toUtc().millisecondsSinceEpoch
                             });
+
+                            lastRestart = now;
                           }
 
                           // If we are connected, tap to show the URL
