@@ -107,6 +107,12 @@ class _AudioPlayerWigetState extends State<AudioPlayerWiget> {
     Playing playing = player.current.value;
     double maxWidth = widget.width ?? MediaQuery.of(context).size.width * 3 / 4;
 
+    double currentValue = current?.inSeconds?.toDouble() ?? 0.0;
+    double maxValue = (playing?.audio?.duration ?? current).inSeconds.toDouble();
+    if (maxValue < currentValue) {
+      maxValue = currentValue;
+    }
+
     return Container(
       alignment: Alignment.center,
       color: Theme.of(context).accentColor,
@@ -160,11 +166,9 @@ class _AudioPlayerWigetState extends State<AudioPlayerWiget> {
                     child: Slider(
                       activeColor: Theme.of(context).primaryColor,
                       inactiveColor: Theme.of(context).backgroundColor,
-                      value: current.inSeconds.toDouble(),
+                      value: currentValue,
                       min: 0.0,
-                      max: (playing?.audio?.duration ?? current)
-                          .inSeconds
-                          .toDouble(),
+                      max: maxValue,
                       onChanged: (double value) {
                         setState(() {
                           seekToSecond(value.toInt());
