@@ -81,7 +81,8 @@ class _AudioPlayerWigetState extends State<AudioPlayerWiget> {
   String formatDuration(Duration duration) {
     if (duration == null) return "00:00";
     String minutes = duration.inMinutes.toString();
-    String seconds = duration.inSeconds.toString();
+    int sec = (duration.inSeconds - (duration.inMinutes * 60));
+    String seconds = sec.isNaN || sec.isNegative ? "0" : sec.toString();
     minutes = (minutes.length == 1) ? "0$minutes" : minutes;
     seconds = (seconds.length == 1) ? "0$seconds" : seconds;
     return "$minutes:$seconds";
@@ -90,6 +91,15 @@ class _AudioPlayerWigetState extends State<AudioPlayerWiget> {
   void seekToSecond(int second) {
     Duration newDuration = Duration(seconds: second);
     player.seek(newDuration);
+  }
+
+  @override
+  void dispose() {
+    if (context != null) {
+      CurrentChat.of(context)?.audioPlayers?.removeWhere((key, _) => key == widget.file.path);
+    }
+
+    super.dispose();
   }
 
   @override

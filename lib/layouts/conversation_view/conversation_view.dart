@@ -92,7 +92,7 @@ class ConversationViewState extends State<ConversationView>
   @override
   void dispose() {
     if (currentChat != null) {
-      currentChat.disposeAudioControllers();
+      currentChat.disposeControllers();
       currentChat.dispose();
     }
 
