@@ -104,9 +104,6 @@ class MessagesViewState extends State<MessagesView>
   void didChangeDependencies() async {
     super.didChangeDependencies();
     currentChat = CurrentChat.of(context);
-    // currentChat.stream.listen((event) {
-    //   if (this.mounted) setState(() {});
-    // });
 
     if (_messages.isEmpty) {
       widget.messageBloc.getMessages();
