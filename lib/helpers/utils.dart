@@ -193,7 +193,7 @@ bool isParticipantEvent(Message message) {
 Future<String> getGroupEventText(Message message) async {
   String text = "Unknown group event";
   String handle = "You";
-  if (message.handleId != null && message.handle != null)
+  if (!message.isFromMe && message.handleId != null && message.handle != null)
     handle = await ContactManager().getContactTitle(message.handle.address);
 
   String other = "someone";

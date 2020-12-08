@@ -155,7 +155,7 @@ class _MessageState extends State<MessageWidget>
 
     // Create a new request and get the attachments
     attachmentsRequest = new Completer();
-    if (context != null)
+    if (context != null && this.mounted)
       await widget.message
           .fetchAttachments(currentChat: CurrentChat.of(context));
 

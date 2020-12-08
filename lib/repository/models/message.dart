@@ -103,6 +103,17 @@ class Message {
     this.dateDeleted
   });
 
+  String get fullText {
+    String fullText = this.subject ?? "";
+    if (fullText.isNotEmpty) {
+      fullText += "\n";
+    }
+
+    fullText += this.text ?? "";
+
+    return sanitizeString(fullText);
+  }
+
   factory Message.fromMap(Map<String, dynamic> json) {
     bool hasAttachments = false;
     if (json.containsKey("hasAttachments")) {
@@ -525,11 +536,11 @@ class Message {
   }
 
   bool hasText({stripWhitespace = false}) {
-    return !isEmptyString(this.text, stripWhitespace: stripWhitespace);
+    return !isEmptyString(this.fullText, stripWhitespace: stripWhitespace);
   }
 
   bool isGroupEvent() {
-    return isEmptyString(this.text) &&
+    return isEmptyString(this.fullText) &&
         !this.hasAttachments &&
         this.balloonBundleId == null;
   }
@@ -538,7 +549,7 @@ class Message {
     // We are checking the variable first because we want to
     // avoid processing twice for this as it won't change
     if (this.bigEmoji == null) {
-      this.bigEmoji = MessageHelper.shouldShowBigEmoji(this.text);
+      this.bigEmoji = MessageHelper.shouldShowBigEmoji(this.fullText);
     }
 
     return this.bigEmoji;

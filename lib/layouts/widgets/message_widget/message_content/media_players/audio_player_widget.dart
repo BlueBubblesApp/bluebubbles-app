@@ -94,15 +94,6 @@ class _AudioPlayerWigetState extends State<AudioPlayerWiget> {
   }
 
   @override
-  void dispose() {
-    if (widget.context != null) {
-      CurrentChat.of(widget.context)?.audioPlayers?.removeWhere((key, _) => key == widget.file.path);
-    }
-
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     Playing playing = player.current.value;
     double maxWidth = widget.width ?? MediaQuery.of(context).size.width * 3 / 4;

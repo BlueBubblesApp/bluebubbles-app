@@ -140,7 +140,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
   }
 
   void sendReaction(String type) {
-    if (isEmptyString(widget.message.text)) return;
+    if (isEmptyString(widget.message.fullText)) return;
     ActionHandler.sendReaction(widget.currentChat.chat, widget.message, type);
   }
 
@@ -221,7 +221,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
   }
 
   Widget buildReactionMenu() {
-    if (isEmptyString(widget.message.text)) {
+    if (isEmptyString(widget.message.fullText)) {
       return Container();
     }
     Size size = MediaQuery.of(context).size;
@@ -325,8 +325,8 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
                 color: Colors.transparent,
                 child: InkWell(
                   onTap: () {
-                    if (!isEmptyString(widget.message.text))
-                      FlutterClipboard.copy(widget.message.text);
+                    if (!isEmptyString(widget.message.fullText))
+                      FlutterClipboard.copy(widget.message.fullText);
                     FlutterToast flutterToast = FlutterToast(context);
                     Widget toast = ClipRRect(
                       borderRadius: BorderRadius.circular(25.0),
@@ -344,7 +344,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(
-                                !isEmptyString(widget.message.text)
+                                !isEmptyString(widget.message.fullText)
                                     ? Icons.check
                                     : Icons.close,
                                 color:
@@ -354,7 +354,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
                                 width: 12.0,
                               ),
                               Text(
-                                !isEmptyString(widget.message.text)
+                                !isEmptyString(widget.message.fullText)
                                     ? "Copied to clipboard"
                                     : "Failed to copy empty message",
                                 style: Theme.of(context).textTheme.bodyText1,
@@ -385,7 +385,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
                 color: Colors.transparent,
                 child: InkWell(
                   onTap: () {
-                    if (isEmptyString(widget.message.text)) return;
+                    if (isEmptyString(widget.message.fullText)) return;
                     showDialog(
                       context: context,
                       builder: (context) => AlertDialog(
@@ -403,7 +403,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
                               parent: CustomBouncingScrollPhysics(),
                             ),
                             child: SelectableText(
-                              widget.message.text,
+                              widget.message.fullText,
                               style: Theme.of(context).textTheme.bodyText1,
                             ),
                           ),
