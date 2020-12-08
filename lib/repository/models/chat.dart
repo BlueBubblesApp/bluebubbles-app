@@ -761,6 +761,24 @@ class Chat {
     return this.participants.length > 1;
   }
 
+  Future<void> clearTranscript() async {
+    final Database db = await DBProvider.db.database;
+    await db.rawQuery(
+      "UPDATE message "
+      "SET dateDeleted = ${DateTime.now().toUtc().millisecondsSinceEpoch} "
+      "WHERE ROWID IN ("
+      "    SELECT m.ROWID "
+      "    FROM message m"
+      "    INNER JOIN chat_message_join cmj ON cmj.messageId = m.ROWID "
+      "    INNER JOIN chat c ON cmj.chatId = c.ROWID "
+      "    WHERE c.guid = ?"
+      ");",
+      [
+        this.guid
+      ]
+    );
+  }
+
   static flush() async {
     final Database db = await DBProvider.db.database;
     await db.delete("chat");

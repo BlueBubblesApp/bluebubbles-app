@@ -32,6 +32,8 @@ class _ConversationDetailsState extends State<ConversationDetails> {
   bool readOnly = true;
   Chat chat;
   List<Attachment> attachmentsForChat = <Attachment>[];
+  bool isClearing = false;
+  bool isCleared = false;
 
   @override
   void initState() {
@@ -308,6 +310,45 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                         EventDispatcher().emit("refresh", null);
                         if (this.mounted) setState(() {});
                       }))),
+          SliverToBoxAdapter(
+            child: InkWell(
+              onTap: () async {
+                if (this.mounted) setState(() { isClearing = true; });
+
+                try {
+                  await widget.chat.clearTranscript();
+                  if (this.mounted) setState(() { isClearing = false; isCleared = true; });
+                } catch (ex) {
+                  if (this.mounted) setState(() { isClearing = false; isCleared = false; });
+                }
+              },
+              child: ListTile(
+                leading: Text(
+                  "Clear Transcript (Local Only)",
+                  style: TextStyle(
+                    color: Theme.of(context).primaryColor,
+                  ),
+                ),
+                trailing: Padding(
+                  padding: EdgeInsets.only(right: 15),
+                  child: (isClearing)
+                  ? CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                          Theme.of(context).primaryColor),
+                    )
+                  : (isCleared)
+                    ? Icon(
+                        Icons.done,
+                        color: Theme.of(context).primaryColor,
+                      )
+                    : Icon(
+                        Icons.delete_forever,
+                        color: Theme.of(context).primaryColor,
+                      ),
+                ),
+              ),
+            ),
+          ),
           SliverGrid(
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
