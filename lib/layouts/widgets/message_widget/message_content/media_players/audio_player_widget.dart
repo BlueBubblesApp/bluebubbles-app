@@ -95,8 +95,8 @@ class _AudioPlayerWigetState extends State<AudioPlayerWiget> {
 
   @override
   void dispose() {
-    if (context != null) {
-      CurrentChat.of(context)?.audioPlayers?.removeWhere((key, _) => key == widget.file.path);
+    if (widget.context != null) {
+      CurrentChat.of(widget.context)?.audioPlayers?.removeWhere((key, _) => key == widget.file.path);
     }
 
     super.dispose();
