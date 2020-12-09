@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
+import 'package:bluebubbles/helpers/socket_singletons.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_group_widget.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
@@ -11,7 +12,6 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
-import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -75,7 +75,7 @@ class _ConversationTileState extends State<ConversationTile>
       if (!message.isGroupEvent()) return;
 
       // If it's a group event, let's fetch the new information and save it
-      await SocketManager().fetchChat(widget.chat.guid);
+      await fetchChatSingleton(widget.chat.guid);
       this.setNewChatData(forceUpdate: true);
     });
   }

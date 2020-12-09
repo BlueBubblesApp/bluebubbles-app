@@ -30,7 +30,7 @@ class _ImageViewerState extends State<ImageViewer>
   double top = 0;
   int duration = 0;
   PhotoViewController controller;
-  bool showOverlay = false;
+  bool showOverlay = true;
   Uint8List bytes;
 
   @override

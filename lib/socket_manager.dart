@@ -231,6 +231,11 @@ class SocketManager {
     }
 
     String serverAddress = getServerAddress();
+    if (serverAddress == null) {
+      debugPrint("Server Address is not yet configured. Not connecting...");
+      return;
+    }
+
     debugPrint("Starting socket io with the server: $serverAddress");
 
     try {
@@ -513,8 +518,6 @@ class SocketManager {
         "args": {"flag": 1}
       });
     }
-
-    print(params);
 
     SocketManager().sendMessage("get-messages", params, (data) async {
       if (data['status'] != 200) {

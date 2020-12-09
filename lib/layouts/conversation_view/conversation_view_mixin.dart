@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:assorted_layout_widgets/assorted_layout_widgets.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
+import 'package:bluebubbles/helpers/socket_singletons.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_details/conversation_details.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
@@ -95,7 +96,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
       if (!message.isGroupEvent()) return;
 
       // If it's a group event, let's fetch the new information and save it
-      await SocketManager().fetchChat(widget.chat.guid);
+      await fetchChatSingleton(widget.chat.guid);
       setNewChatData(forceUpdate: true);
     });
   }
@@ -164,7 +165,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
 
       try {
         // If we don't have participants, we should fetch them from the server
-        Chat data = await SocketManager().fetchChat(chat.guid);
+        Chat data = await fetchChatSingleton(chat.guid);
         // If we got data back, fetch the participants and update the state
         if (data != null) {
           await chat.getParticipants();
