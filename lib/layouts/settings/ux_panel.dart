@@ -109,6 +109,13 @@ class _UXPanelState extends State<UXPanel> {
                   initialVal: _settingsCopy.autoOpenKeyboard,
                   title: "Auto-open Keyboard",
                 ),
+                                SettingsSwitch(
+                  onChanged: (bool val) {
+                    _settingsCopy.sendTypingIndicators = val;
+                  },
+                  initialVal: _settingsCopy.sendTypingIndicators,
+                  title: "Send typing indicators (BlueBubblesHelper ONLY)",
+                ),
                 SettingsSwitch(
                   onChanged: (bool val) {
                     _settingsCopy.sendWithReturn = val;
@@ -132,15 +139,16 @@ class _UXPanelState extends State<UXPanel> {
                 ),
                 SettingsSlider(
                   text: "Scroll Speed Multiplier",
-                  startingVal: _settingsCopy.scrollVelocity,
-                  update: (double val) {
-                    _settingsCopy.scrollVelocity = double.parse(val.toStringAsFixed(2));
-                  },
-                  formatValue: ((double val) => val.toStringAsFixed(2)),
-                  min: 0.20,
-                  max: 2,
-                  divisions: 18
-                ),
+                    startingVal: _settingsCopy.scrollVelocity,
+                    update: (double val) {
+                      _settingsCopy.scrollVelocity =
+                          double.parse(val.toStringAsFixed(2));
+                    },
+                    formatValue: ((double val) => val.toStringAsFixed(2)),
+                    min: 0.20,
+                    max: 2,
+                    divisions: 18
+                    ),
               ],
             ),
           ),
