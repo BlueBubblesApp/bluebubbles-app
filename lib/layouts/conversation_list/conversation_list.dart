@@ -13,7 +13,6 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/managers/theme_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
-import 'package:bluebubbles/helpers/utils.dart';
 
 import './conversation_tile.dart';
 import 'package:flutter/cupertino.dart';
@@ -439,6 +438,19 @@ class __MaterialState extends State<_Material> {
                         .copyWith(fontSize: 20),
                   ),
                   actions: [
+                    Padding(
+                        padding: EdgeInsets.only(right: 20.0),
+                        child: GestureDetector(
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => SearchView(),
+                              ),
+                            );
+                          },
+                          child: Icon(Icons.search, size: 26.0, color: Colors.grey),
+                        )
+                      ),
                     Padding(
                       padding: EdgeInsets.only(right: 20),
                       child: Padding(
