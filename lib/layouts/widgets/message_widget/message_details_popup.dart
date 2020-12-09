@@ -142,7 +142,9 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
 
   void sendReaction(String type) {
     if (isEmptyString(widget.message.text)) return;
+    if (selfReaction == type) type = "-" + type;
     ActionHandler.sendReaction(widget.currentChat.chat, widget.message, type);
+    Navigator.of(context).pop();
   }
 
   @override
@@ -395,8 +397,9 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
                         ),
                         content: Container(
                           constraints: BoxConstraints(
-                              maxHeight:
-                                  MediaQuery.of(context).size.height * 2 / 3),
+                             maxHeight:
+                                MediaQuery.of(context).size.height * 2 / 3,
+                          ),
                           child: SingleChildScrollView(
                             physics: ThemeSwitcher.getScrollPhysics(),
                             child: SelectableText(
