@@ -4,6 +4,8 @@ import 'dart:ui';
 
 import 'package:bluebubbles/blocs/text_field_bloc.dart';
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/layouts/conversation_view/conversation_view_mixin.dart';
+
 import 'package:bluebubbles/layouts/conversation_view/text_field/attachments/list/text_field_attachment_list.dart';
 import 'package:bluebubbles/layouts/conversation_view/text_field/attachments/picker/text_field_attachment_picker.dart';
 import 'package:bluebubbles/layouts/widgets/CustomCupertinoTextField.dart';
@@ -48,13 +50,13 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
     with TickerProviderStateMixin {
   TextEditingController controller;
   FocusNode focusNode;
+  String participants123;
   bool showImagePicker = false;
   List<File> pickedImages = <File>[];
   bool isRecording = false;
   TextFieldData textFieldData;
   StreamController _streamController = new StreamController.broadcast();
   CurrentChat safeChat;
-
   bool selfTyping = false;
   CameraController cameraController;
   int cameraIndex = 0;
@@ -75,7 +77,6 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
       textFieldData =
           TextFieldBloc().getTextField(CurrentChat.of(context).chat.guid);
     }
-
     controller = textFieldData != null
         ? textFieldData.controller
         : new TextEditingController();
@@ -316,9 +317,12 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
 
   Widget buildActualTextField() {
     IconData rightIcon = Icons.arrow_upward;
-
+    if (CurrentChat.of(context).chat.participants.length > 1) {
+      participants123 = (CurrentChat.of(context).chat.displayName);
+    } else if (CurrentChat.of(context).chat.participants.length <= 1) {
+      participants123 = "BlueBubbles";
+    }
     bool canRecord = controller.text.isEmpty && pickedImages.isEmpty;
-
     if (canRecord) rightIcon = Icons.mic;
     return Flexible(
       flex: 1,
@@ -371,7 +375,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                   keyboardType: TextInputType.multiline,
                   maxLines: 14,
                   minLines: 1,
-                  placeholder: "BlueBubbles",
+                  placeholder: participants123,
                   padding:
                       EdgeInsets.only(left: 10, top: 10, right: 40, bottom: 10),
                   placeholderStyle: Theme.of(context).textTheme.subtitle1,
@@ -428,7 +432,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                       ),
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    hintText: "BlueBubbles",
+                    hintText: participants123,
                     contentPadding: EdgeInsets.only(
                         left: 10, top: 15, right: 40, bottom: 10),
                     hintStyle: Theme.of(context).textTheme.subtitle1,
