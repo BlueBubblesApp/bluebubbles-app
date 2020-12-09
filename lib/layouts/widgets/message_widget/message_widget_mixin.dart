@@ -142,8 +142,7 @@ abstract class MessageWidgetMixin {
                       MethodChannelInterface()
                           .invokeMethod("open-link", {"link": url});
                     },
-                  style: textStyle.apply(
-                        decoration: TextDecoration.underline),
+                   style: textStyle.apply(decoration: TextDecoration.underline),
                 ),
               );
             } else {
