@@ -100,10 +100,10 @@ abstract class MessageWidgetMixin {
       if (!message.isFromMe) {
         if (SettingsManager().settings.colorfulBubbles) {
           textStyle = Theme.of(context).textTheme.bodyText2.apply(
-              color:
-                  darken(toColorGradient(message?.handle?.address ?? "")[0], 0.35));
+              color: darken(
+                  toColorGradient(message?.handle?.address ?? "")[0], 0.35));
         } else {
-          Theme.of(context).textTheme.bodyText1.apply(color: Colors.white);
+          textStyle = textStyle.apply(color: Colors.white);
         }
       }
 

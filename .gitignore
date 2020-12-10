@@ -42,3 +42,4 @@ pubspeck.lock
 **/android/.settings
 *.xcconfig
 ios/Podfile
+/.vscode/settings.json
