@@ -473,16 +473,19 @@ class Chat {
     return attachments;
   }
 
-  static Completer<List<Message>> _getMessagesRequest;
+  static Map<String, Completer<List<Message>>> _getMessagesRequests = {};
   static Future<List<Message>> getMessagesSingleton(Chat chat,
       {bool reactionsOnly = false,
       int offset = 0,
       int limit = 25,
       bool includeDeleted: false}) async {
+    String req = "${chat.guid}-$offset-$limit-$reactionsOnly-$includeDeleted";
+
     // If a current request is in progress, return that future
-    if (_getMessagesRequest != null && !_getMessagesRequest.isCompleted)
-      return _getMessagesRequest.future;
-    _getMessagesRequest = new Completer();
+    if (_getMessagesRequests.containsKey(req) &&
+        !_getMessagesRequests[req].isCompleted)
+      return _getMessagesRequests[req].future;
+    _getMessagesRequests[req] = new Completer();
 
     try {
       List<Message> messages = await Chat.getMessages(chat,
@@ -491,12 +494,19 @@ class Chat {
           limit: limit,
           includeDeleted: includeDeleted);
 
-      _getMessagesRequest.complete(messages);
+      _getMessagesRequests[req].complete(messages);
     } catch (ex) {
-      _getMessagesRequest.completeError(ex);
+      _getMessagesRequests[req].completeError(ex);
     }
 
-    return _getMessagesRequest.future;
+    // Remove the request from the "cache" after 10 seconds
+    Future.delayed(new Duration(seconds: 10), () {
+      if (_getMessagesRequests.containsKey(req)) {
+        _getMessagesRequests.remove(req);
+      }
+    });
+
+    return _getMessagesRequests[req].future;
   }
 
   static Future<List<Message>> getMessages(Chat chat,
