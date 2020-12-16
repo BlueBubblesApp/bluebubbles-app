@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:async';
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
@@ -125,7 +126,8 @@ class Chat {
     }
     return new Chat(
       id: json.containsKey("ROWID") ? json["ROWID"] : null,
-      originalROWID: json.containsKey("originalROWID") ? json["originalROWID"] : null,
+      originalROWID:
+          json.containsKey("originalROWID") ? json["originalROWID"] : null,
       guid: json["guid"],
       style: json['style'],
       chatIdentifier:
@@ -471,6 +473,32 @@ class Chat {
     return attachments;
   }
 
+  static Completer<List<Message>> _getMessagesRequest;
+  static Future<List<Message>> getMessagesSingleton(Chat chat,
+      {bool reactionsOnly = false,
+      int offset = 0,
+      int limit = 25,
+      bool includeDeleted: false}) async {
+    // If a current request is in progress, return that future
+    if (_getMessagesRequest != null && !_getMessagesRequest.isCompleted)
+      return _getMessagesRequest.future;
+    _getMessagesRequest = new Completer();
+
+    try {
+      List<Message> messages = await Chat.getMessages(chat,
+          reactionsOnly: reactionsOnly,
+          offset: offset,
+          limit: limit,
+          includeDeleted: includeDeleted);
+
+      _getMessagesRequest.complete(messages);
+    } catch (ex) {
+      _getMessagesRequest.completeError(ex);
+    }
+
+    return _getMessagesRequest.future;
+  }
+
   static Future<List<Message>> getMessages(Chat chat,
       {bool reactionsOnly = false,
       int offset = 0,
@@ -523,8 +551,6 @@ class Chat {
         " FROM message"
         " JOIN chat_message_join AS cmj ON message.ROWID = cmj.messageId"
         " JOIN chat ON cmj.chatId = chat.ROWID"
-        // " LEFT JOIN attachment_message_join ON attachment_message_join.messageId = message.ROWID "
-        // " LEFT JOIN attachment ON attachment.ROWID = attachment_message_join.attachmentId"
         " LEFT OUTER JOIN handle ON handle.ROWID = message.handleId"
         " WHERE chat.ROWID = ?");
 
@@ -666,9 +692,8 @@ class Chat {
     if (this.id == null) return this;
 
     this.isPinned = true;
-    await db.update("chat", {
-      "isPinned": 1
-    }, where: "ROWID = ?", whereArgs: [this.id]);
+    await db.update("chat", {"isPinned": 1},
+        where: "ROWID = ?", whereArgs: [this.id]);
 
     ChatBloc()?.updateChat(this);
     return this;
@@ -679,9 +704,8 @@ class Chat {
     if (this.id == null) return this;
 
     this.isPinned = false;
-    await db.update("chat", {
-      "isPinned": 0
-    }, where: "ROWID = ?", whereArgs: [this.id]);
+    await db.update("chat", {"isPinned": 0},
+        where: "ROWID = ?", whereArgs: [this.id]);
 
     ChatBloc()?.updateChat(this);
     return this;
@@ -764,19 +788,16 @@ class Chat {
   Future<void> clearTranscript() async {
     final Database db = await DBProvider.db.database;
     await db.rawQuery(
-      "UPDATE message "
-      "SET dateDeleted = ${DateTime.now().toUtc().millisecondsSinceEpoch} "
-      "WHERE ROWID IN ("
-      "    SELECT m.ROWID "
-      "    FROM message m"
-      "    INNER JOIN chat_message_join cmj ON cmj.messageId = m.ROWID "
-      "    INNER JOIN chat c ON cmj.chatId = c.ROWID "
-      "    WHERE c.guid = ?"
-      ");",
-      [
-        this.guid
-      ]
-    );
+        "UPDATE message "
+        "SET dateDeleted = ${DateTime.now().toUtc().millisecondsSinceEpoch} "
+        "WHERE ROWID IN ("
+        "    SELECT m.ROWID "
+        "    FROM message m"
+        "    INNER JOIN chat_message_join cmj ON cmj.messageId = m.ROWID "
+        "    INNER JOIN chat c ON cmj.chatId = c.ROWID "
+        "    WHERE c.guid = ?"
+        ");",
+        [this.guid]);
   }
 
   static flush() async {

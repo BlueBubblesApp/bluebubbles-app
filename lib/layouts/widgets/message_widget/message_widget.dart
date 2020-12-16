@@ -12,6 +12,7 @@ import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
+import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -47,15 +48,30 @@ class _MessageState extends State<MessageWidget>
   bool showTail = true;
   Completer<void> associatedMessageRequest;
   Completer<void> attachmentsRequest;
+  Completer<void> handleRequest;
   int lastRequestCount = -1;
   int attachmentCount = 0;
   int associatedCount = 0;
+  bool handledInit = false;
   CurrentChat currentChat;
-  bool checkedHandle = false;
 
   @override
   void initState() {
     super.initState();
+    init();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    init();
+  }
+
+  void init() {
+    if (context != null) currentChat = CurrentChat.of(context);
+    if (handledInit) return;
+    handledInit = true;
+
     checkHandle();
     fetchAssociatedMessages();
     fetchAttachments();
@@ -73,56 +89,48 @@ class _MessageState extends State<MessageWidget>
       bool fetchAttach = false;
       Message message = data.event["message"];
       if (message == null) return;
-      if (message.associatedMessageGuid == widget.message.guid) {
+      if (message.associatedMessageGuid == widget.message.guid)
         fetchAssoc = true;
-      }
-      if (message.hasAttachments) {
-        fetchAttach = true;
-      }
+      if (message.hasAttachments) fetchAttach = true;
 
       // If the associated message GUID matches this one, fetch associated messages
-      if (fetchAssoc) {
-        fetchAssociatedMessages(forceReload: true);
-      }
-
-      if (fetchAttach) {
-        fetchAttachments(forceReload: true);
-      }
+      if (fetchAssoc) fetchAssociatedMessages(forceReload: true);
+      if (fetchAttach) fetchAttachments(forceReload: true);
     });
   }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    currentChat = CurrentChat.of(context);
+  Future<void> checkHandle() async {
+    // If we've already started, return the request
+    if (handleRequest != null) return handleRequest.future;
+    handleRequest = new Completer();
 
-    checkHandle();
-    fetchAssociatedMessages();
-    fetchAttachments();
-  }
+    // Checks ordered in a specific way to ever so slightly reduce processing
+    if (widget.message.isFromMe) return handleRequest.complete();
+    if (widget.message.handle != null) return handleRequest.complete();
 
-  void checkHandle() {
-    // If we've already checked it, don't do it again
-    if (widget.message.isFromMe || widget.message.handle != null ||
-        checkedHandle) return;
-    checkedHandle = true;
-
-    // Fetch the handle and update the state
-    widget.message.getHandle().then((handle) {
-      if (this.mounted) setState(() {});
-    });
+    try {
+      Handle handle = await widget.message.getHandle();
+      if (this.mounted && handle != null) {
+        setState(() {});
+      }
+    } catch (ex) {
+      handleRequest.completeError(ex);
+    }
   }
 
   Future<void> fetchAssociatedMessages({bool forceReload = false}) async {
     // If there is already a request being made, return that request
-    if (associatedMessageRequest != null &&
-        !associatedMessageRequest.isCompleted) {
+    if (!forceReload && associatedMessageRequest != null)
       return associatedMessageRequest.future;
-    }
 
     // Create a new request and get the messages
     associatedMessageRequest = new Completer();
-    await widget.message.fetchAssociatedMessages();
+
+    try {
+      await widget.message.fetchAssociatedMessages();
+    } catch (ex) {
+      return associatedMessageRequest.completeError(ex);
+    }
 
     bool hasChanges = false;
     if (widget.message.associatedMessages.length != associatedCount ||
@@ -132,7 +140,7 @@ class _MessageState extends State<MessageWidget>
     }
 
     // If there are changes, re-render
-    if (this.mounted && hasChanges) {
+    if (hasChanges) {
       // If we don't think there are reactions, and we found reactions,
       // Update the DB so it saves that we have reactions
       if (!widget.message.hasReactions &&
@@ -141,7 +149,7 @@ class _MessageState extends State<MessageWidget>
         widget.message.update();
       }
 
-      setState(() {});
+      if (this.mounted) setState(() {});
     }
 
     associatedMessageRequest.complete();
@@ -149,15 +157,18 @@ class _MessageState extends State<MessageWidget>
 
   Future<void> fetchAttachments({bool forceReload = false}) async {
     // If there is already a request being made, return that request
-    if (attachmentsRequest != null && !attachmentsRequest.isCompleted) {
+    if (!forceReload && attachmentsRequest != null)
       return attachmentsRequest.future;
-    }
 
     // Create a new request and get the attachments
     attachmentsRequest = new Completer();
-    if (context != null && this.mounted)
-      await widget.message
-          .fetchAttachments(currentChat: CurrentChat.of(context));
+    if (!this.mounted) return attachmentsRequest.complete();
+
+    try {
+      await widget.message.fetchAttachments(currentChat: currentChat);
+    } catch (ex) {
+      return attachmentsRequest.completeError(ex);
+    }
 
     // If this is a URL preview and we don't have attachments, we need to get them
     List<Attachment> nonNullAttachments = widget.message.getRealAttachments();
@@ -165,8 +176,7 @@ class _MessageState extends State<MessageWidget>
       if (lastRequestCount != nonNullAttachments.length) {
         lastRequestCount = nonNullAttachments.length;
         SocketManager().setup.startIncrementalSync(SettingsManager().settings,
-            chatGuid: CurrentChat.of(context).chat.guid,
-            saveDate: false, onComplete: () {
+            chatGuid: currentChat.chat.guid, saveDate: false, onComplete: () {
           if (this.mounted) setState(() {});
         });
       }
@@ -196,6 +206,7 @@ class _MessageState extends State<MessageWidget>
   @override
   Widget build(BuildContext context) {
     super.build(context);
+
     if (widget.newerMessage != null) {
       if (widget.newerMessage.isGroupEvent()) {
         showTail = true;
@@ -209,10 +220,11 @@ class _MessageState extends State<MessageWidget>
                 widget.newerMessage.dateDelivered == null);
       }
     }
-    
 
     if (widget.message.isGroupEvent()) {
-      return GroupEvent(message: widget.message);
+      return GroupEvent(
+          key: Key("group-event-${widget.message.guid}"),
+          message: widget.message);
     }
 
     ////////// READ //////////
@@ -255,8 +267,7 @@ class _MessageState extends State<MessageWidget>
         stickersWidget: stickersWidget,
         attachmentsWidget: widgetAttachments,
         reactionsWidget: reactionsWidget,
-        shouldFadeIn:
-            CurrentChat.of(context).sentMessages.contains(widget.message.guid),
+        shouldFadeIn: currentChat.sentMessages.contains(widget.message.guid),
         showHero: widget.showHero,
         showDeliveredReceipt: widget.isFirstSentMessage,
       );
