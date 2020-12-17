@@ -181,7 +181,8 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
 
     // Build the main image
     Widget mainImage = Container();
-    if (data != null &&
+    if (widget.linkPreviews.length <= 1 &&
+        data != null &&
         data.image != null &&
         data.image.isNotEmpty &&
         !data.image.contains("renderTimingPixel.png") &&
@@ -218,8 +219,8 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
             child: InkResponse(
               borderRadius: BorderRadius.circular(20),
               onTap: () {
-                MethodChannelInterface()
-                    .invokeMethod("open-link", {"link": data?.url ?? widget.message.text});
+                MethodChannelInterface().invokeMethod(
+                    "open-link", {"link": data?.url ?? widget.message.text});
               },
               child: Container(
                 width: MediaQuery.of(context).size.width * 2 / 3,
@@ -269,6 +270,7 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
                                 ],
                               )),
                           (widget.linkPreviews.length == 1 &&
+                                  data?.image == null &&
                                   AttachmentHelper.attachmentExists(
                                       widget.linkPreviews.last))
                               ? Padding(

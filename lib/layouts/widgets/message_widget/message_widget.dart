@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/group_event.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/url_preview_widget.dart';
@@ -175,10 +176,12 @@ class _MessageState extends State<MessageWidget>
     if (widget.message.isUrlPreview() && nonNullAttachments.isEmpty) {
       if (lastRequestCount != nonNullAttachments.length) {
         lastRequestCount = nonNullAttachments.length;
-        SocketManager().setup.startIncrementalSync(SettingsManager().settings,
-            chatGuid: currentChat.chat.guid, saveDate: false, onComplete: () {
-          if (this.mounted) setState(() {});
-        });
+
+        List<dynamic> msgs = await SocketManager()
+            .getAttachments(currentChat.chat.guid, widget.message.guid);
+
+        for (var msg in msgs)
+          await ActionHandler.handleMessage(msg, forceProcess: true);
       }
     }
 
@@ -194,7 +197,7 @@ class _MessageState extends State<MessageWidget>
       setState(() {});
     }
 
-    attachmentsRequest.complete();
+    if (!attachmentsRequest.isCompleted) attachmentsRequest.complete();
   }
 
   bool withinTimeThreshold(Message first, Message second, {threshold: 5}) {

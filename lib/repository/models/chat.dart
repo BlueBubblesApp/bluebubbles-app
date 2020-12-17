@@ -495,12 +495,14 @@ class Chat {
           limit: limit,
           includeDeleted: includeDeleted);
 
-      if (_getMessagesRequests.containsKey(req))
+      if (_getMessagesRequests.containsKey(req) &&
+          !_getMessagesRequests[req].isCompleted)
         _getMessagesRequests[req].complete(messages);
     } catch (ex) {
       print(ex);
 
-      if (_getMessagesRequests.containsKey(req))
+      if (_getMessagesRequests.containsKey(req) &&
+          !_getMessagesRequests[req].isCompleted)
         _getMessagesRequests[req].completeError(ex);
     }
 

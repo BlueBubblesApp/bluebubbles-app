@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
-import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/blocs/setup_bloc.dart';
@@ -409,9 +408,9 @@ class SocketManager {
     }
   }
 
-  Future<void> getAttachments(String chatGuid, String messageGuid,
-      {Function cb}) {
-    Completer<void> completer = new Completer();
+  Future<List<dynamic>> getAttachments(String chatGuid, String messageGuid,
+      {Function(List<dynamic>) cb}) {
+    Completer<List<dynamic>> completer = new Completer();
 
     dynamic params = {
       'after': 1,
@@ -432,13 +431,14 @@ class SocketManager {
       dynamic json = jsonDecode(data);
       if (json["status"] != 200) return completer.completeError(json);
 
+      List<dynamic> output = [];
       if (json.containsKey("data") && json["data"].length > 0) {
-        await ActionHandler.handleMessage(json["data"][0], forceProcess: true);
+        output = json["data"];
       }
 
-      completer.complete();
+      completer.complete(output);
 
-      if (cb != null) cb(json);
+      if (cb != null) cb(output);
     });
 
     return completer.future;

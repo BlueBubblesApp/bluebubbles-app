@@ -56,7 +56,7 @@ class Attachment {
 
   factory Attachment.fromMap(Map<String, dynamic> json) {
     String mimeType = json["mimeType"];
-    if ((json['transferName'] as String).endsWith(".caf")) {
+    if (((json['transferName'] as String) ?? "").endsWith(".caf")) {
       mimeType = "audio/caf";
     }
     return new Attachment(
