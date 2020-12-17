@@ -485,6 +485,7 @@ class Chat {
     if (_getMessagesRequests.containsKey(req) &&
         !_getMessagesRequests[req].isCompleted)
       return _getMessagesRequests[req].future;
+
     _getMessagesRequests[req] = new Completer();
 
     try {
@@ -496,7 +497,10 @@ class Chat {
 
       _getMessagesRequests[req].complete(messages);
     } catch (ex) {
-      _getMessagesRequests[req].completeError(ex);
+      print(ex);
+
+      if (_getMessagesRequests.containsKey(req))
+        _getMessagesRequests[req].completeError(ex);
     }
 
     // Remove the request from the "cache" after 10 seconds

@@ -11,6 +11,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:html/parser.dart';
 import 'package:convert/convert.dart';
+import 'package:bluebubbles/managers/method_channel_interface.dart';
 
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:contacts_service/contacts_service.dart';
@@ -186,7 +187,8 @@ bool isEmptyString(String input, {stripWhitespace = false}) {
 
 bool isParticipantEvent(Message message) {
   if (message == null) return false;
-  if (message.itemType == 1 && [0, 1].contains(message.groupActionType)) return true;
+  if (message.itemType == 1 && [0, 1].contains(message.groupActionType))
+    return true;
   if ([2, 3].contains(message.itemType)) return true;
   return false;
 }
@@ -204,7 +206,6 @@ Future<String> getGroupEventText(Message message) async {
       other = await ContactManager().getContactTitle(item.address);
     }
   }
-
 
   if (message.itemType == 1 && message.groupActionType == 1) {
     text = "$handle removed $other from the conversation";
@@ -366,7 +367,9 @@ Size getGifDimensions(Uint8List bytes) {
 }
 
 Brightness getBrightness(BuildContext context) {
-  return AdaptiveTheme.of(context).mode == AdaptiveThemeMode.dark ? Brightness.dark : Brightness.light;
+  return AdaptiveTheme.of(context).mode == AdaptiveThemeMode.dark
+      ? Brightness.dark
+      : Brightness.light;
 }
 
 /// Take the passed [address] or serverAddress from Settings
@@ -397,4 +400,18 @@ String dateToShortString(DateTime timestamp) {
   } else {
     return "${timestamp.month.toString()}/${timestamp.day.toString()}/${timestamp.year.toString()}";
   }
+}
+
+Future<String> getDeviceName() async {
+  String deviceName = "android-client";
+
+  try {
+    deviceName =
+        await MethodChannelInterface().invokeMethod("get-device-name", null);
+  } catch (ex) {
+    debugPrint("Failed to get device name!");
+    debugPrint(ex.toString());
+  }
+
+  return deviceName;
 }

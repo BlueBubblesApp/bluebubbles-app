@@ -148,7 +148,8 @@ class _SettingsPanelState extends State<SettingsPanel> {
                           subtitle = "Connecting...";
                           break;
                         case SocketState.FAILED:
-                          subtitle = "Failed to connect (Tap to restart Server)";
+                          subtitle =
+                              "Failed to connect (Tap to restart Server)";
                           break;
                       }
 
@@ -159,19 +160,24 @@ class _SettingsPanelState extends State<SettingsPanel> {
                           // If we are disconnected, tap to restart server
                           if (disconnectedStates.contains(connectionStatus)) {
                             // Prevent restarting more than once per 30 seconds
-                            int now = DateTime.now().toUtc().millisecondsSinceEpoch;
-                            if (lastRestart != null && now - lastRestart < 1000 * 30 ) return;
+                            int now =
+                                DateTime.now().toUtc().millisecondsSinceEpoch;
+                            if (lastRestart != null &&
+                                now - lastRestart < 1000 * 30) return;
 
                             // Restart the server
-                            MethodChannelInterface().invokeMethod("set-next-restart", {
-                              "value": DateTime.now().toUtc().millisecondsSinceEpoch
+                            MethodChannelInterface().invokeMethod(
+                                "set-next-restart", {
+                              "value":
+                                  DateTime.now().toUtc().millisecondsSinceEpoch
                             });
 
                             lastRestart = now;
                           }
 
                           // If we are connected, tap to show the URL
-                          if ([SocketState.CONNECTED].contains(connectionStatus)) {
+                          if ([SocketState.CONNECTED]
+                              .contains(connectionStatus)) {
                             if (this.mounted) {
                               setState(() {
                                 showUrl = !showUrl;
@@ -227,7 +233,8 @@ class _SettingsPanelState extends State<SettingsPanel> {
                         applicationID: fcmData[7],
                       );
                       _settingsCopy.guidAuthKey = fcmData[0];
-                      _settingsCopy.serverAddress = getServerAddress(address: fcmData[1]);
+                      _settingsCopy.serverAddress =
+                          getServerAddress(address: fcmData[1]);
 
                       SettingsManager().saveSettings(_settingsCopy);
                       SettingsManager().saveFCMData(_fcmDataCopy);
@@ -250,16 +257,15 @@ class _SettingsPanelState extends State<SettingsPanel> {
                   title: "Only Auto-download Attachments on WiFi",
                 ),
                 SettingsSlider(
-                  text: "Attachment Chunk Size",
-                  startingVal: _settingsCopy.chunkSize.toDouble(),
-                  update: (double val) {
-                    _settingsCopy.chunkSize = val.floor();
-                  },
-                  formatValue: ((double val) => getSizeString(val)),
-                  min: 100,
-                  max: 3000,
-                  divisions: 29
-                ),
+                    text: "Attachment Chunk Size",
+                    startingVal: _settingsCopy.chunkSize.toDouble(),
+                    update: (double val) {
+                      _settingsCopy.chunkSize = val.floor();
+                    },
+                    formatValue: ((double val) => getSizeString(val)),
+                    min: 100,
+                    max: 3000,
+                    divisions: 29),
                 // SettingsTile(
                 //   title: "Message Scheduling",
                 //   trailing: Icon(Icons.arrow_forward_ios,
@@ -380,7 +386,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                               onPressed: () async {
                                 await DBProvider.deleteDB();
                                 await SettingsManager().resetConnection();
-                                
+
                                 SocketManager().finishedSetup.sink.add(false);
                                 Navigator.of(context)
                                     .popUntil((route) => route.isFirst);
@@ -727,16 +733,14 @@ class _SettingsOptionsState<T> extends State<SettingsOptions<T>> {
 
 class SettingsSlider extends StatefulWidget {
   SettingsSlider(
-      {
-        @required this.startingVal,
-        this.update,
-        @required this.text,
-        this.formatValue,
-        @required this.min,
-        @required this.max,
-        @required this.divisions,
-        Key key
-      })
+      {@required this.startingVal,
+      this.update,
+      @required this.text,
+      this.formatValue,
+      @required this.min,
+      @required this.max,
+      @required this.divisions,
+      Key key})
       : super(key: key);
 
   final double startingVal;

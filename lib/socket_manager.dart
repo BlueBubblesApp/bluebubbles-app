@@ -380,8 +380,9 @@ class SocketManager {
     } else if (token != null && !force) {
       debugPrint("already authorized fcm " + token);
       if (_manager.socket != null) {
+        String deviceName = await getDeviceName();
         _manager.sendMessage("add-fcm-device",
-            {"deviceId": token, "deviceName": "android-client"}, (data) {},
+            {"deviceId": token, "deviceName": deviceName}, (data) {},
             reason: "authfcm", awaitResponse: false);
       }
       return;
@@ -392,8 +393,9 @@ class SocketManager {
           .invokeMethod('auth', SettingsManager().fcmData.toMap());
       token = result;
       if (_manager.socket != null) {
+        String deviceName = await getDeviceName();
         _manager.sendMessage("add-fcm-device",
-            {"deviceId": token, "deviceName": "android-client"}, (data) {},
+            {"deviceId": token, "deviceName": deviceName}, (data) {},
             reason: "authfcm", awaitResponse: false);
         debugPrint(token);
       }
