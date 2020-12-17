@@ -495,7 +495,8 @@ class Chat {
           limit: limit,
           includeDeleted: includeDeleted);
 
-      _getMessagesRequests[req].complete(messages);
+      if (_getMessagesRequests.containsKey(req))
+        _getMessagesRequests[req].complete(messages);
     } catch (ex) {
       print(ex);
 
@@ -510,7 +511,11 @@ class Chat {
       }
     });
 
-    return _getMessagesRequests[req].future;
+    if (_getMessagesRequests.containsKey(req)) {
+      return _getMessagesRequests[req].future;
+    } else {
+      return [];
+    }
   }
 
   static Future<List<Message>> getMessages(Chat chat,

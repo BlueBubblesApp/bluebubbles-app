@@ -376,7 +376,9 @@ Brightness getBrightness(BuildContext context) {
 /// and sanitize it, making sure it includes an http schema
 String getServerAddress({String address}) {
   String serverAddress = address ?? SettingsManager().settings.serverAddress;
-  if (serverAddress.isEmpty) return null;
+  String sanitized =
+      serverAddress.replaceAll("https://", "").replaceAll("http://", "").trim();
+  if (sanitized.isEmpty) return null;
 
   // If the serverAddress doesn't start with HTTP, modify it
   if (!serverAddress.startsWith("http")) {
