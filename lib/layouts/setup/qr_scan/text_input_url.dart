@@ -1,4 +1,3 @@
-
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/setup/connecting_alert/connecting_alert.dart';
 import 'package:bluebubbles/layouts/setup/qr_scan/failed_to_scan_dialog.dart';
@@ -34,7 +33,14 @@ class _TextInputURLState extends State<TextInputURL> {
   void connect(String url, String password) async {
     SocketManager().closeSocket(force: true);
     Settings copy = SettingsManager().settings;
-    copy.serverAddress = getServerAddress(address: url);
+    String addr = getServerAddress(address: url);
+    if (addr == null) {
+      error = "Server address is invalid!";
+      if (this.mounted) setState(() {});
+      return;
+    }
+
+    copy.serverAddress = addr;
     copy.guidAuthKey = password;
     await SettingsManager().saveSettings(copy);
     try {

@@ -75,8 +75,7 @@ class DBProvider {
         upgrade: (Database db) {
           db.execute(
               "ALTER TABLE message ADD COLUMN dateDeleted INTEGER DEFAULT NULL;");
-          db.execute(
-              "ALTER TABLE chat ADD COLUMN isPinned INTEGER DEFAULT 0;");
+          db.execute("ALTER TABLE chat ADD COLUMN isPinned INTEGER DEFAULT 0;");
         }),
     new DBUpgradeItem(
         fromVersions: [1, 2, 3, 4],
@@ -90,6 +89,13 @@ class DBProvider {
               "ALTER TABLE attachment ADD COLUMN originalROWID INTEGER DEFAULT NULL;");
           db.execute(
               "ALTER TABLE message ADD COLUMN otherHandle INTEGER DEFAULT NULL;");
+        }),
+    new DBUpgradeItem(
+        fromVersions: [1, 2, 3, 4, 5],
+        toVersions: [6],
+        upgrade: (Database db) {
+          db.execute(
+              "ALTER TABLE attachment ADD COLUMN metadata TEXT DEFAULT NULL;");
         }),
   ];
 
@@ -106,7 +112,7 @@ class DBProvider {
   initDB() async {
     Directory documentsDirectory = await getApplicationDocumentsDirectory();
     _path = join(documentsDirectory.path, "chat.db");
-    return await openDatabase(_path, version: 5, onUpgrade: _onUpgrade,
+    return await openDatabase(_path, version: 6, onUpgrade: _onUpgrade,
         onOpen: (Database db) async {
       debugPrint("Database Opened");
       _database = db;
@@ -305,7 +311,8 @@ class DBProvider {
         "hideAttachment INTEGER DEFAULT 0,"
         "blurhash VARCHAR(64) DEFAULT NULL,"
         "height INTEGER DEFAULT NULL,"
-        "width INTEGER DEFAULT NULL"
+        "width INTEGER DEFAULT NULL,"
+        "metadata TEXT DEFAULT NULL"
         ");");
   }
 

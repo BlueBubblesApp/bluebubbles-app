@@ -36,6 +36,7 @@ class Attachment {
   String blurhash;
   int height;
   int width;
+  Map<String, dynamic> metadata;
 
   Attachment({
     this.id,
@@ -52,6 +53,7 @@ class Attachment {
     this.blurhash,
     this.height,
     this.width,
+    this.metadata,
   });
 
   factory Attachment.fromMap(Map<String, dynamic> json) {
@@ -61,6 +63,17 @@ class Attachment {
         (json.containsKey("transferName") &&
             (json['transferName'] ?? "").endsWith(".caf"))) {
       mimeType = "audio/caf";
+    }
+
+    // Load the metadata
+    dynamic metadata = json.containsKey("metadata") ? json["metadata"] : null;
+    if (!isNullOrEmpty(metadata)) {
+      // If the metadata is a string, convert it to JSON
+      if (metadata is String) {
+        try {
+          metadata = jsonDecode(metadata);
+        } catch (ex) {}
+      }
     }
 
     return new Attachment(
@@ -85,6 +98,7 @@ class Attachment {
       blurhash: json.containsKey("blurhash") ? json["blurhash"] : null,
       height: json.containsKey("height") ? json["height"] : 0,
       width: json.containsKey("width") ? json["width"] : 0,
+      metadata: metadata is String ? null : metadata,
     );
   }
 
@@ -125,6 +139,9 @@ class Attachment {
     Map<String, dynamic> params = {
       "width": this.width,
       "height": this.height,
+      // If it's null or empty, save it as null
+      "metadata":
+          (isNullOrEmpty(this.metadata)) ? null : jsonEncode(this.metadata)
     };
 
     if (this.originalROWID != null) {
@@ -157,6 +174,9 @@ class Attachment {
     if (params.containsKey("height")) {
       params.remove("height");
     }
+    if (params.containsKey("metadata")) {
+      params.remove("metadata");
+    }
 
     await db.update("attachment", params,
         where: "ROWID = ?", whereArgs: [existing.id]);
@@ -167,6 +187,7 @@ class Attachment {
     newAttachment.id = existing.id;
     newAttachment.width = existing.width;
     newAttachment.height = existing.height;
+    newAttachment.metadata = existing.metadata;
     return newAttachment;
   }
 
@@ -233,30 +254,6 @@ class Attachment {
     return _mimeType;
   }
 
-  Future<Attachment> updateDimensions(Uint8List data) async {
-    if (mimeType == "image/gif") {
-      Size size = getGifDimensions(data);
-
-      if (size.width != 0 && size.height != 0) {
-        width = size.width.toInt();
-        height = size.height.toInt();
-        await update();
-      }
-    } else if (mimeStart == "image" || mimeStart == "video") {
-      IMG.Size size = IMG.ImageSizeGetter.getSize(IMG.MemoryInput(data));
-      if (size.width != 0 && size.height != 0) {
-        width = size.width;
-        height = size.height;
-        await update();
-      }
-    } else {
-      width = null;
-      height = null;
-      await update();
-    }
-    return this;
-  }
-
   static Future<int> countForChat(Chat chat) async {
     final Database db = await DBProvider.db.database;
     if (chat == null || chat.id == null) return 0;
@@ -292,5 +289,6 @@ class Attachment {
         "blurhash": blurhash,
         "height": height,
         "width": width,
+        "metadata": jsonEncode(metadata),
       };
 }

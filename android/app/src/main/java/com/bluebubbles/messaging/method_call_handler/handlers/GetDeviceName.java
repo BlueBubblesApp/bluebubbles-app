@@ -29,7 +29,14 @@ public class GetDeviceName implements Handler {
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     public void Handle() {
-        String name = android.os.Build.MANUFACTURER + "_" + android.os.Build.MODEL;
+        String name = "android-client";
+        
+        try {
+            name = android.os.Build.MANUFACTURER + "_" + android.os.Build.MODEL;
+        } catch (Exception e) {
+            // Don't do anything
+        }
+
         result.success(name);
     }
 }
