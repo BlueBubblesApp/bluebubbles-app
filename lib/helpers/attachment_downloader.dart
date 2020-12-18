@@ -26,7 +26,8 @@ class AttachmentDownloader {
   Function _onComplete;
   Function _onError;
 
-  double get progress => (_currentChunk) / _totalChunks;
+  double get progress =>
+      (_totalChunks == 0) ? 0 : (_currentChunk) / _totalChunks;
   Attachment get attachment => _attachment;
 
   AttachmentDownloader(Attachment attachment,
@@ -72,19 +73,18 @@ class AttachmentDownloader {
       if (bytes.length == _chunkSize) {
         // Calculate some stats
         double progress = ((index + 1) / total).clamp(0, 1).toDouble();
-        // updateProgressNotif(progress);
         String progressStr = (progress * 100).round().toString();
         debugPrint("Progress: $progressStr% of the attachment");
 
         // Update the progress in stream
-        _stream.sink.add({"Progress": progress});
+        setProgress(progress);
         _currentChunk = index + 1;
 
         // Get the next chunk
         getChunkRecursive(guid, index + 1, total, currentBytes, cb);
       } else {
         debugPrint("Finished fetching attachment");
-        await cb(currentBytes);
+        if (cb != null) await cb(currentBytes);
       }
     }, reason: "Attachment downloader " + attachment.guid);
   }
@@ -168,5 +168,17 @@ class AttachmentDownloader {
     }
 
     return file;
+  }
+
+  void setProgress(double value) {
+    if (value == null || value.isNaN) {
+      value = 0;
+    } else if (progress.isInfinite) {
+      value = 1.0;
+    } else if (progress.isNegative) {
+      value = 0;
+    }
+
+    _stream.sink.add({"progress": value.clamp(0, 1)});
   }
 }

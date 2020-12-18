@@ -4,6 +4,7 @@ import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
+import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -195,10 +196,19 @@ Future<String> getGroupEventText(Message message) async {
   if (message.handleId != null && message.handle != null)
     handle = await ContactManager().getContactTitle(message.handle.address);
 
+  String other = "someone";
+  if (message.otherHandle != null && [1, 2].contains(message.itemType)) {
+    Handle item = await Handle.findOne({"originalROWID": message.otherHandle});
+    if (item != null) {
+      other = await ContactManager().getContactTitle(item.address);
+    }
+  }
+
+
   if (message.itemType == 1 && message.groupActionType == 1) {
-    text = "$handle removed someone from the conversation";
+    text = "$handle removed $other from the conversation";
   } else if (message.itemType == 1 && message.groupActionType == 0) {
-    text = "$handle added someone to the conversation";
+    text = "$handle added $other to the conversation";
   } else if (message.itemType == 3) {
     text = "$handle left the conversation";
   } else if (message.itemType == 2 && message.groupTitle != null) {

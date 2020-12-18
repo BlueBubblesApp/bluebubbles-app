@@ -92,6 +92,7 @@ class _ImageWidgetState extends State<ImageWidget>
                   setState(() {
                     navigated = true;
                   });
+
                   CurrentChat currentChat = CurrentChat.of(context);
                   await Navigator.of(context).push(
                     MaterialPageRoute(
@@ -103,9 +104,12 @@ class _ImageWidgetState extends State<ImageWidget>
                       ),
                     ),
                   );
-                  setState(() {
-                    navigated = false;
-                  });
+                  
+                  if (this.mounted) {
+                    setState(() {
+                      navigated = false;
+                    });
+                  }
                 },
               ),
             ),

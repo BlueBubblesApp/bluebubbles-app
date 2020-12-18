@@ -7,8 +7,12 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_group_widget.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
+import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/repository/models/handle.dart';
+import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
+import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -72,16 +76,37 @@ class _ConversationTileState extends State<ConversationTile>
         });
       }
     });
+
+    // Listen for changes in the group
+    NewMessageManager().stream.listen((NewMessageEvent event) async {
+      // Make sure we have the required data to qualify for this tile
+      if (event.chatGuid != widget.chat.guid) return;
+      if (!event.event.containsKey("message")) return;
+
+      // Make sure the message is a group event
+      Message message = event.event["message"];
+      if (!message.isGroupEvent()) return;
+
+      // If it's a group event, let's fetch the new information and save it
+      await SocketManager().fetchChat(widget.chat.guid);
+      this.setNewChatData(forceUpdate: true);
+    });
   }
 
-  void setNewChatTitle() async {
-    String tmpTitle = await getFullChatTitle(widget.chat);
-    if (tmpTitle != widget.chat.title) {
-      if (this.mounted) {
-        setState(() {
-          widget.chat.title = tmpTitle;
-        });
-      }
+  void setNewChatData({forceUpdate: false}) async {
+    // Save the current participant list and get the latest
+    List<Handle> ogParticipants = widget.chat.participants;
+    await widget.chat.getParticipants();
+
+    // Save the current title and generate the new one
+    String ogTitle = widget.chat.title;
+    await widget.chat.getTitle();
+
+    // If the original data is different, update the state
+    if (ogTitle != widget.chat.title ||
+        ogParticipants.length != widget.chat.participants.length ||
+        forceUpdate) {
+      if (this.mounted) setState(() {});
     }
   }
 

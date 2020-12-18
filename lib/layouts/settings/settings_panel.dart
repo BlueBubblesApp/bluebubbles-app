@@ -19,11 +19,18 @@ import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../../helpers/hex_color.dart';
 import 'package:flutter/material.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 
 import '../setup/qr_code_scanner.dart';
+
+List disconnectedStates = [
+  SocketState.DISCONNECTED,
+  SocketState.ERROR,
+  SocketState.FAILED
+];
 
 class SettingsPanel extends StatefulWidget {
   SettingsPanel({Key key}) : super(key: key);
@@ -39,6 +46,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
   bool showUrl = false;
   Brightness brightness;
   bool gotBrightness = false;
+  int lastRestart;
 
   @override
   void initState() {
@@ -131,16 +139,16 @@ class _SettingsPanelState extends State<SettingsPanel> {
                           }
                           break;
                         case SocketState.DISCONNECTED:
-                          subtitle = "Disconnected";
+                          subtitle = "Disconnected (Tap to restart Server)";
                           break;
                         case SocketState.ERROR:
-                          subtitle = "Error";
+                          subtitle = "Error (Tap to restart Server)";
                           break;
                         case SocketState.CONNECTING:
                           subtitle = "Connecting...";
                           break;
                         case SocketState.FAILED:
-                          subtitle = "Failed to connect";
+                          subtitle = "Failed to connect (Tap to restart Server)";
                           break;
                       }
 
@@ -148,12 +156,27 @@ class _SettingsPanelState extends State<SettingsPanel> {
                         title: "Connection Status",
                         subTitle: subtitle,
                         onTap: () async {
-                          if (![SocketState.CONNECTED]
-                              .contains(connectionStatus)) return;
-                          if (this.mounted) {
-                            setState(() {
-                              showUrl = !showUrl;
+                          // If we are disconnected, tap to restart server
+                          if (disconnectedStates.contains(connectionStatus)) {
+                            // Prevent restarting more than once per 30 seconds
+                            int now = DateTime.now().toUtc().millisecondsSinceEpoch;
+                            if (lastRestart != null && now - lastRestart < 1000 * 30 ) return;
+
+                            // Restart the server
+                            MethodChannelInterface().invokeMethod("set-next-restart", {
+                              "value": DateTime.now().toUtc().millisecondsSinceEpoch
                             });
+
+                            lastRestart = now;
+                          }
+
+                          // If we are connected, tap to show the URL
+                          if ([SocketState.CONNECTED].contains(connectionStatus)) {
+                            if (this.mounted) {
+                              setState(() {
+                                showUrl = !showUrl;
+                              });
+                            }
                           }
                         },
                         onLongPress: () {
@@ -313,6 +336,19 @@ class _SettingsPanelState extends State<SettingsPanel> {
                   trailing: Icon(
                     Icons.arrow_forward_ios,
                     color: Theme.of(context).primaryColor,
+                  ),
+                ),
+                SettingsTile(
+                  title: "Join Our Discord",
+                  onTap: () {
+                    MethodChannelInterface().invokeMethod(
+                        "open-link", {"link": "https://discord.gg/hbx7EhNFjp"});
+                  },
+                  trailing: SvgPicture.asset(
+                    "assets/icon/discord.svg",
+                    color: HexColor("#7289DA"),
+                    alignment: Alignment.centerRight,
+                    width: 30,
                   ),
                 ),
                 SettingsTile(

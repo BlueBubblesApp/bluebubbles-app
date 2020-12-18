@@ -26,6 +26,7 @@ class Message {
   int originalROWID;
   String guid;
   int handleId;
+  int otherHandle;
   String text;
   String subject;
   String country;
@@ -67,6 +68,7 @@ class Message {
     this.originalROWID,
     this.guid,
     this.handleId,
+    this.otherHandle,
     this.text,
     this.subject,
     this.country,
@@ -133,6 +135,7 @@ class Message {
           json.containsKey("originalROWID") ? json["originalROWID"] : null,
       guid: json["guid"],
       handleId: (json["handleId"] != null) ? json["handleId"] : 0,
+      otherHandle: (json["otherHandle"] != null) ? json["otherHandle"] : null,
       text: sanitizeString(json["text"]),
       subject: json.containsKey("subject") ? json["subject"] : null,
       country: json.containsKey("country") ? json["country"] : null,
@@ -283,6 +286,14 @@ class Message {
       params.remove("handle");
     }
 
+    if (existing.toMap().containsKey("originalROWID")) {
+      params["originalROWID"] = existing.toMap()["originalROWID"];
+
+      if (existing.originalROWID != null) {
+        newMessage.originalROWID = existing.originalROWID;
+      }
+    }
+
     if (existing.toMap().containsKey("handleId")) {
       params["handleId"] = existing.toMap()["handleId"];
       newMessage.handleId = existing.handleId;
@@ -323,6 +334,10 @@ class Message {
       "hasDdResults": this.hasDdResults ? 1 : 0,
     };
 
+    if (this.originalROWID != null) {
+      params["originalROWID"] = this.originalROWID;
+    }
+
     // If it already exists, update it
     if (this.id != null) {
       await db
@@ -352,6 +367,7 @@ class Message {
     var res = await db.rawQuery(
         "SELECT"
         " attachment.ROWID AS ROWID,"
+        " attachment.originalROWID AS originalROWID,"
         " attachment.guid AS guid,"
         " attachment.uti AS uti,"
         " attachment.mimeType AS mimeType,"
@@ -382,6 +398,7 @@ class Message {
     var res = await db.rawQuery(
         "SELECT"
         " chat.ROWID AS ROWID,"
+        " chat.originalROWID AS originalROWID,"
         " chat.guid AS guid,"
         " chat.style AS style,"
         " chat.chatIdentifier AS chatIdentifier,"
@@ -412,6 +429,7 @@ class Message {
     var res = await db.rawQuery(
         "SELECT"
         " handle.ROWID AS ROWID,"
+        " handle.originalROWID AS originalROWID,"
         " handle.address AS address,"
         " handle.country AS country,"
         " handle.uncanonicalizedId AS uncanonicalizedId"
@@ -565,6 +583,7 @@ class Message {
         "originalROWID": originalROWID,
         "guid": guid,
         "handleId": handleId,
+        "otherHandle": otherHandle,
         "text": sanitizeString(text),
         "subject": subject,
         "country": country,

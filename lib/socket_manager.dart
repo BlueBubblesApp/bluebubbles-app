@@ -160,7 +160,12 @@ class SocketManager {
           Timer(Duration(seconds: 20), () {
             if (state != SocketState.ERROR) return;
             debugPrint("UNABLE TO CONNECT");
-            NotificationManager().createSocketWarningNotification();
+
+            // Only show the notification if setup is finished
+            if (SettingsManager().settings.finishedSetup) {
+              NotificationManager().createSocketWarningNotification();
+            }
+
             state = SocketState.FAILED;
             List processes = socketProcesses.values.toList();
             processes.forEach((value) {
@@ -237,7 +242,8 @@ class SocketManager {
     try {
       // Create a new socket connection
       _manager.socket = SocketIOManager().createSocketIO(serverAddress, "/",
-          query: "guid=${SettingsManager().settings.guidAuthKey}",
+          query:
+              "guid=${Uri.encodeFull(SettingsManager().settings.guidAuthKey)}",
           socketStatusCallback: (data) => socketStatusUpdate(data));
 
       if (_manager.socket == null) {

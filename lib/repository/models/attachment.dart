@@ -23,6 +23,7 @@ String attachmentToJson(Attachment data) {
 
 class Attachment {
   int id;
+  int originalROWID;
   String guid;
   String uti;
   String mimeType;
@@ -38,6 +39,7 @@ class Attachment {
 
   Attachment({
     this.id,
+    this.originalROWID,
     this.guid,
     this.uti,
     this.mimeType,
@@ -59,6 +61,8 @@ class Attachment {
     }
     return new Attachment(
       id: json.containsKey("ROWID") ? json["ROWID"] : null,
+      originalROWID:
+          json.containsKey("originalROWID") ? json["originalROWID"] : null,
       guid: json["guid"],
       uti: json["uti"],
       mimeType: mimeType,
@@ -118,6 +122,11 @@ class Attachment {
       "width": this.width,
       "height": this.height,
     };
+
+    if (this.originalROWID != null) {
+      params["originalROWID"] = this.originalROWID;
+    }
+
     if (this.id != null) {
       await db.update("attachment", params,
           where: "ROWID = ?", whereArgs: [this.id]);
@@ -266,6 +275,7 @@ class Attachment {
 
   Map<String, dynamic> toMap() => {
         "ROWID": id,
+        "originalROWID": originalROWID,
         "guid": guid,
         "uti": uti,
         "mimeType": mimeType,

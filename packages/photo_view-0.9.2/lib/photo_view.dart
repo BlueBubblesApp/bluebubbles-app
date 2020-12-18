@@ -407,6 +407,7 @@ class _PhotoViewState extends State<PhotoView> {
     final ImageStream stream = widget.imageProvider.resolve(
       const ImageConfiguration(),
     );
+
     final listener = ImageStreamListener((
       ImageInfo info,
       bool synchronousCall,

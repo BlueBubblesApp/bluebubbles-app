@@ -125,6 +125,15 @@ class _ImageViewerState extends State<ImageViewer>
         ),
       ),
     );
+
+    var loader = Center(
+      child: CircularProgressIndicator(
+        backgroundColor: Theme.of(context).accentColor,
+        valueColor: AlwaysStoppedAnimation(
+            Theme.of(context).primaryColor),
+      ),
+    );
+
     return Scaffold(
       backgroundColor: Colors.black,
       body: GestureDetector(
@@ -144,21 +153,10 @@ class _ImageViewerState extends State<ImageViewer>
                     controller: controller,
                     imageProvider: MemoryImage(bytes),
                     loadingBuilder: (BuildContext context, ImageChunkEvent ev) {
-                      return PhotoView(
-                        minScale: PhotoViewComputedScale.contained,
-                        maxScale: PhotoViewComputedScale.contained * 13,
-                        controller: controller,
-                        imageProvider: FileImage(widget.file),
-                      );
+                      return loader;
                     },
                   )
-                : Center(
-                    child: CircularProgressIndicator(
-                      backgroundColor: Colors.grey,
-                      valueColor: AlwaysStoppedAnimation(
-                          Theme.of(context).primaryColor),
-                    ),
-                  ),
+                : loader,
             overlay
           ],
         ),

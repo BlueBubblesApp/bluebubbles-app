@@ -173,7 +173,11 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
               Text("Review your audio snippet before sending it",
                   style: Theme.of(context).textTheme.subtitle1),
               Container(height: 10.0),
-              AudioPlayerWiget(file: file, context: originalContext)
+              AudioPlayerWiget(
+                key: new Key("AudioMessage-${file.length().toString()}"),
+                file: file,
+                context: originalContext
+              )
             ],
           ),
           actions: <Widget>[
@@ -181,7 +185,13 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                 child: new Text("Discard",
                     style: Theme.of(context).textTheme.subtitle1),
                 onPressed: () {
+                  // Dispose of the audio controller
+                  CurrentChat.of(originalContext)?.audioPlayers?.removeWhere((key, _) => key == file.path);
+
+                  // Delete the file
                   file.delete();
+
+                  // REmove the OG alert dialog
                   Navigator.of(context).pop();
                 }),
             new FlatButton(
@@ -190,18 +200,10 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                 style: Theme.of(context).textTheme.bodyText1,
               ),
               onPressed: () async {
-                // if (widget.chat == null) return;
-                // OutgoingQueue().add(
-                //   new QueueItem(
-                //     event: "send-attachment",
-                //     item: new AttachmentSender(
-                //       file,
-                //       widget.chat,
-                //       "",
-                //     ),
-                //   ),
-                // );
                 widget.onSend([file], "");
+
+                // Disposte of the audio controller
+                CurrentChat.of(originalContext)?.audioPlayers?.removeWhere((key, _) => key == file.path);
 
                 // Remove the OG alert dialog
                 Navigator.of(originalContext).pop();

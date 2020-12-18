@@ -104,7 +104,8 @@ class _MessageState extends State<MessageWidget>
 
   void checkHandle() {
     // If we've already checked it, don't do it again
-    if (widget.message.isFromMe || widget.message.handle != null ||
+    if (widget.message.isFromMe ||
+        widget.message.handle != null ||
         checkedHandle) return;
     checkedHandle = true;
 
@@ -192,7 +193,12 @@ class _MessageState extends State<MessageWidget>
   Widget build(BuildContext context) {
     super.build(context);
     if (widget.newerMessage != null) {
-      showTail = MessageHelper.getShowTail(widget.message, widget.newerMessage);
+      if (widget.newerMessage.isGroupEvent()) {
+        showTail = true;
+      } else {
+        showTail =
+            MessageHelper.getShowTail(widget.message, widget.newerMessage);
+      }
     }
 
     if (widget.message.isGroupEvent()) {

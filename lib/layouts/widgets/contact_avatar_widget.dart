@@ -36,6 +36,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget>
     with AutomaticKeepAliveClientMixin {
   ContactAvatarWidgetState state;
   List<Color> colors;
+  bool requested = false;
 
   bool get isInvalid => (widget.handle?.address ?? null) == null;
 
@@ -52,21 +53,33 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget>
         refreshInitials(force: true);
       }
     });
-    refreshInitials();
-  }
 
-  @override
-  void dispose() {
-    super.dispose();
+    refreshInitials();
   }
 
   Future<void> refreshInitials({bool force = false}) async {
     if (isInvalid) return;
-    if (state.initials != null && !force) return;
+    if (state.initials != null && (state.contactImage != null || requested) && !force) return;
     state.initials = await getInitials(handle: widget.handle);
 
     Contact contact =
         await ContactManager().getCachedContact(widget.handle.address);
+
+    if (contact == null) {
+      List<Contact> contactRes = [];
+      if (widget.handle.address.contains("@")) {
+        contactRes = ContactManager().contacts.where((element) => element.emails.any((e) => e.value == widget.handle.address)).toList();
+      } else {
+        contactRes = ContactManager().contacts.where((element) => element.phones.any((e) => e.value == widget.handle.address)).toList();
+      }
+
+      if (contactRes.length > 0) {
+        contact = contactRes.first;
+        if (isNullOrEmpty(contact.avatar)) {
+          contact.avatar = await ContactsService.getAvatar(contact);
+        }
+      }
+    }
 
     if (contact != null &&
         contact.avatar != null &&
@@ -76,6 +89,8 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget>
         state.contactImage = MemoryImage(contact.avatar);
       } catch (e) {}
     }
+
+    requested = true;
     if (this.mounted) setState(() {});
   }
 
