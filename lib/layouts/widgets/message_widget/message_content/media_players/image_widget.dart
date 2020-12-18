@@ -31,10 +31,10 @@ class _ImageWidgetState extends State<ImageWidget>
   Uint8List data;
   bool initGate = false;
 
-  void _initializeBytes() async {
+  void _initializeBytes({runForcefully: false}) async {
     // initGate prevents this from running more than once
     // Especially if the compression takes a while
-    if (initGate || data != null) return;
+    if (!runForcefully && (initGate || data != null)) return;
     initGate = true;
 
     // Try to get the image data from the "cache"
@@ -71,7 +71,7 @@ class _ImageWidgetState extends State<ImageWidget>
           if (this.mounted) setState(() {});
         } else if (!visible) {
           visible = true;
-          _initializeBytes();
+          _initializeBytes(runForcefully: true);
         }
       },
       child: Stack(

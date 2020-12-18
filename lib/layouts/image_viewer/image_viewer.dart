@@ -83,16 +83,96 @@ class _ImageViewerState extends State<ImageViewer>
   @override
   Widget build(BuildContext context) {
     super.build(context);
+
     Widget overlay = AnimatedOpacity(
       opacity: showOverlay ? 1.0 : 0.0,
       duration: Duration(milliseconds: 125),
       child: Container(
-        height: 120.0,
+        height: 150.0,
         width: MediaQuery.of(context).size.width,
         color: Colors.black.withOpacity(0.65),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
+            Padding(
+              padding: EdgeInsets.only(top: 40.0),
+              child: CupertinoButton(
+                onPressed: () async {
+                  List<Widget> metaWidgets = [];
+                  for (var entry
+                      in widget.attachment.metadata?.entries ?? {}.entries) {
+                    metaWidgets.add(RichText(
+                        text: TextSpan(children: [
+                      TextSpan(
+                          text: "${entry.key}: ",
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodyText1
+                              .apply(fontWeightDelta: 2)),
+                      TextSpan(
+                          text: entry.value.toString(),
+                          style: Theme.of(context).textTheme.bodyText1)
+                    ])));
+                  }
+
+                  if (metaWidgets.length == 0) {
+                    metaWidgets.add(Text(
+                      "No metadata available",
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodyText1
+                          .apply(fontWeightDelta: 2),
+                      textAlign: TextAlign.center,
+                    ));
+                  }
+
+                  showDialog(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: Text(
+                        "Metadata",
+                        style: Theme.of(context).textTheme.headline1,
+                        textAlign: TextAlign.center,
+                      ),
+                      backgroundColor: Theme.of(context).accentColor,
+                      content: SizedBox(
+                        width: MediaQuery.of(context).size.width * 3 / 5,
+                        height: MediaQuery.of(context).size.height * 1 / 4,
+                        child: Container(
+                          padding: EdgeInsets.all(10.0),
+                          decoration: BoxDecoration(
+                              color: Theme.of(context).backgroundColor,
+                              borderRadius:
+                                  BorderRadius.all(Radius.circular(10))),
+                          child: ListView(
+                            physics: AlwaysScrollableScrollPhysics(
+                              parent: BouncingScrollPhysics(),
+                            ),
+                            children: metaWidgets,
+                          ),
+                        ),
+                      ),
+                      actions: [
+                        FlatButton(
+                          child: Text(
+                            "Close",
+                            style:
+                                Theme.of(context).textTheme.bodyText1.copyWith(
+                                      color: Theme.of(context).primaryColor,
+                                    ),
+                          ),
+                          onPressed: () => Navigator.of(context).pop(),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+                child: Icon(
+                  Icons.info,
+                  color: Colors.white,
+                ),
+              ),
+            ),
             Padding(
               padding: EdgeInsets.only(top: 40.0),
               child: CupertinoButton(
@@ -131,8 +211,7 @@ class _ImageViewerState extends State<ImageViewer>
     var loader = Center(
       child: CircularProgressIndicator(
         backgroundColor: Theme.of(context).accentColor,
-        valueColor: AlwaysStoppedAnimation(
-            Theme.of(context).primaryColor),
+        valueColor: AlwaysStoppedAnimation(Theme.of(context).primaryColor),
       ),
     );
 
