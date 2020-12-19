@@ -7,11 +7,11 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/repository/models/message.dart';
+import 'package:device_info/device_info.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:html/parser.dart';
 import 'package:convert/convert.dart';
-import 'package:bluebubbles/managers/method_channel_interface.dart';
 
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:contacts_service/contacts_service.dart';
@@ -410,10 +410,21 @@ Future<String> getDeviceName() async {
   String deviceName = "android-client";
 
   try {
-    deviceName =
-        await MethodChannelInterface().invokeMethod("get-device-name", null);
+    // Load device info
+    DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
+    AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
+
+    // Gather device info
+    List<String> items = [
+      androidInfo?.brand ?? androidInfo?.manufacturer,
+      androidInfo?.model,
+      androidInfo?.androidId
+    ].where((element) => element != null).toList();
+
+    // Set device name
+    deviceName = items.join("_").toLowerCase();
   } catch (ex) {
-    debugPrint("Failed to get device name!");
+    debugPrint("Failed to get device name! Defaulting to 'android-client'");
     debugPrint(ex.toString());
   }
 

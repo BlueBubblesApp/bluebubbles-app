@@ -9,6 +9,7 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/managers/theme_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
+import 'package:device_info/device_info.dart';
 
 import './conversation_tile.dart';
 import 'package:flutter/cupertino.dart';
@@ -32,10 +33,12 @@ class _ConversationListState extends State<ConversationList> {
 
   Brightness brightness = Brightness.light;
   bool gotBrightness = false;
+  String model;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    getDeviceModel();
 
     if (this.mounted) {
       setState(() {
@@ -61,6 +64,7 @@ class _ConversationListState extends State<ConversationList> {
   @override
   void initState() {
     super.initState();
+
     if (!widget.showArchivedChats) {
       ChatBloc().chatStream.listen((List<Chat> chats) {
         _chats = chats;
@@ -109,6 +113,23 @@ class _ConversationListState extends State<ConversationList> {
     });
   }
 
+  void getDeviceModel() async {
+    if (model != null) return;
+
+    DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
+    AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
+
+    // If the device is a pixel device
+    String mod = androidInfo?.model ?? "";
+    if (mod.contains("4a") &&
+        (mod.contains("pixel") || mod.contains("gphone"))) {
+      model = "pixel";
+      if (this.mounted) setState(() {});
+    } else {
+      model = "other";
+    }
+  }
+
   void loadBrightness() {
     if (gotBrightness) return;
 
@@ -137,7 +158,7 @@ class _ConversationListState extends State<ConversationList> {
       appBar: PreferredSize(
         preferredSize: Size(
           MediaQuery.of(context).size.width,
-          40,
+          (model == "pixel") ? 20 : 40,
         ),
         child: ClipRRect(
           child: BackdropFilter(
@@ -148,9 +169,7 @@ class _ConversationListState extends State<ConversationList> {
                   : CrossFadeState.showSecond,
               duration: Duration(milliseconds: 250),
               secondChild: AppBar(
-                iconTheme: IconThemeData(
-                  color: Theme.of(context).primaryColor
-                ),
+                iconTheme: IconThemeData(color: Theme.of(context).primaryColor),
                 elevation: 0,
                 backgroundColor: _theme,
                 centerTitle: true,
@@ -183,8 +202,7 @@ class _ConversationListState extends State<ConversationList> {
         slivers: <Widget>[
           SliverAppBar(
             iconTheme: IconThemeData(
-              color: Theme.of(context).textTheme.headline1.color
-            ),
+                color: Theme.of(context).textTheme.headline1.color),
             stretch: true,
             onStretchTrigger: () {
               return null;
