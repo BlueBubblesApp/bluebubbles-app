@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
-import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/blocs/setup_bloc.dart';
@@ -231,6 +230,11 @@ class SocketManager {
     }
 
     String serverAddress = getServerAddress();
+    if (serverAddress == null) {
+      debugPrint("Server Address is not yet configured. Not connecting...");
+      return;
+    }
+
     debugPrint("Starting socket io with the server: $serverAddress");
 
     try {
@@ -375,8 +379,9 @@ class SocketManager {
     } else if (token != null && !force) {
       debugPrint("already authorized fcm " + token);
       if (_manager.socket != null) {
+        String deviceName = await getDeviceName();
         _manager.sendMessage("add-fcm-device",
-            {"deviceId": token, "deviceName": "android-client"}, (data) {},
+            {"deviceId": token, "deviceName": deviceName}, (data) {},
             reason: "authfcm", awaitResponse: false);
       }
       return;
@@ -387,8 +392,9 @@ class SocketManager {
           .invokeMethod('auth', SettingsManager().fcmData.toMap());
       token = result;
       if (_manager.socket != null) {
+        String deviceName = await getDeviceName();
         _manager.sendMessage("add-fcm-device",
-            {"deviceId": token, "deviceName": "android-client"}, (data) {},
+            {"deviceId": token, "deviceName": deviceName}, (data) {},
             reason: "authfcm", awaitResponse: false);
         debugPrint(token);
       }
@@ -402,9 +408,9 @@ class SocketManager {
     }
   }
 
-  Future<void> getAttachments(String chatGuid, String messageGuid,
-      {Function cb}) {
-    Completer<void> completer = new Completer();
+  Future<List<dynamic>> getAttachments(String chatGuid, String messageGuid,
+      {Function(List<dynamic>) cb}) {
+    Completer<List<dynamic>> completer = new Completer();
 
     dynamic params = {
       'after': 1,
@@ -425,13 +431,14 @@ class SocketManager {
       dynamic json = jsonDecode(data);
       if (json["status"] != 200) return completer.completeError(json);
 
+      List<dynamic> output = [];
       if (json.containsKey("data") && json["data"].length > 0) {
-        await ActionHandler.handleMessage(json["data"][0], forceProcess: true);
+        output = json["data"];
       }
 
-      completer.complete();
+      completer.complete(output);
 
-      if (cb != null) cb(json);
+      if (cb != null) cb(output);
     });
 
     return completer.future;
@@ -513,8 +520,6 @@ class SocketManager {
         "args": {"flag": 1}
       });
     }
-
-    print(params);
 
     SocketManager().sendMessage("get-messages", params, (data) async {
       if (data['status'] != 200) {

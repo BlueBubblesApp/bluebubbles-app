@@ -168,7 +168,7 @@ class CurrentChat {
     assert(chat != null);
     List<Message> messages = specificMessages != null
         ? specificMessages
-        : await Chat.getMessages(chat, limit: 25);
+        : await Chat.getMessagesSingleton(chat, limit: 25);
     for (Message message in messages) {
       if (message.hasAttachments) {
         List<Attachment> attachments = await message.fetchAttachments();

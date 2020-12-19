@@ -59,8 +59,6 @@ class _VideoWidgetState extends State<VideoWidget>
       quality: 25,
     );
     CurrentChat.of(context).saveImageData(thumbnail, widget.attachment);
-
-    widget.attachment.updateDimensions(thumbnail);
     if (this.mounted) this.setState(() {});
   }
 

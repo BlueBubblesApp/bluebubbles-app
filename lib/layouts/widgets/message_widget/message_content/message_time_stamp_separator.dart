@@ -20,7 +20,7 @@ class MessageTimeStampSeparator extends StatelessWidget {
 
   Map<String, String> _buildTimeStamp() {
     if (newerMessage != null &&
-        (!isEmptyString(message.text) || message.hasAttachments) &&
+        (!isEmptyString(message.fullText) || message.hasAttachments) &&
         withinTimeThreshold(message, newerMessage, threshold: 30)) {
       DateTime timeOfnewerMessage = newerMessage.dateCreated;
       String time = new DateFormat.jm().format(timeOfnewerMessage);
