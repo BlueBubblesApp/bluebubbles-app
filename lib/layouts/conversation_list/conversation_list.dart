@@ -121,7 +121,8 @@ class _ConversationListState extends State<ConversationList> {
 
     // If the device is a pixel device
     String mod = androidInfo?.model ?? "";
-    if (mod.contains("pixel") || mod.contains("gphone")) {
+    if (mod.contains("4a") &&
+        (mod.contains("pixel") || mod.contains("gphone"))) {
       model = "pixel";
       if (this.mounted) setState(() {});
     } else {
