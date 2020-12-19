@@ -24,7 +24,6 @@ import com.bluebubbles.messaging.method_call_handler.handlers.SaveToFile;
 import com.bluebubbles.messaging.method_call_handler.handlers.ShareFile;
 import com.bluebubbles.messaging.method_call_handler.handlers.SocketIssueWarning;
 import com.bluebubbles.messaging.method_call_handler.handlers.SetNextRestart;
-import com.bluebubbles.messaging.method_call_handler.handlers.GetDeviceName;
 import com.bluebubbles.messaging.workers.DartWorker;
 
 import io.flutter.plugin.common.MethodCall;
@@ -76,8 +75,6 @@ public class MethodCallHandler {
             new AlarmScheduler(context, call, result).Handle();
         } else if (call.method.equals(SetNextRestart.TAG)) {
             new SetNextRestart(context, call, result).Handle();
-        } else if (call.method.equals(GetDeviceName.TAG)) {
-            new GetDeviceName(context, call, result).Handle();
         } else {
             result.notImplemented();
         }
