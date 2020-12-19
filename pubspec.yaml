@@ -86,6 +86,7 @@ dependencies:
   flutter_keyboard_visibility: ^3.3.0
   flutter_markdown: ^0.5.1
   keyboard_attachable: ^1.0.3
+  device_info: ^1.0.0
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
