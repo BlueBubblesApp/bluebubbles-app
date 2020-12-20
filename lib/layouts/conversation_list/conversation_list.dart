@@ -277,37 +277,41 @@ class _Cupertino extends StatelessWidget {
           child: ClipRRect(
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-              child: AnimatedCrossFade(
-                crossFadeState: parent.theme == Colors.transparent
-                    ? CrossFadeState.showFirst
-                    : CrossFadeState.showSecond,
-                duration: Duration(milliseconds: 250),
-                secondChild: AppBar(
-                  iconTheme:
-                      IconThemeData(color: Theme.of(context).primaryColor),
-                  elevation: 0,
-                  backgroundColor: parent.theme,
-                  centerTitle: true,
-                  brightness: parent.brightness,
-                  title: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: <Widget>[
-                      Text(
-                        parent.widget.showArchivedChats
-                            ? "Archive"
-                            : "Messages",
-                        style: Theme.of(context).textTheme.bodyText1,
+              child: StreamBuilder<Color>(
+                  stream: parent.headerColorStream.stream,
+                  builder: (context, snapshot) {
+                    return AnimatedCrossFade(
+                      crossFadeState: parent.theme == Colors.transparent
+                          ? CrossFadeState.showFirst
+                          : CrossFadeState.showSecond,
+                      duration: Duration(milliseconds: 250),
+                      secondChild: AppBar(
+                        iconTheme: IconThemeData(
+                            color: Theme.of(context).primaryColor),
+                        elevation: 0,
+                        backgroundColor: parent.theme,
+                        centerTitle: true,
+                        brightness: parent.brightness,
+                        title: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: <Widget>[
+                            Text(
+                              parent.widget.showArchivedChats
+                                  ? "Archive"
+                                  : "Messages",
+                              style: Theme.of(context).textTheme.bodyText1,
+                            ),
+                          ],
+                        ),
                       ),
-                    ],
-                  ),
-                ),
-                firstChild: AppBar(
-                  leading: new Container(),
-                  elevation: 0,
-                  brightness: parent.brightness,
-                  backgroundColor: Theme.of(context).backgroundColor,
-                ),
-              ),
+                      firstChild: AppBar(
+                        leading: new Container(),
+                        elevation: 0,
+                        brightness: parent.brightness,
+                        backgroundColor: Theme.of(context).backgroundColor,
+                      ),
+                    );
+                  }),
             ),
           ),
         ),
