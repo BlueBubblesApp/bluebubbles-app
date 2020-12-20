@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
@@ -13,6 +14,8 @@ import 'package:bluebubbles/managers/theme_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:device_info/device_info.dart';
+import 'package:flutter/services.dart';
 
 import './conversation_tile.dart';
 import 'package:flutter/cupertino.dart';
@@ -30,41 +33,44 @@ class ConversationList extends StatefulWidget {
 
 class _ConversationListState extends State<ConversationList> {
   ScrollController scrollController;
-  Color theme;
   List<Chat> chats = <Chat>[];
   bool colorfulAvatars = false;
 
   Brightness brightness = Brightness.light;
   bool gotBrightness = false;
+  String model;
+
+  Color currentHeaderColor;
+  StreamController<Color> headerColorStream =
+      StreamController<Color>.broadcast();
+
+  Color get theme => currentHeaderColor;
+  set theme(Color color) {
+    if (currentHeaderColor == color) return;
+    currentHeaderColor = color;
+    if (!headerColorStream.isClosed)
+      headerColorStream.sink.add(currentHeaderColor);
+  }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-
+    getDeviceModel();
     if (this.mounted) {
-      setState(() {
-        theme = Colors.transparent;
-      });
+      theme = Colors.transparent;
     }
   }
 
   void scrollListener() {
-    return !_isAppBarExpanded
-        ? theme != Colors.transparent
-            ? setState(() {
-                theme = Colors.transparent;
-              })
-            : {}
-        : theme != Theme.of(context).accentColor.withOpacity(0.5)
-            ? setState(() {
-                theme = Theme.of(context).accentColor.withOpacity(0.5);
-              })
-            : {};
+    !_isAppBarExpanded
+        ? theme = Colors.transparent
+        : theme = Theme.of(context).accentColor.withOpacity(0.5);
   }
 
   @override
   void initState() {
     super.initState();
+
     if (!widget.showArchivedChats) {
       ChatBloc().chatStream.listen((List<Chat> chats) {
         this.chats = chats;
@@ -111,6 +117,23 @@ class _ConversationListState extends State<ConversationList> {
         });
       }
     });
+  }
+
+  void getDeviceModel() async {
+    if (model != null) return;
+
+    DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
+    AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
+
+    // If the device is a pixel device
+    String mod = androidInfo?.model ?? "";
+    if (mod.contains("4a") &&
+        (mod.contains("pixel") || mod.contains("gphone"))) {
+      model = "pixel";
+      if (this.mounted) setState(() {});
+    } else {
+      model = "other";
+    }
   }
 
   void loadBrightness() {
@@ -241,163 +264,171 @@ class _Cupertino extends StatelessWidget {
   final _ConversationListState parent;
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: PreferredSize(
-        preferredSize: Size(
-          MediaQuery.of(context).size.width,
-          40,
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle(
+        systemNavigationBarColor: Theme.of(context).backgroundColor,
+      ),
+      child: Scaffold(
+        appBar: PreferredSize(
+          preferredSize: Size(
+            MediaQuery.of(context).size.width,
+            40,
+          ),
+          child: ClipRRect(
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+              child: AnimatedCrossFade(
+                crossFadeState: parent.theme == Colors.transparent
+                    ? CrossFadeState.showFirst
+                    : CrossFadeState.showSecond,
+                duration: Duration(milliseconds: 250),
+                secondChild: AppBar(
+                  iconTheme:
+                      IconThemeData(color: Theme.of(context).primaryColor),
+                  elevation: 0,
+                  backgroundColor: parent.theme,
+                  centerTitle: true,
+                  brightness: parent.brightness,
+                  title: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: <Widget>[
+                      Text(
+                        parent.widget.showArchivedChats
+                            ? "Archive"
+                            : "Messages",
+                        style: Theme.of(context).textTheme.bodyText1,
+                      ),
+                    ],
+                  ),
+                ),
+                firstChild: AppBar(
+                  leading: new Container(),
+                  elevation: 0,
+                  brightness: parent.brightness,
+                  backgroundColor: Theme.of(context).backgroundColor,
+                ),
+              ),
+            ),
+          ),
         ),
-        child: ClipRRect(
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-            child: AnimatedCrossFade(
-              crossFadeState: parent.theme == Colors.transparent
-                  ? CrossFadeState.showFirst
-                  : CrossFadeState.showSecond,
-              duration: Duration(milliseconds: 250),
-              secondChild: AppBar(
-                iconTheme: IconThemeData(color: Theme.of(context).primaryColor),
-                elevation: 0,
-                backgroundColor: parent.theme,
+        backgroundColor: Theme.of(context).backgroundColor,
+        extendBodyBehindAppBar: true,
+        body: CustomScrollView(
+          controller: parent.scrollController,
+          physics: ThemeManager().scrollPhysics,
+          slivers: <Widget>[
+            SliverAppBar(
+              iconTheme: IconThemeData(
+                  color: Theme.of(context).textTheme.headline1.color),
+              stretch: true,
+              onStretchTrigger: () {
+                return null;
+              },
+              expandedHeight: 80,
+              backgroundColor: Colors.transparent,
+              pinned: false,
+              flexibleSpace: FlexibleSpaceBar(
+                stretchModes: <StretchMode>[StretchMode.zoomBackground],
+                background: Stack(
+                  fit: StackFit.expand,
+                ),
                 centerTitle: true,
-                brightness: parent.brightness,
-                title: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                title: Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
                   children: <Widget>[
-                    Text(
-                      parent.widget.showArchivedChats ? "Archive" : "Messages",
-                      style: Theme.of(context).textTheme.bodyText1,
+                    Container(height: 20),
+                    Container(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: <Widget>[
+                          Spacer(
+                            flex: 5,
+                          ),
+                          Container(
+                            child: Text(
+                              parent.widget.showArchivedChats
+                                  ? "Archive"
+                                  : "Messages",
+                              style: Theme.of(context).textTheme.headline1,
+                            ),
+                          ),
+                          Spacer(
+                            flex: 25,
+                          ),
+                          parent.buildSettingsButton(),
+                          Spacer(
+                            flex: 1,
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
               ),
-              firstChild: AppBar(
-                leading: new Container(),
-                elevation: 0,
-                brightness: parent.brightness,
-                backgroundColor: Theme.of(context).backgroundColor,
-              ),
             ),
-          ),
-        ),
-      ),
-      backgroundColor: Theme.of(context).backgroundColor,
-      extendBodyBehindAppBar: true,
-      body: CustomScrollView(
-        controller: parent.scrollController,
-        physics: ThemeManager().scrollPhysics,
-        slivers: <Widget>[
-          SliverAppBar(
-            iconTheme: IconThemeData(
-                color: Theme.of(context).textTheme.headline1.color),
-            stretch: true,
-            onStretchTrigger: () {
-              return null;
-            },
-            expandedHeight: 80,
-            backgroundColor: Colors.transparent,
-            pinned: false,
-            flexibleSpace: FlexibleSpaceBar(
-              stretchModes: <StretchMode>[StretchMode.zoomBackground],
-              background: Stack(
-                fit: StackFit.expand,
-              ),
-              centerTitle: true,
-              title: Column(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: <Widget>[
-                  Container(height: 20),
-                  Container(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: <Widget>[
-                        Spacer(
-                          flex: 5,
-                        ),
-                        Container(
+            // SliverToBoxAdapter(
+            //   child: Container(
+            //     padding: EdgeInsets.symmetric(horizontal: 30, vertical: 5),
+            //     child: GestureDetector(
+            //       onTap: () {
+            //         Navigator.of(context).push(
+            //           MaterialPageRoute(
+            //             builder: (context) => SearchView(),
+            //           ),
+            //         );
+            //       },
+            //       child: AbsorbPointer(
+            //         child: SearchTextBox(),
+            //       ),
+            //     ),
+            //   ),
+            // ),
+            StreamBuilder(
+              stream: ChatBloc().chatStream,
+              builder:
+                  (BuildContext context, AsyncSnapshot<List<Chat>> snapshot) {
+                if (snapshot.hasData ||
+                    parent.widget.showArchivedChats ||
+                    parent.chats.isNotEmpty) {
+                  parent.sortChats();
+                  if (parent.chats.isEmpty) {
+                    return SliverToBoxAdapter(
+                      child: Center(
+                        child: Container(
+                          padding: EdgeInsets.only(top: 50.0),
                           child: Text(
-                            parent.widget.showArchivedChats
-                                ? "Archive"
-                                : "Messages",
-                            style: Theme.of(context).textTheme.headline1,
+                            "You have no chats :(",
+                            style: Theme.of(context).textTheme.subtitle1,
                           ),
                         ),
-                        Spacer(
-                          flex: 25,
-                        ),
-                        parent.buildSettingsButton(),
-                        Spacer(
-                          flex: 1,
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          // SliverToBoxAdapter(
-          //   child: Container(
-          //     padding: EdgeInsets.symmetric(horizontal: 30, vertical: 5),
-          //     child: GestureDetector(
-          //       onTap: () {
-          //         Navigator.of(context).push(
-          //           MaterialPageRoute(
-          //             builder: (context) => SearchView(),
-          //           ),
-          //         );
-          //       },
-          //       child: AbsorbPointer(
-          //         child: SearchTextBox(),
-          //       ),
-          //     ),
-          //   ),
-          // ),
-          StreamBuilder(
-            stream: ChatBloc().chatStream,
-            builder:
-                (BuildContext context, AsyncSnapshot<List<Chat>> snapshot) {
-              if (snapshot.hasData ||
-                  parent.widget.showArchivedChats ||
-                  parent.chats.isNotEmpty) {
-                parent.sortChats();
-                if (parent.chats.isEmpty) {
-                  return SliverToBoxAdapter(
-                    child: Center(
-                      child: Container(
-                        padding: EdgeInsets.only(top: 50.0),
-                        child: Text(
-                          "You have no chats :(",
-                          style: Theme.of(context).textTheme.subtitle1,
-                        ),
                       ),
+                    );
+                  }
+
+                  return SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                        if (!parent.widget.showArchivedChats &&
+                            parent.chats[index].isArchived) return Container();
+                        if (parent.widget.showArchivedChats &&
+                            !parent.chats[index].isArchived) return Container();
+                        return ConversationTile(
+                          key: Key(parent.chats[index].guid.toString()),
+                          chat: parent.chats[index],
+                        );
+                      },
+                      childCount: parent.chats?.length ?? 0,
                     ),
                   );
+                } else {
+                  return SliverToBoxAdapter(child: Container());
                 }
-
-                return SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      if (!parent.widget.showArchivedChats &&
-                          parent.chats[index].isArchived) return Container();
-                      if (parent.widget.showArchivedChats &&
-                          !parent.chats[index].isArchived) return Container();
-                      return ConversationTile(
-                        key: Key(parent.chats[index].guid.toString()),
-                        chat: parent.chats[index],
-                      );
-                    },
-                    childCount: parent.chats?.length ?? 0,
-                  ),
-                );
-              } else {
-                return SliverToBoxAdapter(child: Container());
-              }
-            },
-          ),
-        ],
+              },
+            ),
+          ],
+        ),
+        floatingActionButton: parent.buildFloatinActionButton(),
       ),
-      floatingActionButton: parent.buildFloatinActionButton(),
     );
   }
 }
@@ -415,65 +446,94 @@ class __MaterialState extends State<_Material> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: PreferredSize(
-        preferredSize: Size.fromHeight(60),
-        child: AnimatedSwitcher(
-          duration: Duration(milliseconds: 500),
-          child: selected.isEmpty
-              ? AppBar(
-                  bottom: PreferredSize(
-                    child: Container(
-                      color: Theme.of(context).dividerColor,
-                      height: 0.5,
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle(
+        systemNavigationBarColor: Theme.of(context).backgroundColor,
+      ),
+      child: Scaffold(
+        appBar: PreferredSize(
+          preferredSize: Size.fromHeight(60),
+          child: AnimatedSwitcher(
+            duration: Duration(milliseconds: 500),
+            child: selected.isEmpty
+                ? AppBar(
+                    bottom: PreferredSize(
+                      child: Container(
+                        color: Theme.of(context).dividerColor,
+                        height: 0.5,
+                      ),
+                      preferredSize: Size.fromHeight(0.5),
                     ),
-                    preferredSize: Size.fromHeight(0.5),
-                  ),
-                  title: Text(
-                    "Messages",
-                    style: Theme.of(context)
-                        .textTheme
-                        .headline1
-                        .copyWith(fontSize: 20),
-                  ),
-                  actions: [
-                    Padding(
-                      padding: EdgeInsets.only(right: 20),
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(vertical: 15.5),
-                        child: Container(
-                          width: 25,
-                          child: widget.parent.buildSettingsButton(),
+                    title: Text(
+                      "Messages",
+                      style: Theme.of(context)
+                          .textTheme
+                          .headline1
+                          .copyWith(fontSize: 20),
+                    ),
+                    actions: [
+                      Padding(
+                        padding: EdgeInsets.only(right: 20),
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(vertical: 15.5),
+                          child: Container(
+                            width: 25,
+                            child: widget.parent.buildSettingsButton(),
+                          ),
                         ),
                       ),
-                    ),
-                  ],
-                  backgroundColor: Theme.of(context).backgroundColor,
-                )
-              : Padding(
-                  padding: const EdgeInsets.all(20.0),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.max,
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          if (selected.length <= 1)
+                    ],
+                    backgroundColor: Theme.of(context).backgroundColor,
+                  )
+                : Padding(
+                    padding: const EdgeInsets.all(20.0),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.max,
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            if (selected.length <= 1)
+                              GestureDetector(
+                                onTap: () {
+                                  selected.forEach((element) async {
+                                    element.isMuted = !element.isMuted;
+                                    await element.save(updateLocalVals: true);
+                                  });
+                                  if (this.mounted) setState(() {});
+                                  selected = [];
+                                  setState(() {});
+                                },
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Icon(
+                                    Icons.notifications_off,
+                                    color: Theme.of(context)
+                                        .textTheme
+                                        .bodyText1
+                                        .color,
+                                  ),
+                                ),
+                              ),
                             GestureDetector(
                               onTap: () {
-                                selected.forEach((element) async {
-                                  element.isMuted = !element.isMuted;
-                                  await element.save(updateLocalVals: true);
+                                selected.forEach((element) {
+                                  if (element.isArchived) {
+                                    ChatBloc().unArchiveChat(element);
+                                  } else {
+                                    ChatBloc().archiveChat(element);
+                                  }
                                 });
-                                if (this.mounted) setState(() {});
                                 selected = [];
                                 setState(() {});
                               },
                               child: Padding(
                                 padding: const EdgeInsets.all(8.0),
                                 child: Icon(
-                                  Icons.notifications_off,
+                                  widget.parent.widget.showArchivedChats
+                                      ? Icons.restore_from_trash
+                                      : Icons.delete,
                                   color: Theme.of(context)
                                       .textTheme
                                       .bodyText1
@@ -481,89 +541,68 @@ class __MaterialState extends State<_Material> {
                                 ),
                               ),
                             ),
-                          GestureDetector(
-                            onTap: () {
-                              selected.forEach((element) {
-                                if (element.isArchived) {
-                                  ChatBloc().unArchiveChat(element);
-                                } else {
-                                  ChatBloc().archiveChat(element);
-                                }
-                              });
-                              selected = [];
-                              setState(() {});
-                            },
-                            child: Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Icon(
-                                widget.parent.widget.showArchivedChats
-                                    ? Icons.restore_from_trash
-                                    : Icons.delete,
-                                color:
-                                    Theme.of(context).textTheme.bodyText1.color,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
-                ),
+          ),
         ),
-      ),
-      backgroundColor: Theme.of(context).backgroundColor,
-      body: StreamBuilder(
-        stream: ChatBloc().chatStream,
-        builder: (context, snapshot) {
-          if (snapshot.hasData ||
-              widget.parent.widget.showArchivedChats ||
-              widget.parent.chats.isNotEmpty) {
-            widget.parent.sortChats();
-            if (widget.parent.chats.isEmpty) {
-              return Center(
-                child: Container(
-                  padding: EdgeInsets.only(top: 50.0),
-                  child: Text(
-                    "You have no chats :(",
-                    style: Theme.of(context).textTheme.subtitle1,
+        backgroundColor: Theme.of(context).backgroundColor,
+        body: StreamBuilder(
+          stream: ChatBloc().chatStream,
+          builder: (context, snapshot) {
+            if (snapshot.hasData ||
+                widget.parent.widget.showArchivedChats ||
+                widget.parent.chats.isNotEmpty) {
+              widget.parent.sortChats();
+              if (widget.parent.chats.isEmpty) {
+                return Center(
+                  child: Container(
+                    padding: EdgeInsets.only(top: 50.0),
+                    child: Text(
+                      "You have no chats :(",
+                      style: Theme.of(context).textTheme.subtitle1,
+                    ),
                   ),
-                ),
-              );
-            }
-
-            return ListView.builder(
-              physics: ThemeSwitcher.getScrollPhysics(),
-              itemBuilder: (context, index) {
-                if (!widget.parent.widget.showArchivedChats &&
-                    widget.parent.chats[index].isArchived) return Container();
-                if (widget.parent.widget.showArchivedChats &&
-                    !widget.parent.chats[index].isArchived) return Container();
-                return ConversationTile(
-                  key: Key(widget.parent.chats[index].guid.toString()),
-                  chat: widget.parent.chats[index],
-                  inSelectMode: selected.isNotEmpty,
-                  selected: selected,
-                  onSelect: (bool selected) {
-                    if (selected) {
-                      this.selected.add(widget.parent.chats[index]);
-                      setState(() {});
-                    } else {
-                      this.selected.removeWhere((element) =>
-                          element.guid == widget.parent.chats[index].guid);
-                      setState(() {});
-                    }
-                  },
                 );
-              },
-              itemCount: widget.parent.chats?.length ?? 0,
-            );
-          } else {
-            return Container();
-          }
-        },
+              }
+
+              return ListView.builder(
+                physics: ThemeSwitcher.getScrollPhysics(),
+                itemBuilder: (context, index) {
+                  if (!widget.parent.widget.showArchivedChats &&
+                      widget.parent.chats[index].isArchived) return Container();
+                  if (widget.parent.widget.showArchivedChats &&
+                      !widget.parent.chats[index].isArchived)
+                    return Container();
+                  return ConversationTile(
+                    key: Key(widget.parent.chats[index].guid.toString()),
+                    chat: widget.parent.chats[index],
+                    inSelectMode: selected.isNotEmpty,
+                    selected: selected,
+                    onSelect: (bool selected) {
+                      if (selected) {
+                        this.selected.add(widget.parent.chats[index]);
+                        setState(() {});
+                      } else {
+                        this.selected.removeWhere((element) =>
+                            element.guid == widget.parent.chats[index].guid);
+                        setState(() {});
+                      }
+                    },
+                  );
+                },
+                itemCount: widget.parent.chats?.length ?? 0,
+              );
+            } else {
+              return Container();
+            }
+          },
+        ),
+        floatingActionButton:
+            selected.isEmpty ? widget.parent.buildFloatinActionButton() : null,
       ),
-      floatingActionButton:
-          selected.isEmpty ? widget.parent.buildFloatinActionButton() : null,
     );
   }
 }

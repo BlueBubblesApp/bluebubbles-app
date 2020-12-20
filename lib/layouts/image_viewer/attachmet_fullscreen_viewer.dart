@@ -10,6 +10,7 @@ import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import "package:flutter/material.dart";
+import 'package:flutter/services.dart';
 
 class AttachmentFullscreenViewer extends StatefulWidget {
   AttachmentFullscreenViewer({
@@ -88,142 +89,147 @@ class AttachmentFullscreenViewerState
         color: Theme.of(context).accentColor,
       ),
     );
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: controller != null
-          ? PageView.builder(
-              physics: physics,
-              itemCount: widget.allAttachments.length,
-              itemBuilder: (BuildContext context, int index) {
-                Attachment attachment = widget.allAttachments[index];
-                String mimeType = attachment.mimeType;
-                mimeType = mimeType.substring(0, mimeType.indexOf("/"));
-                dynamic content = AttachmentHelper.getContent(attachment,
-                    path: attachment.guid == null
-                        ? attachment.transferName
-                        : null);
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle(
+        systemNavigationBarColor: Colors.black,
+      ),
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        body: controller != null
+            ? PageView.builder(
+                physics: physics,
+                itemCount: widget.allAttachments.length,
+                itemBuilder: (BuildContext context, int index) {
+                  Attachment attachment = widget.allAttachments[index];
+                  String mimeType = attachment.mimeType;
+                  mimeType = mimeType.substring(0, mimeType.indexOf("/"));
+                  dynamic content = AttachmentHelper.getContent(attachment,
+                      path: attachment.guid == null
+                          ? attachment.transferName
+                          : null);
 
-                if (content is File) {
-                  content = content as File;
-                  if (mimeType == "image") {
-                    return ImageViewer(
-                      attachment: attachment,
-                      file: content,
-                      showInteractions: widget.showInteractions,
-                    );
-                  } else if (mimeType == "video") {
-                    return VideoViewer(
-                      file: content,
-                      attachment: attachment,
-                      showInteractions: widget.showInteractions,
-                    );
-                  }
-                } else if (content is Attachment) {
-                  content = content as Attachment;
-                  return Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Center(
-                        child: AttachmentDownloaderWidget(
-                          attachment: attachment,
-                          onPressed: () {
-                            new AttachmentDownloader(attachment);
-                            content = AttachmentHelper.getContent(attachment);
-                            if (this.mounted) setState(() {});
-                          },
-                          placeHolder: placeHolder,
-                        ),
-                      ),
-                    ],
-                  );
-                } else if (content is AttachmentDownloader) {
-                  content = content as AttachmentDownloader;
-                  if (widget.attachment.mimeType == null) return Container();
-                  (content as AttachmentDownloader).stream.listen((event) {
-                    if (event is File) {
-                      content = event;
-                      if (this.mounted) setState(() {});
+                  if (content is File) {
+                    content = content as File;
+                    if (mimeType == "image") {
+                      return ImageViewer(
+                        attachment: attachment,
+                        file: content,
+                        showInteractions: widget.showInteractions,
+                      );
+                    } else if (mimeType == "video") {
+                      return VideoViewer(
+                        file: content,
+                        attachment: attachment,
+                        showInteractions: widget.showInteractions,
+                      );
                     }
-                  }, onError: (error) {
-                    content = widget.attachment;
-                    if (this.mounted) setState(() {});
-                  });
-                  return StreamBuilder(
-                    stream: content.stream,
-                    builder: (BuildContext context, AsyncSnapshot snapshot) {
-                      if (snapshot.hasError) {
-                        return Text(
+                  } else if (content is Attachment) {
+                    content = content as Attachment;
+                    return Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Center(
+                          child: AttachmentDownloaderWidget(
+                            attachment: attachment,
+                            onPressed: () {
+                              new AttachmentDownloader(attachment);
+                              content = AttachmentHelper.getContent(attachment);
+                              if (this.mounted) setState(() {});
+                            },
+                            placeHolder: placeHolder,
+                          ),
+                        ),
+                      ],
+                    );
+                  } else if (content is AttachmentDownloader) {
+                    content = content as AttachmentDownloader;
+                    if (widget.attachment.mimeType == null) return Container();
+                    (content as AttachmentDownloader).stream.listen((event) {
+                      if (event is File) {
+                        content = event;
+                        if (this.mounted) setState(() {});
+                      }
+                    }, onError: (error) {
+                      content = widget.attachment;
+                      if (this.mounted) setState(() {});
+                    });
+                    return StreamBuilder(
+                      stream: content.stream,
+                      builder: (BuildContext context, AsyncSnapshot snapshot) {
+                        if (snapshot.hasError) {
+                          return Text(
+                            "Error loading",
+                            style: Theme.of(context).textTheme.bodyText1,
+                          );
+                        }
+                        if (snapshot.data is File) {
+                          content = snapshot.data;
+                          return Container();
+                        } else {
+                          double progress = 0.0;
+                          if (snapshot.hasData) {
+                            progress = snapshot.data["Progress"];
+                          } else {
+                            progress = content.progress;
+                          }
+
+                          return Stack(
+                            alignment: Alignment.center,
+                            children: <Widget>[
+                              placeHolder,
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: <Widget>[
+                                  Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: <Widget>[
+                                      CircularProgressIndicator(
+                                        value: progress,
+                                        backgroundColor: Colors.grey,
+                                        valueColor: AlwaysStoppedAnimation(
+                                            Colors.white),
+                                      ),
+                                      ((content as AttachmentDownloader)
+                                                  .attachment
+                                                  .mimeType !=
+                                              null)
+                                          ? Container(height: 5.0)
+                                          : Container(),
+                                      (content.attachment.mimeType != null)
+                                          ? Text(
+                                              content.attachment.mimeType,
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .bodyText1,
+                                            )
+                                          : Container()
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ],
+                          );
+                        }
+                      },
+                    );
+                  } else {
+                    return Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
                           "Error loading",
                           style: Theme.of(context).textTheme.bodyText1,
-                        );
-                      }
-                      if (snapshot.data is File) {
-                        content = snapshot.data;
-                        return Container();
-                      } else {
-                        double progress = 0.0;
-                        if (snapshot.hasData) {
-                          progress = snapshot.data["Progress"];
-                        } else {
-                          progress = content.progress;
-                        }
+                        ),
+                      ],
+                    );
+                  }
 
-                        return Stack(
-                          alignment: Alignment.center,
-                          children: <Widget>[
-                            placeHolder,
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: <Widget>[
-                                Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: <Widget>[
-                                    CircularProgressIndicator(
-                                      value: progress,
-                                      backgroundColor: Colors.grey,
-                                      valueColor:
-                                          AlwaysStoppedAnimation(Colors.white),
-                                    ),
-                                    ((content as AttachmentDownloader)
-                                                .attachment
-                                                .mimeType !=
-                                            null)
-                                        ? Container(height: 5.0)
-                                        : Container(),
-                                    (content.attachment.mimeType != null)
-                                        ? Text(
-                                            content.attachment.mimeType,
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .bodyText1,
-                                          )
-                                        : Container()
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ],
-                        );
-                      }
-                    },
-                  );
-                } else {
-                  return Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        "Error loading",
-                        style: Theme.of(context).textTheme.bodyText1,
-                      ),
-                    ],
-                  );
-                }
-
-                return Container();
-              },
-              controller: controller,
-            )
-          : Container(),
+                  return Container();
+                },
+                controller: controller,
+              )
+            : Container(),
+      ),
     );
   }
 }

@@ -19,6 +19,7 @@ import 'package:bluebubbles/repository/models/message.dart';
 import 'package:clipboard/clipboard.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:sprung/sprung.dart';
 
@@ -141,88 +142,92 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
   }
 
   void sendReaction(String type) {
-    if (isEmptyString(widget.message.text)) return;
-    if (selfReaction == type) type = "-" + type;
+    if (isEmptyString(widget.message.fullText)) return;
     ActionHandler.sendReaction(widget.currentChat.chat, widget.message, type);
     Navigator.of(context).pop();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: Container(
-        child: Stack(
-          fit: StackFit.expand,
-          children: <Widget>[
-            GestureDetector(
-              onTap: () {
-                Navigator.of(context).pop();
-              },
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
-                child: Container(
-                  color: oledDarkTheme.accentColor.withOpacity(0.3),
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle(
+        systemNavigationBarColor: Theme.of(context).backgroundColor,
+      ),
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        body: Container(
+          child: Stack(
+            fit: StackFit.expand,
+            children: <Widget>[
+              GestureDetector(
+                onTap: () {
+                  Navigator.of(context).pop();
+                },
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
+                  child: Container(
+                    color: oledDarkTheme.accentColor.withOpacity(0.3),
+                  ),
                 ),
               ),
-            ),
-            AnimatedPositioned(
-              duration: Duration(milliseconds: 250),
-              curve: Curves.easeOut,
-              top: messageTopOffset,
-              left: widget.childOffset.dx,
-              child: Container(
-                width: widget.childSize.width,
-                height: widget.childSize.height,
-                child: widget.child,
+              AnimatedPositioned(
+                duration: Duration(milliseconds: 250),
+                curve: Curves.easeOut,
+                top: messageTopOffset,
+                left: widget.childOffset.dx,
+                child: Container(
+                  width: widget.childSize.width,
+                  height: widget.childSize.height,
+                  child: widget.child,
+                ),
               ),
-            ),
-            Positioned(
-              top: 40,
-              left: 10,
-              child: AnimatedSize(
-                vsync: this,
-                duration: Duration(milliseconds: 500),
-                curve: Sprung(damped: Damped.under),
-                alignment: Alignment.center,
-                child: reactionWidgets.length > 0
-                    ? ClipRRect(
-                        borderRadius: BorderRadius.circular(20),
-                        child: BackdropFilter(
-                          filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                          child: Container(
-                            alignment: Alignment.center,
-                            height: 120,
-                            width: MediaQuery.of(context).size.width - 20,
-                            color: Theme.of(context).accentColor,
-                            child: Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 0),
-                              child: ListView.builder(
-                                shrinkWrap: true,
-                                physics: ThemeSwitcher.getScrollPhysics(),
-                                scrollDirection: Axis.horizontal,
-                                itemBuilder: (context, index) {
-                                  return reactionWidgets[index];
-                                },
-                                itemCount: reactionWidgets.length,
+              Positioned(
+                top: 40,
+                left: 10,
+                child: AnimatedSize(
+                  vsync: this,
+                  duration: Duration(milliseconds: 500),
+                  curve: Sprung(damped: Damped.under),
+                  alignment: Alignment.center,
+                  child: reactionWidgets.length > 0
+                      ? ClipRRect(
+                          borderRadius: BorderRadius.circular(20),
+                          child: BackdropFilter(
+                            filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                            child: Container(
+                              alignment: Alignment.center,
+                              height: 120,
+                              width: MediaQuery.of(context).size.width - 20,
+                              color: Theme.of(context).accentColor,
+                              child: Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 0),
+                                child: ListView.builder(
+                                  shrinkWrap: true,
+                                  physics: ThemeSwitcher.getScrollPhysics(),
+                                  scrollDirection: Axis.horizontal,
+                                  itemBuilder: (context, index) {
+                                    return reactionWidgets[index];
+                                  },
+                                  itemCount: reactionWidgets.length,
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                      )
-                    : Container(),
+                        )
+                      : Container(),
+                ),
               ),
-            ),
-            buildReactionMenu(),
-            buildCopyPasteMenu(),
-          ],
+              buildReactionMenu(),
+              buildCopyPasteMenu(),
+            ],
+          ),
         ),
       ),
     );
   }
 
   Widget buildReactionMenu() {
-    if (isEmptyString(widget.message.text)) {
+    if (isEmptyString(widget.message.fullText)) {
       return Container();
     }
     Size size = MediaQuery.of(context).size;
@@ -326,8 +331,8 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
                 color: Colors.transparent,
                 child: InkWell(
                   onTap: () {
-                    if (!isEmptyString(widget.message.text))
-                      FlutterClipboard.copy(widget.message.text);
+                    if (!isEmptyString(widget.message.fullText))
+                      FlutterClipboard.copy(widget.message.fullText);
                     FlutterToast flutterToast = FlutterToast(context);
                     Widget toast = ClipRRect(
                       borderRadius: BorderRadius.circular(25.0),
@@ -345,7 +350,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(
-                                !isEmptyString(widget.message.text)
+                                !isEmptyString(widget.message.fullText)
                                     ? Icons.check
                                     : Icons.close,
                                 color:
@@ -355,7 +360,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
                                 width: 12.0,
                               ),
                               Text(
-                                !isEmptyString(widget.message.text)
+                                !isEmptyString(widget.message.fullText)
                                     ? "Copied to clipboard"
                                     : "Failed to copy empty message",
                                 style: Theme.of(context).textTheme.bodyText1,
@@ -386,7 +391,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
                 color: Colors.transparent,
                 child: InkWell(
                   onTap: () {
-                    if (isEmptyString(widget.message.text)) return;
+                    if (isEmptyString(widget.message.fullText)) return;
                     showDialog(
                       context: context,
                       builder: (context) => AlertDialog(
@@ -403,7 +408,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
                           child: SingleChildScrollView(
                             physics: ThemeSwitcher.getScrollPhysics(),
                             child: SelectableText(
-                              widget.message.text,
+                              widget.message.fullText,
                               style: Theme.of(context).textTheme.bodyText1,
                             ),
                           ),

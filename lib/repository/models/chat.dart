@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:async';
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
@@ -125,7 +126,8 @@ class Chat {
     }
     return new Chat(
       id: json.containsKey("ROWID") ? json["ROWID"] : null,
-      originalROWID: json.containsKey("originalROWID") ? json["originalROWID"] : null,
+      originalROWID:
+          json.containsKey("originalROWID") ? json["originalROWID"] : null,
       guid: json["guid"],
       style: json['style'],
       chatIdentifier:
@@ -442,7 +444,8 @@ class Chat {
         " attachment.mimeType AS mimeType,"
         " attachment.totalBytes AS totalBytes,"
         " attachment.transferName AS transferName,"
-        " attachment.blurhash AS blurhash"
+        " attachment.blurhash AS blurhash,"
+        " attachment.metadata AS metadata"
         " FROM attachment"
         " JOIN attachment_message_join AS amj ON amj.attachmentId = attachment.ROWID"
         " JOIN message ON amj.messageId = message.ROWID"
@@ -469,6 +472,53 @@ class Chat {
       attachments.retainWhere((element) => guids.remove(element.guid));
     }
     return attachments;
+  }
+
+  static Map<String, Completer<List<Message>>> _getMessagesRequests = {};
+  static Future<List<Message>> getMessagesSingleton(Chat chat,
+      {bool reactionsOnly = false,
+      int offset = 0,
+      int limit = 25,
+      bool includeDeleted: false}) async {
+    String req = "${chat.guid}-$offset-$limit-$reactionsOnly-$includeDeleted";
+
+    // If a current request is in progress, return that future
+    if (_getMessagesRequests.containsKey(req) &&
+        !_getMessagesRequests[req].isCompleted)
+      return _getMessagesRequests[req].future;
+
+    _getMessagesRequests[req] = new Completer();
+
+    try {
+      List<Message> messages = await Chat.getMessages(chat,
+          reactionsOnly: reactionsOnly,
+          offset: offset,
+          limit: limit,
+          includeDeleted: includeDeleted);
+
+      if (_getMessagesRequests.containsKey(req) &&
+          !_getMessagesRequests[req].isCompleted)
+        _getMessagesRequests[req].complete(messages);
+    } catch (ex) {
+      print(ex);
+
+      if (_getMessagesRequests.containsKey(req) &&
+          !_getMessagesRequests[req].isCompleted)
+        _getMessagesRequests[req].completeError(ex);
+    }
+
+    // Remove the request from the "cache" after 10 seconds
+    Future.delayed(new Duration(seconds: 10), () {
+      if (_getMessagesRequests.containsKey(req)) {
+        _getMessagesRequests.remove(req);
+      }
+    });
+
+    if (_getMessagesRequests.containsKey(req)) {
+      return _getMessagesRequests[req].future;
+    } else {
+      return [];
+    }
   }
 
   static Future<List<Message>> getMessages(Chat chat,
@@ -523,8 +573,6 @@ class Chat {
         " FROM message"
         " JOIN chat_message_join AS cmj ON message.ROWID = cmj.messageId"
         " JOIN chat ON cmj.chatId = chat.ROWID"
-        // " LEFT JOIN attachment_message_join ON attachment_message_join.messageId = message.ROWID "
-        // " LEFT JOIN attachment ON attachment.ROWID = attachment_message_join.attachmentId"
         " LEFT OUTER JOIN handle ON handle.ROWID = message.handleId"
         " WHERE chat.ROWID = ?");
 
@@ -666,9 +714,8 @@ class Chat {
     if (this.id == null) return this;
 
     this.isPinned = true;
-    await db.update("chat", {
-      "isPinned": 1
-    }, where: "ROWID = ?", whereArgs: [this.id]);
+    await db.update("chat", {"isPinned": 1},
+        where: "ROWID = ?", whereArgs: [this.id]);
 
     ChatBloc()?.updateChat(this);
     return this;
@@ -679,9 +726,8 @@ class Chat {
     if (this.id == null) return this;
 
     this.isPinned = false;
-    await db.update("chat", {
-      "isPinned": 0
-    }, where: "ROWID = ?", whereArgs: [this.id]);
+    await db.update("chat", {"isPinned": 0},
+        where: "ROWID = ?", whereArgs: [this.id]);
 
     ChatBloc()?.updateChat(this);
     return this;
@@ -764,19 +810,16 @@ class Chat {
   Future<void> clearTranscript() async {
     final Database db = await DBProvider.db.database;
     await db.rawQuery(
-      "UPDATE message "
-      "SET dateDeleted = ${DateTime.now().toUtc().millisecondsSinceEpoch} "
-      "WHERE ROWID IN ("
-      "    SELECT m.ROWID "
-      "    FROM message m"
-      "    INNER JOIN chat_message_join cmj ON cmj.messageId = m.ROWID "
-      "    INNER JOIN chat c ON cmj.chatId = c.ROWID "
-      "    WHERE c.guid = ?"
-      ");",
-      [
-        this.guid
-      ]
-    );
+        "UPDATE message "
+        "SET dateDeleted = ${DateTime.now().toUtc().millisecondsSinceEpoch} "
+        "WHERE ROWID IN ("
+        "    SELECT m.ROWID "
+        "    FROM message m"
+        "    INNER JOIN chat_message_join cmj ON cmj.messageId = m.ROWID "
+        "    INNER JOIN chat c ON cmj.chatId = c.ROWID "
+        "    WHERE c.guid = ?"
+        ");",
+        [this.guid]);
   }
 
   static flush() async {

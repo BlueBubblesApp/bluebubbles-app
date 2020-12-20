@@ -46,7 +46,6 @@ class MessageBloc {
   }
 
   Chat _currentChat;
-  
 
   Chat get currentChat => _currentChat;
 
@@ -183,24 +182,26 @@ class MessageBloc {
   }
 
   Future<LinkedHashMap<String, Message>> getMessages() async {
-    List<Message> messages = await Chat.getMessages(_currentChat);
+    List<Message> messages = await Chat.getMessagesSingleton(_currentChat);
 
     if (isNullOrEmpty(messages)) {
       _allMessages = new LinkedHashMap();
     } else {
-      messages.forEach((element) {
+      for (var element in messages) {
         if (element.associatedMessageGuid == null) {
           _allMessages.addAll({element.guid: element});
         } else {
           _reactions++;
         }
-      });
+      }
     }
+
     if (!_messageController.isClosed) {
       MessageBlocEvent event = MessageBlocEvent();
       event.messages = _allMessages.values.toList();
       _messageController.sink.add(event);
     }
+
     return _allMessages;
   }
 
@@ -290,7 +291,7 @@ class MessageBloc {
 
     return completer.future;
   }
-  
+
   Future<void> refresh() async {
     _allMessages = new LinkedHashMap();
     _reactions = 0;

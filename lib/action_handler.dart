@@ -458,7 +458,7 @@ class ActionHandler {
             "(Message status) New message: [${message.text}] - [${message.guid}]");
         await chat.addMessage(message);
 
-        if (message.itemType == ItemTypes.nameChanged.index) {
+        if (message.itemType == 2 && message.groupTitle != null) {
           chat = await chat.changeName(message.groupTitle);
           ChatBloc().updateChat(chat);
         }

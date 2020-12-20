@@ -71,144 +71,131 @@ class _ThemePanelState extends State<ThemePanel> {
   Widget build(BuildContext context) {
     loadBrightness();
 
-    return Scaffold(
-      // extendBodyBehindAppBar: true,
-      backgroundColor: Theme.of(context).backgroundColor,
-      appBar: PreferredSize(
-        preferredSize: Size(MediaQuery.of(context).size.width, 80),
-        child: ClipRRect(
-          child: BackdropFilter(
-            child: AppBar(
-              brightness: brightness,
-              toolbarHeight: 100.0,
-              elevation: 0,
-              leading: IconButton(
-                icon: Icon(Icons.arrow_back_ios,
-                    color: Theme.of(context).primaryColor),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-              ),
-              backgroundColor: Theme.of(context).accentColor.withOpacity(0.5),
-              title: Text(
-                "Theming & Styles",
-                style: Theme.of(context).textTheme.headline1,
-              ),
-            ),
-            filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-          ),
-        ),
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle(
+        systemNavigationBarColor: Theme.of(context).backgroundColor,
       ),
-      body: CustomScrollView(
-        physics: AlwaysScrollableScrollPhysics(
-          parent: CustomBouncingScrollPhysics(),
-        ),
-        slivers: <Widget>[
-          SliverList(
-            delegate: SliverChildListDelegate(
-              <Widget>[
-                Container(padding: EdgeInsets.only(top: 5.0)),
-                if (currentMode != null && modes != null)
-                  SettingsOptions<DisplayMode>(
-                    initial: currentMode,
-                    showDivider: false,
-                    onChanged: (val) async {
-                      currentMode = val;
-                      _settingsCopy.displayMode = currentMode.id;
-                    },
-                    options: modes,
-                    textProcessing: (dynamic val) => val.toString(),
-                    title: "Display",
-                  ),
-                SettingsOptions<AdaptiveThemeMode>(
-                  initial: AdaptiveTheme.of(context).mode,
-                  onChanged: (val) {
-                    AdaptiveTheme.of(context).setThemeMode(val);
-
-                    // This needs to be on a delay so the background color has time to change
-                    Timer(Duration(seconds: 1),
-                        () => EventDispatcher().emit('theme-update', null));
-                  },
-                  options: AdaptiveThemeMode.values,
-                  textProcessing: (dynamic val) =>
-                      val.toString().split(".").last,
-                  title: "App Theme",
-                  showDivider: false,
-                ),
-                SettingsTile(
-                  title: "Theming",
-                  trailing: Icon(Icons.arrow_forward_ios,
+      child: Scaffold(
+        backgroundColor: Theme.of(context).backgroundColor,
+        appBar: PreferredSize(
+          preferredSize: Size(MediaQuery.of(context).size.width, 80),
+          child: ClipRRect(
+            child: BackdropFilter(
+              child: AppBar(
+                brightness: brightness,
+                toolbarHeight: 100.0,
+                elevation: 0,
+                leading: IconButton(
+                  icon: Icon(Icons.arrow_back_ios,
                       color: Theme.of(context).primaryColor),
-                  onTap: () async {
-                    Navigator.of(context).push(
-                      ThemeSwitcher.buildPageRoute(
-                        builder: (context) => ThemingPanel(),
-                      ),
-                    );
+                  onPressed: () {
+                    Navigator.of(context).pop();
                   },
                 ),
-                SettingsOptions<Skins>(
-                  initial: _settingsCopy.skin,
-                  onChanged: (val) {
-                    _settingsCopy.skin = val;
-                    if (val == Skins.Material) {
-                      _settingsCopy.hideDividers = true;
-                    } else {
-                      _settingsCopy.hideDividers = false;
-                    }
-                    setState(() {});
-                  },
-                  options: Skins.values,
-                  textProcessing: (dynamic val) =>
-                      val.toString().split(".").last,
-                  title: "App Skin",
-                  showDivider: false,
+                backgroundColor: Theme.of(context).accentColor.withOpacity(0.5),
+                title: Text(
+                  "Theming & Styles",
+                  style: Theme.of(context).textTheme.headline1,
                 ),
-                SettingsSwitch(
-                  onChanged: (bool val) {
-                    _settingsCopy.hideDividers = val;
-                    saveSettings();
-                  },
-                  initialVal: _settingsCopy.hideDividers,
-                  title: "Hide Dividers",
-                ),
-                SettingsSwitch(
-                  onChanged: (bool val) {
-                    _settingsCopy.colorfulAvatars = val;
-                    saveSettings();
-                  },
-                  initialVal: _settingsCopy.colorfulAvatars,
-                  title: "Colorful Avatars",
-                ),
-                SettingsSwitch(
-                  onChanged: (bool val) {
-                    _settingsCopy.colorfulBubbles = val;
-                    saveSettings();
-                  },
-                  initialVal: _settingsCopy.colorfulBubbles,
-                  title: "Colorful Bubbles",
-                ),
-                // SettingsOptions<String>(
-                //   initial: _settingsCopy.emojiFontFamily == null
-                //       ? "System"
-                //       : fontFamilyToString[_settingsCopy.emojiFontFamily],
-                //   onChanged: (val) {
-                //     _settingsCopy.emojiFontFamily = stringToFontFamily[val];
-                //   },
-                //   options: stringToFontFamily.keys.toList(),
-                //   textProcessing: (dynamic val) => val,
-                //   title: "Emoji Style",
-                //   showDivider: false,
-                // ),
-              ],
+              ),
+              filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
             ),
           ),
-          SliverList(
-            delegate: SliverChildListDelegate(
-              <Widget>[],
+        ),
+        body: CustomScrollView(
+          physics: AlwaysScrollableScrollPhysics(
+            parent: CustomBouncingScrollPhysics(),
+          ),
+          slivers: <Widget>[
+            SliverList(
+              delegate: SliverChildListDelegate(
+                <Widget>[
+                  Container(padding: EdgeInsets.only(top: 5.0)),
+                  if (currentMode != null && modes != null)
+                    SettingsOptions<DisplayMode>(
+                      initial: currentMode,
+                      showDivider: false,
+                      onChanged: (val) async {
+                        currentMode = val;
+                        _settingsCopy.displayMode = currentMode.id;
+                      },
+                      options: modes,
+                      textProcessing: (dynamic val) => val.toString(),
+                      title: "Display",
+                    ),
+                  SettingsOptions<AdaptiveThemeMode>(
+                    initial: AdaptiveTheme.of(context).mode,
+                    onChanged: (val) {
+                      AdaptiveTheme.of(context).setThemeMode(val);
+
+                      // This needs to be on a delay so the background color has time to change
+                      Timer(Duration(seconds: 1),
+                          () => EventDispatcher().emit('theme-update', null));
+                    },
+                    options: AdaptiveThemeMode.values,
+                    textProcessing: (dynamic val) =>
+                        val.toString().split(".").last,
+                    title: "App Theme",
+                    showDivider: false,
+                  ),
+                  SettingsTile(
+                    title: "Theming",
+                    trailing: Icon(Icons.arrow_forward_ios,
+                        color: Theme.of(context).primaryColor),
+                    onTap: () async {
+                      Navigator.of(context).push(
+                        CupertinoPageRoute(
+                          builder: (context) => ThemingPanel(),
+                        ),
+                      );
+                    },
+                  ),
+                  SettingsSwitch(
+                    onChanged: (bool val) {
+                      _settingsCopy.hideDividers = val;
+                      saveSettings();
+                    },
+                    initialVal: _settingsCopy.hideDividers,
+                    title: "Hide Dividers",
+                  ),
+                  SettingsSwitch(
+                    onChanged: (bool val) {
+                      _settingsCopy.colorfulAvatars = val;
+                      saveSettings();
+                    },
+                    initialVal: _settingsCopy.colorfulAvatars,
+                    title: "Colorful Avatars",
+                  ),
+                  SettingsSwitch(
+                    onChanged: (bool val) {
+                      _settingsCopy.colorfulBubbles = val;
+                      saveSettings();
+                    },
+                    initialVal: _settingsCopy.colorfulBubbles,
+                    title: "Colorful Bubbles",
+                  ),
+                  // SettingsOptions<String>(
+                  //   initial: _settingsCopy.emojiFontFamily == null
+                  //       ? "System"
+                  //       : fontFamilyToString[_settingsCopy.emojiFontFamily],
+                  //   onChanged: (val) {
+                  //     _settingsCopy.emojiFontFamily = stringToFontFamily[val];
+                  //   },
+                  //   options: stringToFontFamily.keys.toList(),
+                  //   textProcessing: (dynamic val) => val,
+                  //   title: "Emoji Style",
+                  //   showDivider: false,
+                  // ),
+                ],
+              ),
             ),
-          )
-        ],
+            SliverList(
+              delegate: SliverChildListDelegate(
+                <Widget>[],
+              ),
+            )
+          ],
+        ),
       ),
     );
   }

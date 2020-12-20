@@ -63,45 +63,55 @@ class Message {
   List<Message> associatedMessages = [];
   bool bigEmoji;
 
-  Message({
-    this.id,
-    this.originalROWID,
-    this.guid,
-    this.handleId,
-    this.otherHandle,
-    this.text,
-    this.subject,
-    this.country,
-    this.error = 0,
-    this.dateCreated,
-    this.dateRead,
-    this.dateDelivered,
-    this.isFromMe = true,
-    this.isDelayed = false,
-    this.isAutoReply = false,
-    this.isSystemMessage = false,
-    this.isServiceMessage = false,
-    this.isForward = false,
-    this.isArchived = false,
-    this.hasDdResults = false,
-    this.cacheRoomnames,
-    this.isAudioMessage = false,
-    this.datePlayed,
-    this.itemType = 0,
-    this.groupTitle,
-    this.groupActionType = 0,
-    this.isExpired = false,
-    this.balloonBundleId,
-    this.associatedMessageGuid,
-    this.associatedMessageType,
-    this.expressiveSendStyleId,
-    this.timeExpressiveSendStyleId,
-    this.handle,
-    this.hasAttachments = false,
-    this.hasReactions = false,
-    this.attachments = const [],
-    this.dateDeleted
-  });
+  Message(
+      {this.id,
+      this.originalROWID,
+      this.guid,
+      this.handleId,
+      this.otherHandle,
+      this.text,
+      this.subject,
+      this.country,
+      this.error = 0,
+      this.dateCreated,
+      this.dateRead,
+      this.dateDelivered,
+      this.isFromMe = true,
+      this.isDelayed = false,
+      this.isAutoReply = false,
+      this.isSystemMessage = false,
+      this.isServiceMessage = false,
+      this.isForward = false,
+      this.isArchived = false,
+      this.hasDdResults = false,
+      this.cacheRoomnames,
+      this.isAudioMessage = false,
+      this.datePlayed,
+      this.itemType = 0,
+      this.groupTitle,
+      this.groupActionType = 0,
+      this.isExpired = false,
+      this.balloonBundleId,
+      this.associatedMessageGuid,
+      this.associatedMessageType,
+      this.expressiveSendStyleId,
+      this.timeExpressiveSendStyleId,
+      this.handle,
+      this.hasAttachments = false,
+      this.hasReactions = false,
+      this.attachments = const [],
+      this.dateDeleted});
+
+  String get fullText {
+    String fullText = this.subject ?? "";
+    if (fullText.isNotEmpty) {
+      fullText += "\n";
+    }
+
+    fullText += this.text ?? "";
+
+    return sanitizeString(fullText);
+  }
 
   factory Message.fromMap(Map<String, dynamic> json) {
     bool hasAttachments = false;
@@ -206,8 +216,9 @@ class Message {
       hasReactions: json.containsKey('hasReactions')
           ? ((json['hasReactions'] == 1) ? true : false)
           : false,
-      dateDeleted:
-          json.containsKey("dateDeleted") ? parseDate(json["dateDeleted"]) : null,
+      dateDeleted: json.containsKey("dateDeleted")
+          ? parseDate(json["dateDeleted"])
+          : null,
     );
   }
 
@@ -378,6 +389,7 @@ class Message {
         " attachment.isSticker AS isSticker,"
         " attachment.hideAttachment AS hideAttachment,"
         " attachment.blurhash AS blurhash,"
+        " attachment.metadata AS metadata,"
         " attachment.width AS width,"
         " attachment.height AS height"
         " FROM message"
@@ -501,10 +513,9 @@ class Message {
 
     List<Message> toDelete = await Message.find(where);
     for (Message msg in toDelete ?? []) {
-      await db
-          .update("message", {
-            'dateDeleted': DateTime.now().toUtc().millisecondsSinceEpoch
-          }, where: "ROWID = ?", whereArgs: [msg.id]);
+      await db.update("message",
+          {'dateDeleted': DateTime.now().toUtc().millisecondsSinceEpoch},
+          where: "ROWID = ?", whereArgs: [msg.id]);
     }
   }
 
@@ -525,11 +536,11 @@ class Message {
   }
 
   bool hasText({stripWhitespace = false}) {
-    return !isEmptyString(this.text, stripWhitespace: stripWhitespace);
+    return !isEmptyString(this.fullText, stripWhitespace: stripWhitespace);
   }
 
   bool isGroupEvent() {
-    return isEmptyString(this.text) &&
+    return isEmptyString(this.fullText) &&
         !this.hasAttachments &&
         this.balloonBundleId == null;
   }
@@ -538,7 +549,7 @@ class Message {
     // We are checking the variable first because we want to
     // avoid processing twice for this as it won't change
     if (this.bigEmoji == null) {
-      this.bigEmoji = MessageHelper.shouldShowBigEmoji(this.text);
+      this.bigEmoji = MessageHelper.shouldShowBigEmoji(this.fullText);
     }
 
     return this.bigEmoji;

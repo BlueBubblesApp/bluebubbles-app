@@ -152,21 +152,6 @@ class AttachmentDownloader {
   Future<File> writeToFile(Uint8List data, String path) async {
     File file = await new File(path).create(recursive: true);
     await file.writeAsBytes(data);
-
-    Uint8List thumbnail;
-    if (attachment.mimeStart == "video") {
-      await VideoThumbnail.thumbnailData(
-        video: path,
-        imageFormat: ImageFormat.JPEG,
-        quality: 25,
-      );
-    } else if (attachment.mimeStart == "image") {
-      thumbnail = data;
-    }
-    if (thumbnail != null) {
-      await attachment.updateDimensions(thumbnail);
-    }
-
     return file;
   }
 

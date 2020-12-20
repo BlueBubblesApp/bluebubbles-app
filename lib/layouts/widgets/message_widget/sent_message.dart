@@ -247,7 +247,7 @@ class _SentMessageState extends State<SentMessage>
     List<Widget> messageColumn = [];
 
     // Second, add the attachments
-    if (isEmptyString(widget.message.text)) {
+    if (isEmptyString(widget.message.fullText)) {
       messageColumn.add(
         addStickersToWidget(
           message: addReactionsToWidget(
@@ -322,10 +322,10 @@ class _SentMessageState extends State<SentMessage>
       Padding(
         // Padding to shift the bubble up a bit, relative to the avatar
         padding: EdgeInsets.only(
-            bottom: (widget.showTail && !isEmptyString(widget.message.text))
+            bottom: (widget.showTail && !isEmptyString(widget.message.fullText))
                 ? 5.0
                 : 3.0,
-            right: isEmptyString(widget.message.text) ? 10.0 : 0.0),
+            right: isEmptyString(widget.message.fullText) ? 10.0 : 0.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.end,
