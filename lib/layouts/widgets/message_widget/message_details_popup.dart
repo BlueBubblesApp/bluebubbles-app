@@ -18,6 +18,7 @@ import 'package:bluebubbles/repository/models/message.dart';
 import 'package:clipboard/clipboard.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:sprung/sprung.dart';
 
@@ -146,75 +147,80 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: Container(
-        child: Stack(
-          fit: StackFit.expand,
-          children: <Widget>[
-            GestureDetector(
-              onTap: () {
-                Navigator.of(context).pop();
-              },
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
-                child: Container(
-                  color: oledDarkTheme.accentColor.withOpacity(0.3),
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle(
+        systemNavigationBarColor: Theme.of(context).backgroundColor,
+      ),
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        body: Container(
+          child: Stack(
+            fit: StackFit.expand,
+            children: <Widget>[
+              GestureDetector(
+                onTap: () {
+                  Navigator.of(context).pop();
+                },
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
+                  child: Container(
+                    color: oledDarkTheme.accentColor.withOpacity(0.3),
+                  ),
                 ),
               ),
-            ),
-            AnimatedPositioned(
-              duration: Duration(milliseconds: 250),
-              curve: Curves.easeOut,
-              top: messageTopOffset,
-              left: widget.childOffset.dx,
-              child: Container(
-                width: widget.childSize.width,
-                height: widget.childSize.height,
-                child: widget.child,
+              AnimatedPositioned(
+                duration: Duration(milliseconds: 250),
+                curve: Curves.easeOut,
+                top: messageTopOffset,
+                left: widget.childOffset.dx,
+                child: Container(
+                  width: widget.childSize.width,
+                  height: widget.childSize.height,
+                  child: widget.child,
+                ),
               ),
-            ),
-            Positioned(
-              top: 40,
-              left: 10,
-              child: AnimatedSize(
-                vsync: this,
-                duration: Duration(milliseconds: 500),
-                curve: Sprung(damped: Damped.under),
-                alignment: Alignment.center,
-                child: reactionWidgets.length > 0
-                    ? ClipRRect(
-                        borderRadius: BorderRadius.circular(20),
-                        child: BackdropFilter(
-                          filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                          child: Container(
-                            alignment: Alignment.center,
-                            height: 120,
-                            width: MediaQuery.of(context).size.width - 20,
-                            color: Theme.of(context).accentColor,
-                            child: Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 0),
-                              child: ListView.builder(
-                                shrinkWrap: true,
-                                physics: AlwaysScrollableScrollPhysics(
-                                  parent: CustomBouncingScrollPhysics(),
+              Positioned(
+                top: 40,
+                left: 10,
+                child: AnimatedSize(
+                  vsync: this,
+                  duration: Duration(milliseconds: 500),
+                  curve: Sprung(damped: Damped.under),
+                  alignment: Alignment.center,
+                  child: reactionWidgets.length > 0
+                      ? ClipRRect(
+                          borderRadius: BorderRadius.circular(20),
+                          child: BackdropFilter(
+                            filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                            child: Container(
+                              alignment: Alignment.center,
+                              height: 120,
+                              width: MediaQuery.of(context).size.width - 20,
+                              color: Theme.of(context).accentColor,
+                              child: Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 0),
+                                child: ListView.builder(
+                                  shrinkWrap: true,
+                                  physics: AlwaysScrollableScrollPhysics(
+                                    parent: CustomBouncingScrollPhysics(),
+                                  ),
+                                  scrollDirection: Axis.horizontal,
+                                  itemBuilder: (context, index) {
+                                    return reactionWidgets[index];
+                                  },
+                                  itemCount: reactionWidgets.length,
                                 ),
-                                scrollDirection: Axis.horizontal,
-                                itemBuilder: (context, index) {
-                                  return reactionWidgets[index];
-                                },
-                                itemCount: reactionWidgets.length,
                               ),
                             ),
                           ),
-                        ),
-                      )
-                    : Container(),
+                        )
+                      : Container(),
+                ),
               ),
-            ),
-            // buildReactionMenu(),
-            buildCopyPasteMenu(),
-          ],
+              // buildReactionMenu(),
+              buildCopyPasteMenu(),
+            ],
+          ),
         ),
       ),
     );

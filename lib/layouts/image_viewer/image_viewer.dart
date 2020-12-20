@@ -6,6 +6,7 @@ import 'package:bluebubbles/layouts/image_viewer/attachmet_fullscreen_viewer.dar
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:photo_view/photo_view.dart';
 
 class ImageViewer extends StatefulWidget {
@@ -215,31 +216,37 @@ class _ImageViewerState extends State<ImageViewer>
       ),
     );
 
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: GestureDetector(
-        onTap: () {
-          if (!this.mounted || !widget.showInteractions) return;
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle(
+        systemNavigationBarColor: Colors.black,
+      ),
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        body: GestureDetector(
+          onTap: () {
+            if (!this.mounted || !widget.showInteractions) return;
 
-          setState(() {
-            showOverlay = !showOverlay;
-          });
-        },
-        child: Stack(
-          children: <Widget>[
-            bytes != null
-                ? PhotoView(
-                    minScale: PhotoViewComputedScale.contained,
-                    maxScale: PhotoViewComputedScale.contained * 13,
-                    controller: controller,
-                    imageProvider: MemoryImage(bytes),
-                    loadingBuilder: (BuildContext context, ImageChunkEvent ev) {
-                      return loader;
-                    },
-                  )
-                : loader,
-            overlay
-          ],
+            setState(() {
+              showOverlay = !showOverlay;
+            });
+          },
+          child: Stack(
+            children: <Widget>[
+              bytes != null
+                  ? PhotoView(
+                      minScale: PhotoViewComputedScale.contained,
+                      maxScale: PhotoViewComputedScale.contained * 13,
+                      controller: controller,
+                      imageProvider: MemoryImage(bytes),
+                      loadingBuilder:
+                          (BuildContext context, ImageChunkEvent ev) {
+                        return loader;
+                      },
+                    )
+                  : loader,
+              overlay
+            ],
+          ),
         ),
       ),
     );
