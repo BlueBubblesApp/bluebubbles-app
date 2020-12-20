@@ -45,10 +45,13 @@ class NewMessageManager {
   Stream<NewMessageEvent> get stream => _stream.stream;
 
   void removeMessage(Chat chat, String guid) {
-    _stream.sink.add(NewMessageEvent(
+    _stream.sink.add(
+      NewMessageEvent(
         chatGuid: chat.guid,
         type: NewMessageType.REMOVE,
-        event: {"guid": guid}));
+        event: {"guid": guid},
+      ),
+    );
   }
 
   void updateMessage(Chat chat, String oldGuid, Message message) {
@@ -56,10 +59,13 @@ class NewMessageManager {
     // Theoretically, addMessage will be called for all incoming messages
     if (!message.isFromMe) return;
 
-    _stream.sink.add(NewMessageEvent(
+    _stream.sink.add(
+      NewMessageEvent(
         chatGuid: chat.guid,
         type: NewMessageType.UPDATE,
-        event: {"oldGuid": oldGuid, "message": message}));
+        event: {"oldGuid": oldGuid, "message": message},
+      ),
+    );
   }
 
   void addMessage(Chat chat, Message message, {bool outgoing = false}) {
@@ -68,10 +74,13 @@ class NewMessageManager {
       return;
     }
 
-    _stream.sink.add(NewMessageEvent(
+    _stream.sink.add(
+      NewMessageEvent(
         chatGuid: chat.guid,
         type: NewMessageType.ADD,
-        event: {"message": message, "outgoing": outgoing, "chat": chat}));
+        event: {"message": message, "outgoing": outgoing, "chat": chat},
+      ),
+    );
   }
 
   dispose() {

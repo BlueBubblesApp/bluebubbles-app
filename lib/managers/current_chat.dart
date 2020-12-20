@@ -7,6 +7,7 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_details_popup.dart';
 import 'package:bluebubbles/managers/attachment_info_bloc.dart';
+import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
@@ -123,10 +124,11 @@ class CurrentChat {
     return messageAttachments[message.guid];
   }
 
-  List<Attachment> updateExistingAttachments(MessageBlocEvent event) {
-    String oldGuid = event.oldGuid;
+  List<Attachment> updateExistingAttachments(NewMessageEvent event) {
+    if (event.type != NewMessageType.UPDATE) return null;
+    String oldGuid = event.event["oldGuid"];
     if (!messageAttachments.containsKey(oldGuid)) return [];
-    Message message = event.message;
+    Message message = event.event["message"];
 
     messageAttachments.remove(oldGuid);
     messageAttachments[message.guid] = message.attachments;

@@ -9,6 +9,7 @@ import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scrol
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
+import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
@@ -222,23 +223,6 @@ class MessagesViewState extends State<MessagesView>
         await currentChat.updateChatAttachments();
         if (this.mounted) setState(() {});
       }
-    } else if (event.type == MessageBlocEventType.update) {
-      currentChat.updateExistingAttachments(event);
-      bool updatedAMessage = false;
-      for (int i = 0; i < _messages.length; i++) {
-        if (_messages[i].guid == event.oldGuid) {
-          debugPrint(
-              "(Message status) Update message: [${event.message.text}] - [${event.message.guid}] - [${event.oldGuid}]");
-          _messages[i] = event.message;
-          if (this.mounted) setState(() {});
-          updatedAMessage = true;
-          break;
-        }
-      }
-      if (!updatedAMessage) {
-        debugPrint(
-            "(Message status) FAILED TO UPDATE A MESSAGE: [${event.message.text}] - [${event.message.guid}] - [${event.oldGuid}]");
-      }
     } else if (event.type == MessageBlocEventType.remove) {
       for (int i = 0; i < _messages.length; i++) {
         if (_messages[i].guid == event.remove &&
@@ -249,36 +233,36 @@ class MessagesViewState extends State<MessagesView>
         }
       }
     } else {
-      int originalMessageLength = _messages.length;
       _messages = event.messages;
       _messages
           .forEach((message) => currentChat.getAttachmentsForMessage(message));
-      if (_listKey == null) _listKey = GlobalKey<SliverAnimatedListState>();
-
-      if (originalMessageLength < _messages.length) {
-        for (int i = originalMessageLength; i < _messages.length; i++) {
-          if (_listKey != null && _listKey.currentState != null)
-            _listKey.currentState
-                .insertItem(i, duration: Duration(milliseconds: 0));
-        }
-      } else if (originalMessageLength > _messages.length) {
-        for (int i = originalMessageLength; i >= _messages.length; i--) {
-          if (_listKey != null && _listKey.currentState != null) {
-            try {
-              _listKey.currentState.removeItem(
-                  i, (context, animation) => Container(),
-                  duration: Duration(milliseconds: 0));
-            } catch (ex) {
-              debugPrint("Error removing item animation");
-              debugPrint(ex.toString());
-            }
-          }
-        }
-      }
-      if (_listKey != null && _listKey.currentState != null)
-        _listKey.currentState.setState(() {});
-      if (this.mounted) setState(() {});
+      _listKey = GlobalKey<SliverAnimatedListState>();
     }
+  }
+
+  /// All message update events are handled within the message widgets, to prevent top level setstates
+  Message onUpdateMessage(NewMessageEvent event) {
+    if (event.type != NewMessageType.UPDATE) return null;
+    currentChat.updateExistingAttachments(event);
+
+    String oldGuid = event.event["oldGuid"];
+    Message message = event.event["message"];
+
+    bool updatedAMessage = false;
+    for (int i = 0; i < _messages.length; i++) {
+      if (_messages[i].guid == oldGuid) {
+        debugPrint(
+            "(Message status) Update message: [${message.text}] - [${message.guid}] - [$oldGuid]");
+        _messages[i] = message;
+        updatedAMessage = true;
+        break;
+      }
+    }
+    if (!updatedAMessage) {
+      debugPrint(
+          "(Message status) FAILED TO UPDATE A MESSAGE: [${message.text}] - [${message.guid}] - [$oldGuid]");
+    }
+    return message;
   }
 
   @override
@@ -382,6 +366,7 @@ class MessagesViewState extends State<MessagesView>
                                           _messages[index].guid,
                                   showHero: index == 0 &&
                                       _messages[index].originalROWID == null,
+                                  onUpdate: (event) => onUpdateMessage(event),
                                 ),
                               ),
                             ),
