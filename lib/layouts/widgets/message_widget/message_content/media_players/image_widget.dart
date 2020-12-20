@@ -90,9 +90,7 @@ class _ImageWidgetState extends State<ImageWidget>
                 onTap: () async {
                   if (!this.mounted) return;
 
-                  setState(() {
-                    navigated = true;
-                  });
+                  navigated = true;
 
                   CurrentChat currentChat = CurrentChat.of(context);
                   await Navigator.of(context).push(
@@ -106,11 +104,7 @@ class _ImageWidgetState extends State<ImageWidget>
                     ),
                   );
 
-                  if (this.mounted) {
-                    setState(() {
-                      navigated = false;
-                    });
-                  }
+                  navigated = false;
                 },
               ),
             ),
