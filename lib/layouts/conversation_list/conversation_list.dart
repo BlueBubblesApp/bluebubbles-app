@@ -23,21 +23,11 @@ class ConversationList extends StatefulWidget {
   ConversationList({Key key, this.showArchivedChats}) : super(key: key);
   final bool showArchivedChats;
 
-  static Stream<Color> of(BuildContext context) {
-    if (context == null) return null;
-
-    return context
-            .findAncestorStateOfType<ConversationListState>()
-            ?.headerColorStream
-            ?.stream ??
-        null;
-  }
-
   @override
-  ConversationListState createState() => ConversationListState();
+  _ConversationListState createState() => _ConversationListState();
 }
 
-class ConversationListState extends State<ConversationList> {
+class _ConversationListState extends State<ConversationList> {
   ScrollController _scrollController;
   List<Chat> _chats = <Chat>[];
   bool colorfulAvatars = false;
