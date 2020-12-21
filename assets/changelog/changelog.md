@@ -26,3 +26,6 @@ Below are the last few BlueBubbles App release changelogs
 - Fixes issue where cameras would stay open after share menu closes
 - Device name is now set based on device (can be seen in server)
 - Makes navigation bar color match the current background color
+- Socket Error notification changes
+  - Adds socket error notification channel so that you can choose to disable the notification
+  - Adds ability to click the notification to take you directly to the server management page of the app to restart the server

@@ -15,6 +15,7 @@ class NotificationManager {
   }
 
   static const String NEW_MESSAGE_CHANNEL = "com.bluebubbles.new_messages";
+  static const String SOCKET_ERROR_CHANNEL = "com.bluebubbles.socket_error";
 
   static final NotificationManager _manager = NotificationManager._internal();
   NotificationManager._internal();
@@ -57,11 +58,12 @@ class NotificationManager {
 
   /// Creates notification channel for android
   /// This is done through native code and all of this data is hard coded for now
-  void createNotificationChannel() {
-    MethodChannelInterface().invokeMethod("create-notif-channel", {
-      "channel_name": "New Messages",
-      "channel_description": "For new messages retreived",
-      "CHANNEL_ID": NEW_MESSAGE_CHANNEL
+  Future<void> createNotificationChannel(
+      String channelID, String channelName, String channelDescription) async {
+    await MethodChannelInterface().invokeMethod("create-notif-channel", {
+      "channel_name": channelName,
+      "channel_description": channelDescription,
+      "CHANNEL_ID": channelID,
     });
   }
 
@@ -140,7 +142,7 @@ class NotificationManager {
     MethodChannelInterface()
         .platform
         .invokeMethod("create-socket-issue-warning", {
-      "CHANNEL_ID": NEW_MESSAGE_CHANNEL,
+      "CHANNEL_ID": SOCKET_ERROR_CHANNEL,
     });
   }
 

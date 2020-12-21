@@ -370,6 +370,7 @@ class SocketManager {
     }
     _manager.socket = null;
     state = SocketState.DISCONNECTED;
+    NotificationManager().clearSocketWarning();
   }
 
   Future<void> authFCM({bool catchException = true, bool force = false}) async {

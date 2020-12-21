@@ -217,7 +217,16 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     });
 
     // Create the notification in case it hasn't been already. Doing this multiple times won't do anything, so we just do it on every app start
-    NotificationManager().createNotificationChannel();
+    NotificationManager().createNotificationChannel(
+      NotificationManager.NEW_MESSAGE_CHANNEL,
+      "New Messages",
+      "For new messages retreived",
+    );
+    NotificationManager().createNotificationChannel(
+      NotificationManager.SOCKET_ERROR_CHANNEL,
+      "Socket Connection Error",
+      "Notifications that will appear when the connection to the server has failed",
+    );
 
     // Get the saved settings from the settings manager after the first frame
     SchedulerBinding.instance.addPostFrameCallback(
