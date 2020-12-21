@@ -26,7 +26,7 @@ public class PickFile implements Handler{
 
     @Override
     public void Handle() {
-        Intent intent  = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        Intent intent  = new Intent(Intent.ACTION_GET_CONTENT);
         intent.setType("*/*");
         try {
             MainActivity activity = (MainActivity) context;
