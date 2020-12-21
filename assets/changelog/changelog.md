@@ -25,3 +25,4 @@ Below are the last few BlueBubbles App release changelogs
 - Better .caf support
 - Fixes issue where cameras would stay open after share menu closes
 - Device name is now set based on device (can be seen in server)
+- Makes navigation bar color match the current background color

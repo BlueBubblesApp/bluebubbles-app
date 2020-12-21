@@ -48,7 +48,7 @@ android {
         // version code: 1  0113                    0                70      64
 
         //noinspection AccidentalOctal
-        versionCode 10113064
+        versionCode 10113070
         versionName flutterVersionName
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 

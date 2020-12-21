@@ -28,6 +28,7 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.work.WorkManager;
 
 import com.bluebubbles.messaging.method_call_handler.MethodCallHandler;
+import com.bluebubbles.messaging.method_call_handler.handlers.SocketIssueWarning;
 import com.bluebubbles.messaging.sharing.ShareShortcutManager;
 import com.itsclicking.clickapp.fluttersocketio.SocketIOManager;
 
@@ -107,6 +108,8 @@ public class MainActivity extends FlutterActivity {
 
 
                 new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod("ChatOpen", intent.getExtras().getString("chatGUID"));
+            } else if(type.equals(SocketIssueWarning.TYPE)) {
+                new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod("socket-error-open", null);
             }
         }
 
