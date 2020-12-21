@@ -150,6 +150,23 @@ class _ThemePanelState extends State<ThemePanel> {
                       );
                     },
                   ),
+                  SettingsOptions<Skins>(
+                    initial: _settingsCopy.skin,
+                    onChanged: (val) {
+                      _settingsCopy.skin = val;
+                      if (val == Skins.Material) {
+                        _settingsCopy.hideDividers = true;
+                      } else {
+                        _settingsCopy.hideDividers = false;
+                      }
+                      setState(() {});
+                    },
+                    options: Skins.values,
+                    textProcessing: (dynamic val) =>
+                        val.toString().split(".").last,
+                    title: "App Skin",
+                    showDivider: false,
+                  ),
                   SettingsSwitch(
                     onChanged: (bool val) {
                       _settingsCopy.hideDividers = val;

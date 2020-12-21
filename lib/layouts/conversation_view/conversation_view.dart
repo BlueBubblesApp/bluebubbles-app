@@ -190,6 +190,16 @@ class ConversationViewState extends State<ConversationView>
                   allContacts: contacts,
                   selectedContacts: selected,
                 ),
+              Expanded(
+                child: (searchQuery.length == 0 || !isCreator) && chat != null
+                    ? MessagesView(
+                        key: new Key(chat?.guid ?? "unknown-chat"),
+                        messageBloc: messageBloc ?? initMessageBloc(),
+                        showHandle: chat.participants.length > 1,
+                        chat: chat,
+                      )
+                    : buildChatSelectorBody(),
+              ),
             ],
           ),
         ),
