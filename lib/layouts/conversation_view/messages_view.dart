@@ -12,6 +12,7 @@ import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
+import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
@@ -46,7 +47,6 @@ class MessagesViewState extends State<MessagesView>
   GlobalKey<SliverAnimatedListState> _listKey;
   final Duration animationDuration = Duration(milliseconds: 400);
   bool initializedList = false;
-  double timeStampOffset = 0;
   ScrollController scrollController = new ScrollController();
   List<int> loadedPages = [];
   CurrentChat currentChat;
@@ -111,7 +111,6 @@ class MessagesViewState extends State<MessagesView>
 
     if (_messages.isEmpty) {
       widget.messageBloc.getMessages();
-      if (this.mounted) setState(() {});
     }
   }
 
@@ -185,10 +184,6 @@ class MessagesViewState extends State<MessagesView>
         Future.delayed(SendWidget.SEND_DURATION * 2, () {
           currentChat.sentMessages
               .removeWhere((element) => element.guid == event.message.guid);
-
-          if (_listKey?.currentState != null && _listKey.currentState.mounted) {
-            _listKey.currentState.setState(() {});
-          }
         });
 
         if (context != null)
@@ -226,23 +221,6 @@ class MessagesViewState extends State<MessagesView>
         await currentChat.updateChatAttachments();
         if (this.mounted) setState(() {});
       }
-    } else if (event.type == MessageBlocEventType.update) {
-      currentChat.updateExistingAttachments(event);
-      bool updatedAMessage = false;
-      for (int i = 0; i < _messages.length; i++) {
-        if (_messages[i].guid == event.oldGuid) {
-          debugPrint(
-              "(Message status) Update message: [${event.message.text}] - [${event.message.guid}] - [${event.oldGuid}]");
-          _messages[i] = event.message;
-          if (this.mounted) setState(() {});
-          updatedAMessage = true;
-          break;
-        }
-      }
-      if (!updatedAMessage) {
-        debugPrint(
-            "(Message status) FAILED TO UPDATE A MESSAGE: [${event.message.text}] - [${event.message.guid}] - [${event.oldGuid}]");
-      }
     } else if (event.type == MessageBlocEventType.remove) {
       for (int i = 0; i < _messages.length; i++) {
         if (_messages[i].guid == event.remove &&
@@ -279,10 +257,32 @@ class MessagesViewState extends State<MessagesView>
           }
         }
       }
-      if (_listKey != null && _listKey.currentState != null)
-        _listKey.currentState.setState(() {});
-      if (this.mounted) setState(() {});
     }
+  }
+
+  /// All message update events are handled within the message widgets, to prevent top level setstates
+  Message onUpdateMessage(NewMessageEvent event) {
+    if (event.type != NewMessageType.UPDATE) return null;
+    currentChat.updateExistingAttachments(event);
+
+    String oldGuid = event.event["oldGuid"];
+    Message message = event.event["message"];
+
+    bool updatedAMessage = false;
+    for (int i = 0; i < _messages.length; i++) {
+      if (_messages[i].guid == oldGuid) {
+        debugPrint(
+            "(Message status) Update message: [${message.text}] - [${message.guid}] - [$oldGuid]");
+        _messages[i] = message;
+        updatedAMessage = true;
+        break;
+      }
+    }
+    if (!updatedAMessage) {
+      debugPrint(
+          "(Message status) FAILED TO UPDATE A MESSAGE: [${message.text}] - [${message.guid}] - [$oldGuid]");
+    }
+    return message;
   }
 
   @override
@@ -291,25 +291,13 @@ class MessagesViewState extends State<MessagesView>
       behavior: HitTestBehavior.deferToChild,
       onHorizontalDragStart: (details) {},
       onHorizontalDragUpdate: (details) {
-        if (!this.mounted) return;
-
-        setState(() {
-          timeStampOffset += details.delta.dx * 0.3;
-        });
+        CurrentChat.of(context).timeStampOffset += details.delta.dx * 0.3;
       },
       onHorizontalDragEnd: (details) {
-        if (!this.mounted) return;
-
-        setState(() {
-          timeStampOffset = 0;
-        });
+        CurrentChat.of(context).timeStampOffset = 0;
       },
       onHorizontalDragCancel: () {
-        if (!this.mounted) return;
-
-        setState(() {
-          timeStampOffset = 0;
-        });
+        CurrentChat.of(context).timeStampOffset = 0;
       },
       child: Stack(
         alignment: AlignmentDirectional.bottomCenter,
@@ -375,7 +363,6 @@ class MessagesViewState extends State<MessagesView>
                                 padding: EdgeInsets.only(left: 5.0, right: 5.0),
                                 child: MessageWidget(
                                   key: Key(_messages[index].guid),
-                                  offset: timeStampOffset,
                                   message: _messages[index],
                                   olderMessage: olderMessage,
                                   newerMessage: newerMessage,
@@ -385,6 +372,7 @@ class MessagesViewState extends State<MessagesView>
                                           _messages[index].guid,
                                   showHero: index == 0 &&
                                       _messages[index].originalROWID == null,
+                                  onUpdate: (event) => onUpdateMessage(event),
                                 ),
                               ),
                             ),

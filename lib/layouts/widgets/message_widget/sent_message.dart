@@ -196,7 +196,6 @@ class SentMessageHelper {
 }
 
 class SentMessage extends StatefulWidget {
-  final double offset;
   final bool showTail;
   final Message message;
   final Message olderMessage;
@@ -218,7 +217,6 @@ class SentMessage extends StatefulWidget {
     @required this.showHero,
     @required this.showDeliveredReceipt,
     @required this.shouldFadeIn,
-    @required this.offset,
 
     // Sub-widgets
     @required this.stickersWidget,
@@ -350,7 +348,6 @@ class _SentMessageState extends State<SentMessage>
         ),
         MessageTimeStamp(
           message: widget.message,
-          offset: widget.offset,
         )
       ],
     );

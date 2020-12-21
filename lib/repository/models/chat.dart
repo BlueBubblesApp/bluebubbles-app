@@ -328,7 +328,7 @@ class Chat {
 
     // If the message was saved correctly, update this chat's latestMessage info,
     // but only if the incoming message's date is newer
-    if (newMessage.id != null) {
+    if (newMessage.id != null && changeUnreadStatus) {
       if (this.latestMessageDate == null) {
         isNewer = true;
       } else if (this.latestMessageDate.millisecondsSinceEpoch <
@@ -337,7 +337,7 @@ class Chat {
       }
     }
 
-    if (isNewer) {
+    if (isNewer && changeUnreadStatus) {
       this.latestMessageText = await MessageHelper.getNotificationText(message);
       this.latestMessageDate = message.dateCreated;
     }
@@ -371,12 +371,14 @@ class Chat {
       }
     }
 
-    // Update the chat position
-    ChatBloc().updateChatPosition(this);
+    if (changeUnreadStatus) {
+      // Update the chat position
+      ChatBloc().updateChatPosition(this);
+    }
 
     // If the message is for adding or removing participants,
     // we need to ensure that all of the chat participants are correct by syncing with the server
-    if (isParticipantEvent(message)) {
+    if (isParticipantEvent(message) && changeUnreadStatus) {
       serverSyncParticipants();
     }
 

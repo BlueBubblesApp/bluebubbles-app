@@ -48,15 +48,15 @@ class MessageHelper {
 
     // Iterate over each message to parse it
     for (dynamic item in messages) {
-      if (onProgress != null) {
-        onProgress(_messages.length, messages.length);
-      }
-  
+      // if (onProgress != null) {
+      //   onProgress(_messages.length, messages.length);
+      // }
+
       // Pull the chats out of the message, if there isnt a default
       Chat msgChat = chat;
       if (msgChat == null) {
         List<Chat> msgChats = parseChats(item);
-        msgChat = msgChats.length > 0 ? msgChats[0] : null;
+        msgChat = msgChats.length > 0 ? msgChats.first : null;
 
         // If there is a cached chat, get it. Otherwise, save the new one
         if (msgChat != null && chats.containsKey(msgChat.guid)) {
@@ -97,18 +97,20 @@ class MessageHelper {
       _messages.add(message);
     }
 
-    notificationMessages.forEach((message, value) async {
-      Chat msgChat = chats[value];
+    if (notifyForNewMessage && notifyMessageManager) {
+      notificationMessages.forEach((message, value) async {
+        Chat msgChat = chats[value];
 
-      if (notifyForNewMessage) {
-        await MessageHelper.handleNotification(message, msgChat, force: true);
-      }
+        if (notifyForNewMessage) {
+          await MessageHelper.handleNotification(message, msgChat, force: true);
+        }
 
-      // Tell all listeners that we have a new message, and save the message
-      if (notifyMessageManager) {
-        NewMessageManager().addMessage(msgChat, message);
-      }
-    });
+        // Tell all listeners that we have a new message, and save the message
+        if (notifyMessageManager) {
+          NewMessageManager().addMessage(msgChat, message);
+        }
+      });
+    }
 
     // Return all the synced messages
     return _messages;

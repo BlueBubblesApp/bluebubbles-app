@@ -13,7 +13,6 @@ import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/material.dart';
 
 class ReceivedMessage extends StatefulWidget {
-  final double offset;
   final bool showTail;
   final Message message;
   final Message olderMessage;
@@ -39,7 +38,6 @@ class ReceivedMessage extends StatefulWidget {
     @required this.attachmentsWidget,
     @required this.reactionsWidget,
     @required this.urlPreviewWidget,
-    this.offset,
     this.isGroup = false,
   }) : super(key: key);
 
@@ -280,7 +278,6 @@ class _ReceivedMessageState extends State<ReceivedMessage>
           ),
           MessageTimeStamp(
             message: widget.message,
-            offset: widget.offset,
           )
         ],
       ),

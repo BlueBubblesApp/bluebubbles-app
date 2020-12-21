@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:bluebubbles/layouts/conversation_view/text_field/blue_bubbles_text_field.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -15,22 +16,43 @@ class CameraWidget extends StatefulWidget {
   _CameraWidgetState createState() => _CameraWidgetState();
 }
 
-class _CameraWidgetState extends State<CameraWidget> {
+class _CameraWidgetState extends State<CameraWidget>
+    with WidgetsBindingObserver {
+  CameraController controller;
+
   @override
   void initState() {
     super.initState();
     initCameras();
+
+    // Bind the lifecycle events
+    WidgetsBinding.instance.addObserver(this);
   }
 
   Future<void> initCameras() async {
     if (BlueBubblesTextField.of(context) == null) return;
     await BlueBubblesTextField.of(context).initializeCameraController();
+    controller = BlueBubblesTextField.of(context).cameraController;
     if (this.mounted) setState(() {});
+  }
+
+  /// Called when the app is either closed or opened or paused
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Call the [LifeCycleManager] events based on the [state]
+    if (state == AppLifecycleState.paused) {
+      controller.dispose();
+    } else if (state == AppLifecycleState.resumed) {
+      initCameras();
+    }
   }
 
   @override
   void dispose() {
-    BlueBubblesTextField.of(context).cameraController?.dispose();
+    if (controller != null) {
+      debugPrint("Disposing of camera!");
+      controller?.dispose();
+    }
     super.dispose();
   }
 
@@ -85,7 +107,8 @@ class _CameraWidgetState extends State<CameraWidget> {
           ),
           Padding(
             padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context).size.height / 30),
+              bottom: MediaQuery.of(context).size.height / 30,
+            ),
             child: FlatButton(
               color: Colors.transparent,
               onPressed: () async {
