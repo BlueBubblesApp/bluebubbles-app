@@ -103,9 +103,7 @@ class _ThemePanelState extends State<ThemePanel> {
           ),
         ),
         body: CustomScrollView(
-          physics: AlwaysScrollableScrollPhysics(
-            parent: CustomBouncingScrollPhysics(),
-          ),
+          physics: ThemeSwitcher.getScrollPhysics(),
           slivers: <Widget>[
             SliverList(
               delegate: SliverChildListDelegate(

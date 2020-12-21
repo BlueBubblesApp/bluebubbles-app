@@ -4,6 +4,7 @@ import 'dart:ui';
 
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
+import 'package:bluebubbles/helpers/contstants.dart';
 import 'package:bluebubbles/helpers/reaction.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -14,6 +15,7 @@ import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scrol
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:clipboard/clipboard.dart';
@@ -163,10 +165,17 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
                 onTap: () {
                   Navigator.of(context).pop();
                 },
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
-                  child: Container(
-                    color: oledDarkTheme.accentColor.withOpacity(0.3),
+                child: ThemeSwitcher(
+                  iOSSkin: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
+                    child: Container(
+                      color: oledDarkTheme.accentColor.withOpacity(0.3),
+                    ),
+                  ),
+                  materialSkin: Container(
+                    width: MediaQuery.of(context).size.width,
+                    height: MediaQuery.of(context).size.height,
+                    color: Colors.transparent,
                   ),
                 ),
               ),
@@ -265,7 +274,8 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
             padding: const EdgeInsets.all(5),
             height: menuHeight,
             decoration: BoxDecoration(
-              color: Theme.of(context).accentColor.withAlpha(150),
+              color: Theme.of(context).accentColor.withAlpha(
+                  SettingsManager().settings.skin == Skins.IOS ? 150 : 255),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Row(
@@ -321,7 +331,8 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
         child: Container(
-          color: Theme.of(context).accentColor.withAlpha(150),
+          color: Theme.of(context).accentColor.withAlpha(
+              SettingsManager().settings.skin == Skins.IOS ? 150 : 255),
           width: maxMenuWidth,
           child: Column(
             mainAxisSize: MainAxisSize.min,

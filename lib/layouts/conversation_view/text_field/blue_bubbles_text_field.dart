@@ -174,10 +174,9 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                   style: Theme.of(context).textTheme.subtitle1),
               Container(height: 10.0),
               AudioPlayerWiget(
-                key: new Key("AudioMessage-${file.length().toString()}"),
-                file: file,
-                context: originalContext
-              )
+                  key: new Key("AudioMessage-${file.length().toString()}"),
+                  file: file,
+                  context: originalContext)
             ],
           ),
           actions: <Widget>[
@@ -186,7 +185,9 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                     style: Theme.of(context).textTheme.subtitle1),
                 onPressed: () {
                   // Dispose of the audio controller
-                  CurrentChat.of(originalContext)?.audioPlayers?.removeWhere((key, _) => key == file.path);
+                  CurrentChat.of(originalContext)
+                      ?.audioPlayers
+                      ?.removeWhere((key, _) => key == file.path);
 
                   // Delete the file
                   file.delete();
@@ -203,7 +204,9 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                 widget.onSend([file], "");
 
                 // Disposte of the audio controller
-                CurrentChat.of(originalContext)?.audioPlayers?.removeWhere((key, _) => key == file.path);
+                CurrentChat.of(originalContext)
+                    ?.audioPlayers
+                    ?.removeWhere((key, _) => key == file.path);
 
                 // Remove the OG alert dialog
                 Navigator.of(originalContext).pop();
@@ -432,6 +435,12 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                     ),
                     hintText: "BlueBubbles",
                     hintStyle: Theme.of(context).textTheme.subtitle1,
+                    contentPadding: EdgeInsets.only(
+                      left: 10,
+                      top: 15,
+                      right: 40,
+                      bottom: 10,
+                    ),
                   ),
                   keyboardType: TextInputType.multiline,
                   maxLines: 14,

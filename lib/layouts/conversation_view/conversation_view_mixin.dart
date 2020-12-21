@@ -4,6 +4,7 @@ import 'package:assorted_layout_widgets/assorted_layout_widgets.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/contstants.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/socket_singletons.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_details/conversation_details.dart';
@@ -204,10 +205,18 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
 
   Widget buildConversationViewHeader() {
     if (SettingsManager().settings.skin == Skins.Material) {
+      Color backgroundColor = Theme.of(context).backgroundColor;
+      Color fontColor = Theme.of(context).textTheme.headline1.color;
+      if (chat.participants.length == 1 &&
+          SettingsManager().settings.colorfulBubbles) {
+        backgroundColor =
+            toColorGradient(chat.participants.first.address).first;
+        fontColor = darken(backgroundColor, 0.35);
+      }
       return AppBar(
         title: Text(
           chat.title,
-          style: Theme.of(context).textTheme.headline1,
+          style: Theme.of(context).textTheme.headline1.apply(color: fontColor),
         ),
         bottom: PreferredSize(
           child: Container(
@@ -216,8 +225,9 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
           ),
           preferredSize: Size.fromHeight(0.5),
         ),
-        backgroundColor: Theme.of(context).backgroundColor,
+        backgroundColor: backgroundColor,
         actionsIconTheme: IconThemeData(color: Theme.of(context).primaryColor),
+        iconTheme: IconThemeData(color: Theme.of(context).primaryColor),
         actions: [
           Cupertino.Padding(
             padding: const EdgeInsets.only(right: 8.0),

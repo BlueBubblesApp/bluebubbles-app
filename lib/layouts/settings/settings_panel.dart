@@ -115,9 +115,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
           ),
         ),
         body: CustomScrollView(
-          physics: AlwaysScrollableScrollPhysics(
-            parent: CustomBouncingScrollPhysics(),
-          ),
+          physics: ThemeSwitcher.getScrollPhysics(),
           slivers: <Widget>[
             SliverList(
               delegate: SliverChildListDelegate(

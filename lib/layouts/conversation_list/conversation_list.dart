@@ -207,17 +207,24 @@ class _ConversationListState extends State<ConversationList> {
               ),
             ];
           },
-          child: Container(
-            width: 20,
-            height: 20,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(40),
-              color: Theme.of(context).accentColor,
+          child: ThemeSwitcher(
+            iOSSkin: Container(
+              width: 20,
+              height: 20,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(40),
+                color: Theme.of(context).accentColor,
+              ),
+              child: Icon(
+                Icons.more_horiz,
+                color: Theme.of(context).primaryColor,
+                size: 15,
+              ),
             ),
-            child: Icon(
-              Icons.more_horiz,
-              color: Theme.of(context).primaryColor,
-              size: 15,
+            materialSkin: Icon(
+              Icons.more_vert,
+              color: Theme.of(context).textTheme.subtitle1.color,
+              size: 25,
             ),
           ),
         )
