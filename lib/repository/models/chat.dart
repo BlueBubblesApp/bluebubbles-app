@@ -309,7 +309,7 @@ class Chat {
   }
 
   Future<Chat> addMessage(Message message,
-      {bool changeUnreadStatus: true}) async {
+      {bool changeUnreadStatus: true, bool checkForMessageText = true}) async {
     final Database db = await DBProvider.db.database;
 
     // Save the message
@@ -328,7 +328,7 @@ class Chat {
 
     // If the message was saved correctly, update this chat's latestMessage info,
     // but only if the incoming message's date is newer
-    if (newMessage.id != null && changeUnreadStatus) {
+    if (newMessage.id != null && checkForMessageText) {
       if (this.latestMessageDate == null) {
         isNewer = true;
       } else if (this.latestMessageDate.millisecondsSinceEpoch <
@@ -337,7 +337,7 @@ class Chat {
       }
     }
 
-    if (isNewer && changeUnreadStatus) {
+    if (isNewer && checkForMessageText) {
       this.latestMessageText = await MessageHelper.getNotificationText(message);
       this.latestMessageDate = message.dateCreated;
     }
@@ -361,7 +361,10 @@ class Chat {
     }
 
     // If the incoming message was newer than the "last" one, set the unread status accordingly
-    if (changeUnreadStatus && isNewer && existing == null) {
+    if (checkForMessageText &&
+        changeUnreadStatus &&
+        isNewer &&
+        existing == null) {
       // If the message is from me, mark it unread
       // If the message is not from the same chat as the current chat, mark unread
       if (message.isFromMe) {
@@ -371,14 +374,14 @@ class Chat {
       }
     }
 
-    if (changeUnreadStatus) {
+    if (checkForMessageText) {
       // Update the chat position
       ChatBloc().updateChatPosition(this);
     }
 
     // If the message is for adding or removing participants,
     // we need to ensure that all of the chat participants are correct by syncing with the server
-    if (isParticipantEvent(message) && changeUnreadStatus) {
+    if (isParticipantEvent(message) && checkForMessageText) {
       serverSyncParticipants();
     }
 
