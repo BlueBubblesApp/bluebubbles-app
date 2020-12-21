@@ -6,6 +6,7 @@ import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
+import 'package:bluebubbles/layouts/settings/server_management_panel.dart';
 import 'package:bluebubbles/managers/alarm_manager.dart';
 import 'package:bluebubbles/managers/incoming_queue.dart';
 import 'package:bluebubbles/managers/navigator_manager.dart';
@@ -102,6 +103,13 @@ class MethodChannelInterface {
       case "ChatOpen":
         openChat(call.arguments);
 
+        return new Future.value("");
+      case "socket-error-open":
+        NavigatorManager().navigatorKey.currentState.push(
+              ThemeSwitcher.buildPageRoute(
+                builder: (context) => ServerManagementPanel(),
+              ),
+            );
         return new Future.value("");
       case "reply":
         // Find the chat to reply to
