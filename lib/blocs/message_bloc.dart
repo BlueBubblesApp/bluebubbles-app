@@ -239,7 +239,9 @@ class MessageBloc {
 
             messages = await MessageHelper.bulkAddMessages(
                 _currentChat, _messages,
-                notifyMessageManager: false, notifyForNewMessage: false);
+                notifyMessageManager: false,
+                notifyForNewMessage: false,
+                checkForLatestMessageText: false);
 
             // If the handle is empty, load it
             for (Message msg in messages) {

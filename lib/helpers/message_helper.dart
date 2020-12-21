@@ -30,6 +30,7 @@ class MessageHelper {
       Chat chat, List<dynamic> messages,
       {bool notifyForNewMessage = false,
       bool notifyMessageManager = true,
+      bool checkForLatestMessageText = true,
       Function(int progress, int length) onProgress}) async {
     bool limit = messages.length > 20;
 
@@ -72,8 +73,11 @@ class MessageHelper {
 
       Message message = Message.fromMap(item);
       Message existing = await Message.findOne({"guid": message.guid});
-      await msgChat.addMessage(message,
-          changeUnreadStatus: notifyForNewMessage);
+      await msgChat.addMessage(
+        message,
+        changeUnreadStatus: notifyForNewMessage,
+        checkForMessageText: checkForLatestMessageText,
+      );
       if (existing == null) {
         if (limit) {
           if (!notificationMessages.containsValue(msgChat.guid)) {
