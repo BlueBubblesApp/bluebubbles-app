@@ -29,3 +29,4 @@ Below are the last few BlueBubbles App release changelogs
 - Socket Error notification changes
   - Adds socket error notification channel so that you can choose to disable the notification
   - Adds ability to click the notification to take you directly to the server management page of the app to restart the server
+- Fixes issues with settings panel not properly reflecting the current settings
