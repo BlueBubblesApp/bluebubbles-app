@@ -45,6 +45,19 @@ class CurrentChat {
 
   Map<String, List<Attachment>> messageAttachments = {};
 
+  double _timeStampOffset = 0.0;
+
+  StreamController<double> timeStampOffsetStream =
+      StreamController<double>.broadcast();
+
+  double get timeStampOffset => _timeStampOffset;
+  set timeStampOffset(double value) {
+    if (_timeStampOffset == value) return;
+    _timeStampOffset = value;
+    if (!timeStampOffsetStream.isClosed)
+      timeStampOffsetStream.sink.add(_timeStampOffset);
+  }
+
   CurrentChat(this.chat);
 
   factory CurrentChat.getCurrentChat(Chat chat) {
@@ -91,6 +104,8 @@ class CurrentChat {
     sentMessages = [];
     entry = null;
     isAlive = true;
+    _timeStampOffset = 0;
+    timeStampOffsetStream = StreamController<double>.broadcast();
     // showTypingIndicator = false;
     // indicatorHideTimer = null;
     // checkTypingIndicator();
@@ -239,7 +254,9 @@ class CurrentChat {
         element.dispose();
       });
     }
+    if (!timeStampOffsetStream.isClosed) timeStampOffsetStream.close();
 
+    _timeStampOffset = 0;
     imageData = {};
     currentPlayingVideo = {};
     audioPlayers = {};

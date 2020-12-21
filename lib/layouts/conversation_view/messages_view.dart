@@ -43,7 +43,6 @@ class MessagesViewState extends State<MessagesView>
   GlobalKey<SliverAnimatedListState> _listKey;
   final Duration animationDuration = Duration(milliseconds: 400);
   bool initializedList = false;
-  double timeStampOffset = 0;
   ScrollController scrollController = new ScrollController();
   List<int> loadedPages = [];
   CurrentChat currentChat;
@@ -108,7 +107,6 @@ class MessagesViewState extends State<MessagesView>
 
     if (_messages.isEmpty) {
       widget.messageBloc.getMessages();
-      if (this.mounted) setState(() {});
     }
   }
 
@@ -182,10 +180,6 @@ class MessagesViewState extends State<MessagesView>
         Future.delayed(SendWidget.SEND_DURATION * 2, () {
           currentChat.sentMessages
               .removeWhere((element) => element.guid == event.message.guid);
-
-          if (_listKey?.currentState != null && _listKey.currentState.mounted) {
-            _listKey.currentState.setState(() {});
-          }
         });
 
         if (context != null)
@@ -233,10 +227,32 @@ class MessagesViewState extends State<MessagesView>
         }
       }
     } else {
+      int originalMessageLength = _messages.length;
       _messages = event.messages;
       _messages
           .forEach((message) => currentChat.getAttachmentsForMessage(message));
-      _listKey = GlobalKey<SliverAnimatedListState>();
+      if (_listKey == null) _listKey = GlobalKey<SliverAnimatedListState>();
+
+      if (originalMessageLength < _messages.length) {
+        for (int i = originalMessageLength; i < _messages.length; i++) {
+          if (_listKey != null && _listKey.currentState != null)
+            _listKey.currentState
+                .insertItem(i, duration: Duration(milliseconds: 0));
+        }
+      } else if (originalMessageLength > _messages.length) {
+        for (int i = originalMessageLength; i >= _messages.length; i--) {
+          if (_listKey != null && _listKey.currentState != null) {
+            try {
+              _listKey.currentState.removeItem(
+                  i, (context, animation) => Container(),
+                  duration: Duration(milliseconds: 0));
+            } catch (ex) {
+              debugPrint("Error removing item animation");
+              debugPrint(ex.toString());
+            }
+          }
+        }
+      }
     }
   }
 
@@ -271,25 +287,13 @@ class MessagesViewState extends State<MessagesView>
       behavior: HitTestBehavior.deferToChild,
       onHorizontalDragStart: (details) {},
       onHorizontalDragUpdate: (details) {
-        if (!this.mounted) return;
-
-        setState(() {
-          timeStampOffset += details.delta.dx * 0.3;
-        });
+        CurrentChat.of(context).timeStampOffset += details.delta.dx * 0.3;
       },
       onHorizontalDragEnd: (details) {
-        if (!this.mounted) return;
-
-        setState(() {
-          timeStampOffset = 0;
-        });
+        CurrentChat.of(context).timeStampOffset = 0;
       },
       onHorizontalDragCancel: () {
-        if (!this.mounted) return;
-
-        setState(() {
-          timeStampOffset = 0;
-        });
+        CurrentChat.of(context).timeStampOffset = 0;
       },
       child: Stack(
         alignment: AlignmentDirectional.bottomCenter,
@@ -300,11 +304,6 @@ class MessagesViewState extends State<MessagesView>
             physics: AlwaysScrollableScrollPhysics(
                 parent: CustomBouncingScrollPhysics()),
             slivers: <Widget>[
-              // SliverToBoxAdapter(
-              //   child: TypingIndicator(
-              //     visible: currentChat.showTypingIndicator,
-              //   ),
-              // ),
               _listKey != null
                   ? SliverAnimatedList(
                       initialItemCount: _messages.length + 1,
@@ -356,7 +355,6 @@ class MessagesViewState extends State<MessagesView>
                                 padding: EdgeInsets.only(left: 5.0, right: 5.0),
                                 child: MessageWidget(
                                   key: Key(_messages[index].guid),
-                                  offset: timeStampOffset,
                                   message: _messages[index],
                                   olderMessage: olderMessage,
                                   newerMessage: newerMessage,

@@ -30,7 +30,6 @@ class MessageWidget extends StatefulWidget {
     this.showHandle,
     this.isFirstSentMessage,
     this.showHero,
-    this.offset,
     this.onUpdate,
   }) : super(key: key);
 
@@ -40,7 +39,6 @@ class MessageWidget extends StatefulWidget {
   final bool showHandle;
   final bool isFirstSentMessage;
   final bool showHero;
-  final double offset;
   final Message Function(NewMessageEvent event) onUpdate;
 
   @override
@@ -287,7 +285,6 @@ class _MessageState extends State<MessageWidget>
     Widget message;
     if (_message.isFromMe) {
       message = SentMessage(
-        offset: widget.offset,
         showTail: showTail,
         olderMessage: widget.olderMessage,
         message: _message,
@@ -301,7 +298,6 @@ class _MessageState extends State<MessageWidget>
       );
     } else {
       message = ReceivedMessage(
-        offset: widget.offset,
         showTail: showTail,
         olderMessage: widget.olderMessage,
         message: _message,
