@@ -165,17 +165,10 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
                 onTap: () {
                   Navigator.of(context).pop();
                 },
-                child: ThemeSwitcher(
-                  iOSSkin: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
-                    child: Container(
-                      color: oledDarkTheme.accentColor.withOpacity(0.3),
-                    ),
-                  ),
-                  materialSkin: Container(
-                    width: MediaQuery.of(context).size.width,
-                    height: MediaQuery.of(context).size.height,
-                    color: Colors.transparent,
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
+                  child: Container(
+                    color: oledDarkTheme.accentColor.withOpacity(0.3),
                   ),
                 ),
               ),
@@ -274,8 +267,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
             padding: const EdgeInsets.all(5),
             height: menuHeight,
             decoration: BoxDecoration(
-              color: Theme.of(context).accentColor.withAlpha(
-                  SettingsManager().settings.skin == Skins.IOS ? 150 : 255),
+              color: Theme.of(context).accentColor.withAlpha(150),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Row(
@@ -331,8 +323,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
         child: Container(
-          color: Theme.of(context).accentColor.withAlpha(
-              SettingsManager().settings.skin == Skins.IOS ? 150 : 255),
+          color: Theme.of(context).accentColor.withAlpha(150),
           width: maxMenuWidth,
           child: Column(
             mainAxisSize: MainAxisSize.min,

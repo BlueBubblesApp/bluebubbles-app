@@ -42,37 +42,37 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
       onLongPress: () async {
         HapticFeedback.lightImpact();
         getOffset();
-        if (SettingsManager().settings.skin == Skins.Material) {
-          showMenu(
-            context: context,
-            position: RelativeRect.fromSize(
-              Rect.fromCenter(
-                center: Offset(0, childOffset.dy),
-                width: childSize.width,
-                height: childSize.height,
-              ),
-              Size(0, 0),
-            ),
-            color: Theme.of(context).accentColor,
-            items: <PopupMenuItem>[
-              PopupMenuItem(
-                value: 0,
-                child: Text(
-                  'Archived',
-                  style: Theme.of(context).textTheme.bodyText1,
-                ),
-              ),
-              PopupMenuItem(
-                value: 1,
-                child: Text(
-                  'Settings',
-                  style: Theme.of(context).textTheme.bodyText1,
-                ),
-              ),
-            ],
-          );
-          return;
-        }
+        // if (SettingsManager().settings.skin == Skins.Material) {
+        //   showMenu(
+        //     context: context,
+        //     position: RelativeRect.fromSize(
+        //       Rect.fromCenter(
+        //         center: Offset(0, childOffset.dy),
+        //         width: childSize.width,
+        //         height: childSize.height,
+        //       ),
+        //       Size(0, 0),
+        //     ),
+        //     color: Theme.of(context).accentColor,
+        //     items: <PopupMenuItem>[
+        //       PopupMenuItem(
+        //         value: 0,
+        //         child: Text(
+        //           'Archived',
+        //           style: Theme.of(context).textTheme.bodyText1,
+        //         ),
+        //       ),
+        //       PopupMenuItem(
+        //         value: 1,
+        //         child: Text(
+        //           'Settings',
+        //           style: Theme.of(context).textTheme.bodyText1,
+        //         ),
+        //       ),
+        //     ],
+        //   );
+        //   return;
+        // }
         CurrentChat currentChat = CurrentChat.of(context);
         if (this.mounted) {
           setState(() {
