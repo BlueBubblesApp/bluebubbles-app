@@ -273,7 +273,7 @@ public class SocketIO {
                     @RequiresApi(api = Build.VERSION_CODES.O)
                     @Override
                     public void call(Object... args) {
-                        Object[] array = new Object[1];
+                        final Object[] array = new Object[1];
                         if(args[0] == null) return;
                         final String dataRaw =  args[0].toString();
                         final HashMap<String, String> data = new Gson().fromJson(dataRaw, new TypeToken<HashMap<String, String>>(){}.getType());
@@ -304,7 +304,7 @@ public class SocketIO {
                         final byte[] decoded = Base64.getDecoder().decode(data.get("data"));
                         response.put("byteLength", decoded.length);
                         array[0] = new Gson().toJson(response);
-                        listener.call(array);
+
                         Runnable r = new Runnable()
                         {
                             @Override
@@ -318,8 +318,12 @@ public class SocketIO {
                                         outputFile.createNewFile();
                                     }
                                     Files.write(Paths.get(path), decoded, StandardOpenOption.APPEND);
+
+                                    listener.call(array);
                                 } catch (IOException e) {
                                     e.printStackTrace();
+                                    response.put("error", e.getMessage());
+                                    listener.call(array);
                                 }
                             }
                         };
