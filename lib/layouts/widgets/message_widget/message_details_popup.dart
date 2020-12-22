@@ -230,8 +230,8 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
   Widget buildReactionMenu() {
     Size size = MediaQuery.of(context).size;
 
-    double reactionIconSize = ((MessageWidgetMixin.MAX_SIZE * size.width) /
-        (ReactionTypes.toList().length).toDouble());
+    double reactionIconSize =
+        ((7 / 10 * size.width) / (ReactionTypes.toList().length).toDouble());
     double maxMenuWidth =
         (ReactionTypes.toList().length * reactionIconSize).toDouble();
     double menuHeight = (reactionIconSize).toDouble();
