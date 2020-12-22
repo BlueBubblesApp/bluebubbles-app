@@ -12,6 +12,7 @@ import com.bluebubbles.messaging.method_call_handler.handlers.AlarmScheduler;
 import com.bluebubbles.messaging.method_call_handler.handlers.ClearChatNotifs;
 import com.bluebubbles.messaging.method_call_handler.handlers.ClearSocketIssue;
 import com.bluebubbles.messaging.method_call_handler.handlers.CreateNotificationChannel;
+import com.bluebubbles.messaging.method_call_handler.handlers.FetchMessagesHandler;
 import com.bluebubbles.messaging.method_call_handler.handlers.FirebaseAuth;
 import com.bluebubbles.messaging.method_call_handler.handlers.GetLastLocation;
 import com.bluebubbles.messaging.method_call_handler.handlers.GetServerUrl;
@@ -41,6 +42,8 @@ public class MethodCallHandler {
                 worker.destroyHeadlessThread();
             }
             result.success("");
+        } else if(call.method.equals(FetchMessagesHandler.TAG)) {
+            new FetchMessagesHandler(context, call, result).Handle();
         } else if (call.method.equals(CreateNotificationChannel.TAG)) {
             new CreateNotificationChannel(context, call, result).Handle();
         } else if (call.method.equals(NewMessageNotification.TAG)) {

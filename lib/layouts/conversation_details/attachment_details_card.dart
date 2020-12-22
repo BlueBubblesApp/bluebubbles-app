@@ -79,7 +79,7 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
     File file = new File(
       "${SettingsManager().appDocDir.path}/attachments/${attachment.guid}/${attachment.transferName}",
     );
-    
+
     if (!file.existsSync()) {
       return Stack(
         alignment: Alignment.center,
@@ -172,16 +172,15 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
         children: <Widget>[
           SizedBox(
             child: Hero(
-              tag: widget.attachment.guid,
-              child: (previewImage != null)
-                ? Image.memory(
-                    previewImage,
-                    fit: BoxFit.cover,
-                    filterQuality: FilterQuality.low,
-                    alignment: Alignment.center,
-                  )
-                : Container()
-            ),
+                tag: widget.attachment.guid,
+                child: (previewImage != null)
+                    ? Image.memory(
+                        previewImage,
+                        fit: BoxFit.cover,
+                        filterQuality: FilterQuality.low,
+                        alignment: Alignment.center,
+                      )
+                    : Container()),
             width: MediaQuery.of(context).size.width / 2,
             height: MediaQuery.of(context).size.width / 2,
           ),
@@ -194,7 +193,6 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
                   CupertinoPageRoute(
                     builder: (context) => AttachmentFullscreenViewer(
                       currentChat: currentChat,
-                      allAttachments: widget.allAttachments,
                       attachment: widget.attachment,
                       showInteractions: true,
                     ),
@@ -234,7 +232,6 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
                   CupertinoPageRoute(
                     builder: (context) => AttachmentFullscreenViewer(
                       currentChat: currentChat,
-                      allAttachments: widget.allAttachments,
                       attachment: widget.attachment,
                       showInteractions: true,
                     ),

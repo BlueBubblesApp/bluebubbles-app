@@ -274,6 +274,13 @@ class Attachment {
     return res[0]["count"];
   }
 
+  String getPath() {
+    String fileName = this.transferName;
+    String appDocPath = SettingsManager().appDocDir.path;
+    String pathName = "$appDocPath/attachments/${this.guid}/$fileName";
+    return pathName;
+  }
+
   Map<String, dynamic> toMap() => {
         "ROWID": id,
         "originalROWID": originalROWID,

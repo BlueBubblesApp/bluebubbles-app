@@ -542,7 +542,7 @@ class SocketManager {
 
   Future<Map<String, dynamic>> sendMessage(String event,
       Map<String, dynamic> message, Function(Map<String, dynamic>) cb,
-      {String reason, bool awaitResponse = true}) {
+      {String reason, bool awaitResponse = true, String path}) {
     Completer<Map<String, dynamic>> completer = Completer();
     int _processId = 0;
     Function socketCB = ([bool finishWithError = false]) {
@@ -557,22 +557,34 @@ class SocketManager {
         });
         if (awaitResponse) _manager.finishSocketProcess(_processId);
       } else {
-        _manager.socket.sendMessage(event, jsonEncode(message), (String data) {
-          Map<String, dynamic> response = jsonDecode(data);
-          if (response.containsKey('encrypted') && response['encrypted']) {
-            try {
-              response['data'] = jsonDecode(decryptAESCryptoJS(
-                  response['data'], SettingsManager().settings.guidAuthKey));
-            } catch (ex) {
-              response['data'] = decryptAESCryptoJS(
-                  response['data'], SettingsManager().settings.guidAuthKey);
+        if (path == null) {
+          _manager.socket.sendMessage(event, jsonEncode(message),
+              (String data) {
+            Map<String, dynamic> response = jsonDecode(data);
+            if (response.containsKey('encrypted') && response['encrypted']) {
+              try {
+                response['data'] = jsonDecode(decryptAESCryptoJS(
+                    response['data'], SettingsManager().settings.guidAuthKey));
+              } catch (ex) {
+                response['data'] = decryptAESCryptoJS(
+                    response['data'], SettingsManager().settings.guidAuthKey);
+              }
             }
-          }
 
-          cb(response);
-          completer.complete(response);
-          if (awaitResponse) _manager.finishSocketProcess(_processId);
-        });
+            cb(response);
+            completer.complete(response);
+            if (awaitResponse) _manager.finishSocketProcess(_processId);
+          });
+        } else {
+          _manager.socket.sendMessageWithoutReturn(event, jsonEncode(message),
+              path, SettingsManager().settings.guidAuthKey, (String data) {
+            debugPrint(data);
+            Map<String, dynamic> response = jsonDecode(data);
+            cb(response);
+            completer.complete(response);
+            if (awaitResponse) _manager.finishSocketProcess(_processId);
+          });
+        }
       }
     };
 
