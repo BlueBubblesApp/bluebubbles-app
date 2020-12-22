@@ -69,11 +69,9 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
 
           Attachment fakeAttachment = new Attachment(
               transferName: widget.file.path, mimeType: mimeType);
-          CurrentChat currentChat = CurrentChat.of(context);
           await Navigator.of(context).push(
             MaterialPageRoute(
               builder: (context) => AttachmentFullscreenViewer(
-                currentChat: currentChat,
                 attachment: fakeAttachment,
                 showInteractions: false,
               ),

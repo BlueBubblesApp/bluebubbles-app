@@ -53,6 +53,7 @@ public class MainActivity extends FlutterActivity {
     private String startingChat;
 
     public static int PICK_IMAGE = 1000;
+    public static int OPEN_CAMERA = 2000;
     public MethodChannel.Result result = null;
 
 
@@ -142,6 +143,13 @@ public class MainActivity extends FlutterActivity {
                 result.success(null);
             }
             result = null;
+        } else if(requestCode == OPEN_CAMERA) {
+            if(resultCode == RESULT_OK) {
+                result.success(null);
+            } else {
+                Log.d("OPEN_CAMERA", "Something went wrong");
+                result.success(null);
+            }
         }
     }
 

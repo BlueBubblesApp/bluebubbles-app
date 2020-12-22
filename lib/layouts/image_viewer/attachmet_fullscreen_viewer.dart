@@ -18,7 +18,7 @@ class AttachmentFullscreenViewer extends StatefulWidget {
     Key key,
     @required this.attachment,
     @required this.showInteractions,
-    @required this.currentChat,
+    this.currentChat,
   }) : super(key: key);
   final CurrentChat currentChat;
   final Attachment attachment;
@@ -57,38 +57,40 @@ class AttachmentFullscreenViewerState
     // If the allAttachments is not updated
     if (startingIndex == null) {
       // Then fetch all of them and try again
-      await widget.currentChat.updateChatAttachments();
+      await widget.currentChat?.updateChatAttachments();
       getStartingIndex();
     }
 
-    newMessageEventStream = NewMessageManager().stream.listen((event) async {
-      // We don't need to do anything if there isn't a new message
-      if (event.type != NewMessageType.ADD) return;
+    if (widget.currentChat != null)
+      newMessageEventStream = NewMessageManager().stream.listen((event) async {
+        // We don't need to do anything if there isn't a new message
+        if (event.type != NewMessageType.ADD) return;
 
-      // If the new message event isn't for this particular chat, don't do anything
-      if (event.chatGuid != widget.currentChat.chat.guid) return;
+        // If the new message event isn't for this particular chat, don't do anything
+        if (event.chatGuid != widget.currentChat.chat.guid) return;
 
-      List<Attachment> older = widget.currentChat.chatAttachments.sublist(0);
+        List<Attachment> older = widget.currentChat.chatAttachments.sublist(0);
 
-      // Update all of the attachments
-      await widget.currentChat.updateChatAttachments();
-      List<Attachment> newer = widget.currentChat.chatAttachments.sublist(0);
-      if (newer.length > older.length) {
-        debugPrint("Increasing currentIndex from " +
-            currentIndex.toString() +
-            " to " +
-            (newer.length - older.length + currentIndex).toString());
-        currentIndex += newer.length - older.length;
-        controller.animateToPage(currentIndex,
-            duration: Duration(milliseconds: 0), curve: Curves.easeIn);
-      }
-    });
+        // Update all of the attachments
+        await widget.currentChat.updateChatAttachments();
+        List<Attachment> newer = widget.currentChat.chatAttachments.sublist(0);
+        if (newer.length > older.length) {
+          debugPrint("Increasing currentIndex from " +
+              currentIndex.toString() +
+              " to " +
+              (newer.length - older.length + currentIndex).toString());
+          currentIndex += newer.length - older.length;
+          controller.animateToPage(currentIndex,
+              duration: Duration(milliseconds: 0), curve: Curves.easeIn);
+        }
+      });
 
     controller = new PageController(initialPage: startingIndex ?? 0);
     if (this.mounted) setState(() {});
   }
 
   void getStartingIndex() {
+    if (widget.currentChat == null) return;
     for (int i = 0; i < widget.currentChat.chatAttachments.length; i++) {
       if (widget.currentChat.chatAttachments[i].guid ==
           widget.attachment.guid) {
@@ -108,7 +110,7 @@ class AttachmentFullscreenViewerState
 
   @override
   void dispose() {
-    newMessageEventStream.cancel();
+    newMessageEventStream?.cancel();
     super.dispose();
   }
 
@@ -131,11 +133,12 @@ class AttachmentFullscreenViewerState
         body: controller != null
             ? PageView.builder(
                 physics: physics,
-                itemCount: widget.currentChat.chatAttachments.length,
+                itemCount: widget.currentChat?.chatAttachments?.length ?? 1,
                 itemBuilder: (BuildContext context, int index) {
                   debugPrint("Showing index: " + index.toString());
-                  Attachment attachment =
-                      widget.currentChat.chatAttachments[index];
+                  Attachment attachment = widget.currentChat != null
+                      ? widget.currentChat.chatAttachments[index]
+                      : widget.attachment;
                   String mimeType = attachment.mimeType;
                   mimeType = mimeType.substring(0, mimeType.indexOf("/"));
                   dynamic content = AttachmentHelper.getContent(attachment,
