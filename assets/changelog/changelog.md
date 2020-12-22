@@ -9,11 +9,13 @@ Below are the last few BlueBubbles App release changelogs
   - Scrolling up in the conversation list
   - Sending messages
   - Loading URL previews
+  - Downloading attachments
 - Adds ability to pick image from gallery when tapping "Pick File"
 - Adds tap to restart
 - Fixes contact card widget
 - Fixes attachment downloader when chat is open
 - Fixes crash when passwords containing "%" and "&" were used on the server
+- Fixes attachment fullscreen viewer showing wrong image
 - Adds better support for group events
   - You should now see "<Person 1> added <Person 2>" instead of "<Person 1> added someone to the conversation"
 - Fixes image loading page

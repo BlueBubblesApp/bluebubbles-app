@@ -74,6 +74,10 @@ class AttachmentFullscreenViewerState
       await widget.currentChat.updateChatAttachments();
       List<Attachment> newer = widget.currentChat.chatAttachments.sublist(0);
       if (newer.length > older.length) {
+        debugPrint("Increasing currentIndex from " +
+            currentIndex.toString() +
+            " to " +
+            (newer.length - older.length + currentIndex).toString());
         currentIndex += newer.length - older.length;
         controller.animateToPage(currentIndex,
             duration: Duration(milliseconds: 0), curve: Curves.easeIn);
