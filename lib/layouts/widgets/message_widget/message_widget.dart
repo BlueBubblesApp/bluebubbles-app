@@ -58,6 +58,7 @@ class _MessageState extends State<MessageWidget>
   CurrentChat currentChat;
   StreamSubscription<NewMessageEvent> subscription;
   Message _message;
+  Message _newerMessage;
 
   @override
   void initState() {
@@ -76,6 +77,7 @@ class _MessageState extends State<MessageWidget>
     if (handledInit) return;
     handledInit = true;
     _message = widget.message;
+    _newerMessage = widget.newerMessage;
 
     checkHandle();
     fetchAssociatedMessages();
@@ -105,7 +107,7 @@ class _MessageState extends State<MessageWidget>
       } else if (data.type == NewMessageType.UPDATE) {
         String oldGuid = data.event["oldGuid"];
         // If the guid does not match our current guid, then it's not meant for us
-        if (oldGuid != widget.message.guid) return;
+        if (oldGuid != _message.guid && oldGuid != _newerMessage.guid) return;
 
         // Tell the [MessagesView] to update with the new event, to ensure that things are done synchronously
         if (widget.onUpdate != null) {
@@ -113,7 +115,11 @@ class _MessageState extends State<MessageWidget>
           if (result != null) {
             if (this.mounted)
               setState(() {
-                _message = result;
+                if (_message.guid == oldGuid) {
+                  _message = result;
+                } else if (_newerMessage.guid == oldGuid) {
+                  _newerMessage = result;
+                }
               });
           }
         }
@@ -234,17 +240,16 @@ class _MessageState extends State<MessageWidget>
   Widget build(BuildContext context) {
     super.build(context);
 
-    if (widget.newerMessage != null) {
-      if (widget.newerMessage.isGroupEvent()) {
+    if (_newerMessage != null) {
+      if (_newerMessage.isGroupEvent()) {
         showTail = true;
       } else {
-        showTail =
-            withinTimeThreshold(_message, widget.newerMessage, threshold: 1) ||
-                !sameSender(_message, widget.newerMessage) ||
-                (_message.isFromMe &&
-                    widget.newerMessage.isFromMe &&
-                    _message.dateDelivered != null &&
-                    widget.newerMessage.dateDelivered == null);
+        showTail = withinTimeThreshold(_message, _newerMessage, threshold: 1) ||
+            !sameSender(_message, _newerMessage) ||
+            (_message.isFromMe &&
+                _newerMessage.isFromMe &&
+                _message.dateDelivered != null &&
+                _newerMessage.dateDelivered == null);
       }
     }
 
@@ -313,7 +318,7 @@ class _MessageState extends State<MessageWidget>
       children: [
         message,
         MessageTimeStampSeparator(
-          newerMessage: widget.newerMessage,
+          newerMessage: _newerMessage,
           message: _message,
         )
       ],

@@ -95,12 +95,20 @@ class AttachmentDownloader {
 
     _totalChunks = numOfChunks;
 
-    _cb = () async {
+    _cb = ([bool recheck = true]) async {
       stopwatch.stop();
       debugPrint(
           "Attachment downloaded in ${stopwatch.elapsedMilliseconds} ms");
 
       File file = new File(attachment.getPath());
+      if (!(await file.exists()) && recheck) {
+        return Future.delayed(Duration(milliseconds: 200), () {
+          _cb(false);
+        });
+      } else if (!recheck) {
+        _stream.sink.add(null);
+        return;
+      }
 
       // Finish the downloader
       SocketManager().finishDownloader(attachment.guid);

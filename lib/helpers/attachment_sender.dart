@@ -102,7 +102,7 @@ class AttachmentSender {
             : MessageError.SERVER_ERROR.code;
 
         await Message.replaceMessage(tempGuid, sentMessage);
-        NewMessageManager().addMessage(_chat, sentMessage, outgoing: true);
+        NewMessageManager().updateMessage(_chat, tempGuid, sentMessage);
         if (messageWithText != null) {
           tempGuid = messageWithText.guid;
           messageWithText.guid = messageWithText.guid
@@ -111,8 +111,8 @@ class AttachmentSender {
               ? MessageError.BAD_REQUEST.code
               : MessageError.SERVER_ERROR.code;
 
-          await Message.replaceMessage(tempGuid, sentMessage);
-          NewMessageManager().addMessage(_chat, sentMessage, outgoing: true);
+          await Message.replaceMessage(tempGuid, messageWithText);
+          NewMessageManager().updateMessage(_chat, tempGuid, messageWithText);
         }
         SocketManager().finishSender(_attachmentGuid);
         _stream.sink.addError("failed to send");
@@ -120,7 +120,6 @@ class AttachmentSender {
       }
     });
   }
-  //{"identifier":"160E8D64-0A22-400D-93BE-7D4C19346F1F","start":1048576,"chunkSize":524288,"compress":false}
 
   Future<void> send() async {
     _attachmentName = basename(_attachment.path);

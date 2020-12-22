@@ -128,8 +128,4 @@ dependencies {
     // Why won't it fucking compile
     implementation 'com.google.guava:guava:27.0.1-android'
 
-
-    // SocketIO
-    implementation 'io.socket:socket.io-client:1.0.0'
-
 }
