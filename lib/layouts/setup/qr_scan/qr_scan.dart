@@ -10,6 +10,7 @@ import 'package:bluebubbles/repository/models/fcm_data.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class QRScan extends StatefulWidget {
   QRScan({Key key, @required this.controller}) : super(key: key);
@@ -20,7 +21,6 @@ class QRScan extends StatefulWidget {
 }
 
 class _QRScanState extends State<QRScan> {
-
   Future<void> scanQRCode() async {
     var result;
     try {
@@ -35,7 +35,7 @@ class _QRScanState extends State<QRScan> {
       if (isNullOrEmpty(result)) {
         throw new Exception("No data was scanned! Please re-scan your QRCode!");
       }
-      
+
       result = jsonDecode(result);
     } catch (e) {
       showDialog(
@@ -90,85 +90,90 @@ class _QRScanState extends State<QRScan> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Theme.of(context).accentColor,
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20.0),
-              child: Text(
-                "BlueBubbles tries to make the setup process as easy as possible. We've created a QR code on your server that you can use to easily register this device with the server.",
-                style: Theme.of(context)
-                    .textTheme
-                    .bodyText1
-                    .apply(fontSizeFactor: 1.5),
-                textAlign: TextAlign.center,
-              ),
-            ),
-            Container(height: 20.0),
-            ClipOval(
-              child: Material(
-                color: Theme.of(context).primaryColor, // button color
-                child: InkWell(
-                  child: SizedBox(
-                    width: 60,
-                    height: 60,
-                    child: Icon(
-                      Icons.camera,
-                      color: Colors.white,
-                    ),
-                  ),
-                  onTap: scanQRCode,
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle(
+        systemNavigationBarColor: Theme.of(context).accentColor,
+      ),
+      child: Scaffold(
+        backgroundColor: Theme.of(context).accentColor,
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20.0),
+                child: Text(
+                  "BlueBubbles tries to make the setup process as easy as possible. We've created a QR code on your server that you can use to easily register this device with the server.",
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodyText1
+                      .apply(fontSizeFactor: 1.5),
+                  textAlign: TextAlign.center,
                 ),
               ),
-            ),
-            Container(height: 80.0),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20.0),
-              child: Text(
-                "Or alternatively... you can enter in your url here",
-                style: Theme.of(context)
-                    .textTheme
-                    .bodyText1
-                    .apply(fontSizeFactor: 1.15),
-                textAlign: TextAlign.center,
-              ),
-            ),
-            Padding(
-              padding: EdgeInsets.only(top: 15.0),
-              child: ClipOval(
+              Container(height: 20.0),
+              ClipOval(
                 child: Material(
-                  color: Theme.of(context).primaryColor,
+                  color: Theme.of(context).primaryColor, // button color
                   child: InkWell(
                     child: SizedBox(
                       width: 60,
                       height: 60,
                       child: Icon(
-                        Icons.input,
+                        Icons.camera,
                         color: Colors.white,
                       ),
                     ),
-                    onTap: () async {
-                      showDialog(
-                        context: context,
-                        builder: (context) => TextInputURL(
-                          onConnect: () {
-                            Navigator.of(context).pop();
-                            goToNextPage();
-                          },
-                          onClose: () {
-                            Navigator.of(context).pop();
-                          },
-                        ),
-                      );
-                    },
+                    onTap: scanQRCode,
                   ),
                 ),
               ),
-            )
-          ],
+              Container(height: 80.0),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20.0),
+                child: Text(
+                  "Or alternatively... you can enter in your url here",
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodyText1
+                      .apply(fontSizeFactor: 1.15),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              Padding(
+                padding: EdgeInsets.only(top: 15.0),
+                child: ClipOval(
+                  child: Material(
+                    color: Theme.of(context).primaryColor,
+                    child: InkWell(
+                      child: SizedBox(
+                        width: 60,
+                        height: 60,
+                        child: Icon(
+                          Icons.input,
+                          color: Colors.white,
+                        ),
+                      ),
+                      onTap: () async {
+                        showDialog(
+                          context: context,
+                          builder: (context) => TextInputURL(
+                            onConnect: () {
+                              Navigator.of(context).pop();
+                              goToNextPage();
+                            },
+                            onClose: () {
+                              Navigator.of(context).pop();
+                            },
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              )
+            ],
+          ),
         ),
       ),
     );

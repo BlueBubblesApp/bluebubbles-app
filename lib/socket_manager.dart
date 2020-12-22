@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
-import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/blocs/setup_bloc.dart';
@@ -371,6 +370,7 @@ class SocketManager {
     }
     _manager.socket = null;
     state = SocketState.DISCONNECTED;
+    NotificationManager().clearSocketWarning();
   }
 
   Future<void> authFCM({bool catchException = true, bool force = false}) async {
@@ -380,8 +380,9 @@ class SocketManager {
     } else if (token != null && !force) {
       debugPrint("already authorized fcm " + token);
       if (_manager.socket != null) {
+        String deviceName = await getDeviceName();
         _manager.sendMessage("add-fcm-device",
-            {"deviceId": token, "deviceName": "android-client"}, (data) {},
+            {"deviceId": token, "deviceName": deviceName}, (data) {},
             reason: "authfcm", awaitResponse: false);
       }
       return;
@@ -392,8 +393,9 @@ class SocketManager {
           .invokeMethod('auth', SettingsManager().fcmData.toMap());
       token = result;
       if (_manager.socket != null) {
+        String deviceName = await getDeviceName();
         _manager.sendMessage("add-fcm-device",
-            {"deviceId": token, "deviceName": "android-client"}, (data) {},
+            {"deviceId": token, "deviceName": deviceName}, (data) {},
             reason: "authfcm", awaitResponse: false);
         debugPrint(token);
       }
@@ -407,9 +409,9 @@ class SocketManager {
     }
   }
 
-  Future<void> getAttachments(String chatGuid, String messageGuid,
-      {Function cb}) {
-    Completer<void> completer = new Completer();
+  Future<List<dynamic>> getAttachments(String chatGuid, String messageGuid,
+      {Function(List<dynamic>) cb}) {
+    Completer<List<dynamic>> completer = new Completer();
 
     dynamic params = {
       'after': 1,
@@ -430,13 +432,14 @@ class SocketManager {
       dynamic json = jsonDecode(data);
       if (json["status"] != 200) return completer.completeError(json);
 
+      List<dynamic> output = [];
       if (json.containsKey("data") && json["data"].length > 0) {
-        await ActionHandler.handleMessage(json["data"][0], forceProcess: true);
+        output = json["data"];
       }
 
-      completer.complete();
+      completer.complete(output);
 
-      if (cb != null) cb(json);
+      if (cb != null) cb(output);
     });
 
     return completer.future;
@@ -539,7 +542,7 @@ class SocketManager {
 
   Future<Map<String, dynamic>> sendMessage(String event,
       Map<String, dynamic> message, Function(Map<String, dynamic>) cb,
-      {String reason, bool awaitResponse = true}) {
+      {String reason, bool awaitResponse = true, String path}) {
     Completer<Map<String, dynamic>> completer = Completer();
     int _processId = 0;
     Function socketCB = ([bool finishWithError = false]) {
@@ -554,22 +557,34 @@ class SocketManager {
         });
         if (awaitResponse) _manager.finishSocketProcess(_processId);
       } else {
-        _manager.socket.sendMessage(event, jsonEncode(message), (String data) {
-          Map<String, dynamic> response = jsonDecode(data);
-          if (response.containsKey('encrypted') && response['encrypted']) {
-            try {
-              response['data'] = jsonDecode(decryptAESCryptoJS(
-                  response['data'], SettingsManager().settings.guidAuthKey));
-            } catch (ex) {
-              response['data'] = decryptAESCryptoJS(
-                  response['data'], SettingsManager().settings.guidAuthKey);
+        if (path == null) {
+          _manager.socket.sendMessage(event, jsonEncode(message),
+              (String data) {
+            Map<String, dynamic> response = jsonDecode(data);
+            if (response.containsKey('encrypted') && response['encrypted']) {
+              try {
+                response['data'] = jsonDecode(decryptAESCryptoJS(
+                    response['data'], SettingsManager().settings.guidAuthKey));
+              } catch (ex) {
+                response['data'] = decryptAESCryptoJS(
+                    response['data'], SettingsManager().settings.guidAuthKey);
+              }
             }
-          }
 
-          cb(response);
-          completer.complete(response);
-          if (awaitResponse) _manager.finishSocketProcess(_processId);
-        });
+            cb(response);
+            completer.complete(response);
+            if (awaitResponse) _manager.finishSocketProcess(_processId);
+          });
+        } else {
+          _manager.socket.sendMessageWithoutReturn(event, jsonEncode(message),
+              path, SettingsManager().settings.guidAuthKey, (String data) {
+            debugPrint(data);
+            Map<String, dynamic> response = jsonDecode(data);
+            cb(response);
+            completer.complete(response);
+            if (awaitResponse) _manager.finishSocketProcess(_processId);
+          });
+        }
       }
     };
 

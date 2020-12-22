@@ -7,6 +7,7 @@ import 'package:bluebubbles/helpers/share.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
 
 class VideoViewer extends StatefulWidget {
@@ -104,135 +105,140 @@ class _VideoViewerState extends State<VideoViewer> {
         ),
       ]);
     }
-    return Scaffold(
-      backgroundColor: Theme.of(context).backgroundColor,
-      body: Stack(
-        alignment: Alignment.bottomCenter,
-        children: <Widget>[
-          GestureDetector(
-            behavior: HitTestBehavior.translucent,
-            onTap: () {
-              if (!this.mounted) return;
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle(
+        systemNavigationBarColor: Theme.of(context).backgroundColor,
+      ),
+      child: Scaffold(
+        backgroundColor: Theme.of(context).backgroundColor,
+        body: Stack(
+          alignment: Alignment.bottomCenter,
+          children: <Widget>[
+            GestureDetector(
+              behavior: HitTestBehavior.translucent,
+              onTap: () {
+                if (!this.mounted) return;
 
-              setState(() {
-                showPlayPauseOverlay = !showPlayPauseOverlay;
-                resetTimer();
-                setTimer();
-              });
-            },
-            child: Stack(
-              alignment: Alignment.center,
-              children: <Widget>[
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[
-                    Container(
-                      constraints: BoxConstraints(
-                        maxHeight: MediaQuery.of(context).size.height,
-                        maxWidth: MediaQuery.of(context).size.width,
-                      ),
-                      child: AspectRatio(
-                        aspectRatio: controller.value.aspectRatio,
-                        child: Stack(
-                          children: <Widget>[
-                            VideoPlayer(controller),
-                          ],
+                setState(() {
+                  showPlayPauseOverlay = !showPlayPauseOverlay;
+                  resetTimer();
+                  setTimer();
+                });
+              },
+              child: Stack(
+                alignment: Alignment.center,
+                children: <Widget>[
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      Container(
+                        constraints: BoxConstraints(
+                          maxHeight: MediaQuery.of(context).size.height,
+                          maxWidth: MediaQuery.of(context).size.width,
+                        ),
+                        child: AspectRatio(
+                          aspectRatio: controller.value.aspectRatio,
+                          child: Stack(
+                            children: <Widget>[
+                              VideoPlayer(controller),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-                AnimatedOpacity(
-                  opacity: showPlayPauseOverlay ? 1 : 0,
-                  duration: Duration(milliseconds: 250),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: HexColor('26262a').withOpacity(0.5),
-                      borderRadius: BorderRadius.circular(40),
-                    ),
-                    padding: EdgeInsets.all(10),
-                    child: controller.value.isPlaying
-                        ? GestureDetector(
-                            child: Icon(
-                              Icons.pause,
-                              color: Colors.white,
-                              size: 45,
-                            ),
-                            onTap: () {
-                              controller.pause();
-                              if (this.mounted) setState(() {});
-                              resetTimer();
-                              setTimer();
-                            },
-                          )
-                        : GestureDetector(
-                            child: Icon(
-                              Icons.play_arrow,
-                              color: Colors.white,
-                              size: 45,
-                            ),
-                            onTap: () {
-                              controller.play();
-                              resetTimer();
-                              setTimer();
-                              if (this.mounted) setState(() {});
-                            },
-                          ),
+                    ],
                   ),
-                )
-              ],
+                  AnimatedOpacity(
+                    opacity: showPlayPauseOverlay ? 1 : 0,
+                    duration: Duration(milliseconds: 250),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: HexColor('26262a').withOpacity(0.5),
+                        borderRadius: BorderRadius.circular(40),
+                      ),
+                      padding: EdgeInsets.all(10),
+                      child: controller.value.isPlaying
+                          ? GestureDetector(
+                              child: Icon(
+                                Icons.pause,
+                                color: Colors.white,
+                                size: 45,
+                              ),
+                              onTap: () {
+                                controller.pause();
+                                if (this.mounted) setState(() {});
+                                resetTimer();
+                                setTimer();
+                              },
+                            )
+                          : GestureDetector(
+                              child: Icon(
+                                Icons.play_arrow,
+                                color: Colors.white,
+                                size: 45,
+                              ),
+                              onTap: () {
+                                controller.play();
+                                resetTimer();
+                                setTimer();
+                                if (this.mounted) setState(() {});
+                              },
+                            ),
+                    ),
+                  )
+                ],
+              ),
             ),
-          ),
-          ...interactives,
-          controller.value.duration != null
-              ? StreamBuilder(
-                  stream: videoProgressStream.stream,
-                  builder: (context, AsyncSnapshot<double> snapshot) {
-                    return AnimatedOpacity(
-                      opacity: showPlayPauseOverlay ? 1 : 0,
-                      duration: Duration(milliseconds: 500),
-                      child: SizedBox(
-                        height: MediaQuery.of(context).size.height * 1 / 10,
-                        child: Slider(
-                          min: 0,
-                          max: controller.value.duration.inMilliseconds
-                              .toDouble(),
-                          onChangeStart: (value) {
-                            controller.pause();
-                            videoProgressStream.sink.add(value);
-                            controller
-                                .seekTo(Duration(milliseconds: value.toInt()));
-                            resetTimer();
-                          },
-                          onChanged: (double value) async {
-                            // controller.pause();
-                            videoProgressStream.sink.add(value);
-
-                            if ((await controller.position).inMilliseconds !=
-                                value.toInt()) {
+            ...interactives,
+            controller.value.duration != null
+                ? StreamBuilder(
+                    stream: videoProgressStream.stream,
+                    builder: (context, AsyncSnapshot<double> snapshot) {
+                      return AnimatedOpacity(
+                        opacity: showPlayPauseOverlay ? 1 : 0,
+                        duration: Duration(milliseconds: 500),
+                        child: SizedBox(
+                          height: MediaQuery.of(context).size.height * 1 / 10,
+                          child: Slider(
+                            min: 0,
+                            max: controller.value.duration.inMilliseconds
+                                .toDouble(),
+                            onChangeStart: (value) {
+                              controller.pause();
+                              videoProgressStream.sink.add(value);
                               controller.seekTo(
                                   Duration(milliseconds: value.toInt()));
-                            }
-                          },
-                          onChangeEnd: (double value) {
-                            controller.play();
-                            videoProgressStream.sink.add(value);
+                              resetTimer();
+                            },
+                            onChanged: (double value) async {
+                              // controller.pause();
+                              videoProgressStream.sink.add(value);
 
-                            controller
-                                .seekTo(Duration(milliseconds: value.toInt()));
-                            setTimer();
-                          },
-                          value: (snapshot.hasData ? snapshot.data : 0.0)
-                              .clamp(
-                                  0, controller.value.duration.inMilliseconds)
-                              .toDouble(),
+                              if ((await controller.position).inMilliseconds !=
+                                  value.toInt()) {
+                                controller.seekTo(
+                                    Duration(milliseconds: value.toInt()));
+                              }
+                            },
+                            onChangeEnd: (double value) {
+                              controller.play();
+                              videoProgressStream.sink.add(value);
+
+                              controller.seekTo(
+                                  Duration(milliseconds: value.toInt()));
+                              setTimer();
+                            },
+                            value: (snapshot.hasData ? snapshot.data : 0.0)
+                                .clamp(
+                                    0, controller.value.duration.inMilliseconds)
+                                .toDouble(),
+                          ),
                         ),
-                      ),
-                    );
-                  },
-                )
-              : Container()
-        ],
+                      );
+                    },
+                  )
+                : Container()
+          ],
+        ),
       ),
     );
   }

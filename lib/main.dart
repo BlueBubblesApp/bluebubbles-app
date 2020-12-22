@@ -217,7 +217,16 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     });
 
     // Create the notification in case it hasn't been already. Doing this multiple times won't do anything, so we just do it on every app start
-    NotificationManager().createNotificationChannel();
+    NotificationManager().createNotificationChannel(
+      NotificationManager.NEW_MESSAGE_CHANNEL,
+      "New Messages",
+      "For new messages retreived",
+    );
+    NotificationManager().createNotificationChannel(
+      NotificationManager.SOCKET_ERROR_CHANNEL,
+      "Socket Connection Error",
+      "Notifications that will appear when the connection to the server has failed",
+    );
 
     // Get the saved settings from the settings manager after the first frame
     SchedulerBinding.instance.addPostFrameCallback(
@@ -255,38 +264,43 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
       statusBarColor: Colors.transparent, // status bar color
     ));
 
-    return Scaffold(
-      backgroundColor: Colors.black,
-      // The stream builder connects to the [SocketManager] to check if the app has finished the setup or not
-      body: StreamBuilder(
-        stream: SocketManager().finishedSetup.stream,
-        builder: (BuildContext context, AsyncSnapshot<bool> snapshot) {
-          if (snapshot.hasData) {
-            // If the app has already gone through setup, show the convo list
-            // Otherwise show the setup
-            if (snapshot.data) {
-              SystemChrome.setPreferredOrientations([
-                DeviceOrientation.landscapeRight,
-                DeviceOrientation.landscapeLeft,
-                DeviceOrientation.portraitUp,
-                DeviceOrientation.portraitDown,
-              ]);
-              return ConversationList(
-                showArchivedChats: false,
-              );
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle(
+        systemNavigationBarColor: Theme.of(context).backgroundColor,
+      ),
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        // The stream builder connects to the [SocketManager] to check if the app has finished the setup or not
+        body: StreamBuilder(
+          stream: SocketManager().finishedSetup.stream,
+          builder: (BuildContext context, AsyncSnapshot<bool> snapshot) {
+            if (snapshot.hasData) {
+              // If the app has already gone through setup, show the convo list
+              // Otherwise show the setup
+              if (snapshot.data) {
+                SystemChrome.setPreferredOrientations([
+                  DeviceOrientation.landscapeRight,
+                  DeviceOrientation.landscapeLeft,
+                  DeviceOrientation.portraitUp,
+                  DeviceOrientation.portraitDown,
+                ]);
+                return ConversationList(
+                  showArchivedChats: false,
+                );
+              } else {
+                SystemChrome.setPreferredOrientations([
+                  DeviceOrientation.portraitUp,
+                ]);
+                return WillPopScope(
+                  onWillPop: () async => false,
+                  child: SetupView(),
+                );
+              }
             } else {
-              SystemChrome.setPreferredOrientations([
-                DeviceOrientation.portraitUp,
-              ]);
-              return WillPopScope(
-                onWillPop: () async => false,
-                child: SetupView(),
-              );
+              return Container();
             }
-          } else {
-            return Container();
-          }
-        },
+          },
+        ),
       ),
     );
   }

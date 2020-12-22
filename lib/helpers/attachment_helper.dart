@@ -183,12 +183,11 @@ class AttachmentHelper {
     String pathName = path ??
         "$appDocPath/attachments/${attachment.guid}/${attachment.transferName}";
 
-    if (FileSystemEntity.typeSync(pathName) != FileSystemEntityType.notFound) {
-      return File(pathName);
-    } else if (SocketManager()
-        .attachmentDownloaders
-        .containsKey(attachment.guid)) {
+    if (SocketManager().attachmentDownloaders.containsKey(attachment.guid)) {
       return SocketManager().attachmentDownloaders[attachment.guid];
+    } else if (FileSystemEntity.typeSync(pathName) !=
+        FileSystemEntityType.notFound) {
+      return File(pathName);
     } else if (attachment.mimeType == null ||
         attachment.mimeType.startsWith("text/")) {
       return AttachmentDownloader(attachment);

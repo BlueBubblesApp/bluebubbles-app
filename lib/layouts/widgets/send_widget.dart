@@ -3,6 +3,7 @@ import 'package:bluebubbles/layouts/widgets/message_widget/sent_message.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:flutter/services.dart';
 
 /// This widget is responsible for the send animation.
 /// This is probably the weirdest and hackiest thing in the codebase
@@ -90,49 +91,54 @@ class _SendWidgetState extends State<SendWidget> {
       currentChat: widget.currentChat,
     );
 
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: Stack(
-        alignment: Alignment.bottomRight,
-        children: <Widget>[
-          Material(
-            color: Colors.transparent,
-            child: TextField(
-              cursorColor: Colors.transparent,
-              decoration: InputDecoration(
-                fillColor: Colors.transparent,
-                border: InputBorder.none,
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle(
+        systemNavigationBarColor: Theme.of(context).backgroundColor,
+      ),
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        body: Stack(
+          alignment: Alignment.bottomRight,
+          children: <Widget>[
+            Material(
+              color: Colors.transparent,
+              child: TextField(
+                cursorColor: Colors.transparent,
+                decoration: InputDecoration(
+                  fillColor: Colors.transparent,
+                  border: InputBorder.none,
+                ),
+                autofocus: MediaQuery.of(context).viewInsets.bottom > 0,
               ),
-              autofocus: MediaQuery.of(context).viewInsets.bottom > 0,
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.only(bottom: 12, right: 4),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.end,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: <Widget>[
-                Hero(
-                  flightShuttleBuilder: buildAnimation,
-                  tag: widget.tag,
-                  child: Material(
-                    type: MaterialType.transparency,
-                    child: Row(
-                      children: [
-                        Opacity(
-                          child: messageWidget,
-                          opacity: 0,
-                        )
-                      ],
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      mainAxisSize: MainAxisSize.max,
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12, right: 4),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.end,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: <Widget>[
+                  Hero(
+                    flightShuttleBuilder: buildAnimation,
+                    tag: widget.tag,
+                    child: Material(
+                      type: MaterialType.transparency,
+                      child: Row(
+                        children: [
+                          Opacity(
+                            child: messageWidget,
+                            opacity: 0,
+                          )
+                        ],
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        mainAxisSize: MainAxisSize.max,
+                      ),
                     ),
-                  ),
-                )
-              ],
+                  )
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

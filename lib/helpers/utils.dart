@@ -7,6 +7,7 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/repository/models/message.dart';
+import 'package:device_info/device_info.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:html/parser.dart';
@@ -186,7 +187,8 @@ bool isEmptyString(String input, {stripWhitespace = false}) {
 
 bool isParticipantEvent(Message message) {
   if (message == null) return false;
-  if (message.itemType == 1 && [0, 1].contains(message.groupActionType)) return true;
+  if (message.itemType == 1 && [0, 1].contains(message.groupActionType))
+    return true;
   if ([2, 3].contains(message.itemType)) return true;
   return false;
 }
@@ -204,7 +206,6 @@ Future<String> getGroupEventText(Message message) async {
       other = await ContactManager().getContactTitle(item.address);
     }
   }
-
 
   if (message.itemType == 1 && message.groupActionType == 1) {
     text = "$handle removed $other from the conversation";
@@ -366,14 +367,20 @@ Size getGifDimensions(Uint8List bytes) {
 }
 
 Brightness getBrightness(BuildContext context) {
-  return AdaptiveTheme.of(context).mode == AdaptiveThemeMode.dark ? Brightness.dark : Brightness.light;
+  return AdaptiveTheme.of(context).mode == AdaptiveThemeMode.dark
+      ? Brightness.dark
+      : Brightness.light;
 }
 
 /// Take the passed [address] or serverAddress from Settings
 /// and sanitize it, making sure it includes an http schema
 String getServerAddress({String address}) {
   String serverAddress = address ?? SettingsManager().settings.serverAddress;
-  if (serverAddress.isEmpty) return null;
+  if (serverAddress == null) return null;
+
+  String sanitized =
+      serverAddress.replaceAll("https://", "").replaceAll("http://", "").trim();
+  if (sanitized.isEmpty) return null;
 
   // If the serverAddress doesn't start with HTTP, modify it
   if (!serverAddress.startsWith("http")) {
@@ -397,4 +404,29 @@ String dateToShortString(DateTime timestamp) {
   } else {
     return "${timestamp.month.toString()}/${timestamp.day.toString()}/${timestamp.year.toString()}";
   }
+}
+
+Future<String> getDeviceName() async {
+  String deviceName = "android-client";
+
+  try {
+    // Load device info
+    DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
+    AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
+
+    // Gather device info
+    List<String> items = [
+      androidInfo?.brand ?? androidInfo?.manufacturer,
+      androidInfo?.model,
+      androidInfo?.androidId
+    ].where((element) => element != null).toList();
+
+    // Set device name
+    deviceName = items.join("_").toLowerCase();
+  } catch (ex) {
+    debugPrint("Failed to get device name! Defaulting to 'android-client'");
+    debugPrint(ex.toString());
+  }
+
+  return deviceName;
 }

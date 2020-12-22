@@ -7,6 +7,7 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_details_popup.dart';
 import 'package:bluebubbles/managers/attachment_info_bloc.dart';
+import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
@@ -43,6 +44,19 @@ class CurrentChat {
   bool isAlive = false;
 
   Map<String, List<Attachment>> messageAttachments = {};
+
+  double _timeStampOffset = 0.0;
+
+  StreamController<double> timeStampOffsetStream =
+      StreamController<double>.broadcast();
+
+  double get timeStampOffset => _timeStampOffset;
+  set timeStampOffset(double value) {
+    if (_timeStampOffset == value) return;
+    _timeStampOffset = value;
+    if (!timeStampOffsetStream.isClosed)
+      timeStampOffsetStream.sink.add(_timeStampOffset);
+  }
 
   CurrentChat(this.chat);
 
@@ -90,6 +104,8 @@ class CurrentChat {
     sentMessages = [];
     entry = null;
     isAlive = true;
+    _timeStampOffset = 0;
+    timeStampOffsetStream = StreamController<double>.broadcast();
     // showTypingIndicator = false;
     // indicatorHideTimer = null;
     // checkTypingIndicator();
@@ -123,10 +139,11 @@ class CurrentChat {
     return messageAttachments[message.guid];
   }
 
-  List<Attachment> updateExistingAttachments(MessageBlocEvent event) {
-    String oldGuid = event.oldGuid;
+  List<Attachment> updateExistingAttachments(NewMessageEvent event) {
+    if (event.type != NewMessageType.UPDATE) return null;
+    String oldGuid = event.event["oldGuid"];
     if (!messageAttachments.containsKey(oldGuid)) return [];
-    Message message = event.message;
+    Message message = event.event["message"];
 
     messageAttachments.remove(oldGuid);
     messageAttachments[message.guid] = message.attachments;
@@ -168,7 +185,7 @@ class CurrentChat {
     assert(chat != null);
     List<Message> messages = specificMessages != null
         ? specificMessages
-        : await Chat.getMessages(chat, limit: 25);
+        : await Chat.getMessagesSingleton(chat, limit: 25);
     for (Message message in messages) {
       if (message.hasAttachments) {
         List<Attachment> attachments = await message.fetchAttachments();
@@ -237,7 +254,9 @@ class CurrentChat {
         element.dispose();
       });
     }
+    if (!timeStampOffsetStream.isClosed) timeStampOffsetStream.close();
 
+    _timeStampOffset = 0;
     imageData = {};
     currentPlayingVideo = {};
     audioPlayers = {};

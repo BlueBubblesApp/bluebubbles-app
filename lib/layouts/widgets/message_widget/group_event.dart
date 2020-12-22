@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/material.dart';
+import 'dart:async';
 
 enum ItemTypes {
   participantAdded,
@@ -33,49 +34,39 @@ class _GroupEventState extends State<GroupEvent> {
   }
 
   Future<void> getEventText() async {
-    // If we've already completed the task, don't do it again
-    if (completer != null && completer.isCompleted) return;
+    if (completer != null) return completer.future;
+    completer = new Completer();
 
-    // If we haven't completed the task, return the pending task
-    if (completer != null && !completer.isCompleted) return completer.future;
+    try {
+      String text = await getGroupEventText(widget.message);
+      if (this.text != text && this.mounted) {
+        setState(() {
+          this.text = text;
+        });
+      }
 
-    // If we've never started the task, create a new one and fetch the group event text
-    completer = new Completer<void>();
-
-    getGroupEventText(widget.message).then((String text) {
-      if (this.text == text) return;
-
-      this.text = text;
       completer.complete();
-      if (this.mounted) setState(() {});
-    }).catchError((e) {
-      completer.completeError(e);
-    });
-
-    return completer.future;
+    } catch (ex) {
+      completer.completeError(ex);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Flex(
-      direction: Axis.horizontal,
-      children: [
-        Flexible(
-          fit: FlexFit.tight,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 25.0, vertical: 10.0),
-            child: Text(
-              text,
-              style: Theme.of(context)
-                  .textTheme
-                  .subtitle2,
-              overflow: TextOverflow.ellipsis,
-              maxLines: 2,
-              textAlign: TextAlign.center,
-            ),
+    return Flex(direction: Axis.horizontal, children: [
+      Flexible(
+        fit: FlexFit.tight,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 25.0, vertical: 10.0),
+          child: Text(
+            text,
+            style: Theme.of(context).textTheme.subtitle2,
+            overflow: TextOverflow.ellipsis,
+            maxLines: 2,
+            textAlign: TextAlign.center,
           ),
         ),
-      ]
-    );
+      ),
+    ]);
   }
 }

@@ -7,6 +7,7 @@ import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class SearchView extends StatefulWidget {
   SearchView({
@@ -123,7 +124,11 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
     print("REBUILDING");
     print(results.length);
 
-    return Scaffold(
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle(
+        systemNavigationBarColor: Theme.of(context).backgroundColor,
+      ),
+      child: Scaffold(
         // extendBodyBehindAppBar: true,
         backgroundColor: Theme.of(context).backgroundColor,
         appBar: PreferredSize(
@@ -151,146 +156,158 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
             ),
           ),
         ),
-        body: Column(children: [
-          Container(padding: EdgeInsets.only(top: 8.0)),
-          Container(
-              padding: EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
-              child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Icon(Icons.search,
-                        color: Theme.of(context).textTheme.bodyText1.color),
-                    Container(padding: EdgeInsets.only(right: 5.0)),
-                    Flexible(
-                        fit: FlexFit.loose,
-                        child: CupertinoTextField(
-                          padding: EdgeInsets.symmetric(
-                              horizontal: 15.0, vertical: 10),
-                          controller: textEditingController,
-                          placeholder: "Enter a search term...",
-                          style: Theme.of(context).textTheme.bodyText1,
-                          placeholderStyle:
-                              Theme.of(context).textTheme.subtitle1,
-                          decoration: BoxDecoration(
-                              color: Theme.of(context).backgroundColor,
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(
-                                  color: Theme.of(context).accentColor)),
-                          maxLines: 1,
-                        )),
-                    (!this.isSearching)
-                        ? CupertinoButton(
-                            padding: EdgeInsets.all(0),
-                            child: Icon(Icons.arrow_forward,
-                                color:
-                                    Theme.of(context).textTheme.bodyText1.color,
-                                size: 30),
-                            onPressed: () {
-                              search(textEditingController.text);
-                            })
-                        : Padding(
-                            padding: const EdgeInsets.all(12.0),
-                            child: Theme(
-                              data: ThemeData(
-                                cupertinoOverrideTheme:
-                                    CupertinoThemeData(brightness: brightness),
+        body: Column(
+          children: [
+            Container(padding: EdgeInsets.only(top: 8.0)),
+            Container(
+                padding: EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
+                child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Icon(Icons.search,
+                          color: Theme.of(context).textTheme.bodyText1.color),
+                      Container(padding: EdgeInsets.only(right: 5.0)),
+                      Flexible(
+                          fit: FlexFit.loose,
+                          child: CupertinoTextField(
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 15.0, vertical: 10),
+                            controller: textEditingController,
+                            placeholder: "Enter a search term...",
+                            style: Theme.of(context).textTheme.bodyText1,
+                            placeholderStyle:
+                                Theme.of(context).textTheme.subtitle1,
+                            decoration: BoxDecoration(
+                                color: Theme.of(context).backgroundColor,
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                    color: Theme.of(context).accentColor)),
+                            maxLines: 1,
+                          )),
+                      (!this.isSearching)
+                          ? CupertinoButton(
+                              padding: EdgeInsets.all(0),
+                              child: Icon(Icons.arrow_forward,
+                                  color: Theme.of(context)
+                                      .textTheme
+                                      .bodyText1
+                                      .color,
+                                  size: 30),
+                              onPressed: () {
+                                search(textEditingController.text);
+                              })
+                          : Padding(
+                              padding: const EdgeInsets.all(12.0),
+                              child: Theme(
+                                data: ThemeData(
+                                  cupertinoOverrideTheme: CupertinoThemeData(
+                                      brightness: brightness),
+                                ),
+                                child: CupertinoActivityIndicator(),
                               ),
-                              child: CupertinoActivityIndicator(),
-                            ),
-                          )
-                  ])),
-          Divider(color: Theme.of(context).accentColor),
-          Flexible(
-            fit: FlexFit.loose,
-            child: AnimatedList(
-              key: _listKey,
-              initialItemCount: results.length,
-              itemBuilder: (BuildContext context, int index,
-                  Animation<double> animation) {
-                print(this.results[index]);
-                Message message = results[index]['message'];
-                Chat chat = results[index]['chat'];
+                            )
+                    ])),
+            Divider(color: Theme.of(context).accentColor),
+            Flexible(
+              fit: FlexFit.loose,
+              child: AnimatedList(
+                key: _listKey,
+                initialItemCount: results.length,
+                itemBuilder: (BuildContext context, int index,
+                    Animation<double> animation) {
+                  print(this.results[index]);
+                  Message message = results[index]['message'];
+                  Chat chat = results[index]['chat'];
 
-                // Create the textspans
-                List<InlineSpan> spans = [];
+                  // Create the textspans
+                  List<InlineSpan> spans = [];
 
-                // Get the current position of the search term
-                int termIndex = (message.text ?? "")
-                    .toLowerCase()
-                    .indexOf(textEditingController.text.toLowerCase());
-                int termEnd = termIndex + textEditingController.text.length;
-
-                if (termIndex >= 0) {
-                  // We only want a snippet of the text, so only get a 50x50 range
-                  // of characters from the string, with the search term in the middle
-                  String subText = message.text.substring(
-                      (termIndex - 50 >= 0) ? termIndex - 50 : 0,
-                      (termEnd + 50 < message.text.length)
-                          ? termEnd + 50
-                          : message.text.length);
-
-                  // Recarculate the term position in the snippet
-                  termIndex = subText
+                  // Get the current position of the search term
+                  int termIndex = (message.text ?? "")
                       .toLowerCase()
                       .indexOf(textEditingController.text.toLowerCase());
-                  termEnd = termIndex + textEditingController.text.length;
+                  int termEnd = termIndex + textEditingController.text.length;
 
-                  // Add the beginning string
-                  spans.add(TextSpan(
-                      text: subText.substring(0, termIndex).trimLeft(),
-                      style: Theme.of(context).textTheme.subtitle1));
+                  if (termIndex >= 0) {
+                    // We only want a snippet of the text, so only get a 50x50 range
+                    // of characters from the string, with the search term in the middle
+                    String subText = message.text.substring(
+                        (termIndex - 50 >= 0) ? termIndex - 50 : 0,
+                        (termEnd + 50 < message.text.length)
+                            ? termEnd + 50
+                            : message.text.length);
 
-                  // Add the search term
-                  spans.add(TextSpan(
-                      text: subText.substring(termIndex, termEnd),
-                      style: Theme.of(context).textTheme.subtitle1.apply(
-                          color: Theme.of(context).primaryColor,
-                          fontWeightDelta: 2)));
+                    // Recarculate the term position in the snippet
+                    termIndex = subText
+                        .toLowerCase()
+                        .indexOf(textEditingController.text.toLowerCase());
+                    termEnd = termIndex + textEditingController.text.length;
 
-                  // Add the ending string
-                  spans.add(TextSpan(
-                      text: subText.substring(termEnd, subText.length).trimRight(),
-                      style: Theme.of(context).textTheme.subtitle1));
-                } else {
-                  spans.add(TextSpan(
-                      text: message.text,
-                      style: Theme.of(context).textTheme.subtitle1));
-                }
+                    // Add the beginning string
+                    spans.add(TextSpan(
+                        text: subText.substring(0, termIndex).trimLeft(),
+                        style: Theme.of(context).textTheme.subtitle1));
 
-                return Column(
+                    // Add the search term
+                    spans.add(TextSpan(
+                        text: subText.substring(termIndex, termEnd),
+                        style: Theme.of(context).textTheme.subtitle1.apply(
+                            color: Theme.of(context).primaryColor,
+                            fontWeightDelta: 2)));
+
+                    // Add the ending string
+                    spans.add(TextSpan(
+                        text: subText
+                            .substring(termEnd, subText.length)
+                            .trimRight(),
+                        style: Theme.of(context).textTheme.subtitle1));
+                  } else {
+                    spans.add(TextSpan(
+                        text: message.text,
+                        style: Theme.of(context).textTheme.subtitle1));
+                  }
+
+                  return Column(
                     key: new Key("result-${message.guid}"),
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
                       ListTile(
-                          dense: true,
-                          title: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            children: [
-                              Text(
-                                "${dateToShortString(message.dateCreated)}",
+                        dense: true,
+                        title: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            Text("${dateToShortString(message.dateCreated)}",
                                 style: Theme.of(context)
                                     .textTheme
                                     .subtitle1
                                     .apply(fontSizeDelta: -2)),
-                              Container(height: 5.0),
-                              Text(
-                                chat?.title,
+                            Container(height: 5.0),
+                            Text(chat?.title,
                                 style: Theme.of(context).textTheme.bodyText1),
-                            ],     
+                          ],
+                        ),
+                        subtitle: Padding(
+                          padding: EdgeInsets.only(top: 5.0),
+                          child: RichText(
+                            text: TextSpan(children: spans),
                           ),
-                          subtitle: Padding(
-                              padding: EdgeInsets.only(top: 5.0),
-                              child: RichText(text: TextSpan(children: spans))),
-                          trailing: Icon(Icons.arrow_forward_ios,
-                              color:
-                                  Theme.of(context).textTheme.bodyText1.color)),
+                        ),
+                        trailing: Icon(
+                          Icons.arrow_forward_ios,
+                          color: Theme.of(context).textTheme.bodyText1.color,
+                        ),
+                      ),
                       Divider(color: Theme.of(context).accentColor)
-                    ]);
-              },
-            ),
-          )
-        ]));
+                    ],
+                  );
+                },
+              ),
+            )
+          ],
+        ),
+      ),
+    );
   }
 }

@@ -29,28 +29,28 @@ class _ImageWidgetState extends State<ImageWidget>
   bool navigated = false;
   bool visible = true;
   Uint8List data;
+  bool initGate = false;
 
-  @override
-  void didChangeDependencies() async {
-    super.didChangeDependencies();
-  }
+  void _initializeBytes({runForcefully: false}) async {
+    // initGate prevents this from running more than once
+    // Especially if the compression takes a while
+    if (!runForcefully && (initGate || data != null)) return;
+    initGate = true;
 
-  void _initializeBytes() async {
-    if (data != null) return;
+    // Try to get the image data from the "cache"
     data = CurrentChat.of(context).getImageData(widget.attachment);
     if (data == null) {
       // If it's an image, compress the image when loading it
       if (AttachmentHelper.canCompress(widget.attachment)) {
         data = await FlutterImageCompress.compressWithFile(
             widget.file.absolute.path,
-            quality: 25 // This is arbitrary
-            );
+            quality: 25);
 
         // All other attachments can be held in memory as bytes
       } else {
         data = await widget.file.readAsBytes();
       }
-      await widget.attachment.updateDimensions(data);
+
       CurrentChat.of(context)?.saveImageData(data, widget.attachment);
       if (this.mounted) setState(() {});
     }
@@ -60,6 +60,7 @@ class _ImageWidgetState extends State<ImageWidget>
   Widget build(BuildContext context) {
     super.build(context);
     _initializeBytes();
+
     return VisibilityDetector(
       key: Key(widget.attachment.guid),
       onVisibilityChanged: (info) {
@@ -70,7 +71,7 @@ class _ImageWidgetState extends State<ImageWidget>
           if (this.mounted) setState(() {});
         } else if (!visible) {
           visible = true;
-          _initializeBytes();
+          _initializeBytes(runForcefully: true);
         }
       },
       child: Stack(
@@ -89,27 +90,20 @@ class _ImageWidgetState extends State<ImageWidget>
                 onTap: () async {
                   if (!this.mounted) return;
 
-                  setState(() {
-                    navigated = true;
-                  });
+                  navigated = true;
 
                   CurrentChat currentChat = CurrentChat.of(context);
                   await Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (context) => AttachmentFullscreenViewer(
                         currentChat: currentChat,
-                        allAttachments: currentChat.chatAttachments,
                         attachment: widget.attachment,
                         showInteractions: true,
                       ),
                     ),
                   );
-                  
-                  if (this.mounted) {
-                    setState(() {
-                      navigated = false;
-                    });
-                  }
+
+                  navigated = false;
                 },
               ),
             ),

@@ -81,333 +81,344 @@ class _SettingsPanelState extends State<SettingsPanel> {
   Widget build(BuildContext context) {
     loadBrightness();
 
-    return Scaffold(
-      // extendBodyBehindAppBar: true,
-      backgroundColor: Theme.of(context).backgroundColor,
-      appBar: PreferredSize(
-        preferredSize: Size(MediaQuery.of(context).size.width, 80),
-        child: ClipRRect(
-          child: BackdropFilter(
-            child: AppBar(
-              brightness: brightness,
-              toolbarHeight: 100.0,
-              elevation: 0,
-              leading: IconButton(
-                icon: Icon(Icons.arrow_back_ios,
-                    color: Theme.of(context).primaryColor),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle(
+        systemNavigationBarColor: Theme.of(context).backgroundColor,
+      ),
+      child: Scaffold(
+        backgroundColor: Theme.of(context).backgroundColor,
+        appBar: PreferredSize(
+          preferredSize: Size(MediaQuery.of(context).size.width, 80),
+          child: ClipRRect(
+            child: BackdropFilter(
+              child: AppBar(
+                brightness: brightness,
+                toolbarHeight: 100.0,
+                elevation: 0,
+                leading: IconButton(
+                  icon: Icon(Icons.arrow_back_ios,
+                      color: Theme.of(context).primaryColor),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                ),
+                backgroundColor: Theme.of(context).accentColor.withOpacity(0.5),
+                title: Text(
+                  "Settings",
+                  style: Theme.of(context).textTheme.headline1,
+                ),
               ),
-              backgroundColor: Theme.of(context).accentColor.withOpacity(0.5),
-              title: Text(
-                "Settings",
-                style: Theme.of(context).textTheme.headline1,
-              ),
+              filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
             ),
-            filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
           ),
         ),
-      ),
-      body: CustomScrollView(
-        physics: AlwaysScrollableScrollPhysics(
-          parent: CustomBouncingScrollPhysics(),
-        ),
-        slivers: <Widget>[
-          SliverList(
-            delegate: SliverChildListDelegate(
-              <Widget>[
-                Container(padding: EdgeInsets.only(top: 5.0)),
-                StreamBuilder(
-                    stream: SocketManager().connectionStateStream,
-                    builder: (context, AsyncSnapshot<SocketState> snapshot) {
-                      SocketState connectionStatus;
-                      if (snapshot.hasData) {
-                        connectionStatus = snapshot.data;
-                      } else {
-                        connectionStatus = SocketManager().state;
-                      }
-                      String subtitle;
+        body: CustomScrollView(
+          physics: AlwaysScrollableScrollPhysics(
+            parent: CustomBouncingScrollPhysics(),
+          ),
+          slivers: <Widget>[
+            SliverList(
+              delegate: SliverChildListDelegate(
+                <Widget>[
+                  Container(padding: EdgeInsets.only(top: 5.0)),
+                  StreamBuilder(
+                      stream: SocketManager().connectionStateStream,
+                      builder: (context, AsyncSnapshot<SocketState> snapshot) {
+                        SocketState connectionStatus;
+                        if (snapshot.hasData) {
+                          connectionStatus = snapshot.data;
+                        } else {
+                          connectionStatus = SocketManager().state;
+                        }
+                        String subtitle;
 
-                      switch (connectionStatus) {
-                        case SocketState.CONNECTED:
-                          if (showUrl) {
-                            subtitle =
-                                "Connected (${this._settingsCopy.serverAddress})";
-                          } else {
-                            subtitle = "Connected (Tap to view URL)";
-                          }
-                          break;
-                        case SocketState.DISCONNECTED:
-                          subtitle = "Disconnected (Tap to restart Server)";
-                          break;
-                        case SocketState.ERROR:
-                          subtitle = "Error (Tap to restart Server)";
-                          break;
-                        case SocketState.CONNECTING:
-                          subtitle = "Connecting...";
-                          break;
-                        case SocketState.FAILED:
-                          subtitle = "Failed to connect (Tap to restart Server)";
-                          break;
-                      }
-
-                      return SettingsTile(
-                        title: "Connection Status",
-                        subTitle: subtitle,
-                        onTap: () async {
-                          // If we are disconnected, tap to restart server
-                          if (disconnectedStates.contains(connectionStatus)) {
-                            // Prevent restarting more than once per 30 seconds
-                            int now = DateTime.now().toUtc().millisecondsSinceEpoch;
-                            if (lastRestart != null && now - lastRestart < 1000 * 30 ) return;
-
-                            // Restart the server
-                            MethodChannelInterface().invokeMethod("set-next-restart", {
-                              "value": DateTime.now().toUtc().millisecondsSinceEpoch
-                            });
-
-                            lastRestart = now;
-                          }
-
-                          // If we are connected, tap to show the URL
-                          if ([SocketState.CONNECTED].contains(connectionStatus)) {
-                            if (this.mounted) {
-                              setState(() {
-                                showUrl = !showUrl;
-                              });
+                        switch (connectionStatus) {
+                          case SocketState.CONNECTED:
+                            if (showUrl) {
+                              subtitle =
+                                  "Connected (${this._settingsCopy.serverAddress})";
+                            } else {
+                              subtitle = "Connected (Tap to view URL)";
                             }
-                          }
-                        },
-                        onLongPress: () {
-                          Clipboard.setData(new ClipboardData(
-                              text: _settingsCopy.serverAddress));
-                          final snackBar = SnackBar(
-                              content: Text("Address copied to clipboard"));
-                          Scaffold.of(context).showSnackBar(snackBar);
-                        },
-                        trailing: connectionStatus == SocketState.CONNECTED ||
-                                connectionStatus == SocketState.CONNECTING
-                            ? Icon(
-                                Icons.fiber_manual_record,
-                                color: HexColor('32CD32').withAlpha(200),
-                              )
-                            : Icon(
-                                Icons.fiber_manual_record,
-                                color: HexColor('DC143C').withAlpha(200),
-                              ),
-                      );
-                    }),
-                SettingsTile(
-                  title: "Re-configure with MacOS Server",
-                  trailing: Icon(Icons.camera,
-                      color: Theme.of(context).primaryColor.withAlpha(200)),
-                  onTap: () async {
-                    var fcmData;
-                    try {
-                      fcmData = jsonDecode(
-                        await Navigator.of(context).push(
-                          CupertinoPageRoute(
-                            builder: (BuildContext context) {
-                              return QRCodeScanner();
-                            },
+                            break;
+                          case SocketState.DISCONNECTED:
+                            subtitle = "Disconnected (Tap to restart Server)";
+                            break;
+                          case SocketState.ERROR:
+                            subtitle = "Error (Tap to restart Server)";
+                            break;
+                          case SocketState.CONNECTING:
+                            subtitle = "Connecting...";
+                            break;
+                          case SocketState.FAILED:
+                            subtitle =
+                                "Failed to connect (Tap to restart Server)";
+                            break;
+                        }
+
+                        return SettingsTile(
+                          title: "Connection Status",
+                          subTitle: subtitle,
+                          onTap: () async {
+                            // If we are disconnected, tap to restart server
+                            if (disconnectedStates.contains(connectionStatus)) {
+                              // Prevent restarting more than once per 30 seconds
+                              int now =
+                                  DateTime.now().toUtc().millisecondsSinceEpoch;
+                              if (lastRestart != null &&
+                                  now - lastRestart < 1000 * 30) return;
+
+                              // Restart the server
+                              MethodChannelInterface().invokeMethod(
+                                  "set-next-restart", {
+                                "value": DateTime.now()
+                                    .toUtc()
+                                    .millisecondsSinceEpoch
+                              });
+
+                              lastRestart = now;
+                            }
+
+                            // If we are connected, tap to show the URL
+                            if ([SocketState.CONNECTED]
+                                .contains(connectionStatus)) {
+                              if (this.mounted) {
+                                setState(() {
+                                  showUrl = !showUrl;
+                                });
+                              }
+                            }
+                          },
+                          onLongPress: () {
+                            Clipboard.setData(new ClipboardData(
+                                text: _settingsCopy.serverAddress));
+                            final snackBar = SnackBar(
+                                content: Text("Address copied to clipboard"));
+                            Scaffold.of(context).showSnackBar(snackBar);
+                          },
+                          trailing: connectionStatus == SocketState.CONNECTED ||
+                                  connectionStatus == SocketState.CONNECTING
+                              ? Icon(
+                                  Icons.fiber_manual_record,
+                                  color: HexColor('32CD32').withAlpha(200),
+                                )
+                              : Icon(
+                                  Icons.fiber_manual_record,
+                                  color: HexColor('DC143C').withAlpha(200),
+                                ),
+                        );
+                      }),
+                  SettingsTile(
+                    title: "Re-configure with MacOS Server",
+                    trailing: Icon(Icons.camera,
+                        color: Theme.of(context).primaryColor.withAlpha(200)),
+                    onTap: () async {
+                      var fcmData;
+                      try {
+                        fcmData = jsonDecode(
+                          await Navigator.of(context).push(
+                            CupertinoPageRoute(
+                              builder: (BuildContext context) {
+                                return QRCodeScanner();
+                              },
+                            ),
                           ),
+                        );
+                      } catch (e) {
+                        return;
+                      }
+                      if (fcmData != null) {
+                        _fcmDataCopy = FCMData(
+                          projectID: fcmData[2],
+                          storageBucket: fcmData[3],
+                          apiKey: fcmData[4],
+                          firebaseURL: fcmData[5],
+                          clientID: fcmData[6],
+                          applicationID: fcmData[7],
+                        );
+                        _settingsCopy.guidAuthKey = fcmData[0];
+                        _settingsCopy.serverAddress =
+                            getServerAddress(address: fcmData[1]);
+
+                        SettingsManager().saveSettings(_settingsCopy);
+                        SettingsManager().saveFCMData(_fcmDataCopy);
+                        SocketManager().authFCM();
+                      }
+                    },
+                  ),
+                  SettingsSwitch(
+                    onChanged: (bool val) {
+                      _settingsCopy.autoDownload = val;
+                    },
+                    initialVal: _settingsCopy.autoDownload,
+                    title: "Auto-download Attachments",
+                  ),
+                  SettingsSwitch(
+                    onChanged: (bool val) {
+                      _settingsCopy.onlyWifiDownload = val;
+                    },
+                    initialVal: _settingsCopy.onlyWifiDownload,
+                    title: "Only Auto-download Attachments on WiFi",
+                  ),
+                  SettingsSlider(
+                      text: "Attachment Chunk Size",
+                      startingVal: _settingsCopy.chunkSize.toDouble(),
+                      update: (double val) {
+                        _settingsCopy.chunkSize = val.floor();
+                      },
+                      formatValue: ((double val) => getSizeString(val)),
+                      min: 100,
+                      max: 3000,
+                      divisions: 29),
+                  // SettingsTile(
+                  //   title: "Message Scheduling",
+                  //   trailing: Icon(Icons.arrow_forward_ios,
+                  //       color: Theme.of(context).primaryColor),
+                  //   onTap: () async {
+                  //     Navigator.of(context).push(
+                  //       CupertinoPageRoute(
+                  //         builder: (context) => SchedulingPanel(),
+                  //       ),
+                  //     );
+                  //   },
+                  // ),
+                  // SettingsTile(
+                  //   title: "Search",
+                  //   trailing: Icon(Icons.arrow_forward_ios,
+                  //       color: Theme.of(context).primaryColor),
+                  //   onTap: () async {
+                  //     Navigator.of(context).push(
+                  //       CupertinoPageRoute(
+                  //         builder: (context) => SearchView(),
+                  //       ),
+                  //     );
+                  //   },
+                  // ),
+                  SettingsTile(
+                    title: "Theme Settings",
+                    onTap: () {
+                      Navigator.of(context).push(
+                        CupertinoPageRoute(
+                          builder: (context) => ThemePanel(),
                         ),
                       );
-                    } catch (e) {
-                      return;
-                    }
-                    if (fcmData != null) {
-                      _fcmDataCopy = FCMData(
-                        projectID: fcmData[2],
-                        storageBucket: fcmData[3],
-                        apiKey: fcmData[4],
-                        firebaseURL: fcmData[5],
-                        clientID: fcmData[6],
-                        applicationID: fcmData[7],
+                    },
+                    trailing: Icon(
+                      Icons.arrow_forward_ios,
+                      color: Theme.of(context).primaryColor,
+                    ),
+                  ),
+                  SettingsTile(
+                    title: "User Experience Settings",
+                    onTap: () {
+                      Navigator.of(context).push(
+                        CupertinoPageRoute(
+                          builder: (context) => UXPanel(),
+                        ),
                       );
-                      _settingsCopy.guidAuthKey = fcmData[0];
-                      _settingsCopy.serverAddress = getServerAddress(address: fcmData[1]);
+                    },
+                    trailing: Icon(
+                      Icons.arrow_forward_ios,
+                      color: Theme.of(context).primaryColor,
+                    ),
+                  ),
+                  SettingsTile(
+                    title: "Server Management",
+                    trailing: Icon(Icons.arrow_forward_ios,
+                        color: Theme.of(context).primaryColor),
+                    onTap: () async {
+                      Navigator.of(context).push(
+                        CupertinoPageRoute(
+                          builder: (context) => ServerManagementPanel(),
+                        ),
+                      );
+                    },
+                  ),
+                  SettingsTile(
+                    title: "About & Links",
+                    onTap: () {
+                      Navigator.of(context).push(
+                        CupertinoPageRoute(
+                          builder: (context) => AboutPanel(),
+                        ),
+                      );
+                    },
+                    trailing: Icon(
+                      Icons.arrow_forward_ios,
+                      color: Theme.of(context).primaryColor,
+                    ),
+                  ),
+                  SettingsTile(
+                    title: "Join Our Discord",
+                    onTap: () {
+                      MethodChannelInterface().invokeMethod("open-link",
+                          {"link": "https://discord.gg/hbx7EhNFjp"});
+                    },
+                    trailing: SvgPicture.asset(
+                      "assets/icon/discord.svg",
+                      color: HexColor("#7289DA"),
+                      alignment: Alignment.centerRight,
+                      width: 30,
+                    ),
+                  ),
+                  SettingsTile(
+                    title: "Support the Developers!",
+                    onTap: () {
+                      MethodChannelInterface().invokeMethod("open-link",
+                          {"link": "https://bluebubbles.app/donate/"});
+                    },
+                    trailing: Icon(
+                      Icons.attach_money,
+                      color: Theme.of(context).primaryColor,
+                    ),
+                  ),
+                  SettingsTile(
+                    onTap: () {
+                      showDialog(
+                        barrierDismissible: false,
+                        context: context,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                            title: Text(
+                              "Are you sure?",
+                              style: Theme.of(context).textTheme.bodyText1,
+                            ),
+                            backgroundColor: Theme.of(context).backgroundColor,
+                            actions: <Widget>[
+                              FlatButton(
+                                child: Text("Yes"),
+                                onPressed: () async {
+                                  await DBProvider.deleteDB();
+                                  await SettingsManager().resetConnection();
 
-                      SettingsManager().saveSettings(_settingsCopy);
-                      SettingsManager().saveFCMData(_fcmDataCopy);
-                      SocketManager().authFCM();
-                    }
-                  },
-                ),
-                SettingsSwitch(
-                  onChanged: (bool val) {
-                    _settingsCopy.autoDownload = val;
-                  },
-                  initialVal: _settingsCopy.autoDownload,
-                  title: "Auto-download Attachments",
-                ),
-                SettingsSwitch(
-                  onChanged: (bool val) {
-                    _settingsCopy.onlyWifiDownload = val;
-                  },
-                  initialVal: _settingsCopy.onlyWifiDownload,
-                  title: "Only Auto-download Attachments on WiFi",
-                ),
-                SettingsSlider(
-                  text: "Attachment Chunk Size",
-                  startingVal: _settingsCopy.chunkSize.toDouble(),
-                  update: (double val) {
-                    _settingsCopy.chunkSize = val.floor();
-                  },
-                  formatValue: ((double val) => getSizeString(val)),
-                  min: 100,
-                  max: 3000,
-                  divisions: 29
-                ),
-                // SettingsTile(
-                //   title: "Message Scheduling",
-                //   trailing: Icon(Icons.arrow_forward_ios,
-                //       color: Theme.of(context).primaryColor),
-                //   onTap: () async {
-                //     Navigator.of(context).push(
-                //       CupertinoPageRoute(
-                //         builder: (context) => SchedulingPanel(),
-                //       ),
-                //     );
-                //   },
-                // ),
-                // SettingsTile(
-                //   title: "Search",
-                //   trailing: Icon(Icons.arrow_forward_ios,
-                //       color: Theme.of(context).primaryColor),
-                //   onTap: () async {
-                //     Navigator.of(context).push(
-                //       CupertinoPageRoute(
-                //         builder: (context) => SearchView(),
-                //       ),
-                //     );
-                //   },
-                // ),
-                SettingsTile(
-                  title: "Theme Settings",
-                  onTap: () {
-                    Navigator.of(context).push(
-                      CupertinoPageRoute(
-                        builder: (context) => ThemePanel(),
-                      ),
-                    );
-                  },
-                  trailing: Icon(
-                    Icons.arrow_forward_ios,
-                    color: Theme.of(context).primaryColor,
+                                  SocketManager().finishedSetup.sink.add(false);
+                                  Navigator.of(context)
+                                      .popUntil((route) => route.isFirst);
+                                },
+                              ),
+                              FlatButton(
+                                child: Text("Cancel"),
+                                onPressed: () {
+                                  Navigator.of(context).pop();
+                                },
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    },
+                    title: "Reset DB",
                   ),
-                ),
-                SettingsTile(
-                  title: "User Experience Settings",
-                  onTap: () {
-                    Navigator.of(context).push(
-                      CupertinoPageRoute(
-                        builder: (context) => UXPanel(),
-                      ),
-                    );
-                  },
-                  trailing: Icon(
-                    Icons.arrow_forward_ios,
-                    color: Theme.of(context).primaryColor,
-                  ),
-                ),
-                SettingsTile(
-                  title: "Server Management",
-                  trailing: Icon(Icons.arrow_forward_ios,
-                      color: Theme.of(context).primaryColor),
-                  onTap: () async {
-                    Navigator.of(context).push(
-                      CupertinoPageRoute(
-                        builder: (context) => ServerManagementPanel(),
-                      ),
-                    );
-                  },
-                ),
-                SettingsTile(
-                  title: "About & Links",
-                  onTap: () {
-                    Navigator.of(context).push(
-                      CupertinoPageRoute(
-                        builder: (context) => AboutPanel(),
-                      ),
-                    );
-                  },
-                  trailing: Icon(
-                    Icons.arrow_forward_ios,
-                    color: Theme.of(context).primaryColor,
-                  ),
-                ),
-                SettingsTile(
-                  title: "Join Our Discord",
-                  onTap: () {
-                    MethodChannelInterface().invokeMethod(
-                        "open-link", {"link": "https://discord.gg/hbx7EhNFjp"});
-                  },
-                  trailing: SvgPicture.asset(
-                    "assets/icon/discord.svg",
-                    color: HexColor("#7289DA"),
-                    alignment: Alignment.centerRight,
-                    width: 30,
-                  ),
-                ),
-                SettingsTile(
-                  title: "Support the Developers!",
-                  onTap: () {
-                    MethodChannelInterface().invokeMethod("open-link",
-                        {"link": "https://bluebubbles.app/donate/"});
-                  },
-                  trailing: Icon(
-                    Icons.attach_money,
-                    color: Theme.of(context).primaryColor,
-                  ),
-                ),
-                SettingsTile(
-                  onTap: () {
-                    showDialog(
-                      barrierDismissible: false,
-                      context: context,
-                      builder: (BuildContext context) {
-                        return AlertDialog(
-                          title: Text(
-                            "Are you sure?",
-                            style: Theme.of(context).textTheme.bodyText1,
-                          ),
-                          backgroundColor: Theme.of(context).backgroundColor,
-                          actions: <Widget>[
-                            FlatButton(
-                              child: Text("Yes"),
-                              onPressed: () async {
-                                await DBProvider.deleteDB();
-                                await SettingsManager().resetConnection();
-                                
-                                SocketManager().finishedSetup.sink.add(false);
-                                Navigator.of(context)
-                                    .popUntil((route) => route.isFirst);
-                              },
-                            ),
-                            FlatButton(
-                              child: Text("Cancel"),
-                              onPressed: () {
-                                Navigator.of(context).pop();
-                              },
-                            ),
-                          ],
-                        );
-                      },
-                    );
-                  },
-                  title: "Reset DB",
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          SliverList(
-            delegate: SliverChildListDelegate(
-              <Widget>[],
-            ),
-          )
-        ],
+            SliverList(
+              delegate: SliverChildListDelegate(
+                <Widget>[],
+              ),
+            )
+          ],
+        ),
       ),
     );
   }
@@ -727,16 +738,14 @@ class _SettingsOptionsState<T> extends State<SettingsOptions<T>> {
 
 class SettingsSlider extends StatefulWidget {
   SettingsSlider(
-      {
-        @required this.startingVal,
-        this.update,
-        @required this.text,
-        this.formatValue,
-        @required this.min,
-        @required this.max,
-        @required this.divisions,
-        Key key
-      })
+      {@required this.startingVal,
+      this.update,
+      @required this.text,
+      this.formatValue,
+      @required this.min,
+      @required this.max,
+      @required this.divisions,
+      Key key})
       : super(key: key);
 
   final double startingVal;

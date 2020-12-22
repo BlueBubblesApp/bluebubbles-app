@@ -32,7 +32,6 @@ class _AttachmentPickedState extends State<AttachmentPicked>
     BlueBubblesTextField.of(context).stream.listen((event) {
       if (this.mounted) setState(() {});
     });
-    setState(() {});
   }
 
   Future<void> load() async {

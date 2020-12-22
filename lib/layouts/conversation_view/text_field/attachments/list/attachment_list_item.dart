@@ -73,7 +73,6 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
           await Navigator.of(context).push(
             MaterialPageRoute(
               builder: (context) => AttachmentFullscreenViewer(
-                allAttachments: [fakeAttachment],
                 currentChat: currentChat,
                 attachment: fakeAttachment,
                 showInteractions: false,
@@ -123,7 +122,10 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
                   padding: const EdgeInsets.fromLTRB(8, 0, 8, 10),
                   child: Text(
                     name,
-                    style: Theme.of(context).textTheme.bodyText1.apply(fontSizeDelta: -2),
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodyText1
+                        .apply(fontSizeDelta: -2),
                     textAlign: TextAlign.center,
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,

@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'package:bluebubbles/action_handler.dart';
+import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/group_event.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/url_preview_widget.dart';
@@ -12,6 +14,7 @@ import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
+import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -27,7 +30,7 @@ class MessageWidget extends StatefulWidget {
     this.showHandle,
     this.isFirstSentMessage,
     this.showHero,
-    this.offset,
+    this.onUpdate,
   }) : super(key: key);
 
   final Message message;
@@ -36,7 +39,7 @@ class MessageWidget extends StatefulWidget {
   final bool showHandle;
   final bool isFirstSentMessage;
   final bool showHero;
-  final double offset;
+  final Message Function(NewMessageEvent event) onUpdate;
 
   @override
   _MessageState createState() => _MessageState();
@@ -47,101 +50,138 @@ class _MessageState extends State<MessageWidget>
   bool showTail = true;
   Completer<void> associatedMessageRequest;
   Completer<void> attachmentsRequest;
+  Completer<void> handleRequest;
   int lastRequestCount = -1;
   int attachmentCount = 0;
   int associatedCount = 0;
+  bool handledInit = false;
   CurrentChat currentChat;
-  bool checkedHandle = false;
+  StreamSubscription<NewMessageEvent> subscription;
+  Message _message;
+  Message _newerMessage;
 
   @override
   void initState() {
     super.initState();
-    checkHandle();
-    fetchAssociatedMessages();
-    fetchAttachments();
-
-    // Listen for new messages
-    NewMessageManager().stream.listen((data) {
-      // If the message doesn't apply to this chat, ignore it
-      if (data.chatGuid != currentChat?.chat?.guid) return;
-
-      // If it's not an ADD event, ignore it
-      if (data.type != NewMessageType.ADD) return;
-
-      // Check if the new message has an associated GUID that matches this message
-      bool fetchAssoc = false;
-      bool fetchAttach = false;
-      Message message = data.event["message"];
-      if (message == null) return;
-      if (message.associatedMessageGuid == widget.message.guid) {
-        fetchAssoc = true;
-      }
-      if (message.hasAttachments) {
-        fetchAttach = true;
-      }
-
-      // If the associated message GUID matches this one, fetch associated messages
-      if (fetchAssoc) {
-        fetchAssociatedMessages(forceReload: true);
-      }
-
-      if (fetchAttach) {
-        fetchAttachments(forceReload: true);
-      }
-    });
+    init();
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    currentChat = CurrentChat.of(context);
+    init();
+  }
+
+  void init() {
+    if (context != null) currentChat = CurrentChat.of(context);
+    if (handledInit) return;
+    handledInit = true;
+    _message = widget.message;
+    _newerMessage = widget.newerMessage;
 
     checkHandle();
     fetchAssociatedMessages();
     fetchAttachments();
+
+    // If we already are listening to the stream, no need to do it again
+    if (subscription != null) return;
+
+    // Listen for new messages
+    subscription = NewMessageManager().stream.listen((data) {
+      // If the message doesn't apply to this chat, ignore it
+      if (data.chatGuid != currentChat?.chat?.guid) return;
+
+      if (data.type == NewMessageType.ADD) {
+        // Check if the new message has an associated GUID that matches this message
+        bool fetchAssoc = false;
+        bool fetchAttach = false;
+        Message message = data.event["message"];
+        if (message == null) return;
+        if (message.associatedMessageGuid == widget.message.guid)
+          fetchAssoc = true;
+        if (message.hasAttachments) fetchAttach = true;
+
+        // If the associated message GUID matches this one, fetch associated messages
+        if (fetchAssoc) fetchAssociatedMessages(forceReload: true);
+        if (fetchAttach) fetchAttachments(forceReload: true);
+      } else if (data.type == NewMessageType.UPDATE) {
+        String oldGuid = data.event["oldGuid"];
+        // If the guid does not match our current guid, then it's not meant for us
+        if (oldGuid != _message.guid && oldGuid != _newerMessage.guid) return;
+
+        // Tell the [MessagesView] to update with the new event, to ensure that things are done synchronously
+        if (widget.onUpdate != null) {
+          Message result = widget.onUpdate(data);
+          if (result != null) {
+            if (this.mounted)
+              setState(() {
+                if (_message.guid == oldGuid) {
+                  _message = result;
+                } else if (_newerMessage.guid == oldGuid) {
+                  _newerMessage = result;
+                }
+              });
+          }
+        }
+      }
+    });
   }
 
-  void checkHandle() {
-    // If we've already checked it, don't do it again
-    if (widget.message.isFromMe || widget.message.handle != null ||
-        checkedHandle) return;
-    checkedHandle = true;
+  @override
+  void dispose() {
+    subscription.cancel();
+    super.dispose();
+  }
 
-    // Fetch the handle and update the state
-    widget.message.getHandle().then((handle) {
-      if (this.mounted) setState(() {});
-    });
+  Future<void> checkHandle() async {
+    // If we've already started, return the request
+    if (handleRequest != null) return handleRequest.future;
+    handleRequest = new Completer();
+
+    // Checks ordered in a specific way to ever so slightly reduce processing
+    if (_message.isFromMe) return handleRequest.complete();
+    if (_message.handle != null) return handleRequest.complete();
+
+    try {
+      Handle handle = await _message.getHandle();
+      if (this.mounted && handle != null) {
+        setState(() {});
+      }
+    } catch (ex) {
+      handleRequest.completeError(ex);
+    }
   }
 
   Future<void> fetchAssociatedMessages({bool forceReload = false}) async {
     // If there is already a request being made, return that request
-    if (associatedMessageRequest != null &&
-        !associatedMessageRequest.isCompleted) {
+    if (!forceReload && associatedMessageRequest != null)
       return associatedMessageRequest.future;
-    }
 
     // Create a new request and get the messages
     associatedMessageRequest = new Completer();
-    await widget.message.fetchAssociatedMessages();
+
+    try {
+      await _message.fetchAssociatedMessages();
+    } catch (ex) {
+      return associatedMessageRequest.completeError(ex);
+    }
 
     bool hasChanges = false;
-    if (widget.message.associatedMessages.length != associatedCount ||
-        forceReload) {
-      associatedCount = widget.message.associatedMessages.length;
+    if (_message.associatedMessages.length != associatedCount || forceReload) {
+      associatedCount = _message.associatedMessages.length;
       hasChanges = true;
     }
 
     // If there are changes, re-render
-    if (this.mounted && hasChanges) {
+    if (hasChanges) {
       // If we don't think there are reactions, and we found reactions,
       // Update the DB so it saves that we have reactions
-      if (!widget.message.hasReactions &&
-          widget.message.getReactions().length > 0) {
-        widget.message.hasReactions = true;
-        widget.message.update();
+      if (!_message.hasReactions && _message.getReactions().length > 0) {
+        _message.hasReactions = true;
+        _message.update();
       }
 
-      setState(() {});
+      if (this.mounted) setState(() {});
     }
 
     associatedMessageRequest.complete();
@@ -149,33 +189,36 @@ class _MessageState extends State<MessageWidget>
 
   Future<void> fetchAttachments({bool forceReload = false}) async {
     // If there is already a request being made, return that request
-    if (attachmentsRequest != null && !attachmentsRequest.isCompleted) {
+    if (!forceReload && attachmentsRequest != null)
       return attachmentsRequest.future;
-    }
 
     // Create a new request and get the attachments
     attachmentsRequest = new Completer();
-    if (context != null && this.mounted)
-      await widget.message
-          .fetchAttachments(currentChat: CurrentChat.of(context));
+    if (!this.mounted) return attachmentsRequest.complete();
+
+    try {
+      await _message.fetchAttachments(currentChat: currentChat);
+    } catch (ex) {
+      return attachmentsRequest.completeError(ex);
+    }
 
     // If this is a URL preview and we don't have attachments, we need to get them
-    List<Attachment> nonNullAttachments = widget.message.getRealAttachments();
-    if (widget.message.isUrlPreview() && nonNullAttachments.isEmpty) {
+    List<Attachment> nonNullAttachments = _message.getRealAttachments();
+    if (_message.isUrlPreview() && nonNullAttachments.isEmpty) {
       if (lastRequestCount != nonNullAttachments.length) {
         lastRequestCount = nonNullAttachments.length;
-        SocketManager().setup.startIncrementalSync(SettingsManager().settings,
-            chatGuid: CurrentChat.of(context).chat.guid,
-            saveDate: false, onComplete: () {
-          if (this.mounted) setState(() {});
-        });
+
+        List<dynamic> msgs = await SocketManager()
+            .getAttachments(currentChat.chat.guid, _message.guid);
+
+        for (var msg in msgs)
+          await ActionHandler.handleMessage(msg, forceProcess: true);
       }
     }
 
     bool hasChanges = false;
-    if (widget.message.attachments.length != this.attachmentCount ||
-        forceReload) {
-      this.attachmentCount = widget.message.attachments.length;
+    if (_message.attachments.length != this.attachmentCount || forceReload) {
+      this.attachmentCount = _message.attachments.length;
       hasChanges = true;
     }
 
@@ -184,7 +227,7 @@ class _MessageState extends State<MessageWidget>
       setState(() {});
     }
 
-    attachmentsRequest.complete();
+    if (!attachmentsRequest.isCompleted) attachmentsRequest.complete();
   }
 
   bool withinTimeThreshold(Message first, Message second, {threshold: 5}) {
@@ -196,23 +239,23 @@ class _MessageState extends State<MessageWidget>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    if (widget.newerMessage != null) {
-      if (widget.newerMessage.isGroupEvent()) {
+
+    if (_newerMessage != null) {
+      if (_newerMessage.isGroupEvent()) {
         showTail = true;
       } else {
-        showTail = withinTimeThreshold(widget.message, widget.newerMessage,
-                threshold: 1) ||
-            !sameSender(widget.message, widget.newerMessage) ||
-            (widget.message.isFromMe &&
-                widget.newerMessage.isFromMe &&
-                widget.message.dateDelivered != null &&
-                widget.newerMessage.dateDelivered == null);
+        showTail = withinTimeThreshold(_message, _newerMessage, threshold: 1) ||
+            !sameSender(_message, _newerMessage) ||
+            (_message.isFromMe &&
+                _newerMessage.isFromMe &&
+                _message.dateDelivered != null &&
+                _newerMessage.dateDelivered == null);
       }
     }
-    
 
-    if (widget.message.isGroupEvent()) {
-      return GroupEvent(message: widget.message);
+    if (_message.isGroupEvent()) {
+      return GroupEvent(
+          key: Key("group-event-${_message.guid}"), message: _message);
     }
 
     ////////// READ //////////
@@ -226,46 +269,43 @@ class _MessageState extends State<MessageWidget>
 
     // Build the attachments widget
     Widget widgetAttachments = MessageAttachments(
-      message: widget.message,
+      message: _message,
       showTail: showTail,
       showHandle: widget.showHandle,
     );
 
     UrlPreviewWidget urlPreviewWidget = UrlPreviewWidget(
-        key: new Key("preview-${widget.message.guid}"),
-        linkPreviews: widget.message.getPreviewAttachments(),
-        message: widget.message);
+        key: new Key("preview-${_message.guid}"),
+        linkPreviews: _message.getPreviewAttachments(),
+        message: _message);
     StickersWidget stickersWidget = StickersWidget(
         key: new Key("stickers-${associatedCount.toString()}"),
-        messages: widget.message.associatedMessages);
+        messages: _message.associatedMessages);
     ReactionsWidget reactionsWidget = ReactionsWidget(
         key: new Key("reactions-${associatedCount.toString()}"),
-        message: widget.message,
-        associatedMessages: widget.message.associatedMessages);
+        message: _message,
+        associatedMessages: _message.associatedMessages);
 
     // Add the correct type of message to the message stack
     Widget message;
-    if (widget.message.isFromMe) {
+    if (_message.isFromMe) {
       message = SentMessage(
-        offset: widget.offset,
         showTail: showTail,
         olderMessage: widget.olderMessage,
-        message: widget.message,
+        message: _message,
         urlPreviewWidget: urlPreviewWidget,
         stickersWidget: stickersWidget,
         attachmentsWidget: widgetAttachments,
         reactionsWidget: reactionsWidget,
-        shouldFadeIn:
-            CurrentChat.of(context).sentMessages.contains(widget.message.guid),
+        shouldFadeIn: currentChat.sentMessages.contains(_message.guid),
         showHero: widget.showHero,
         showDeliveredReceipt: widget.isFirstSentMessage,
       );
     } else {
       message = ReceivedMessage(
-        offset: widget.offset,
         showTail: showTail,
         olderMessage: widget.olderMessage,
-        message: widget.message,
+        message: _message,
         showHandle: widget.showHandle,
         urlPreviewWidget: urlPreviewWidget,
         stickersWidget: stickersWidget,
@@ -278,8 +318,8 @@ class _MessageState extends State<MessageWidget>
       children: [
         message,
         MessageTimeStampSeparator(
-          newerMessage: widget.newerMessage,
-          message: widget.message,
+          newerMessage: _newerMessage,
+          message: _message,
         )
       ],
     );

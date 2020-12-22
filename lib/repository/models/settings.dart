@@ -41,6 +41,8 @@ class Settings {
         settings.chunkSize = entry.value;
       } else if (entry.name == "autoOpenKeyboard") {
         settings.autoOpenKeyboard = entry.value;
+      } else if (entry.name == "autoDownload") {
+        settings.autoDownload = entry.value;
       } else if (entry.name == "onlyWifiDownload") {
         settings.onlyWifiDownload = entry.value;
       } else if (entry.name == "hideTextPreviews") {
@@ -81,7 +83,6 @@ class Settings {
     DisplayMode mode;
     if (modes.isEmpty) {
       mode = await FlutterDisplayMode.current;
-      this.displayMode = mode.id;
     } else {
       mode = modes.first;
     }

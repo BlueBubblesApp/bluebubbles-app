@@ -9,6 +9,7 @@ import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scrol
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
+import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
@@ -42,12 +43,20 @@ class MessagesViewState extends State<MessagesView>
   GlobalKey<SliverAnimatedListState> _listKey;
   final Duration animationDuration = Duration(milliseconds: 400);
   bool initializedList = false;
-  double timeStampOffset = 0;
   ScrollController scrollController = new ScrollController();
-  bool showScrollDown = false;
-  int scrollState = -1; // -1: stopped, 0: start, 1: update
   List<int> loadedPages = [];
   CurrentChat currentChat;
+
+  bool currentShowScrollDown = false;
+  StreamController<bool> showScrollDownStream =
+      StreamController<bool>.broadcast();
+  bool get showScrollDown => currentShowScrollDown;
+  set showScrollDown(bool value) {
+    if (currentShowScrollDown == value) return;
+    currentShowScrollDown = value;
+    if (!showScrollDownStream.isClosed)
+      showScrollDownStream.sink.add(currentShowScrollDown);
+  }
 
   @override
   void initState() {
@@ -55,35 +64,26 @@ class MessagesViewState extends State<MessagesView>
     widget.messageBloc.stream.listen(handleNewMessage);
 
     scrollController.addListener(() {
-      if (scrollController == null) return;
+      if (scrollController == null || !scrollController.hasClients) return;
+      if (showScrollDown && scrollController.offset >= 500) return;
+      if (!showScrollDown && scrollController.offset < 500) return;
 
-      if (scrollController.hasClients &&
-          scrollController.offset >= 500 &&
-          !showScrollDown) {
-        if (this.mounted)
-          setState(() {
-            showScrollDown = true;
-          });
-      } else if (scrollController.hasClients &&
-          scrollController.offset < 500 &&
-          showScrollDown) {
-        if (this.mounted)
-          setState(() {
-            showScrollDown = false;
-          });
+      if (scrollController.offset >= 500) {
+        showScrollDown = true;
+      } else {
+        showScrollDown = false;
       }
     });
 
     EventDispatcher().stream.listen((Map<String, dynamic> event) {
-      if (!["refresh-messagebloc"].contains(event["type"]))
-        return;
+      if (!["refresh-messagebloc"].contains(event["type"])) return;
       if (!event["data"].containsKey("chatGuid")) return;
 
       // Handle event's that require a matching guid
       String chatGuid = event["data"]["chatGuid"];
       if (widget.chat.guid == chatGuid) {
         if (event["type"] == "refresh-messagebloc") {
-          // Clear state items 
+          // Clear state items
           noMoreLocalMessages = false;
           noMoreMessages = false;
           _messages = [];
@@ -107,8 +107,13 @@ class MessagesViewState extends State<MessagesView>
 
     if (_messages.isEmpty) {
       widget.messageBloc.getMessages();
-      if (this.mounted) setState(() {});
     }
+  }
+
+  @override
+  void dispose() {
+    showScrollDownStream.close();
+    super.dispose();
   }
 
   Future<void> loadNextChunk() {
@@ -160,7 +165,9 @@ class MessagesViewState extends State<MessagesView>
     // Skip deleted messages
     if (event.message != null && event.message.dateDeleted != null) return;
     if (!isNullOrEmpty(event.messages)) {
-      event.messages = event.messages.where((element) => element.dateDeleted == null).toList();
+      event.messages = event.messages
+          .where((element) => element.dateDeleted == null)
+          .toList();
     }
 
     if (event.type == MessageBlocEventType.insert) {
@@ -173,10 +180,6 @@ class MessagesViewState extends State<MessagesView>
         Future.delayed(SendWidget.SEND_DURATION * 2, () {
           currentChat.sentMessages
               .removeWhere((element) => element.guid == event.message.guid);
-
-          if (_listKey?.currentState != null && _listKey.currentState.mounted) {
-            _listKey.currentState.setState(() {});
-          }
         });
 
         if (context != null)
@@ -206,7 +209,9 @@ class MessagesViewState extends State<MessagesView>
         _listKey.currentState.insertItem(
           event.index != null ? event.index : 0,
           duration: isNewMessage
-              ? event.outGoing ? Duration(milliseconds: 500) : animationDuration
+              ? event.outGoing
+                  ? Duration(milliseconds: 500)
+                  : animationDuration
               : Duration(milliseconds: 0),
         );
       }
@@ -214,26 +219,10 @@ class MessagesViewState extends State<MessagesView>
         await currentChat.updateChatAttachments();
         if (this.mounted) setState(() {});
       }
-    } else if (event.type == MessageBlocEventType.update) {
-      currentChat.updateExistingAttachments(event);
-      bool updatedAMessage = false;
-      for (int i = 0; i < _messages.length; i++) {
-        if (_messages[i].guid == event.oldGuid) {
-          debugPrint(
-              "(Message status) Update message: [${event.message.text}] - [${event.message.guid}] - [${event.oldGuid}]");
-          _messages[i] = event.message;
-          if (this.mounted) setState(() {});
-          updatedAMessage = true;
-          break;
-        }
-      }
-      if (!updatedAMessage) {
-        debugPrint(
-            "(Message status) FAILED TO UPDATE A MESSAGE: [${event.message.text}] - [${event.message.guid}] - [${event.oldGuid}]");
-      }
     } else if (event.type == MessageBlocEventType.remove) {
       for (int i = 0; i < _messages.length; i++) {
-        if (_messages[i].guid == event.remove && _listKey.currentState != null) {
+        if (_messages[i].guid == event.remove &&
+            _listKey.currentState != null) {
           _messages.removeAt(i);
           _listKey.currentState
               .removeItem(i, (context, animation) => Container());
@@ -266,10 +255,32 @@ class MessagesViewState extends State<MessagesView>
           }
         }
       }
-      if (_listKey != null && _listKey.currentState != null)
-        _listKey.currentState.setState(() {});
-      if (this.mounted) setState(() {});
     }
+  }
+
+  /// All message update events are handled within the message widgets, to prevent top level setstates
+  Message onUpdateMessage(NewMessageEvent event) {
+    if (event.type != NewMessageType.UPDATE) return null;
+    currentChat.updateExistingAttachments(event);
+
+    String oldGuid = event.event["oldGuid"];
+    Message message = event.event["message"];
+
+    bool updatedAMessage = false;
+    for (int i = 0; i < _messages.length; i++) {
+      if (_messages[i].guid == oldGuid) {
+        debugPrint(
+            "(Message status) Update message: [${message.text}] - [${message.guid}] - [$oldGuid]");
+        _messages[i] = message;
+        updatedAMessage = true;
+        break;
+      }
+    }
+    if (!updatedAMessage) {
+      debugPrint(
+          "(Message status) FAILED TO UPDATE A MESSAGE: [${message.text}] - [${message.guid}] - [$oldGuid]");
+    }
+    return message;
   }
 
   @override
@@ -278,54 +289,23 @@ class MessagesViewState extends State<MessagesView>
       behavior: HitTestBehavior.deferToChild,
       onHorizontalDragStart: (details) {},
       onHorizontalDragUpdate: (details) {
-        if (!this.mounted) return;
-
-        setState(() {
-          timeStampOffset += details.delta.dx * 0.3;
-        });
+        CurrentChat.of(context).timeStampOffset += details.delta.dx * 0.3;
       },
       onHorizontalDragEnd: (details) {
-        if (!this.mounted) return;
-
-        setState(() {
-          timeStampOffset = 0;
-        });
+        CurrentChat.of(context).timeStampOffset = 0;
       },
       onHorizontalDragCancel: () {
-        if (!this.mounted) return;
-
-        setState(() {
-          timeStampOffset = 0;
-        });
+        CurrentChat.of(context).timeStampOffset = 0;
       },
-      child: Stack(alignment: AlignmentDirectional.bottomCenter, children: [
-        NotificationListener(
-          onNotification: (scrollNotification) {
-            if (scrollNotification is ScrollStartNotification &&
-                scrollState != 0) {
-              scrollState = 0;
-            } else if (scrollNotification is ScrollUpdateNotification &&
-                scrollState != 1) {
-              scrollState = 1;
-            } else if (scrollNotification is ScrollEndNotification &&
-                scrollState != -1) {
-              scrollState = -1;
-              setState(() {});
-            }
-
-            return true;
-          },
-          child: CustomScrollView(
+      child: Stack(
+        alignment: AlignmentDirectional.bottomCenter,
+        children: [
+          CustomScrollView(
             controller: scrollController,
             reverse: true,
             physics: AlwaysScrollableScrollPhysics(
                 parent: CustomBouncingScrollPhysics()),
             slivers: <Widget>[
-              // SliverToBoxAdapter(
-              //   child: TypingIndicator(
-              //     visible: currentChat.showTypingIndicator,
-              //   ),
-              // ),
               _listKey != null
                   ? SliverAnimatedList(
                       initialItemCount: _messages.length + 1,
@@ -377,7 +357,6 @@ class MessagesViewState extends State<MessagesView>
                                 padding: EdgeInsets.only(left: 5.0, right: 5.0),
                                 child: MessageWidget(
                                   key: Key(_messages[index].guid),
-                                  offset: timeStampOffset,
                                   message: _messages[index],
                                   olderMessage: olderMessage,
                                   newerMessage: newerMessage,
@@ -387,6 +366,7 @@ class MessagesViewState extends State<MessagesView>
                                           _messages[index].guid,
                                   showHero: index == 0 &&
                                       _messages[index].originalROWID == null,
+                                  onUpdate: (event) => onUpdateMessage(event),
                                 ),
                               ),
                             ),
@@ -400,39 +380,50 @@ class MessagesViewState extends State<MessagesView>
               ),
             ],
           ),
-        ),
-        (showScrollDown && scrollState == -1)
-            ? ClipRRect(
-                borderRadius: BorderRadius.circular(10.0),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-                  child: Container(
-                    height: 35,
-                    width: 150,
-                    decoration: BoxDecoration(
-                        color: Theme.of(context).accentColor.withOpacity(0.7),
-                        borderRadius: BorderRadius.circular(10.0)),
-                    child: Center(
-                      child: GestureDetector(
-                        onTap: () {
-                          scrollController.animateTo(
-                            0.0,
-                            curve: Curves.easeOut,
-                            duration: const Duration(milliseconds: 300),
-                          );
-                        },
-                        child: Text(
-                          "\u{2193} Scroll to bottom \u{2193}",
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.bodyText1,
+          StreamBuilder<bool>(
+            stream: showScrollDownStream.stream,
+            builder: (context, snapshot) {
+              return AnimatedOpacity(
+                opacity: showScrollDown ? 1 : 0,
+                duration: new Duration(milliseconds: 300),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(10.0),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+                    child: FittedBox(
+                      fit: BoxFit.fitWidth,
+                      child: Container(
+                        height: 35,
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).accentColor.withOpacity(0.7),
+                          borderRadius: BorderRadius.circular(10.0),
+                        ),
+                        padding: EdgeInsets.symmetric(horizontal: 10),
+                        child: Center(
+                          child: GestureDetector(
+                            onTap: () {
+                              scrollController.animateTo(
+                                0.0,
+                                curve: Curves.easeOut,
+                                duration: const Duration(milliseconds: 300),
+                              );
+                            },
+                            child: Text(
+                              "\u{2193} Scroll to bottom \u{2193}",
+                              textAlign: TextAlign.center,
+                              style: Theme.of(context).textTheme.bodyText1,
+                            ),
+                          ),
                         ),
                       ),
                     ),
                   ),
                 ),
-              )
-            : Container()
-      ]),
+              );
+            },
+          ),
+        ],
+      ),
     );
   }
 }
