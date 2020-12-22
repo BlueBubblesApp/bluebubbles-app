@@ -103,9 +103,13 @@ class AttachmentDownloader {
       debugPrint(
           "Attachment downloaded in ${stopwatch.elapsedMilliseconds} ms");
 
-      // Get the dimensions of the attachment
-      await AttachmentHelper.setDimensions(attachment);
-      await attachment.update();
+      try {
+        // Get the dimensions of the attachment
+        await AttachmentHelper.setDimensions(attachment);
+        await attachment.update();
+      } catch (ex) {
+        // So what if it crashes here.... I don't care...
+      }
 
       File file = new File(attachment.getPath());
 
