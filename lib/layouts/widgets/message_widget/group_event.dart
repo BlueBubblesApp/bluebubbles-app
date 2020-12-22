@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/material.dart';
@@ -22,7 +24,7 @@ class GroupEvent extends StatefulWidget {
 
 class _GroupEventState extends State<GroupEvent> {
   String text = "";
-  bool complete = false;
+  Completer<void> completer;
 
   @override
   initState() {
@@ -30,19 +32,27 @@ class _GroupEventState extends State<GroupEvent> {
     getEventText();
   }
 
-  void getEventText() {
-    if (complete) return;
+  Future<void> getEventText() async {
+    // If we've already completed the task, don't do it again
+    if (completer != null && completer.isCompleted) return;
+
+    // If we haven't completed the task, return the pending task
+    if (completer != null && !completer.isCompleted) return completer.future;
+
+    // If we've never started the task, create a new one and fetch the group event text
+    completer = new Completer<void>();
 
     getGroupEventText(widget.message).then((String text) {
-      if (this.text != text) {
-        this.text = text;
-        if (this.mounted) {
-          setState(() {
-            complete = true;
-          });
-        }
-      }
+      if (this.text == text) return;
+
+      this.text = text;
+      completer.complete();
+      if (this.mounted) setState(() {});
+    }).catchError((e) {
+      completer.completeError(e);
     });
+
+    return completer.future;
   }
 
   @override

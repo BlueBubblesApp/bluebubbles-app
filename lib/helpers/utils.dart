@@ -65,8 +65,8 @@ String formatPhoneNumber(String str) {
 }
 
 bool sameAddress(String address1, String address2) {
-  String formattedNumber1 = address1.replaceAll(RegExp(r'[-() ]'), '');
-  String formattedNumber2 = address2.replaceAll(RegExp(r'[-() ]'), '');
+  String formattedNumber1 = address1.replaceAll(RegExp(r'[-() \.]'), '');
+  String formattedNumber2 = address2.replaceAll(RegExp(r'[-() \.]'), '');
 
   return formattedNumber1 == formattedNumber2 ||
       "+1" + formattedNumber1 == formattedNumber2 ||
