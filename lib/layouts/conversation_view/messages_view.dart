@@ -47,37 +47,33 @@ class MessagesViewState extends State<MessagesView>
   GlobalKey<SliverAnimatedListState> _listKey;
   final Duration animationDuration = Duration(milliseconds: 400);
   bool initializedList = false;
-  ScrollController scrollController = new ScrollController();
   List<int> loadedPages = [];
   CurrentChat currentChat;
 
-  bool currentShowScrollDown = false;
-  StreamController<bool> showScrollDownStream =
-      StreamController<bool>.broadcast();
-  bool get showScrollDown => currentShowScrollDown;
+  bool get showScrollDown => currentChat.showScrollDown;
   set showScrollDown(bool value) {
-    if (currentShowScrollDown == value) return;
-    currentShowScrollDown = value;
-    if (!showScrollDownStream.isClosed)
-      showScrollDownStream.sink.add(currentShowScrollDown);
+    if (currentChat.currentShowScrollDown == value) {
+      return;
+    }
+    currentChat.currentShowScrollDown = value;
+    if (!currentChat.showScrollDownStream.isClosed) {
+      currentChat.showScrollDownStream.sink
+          .add(currentChat.currentShowScrollDown);
+    }
+  }
+
+  ScrollController get scrollController {
+    if (currentChat == null) return null;
+    if (currentChat.scrollController == null) {
+      currentChat.scrollController = ScrollController();
+    }
+    return currentChat.scrollController;
   }
 
   @override
   void initState() {
     super.initState();
     widget.messageBloc.stream.listen(handleNewMessage);
-
-    scrollController.addListener(() {
-      if (scrollController == null || !scrollController.hasClients) return;
-      if (showScrollDown && scrollController.offset >= 500) return;
-      if (!showScrollDown && scrollController.offset < 500) return;
-
-      if (scrollController.offset >= 500) {
-        showScrollDown = true;
-      } else {
-        showScrollDown = false;
-      }
-    });
 
     EventDispatcher().stream.listen((Map<String, dynamic> event) {
       if (!["refresh-messagebloc"].contains(event["type"])) return;
@@ -109,6 +105,18 @@ class MessagesViewState extends State<MessagesView>
     super.didChangeDependencies();
     currentChat = CurrentChat.of(context);
 
+    scrollController?.addListener(() {
+      if (scrollController == null || !scrollController.hasClients) return;
+      if (showScrollDown && scrollController.offset >= 500) return;
+      if (!showScrollDown && scrollController.offset < 500) return;
+
+      if (scrollController.offset >= 500) {
+        showScrollDown = true;
+      } else {
+        showScrollDown = false;
+      }
+    });
+
     if (_messages.isEmpty) {
       widget.messageBloc.getMessages();
     }
@@ -116,7 +124,6 @@ class MessagesViewState extends State<MessagesView>
 
   @override
   void dispose() {
-    showScrollDownStream.close();
     super.dispose();
   }
 
@@ -390,48 +397,44 @@ class MessagesViewState extends State<MessagesView>
               ),
             ],
           ),
-          StreamBuilder<bool>(
-            stream: showScrollDownStream.stream,
-            builder: (context, snapshot) {
-              return AnimatedOpacity(
-                opacity: showScrollDown ? 1 : 0,
-                duration: new Duration(milliseconds: 300),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(10.0),
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-                    child: FittedBox(
-                      fit: BoxFit.fitWidth,
-                      child: Container(
-                        height: 35,
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).accentColor.withOpacity(0.7),
-                          borderRadius: BorderRadius.circular(10.0),
-                        ),
-                        padding: EdgeInsets.symmetric(horizontal: 10),
-                        child: Center(
-                          child: GestureDetector(
-                            onTap: () {
-                              scrollController.animateTo(
-                                0.0,
-                                curve: Curves.easeOut,
-                                duration: const Duration(milliseconds: 300),
-                              );
-                            },
-                            child: Text(
-                              "\u{2193} Scroll to bottom \u{2193}",
-                              textAlign: TextAlign.center,
-                              style: Theme.of(context).textTheme.bodyText1,
+          if (SettingsManager().settings.skin == Skins.IOS)
+            StreamBuilder<bool>(
+              stream: currentChat.showScrollDownStream.stream,
+              builder: (context, snapshot) {
+                return AnimatedOpacity(
+                  opacity: showScrollDown ? 1 : 0,
+                  duration: new Duration(milliseconds: 300),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(10.0),
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+                      child: FittedBox(
+                        fit: BoxFit.fitWidth,
+                        child: Container(
+                          height: 35,
+                          decoration: BoxDecoration(
+                            color:
+                                Theme.of(context).accentColor.withOpacity(0.7),
+                            borderRadius: BorderRadius.circular(10.0),
+                          ),
+                          padding: EdgeInsets.symmetric(horizontal: 10),
+                          child: Center(
+                            child: GestureDetector(
+                              onTap: currentChat.scrollToBottom,
+                              child: Text(
+                                "\u{2193} Scroll to bottom \u{2193}",
+                                textAlign: TextAlign.center,
+                                style: Theme.of(context).textTheme.bodyText1,
+                              ),
                             ),
                           ),
                         ),
                       ),
                     ),
                   ),
-                ),
-              );
-            },
-          ),
+                );
+              },
+            ),
         ],
       ),
     );

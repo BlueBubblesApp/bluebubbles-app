@@ -234,7 +234,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
             child: GestureDetector(
               child: Icon(
                 Icons.more_vert,
-                color: Theme.of(context).textTheme.subtitle1.color,
+                color: fontColor,
               ),
               onTap: openDetails,
             ),

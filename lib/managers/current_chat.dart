@@ -59,6 +59,12 @@ class CurrentChat {
       timeStampOffsetStream.sink.add(_timeStampOffset);
   }
 
+  StreamController<bool> showScrollDownStream =
+      StreamController<bool>.broadcast();
+  ScrollController scrollController = ScrollController();
+  bool currentShowScrollDown = false;
+  bool get showScrollDown => currentShowScrollDown;
+
   CurrentChat(this.chat);
 
   factory CurrentChat.getCurrentChat(Chat chat) {
@@ -109,6 +115,9 @@ class CurrentChat {
     indicatorHideTimer = null;
     _timeStampOffset = 0;
     timeStampOffsetStream = StreamController<double>.broadcast();
+    currentShowScrollDown = false;
+    showScrollDownStream = StreamController<bool>.broadcast();
+    scrollController = ScrollController();
     // checkTypingIndicator();
   }
 
@@ -237,8 +246,10 @@ class CurrentChat {
       });
     }
     if (!timeStampOffsetStream.isClosed) timeStampOffsetStream.close();
+    if (!showScrollDownStream.isClosed) showScrollDownStream.close();
 
     _timeStampOffset = 0;
+    currentShowScrollDown = false;
     imageData = {};
     currentPlayingVideo = {};
     audioPlayers = {};
@@ -252,7 +263,18 @@ class CurrentChat {
     sentMessages = [];
     isAlive = false;
     showTypingIndicator = false;
+    scrollController.dispose();
+    scrollController = ScrollController();
     if (entry != null) entry.remove();
+  }
+
+  void scrollToBottom() {
+    if (scrollController == null) return;
+    scrollController.animateTo(
+      0.0,
+      curve: Curves.easeOut,
+      duration: const Duration(milliseconds: 300),
+    );
   }
 
   /// Dipose of the controllers which we no longer need

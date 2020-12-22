@@ -144,7 +144,6 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
   }
 
   void sendReaction(String type) {
-    if (isEmptyString(widget.message.fullText)) return;
     ActionHandler.sendReaction(widget.currentChat.chat, widget.message, type);
     Navigator.of(context).pop();
   }
@@ -229,9 +228,6 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
   }
 
   Widget buildReactionMenu() {
-    if (isEmptyString(widget.message.fullText)) {
-      return Container();
-    }
     Size size = MediaQuery.of(context).size;
 
     double reactionIconSize = ((MessageWidgetMixin.MAX_SIZE * size.width) /
@@ -287,7 +283,8 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
                         ),
                       ),
                       child: GestureDetector(
-                        onTap: () => sendReaction(e),
+                        onTap: () =>
+                            sendReaction(selfReaction == e ? "-$e" : e),
                         child: Padding(
                           padding: const EdgeInsets.all(6),
                           child: Reaction.getReactionIcon(e, iconColor),

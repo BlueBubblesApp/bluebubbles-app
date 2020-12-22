@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/attachment_sender.dart';
+import 'package:bluebubbles/helpers/contstants.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view_mixin.dart';
 import 'package:bluebubbles/layouts/conversation_view/messages_view.dart';
 import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/chat_selector_text_field.dart';
@@ -140,6 +141,34 @@ class ConversationViewState extends State<ConversationView>
     return true;
   }
 
+  Widget buildFAB() {
+    if (widget.onSelect != null) {
+      return FloatingActionButton(
+        onPressed: () => widget.onSelect(selected),
+        child: widget.selectIcon ??
+            Icon(
+              Icons.check,
+              color: Theme.of(context).textTheme.bodyText1.color,
+            ),
+        backgroundColor: Theme.of(context).primaryColor,
+      );
+    } else if (currentChat.showScrollDown &&
+        SettingsManager().settings.skin == Skins.Material) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 55.0),
+        child: FloatingActionButton(
+          onPressed: currentChat.scrollToBottom,
+          child: Icon(
+            Icons.arrow_downward,
+            color: Theme.of(context).textTheme.bodyText1.color,
+          ),
+          backgroundColor: Theme.of(context).accentColor,
+        ),
+      );
+    }
+    return Container();
+  }
+
   @override
   Widget build(BuildContext context) {
     currentChat?.isAlive = true;
@@ -203,17 +232,12 @@ class ConversationViewState extends State<ConversationView>
             ],
           ),
         ),
-        floatingActionButton: widget.onSelect != null
-            ? FloatingActionButton(
-                onPressed: () => widget.onSelect(selected),
-                child: widget.selectIcon ??
-                    Icon(
-                      Icons.check,
-                      color: Theme.of(context).textTheme.bodyText1.color,
-                    ),
-                backgroundColor: Theme.of(context).primaryColor,
-              )
-            : null,
+        floatingActionButton: StreamBuilder<bool>(
+          stream: currentChat.showScrollDownStream.stream,
+          builder: (context, snapshot) {
+            return buildFAB();
+          },
+        ),
       ),
     );
   }
