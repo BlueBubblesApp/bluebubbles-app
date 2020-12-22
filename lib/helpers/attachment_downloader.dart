@@ -55,11 +55,14 @@ class AttachmentDownloader {
     params["compress"] = false;
     SocketManager().sendMessage("get-attachment-chunk", params,
         (attachmentResponse) async {
-      if (attachmentResponse['status'] != "200") {
+      if (attachmentResponse['status'] != "200" ||
+          (attachmentResponse.containsKey("error") &&
+              attachmentResponse["error"] != null)) {
         cb();
         _onError(attachmentResponse);
         return;
       }
+
       int numBytes = attachmentResponse["byteLength"];
 
       if (numBytes == _chunkSize) {
@@ -95,20 +98,12 @@ class AttachmentDownloader {
 
     _totalChunks = numOfChunks;
 
-    _cb = ([bool recheck = true]) async {
+    _cb = () async {
       stopwatch.stop();
       debugPrint(
           "Attachment downloaded in ${stopwatch.elapsedMilliseconds} ms");
 
       File file = new File(attachment.getPath());
-      if (!(await file.exists()) && recheck) {
-        return Future.delayed(Duration(milliseconds: 200), () {
-          _cb(false);
-        });
-      } else if (!recheck) {
-        _stream.sink.add(null);
-        return;
-      }
 
       // Finish the downloader
       SocketManager().finishDownloader(attachment.guid);

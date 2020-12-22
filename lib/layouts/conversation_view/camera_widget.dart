@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/text_field/blue_bubbles_text_field.dart';
+import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
@@ -82,7 +84,8 @@ class _CameraWidgetState extends State<CameraWidget>
               ),
               Padding(
                 padding: EdgeInsets.only(
-                    bottom: MediaQuery.of(context).size.height / 30),
+                  bottom: MediaQuery.of(context).size.height / 30,
+                ),
                 child: FlatButton(
                   color: Colors.transparent,
                   onPressed: () async {
@@ -104,6 +107,32 @@ class _CameraWidgetState extends State<CameraWidget>
                 ),
               )
             ],
+          ),
+          Align(
+            alignment: Alignment.topLeft,
+            child: Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).size.height / 30,
+              ),
+              child: FlatButton(
+                color: Colors.transparent,
+                onPressed: () async {
+                  String appDocPath = SettingsManager().appDocDir.path;
+                  File file = new File(
+                      "$appDocPath/attachments/" + randomString(16) + ".png");
+                  await file.create();
+                  await MethodChannelInterface()
+                      .invokeMethod("open-camera", {"path": file.path});
+                  debugPrint("Adding attachment: " + file.path);
+                  widget.addAttachment(file);
+                },
+                child: Icon(
+                  Icons.fullscreen,
+                  color: Colors.white,
+                  size: 30,
+                ),
+              ),
+            ),
           ),
           Padding(
             padding: EdgeInsets.only(
@@ -127,7 +156,7 @@ class _CameraWidgetState extends State<CameraWidget>
                 size: 30,
               ),
             ),
-          )
+          ),
         ],
       ),
     );

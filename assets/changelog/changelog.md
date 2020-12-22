@@ -34,3 +34,4 @@ Below are the last few BlueBubbles App release changelogs
   - Adds ability to click the notification to take you directly to the server management page of the app to restart the server
 - Fixes issues with settings panel not properly reflecting the current settings
 - Fixes issue where removing an attachment would not fully remove it, thus re-entering the chat would cause the attachment to reappear
+- Added ability to take a picture in fullscreen

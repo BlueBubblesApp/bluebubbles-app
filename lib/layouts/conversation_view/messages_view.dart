@@ -322,7 +322,7 @@ class MessagesViewState extends State<MessagesView>
                           Animation<double> animation) {
                         // Load more messages if we are at the top and we aren't alrady loading
                         // and we have more messages to load
-                        if (index >= _messages.length) {
+                        if (index == _messages.length) {
                           if (!noMoreMessages &&
                               (loader == null ||
                                   !loader.isCompleted ||
@@ -331,6 +331,8 @@ class MessagesViewState extends State<MessagesView>
                             return NewMessageLoader();
                           }
 
+                          return Container();
+                        } else if (index > _messages.length) {
                           return Container();
                         }
 
