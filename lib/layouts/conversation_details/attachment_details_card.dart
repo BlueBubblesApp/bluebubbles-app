@@ -194,7 +194,6 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
                   ThemeSwitcher.buildPageRoute(
                     builder: (context) => AttachmentFullscreenViewer(
                       currentChat: currentChat,
-                      allAttachments: widget.allAttachments,
                       attachment: widget.attachment,
                       showInteractions: true,
                     ),
@@ -234,7 +233,6 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
                   ThemeSwitcher.buildPageRoute(
                     builder: (context) => AttachmentFullscreenViewer(
                       currentChat: currentChat,
-                      allAttachments: widget.allAttachments,
                       attachment: widget.attachment,
                       showInteractions: true,
                     ),

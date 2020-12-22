@@ -97,7 +97,6 @@ class _ImageWidgetState extends State<ImageWidget>
                     MaterialPageRoute(
                       builder: (context) => AttachmentFullscreenViewer(
                         currentChat: currentChat,
-                        allAttachments: currentChat.chatAttachments,
                         attachment: widget.attachment,
                         showInteractions: true,
                       ),

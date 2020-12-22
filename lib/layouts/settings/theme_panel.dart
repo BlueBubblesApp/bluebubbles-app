@@ -109,18 +109,6 @@ class _ThemePanelState extends State<ThemePanel> {
               delegate: SliverChildListDelegate(
                 <Widget>[
                   Container(padding: EdgeInsets.only(top: 5.0)),
-                  if (currentMode != null && modes != null)
-                    SettingsOptions<DisplayMode>(
-                      initial: currentMode,
-                      showDivider: false,
-                      onChanged: (val) async {
-                        currentMode = val;
-                        _settingsCopy.displayMode = currentMode.id;
-                      },
-                      options: modes,
-                      textProcessing: (dynamic val) => val.toString(),
-                      title: "Display",
-                    ),
                   SettingsOptions<AdaptiveThemeMode>(
                     initial: AdaptiveTheme.of(context).mode,
                     onChanged: (val) {
@@ -189,6 +177,19 @@ class _ThemePanelState extends State<ThemePanel> {
                     initialVal: _settingsCopy.colorfulBubbles,
                     title: "Colorful Bubbles",
                   ),
+                  // For whatever fucking reason, this needs to be down here, otherwise all of the switch values are false
+                  if (currentMode != null && modes != null)
+                    SettingsOptions<DisplayMode>(
+                      initial: currentMode,
+                      showDivider: false,
+                      onChanged: (val) async {
+                        currentMode = val;
+                        _settingsCopy.displayMode = currentMode.id;
+                      },
+                      options: modes,
+                      textProcessing: (dynamic val) => val.toString(),
+                      title: "Display",
+                    ),
                   // SettingsOptions<String>(
                   //   initial: _settingsCopy.emojiFontFamily == null
                   //       ? "System"

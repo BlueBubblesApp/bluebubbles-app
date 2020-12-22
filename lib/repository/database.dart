@@ -132,8 +132,7 @@ class DBProvider {
     // then we will run every single scheme from 1 -> 2 and 2 -> 3
 
     for (DBUpgradeItem item in upgradeSchemes) {
-      if (item.fromVersions.contains(oldVersion) &&
-          item.toVersions.contains(newVersion)) {
+      if (item.fromVersions.contains(oldVersion)) {
         debugPrint(
             "UPGRADING DB FROM VERSION $oldVersion TO VERSION $newVersion");
         await item.upgrade(db);

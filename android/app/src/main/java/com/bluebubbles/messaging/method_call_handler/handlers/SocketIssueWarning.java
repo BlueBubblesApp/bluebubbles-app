@@ -43,7 +43,8 @@ public class SocketIssueWarning implements Handler {
                 .setContentText("Your server may be offline")
                 .setColor(4888294)
                 .setContentIntent(openIntent)
-                .setAutoCancel(true);
+                .setOngoing(true);
+
         NotificationManagerCompat notificationManagerCompat = NotificationManagerCompat.from(context);
         notificationManagerCompat.notify(1000, builder.build());
         result.success("");

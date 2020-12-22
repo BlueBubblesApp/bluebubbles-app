@@ -88,7 +88,6 @@ class Settings {
     DisplayMode mode;
     if (modes.isEmpty) {
       mode = await FlutterDisplayMode.current;
-      this.displayMode = mode.id;
     } else {
       mode = modes.first;
     }

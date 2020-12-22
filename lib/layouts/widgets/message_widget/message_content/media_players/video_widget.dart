@@ -121,7 +121,6 @@ class _VideoWidgetState extends State<VideoWidget>
             await Navigator.of(context).push(
               ThemeSwitcher.buildPageRoute(
                 builder: (context) => AttachmentFullscreenViewer(
-                  allAttachments: currentChat.chatAttachments,
                   currentChat: currentChat,
                   attachment: widget.attachment,
                   showInteractions: true,

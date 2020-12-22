@@ -281,6 +281,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
           onRemove: (File attachment) {
             pickedImages
                 .removeWhere((element) => element.path == attachment.path);
+            updateTextFieldAttachments();
             if (this.mounted) setState(() {});
           },
         ),

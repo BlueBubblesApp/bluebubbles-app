@@ -23,7 +23,8 @@ public class SocketIOManager implements ISocketIOManager {
         mSockets = new HashMap<>();
     }
 
-    private SocketIO getSocket(String socketId) {
+    @Override
+    public SocketIO getSocket(String socketId) {
         if(mSockets != null && !Utils.isNullOrEmpty(socketId)) {
             //Utils.log("TOTAL SOCKETS: ", String.valueOf(mSockets.size()));
             return mSockets.get(socketId);
@@ -58,7 +59,8 @@ public class SocketIOManager implements ISocketIOManager {
         return socketIO != null && socketIO.isConnected();
     }
 
-    private String getSocketId(String domain, String namespace) {
+    @Override
+    public String getSocketId(String domain, String namespace) {
         if(!Utils.isNullOrEmpty(domain)) {
             return domain + (namespace != null ? namespace : "");
         }
@@ -96,6 +98,16 @@ public class SocketIOManager implements ISocketIOManager {
         SocketIO socketIO = getSocket(getSocketId(domain, namespace));
         if(socketIO != null) {
             socketIO.sendMessage(event, message, callback);
+        } else {
+            Utils.log(TAG, " not found socket: " + getSocketId(domain, namespace));
+        }
+    }
+
+    @Override
+    public void sendAndHandle(String domain, String namespace, String event, String message, String path, String guidKey, String callback) {
+        SocketIO socketIO = getSocket(getSocketId(domain, namespace));
+        if(socketIO != null) {
+            socketIO.sendAndHandle(event, message, path, guidKey, callback);
         } else {
             Utils.log(TAG, " not found socket: " + getSocketId(domain, namespace));
         }
@@ -177,6 +189,8 @@ public class SocketIOManager implements ISocketIOManager {
         public static final String SOCKET_DOMAIN = "socketDomain";
         public static final String SOCKET_NAME_SPACE = "socketNameSpace";
         public static final String SOCKET_CALLBACK = "socketCallback";
+        public static final String FILE_PATH = "filePath";
+        public static final String GUID_KEY = "guidKey";
         public static final String SOCKET_EVENT = "socketEvent";
         public static final String SOCKET_MESSAGE = "socketMessage";
         public static final String SOCKET_DATA = "socketData";
@@ -191,6 +205,7 @@ public class SocketIOManager implements ISocketIOManager {
         public static final String SOCKET_UNSUBSCRIBES = "socketUnsubcribes";
         public static final String SOCKET_UNSUBSCRIBES_ALL = "socketUnsubcribesAll";
         public static final String SOCKET_SEND_MESSAGE = "socketSendMessage";
+        public static final String SOCKET_SEND_MESSAGE_WITHOUT_CALLBACK = "socketSendMessageWithoutCallback";
         public static final String SOCKET_DESTROY = "socketDestroy";
         public static final String SOCKET_DESTROY_ALL = "socketDestroyAll";
     }

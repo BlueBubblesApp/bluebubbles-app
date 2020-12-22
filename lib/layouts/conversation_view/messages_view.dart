@@ -213,7 +213,9 @@ class MessagesViewState extends State<MessagesView>
         _listKey.currentState.insertItem(
           event.index != null ? event.index : 0,
           duration: isNewMessage
-              ? event.outGoing ? Duration(milliseconds: 500) : animationDuration
+              ? event.outGoing
+                  ? Duration(milliseconds: 500)
+                  : animationDuration
               : Duration(milliseconds: 0),
         );
       }
@@ -396,25 +398,29 @@ class MessagesViewState extends State<MessagesView>
                   borderRadius: BorderRadius.circular(10.0),
                   child: BackdropFilter(
                     filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-                    child: Container(
-                      height: 35,
-                      width: 150,
-                      decoration: BoxDecoration(
+                    child: FittedBox(
+                      fit: BoxFit.fitWidth,
+                      child: Container(
+                        height: 35,
+                        decoration: BoxDecoration(
                           color: Theme.of(context).accentColor.withOpacity(0.7),
-                          borderRadius: BorderRadius.circular(10.0)),
-                      child: Center(
-                        child: GestureDetector(
-                          onTap: () {
-                            scrollController.animateTo(
-                              0.0,
-                              curve: Curves.easeOut,
-                              duration: const Duration(milliseconds: 300),
-                            );
-                          },
-                          child: Text(
-                            "\u{2193} Scroll to bottom \u{2193}",
-                            textAlign: TextAlign.center,
-                            style: Theme.of(context).textTheme.bodyText1,
+                          borderRadius: BorderRadius.circular(10.0),
+                        ),
+                        padding: EdgeInsets.symmetric(horizontal: 10),
+                        child: Center(
+                          child: GestureDetector(
+                            onTap: () {
+                              scrollController.animateTo(
+                                0.0,
+                                curve: Curves.easeOut,
+                                duration: const Duration(milliseconds: 300),
+                              );
+                            },
+                            child: Text(
+                              "\u{2193} Scroll to bottom \u{2193}",
+                              textAlign: TextAlign.center,
+                              style: Theme.of(context).textTheme.bodyText1,
+                            ),
                           ),
                         ),
                       ),
