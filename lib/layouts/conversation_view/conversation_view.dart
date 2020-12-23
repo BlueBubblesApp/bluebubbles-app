@@ -152,7 +152,8 @@ class ConversationViewState extends State<ConversationView>
             ),
         backgroundColor: Theme.of(context).primaryColor,
       );
-    } else if (currentChat.showScrollDown &&
+    } else if (currentChat != null &&
+        currentChat.showScrollDown &&
         SettingsManager().settings.skin == Skins.Material) {
       return Padding(
         padding: const EdgeInsets.only(bottom: 55.0),
@@ -232,12 +233,14 @@ class ConversationViewState extends State<ConversationView>
             ],
           ),
         ),
-        floatingActionButton: StreamBuilder<bool>(
-          stream: currentChat.showScrollDownStream.stream,
-          builder: (context, snapshot) {
-            return buildFAB();
-          },
-        ),
+        floatingActionButton: currentChat != null
+            ? StreamBuilder<bool>(
+                stream: currentChat.showScrollDownStream.stream,
+                builder: (context, snapshot) {
+                  return buildFAB();
+                },
+              )
+            : buildFAB(),
       ),
     );
   }
