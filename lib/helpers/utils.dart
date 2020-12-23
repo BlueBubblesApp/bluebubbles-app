@@ -2,8 +2,10 @@ import 'dart:async';
 import 'dart:math';
 import 'dart:typed_data';
 import 'package:adaptive_theme/adaptive_theme.dart';
+import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/repository/models/message.dart';
@@ -16,7 +18,9 @@ import 'package:convert/convert.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/services.dart';
+import 'package:image_size_getter/image_size_getter.dart' as IMG;
 import 'package:intl/intl.dart' as intl;
+import 'package:video_thumbnail/video_thumbnail.dart';
 
 DateTime parseDate(dynamic value) {
   if (value == null) return null;
@@ -364,6 +368,16 @@ Size getGifDimensions(Uint8List bytes) {
   debugPrint("GIF height: $height");
   Size size = new Size(width.toDouble(), height.toDouble());
   return size;
+}
+
+Future<IMG.Size> getVideoDimensions(Attachment attachment, { Uint8List bytes }) async {
+  Uint8List imageData = await VideoThumbnail.thumbnailData(
+    video: AttachmentHelper.getAttachmentPath(attachment),
+    imageFormat: ImageFormat.JPEG,
+    quality: 50,
+  );
+
+  return IMG.ImageSizeGetter.getSize(IMG.MemoryInput(imageData));
 }
 
 Brightness getBrightness(BuildContext context) {
