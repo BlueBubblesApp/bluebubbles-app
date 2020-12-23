@@ -116,10 +116,7 @@ class AttachmentDownloader {
       _stream.close();
     };
 
-    // Only donwload if auto download is on or the wifi stars align
-    if ((await AttachmentHelper.canAutoDownload())) {
-      SocketManager().addAttachmentDownloader(attachment.guid, this);
-    }
+    SocketManager().addAttachmentDownloader(attachment.guid, this);
 
     getChunkRecursive(attachment.guid, 0, numOfChunks, [], _cb);
   }

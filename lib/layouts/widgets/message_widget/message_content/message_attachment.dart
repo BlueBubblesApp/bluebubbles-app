@@ -148,12 +148,11 @@ class _MessageAttachmentState extends State<MessageAttachment>
           // If there is an error, return an error text
           if (snapshot.hasError) {
             return Padding(
-              padding: EdgeInsets.symmetric(horizontal: 5.0, vertical: 10.0),
-              child: Text(
-                "Error loading Attachment",
-                style: Theme.of(context).textTheme.bodyText1,
-              )
-            );
+                padding: EdgeInsets.symmetric(horizontal: 5.0, vertical: 10.0),
+                child: Text(
+                  "Error loading Attachment",
+                  style: Theme.of(context).textTheme.bodyText1,
+                ));
           }
 
           // If the snapshot data is a file, we have finished downloading
@@ -185,9 +184,7 @@ class _MessageAttachmentState extends State<MessageAttachment>
                           valueColor: AlwaysStoppedAnimation(Colors.white),
                         ),
                       ),
-                      ((content as AttachmentDownloader)
-                                  .attachment
-                                  .mimeType !=
+                      ((content as AttachmentDownloader).attachment.mimeType !=
                               null)
                           ? Container(height: 5.0)
                           : Container(),
