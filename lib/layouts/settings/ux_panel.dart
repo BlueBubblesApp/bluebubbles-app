@@ -112,10 +112,24 @@ class _UXPanelState extends State<UXPanel> {
                   ),
                   SettingsSwitch(
                     onChanged: (bool val) {
+                      _settingsCopy.sendTypingIndicators = val;
+                    },
+                    initialVal: _settingsCopy.sendTypingIndicators,
+                    title: "Send typing indicators (BlueBubblesHelper ONLY)",
+                  ),
+                  SettingsSwitch(
+                    onChanged: (bool val) {
                       _settingsCopy.sendWithReturn = val;
                     },
                     initialVal: _settingsCopy.sendWithReturn,
                     title: "Send Message with Return Key",
+                  ),
+                  SettingsSwitch(
+                    onChanged: (bool val) {
+                      _settingsCopy.smartReply = val;
+                    },
+                    initialVal: _settingsCopy.smartReply,
+                    title: "Smart Replies",
                   ),
                   SettingsSwitch(
                     onChanged: (bool val) {

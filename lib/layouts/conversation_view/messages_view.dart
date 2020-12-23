@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:ui';
 
+import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/contstants.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -20,6 +21,7 @@ import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:bluebubbles/layouts/widgets/send_widget.dart';
+import 'package:flutter_smart_reply/flutter_smart_reply.dart';
 
 class MessagesView extends StatefulWidget {
   final MessageBloc messageBloc;
@@ -50,6 +52,11 @@ class MessagesViewState extends State<MessagesView>
   List<int> loadedPages = [];
   CurrentChat currentChat;
 
+  List<TextMessage> currentMessages = [];
+  List<String> replies = [];
+
+  StreamController<List<String>> smartReplyController;
+
   bool get showScrollDown => currentChat.showScrollDown;
   set showScrollDown(bool value) {
     if (currentChat.currentShowScrollDown == value) {
@@ -74,6 +81,7 @@ class MessagesViewState extends State<MessagesView>
   void initState() {
     super.initState();
     widget.messageBloc.stream.listen(handleNewMessage);
+    smartReplyController = StreamController<List<String>>.broadcast();
 
     EventDispatcher().stream.listen((Map<String, dynamic> event) {
       if (!["refresh-messagebloc"].contains(event["type"])) return;
@@ -124,7 +132,30 @@ class MessagesViewState extends State<MessagesView>
 
   @override
   void dispose() {
+    // if (!smartReplyController.isClosed) smartReplyController.close();
     super.dispose();
+  }
+
+  void addMessage(Message message, {bool fetch = true}) {
+    if (isEmptyString(message.text)) return;
+
+    TextMessage textMessage = message.isFromMe
+        ? TextMessage.createForLocalUser(
+            message.text, message.dateCreated.millisecondsSinceEpoch)
+        : TextMessage.createForRemoteUser(
+            message.text, message.dateCreated.millisecondsSinceEpoch);
+
+    currentMessages.add(textMessage);
+    if (currentMessages.length > 10) {
+      currentMessages.removeAt(0);
+    }
+    if (fetch) updateReplies();
+  }
+
+  Future<void> updateReplies() async {
+    currentMessages.sort((a, b) => a.timestamp.compareTo(b.timestamp));
+    replies = await FlutterSmartReply.getSmartReplies(currentMessages);
+    smartReplyController.sink.add(replies);
   }
 
   Future<void> loadNextChunk() {
@@ -226,9 +257,14 @@ class MessagesViewState extends State<MessagesView>
               : Duration(milliseconds: 0),
         );
       }
+
       if (event.message.hasAttachments) {
         await currentChat.updateChatAttachments();
         if (this.mounted) setState(() {});
+      }
+
+      if (isNewMessage && SettingsManager().settings.smartReply) {
+        addMessage(event.message);
       }
     } else if (event.type == MessageBlocEventType.remove) {
       for (int i = 0; i < _messages.length; i++) {
@@ -244,6 +280,16 @@ class MessagesViewState extends State<MessagesView>
       _messages = event.messages;
       _messages
           .forEach((message) => currentChat.getAttachmentsForMessage(message));
+
+      // We only want to update smart replies on the intial message fetch
+      if (originalMessageLength == 0) {
+        if (SettingsManager().settings.smartReply) {
+          for (Message message in _messages) {
+            addMessage(message, fetch: false);
+          }
+          updateReplies();
+        }
+      }
       if (_listKey == null) _listKey = GlobalKey<SliverAnimatedListState>();
 
       if (originalMessageLength < _messages.length) {
@@ -294,6 +340,34 @@ class MessagesViewState extends State<MessagesView>
     return message;
   }
 
+  Widget _buildReply(String text) => Container(
+        margin: EdgeInsets.all(5),
+        decoration: BoxDecoration(
+          border: Border.all(
+            width: 2,
+            style: BorderStyle.solid,
+            color: Theme.of(context).accentColor,
+          ),
+          borderRadius: BorderRadius.circular(19),
+        ),
+        child: InkWell(
+          customBorder: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(19),
+          ),
+          onTap: () {
+            ActionHandler.sendMessage(currentChat.chat, text);
+          },
+          child: Padding(
+            padding:
+                const EdgeInsets.symmetric(vertical: 8.0, horizontal: 13.0),
+            child: Text(
+              text,
+              style: Theme.of(context).textTheme.bodyText1,
+            ),
+          ),
+        ),
+      );
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -316,6 +390,25 @@ class MessagesViewState extends State<MessagesView>
             reverse: true,
             physics: ThemeSwitcher.getScrollPhysics(),
             slivers: <Widget>[
+              if (SettingsManager().settings.smartReply)
+                StreamBuilder<List<String>>(
+                  stream: smartReplyController.stream,
+                  builder: (context, snapshot) {
+                    return SliverToBoxAdapter(
+                      child: AnimatedSize(
+                        duration: Duration(milliseconds: 500),
+                        vsync: this,
+                        child: Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: replies
+                                .map(
+                                  (e) => _buildReply(e),
+                                )
+                                .toList()),
+                      ),
+                    );
+                  },
+                ),
               SliverToBoxAdapter(
                 child: TypingIndicator(
                   visible: currentChat.showTypingIndicator,
