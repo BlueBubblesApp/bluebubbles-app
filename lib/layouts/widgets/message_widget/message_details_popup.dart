@@ -50,6 +50,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
   List<Widget> reactionWidgets = <Widget>[];
   bool showTools = false;
   String selfReaction;
+  String currentlySelectedReaction;
   Completer fetchRequest;
   CurrentChat currentChat;
 
@@ -63,7 +64,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
 
     messageTopOffset = widget.childOffset.dy;
     topMinimum = CupertinoNavigationBar().preferredSize.height +
-        (widget.message.hasReactions ? 100 : 40);
+        (widget.message.hasReactions ? 110 : 50);
 
     fetchReactions();
 
@@ -115,7 +116,9 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
 
     // If there are no associated messages, return now
     List<Message> reactions = widget.message.getReactions();
-    if (reactions.isEmpty) return fetchRequest.complete();
+    if (reactions.isEmpty) {
+      return fetchRequest.complete();
+    }
 
     // Filter down the messages to the unique ones (one per user, newest)
     List<Message> reactionMessages =
@@ -126,6 +129,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
       await reaction.getHandle();
       if (reaction.isFromMe) {
         selfReaction = reaction.associatedMessageType;
+        currentlySelectedReaction = selfReaction;
       }
       reactionWidgets.add(
         ReactionDetailWidget(
@@ -144,6 +148,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
   }
 
   void sendReaction(String type) {
+    debugPrint("Sending reaction type: " + type);
     ActionHandler.sendReaction(widget.currentChat.chat, widget.message, type);
     Navigator.of(context).pop();
   }
@@ -231,12 +236,12 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
     Size size = MediaQuery.of(context).size;
 
     double reactionIconSize =
-        ((7 / 10 * size.width) / (ReactionTypes.toList().length).toDouble());
+        ((8.5 / 10 * size.width) / (ReactionTypes.toList().length).toDouble());
     double maxMenuWidth =
         (ReactionTypes.toList().length * reactionIconSize).toDouble();
     double menuHeight = (reactionIconSize).toDouble();
 
-    double topPadding = -5;
+    double topPadding = -20;
 
     double topOffset = (messageTopOffset - menuHeight).toDouble().clamp(
         topMinimum,
@@ -256,7 +261,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
       top: topOffset + topPadding,
       left: leftOffset,
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(20.0),
+        borderRadius: BorderRadius.circular(40.0),
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
           child: Container(
@@ -271,23 +276,41 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
               mainAxisAlignment: MainAxisAlignment.start,
               children: ReactionTypes.toList()
                   .map(
-                    (e) => Container(
-                      width: reactionIconSize,
-                      height: reactionIconSize,
-                      decoration: BoxDecoration(
-                        color: selfReaction == e
-                            ? Theme.of(context).primaryColor
-                            : Theme.of(context).accentColor.withAlpha(150),
-                        borderRadius: BorderRadius.circular(
-                          20,
+                    (e) => Padding(
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 7.5, horizontal: 7.5),
+                      child: Container(
+                        width: reactionIconSize - 15,
+                        height: reactionIconSize - 15,
+                        decoration: BoxDecoration(
+                          color: currentlySelectedReaction == e
+                              ? Theme.of(context).primaryColor
+                              : Theme.of(context).accentColor.withAlpha(150),
+                          borderRadius: BorderRadius.circular(
+                            20,
+                          ),
                         ),
-                      ),
-                      child: GestureDetector(
-                        onTap: () =>
-                            sendReaction(selfReaction == e ? "-$e" : e),
-                        child: Padding(
-                          padding: const EdgeInsets.all(6),
-                          child: Reaction.getReactionIcon(e, iconColor),
+                        child: GestureDetector(
+                          onTap: () {
+                            sendReaction(selfReaction == e ? "-$e" : e);
+                          },
+                          onTapDown: (TapDownDetails details) {
+                            if (currentlySelectedReaction == e) {
+                              currentlySelectedReaction = null;
+                            } else {
+                              currentlySelectedReaction = e;
+                            }
+                            if (this.mounted) setState(() {});
+                          },
+                          onTapUp: (details) {},
+                          onTapCancel: () {
+                            currentlySelectedReaction = selfReaction;
+                            if (this.mounted) setState(() {});
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.all(6),
+                            child: Reaction.getReactionIcon(e, iconColor),
+                          ),
                         ),
                       ),
                     ),
