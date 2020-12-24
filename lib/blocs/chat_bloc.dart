@@ -141,54 +141,47 @@ class ChatBloc {
     // Update the sink so all listeners get the new chat list
     await this.addToSink(_chats);
 
-    await updateShareTargets();
+    await updateShareTarget(chat);
   }
 
-  Future<void> updateShareTargets() async {
-    debugPrint("Pushing share targets");
-
-    List<String> names = [];
-    List<String> addresses = [];
-    List<Uint8List> icons = [];
-
-    List<Chat> chats =
-        _chats.where((element) => element.participants.length == 1).toList();
+  Future<void> updateAllShareTargets() async {
+    List<Chat> chats = _chats.sublist(0);
     chats.sort(Chat.sort);
 
     for (int i = 0; i < 4; i++) {
       if (i >= chats.length) break;
-      if (chats[i].participants.length > 1) continue;
-      String handleAddress = chats[i].participants.first.address;
-      String contactTitle =
-          await ContactManager().getContactTitle(handleAddress);
-      Contact contact = await ContactManager().getCachedContact(handleAddress);
-      names.add(contactTitle);
-      addresses.add(handleAddress);
-      Uint8List contactIcon;
-      try {
-        // If there is a contact specified, we can use it's avatar
-        if (contact != null && contact.avatar.isNotEmpty) {
-          contactIcon = contact.avatar;
-          // Otherwise if there isn't, we use the [defaultAvatar]
-        } else {
-          // If [defaultAvatar] is not loaded, load it from assets
-          if (NotificationManager().defaultAvatar == null) {
-            ByteData file = await loadAsset("assets/images/person.png");
-            NotificationManager().defaultAvatar = file.buffer.asUint8List();
-          }
+      await updateShareTarget(chats[i]);
+    }
+  }
 
-          contactIcon = NotificationManager().defaultAvatar;
+  Future<void> updateShareTarget(Chat chat) async {
+    Uint8List icon;
+    Contact contact = chat.participants.length == 1
+        ? await ContactManager()
+            .getCachedContact(chat.participants.first.address)
+        : null;
+    try {
+      // If there is a contact specified, we can use it's avatar
+      if (contact != null && contact.avatar.isNotEmpty) {
+        icon = contact.avatar;
+        // Otherwise if there isn't, we use the [defaultAvatar]
+      } else {
+        // If [defaultAvatar] is not loaded, load it from assets
+        if (NotificationManager().defaultAvatar == null) {
+          ByteData file = await loadAsset("assets/images/person.png");
+          NotificationManager().defaultAvatar = file.buffer.asUint8List();
         }
-      } catch (ex) {
-        debugPrint("Failed to load contact avatar: ${ex.toString()}");
+
+        icon = NotificationManager().defaultAvatar;
       }
-      icons.add(contactIcon);
+    } catch (ex) {
+      debugPrint("Failed to load contact avatar: ${ex.toString()}");
     }
 
     await MethodChannelInterface().invokeMethod("push-share-targets", {
-      "names": names,
-      "addresses": addresses,
-      "icons": icons,
+      "title": chat.title,
+      "guid": chat.guid,
+      "icon": icon,
     });
   }
 
@@ -240,10 +233,10 @@ class ChatBloc {
         await this.addToSink(_chats);
         recursiveGetChats();
       } else {
-        await updateShareTargets();
+        await updateAllShareTargets();
       }
     } else {
-      await updateShareTargets();
+      await updateAllShareTargets();
     }
   }
 

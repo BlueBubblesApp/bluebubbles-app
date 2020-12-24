@@ -69,7 +69,10 @@
             android:hardwareAccelerated="true"
             android:launchMode="singleTask"
             android:theme="@style/LaunchTheme"
-            android:windowSoftInputMode="adjustResize">
+            android:windowSoftInputMode="adjustResize"
+            android:allowEmbedded="true"
+            android:resizeableActivity="true"
+            >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -135,6 +138,9 @@
             <meta-data
                 android:name="android.app.shortcuts"
                 android:resource="@xml/shortcuts" />
+            <meta-data
+                android:name="android.service.chooser.chooser_target_service"
+                android:value="androidx.sharetarget.ChooserTargetServiceCompat" />
         </activity>
         <!--
  Don't delete the meta-data below.
@@ -143,6 +149,7 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+
     </application>
 
 </manifest>

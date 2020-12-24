@@ -8,6 +8,7 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/settings/server_management_panel.dart';
 import 'package:bluebubbles/managers/alarm_manager.dart';
+import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/incoming_queue.dart';
 import 'package:bluebubbles/managers/navigator_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
@@ -164,15 +165,13 @@ class MethodChannelInterface {
         });
 
         // Get the handle if it is a direct shortcut
-        String handle = call.arguments["id"];
+        String guid = call.arguments["id"];
 
         // If it is a direct shortcut, try and find the chat and navigate to it
-        if (handle != null) {
+        if (guid != null) {
           List<Chat> chats = ChatBloc()
               .chats
-              .where((element) =>
-                  element.participants.length == 1 &&
-                  element.participants.first.address == handle)
+              .where((element) => element.guid == guid)
               .toList();
 
           // If we did find a chat matching the criteria
@@ -208,15 +207,13 @@ class MethodChannelInterface {
         String text = call.arguments["text"];
 
         // Get the handle if it is a direct shortcut
-        String handle = call.arguments["id"];
+        String guid = call.arguments["id"];
 
         // If it is a direct shortcut, try and find the chat and navigate to it
-        if (handle != null) {
+        if (guid != null) {
           List<Chat> chats = ChatBloc()
               .chats
-              .where((element) =>
-                  element.participants.length == 1 &&
-                  element.participants.first.address == handle)
+              .where((element) => element.guid == guid)
               .toList();
 
           // If we did find a chat matching the criteria
@@ -265,6 +262,10 @@ class MethodChannelInterface {
 
   Future<void> openChat(String id,
       {List<File> existingAttachments, String existingText}) async {
+    if (CurrentChat.activeChat?.chat?.guid == id) {
+      NotificationManager().switchChat(CurrentChat.activeChat.chat);
+      return;
+    }
     // Try to find the specified chat to open
     Chat openedChat = await Chat.findOne({"GUID": id});
 

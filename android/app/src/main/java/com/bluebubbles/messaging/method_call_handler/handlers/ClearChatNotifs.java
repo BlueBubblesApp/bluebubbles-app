@@ -9,6 +9,8 @@ import android.util.Log;
 import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationManagerCompat;
 
+import com.bluebubbles.messaging.MainActivity;
+
 import java.util.Objects;
 
 import io.flutter.plugin.common.MethodCall;

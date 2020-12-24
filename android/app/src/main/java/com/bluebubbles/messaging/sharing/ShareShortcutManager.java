@@ -21,33 +21,25 @@ public class ShareShortcutManager {
 
     private static final String CATEGORY_SHARE_TARGET = "com.bluebubbles.messaging.category.TEXT_SHARE_TARGET";
 
-    @SuppressLint("RestrictedApi")
-    public static void publishShareTarget(Context context, ArrayList<Contact> contacts) {
-        ArrayList<ShortcutInfoCompat> shortcuts = new ArrayList<>();
+    public static void publishShareTarget(Context context, Contact contact) {
 
         // Category that our sharing shortcuts will be assigned to
         Set<String> contactCategories = new HashSet<>();
         contactCategories.add(CATEGORY_SHARE_TARGET);
 
-        // Adding maximum number of shortcuts to the list
-        for (int i = 0; i < contacts.size(); ++i) {
-            Contact contact = contacts.get(i);
+        Intent staticLauncherShortcutIntent = new Intent(Intent.ACTION_DEFAULT);
 
-            Intent staticLauncherShortcutIntent = new Intent(Intent.ACTION_DEFAULT);
+        @SuppressLint("RestrictedApi") ShortcutInfoCompat shortcut = new ShortcutInfoCompat.Builder(context, contact.id)
+                .setShortLabel(contact.name)
+                .setIcon(contact.getIcon())
+                .setIntent(staticLauncherShortcutIntent)
+                .setCategories(contactCategories)
+                .setLongLived(true)
+                .setPerson(new Person.Builder()
+                        .setName(contact.name)
+                        .build())
+                .build();
+        ShortcutManagerCompat.pushDynamicShortcut(context, shortcut);
 
-            shortcuts.add(new ShortcutInfoCompat.Builder(context, contact.id)
-                    .setShortLabel(contact.name)
-                    .setIcon(IconCompat.createFromIcon(contact.icon))
-                    .setIntent(staticLauncherShortcutIntent)
-                    .setCategories(contactCategories)
-                    .setLongLived(true)
-                    .setPerson(new Person.Builder()
-                            .setName(contact.name)
-                            .build())
-                    .build());
-        }
-
-        ShortcutManagerCompat.removeAllDynamicShortcuts(context);
-        ShortcutManagerCompat.addDynamicShortcuts(context, shortcuts);
     }
 }

@@ -1,6 +1,5 @@
 package com.bluebubbles.messaging.workers;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.Build;
 import android.os.Handler;
@@ -17,7 +16,6 @@ import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
 import com.baseflow.permissionhandler.PermissionHandlerPlugin;
-import com.bluebubbles.messaging.MainActivity;
 import com.bluebubbles.messaging.helpers.NotifyRunnable;
 import com.bluebubbles.messaging.method_call_handler.MethodCallHandler;
 import com.itsclicking.clickapp.fluttersocketio.FlutterSocketIoPlugin;
@@ -108,8 +106,8 @@ public class NotificationWorker extends Worker implements DartWorker {
     }
 
     @Override
-    public void destroyHeadlessThread() {
-        if (backgroundView == null) return;
+    public MethodChannel destroyHeadlessThread() {
+        if (backgroundView == null) return null;
         new Handler(Looper.getMainLooper()).post(() -> {
             if (backgroundView != null) {
                 try {
@@ -122,6 +120,7 @@ public class NotificationWorker extends Worker implements DartWorker {
                 }
             }
         });
+        return null;
     }
 
     private void invokeMethod() {

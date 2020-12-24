@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 
-public class PushShareTargets implements Handler{
+public class PushShareTargets implements Handler {
     public static String TAG = "push-share-targets";
 
     private Context context;
@@ -30,14 +30,11 @@ public class PushShareTargets implements Handler{
     @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     public void Handle() {
-        ArrayList<String> names = call.argument("names");
-        ArrayList<String> addresses = call.argument("addresses");
-        ArrayList<byte[]> icons = call.argument("icons");
+        String name = call.argument("title");
+        String guid = call.argument("guid");
+        byte[] icon = call.argument("icon");
 
-        ArrayList<Contact> contacts = new ArrayList<>();
-        for(int i = 0; i < names.size(); i++) {
-            contacts.add(new Contact(names.get(i), addresses.get(i), icons.get(i)));
-        }
-        ShareShortcutManager.publishShareTarget(context, contacts);
+        ShareShortcutManager.publishShareTarget(context, new Contact(name, guid, icon));
+        result.success(null);
     }
 }

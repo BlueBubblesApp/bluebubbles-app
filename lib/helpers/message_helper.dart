@@ -228,13 +228,14 @@ class MessageHelper {
       title,
       notification,
       chat.guid,
+      chat,
       Random().nextInt(9998) + 1,
       chat.id,
       message.dateCreated.millisecondsSinceEpoch,
       contactTitle,
       chat.participants.length > 1,
-      handle: message.handle,
-      contact: contact,
+      message.handle,
+      contact,
     );
   }
 

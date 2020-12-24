@@ -95,7 +95,6 @@ public class MainActivity extends FlutterActivity {
                 Log.d("Notifications", "tapped on notification by id " + intent.getExtras().getInt("id"));
                 startingChat = intent.getStringExtra("chatGUID");
 
-
                 new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod("ChatOpen", intent.getExtras().getString("chatGUID"));
             } else if (type.equals(SocketIssueWarning.TYPE)) {
                 new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod("socket-error-open", null);

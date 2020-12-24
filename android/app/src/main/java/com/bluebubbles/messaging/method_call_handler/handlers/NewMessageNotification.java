@@ -1,6 +1,7 @@
 package com.bluebubbles.messaging.method_call_handler.handlers;
 
 import android.annotation.SuppressLint;
+import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Person;
@@ -23,16 +24,19 @@ import android.service.notification.StatusBarNotification;
 import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
+import androidx.core.graphics.drawable.IconCompat;
 
 import com.bluebubbles.messaging.MainActivity;
 import com.bluebubbles.messaging.R;
 import com.bluebubbles.messaging.helpers.HelperUtils;
 import com.bluebubbles.messaging.services.ReplyReceiver;
+import com.bluebubbles.messaging.sharing.Contact;
+import com.bluebubbles.messaging.sharing.ShareShortcutManager;
 
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 
-public class NewMessageNotification implements Handler{
+public class NewMessageNotification implements Handler {
     public static String TAG = "new-message-notification";
 
     private Context context;
@@ -114,7 +118,9 @@ public class NewMessageNotification implements Handler{
                 new Intent(context, MainActivity.class)
                         .putExtra("id", existingNotificationId)
                         .putExtra("chatGUID",
-                                (String) call.argument("group")).setType("NotificationOpen"),
+                                (String) call.argument("group"))
+                        .putExtra("bubble", true)
+                        .setType("NotificationOpen"),
                 Intent.FILL_IN_ACTION);
 
         // Create intent for dismissing the notification
@@ -144,6 +150,28 @@ public class NewMessageNotification implements Handler{
                         .setHintDisplayActionInline(true))
                 .build();
 
+        PendingIntent bubbleIntent = PendingIntent.getActivity(
+                context,
+                existingNotificationId,
+                new Intent(context, MainActivity.class)
+                        .putExtra("id", existingNotificationId)
+                        .putExtra("chatGUID",
+                                (String) call.argument("group"))
+                        .setType("NotificationOpen"),
+                Intent.FILL_IN_ACTION);
+        NotificationCompat.BubbleMetadata bubbleMetadata = null;
+        if (call.argument("contactIcon") != null) {
+
+            Bitmap bmp = BitmapFactory.decodeByteArray((byte[]) call.argument("contactIcon"), 0, ((byte[]) call.argument("contactIcon")).length);
+
+            bubbleMetadata = new NotificationCompat.BubbleMetadata.Builder()
+                    .setIntent(bubbleIntent)
+                    .setDesiredHeight(600)
+                    .setIcon(IconCompat.createWithAdaptiveBitmap(bmp))
+                    .setAutoExpandBubble(true)
+                    .setSuppressNotification(false)
+                    .build();
+        }
         // Build the actual notification
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, call.argument("CHANNEL_ID"))
                 .setSmallIcon(R.mipmap.ic_stat_icon)
@@ -154,8 +182,12 @@ public class NewMessageNotification implements Handler{
                 .addAction(dismissAction)
                 .addAction(replyAction)
                 .setStyle(style)
+                .setShortcutId(call.argument("group"))
                 .addExtras(extras)
                 .setColor(4888294);
+//        if (bubbleMetadata != null) {
+//            builder.setBubbleMetadata(bubbleMetadata);
+//        }
 
         // Send the notification
         NotificationManagerCompat notificationManagerCompat = NotificationManagerCompat.from(context);
