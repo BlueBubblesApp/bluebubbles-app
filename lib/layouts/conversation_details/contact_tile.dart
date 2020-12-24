@@ -122,10 +122,26 @@ class _ContactTileState extends State<ContactTile> {
         }
       },
       child: ListTile(
-        title: Text(
-          contact != null ? contact.displayName : widget.handle.address,
-          style: Theme.of(context).textTheme.bodyText1,
-        ),
+        title: (contact?.displayName != null)
+            ? Text(
+                contact.displayName ?? "",
+                style: Theme.of(context).textTheme.bodyText1,
+              )
+            : FutureBuilder(
+                future: formatPhoneNumber(widget.handle?.address ?? ""),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) {
+                    return Text(
+                      widget.handle?.address ?? "",
+                      style: Theme.of(context).textTheme.bodyText1,
+                    );
+                  }
+
+                  return Text(
+                    snapshot.data,
+                    style: Theme.of(context).textTheme.bodyText1,
+                  );
+                }),
         leading: ContactAvatarWidget(
           handle: widget.handle,
           borderThickness: 0.1,

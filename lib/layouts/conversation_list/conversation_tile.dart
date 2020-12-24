@@ -262,10 +262,10 @@ class _ConversationTileState extends State<ConversationTile>
                   child: ListTile(
                     contentPadding: EdgeInsets.only(left: 0),
                     title: Text(
-                      widget.chat.title != null ? widget.chat.title : "",
-                      style: Theme.of(context).textTheme.bodyText1,
-                      maxLines: 1,
-                    ),
+                        widget.chat.title != null ? widget.chat.title : "",
+                        style: Theme.of(context).textTheme.bodyText1,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis),
                     subtitle: widget.chat.latestMessageText != null &&
                             !(widget.chat.latestMessageText is String)
                         ? widget.chat.latestMessageText

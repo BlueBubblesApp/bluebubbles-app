@@ -12,6 +12,7 @@ import 'package:bluebubbles/repository/models/message.dart';
 import 'package:device_info/device_info.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
 import 'package:html/parser.dart';
 import 'package:convert/convert.dart';
 
@@ -46,27 +47,22 @@ Size textSize(String text, TextStyle style) {
   return textPainter.size;
 }
 
-String formatPhoneNumber(String str) {
+Future<String> formatPhoneNumber(String str) async {
   // If the string is an email, we don't want to format it
   if (str.contains("@")) return str;
-  if (str.length < 10) return str;
-  String areaCode = "";
 
-  String numberWithoutAreaCode = str;
+  Map<String, dynamic> meta = await FlutterLibphonenumber()
+      .parse(str, region: SettingsManager().countryCode ?? "US");
 
-  if (str.startsWith("+")) {
-    areaCode = "+1 ";
-    numberWithoutAreaCode = str.substring(2);
+  if (!meta.containsKey("national")) {
+    if (meta.containsKey("international")) {
+      return meta['international'];
+    } else {
+      return str;
+    }
   }
 
-  String formattedPhoneNumber = areaCode +
-      "(" +
-      numberWithoutAreaCode.substring(0, 3) +
-      ") " +
-      numberWithoutAreaCode.substring(3, 6) +
-      "-" +
-      numberWithoutAreaCode.substring(6, numberWithoutAreaCode.length);
-  return formattedPhoneNumber;
+  return meta['national'];
 }
 
 bool sameAddress(String address1, String address2) {
@@ -370,7 +366,8 @@ Size getGifDimensions(Uint8List bytes) {
   return size;
 }
 
-Future<IMG.Size> getVideoDimensions(Attachment attachment, { Uint8List bytes }) async {
+Future<IMG.Size> getVideoDimensions(Attachment attachment,
+    {Uint8List bytes}) async {
   Uint8List imageData = await VideoThumbnail.thumbnailData(
     video: AttachmentHelper.getAttachmentPath(attachment),
     imageFormat: ImageFormat.JPEG,

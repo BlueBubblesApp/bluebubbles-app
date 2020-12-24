@@ -576,13 +576,13 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
         chat = item.chat;
         contacts = [];
       } else {
-        item.chat.participants.forEach((e) {
+        item.chat.participants.forEach((e) async {
           UniqueContact contact = new UniqueContact(
               address: e.address,
               displayName: ContactManager()
                       .getCachedContactSync(e.address)
                       ?.displayName ??
-                  formatPhoneNumber(e.address));
+                  await formatPhoneNumber(e.address));
           selected.add(contact);
         });
         fetchCurrentChat();
