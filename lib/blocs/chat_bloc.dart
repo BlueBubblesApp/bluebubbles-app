@@ -153,14 +153,7 @@ class ChatBloc {
 
     List<Chat> chats =
         _chats.where((element) => element.participants.length == 1).toList();
-    chats.sort((a, b) {
-      if (!a.isPinned && b.isPinned) return 1;
-      if (a.isPinned && !b.isPinned) return -1;
-      if (a.latestMessageDate == null && b.latestMessageDate == null) return 0;
-      if (a.latestMessageDate == null) return 1;
-      if (b.latestMessageDate == null) return -1;
-      return -a.latestMessageDate.compareTo(b.latestMessageDate);
-    });
+    chats.sort(Chat.sort);
 
     for (int i = 0; i < 4; i++) {
       if (i >= chats.length) break;

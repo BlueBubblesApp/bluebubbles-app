@@ -323,15 +323,7 @@ class _ConversationListState extends State<ConversationList> {
               builder:
                   (BuildContext context, AsyncSnapshot<List<Chat>> snapshot) {
                 if (snapshot.hasData || widget.showArchivedChats) {
-                  _chats.sort((a, b) {
-                    if (!a.isPinned && b.isPinned) return 1;
-                    if (a.isPinned && !b.isPinned) return -1;
-                    if (a.latestMessageDate == null &&
-                        b.latestMessageDate == null) return 0;
-                    if (a.latestMessageDate == null) return 1;
-                    if (b.latestMessageDate == null) return -1;
-                    return -a.latestMessageDate.compareTo(b.latestMessageDate);
-                  });
+                  _chats.sort(Chat.sort);
 
                   if (_chats.isEmpty) {
                     return SliverToBoxAdapter(

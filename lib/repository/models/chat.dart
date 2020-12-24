@@ -827,6 +827,15 @@ class Chat {
         [this.guid]);
   }
 
+  static int sort(Chat a, Chat b) {
+    if (!a.isPinned && b.isPinned) return 1;
+    if (a.isPinned && !b.isPinned) return -1;
+    if (a.latestMessageDate == null && b.latestMessageDate == null) return 0;
+    if (a.latestMessageDate == null) return 1;
+    if (b.latestMessageDate == null) return -1;
+    return -a.latestMessageDate.compareTo(b.latestMessageDate);
+  }
+
   static flush() async {
     final Database db = await DBProvider.db.database;
     await db.delete("chat");

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:bluebubbles/action_handler.dart';
+import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/settings/server_management_panel.dart';
@@ -154,7 +155,7 @@ class MethodChannelInterface {
         debugPrint("shareAttachments " + sharedFilesPath);
 
         // Loop through all of the attachments sent by native code
-        call.arguments.forEach((element) {
+        call.arguments["attachments"].forEach((element) {
           // Get the file in that directory
           File file = File(element);
 
@@ -162,7 +163,33 @@ class MethodChannelInterface {
           attachments.add(file);
         });
 
-        // Go to the new chat creator with all of these attachments to select a chat
+        // Get the handle if it is a direct shortcut
+        String handle = call.arguments["id"];
+
+        // If it is a direct shortcut, try and find the chat and navigate to it
+        if (handle != null) {
+          List<Chat> chats = ChatBloc()
+              .chats
+              .where((element) =>
+                  element.participants.length == 1 &&
+                  element.participants.first.address == handle)
+              .toList();
+
+          // If we did find a chat matching the criteria
+          if (chats.length != 0) {
+            // Get the most recent of our results
+            chats.sort(Chat.sort);
+            Chat chat = chats.first;
+
+            // Open the chat
+            openChat(chat.guid, existingAttachments: attachments);
+
+            // Nothing else to do
+            return new Future.value("");
+          }
+        }
+
+        // Go to the new chat creator with all of these attachments to select a chat in case it wasn't a direct share
         NavigatorManager().navigatorKey.currentState.pushAndRemoveUntil(
               CupertinoPageRoute(
                 builder: (context) => ConversationView(
@@ -178,8 +205,33 @@ class MethodChannelInterface {
       case "shareText":
 
         // Get the text that was shared to the app
-        String text = call.arguments;
+        String text = call.arguments["text"];
 
+        // Get the handle if it is a direct shortcut
+        String handle = call.arguments["id"];
+
+        // If it is a direct shortcut, try and find the chat and navigate to it
+        if (handle != null) {
+          List<Chat> chats = ChatBloc()
+              .chats
+              .where((element) =>
+                  element.participants.length == 1 &&
+                  element.participants.first.address == handle)
+              .toList();
+
+          // If we did find a chat matching the criteria
+          if (chats.length != 0) {
+            // Get the most recent of our results
+            chats.sort(Chat.sort);
+            Chat chat = chats.first;
+
+            // Open the chat
+            openChat(chat.guid, existingText: text);
+
+            // Nothing else to do
+            return new Future.value("");
+          }
+        }
         // Navigate to the new chat creator with the specified text
         NavigatorManager().navigatorKey.currentState.pushAndRemoveUntil(
               CupertinoPageRoute(
@@ -211,7 +263,8 @@ class MethodChannelInterface {
     }
   }
 
-  void openChat(String id) async {
+  Future<void> openChat(String id,
+      {List<File> existingAttachments, String existingText}) async {
     // Try to find the specified chat to open
     Chat openedChat = await Chat.findOne({"GUID": id});
 
@@ -233,6 +286,8 @@ class MethodChannelInterface {
           CupertinoPageRoute(
             builder: (context) => ConversationView(
               chat: openedChat,
+              existingAttachments: existingAttachments,
+              existingText: existingText,
             ),
           ),
           (route) => route.isFirst,
