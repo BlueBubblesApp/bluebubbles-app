@@ -22,6 +22,7 @@ import com.bluebubbles.messaging.method_call_handler.handlers.OpenCamera;
 import com.bluebubbles.messaging.method_call_handler.handlers.OpenFile;
 import com.bluebubbles.messaging.method_call_handler.handlers.OpenLink;
 import com.bluebubbles.messaging.method_call_handler.handlers.PickFile;
+import com.bluebubbles.messaging.method_call_handler.handlers.PushShareTargets;
 import com.bluebubbles.messaging.method_call_handler.handlers.SaveToFile;
 import com.bluebubbles.messaging.method_call_handler.handlers.ShareFile;
 import com.bluebubbles.messaging.method_call_handler.handlers.SocketIssueWarning;
@@ -63,6 +64,8 @@ public class MethodCallHandler {
             new GetLastLocation(context, call, result).Handle();
         } else if (call.method.equals(SaveToFile.TAG)) {
             new SaveToFile(context, call, result).Handle();
+        } else if(call.method.equals(PushShareTargets.TAG)) {
+            new PushShareTargets(context, call, result).Handle();
         } else if (call.method.equals("get-starting-intent")) {
             String intent = ((MainActivity) context).getIntent().getStringExtra("chatGUID");
             ((MainActivity) context).getIntent().putExtra("chatGUID", (String) null);

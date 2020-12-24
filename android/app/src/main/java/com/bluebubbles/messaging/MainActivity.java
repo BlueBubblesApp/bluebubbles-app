@@ -61,18 +61,6 @@ public class MainActivity extends FlutterActivity {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState, @Nullable PersistableBundle persistentState) {
         super.onCreate(savedInstanceState, persistentState);
-//        ShareShortcutManager.publishShareTarget(getApplicationContext());
-
-        ShortcutInfoCompat shortcutInfoCompat = new ShortcutInfoCompat.Builder(getApplicationContext(), "id1")
-                .setShortLabel("Website")
-                .setLongLabel("Open the website")
-                .setIntent(new Intent(Intent.ACTION_VIEW,
-                        Uri.parse("https://bluebubbles.app/")))
-
-                .build();
-
-
-        ShortcutManagerCompat.pushDynamicShortcut(getApplicationContext(), shortcutInfoCompat);
     }
 
 
@@ -85,6 +73,7 @@ public class MainActivity extends FlutterActivity {
 
         new MethodChannel(flutterEngine.getDartExecutor().getBinaryMessenger(), CHANNEL)
                 .setMethodCallHandler(((call, result) -> MethodCallHandler.methodCallHandler(call, result, MainActivity.this, null)));
+//        ShareShortcutManager.publishShareTarget(this);
     }
 
 

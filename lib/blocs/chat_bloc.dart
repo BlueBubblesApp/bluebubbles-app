@@ -1,9 +1,13 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/attachment_info_bloc.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
+import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
+import 'package:bluebubbles/managers/notification_manager.dart';
+import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/material.dart';
 
 import '../repository/models/handle.dart';
@@ -136,6 +140,63 @@ class ChatBloc {
 
     // Update the sink so all listeners get the new chat list
     await this.addToSink(_chats);
+
+    await updateShareTargets();
+  }
+
+  Future<void> updateShareTargets() async {
+    debugPrint("Pushing share targets");
+
+    List<String> names = [];
+    List<String> addresses = [];
+    List<Uint8List> icons = [];
+
+    List<Chat> chats =
+        _chats.where((element) => element.participants.length == 1).toList();
+    chats.sort((a, b) {
+      if (!a.isPinned && b.isPinned) return 1;
+      if (a.isPinned && !b.isPinned) return -1;
+      if (a.latestMessageDate == null && b.latestMessageDate == null) return 0;
+      if (a.latestMessageDate == null) return 1;
+      if (b.latestMessageDate == null) return -1;
+      return -a.latestMessageDate.compareTo(b.latestMessageDate);
+    });
+
+    for (int i = 0; i < 4; i++) {
+      if (i >= chats.length) break;
+      if (chats[i].participants.length > 1) continue;
+      String handleAddress = chats[i].participants.first.address;
+      String contactTitle =
+          await ContactManager().getContactTitle(handleAddress);
+      Contact contact = await ContactManager().getCachedContact(handleAddress);
+      names.add(contactTitle);
+      addresses.add(handleAddress);
+      Uint8List contactIcon;
+      try {
+        // If there is a contact specified, we can use it's avatar
+        if (contact != null && contact.avatar.isNotEmpty) {
+          contactIcon = contact.avatar;
+          // Otherwise if there isn't, we use the [defaultAvatar]
+        } else {
+          // If [defaultAvatar] is not loaded, load it from assets
+          if (NotificationManager().defaultAvatar == null) {
+            ByteData file = await loadAsset("assets/images/person.png");
+            NotificationManager().defaultAvatar = file.buffer.asUint8List();
+          }
+
+          contactIcon = NotificationManager().defaultAvatar;
+        }
+      } catch (ex) {
+        debugPrint("Failed to load contact avatar: ${ex.toString()}");
+      }
+      icons.add(contactIcon);
+    }
+
+    await MethodChannelInterface().invokeMethod("push-share-targets", {
+      "names": names,
+      "addresses": addresses,
+      "icons": icons,
+    });
   }
 
   Future<void> handleMessageAction(NewMessageEvent event) async {
@@ -185,7 +246,11 @@ class ChatBloc {
       if (_chats.length > len) {
         await this.addToSink(_chats);
         recursiveGetChats();
+      } else {
+        await updateShareTargets();
       }
+    } else {
+      await updateShareTargets();
     }
   }
 

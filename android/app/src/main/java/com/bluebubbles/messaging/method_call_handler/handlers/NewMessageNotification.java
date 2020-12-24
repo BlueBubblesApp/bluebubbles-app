@@ -26,6 +26,7 @@ import androidx.core.app.NotificationManagerCompat;
 
 import com.bluebubbles.messaging.MainActivity;
 import com.bluebubbles.messaging.R;
+import com.bluebubbles.messaging.helpers.HelperUtils;
 import com.bluebubbles.messaging.services.ReplyReceiver;
 
 import io.flutter.plugin.common.MethodCall;
@@ -86,7 +87,7 @@ public class NewMessageNotification implements Handler{
         Icon icon = null;
         if (call.argument("contactIcon") != null) {
             Bitmap bmp = BitmapFactory.decodeByteArray((byte[]) call.argument("contactIcon"), 0, ((byte[]) call.argument("contactIcon")).length);
-            icon = Icon.createWithBitmap(getCircleBitmap(bmp));
+            icon = Icon.createWithBitmap(HelperUtils.getCircleBitmap(bmp));
         }
         Person.Builder person = new Person.Builder().setName(call.argument("name"));
         if (icon != null) {
@@ -163,26 +164,4 @@ public class NewMessageNotification implements Handler{
     }
 
 
-    private static Bitmap getCircleBitmap(Bitmap bitmap) {
-        final Bitmap output = Bitmap.createBitmap(bitmap.getWidth(),
-                bitmap.getHeight(), Bitmap.Config.ARGB_8888);
-        final Canvas canvas = new Canvas(output);
-
-        final int color = Color.RED;
-        final Paint paint = new Paint();
-        final Rect rect = new Rect(0, 0, bitmap.getWidth(), bitmap.getHeight());
-        final RectF rectF = new RectF(rect);
-
-        paint.setAntiAlias(true);
-        canvas.drawARGB(0, 0, 0, 0);
-        paint.setColor(color);
-        canvas.drawOval(rectF, paint);
-
-        paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_IN));
-        canvas.drawBitmap(bitmap, rect, rect, paint);
-
-        bitmap.recycle();
-
-        return output;
-    }
 }
