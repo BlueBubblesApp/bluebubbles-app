@@ -529,6 +529,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.5.7"
+  flutter_smart_reply:
+    dependency: "direct main"
+    description:
+      name: flutter_smart_reply
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.0.2"
   flutter_socket_io:
     dependency: "direct main"
     description:
