@@ -43,7 +43,11 @@ Future<String> getFullChatTitle(Chat _chat) async {
       String name =
           await ContactManager().getContactTitle(chat.participants[i].address);
 
-      if (chat.participants.length > 1 && !name.startsWith('+1')) {
+      String test = name.replaceAll(RegExp(r'[-() \.]'), '');
+      test = test.replaceAll(RegExp(r'[^0-9]'), "").trim();
+      bool isNumber = test.length > 0;
+
+      if (chat.participants.length > 1 && !isNumber) {
         name = name.trim().split(" ")[0];
       } else {
         name = name.trim();

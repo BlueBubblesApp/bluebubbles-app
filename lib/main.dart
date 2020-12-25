@@ -20,6 +20,7 @@ import 'package:flutter/scheduler.dart' hide Priority;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
@@ -234,6 +235,15 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
 
     // Bind the lifecycle events
     WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void didChangeDependencies() async {
+    Locale myLocale = Localizations.localeOf(context);
+    SettingsManager().countryCode = myLocale.countryCode;
+
+    await FlutterLibphonenumber().init();
+    super.didChangeDependencies();
   }
 
   @override

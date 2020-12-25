@@ -298,7 +298,7 @@ class MessageHelper {
       // It's a reaction message, get the "sender"
       String sender = (message.isFromMe)
           ? "You"
-          : formatPhoneNumber(message.handle.address);
+          : await formatPhoneNumber(message.handle.address);
       if (!message.isFromMe && message.handle != null) {
         Contact contact =
             await ContactManager().getCachedContact(message.handle.address);

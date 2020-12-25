@@ -41,6 +41,7 @@ class SettingsManager {
   Settings settings;
   FCMData fcmData;
   List<ThemeObject> themes;
+  String countryCode;
 
   /// [sharedPreferences] is just an instance of [SharedPreferences] and it is stored here because it is commonly used
   SharedPreferences sharedPreferences;

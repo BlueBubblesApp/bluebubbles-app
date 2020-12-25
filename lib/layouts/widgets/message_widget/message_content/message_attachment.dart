@@ -179,7 +179,7 @@ class _MessageAttachmentState extends State<MessageAttachment>
                     children: <Widget>[
                       Center(
                         child: CircularProgressIndicator(
-                          value: progress ?? 0,
+                          value: progress == 1.0 ? null : (progress ?? 0),
                           backgroundColor: Colors.grey,
                           valueColor: AlwaysStoppedAnimation(Colors.white),
                         ),

@@ -117,8 +117,8 @@ class _ReceivedMessageState extends State<ReceivedMessage>
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
             gradient: LinearGradient(
-              begin: AlignmentDirectional.topStart,
-              end: AlignmentDirectional.bottomEnd,
+              begin: AlignmentDirectional.bottomCenter,
+              end: AlignmentDirectional.topCenter,
               colors: bubbleColors,
             ),
           ),
