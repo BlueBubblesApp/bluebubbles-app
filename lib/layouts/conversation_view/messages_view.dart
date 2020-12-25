@@ -147,8 +147,7 @@ class MessagesViewState extends State<MessagesView>
       loader.complete(val);
 
       // Only update the state if there are messages that were added
-      if (val != LoadMessageResult.RETREIVED_NO_MESSAGES &&
-          val != LoadMessageResult.FAILED_TO_RETREIVE) {
+      if (val != LoadMessageResult.FAILED_TO_RETREIVE) {
         if (this.mounted) setState(() {});
       }
     }).catchError((ex) {

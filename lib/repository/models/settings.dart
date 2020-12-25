@@ -22,6 +22,7 @@ class Settings {
   bool hideDividers = false;
   double scrollVelocity = 1.00;
   bool sendWithReturn = false;
+  bool doubleTapForDetails = false;
   // String emojiFontFamily;
 
   Skins skin = Skins.IOS;
@@ -65,7 +66,10 @@ class Settings {
         settings.scrollVelocity = entry.value;
       } else if (entry.name == "sendWithReturn") {
         settings.sendWithReturn = entry.value;
+      } else if (entry.name == "doubleTapForDetails") {
+        settings.doubleTapForDetails = entry.value;
       }
+
       // else if (entry.name == "emojiFontFamily") {
       //   settings.emojiFontFamily = entry.value;
       // }
@@ -178,6 +182,10 @@ class Settings {
             name: "sendWithReturn",
             value: this.sendWithReturn,
             type: this.sendWithReturn.runtimeType),
+        ConfigEntry(
+            name: "doubleTapForDetails",
+            value: this.doubleTapForDetails,
+            type: this.doubleTapForDetails.runtimeType),
         // ConfigEntry(
         //     name: "emojiFontFamily",
         //     value: this.emojiFontFamily,

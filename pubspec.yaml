@@ -84,6 +84,7 @@ dependencies:
   visibility_detector: ^0.1.5
   flutter_displaymode: 0.1.1
   flutter_keyboard_visibility: ^3.3.0
+  flutter_libphonenumber: ^0.3.11
   flutter_markdown: ^0.5.1
   keyboard_attachable: ^1.0.3
   device_info: ^1.0.0
