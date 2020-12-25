@@ -58,8 +58,18 @@ class AttachmentDownloader {
       if (attachmentResponse['status'] != "200" ||
           (attachmentResponse.containsKey("error") &&
               attachmentResponse["error"] != null)) {
-        cb();
-        _onError(attachmentResponse);
+        File file = new File(attachment.getPath());
+        if (await file.exists()) {
+          await file.delete();
+        }
+
+        // Finish the downloader
+        SocketManager().finishDownloader(attachment.guid);
+        if (_onComplete != null) _onComplete();
+
+        _stream.sink.addError("Error");
+
+        _stream.close();
         return;
       }
 
