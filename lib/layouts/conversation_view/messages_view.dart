@@ -228,6 +228,7 @@ class MessagesViewState extends State<MessagesView>
         }
       }
     } else {
+      print("HANDLING A BUNCH OF MESSAGES");
       int originalMessageLength = _messages.length;
       _messages = event.messages;
       _messages
@@ -255,6 +256,8 @@ class MessagesViewState extends State<MessagesView>
         }
       }
     }
+
+    if (this.mounted) setState(() {});
   }
 
   /// All message update events are handled within the message widgets, to prevent top level setstates

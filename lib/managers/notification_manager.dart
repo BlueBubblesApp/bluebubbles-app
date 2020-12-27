@@ -49,7 +49,7 @@ class NotificationManager {
   /// Sets the currently active [chat]. As a result,
   /// the chat will be marked as read, and the notifications
   /// for the chat will be cleared
-  void switchChat(Chat chat) async {
+  Future<void> switchChat(Chat chat) async {
     if (chat == null) {
       // CurrentChat.getCurrentChat(chat)?.dispose();
       return;
