@@ -49,6 +49,7 @@ class _ConversationTileState extends State<ConversationTile>
   bool isPressed = false;
   bool hideDividers = false;
   bool isFetching = false;
+  bool denseTiles = false;
 
   @override
   void initState() {
@@ -56,10 +57,17 @@ class _ConversationTileState extends State<ConversationTile>
     fetchParticipants();
 
     hideDividers = SettingsManager().settings.hideDividers;
+    denseTiles = SettingsManager().settings.denseChatTiles;
     SettingsManager().stream.listen((Settings newSettings) {
       if (newSettings.hideDividers != hideDividers && this.mounted) {
         setState(() {
           hideDividers = newSettings.hideDividers;
+        });
+      }
+
+      if (newSettings.denseChatTiles != denseTiles && this.mounted) {
+        setState(() {
+          denseTiles = newSettings.denseChatTiles;
         });
       }
     });
@@ -260,6 +268,7 @@ class _ConversationTileState extends State<ConversationTile>
                         : null,
                   ),
                   child: ListTile(
+                    dense: denseTiles,
                     contentPadding: EdgeInsets.only(left: 0),
                     title: Text(
                         widget.chat.title != null ? widget.chat.title : "",

@@ -23,6 +23,7 @@ class Settings {
   double scrollVelocity = 1.00;
   bool sendWithReturn = false;
   bool doubleTapForDetails = false;
+  bool denseChatTiles = false;
   // String emojiFontFamily;
 
   Skins skin = Skins.IOS;
@@ -68,6 +69,8 @@ class Settings {
         settings.sendWithReturn = entry.value;
       } else if (entry.name == "doubleTapForDetails") {
         settings.doubleTapForDetails = entry.value;
+      } else if (entry.name == "denseChatTiles") {
+        settings.denseChatTiles = entry.value;
       }
 
       // else if (entry.name == "emojiFontFamily") {
@@ -186,6 +189,10 @@ class Settings {
             name: "doubleTapForDetails",
             value: this.doubleTapForDetails,
             type: this.doubleTapForDetails.runtimeType),
+        ConfigEntry(
+            name: "denseChatTiles",
+            value: this.denseChatTiles,
+            type: this.denseChatTiles.runtimeType),
         // ConfigEntry(
         //     name: "emojiFontFamily",
         //     value: this.emojiFontFamily,
