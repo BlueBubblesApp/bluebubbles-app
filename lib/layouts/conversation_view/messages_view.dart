@@ -228,7 +228,6 @@ class MessagesViewState extends State<MessagesView>
         }
       }
     } else {
-      print("HANDLING A BUNCH OF MESSAGES");
       int originalMessageLength = _messages.length;
       _messages = event.messages;
       _messages
