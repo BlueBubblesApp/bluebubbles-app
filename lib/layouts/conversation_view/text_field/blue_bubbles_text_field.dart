@@ -235,26 +235,41 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
     return file;
   }
 
+  Future<bool> _onWillPop() async {
+    if (showImagePicker) {
+      if (this.mounted) {
+        setState(() {
+          showImagePicker = false;
+        });
+      }
+      return false;
+    }
+
+    return true;
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.max,
-      children: [
-        Expanded(
-          child: Container(
-            padding: EdgeInsets.all(5),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                buildAttachmentList(),
-                buildTextFieldAlwaysVisible(),
-                buildAttachmentPicker(),
-              ],
+    return new WillPopScope(
+        onWillPop: _onWillPop,
+        child: Row(
+          mainAxisSize: MainAxisSize.max,
+          children: [
+            Expanded(
+              child: Container(
+                padding: EdgeInsets.all(5),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    buildAttachmentList(),
+                    buildTextFieldAlwaysVisible(),
+                    buildAttachmentPicker(),
+                  ],
+                ),
+              ),
             ),
-          ),
-        ),
-      ],
-    );
+          ],
+        ));
   }
 
   Widget buildAttachmentList() => Padding(
