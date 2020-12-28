@@ -219,7 +219,7 @@ class _ConversationListState extends State<ConversationList> {
             ),
             materialSkin: Icon(
               Icons.more_vert,
-              color: Theme.of(context).textTheme.subtitle1.color,
+              color: Theme.of(context).textTheme.bodyText1.color,
               size: 25,
             ),
           ),
