@@ -9,7 +9,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-
+import 'package:bluebubbles/helpers/contstants.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 import '../../helpers/hex_color.dart';
 
 class AboutPanel extends StatefulWidget {
@@ -72,7 +73,7 @@ class _AboutPanelState extends State<AboutPanel> {
                 toolbarHeight: 100.0,
                 elevation: 0,
                 leading: IconButton(
-                  icon: Icon(Icons.arrow_back_ios,
+                  icon: Icon(SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_back_ios : Icons.arrow_back,
                       color: Theme.of(context).primaryColor),
                   onPressed: () {
                     Navigator.of(context).pop();

@@ -10,6 +10,8 @@ import 'package:bluebubbles/repository/models/scheduled.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:bluebubbles/helpers/contstants.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 
 List<dynamic> timeOptions = [
   [300, "5 Minutes"],
@@ -116,7 +118,7 @@ class _SchedulePanelState extends State<SchedulePanel> {
                 toolbarHeight: 100.0,
                 elevation: 0,
                 leading: IconButton(
-                  icon: Icon(Icons.arrow_back_ios,
+                  icon: Icon(SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_back_ios : Icons.arrow_back,
                       color: Theme.of(context).primaryColor),
                   onPressed: () {
                     Navigator.of(context).pop();
