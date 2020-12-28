@@ -130,7 +130,7 @@ class _ConversationTileState extends State<ConversationTile>
       actionPane: SlidableStrechActionPane(),
       actions: [
         IconSlideAction(
-          caption: widget.chat.isPinned ? 'Un-pin' : 'Pin',
+          caption: widget.chat.isPinned ? 'Unpin' : 'Pin',
           color: Colors.yellow[800],
           foregroundColor: Theme.of(context).textTheme.bodyText1.color,
           icon: Icons.star,
@@ -524,6 +524,12 @@ class _Material extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: <Widget>[
+                  if( parent.widget.chat.isPinned)
+                    Icon(
+                      Icons.star,
+                      size:15,
+                      color: Colors.yellow
+                    ),
                   if (parent.widget.chat.isMuted)
                     Icon(
                       Icons.notifications_off,
