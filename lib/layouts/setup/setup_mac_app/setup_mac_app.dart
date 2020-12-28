@@ -20,7 +20,7 @@ class SetupMacApp extends StatelessWidget {
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 20.0),
                 child: Text(
-                  "Before using the Android App, please verify that you have already installed the macOS Server app.",
+                  "Before using the Android App, please verify that you have already installed the macOS Server app. Additionally, make sure that your iMessage app is signed into an iCloud/Apple account.",
                   style: Theme.of(context)
                       .textTheme
                       .bodyText1

@@ -528,6 +528,10 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
   Widget buildAttachmentPicker() => TextFieldAttachmentPicker(
         visible: showImagePicker,
         onAddAttachment: (File file) {
+          if (file == null) return;
+          bool exists = file.existsSync();
+          if (!exists) return;
+
           for (File image in pickedImages) {
             if (image.path == file.path) {
               pickedImages.removeWhere((element) => element.path == file.path);
@@ -536,6 +540,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
               return;
             }
           }
+
           pickedImages.add(file);
           updateTextFieldAttachments();
           if (this.mounted) setState(() {});
