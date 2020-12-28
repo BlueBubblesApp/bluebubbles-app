@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:bluebubbles/blocs/setup_bloc.dart';
 import 'package:bluebubbles/layouts/setup/qr_scan/failed_to_scan_dialog.dart';
-import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';

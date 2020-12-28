@@ -14,8 +14,8 @@ description: Send iMessages on Android using BlueBubbles!
 version: 0.1.13
 
 environment:
-  sdk: ">=2.6.0 <3.0.0"
-
+  sdk: ">=2.8.0 <3.0.0"
+  
 dependencies:
   flutter:
     sdk: flutter
@@ -79,6 +79,7 @@ dependencies:
   image_gallery_saver: ^1.6.6
   # sentry: ^3.0.1
   flutter_image_compress: ^0.7.0
+  flutter_dynamic_icon: ^1.0.0
   extended_text_field:
     path: packages/extended_text_field
   visibility_detector: ^0.1.5

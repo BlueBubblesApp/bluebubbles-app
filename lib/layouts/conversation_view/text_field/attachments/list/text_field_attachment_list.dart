@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:bluebubbles/layouts/conversation_view/text_field/attachments/list/attachment_list_item.dart';
-import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:flutter/material.dart';
 

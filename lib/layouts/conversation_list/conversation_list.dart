@@ -3,8 +3,6 @@ import 'dart:ui';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
-import 'package:bluebubbles/layouts/search/search_text_box.dart';
-import 'package:bluebubbles/layouts/search/search_view.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
@@ -13,14 +11,12 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/managers/theme_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
-import 'package:bluebubbles/helpers/utils.dart';
 import 'package:device_info/device_info.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import './conversation_tile.dart';
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
-
 import '../settings/settings_panel.dart';
 
 class ConversationList extends StatefulWidget {

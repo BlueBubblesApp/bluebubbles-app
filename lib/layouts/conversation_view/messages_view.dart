@@ -8,7 +8,7 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/new_message_loader.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/typing_indicator.dart';
-import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
+import 'package:bluebubbles/layouts/widgets/send_widget.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
@@ -20,7 +20,6 @@ import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:bluebubbles/layouts/widgets/send_widget.dart';
 import 'package:flutter_smart_reply/flutter_smart_reply.dart';
 
 class MessagesView extends StatefulWidget {

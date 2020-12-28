@@ -1,16 +1,16 @@
 import 'dart:ui';
 
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
-import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+
 import '../../helpers/hex_color.dart';
-import 'package:flutter/material.dart';
 
 class AboutPanel extends StatefulWidget {
   AboutPanel({Key key}) : super(key: key);

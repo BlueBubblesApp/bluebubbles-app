@@ -1,8 +1,7 @@
 import 'dart:async';
-import 'package:bluebubbles/helpers/message_helper.dart';
+
 import 'package:bluebubbles/action_handler.dart';
-import 'package:bluebubbles/blocs/message_bloc.dart';
-import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/group_event.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/url_preview_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_attachments.dart';
@@ -13,13 +12,12 @@ import 'package:bluebubbles/layouts/widgets/message_widget/sent_message.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/stickers_widget.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import '../../../helpers/utils.dart';
+
 import '../../../repository/models/message.dart';
 
 class MessageWidget extends StatefulWidget {
