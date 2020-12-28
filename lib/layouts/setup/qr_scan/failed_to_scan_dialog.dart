@@ -14,12 +14,18 @@ class FailedToScan extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    String error = exception.toString();
+    if (error.contains("ROWID")) {
+      error =
+          "iMessage not configured on macOS device! Please configure an iCloud/Apple ID account!";
+    }
+
     return AlertDialog(
       title: Text(title),
       content: SingleChildScrollView(
         physics: AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
         child: Text(
-          exception.toString(),
+          error,
         ),
       ),
       actions: [
