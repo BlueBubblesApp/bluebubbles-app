@@ -403,7 +403,7 @@ class _Cupertino extends StatelessWidget {
                         child: Container(
                           padding: EdgeInsets.only(top: 50.0),
                           child: Text(
-                            "You have no chats :(",
+                            "You have no archived chats :(",
                             style: Theme.of(context).textTheme.subtitle1,
                           ),
                         ),
@@ -590,7 +590,7 @@ class __MaterialState extends State<_Material> {
                   child: Container(
                     padding: EdgeInsets.only(top: 50.0),
                     child: Text(
-                      "You have no chats :(",
+                      "You have no archived chats :(",
                       style: Theme.of(context).textTheme.subtitle1,
                     ),
                   ),
