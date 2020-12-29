@@ -235,26 +235,41 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
     return file;
   }
 
+  Future<bool> _onWillPop() async {
+    if (showImagePicker) {
+      if (this.mounted) {
+        setState(() {
+          showImagePicker = false;
+        });
+      }
+      return false;
+    }
+
+    return true;
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.max,
-      children: [
-        Expanded(
-          child: Container(
-            padding: EdgeInsets.all(5),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                buildAttachmentList(),
-                buildTextFieldAlwaysVisible(),
-                buildAttachmentPicker(),
-              ],
+    return new WillPopScope(
+        onWillPop: _onWillPop,
+        child: Row(
+          mainAxisSize: MainAxisSize.max,
+          children: [
+            Expanded(
+              child: Container(
+                padding: EdgeInsets.all(5),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    buildAttachmentList(),
+                    buildTextFieldAlwaysVisible(),
+                    buildAttachmentPicker(),
+                  ],
+                ),
+              ),
             ),
-          ),
-        ),
-      ],
-    );
+          ],
+        ));
   }
 
   Widget buildAttachmentList() => Padding(
@@ -513,6 +528,10 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
   Widget buildAttachmentPicker() => TextFieldAttachmentPicker(
         visible: showImagePicker,
         onAddAttachment: (File file) {
+          if (file == null) return;
+          bool exists = file.existsSync();
+          if (!exists) return;
+
           for (File image in pickedImages) {
             if (image.path == file.path) {
               pickedImages.removeWhere((element) => element.path == file.path);
@@ -521,6 +540,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
               return;
             }
           }
+
           pickedImages.add(file);
           updateTextFieldAttachments();
           if (this.mounted) setState(() {});

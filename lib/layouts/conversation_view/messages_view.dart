@@ -255,6 +255,8 @@ class MessagesViewState extends State<MessagesView>
         }
       }
     }
+
+    if (this.mounted) setState(() {});
   }
 
   /// All message update events are handled within the message widgets, to prevent top level setstates

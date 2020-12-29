@@ -32,8 +32,11 @@ class _CameraWidgetState extends State<CameraWidget>
   }
 
   Future<void> initCameras() async {
+    if (context == null) return;
     if (BlueBubblesTextField.of(context) == null) return;
     await BlueBubblesTextField.of(context).initializeCameraController();
+    if (context == null)
+      return; // After the await, so could have been some time
     controller = BlueBubblesTextField.of(context).cameraController;
     if (this.mounted) setState(() {});
   }
@@ -43,7 +46,7 @@ class _CameraWidgetState extends State<CameraWidget>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     // Call the [LifeCycleManager] events based on the [state]
     if (state == AppLifecycleState.paused) {
-      controller.dispose();
+      controller?.dispose();
     } else if (state == AppLifecycleState.resumed) {
       initCameras();
     }
@@ -97,7 +100,15 @@ class _CameraWidgetState extends State<CameraWidget>
                         .create(recursive: true);
 
                     await controller.takePicture(pathName);
-                    widget.addAttachment(File(pathName));
+
+                    File file = new File(pathName);
+                    if (!file.existsSync()) return;
+                    if (file.statSync().size == 0) {
+                      file.deleteSync();
+                      return;
+                    }
+
+                    widget.addAttachment(file);
                   },
                   child: Icon(
                     Icons.radio_button_checked,
@@ -115,19 +126,61 @@ class _CameraWidgetState extends State<CameraWidget>
                 bottom: MediaQuery.of(context).size.height / 30,
               ),
               child: FlatButton(
+                padding: EdgeInsets.only(left: 10),
+                minWidth: 30,
                 color: Colors.transparent,
                 onPressed: () async {
                   String appDocPath = SettingsManager().appDocDir.path;
                   File file = new File(
                       "$appDocPath/attachments/" + randomString(16) + ".png");
                   await file.create();
-                  await MethodChannelInterface()
-                      .invokeMethod("open-camera", {"path": file.path});
-                  debugPrint("Adding attachment: " + file.path);
+                  await MethodChannelInterface().invokeMethod(
+                      "open-camera", {"path": file.path, "type": "camera"});
+
+                  if (!file.existsSync()) return;
+                  if (file.statSync().size == 0) {
+                    file.deleteSync();
+                    return;
+                  }
+
                   widget.addAttachment(file);
                 },
                 child: Icon(
                   Icons.fullscreen,
+                  color: Colors.white,
+                  size: 30,
+                ),
+              ),
+            ),
+          ),
+          Align(
+            alignment: Alignment.topCenter,
+            child: Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).size.height / 30,
+              ),
+              child: FlatButton(
+                padding: EdgeInsets.all(0),
+                minWidth: 30,
+                color: Colors.transparent,
+                onPressed: () async {
+                  String appDocPath = SettingsManager().appDocDir.path;
+                  File file = new File(
+                      "$appDocPath/attachments/" + randomString(16) + ".mp4");
+                  await file.create();
+                  await MethodChannelInterface().invokeMethod(
+                      "open-camera", {"path": file.path, "type": "video"});
+
+                  if (!file.existsSync()) return;
+                  if (file.statSync().size == 0) {
+                    file.deleteSync();
+                    return;
+                  }
+
+                  widget.addAttachment(file);
+                },
+                child: Icon(
+                  Icons.videocam,
                   color: Colors.white,
                   size: 30,
                 ),
@@ -139,6 +192,8 @@ class _CameraWidgetState extends State<CameraWidget>
               bottom: MediaQuery.of(context).size.height / 30,
             ),
             child: FlatButton(
+              padding: EdgeInsets.only(right: 10),
+              minWidth: 30,
               color: Colors.transparent,
               onPressed: () async {
                 if (BlueBubblesTextField.of(context) == null) return;

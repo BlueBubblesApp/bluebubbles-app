@@ -329,19 +329,19 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
     );
   }
 
-  void fetchCurrentChat() {
+  Future<void> fetchCurrentChat() async {
     if (!isCreator) return;
     if (selected.length == 1 && selected.first.isChat) {
       chat = selected.first.chat;
     }
-    debugPrint(selected.toString());
+
     if (selected.length == 0) {
       chat = null;
       if (this.mounted) setState(() {});
       return;
     }
-    List<Chat> cache = ChatBloc().chats.sublist(0);
 
+    List<Chat> cache = ChatBloc().chats.sublist(0);
     cache.retainWhere((element) {
       if (element.participants.length != selected.length) return false;
       for (UniqueContact contact in selected) {
@@ -353,8 +353,10 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
           return false;
         }
       }
+
       return true;
     });
+
     if (cache.length == 0) {
       chat = null;
       messageBloc = null;
@@ -367,7 +369,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
     chat = cache.first;
     currentChat = CurrentChat.getCurrentChat(chat);
 
-    NotificationManager().switchChat(chat);
+    await NotificationManager().switchChat(chat);
     messageBloc = null;
     if (this.mounted) setState(() {});
   }
@@ -569,14 +571,14 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
     return completer.future;
   }
 
-  void onSelected(UniqueContact item) {
+  void onSelected(UniqueContact item) async {
     if (item.isChat) {
       if (widget.type == ChatSelectorTypes.ONLY_EXISTING) {
         selected.add(item);
         chat = item.chat;
         contacts = [];
       } else {
-        item.chat.participants.forEach((e) async {
+        for (Handle e in item?.chat?.participants ?? []) {
           UniqueContact contact = new UniqueContact(
               address: e.address,
               displayName: ContactManager()
@@ -584,9 +586,11 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
                       ?.displayName ??
                   await formatPhoneNumber(e.address));
           selected.add(contact);
-        });
-        fetchCurrentChat();
+        }
+
+        await fetchCurrentChat();
       }
+
       resetCursor();
       if (this.mounted) setState(() {});
       return;
