@@ -6,6 +6,7 @@ import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/layouts/image_viewer/attachmet_fullscreen_viewer.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/regular_file_opener.dart';
+import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
@@ -190,7 +191,7 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
               onTap: () {
                 CurrentChat currentChat = CurrentChat.of(context);
                 Navigator.of(context).push(
-                  CupertinoPageRoute(
+                  ThemeSwitcher.buildPageRoute(
                     builder: (context) => AttachmentFullscreenViewer(
                       currentChat: currentChat,
                       attachment: widget.attachment,
@@ -227,11 +228,9 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
             color: Colors.transparent,
             child: InkWell(
               onTap: () {
-                CurrentChat currentChat = CurrentChat.of(context);
                 Navigator.of(context).push(
-                  CupertinoPageRoute(
+                  ThemeSwitcher.buildPageRoute(
                     builder: (context) => AttachmentFullscreenViewer(
-                      currentChat: currentChat,
                       attachment: widget.attachment,
                       showInteractions: true,
                     ),

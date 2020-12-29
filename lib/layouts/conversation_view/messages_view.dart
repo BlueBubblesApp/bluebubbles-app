@@ -1,21 +1,27 @@
 import 'dart:async';
 import 'dart:ui';
 
+import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
+import 'package:bluebubbles/helpers/contstants.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/new_message_loader.dart';
+import 'package:bluebubbles/layouts/widgets/message_widget/typing_indicator.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
+import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:bluebubbles/layouts/widgets/send_widget.dart';
+import 'package:flutter_smart_reply/flutter_smart_reply.dart';
 
 class MessagesView extends StatefulWidget {
   final MessageBloc messageBloc;
@@ -43,37 +49,39 @@ class MessagesViewState extends State<MessagesView>
   GlobalKey<SliverAnimatedListState> _listKey;
   final Duration animationDuration = Duration(milliseconds: 400);
   bool initializedList = false;
-  ScrollController scrollController = new ScrollController();
   List<int> loadedPages = [];
   CurrentChat currentChat;
 
-  bool currentShowScrollDown = false;
-  StreamController<bool> showScrollDownStream =
-      StreamController<bool>.broadcast();
-  bool get showScrollDown => currentShowScrollDown;
+  List<TextMessage> currentMessages = [];
+  List<String> replies = [];
+
+  StreamController<List<String>> smartReplyController;
+
+  bool get showScrollDown => currentChat.showScrollDown;
   set showScrollDown(bool value) {
-    if (currentShowScrollDown == value) return;
-    currentShowScrollDown = value;
-    if (!showScrollDownStream.isClosed)
-      showScrollDownStream.sink.add(currentShowScrollDown);
+    if (currentChat.currentShowScrollDown == value) {
+      return;
+    }
+    currentChat.currentShowScrollDown = value;
+    if (!currentChat.showScrollDownStream.isClosed) {
+      currentChat.showScrollDownStream.sink
+          .add(currentChat.currentShowScrollDown);
+    }
+  }
+
+  ScrollController get scrollController {
+    if (currentChat == null) return null;
+    if (currentChat.scrollController == null) {
+      currentChat.scrollController = ScrollController();
+    }
+    return currentChat.scrollController;
   }
 
   @override
   void initState() {
     super.initState();
     widget.messageBloc.stream.listen(handleNewMessage);
-
-    scrollController.addListener(() {
-      if (scrollController == null || !scrollController.hasClients) return;
-      if (showScrollDown && scrollController.offset >= 500) return;
-      if (!showScrollDown && scrollController.offset < 500) return;
-
-      if (scrollController.offset >= 500) {
-        showScrollDown = true;
-      } else {
-        showScrollDown = false;
-      }
-    });
+    smartReplyController = StreamController<List<String>>.broadcast();
 
     EventDispatcher().stream.listen((Map<String, dynamic> event) {
       if (!["refresh-messagebloc"].contains(event["type"])) return;
@@ -105,6 +113,18 @@ class MessagesViewState extends State<MessagesView>
     super.didChangeDependencies();
     currentChat = CurrentChat.of(context);
 
+    scrollController?.addListener(() {
+      if (scrollController == null || !scrollController.hasClients) return;
+      if (showScrollDown && scrollController.offset >= 500) return;
+      if (!showScrollDown && scrollController.offset < 500) return;
+
+      if (scrollController.offset >= 500) {
+        showScrollDown = true;
+      } else {
+        showScrollDown = false;
+      }
+    });
+
     if (_messages.isEmpty) {
       widget.messageBloc.getMessages();
     }
@@ -112,8 +132,30 @@ class MessagesViewState extends State<MessagesView>
 
   @override
   void dispose() {
-    showScrollDownStream.close();
+    // if (!smartReplyController.isClosed) smartReplyController.close();
     super.dispose();
+  }
+
+  void addMessage(Message message, {bool fetch = true}) {
+    if (isEmptyString(message.text)) return;
+
+    TextMessage textMessage = message.isFromMe
+        ? TextMessage.createForLocalUser(
+            message.text, message.dateCreated.millisecondsSinceEpoch)
+        : TextMessage.createForRemoteUser(
+            message.text, message.dateCreated.millisecondsSinceEpoch);
+
+    currentMessages.add(textMessage);
+    if (currentMessages.length > 10) {
+      currentMessages.removeAt(0);
+    }
+    if (fetch) updateReplies();
+  }
+
+  Future<void> updateReplies() async {
+    currentMessages.sort((a, b) => a.timestamp.compareTo(b.timestamp));
+    replies = await FlutterSmartReply.getSmartReplies(currentMessages);
+    smartReplyController.sink.add(replies);
   }
 
   Future<void> loadNextChunk() {
@@ -214,9 +256,14 @@ class MessagesViewState extends State<MessagesView>
               : Duration(milliseconds: 0),
         );
       }
+
       if (event.message.hasAttachments) {
         await currentChat.updateChatAttachments();
         if (this.mounted) setState(() {});
+      }
+
+      if (isNewMessage && SettingsManager().settings.smartReply) {
+        addMessage(event.message);
       }
     } else if (event.type == MessageBlocEventType.remove) {
       for (int i = 0; i < _messages.length; i++) {
@@ -232,6 +279,16 @@ class MessagesViewState extends State<MessagesView>
       _messages = event.messages;
       _messages
           .forEach((message) => currentChat.getAttachmentsForMessage(message));
+
+      // We only want to update smart replies on the intial message fetch
+      if (originalMessageLength == 0) {
+        if (SettingsManager().settings.smartReply) {
+          for (Message message in _messages) {
+            addMessage(message, fetch: false);
+          }
+          updateReplies();
+        }
+      }
       if (_listKey == null) _listKey = GlobalKey<SliverAnimatedListState>();
 
       if (originalMessageLength < _messages.length) {
@@ -284,6 +341,34 @@ class MessagesViewState extends State<MessagesView>
     return message;
   }
 
+  Widget _buildReply(String text) => Container(
+        margin: EdgeInsets.all(5),
+        decoration: BoxDecoration(
+          border: Border.all(
+            width: 2,
+            style: BorderStyle.solid,
+            color: Theme.of(context).accentColor,
+          ),
+          borderRadius: BorderRadius.circular(19),
+        ),
+        child: InkWell(
+          customBorder: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(19),
+          ),
+          onTap: () {
+            ActionHandler.sendMessage(currentChat.chat, text);
+          },
+          child: Padding(
+            padding:
+                const EdgeInsets.symmetric(vertical: 8.0, horizontal: 13.0),
+            child: Text(
+              text,
+              style: Theme.of(context).textTheme.bodyText1,
+            ),
+          ),
+        ),
+      );
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -304,9 +389,32 @@ class MessagesViewState extends State<MessagesView>
           CustomScrollView(
             controller: scrollController,
             reverse: true,
-            physics: AlwaysScrollableScrollPhysics(
-                parent: CustomBouncingScrollPhysics()),
+            physics: ThemeSwitcher.getScrollPhysics(),
             slivers: <Widget>[
+              if (SettingsManager().settings.smartReply)
+                StreamBuilder<List<String>>(
+                  stream: smartReplyController.stream,
+                  builder: (context, snapshot) {
+                    return SliverToBoxAdapter(
+                      child: AnimatedSize(
+                        duration: Duration(milliseconds: 500),
+                        vsync: this,
+                        child: Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: replies
+                                .map(
+                                  (e) => _buildReply(e),
+                                )
+                                .toList()),
+                      ),
+                    );
+                  },
+                ),
+              SliverToBoxAdapter(
+                child: TypingIndicator(
+                  visible: currentChat.showTypingIndicator,
+                ),
+              ),
               _listKey != null
                   ? SliverAnimatedList(
                       initialItemCount: _messages.length + 1,
@@ -383,48 +491,44 @@ class MessagesViewState extends State<MessagesView>
               ),
             ],
           ),
-          StreamBuilder<bool>(
-            stream: showScrollDownStream.stream,
-            builder: (context, snapshot) {
-              return AnimatedOpacity(
-                opacity: showScrollDown ? 1 : 0,
-                duration: new Duration(milliseconds: 300),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(10.0),
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-                    child: FittedBox(
-                      fit: BoxFit.fitWidth,
-                      child: Container(
-                        height: 35,
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).accentColor.withOpacity(0.7),
-                          borderRadius: BorderRadius.circular(10.0),
-                        ),
-                        padding: EdgeInsets.symmetric(horizontal: 10),
-                        child: Center(
-                          child: GestureDetector(
-                            onTap: () {
-                              scrollController.animateTo(
-                                0.0,
-                                curve: Curves.easeOut,
-                                duration: const Duration(milliseconds: 300),
-                              );
-                            },
-                            child: Text(
-                              "\u{2193} Scroll to bottom \u{2193}",
-                              textAlign: TextAlign.center,
-                              style: Theme.of(context).textTheme.bodyText1,
+          if (SettingsManager().settings.skin == Skins.IOS)
+            StreamBuilder<bool>(
+              stream: currentChat.showScrollDownStream.stream,
+              builder: (context, snapshot) {
+                return AnimatedOpacity(
+                  opacity: showScrollDown ? 1 : 0,
+                  duration: new Duration(milliseconds: 300),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(10.0),
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+                      child: FittedBox(
+                        fit: BoxFit.fitWidth,
+                        child: Container(
+                          height: 35,
+                          decoration: BoxDecoration(
+                            color:
+                                Theme.of(context).accentColor.withOpacity(0.7),
+                            borderRadius: BorderRadius.circular(10.0),
+                          ),
+                          padding: EdgeInsets.symmetric(horizontal: 10),
+                          child: Center(
+                            child: GestureDetector(
+                              onTap: currentChat.scrollToBottom,
+                              child: Text(
+                                "\u{2193} Scroll to bottom \u{2193}",
+                                textAlign: TextAlign.center,
+                                style: Theme.of(context).textTheme.bodyText1,
+                              ),
                             ),
                           ),
                         ),
                       ),
                     ),
                   ),
-                ),
-              );
-            },
-          ),
+                );
+              },
+            ),
         ],
       ),
     );

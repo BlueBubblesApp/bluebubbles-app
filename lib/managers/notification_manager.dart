@@ -6,6 +6,7 @@ import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
+import 'package:bluebubbles/socket_manager.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/material.dart';
 
@@ -57,6 +58,13 @@ class NotificationManager {
     CurrentChat.getCurrentChat(chat)?.isAlive = true;
 
     await chat.setUnreadStatus(false);
+    SocketManager()
+        .sendMessage("mark-chat-read", {"chatGuid": chat.guid}, (data) {});
+
+    if (!MethodChannelInterface().headless) {
+      SocketManager().sendMessage(
+          "update-typing-status", {"chatGuid": chat.guid}, (data) {});
+    }
     MethodChannelInterface()
         .invokeMethod("clear-chat-notifs", {"chatGuid": chat.guid});
   }

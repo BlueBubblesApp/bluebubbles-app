@@ -1,13 +1,41 @@
 import 'package:bluebubbles/helpers/contstants.dart';
+import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class ThemeSwitcher extends StatefulWidget {
-  ThemeSwitcher(
-      {Key key, @required this.cupertinoWidget, @required this.materialWidget})
+  ThemeSwitcher({Key key, @required this.iOSSkin, @required this.materialSkin})
       : super(key: key);
-  final Widget cupertinoWidget;
-  final Widget materialWidget;
+  final Widget iOSSkin;
+  final Widget materialSkin;
+
+  static PageRoute buildPageRoute(
+      {@required Function(BuildContext context) builder}) {
+    switch (SettingsManager().settings.skin) {
+      case Skins.IOS:
+        return CupertinoPageRoute(builder: builder);
+        break;
+      case Skins.Material:
+        return MaterialPageRoute(builder: builder);
+        break;
+    }
+  }
+
+  static ScrollPhysics getScrollPhysics() {
+    switch (SettingsManager().settings.skin) {
+      case Skins.IOS:
+        return AlwaysScrollableScrollPhysics(
+          parent: CustomBouncingScrollPhysics(),
+        );
+        break;
+      case Skins.Material:
+        return AlwaysScrollableScrollPhysics(
+          parent: ClampingScrollPhysics(),
+        );
+        break;
+    }
+  }
 
   @override
   _ThemeSwitcherState createState() => _ThemeSwitcherState();
@@ -20,8 +48,10 @@ class _ThemeSwitcherState extends State<ThemeSwitcher> {
   void initState() {
     super.initState();
     skin = SettingsManager().settings.skin;
+
     SettingsManager().stream.listen((event) {
       if (!this.mounted) return;
+
       if (event.skin != skin) {
         skin = event.skin;
         setState(() {});
@@ -31,10 +61,11 @@ class _ThemeSwitcherState extends State<ThemeSwitcher> {
 
   @override
   Widget build(BuildContext context) {
-    if (skin == Skins.IOS) {
-      return widget.cupertinoWidget;
-    } else {
-      return widget.materialWidget;
+    switch (skin) {
+      case Skins.IOS:
+        return widget.iOSSkin;
+      case Skins.Material:
+        return widget.materialSkin;
     }
   }
 }

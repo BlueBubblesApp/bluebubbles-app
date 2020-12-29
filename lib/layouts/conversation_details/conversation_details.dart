@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
+import 'package:bluebubbles/helpers/contstants.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/layouts/conversation_details/attachment_details_card.dart';
 import 'package:bluebubbles/layouts/conversation_details/contact_tile.dart';
@@ -9,7 +10,9 @@ import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/adding_participant_popup.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view_mixin.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
+import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
@@ -74,25 +77,40 @@ class _ConversationDetailsState extends State<ConversationDetails> {
       ),
       child: Scaffold(
         backgroundColor: Theme.of(context).backgroundColor,
-        appBar: CupertinoNavigationBar(
-          backgroundColor: Theme.of(context).accentColor.withAlpha(125),
-          actionsForegroundColor: Theme.of(context).primaryColor,
-          middle: Text(
-            "Details",
-            style: Theme.of(context).textTheme.headline1,
-          ),
-        ),
-        extendBodyBehindAppBar: true,
-        body: CustomScrollView(
-          physics: AlwaysScrollableScrollPhysics(
-            parent: CustomBouncingScrollPhysics(),
-          ),
-          slivers: <Widget>[
-            SliverToBoxAdapter(
-              child: Container(
-                height: 100,
+        appBar: SettingsManager().settings.skin == Skins.IOS
+            ? CupertinoNavigationBar(
+                backgroundColor: Theme.of(context).accentColor.withAlpha(125),
+                actionsForegroundColor: Theme.of(context).primaryColor,
+                middle: Text(
+                  "Details",
+                  style: Theme.of(context).textTheme.headline1,
+                ),
+              )
+            : AppBar(
+                title: Text(
+                  "Details",
+                  style: Theme.of(context).textTheme.headline1,
+                ),
+                backgroundColor: Theme.of(context).backgroundColor,
+                bottom: PreferredSize(
+                  child: Container(
+                    color: Theme.of(context).dividerColor,
+                    height: 0.5,
+                  ),
+                  preferredSize: Size.fromHeight(0.5),
+                ),
               ),
-            ),
+        extendBodyBehindAppBar:
+            SettingsManager().settings.skin == Skins.IOS ? true : false,
+        body: CustomScrollView(
+          physics: ThemeSwitcher.getScrollPhysics(),
+          slivers: <Widget>[
+            if (SettingsManager().settings.skin == Skins.IOS)
+              SliverToBoxAdapter(
+                child: Container(
+                  height: 100,
+                ),
+              ),
             SliverToBoxAdapter(
               child: readOnly
                   ? Container()

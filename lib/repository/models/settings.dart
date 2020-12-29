@@ -20,10 +20,12 @@ class Settings {
   bool colorfulAvatars = false;
   bool colorfulBubbles = false;
   bool hideDividers = false;
+  bool sendTypingIndicators = true;
   double scrollVelocity = 1.00;
   bool sendWithReturn = false;
   bool doubleTapForDetails = false;
   bool denseChatTiles = false;
+  bool smartReply = false;
   // String emojiFontFamily;
 
   Skins skin = Skins.IOS;
@@ -63,6 +65,10 @@ class Settings {
         settings.colorfulBubbles = entry.value;
       } else if (entry.name == "hideDividers") {
         settings.hideDividers = entry.value;
+      } else if (entry.name == "skin") {
+        settings.skin = Skins.values[entry.value];
+      } else if (entry.name == "sendTypingIndicators") {
+        settings.sendTypingIndicators = entry.value;
       } else if (entry.name == "scrollVelocity") {
         settings.scrollVelocity = entry.value;
       } else if (entry.name == "sendWithReturn") {
@@ -71,6 +77,8 @@ class Settings {
         settings.doubleTapForDetails = entry.value;
       } else if (entry.name == "denseChatTiles") {
         settings.denseChatTiles = entry.value;
+      } else if (entry.name == "smartReply") {
+        settings.smartReply = entry.value;
       }
 
       // else if (entry.name == "emojiFontFamily") {
@@ -178,6 +186,14 @@ class Settings {
             value: this.hideDividers,
             type: this.hideDividers.runtimeType),
         ConfigEntry(
+            name: "skin",
+            value: this.skin.index,
+            type: this.skin.index.runtimeType),
+        ConfigEntry(
+            name: "sendTypingIndicators",
+            value: this.sendTypingIndicators,
+            type: this.sendTypingIndicators.runtimeType),
+        ConfigEntry(
             name: "scrollVelocity",
             value: this.scrollVelocity,
             type: this.scrollVelocity.runtimeType),
@@ -193,6 +209,10 @@ class Settings {
             name: "denseChatTiles",
             value: this.denseChatTiles,
             type: this.denseChatTiles.runtimeType),
+        ConfigEntry(
+            name: "smartReply",
+            value: this.smartReply,
+            type: this.smartReply.runtimeType),
         // ConfigEntry(
         //     name: "emojiFontFamily",
         //     value: this.emojiFontFamily,

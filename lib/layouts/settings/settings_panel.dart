@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:ui';
 
+import 'package:bluebubbles/helpers/contstants.dart';
 import "package:bluebubbles/helpers/string_extension.dart";
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/settings/about_panel.dart';
@@ -21,6 +22,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../helpers/hex_color.dart';
 import 'package:flutter/material.dart';
+import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 
 import '../setup/qr_code_scanner.dart';
 
@@ -113,9 +115,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
           ),
         ),
         body: CustomScrollView(
-          physics: AlwaysScrollableScrollPhysics(
-            parent: CustomBouncingScrollPhysics(),
-          ),
+          physics: ThemeSwitcher.getScrollPhysics(),
           slivers: <Widget>[
             SliverList(
               delegate: SliverChildListDelegate(

@@ -3,14 +3,17 @@ import 'dart:io';
 import 'dart:ui';
 
 import 'package:bluebubbles/blocs/text_field_bloc.dart';
+import 'package:bluebubbles/helpers/contstants.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/text_field/attachments/list/text_field_attachment_list.dart';
 import 'package:bluebubbles/layouts/conversation_view/text_field/attachments/picker/text_field_attachment_picker.dart';
 import 'package:bluebubbles/layouts/widgets/CustomCupertinoTextField.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/audio_player_widget.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
+import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/socket_manager.dart';
 import 'package:camera/camera.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
@@ -53,6 +56,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
   StreamController _streamController = new StreamController.broadcast();
   CurrentChat safeChat;
 
+  bool selfTyping = false;
   CameraController cameraController;
   int cameraIndex = 0;
   List<CameraDescription> cameras;
@@ -60,6 +64,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
   // bool selfTyping = false;
 
   Stream get stream => _streamController.stream;
+
+  bool get canRecord => controller.text.isEmpty && pickedImages.isEmpty;
 
   static final GlobalKey<FormFieldState<String>> _searchFormKey =
       GlobalKey<FormFieldState<String>>();
@@ -76,21 +82,23 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
     controller = textFieldData != null
         ? textFieldData.controller
         : new TextEditingController();
-    // controller.addListener(() {
-    //   if (CurrentChat.of(context)?.chat == null) return;
-    //   if (controller.text.length == 0 &&
-    //       pickedImages.length == 0 &&
-    //       selfTyping) {
-    //     selfTyping = false;
-    //     SocketManager().sendMessage("stopped-typing",
-    //         {"chatGuid": CurrentChat.of(context).chat.guid}, (data) => null);
-    //   } else if (!selfTyping &&
-    //       (controller.text.length > 0 || pickedImages.length > 0)) {
-    //     selfTyping = true;
-    //     SocketManager().sendMessage("started-typing",
-    //         {"chatGuid": CurrentChat.of(context).chat.guid}, (data) => null);
-    //   }
-    // });
+    controller.addListener(() {
+      if (CurrentChat.of(context)?.chat == null) return;
+      if (controller.text.length == 0 &&
+          pickedImages.length == 0 &&
+          selfTyping) {
+        selfTyping = false;
+        SocketManager().sendMessage("stopped-typing",
+            {"chatGuid": CurrentChat.of(context).chat.guid}, (data) {});
+      } else if (!selfTyping &&
+          (controller.text.length > 0 || pickedImages.length > 0)) {
+        selfTyping = true;
+        if (SettingsManager().settings.sendTypingIndicators)
+          SocketManager().sendMessage("started-typing",
+              {"chatGuid": CurrentChat.of(context).chat.guid}, (data) {});
+      }
+      if (this.mounted) setState(() {});
+    });
 
     if (widget.existingText != null) {
       controller.text = widget.existingText;
@@ -142,6 +150,18 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
     super.dispose();
   }
 
+  void onContentCommit(String url) async {
+    debugPrint("got attachment " + url);
+    List<String> fnParts = url.split("/");
+    fnParts = (fnParts.length > 2)
+        ? fnParts.sublist(fnParts.length - 2)
+        : fnParts.last;
+    File file = await _downloadFile(url, fnParts.join("_"));
+    pickedImages.add(file);
+    updateTextFieldAttachments();
+    if (this.mounted) setState(() {});
+  }
+
   Future<void> reviewAudio(BuildContext originalContext, File file) async {
     showDialog(
       context: originalContext,
@@ -157,9 +177,10 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                   style: Theme.of(context).textTheme.subtitle1),
               Container(height: 10.0),
               AudioPlayerWiget(
-                  key: new Key("AudioMessage-${file.length().toString()}"),
-                  file: file,
-                  context: originalContext)
+                key: new Key("AudioMessage-${file.length().toString()}"),
+                file: file,
+                context: originalContext,
+              )
             ],
           ),
           actions: <Widget>[
@@ -292,35 +313,40 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
       children: <Widget>[
         buildShareButton(),
         buildActualTextField(),
+        if (SettingsManager().settings.skin == Skins.Material)
+          buildSendButton(canRecord),
       ],
     );
   }
 
-  Widget buildShareButton() => Container(
-        height: 35,
-        width: 35,
-        margin: EdgeInsets.only(left: 5.0, right: 5.0),
-        child: ClipOval(
-          child: Material(
-            color: Theme.of(context).primaryColor,
-            child: InkWell(
-              onTap: toggleShareMenu,
-              child: Padding(
-                padding: EdgeInsets.only(right: 1),
-                child: Icon(
-                  Icons.share,
-                  color: Colors.white.withAlpha(225),
-                  size: 20,
-                ),
+  Widget buildShareButton() {
+    double size = SettingsManager().settings.skin == Skins.IOS ? 35 : 40;
+    return Container(
+      height: size,
+      width: size,
+      margin: EdgeInsets.only(left: 5.0, right: 5.0),
+      child: ClipOval(
+        child: Material(
+          color: Theme.of(context).primaryColor,
+          child: InkWell(
+            onTap: toggleShareMenu,
+            child: Padding(
+              padding: EdgeInsets.only(right: 1),
+              child: Icon(
+                Icons.share,
+                color: Colors.white.withAlpha(225),
+                size: 20,
               ),
             ),
           ),
         ),
-      );
+      ),
+    );
+  }
 
   Widget buildActualTextField() {
     IconData rightIcon = Icons.arrow_upward;
-    bool canRecord = controller.text.isEmpty && pickedImages.isEmpty;
+
     if (canRecord) rightIcon = Icons.mic;
     return Flexible(
       flex: 1,
@@ -333,85 +359,120 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
               duration: Duration(milliseconds: 100),
               vsync: this,
               curve: Curves.easeInOut,
-              child: CustomCupertinoTextField(
-                textInputAction: SettingsManager().settings.sendWithReturn
-                    ? TextInputAction.send
-                    : TextInputAction.newline,
-                onSubmitted: (String value) async {
-                  if (!SettingsManager().settings.sendWithReturn ||
-                      isNullOrEmpty(value)) return;
-
-                  if (await widget.onSend(pickedImages, value)) {
-                    controller.text = "";
-                    pickedImages = <File>[];
-                    updateTextFieldAttachments();
-                  }
-
-                  if (this.mounted) setState(() {});
-                },
-                cursorColor: Theme.of(context).primaryColor,
-                onLongPressStart: () {
-                  Feedback.forLongPress(context);
-                },
-                onTap: () {
-                  HapticFeedback.selectionClick();
-                },
-                key: _searchFormKey,
-                onChanged: (String value) {
-                  if (value.isEmpty && this.mounted) {
-                    setState(() {
-                      rightIcon = Icons.mic;
-                    });
-                  } else if (value.isNotEmpty &&
-                      rightIcon == Icons.mic &&
-                      this.mounted) {
-                    setState(() {
-                      rightIcon = Icons.arrow_upward;
-                    });
-                  }
-                },
-                onContentCommited: (String url) async {
-                  List<String> fnParts = url.split("/");
-                  fnParts = (fnParts.length > 2)
-                      ? fnParts.sublist(fnParts.length - 2)
-                      : fnParts.last;
-                  File file = await _downloadFile(url, fnParts.join("_"));
-                  pickedImages.add(file);
-                  updateTextFieldAttachments();
-                  if (this.mounted) setState(() {});
-                },
-                textCapitalization: TextCapitalization.sentences,
-                focusNode: focusNode,
-                autocorrect: true,
-                controller: controller,
-                scrollPhysics: CustomBouncingScrollPhysics(),
-                style: Theme.of(context).textTheme.bodyText1.apply(
-                      color: ThemeData.estimateBrightnessForColor(
-                                  Theme.of(context).backgroundColor) ==
-                              Brightness.light
-                          ? Colors.black
-                          : Colors.white,
-                      fontSizeDelta: -0.25,
+              child: ThemeSwitcher(
+                iOSSkin: CustomCupertinoTextField(
+                  cursorColor: Theme.of(context).primaryColor,
+                  onLongPressStart: () {
+                    Feedback.forLongPress(context);
+                  },
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                  },
+                  key: _searchFormKey,
+                  onChanged: (String value) {
+                    if (value.isEmpty && this.mounted) {
+                      setState(() {
+                        rightIcon = Icons.mic;
+                      });
+                    } else if (value.isNotEmpty &&
+                        rightIcon == Icons.mic &&
+                        this.mounted) {
+                      setState(() {
+                        rightIcon = Icons.arrow_upward;
+                      });
+                    }
+                  },
+                  onContentCommited: onContentCommit,
+                  textCapitalization: TextCapitalization.sentences,
+                  focusNode: focusNode,
+                  autocorrect: true,
+                  controller: controller,
+                  scrollPhysics: CustomBouncingScrollPhysics(),
+                  style: Theme.of(context).textTheme.bodyText1.apply(
+                        color: ThemeData.estimateBrightnessForColor(
+                                    Theme.of(context).backgroundColor) ==
+                                Brightness.light
+                            ? Colors.black
+                            : Colors.white,
+                        fontSizeDelta: -0.25,
+                      ),
+                  keyboardType: TextInputType.multiline,
+                  maxLines: 14,
+                  minLines: 1,
+                  placeholder: "BlueBubbles",
+                  padding:
+                      EdgeInsets.only(left: 10, top: 10, right: 40, bottom: 10),
+                  placeholderStyle: Theme.of(context).textTheme.subtitle1,
+                  autofocus: SettingsManager().settings.autoOpenKeyboard,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).backgroundColor,
+                    border: Border.all(
+                      color: Theme.of(context).dividerColor,
+                      width: 1.5,
                     ),
-                keyboardType: TextInputType.multiline,
-                maxLines: 14,
-                minLines: 1,
-                placeholder: "BlueBubbles",
-                padding:
-                    EdgeInsets.only(left: 10, top: 10, right: 40, bottom: 10),
-                placeholderStyle: Theme.of(context).textTheme.subtitle1,
-                autofocus: SettingsManager().settings.autoOpenKeyboard,
-                decoration: BoxDecoration(
-                  color: Theme.of(context).backgroundColor,
-                  border: Border.all(
-                    color: Theme.of(context).dividerColor,
-                    width: 1.5,
+                    borderRadius: BorderRadius.circular(20),
                   ),
-                  borderRadius: BorderRadius.circular(20),
+                ),
+                materialSkin: TextField(
+                  controller: controller,
+                  focusNode: focusNode,
+                  textCapitalization: TextCapitalization.sentences,
+                  autocorrect: true,
+                  autofocus: SettingsManager().settings.autoOpenKeyboard,
+                  cursorColor: Theme.of(context).primaryColor,
+                  key: _searchFormKey,
+                  style: Theme.of(context).textTheme.bodyText1.apply(
+                        color: ThemeData.estimateBrightnessForColor(
+                                    Theme.of(context).backgroundColor) ==
+                                Brightness.light
+                            ? Colors.black
+                            : Colors.white,
+                        fontSizeDelta: -0.25,
+                      ),
+                  onContentCommited: onContentCommit,
+                  decoration: InputDecoration(
+                    isDense: true,
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(
+                        color: Theme.of(context).dividerColor,
+                        width: 1.5,
+                        style: BorderStyle.solid,
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    disabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(
+                        color: Theme.of(context).dividerColor,
+                        width: 1.5,
+                        style: BorderStyle.solid,
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(
+                        color: Theme.of(context).dividerColor,
+                        width: 1.5,
+                        style: BorderStyle.solid,
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    hintText: "BlueBubbles",
+                    hintStyle: Theme.of(context).textTheme.subtitle1,
+                    contentPadding: EdgeInsets.only(
+                      left: 10,
+                      top: 15,
+                      right: 10,
+                      bottom: 10,
+                    ),
+                  ),
+                  keyboardType: TextInputType.multiline,
+                  maxLines: 14,
+                  minLines: 1,
                 ),
               ),
             ),
-            buildSendButton(canRecord),
+            if (SettingsManager().settings.skin == Skins.IOS)
+              buildSendButton(canRecord),
           ],
         ),
       ),
@@ -463,67 +524,69 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
     }
   }
 
-  Widget buildSendButton(bool canRecord) => Align(
-        alignment: Alignment.bottomRight,
-        child: ButtonTheme(
-          minWidth: 30,
-          height: 30,
-          child: RaisedButton(
-            padding: EdgeInsets.symmetric(
-              horizontal: 0,
-            ),
-            color: Theme.of(context).primaryColor,
-            onPressed: () async {
-              if (isRecording) {
-                await stopRecording();
-              } else if (canRecord &&
-                  !isRecording &&
-                  await Permission.microphone.request().isGranted) {
-                await startRecording();
-              } else {
-                if (await widget.onSend(pickedImages, controller.text)) {
-                  controller.text = "";
-                  pickedImages = <File>[];
-                  updateTextFieldAttachments();
-                }
+  Widget buildSendButton(bool canRecord) {
+    double size = SettingsManager().settings.skin == Skins.IOS ? 30 : 40;
+    return Align(
+      alignment: Alignment.bottomRight,
+      child: ButtonTheme(
+        minWidth: size,
+        height: size,
+        child: RaisedButton(
+          padding: EdgeInsets.symmetric(
+            horizontal: 0,
+          ),
+          color: Theme.of(context).primaryColor,
+          onPressed: () async {
+            if (isRecording) {
+              await stopRecording();
+            } else if (canRecord &&
+                !isRecording &&
+                await Permission.microphone.request().isGranted) {
+              await startRecording();
+            } else {
+              if (await widget.onSend(pickedImages, controller.text)) {
+                controller.text = "";
+                pickedImages = <File>[];
+                updateTextFieldAttachments();
               }
-              if (this.mounted) setState(() {});
-            },
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                AnimatedOpacity(
-                  opacity: controller.text.isEmpty && pickedImages.isEmpty
-                      ? 1.0
-                      : 0.0,
-                  duration: Duration(milliseconds: 150),
-                  child: Icon(
-                    Icons.mic,
-                    color: (isRecording) ? Colors.red : Colors.white,
-                    size: 20,
-                  ),
+            }
+            if (this.mounted) setState(() {});
+          },
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              AnimatedOpacity(
+                opacity:
+                    controller.text.isEmpty && pickedImages.isEmpty ? 1.0 : 0.0,
+                duration: Duration(milliseconds: 150),
+                child: Icon(
+                  Icons.mic,
+                  color: (isRecording) ? Colors.red : Colors.white,
+                  size: 20,
                 ),
-                AnimatedOpacity(
-                  opacity:
-                      (controller.text.isNotEmpty || pickedImages.length > 0) &&
-                              !isRecording
-                          ? 1.0
-                          : 0.0,
-                  duration: Duration(milliseconds: 150),
-                  child: Icon(
-                    Icons.arrow_upward,
-                    color: Colors.white,
-                    size: 20,
-                  ),
+              ),
+              AnimatedOpacity(
+                opacity:
+                    (controller.text.isNotEmpty || pickedImages.length > 0) &&
+                            !isRecording
+                        ? 1.0
+                        : 0.0,
+                duration: Duration(milliseconds: 150),
+                child: Icon(
+                  Icons.arrow_upward,
+                  color: Colors.white,
+                  size: 20,
                 ),
-              ],
-            ),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(40),
-            ),
+              ),
+            ],
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(40),
           ),
         ),
-      );
+      ),
+    );
+  }
 
   Widget buildAttachmentPicker() => TextFieldAttachmentPicker(
         visible: showImagePicker,

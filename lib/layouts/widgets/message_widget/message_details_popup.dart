@@ -4,6 +4,7 @@ import 'dart:ui';
 
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
+import 'package:bluebubbles/helpers/contstants.dart';
 import 'package:bluebubbles/helpers/reaction.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -11,8 +12,10 @@ import 'package:bluebubbles/layouts/widgets/CustomCupertinoNavBar.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/reaction_detail_widget.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
+import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:clipboard/clipboard.dart';
@@ -47,6 +50,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
   List<Widget> reactionWidgets = <Widget>[];
   bool showTools = false;
   String selfReaction;
+  String currentlySelectedReaction;
   Completer fetchRequest;
   CurrentChat currentChat;
 
@@ -60,7 +64,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
 
     messageTopOffset = widget.childOffset.dy;
     topMinimum = CupertinoNavigationBar().preferredSize.height +
-        (widget.message.hasReactions ? 100 : 40);
+        (widget.message.hasReactions ? 110 : 50);
 
     fetchReactions();
 
@@ -112,7 +116,9 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
 
     // If there are no associated messages, return now
     List<Message> reactions = widget.message.getReactions();
-    if (reactions.isEmpty) return fetchRequest.complete();
+    if (reactions.isEmpty) {
+      return fetchRequest.complete();
+    }
 
     // Filter down the messages to the unique ones (one per user, newest)
     List<Message> reactionMessages =
@@ -123,6 +129,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
       await reaction.getHandle();
       if (reaction.isFromMe) {
         selfReaction = reaction.associatedMessageType;
+        currentlySelectedReaction = selfReaction;
       }
       reactionWidgets.add(
         ReactionDetailWidget(
@@ -141,8 +148,9 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
   }
 
   void sendReaction(String type) {
-    if (isEmptyString(widget.message.fullText)) return;
+    debugPrint("Sending reaction type: " + type);
     ActionHandler.sendReaction(widget.currentChat.chat, widget.message, type);
+    Navigator.of(context).pop();
   }
 
   @override
@@ -201,9 +209,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
                                 padding: EdgeInsets.symmetric(horizontal: 0),
                                 child: ListView.builder(
                                   shrinkWrap: true,
-                                  physics: AlwaysScrollableScrollPhysics(
-                                    parent: CustomBouncingScrollPhysics(),
-                                  ),
+                                  physics: ThemeSwitcher.getScrollPhysics(),
                                   scrollDirection: Axis.horizontal,
                                   itemBuilder: (context, index) {
                                     return reactionWidgets[index];
@@ -217,7 +223,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
                       : Container(),
                 ),
               ),
-              // buildReactionMenu(),
+              buildReactionMenu(),
               buildCopyPasteMenu(),
             ],
           ),
@@ -227,18 +233,15 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
   }
 
   Widget buildReactionMenu() {
-    if (isEmptyString(widget.message.fullText)) {
-      return Container();
-    }
     Size size = MediaQuery.of(context).size;
 
-    double reactionIconSize = ((MessageWidgetMixin.MAX_SIZE * size.width) /
-        (ReactionTypes.toList().length).toDouble());
+    double reactionIconSize =
+        ((8.5 / 10 * size.width) / (ReactionTypes.toList().length).toDouble());
     double maxMenuWidth =
         (ReactionTypes.toList().length * reactionIconSize).toDouble();
     double menuHeight = (reactionIconSize).toDouble();
 
-    double topPadding = -5;
+    double topPadding = -20;
 
     double topOffset = (messageTopOffset - menuHeight).toDouble().clamp(
         topMinimum,
@@ -258,7 +261,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
       top: topOffset + topPadding,
       left: leftOffset,
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(20.0),
+        borderRadius: BorderRadius.circular(40.0),
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
           child: Container(
@@ -273,22 +276,41 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
               mainAxisAlignment: MainAxisAlignment.start,
               children: ReactionTypes.toList()
                   .map(
-                    (e) => Container(
-                      width: reactionIconSize,
-                      height: reactionIconSize,
-                      decoration: BoxDecoration(
-                        color: selfReaction == e
-                            ? Theme.of(context).primaryColor
-                            : Theme.of(context).accentColor.withAlpha(150),
-                        borderRadius: BorderRadius.circular(
-                          20,
+                    (e) => Padding(
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 7.5, horizontal: 7.5),
+                      child: Container(
+                        width: reactionIconSize - 15,
+                        height: reactionIconSize - 15,
+                        decoration: BoxDecoration(
+                          color: currentlySelectedReaction == e
+                              ? Theme.of(context).primaryColor
+                              : Theme.of(context).accentColor.withAlpha(150),
+                          borderRadius: BorderRadius.circular(
+                            20,
+                          ),
                         ),
-                      ),
-                      child: GestureDetector(
-                        onTap: () => sendReaction(e),
-                        child: Padding(
-                          padding: const EdgeInsets.all(6),
-                          child: Reaction.getReactionIcon(e, iconColor),
+                        child: GestureDetector(
+                          onTap: () {
+                            sendReaction(selfReaction == e ? "-$e" : e);
+                          },
+                          onTapDown: (TapDownDetails details) {
+                            if (currentlySelectedReaction == e) {
+                              currentlySelectedReaction = null;
+                            } else {
+                              currentlySelectedReaction = e;
+                            }
+                            if (this.mounted) setState(() {});
+                          },
+                          onTapUp: (details) {},
+                          onTapCancel: () {
+                            currentlySelectedReaction = selfReaction;
+                            if (this.mounted) setState(() {});
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.all(6),
+                            child: Reaction.getReactionIcon(e, iconColor),
+                          ),
                         ),
                       ),
                     ),
@@ -402,12 +424,11 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
                         ),
                         content: Container(
                           constraints: BoxConstraints(
-                              maxHeight:
-                                  MediaQuery.of(context).size.height * 2 / 3),
+                            maxHeight:
+                                MediaQuery.of(context).size.height * 2 / 3,
+                          ),
                           child: SingleChildScrollView(
-                            physics: AlwaysScrollableScrollPhysics(
-                              parent: CustomBouncingScrollPhysics(),
-                            ),
+                            physics: ThemeSwitcher.getScrollPhysics(),
                             child: SelectableText(
                               widget.message.fullText,
                               style: Theme.of(context).textTheme.bodyText1,

@@ -1,7 +1,7 @@
 import 'dart:ui';
 
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
-import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
+import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
@@ -89,9 +89,7 @@ class _UXPanelState extends State<UXPanel> {
           ),
         ),
         body: CustomScrollView(
-          physics: AlwaysScrollableScrollPhysics(
-            parent: CustomBouncingScrollPhysics(),
-          ),
+          physics: ThemeSwitcher.getScrollPhysics(),
           slivers: <Widget>[
             SliverList(
               delegate: SliverChildListDelegate(
@@ -120,10 +118,24 @@ class _UXPanelState extends State<UXPanel> {
                   ),
                   SettingsSwitch(
                     onChanged: (bool val) {
+                      _settingsCopy.sendTypingIndicators = val;
+                    },
+                    initialVal: _settingsCopy.sendTypingIndicators,
+                    title: "Send typing indicators (BlueBubblesHelper ONLY)",
+                  ),
+                  SettingsSwitch(
+                    onChanged: (bool val) {
                       _settingsCopy.sendWithReturn = val;
                     },
                     initialVal: _settingsCopy.sendWithReturn,
                     title: "Send Message with Return Key",
+                  ),
+                  SettingsSwitch(
+                    onChanged: (bool val) {
+                      _settingsCopy.smartReply = val;
+                    },
+                    initialVal: _settingsCopy.smartReply,
+                    title: "Smart Replies",
                   ),
                   SettingsSwitch(
                     onChanged: (bool val) {

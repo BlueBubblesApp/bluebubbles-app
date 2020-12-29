@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:assorted_layout_widgets/assorted_layout_widgets.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
+import 'package:bluebubbles/helpers/contstants.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/socket_singletons.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_details/conversation_details.dart';
@@ -12,11 +14,13 @@ import 'package:bluebubbles/layouts/widgets/CustomCupertinoNavBackButton.dart';
 import 'package:bluebubbles/layouts/widgets/CustomCupertinoNavBar.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
+import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/repository/models/message.dart';
@@ -190,7 +194,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
   Future<void> openDetails() async {
     Chat _chat = await chat.getParticipants();
     Navigator.of(context).push(
-      Cupertino.CupertinoPageRoute(
+      ThemeSwitcher.buildPageRoute(
         builder: (context) => ConversationDetails(
           chat: _chat,
           messageBloc: messageBloc ?? initMessageBloc(),
@@ -200,6 +204,45 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
   }
 
   Widget buildConversationViewHeader() {
+    if (SettingsManager().settings.skin == Skins.Material) {
+      Color backgroundColor = Theme.of(context).backgroundColor;
+      Color fontColor = Theme.of(context).textTheme.headline1.color;
+      if (chat.participants.length == 1 &&
+          SettingsManager().settings.colorfulBubbles) {
+        backgroundColor =
+            toColorGradient(chat.participants.first.address).first;
+        fontColor = darken(backgroundColor, 0.35);
+      }
+      return AppBar(
+        title: Text(
+          chat.title,
+          style: Theme.of(context).textTheme.headline1.apply(color: fontColor),
+        ),
+        bottom: PreferredSize(
+          child: Container(
+            color: Theme.of(context).dividerColor,
+            height: 0.5,
+          ),
+          preferredSize: Size.fromHeight(0.5),
+        ),
+        backgroundColor: backgroundColor,
+        actionsIconTheme: IconThemeData(color: Theme.of(context).primaryColor),
+        iconTheme: IconThemeData(color: Theme.of(context).primaryColor),
+        actions: [
+          Cupertino.Padding(
+            padding: const EdgeInsets.only(right: 8.0),
+            child: GestureDetector(
+              child: Icon(
+                Icons.more_vert,
+                color: fontColor,
+              ),
+              onTap: openDetails,
+            ),
+          ),
+        ],
+      );
+    }
+
     // Build the stack
     List<Widget> avatars = [];
     chat.participants.forEach((Handle participant) {
@@ -605,8 +648,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
   }
 
   Widget buildChatSelectorBody() => ListView.builder(
-        physics: AlwaysScrollableScrollPhysics(
-            parent: CustomBouncingScrollPhysics()),
+        physics: ThemeSwitcher.getScrollPhysics(),
         itemBuilder: (BuildContext context, int index) => ContactSelectorOption(
           key: new Key("selector-${contacts[index].displayName}"),
           item: contacts[index],
