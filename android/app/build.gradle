@@ -44,11 +44,11 @@ android {
         applicationId "com.bluebubbles.messaging"
         minSdkVersion 21
         targetSdkVersion 29
-        //                 v0.1.13        hotfix version (0-9)      armv7 OR arm64
-        // version code: 1  0113                    0                70      64
+        //                 v0.1.14        hotfix version (0-9)      armv7 OR arm64
+        // version code: 1  0114                    0                70      64
 
         //noinspection AccidentalOctal
-        versionCode 10113070
+        versionCode 10114064
         versionName flutterVersionName
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
