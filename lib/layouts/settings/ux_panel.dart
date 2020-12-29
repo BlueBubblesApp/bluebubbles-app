@@ -118,6 +118,20 @@ class _UXPanelState extends State<UXPanel> {
                     initialVal: _settingsCopy.doubleTapForDetails,
                     title: "Double-Tap Message for Details",
                   ),
+                  // SettingsSwitch(
+                  //   onChanged: (bool val) {
+                  //     _settingsCopy.sendTypingIndicators = val;
+                  //   },
+                  //   initialVal: _settingsCopy.sendTypingIndicators,
+                  //   title: "Send typing indicators (BlueBubblesHelper ONLY)",
+                  // ),
+                  SettingsSwitch(
+                    onChanged: (bool val) {
+                      _settingsCopy.smartReply = val;
+                    },
+                    initialVal: _settingsCopy.smartReply,
+                    title: "Smart Replies",
+                  ),
                   SettingsSwitch(
                     onChanged: (bool val) {
                       _settingsCopy.sendWithReturn = val;

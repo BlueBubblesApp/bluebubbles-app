@@ -24,6 +24,7 @@ class Settings {
   bool sendWithReturn = false;
   bool doubleTapForDetails = false;
   bool denseChatTiles = false;
+  bool smartReply = false;
   // String emojiFontFamily;
 
   Skins skin = Skins.IOS;
@@ -71,6 +72,8 @@ class Settings {
         settings.doubleTapForDetails = entry.value;
       } else if (entry.name == "denseChatTiles") {
         settings.denseChatTiles = entry.value;
+      } else if (entry.name == "smartReply") {
+        settings.smartReply = entry.value;
       }
 
       // else if (entry.name == "emojiFontFamily") {
@@ -193,6 +196,10 @@ class Settings {
             name: "denseChatTiles",
             value: this.denseChatTiles,
             type: this.denseChatTiles.runtimeType),
+        ConfigEntry(
+            name: "smartReply",
+            value: this.smartReply,
+            type: this.smartReply.runtimeType),
         // ConfigEntry(
         //     name: "emojiFontFamily",
         //     value: this.emojiFontFamily,
