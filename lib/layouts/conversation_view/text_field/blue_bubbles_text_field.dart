@@ -102,7 +102,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
         setState(() {});
       }
     });
-    if (widget.existingAttachments != null) {
+
+    if (textFieldData == null && widget.existingAttachments != null) {
       pickedImages.addAll(widget.existingAttachments);
       updateTextFieldAttachments();
     } else if (textFieldData != null) {
@@ -186,7 +187,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
               onPressed: () async {
                 widget.onSend([file], "");
 
-                // Disposte of the audio controller
+                // Dispose of the audio controller
                 CurrentChat.of(originalContext)
                     ?.audioPlayers
                     ?.removeWhere((key, _) => key == file.path);

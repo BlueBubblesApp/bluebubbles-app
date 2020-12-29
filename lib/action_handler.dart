@@ -74,13 +74,18 @@ class ActionHandler {
     }
 
     // Make sure to save the chat
-    await chat.save();
+    // If we already have the ID, we don't have to wait to resave it
+    if (chat.id == null) {
+      await chat.save();
+    } else {
+      chat.save();
+    }
 
     // Send all the messages
     for (Message message in messages) {
       // Add the message to the UI and DB
       NewMessageManager().addMessage(chat, message, outgoing: true);
-      await chat.addMessage(message);
+      chat.addMessage(message);
 
       // Create params for the queue item
       Map<String, dynamic> params = {"chat": chat, "message": message};

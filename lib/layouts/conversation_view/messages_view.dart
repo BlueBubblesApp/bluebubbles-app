@@ -143,6 +143,7 @@ class MessagesViewState extends State<MessagesView>
   }
 
   Future<void> updateReplies() async {
+    if (currentMessages.length == 0) return;
     currentMessages.sort((a, b) => a.timestamp.compareTo(b.timestamp));
     replies = await FlutterSmartReply.getSmartReplies(currentMessages);
     smartReplyController.sink.add(replies);

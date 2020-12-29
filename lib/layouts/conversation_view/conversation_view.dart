@@ -132,10 +132,12 @@ class ConversationViewState extends State<ConversationView>
     } else {
       ActionHandler.sendMessage(chat, text);
     }
+
     if (isCreator) {
       isCreator = false;
       setState(() {});
     }
+
     return true;
   }
 
