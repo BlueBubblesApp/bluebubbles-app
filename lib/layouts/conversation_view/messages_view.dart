@@ -24,12 +24,14 @@ class MessagesView extends StatefulWidget {
   final MessageBloc messageBloc;
   final bool showHandle;
   final Chat chat;
+  final Function initComplete;
 
   MessagesView({
     Key key,
     this.messageBloc,
     this.showHandle,
     this.chat,
+    this.initComplete,
   }) : super(key: key);
 
   @override
@@ -107,16 +109,14 @@ class MessagesViewState extends State<MessagesView>
         }
       }
     });
+
+    if (widget.initComplete != null) widget.initComplete();
   }
 
   @override
   void didChangeDependencies() async {
     super.didChangeDependencies();
     currentChat = CurrentChat.of(context);
-
-    if (_messages.isEmpty) {
-      widget.messageBloc.getMessages();
-    }
   }
 
   @override

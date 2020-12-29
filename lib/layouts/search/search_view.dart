@@ -1,6 +1,8 @@
 import 'dart:ui';
 
+import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
@@ -30,6 +32,7 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
   bool gotBrightness = false;
   bool isSearching = false;
   Map<String, Chat> chatCache = {};
+  FocusNode _focusNode = new FocusNode();
 
   @override
   void initState() {
@@ -44,6 +47,8 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
         });
       }
     });
+
+    _focusNode.requestFocus();
   }
 
   void loadBrightness() {
@@ -61,6 +66,8 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
 
   Future<void> search(String term) async {
     if (isSearching || isNullOrEmpty(term) || term.length < 3) return;
+    _focusNode.unfocus();
+
     if (this.mounted)
       setState(() {
         isSearching = true;
@@ -71,7 +78,8 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
       {
         'statement': 'message.text LIKE :term',
         'args': {'term': "%${textEditingController.text}%"}
-      }
+      },
+      {'statement': 'message.associated_message_guid IS NULL', 'args': null}
     ]);
 
     List<dynamic> _results = [];
@@ -121,8 +129,6 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     loadBrightness();
-    print("REBUILDING");
-    print(results.length);
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
@@ -171,6 +177,11 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
                       Flexible(
                           fit: FlexFit.loose,
                           child: CupertinoTextField(
+                            textInputAction: TextInputAction.send,
+                            onSubmitted: (_) {
+                              search(textEditingController.text);
+                            },
+                            focusNode: _focusNode,
                             padding: EdgeInsets.symmetric(
                                 horizontal: 15.0, vertical: 10),
                             controller: textEditingController,
@@ -273,6 +284,27 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
                       ListTile(
+                        onTap: () {
+                          Navigator.of(context).push(
+                            CupertinoPageRoute(
+                              builder: (BuildContext context) {
+                                MessageBloc customBloc =
+                                    new MessageBloc(chat, canLoadMore: false);
+
+                                return ConversationView(
+                                  chat: chat,
+                                  existingAttachments: [],
+                                  existingText: null,
+                                  isCreator: false,
+                                  customMessageBloc: customBloc,
+                                  onMessagesViewComplete: () {
+                                    customBloc.loadSearchChunk(message);
+                                  },
+                                );
+                              },
+                            ),
+                          );
+                        },
                         dense: true,
                         title: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,

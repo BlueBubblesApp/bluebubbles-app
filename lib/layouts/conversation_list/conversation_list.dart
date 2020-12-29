@@ -3,6 +3,7 @@ import 'dart:ui';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
+import 'package:bluebubbles/layouts/search/search_view.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
@@ -237,6 +238,27 @@ class _ConversationListState extends State<ConversationList> {
                           Spacer(
                             flex: 25,
                           ),
+                          ClipOval(
+                            child: Material(
+                              color:
+                                  Theme.of(context).accentColor, // button color
+                              child: InkWell(
+                                  child: SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: Icon(Icons.search,
+                                          color: Theme.of(context).primaryColor,
+                                          size: 12)),
+                                  onTap: () async {
+                                    Navigator.of(context).push(
+                                      CupertinoPageRoute(
+                                        builder: (context) => SearchView(),
+                                      ),
+                                    );
+                                  }),
+                            ),
+                          ),
+                          Container(width: 10.0),
                           !widget.showArchivedChats
                               ? PopupMenuButton(
                                   color: Theme.of(context).accentColor,
