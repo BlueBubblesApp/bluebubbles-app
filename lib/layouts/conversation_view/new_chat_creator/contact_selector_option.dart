@@ -21,14 +21,20 @@ class ContactSelectorOption extends StatelessWidget {
   Future<String> get chatParticipants async {
     if (!item.isChat) return "";
 
-    List<String> people = [];
-    for (var e in item.chat?.participants ?? []) {
-      people.add(
-          ContactManager().getCachedContactSync(e.address)?.displayName ??
-              await formatPhoneNumber(e.address));
+    List<String> formatted = [];
+    for (var item in item.chat.participants) {
+      String contact =
+          ContactManager().getCachedContactSync(item.address)?.displayName;
+      if (contact == null) {
+        contact = await formatPhoneNumber(item.address);
+      }
+
+      if (contact != null) {
+        formatted.add(contact);
+      }
     }
 
-    return people.join(", ");
+    return formatted.join(", ");
   }
 
   @override
@@ -47,7 +53,7 @@ class ContactSelectorOption extends StatelessWidget {
       title: Text(
         !item.isChat
             ? "${item.displayName}${getTypeStr(item.label)}"
-            : item.chat.title,
+            : item.chat.title ?? "Group Chat",
         style: Theme.of(context).textTheme.bodyText1,
         overflow: TextOverflow.ellipsis,
       ),
