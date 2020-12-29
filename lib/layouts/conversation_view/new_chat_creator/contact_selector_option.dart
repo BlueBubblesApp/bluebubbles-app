@@ -18,19 +18,29 @@ class ContactSelectorOption extends StatelessWidget {
     return " ($type)";
   }
 
-  String get chatParticipants {
+  Future<String> get chatParticipants async {
     if (!item.isChat) return "";
 
-    List<String> participants = item.chat.participants
-        .map((e) =>
-            ContactManager().getCachedContactSync(e.address)?.displayName ??
-            formatPhoneNumber(e.address))
-        .toList();
-    return participants.join(", ");
+    List<String> people = [];
+    for (var e in item.chat?.participants ?? []) {
+      people.add(
+          ContactManager().getCachedContactSync(e.address)?.displayName ??
+              await formatPhoneNumber(e.address));
+    }
+
+    return people.join(", ");
   }
 
   @override
   Widget build(BuildContext context) {
+    var getTextWidget = (String text) {
+      return Text(
+        text,
+        style: Theme.of(context).textTheme.subtitle1,
+        overflow: TextOverflow.ellipsis,
+      );
+    };
+
     return ListTile(
       key: new Key("chat-${item.displayName}"),
       onTap: () => onSelected(item),
@@ -41,11 +51,19 @@ class ContactSelectorOption extends StatelessWidget {
         style: Theme.of(context).textTheme.bodyText1,
         overflow: TextOverflow.ellipsis,
       ),
-      subtitle: Text(
-        !item.isChat ? item.address : chatParticipants,
-        style: Theme.of(context).textTheme.subtitle1,
-        overflow: TextOverflow.ellipsis,
-      ),
+      subtitle: (!item.isChat)
+          ? getTextWidget(item.address)
+          : FutureBuilder(
+              future: chatParticipants,
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) {
+                  return getTextWidget(
+                      item.displayName ?? item.address ?? "Person");
+                }
+
+                return getTextWidget(snapshot.data);
+              },
+            ),
       leading: !item.isChat
           ? ContactAvatarWidget(
               handle: Handle(address: item.address),
