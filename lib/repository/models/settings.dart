@@ -25,6 +25,7 @@ class Settings {
   bool doubleTapForDetails = false;
   bool denseChatTiles = false;
   bool smartReply = false;
+  bool reducedForehead = false;
   // String emojiFontFamily;
 
   Skins skin = Skins.IOS;
@@ -74,6 +75,8 @@ class Settings {
         settings.denseChatTiles = entry.value;
       } else if (entry.name == "smartReply") {
         settings.smartReply = entry.value;
+      } else if (entry.name == "reducedForehead") {
+        settings.reducedForehead = entry.value;
       }
 
       // else if (entry.name == "emojiFontFamily") {
@@ -200,6 +203,10 @@ class Settings {
             name: "smartReply",
             value: this.smartReply,
             type: this.smartReply.runtimeType),
+        ConfigEntry(
+            name: "reducedForehead",
+            value: this.reducedForehead,
+            type: this.reducedForehead.runtimeType),
         // ConfigEntry(
         //     name: "emojiFontFamily",
         //     value: this.emojiFontFamily,

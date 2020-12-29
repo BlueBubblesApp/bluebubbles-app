@@ -1,17 +1,11 @@
 import 'dart:async';
-import 'dart:convert';
-
 import 'dart:io';
 
-import 'dart:typed_data';
-
 import 'package:bluebubbles/helpers/attachment_helper.dart';
-import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/material.dart';
-import 'package:video_thumbnail/video_thumbnail.dart';
 
 class AttachmentDownloader {
   final _stream = StreamController<dynamic>.broadcast();
@@ -24,7 +18,6 @@ class AttachmentDownloader {
   Function _cb;
   Attachment _attachment;
   Function _onComplete;
-  Function _onError;
 
   double get progress =>
       (_totalChunks == 0) ? 0 : (_currentChunk) / _totalChunks;
@@ -36,7 +29,6 @@ class AttachmentDownloader {
     _chunkSize = SettingsManager().settings.chunkSize * 1024;
     _attachment = attachment;
     _onComplete = onComplete;
-    _onError = onError;
 
     if (File(_attachment.getPath()).existsSync()) {
       return;
