@@ -88,6 +88,19 @@ public class FlutterSocketIoPlugin implements MethodCallHandler {
                     result.success(null);
                     break;
 
+                case SocketIOManager.MethodCallName.SOCKET_SEND_MESSAGE_WITHOUT_CALLBACK:
+                    String _event = call.argument(SocketIOManager.MethodCallArgumentsName.SOCKET_EVENT);
+                    String _message = call.argument(SocketIOManager.MethodCallArgumentsName.SOCKET_MESSAGE);
+                    String path = call.argument(SocketIOManager.MethodCallArgumentsName.FILE_PATH);
+                    String guidKey = call.argument(SocketIOManager.MethodCallArgumentsName.GUID_KEY);
+                    if (!Utils.isNullOrEmpty(_event) && _message != null) {
+                        SocketIOManager.getInstance().sendAndHandle(socketDomain, socketNameSpace, _event, _message, path, guidKey, callback);
+                    } else {
+                        Utils.log(TAG, "send message and handle with invalid params:" + "Event: " + _event + " - with message: " + new Gson().toJson(_message));
+                    }
+                    result.success(null);
+                    break;
+
                 case SocketIOManager.MethodCallName.SOCKET_DESTROY:
                     SocketIOManager.getInstance().destroySocket(socketDomain, socketNameSpace);
                     result.success(null);

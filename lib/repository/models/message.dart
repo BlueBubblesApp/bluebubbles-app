@@ -26,6 +26,7 @@ class Message {
   int originalROWID;
   String guid;
   int handleId;
+  int otherHandle;
   String text;
   String subject;
   String country;
@@ -62,44 +63,55 @@ class Message {
   List<Message> associatedMessages = [];
   bool bigEmoji;
 
-  Message({
-    this.id,
-    this.originalROWID,
-    this.guid,
-    this.handleId,
-    this.text,
-    this.subject,
-    this.country,
-    this.error = 0,
-    this.dateCreated,
-    this.dateRead,
-    this.dateDelivered,
-    this.isFromMe = true,
-    this.isDelayed = false,
-    this.isAutoReply = false,
-    this.isSystemMessage = false,
-    this.isServiceMessage = false,
-    this.isForward = false,
-    this.isArchived = false,
-    this.hasDdResults = false,
-    this.cacheRoomnames,
-    this.isAudioMessage = false,
-    this.datePlayed,
-    this.itemType = 0,
-    this.groupTitle,
-    this.groupActionType = 0,
-    this.isExpired = false,
-    this.balloonBundleId,
-    this.associatedMessageGuid,
-    this.associatedMessageType,
-    this.expressiveSendStyleId,
-    this.timeExpressiveSendStyleId,
-    this.handle,
-    this.hasAttachments = false,
-    this.hasReactions = false,
-    this.attachments = const [],
-    this.dateDeleted
-  });
+  Message(
+      {this.id,
+      this.originalROWID,
+      this.guid,
+      this.handleId,
+      this.otherHandle,
+      this.text,
+      this.subject,
+      this.country,
+      this.error = 0,
+      this.dateCreated,
+      this.dateRead,
+      this.dateDelivered,
+      this.isFromMe = true,
+      this.isDelayed = false,
+      this.isAutoReply = false,
+      this.isSystemMessage = false,
+      this.isServiceMessage = false,
+      this.isForward = false,
+      this.isArchived = false,
+      this.hasDdResults = false,
+      this.cacheRoomnames,
+      this.isAudioMessage = false,
+      this.datePlayed,
+      this.itemType = 0,
+      this.groupTitle,
+      this.groupActionType = 0,
+      this.isExpired = false,
+      this.balloonBundleId,
+      this.associatedMessageGuid,
+      this.associatedMessageType,
+      this.expressiveSendStyleId,
+      this.timeExpressiveSendStyleId,
+      this.handle,
+      this.hasAttachments = false,
+      this.hasReactions = false,
+      this.attachments = const [],
+      this.dateDeleted});
+
+  String get fullText {
+    String fullText = this.subject ?? "";
+    if (fullText.isNotEmpty) {
+      fullText += "\n";
+    }
+
+    fullText += this.text ?? "";
+
+    return sanitizeString(fullText);
+  }
 
   factory Message.fromMap(Map<String, dynamic> json) {
     bool hasAttachments = false;
@@ -133,6 +145,7 @@ class Message {
           json.containsKey("originalROWID") ? json["originalROWID"] : null,
       guid: json["guid"],
       handleId: (json["handleId"] != null) ? json["handleId"] : 0,
+      otherHandle: (json["otherHandle"] != null) ? json["otherHandle"] : null,
       text: sanitizeString(json["text"]),
       subject: json.containsKey("subject") ? json["subject"] : null,
       country: json.containsKey("country") ? json["country"] : null,
@@ -203,8 +216,9 @@ class Message {
       hasReactions: json.containsKey('hasReactions')
           ? ((json['hasReactions'] == 1) ? true : false)
           : false,
-      dateDeleted:
-          json.containsKey("dateDeleted") ? parseDate(json["dateDeleted"]) : null,
+      dateDeleted: json.containsKey("dateDeleted")
+          ? parseDate(json["dateDeleted"])
+          : null,
     );
   }
 
@@ -283,6 +297,14 @@ class Message {
       params.remove("handle");
     }
 
+    if (existing.toMap().containsKey("originalROWID")) {
+      params["originalROWID"] = existing.toMap()["originalROWID"];
+
+      if (existing.originalROWID != null) {
+        newMessage.originalROWID = existing.originalROWID;
+      }
+    }
+
     if (existing.toMap().containsKey("handleId")) {
       params["handleId"] = existing.toMap()["handleId"];
       newMessage.handleId = existing.handleId;
@@ -323,6 +345,10 @@ class Message {
       "hasDdResults": this.hasDdResults ? 1 : 0,
     };
 
+    if (this.originalROWID != null) {
+      params["originalROWID"] = this.originalROWID;
+    }
+
     // If it already exists, update it
     if (this.id != null) {
       await db
@@ -352,6 +378,7 @@ class Message {
     var res = await db.rawQuery(
         "SELECT"
         " attachment.ROWID AS ROWID,"
+        " attachment.originalROWID AS originalROWID,"
         " attachment.guid AS guid,"
         " attachment.uti AS uti,"
         " attachment.mimeType AS mimeType,"
@@ -362,6 +389,7 @@ class Message {
         " attachment.isSticker AS isSticker,"
         " attachment.hideAttachment AS hideAttachment,"
         " attachment.blurhash AS blurhash,"
+        " attachment.metadata AS metadata,"
         " attachment.width AS width,"
         " attachment.height AS height"
         " FROM message"
@@ -382,6 +410,7 @@ class Message {
     var res = await db.rawQuery(
         "SELECT"
         " chat.ROWID AS ROWID,"
+        " chat.originalROWID AS originalROWID,"
         " chat.guid AS guid,"
         " chat.style AS style,"
         " chat.chatIdentifier AS chatIdentifier,"
@@ -412,6 +441,7 @@ class Message {
     var res = await db.rawQuery(
         "SELECT"
         " handle.ROWID AS ROWID,"
+        " handle.originalROWID AS originalROWID,"
         " handle.address AS address,"
         " handle.country AS country,"
         " handle.uncanonicalizedId AS uncanonicalizedId"
@@ -483,10 +513,9 @@ class Message {
 
     List<Message> toDelete = await Message.find(where);
     for (Message msg in toDelete ?? []) {
-      await db
-          .update("message", {
-            'dateDeleted': DateTime.now().toUtc().millisecondsSinceEpoch
-          }, where: "ROWID = ?", whereArgs: [msg.id]);
+      await db.update("message",
+          {'dateDeleted': DateTime.now().toUtc().millisecondsSinceEpoch},
+          where: "ROWID = ?", whereArgs: [msg.id]);
     }
   }
 
@@ -507,11 +536,11 @@ class Message {
   }
 
   bool hasText({stripWhitespace = false}) {
-    return !isEmptyString(this.text, stripWhitespace: stripWhitespace);
+    return !isEmptyString(this.fullText, stripWhitespace: stripWhitespace);
   }
 
   bool isGroupEvent() {
-    return isEmptyString(this.text) &&
+    return isEmptyString(this.fullText) &&
         !this.hasAttachments &&
         this.balloonBundleId == null;
   }
@@ -520,7 +549,7 @@ class Message {
     // We are checking the variable first because we want to
     // avoid processing twice for this as it won't change
     if (this.bigEmoji == null) {
-      this.bigEmoji = MessageHelper.shouldShowBigEmoji(this.text);
+      this.bigEmoji = MessageHelper.shouldShowBigEmoji(this.fullText);
     }
 
     return this.bigEmoji;
@@ -565,6 +594,7 @@ class Message {
         "originalROWID": originalROWID,
         "guid": guid,
         "handleId": handleId,
+        "otherHandle": otherHandle,
         "text": sanitizeString(text),
         "subject": subject,
         "country": country,

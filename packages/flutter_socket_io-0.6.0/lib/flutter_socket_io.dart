@@ -168,6 +168,36 @@ class SocketIO {
     }
   }
 
+  Future<void> sendMessageWithoutReturn(String event, dynamic message,
+      String path, String guidKey, Function callback) async {
+    if (event != null && event.isNotEmpty) {
+      CallbackFunctions functions = _callbacks[event];
+      SocketIOFunction f;
+
+      if (functions == null) {
+        functions = new CallbackFunctions();
+      }
+
+      if (callback != null) {
+        f = functions.addFunction(callback);
+      }
+
+      _callbacks[event] = functions;
+
+      await _channel
+          .invokeMethod(MethodCallName.SOCKET_SEND_MESSAGE_WITHOUT_CALLBACK, {
+        MethodCallArgumentsName.SOCKET_DOMAIN: _domain,
+        MethodCallArgumentsName.SOCKET_NAME_SPACE: _namespace,
+        MethodCallArgumentsName.SOCKET_EVENT: event,
+        MethodCallArgumentsName.SOCKET_MESSAGE: message,
+        MethodCallArgumentsName.FILE_PATH: path,
+        MethodCallArgumentsName.GUID_KEY: guidKey,
+        MethodCallArgumentsName.SOCKET_CALLBACK:
+            f == null ? "" : f.functionName,
+      });
+    }
+  }
+
   /// Disconnect from the socket
   Future<void> disconnect() async {
     await _channel.invokeMethod(MethodCallName.SOCKET_DISCONNECT, {
@@ -295,6 +325,8 @@ class MethodCallArgumentsName {
   static final String SOCKET_DOMAIN = "socketDomain";
   static final String SOCKET_NAME_SPACE = "socketNameSpace";
   static final String SOCKET_CALLBACK = "socketCallback";
+  static final String FILE_PATH = "filePath";
+  static final String GUID_KEY = "guidKey";
   static final String SOCKET_EVENT = "socketEvent";
   static final String SOCKET_MESSAGE = "socketMessage";
   static final String SOCKET_DATA = "socketData";
@@ -309,6 +341,8 @@ class MethodCallName {
   static final String SOCKET_UNSUBSCRIBES = "socketUnsubcribes";
   static final String SOCKET_UNSUBSCRIBES_ALL = "socketUnsubcribesAll";
   static final String SOCKET_SEND_MESSAGE = "socketSendMessage";
+  static final String SOCKET_SEND_MESSAGE_WITHOUT_CALLBACK =
+      "socketSendMessageWithoutCallback";
   static final String SOCKET_DESTROY = "socketDestroy";
   static final String SOCKET_DESTROY_ALL = "socketDestroyAll";
 }

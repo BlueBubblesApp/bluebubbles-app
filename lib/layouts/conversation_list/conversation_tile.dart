@@ -3,10 +3,14 @@ import 'dart:io';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
+import 'package:bluebubbles/helpers/socket_singletons.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_group_widget.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
+import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/repository/models/handle.dart';
+import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
@@ -45,6 +49,7 @@ class _ConversationTileState extends State<ConversationTile>
   bool isPressed = false;
   bool hideDividers = false;
   bool isFetching = false;
+  bool denseTiles = false;
 
   @override
   void initState() {
@@ -52,23 +57,51 @@ class _ConversationTileState extends State<ConversationTile>
     fetchParticipants();
 
     hideDividers = SettingsManager().settings.hideDividers;
+    denseTiles = SettingsManager().settings.denseChatTiles;
     SettingsManager().stream.listen((Settings newSettings) {
       if (newSettings.hideDividers != hideDividers && this.mounted) {
         setState(() {
           hideDividers = newSettings.hideDividers;
         });
       }
+
+      if (newSettings.denseChatTiles != denseTiles && this.mounted) {
+        setState(() {
+          denseTiles = newSettings.denseChatTiles;
+        });
+      }
+    });
+
+    // Listen for changes in the group
+    NewMessageManager().stream.listen((NewMessageEvent event) async {
+      // Make sure we have the required data to qualify for this tile
+      if (event.chatGuid != widget.chat.guid) return;
+      if (!event.event.containsKey("message")) return;
+
+      // Make sure the message is a group event
+      Message message = event.event["message"];
+      if (!message.isGroupEvent()) return;
+
+      // If it's a group event, let's fetch the new information and save it
+      await fetchChatSingleton(widget.chat.guid);
+      this.setNewChatData(forceUpdate: true);
     });
   }
 
-  void setNewChatTitle() async {
-    String tmpTitle = await getFullChatTitle(widget.chat);
-    if (tmpTitle != widget.chat.title) {
-      if (this.mounted) {
-        setState(() {
-          widget.chat.title = tmpTitle;
-        });
-      }
+  void setNewChatData({forceUpdate: false}) async {
+    // Save the current participant list and get the latest
+    List<Handle> ogParticipants = widget.chat.participants;
+    await widget.chat.getParticipants();
+
+    // Save the current title and generate the new one
+    String ogTitle = widget.chat.title;
+    await widget.chat.getTitle();
+
+    // If the original data is different, update the state
+    if (ogTitle != widget.chat.title ||
+        ogParticipants.length != widget.chat.participants.length ||
+        forceUpdate) {
+      if (this.mounted) setState(() {});
     }
   }
 
@@ -235,12 +268,13 @@ class _ConversationTileState extends State<ConversationTile>
                         : null,
                   ),
                   child: ListTile(
+                    dense: denseTiles,
                     contentPadding: EdgeInsets.only(left: 0),
                     title: Text(
-                      widget.chat.title != null ? widget.chat.title : "",
-                      style: Theme.of(context).textTheme.bodyText1,
-                      maxLines: 1,
-                    ),
+                        widget.chat.title != null ? widget.chat.title : "",
+                        style: Theme.of(context).textTheme.bodyText1,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis),
                     subtitle: widget.chat.latestMessageText != null &&
                             !(widget.chat.latestMessageText is String)
                         ? widget.chat.latestMessageText

@@ -1,5 +1,8 @@
+import 'dart:async';
 import 'dart:io';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/text_field/blue_bubbles_text_field.dart';
+import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
@@ -15,22 +18,46 @@ class CameraWidget extends StatefulWidget {
   _CameraWidgetState createState() => _CameraWidgetState();
 }
 
-class _CameraWidgetState extends State<CameraWidget> {
+class _CameraWidgetState extends State<CameraWidget>
+    with WidgetsBindingObserver {
+  CameraController controller;
+
   @override
   void initState() {
     super.initState();
     initCameras();
+
+    // Bind the lifecycle events
+    WidgetsBinding.instance.addObserver(this);
   }
 
   Future<void> initCameras() async {
+    if (context == null) return;
     if (BlueBubblesTextField.of(context) == null) return;
     await BlueBubblesTextField.of(context).initializeCameraController();
+    if (context == null)
+      return; // After the await, so could have been some time
+    controller = BlueBubblesTextField.of(context).cameraController;
     if (this.mounted) setState(() {});
+  }
+
+  /// Called when the app is either closed or opened or paused
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Call the [LifeCycleManager] events based on the [state]
+    if (state == AppLifecycleState.paused) {
+      controller?.dispose();
+    } else if (state == AppLifecycleState.resumed) {
+      initCameras();
+    }
   }
 
   @override
   void dispose() {
-    BlueBubblesTextField.of(context).cameraController?.dispose();
+    if (controller != null) {
+      debugPrint("Disposing of camera!");
+      controller?.dispose();
+    }
     super.dispose();
   }
 
@@ -60,7 +87,8 @@ class _CameraWidgetState extends State<CameraWidget> {
               ),
               Padding(
                 padding: EdgeInsets.only(
-                    bottom: MediaQuery.of(context).size.height / 30),
+                  bottom: MediaQuery.of(context).size.height / 30,
+                ),
                 child: FlatButton(
                   color: Colors.transparent,
                   onPressed: () async {
@@ -72,7 +100,15 @@ class _CameraWidgetState extends State<CameraWidget> {
                         .create(recursive: true);
 
                     await controller.takePicture(pathName);
-                    widget.addAttachment(File(pathName));
+
+                    File file = new File(pathName);
+                    if (!file.existsSync()) return;
+                    if (file.statSync().size == 0) {
+                      file.deleteSync();
+                      return;
+                    }
+
+                    widget.addAttachment(file);
                   },
                   child: Icon(
                     Icons.radio_button_checked,
@@ -83,10 +119,81 @@ class _CameraWidgetState extends State<CameraWidget> {
               )
             ],
           ),
+          Align(
+            alignment: Alignment.topLeft,
+            child: Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).size.height / 30,
+              ),
+              child: FlatButton(
+                padding: EdgeInsets.only(left: 10),
+                minWidth: 30,
+                color: Colors.transparent,
+                onPressed: () async {
+                  String appDocPath = SettingsManager().appDocDir.path;
+                  File file = new File(
+                      "$appDocPath/attachments/" + randomString(16) + ".png");
+                  await file.create();
+                  await MethodChannelInterface().invokeMethod(
+                      "open-camera", {"path": file.path, "type": "camera"});
+
+                  if (!file.existsSync()) return;
+                  if (file.statSync().size == 0) {
+                    file.deleteSync();
+                    return;
+                  }
+
+                  widget.addAttachment(file);
+                },
+                child: Icon(
+                  Icons.fullscreen,
+                  color: Colors.white,
+                  size: 30,
+                ),
+              ),
+            ),
+          ),
+          Align(
+            alignment: Alignment.topCenter,
+            child: Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).size.height / 30,
+              ),
+              child: FlatButton(
+                padding: EdgeInsets.all(0),
+                minWidth: 30,
+                color: Colors.transparent,
+                onPressed: () async {
+                  String appDocPath = SettingsManager().appDocDir.path;
+                  File file = new File(
+                      "$appDocPath/attachments/" + randomString(16) + ".mp4");
+                  await file.create();
+                  await MethodChannelInterface().invokeMethod(
+                      "open-camera", {"path": file.path, "type": "video"});
+
+                  if (!file.existsSync()) return;
+                  if (file.statSync().size == 0) {
+                    file.deleteSync();
+                    return;
+                  }
+
+                  widget.addAttachment(file);
+                },
+                child: Icon(
+                  Icons.videocam,
+                  color: Colors.white,
+                  size: 30,
+                ),
+              ),
+            ),
+          ),
           Padding(
             padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context).size.height / 30),
+              bottom: MediaQuery.of(context).size.height / 30,
+            ),
             child: FlatButton(
+              padding: EdgeInsets.only(right: 10),
+              minWidth: 30,
               color: Colors.transparent,
               onPressed: () async {
                 if (BlueBubblesTextField.of(context) == null) return;
@@ -104,7 +211,7 @@ class _CameraWidgetState extends State<CameraWidget> {
                 size: 30,
               ),
             ),
-          )
+          ),
         ],
       ),
     );

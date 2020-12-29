@@ -3,9 +3,12 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:bluebubbles/action_handler.dart';
+import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
+import 'package:bluebubbles/layouts/settings/server_management_panel.dart';
 import 'package:bluebubbles/managers/alarm_manager.dart';
+import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/incoming_queue.dart';
 import 'package:bluebubbles/managers/navigator_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
@@ -73,7 +76,8 @@ class MethodChannelInterface {
         String address = call.arguments.toString();
 
         // We remove the brackets from the formatting
-        address = getServerAddress(address: address.substring(1, address.length - 1));
+        address =
+            getServerAddress(address: address.substring(1, address.length - 1));
 
         // And then tell the socket to set the new server address
         await SocketManager().newServer(address);
@@ -100,6 +104,13 @@ class MethodChannelInterface {
       case "ChatOpen":
         openChat(call.arguments);
 
+        return new Future.value("");
+      case "socket-error-open":
+        NavigatorManager().navigatorKey.currentState.push(
+              CupertinoPageRoute(
+                builder: (context) => ServerManagementPanel(),
+              ),
+            );
         return new Future.value("");
       case "reply":
         // Find the chat to reply to
@@ -145,7 +156,7 @@ class MethodChannelInterface {
         debugPrint("shareAttachments " + sharedFilesPath);
 
         // Loop through all of the attachments sent by native code
-        call.arguments.forEach((element) {
+        call.arguments["attachments"].forEach((element) {
           // Get the file in that directory
           File file = File(element);
 
@@ -153,7 +164,31 @@ class MethodChannelInterface {
           attachments.add(file);
         });
 
-        // Go to the new chat creator with all of these attachments to select a chat
+        // Get the handle if it is a direct shortcut
+        String guid = call.arguments["id"];
+
+        // If it is a direct shortcut, try and find the chat and navigate to it
+        if (guid != null) {
+          List<Chat> chats = ChatBloc()
+              .chats
+              .where((element) => element.guid == guid)
+              .toList();
+
+          // If we did find a chat matching the criteria
+          if (chats.length != 0) {
+            // Get the most recent of our results
+            chats.sort(Chat.sort);
+            Chat chat = chats.first;
+
+            // Open the chat
+            openChat(chat.guid, existingAttachments: attachments);
+
+            // Nothing else to do
+            return new Future.value("");
+          }
+        }
+
+        // Go to the new chat creator with all of these attachments to select a chat in case it wasn't a direct share
         NavigatorManager().navigatorKey.currentState.pushAndRemoveUntil(
               CupertinoPageRoute(
                 builder: (context) => ConversationView(
@@ -169,8 +204,31 @@ class MethodChannelInterface {
       case "shareText":
 
         // Get the text that was shared to the app
-        String text = call.arguments;
+        String text = call.arguments["text"];
 
+        // Get the handle if it is a direct shortcut
+        String guid = call.arguments["id"];
+
+        // If it is a direct shortcut, try and find the chat and navigate to it
+        if (guid != null) {
+          List<Chat> chats = ChatBloc()
+              .chats
+              .where((element) => element.guid == guid)
+              .toList();
+
+          // If we did find a chat matching the criteria
+          if (chats.length != 0) {
+            // Get the most recent of our results
+            chats.sort(Chat.sort);
+            Chat chat = chats.first;
+
+            // Open the chat
+            openChat(chat.guid, existingText: text);
+
+            // Nothing else to do
+            return new Future.value("");
+          }
+        }
         // Navigate to the new chat creator with the specified text
         NavigatorManager().navigatorKey.currentState.pushAndRemoveUntil(
               CupertinoPageRoute(
@@ -202,7 +260,12 @@ class MethodChannelInterface {
     }
   }
 
-  void openChat(String id) async {
+  Future<void> openChat(String id,
+      {List<File> existingAttachments, String existingText}) async {
+    if (CurrentChat.activeChat?.chat?.guid == id) {
+      NotificationManager().switchChat(CurrentChat.activeChat.chat);
+      return;
+    }
     // Try to find the specified chat to open
     Chat openedChat = await Chat.findOne({"GUID": id});
 
@@ -224,6 +287,8 @@ class MethodChannelInterface {
           CupertinoPageRoute(
             builder: (context) => ConversationView(
               chat: openedChat,
+              existingAttachments: existingAttachments,
+              existingText: existingText,
             ),
           ),
           (route) => route.isFirst,

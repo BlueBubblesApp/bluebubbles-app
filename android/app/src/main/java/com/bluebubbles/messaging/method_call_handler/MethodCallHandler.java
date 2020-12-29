@@ -12,14 +12,17 @@ import com.bluebubbles.messaging.method_call_handler.handlers.AlarmScheduler;
 import com.bluebubbles.messaging.method_call_handler.handlers.ClearChatNotifs;
 import com.bluebubbles.messaging.method_call_handler.handlers.ClearSocketIssue;
 import com.bluebubbles.messaging.method_call_handler.handlers.CreateNotificationChannel;
+import com.bluebubbles.messaging.method_call_handler.handlers.FetchMessagesHandler;
 import com.bluebubbles.messaging.method_call_handler.handlers.FirebaseAuth;
 import com.bluebubbles.messaging.method_call_handler.handlers.GetLastLocation;
 import com.bluebubbles.messaging.method_call_handler.handlers.GetServerUrl;
 import com.bluebubbles.messaging.method_call_handler.handlers.InitializeBackgroundHandle;
 import com.bluebubbles.messaging.method_call_handler.handlers.NewMessageNotification;
+import com.bluebubbles.messaging.method_call_handler.handlers.OpenCamera;
 import com.bluebubbles.messaging.method_call_handler.handlers.OpenFile;
 import com.bluebubbles.messaging.method_call_handler.handlers.OpenLink;
 import com.bluebubbles.messaging.method_call_handler.handlers.PickFile;
+import com.bluebubbles.messaging.method_call_handler.handlers.PushShareTargets;
 import com.bluebubbles.messaging.method_call_handler.handlers.SaveToFile;
 import com.bluebubbles.messaging.method_call_handler.handlers.ShareFile;
 import com.bluebubbles.messaging.method_call_handler.handlers.SocketIssueWarning;
@@ -41,6 +44,8 @@ public class MethodCallHandler {
                 worker.destroyHeadlessThread();
             }
             result.success("");
+        } else if(call.method.equals(FetchMessagesHandler.TAG)) {
+            new FetchMessagesHandler(context, call, result).Handle();
         } else if (call.method.equals(CreateNotificationChannel.TAG)) {
             new CreateNotificationChannel(context, call, result).Handle();
         } else if (call.method.equals(NewMessageNotification.TAG)) {
@@ -59,6 +64,8 @@ public class MethodCallHandler {
             new GetLastLocation(context, call, result).Handle();
         } else if (call.method.equals(SaveToFile.TAG)) {
             new SaveToFile(context, call, result).Handle();
+        } else if(call.method.equals(PushShareTargets.TAG)) {
+            new PushShareTargets(context, call, result).Handle();
         } else if (call.method.equals("get-starting-intent")) {
             String intent = ((MainActivity) context).getIntent().getStringExtra("chatGUID");
             ((MainActivity) context).getIntent().putExtra("chatGUID", (String) null);
@@ -71,6 +78,8 @@ public class MethodCallHandler {
             new ShareFile(context, call, result).Handle();
         } else if (call.method.equals(PickFile.TAG)) {
             new PickFile(context, call, result).Handle();
+        } else if(call.method.equals(OpenCamera.TAG)) {
+            new OpenCamera(context, call, result).Handle();
         } else if (call.method.equals(AlarmScheduler.TAG)) {
             new AlarmScheduler(context, call, result).Handle();
         } else if (call.method.equals(SetNextRestart.TAG)) {

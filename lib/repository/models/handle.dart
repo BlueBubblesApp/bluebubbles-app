@@ -16,12 +16,14 @@ String handleToJson(Handle data) {
 
 class Handle {
   int id;
+  int originalROWID;
   String address;
   String country;
   String uncanonicalizedId;
 
   Handle({
     this.id,
+    this.originalROWID,
     this.address,
     this.country,
     this.uncanonicalizedId,
@@ -30,6 +32,8 @@ class Handle {
   factory Handle.fromMap(Map<String, dynamic> json) {
     return new Handle(
       id: json.containsKey("ROWID") ? json["ROWID"] : null,
+      originalROWID:
+          json.containsKey("originalROWID") ? json["originalROWID"] : null,
       address: json["address"],
       country: json.containsKey("country") ? json["country"] : null,
       uncanonicalizedId: json.containsKey("uncanonicalizedId")
@@ -69,15 +73,18 @@ class Handle {
 
     // If it already exists, update it
     if (this.id != null) {
-      await db.update(
-          "handle",
-          {
-            "address": this.address,
-            "country": this.country,
-            "uncanonicalizedId": this.uncanonicalizedId
-          },
-          where: "ROWID = ?",
-          whereArgs: [this.id]);
+      Map<String, dynamic> params = {
+        "address": this.address,
+        "country": this.country,
+        "uncanonicalizedId": this.uncanonicalizedId
+      };
+
+      if (this.originalROWID != null) {
+        params["originalROWID"] = this.originalROWID;
+      }
+
+      await db
+          .update("handle", params, where: "ROWID = ?", whereArgs: [this.id]);
     } else {
       await this.save(false);
     }
@@ -123,6 +130,7 @@ class Handle {
     var res = await db.rawQuery(
         "SELECT"
         " chat.ROWID AS ROWID,"
+        " chat.originalROWID AS originalROWID,"
         " chat.guid AS guid,"
         " chat.style AS style,"
         " chat.chatIdentifier AS chatIdentifier,"
@@ -144,6 +152,7 @@ class Handle {
 
   Map<String, dynamic> toMap() => {
         "ROWID": id,
+        "originalROWID": originalROWID,
         "address": address,
         "country": country,
         "uncanonicalizedId": uncanonicalizedId,

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:assorted_layout_widgets/assorted_layout_widgets.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
+import 'package:bluebubbles/helpers/socket_singletons.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_details/conversation_details.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
@@ -14,9 +15,11 @@ import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scrol
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
+import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
+import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/cupertino.dart' as Cupertino;
@@ -61,8 +64,8 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
     });
 
     EventDispatcher().stream.listen((Map<String, dynamic> event) {
-      if (!["add-unread-chat", "remove-unread-chat"].contains(event["type"]))
-        return;
+      if (!["add-unread-chat", "remove-unread-chat", "refresh-messagebloc"]
+          .contains(event["type"])) return;
       if (!event["data"].containsKey("chatGuid")) return;
 
       // Ignore any events having to do with this chat
@@ -81,6 +84,38 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
       // Only re-render if the newMessages count changes
       if (preLength != newMessages.length && this.mounted) setState(() {});
     });
+
+    // Listen for changes in the group
+    NewMessageManager().stream.listen((NewMessageEvent event) async {
+      // Make sure we have the required data to qualify for this tile
+      if (event.chatGuid != widget.chat.guid) return;
+      if (!event.event.containsKey("message")) return;
+
+      // Make sure the message is a group event
+      Message message = event.event["message"];
+      if (!message.isGroupEvent()) return;
+
+      // If it's a group event, let's fetch the new information and save it
+      await fetchChatSingleton(widget.chat.guid);
+      setNewChatData(forceUpdate: true);
+    });
+  }
+
+  void setNewChatData({forceUpdate: false}) async {
+    // Save the current participant list and get the latest
+    List<Handle> ogParticipants = widget.chat.participants;
+    await widget.chat.getParticipants();
+
+    // Save the current title and generate the new one
+    String ogTitle = widget.chat.title;
+    await widget.chat.getTitle();
+
+    // If the original data is different, update the state
+    if (ogTitle != widget.chat.title ||
+        ogParticipants.length != widget.chat.participants.length ||
+        forceUpdate) {
+      if (this.mounted) setState(() {});
+    }
   }
 
   void didChangeDependenciesConversationView() {
@@ -130,7 +165,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
 
       try {
         // If we don't have participants, we should fetch them from the server
-        Chat data = await SocketManager().fetchChat(chat.guid);
+        Chat data = await fetchChatSingleton(chat.guid);
         // If we got data back, fetch the participants and update the state
         if (data != null) {
           await chat.getParticipants();
@@ -294,19 +329,19 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
     );
   }
 
-  void fetchCurrentChat() {
+  Future<void> fetchCurrentChat() async {
     if (!isCreator) return;
     if (selected.length == 1 && selected.first.isChat) {
       chat = selected.first.chat;
     }
-    debugPrint(selected.toString());
+
     if (selected.length == 0) {
       chat = null;
       if (this.mounted) setState(() {});
       return;
     }
-    List<Chat> cache = ChatBloc().chats.sublist(0);
 
+    List<Chat> cache = ChatBloc().chats.sublist(0);
     cache.retainWhere((element) {
       if (element.participants.length != selected.length) return false;
       for (UniqueContact contact in selected) {
@@ -318,8 +353,10 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
           return false;
         }
       }
+
       return true;
     });
+
     if (cache.length == 0) {
       chat = null;
       messageBloc = null;
@@ -332,7 +369,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
     chat = cache.first;
     currentChat = CurrentChat.getCurrentChat(chat);
 
-    NotificationManager().switchChat(chat);
+    await NotificationManager().switchChat(chat);
     messageBloc = null;
     if (this.mounted) setState(() {});
   }
@@ -534,24 +571,26 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
     return completer.future;
   }
 
-  void onSelected(UniqueContact item) {
+  void onSelected(UniqueContact item) async {
     if (item.isChat) {
       if (widget.type == ChatSelectorTypes.ONLY_EXISTING) {
         selected.add(item);
         chat = item.chat;
         contacts = [];
       } else {
-        item.chat.participants.forEach((e) {
+        for (Handle e in item?.chat?.participants ?? []) {
           UniqueContact contact = new UniqueContact(
               address: e.address,
               displayName: ContactManager()
                       .getCachedContactSync(e.address)
                       ?.displayName ??
-                  formatPhoneNumber(e.address));
+                  await formatPhoneNumber(e.address));
           selected.add(contact);
-        });
-        fetchCurrentChat();
+        }
+
+        await fetchCurrentChat();
       }
+
       resetCursor();
       if (this.mounted) setState(() {});
       return;

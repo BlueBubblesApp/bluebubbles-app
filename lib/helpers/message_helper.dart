@@ -30,6 +30,7 @@ class MessageHelper {
       Chat chat, List<dynamic> messages,
       {bool notifyForNewMessage = false,
       bool notifyMessageManager = true,
+      bool checkForLatestMessageText = true,
       Function(int progress, int length) onProgress}) async {
     bool limit = messages.length > 20;
 
@@ -48,15 +49,15 @@ class MessageHelper {
 
     // Iterate over each message to parse it
     for (dynamic item in messages) {
-      if (onProgress != null) {
-        onProgress(_messages.length, messages.length);
-      }
-  
+      // if (onProgress != null) {
+      //   onProgress(_messages.length, messages.length);
+      // }
+
       // Pull the chats out of the message, if there isnt a default
       Chat msgChat = chat;
       if (msgChat == null) {
         List<Chat> msgChats = parseChats(item);
-        msgChat = msgChats.length > 0 ? msgChats[0] : null;
+        msgChat = msgChats.length > 0 ? msgChats.first : null;
 
         // If there is a cached chat, get it. Otherwise, save the new one
         if (msgChat != null && chats.containsKey(msgChat.guid)) {
@@ -72,8 +73,11 @@ class MessageHelper {
 
       Message message = Message.fromMap(item);
       Message existing = await Message.findOne({"guid": message.guid});
-      await msgChat.addMessage(message,
-          changeUnreadStatus: notifyForNewMessage);
+      await msgChat.addMessage(
+        message,
+        changeUnreadStatus: notifyForNewMessage,
+        checkForMessageText: checkForLatestMessageText,
+      );
       if (existing == null) {
         if (limit) {
           if (!notificationMessages.containsValue(msgChat.guid)) {
@@ -97,18 +101,20 @@ class MessageHelper {
       _messages.add(message);
     }
 
-    notificationMessages.forEach((message, value) async {
-      Chat msgChat = chats[value];
+    if (notifyForNewMessage && notifyMessageManager) {
+      notificationMessages.forEach((message, value) async {
+        Chat msgChat = chats[value];
 
-      if (notifyForNewMessage) {
-        await MessageHelper.handleNotification(message, msgChat, force: true);
-      }
+        if (notifyForNewMessage) {
+          await MessageHelper.handleNotification(message, msgChat, force: true);
+        }
 
-      // Tell all listeners that we have a new message, and save the message
-      if (notifyMessageManager) {
-        NewMessageManager().addMessage(msgChat, message);
-      }
-    });
+        // Tell all listeners that we have a new message, and save the message
+        if (notifyMessageManager) {
+          NewMessageManager().addMessage(msgChat, message);
+        }
+      });
+    }
 
     // Return all the synced messages
     return _messages;
@@ -222,13 +228,14 @@ class MessageHelper {
       title,
       notification,
       chat.guid,
+      chat,
       Random().nextInt(9998) + 1,
       chat.id,
       message.dateCreated.millisecondsSinceEpoch,
       contactTitle,
       chat.participants.length > 1,
-      handle: message.handle,
-      contact: contact,
+      message.handle,
+      contact,
     );
   }
 
@@ -291,7 +298,7 @@ class MessageHelper {
       // It's a reaction message, get the "sender"
       String sender = (message.isFromMe)
           ? "You"
-          : formatPhoneNumber(message.handle.address);
+          : await formatPhoneNumber(message.handle.address);
       if (!message.isFromMe && message.handle != null) {
         Contact contact =
             await ContactManager().getCachedContact(message.handle.address);

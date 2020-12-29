@@ -22,6 +22,8 @@ class Settings {
   bool hideDividers = false;
   double scrollVelocity = 1.00;
   bool sendWithReturn = false;
+  bool doubleTapForDetails = false;
+  bool denseChatTiles = false;
   // String emojiFontFamily;
 
   Skins skin = Skins.IOS;
@@ -41,6 +43,8 @@ class Settings {
         settings.chunkSize = entry.value;
       } else if (entry.name == "autoOpenKeyboard") {
         settings.autoOpenKeyboard = entry.value;
+      } else if (entry.name == "autoDownload") {
+        settings.autoDownload = entry.value;
       } else if (entry.name == "onlyWifiDownload") {
         settings.onlyWifiDownload = entry.value;
       } else if (entry.name == "hideTextPreviews") {
@@ -63,7 +67,12 @@ class Settings {
         settings.scrollVelocity = entry.value;
       } else if (entry.name == "sendWithReturn") {
         settings.sendWithReturn = entry.value;
+      } else if (entry.name == "doubleTapForDetails") {
+        settings.doubleTapForDetails = entry.value;
+      } else if (entry.name == "denseChatTiles") {
+        settings.denseChatTiles = entry.value;
       }
+
       // else if (entry.name == "emojiFontFamily") {
       //   settings.emojiFontFamily = entry.value;
       // }
@@ -81,7 +90,6 @@ class Settings {
     DisplayMode mode;
     if (modes.isEmpty) {
       mode = await FlutterDisplayMode.current;
-      this.displayMode = mode.id;
     } else {
       mode = modes.first;
     }
@@ -177,6 +185,14 @@ class Settings {
             name: "sendWithReturn",
             value: this.sendWithReturn,
             type: this.sendWithReturn.runtimeType),
+        ConfigEntry(
+            name: "doubleTapForDetails",
+            value: this.doubleTapForDetails,
+            type: this.doubleTapForDetails.runtimeType),
+        ConfigEntry(
+            name: "denseChatTiles",
+            value: this.denseChatTiles,
+            type: this.denseChatTiles.runtimeType),
         // ConfigEntry(
         //     name: "emojiFontFamily",
         //     value: this.emojiFontFamily,

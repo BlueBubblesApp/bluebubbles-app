@@ -1,5 +1,7 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'dart:ui';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:connectivity/connectivity.dart';
 
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
@@ -12,6 +14,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:vcard_parser/vcard_parser.dart';
+import 'package:image_size_getter/image_size_getter.dart' as IMG;
 
 class AttachmentHelper {
   static String createAppleLocation(double longitude, double latitude,
@@ -183,12 +186,11 @@ class AttachmentHelper {
     String pathName = path ??
         "$appDocPath/attachments/${attachment.guid}/${attachment.transferName}";
 
-    if (FileSystemEntity.typeSync(pathName) != FileSystemEntityType.notFound) {
-      return File(pathName);
-    } else if (SocketManager()
-        .attachmentDownloaders
-        .containsKey(attachment.guid)) {
+    if (SocketManager().attachmentDownloaders.containsKey(attachment.guid)) {
       return SocketManager().attachmentDownloaders[attachment.guid];
+    } else if (FileSystemEntity.typeSync(pathName) !=
+        FileSystemEntityType.notFound) {
+      return File(pathName);
     } else if (attachment.mimeType == null ||
         attachment.mimeType.startsWith("text/")) {
       return AttachmentDownloader(attachment);
@@ -225,5 +227,45 @@ class AttachmentHelper {
         (!SettingsManager().settings.onlyWifiDownload ||
             (SettingsManager().settings.onlyWifiDownload &&
                 status == ConnectivityResult.wifi)));
+  }
+
+  static Future<void> setDimensions(
+      Attachment attachment, {Uint8List data}) async {
+    // Handle break cases
+    if (attachment.width != null &&
+        attachment.height != null &&
+        attachment.height != 0 &&
+        attachment.width != 0) return;
+    if (attachment.mimeType == null) return;
+
+    // Make sure the attachment is an image or video
+    String mimeStart = attachment.mimeType.split("/").first;
+    if (!["image", "video"].contains(mimeStart)) return;
+
+    Uint8List previewData = data;
+    if (data == null) {
+      previewData = new File(AttachmentHelper.getAttachmentPath(attachment)).readAsBytesSync();
+    }
+
+    if (attachment.mimeType == "image/gif") {
+      Size size = getGifDimensions(previewData);
+
+      if (size.width != 0 && size.height != 0) {
+        attachment.width = size.width.toInt();
+        attachment.height = size.height.toInt();
+      }
+    } else if (mimeStart == "image") {
+      IMG.Size size = IMG.ImageSizeGetter.getSize(IMG.MemoryInput(previewData));
+      if (size.width != 0 && size.height != 0) {
+        attachment.width = size.width;
+        attachment.height = size.height;
+      }
+    } else if (mimeStart == "video") {
+      IMG.Size size = await getVideoDimensions(attachment);
+      if (size.width != 0 && size.height != 0) {
+        attachment.width = size.width;
+        attachment.height = size.height;
+      }
+    }
   }
 }

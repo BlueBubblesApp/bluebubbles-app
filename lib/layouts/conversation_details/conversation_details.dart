@@ -16,6 +16,7 @@ import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class ConversationDetails extends StatefulWidget {
   final Chat chat;
@@ -32,21 +33,21 @@ class _ConversationDetailsState extends State<ConversationDetails> {
   bool readOnly = true;
   Chat chat;
   List<Attachment> attachmentsForChat = <Attachment>[];
+  bool isClearing = false;
+  bool isCleared = false;
 
   @override
   void initState() {
     super.initState();
     chat = widget.chat;
     controller = new TextEditingController(text: chat.displayName);
-    
+
     fetchAttachments();
     ChatBloc().chatStream.listen((event) async {
-      if (this.mounted) {
-        Chat _chat = await Chat.findOne({"guid": widget.chat.guid});
-        await _chat.getParticipants();
-        chat = _chat;
-        setState(() {});
-      }
+      Chat _chat = await Chat.findOne({"guid": widget.chat.guid});
+      await _chat.getParticipants();
+      chat = _chat;
+      if (this.mounted) setState(() {});
     });
   }
 
@@ -67,270 +68,324 @@ class _ConversationDetailsState extends State<ConversationDetails> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Theme.of(context).backgroundColor,
-      appBar: CupertinoNavigationBar(
-        backgroundColor: Theme.of(context).accentColor.withAlpha(125),
-        actionsForegroundColor: Theme.of(context).primaryColor,
-        middle: Text(
-          "Details",
-          style: Theme.of(context).textTheme.headline1,
-        ),
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle(
+        systemNavigationBarColor: Theme.of(context).backgroundColor,
       ),
-      extendBodyBehindAppBar: true,
-      body: CustomScrollView(
-        physics: AlwaysScrollableScrollPhysics(
-          parent: CustomBouncingScrollPhysics(),
-        ),
-        slivers: <Widget>[
-          SliverToBoxAdapter(
-            child: Container(
-              height: 100,
-            ),
+      child: Scaffold(
+        backgroundColor: Theme.of(context).backgroundColor,
+        appBar: CupertinoNavigationBar(
+          backgroundColor: Theme.of(context).accentColor.withAlpha(125),
+          actionsForegroundColor: Theme.of(context).primaryColor,
+          middle: Text(
+            "Details",
+            style: Theme.of(context).textTheme.headline1,
           ),
-          SliverToBoxAdapter(
-            child: readOnly
-                ? Container()
-                : Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: TextField(
-                      cursorColor: Theme.of(context).primaryColor,
-                      readOnly: true,
-                      controller: controller,
-                      style: Theme.of(context).textTheme.bodyText1,
-                      autofocus: false,
-                      autocorrect: false,
-                      decoration: InputDecoration(
-                        labelText: "NAME",
-                        labelStyle:
-                            TextStyle(color: Theme.of(context).primaryColor),
+        ),
+        extendBodyBehindAppBar: true,
+        body: CustomScrollView(
+          physics: AlwaysScrollableScrollPhysics(
+            parent: CustomBouncingScrollPhysics(),
+          ),
+          slivers: <Widget>[
+            SliverToBoxAdapter(
+              child: Container(
+                height: 100,
+              ),
+            ),
+            SliverToBoxAdapter(
+              child: readOnly
+                  ? Container()
+                  : Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: TextField(
+                        cursorColor: Theme.of(context).primaryColor,
+                        readOnly: true,
+                        controller: controller,
+                        style: Theme.of(context).textTheme.bodyText1,
+                        autofocus: false,
+                        autocorrect: false,
+                        decoration: InputDecoration(
+                          labelText: "NAME",
+                          labelStyle:
+                              TextStyle(color: Theme.of(context).primaryColor),
+                        ),
                       ),
                     ),
-                  ),
-          ),
-          SliverList(
-            delegate: SliverChildBuilderDelegate(
-              (context, index) {
-                return ContactTile(
-                  key: Key(chat.participants[index].id.toString()),
-                  address: chat.participants[index].address,
-                  handle: chat.participants[index],
-                  chat: chat,
-                  updateChat: (Chat newChat) {
-                    chat = newChat;
-                    if (this.mounted) setState(() {});
-                  },
-                  canBeRemoved: chat.participants.length > 1,
-                );
-              },
-              childCount: chat.participants.length,
             ),
-          ),
-          SliverToBoxAdapter(
-            child: chat.participants.length > 1
-                ? InkWell(
-                    onTap: () async {
-                      Chat result = await Navigator.of(context).push(
-                        CupertinoPageRoute(
-                          builder: (context) => ConversationView(
-                            isCreator: true,
-                            type: ChatSelectorTypes.ONLY_CONTACTS,
-                            onSelect: (List<UniqueContact> items) {
-                              Navigator.of(context).pop();
-                              if (items.length == 0) return;
+            SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (context, index) {
+                  return ContactTile(
+                    key: Key(chat.participants[index].id.toString()),
+                    address: chat.participants[index].address,
+                    handle: chat.participants[index],
+                    chat: chat,
+                    updateChat: (Chat newChat) {
+                      chat = newChat;
+                      if (this.mounted) setState(() {});
+                    },
+                    canBeRemoved: chat.participants.length > 1,
+                  );
+                },
+                childCount: chat.participants.length,
+              ),
+            ),
+            SliverToBoxAdapter(
+              child: chat.participants.length > 1
+                  ? InkWell(
+                      onTap: () async {
+                        Chat result = await Navigator.of(context).push(
+                          CupertinoPageRoute(
+                            builder: (context) => ConversationView(
+                              isCreator: true,
+                              type: ChatSelectorTypes.ONLY_CONTACTS,
+                              onSelect: (List<UniqueContact> items) {
+                                Navigator.of(context).pop();
+                                if (items.length == 0) return;
 
-                              for (UniqueContact contact in items) {
-                                if (contact.isChat) return;
-                              }
-                              showDialog(
-                                context: context,
-                                barrierDismissible: false,
-                                builder: (context) => AddingParticipantPopup(
-                                  contacts: items,
-                                  chat: chat,
-                                ),
-                              );
-                            },
+                                for (UniqueContact contact in items) {
+                                  if (contact.isChat) return;
+                                }
+                                showDialog(
+                                  context: context,
+                                  barrierDismissible: false,
+                                  builder: (context) => AddingParticipantPopup(
+                                    contacts: items,
+                                    chat: chat,
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        );
+                        if (result != null && this.mounted) {
+                          chat = result;
+                          setState(() {});
+                        }
+                      },
+                      child: ListTile(
+                        title: Text(
+                          "Add Contact",
+                          style: TextStyle(
+                            color: Theme.of(context).primaryColor,
                           ),
                         ),
-                      );
-                      if (result != null && this.mounted) {
-                        chat = result;
-                        setState(() {});
-                      }
-                    },
-                    child: ListTile(
-                      title: Text(
-                        "Add Contact",
-                        style: TextStyle(
+                        leading: Icon(
+                          Icons.add,
                           color: Theme.of(context).primaryColor,
                         ),
                       ),
-                      leading: Icon(
-                        Icons.add,
-                        color: Theme.of(context).primaryColor,
-                      ),
+                    )
+                  : Container(),
+            ),
+            SliverPadding(
+              padding: EdgeInsets.symmetric(vertical: 20),
+            ),
+            SliverToBoxAdapter(
+              child: InkWell(
+                onTap: () async {
+                  await showDialog(
+                    context: context,
+                    builder: (context) => SyncDialog(
+                        chat: chat,
+                        withOffset: true,
+                        initialMessage: "Fetching messages...",
+                        limit: 100),
+                  );
+
+                  fetchAttachments();
+                },
+                child: ListTile(
+                  leading: Text(
+                    "Fetch more messages",
+                    style: TextStyle(
+                      color: Theme.of(context).primaryColor,
                     ),
-                  )
-                : Container(),
-          ),
-          SliverPadding(
-            padding: EdgeInsets.symmetric(vertical: 20),
-          ),
-          SliverToBoxAdapter(
-            child: InkWell(
-              onTap: () async {
-                await showDialog(
-                  context: context,
-                  builder: (context) => SyncDialog(
-                    chat: chat,
-                    withOffset: true,
-                    initialMessage: "Fetching messages...",
-                    limit: 100
                   ),
-                );
-
-                fetchAttachments();
-              },
-              child: ListTile(
-                leading: Text(
-                  "Fetch more messages",
-                  style: TextStyle(
-                    color: Theme.of(context).primaryColor,
-                  ),
-                ),
-                trailing: Padding(
-                  padding: EdgeInsets.only(right: 15),
-                  child: Icon(
-                    Icons.file_download,
-                    color: Theme.of(context).primaryColor,
+                  trailing: Padding(
+                    padding: EdgeInsets.only(right: 15),
+                    child: Icon(
+                      Icons.file_download,
+                      color: Theme.of(context).primaryColor,
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-          SliverToBoxAdapter(
-            child: InkWell(
-              onTap: () async {
-                showDialog(
-                  context: context,
-                  builder: (context) => SyncDialog(
-                    chat: chat,
-                    initialMessage: "Syncing messages...",
-                    limit: 25
+            SliverToBoxAdapter(
+              child: InkWell(
+                onTap: () async {
+                  showDialog(
+                    context: context,
+                    builder: (context) => SyncDialog(
+                        chat: chat,
+                        initialMessage: "Syncing messages...",
+                        limit: 25),
+                  );
+                },
+                child: ListTile(
+                  leading: Text(
+                    "Sync last 25 messages",
+                    style: TextStyle(
+                      color: Theme.of(context).primaryColor,
+                    ),
                   ),
-                );
-              },
-              child: ListTile(
-                leading: Text(
-                  "Sync last 25 messages",
-                  style: TextStyle(
-                    color: Theme.of(context).primaryColor,
-                  ),
-                ),
-                trailing: Padding(
-                  padding: EdgeInsets.only(right: 15),
-                  child: Icon(
-                    Icons.replay,
-                    color: Theme.of(context).primaryColor,
+                  trailing: Padding(
+                    padding: EdgeInsets.only(right: 15),
+                    child: Icon(
+                      Icons.replay,
+                      color: Theme.of(context).primaryColor,
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-          SliverToBoxAdapter(
-              child: ListTile(
-                  leading: Text("Pin Conversation",
-                      style: TextStyle(
-                        color: Theme.of(context).primaryColor,
-                      )),
-                  trailing: Switch(
-                      value: widget.chat.isPinned,
-                      activeColor: Theme.of(context).primaryColor,
-                      activeTrackColor:
-                          Theme.of(context).primaryColor.withAlpha(200),
-                      inactiveTrackColor:
-                          Theme.of(context).accentColor.withOpacity(0.6),
-                      inactiveThumbColor: Theme.of(context).accentColor,
-                      onChanged: (value) async {
-                        if (value) {
-                          await widget.chat.pin();
-                        } else {
-                          await widget.chat.unpin();
-                        }
-                        
-                        EventDispatcher().emit("refresh", null);
+            SliverToBoxAdapter(
+                child: ListTile(
+                    leading: Text("Pin Conversation",
+                        style: TextStyle(
+                          color: Theme.of(context).primaryColor,
+                        )),
+                    trailing: Switch(
+                        value: widget.chat.isPinned,
+                        activeColor: Theme.of(context).primaryColor,
+                        activeTrackColor:
+                            Theme.of(context).primaryColor.withAlpha(200),
+                        inactiveTrackColor:
+                            Theme.of(context).accentColor.withOpacity(0.6),
+                        inactiveThumbColor: Theme.of(context).accentColor,
+                        onChanged: (value) async {
+                          if (value) {
+                            await widget.chat.pin();
+                          } else {
+                            await widget.chat.unpin();
+                          }
 
-                        if (this.mounted) setState(() {});
-                      }))),
-          SliverToBoxAdapter(
-              child: ListTile(
-                  leading: Text("Mute Conversation",
-                      style: TextStyle(
-                        color: Theme.of(context).primaryColor,
-                      )),
-                  trailing: Switch(
-                      value: widget.chat.isMuted,
-                      activeColor: Theme.of(context).primaryColor,
-                      activeTrackColor:
-                          Theme.of(context).primaryColor.withAlpha(200),
-                      inactiveTrackColor:
-                          Theme.of(context).accentColor.withOpacity(0.6),
-                      inactiveThumbColor: Theme.of(context).accentColor,
-                      onChanged: (value) async {
-                        widget.chat.isMuted = value;
-                        await widget.chat.save(updateLocalVals: true);
-                        EventDispatcher().emit("refresh", null);
+                          EventDispatcher().emit("refresh", null);
 
-                        if (this.mounted) setState(() {});
-                      }))),
-          SliverToBoxAdapter(
-              child: ListTile(
-                  leading: Text("Archive Conversation",
-                      style: TextStyle(
-                        color: Theme.of(context).primaryColor,
-                      )),
-                  trailing: Switch(
-                      value: widget.chat.isArchived,
-                      activeColor: Theme.of(context).primaryColor,
-                      activeTrackColor:
-                          Theme.of(context).primaryColor.withAlpha(200),
-                      inactiveTrackColor:
-                          Theme.of(context).accentColor.withOpacity(0.6),
-                      inactiveThumbColor: Theme.of(context).accentColor,
-                      onChanged: (value) {
-                        if (value) {
-                          ChatBloc().archiveChat(widget.chat);
-                        } else {
-                          ChatBloc().unArchiveChat(widget.chat);
-                        }
+                          if (this.mounted) setState(() {});
+                        }))),
+            SliverToBoxAdapter(
+                child: ListTile(
+                    leading: Text("Mute Conversation",
+                        style: TextStyle(
+                          color: Theme.of(context).primaryColor,
+                        )),
+                    trailing: Switch(
+                        value: widget.chat.isMuted,
+                        activeColor: Theme.of(context).primaryColor,
+                        activeTrackColor:
+                            Theme.of(context).primaryColor.withAlpha(200),
+                        inactiveTrackColor:
+                            Theme.of(context).accentColor.withOpacity(0.6),
+                        inactiveThumbColor: Theme.of(context).accentColor,
+                        onChanged: (value) async {
+                          widget.chat.isMuted = value;
+                          await widget.chat.save(updateLocalVals: true);
+                          EventDispatcher().emit("refresh", null);
 
-                        EventDispatcher().emit("refresh", null);
-                        if (this.mounted) setState(() {});
-                      }))),
-          SliverGrid(
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-            ),
-            delegate: SliverChildBuilderDelegate(
-              (context, int index) {
-                return Container(
-                  decoration: BoxDecoration(
-                    border: Border.all(
-                        color: Theme.of(context).accentColor, width: 3),
+                          if (this.mounted) setState(() {});
+                        }))),
+            SliverToBoxAdapter(
+                child: ListTile(
+                    leading: Text("Archive Conversation",
+                        style: TextStyle(
+                          color: Theme.of(context).primaryColor,
+                        )),
+                    trailing: Switch(
+                        value: widget.chat.isArchived,
+                        activeColor: Theme.of(context).primaryColor,
+                        activeTrackColor:
+                            Theme.of(context).primaryColor.withAlpha(200),
+                        inactiveTrackColor:
+                            Theme.of(context).accentColor.withOpacity(0.6),
+                        inactiveThumbColor: Theme.of(context).accentColor,
+                        onChanged: (value) {
+                          if (value) {
+                            ChatBloc().archiveChat(widget.chat);
+                          } else {
+                            ChatBloc().unArchiveChat(widget.chat);
+                          }
+
+                          EventDispatcher().emit("refresh", null);
+                          if (this.mounted) setState(() {});
+                        }))),
+            SliverToBoxAdapter(
+              child: InkWell(
+                onTap: () async {
+                  if (this.mounted)
+                    setState(() {
+                      isClearing = true;
+                    });
+
+                  try {
+                    await widget.chat.clearTranscript();
+                    EventDispatcher().emit(
+                        "refresh-messagebloc", {"chatGuid": widget.chat.guid});
+                    if (this.mounted)
+                      setState(() {
+                        isClearing = false;
+                        isCleared = true;
+                      });
+                  } catch (ex) {
+                    if (this.mounted)
+                      setState(() {
+                        isClearing = false;
+                        isCleared = false;
+                      });
+                  }
+                },
+                child: ListTile(
+                  leading: Text(
+                    "Clear Transcript (Local Only)",
+                    style: TextStyle(
+                      color: Theme.of(context).primaryColor,
+                    ),
                   ),
-                  child: AttachmentDetailsCard(
-                    attachment: attachmentsForChat[index],
-                    allAttachments: attachmentsForChat.reversed.toList(),
+                  trailing: Padding(
+                    padding: EdgeInsets.only(right: 15),
+                    child: (isClearing)
+                        ? CircularProgressIndicator(
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                                Theme.of(context).primaryColor),
+                          )
+                        : (isCleared)
+                            ? Icon(
+                                Icons.done,
+                                color: Theme.of(context).primaryColor,
+                              )
+                            : Icon(
+                                Icons.delete_forever,
+                                color: Theme.of(context).primaryColor,
+                              ),
                   ),
-                );
-              },
-              childCount: attachmentsForChat.length,
+                ),
+              ),
             ),
-          )
-        ],
+            SliverGrid(
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+              ),
+              delegate: SliverChildBuilderDelegate(
+                (context, int index) {
+                  return Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                          color: Theme.of(context).accentColor, width: 3),
+                    ),
+                    child: AttachmentDetailsCard(
+                      attachment: attachmentsForChat[index],
+                      allAttachments: attachmentsForChat.reversed.toList(),
+                    ),
+                  );
+                },
+                childCount: attachmentsForChat.length,
+              ),
+            )
+          ],
+        ),
       ),
-      // ),
     );
   }
 }
@@ -380,19 +435,16 @@ class _SyncDialogState extends State<SyncDialog> {
         });
       }
 
-      MessageHelper.bulkAddMessages(
-        widget.chat,
-        messages,
-        onProgress: (int progress, int length) {
-          if (progress == 0 || length  == 0) {
-            this.progress = null;
-          } else {
-            this.progress = progress / length;
-          }
+      MessageHelper.bulkAddMessages(widget.chat, messages,
+          onProgress: (int progress, int length) {
+        if (progress == 0 || length == 0) {
+          this.progress = null;
+        } else {
+          this.progress = progress / length;
+        }
 
-          if (this.mounted) setState(() {});
-        })
-          .then((List<Message> __) {
+        if (this.mounted) setState(() {});
+      }).then((List<Message> __) {
         onFinish(true);
       });
     }).catchError((_) => onFinish(false));

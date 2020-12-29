@@ -1,19 +1,27 @@
+import 'dart:async';
 import 'dart:math';
 import 'dart:typed_data';
 import 'package:adaptive_theme/adaptive_theme.dart';
+import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
+import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/repository/models/message.dart';
+import 'package:device_info/device_info.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
 import 'package:html/parser.dart';
 import 'package:convert/convert.dart';
 
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/services.dart';
+import 'package:image_size_getter/image_size_getter.dart' as IMG;
 import 'package:intl/intl.dart' as intl;
+import 'package:video_thumbnail/video_thumbnail.dart';
 
 DateTime parseDate(dynamic value) {
   if (value == null) return null;
@@ -39,32 +47,27 @@ Size textSize(String text, TextStyle style) {
   return textPainter.size;
 }
 
-String formatPhoneNumber(String str) {
+Future<String> formatPhoneNumber(String str) async {
   // If the string is an email, we don't want to format it
   if (str.contains("@")) return str;
-  if (str.length < 10) return str;
-  String areaCode = "";
 
-  String numberWithoutAreaCode = str;
+  Map<String, dynamic> meta = await FlutterLibphonenumber()
+      .parse(str, region: SettingsManager().countryCode ?? "US");
 
-  if (str.startsWith("+")) {
-    areaCode = "+1 ";
-    numberWithoutAreaCode = str.substring(2);
+  if (!meta.containsKey("national")) {
+    if (meta.containsKey("international")) {
+      return meta['international'];
+    } else {
+      return str;
+    }
   }
 
-  String formattedPhoneNumber = areaCode +
-      "(" +
-      numberWithoutAreaCode.substring(0, 3) +
-      ") " +
-      numberWithoutAreaCode.substring(3, 6) +
-      "-" +
-      numberWithoutAreaCode.substring(6, numberWithoutAreaCode.length);
-  return formattedPhoneNumber;
+  return meta['national'];
 }
 
 bool sameAddress(String address1, String address2) {
-  String formattedNumber1 = address1.replaceAll(RegExp(r'[-() ]'), '');
-  String formattedNumber2 = address2.replaceAll(RegExp(r'[-() ]'), '');
+  String formattedNumber1 = address1.replaceAll(RegExp(r'[-() \.]'), '');
+  String formattedNumber2 = address2.replaceAll(RegExp(r'[-() \.]'), '');
 
   return formattedNumber1 == formattedNumber2 ||
       "+1" + formattedNumber1 == formattedNumber2 ||
@@ -184,7 +187,8 @@ bool isEmptyString(String input, {stripWhitespace = false}) {
 
 bool isParticipantEvent(Message message) {
   if (message == null) return false;
-  if (message.itemType == 1 && [0, 1].contains(message.groupActionType)) return true;
+  if (message.itemType == 1 && [0, 1].contains(message.groupActionType))
+    return true;
   if ([2, 3].contains(message.itemType)) return true;
   return false;
 }
@@ -192,13 +196,21 @@ bool isParticipantEvent(Message message) {
 Future<String> getGroupEventText(Message message) async {
   String text = "Unknown group event";
   String handle = "You";
-  if (message.handleId != null && message.handle != null)
+  if (!message.isFromMe && message.handleId != null && message.handle != null)
     handle = await ContactManager().getContactTitle(message.handle.address);
 
+  String other = "someone";
+  if (message.otherHandle != null && [1, 2].contains(message.itemType)) {
+    Handle item = await Handle.findOne({"originalROWID": message.otherHandle});
+    if (item != null) {
+      other = await ContactManager().getContactTitle(item.address);
+    }
+  }
+
   if (message.itemType == 1 && message.groupActionType == 1) {
-    text = "$handle removed someone from the conversation";
+    text = "$handle removed $other from the conversation";
   } else if (message.itemType == 1 && message.groupActionType == 0) {
-    text = "$handle added someone to the conversation";
+    text = "$handle added $other to the conversation";
   } else if (message.itemType == 3) {
     text = "$handle left the conversation";
   } else if (message.itemType == 2 && message.groupTitle != null) {
@@ -354,14 +366,32 @@ Size getGifDimensions(Uint8List bytes) {
   return size;
 }
 
+Future<IMG.Size> getVideoDimensions(Attachment attachment,
+    {Uint8List bytes}) async {
+  Uint8List imageData = await VideoThumbnail.thumbnailData(
+    video: AttachmentHelper.getAttachmentPath(attachment),
+    imageFormat: ImageFormat.JPEG,
+    quality: 50,
+  );
+
+  return IMG.ImageSizeGetter.getSize(IMG.MemoryInput(imageData));
+}
+
 Brightness getBrightness(BuildContext context) {
-  return AdaptiveTheme.of(context).mode == AdaptiveThemeMode.dark ? Brightness.dark : Brightness.light;
+  return AdaptiveTheme.of(context).mode == AdaptiveThemeMode.dark
+      ? Brightness.dark
+      : Brightness.light;
 }
 
 /// Take the passed [address] or serverAddress from Settings
 /// and sanitize it, making sure it includes an http schema
 String getServerAddress({String address}) {
   String serverAddress = address ?? SettingsManager().settings.serverAddress;
+  if (serverAddress == null) return null;
+
+  String sanitized =
+      serverAddress.replaceAll("https://", "").replaceAll("http://", "").trim();
+  if (sanitized.isEmpty) return null;
 
   // If the serverAddress doesn't start with HTTP, modify it
   if (!serverAddress.startsWith("http")) {
@@ -385,4 +415,29 @@ String dateToShortString(DateTime timestamp) {
   } else {
     return "${timestamp.month.toString()}/${timestamp.day.toString()}/${timestamp.year.toString()}";
   }
+}
+
+Future<String> getDeviceName() async {
+  String deviceName = "android-client";
+
+  try {
+    // Load device info
+    DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
+    AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
+
+    // Gather device info
+    List<String> items = [
+      androidInfo?.brand ?? androidInfo?.manufacturer,
+      androidInfo?.model,
+      androidInfo?.androidId
+    ].where((element) => element != null).toList();
+
+    // Set device name
+    deviceName = items.join("_").toLowerCase();
+  } catch (ex) {
+    debugPrint("Failed to get device name! Defaulting to 'android-client'");
+    debugPrint(ex.toString());
+  }
+
+  return deviceName;
 }

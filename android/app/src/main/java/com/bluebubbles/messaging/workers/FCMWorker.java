@@ -106,8 +106,8 @@ public class FCMWorker extends Worker implements DartWorker {
 
 
     @Override
-    public void destroyHeadlessThread() {
-        if (backgroundView == null) return;
+    public MethodChannel destroyHeadlessThread() {
+        if (backgroundView == null) return null;
         new Handler(Looper.getMainLooper()).post(() -> {
             if (backgroundView != null) {
                 try {
@@ -120,6 +120,7 @@ public class FCMWorker extends Worker implements DartWorker {
                 }
             }
         });
+        return null;
     }
 
 

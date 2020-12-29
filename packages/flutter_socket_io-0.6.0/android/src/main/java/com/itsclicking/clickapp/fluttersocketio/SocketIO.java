@@ -1,20 +1,38 @@
 package com.itsclicking.clickapp.fluttersocketio;
 
+import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 
+import androidx.annotation.RequiresApi;
+
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.File;
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.OpenOption;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
+
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 
 import io.flutter.plugin.common.MethodChannel;
 import io.socket.client.Ack;
@@ -34,7 +52,7 @@ public class SocketIO {
     private String _namespace;
     private String _statusCallback;
     private String _query;
-    private Socket _socket;
+    public Socket _socket;
     private IO.Options mOptions;
     private ConcurrentMap<String, ConcurrentLinkedQueue<SocketListener>> _subscribes;
     private static final ConcurrentHashMap<String, Manager> managers = new ConcurrentHashMap<String, Manager>();
@@ -229,6 +247,92 @@ public class SocketIO {
                     @Override
                     public void call(Object... args) {
                         listener.call(args);
+                    }
+                });
+            }
+        }
+
+    }
+
+    public void sendAndHandle(String event, String message, final String path, final String guidKey, final String callback) {
+
+        if (Utils.isNullOrEmpty(event) || Utils.isNullOrEmpty(message)) {
+            Utils.log("sendMessageWithoutCallback", "Invalid params: event or message is NULL or EMPTY!");
+        } else if (isConnected()) {
+            Utils.log("sendMessageWithoutCallback", "Event: " + event + " - with message: " + message);
+            JSONObject jb = null;
+            try {
+                jb = new JSONObject(message);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            if (jb != null) {
+                Utils.log("sendMessageWithoutCallback", path);
+                final SocketListener listener = new SocketListener(_methodChannel, getId(), event, callback);
+                _socket.emit(event, jb, new Ack() {
+                    @RequiresApi(api = Build.VERSION_CODES.O)
+                    @Override
+                    public void call(Object... args) {
+                        final Object[] array = new Object[1];
+                        if (args[0] == null) return;
+                        final String dataRaw = args[0].toString();
+                        try {
+                            final HashMap<String, String> data = new Gson().fromJson(dataRaw, new TypeToken<HashMap<String, String>>() {
+                            }.getType());
+                            final HashMap<String, Object> response = new HashMap<>();
+                            response.put("status", data.get("status"));
+                            response.put("error", data.get("error"));
+                            if (!data.get("status").equals("200")) {
+                                array[0] = new Gson().toJson(response);
+                                listener.call(array);
+                                return;
+                            }
+                            if (data.containsKey("encrypted") && data.get("encrypted").equals("true")) {
+                                try {
+                                    Utils.log("sendMessageWithoutCallback", Encryption.decrypt(data.get("data"), guidKey));
+                                } catch (NoSuchPaddingException e) {
+                                    e.printStackTrace();
+                                } catch (NoSuchAlgorithmException e) {
+                                    e.printStackTrace();
+                                } catch (InvalidKeyException e) {
+                                    e.printStackTrace();
+                                } catch (BadPaddingException e) {
+                                    e.printStackTrace();
+                                } catch (IllegalBlockSizeException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+
+                            final byte[] decoded = Base64.getDecoder().decode(data.get("data"));
+                            response.put("byteLength", decoded.length);
+                            array[0] = new Gson().toJson(response);
+
+                            Runnable r = new Runnable() {
+                                @Override
+                                public void run() {
+                                    try {
+                                        File outputFile = new File(path);
+                                        Utils.log("sendMessageWithoutCallback", path);
+                                        if (!outputFile.exists()) {
+                                            outputFile.getParentFile().mkdirs();
+                                            outputFile.createNewFile();
+                                        }
+                                        Files.write(Paths.get(path), decoded, StandardOpenOption.APPEND);
+
+                                        listener.call(array);
+                                    } catch (IOException e) {
+                                        e.printStackTrace();
+                                        response.put("error", e.getMessage());
+                                        listener.call(array);
+                                    }
+                                }
+                            };
+
+                            Thread t = new Thread(r);
+                            t.start();
+                        } catch (Exception e) {
+                            listener.call(args);
+                        }
                     }
                 });
             }

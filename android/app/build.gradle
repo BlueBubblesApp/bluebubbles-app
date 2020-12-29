@@ -44,11 +44,11 @@ android {
         applicationId "com.bluebubbles.messaging"
         minSdkVersion 21
         targetSdkVersion 29
-        //                 v0.1.12        hotfix version (0-9)      armv7 OR arm64
-        // version code: 1  0112                    1                70      64
+        //                 v0.1.13        hotfix version (0-9)      armv7 OR arm64
+        // version code: 1  0113                    0                70      64
 
         //noinspection AccidentalOctal
-        versionCode 10112270
+        versionCode 10113070
         versionName flutterVersionName
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
@@ -94,12 +94,16 @@ flutter {
 }
 
 dependencies {
+    implementation 'androidx.appcompat:appcompat:1.2.0'
+    implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test:runner:1.1.1'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.1.1'
     implementation 'com.google.firebase:firebase-analytics:17.3.0'
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     implementation 'com.github.judemanutd:autostarter:1.0.8'
+    implementation "androidx.core:core:1.3.2"
+    implementation "androidx.sharetarget:sharetarget:1.0.0"
 
 
     //for notifications

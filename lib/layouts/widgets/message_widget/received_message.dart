@@ -11,7 +11,6 @@ import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/material.dart';
 
 class ReceivedMessage extends StatefulWidget {
-  final double offset;
   final bool showTail;
   final Message message;
   final Message olderMessage;
@@ -37,7 +36,6 @@ class ReceivedMessage extends StatefulWidget {
     @required this.attachmentsWidget,
     @required this.reactionsWidget,
     @required this.urlPreviewWidget,
-    this.offset,
     this.isGroup = false,
   }) : super(key: key);
 
@@ -47,7 +45,6 @@ class ReceivedMessage extends StatefulWidget {
 
 class _ReceivedMessageState extends State<ReceivedMessage>
     with MessageWidgetMixin {
-
   bool checkedHandle = false;
   @override
   initState() {
@@ -87,7 +84,10 @@ class _ReceivedMessageState extends State<ReceivedMessage>
       );
     }
 
-    List<Color> bubbleColors = [Theme.of(context).accentColor, Theme.of(context).accentColor];
+    List<Color> bubbleColors = [
+      Theme.of(context).accentColor,
+      Theme.of(context).accentColor
+    ];
     if (SettingsManager().settings.colorfulBubbles) {
       bubbleColors = toColorGradient(message?.handle?.address);
     }
@@ -95,7 +95,8 @@ class _ReceivedMessageState extends State<ReceivedMessage>
     return Stack(
       alignment: AlignmentDirectional.bottomStart,
       children: [
-        if (widget.showTail) MessageTail(message: message, color: bubbleColors[0]),
+        if (widget.showTail)
+          MessageTail(message: message, color: bubbleColors[0]),
         Container(
           margin: EdgeInsets.only(
             top: widget.message.getReactions().length > 0 &&
@@ -115,9 +116,9 @@ class _ReceivedMessageState extends State<ReceivedMessage>
           ),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
-            gradient:  LinearGradient(
-              begin: AlignmentDirectional.topStart,
-              end: AlignmentDirectional.bottomEnd,
+            gradient: LinearGradient(
+              begin: AlignmentDirectional.bottomCenter,
+              end: AlignmentDirectional.topCenter,
               colors: bubbleColors,
             ),
           ),
@@ -261,7 +262,6 @@ class _ReceivedMessageState extends State<ReceivedMessage>
           ),
           MessageTimeStamp(
             message: widget.message,
-            offset: widget.offset,
           )
         ],
       ),

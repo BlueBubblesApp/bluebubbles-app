@@ -1,13 +1,12 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
-import 'dart:ui';
+import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:sqflite/sqflite.dart';
-import 'package:image_size_getter/image_size_getter.dart' as IMG;
+
 
 import '../database.dart';
 
@@ -23,6 +22,7 @@ String attachmentToJson(Attachment data) {
 
 class Attachment {
   int id;
+  int originalROWID;
   String guid;
   String uti;
   String mimeType;
@@ -35,9 +35,11 @@ class Attachment {
   String blurhash;
   int height;
   int width;
+  Map<String, dynamic> metadata;
 
   Attachment({
     this.id,
+    this.originalROWID,
     this.guid,
     this.uti,
     this.mimeType,
@@ -50,15 +52,38 @@ class Attachment {
     this.blurhash,
     this.height,
     this.width,
+    this.metadata,
   });
+
+  bool get existsOnDisk {
+    File attachment = new File(AttachmentHelper.getAttachmentPath(this));
+    return attachment.existsSync();
+  }
 
   factory Attachment.fromMap(Map<String, dynamic> json) {
     String mimeType = json["mimeType"];
-    if ((json['transferName'] as String).endsWith(".caf")) {
+    if ((json.containsKey("uti") &&
+            json["uti"] == "com.apple.coreaudio_format") ||
+        (json.containsKey("transferName") &&
+            (json['transferName'] ?? "").endsWith(".caf"))) {
       mimeType = "audio/caf";
     }
+
+    // Load the metadata
+    dynamic metadata = json.containsKey("metadata") ? json["metadata"] : null;
+    if (!isNullOrEmpty(metadata)) {
+      // If the metadata is a string, convert it to JSON
+      if (metadata is String) {
+        try {
+          metadata = jsonDecode(metadata);
+        } catch (ex) {}
+      }
+    }
+
     return new Attachment(
       id: json.containsKey("ROWID") ? json["ROWID"] : null,
+      originalROWID:
+          json.containsKey("originalROWID") ? json["originalROWID"] : null,
       guid: json["guid"],
       uti: json["uti"],
       mimeType: mimeType,
@@ -77,6 +102,7 @@ class Attachment {
       blurhash: json.containsKey("blurhash") ? json["blurhash"] : null,
       height: json.containsKey("height") ? json["height"] : 0,
       width: json.containsKey("width") ? json["width"] : 0,
+      metadata: metadata is String ? null : metadata,
     );
   }
 
@@ -117,7 +143,15 @@ class Attachment {
     Map<String, dynamic> params = {
       "width": this.width,
       "height": this.height,
+      // If it's null or empty, save it as null
+      "metadata":
+          (isNullOrEmpty(this.metadata)) ? null : jsonEncode(this.metadata)
     };
+
+    if (this.originalROWID != null) {
+      params["originalROWID"] = this.originalROWID;
+    }
+
     if (this.id != null) {
       await db.update("attachment", params,
           where: "ROWID = ?", whereArgs: [this.id]);
@@ -144,6 +178,9 @@ class Attachment {
     if (params.containsKey("height")) {
       params.remove("height");
     }
+    if (params.containsKey("metadata")) {
+      params.remove("metadata");
+    }
 
     await db.update("attachment", params,
         where: "ROWID = ?", whereArgs: [existing.id]);
@@ -154,6 +191,7 @@ class Attachment {
     newAttachment.id = existing.id;
     newAttachment.width = existing.width;
     newAttachment.height = existing.height;
+    newAttachment.metadata = existing.metadata;
     return newAttachment;
   }
 
@@ -220,30 +258,6 @@ class Attachment {
     return _mimeType;
   }
 
-  Future<Attachment> updateDimensions(Uint8List data) async {
-    if (mimeType == "image/gif") {
-      Size size = getGifDimensions(data);
-
-      if (size.width != 0 && size.height != 0) {
-        width = size.width.toInt();
-        height = size.height.toInt();
-        await update();
-      }
-    } else if (mimeStart == "image" || mimeStart == "video") {
-      IMG.Size size = IMG.ImageSizeGetter.getSize(IMG.MemoryInput(data));
-      if (size.width != 0 && size.height != 0) {
-        width = size.width;
-        height = size.height;
-        await update();
-      }
-    } else {
-      width = null;
-      height = null;
-      await update();
-    }
-    return this;
-  }
-
   static Future<int> countForChat(Chat chat) async {
     final Database db = await DBProvider.db.database;
     if (chat == null || chat.id == null) return 0;
@@ -264,8 +278,16 @@ class Attachment {
     return res[0]["count"];
   }
 
+  String getPath() {
+    String fileName = this.transferName;
+    String appDocPath = SettingsManager().appDocDir.path;
+    String pathName = "$appDocPath/attachments/${this.guid}/$fileName";
+    return pathName;
+  }
+
   Map<String, dynamic> toMap() => {
         "ROWID": id,
+        "originalROWID": originalROWID,
         "guid": guid,
         "uti": uti,
         "mimeType": mimeType,
@@ -278,5 +300,6 @@ class Attachment {
         "blurhash": blurhash,
         "height": height,
         "width": width,
+        "metadata": jsonEncode(metadata),
       };
 }

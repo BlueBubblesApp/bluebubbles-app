@@ -60,9 +60,8 @@ class _ChatSelectorTextFieldState extends State<ChatSelectorTextField> {
                   mainAxisAlignment: MainAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
-                    Text(
-                      contact.displayName.trim(),
-                    ),
+                    Text(contact.displayName.trim(),
+                        style: Theme.of(context).textTheme.bodyText1),
                     SizedBox(
                       width: 5.0,
                     ),
@@ -100,7 +99,7 @@ class _ChatSelectorTextFieldState extends State<ChatSelectorTextField> {
                   duration: Duration(milliseconds: 500),
                 ));
 
-              // This is 4 chars due to invisible character
+                // This is 4 chars due to invisible character
               } else if (widget.controller.text.length >= 4) {
                 widget.onSelected(widget.allContacts[0]);
               }

@@ -12,6 +12,7 @@ import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/outgoing_queue.dart';
 import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:keyboard_attachable/keyboard_attachable.dart';
 
 import '../../repository/models/chat.dart';
@@ -92,7 +93,7 @@ class ConversationViewState extends State<ConversationView>
   @override
   void dispose() {
     if (currentChat != null) {
-      currentChat.disposeAudioControllers();
+      currentChat.disposeControllers();
       currentChat.dispose();
     }
 
@@ -141,72 +142,76 @@ class ConversationViewState extends State<ConversationView>
   @override
   Widget build(BuildContext context) {
     currentChat?.isAlive = true;
-    return Scaffold(
-      backgroundColor: Theme.of(context).backgroundColor,
-      extendBodyBehindAppBar: !isCreator,
-      appBar: !isCreator
-          ? buildConversationViewHeader()
-          : buildChatSelectorHeader(),
-      resizeToAvoidBottomInset: false,
-      body: FooterLayout(
-        footer: KeyboardAttachable(
-          child: widget.onSelect == null
-              ? BlueBubblesTextField(
-                  onSend: send,
-                  isCreator: isCreator,
-                  existingAttachments:
-                      isCreator ? widget.existingAttachments : null,
-                  existingText: isCreator ? widget.existingText : null,
-                )
-              : Container(),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: <Widget>[
-            if (isCreator)
-              ChatSelectorTextField(
-                controller: chatSelectorController,
-                onRemove: (UniqueContact item) {
-                  if (item.isChat) {
-                    selected.removeWhere(
-                        (e) => (e.chat?.guid ?? null) == item.chat.guid);
-                  } else {
-                    selected.removeWhere((e) => e.address == item.address);
-                  }
-                  fetchCurrentChat();
-                  filterContacts();
-                  resetCursor();
-                  if (this.mounted) setState(() {});
-                },
-                onSelected: onSelected,
-                isCreator: widget.isCreator,
-                allContacts: contacts,
-                selectedContacts: selected,
-              ),
-            Expanded(
-              child: (searchQuery.length == 0 || !isCreator) && chat != null
-                  ? MessagesView(
-                      key: new Key(chat?.guid ?? "unknown-chat"),
-                      messageBloc: messageBloc ?? initMessageBloc(),
-                      showHandle: chat.participants.length > 1,
-                      chat: chat,
-                    )
-                  : buildChatSelectorBody(),
-            ),
-          ],
-        ),
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle(
+        systemNavigationBarColor: Theme.of(context).backgroundColor,
       ),
-      floatingActionButton: widget.onSelect != null
-          ? FloatingActionButton(
-              onPressed: () => widget.onSelect(selected),
-              child: widget.selectIcon ??
-                  Icon(
-                    Icons.check,
-                    color: Theme.of(context).textTheme.bodyText1.color,
-                  ),
-              backgroundColor: Theme.of(context).primaryColor,
-            )
-          : null,
+      child: Scaffold(
+        backgroundColor: Theme.of(context).backgroundColor,
+        extendBodyBehindAppBar: !isCreator,
+        appBar: !isCreator
+            ? buildConversationViewHeader()
+            : buildChatSelectorHeader(),
+        resizeToAvoidBottomInset: false,
+        body: FooterLayout(
+          footer: KeyboardAttachable(
+            child: widget.onSelect == null
+                ? BlueBubblesTextField(
+                    onSend: send,
+                    isCreator: isCreator,
+                    existingAttachments: widget.existingAttachments,
+                    existingText: widget.existingText,
+                  )
+                : Container(),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: <Widget>[
+              if (isCreator)
+                ChatSelectorTextField(
+                  controller: chatSelectorController,
+                  onRemove: (UniqueContact item) {
+                    if (item.isChat) {
+                      selected.removeWhere(
+                          (e) => (e.chat?.guid ?? null) == item.chat.guid);
+                    } else {
+                      selected.removeWhere((e) => e.address == item.address);
+                    }
+                    fetchCurrentChat();
+                    filterContacts();
+                    resetCursor();
+                    if (this.mounted) setState(() {});
+                  },
+                  onSelected: onSelected,
+                  isCreator: widget.isCreator,
+                  allContacts: contacts,
+                  selectedContacts: selected,
+                ),
+              Expanded(
+                child: (searchQuery.length == 0 || !isCreator) && chat != null
+                    ? MessagesView(
+                        key: new Key(chat?.guid ?? "unknown-chat"),
+                        messageBloc: messageBloc ?? initMessageBloc(),
+                        showHandle: chat.participants.length > 1,
+                        chat: chat,
+                      )
+                    : buildChatSelectorBody(),
+              ),
+            ],
+          ),
+        ),
+        floatingActionButton: widget.onSelect != null
+            ? FloatingActionButton(
+                onPressed: () => widget.onSelect(selected),
+                child: widget.selectIcon ??
+                    Icon(
+                      Icons.check,
+                      color: Theme.of(context).textTheme.bodyText1.color,
+                    ),
+                backgroundColor: Theme.of(context).primaryColor,
+              )
+            : null,
+      ),
     );
   }
 }

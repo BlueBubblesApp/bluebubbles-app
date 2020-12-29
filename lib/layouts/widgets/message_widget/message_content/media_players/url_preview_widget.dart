@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -29,8 +30,19 @@ class UrlPreviewWidget extends StatefulWidget {
 class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
     with TickerProviderStateMixin {
   Metadata data;
-  String url;
-  bool isLoading = false;
+  bool currentIsLoading = false;
+  StreamController<bool> loadingStateStream =
+      StreamController<bool>.broadcast();
+
+  bool get isLoading => currentIsLoading;
+  set isLoading(bool value) {
+    if (currentIsLoading == value) return;
+
+    currentIsLoading = value;
+    if (!loadingStateStream.isClosed)
+      loadingStateStream.sink.add(currentIsLoading);
+  }
+
   bool fetchedMissing = false;
 
   @override
@@ -40,9 +52,9 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
   }
 
   @override
-  void didChangeDependencies() async {
-    super.didChangeDependencies();
-    fetchPreview();
+  void dispose() {
+    loadingStateStream.close();
+    super.dispose();
   }
 
   /// Returns a File object representing the [attachment]
@@ -102,14 +114,10 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
     if (data != null || isEmptyString(widget.message.text) || isLoading) return;
 
     // Let the UI know we are loading
-    if (this.mounted) {
-      setState(() {
-        isLoading = true;
-      });
-    }
+    isLoading = true;
 
     // Make sure there is a schema with the URL
-    url = widget.message.text;
+    String url = widget.message.text;
     if (!widget.message.text.toLowerCase().startsWith("http://") &&
         !widget.message.text.toLowerCase().startsWith("https://")) {
       url = "https://" + widget.message.text;
@@ -160,35 +168,40 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
     }
 
     // Let the UI know we are done loading
-    if (this.mounted) {
-      setState(() {
-        isLoading = false;
-      });
-    }
+    isLoading = false;
   }
 
   @override
   Widget build(BuildContext context) {
-    Widget titleWidget = Container();
-    if (data == null && isLoading) {
-      titleWidget = Text("Loading...",
-          style:
-              Theme.of(context).textTheme.bodyText1.apply(fontWeightDelta: 2));
-    } else if (data != null && data.title != null) {
-      titleWidget = Text(
-        data.title,
-        style: Theme.of(context).textTheme.bodyText1.apply(fontWeightDelta: 2),
-        overflow: TextOverflow.ellipsis,
-        maxLines: 2,
-      );
-    }
+    Widget titleWidget = StreamBuilder(
+      stream: loadingStateStream.stream,
+      builder: (context, snapshot) {
+        if (data == null && isLoading) {
+          return Text("Loading...",
+              style: Theme.of(context)
+                  .textTheme
+                  .bodyText1
+                  .apply(fontWeightDelta: 2));
+        } else if (data != null && data.title != null) {
+          return Text(
+            data.title,
+            style:
+                Theme.of(context).textTheme.bodyText1.apply(fontWeightDelta: 2),
+            overflow: TextOverflow.ellipsis,
+            maxLines: 2,
+          );
+        }
+        return Container();
+      },
+    );
 
     // Everytime we build, we want to fetch any missing attachments
     fetchMissingAttachments();
 
     // Build the main image
     Widget mainImage = Container();
-    if (data != null &&
+    if (widget.linkPreviews.length <= 1 &&
+        data != null &&
         data.image != null &&
         data.image.isNotEmpty &&
         !data.image.contains("renderTimingPixel.png") &&
@@ -225,8 +238,10 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
             child: InkResponse(
               borderRadius: BorderRadius.circular(20),
               onTap: () {
-                MethodChannelInterface()
-                    .invokeMethod("open-link", {"link": url});
+                MethodChannelInterface().invokeMethod(
+                  "open-link",
+                  {"link": data?.url ?? widget.message.text},
+                );
               },
               child: Container(
                 width: MediaQuery.of(context).size.width * 2 / 3,
@@ -241,58 +256,61 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
                           Flexible(
-                              fit: FlexFit.tight,
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: <Widget>[
-                                  titleWidget,
-                                  data != null && data.description != null
-                                      ? Padding(
-                                          padding: EdgeInsets.only(top: 5.0),
-                                          child: Text(
-                                            data.description,
-                                            maxLines: 3,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .bodyText1
-                                                .apply(fontSizeDelta: -5),
-                                          ))
-                                      : Container(),
-                                  Padding(
-                                      padding: EdgeInsets.only(
-                                          top: 5.0, bottom: 10.0),
-                                      child: Text(
-                                        widget.message.text
-                                            .replaceAll("https://", "")
-                                            .replaceAll("http://", "")
-                                            .toLowerCase(),
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .subtitle2,
-                                        overflow: TextOverflow.ellipsis,
-                                        maxLines: 1,
-                                      ))
-                                ],
-                              )),
+                            fit: FlexFit.tight,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: <Widget>[
+                                titleWidget,
+                                data != null && data.description != null
+                                    ? Padding(
+                                        padding: EdgeInsets.only(top: 5.0),
+                                        child: Text(
+                                          data.description,
+                                          maxLines: 3,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodyText1
+                                              .apply(fontSizeDelta: -5),
+                                        ))
+                                    : Container(),
+                                Padding(
+                                  padding:
+                                      EdgeInsets.only(top: 5.0, bottom: 10.0),
+                                  child: Text(
+                                    widget.message.text
+                                        .replaceAll("https://", "")
+                                        .replaceAll("http://", "")
+                                        .toLowerCase(),
+                                    style:
+                                        Theme.of(context).textTheme.subtitle2,
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 1,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                           (widget.linkPreviews.length == 1 &&
+                                  data?.image == null &&
                                   AttachmentHelper.attachmentExists(
                                       widget.linkPreviews.last))
                               ? Padding(
                                   padding:
                                       EdgeInsets.only(left: 10.0, bottom: 10.0),
                                   child: ClipRRect(
-                                      borderRadius: BorderRadius.circular(10.0),
-                                      child: Image.file(
-                                        attachmentFile(
-                                            widget.linkPreviews.first),
-                                        width: 40,
-                                        fit: BoxFit.contain,
-                                        errorBuilder: (BuildContext contenxt,
-                                            Object test, StackTrace trace) {
-                                          return Container();
-                                        },
-                                      )))
+                                    borderRadius: BorderRadius.circular(10.0),
+                                    child: Image.file(
+                                      attachmentFile(widget.linkPreviews.first),
+                                      width: 40,
+                                      fit: BoxFit.contain,
+                                      errorBuilder: (BuildContext contenxt,
+                                          Object test, StackTrace trace) {
+                                        return Container();
+                                      },
+                                    ),
+                                  ),
+                                )
                               : Container()
                         ],
                       ),

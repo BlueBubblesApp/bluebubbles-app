@@ -1,9 +1,13 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/attachment_info_bloc.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
+import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
+import 'package:bluebubbles/managers/notification_manager.dart';
+import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/material.dart';
 
 import '../repository/models/handle.dart';
@@ -136,6 +140,49 @@ class ChatBloc {
 
     // Update the sink so all listeners get the new chat list
     await this.addToSink(_chats);
+
+    await updateShareTarget(chat);
+  }
+
+  Future<void> updateAllShareTargets() async {
+    List<Chat> chats = _chats.sublist(0);
+    chats.sort(Chat.sort);
+
+    for (int i = 0; i < 4; i++) {
+      if (i >= chats.length) break;
+      await updateShareTarget(chats[i]);
+    }
+  }
+
+  Future<void> updateShareTarget(Chat chat) async {
+    Uint8List icon;
+    Contact contact = chat.participants.length == 1
+        ? await ContactManager()
+            .getCachedContact(chat.participants.first.address)
+        : null;
+    try {
+      // If there is a contact specified, we can use it's avatar
+      if (contact != null && contact.avatar.isNotEmpty) {
+        icon = contact.avatar;
+        // Otherwise if there isn't, we use the [defaultAvatar]
+      } else {
+        // If [defaultAvatar] is not loaded, load it from assets
+        if (NotificationManager().defaultAvatar == null) {
+          ByteData file = await loadAsset("assets/images/person.png");
+          NotificationManager().defaultAvatar = file.buffer.asUint8List();
+        }
+
+        icon = NotificationManager().defaultAvatar;
+      }
+    } catch (ex) {
+      debugPrint("Failed to load contact avatar: ${ex.toString()}");
+    }
+
+    await MethodChannelInterface().invokeMethod("push-share-targets", {
+      "title": chat.title,
+      "guid": chat.guid,
+      "icon": icon,
+    });
   }
 
   Future<void> handleMessageAction(NewMessageEvent event) async {
@@ -185,7 +232,11 @@ class ChatBloc {
       if (_chats.length > len) {
         await this.addToSink(_chats);
         recursiveGetChats();
+      } else {
+        await updateAllShareTargets();
       }
+    } else {
+      await updateAllShareTargets();
     }
   }
 

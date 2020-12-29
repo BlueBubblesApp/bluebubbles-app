@@ -156,7 +156,10 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
               Text("Review your audio snippet before sending it",
                   style: Theme.of(context).textTheme.subtitle1),
               Container(height: 10.0),
-              AudioPlayerWiget(file: file, context: originalContext)
+              AudioPlayerWiget(
+                  key: new Key("AudioMessage-${file.length().toString()}"),
+                  file: file,
+                  context: originalContext)
             ],
           ),
           actions: <Widget>[
@@ -164,7 +167,15 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                 child: new Text("Discard",
                     style: Theme.of(context).textTheme.subtitle1),
                 onPressed: () {
+                  // Dispose of the audio controller
+                  CurrentChat.of(originalContext)
+                      ?.audioPlayers
+                      ?.removeWhere((key, _) => key == file.path);
+
+                  // Delete the file
                   file.delete();
+
+                  // REmove the OG alert dialog
                   Navigator.of(context).pop();
                 }),
             new FlatButton(
@@ -173,18 +184,12 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                 style: Theme.of(context).textTheme.bodyText1,
               ),
               onPressed: () async {
-                // if (widget.chat == null) return;
-                // OutgoingQueue().add(
-                //   new QueueItem(
-                //     event: "send-attachment",
-                //     item: new AttachmentSender(
-                //       file,
-                //       widget.chat,
-                //       "",
-                //     ),
-                //   ),
-                // );
                 widget.onSend([file], "");
+
+                // Disposte of the audio controller
+                CurrentChat.of(originalContext)
+                    ?.audioPlayers
+                    ?.removeWhere((key, _) => key == file.path);
 
                 // Remove the OG alert dialog
                 Navigator.of(originalContext).pop();
@@ -230,26 +235,41 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
     return file;
   }
 
+  Future<bool> _onWillPop() async {
+    if (showImagePicker) {
+      if (this.mounted) {
+        setState(() {
+          showImagePicker = false;
+        });
+      }
+      return false;
+    }
+
+    return true;
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.max,
-      children: [
-        Expanded(
-          child: Container(
-            padding: EdgeInsets.all(5),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                buildAttachmentList(),
-                buildTextFieldAlwaysVisible(),
-                buildAttachmentPicker(),
-              ],
+    return new WillPopScope(
+        onWillPop: _onWillPop,
+        child: Row(
+          mainAxisSize: MainAxisSize.max,
+          children: [
+            Expanded(
+              child: Container(
+                padding: EdgeInsets.all(5),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    buildAttachmentList(),
+                    buildTextFieldAlwaysVisible(),
+                    buildAttachmentPicker(),
+                  ],
+                ),
+              ),
             ),
-          ),
-        ),
-      ],
-    );
+          ],
+        ));
   }
 
   Widget buildAttachmentList() => Padding(
@@ -259,6 +279,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
           onRemove: (File attachment) {
             pickedImages
                 .removeWhere((element) => element.path == attachment.path);
+            updateTextFieldAttachments();
             if (this.mounted) setState(() {});
           },
         ),
@@ -507,6 +528,10 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
   Widget buildAttachmentPicker() => TextFieldAttachmentPicker(
         visible: showImagePicker,
         onAddAttachment: (File file) {
+          if (file == null) return;
+          bool exists = file.existsSync();
+          if (!exists) return;
+
           for (File image in pickedImages) {
             if (image.path == file.path) {
               pickedImages.removeWhere((element) => element.path == file.path);
@@ -515,6 +540,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
               return;
             }
           }
+
           pickedImages.add(file);
           updateTextFieldAttachments();
           if (this.mounted) setState(() {});

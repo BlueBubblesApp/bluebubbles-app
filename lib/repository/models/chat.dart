@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:async';
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
@@ -7,6 +8,7 @@ import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/socket_manager.dart';
+import 'package:flutter/widgets.dart';
 import 'package:intl/intl.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -41,7 +43,11 @@ Future<String> getFullChatTitle(Chat _chat) async {
       String name =
           await ContactManager().getContactTitle(chat.participants[i].address);
 
-      if (chat.participants.length > 1 && !name.startsWith('+1')) {
+      String test = name.replaceAll(RegExp(r'[-() \.]'), '');
+      test = test.replaceAll(RegExp(r'[^0-9]'), "").trim();
+      bool isNumber = test.length > 0;
+
+      if (chat.participants.length > 1 && !isNumber) {
         name = name.trim().split(" ")[0];
       } else {
         name = name.trim();
@@ -83,6 +89,7 @@ Future<String> getShortChatTitle(Chat _chat) async {
 
 class Chat {
   int id;
+  int originalROWID;
   String guid;
   int style;
   String chatIdentifier;
@@ -99,6 +106,7 @@ class Chat {
 
   Chat({
     this.id,
+    this.originalROWID,
     this.guid,
     this.style,
     this.chatIdentifier,
@@ -122,6 +130,8 @@ class Chat {
     }
     return new Chat(
       id: json.containsKey("ROWID") ? json["ROWID"] : null,
+      originalROWID:
+          json.containsKey("originalROWID") ? json["originalROWID"] : null,
       guid: json["guid"],
       style: json['style'],
       chatIdentifier:
@@ -235,6 +245,10 @@ class Chat {
       "isFiltered": this.isFiltered ? 1 : 0
     };
 
+    if (this.originalROWID != null) {
+      params["originalROWID"] = this.originalROWID;
+    }
+
     // Only update the latestMessage info if it's not null
     if (this.latestMessageDate != null) {
       params["latestMessageText"] = this.latestMessageText;
@@ -299,24 +313,26 @@ class Chat {
   }
 
   Future<Chat> addMessage(Message message,
-      {bool changeUnreadStatus: true}) async {
+      {bool changeUnreadStatus: true, bool checkForMessageText = true}) async {
     final Database db = await DBProvider.db.database;
 
     // Save the message
     Message existing = await Message.findOne({"guid": message.guid});
-
     Message newMessage;
 
     try {
       newMessage = await message.save();
     } catch (ex) {
       newMessage = await Message.findOne({"guid": message.guid});
+      if (newMessage == null) {
+        debugPrint(ex.toString());
+      }
     }
     bool isNewer = false;
 
     // If the message was saved correctly, update this chat's latestMessage info,
     // but only if the incoming message's date is newer
-    if (newMessage.id != null) {
+    if (newMessage.id != null && checkForMessageText) {
       if (this.latestMessageDate == null) {
         isNewer = true;
       } else if (this.latestMessageDate.millisecondsSinceEpoch <
@@ -325,7 +341,7 @@ class Chat {
       }
     }
 
-    if (isNewer) {
+    if (isNewer && checkForMessageText) {
       this.latestMessageText = await MessageHelper.getNotificationText(message);
       this.latestMessageDate = message.dateCreated;
     }
@@ -349,7 +365,10 @@ class Chat {
     }
 
     // If the incoming message was newer than the "last" one, set the unread status accordingly
-    if (changeUnreadStatus && isNewer && existing == null) {
+    if (checkForMessageText &&
+        changeUnreadStatus &&
+        isNewer &&
+        existing == null) {
       // If the message is from me, mark it unread
       // If the message is not from the same chat as the current chat, mark unread
       if (message.isFromMe) {
@@ -359,12 +378,14 @@ class Chat {
       }
     }
 
-    // Update the chat position
-    ChatBloc().updateChatPosition(this);
+    if (checkForMessageText) {
+      // Update the chat position
+      ChatBloc().updateChatPosition(this);
+    }
 
     // If the message is for adding or removing participants,
     // we need to ensure that all of the chat participants are correct by syncing with the server
-    if (isParticipantEvent(message)) {
+    if (isParticipantEvent(message) && checkForMessageText) {
       serverSyncParticipants();
     }
 
@@ -426,12 +447,14 @@ class Chat {
 
     String query = ("SELECT"
         " attachment.ROWID AS ROWID,"
+        " attachment.originalROWID AS originalROWID,"
         " attachment.guid AS guid,"
         " attachment.uti AS uti,"
         " attachment.mimeType AS mimeType,"
         " attachment.totalBytes AS totalBytes,"
         " attachment.transferName AS transferName,"
-        " attachment.blurhash AS blurhash"
+        " attachment.blurhash AS blurhash,"
+        " attachment.metadata AS metadata"
         " FROM attachment"
         " JOIN attachment_message_join AS amj ON amj.attachmentId = attachment.ROWID"
         " JOIN message ON amj.messageId = message.ROWID"
@@ -460,6 +483,53 @@ class Chat {
     return attachments;
   }
 
+  static Map<String, Completer<List<Message>>> _getMessagesRequests = {};
+  static Future<List<Message>> getMessagesSingleton(Chat chat,
+      {bool reactionsOnly = false,
+      int offset = 0,
+      int limit = 25,
+      bool includeDeleted: false}) async {
+    String req = "${chat.guid}-$offset-$limit-$reactionsOnly-$includeDeleted";
+
+    // If a current request is in progress, return that future
+    if (_getMessagesRequests.containsKey(req) &&
+        !_getMessagesRequests[req].isCompleted)
+      return _getMessagesRequests[req].future;
+
+    _getMessagesRequests[req] = new Completer();
+
+    try {
+      List<Message> messages = await Chat.getMessages(chat,
+          reactionsOnly: reactionsOnly,
+          offset: offset,
+          limit: limit,
+          includeDeleted: includeDeleted);
+
+      if (_getMessagesRequests.containsKey(req) &&
+          !_getMessagesRequests[req].isCompleted)
+        _getMessagesRequests[req].complete(messages);
+    } catch (ex) {
+      print(ex);
+
+      if (_getMessagesRequests.containsKey(req) &&
+          !_getMessagesRequests[req].isCompleted)
+        _getMessagesRequests[req].completeError(ex);
+    }
+
+    // Remove the request from the "cache" after 10 seconds
+    Future.delayed(new Duration(seconds: 10), () {
+      if (_getMessagesRequests.containsKey(req)) {
+        _getMessagesRequests.remove(req);
+      }
+    });
+
+    if (_getMessagesRequests.containsKey(req)) {
+      return _getMessagesRequests[req].future;
+    } else {
+      return [];
+    }
+  }
+
   static Future<List<Message>> getMessages(Chat chat,
       {bool reactionsOnly = false,
       int offset = 0,
@@ -474,6 +544,7 @@ class Chat {
         " message.originalROWID AS originalROWID,"
         " message.guid AS guid,"
         " message.handleId AS handleId,"
+        " message.otherHandle AS otherHandle,"
         " message.text AS text,"
         " message.subject AS subject,"
         " message.country AS country,"
@@ -504,14 +575,13 @@ class Chat {
         " message.hasReactions AS hasReactions,"
         " message.hasDdResults AS hasDdResults,"
         " handle.ROWID AS handleId,"
+        " handle.originalROWID AS handleOriginalROWID,"
         " handle.address AS handleAddress,"
         " handle.country AS handleCountry,"
         " handle.uncanonicalizedId AS handleUncanonicalizedId"
         " FROM message"
         " JOIN chat_message_join AS cmj ON message.ROWID = cmj.messageId"
         " JOIN chat ON cmj.chatId = chat.ROWID"
-        // " LEFT JOIN attachment_message_join ON attachment_message_join.messageId = message.ROWID "
-        // " LEFT JOIN attachment ON attachment.ROWID = attachment_message_join.attachmentId"
         " LEFT OUTER JOIN handle ON handle.ROWID = message.handleId"
         " WHERE chat.ROWID = ?");
 
@@ -542,6 +612,7 @@ class Chat {
           res[i]['handleAddress'] != null) {
         msg.handle = Handle.fromMap({
           'id': res[i]['handleId'],
+          'originalROWID': res[i]['handleOriginalROWID'],
           'address': res[i]['handleAddress'],
           'country': res[i]['handleCountry'],
           'uncanonicalizedId': res[i]['handleUncanonicalizedId']
@@ -564,6 +635,7 @@ class Chat {
           res2[i]['handleAddress'] != null) {
         msg.handle = Handle.fromMap({
           'id': res2[i]['handleId'],
+          'originalROWID': res2[i]['handleOriginalROWID'],
           'address': res2[i]['handleAddress'],
           'country': res2[i]['handleCountry'],
           'uncanonicalizedId': res2[i]['handleUncanonicalizedId']
@@ -587,6 +659,7 @@ class Chat {
     var res = await db.rawQuery(
         "SELECT"
         " handle.ROWID AS ROWID,"
+        " handle.originalROWID as originalROWID,"
         " handle.address AS address,"
         " handle.country AS country,"
         " handle.uncanonicalizedId AS uncanonicalizedId"
@@ -650,9 +723,8 @@ class Chat {
     if (this.id == null) return this;
 
     this.isPinned = true;
-    await db.update("chat", {
-      "isPinned": 1
-    }, where: "ROWID = ?", whereArgs: [this.id]);
+    await db.update("chat", {"isPinned": 1},
+        where: "ROWID = ?", whereArgs: [this.id]);
 
     ChatBloc()?.updateChat(this);
     return this;
@@ -663,9 +735,8 @@ class Chat {
     if (this.id == null) return this;
 
     this.isPinned = false;
-    await db.update("chat", {
-      "isPinned": 0
-    }, where: "ROWID = ?", whereArgs: [this.id]);
+    await db.update("chat", {"isPinned": 0},
+        where: "ROWID = ?", whereArgs: [this.id]);
 
     ChatBloc()?.updateChat(this);
     return this;
@@ -715,6 +786,7 @@ class Chat {
     var res = await db.rawQuery(
         "SELECT"
         " chat.ROWID as ROWID,"
+        " chat.originalROWID as originalROWID,"
         " chat.guid as guid,"
         " chat.style as style,"
         " chat.chatIdentifier as chatIdentifier,"
@@ -744,6 +816,30 @@ class Chat {
     return this.participants.length > 1;
   }
 
+  Future<void> clearTranscript() async {
+    final Database db = await DBProvider.db.database;
+    await db.rawQuery(
+        "UPDATE message "
+        "SET dateDeleted = ${DateTime.now().toUtc().millisecondsSinceEpoch} "
+        "WHERE ROWID IN ("
+        "    SELECT m.ROWID "
+        "    FROM message m"
+        "    INNER JOIN chat_message_join cmj ON cmj.messageId = m.ROWID "
+        "    INNER JOIN chat c ON cmj.chatId = c.ROWID "
+        "    WHERE c.guid = ?"
+        ");",
+        [this.guid]);
+  }
+
+  static int sort(Chat a, Chat b) {
+    if (!a.isPinned && b.isPinned) return 1;
+    if (a.isPinned && !b.isPinned) return -1;
+    if (a.latestMessageDate == null && b.latestMessageDate == null) return 0;
+    if (a.latestMessageDate == null) return 1;
+    if (b.latestMessageDate == null) return -1;
+    return -a.latestMessageDate.compareTo(b.latestMessageDate);
+  }
+
   static flush() async {
     final Database db = await DBProvider.db.database;
     await db.delete("chat");
@@ -751,6 +847,7 @@ class Chat {
 
   Map<String, dynamic> toMap() => {
         "ROWID": id,
+        "originalROWID": originalROWID,
         "guid": guid,
         "style": style,
         "chatIdentifier": chatIdentifier,
