@@ -90,18 +90,32 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
 
     for (dom.Element i in document.head?.children ?? []) {
       if (i.localName != "meta") continue;
-      i.attributes.forEach((dynamic name, String value) {
-        String prop = name as String;
-        if (prop != "property" && prop != "name") return;
+      for (var entry in i.attributes.entries) {
+        String prop = entry.key as String;
+        String value = entry.value;
+        if (prop != "property" && prop != "name") continue;
+
         if (value.contains("title")) {
           meta.title = i.attributes["content"];
         } else if (value.contains("description")) {
           meta.description = i.attributes["content"];
+        } else if (value == "og:image") {
+          meta.image = i.attributes["content"];
         }
-      });
+      }
     }
 
     return meta;
+  }
+
+  String reformatUrl(String url) {
+    if (url.contains('youtube.com/watch?v=') || url.contains("youtu.be/")) {
+      return "https://www.youtube.com/oembed?url=$url";
+    } else if (url.contains("twitter.com") && url.contains("/status/")) {
+      return "https://publish.twitter.com/oembed?url=$url";
+    } else {
+      return url;
+    }
   }
 
   Future<void> fetchPreview() async {
@@ -123,10 +137,12 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
       url = "https://" + widget.message.text;
     }
 
+    String newUrl = reformatUrl(url);
+
     // Handle specific cases
-    if (url.contains('youtube.com/watch?v=') || url.contains("youtu.be/")) {
+    bool alreadyManual = false;
+    if (newUrl.contains('https://www.youtube.com/oembed')) {
       // Manually request this URL
-      String newUrl = "https://www.youtube.com/oembed?url=$url";
       var response = await http.get(newUrl);
 
       // Manually load it into a metadata object via JSON
@@ -134,9 +150,8 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
 
       // Set the URL to the original URL
       data.url = url;
-    } else if (url.contains("twitter.com") && url.contains("/status/")) {
+    } else if (newUrl.contains("https://publish.twitter.com/oembed")) {
       // Manually request this URL
-      String newUrl = "https://publish.twitter.com/oembed?url=$url";
       var response = await http.get(newUrl);
 
       // Manually load it into a metadata object via JSON
@@ -149,17 +164,52 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
 
       // Set the URL to the original URL
       data.url = url;
+    } else if (url.contains("redd.it/")) {
+      var response = await http.get(url);
+      var document = responseToDocument(response);
+
+      // Since this is a short-URL, we need to get the actual URL out
+      String href;
+      for (dom.Element i in document.head?.children ?? []) {
+        // Skip over all links
+        if (i.localName != "link") continue;
+
+        // Find an href and save it
+        for (var entry in i.attributes.entries) {
+          String prop = entry.key as String;
+          if (prop != "href" ||
+              entry.value.contains("amp.") ||
+              !entry.value.contains("reddit.com")) continue;
+          href = entry.value;
+          break;
+        }
+
+        // If we have an href, break out
+        if (href != null) break;
+      }
+
+      if (href != null) {
+        data = await this.manuallyGetMetadata(href);
+        alreadyManual = true;
+      }
     } else if (url.contains("linkedin.com/posts/")) {
       data = await this.manuallyGetMetadata(url);
       data.url = url;
+      alreadyManual = true;
     } else {
       data = await extract(url);
     }
 
     // If the data or title was null, try to manually parse
-    if (isNullOrEmpty(data?.title)) {
+    if (!alreadyManual && isNullOrEmpty(data?.title)) {
       data = await this.manuallyGetMetadata(url);
       data.url = url;
+    }
+
+    String imageData = data?.image ?? "";
+    if (imageData.contains("renderTimingPixel.png") ||
+        imageData.contains("fls-na.amazon.com")) {
+      data?.image = null;
     }
 
     // Save the metadata
@@ -167,8 +217,25 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
       CurrentChat.of(context).urlPreviews[widget.message.text] = data;
     }
 
-    // Let the UI know we are done loading
+    // We are done loading
     isLoading = false;
+    bool didSetState = false;
+
+    // Only update the state if we have more information
+    if (data?.title != null ||
+        data?.description != null ||
+        (widget.linkPreviews.length <= 1 && data?.image != null)) {
+      if (this.mounted) {
+        didSetState = true;
+        setState(() {});
+      }
+    }
+
+    // If we never updated the state due to the preview metadata change,
+    // Update the state because of the isLoading toggle
+    if (!didSetState && this.mounted) {
+      setState(() {});
+    }
   }
 
   @override
@@ -177,7 +244,7 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
       stream: loadingStateStream.stream,
       builder: (context, snapshot) {
         if (data == null && isLoading) {
-          return Text("Loading...",
+          return Text("Loading Preview...",
               style: Theme.of(context)
                   .textTheme
                   .bodyText1
@@ -190,8 +257,13 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
             overflow: TextOverflow.ellipsis,
             maxLines: 2,
           );
+        } else {
+          return Text("Unable to Load Preview",
+              style: Theme.of(context)
+                  .textTheme
+                  .bodyText1
+                  .apply(fontWeightDelta: 2));
         }
-        return Container();
       },
     );
 
@@ -201,11 +273,8 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
     // Build the main image
     Widget mainImage = Container();
     if (widget.linkPreviews.length <= 1 &&
-        data != null &&
-        data.image != null &&
-        data.image.isNotEmpty &&
-        !data.image.contains("renderTimingPixel.png") &&
-        !data.image.contains("fls-na.amazon.com")) {
+        data?.image != null &&
+        data.image.isNotEmpty) {
       mainImage = Image.network(data.image,
           filterQuality: FilterQuality.low,
           errorBuilder: (context, error, stackTrace) => Container());
