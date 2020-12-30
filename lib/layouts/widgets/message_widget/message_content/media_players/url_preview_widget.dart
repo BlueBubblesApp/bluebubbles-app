@@ -170,7 +170,7 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
 
       // Since this is a short-URL, we need to get the actual URL out
       String href;
-      for (dom.Element i in document.head?.children ?? []) {
+      for (dom.Element i in document?.head?.children ?? []) {
         // Skip over all links
         if (i.localName != "link") continue;
 
