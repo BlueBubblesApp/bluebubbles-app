@@ -4,6 +4,7 @@ import 'dart:ui';
 
 import 'package:bluebubbles/blocs/text_field_bloc.dart';
 import 'package:bluebubbles/helpers/contstants.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/text_field/attachments/list/text_field_attachment_list.dart';
 import 'package:bluebubbles/layouts/conversation_view/text_field/attachments/picker/text_field_attachment_picker.dart';
 import 'package:bluebubbles/layouts/widgets/CustomCupertinoTextField.dart';
@@ -381,7 +382,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                       });
                     }
                   },
-                  //onContentCommited: onContentCommit,
+                  onContentCommited: onContentCommit,
                   textCapitalization: TextCapitalization.sentences,
                   focusNode: focusNode,
                   autocorrect: true,
@@ -428,7 +429,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                             : Colors.white,
                         fontSizeDelta: -0.25,
                       ),
-                  //onContentCommited: onContentCommit,
+                  onContentCommited: onContentCommit,
                   decoration: InputDecoration(
                     isDense: true,
                     enabledBorder: OutlineInputBorder(

@@ -1,15 +1,14 @@
 import 'dart:ui';
 
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
+import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:bluebubbles/helpers/contstants.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:flutter/material.dart';
 
 class UXPanel extends StatefulWidget {
   UXPanel({Key key}) : super(key: key);

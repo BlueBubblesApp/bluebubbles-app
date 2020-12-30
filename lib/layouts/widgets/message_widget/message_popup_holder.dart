@@ -1,5 +1,7 @@
+import 'package:bluebubbles/helpers/contstants.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_details_popup.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
