@@ -233,15 +233,6 @@ class _AboutPanelState extends State<AboutPanel> {
                                   alignment: Alignment.center,
                                   padding: EdgeInsets.all(8),
                                   child: Text(
-                                    "Brandon",
-                                    style:
-                                        Theme.of(context).textTheme.bodyText1,
-                                  ),
-                                ),
-                                Container(
-                                  alignment: Alignment.center,
-                                  padding: EdgeInsets.all(8),
-                                  child: Text(
                                     "Maxwell",
                                     style:
                                         Theme.of(context).textTheme.bodyText1,

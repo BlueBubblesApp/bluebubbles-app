@@ -191,9 +191,8 @@ class ConversationViewState extends State<ConversationView>
                 ? BlueBubblesTextField(
                     onSend: send,
                     isCreator: isCreator,
-                    existingAttachments:
-                        isCreator ? widget.existingAttachments : null,
-                    existingText: isCreator ? widget.existingText : null,
+                    existingAttachments: widget.existingAttachments,
+                    existingText: widget.existingText,
                   )
                 : Container(),
           ),

@@ -274,62 +274,65 @@ public class SocketIO {
                     @Override
                     public void call(Object... args) {
                         final Object[] array = new Object[1];
-                        if(args[0] == null) return;
-                        final String dataRaw =  args[0].toString();
-                        final HashMap<String, String> data = new Gson().fromJson(dataRaw, new TypeToken<HashMap<String, String>>(){}.getType());
-                        final HashMap<String, Object> response = new HashMap<>();
-                        response.put("status", data.get("status"));
-                        response.put("error", data.get("error"));
-                        if(!data.get("status").equals("200"))  {
-                            array[0] = new Gson().toJson(response);
-                            listener.call(array);
-                            return;
-                        }
-                        if(data.containsKey("encrypted") && data.get("encrypted").equals("true")) {
-                            try {
-                                Utils.log("sendMessageWithoutCallback", Encryption.decrypt(data.get("data"), guidKey));
-                            } catch (NoSuchPaddingException e) {
-                                e.printStackTrace();
-                            } catch (NoSuchAlgorithmException e) {
-                                e.printStackTrace();
-                            } catch (InvalidKeyException e) {
-                                e.printStackTrace();
-                            } catch (BadPaddingException e) {
-                                e.printStackTrace();
-                            } catch (IllegalBlockSizeException e) {
-                                e.printStackTrace();
+                        if (args[0] == null) return;
+                        final String dataRaw = args[0].toString();
+                        try {
+                            final HashMap<String, String> data = new Gson().fromJson(dataRaw, new TypeToken<HashMap<String, String>>() {
+                            }.getType());
+                            final HashMap<String, Object> response = new HashMap<>();
+                            response.put("status", data.get("status"));
+                            response.put("error", data.get("error"));
+                            if (!data.get("status").equals("200")) {
+                                array[0] = new Gson().toJson(response);
+                                listener.call(array);
+                                return;
                             }
-                        }
-
-                        final byte[] decoded = Base64.getDecoder().decode(data.get("data"));
-                        response.put("byteLength", decoded.length);
-                        array[0] = new Gson().toJson(response);
-
-                        Runnable r = new Runnable()
-                        {
-                            @Override
-                            public void run()
-                            {
+                            if (data.containsKey("encrypted") && data.get("encrypted").equals("true")) {
                                 try {
-                                    File outputFile = new File(path);
-                                    Utils.log("sendMessageWithoutCallback", path);
-                                    if(!outputFile.exists()) {
-                                        outputFile.getParentFile().mkdirs();
-                                        outputFile.createNewFile();
-                                    }
-                                    Files.write(Paths.get(path), decoded, StandardOpenOption.APPEND);
-
-                                    listener.call(array);
-                                } catch (IOException e) {
+                                    Utils.log("sendMessageWithoutCallback", Encryption.decrypt(data.get("data"), guidKey));
+                                } catch (NoSuchPaddingException e) {
                                     e.printStackTrace();
-                                    response.put("error", e.getMessage());
-                                    listener.call(array);
+                                } catch (NoSuchAlgorithmException e) {
+                                    e.printStackTrace();
+                                } catch (InvalidKeyException e) {
+                                    e.printStackTrace();
+                                } catch (BadPaddingException e) {
+                                    e.printStackTrace();
+                                } catch (IllegalBlockSizeException e) {
+                                    e.printStackTrace();
                                 }
                             }
-                        };
 
-                        Thread t = new Thread(r);
-                        t.start();
+                            final byte[] decoded = Base64.getDecoder().decode(data.get("data"));
+                            response.put("byteLength", decoded.length);
+                            array[0] = new Gson().toJson(response);
+
+                            Runnable r = new Runnable() {
+                                @Override
+                                public void run() {
+                                    try {
+                                        File outputFile = new File(path);
+                                        Utils.log("sendMessageWithoutCallback", path);
+                                        if (!outputFile.exists()) {
+                                            outputFile.getParentFile().mkdirs();
+                                            outputFile.createNewFile();
+                                        }
+                                        Files.write(Paths.get(path), decoded, StandardOpenOption.APPEND);
+
+                                        listener.call(array);
+                                    } catch (IOException e) {
+                                        e.printStackTrace();
+                                        response.put("error", e.getMessage());
+                                        listener.call(array);
+                                    }
+                                }
+                            };
+
+                            Thread t = new Thread(r);
+                            t.start();
+                        } catch (Exception e) {
+                            listener.call(args);
+                        }
                     }
                 });
             }

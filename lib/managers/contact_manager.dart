@@ -174,7 +174,7 @@ class ContactManager {
       return contact.displayName;
     String contactTitle = address;
     if (contactTitle == address && !contactTitle.contains("@")) {
-      return formatPhoneNumber(contactTitle);
+      return await formatPhoneNumber(contactTitle);
     }
     return contactTitle;
   }

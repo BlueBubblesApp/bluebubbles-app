@@ -228,13 +228,14 @@ class MessageHelper {
       title,
       notification,
       chat.guid,
+      chat,
       Random().nextInt(9998) + 1,
       chat.id,
       message.dateCreated.millisecondsSinceEpoch,
       contactTitle,
       chat.participants.length > 1,
-      handle: message.handle,
-      contact: contact,
+      message.handle,
+      contact,
     );
   }
 
@@ -297,7 +298,7 @@ class MessageHelper {
       // It's a reaction message, get the "sender"
       String sender = (message.isFromMe)
           ? "You"
-          : formatPhoneNumber(message.handle.address);
+          : await formatPhoneNumber(message.handle.address);
       if (!message.isFromMe && message.handle != null) {
         Contact contact =
             await ContactManager().getCachedContact(message.handle.address);

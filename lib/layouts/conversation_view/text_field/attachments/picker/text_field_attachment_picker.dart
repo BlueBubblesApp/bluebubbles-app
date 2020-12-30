@@ -125,7 +125,7 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker>
                               onPressed: () async {
                                 showDialog(
                                   context: context,
-                                  builder: (context) => AlertDialog(
+                                  builder: (buildContext) => AlertDialog(
                                     backgroundColor:
                                         Theme.of(context).accentColor,
                                     title: Text(

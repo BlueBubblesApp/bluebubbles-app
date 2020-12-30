@@ -51,8 +51,18 @@ class AttachmentDownloader {
       if (attachmentResponse['status'] != "200" ||
           (attachmentResponse.containsKey("error") &&
               attachmentResponse["error"] != null)) {
-        cb();
-        _onError(attachmentResponse);
+        File file = new File(attachment.getPath());
+        if (await file.exists()) {
+          await file.delete();
+        }
+
+        // Finish the downloader
+        SocketManager().finishDownloader(attachment.guid);
+        if (_onComplete != null) _onComplete();
+
+        _stream.sink.addError("Error");
+
+        _stream.close();
         return;
       }
 
@@ -95,6 +105,14 @@ class AttachmentDownloader {
       stopwatch.stop();
       debugPrint(
           "Attachment downloaded in ${stopwatch.elapsedMilliseconds} ms");
+
+      try {
+        // Get the dimensions of the attachment
+        await AttachmentHelper.setDimensions(attachment);
+        await attachment.update();
+      } catch (ex) {
+        // So what if it crashes here.... I don't care...
+      }
 
       File file = new File(attachment.getPath());
 

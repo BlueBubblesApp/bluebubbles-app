@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:io';
-
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
@@ -53,6 +52,11 @@ class Attachment {
     this.width,
     this.metadata,
   });
+
+  bool get existsOnDisk {
+    File attachment = new File(AttachmentHelper.getAttachmentPath(this));
+    return attachment.existsSync();
+  }
 
   factory Attachment.fromMap(Map<String, dynamic> json) {
     String mimeType = json["mimeType"];

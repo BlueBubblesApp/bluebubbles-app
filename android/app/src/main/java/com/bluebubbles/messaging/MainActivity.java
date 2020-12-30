@@ -61,18 +61,6 @@ public class MainActivity extends FlutterActivity {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState, @Nullable PersistableBundle persistentState) {
         super.onCreate(savedInstanceState, persistentState);
-//        ShareShortcutManager.publishShareTarget(getApplicationContext());
-
-        ShortcutInfoCompat shortcutInfoCompat = new ShortcutInfoCompat.Builder(getApplicationContext(), "id1")
-                .setShortLabel("Website")
-                .setLongLabel("Open the website")
-                .setIntent(new Intent(Intent.ACTION_VIEW,
-                        Uri.parse("https://bluebubbles.app/")))
-
-                .build();
-
-
-        ShortcutManagerCompat.pushDynamicShortcut(getApplicationContext(), shortcutInfoCompat);
     }
 
 
@@ -107,9 +95,8 @@ public class MainActivity extends FlutterActivity {
                 Log.d("Notifications", "tapped on notification by id " + intent.getExtras().getInt("id"));
                 startingChat = intent.getStringExtra("chatGUID");
 
-
                 new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod("ChatOpen", intent.getExtras().getString("chatGUID"));
-            } else if(type.equals(SocketIssueWarning.TYPE)) {
+            } else if (type.equals(SocketIssueWarning.TYPE)) {
                 new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod("socket-error-open", null);
             }
         }
@@ -143,8 +130,8 @@ public class MainActivity extends FlutterActivity {
                 result.success(null);
             }
             result = null;
-        } else if(requestCode == OPEN_CAMERA) {
-            if(resultCode == RESULT_OK) {
+        } else if (requestCode == OPEN_CAMERA) {
+            if (resultCode == RESULT_OK) {
                 result.success(null);
             } else {
                 Log.d("OPEN_CAMERA", "Something went wrong");
@@ -157,7 +144,13 @@ public class MainActivity extends FlutterActivity {
     void handleSendText(Intent intent) {
         String sharedText = intent.getStringExtra(Intent.EXTRA_TEXT);
         if (sharedText != null) {
-            new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod("shareText", sharedText);
+            HashMap<String, Object> input = new HashMap<>();
+            input.put("text", sharedText);
+            String id = null;
+            if (intent.hasExtra(Intent.EXTRA_SHORTCUT_ID))
+                id = intent.getStringExtra(Intent.EXTRA_SHORTCUT_ID);
+            input.put("id", id);
+            new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod("shareText", input);
         }
     }
 
@@ -174,7 +167,14 @@ public class MainActivity extends FlutterActivity {
                 file.createNewFile();
                 writeBytesFromURI(imageUri, file);
                 images.add(file.getPath());
-                new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod("shareAttachments", images);
+                HashMap<String, Object> input = new HashMap<>();
+                input.put("attachments", images);
+
+                String id = null;
+                if (intent.hasExtra(Intent.EXTRA_SHORTCUT_ID))
+                    id = intent.getStringExtra(Intent.EXTRA_SHORTCUT_ID);
+                input.put("id", id);
+                new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod("shareAttachments", input);
             } catch (Exception e) {
                 Log.d("ShareImage", "FAILURE");
                 e.printStackTrace();
@@ -247,7 +247,14 @@ public class MainActivity extends FlutterActivity {
                 }
             }
             Log.d("share", images.toString());
-            new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod("shareAttachments", images);
+            HashMap<String, Object> input = new HashMap<>();
+            input.put("attachments", images);
+
+            String id = null;
+            if (intent.hasExtra(Intent.EXTRA_SHORTCUT_ID))
+                id = intent.getStringExtra(Intent.EXTRA_SHORTCUT_ID);
+            input.put("id", id);
+            new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod("shareAttachments", input);
         }
     }
 

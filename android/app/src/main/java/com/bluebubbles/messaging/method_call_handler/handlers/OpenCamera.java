@@ -34,7 +34,12 @@ public class OpenCamera implements Handler{
 
     @Override
     public void Handle() {
-        Intent intent  = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        String cameraType = MediaStore.ACTION_IMAGE_CAPTURE;
+        if (call.argument("type").equals("video")) {
+            cameraType = MediaStore.ACTION_VIDEO_CAPTURE;
+        }
+
+        Intent intent = new Intent(cameraType);
         try {
             File file = new File((String) call.argument("path"));
             if(!file.exists()) {

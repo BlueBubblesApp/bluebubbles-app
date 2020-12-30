@@ -35,3 +35,14 @@ Below are the last few BlueBubbles App release changelogs
 - Fixes issues with settings panel not properly reflecting the current settings
 - Fixes issue where removing an attachment would not fully remove it, thus re-entering the chat would cause the attachment to reappear
 - Added ability to take a picture in fullscreen
+- Back button in share menu now closes the share menu
+- Fixes issue with chats not pre-loading in the chat creator/share menu
+- Adds additional setup information to the setup workflow
+- Fixes sharing location
+- Location widget is now clickable
+- Fixes empty map issue
+- Added proper error message for ROWID error
+- Fixes issues with backing out of full screen camera
+- Fixes issue to infinite loading image after cancelling a camera shot
+- Adds ability to take video
+- Adds dense tile option (Settings > Theme & Style)

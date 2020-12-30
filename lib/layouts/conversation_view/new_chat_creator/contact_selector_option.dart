@@ -18,34 +18,58 @@ class ContactSelectorOption extends StatelessWidget {
     return " ($type)";
   }
 
-  String get chatParticipants {
+  Future<String> get chatParticipants async {
     if (!item.isChat) return "";
 
-    List<String> participants = item.chat.participants
-        .map((e) =>
-            ContactManager().getCachedContactSync(e.address)?.displayName ??
-            formatPhoneNumber(e.address))
-        .toList();
-    return participants.join(", ");
+    List<String> formatted = [];
+    for (var item in item.chat.participants) {
+      String contact =
+          ContactManager().getCachedContactSync(item.address)?.displayName;
+      if (contact == null) {
+        contact = await formatPhoneNumber(item.address);
+      }
+
+      if (contact != null) {
+        formatted.add(contact);
+      }
+    }
+
+    return formatted.join(", ");
   }
 
   @override
   Widget build(BuildContext context) {
+    var getTextWidget = (String text) {
+      return Text(
+        text,
+        style: Theme.of(context).textTheme.subtitle1,
+        overflow: TextOverflow.ellipsis,
+      );
+    };
+
     return ListTile(
       key: new Key("chat-${item.displayName}"),
       onTap: () => onSelected(item),
       title: Text(
         !item.isChat
             ? "${item.displayName}${getTypeStr(item.label)}"
-            : item.chat.title,
+            : item.chat.title ?? "Group Chat",
         style: Theme.of(context).textTheme.bodyText1,
         overflow: TextOverflow.ellipsis,
       ),
-      subtitle: Text(
-        !item.isChat ? item.address : chatParticipants,
-        style: Theme.of(context).textTheme.subtitle1,
-        overflow: TextOverflow.ellipsis,
-      ),
+      subtitle: (!item.isChat)
+          ? getTextWidget(item.address)
+          : FutureBuilder(
+              future: chatParticipants,
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) {
+                  return getTextWidget(
+                      item.displayName ?? item.address ?? "Person");
+                }
+
+                return getTextWidget(snapshot.data);
+              },
+            ),
       leading: !item.isChat
           ? ContactAvatarWidget(
               handle: Handle(address: item.address),

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/group_event.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/url_preview_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_attachments.dart';
@@ -106,7 +107,7 @@ class _MessageState extends State<MessageWidget>
       } else if (data.type == NewMessageType.UPDATE) {
         String oldGuid = data.event["oldGuid"];
         // If the guid does not match our current guid, then it's not meant for us
-        if (oldGuid != _message.guid && oldGuid != _newerMessage.guid) return;
+        if (oldGuid != _message?.guid && oldGuid != _newerMessage?.guid) return;
 
         // Tell the [MessagesView] to update with the new event, to ensure that things are done synchronously
         if (widget.onUpdate != null) {

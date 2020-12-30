@@ -179,6 +179,14 @@ class _ThemePanelState extends State<ThemePanel> {
                     initialVal: _settingsCopy.colorfulBubbles,
                     title: "Colorful Bubbles",
                   ),
+                  SettingsSwitch(
+                    onChanged: (bool val) {
+                      _settingsCopy.denseChatTiles = val;
+                      saveSettings();
+                    },
+                    initialVal: _settingsCopy.denseChatTiles,
+                    title: "Dense Conversation Tiles",
+                  ),
                   // For whatever fucking reason, this needs to be down here, otherwise all of the switch values are false
                   if (currentMode != null && modes != null)
                     SettingsOptions<DisplayMode>(

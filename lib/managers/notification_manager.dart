@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
@@ -27,6 +28,7 @@ class NotificationManager {
 
   /// [defaultAvatar] is the avatar that is used if there is no contact icon
   Uint8List defaultAvatar;
+  Uint8List defaultMultiUserAvatar;
 
   /// Checks if a [guid] has been marked as processed
   bool hasProcessed(String guid) {
@@ -48,8 +50,11 @@ class NotificationManager {
   /// Sets the currently active [chat]. As a result,
   /// the chat will be marked as read, and the notifications
   /// for the chat will be cleared
-  void switchChat(Chat chat) async {
-    if (chat == null) return;
+  Future<void> switchChat(Chat chat) async {
+    if (chat == null) {
+      // CurrentChat.getCurrentChat(chat)?.dispose();
+      return;
+    }
     CurrentChat.getCurrentChat(chat)?.isAlive = true;
 
     await chat.setUnreadStatus(false);
@@ -102,13 +107,14 @@ class NotificationManager {
       String contentTitle,
       String contentText,
       String group,
+      Chat chat,
       int id,
       int summaryId,
       int timeStamp,
       String senderName,
       bool groupConversation,
-      {Handle handle,
-      Contact contact}) async {
+      Handle handle,
+      Contact contact) async {
     Uint8List contactIcon;
 
     try {
@@ -128,6 +134,7 @@ class NotificationManager {
     } catch (ex) {
       debugPrint("Failed to load contact avatar: ${ex.toString()}");
     }
+    await ChatBloc().updateShareTarget(chat);
 
     // Invoke the method in native code
     MethodChannelInterface().platform.invokeMethod("new-message-notification", {

@@ -113,6 +113,13 @@ class _UXPanelState extends State<UXPanel> {
                   ),
                   SettingsSwitch(
                     onChanged: (bool val) {
+                      _settingsCopy.doubleTapForDetails = val;
+                    },
+                    initialVal: _settingsCopy.doubleTapForDetails,
+                    title: "Double-Tap Message for Details",
+                  ),
+                  SettingsSwitch(
+                    onChanged: (bool val) {
                       _settingsCopy.sendTypingIndicators = val;
                     },
                     initialVal: _settingsCopy.sendTypingIndicators,

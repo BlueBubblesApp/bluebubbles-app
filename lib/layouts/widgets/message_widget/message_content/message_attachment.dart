@@ -147,12 +147,15 @@ class _MessageAttachmentState extends State<MessageAttachment>
         builder: (BuildContext context, AsyncSnapshot snapshot) {
           // If there is an error, return an error text
           if (snapshot.hasError) {
-            return Padding(
-                padding: EdgeInsets.symmetric(horizontal: 5.0, vertical: 10.0),
-                child: Text(
-                  "Error loading Attachment",
-                  style: Theme.of(context).textTheme.bodyText1,
-                ));
+            content = widget.attachment;
+            return AttachmentDownloaderWidget(
+              onPressed: () {
+                content = new AttachmentDownloader(content);
+                if (this.mounted) setState(() {});
+              },
+              attachment: content,
+              placeHolder: buildPlaceHolder(),
+            );
           }
 
           // If the snapshot data is a file, we have finished downloading
@@ -179,7 +182,7 @@ class _MessageAttachmentState extends State<MessageAttachment>
                     children: <Widget>[
                       Center(
                         child: CircularProgressIndicator(
-                          value: progress ?? 0,
+                          value: progress == 1.0 ? null : (progress ?? 0),
                           backgroundColor: Colors.grey,
                           valueColor: AlwaysStoppedAnimation(Colors.white),
                         ),

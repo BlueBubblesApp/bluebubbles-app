@@ -59,7 +59,9 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget>
 
   Future<void> refreshInitials({bool force = false}) async {
     if (isInvalid) return;
-    if (state.initials != null && (state.contactImage != null || requested) && !force) return;
+    if (state.initials != null &&
+        (state.contactImage != null || requested) &&
+        !force) return;
     state.initials = await getInitials(handle: widget.handle);
 
     Contact contact =
@@ -68,9 +70,17 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget>
     if (contact == null) {
       List<Contact> contactRes = [];
       if (widget.handle.address.contains("@")) {
-        contactRes = ContactManager().contacts.where((element) => element.emails.any((e) => e.value == widget.handle.address)).toList();
+        contactRes = ContactManager()
+            .contacts
+            .where((element) =>
+                element.emails.any((e) => e.value == widget.handle.address))
+            .toList();
       } else {
-        contactRes = ContactManager().contacts.where((element) => element.phones.any((e) => e.value == widget.handle.address)).toList();
+        contactRes = ContactManager()
+            .contacts
+            .where((element) =>
+                element.phones.any((e) => e.value == widget.handle.address))
+            .toList();
       }
 
       if (contactRes.length > 0) {
@@ -99,8 +109,10 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget>
     String name = await ContactManager().getContactTitle(handle.address);
     if (name.contains("@")) return name[0].toUpperCase();
 
-    // If the name is a phone number, return the "person" icon
-    if (name.startsWith("+")) return null;
+    // Check if it's just a regular number, no contact
+    String test = name.replaceAll(RegExp(r'[-() \.]'), '');
+    test = test.replaceAll(RegExp(r'[0-9]'), "").trim();
+    if (test.length == 0) return null;
 
     List<String> items =
         name.split(" ").where((element) => element.isNotEmpty).toList();

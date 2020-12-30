@@ -393,10 +393,8 @@ class _Cupertino extends StatelessWidget {
               stream: ChatBloc().chatStream,
               builder:
                   (BuildContext context, AsyncSnapshot<List<Chat>> snapshot) {
-                if (snapshot.hasData ||
-                    parent.widget.showArchivedChats ||
-                    parent.chats.isNotEmpty) {
-                  parent.sortChats();
+                if (snapshot.hasData || parent.widget.showArchivedChats) {
+                  parent.chats.sort(Chat.sort);
                   if (parent.chats.isEmpty) {
                     return SliverToBoxAdapter(
                       child: Center(

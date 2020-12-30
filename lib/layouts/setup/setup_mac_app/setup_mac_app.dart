@@ -20,7 +20,7 @@ class SetupMacApp extends StatelessWidget {
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 20.0),
                 child: Text(
-                  "Next download the BlueBubbles Server app on your Mac and install. Follow the setup process",
+                  "Before using the Android App, please verify that you have already installed the macOS Server app. Additionally, make sure that your iMessage app is signed into an iCloud/Apple account.",
                   style: Theme.of(context)
                       .textTheme
                       .bodyText1
@@ -44,6 +44,18 @@ class SetupMacApp extends StatelessWidget {
                       );
                     },
                   ),
+                ),
+              ),
+              Container(height: 20.0),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20.0),
+                child: Text(
+                  "If you have not installed the macOS Server app, please go to the following link on your macOS device to download it:\n\nhttps://bluebubbles.app",
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodyText1
+                      .apply(fontSizeFactor: 1.5),
+                  textAlign: TextAlign.center,
                 ),
               ),
             ],

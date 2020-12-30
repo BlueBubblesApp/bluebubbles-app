@@ -152,10 +152,10 @@ class CurrentChat {
     String oldGuid = event.event["oldGuid"];
     if (!messageAttachments.containsKey(oldGuid)) return [];
     Message message = event.event["message"];
+    if (message.attachments.isEmpty) return [];
 
     messageAttachments.remove(oldGuid);
     messageAttachments[message.guid] = message.attachments;
-    if (message.attachments.isEmpty) return [];
 
     String newAttachmentGuid = message.attachments.first.guid;
     if (imageData.containsKey(oldGuid)) {

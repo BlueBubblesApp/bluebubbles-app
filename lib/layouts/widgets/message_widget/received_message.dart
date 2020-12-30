@@ -133,8 +133,8 @@ class _ReceivedMessageState extends State<ReceivedMessage>
                     bottomLeft: Radius.circular(widget.showTail ? 20 : 5),
                   ),
             gradient: LinearGradient(
-              begin: AlignmentDirectional.topStart,
-              end: AlignmentDirectional.bottomEnd,
+              begin: AlignmentDirectional.bottomCenter,
+              end: AlignmentDirectional.topCenter,
               colors: bubbleColors,
             ),
           ),
