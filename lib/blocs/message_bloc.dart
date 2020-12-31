@@ -183,6 +183,14 @@ class MessageBloc {
         LinkedHashMap.fromIterables(keys, values));
   }
 
+  void emitLoaded() {
+    if (!_messageController.isClosed) {
+      MessageBlocEvent event = MessageBlocEvent();
+      event.messages = _allMessages.values.toList();
+      _messageController.sink.add(event);
+    }
+  }
+
   Future<LinkedHashMap<String, Message>> getMessages() async {
     List<Message> messages = await Chat.getMessagesSingleton(_currentChat);
 
@@ -198,12 +206,7 @@ class MessageBloc {
       }
     }
 
-    if (!_messageController.isClosed) {
-      MessageBlocEvent event = MessageBlocEvent();
-      event.messages = _allMessages.values.toList();
-      _messageController.sink.add(event);
-    }
-
+    this.emitLoaded();
     return _allMessages;
   }
 
@@ -244,11 +247,7 @@ class MessageBloc {
 
     // print(_allMessages.length);
 
-    if (!_messageController.isClosed) {
-      MessageBlocEvent event = MessageBlocEvent();
-      event.messages = _allMessages.values.toList();
-      _messageController.sink.add(event);
-    }
+    this.emitLoaded();
   }
 
   Future<LoadMessageResult> loadMessageChunk(int offset,
@@ -326,9 +325,7 @@ class MessageBloc {
 
       // Emit messages to listeners
       if (!_messageController.isClosed) {
-        MessageBlocEvent event = MessageBlocEvent();
-        event.messages = _allMessages.values.toList();
-        _messageController.sink.add(event);
+        this.emitLoaded();
 
         // Complete the execution
         if (count < 25 && !completer.isCompleted) {

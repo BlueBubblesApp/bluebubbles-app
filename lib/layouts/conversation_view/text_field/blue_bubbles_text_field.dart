@@ -110,7 +110,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
         updateTextFieldAttachments();
       }
     } else {
-      pickedImages.addAll(textFieldData.attachments);
+      pickedImages.addAll(textFieldData?.attachments ?? []);
     }
   }
 

@@ -183,11 +183,15 @@ class ChatBloc {
       debugPrint("Failed to load contact avatar: ${ex.toString()}");
     }
 
-    await MethodChannelInterface().invokeMethod("push-share-targets", {
-      "title": chat.title,
-      "guid": chat.guid,
-      "icon": icon,
-    });
+    try {
+      await MethodChannelInterface().invokeMethod("push-share-targets", {
+        "title": chat.title,
+        "guid": chat.guid,
+        "icon": icon,
+      });
+    } catch (ex) {
+      // Ignore the error
+    }
   }
 
   Future<void> handleMessageAction(NewMessageEvent event) async {
