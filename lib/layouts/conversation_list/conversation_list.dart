@@ -35,6 +35,7 @@ class _ConversationListState extends State<ConversationList> {
   bool reducedForehead = false;
 
   Brightness brightness = Brightness.light;
+  Color previousBackgroundColor;
   bool gotBrightness = false;
   String model;
 
@@ -123,17 +124,22 @@ class _ConversationListState extends State<ConversationList> {
   }
 
   void loadBrightness() {
-    if (gotBrightness) return;
+    Color now = Theme.of(context).backgroundColor;
+    bool themeChanged =
+        previousBackgroundColor == null || previousBackgroundColor != now;
+    if (!themeChanged && gotBrightness) return;
 
+    previousBackgroundColor = now;
     if (this.context == null) {
       brightness = Brightness.light;
       gotBrightness = true;
       return;
     }
 
-    bool isDark = Theme.of(context).backgroundColor.computeLuminance() < 0.179;
+    bool isDark = now.computeLuminance() < 0.179;
     brightness = isDark ? Brightness.dark : Brightness.light;
     gotBrightness = true;
+    if (this.mounted) setState(() {});
   }
 
   bool get _isAppBarExpanded {

@@ -29,6 +29,7 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
       new TextEditingController();
 
   Brightness brightness;
+  Color previousBackgroundColor;
   bool gotBrightness = false;
   bool isSearching = false;
   Map<String, Chat> chatCache = {};
@@ -52,16 +53,22 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
   }
 
   void loadBrightness() {
-    if (gotBrightness) return;
-    if (context == null) {
+    Color now = Theme.of(context).backgroundColor;
+    bool themeChanged =
+        previousBackgroundColor == null || previousBackgroundColor != now;
+    if (!themeChanged && gotBrightness) return;
+
+    previousBackgroundColor = now;
+    if (this.context == null) {
       brightness = Brightness.light;
       gotBrightness = true;
       return;
     }
 
-    bool isDark = Theme.of(context).backgroundColor.computeLuminance() < 0.179;
+    bool isDark = now.computeLuminance() < 0.179;
     brightness = isDark ? Brightness.dark : Brightness.light;
     gotBrightness = true;
+    if (this.mounted) setState(() {});
   }
 
   Future<void> search(String term) async {

@@ -25,6 +25,7 @@ class _ThemePanelState extends State<ThemePanel> {
   List<DisplayMode> modes;
   DisplayMode currentMode;
   Brightness brightness;
+  Color previousBackgroundColor;
   bool gotBrightness = false;
 
   @override
@@ -53,16 +54,22 @@ class _ThemePanelState extends State<ThemePanel> {
   }
 
   void loadBrightness() {
-    if (gotBrightness) return;
-    if (context == null) {
+    Color now = Theme.of(context).backgroundColor;
+    bool themeChanged =
+        previousBackgroundColor == null || previousBackgroundColor != now;
+    if (!themeChanged && gotBrightness) return;
+
+    previousBackgroundColor = now;
+    if (this.context == null) {
       brightness = Brightness.light;
       gotBrightness = true;
       return;
     }
 
-    bool isDark = Theme.of(context).accentColor.computeLuminance() < 0.179;
+    bool isDark = now.computeLuminance() < 0.179;
     brightness = isDark ? Brightness.dark : Brightness.light;
     gotBrightness = true;
+    if (this.mounted) setState(() {});
   }
 
   @override
