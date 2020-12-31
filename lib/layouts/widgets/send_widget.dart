@@ -151,6 +151,8 @@ class _SendWidgetState extends State<SendWidget> {
         begin: 0,
       ),
     );
+
+    print("BUILDING ANIMATION");
     return Material(
       type: MaterialType.transparency,
       child: FadeTransition(

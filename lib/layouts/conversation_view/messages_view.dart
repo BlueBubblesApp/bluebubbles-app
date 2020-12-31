@@ -72,7 +72,7 @@ class MessagesViewState extends State<MessagesView>
   void initState() {
     super.initState();
 
-    widget.messageBloc?.stream?.listen(handleNewMessage);
+    widget.messageBloc.stream.listen(handleNewMessage);
     smartReplyController = StreamController<List<String>>.broadcast();
 
     scrollController.addListener(() {
@@ -118,6 +118,12 @@ class MessagesViewState extends State<MessagesView>
   void didChangeDependencies() async {
     super.didChangeDependencies();
     currentChat = CurrentChat.of(context);
+
+    if (_messages.isEmpty && widget.messageBloc.messages.isEmpty) {
+      widget.messageBloc.getMessages();
+    } else if (_messages.isEmpty && widget.messageBloc.messages.isNotEmpty) {
+      widget.messageBloc.emitLoaded();
+    }
   }
 
   @override
@@ -212,7 +218,7 @@ class MessagesViewState extends State<MessagesView>
               ?.removeWhere((element) => element.guid == event.message.guid);
         });
 
-        if (context != null)
+        if (context != null) {
           Navigator.of(context).push(
             SendPageBuilder(
               builder: (context) {
@@ -224,6 +230,7 @@ class MessagesViewState extends State<MessagesView>
               },
             ),
           );
+        }
       }
 
       bool isNewMessage = true;

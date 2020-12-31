@@ -109,17 +109,22 @@ class ConversationViewState extends State<ConversationView>
   }
 
   Future<bool> send(List<File> attachments, String text) async {
-    if (isCreator && chat == null) {
-      chat = await createChat();
+    if (isCreator) {
+      // If the chat is null, create it
+      if (chat == null) chat = await createChat();
 
+      // If the chat is still null, return false
       if (chat == null) return false;
-      initCurrentChat(chat);
-      initConversationViewState();
-      initChatSelector();
 
       // Fetch messages
-      messageBloc = initMessageBloc();
-      messageBloc.getMessages();
+      if (messageBloc == null) {
+        // Init the states
+        initCurrentChat(chat);
+        initConversationViewState();
+
+        messageBloc = initMessageBloc();
+        messageBloc.getMessages();
+      }
     }
 
     if (attachments.length > 0) {
