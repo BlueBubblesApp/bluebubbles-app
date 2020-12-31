@@ -71,7 +71,8 @@ class MessagesViewState extends State<MessagesView>
   @override
   void initState() {
     super.initState();
-    widget.messageBloc.stream.listen(handleNewMessage);
+
+    widget.messageBloc?.stream?.listen(handleNewMessage);
     smartReplyController = StreamController<List<String>>.broadcast();
 
     scrollController.addListener(() {
@@ -191,9 +192,6 @@ class MessagesViewState extends State<MessagesView>
   }
 
   void handleNewMessage(MessageBlocEvent event) async {
-    // Get outta here if we don't have a chat "open"
-    if (currentChat == null) return;
-
     // Skip deleted messages
     if (event.message != null && event.message.dateDeleted != null) return;
     if (!isNullOrEmpty(event.messages)) {
@@ -206,12 +204,12 @@ class MessagesViewState extends State<MessagesView>
       if (this.mounted && LifeCycleManager().isAlive && context != null) {
         NotificationManager().switchChat(CurrentChat.of(context)?.chat);
       }
-      currentChat.getAttachmentsForMessage(event.message);
+      currentChat?.getAttachmentsForMessage(event.message);
       if (event.outGoing) {
-        currentChat.sentMessages.add(event.message);
+        currentChat?.sentMessages?.add(event.message);
         Future.delayed(SendWidget.SEND_DURATION * 2, () {
-          currentChat.sentMessages
-              .removeWhere((element) => element.guid == event.message.guid);
+          currentChat?.sentMessages
+              ?.removeWhere((element) => element.guid == event.message.guid);
         });
 
         if (context != null)

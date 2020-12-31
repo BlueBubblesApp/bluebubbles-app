@@ -92,9 +92,6 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
     //   }
     // });
 
-    if (widget.existingText != null) {
-      controller.text = widget.existingText;
-    }
     focusNode = new FocusNode();
     focusNode.addListener(() {
       if (focusNode.hasFocus && this.mounted) {
@@ -103,10 +100,16 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
       }
     });
 
-    if (textFieldData == null && widget.existingAttachments != null) {
-      pickedImages.addAll(widget.existingAttachments);
-      updateTextFieldAttachments();
-    } else if (textFieldData != null) {
+    if (textFieldData == null) {
+      if (widget.existingText != null) {
+        controller.text = widget.existingText;
+      }
+
+      if (widget.existingAttachments != null) {
+        pickedImages.addAll(widget.existingAttachments);
+        updateTextFieldAttachments();
+      }
+    } else {
       pickedImages.addAll(textFieldData.attachments);
     }
   }

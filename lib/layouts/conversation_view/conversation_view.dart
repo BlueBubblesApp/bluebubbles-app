@@ -67,6 +67,7 @@ class ConversationViewState extends State<ConversationView>
 
     isCreator = widget.isCreator ?? false;
     chat = widget.chat;
+
     initChatSelector();
     initConversationViewState();
 
@@ -88,9 +89,11 @@ class ConversationViewState extends State<ConversationView>
       }
     });
 
-    if (widget.customMessageBloc != null) {
+    if (widget.customMessageBloc != null && messageBloc == null) {
       messageBloc = widget.customMessageBloc;
-    } else {
+    }
+
+    if (messageBloc == null) {
       messageBloc = initMessageBloc();
       messageBloc.getMessages();
     }

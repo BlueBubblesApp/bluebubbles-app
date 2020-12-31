@@ -504,7 +504,9 @@ class Chat {
       int offset = 0,
       int limit = 25,
       bool includeDeleted: false}) async {
-    String req = "${chat.guid}-$offset-$limit-$reactionsOnly-$includeDeleted";
+    if (chat == null) return [];
+
+    String req = "${chat?.guid}-$offset-$limit-$reactionsOnly-$includeDeleted";
 
     // If a current request is in progress, return that future
     if (_getMessagesRequests.containsKey(req) &&

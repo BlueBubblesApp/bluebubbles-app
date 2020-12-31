@@ -245,7 +245,6 @@ class MessageBloc {
     // print(_allMessages.length);
 
     if (!_messageController.isClosed) {
-      print("SENDING EVENT");
       MessageBlocEvent event = MessageBlocEvent();
       event.messages = _allMessages.values.toList();
       _messageController.sink.add(event);
