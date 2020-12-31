@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
+import 'package:bluebubbles/helpers/metadata_helper.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
@@ -10,6 +11,7 @@ import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/widgets.dart';
 import 'package:intl/intl.dart';
+import 'package:metadata_fetch/metadata_fetch.dart';
 import 'package:sqflite/sqflite.dart';
 
 import '../database.dart';
@@ -389,6 +391,19 @@ class Chat {
       serverSyncParticipants();
     }
 
+    // If this is a message preview and we don't already have metadata for this, get it
+    if (message.isUrlPreview() &&
+        !MetadataHelper.mapIsNotEmpty(message.metadata)) {
+      MetadataHelper.fetchMetadata(message).then((Metadata meta) {
+        // If the metadata is empty, don't do anything
+        if (!MetadataHelper.isNotEmpty(meta)) return;
+
+        // Save the metadata to the database
+        message.metadata = meta.toJson();
+        message.update();
+      });
+    }
+
     // Return the current chat instance (with updated vals)
     return this;
   }
@@ -573,6 +588,7 @@ class Chat {
         " message.timeExpressiveSendStyleId AS timeExpressiveSendStyleId,"
         " message.hasAttachments AS hasAttachments,"
         " message.hasReactions AS hasReactions,"
+        " message.metadata AS metadata,"
         " message.hasDdResults AS hasDdResults,"
         " handle.ROWID AS handleId,"
         " handle.originalROWID AS handleOriginalROWID,"

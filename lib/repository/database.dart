@@ -28,14 +28,10 @@ enum Tables {
 }
 
 class DBUpgradeItem {
-  List<int> fromVersions; // If this is 0, it's any version
-  List<int> toVersions;
+  int addedInVersion;
   Function(Database) upgrade;
 
-  DBUpgradeItem(
-      {@required this.fromVersions,
-      @required this.toVersions,
-      @required this.upgrade});
+  DBUpgradeItem({@required this.addedInVersion, @required this.upgrade});
 }
 
 class DBProvider {
@@ -49,37 +45,28 @@ class DBProvider {
   /// The previous version is always [key - 1], for example for key 2, it will be the upgrade scheme from version 1 to version 2
   static final List<DBUpgradeItem> upgradeSchemes = [
     new DBUpgradeItem(
-        fromVersions: [1],
-        toVersions: [2],
+        addedInVersion: 2,
         upgrade: (Database db) {
           db.execute(
               "ALTER TABLE message ADD COLUMN hasDdResults INTEGER DEFAULT 0;");
         }),
     new DBUpgradeItem(
-        fromVersions: [1, 2],
-        toVersions: [3],
+        addedInVersion: 3,
         upgrade: (Database db) {
           db.execute(
               "ALTER TABLE message ADD COLUMN balloonBundleId TEXT DEFAULT NULL;");
-        }),
-    new DBUpgradeItem(
-        fromVersions: [1, 2],
-        toVersions: [3],
-        upgrade: (Database db) {
           db.execute(
               "ALTER TABLE chat ADD COLUMN isFiltered INTEGER DEFAULT 0;");
         }),
     new DBUpgradeItem(
-        fromVersions: [1, 2, 3],
-        toVersions: [4],
+        addedInVersion: 4,
         upgrade: (Database db) {
           db.execute(
               "ALTER TABLE message ADD COLUMN dateDeleted INTEGER DEFAULT NULL;");
           db.execute("ALTER TABLE chat ADD COLUMN isPinned INTEGER DEFAULT 0;");
         }),
     new DBUpgradeItem(
-        fromVersions: [1, 2, 3, 4],
-        toVersions: [5],
+        addedInVersion: 5,
         upgrade: (Database db) {
           db.execute(
               "ALTER TABLE handle ADD COLUMN originalROWID INTEGER DEFAULT NULL;");
@@ -91,11 +78,16 @@ class DBProvider {
               "ALTER TABLE message ADD COLUMN otherHandle INTEGER DEFAULT NULL;");
         }),
     new DBUpgradeItem(
-        fromVersions: [1, 2, 3, 4, 5],
-        toVersions: [6],
+        addedInVersion: 6,
         upgrade: (Database db) {
           db.execute(
               "ALTER TABLE attachment ADD COLUMN metadata TEXT DEFAULT NULL;");
+        }),
+    new DBUpgradeItem(
+        addedInVersion: 7,
+        upgrade: (Database db) {
+          db.execute(
+              "ALTER TABLE message ADD COLUMN metadata TEXT DEFAULT NULL;");
         }),
   ];
 
@@ -112,7 +104,7 @@ class DBProvider {
   initDB() async {
     Directory documentsDirectory = await getApplicationDocumentsDirectory();
     _path = join(documentsDirectory.path, "chat.db");
-    return await openDatabase(_path, version: 6, onUpgrade: _onUpgrade,
+    return await openDatabase(_path, version: 7, onUpgrade: _onUpgrade,
         onOpen: (Database db) async {
       debugPrint("Database Opened");
       _database = db;
@@ -132,7 +124,7 @@ class DBProvider {
     // then we will run every single scheme from 1 -> 2 and 2 -> 3
 
     for (DBUpgradeItem item in upgradeSchemes) {
-      if (item.fromVersions.contains(oldVersion)) {
+      if (oldVersion < item.addedInVersion) {
         debugPrint(
             "UPGRADING DB FROM VERSION $oldVersion TO VERSION $newVersion");
         await item.upgrade(db);
@@ -290,6 +282,7 @@ class DBProvider {
         "timeExpressiveSendStyleId INTEGER DEFAULT 0,"
         "hasAttachments INTEGER DEFAULT 0,"
         "hasReactions INTEGER DEFAULT 0,"
+        "metadata TEXT DEFAULT NULL,"
         "dateDeleted INTEGER DEFAULT NULL,"
         "FOREIGN KEY(handleId) REFERENCES handle(ROWID)"
         ");");

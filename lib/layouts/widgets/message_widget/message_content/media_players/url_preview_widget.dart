@@ -1,10 +1,9 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
-import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/helpers/metadata_helper.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -13,8 +12,6 @@ import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:metadata_fetch/metadata_fetch.dart';
-import 'package:http/http.dart' as http;
-import 'package:html/dom.dart' as dom;
 
 class UrlPreviewWidget extends StatefulWidget {
   UrlPreviewWidget(
@@ -48,7 +45,13 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
   @override
   void initState() {
     super.initState();
-    fetchPreview();
+
+    // If we already have metadata, don't re-fetch it
+    if (MetadataHelper.mapIsNotEmpty(widget.message.metadata)) {
+      data = Metadata.fromJson(widget.message.metadata);
+    } else {
+      fetchPreview();
+    }
   }
 
   @override
@@ -81,43 +84,6 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
     }
   }
 
-  /// Manually tries to parse out metadata from a given [url]
-  Future<Metadata> manuallyGetMetadata(String url) async {
-    Metadata meta = new Metadata();
-
-    var response = await http.get(url);
-    var document = responseToDocument(response);
-
-    for (dom.Element i in document.head?.children ?? []) {
-      if (i.localName != "meta") continue;
-      for (var entry in i.attributes.entries) {
-        String prop = entry.key as String;
-        String value = entry.value;
-        if (prop != "property" && prop != "name") continue;
-
-        if (value.contains("title")) {
-          meta.title = i.attributes["content"];
-        } else if (value.contains("description")) {
-          meta.description = i.attributes["content"];
-        } else if (value == "og:image") {
-          meta.image = i.attributes["content"];
-        }
-      }
-    }
-
-    return meta;
-  }
-
-  String reformatUrl(String url) {
-    if (url.contains('youtube.com/watch?v=') || url.contains("youtu.be/")) {
-      return "https://www.youtube.com/oembed?url=$url";
-    } else if (url.contains("twitter.com") && url.contains("/status/")) {
-      return "https://publish.twitter.com/oembed?url=$url";
-    } else {
-      return url;
-    }
-  }
-
   Future<void> fetchPreview() async {
     // Try to get any already loaded attachment data
     if (CurrentChat.of(context).urlPreviews?.containsKey(widget.message.text) !=
@@ -125,95 +91,26 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
       data = CurrentChat.of(context).urlPreviews[widget.message.text];
     }
 
-    if (data != null || isEmptyString(widget.message.text) || isLoading) return;
+    if (data != null || isLoading) return;
 
     // Let the UI know we are loading
     isLoading = true;
 
-    // Make sure there is a schema with the URL
-    String url = widget.message.text;
-    if (!widget.message.text.toLowerCase().startsWith("http://") &&
-        !widget.message.text.toLowerCase().startsWith("https://")) {
-      url = "https://" + widget.message.text;
-    }
+    // Fetch the metadata
+    Metadata meta = await MetadataHelper.fetchMetadata(widget.message);
 
-    String newUrl = reformatUrl(url);
+    // If the data isn't empty, save/update it in the DB
+    if (MetadataHelper.isNotEmpty(meta)) {
+      widget.message.metadata = meta.toJson();
+      widget.message.update();
 
-    // Handle specific cases
-    bool alreadyManual = false;
-    if (newUrl.contains('https://www.youtube.com/oembed')) {
-      // Manually request this URL
-      var response = await http.get(newUrl);
-
-      // Manually load it into a metadata object via JSON
-      data = Metadata.fromJson(jsonDecode(response.body));
-
-      // Set the URL to the original URL
-      data.url = url;
-    } else if (newUrl.contains("https://publish.twitter.com/oembed")) {
-      // Manually request this URL
-      var response = await http.get(newUrl);
-
-      // Manually load it into a metadata object via JSON
-      Map res = jsonDecode(response.body);
-      data = new Metadata();
-      data.title = (res.containsKey("author_name")) ? res["author_name"] : "";
-      data.description = (res.containsKey("html"))
-          ? stripHtmlTags(res["html"].replaceAll("<br>", "\n")).trim()
-          : "";
-
-      // Set the URL to the original URL
-      data.url = url;
-    } else if (url.contains("redd.it/")) {
-      var response = await http.get(url);
-      var document = responseToDocument(response);
-
-      // Since this is a short-URL, we need to get the actual URL out
-      String href;
-      for (dom.Element i in document?.head?.children ?? []) {
-        // Skip over all links
-        if (i.localName != "link") continue;
-
-        // Find an href and save it
-        for (var entry in i.attributes.entries) {
-          String prop = entry.key as String;
-          if (prop != "href" ||
-              entry.value.contains("amp.") ||
-              !entry.value.contains("reddit.com")) continue;
-          href = entry.value;
-          break;
-        }
-
-        // If we have an href, break out
-        if (href != null) break;
+      if (!MetadataHelper.isNotEmpty(data)) {
+        data = meta;
       }
-
-      if (href != null) {
-        data = await this.manuallyGetMetadata(href);
-        alreadyManual = true;
-      }
-    } else if (url.contains("linkedin.com/posts/")) {
-      data = await this.manuallyGetMetadata(url);
-      data.url = url;
-      alreadyManual = true;
-    } else {
-      data = await extract(url);
-    }
-
-    // If the data or title was null, try to manually parse
-    if (!alreadyManual && isNullOrEmpty(data?.title)) {
-      data = await this.manuallyGetMetadata(url);
-      data.url = url;
-    }
-
-    String imageData = data?.image ?? "";
-    if (imageData.contains("renderTimingPixel.png") ||
-        imageData.contains("fls-na.amazon.com")) {
-      data?.image = null;
     }
 
     // Save the metadata
-    if (context != null) {
+    if (context != null && data != null) {
       CurrentChat.of(context).urlPreviews[widget.message.text] = data;
     }
 
@@ -222,9 +119,7 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
     bool didSetState = false;
 
     // Only update the state if we have more information
-    if (data?.title != null ||
-        data?.description != null ||
-        (widget.linkPreviews.length <= 1 && data?.image != null)) {
+    if (MetadataHelper.isNotEmpty(meta) && widget.linkPreviews.length <= 1) {
       if (this.mounted) {
         didSetState = true;
         setState(() {});
