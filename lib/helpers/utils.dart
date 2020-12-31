@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
 import 'package:adaptive_theme/adaptive_theme.dart';
@@ -22,6 +23,7 @@ import 'package:flutter/services.dart';
 import 'package:image_size_getter/image_size_getter.dart' as IMG;
 import 'package:intl/intl.dart' as intl;
 import 'package:video_thumbnail/video_thumbnail.dart';
+import 'package:http/http.dart' show get;
 
 DateTime parseDate(dynamic value) {
   if (value == null) return null;
@@ -440,4 +442,44 @@ Future<String> getDeviceName() async {
   }
 
   return deviceName;
+}
+
+String getFilenameFromUrl(String url) {
+  if (isNullOrEmpty(url)) return null;
+
+  // Return everything after the last slash
+  if (url.contains("/")) {
+    String end = url.split("/").last;
+    return end.split("?")[0];
+  }
+
+  // If there are no slashes, it's probably an invalid URL, so let's just ignore it
+  return null;
+}
+
+Future<File> saveImageFromUrl(String guid, String url) async {
+  // Make sure the URL is "formed"
+  if (!url.contains("/")) return null;
+
+  // Get the filename from the URL
+  String filename = getFilenameFromUrl(url);
+  if (filename == null) return null;
+
+  try {
+    var response = await get(url);
+
+    Directory baseDir =
+        new Directory("${AttachmentHelper.getBaseAttachmentsPath()}/$guid");
+    if (!baseDir.existsSync()) {
+      baseDir.createSync(recursive: true);
+    }
+
+    String newPath = "${baseDir.path}/$filename";
+    File file = new File(newPath);
+    file.writeAsBytesSync(response.bodyBytes);
+
+    return file;
+  } catch (ex) {
+    return null;
+  }
 }

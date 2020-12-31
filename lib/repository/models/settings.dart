@@ -26,6 +26,7 @@ class Settings {
   bool denseChatTiles = false;
   bool smartReply = false;
   bool reducedForehead = false;
+  bool preCachePreviewImages = true;
   // String emojiFontFamily;
 
   Skins skin = Skins.IOS;
@@ -77,6 +78,8 @@ class Settings {
         settings.smartReply = entry.value;
       } else if (entry.name == "reducedForehead") {
         settings.reducedForehead = entry.value;
+      } else if (entry.name == "preCachePreviewImages") {
+        settings.preCachePreviewImages = entry.value;
       }
 
       // else if (entry.name == "emojiFontFamily") {
@@ -207,6 +210,10 @@ class Settings {
             name: "reducedForehead",
             value: this.reducedForehead,
             type: this.reducedForehead.runtimeType),
+        ConfigEntry(
+            name: "preCachePreviewImages",
+            value: this.preCachePreviewImages,
+            type: this.preCachePreviewImages.runtimeType),
         // ConfigEntry(
         //     name: "emojiFontFamily",
         //     value: this.emojiFontFamily,

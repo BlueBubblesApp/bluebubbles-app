@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/metadata_helper.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -101,6 +102,18 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
 
     // If the data isn't empty, save/update it in the DB
     if (MetadataHelper.isNotEmpty(meta)) {
+      // If pre-caching is enabled, fetch the image and save it
+      if (SettingsManager().settings.preCachePreviewImages &&
+          !isNullOrEmpty(meta.image)) {
+        // Save from URL
+        File newFile = await saveImageFromUrl(widget.message.guid, meta.image);
+
+        // If we downloaded a file, set the new metadata path
+        if (newFile != null && newFile.existsSync()) {
+          meta.image = newFile.path;
+        }
+      }
+
       widget.message.metadata = meta.toJson();
       widget.message.update();
 
@@ -170,9 +183,15 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
     if (widget.linkPreviews.length <= 1 &&
         data?.image != null &&
         data.image.isNotEmpty) {
-      mainImage = Image.network(data.image,
-          filterQuality: FilterQuality.low,
-          errorBuilder: (context, error, stackTrace) => Container());
+      if (data.image.startsWith("/")) {
+        mainImage = Image.file(new File(data.image),
+            filterQuality: FilterQuality.low,
+            errorBuilder: (context, error, stackTrace) => Container());
+      } else {
+        mainImage = Image.network(data.image,
+            filterQuality: FilterQuality.low,
+            errorBuilder: (context, error, stackTrace) => Container());
+      }
     } else if (widget.linkPreviews.length > 1 &&
         AttachmentHelper.attachmentExists(widget.linkPreviews.last)) {
       mainImage = Image.file(attachmentFile(widget.linkPreviews.last),

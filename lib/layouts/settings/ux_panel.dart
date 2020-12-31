@@ -148,6 +148,13 @@ class _UXPanelState extends State<UXPanel> {
                   ),
                   SettingsSwitch(
                     onChanged: (bool val) {
+                      _settingsCopy.preCachePreviewImages = val;
+                    },
+                    initialVal: _settingsCopy.preCachePreviewImages,
+                    title: "Pre-Cache Preview Images",
+                  ),
+                  SettingsSwitch(
+                    onChanged: (bool val) {
                       _settingsCopy.lowMemoryMode = val;
                     },
                     initialVal: _settingsCopy.lowMemoryMode,

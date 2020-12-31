@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:async';
+import 'dart:io';
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
@@ -7,6 +8,7 @@ import 'package:bluebubbles/helpers/metadata_helper.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/widgets.dart';
@@ -394,12 +396,28 @@ class Chat {
     // If this is a message preview and we don't already have metadata for this, get it
     if (message.isUrlPreview() &&
         !MetadataHelper.mapIsNotEmpty(message.metadata)) {
-      MetadataHelper.fetchMetadata(message).then((Metadata meta) {
+      MetadataHelper.fetchMetadata(message).then((Metadata meta) async {
         // If the metadata is empty, don't do anything
         if (!MetadataHelper.isNotEmpty(meta)) return;
 
-        // Save the metadata to the database
+        // Save the metadata to the object
         message.metadata = meta.toJson();
+
+        // If pre-caching is enabled, fetch the image and save it
+        if (SettingsManager().settings.preCachePreviewImages &&
+            message.metadata.containsKey("image") &&
+            !isNullOrEmpty(message.metadata["image"])) {
+
+          // Save from URL
+          File newFile =
+              await saveImageFromUrl(message.guid, message.metadata["image"]);
+
+          // If we downloaded a file, set the new metadata path
+          if (newFile != null && newFile.existsSync()) {
+            message.metadata["image"] = newFile.path;
+          }
+        }
+
         message.update();
       });
     }
