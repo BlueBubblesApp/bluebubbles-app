@@ -88,15 +88,6 @@ class ConversationViewState extends State<ConversationView>
         if (this.mounted) setState(() {});
       }
     });
-
-    if (widget.customMessageBloc != null && messageBloc == null) {
-      messageBloc = widget.customMessageBloc;
-    }
-
-    if (messageBloc == null) {
-      messageBloc = initMessageBloc();
-      messageBloc.getMessages();
-    }
   }
 
   @override
@@ -159,6 +150,16 @@ class ConversationViewState extends State<ConversationView>
   @override
   Widget build(BuildContext context) {
     currentChat?.isAlive = true;
+
+    if (widget.customMessageBloc != null && messageBloc == null) {
+      messageBloc = widget.customMessageBloc;
+    }
+
+    if (messageBloc == null) {
+      messageBloc = initMessageBloc();
+      messageBloc.getMessages();
+    }
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: Theme.of(context).backgroundColor,
