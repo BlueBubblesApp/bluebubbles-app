@@ -1,15 +1,19 @@
 import 'dart:convert';
 import 'dart:async';
+import 'dart:io';
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
+import 'package:bluebubbles/helpers/metadata_helper.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/widgets.dart';
 import 'package:intl/intl.dart';
+import 'package:metadata_fetch/metadata_fetch.dart';
 import 'package:sqflite/sqflite.dart';
 
 import '../database.dart';
@@ -389,6 +393,35 @@ class Chat {
       serverSyncParticipants();
     }
 
+    // If this is a message preview and we don't already have metadata for this, get it
+    if (message.isUrlPreview() &&
+        !MetadataHelper.mapIsNotEmpty(message.metadata)) {
+      MetadataHelper.fetchMetadata(message).then((Metadata meta) async {
+        // If the metadata is empty, don't do anything
+        if (!MetadataHelper.isNotEmpty(meta)) return;
+
+        // Save the metadata to the object
+        message.metadata = meta.toJson();
+
+        // If pre-caching is enabled, fetch the image and save it
+        if (SettingsManager().settings.preCachePreviewImages &&
+            message.metadata.containsKey("image") &&
+            !isNullOrEmpty(message.metadata["image"])) {
+
+          // Save from URL
+          File newFile =
+              await saveImageFromUrl(message.guid, message.metadata["image"]);
+
+          // If we downloaded a file, set the new metadata path
+          if (newFile != null && newFile.existsSync()) {
+            message.metadata["image"] = newFile.path;
+          }
+        }
+
+        message.update();
+      });
+    }
+
     // Return the current chat instance (with updated vals)
     return this;
   }
@@ -489,7 +522,9 @@ class Chat {
       int offset = 0,
       int limit = 25,
       bool includeDeleted: false}) async {
-    String req = "${chat.guid}-$offset-$limit-$reactionsOnly-$includeDeleted";
+    if (chat == null) return [];
+
+    String req = "${chat?.guid}-$offset-$limit-$reactionsOnly-$includeDeleted";
 
     // If a current request is in progress, return that future
     if (_getMessagesRequests.containsKey(req) &&
@@ -573,6 +608,7 @@ class Chat {
         " message.timeExpressiveSendStyleId AS timeExpressiveSendStyleId,"
         " message.hasAttachments AS hasAttachments,"
         " message.hasReactions AS hasReactions,"
+        " message.metadata AS metadata,"
         " message.hasDdResults AS hasDdResults,"
         " handle.ROWID AS handleId,"
         " handle.originalROWID AS handleOriginalROWID,"

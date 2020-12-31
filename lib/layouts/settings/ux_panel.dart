@@ -21,6 +21,7 @@ class _UXPanelState extends State<UXPanel> {
   bool needToReconnect = false;
   bool showUrl = false;
   Brightness brightness;
+  Color previousBackgroundColor;
   bool gotBrightness = false;
 
   @override
@@ -41,16 +42,22 @@ class _UXPanelState extends State<UXPanel> {
   }
 
   void loadBrightness() {
-    if (gotBrightness) return;
-    if (context == null) {
+    Color now = Theme.of(context).backgroundColor;
+    bool themeChanged =
+        previousBackgroundColor == null || previousBackgroundColor != now;
+    if (!themeChanged && gotBrightness) return;
+
+    previousBackgroundColor = now;
+    if (this.context == null) {
       brightness = Brightness.light;
       gotBrightness = true;
       return;
     }
 
-    bool isDark = Theme.of(context).backgroundColor.computeLuminance() < 0.179;
+    bool isDark = now.computeLuminance() < 0.179;
     brightness = isDark ? Brightness.dark : Brightness.light;
     gotBrightness = true;
+    if (this.mounted) setState(() {});
   }
 
   @override
@@ -118,12 +125,33 @@ class _UXPanelState extends State<UXPanel> {
                     initialVal: _settingsCopy.doubleTapForDetails,
                     title: "Double-Tap Message for Details",
                   ),
+                  // SettingsSwitch(
+                  //   onChanged: (bool val) {
+                  //     _settingsCopy.sendTypingIndicators = val;
+                  //   },
+                  //   initialVal: _settingsCopy.sendTypingIndicators,
+                  //   title: "Send typing indicators (BlueBubblesHelper ONLY)",
+                  // ),
+                  SettingsSwitch(
+                    onChanged: (bool val) {
+                      _settingsCopy.smartReply = val;
+                    },
+                    initialVal: _settingsCopy.smartReply,
+                    title: "Smart Replies",
+                  ),
                   SettingsSwitch(
                     onChanged: (bool val) {
                       _settingsCopy.sendWithReturn = val;
                     },
                     initialVal: _settingsCopy.sendWithReturn,
                     title: "Send Message with Return Key",
+                  ),
+                  SettingsSwitch(
+                    onChanged: (bool val) {
+                      _settingsCopy.preCachePreviewImages = val;
+                    },
+                    initialVal: _settingsCopy.preCachePreviewImages,
+                    title: "Pre-Cache Preview Images",
                   ),
                   SettingsSwitch(
                     onChanged: (bool val) {

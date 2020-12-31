@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
+import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/attachment_sender.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view_mixin.dart';
 import 'package:bluebubbles/layouts/conversation_view/messages_view.dart';
@@ -35,6 +36,8 @@ class ConversationView extends StatefulWidget {
     this.onSelect,
     this.selectIcon,
     this.customHeading,
+    this.customMessageBloc,
+    this.onMessagesViewComplete,
     this.type = ChatSelectorTypes.ALL,
   }) : super(key: key);
 
@@ -44,6 +47,8 @@ class ConversationView extends StatefulWidget {
   final String customHeading;
   final String type;
   final bool isCreator;
+  final MessageBloc customMessageBloc;
+  final Function onMessagesViewComplete;
 
   @override
   ConversationViewState createState() => ConversationViewState();
@@ -62,6 +67,7 @@ class ConversationViewState extends State<ConversationView>
 
     isCreator = widget.isCreator ?? false;
     chat = widget.chat;
+
     initChatSelector();
     initConversationViewState();
 
@@ -132,16 +138,28 @@ class ConversationViewState extends State<ConversationView>
     } else {
       ActionHandler.sendMessage(chat, text);
     }
+
     if (isCreator) {
       isCreator = false;
       setState(() {});
     }
+
     return true;
   }
 
   @override
   Widget build(BuildContext context) {
     currentChat?.isAlive = true;
+
+    if (widget.customMessageBloc != null && messageBloc == null) {
+      messageBloc = widget.customMessageBloc;
+    }
+
+    if (messageBloc == null) {
+      messageBloc = initMessageBloc();
+      messageBloc.getMessages();
+    }
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: Theme.of(context).backgroundColor,
@@ -191,9 +209,10 @@ class ConversationViewState extends State<ConversationView>
                 child: (searchQuery.length == 0 || !isCreator) && chat != null
                     ? MessagesView(
                         key: new Key(chat?.guid ?? "unknown-chat"),
-                        messageBloc: messageBloc ?? initMessageBloc(),
+                        messageBloc: messageBloc,
                         showHandle: chat.participants.length > 1,
                         chat: chat,
+                        initComplete: widget.onMessagesViewComplete,
                       )
                     : buildChatSelectorBody(),
               ),

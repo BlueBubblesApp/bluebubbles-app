@@ -92,9 +92,6 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
     //   }
     // });
 
-    if (widget.existingText != null) {
-      controller.text = widget.existingText;
-    }
     focusNode = new FocusNode();
     focusNode.addListener(() {
       if (focusNode.hasFocus && this.mounted) {
@@ -102,10 +99,17 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
         setState(() {});
       }
     });
-    if (widget.existingAttachments != null) {
-      pickedImages.addAll(widget.existingAttachments);
-      updateTextFieldAttachments();
-    } else if (textFieldData != null) {
+
+    if (textFieldData == null) {
+      if (widget.existingText != null) {
+        controller.text = widget.existingText;
+      }
+
+      if (widget.existingAttachments != null) {
+        pickedImages.addAll(widget.existingAttachments);
+        updateTextFieldAttachments();
+      }
+    } else {
       pickedImages.addAll(textFieldData.attachments);
     }
   }
@@ -186,7 +190,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
               onPressed: () async {
                 widget.onSend([file], "");
 
-                // Disposte of the audio controller
+                // Dispose of the audio controller
                 CurrentChat.of(originalContext)
                     ?.audioPlayers
                     ?.removeWhere((key, _) => key == file.path);

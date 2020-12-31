@@ -24,6 +24,9 @@ class Settings {
   bool sendWithReturn = false;
   bool doubleTapForDetails = false;
   bool denseChatTiles = false;
+  bool smartReply = false;
+  bool reducedForehead = false;
+  bool preCachePreviewImages = true;
   // String emojiFontFamily;
 
   Skins skin = Skins.IOS;
@@ -71,6 +74,12 @@ class Settings {
         settings.doubleTapForDetails = entry.value;
       } else if (entry.name == "denseChatTiles") {
         settings.denseChatTiles = entry.value;
+      } else if (entry.name == "smartReply") {
+        settings.smartReply = entry.value;
+      } else if (entry.name == "reducedForehead") {
+        settings.reducedForehead = entry.value;
+      } else if (entry.name == "preCachePreviewImages") {
+        settings.preCachePreviewImages = entry.value;
       }
 
       // else if (entry.name == "emojiFontFamily") {
@@ -193,6 +202,18 @@ class Settings {
             name: "denseChatTiles",
             value: this.denseChatTiles,
             type: this.denseChatTiles.runtimeType),
+        ConfigEntry(
+            name: "smartReply",
+            value: this.smartReply,
+            type: this.smartReply.runtimeType),
+        ConfigEntry(
+            name: "reducedForehead",
+            value: this.reducedForehead,
+            type: this.reducedForehead.runtimeType),
+        ConfigEntry(
+            name: "preCachePreviewImages",
+            value: this.preCachePreviewImages,
+            type: this.preCachePreviewImages.runtimeType),
         // ConfigEntry(
         //     name: "emojiFontFamily",
         //     value: this.emojiFontFamily,

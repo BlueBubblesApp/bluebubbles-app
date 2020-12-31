@@ -58,6 +58,7 @@ class Message {
   bool hasAttachments;
   bool hasReactions;
   DateTime dateDeleted;
+  Map<String, dynamic> metadata;
 
   List<Attachment> attachments = [];
   List<Message> associatedMessages = [];
@@ -100,7 +101,8 @@ class Message {
       this.hasAttachments = false,
       this.hasReactions = false,
       this.attachments = const [],
-      this.dateDeleted});
+      this.dateDeleted,
+      this.metadata});
 
   String get fullText {
     String fullText = this.subject ?? "";
@@ -126,6 +128,17 @@ class Message {
             .map((a) => Attachment.fromMap(a))
             .toList()
         : [];
+
+    // Load the metadata
+    dynamic metadata = json.containsKey("metadata") ? json["metadata"] : null;
+    if (!isNullOrEmpty(metadata)) {
+      // If the metadata is a string, convert it to JSON
+      if (metadata is String) {
+        try {
+          metadata = jsonDecode(metadata);
+        } catch (ex) {}
+      }
+    }
 
     String associatedMessageGuid;
     if (json.containsKey("associatedMessageGuid") &&
@@ -219,6 +232,7 @@ class Message {
       dateDeleted: json.containsKey("dateDeleted")
           ? parseDate(json["dateDeleted"])
           : null,
+      metadata: metadata is String ? null : metadata,
     );
   }
 
@@ -305,17 +319,22 @@ class Message {
       }
     }
 
-    if (existing.toMap().containsKey("handleId")) {
-      params["handleId"] = existing.toMap()["handleId"];
+    var theMap = existing.toMap();
+    if (theMap.containsKey("handleId")) {
+      params["handleId"] = theMap["handleId"];
       newMessage.handleId = existing.handleId;
     }
     if (existing.hasAttachments) {
       params["hasAttachments"] = existing.hasAttachments ? 1 : 0;
       newMessage.hasAttachments = existing.hasAttachments;
     }
-    if (existing.toMap().containsKey("hasReactions")) {
-      params["hasReactions"] = existing.toMap()["hasReactions"];
+    if (theMap.containsKey("hasReactions")) {
+      params["hasReactions"] = theMap["hasReactions"];
       newMessage.hasReactions = existing.hasReactions;
+    }
+    if (theMap.containsKey("metadata")) {
+      params["metadata"] = theMap["metadata"];
+      newMessage.metadata = existing.metadata;
     }
 
     await db.update("message", params,
@@ -343,6 +362,8 @@ class Message {
       "error": this.error,
       "hasReactions": this.hasReactions ? 1 : 0,
       "hasDdResults": this.hasDdResults ? 1 : 0,
+      "metadata":
+          (isNullOrEmpty(this.metadata)) ? null : jsonEncode(this.metadata)
     };
 
     if (this.originalROWID != null) {
@@ -633,5 +654,6 @@ class Message {
         "hasReactions": hasReactions ? 1 : 0,
         "dateDeleted":
             (dateDeleted == null) ? null : dateDeleted.millisecondsSinceEpoch,
+        "metadata": jsonEncode(metadata),
       };
 }

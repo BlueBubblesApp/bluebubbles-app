@@ -3,6 +3,7 @@ import 'dart:ui';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
+import 'package:bluebubbles/layouts/search/search_view.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
@@ -31,8 +32,10 @@ class _ConversationListState extends State<ConversationList> {
   ScrollController _scrollController;
   List<Chat> _chats = <Chat>[];
   bool colorfulAvatars = false;
+  bool reducedForehead = false;
 
   Brightness brightness = Brightness.light;
+  Color previousBackgroundColor;
   bool gotBrightness = false;
   String model;
 
@@ -51,7 +54,6 @@ class _ConversationListState extends State<ConversationList> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    getDeviceModel();
     if (this.mounted) {
       theme = Colors.transparent;
     }
@@ -83,10 +85,16 @@ class _ConversationListState extends State<ConversationList> {
     }
 
     colorfulAvatars = SettingsManager().settings.colorfulAvatars;
+    reducedForehead = SettingsManager().settings.reducedForehead;
     SettingsManager().stream.listen((Settings newSettings) {
       if (newSettings.colorfulAvatars != colorfulAvatars && this.mounted) {
         setState(() {
           colorfulAvatars = newSettings.colorfulAvatars;
+        });
+      } else if (newSettings.reducedForehead != reducedForehead &&
+          this.mounted) {
+        setState(() {
+          reducedForehead = newSettings.reducedForehead;
         });
       }
     });
@@ -115,35 +123,23 @@ class _ConversationListState extends State<ConversationList> {
     });
   }
 
-  void getDeviceModel() async {
-    if (model != null) return;
-
-    DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
-    AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
-
-    // If the device is a pixel device
-    String mod = androidInfo?.model ?? "";
-    if (mod.contains("4a") &&
-        (mod.contains("pixel") || mod.contains("gphone"))) {
-      model = "pixel";
-      if (this.mounted) setState(() {});
-    } else {
-      model = "other";
-    }
-  }
-
   void loadBrightness() {
-    if (gotBrightness) return;
+    Color now = Theme.of(context).backgroundColor;
+    bool themeChanged =
+        previousBackgroundColor == null || previousBackgroundColor != now;
+    if (!themeChanged && gotBrightness) return;
 
+    previousBackgroundColor = now;
     if (this.context == null) {
       brightness = Brightness.light;
       gotBrightness = true;
       return;
     }
 
-    bool isDark = Theme.of(context).backgroundColor.computeLuminance() < 0.179;
+    bool isDark = now.computeLuminance() < 0.179;
     brightness = isDark ? Brightness.dark : Brightness.light;
     gotBrightness = true;
+    if (this.mounted) setState(() {});
   }
 
   bool get _isAppBarExpanded {
@@ -164,7 +160,7 @@ class _ConversationListState extends State<ConversationList> {
         appBar: PreferredSize(
           preferredSize: Size(
             MediaQuery.of(context).size.width,
-            (model == "pixel") ? 20 : 40,
+            reducedForehead ? 10 : 40,
           ),
           child: ClipRRect(
             child: BackdropFilter(
@@ -248,6 +244,27 @@ class _ConversationListState extends State<ConversationList> {
                           Spacer(
                             flex: 25,
                           ),
+                          ClipOval(
+                            child: Material(
+                              color:
+                                  Theme.of(context).accentColor, // button color
+                              child: InkWell(
+                                  child: SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: Icon(Icons.search,
+                                          color: Theme.of(context).primaryColor,
+                                          size: 12)),
+                                  onTap: () async {
+                                    Navigator.of(context).push(
+                                      CupertinoPageRoute(
+                                        builder: (context) => SearchView(),
+                                      ),
+                                    );
+                                  }),
+                            ),
+                          ),
+                          Container(width: 10.0),
                           !widget.showArchivedChats
                               ? PopupMenuButton(
                                   color: Theme.of(context).accentColor,
