@@ -122,6 +122,10 @@ class MetadataHelper {
       data?.image = null;
     }
 
+    // Remove title or description if either are the "null" string
+    if (data?.title == "null") data?.title = null;
+    if (data?.description == "null") data?.description = null;
+
     // Delete from the cache after 15 seconds (arbitrary)
     Future.delayed(Duration(seconds: 15), () {
       if (_metaCache.containsKey(message.guid)) {
