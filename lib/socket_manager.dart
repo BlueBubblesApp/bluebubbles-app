@@ -140,7 +140,7 @@ class SocketManager {
         });
         if (SettingsManager().settings.finishedSetup)
           setup.startIncrementalSync(SettingsManager().settings,
-              onConnectionError: (String err) {
+              isIncremental: true, onConnectionError: (String err) {
             debugPrint(
                 "(SYNC) Error performing incremental sync. Not saving last sync date.");
             debugPrint(err);

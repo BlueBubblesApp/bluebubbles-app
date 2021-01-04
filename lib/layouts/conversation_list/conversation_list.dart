@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:ui';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
+import 'package:bluebubbles/blocs/setup_bloc.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/search/search_view.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
@@ -11,7 +12,7 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/managers/theme_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
-import 'package:device_info/device_info.dart';
+import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/services.dart';
 
 import './conversation_tile.dart';
@@ -235,11 +236,40 @@ class _ConversationListState extends State<ConversationList> {
                           Spacer(
                             flex: 5,
                           ),
-                          Container(
-                            child: Text(
-                              widget.showArchivedChats ? "Archive" : "Messages",
-                              style: Theme.of(context).textTheme.headline1,
-                            ),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Text(
+                                widget.showArchivedChats
+                                    ? "Archive"
+                                    : "Messages",
+                                style: Theme.of(context).textTheme.headline1,
+                              ),
+                              Container(width: 10.0),
+                              StreamBuilder(
+                                stream: SocketManager().setup.stream,
+                                initialData: SetupData(0, []),
+                                builder: (context, snapshot) {
+                                  if (!snapshot.hasData ||
+                                      snapshot.data.progress < 1 ||
+                                      snapshot.data.progress >= 100)
+                                    return Container();
+
+                                  return Theme(
+                                    data: ThemeData(
+                                      cupertinoOverrideTheme:
+                                          CupertinoThemeData(
+                                              brightness: this.brightness),
+                                    ),
+                                    child: CupertinoActivityIndicator(
+                                      radius: 7,
+                                    ),
+                                  );
+                                },
+                              )
+                            ],
                           ),
                           Spacer(
                             flex: 25,

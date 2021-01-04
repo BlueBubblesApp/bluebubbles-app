@@ -31,9 +31,8 @@ class MessageHelper {
       {bool notifyForNewMessage = false,
       bool notifyMessageManager = true,
       bool checkForLatestMessageText = true,
+      bool isIncremental = false,
       Function(int progress, int length) onProgress}) async {
-    bool limit = messages.length > 20;
-
     // Create master list for all the messages and a chat cache
     List<Message> _messages = <Message>[];
     Map<Message, String> notificationMessages = <Message, String>{};
@@ -78,12 +77,12 @@ class MessageHelper {
         changeUnreadStatus: notifyForNewMessage,
         checkForMessageText: checkForLatestMessageText,
       );
+
       if (existing == null) {
-        if (limit) {
-          if (!notificationMessages.containsValue(msgChat.guid)) {
-            notificationMessages[message] = msgChat.guid;
-          }
-        } else {
+        if (isIncremental &&
+            !notificationMessages.containsValue(msgChat.guid)) {
+          notificationMessages[message] = msgChat.guid;
+        } else if (!isIncremental) {
           notificationMessages[message] = msgChat.guid;
         }
       } else {
