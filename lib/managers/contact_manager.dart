@@ -176,6 +176,12 @@ class ContactManager {
     if (contactTitle == address && !contactTitle.contains("@")) {
       return await formatPhoneNumber(contactTitle);
     }
+
+    // If it's an email and starts with "e:", strip it out
+    if (contactTitle.contains("@") && contactTitle.startsWith("e:")) {
+      contactTitle = contactTitle.substring(2);
+    }
+
     return contactTitle;
   }
 
