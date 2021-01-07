@@ -173,7 +173,7 @@ class ChatBloc {
       } else {
         // If [defaultAvatar] is not loaded, load it from assets
         if (NotificationManager().defaultAvatar == null) {
-          ByteData file = await loadAsset("assets/images/person.png");
+          ByteData file = await loadAsset("assets/images/person64.png");
           NotificationManager().defaultAvatar = file.buffer.asUint8List();
         }
 

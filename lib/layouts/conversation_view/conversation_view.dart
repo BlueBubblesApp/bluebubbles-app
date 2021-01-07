@@ -144,6 +144,7 @@ class ConversationViewState extends State<ConversationView>
         );
       }
     } else {
+      // We include messageBloc here because the bloc listener may not be instantiated yet
       ActionHandler.sendMessage(chat, text, messageBloc: messageBloc);
     }
 

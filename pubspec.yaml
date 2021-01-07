@@ -138,6 +138,7 @@ flutter:
     - assets/icon/moon.svg
     - assets/icon/discord.svg
     - assets/images/person.png
+    - assets/images/person64.png
     - assets/icon/icon.png
     - assets/changelog/changelog.md
   # An image asset can refer to one or more resolution-specific "variants", see
