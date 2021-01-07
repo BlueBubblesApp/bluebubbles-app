@@ -295,7 +295,7 @@ class _MessageState extends State<MessageWidget>
         stickersWidget: stickersWidget,
         attachmentsWidget: widgetAttachments,
         reactionsWidget: reactionsWidget,
-        shouldFadeIn: currentChat.sentMessages.contains(_message.guid),
+        shouldFadeIn: currentChat?.sentMessages?.contains(_message.guid),
         showHero: widget.showHero,
         showDeliveredReceipt: widget.isFirstSentMessage,
       );

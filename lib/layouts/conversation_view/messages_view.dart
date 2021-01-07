@@ -378,13 +378,13 @@ class MessagesViewState extends State<MessagesView>
       behavior: HitTestBehavior.deferToChild,
       onHorizontalDragStart: (details) {},
       onHorizontalDragUpdate: (details) {
-        CurrentChat.of(context).timeStampOffset += details.delta.dx * 0.3;
+        CurrentChat.of(context)?.timeStampOffset += details.delta.dx * 0.3;
       },
       onHorizontalDragEnd: (details) {
-        CurrentChat.of(context).timeStampOffset = 0;
+        CurrentChat.of(context)?.timeStampOffset = 0;
       },
       onHorizontalDragCancel: () {
-        CurrentChat.of(context).timeStampOffset = 0;
+        CurrentChat.of(context)?.timeStampOffset = 0;
       },
       child: Stack(
         alignment: AlignmentDirectional.bottomCenter,

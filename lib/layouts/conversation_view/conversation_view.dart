@@ -127,6 +127,9 @@ class ConversationViewState extends State<ConversationView>
       }
     }
 
+    // If the current chat is null, set it
+    if (currentChat == null) initCurrentChat(chat);
+
     if (attachments.length > 0) {
       for (int i = 0; i < attachments.length; i++) {
         OutgoingQueue().add(
@@ -141,7 +144,7 @@ class ConversationViewState extends State<ConversationView>
         );
       }
     } else {
-      ActionHandler.sendMessage(chat, text);
+      ActionHandler.sendMessage(chat, text, messageBloc: messageBloc);
     }
 
     if (isCreator) {

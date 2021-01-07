@@ -9,7 +9,6 @@ import 'package:bluebubbles/helpers/attachment_sender.dart';
 import 'package:bluebubbles/helpers/contstants.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/layouts/widgets/message_widget/group_event.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/outgoing_queue.dart';
@@ -35,7 +34,7 @@ class ActionHandler {
   /// sendMessage(chatObject, 'Hello world!')
   /// ```
   static Future<void> sendMessage(Chat chat, String text,
-      {List<Attachment> attachments = const []}) async {
+      {MessageBloc messageBloc, List<Attachment> attachments = const []}) async {
     if (isNullOrEmpty(text, trimString: true)) return;
 
     List<Message> messages = <Message>[];
@@ -84,6 +83,7 @@ class ActionHandler {
     // Send all the messages
     for (Message message in messages) {
       // Add the message to the UI and DB
+      if (messageBloc != null) messageBloc.insert(message);
       NewMessageManager().addMessage(chat, message, outgoing: true);
       chat.addMessage(message);
 
