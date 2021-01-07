@@ -33,11 +33,12 @@ DateTime parseDate(dynamic value) {
 }
 
 bool isNullOrEmpty(dynamic input, {trimString = false}) {
-  if (input != null && input is String) {
+  if (input == null) return true;
+  if (input is String) {
     input = input.trim();
   }
 
-  return input == null || input.isEmpty;
+  return input.isEmpty;
 }
 
 Size textSize(String text, TextStyle style) {

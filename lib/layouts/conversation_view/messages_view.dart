@@ -132,28 +132,33 @@ class MessagesViewState extends State<MessagesView>
     super.dispose();
   }
 
-  void addMessage(Message message, {bool fetch = true}) {
-    if (isEmptyString(message.text)) return;
-
-    TextMessage textMessage = message.isFromMe
-        ? TextMessage.createForLocalUser(
-            message.text, message.dateCreated.millisecondsSinceEpoch)
-        : TextMessage.createForRemoteUser(
-            message.text, message.dateCreated.millisecondsSinceEpoch);
-
-    currentMessages.add(textMessage);
-    if (currentMessages.length > 2) {
-      currentMessages.removeAt(currentMessages.length - 1);
-    }
-
-    if (fetch) updateReplies();
+  void resetReplies() {
+    if (replies.length == 0) return;
+    replies = [];
+    return smartReplyController.sink.add(replies);
   }
 
-  Future<void> updateReplies() async {
-    if (currentMessages.length == 0) return;
-    currentMessages.sort((a, b) => a.timestamp.compareTo(b.timestamp));
-    replies = await FlutterSmartReply.getSmartReplies(currentMessages);
-    smartReplyController.sink.add(replies);
+  void updateReplies() async {
+    if (isNullOrEmpty(_messages)) return resetReplies();
+
+    // If the first message has no text, don't do anything
+    Message msg = _messages.first;
+    if (isEmptyString(msg.text, stripWhitespace: true)) return resetReplies();
+
+    // If the latest message is from yourself, clear the replies
+    if (msg.isFromMe) return resetReplies();
+
+    TextMessage textMessage = TextMessage.createForRemoteUser(
+        msg.text, msg.dateCreated.millisecondsSinceEpoch);
+
+    debugPrint("Getting smart replies for `${textMessage.text}`");
+    replies = await FlutterSmartReply.getSmartReplies([textMessage]);
+    debugPrint("Smart Replies found: $replies");
+    if (replies.length == 0) {
+      resetReplies();
+    } else {
+      smartReplyController.sink.add(replies);
+    }
   }
 
   Future<void> loadNextChunk() {
@@ -211,6 +216,8 @@ class MessagesViewState extends State<MessagesView>
         NotificationManager().switchChat(CurrentChat.of(context)?.chat);
       }
       currentChat?.getAttachmentsForMessage(event.message);
+      currentChat?.tryUpdateMessageMarkers(event.message);
+
       if (event.outGoing) {
         currentChat?.sentMessages?.add(event.message);
         Future.delayed(SendWidget.SEND_DURATION * 2, () {
@@ -259,7 +266,7 @@ class MessagesViewState extends State<MessagesView>
       }
 
       if (isNewMessage && SettingsManager().settings.smartReply) {
-        addMessage(event.message);
+        updateReplies();
       }
     } else if (event.type == MessageBlocEventType.remove) {
       for (int i = 0; i < _messages.length; i++) {
@@ -273,15 +280,14 @@ class MessagesViewState extends State<MessagesView>
     } else {
       int originalMessageLength = _messages.length;
       _messages = event.messages;
-      _messages
-          .forEach((message) => currentChat.getAttachmentsForMessage(message));
+      _messages.forEach((message) {
+        currentChat?.getAttachmentsForMessage(message);
+        currentChat?.tryUpdateMessageMarkers(message);
+      });
 
       // We only want to update smart replies on the intial message fetch
       if (originalMessageLength == 0) {
         if (SettingsManager().settings.smartReply) {
-          for (Message message in _messages) {
-            addMessage(message, fetch: false);
-          }
           updateReplies();
         }
       }

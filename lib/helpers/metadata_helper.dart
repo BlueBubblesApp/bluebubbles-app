@@ -24,6 +24,14 @@ class MetadataHelper {
         data?.image != null;
   }
 
+  static Map<String, dynamic> safeJsonDecode(String input) {
+    try {
+      return jsonDecode(input);
+    } catch (ex) {
+      return null;
+    }
+  }
+
   static Map<String, Completer<Metadata>> _metaCache = {};
   static Future<Metadata> fetchMetadata(Message message) async {
     Metadata data;
@@ -55,7 +63,13 @@ class MetadataHelper {
       var response = await http.get(newUrl);
 
       // Manually load it into a metadata object via JSON
-      data = Metadata.fromJson(jsonDecode(response.body));
+      Map json = MetadataHelper.safeJsonDecode(response.body);
+      if (isNullOrEmpty(json)) {
+        completer.complete(null);
+        return completer.future;
+      }
+
+      data = Metadata.fromJson(json);
 
       // Set the URL to the original URL
       data.url = url;
@@ -64,7 +78,12 @@ class MetadataHelper {
       var response = await http.get(newUrl);
 
       // Manually load it into a metadata object via JSON
-      Map res = jsonDecode(response.body);
+      Map res = MetadataHelper.safeJsonDecode(response.body);
+      if (isNullOrEmpty(res)) {
+        completer.complete(null);
+        return completer.future;
+      }
+
       data = new Metadata();
       data.title = (res.containsKey("author_name")) ? res["author_name"] : "";
       data.description = (res.containsKey("html"))
@@ -121,6 +140,10 @@ class MetadataHelper {
         imageData.contains("fls-na.amazon.com")) {
       data?.image = null;
     }
+
+    // Remove title or description if either are the "null" string
+    if (data?.title == "null") data?.title = null;
+    if (data?.description == "null") data?.description = null;
 
     // Delete from the cache after 15 seconds (arbitrary)
     Future.delayed(Duration(seconds: 15), () {
