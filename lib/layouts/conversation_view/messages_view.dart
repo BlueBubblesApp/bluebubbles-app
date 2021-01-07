@@ -216,6 +216,8 @@ class MessagesViewState extends State<MessagesView>
         NotificationManager().switchChat(CurrentChat.of(context)?.chat);
       }
       currentChat?.getAttachmentsForMessage(event.message);
+      currentChat?.tryUpdateMessageMarkers(event.message);
+
       if (event.outGoing) {
         currentChat?.sentMessages?.add(event.message);
         Future.delayed(SendWidget.SEND_DURATION * 2, () {
@@ -278,8 +280,10 @@ class MessagesViewState extends State<MessagesView>
     } else {
       int originalMessageLength = _messages.length;
       _messages = event.messages;
-      _messages
-          .forEach((message) => currentChat.getAttachmentsForMessage(message));
+      _messages.forEach((message) {
+        currentChat?.getAttachmentsForMessage(message);
+        currentChat?.tryUpdateMessageMarkers(message);
+      });
 
       // We only want to update smart replies on the intial message fetch
       if (originalMessageLength == 0) {
