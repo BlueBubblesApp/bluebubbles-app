@@ -56,9 +56,16 @@ class ConversationView extends StatefulWidget {
 
 class ConversationViewState extends State<ConversationView>
     with ConversationViewMixin {
+
+  List<File> existingAttachments;
+  String existingText;
+
   @override
   void initState() {
     super.initState();
+
+    this.existingAttachments = widget.existingAttachments;
+    this.existingText = widget.existingText;
 
     // Initialize the current chat state
     if (widget.chat != null) {
@@ -150,6 +157,8 @@ class ConversationViewState extends State<ConversationView>
 
     if (isCreator) {
       isCreator = false;
+      this.existingText = "";
+      this.existingAttachments = [];
       setState(() {});
     }
 
@@ -186,8 +195,8 @@ class ConversationViewState extends State<ConversationView>
                 ? BlueBubblesTextField(
                     onSend: send,
                     isCreator: isCreator,
-                    existingAttachments: widget.existingAttachments,
-                    existingText: widget.existingText,
+                    existingAttachments: this.existingAttachments,
+                    existingText: this.existingText,
                   )
                 : Container(),
           ),

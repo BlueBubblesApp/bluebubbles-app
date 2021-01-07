@@ -100,16 +100,16 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
       }
     });
 
-    if (textFieldData == null) {
-      if (widget.existingText != null) {
-        controller.text = widget.existingText;
-      }
+    if (widget.existingText != null) {
+      controller.text = widget.existingText;
+    }
 
-      if (widget.existingAttachments != null) {
-        pickedImages.addAll(widget.existingAttachments);
-        updateTextFieldAttachments();
-      }
-    } else {
+    if (widget.existingAttachments != null) {
+      pickedImages.addAll(widget.existingAttachments);
+      updateTextFieldAttachments();
+    }
+
+    if (textFieldData != null) {
       pickedImages.addAll(textFieldData?.attachments ?? []);
     }
   }

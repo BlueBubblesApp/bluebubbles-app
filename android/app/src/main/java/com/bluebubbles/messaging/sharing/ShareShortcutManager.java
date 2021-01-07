@@ -19,7 +19,7 @@ import java.util.Set;
 public class ShareShortcutManager {
     private static final int MAX_SHORTCUTS = 4;
 
-    private static final String CATEGORY_SHARE_TARGET = "com.bluebubbles.messaging.category.TEXT_SHARE_TARGET";
+    private static final String CATEGORY_SHARE_TARGET = "com.bluebubbles.messaging.directshare.category.TEXT_SHARE_TARGET";
 
     public static void publishShareTarget(Context context, Contact contact) {
 
@@ -29,7 +29,8 @@ public class ShareShortcutManager {
 
         Intent staticLauncherShortcutIntent = new Intent(Intent.ACTION_DEFAULT);
 
-        @SuppressLint("RestrictedApi") ShortcutInfoCompat shortcut = new ShortcutInfoCompat.Builder(context, contact.id)
+        @SuppressLint("RestrictedApi")
+        ShortcutInfoCompat shortcut = new ShortcutInfoCompat.Builder(context, contact.id)
                 .setShortLabel(contact.name)
                 .setIcon(contact.getIcon())
                 .setIntent(staticLauncherShortcutIntent)
@@ -40,6 +41,5 @@ public class ShareShortcutManager {
                         .build())
                 .build();
         ShortcutManagerCompat.pushDynamicShortcut(context, shortcut);
-
     }
 }
