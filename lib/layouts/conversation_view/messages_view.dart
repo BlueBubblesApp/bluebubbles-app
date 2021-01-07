@@ -72,7 +72,19 @@ class MessagesViewState extends State<MessagesView>
   void initState() {
     super.initState();
 
-    widget.messageBloc.stream.listen(handleNewMessage);
+    // Get the current chat
+    currentChat = CurrentChat.of(context);
+
+    // Start listening for incoming messages
+    widget.messageBloc?.stream?.listen(handleNewMessage);
+
+    // See if we need to load anything from the message bloc
+    if (_messages.isEmpty && widget.messageBloc.messages.isEmpty) {
+      widget.messageBloc.getMessages();
+    } else if (_messages.isEmpty && widget.messageBloc.messages.isNotEmpty) {
+      widget.messageBloc.emitLoaded();
+    }
+
     smartReplyController = StreamController<List<String>>.broadcast();
 
     scrollController.addListener(() {
@@ -112,18 +124,6 @@ class MessagesViewState extends State<MessagesView>
     });
 
     if (widget.initComplete != null) widget.initComplete();
-  }
-
-  @override
-  void didChangeDependencies() async {
-    super.didChangeDependencies();
-    currentChat = CurrentChat.of(context);
-
-    if (_messages.isEmpty && widget.messageBloc.messages.isEmpty) {
-      widget.messageBloc.getMessages();
-    } else if (_messages.isEmpty && widget.messageBloc.messages.isNotEmpty) {
-      widget.messageBloc.emitLoaded();
-    }
   }
 
   @override

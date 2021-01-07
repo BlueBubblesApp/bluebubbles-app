@@ -37,6 +37,7 @@ class MessageBloc {
   int _reactions = 0;
   bool showDeleted = false;
   bool _canLoadMore = true;
+  bool _isGettingMore = false;
 
   LinkedHashMap<String, Message> get messages {
     if (!showDeleted) {
@@ -192,6 +193,11 @@ class MessageBloc {
   }
 
   Future<LinkedHashMap<String, Message>> getMessages() async {
+    // If we are already fetching, return empty
+    if (_isGettingMore || !this._canLoadMore) return new LinkedHashMap();
+    _isGettingMore = true;
+
+    // Fetch messages
     List<Message> messages = await Chat.getMessagesSingleton(_currentChat);
 
     if (isNullOrEmpty(messages)) {
@@ -207,6 +213,8 @@ class MessageBloc {
     }
 
     this.emitLoaded();
+
+    _isGettingMore = false;
     return _allMessages;
   }
 
@@ -261,14 +269,16 @@ class MessageBloc {
       return completer.future;
     }
 
-    if (_currentChat != null) {
+    Chat currChat = currentChat?.chat ?? _currentChat;
+
+    if (currChat != null) {
       List<Message> messages = [];
       int count = 0;
 
       // Should we check locally first?
       if (checkLocal)
         messages =
-            await Chat.getMessages(_currentChat, offset: offset + reactionCnt);
+            await Chat.getMessages(currChat, offset: offset + reactionCnt);
 
       // Fetch messages from the socket
       count = messages.length;
@@ -276,7 +286,7 @@ class MessageBloc {
         try {
           // Fetch messages from the server
           List<dynamic> _messages = await SocketManager()
-              .loadMessageChunk(_currentChat, offset + reactionCnt);
+              .loadMessageChunk(currChat, offset + reactionCnt);
           count = _messages.length;
 
           // Handle the messages

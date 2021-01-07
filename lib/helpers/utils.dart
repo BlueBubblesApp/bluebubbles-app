@@ -285,7 +285,7 @@ Future<dynamic> loadAsset(String path) {
   return rootBundle.load(path);
 }
 
-bool validatePhoneNumber(String value) {
+bool isValidAddress(String value) {
   value = value.trim();
 
   String phonePattern =

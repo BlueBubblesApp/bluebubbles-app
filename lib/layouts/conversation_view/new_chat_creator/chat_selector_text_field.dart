@@ -89,7 +89,7 @@ class _ChatSelectorTextFieldState extends State<ChatSelectorTextField> {
           onSubmitted: (String done) {
             FocusScope.of(context).requestFocus(inputFieldNode);
             if (done.isEmpty) return;
-            if (validatePhoneNumber(done)) {
+            if (isValidAddress(done)) {
               widget.onSelected(
                   new UniqueContact(address: done, displayName: done));
             } else {
