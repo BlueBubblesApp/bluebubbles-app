@@ -407,7 +407,6 @@ class Chat {
         if (SettingsManager().settings.preCachePreviewImages &&
             message.metadata.containsKey("image") &&
             !isNullOrEmpty(message.metadata["image"])) {
-
           // Save from URL
           File newFile =
               await saveImageFromUrl(message.guid, message.metadata["image"]);

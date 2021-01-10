@@ -289,6 +289,7 @@ class Message {
       {bool awaitNewMessageEvent = true, Chat chat}) async {
     final Database db = await DBProvider.db.database;
     Message existing = await Message.findOne({"guid": oldGuid});
+
     if (existing == null) {
       if (awaitNewMessageEvent) {
         await Future.delayed(Duration(milliseconds: 500));
@@ -309,14 +310,6 @@ class Message {
     }
     if (params.containsKey("handle")) {
       params.remove("handle");
-    }
-
-    if (existing.toMap().containsKey("originalROWID")) {
-      params["originalROWID"] = existing.toMap()["originalROWID"];
-
-      if (existing.originalROWID != null) {
-        newMessage.originalROWID = existing.originalROWID;
-      }
     }
 
     var theMap = existing.toMap();
