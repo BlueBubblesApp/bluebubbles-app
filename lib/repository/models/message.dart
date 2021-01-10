@@ -603,6 +603,39 @@ class Message {
     return res[0]["count"];
   }
 
+  void merge(Message otherMessage) {
+    if (this.dateCreated == null && otherMessage.dateCreated != null) {
+      this.dateCreated = otherMessage.dateCreated;
+    }
+    if (this.dateDelivered == null && otherMessage.dateDelivered != null) {
+      this.dateDelivered = otherMessage.dateDelivered;
+    }
+    if (this.dateRead == null && otherMessage.dateRead != null) {
+      this.dateRead = otherMessage.dateRead;
+    }
+    if (this.dateDeleted == null && otherMessage.dateDeleted != null) {
+      this.dateDeleted = otherMessage.dateDeleted;
+    }
+    if (this.datePlayed == null && otherMessage.datePlayed != null) {
+      this.datePlayed = otherMessage.datePlayed;
+    }
+    if (this.metadata == null && otherMessage.metadata != null) {
+      this.metadata = otherMessage.metadata;
+    }
+    if (this.originalROWID == null && otherMessage.originalROWID != null) {
+      this.originalROWID = otherMessage.originalROWID;
+    }
+    if (!this.hasAttachments && otherMessage.hasAttachments) {
+      this.hasAttachments = otherMessage.hasAttachments;
+    }
+    if (!this.hasReactions && otherMessage.hasReactions) {
+      this.hasReactions = otherMessage.hasReactions;
+    }
+    if (this.error == 0 && otherMessage.error != 0) {
+      this.error = otherMessage.error;
+    }
+  }
+
   Map<String, dynamic> toMap() => {
         "ROWID": id,
         "originalROWID": originalROWID,

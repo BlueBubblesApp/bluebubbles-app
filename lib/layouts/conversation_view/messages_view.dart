@@ -329,14 +329,16 @@ class MessagesViewState extends State<MessagesView>
 
     bool updatedAMessage = false;
     for (int i = 0; i < _messages.length; i++) {
-      if (_messages[i].guid == oldGuid) {
+      if (_messages[i].guid == oldGuid || _messages[i].guid == message.guid) {
         debugPrint(
             "(Message status) Update message: [${message.text}] - [${message.guid}] - [$oldGuid]");
-        _messages[i] = message;
+
+        _messages[i].merge(message);
         updatedAMessage = true;
         break;
       }
     }
+
     if (!updatedAMessage) {
       debugPrint(
           "(Message status) FAILED TO UPDATE A MESSAGE: [${message.text}] - [${message.guid}] - [$oldGuid]");
