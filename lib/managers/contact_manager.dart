@@ -133,10 +133,15 @@ class ContactManager {
     Contact contact;
 
     // If the contact list is null, get the contacts
-    if (contacts == null) await getContacts();
-    for (Contact c in contacts) {
+    try {
+      if (contacts == null) await getContacts();
+    } catch (ex) {
+      return null;
+    }
+
+    for (Contact c in contacts ?? []) {
       // Get a phone number match
-      for (Item item in c.phones) {
+      for (Item item in c?.phones ?? []) {
         if (sameAddress(item.value, address)) {
           contact = c;
           break;
@@ -144,7 +149,7 @@ class ContactManager {
       }
 
       // Get an email match
-      for (Item item in c.emails) {
+      for (Item item in c?.emails ?? []) {
         if (item.value == address) {
           contact = c;
           break;
