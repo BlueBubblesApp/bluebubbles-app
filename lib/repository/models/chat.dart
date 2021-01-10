@@ -697,6 +697,7 @@ class Chat {
         " handle.originalROWID as originalROWID,"
         " handle.address AS address,"
         " handle.country AS country,"
+        " handle.color AS color,"
         " handle.uncanonicalizedId AS uncanonicalizedId"
         " FROM chat"
         " JOIN chat_handle_join AS chj ON chat.ROWID = chj.chatId"

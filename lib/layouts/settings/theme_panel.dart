@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:ui';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
+import 'package:bluebubbles/layouts/settings/custom_avatar_panel.dart';
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
 import 'package:bluebubbles/layouts/theming/theming_panel.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
@@ -145,14 +146,6 @@ class _ThemePanelState extends State<ThemePanel> {
                   ),
                   SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.hideDividers = val;
-                      saveSettings();
-                    },
-                    initialVal: _settingsCopy.hideDividers,
-                    title: "Hide Dividers",
-                  ),
-                  SettingsSwitch(
-                    onChanged: (bool val) {
                       _settingsCopy.colorfulAvatars = val;
                       saveSettings();
                     },
@@ -166,6 +159,26 @@ class _ThemePanelState extends State<ThemePanel> {
                     },
                     initialVal: _settingsCopy.colorfulBubbles,
                     title: "Colorful Bubbles",
+                  ),
+                  SettingsTile(
+                    title: "Custom Avatar Colors",
+                    trailing: Icon(Icons.arrow_forward_ios,
+                        color: Theme.of(context).primaryColor),
+                    onTap: () async {
+                      Navigator.of(context).push(
+                        CupertinoPageRoute(
+                          builder: (context) => CustomAvatarPanel(),
+                        ),
+                      );
+                    },
+                  ),
+                  SettingsSwitch(
+                    onChanged: (bool val) {
+                      _settingsCopy.hideDividers = val;
+                      saveSettings();
+                    },
+                    initialVal: _settingsCopy.hideDividers,
+                    title: "Hide Dividers",
                   ),
                   SettingsSwitch(
                     onChanged: (bool val) {

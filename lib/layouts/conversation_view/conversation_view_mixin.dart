@@ -356,7 +356,8 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
       int matches = 0;
       for (UniqueContact contact in selected) {
         // If the selected contact doesn't match any participants int he chat, continue
-        if (i.participants.any((Handle participant) => sameAddress(contact.address, participant.address))) {
+        if (i.participants.any((Handle participant) =>
+            sameAddress(contact.address, participant.address))) {
           matches += 1;
         }
       }

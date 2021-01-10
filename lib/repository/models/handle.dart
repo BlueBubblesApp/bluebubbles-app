@@ -19,6 +19,7 @@ class Handle {
   int originalROWID;
   String address;
   String country;
+  String color;
   String uncanonicalizedId;
 
   Handle({
@@ -26,6 +27,7 @@ class Handle {
     this.originalROWID,
     this.address,
     this.country,
+    this.color,
     this.uncanonicalizedId,
   });
 
@@ -36,6 +38,7 @@ class Handle {
           json.containsKey("originalROWID") ? json["originalROWID"] : null,
       address: json["address"],
       country: json.containsKey("country") ? json["country"] : null,
+      color: json.containsKey("color") ? json["color"] : null,
       uncanonicalizedId: json.containsKey("uncanonicalizedId")
           ? json["uncanonicalizedId"]
           : null,
@@ -76,6 +79,7 @@ class Handle {
       Map<String, dynamic> params = {
         "address": this.address,
         "country": this.country,
+        "color": this.color,
         "uncanonicalizedId": this.uncanonicalizedId
       };
 
@@ -155,6 +159,7 @@ class Handle {
         "originalROWID": originalROWID,
         "address": address,
         "country": country,
+        "color": color,
         "uncanonicalizedId": uncanonicalizedId,
       };
 }

@@ -16,6 +16,11 @@ class ContactManager {
 
   StreamController<List<String>> _stream = new StreamController.broadcast();
 
+  StreamController<Map<String, Color>> _colorStream =
+      new StreamController.broadcast();
+  Stream<Map<String, Color>> get colorStream => _colorStream.stream;
+  StreamController<Map<String, Color>> get colorStreamObject => _colorStream;
+
   Stream<List<String>> get stream => _stream.stream;
 
   ContactManager._internal();
@@ -200,5 +205,6 @@ class ContactManager {
 
   dispose() {
     _stream.close();
+    _colorStream.close();
   }
 }

@@ -40,6 +40,7 @@ class DBProvider {
 
   static Database _database;
   static String _path = "";
+  static int currentVersion = 8;
 
   /// Contains list of functions to invoke when going from a previous to the current database verison
   /// The previous version is always [key - 1], for example for key 2, it will be the upgrade scheme from version 1 to version 2
@@ -89,6 +90,11 @@ class DBProvider {
           db.execute(
               "ALTER TABLE message ADD COLUMN metadata TEXT DEFAULT NULL;");
         }),
+    new DBUpgradeItem(
+        addedInVersion: 8,
+        upgrade: (Database db) {
+          db.execute("ALTER TABLE handle ADD COLUMN color TEXT DEFAULT NULL;");
+        }),
   ];
 
   Future<Database> get database async {
@@ -104,8 +110,9 @@ class DBProvider {
   initDB() async {
     Directory documentsDirectory = await getApplicationDocumentsDirectory();
     _path = join(documentsDirectory.path, "chat.db");
-    return await openDatabase(_path, version: 7, onUpgrade: _onUpgrade,
-        onOpen: (Database db) async {
+    return await openDatabase(_path,
+        version: currentVersion,
+        onUpgrade: _onUpgrade, onOpen: (Database db) async {
       debugPrint("Database Opened");
       _database = db;
       await checkTableExistenceAndCreate(db);
@@ -224,6 +231,7 @@ class DBProvider {
         "originalROWID INTEGER DEFAULT NULL,"
         "address TEXT UNIQUE NOT NULL,"
         "country TEXT DEFAULT NULL,"
+        "color TEXT DEFAULT NULL,"
         "uncanonicalizedId TEXT DEFAULT NULL"
         ");");
   }
