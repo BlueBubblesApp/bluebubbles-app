@@ -69,7 +69,13 @@ class MetadataHelper {
         return completer.future;
       }
 
-      data = Metadata.fromJson(json);
+      data = Metadata();
+      data.image =
+          json.containsKey("thumbnail_url") ? json["thumbnail_url"] : null;
+      data.title = json.containsKey("title") ? json["title"] : null;
+      data.description = json.containsKey("author_name")
+          ? "User: ${json["author_name"]}"
+          : null;
 
       // Set the URL to the original URL
       data.url = url;

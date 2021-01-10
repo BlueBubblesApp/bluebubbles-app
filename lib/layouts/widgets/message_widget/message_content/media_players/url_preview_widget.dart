@@ -202,7 +202,7 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
     return AnimatedSize(
       curve: Curves.easeInOut,
       alignment: Alignment.center,
-      duration: Duration(milliseconds: 500),
+      duration: Duration(milliseconds: 200),
       vsync: this,
       child: Padding(
         padding: EdgeInsets.only(
