@@ -27,6 +27,7 @@ class Settings {
   bool smartReply = false;
   bool reducedForehead = false;
   bool preCachePreviewImages = true;
+  bool showConnectionIndicator = false;
   // String emojiFontFamily;
 
   Skins skin = Skins.IOS;
@@ -80,6 +81,8 @@ class Settings {
         settings.reducedForehead = entry.value;
       } else if (entry.name == "preCachePreviewImages") {
         settings.preCachePreviewImages = entry.value;
+      } else if (entry.name == "showConnectionIndicator") {
+        settings.showConnectionIndicator = entry.value;
       }
 
       // else if (entry.name == "emojiFontFamily") {
@@ -214,6 +217,10 @@ class Settings {
             name: "preCachePreviewImages",
             value: this.preCachePreviewImages,
             type: this.preCachePreviewImages.runtimeType),
+        ConfigEntry(
+            name: "showConnectionIndicator",
+            value: this.showConnectionIndicator,
+            type: this.showConnectionIndicator.runtimeType),
         // ConfigEntry(
         //     name: "emojiFontFamily",
         //     value: this.emojiFontFamily,

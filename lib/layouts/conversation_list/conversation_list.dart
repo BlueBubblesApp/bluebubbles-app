@@ -3,6 +3,7 @@ import 'dart:ui';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/setup_bloc.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/search/search_view.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
@@ -34,6 +35,7 @@ class _ConversationListState extends State<ConversationList> {
   List<Chat> _chats = <Chat>[];
   bool colorfulAvatars = false;
   bool reducedForehead = false;
+  bool showIndicator = false;
 
   Brightness brightness = Brightness.light;
   Color previousBackgroundColor;
@@ -87,6 +89,7 @@ class _ConversationListState extends State<ConversationList> {
 
     colorfulAvatars = SettingsManager().settings.colorfulAvatars;
     reducedForehead = SettingsManager().settings.reducedForehead;
+    showIndicator = SettingsManager().settings.showConnectionIndicator;
     SettingsManager().stream.listen((Settings newSettings) {
       if (newSettings.colorfulAvatars != colorfulAvatars && this.mounted) {
         setState(() {
@@ -96,6 +99,11 @@ class _ConversationListState extends State<ConversationList> {
           this.mounted) {
         setState(() {
           reducedForehead = newSettings.reducedForehead;
+        });
+      } else if (newSettings.showConnectionIndicator != showIndicator &&
+          this.mounted) {
+        setState(() {
+          showIndicator = newSettings.showConnectionIndicator;
         });
       }
     });
@@ -248,26 +256,66 @@ class _ConversationListState extends State<ConversationList> {
                                 style: Theme.of(context).textTheme.headline1,
                               ),
                               Container(width: 10.0),
-                              StreamBuilder(
-                                stream: SocketManager().setup.stream,
-                                initialData: SetupData(0, []),
-                                builder: (context, snapshot) {
-                                  if (!snapshot.hasData ||
-                                      snapshot.data.progress < 1 ||
-                                      snapshot.data.progress >= 100)
-                                    return Container();
+                              Stack(
+                                alignment: Alignment.center,
+                                children: [
+                                  (showIndicator)
+                                      ? StreamBuilder(
+                                          stream: SocketManager()
+                                              .connectionStateStream,
+                                          builder: (context,
+                                              AsyncSnapshot<SocketState>
+                                                  snapshot) {
+                                            SocketState connectionStatus;
+                                            if (snapshot.hasData) {
+                                              connectionStatus = snapshot.data;
+                                            } else {
+                                              connectionStatus =
+                                                  SocketManager().state;
+                                            }
 
-                                  return Theme(
-                                    data: ThemeData(
-                                      cupertinoOverrideTheme:
-                                          CupertinoThemeData(
-                                              brightness: this.brightness),
-                                    ),
-                                    child: CupertinoActivityIndicator(
-                                      radius: 7,
-                                    ),
-                                  );
-                                },
+                                            if (connectionStatus ==
+                                                    SocketState.CONNECTED ||
+                                                connectionStatus ==
+                                                    SocketState.CONNECTING) {
+                                              return Icon(
+                                                Icons.fiber_manual_record,
+                                                size: 8,
+                                                color: HexColor('32CD32')
+                                                    .withAlpha(200),
+                                              );
+                                            } else {
+                                              return Icon(
+                                                Icons.fiber_manual_record,
+                                                size: 8,
+                                                color: HexColor('DC143C')
+                                                    .withAlpha(200),
+                                              );
+                                            }
+                                          })
+                                      : Container(),
+                                  StreamBuilder(
+                                    stream: SocketManager().setup.stream,
+                                    initialData: SetupData(0, []),
+                                    builder: (context, snapshot) {
+                                      if (!snapshot.hasData ||
+                                          snapshot.data.progress < 1 ||
+                                          snapshot.data.progress >= 100)
+                                        return Container();
+
+                                      return Theme(
+                                        data: ThemeData(
+                                          cupertinoOverrideTheme:
+                                              CupertinoThemeData(
+                                                  brightness: this.brightness),
+                                        ),
+                                        child: CupertinoActivityIndicator(
+                                          radius: 7,
+                                        ),
+                                      );
+                                    },
+                                  )
+                                ],
                               )
                             ],
                           ),

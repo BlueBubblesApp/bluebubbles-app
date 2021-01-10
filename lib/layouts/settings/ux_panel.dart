@@ -106,6 +106,13 @@ class _UXPanelState extends State<UXPanel> {
                   Container(padding: EdgeInsets.only(top: 5.0)),
                   SettingsSwitch(
                     onChanged: (bool val) {
+                      _settingsCopy.showConnectionIndicator = val;
+                    },
+                    initialVal: _settingsCopy.showConnectionIndicator,
+                    title: "Show Connection Indicator in Chat List",
+                  ),
+                  SettingsSwitch(
+                    onChanged: (bool val) {
                       _settingsCopy.hideTextPreviews = val;
                     },
                     initialVal: _settingsCopy.hideTextPreviews,
