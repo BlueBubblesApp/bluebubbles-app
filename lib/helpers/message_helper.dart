@@ -48,9 +48,9 @@ class MessageHelper {
 
     // Iterate over each message to parse it
     for (dynamic item in messages) {
-      // if (onProgress != null) {
-      //   onProgress(_messages.length, messages.length);
-      // }
+      if (onProgress != null) {
+        onProgress(_messages.length, messages.length);
+      }
 
       // Pull the chats out of the message, if there isnt a default
       Chat msgChat = chat;
