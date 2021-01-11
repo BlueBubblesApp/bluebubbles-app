@@ -28,6 +28,7 @@ class Settings {
   bool reducedForehead = false;
   bool preCachePreviewImages = true;
   bool showConnectionIndicator = false;
+  int sendDelay;
   // String emojiFontFamily;
 
   Skins skin = Skins.IOS;
@@ -83,6 +84,8 @@ class Settings {
         settings.preCachePreviewImages = entry.value;
       } else if (entry.name == "showConnectionIndicator") {
         settings.showConnectionIndicator = entry.value;
+      } else if (entry.name == "sendDelay") {
+        settings.sendDelay = entry.value;
       }
 
       // else if (entry.name == "emojiFontFamily") {
@@ -221,6 +224,10 @@ class Settings {
             name: "showConnectionIndicator",
             value: this.showConnectionIndicator,
             type: this.showConnectionIndicator.runtimeType),
+        ConfigEntry(
+            name: "sendDelay",
+            value: this.sendDelay,
+            type: this.sendDelay.runtimeType),
         // ConfigEntry(
         //     name: "emojiFontFamily",
         //     value: this.emojiFontFamily,

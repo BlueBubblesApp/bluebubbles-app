@@ -185,6 +185,25 @@ class _UXPanelState extends State<UXPanel> {
                       min: 0.20,
                       max: 1,
                       divisions: 8),
+                  SettingsSwitch(
+                    onChanged: (bool val) {
+                      _settingsCopy.sendDelay = val ? 3 : null;
+                      setState(() {});
+                    },
+                    initialVal: _settingsCopy.sendDelay != null,
+                    title: "Send Delay",
+                  ),
+                  if (SettingsManager().settings.sendDelay != null)
+                    SettingsSlider(
+                        text: "Send Delay (Seconds)",
+                        startingVal: _settingsCopy.sendDelay.toDouble(),
+                        update: (double val) {
+                          _settingsCopy.sendDelay = val.toInt();
+                        },
+                        formatValue: ((double val) => val.toStringAsFixed(2)),
+                        min: 1,
+                        max: 10,
+                        divisions: 9),
                 ],
               ),
             ),
