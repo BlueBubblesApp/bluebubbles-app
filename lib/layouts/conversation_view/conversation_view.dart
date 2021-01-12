@@ -56,7 +56,6 @@ class ConversationView extends StatefulWidget {
 
 class ConversationViewState extends State<ConversationView>
     with ConversationViewMixin {
-
   List<File> existingAttachments;
   String existingText;
 
