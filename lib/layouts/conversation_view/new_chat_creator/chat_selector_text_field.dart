@@ -1,6 +1,8 @@
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view_mixin.dart';
 import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/contact_selector_custom_cupertino_textfield.dart';
+import 'package:bluebubbles/managers/contact_manager.dart';
+import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -86,12 +88,19 @@ class _ChatSelectorTextFieldState extends State<ChatSelectorTextField> {
         child: ContactSelectorCustomCupertinoTextfield(
           cursorColor: Theme.of(context).primaryColor,
           focusNode: inputFieldNode,
-          onSubmitted: (String done) {
+          onSubmitted: (String done) async {
             FocusScope.of(context).requestFocus(inputFieldNode);
             if (done.isEmpty) return;
             if (isValidAddress(done)) {
-              widget.onSelected(
-                  new UniqueContact(address: done, displayName: done));
+              Contact contact = ContactManager().getCachedContactSync(done);
+              if (contact == null) {
+                widget.onSelected(new UniqueContact(
+                    address: done,
+                    displayName: (await formatPhoneNumber(done)) ?? done));
+              } else {
+                widget.onSelected(new UniqueContact(
+                    address: done, displayName: contact.displayName ?? done));
+              }
             } else {
               if (widget.allContacts.isEmpty) {
                 Scaffold.of(context).showSnackBar(SnackBar(

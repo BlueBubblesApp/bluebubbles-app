@@ -54,9 +54,21 @@ Size textSize(String text, TextStyle style) {
 Future<String> formatPhoneNumber(String str) async {
   // If the string is an email, we don't want to format it
   if (str.contains("@")) return str;
+  str = str.trim();
 
-  Map<String, dynamic> meta = await FlutterLibphonenumber()
-      .parse(str, region: SettingsManager().countryCode ?? "US");
+  String countryCode = SettingsManager().countryCode ?? "US";
+  Map<String, dynamic> meta = {};
+
+  try {
+    meta = await FlutterLibphonenumber().parse(str, region: countryCode);
+  } catch (ex) {
+    if (!str.startsWith("+") && getCodeMap().containsKey(countryCode)) {
+      try {
+        meta = await FlutterLibphonenumber()
+            .parse("${getCodeMap()[countryCode]}$str", region: countryCode);
+      } catch (x) {}
+    }
+  }
 
   if (!meta.containsKey("national")) {
     if (meta.containsKey("international")) {
