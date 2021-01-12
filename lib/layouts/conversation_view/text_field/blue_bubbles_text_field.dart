@@ -342,7 +342,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
           if (!isNullOrEmpty(title)) {
             placeholder = title;
           }
-        } else {
+        } else if (!isNullOrEmpty(
+            CurrentChat.of(context)?.chat?.participants)) {
           // If it's not a group chat, get the participant's contact info
           String address =
               CurrentChat.of(context)?.chat?.participants[0].address;
@@ -355,6 +356,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
         }
       }
     } catch (ex) {
+      debugPrint("Error setting Text Field Placeholder!");
       debugPrint(ex.toString());
     }
 
