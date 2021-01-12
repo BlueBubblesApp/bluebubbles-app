@@ -133,8 +133,13 @@ class DBProvider {
     for (DBUpgradeItem item in upgradeSchemes) {
       if (oldVersion < item.addedInVersion) {
         debugPrint(
-            "UPGRADING DB FROM VERSION $oldVersion TO VERSION $newVersion");
-        await item.upgrade(db);
+            "Upgrading DB from version $oldVersion to version $newVersion");
+
+        try {
+          await item.upgrade(db);
+        } catch (ex) {
+          debugPrint("Failed to perform DB upgrade: ${ex.toString()}");
+        }
       }
     }
   }

@@ -211,9 +211,10 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
             radius: 20,
             backgroundColor: Theme.of(context).accentColor,
             child: ContactAvatarWidget(
-              handle: participant,
-              borderThickness: 0.1,
-            ),
+                handle: participant,
+                borderThickness: 0.1,
+                editable: false,
+                onTap: openDetails),
           ),
         ),
       );

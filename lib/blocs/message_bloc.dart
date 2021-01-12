@@ -63,6 +63,7 @@ class MessageBloc {
   MessageBloc(Chat chat, {bool canLoadMore = true}) {
     _canLoadMore = canLoadMore;
     _currentChat = chat;
+
     NewMessageManager().stream.listen((msgEvent) {
       if (_messageController.isClosed) return;
 

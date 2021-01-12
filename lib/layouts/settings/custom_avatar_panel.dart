@@ -141,6 +141,14 @@ class _CustomAvatarPanelState extends State<CustomAvatarPanel> {
               delegate: SliverChildListDelegate(
                 <Widget>[
                   Container(padding: EdgeInsets.only(top: 5.0)),
+                  if (this.handleWidgets.length == 0)
+                    Container(
+                        padding: EdgeInsets.all(30),
+                        child: Text(
+                          "No avatars have been customized! To get started, tap an avatar.",
+                          style: Theme.of(context).textTheme.subtitle1,
+                          textAlign: TextAlign.center,
+                        )),
                   for (Widget handleWidget in this.handleWidgets ?? [])
                     handleWidget
                 ],

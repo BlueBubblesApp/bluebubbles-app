@@ -29,6 +29,7 @@ class Settings {
   bool preCachePreviewImages = true;
   bool showConnectionIndicator = false;
   int sendDelay;
+  bool recipientAsPlaceholder = false;
   // String emojiFontFamily;
 
   Skins skin = Skins.IOS;
@@ -86,6 +87,8 @@ class Settings {
         settings.showConnectionIndicator = entry.value;
       } else if (entry.name == "sendDelay") {
         settings.sendDelay = entry.value;
+      } else if (entry.name == "recipientAsPlaceholder") {
+        settings.recipientAsPlaceholder = entry.value;
       }
 
       // else if (entry.name == "emojiFontFamily") {
@@ -228,6 +231,10 @@ class Settings {
             name: "sendDelay",
             value: this.sendDelay,
             type: this.sendDelay.runtimeType),
+        ConfigEntry(
+            name: "recipientAsPlaceholder",
+            value: this.recipientAsPlaceholder,
+            type: this.recipientAsPlaceholder.runtimeType),
         // ConfigEntry(
         //     name: "emojiFontFamily",
         //     value: this.emojiFontFamily,

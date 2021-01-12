@@ -132,7 +132,8 @@ class Chat {
         participants.add(Handle.fromMap(item));
       });
     }
-    return new Chat(
+
+    var data = new Chat(
       id: json.containsKey("ROWID") ? json["ROWID"] : null,
       originalROWID:
           json.containsKey("originalROWID") ? json["originalROWID"] : null,
@@ -174,6 +175,13 @@ class Chat {
       displayName: json.containsKey("displayName") ? json["displayName"] : null,
       participants: participants,
     );
+
+    // Adds fallback getter for the ID
+    if (data.id == null) {
+      data.id = json.containsKey("id") ? json["id"] : null;
+    }
+
+    return data;
   }
 
   Future<Chat> save(
@@ -613,6 +621,7 @@ class Chat {
         " handle.originalROWID AS handleOriginalROWID,"
         " handle.address AS handleAddress,"
         " handle.country AS handleCountry,"
+        " handle.color AS handleColor,"
         " handle.uncanonicalizedId AS handleUncanonicalizedId"
         " FROM message"
         " JOIN chat_message_join AS cmj ON message.ROWID = cmj.messageId"
@@ -650,6 +659,7 @@ class Chat {
           'originalROWID': res[i]['handleOriginalROWID'],
           'address': res[i]['handleAddress'],
           'country': res[i]['handleCountry'],
+          'color': res[i]['handleColor'],
           'uncanonicalizedId': res[i]['handleUncanonicalizedId']
         });
       }
@@ -673,6 +683,7 @@ class Chat {
           'originalROWID': res2[i]['handleOriginalROWID'],
           'address': res2[i]['handleAddress'],
           'country': res2[i]['handleCountry'],
+          'color': res2[i]['handleColor'],
           'uncanonicalizedId': res2[i]['handleUncanonicalizedId']
         });
       }

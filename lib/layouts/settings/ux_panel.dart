@@ -127,6 +127,13 @@ class _UXPanelState extends State<UXPanel> {
                   ),
                   SettingsSwitch(
                     onChanged: (bool val) {
+                      _settingsCopy.recipientAsPlaceholder = val;
+                    },
+                    initialVal: _settingsCopy.recipientAsPlaceholder,
+                    title: "Show Recipient (or Group Name) as Placeholder",
+                  ),
+                  SettingsSwitch(
+                    onChanged: (bool val) {
                       _settingsCopy.doubleTapForDetails = val;
                     },
                     initialVal: _settingsCopy.doubleTapForDetails,

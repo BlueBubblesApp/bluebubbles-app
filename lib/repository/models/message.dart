@@ -152,7 +152,7 @@ class Message {
       }
     }
 
-    return new Message(
+    var data = new Message(
       id: json.containsKey("ROWID") ? json["ROWID"] : null,
       originalROWID:
           json.containsKey("originalROWID") ? json["originalROWID"] : null,
@@ -234,6 +234,13 @@ class Message {
           : null,
       metadata: metadata is String ? null : metadata,
     );
+
+    // Adds fallback getter for the ID
+    if (data.id == null) {
+      data.id = json.containsKey("id") ? json["id"] : null;
+    }
+
+    return data;
   }
 
   Future<Message> save([bool updateIfAbsent = true]) async {
@@ -458,6 +465,7 @@ class Message {
         " handle.originalROWID AS originalROWID,"
         " handle.address AS address,"
         " handle.country AS country,"
+        " handle.color AS color,"
         " handle.uncanonicalizedId AS uncanonicalizedId"
         " FROM handle"
         " JOIN message ON message.handleId = handle.ROWID"

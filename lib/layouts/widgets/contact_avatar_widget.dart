@@ -22,12 +22,16 @@ class ContactAvatarWidget extends StatefulWidget {
     this.size,
     this.fontSize,
     this.borderThickness = 2.0,
+    this.editable = true,
+    this.onTap,
     @required this.handle,
   }) : super(key: key);
   final Handle handle;
   final double size;
   final double fontSize;
   final double borderThickness;
+  final bool editable;
+  final Function onTap;
 
   @override
   _ContactAvatarWidgetState createState() => _ContactAvatarWidgetState();
@@ -54,8 +58,10 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget>
       Color color = event[widget?.handle?.address];
       if (color == null) {
         colors = toColorGradient(widget.handle.address);
+        widget.handle.color = null;
       } else {
-        colors = [lighten(color, 0.01), color];
+        colors = [lighten(color, 0.02), color];
+        widget.handle.color = color.value.toRadixString(16);
       }
 
       if (this.mounted) setState(() {});
@@ -78,7 +84,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget>
       colors = toColorGradient(widget.handle.address);
     } else {
       colors = [
-        lighten(HexColor(widget.handle.color), 0.01),
+        lighten(HexColor(widget.handle.color), 0.02),
         HexColor(widget.handle.color),
       ];
     }
@@ -155,7 +161,9 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget>
     }
   }
 
-  void setAvatarColor() {
+  void onAvatarTap() {
+    if (widget.onTap != null) widget.onTap();
+    if (!widget.editable) return;
     showDialog(
       context: context,
       builder: (context) => AvatarColorPickerPopup(
@@ -180,11 +188,13 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget>
             widget.handle.color = color.value.toRadixString(16);
           }
 
-          await widget.handle.update();
-          ContactManager()
-              .colorStreamObject
-              .sink
-              .add({widget.handle.address: HexColor(widget.handle.color)});
+          await widget.handle.updateColor(widget.handle.color);
+
+          ContactManager().colorStreamObject.sink.add({
+            widget.handle.address: widget?.handle?.color == null
+                ? null
+                : HexColor(widget.handle.color)
+          });
         },
       ),
     );
@@ -209,7 +219,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget>
     }
 
     return GestureDetector(
-        onTap: setAvatarColor,
+        onTap: onAvatarTap,
         child: Container(
           width: widget.size ?? 40,
           height: widget.size ?? 40,

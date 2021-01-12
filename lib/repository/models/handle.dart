@@ -32,7 +32,7 @@ class Handle {
   });
 
   factory Handle.fromMap(Map<String, dynamic> json) {
-    return new Handle(
+    var data = new Handle(
       id: json.containsKey("ROWID") ? json["ROWID"] : null,
       originalROWID:
           json.containsKey("originalROWID") ? json["originalROWID"] : null,
@@ -43,6 +43,13 @@ class Handle {
           ? json["uncanonicalizedId"]
           : null,
     );
+
+    // Adds fallback getter for the ID
+    if (data.id == null) {
+      data.id = json.containsKey("id") ? json["id"] : null;
+    }
+
+    return data;
   }
 
   Future<Handle> save([bool updateIfAbsent = false]) async {
@@ -92,6 +99,16 @@ class Handle {
     } else {
       await this.save(false);
     }
+
+    return this;
+  }
+
+  Future<Handle> updateColor(String newColor) async {
+    final Database db = await DBProvider.db.database;
+    if (this.id == null) return this;
+
+    await db.update("handle", {"color": newColor},
+        where: "ROWID = ?", whereArgs: [this.id]);
 
     return this;
   }
