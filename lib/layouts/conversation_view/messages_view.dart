@@ -447,43 +447,49 @@ class MessagesViewState extends State<MessagesView>
                           newerMessage = _messages[index - 1];
                         }
 
-                        return SizeTransition(
-                          axis: Axis.vertical,
-                          sizeFactor: animation.drive(
-                              Tween(begin: 0.0, end: 1.0)
-                                  .chain(CurveTween(curve: Curves.easeInOut))),
-                          child: SlideTransition(
-                            position: animation.drive(
-                              Tween(
-                                begin: Offset(0.0, 1),
-                                end: Offset(0.0, 0.0),
-                              ).chain(
-                                CurveTween(
-                                  curve: Curves.easeInOut,
-                                ),
-                              ),
-                            ),
-                            child: FadeTransition(
-                              opacity: animation,
-                              child: Padding(
-                                padding: EdgeInsets.only(left: 5.0, right: 5.0),
-                                child: MessageWidget(
-                                  key: Key(_messages[index].guid),
-                                  message: _messages[index],
-                                  olderMessage: olderMessage,
-                                  newerMessage: newerMessage,
-                                  showHandle: widget.showHandle,
-                                  isFirstSentMessage:
-                                      widget.messageBloc.firstSentMessage ==
-                                          _messages[index].guid,
-                                  showHero: index == 0 &&
-                                      _messages[index].originalROWID == null,
-                                  onUpdate: (event) => onUpdateMessage(event),
-                                ),
-                              ),
-                            ),
-                          ),
+                        bool shouldAnimate = index == 0 && _messages[index].originalROWID == null;
+                        Widget messageWidget = MessageWidget(
+                          key: Key(_messages[index].guid),
+                          message: _messages[index],
+                          olderMessage: olderMessage,
+                          newerMessage: newerMessage,
+                          showHandle: widget.showHandle,
+                          isFirstSentMessage:
+                              widget.messageBloc.firstSentMessage ==
+                                  _messages[index].guid,
+                          showHero: shouldAnimate,
+                          onUpdate: (event) => onUpdateMessage(event),
                         );
+
+                        if (shouldAnimate) {
+                          return SizeTransition(
+                            axis: Axis.vertical,
+                            sizeFactor: animation.drive(
+                                Tween(begin: 0.0, end: 1.0)
+                                    .chain(CurveTween(curve: Curves.easeInOut))),
+                            child: SlideTransition(
+                              position: animation.drive(
+                                Tween(
+                                  begin: Offset(0.0, 1),
+                                  end: Offset(0.0, 0.0),
+                                ).chain(
+                                  CurveTween(
+                                    curve: Curves.easeInOut,
+                                  ),
+                                ),
+                              ),
+                              child: FadeTransition(
+                                opacity: animation,
+                                child: Padding(
+                                  padding: EdgeInsets.only(left: 5.0, right: 5.0),
+                                  child: messageWidget,
+                                ),
+                              ),
+                            ),
+                          );
+                        }
+
+                        return messageWidget;
                       },
                     )
                   : SliverToBoxAdapter(child: Container()),
