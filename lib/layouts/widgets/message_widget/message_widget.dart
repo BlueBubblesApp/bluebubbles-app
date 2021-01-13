@@ -201,10 +201,10 @@ class _MessageState extends State<MessageWidget>
     }
 
     // If this is a URL preview and we don't have attachments, we need to get them
-    List<Attachment> nonNullAttachments = _message.getRealAttachments();
-    if (_message.isUrlPreview() && nonNullAttachments.isEmpty) {
-      if (lastRequestCount != nonNullAttachments.length) {
-        lastRequestCount = nonNullAttachments.length;
+    List<Attachment> nullAttachments = _message.getPreviewAttachments();
+    if (_message.isUrlPreview() && nullAttachments.isEmpty) {
+      if (lastRequestCount != nullAttachments.length) {
+        lastRequestCount = nullAttachments.length;
 
         List<dynamic> msgs = await SocketManager()
             .getAttachments(currentChat.chat.guid, _message.guid);
@@ -295,7 +295,7 @@ class _MessageState extends State<MessageWidget>
         stickersWidget: stickersWidget,
         attachmentsWidget: widgetAttachments,
         reactionsWidget: reactionsWidget,
-        shouldFadeIn: currentChat.sentMessages.contains(_message.guid),
+        shouldFadeIn: currentChat?.sentMessages?.contains(_message.guid),
         showHero: widget.showHero,
         showDeliveredReceipt: widget.isFirstSentMessage,
       );

@@ -58,6 +58,7 @@ class Message {
   bool hasAttachments;
   bool hasReactions;
   DateTime dateDeleted;
+  Map<String, dynamic> metadata;
 
   List<Attachment> attachments = [];
   List<Message> associatedMessages = [];
@@ -100,7 +101,8 @@ class Message {
       this.hasAttachments = false,
       this.hasReactions = false,
       this.attachments = const [],
-      this.dateDeleted});
+      this.dateDeleted,
+      this.metadata});
 
   String get fullText {
     String fullText = this.subject ?? "";
@@ -127,6 +129,17 @@ class Message {
             .toList()
         : [];
 
+    // Load the metadata
+    dynamic metadata = json.containsKey("metadata") ? json["metadata"] : null;
+    if (!isNullOrEmpty(metadata)) {
+      // If the metadata is a string, convert it to JSON
+      if (metadata is String) {
+        try {
+          metadata = jsonDecode(metadata);
+        } catch (ex) {}
+      }
+    }
+
     String associatedMessageGuid;
     if (json.containsKey("associatedMessageGuid") &&
         json["associatedMessageGuid"] != null) {
@@ -139,7 +152,7 @@ class Message {
       }
     }
 
-    return new Message(
+    var data = new Message(
       id: json.containsKey("ROWID") ? json["ROWID"] : null,
       originalROWID:
           json.containsKey("originalROWID") ? json["originalROWID"] : null,
@@ -219,7 +232,15 @@ class Message {
       dateDeleted: json.containsKey("dateDeleted")
           ? parseDate(json["dateDeleted"])
           : null,
+      metadata: metadata is String ? null : metadata,
     );
+
+    // Adds fallback getter for the ID
+    if (data.id == null) {
+      data.id = json.containsKey("id") ? json["id"] : null;
+    }
+
+    return data;
   }
 
   Future<Message> save([bool updateIfAbsent = true]) async {
@@ -275,6 +296,7 @@ class Message {
       {bool awaitNewMessageEvent = true, Chat chat}) async {
     final Database db = await DBProvider.db.database;
     Message existing = await Message.findOne({"guid": oldGuid});
+
     if (existing == null) {
       if (awaitNewMessageEvent) {
         await Future.delayed(Duration(milliseconds: 500));
@@ -297,25 +319,22 @@ class Message {
       params.remove("handle");
     }
 
-    if (existing.toMap().containsKey("originalROWID")) {
-      params["originalROWID"] = existing.toMap()["originalROWID"];
-
-      if (existing.originalROWID != null) {
-        newMessage.originalROWID = existing.originalROWID;
-      }
-    }
-
-    if (existing.toMap().containsKey("handleId")) {
-      params["handleId"] = existing.toMap()["handleId"];
+    var theMap = existing.toMap();
+    if (theMap.containsKey("handleId")) {
+      params["handleId"] = theMap["handleId"];
       newMessage.handleId = existing.handleId;
     }
     if (existing.hasAttachments) {
       params["hasAttachments"] = existing.hasAttachments ? 1 : 0;
       newMessage.hasAttachments = existing.hasAttachments;
     }
-    if (existing.toMap().containsKey("hasReactions")) {
-      params["hasReactions"] = existing.toMap()["hasReactions"];
+    if (theMap.containsKey("hasReactions")) {
+      params["hasReactions"] = theMap["hasReactions"];
       newMessage.hasReactions = existing.hasReactions;
+    }
+    if (theMap.containsKey("metadata")) {
+      params["metadata"] = theMap["metadata"];
+      newMessage.metadata = existing.metadata;
     }
 
     await db.update("message", params,
@@ -343,6 +362,8 @@ class Message {
       "error": this.error,
       "hasReactions": this.hasReactions ? 1 : 0,
       "hasDdResults": this.hasDdResults ? 1 : 0,
+      "metadata":
+          (isNullOrEmpty(this.metadata)) ? null : jsonEncode(this.metadata)
     };
 
     if (this.originalROWID != null) {
@@ -444,6 +465,7 @@ class Message {
         " handle.originalROWID AS originalROWID,"
         " handle.address AS address,"
         " handle.country AS country,"
+        " handle.color AS color,"
         " handle.uncanonicalizedId AS uncanonicalizedId"
         " FROM handle"
         " JOIN message ON message.handleId = handle.ROWID"
@@ -589,6 +611,39 @@ class Message {
     return res[0]["count"];
   }
 
+  void merge(Message otherMessage) {
+    if (this.dateCreated == null && otherMessage.dateCreated != null) {
+      this.dateCreated = otherMessage.dateCreated;
+    }
+    if (this.dateDelivered == null && otherMessage.dateDelivered != null) {
+      this.dateDelivered = otherMessage.dateDelivered;
+    }
+    if (this.dateRead == null && otherMessage.dateRead != null) {
+      this.dateRead = otherMessage.dateRead;
+    }
+    if (this.dateDeleted == null && otherMessage.dateDeleted != null) {
+      this.dateDeleted = otherMessage.dateDeleted;
+    }
+    if (this.datePlayed == null && otherMessage.datePlayed != null) {
+      this.datePlayed = otherMessage.datePlayed;
+    }
+    if (this.metadata == null && otherMessage.metadata != null) {
+      this.metadata = otherMessage.metadata;
+    }
+    if (this.originalROWID == null && otherMessage.originalROWID != null) {
+      this.originalROWID = otherMessage.originalROWID;
+    }
+    if (!this.hasAttachments && otherMessage.hasAttachments) {
+      this.hasAttachments = otherMessage.hasAttachments;
+    }
+    if (!this.hasReactions && otherMessage.hasReactions) {
+      this.hasReactions = otherMessage.hasReactions;
+    }
+    if (this.error == 0 && otherMessage.error != 0) {
+      this.error = otherMessage.error;
+    }
+  }
+
   Map<String, dynamic> toMap() => {
         "ROWID": id,
         "originalROWID": originalROWID,
@@ -633,5 +688,6 @@ class Message {
         "hasReactions": hasReactions ? 1 : 0,
         "dateDeleted":
             (dateDeleted == null) ? null : dateDeleted.millisecondsSinceEpoch,
+        "metadata": jsonEncode(metadata),
       };
 }

@@ -133,7 +133,7 @@ class _CameraWidgetState extends State<CameraWidget>
                   String appDocPath = SettingsManager().appDocDir.path;
                   File file = new File(
                       "$appDocPath/attachments/" + randomString(16) + ".png");
-                  await file.create();
+                  await file.create(recursive: true);
                   await MethodChannelInterface().invokeMethod(
                       "open-camera", {"path": file.path, "type": "camera"});
 
@@ -167,7 +167,7 @@ class _CameraWidgetState extends State<CameraWidget>
                   String appDocPath = SettingsManager().appDocDir.path;
                   File file = new File(
                       "$appDocPath/attachments/" + randomString(16) + ".mp4");
-                  await file.create();
+                  await file.create(recursive: true);
                   await MethodChannelInterface().invokeMethod(
                       "open-camera", {"path": file.path, "type": "video"});
 

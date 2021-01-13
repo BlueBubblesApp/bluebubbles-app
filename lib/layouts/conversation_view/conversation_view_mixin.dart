@@ -211,9 +211,10 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
             radius: 20,
             backgroundColor: Theme.of(context).accentColor,
             child: ContactAvatarWidget(
-              handle: participant,
-              borderThickness: 0.1,
-            ),
+                handle: participant,
+                borderThickness: 0.1,
+                editable: false,
+                onTap: openDetails),
           ),
         ),
       );
@@ -335,42 +336,52 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
       chat = selected.first.chat;
     }
 
-    if (selected.length == 0) {
-      chat = null;
-      if (this.mounted) setState(() {});
-      return;
-    }
-
-    List<Chat> cache = ChatBloc().chats.sublist(0);
-    cache.retainWhere((element) {
-      if (element.participants.length != selected.length) return false;
-      for (UniqueContact contact in selected) {
-        if (!contact.isChat &&
-            element.participants
-                .where((participant) =>
-                    sameAddress(participant.address, contact.address))
-                .isEmpty) {
-          return false;
-        }
-      }
-
-      return true;
-    });
-
-    if (cache.length == 0) {
+    Function clearCurrent = () {
       chat = null;
       messageBloc = null;
       if (this.mounted) setState(() {});
-      return;
+    };
+
+    // If we don't have anything selected, reset the chat and message bloc
+    if (selected.length == 0) {
+      return clearCurrent();
     }
 
-    cache
-        .sort((a, b) => a.participants.length.compareTo(b.participants.length));
-    chat = cache.first;
-    currentChat = CurrentChat.getCurrentChat(chat);
+    // Check and see if there are any matching chats to the select participants
+    List<Chat> matchingChats = [];
+    for (var i in ChatBloc().chats) {
+      // If the lengths don't match continue
+      if (i.participants.length != selected.length) continue;
 
+      // Iterate over each selected contact
+      int matches = 0;
+      for (UniqueContact contact in selected) {
+        // If the selected contact doesn't match any participants int he chat, continue
+        if (i.participants.any((Handle participant) =>
+            sameAddress(contact.address, participant.address))) {
+          matches += 1;
+        }
+      }
+
+      if (matches == selected.length) matchingChats.add(i);
+    }
+
+    // If there are no matching chats, clear the chat and message bloc
+    if (matchingChats.length == 0) {
+      return clearCurrent();
+    }
+
+    // Sort the chats and take the first one
+    matchingChats
+        .sort((a, b) => a.participants.length.compareTo(b.participants.length));
+    chat = matchingChats.first;
+
+    // Re-initialize the current chat and message bloc for the found chats
+    currentChat = CurrentChat.getCurrentChat(chat);
+    messageBloc = initMessageBloc();
+
+    // Tell the notification manager that we are looking at a specific chat
     await NotificationManager().switchChat(chat);
-    messageBloc = null;
     if (this.mounted) setState(() {});
   }
 

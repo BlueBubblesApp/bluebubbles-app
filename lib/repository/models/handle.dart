@@ -19,6 +19,7 @@ class Handle {
   int originalROWID;
   String address;
   String country;
+  String color;
   String uncanonicalizedId;
 
   Handle({
@@ -26,20 +27,29 @@ class Handle {
     this.originalROWID,
     this.address,
     this.country,
+    this.color,
     this.uncanonicalizedId,
   });
 
   factory Handle.fromMap(Map<String, dynamic> json) {
-    return new Handle(
+    var data = new Handle(
       id: json.containsKey("ROWID") ? json["ROWID"] : null,
       originalROWID:
           json.containsKey("originalROWID") ? json["originalROWID"] : null,
       address: json["address"],
       country: json.containsKey("country") ? json["country"] : null,
+      color: json.containsKey("color") ? json["color"] : null,
       uncanonicalizedId: json.containsKey("uncanonicalizedId")
           ? json["uncanonicalizedId"]
           : null,
     );
+
+    // Adds fallback getter for the ID
+    if (data.id == null) {
+      data.id = json.containsKey("id") ? json["id"] : null;
+    }
+
+    return data;
   }
 
   Future<Handle> save([bool updateIfAbsent = false]) async {
@@ -76,6 +86,7 @@ class Handle {
       Map<String, dynamic> params = {
         "address": this.address,
         "country": this.country,
+        "color": this.color,
         "uncanonicalizedId": this.uncanonicalizedId
       };
 
@@ -88,6 +99,16 @@ class Handle {
     } else {
       await this.save(false);
     }
+
+    return this;
+  }
+
+  Future<Handle> updateColor(String newColor) async {
+    final Database db = await DBProvider.db.database;
+    if (this.id == null) return this;
+
+    await db.update("handle", {"color": newColor},
+        where: "ROWID = ?", whereArgs: [this.id]);
 
     return this;
   }
@@ -155,6 +176,7 @@ class Handle {
         "originalROWID": originalROWID,
         "address": address,
         "country": country,
+        "color": color,
         "uncanonicalizedId": uncanonicalizedId,
       };
 }

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:ui';
 
+import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget.dart';
@@ -11,22 +12,26 @@ import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:bluebubbles/layouts/widgets/send_widget.dart';
+import 'package:flutter_smart_reply/flutter_smart_reply.dart';
 
 class MessagesView extends StatefulWidget {
   final MessageBloc messageBloc;
   final bool showHandle;
   final Chat chat;
+  final Function initComplete;
 
   MessagesView({
     Key key,
     this.messageBloc,
     this.showHandle,
     this.chat,
+    this.initComplete,
   }) : super(key: key);
 
   @override
@@ -47,6 +52,11 @@ class MessagesViewState extends State<MessagesView>
   List<int> loadedPages = [];
   CurrentChat currentChat;
 
+  List<TextMessage> currentMessages = [];
+  List<String> replies = [];
+
+  StreamController<List<String>> smartReplyController;
+
   bool currentShowScrollDown = false;
   StreamController<bool> showScrollDownStream =
       StreamController<bool>.broadcast();
@@ -61,7 +71,21 @@ class MessagesViewState extends State<MessagesView>
   @override
   void initState() {
     super.initState();
-    widget.messageBloc.stream.listen(handleNewMessage);
+
+    // Get the current chat
+    currentChat = CurrentChat.of(context);
+
+    // Start listening for incoming messages
+    widget.messageBloc?.stream?.listen(handleNewMessage);
+
+    // See if we need to load anything from the message bloc
+    if (_messages.isEmpty && widget.messageBloc.messages.isEmpty) {
+      widget.messageBloc.getMessages();
+    } else if (_messages.isEmpty && widget.messageBloc.messages.isNotEmpty) {
+      widget.messageBloc.emitLoaded();
+    }
+
+    smartReplyController = StreamController<List<String>>.broadcast();
 
     scrollController.addListener(() {
       if (scrollController == null || !scrollController.hasClients) return;
@@ -98,22 +122,43 @@ class MessagesViewState extends State<MessagesView>
         }
       }
     });
-  }
 
-  @override
-  void didChangeDependencies() async {
-    super.didChangeDependencies();
-    currentChat = CurrentChat.of(context);
-
-    if (_messages.isEmpty) {
-      widget.messageBloc.getMessages();
-    }
+    if (widget.initComplete != null) widget.initComplete();
   }
 
   @override
   void dispose() {
     showScrollDownStream.close();
     super.dispose();
+  }
+
+  void resetReplies() {
+    if (replies.length == 0) return;
+    replies = [];
+    return smartReplyController.sink.add(replies);
+  }
+
+  void updateReplies() async {
+    if (isNullOrEmpty(_messages)) return resetReplies();
+
+    // If the first message has no text, don't do anything
+    Message msg = _messages.first;
+    if (isEmptyString(msg.text, stripWhitespace: true)) return resetReplies();
+
+    // If the latest message is from yourself, clear the replies
+    if (msg.isFromMe) return resetReplies();
+
+    TextMessage textMessage = TextMessage.createForRemoteUser(
+        msg.text, msg.dateCreated.millisecondsSinceEpoch);
+
+    debugPrint("Getting smart replies for `${textMessage.text}`");
+    replies = await FlutterSmartReply.getSmartReplies([textMessage]);
+    debugPrint("Smart Replies found: $replies");
+    if (replies.length == 0) {
+      resetReplies();
+    } else {
+      smartReplyController.sink.add(replies);
+    }
   }
 
   Future<void> loadNextChunk() {
@@ -158,9 +203,6 @@ class MessagesViewState extends State<MessagesView>
   }
 
   void handleNewMessage(MessageBlocEvent event) async {
-    // Get outta here if we don't have a chat "open"
-    if (currentChat == null) return;
-
     // Skip deleted messages
     if (event.message != null && event.message.dateDeleted != null) return;
     if (!isNullOrEmpty(event.messages)) {
@@ -173,15 +215,17 @@ class MessagesViewState extends State<MessagesView>
       if (this.mounted && LifeCycleManager().isAlive && context != null) {
         NotificationManager().switchChat(CurrentChat.of(context)?.chat);
       }
-      currentChat.getAttachmentsForMessage(event.message);
+      currentChat?.getAttachmentsForMessage(event.message);
+      currentChat?.tryUpdateMessageMarkers(event.message);
+
       if (event.outGoing) {
-        currentChat.sentMessages.add(event.message);
+        currentChat?.sentMessages?.add(event.message);
         Future.delayed(SendWidget.SEND_DURATION * 2, () {
-          currentChat.sentMessages
-              .removeWhere((element) => element.guid == event.message.guid);
+          currentChat?.sentMessages
+              ?.removeWhere((element) => element.guid == event.message.guid);
         });
 
-        if (context != null)
+        if (context != null) {
           Navigator.of(context).push(
             SendPageBuilder(
               builder: (context) {
@@ -193,6 +237,7 @@ class MessagesViewState extends State<MessagesView>
               },
             ),
           );
+        }
       }
 
       bool isNewMessage = true;
@@ -214,9 +259,14 @@ class MessagesViewState extends State<MessagesView>
               : Duration(milliseconds: 0),
         );
       }
+
       if (event.message.hasAttachments) {
         await currentChat.updateChatAttachments();
         if (this.mounted) setState(() {});
+      }
+
+      if (isNewMessage && SettingsManager().settings.smartReply) {
+        updateReplies();
       }
     } else if (event.type == MessageBlocEventType.remove) {
       for (int i = 0; i < _messages.length; i++) {
@@ -230,8 +280,18 @@ class MessagesViewState extends State<MessagesView>
     } else {
       int originalMessageLength = _messages.length;
       _messages = event.messages;
-      _messages
-          .forEach((message) => currentChat.getAttachmentsForMessage(message));
+      _messages.forEach((message) {
+        currentChat?.getAttachmentsForMessage(message);
+        currentChat?.tryUpdateMessageMarkers(message);
+      });
+
+      // We only want to update smart replies on the intial message fetch
+      if (originalMessageLength == 0) {
+        if (SettingsManager().settings.smartReply) {
+          updateReplies();
+        }
+      }
+
       if (_listKey == null) _listKey = GlobalKey<SliverAnimatedListState>();
 
       if (originalMessageLength < _messages.length) {
@@ -269,14 +329,16 @@ class MessagesViewState extends State<MessagesView>
 
     bool updatedAMessage = false;
     for (int i = 0; i < _messages.length; i++) {
-      if (_messages[i].guid == oldGuid) {
+      if (_messages[i].guid == oldGuid || _messages[i].guid == message.guid) {
         debugPrint(
             "(Message status) Update message: [${message.text}] - [${message.guid}] - [$oldGuid]");
-        _messages[i] = message;
+
+        _messages[i].merge(message);
         updatedAMessage = true;
         break;
       }
     }
+
     if (!updatedAMessage) {
       debugPrint(
           "(Message status) FAILED TO UPDATE A MESSAGE: [${message.text}] - [${message.guid}] - [$oldGuid]");
@@ -284,19 +346,47 @@ class MessagesViewState extends State<MessagesView>
     return message;
   }
 
+  Widget _buildReply(String text) => Container(
+        margin: EdgeInsets.all(5),
+        decoration: BoxDecoration(
+          border: Border.all(
+            width: 2,
+            style: BorderStyle.solid,
+            color: Theme.of(context).accentColor,
+          ),
+          borderRadius: BorderRadius.circular(19),
+        ),
+        child: InkWell(
+          customBorder: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(19),
+          ),
+          onTap: () {
+            ActionHandler.sendMessage(currentChat.chat, text);
+          },
+          child: Padding(
+            padding:
+                const EdgeInsets.symmetric(vertical: 8.0, horizontal: 13.0),
+            child: Text(
+              text,
+              style: Theme.of(context).textTheme.bodyText1,
+            ),
+          ),
+        ),
+      );
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       behavior: HitTestBehavior.deferToChild,
       onHorizontalDragStart: (details) {},
       onHorizontalDragUpdate: (details) {
-        CurrentChat.of(context).timeStampOffset += details.delta.dx * 0.3;
+        CurrentChat.of(context)?.timeStampOffset += details.delta.dx * 0.3;
       },
       onHorizontalDragEnd: (details) {
-        CurrentChat.of(context).timeStampOffset = 0;
+        CurrentChat.of(context)?.timeStampOffset = 0;
       },
       onHorizontalDragCancel: () {
-        CurrentChat.of(context).timeStampOffset = 0;
+        CurrentChat.of(context)?.timeStampOffset = 0;
       },
       child: Stack(
         alignment: AlignmentDirectional.bottomCenter,
@@ -307,6 +397,25 @@ class MessagesViewState extends State<MessagesView>
             physics: AlwaysScrollableScrollPhysics(
                 parent: CustomBouncingScrollPhysics()),
             slivers: <Widget>[
+              if (SettingsManager().settings.smartReply)
+                StreamBuilder<List<String>>(
+                  stream: smartReplyController.stream,
+                  builder: (context, snapshot) {
+                    return SliverToBoxAdapter(
+                      child: AnimatedSize(
+                        duration: Duration(milliseconds: 250),
+                        vsync: this,
+                        child: Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: replies
+                                .map(
+                                  (e) => _buildReply(e),
+                                )
+                                .toList()),
+                      ),
+                    );
+                  },
+                ),
               _listKey != null
                   ? SliverAnimatedList(
                       initialItemCount: _messages.length + 1,

@@ -11,7 +11,7 @@ description: Send iMessages on Android using BlueBubbles!
 # In iOS, build-name is used as CFBundleShortVersionString while build-number used as CFBundleVersion.
 # Read more about iOS versioning at
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
-version: 0.1.13
+version: 0.1.14
 
 environment:
   sdk: ">=2.6.0 <3.0.0"
@@ -89,6 +89,7 @@ dependencies:
   flutter_markdown: ^0.5.1
   keyboard_attachable: ^1.0.3
   device_info: ^1.0.0
+  flutter_smart_reply: ^0.0.2
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -137,6 +138,7 @@ flutter:
     - assets/icon/moon.svg
     - assets/icon/discord.svg
     - assets/images/person.png
+    - assets/images/person64.png
     - assets/icon/icon.png
     - assets/changelog/changelog.md
   # An image asset can refer to one or more resolution-specific "variants", see

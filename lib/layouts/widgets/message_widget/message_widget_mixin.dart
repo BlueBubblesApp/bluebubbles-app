@@ -65,7 +65,8 @@ abstract class MessageWidgetMixin {
   }
 
   static List<InlineSpan> buildMessageSpans(
-      BuildContext context, Message message) {
+      BuildContext context, Message message,
+      {List<Color> colors: const []}) {
     List<InlineSpan> textSpans = <InlineSpan>[];
 
     if (message != null && !isEmptyString(message.text)) {
@@ -99,9 +100,21 @@ abstract class MessageWidgetMixin {
       TextStyle textStyle = Theme.of(context).textTheme.bodyText2;
       if (!message.isFromMe) {
         if (SettingsManager().settings.colorfulBubbles) {
-          textStyle = Theme.of(context).textTheme.bodyText2.apply(
-              color: darken(
-                  toColorGradient(message?.handle?.address ?? "")[0], 0.35));
+          if (!isNullOrEmpty(colors)) {
+            bool dark = colors[0].computeLuminance() < 0.179;
+            if (!dark) {
+              textStyle = Theme.of(context)
+                  .textTheme
+                  .bodyText2
+                  .apply(color: darken(colors[0], 0.35));
+            } else {
+              textStyle = Theme.of(context).textTheme.bodyText2;
+            }
+          } else {
+            textStyle = Theme.of(context).textTheme.bodyText2.apply(
+                color: darken(
+                    toColorGradient(message?.handle?.address ?? "")[0], 0.35));
+          }
         }
       } else {
         textStyle = textStyle.apply(color: Colors.white);

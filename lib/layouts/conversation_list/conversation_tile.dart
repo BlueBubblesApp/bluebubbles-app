@@ -12,6 +12,7 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -120,6 +121,48 @@ class _ConversationTileState extends State<ConversationTile>
     isFetching = false;
   }
 
+  void onTapUp(details) {
+    if (widget.onTapGoToChat != null && widget.onTapGoToChat) {
+      Navigator.of(context).pushAndRemoveUntil(
+        CupertinoPageRoute(
+          builder: (BuildContext context) {
+            return ConversationView(
+              chat: widget.chat,
+              existingAttachments: widget.existingAttachments,
+              existingText: widget.existingText,
+            );
+          },
+        ),
+        (route) => route.isFirst,
+      );
+    } else if (widget.onTapCallback != null) {
+      widget.onTapCallback();
+    } else {
+      Navigator.of(context).push(
+        CupertinoPageRoute(
+          builder: (BuildContext context) {
+            return ConversationView(
+              chat: widget.chat,
+              existingAttachments: widget.existingAttachments,
+              existingText: widget.existingText,
+            );
+          },
+        ),
+      );
+    }
+
+    Future.delayed(Duration(milliseconds: 200), () {
+      if (this.mounted)
+        setState(() {
+          isPressed = false;
+        });
+    });
+  }
+
+  void onTapUpBypass() {
+    this.onTapUp(TapUpDetails(kind: PointerDeviceKind.touch));
+  }
+
   @override
   Widget build(BuildContext context) {
     super.build(context);
@@ -203,42 +246,7 @@ class _ConversationTileState extends State<ConversationTile>
               isPressed = true;
             });
           },
-          onTapUp: (details) {
-            if (widget.onTapGoToChat != null && widget.onTapGoToChat) {
-              Navigator.of(context).pushAndRemoveUntil(
-                CupertinoPageRoute(
-                  builder: (BuildContext context) {
-                    return ConversationView(
-                      chat: widget.chat,
-                      existingAttachments: widget.existingAttachments,
-                      existingText: widget.existingText,
-                    );
-                  },
-                ),
-                (route) => route.isFirst,
-              );
-            } else if (widget.onTapCallback != null) {
-              widget.onTapCallback();
-            } else {
-              Navigator.of(context).push(
-                CupertinoPageRoute(
-                  builder: (BuildContext context) {
-                    return ConversationView(
-                      chat: widget.chat,
-                      existingAttachments: widget.existingAttachments,
-                      existingText: widget.existingText,
-                    );
-                  },
-                ),
-              );
-            }
-            Future.delayed(Duration(milliseconds: 200), () {
-              if (this.mounted)
-                setState(() {
-                  isPressed = false;
-                });
-            });
-          },
+          onTapUp: this.onTapUp,
           onTapCancel: () {
             if (!this.mounted) return;
 
@@ -299,6 +307,8 @@ class _ConversationTileState extends State<ConversationTile>
                       chat: widget.chat,
                       width: 40,
                       height: 40,
+                      editable: false,
+                      onTap: this.onTapUpBypass,
                     ),
                     trailing: Container(
                       padding: EdgeInsets.only(right: 3),

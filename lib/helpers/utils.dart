@@ -1,8 +1,10 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
+import 'package:bluebubbles/helpers/country_codes.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
@@ -22,6 +24,7 @@ import 'package:flutter/services.dart';
 import 'package:image_size_getter/image_size_getter.dart' as IMG;
 import 'package:intl/intl.dart' as intl;
 import 'package:video_thumbnail/video_thumbnail.dart';
+import 'package:http/http.dart' show get;
 
 DateTime parseDate(dynamic value) {
   if (value == null) return null;
@@ -31,11 +34,18 @@ DateTime parseDate(dynamic value) {
 }
 
 bool isNullOrEmpty(dynamic input, {trimString = false}) {
-  if (input != null && input is String) {
+  if (input == null) return true;
+  if (input is String) {
     input = input.trim();
   }
 
-  return input == null || input.isEmpty;
+  return input.isEmpty;
+}
+
+bool isNullOrZero(int input) {
+  if (input == null) return true;
+  if (input == 0) return true;
+  return false;
 }
 
 Size textSize(String text, TextStyle style) {
@@ -50,9 +60,21 @@ Size textSize(String text, TextStyle style) {
 Future<String> formatPhoneNumber(String str) async {
   // If the string is an email, we don't want to format it
   if (str.contains("@")) return str;
+  str = str.trim();
 
-  Map<String, dynamic> meta = await FlutterLibphonenumber()
-      .parse(str, region: SettingsManager().countryCode ?? "US");
+  String countryCode = SettingsManager().countryCode ?? "US";
+  Map<String, dynamic> meta = {};
+
+  try {
+    meta = await FlutterLibphonenumber().parse(str, region: countryCode);
+  } catch (ex) {
+    if (!str.startsWith("+") && getCodeMap().containsKey(countryCode)) {
+      try {
+        meta = await FlutterLibphonenumber()
+            .parse("${getCodeMap()[countryCode]}$str", region: countryCode);
+      } catch (x) {}
+    }
+  }
 
   if (!meta.containsKey("national")) {
     if (meta.containsKey("international")) {
@@ -66,14 +88,56 @@ Future<String> formatPhoneNumber(String str) async {
 }
 
 bool sameAddress(String address1, String address2) {
-  String formattedNumber1 = address1.replaceAll(RegExp(r'[-() \.]'), '');
-  String formattedNumber2 = address2.replaceAll(RegExp(r'[-() \.]'), '');
+  String countryCode = SettingsManager().countryCode ?? "US";
+  String formattedNumber1 = address1.replaceAll(RegExp(r'[-() \.]'), '').trim();
+  String formattedNumber2 = address2.replaceAll(RegExp(r'[-() \.]'), '').trim();
 
-  return formattedNumber1 == formattedNumber2 ||
-      "+1" + formattedNumber1 == formattedNumber2 ||
-      "+" + formattedNumber1 == formattedNumber2 ||
-      "+1" + formattedNumber2 == formattedNumber1 ||
-      "+" + formattedNumber2 == formattedNumber1;
+  // Strip any unnecessary pluses and "1"s
+  // If it starts with a plus, is in the US, and the length is 11, strip the +
+  // Having only 11 characters means it was missing the "1" after "+1"
+  String ccUpper = countryCode.toUpperCase();
+  if (formattedNumber1.startsWith("+") &&
+      ccUpper == "US" &&
+      formattedNumber1.length == 11) {
+    formattedNumber1 = formattedNumber1.substring(1);
+  } else if (formattedNumber1.startsWith("1") &&
+      ccUpper == "US" &&
+      formattedNumber1.length == 11) {
+    formattedNumber1 = formattedNumber1.substring(1);
+  }
+  if (formattedNumber2.startsWith("+") &&
+      ccUpper == "US" &&
+      formattedNumber2.length == 11) {
+    formattedNumber2 = formattedNumber1.substring(1);
+  } else if (!formattedNumber2.startsWith("1") &&
+      ccUpper == "US" &&
+      formattedNumber2.length == 11) {
+    formattedNumber2 = formattedNumber2.substring(1);
+  }
+
+  // Now check if the values are equal
+  if (formattedNumber1 == formattedNumber2) return true;
+
+  // If they are not equal, try to strip the dial code (if any)
+  if (formattedNumber1.startsWith("+")) {
+    if (getCodeMap().containsKey(countryCode)) {
+      String dialCode = getCodeMap()[countryCode];
+      formattedNumber1 = formattedNumber1.substring(dialCode.length);
+    }
+  }
+
+  if (formattedNumber2.startsWith("+")) {
+    if (getCodeMap().containsKey(countryCode)) {
+      String dialCode = getCodeMap()[countryCode];
+      formattedNumber2 = formattedNumber2.substring(dialCode.length);
+    }
+  }
+
+  // Now that the dial code is stripped, check if they are the same
+  if (formattedNumber1 == formattedNumber2) return true;
+
+  // I didn't return above in case we want to add more checks below here
+  return false;
 }
 
 // Future<Uint8List> blurHashDecode(String blurhash, int width, int height) async {
@@ -282,7 +346,7 @@ Future<dynamic> loadAsset(String path) {
   return rootBundle.load(path);
 }
 
-bool validatePhoneNumber(String value) {
+bool isValidAddress(String value) {
   value = value.trim();
 
   String phonePattern =
@@ -440,4 +504,44 @@ Future<String> getDeviceName() async {
   }
 
   return deviceName;
+}
+
+String getFilenameFromUrl(String url) {
+  if (isNullOrEmpty(url)) return null;
+
+  // Return everything after the last slash
+  if (url.contains("/")) {
+    String end = url.split("/").last;
+    return end.split("?")[0];
+  }
+
+  // If there are no slashes, it's probably an invalid URL, so let's just ignore it
+  return null;
+}
+
+Future<File> saveImageFromUrl(String guid, String url) async {
+  // Make sure the URL is "formed"
+  if (!url.contains("/")) return null;
+
+  // Get the filename from the URL
+  String filename = getFilenameFromUrl(url);
+  if (filename == null) return null;
+
+  try {
+    var response = await get(url);
+
+    Directory baseDir =
+        new Directory("${AttachmentHelper.getBaseAttachmentsPath()}/$guid");
+    if (!baseDir.existsSync()) {
+      baseDir.createSync(recursive: true);
+    }
+
+    String newPath = "${baseDir.path}/$filename";
+    File file = new File(newPath);
+    file.writeAsBytesSync(response.bodyBytes);
+
+    return file;
+  } catch (ex) {
+    return null;
+  }
 }

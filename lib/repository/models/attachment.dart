@@ -7,7 +7,6 @@ import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:sqflite/sqflite.dart';
 
-
 import '../database.dart';
 
 Attachment attachmentFromJson(String str) {
@@ -80,7 +79,7 @@ class Attachment {
       }
     }
 
-    return new Attachment(
+    var data = new Attachment(
       id: json.containsKey("ROWID") ? json["ROWID"] : null,
       originalROWID:
           json.containsKey("originalROWID") ? json["originalROWID"] : null,
@@ -104,6 +103,13 @@ class Attachment {
       width: json.containsKey("width") ? json["width"] : 0,
       metadata: metadata is String ? null : metadata,
     );
+
+    // Adds fallback getter for the ID
+    if (data.id == null) {
+      data.id = json.containsKey("id") ? json["id"] : null;
+    }
+
+    return data;
   }
 
   Future<Attachment> save(Message message) async {

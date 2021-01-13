@@ -1,9 +1,9 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
+import 'package:bluebubbles/helpers/metadata_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
@@ -13,8 +13,6 @@ import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:metadata_fetch/metadata_fetch.dart';
-import 'package:http/http.dart' as http;
-import 'package:html/dom.dart' as dom;
 
 class UrlPreviewWidget extends StatefulWidget {
   UrlPreviewWidget(
@@ -48,7 +46,13 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
   @override
   void initState() {
     super.initState();
-    fetchPreview();
+
+    // If we already have metadata, don't re-fetch it
+    if (MetadataHelper.mapIsNotEmpty(widget.message.metadata)) {
+      data = Metadata.fromJson(widget.message.metadata);
+    } else {
+      fetchPreview();
+    }
   }
 
   @override
@@ -81,29 +85,6 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
     }
   }
 
-  /// Manually tries to parse out metadata from a given [url]
-  Future<Metadata> manuallyGetMetadata(String url) async {
-    Metadata meta = new Metadata();
-
-    var response = await http.get(url);
-    var document = responseToDocument(response);
-
-    for (dom.Element i in document.head?.children ?? []) {
-      if (i.localName != "meta") continue;
-      i.attributes.forEach((dynamic name, String value) {
-        String prop = name as String;
-        if (prop != "property" && prop != "name") return;
-        if (value.contains("title")) {
-          meta.title = i.attributes["content"];
-        } else if (value.contains("description")) {
-          meta.description = i.attributes["content"];
-        }
-      });
-    }
-
-    return meta;
-  }
-
   Future<void> fetchPreview() async {
     // Try to get any already loaded attachment data
     if (CurrentChat.of(context).urlPreviews?.containsKey(widget.message.text) !=
@@ -111,64 +92,58 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
       data = CurrentChat.of(context).urlPreviews[widget.message.text];
     }
 
-    if (data != null || isEmptyString(widget.message.text) || isLoading) return;
+    if (data != null || isLoading) return;
 
     // Let the UI know we are loading
     isLoading = true;
 
-    // Make sure there is a schema with the URL
-    String url = widget.message.text;
-    if (!widget.message.text.toLowerCase().startsWith("http://") &&
-        !widget.message.text.toLowerCase().startsWith("https://")) {
-      url = "https://" + widget.message.text;
-    }
+    // Fetch the metadata
+    Metadata meta = await MetadataHelper.fetchMetadata(widget.message);
 
-    // Handle specific cases
-    if (url.contains('youtube.com/watch?v=') || url.contains("youtu.be/")) {
-      // Manually request this URL
-      String newUrl = "https://www.youtube.com/oembed?url=$url";
-      var response = await http.get(newUrl);
+    // If the data isn't empty, save/update it in the DB
+    if (MetadataHelper.isNotEmpty(meta)) {
+      // If pre-caching is enabled, fetch the image and save it
+      if (SettingsManager().settings.preCachePreviewImages &&
+          !isNullOrEmpty(meta.image)) {
+        // Save from URL
+        File newFile = await saveImageFromUrl(widget.message.guid, meta.image);
 
-      // Manually load it into a metadata object via JSON
-      data = Metadata.fromJson(jsonDecode(response.body));
+        // If we downloaded a file, set the new metadata path
+        if (newFile != null && newFile.existsSync()) {
+          meta.image = newFile.path;
+        }
+      }
 
-      // Set the URL to the original URL
-      data.url = url;
-    } else if (url.contains("twitter.com") && url.contains("/status/")) {
-      // Manually request this URL
-      String newUrl = "https://publish.twitter.com/oembed?url=$url";
-      var response = await http.get(newUrl);
+      widget.message.metadata = meta.toJson();
+      widget.message.update();
 
-      // Manually load it into a metadata object via JSON
-      Map res = jsonDecode(response.body);
-      data = new Metadata();
-      data.title = (res.containsKey("author_name")) ? res["author_name"] : "";
-      data.description = (res.containsKey("html"))
-          ? stripHtmlTags(res["html"].replaceAll("<br>", "\n")).trim()
-          : "";
-
-      // Set the URL to the original URL
-      data.url = url;
-    } else if (url.contains("linkedin.com/posts/")) {
-      data = await this.manuallyGetMetadata(url);
-      data.url = url;
-    } else {
-      data = await extract(url);
-    }
-
-    // If the data or title was null, try to manually parse
-    if (isNullOrEmpty(data?.title)) {
-      data = await this.manuallyGetMetadata(url);
-      data.url = url;
+      if (!MetadataHelper.isNotEmpty(data)) {
+        data = meta;
+      }
     }
 
     // Save the metadata
-    if (context != null) {
+    if (context != null && data != null) {
       CurrentChat.of(context).urlPreviews[widget.message.text] = data;
     }
 
-    // Let the UI know we are done loading
+    // We are done loading
     isLoading = false;
+    bool didSetState = false;
+
+    // Only update the state if we have more information
+    if (MetadataHelper.isNotEmpty(meta) && widget.linkPreviews.length <= 1) {
+      if (this.mounted) {
+        didSetState = true;
+        setState(() {});
+      }
+    }
+
+    // If we never updated the state due to the preview metadata change,
+    // Update the state because of the isLoading toggle
+    if (!didSetState && this.mounted) {
+      setState(() {});
+    }
   }
 
   @override
@@ -177,7 +152,7 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
       stream: loadingStateStream.stream,
       builder: (context, snapshot) {
         if (data == null && isLoading) {
-          return Text("Loading...",
+          return Text("Loading Preview...",
               style: Theme.of(context)
                   .textTheme
                   .bodyText1
@@ -190,8 +165,13 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
             overflow: TextOverflow.ellipsis,
             maxLines: 2,
           );
+        } else {
+          return Text("Unable to Load Preview",
+              style: Theme.of(context)
+                  .textTheme
+                  .bodyText1
+                  .apply(fontWeightDelta: 2));
         }
-        return Container();
       },
     );
 
@@ -201,14 +181,17 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
     // Build the main image
     Widget mainImage = Container();
     if (widget.linkPreviews.length <= 1 &&
-        data != null &&
-        data.image != null &&
-        data.image.isNotEmpty &&
-        !data.image.contains("renderTimingPixel.png") &&
-        !data.image.contains("fls-na.amazon.com")) {
-      mainImage = Image.network(data.image,
-          filterQuality: FilterQuality.low,
-          errorBuilder: (context, error, stackTrace) => Container());
+        data?.image != null &&
+        data.image.isNotEmpty) {
+      if (data.image.startsWith("/")) {
+        mainImage = Image.file(new File(data.image),
+            filterQuality: FilterQuality.low,
+            errorBuilder: (context, error, stackTrace) => Container());
+      } else {
+        mainImage = Image.network(data.image,
+            filterQuality: FilterQuality.low,
+            errorBuilder: (context, error, stackTrace) => Container());
+      }
     } else if (widget.linkPreviews.length > 1 &&
         AttachmentHelper.attachmentExists(widget.linkPreviews.last)) {
       mainImage = Image.file(attachmentFile(widget.linkPreviews.last),
@@ -219,7 +202,7 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
     return AnimatedSize(
       curve: Curves.easeInOut,
       alignment: Alignment.center,
-      duration: Duration(milliseconds: 500),
+      duration: Duration(milliseconds: 200),
       vsync: this,
       child: Padding(
         padding: EdgeInsets.only(
