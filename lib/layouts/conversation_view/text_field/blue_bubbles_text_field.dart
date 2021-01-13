@@ -392,7 +392,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                       isNullOrEmpty(value)) return;
 
                   // If send delay is enabled, delay the sending
-                  if (SettingsManager().settings.sendDelay != null) {
+                  if (!isNullOrZero(SettingsManager().settings.sendDelay)) {
                     // Break the delay into 1 second intervals
                     for (var i = 0;
                         i < SettingsManager().settings.sendDelay;
@@ -572,7 +572,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                       await startRecording();
                     } else {
                       // If send delay is enabled, delay the sending
-                      if (SettingsManager().settings.sendDelay != null) {
+                      if (isNullOrZero(SettingsManager().settings.sendDelay)) {
                         // Break the delay into 1 second intervals
                         for (var i = 0;
                             i < SettingsManager().settings.sendDelay;

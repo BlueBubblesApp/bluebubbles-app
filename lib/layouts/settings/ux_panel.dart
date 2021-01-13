@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
@@ -194,13 +195,13 @@ class _UXPanelState extends State<UXPanel> {
                       divisions: 8),
                   SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.sendDelay = val ? 3 : null;
+                      _settingsCopy.sendDelay = val ? 3 : 0;
                       setState(() {});
                     },
-                    initialVal: _settingsCopy.sendDelay != null,
+                    initialVal: !isNullOrZero(_settingsCopy.sendDelay),
                     title: "Send Delay",
                   ),
-                  if (SettingsManager().settings.sendDelay != null)
+                  if (!isNullOrZero(SettingsManager().settings.sendDelay))
                     SettingsSlider(
                         text: "Send Delay (Seconds)",
                         startingVal: _settingsCopy.sendDelay.toDouble(),

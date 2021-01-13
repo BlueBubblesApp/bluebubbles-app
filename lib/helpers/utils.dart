@@ -42,6 +42,12 @@ bool isNullOrEmpty(dynamic input, {trimString = false}) {
   return input.isEmpty;
 }
 
+bool isNullOrZero(int input) {
+  if (input == null) return true;
+  if (input == 0) return true;
+  return false;
+}
+
 Size textSize(String text, TextStyle style) {
   final TextPainter textPainter = TextPainter(
       text: TextSpan(text: text, style: style),
