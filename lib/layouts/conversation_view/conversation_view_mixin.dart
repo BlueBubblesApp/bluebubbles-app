@@ -353,7 +353,8 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
     // If it's just one recipient, try manual lookup
     if (selected.length == 1) {
       try {
-        Chat existingChat = await Chat.findOne({"chatIdentifier": sanitizeAddress(selected[0].address)});
+        Chat existingChat = await Chat.findOne(
+            {"chatIdentifier": sanitizeAddress(selected[0].address)});
         if (existingChat != null) {
           matchingChats.add(existingChat);
         }
@@ -564,7 +565,8 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
     // If there is only 1 participant, try to find the chat
     Chat existingChat;
     if (participants.length == 1) {
-      existingChat = await Chat.findOne({"address": participants[0]});
+      existingChat = await Chat.findOne(
+          {"chatIdentifier": sanitizeAddress(participants[0])});
     }
 
     if (existingChat == null) {
