@@ -107,8 +107,8 @@ class SentMessageHelper {
     );
   }
 
-  static Widget getErrorWidget(
-      BuildContext context, Message message, Chat chat) {
+  static Widget getErrorWidget(BuildContext context, Message message, Chat chat,
+      {double rightPadding = 8.0}) {
     if (message != null && message.error > 0) {
       int errorCode = message != null ? message.error : 0;
       String errorText = "Server Error. Contact Support.";
@@ -119,7 +119,7 @@ class SentMessageHelper {
       }
 
       return Padding(
-        padding: EdgeInsets.only(right: 8.0),
+        padding: EdgeInsets.only(right: rightPadding),
         child: GestureDetector(
           onTap: () {
             showDialog(
@@ -314,7 +314,7 @@ class _SentMessageState extends State<SentMessage>
             bottom: (widget.showTail && !isEmptyString(widget.message.fullText))
                 ? 5.0
                 : 3.0,
-            right: isEmptyString(widget.message.fullText) ? 10.0 : 0.0),
+            right: isEmptyString(widget.message.fullText) && widget.message.error == 0 ? 10.0 : 0.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.end,

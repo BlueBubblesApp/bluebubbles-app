@@ -108,6 +108,7 @@ class _MessageAttachmentsState extends State<MessageAttachments>
                 context,
                 widget.message,
                 CurrentChat.of(context)?.chat,
+                rightPadding: 0
               ),
             ],
           ));
