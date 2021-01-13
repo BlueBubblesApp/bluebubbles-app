@@ -22,6 +22,7 @@ class AboutPanel extends StatefulWidget {
 class _AboutPanelState extends State<AboutPanel> {
   Brightness brightness;
   bool gotBrightness = false;
+  Color previousBackgroundColor;
 
   @override
   void initState() {
@@ -40,16 +41,22 @@ class _AboutPanelState extends State<AboutPanel> {
   }
 
   void loadBrightness() {
-    if (gotBrightness) return;
-    if (context == null) {
+    Color now = Theme.of(context).backgroundColor;
+    bool themeChanged =
+        previousBackgroundColor == null || previousBackgroundColor != now;
+    if (!themeChanged && gotBrightness) return;
+
+    previousBackgroundColor = now;
+    if (this.context == null) {
       brightness = Brightness.light;
       gotBrightness = true;
       return;
     }
 
-    bool isDark = Theme.of(context).accentColor.computeLuminance() < 0.179;
+    bool isDark = now.computeLuminance() < 0.179;
     brightness = isDark ? Brightness.dark : Brightness.light;
     gotBrightness = true;
+    if (this.mounted) setState(() {});
   }
 
   @override

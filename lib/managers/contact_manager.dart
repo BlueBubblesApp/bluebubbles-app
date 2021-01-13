@@ -16,6 +16,11 @@ class ContactManager {
 
   StreamController<List<String>> _stream = new StreamController.broadcast();
 
+  StreamController<Map<String, Color>> _colorStream =
+      new StreamController.broadcast();
+  Stream<Map<String, Color>> get colorStream => _colorStream.stream;
+  StreamController<Map<String, Color>> get colorStreamObject => _colorStream;
+
   Stream<List<String>> get stream => _stream.stream;
 
   ContactManager._internal();
@@ -70,7 +75,7 @@ class ContactManager {
     getContactsFuture = new Completer<bool>();
 
     // Fetch the current list of contacts
-    debugPrint("ContactManager -> Fetching Contacts");
+    debugPrint("ContactManager -> Fetching contacts");
     contacts =
         ((await ContactsService.getContacts(withThumbnails: false)) ?? [])
             .toList();
@@ -92,6 +97,7 @@ class ContactManager {
       }
     }
 
+    debugPrint("ContactManager -> Finished fetching contacts (${handleToContact.length})");
     getContactsFuture.complete(true);
 
     // Lazy load thumbnails after rendering initial contacts.
@@ -125,6 +131,7 @@ class ContactManager {
       });
     }
 
+    debugPrint("ContactManager -> Finished fetching avatars");
     getAvatarsFuture.complete();
   }
 
@@ -133,10 +140,15 @@ class ContactManager {
     Contact contact;
 
     // If the contact list is null, get the contacts
-    if (contacts == null) await getContacts();
-    for (Contact c in contacts) {
+    try {
+      if (contacts == null) await getContacts();
+    } catch (ex) {
+      return null;
+    }
+
+    for (Contact c in contacts ?? []) {
       // Get a phone number match
-      for (Item item in c.phones) {
+      for (Item item in c?.phones ?? []) {
         if (sameAddress(item.value, address)) {
           contact = c;
           break;
@@ -144,7 +156,7 @@ class ContactManager {
       }
 
       // Get an email match
-      for (Item item in c.emails) {
+      for (Item item in c?.emails ?? []) {
         if (item.value == address) {
           contact = c;
           break;
@@ -176,6 +188,12 @@ class ContactManager {
     if (contactTitle == address && !contactTitle.contains("@")) {
       return await formatPhoneNumber(contactTitle);
     }
+
+    // If it's an email and starts with "e:", strip it out
+    if (contactTitle.contains("@") && contactTitle.startsWith("e:")) {
+      contactTitle = contactTitle.substring(2);
+    }
+
     return contactTitle;
   }
 
@@ -189,5 +207,6 @@ class ContactManager {
 
   dispose() {
     _stream.close();
+    _colorStream.close();
   }
 }

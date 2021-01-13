@@ -9,10 +9,12 @@ class MessageTimeStamp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (context == null || CurrentChat.of(context) == null) return Container();
+
     return StreamBuilder<double>(
-        stream: CurrentChat.of(context).timeStampOffsetStream.stream,
+        stream: CurrentChat.of(context)?.timeStampOffsetStream?.stream,
         builder: (context, snapshot) {
-          double offset = CurrentChat.of(context).timeStampOffset;
+          double offset = CurrentChat.of(context)?.timeStampOffset;
 
           return AnimatedContainer(
             duration: Duration(milliseconds: offset == 0 ? 150 : 0),

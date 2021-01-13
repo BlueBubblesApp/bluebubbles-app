@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:ui';
 
+import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/share.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
@@ -8,6 +9,7 @@ import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scrol
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -108,6 +110,35 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                           trailing:
                               Text((latency == null) ? "N/A" : "$latency ms"),
                         );
+                      }),
+                  StreamBuilder(
+                      stream: SocketManager().connectionStateStream,
+                      builder: (context, AsyncSnapshot<SocketState> snapshot) {
+                        SocketState connectionStatus;
+                        if (snapshot.hasData) {
+                          connectionStatus = snapshot.data;
+                        } else {
+                          connectionStatus = SocketManager().state;
+                        }
+                        String subtitle;
+
+                        switch (connectionStatus) {
+                          case SocketState.CONNECTED:
+                            subtitle = "Tap to manually sync messages";
+                            break;
+                          default:
+                            subtitle = "Disconnected (Nothing to do)";
+                        }
+
+                        return SettingsTile(
+                            title: "Manually Sync Messages",
+                            subTitle: subtitle,
+                            onTap: () async {
+                              showDialog(
+                                context: context,
+                                builder: (context) => SyncDialog(),
+                              );
+                            });
                       }),
                   StreamBuilder(
                       stream: SocketManager().connectionStateStream,
@@ -223,6 +254,156 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class SyncDialog extends StatefulWidget {
+  SyncDialog({Key key}) : super(key: key);
+
+  @override
+  _SyncDialogState createState() => _SyncDialogState();
+}
+
+class _SyncDialogState extends State<SyncDialog> {
+  String errorCode;
+  bool finished = false;
+  String message;
+  double progress;
+  Duration lookback;
+  int page = 0;
+
+  void syncMessages() async {
+    if (lookback == null) return;
+
+    DateTime now = DateTime.now().toUtc().subtract(lookback);
+    SocketManager()
+        .fetchMessages(null, after: now.millisecondsSinceEpoch)
+        .then((List<dynamic> messages) {
+      if (this.mounted) {
+        setState(() {
+          message = "Adding ${messages.length} messages...";
+        });
+      }
+
+      MessageHelper.bulkAddMessages(null, messages,
+          onProgress: (int progress, int length) {
+        if (progress == 0 || length == 0) {
+          this.progress = null;
+        } else {
+          this.progress = progress / length;
+        }
+
+        if (this.mounted)
+          setState(() {
+            message =
+                "Adding $progress of $length (${((this.progress ?? 0) * 100).floor().toInt()}%)";
+          });
+      }).then((List<Message> items) {
+        onFinish(true, items.length);
+      });
+    }).catchError((_) => onFinish(false, 0));
+  }
+
+  void onFinish([bool success = true, int total]) {
+    if (!this.mounted) return;
+
+    this.progress = 100;
+    message = "Finished adding $total messages!";
+    setState(() {});
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    String title = errorCode != null ? "Error!" : message ?? "";
+    Widget content = Container();
+    if (errorCode != null) {
+      content = Text(errorCode);
+    } else {
+      content = Container(
+        height: 5,
+        child: Center(
+          child: LinearProgressIndicator(
+            value: progress,
+            backgroundColor: Colors.white,
+            valueColor: AlwaysStoppedAnimation(Theme.of(context).primaryColor),
+          ),
+        ),
+      );
+    }
+
+    List<Widget> actions = [
+      FlatButton(
+        onPressed: () {
+          Navigator.of(context).pop();
+        },
+        child: Text(
+          "Ok",
+          style: Theme.of(context).textTheme.bodyText1.apply(
+                color: Theme.of(context).primaryColor,
+              ),
+        ),
+      )
+    ];
+
+    if (page == 0) {
+      title = "How far back would you like to go?";
+      content = Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 20.0),
+            child: Text(
+              "Days: ${lookback?.inDays ?? "1"}",
+              style: Theme.of(context).textTheme.bodyText1,
+              textAlign: TextAlign.center,
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 20.0),
+            child: Slider(
+              value: lookback?.inDays?.toDouble() ?? 1.0,
+              onChanged: (double value) {
+                if (!this.mounted) return;
+
+                setState(() {
+                  lookback = new Duration(days: value.toInt());
+                });
+              },
+              label: lookback?.inDays?.toString() ?? "1",
+              divisions: 29,
+              min: 1,
+              max: 30,
+            ),
+          )
+        ],
+      );
+
+      actions = [
+        FlatButton(
+          onPressed: () {
+            if (!this.mounted) return;
+            if (lookback == null) lookback = new Duration(days: 1);
+            page = 1;
+            message = "Fetching messages...";
+            setState(() {});
+            syncMessages();
+          },
+          child: Text(
+            "Sync",
+            style: Theme.of(context).textTheme.bodyText1.apply(
+                  color: Theme.of(context).primaryColor,
+                ),
+          ),
+        )
+      ];
+    }
+
+    return AlertDialog(
+      backgroundColor: Theme.of(context).backgroundColor,
+      title: Text(title, style: Theme.of(context).textTheme.headline1),
+      content: content,
+      actions: actions,
     );
   }
 }

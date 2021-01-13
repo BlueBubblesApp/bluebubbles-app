@@ -3,9 +3,9 @@ import 'dart:ui';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/contstants.dart';
+import 'package:bluebubbles/layouts/settings/custom_avatar_panel.dart';
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
 import 'package:bluebubbles/layouts/theming/theming_panel.dart';
-import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -27,6 +27,7 @@ class _ThemePanelState extends State<ThemePanel> {
   List<DisplayMode> modes;
   DisplayMode currentMode;
   Brightness brightness;
+  Color previousBackgroundColor;
   bool gotBrightness = false;
 
   @override
@@ -55,16 +56,22 @@ class _ThemePanelState extends State<ThemePanel> {
   }
 
   void loadBrightness() {
-    if (gotBrightness) return;
-    if (context == null) {
+    Color now = Theme.of(context).backgroundColor;
+    bool themeChanged =
+        previousBackgroundColor == null || previousBackgroundColor != now;
+    if (!themeChanged && gotBrightness) return;
+
+    previousBackgroundColor = now;
+    if (this.context == null) {
       brightness = Brightness.light;
       gotBrightness = true;
       return;
     }
 
-    bool isDark = Theme.of(context).accentColor.computeLuminance() < 0.179;
+    bool isDark = now.computeLuminance() < 0.179;
     brightness = isDark ? Brightness.dark : Brightness.light;
     gotBrightness = true;
+    if (this.mounted) setState(() {});
   }
 
   @override
@@ -155,14 +162,6 @@ class _ThemePanelState extends State<ThemePanel> {
                   ),
                   SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.hideDividers = val;
-                      saveSettings();
-                    },
-                    initialVal: _settingsCopy.hideDividers,
-                    title: "Hide Dividers",
-                  ),
-                  SettingsSwitch(
-                    onChanged: (bool val) {
                       _settingsCopy.colorfulAvatars = val;
                       saveSettings();
                     },
@@ -177,6 +176,26 @@ class _ThemePanelState extends State<ThemePanel> {
                     initialVal: _settingsCopy.colorfulBubbles,
                     title: "Colorful Bubbles",
                   ),
+                  SettingsTile(
+                    title: "Custom Avatar Colors",
+                    trailing: Icon(Icons.arrow_forward_ios,
+                        color: Theme.of(context).primaryColor),
+                    onTap: () async {
+                      Navigator.of(context).push(
+                        CupertinoPageRoute(
+                          builder: (context) => CustomAvatarPanel(),
+                        ),
+                      );
+                    },
+                  ),
+                  SettingsSwitch(
+                    onChanged: (bool val) {
+                      _settingsCopy.hideDividers = val;
+                      saveSettings();
+                    },
+                    initialVal: _settingsCopy.hideDividers,
+                    title: "Hide Dividers",
+                  ),
                   SettingsSwitch(
                     onChanged: (bool val) {
                       _settingsCopy.denseChatTiles = val;
@@ -184,6 +203,14 @@ class _ThemePanelState extends State<ThemePanel> {
                     },
                     initialVal: _settingsCopy.denseChatTiles,
                     title: "Dense Conversation Tiles",
+                  ),
+                  SettingsSwitch(
+                    onChanged: (bool val) {
+                      _settingsCopy.reducedForehead = val;
+                      saveSettings();
+                    },
+                    initialVal: _settingsCopy.reducedForehead,
+                    title: "Reduced Forehead",
                   ),
                   // For whatever fucking reason, this needs to be down here, otherwise all of the switch values are false
                   if (currentMode != null && modes != null)

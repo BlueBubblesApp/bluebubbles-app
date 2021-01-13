@@ -45,6 +45,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
   bool needToReconnect = false;
   bool showUrl = false;
   Brightness brightness;
+  Color previousBackgroundColor;
   bool gotBrightness = false;
   int lastRestart;
 
@@ -67,16 +68,22 @@ class _SettingsPanelState extends State<SettingsPanel> {
   }
 
   void loadBrightness() {
-    if (gotBrightness) return;
-    if (context == null) {
+    Color now = Theme.of(context).backgroundColor;
+    bool themeChanged =
+        previousBackgroundColor == null || previousBackgroundColor != now;
+    if (!themeChanged && gotBrightness) return;
+
+    previousBackgroundColor = now;
+    if (this.context == null) {
       brightness = Brightness.light;
       gotBrightness = true;
       return;
     }
 
-    bool isDark = Theme.of(context).backgroundColor.computeLuminance() < 0.179;
+    bool isDark = now.computeLuminance() < 0.179;
     brightness = isDark ? Brightness.dark : Brightness.light;
     gotBrightness = true;
+    if (this.mounted) setState(() {});
   }
 
   @override

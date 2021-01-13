@@ -2,6 +2,23 @@
 
 Below are the last few BlueBubbles App release changelogs
 
+## v0.1.15
+
+* Adds Option: Send Delay
+* Fixes to formatting international numbers
+* Adds Option: Show Recipient/Group Name as Text Field Placeholder
+* Adds Feature: Custom Avatar Colors
+* Fixes issue with loading YouTube previews
+* Adds Feature: Sync all messages since a point in time
+* Fixes issue with empty chats when Contacts permission is disabled
+* Adds Feature: Share Targets
+* Fixes issue with preloading chats in the chat selector
+* Fixes issue where previous messages will re-animate when sending a new message
+* Fixes issue loading chat previews when in share screen
+* Fixes issue where chat creator would create a chat if it already existed
+* Tons of optimizations and small tweaks
+* Tons of other small bug fixes and improvements
+
 ## v0.1.13
 
 - Performance improvements when

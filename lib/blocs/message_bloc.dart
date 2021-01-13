@@ -36,6 +36,8 @@ class MessageBloc {
 
   int _reactions = 0;
   bool showDeleted = false;
+  bool _canLoadMore = true;
+  bool _isGettingMore = false;
 
   LinkedHashMap<String, Message> get messages {
     if (!showDeleted) {
@@ -58,13 +60,15 @@ class MessageBloc {
     return "no sent message found";
   }
 
-  MessageBloc(Chat chat) {
+  MessageBloc(Chat chat, {bool canLoadMore = true}) {
+    _canLoadMore = canLoadMore;
     _currentChat = chat;
+
     NewMessageManager().stream.listen((msgEvent) {
       if (_messageController.isClosed) return;
 
       // Ignore any events that don't have to do with the current chat
-      if (msgEvent.chatGuid != currentChat.guid) return;
+      if (msgEvent?.chatGuid != currentChat?.guid) return;
 
       // Iterate over each action that needs to take place on the chat
       bool addToSink = true;
@@ -181,7 +185,20 @@ class MessageBloc {
         LinkedHashMap.fromIterables(keys, values));
   }
 
+  void emitLoaded() {
+    if (!_messageController.isClosed) {
+      MessageBlocEvent event = MessageBlocEvent();
+      event.messages = _allMessages.values.toList();
+      _messageController.sink.add(event);
+    }
+  }
+
   Future<LinkedHashMap<String, Message>> getMessages() async {
+    // If we are already fetching, return empty
+    if (_isGettingMore || !this._canLoadMore) return new LinkedHashMap();
+    _isGettingMore = true;
+
+    // Fetch messages
     List<Message> messages = await Chat.getMessagesSingleton(_currentChat);
 
     if (isNullOrEmpty(messages)) {
@@ -196,13 +213,50 @@ class MessageBloc {
       }
     }
 
-    if (!_messageController.isClosed) {
-      MessageBlocEvent event = MessageBlocEvent();
-      event.messages = _allMessages.values.toList();
-      _messageController.sink.add(event);
-    }
+    this.emitLoaded();
 
+    _isGettingMore = false;
     return _allMessages;
+  }
+
+  Future<void> loadSearchChunk(Message message) async {
+    // List<int> rowIDs = [message.originalROWID + 1];
+    // if (message.originalROWID - 1 > 0) {
+    //   rowIDs.add(message.originalROWID - 1);
+    // }
+
+    // List<Map<String, dynamic>> params = [
+    //   {"statement": "message.ROWID IN (${rowIDs.join(", ")})", 'args': null},
+    //   {"statement": "message.associated_message_guid IS NULL", 'args': null}
+    // ];
+
+    // List<dynamic> res =
+    //     await SocketManager().fetchMessages(null, limit: 3, where: params);
+
+    _allMessages = new LinkedHashMap();
+    _allMessages.addAll({message.guid: message});
+
+    // print("ITEMS OG");
+    // for (var i in _allMessages.values.toList()) {
+    //   print(i.guid);
+    // }
+
+    // for (var i in res ?? []) {
+    //   Message tmp = Message.fromMap(i);
+    //   print("ADDING: ${tmp.guid}");
+    //   if (!_allMessages.containsKey(tmp.guid)) {
+    //     _allMessages.addAll({tmp.guid: message});
+    //   }
+    // }
+
+    // print("ITEMS AFTER");
+    // for (var i in _allMessages.values.toList()) {
+    //   print("TEXT: ${i.text}");
+    // }
+
+    // print(_allMessages.length);
+
+    this.emitLoaded();
   }
 
   Future<LoadMessageResult> loadMessageChunk(int offset,
@@ -211,14 +265,21 @@ class MessageBloc {
       CurrentChat currentChat}) async {
     int reactionCnt = includeReactions ? _reactions : 0;
     Completer<LoadMessageResult> completer = new Completer();
-    if (_currentChat != null) {
+    if (!this._canLoadMore) {
+      completer.complete();
+      return completer.future;
+    }
+
+    Chat currChat = currentChat?.chat ?? _currentChat;
+
+    if (currChat != null) {
       List<Message> messages = [];
       int count = 0;
 
       // Should we check locally first?
       if (checkLocal)
         messages =
-            await Chat.getMessages(_currentChat, offset: offset + reactionCnt);
+            await Chat.getMessages(currChat, offset: offset + reactionCnt);
 
       // Fetch messages from the socket
       count = messages.length;
@@ -226,7 +287,7 @@ class MessageBloc {
         try {
           // Fetch messages from the server
           List<dynamic> _messages = await SocketManager()
-              .loadMessageChunk(_currentChat, offset + reactionCnt);
+              .loadMessageChunk(currChat, offset + reactionCnt);
           count = _messages.length;
 
           // Handle the messages
@@ -275,9 +336,7 @@ class MessageBloc {
 
       // Emit messages to listeners
       if (!_messageController.isClosed) {
-        MessageBlocEvent event = MessageBlocEvent();
-        event.messages = _allMessages.values.toList();
-        _messageController.sink.add(event);
+        this.emitLoaded();
 
         // Complete the execution
         if (count < 25 && !completer.isCompleted) {

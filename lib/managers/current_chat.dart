@@ -29,6 +29,8 @@ class CurrentChat {
   Stream get attachmentStream => _attachmentStream.stream;
 
   Chat chat;
+  Message myLastMessage;
+  Message lastReadMessage;
 
   Map<String, Uint8List> imageData = {};
   Map<String, Metadata> urlPreviews = {};
@@ -50,6 +52,9 @@ class CurrentChat {
   StreamController<double> timeStampOffsetStream =
       StreamController<double>.broadcast();
 
+  StreamController<Map<String, Message>> messageMarkerStream =
+      StreamController<Map<String, Message>>.broadcast();
+
   double get timeStampOffset => _timeStampOffset;
   set timeStampOffset(double value) {
     if (_timeStampOffset == value) return;
@@ -64,7 +69,27 @@ class CurrentChat {
   bool currentShowScrollDown = false;
   bool get showScrollDown => currentShowScrollDown;
 
-  CurrentChat(this.chat);
+  CurrentChat(this.chat) {
+    NewMessageManager().stream.listen((msgEvent) {
+      if (messageMarkerStream.isClosed) return;
+
+      // Ignore any events that don't have to do with the current chat
+      if (msgEvent?.chatGuid != chat?.guid) return;
+
+      // If it's the event we want
+      if (msgEvent.type == NewMessageType.UPDATE ||
+          msgEvent.type == NewMessageType.ADD) {
+        tryUpdateMessageMarkers(msgEvent.event["message"]);
+      }
+
+      if (messageMarkerStream.isClosed) {
+        messageMarkerStream.sink.add({
+          "myLastMessage": this.myLastMessage,
+          "lastReadMessage": this.lastReadMessage
+        });
+      }
+    });
+  }
 
   factory CurrentChat.getCurrentChat(Chat chat) {
     if (chat == null) return null;
@@ -231,6 +256,26 @@ class CurrentChat {
     _stream.sink.add(null);
   }
 
+  void tryUpdateMessageMarkers(Message msg) {
+    if (!msg.isFromMe) return;
+
+    if (myLastMessage == null ||
+        (myLastMessage?.dateCreated != null &&
+            msg.dateCreated != null &&
+            msg.dateCreated.millisecondsSinceEpoch >
+                myLastMessage.dateCreated.millisecondsSinceEpoch)) {
+      myLastMessage = msg;
+    }
+
+    if ((lastReadMessage == null && msg.dateRead != null) ||
+        (lastReadMessage?.dateRead != null &&
+            msg.dateRead != null &&
+            msg.dateRead.millisecondsSinceEpoch >
+                lastReadMessage.dateRead.millisecondsSinceEpoch)) {
+      lastReadMessage = msg;
+    }
+  }
+
   /// Dispose all of the controllers and whatnot
   void dispose() {
     if (!isNullOrEmpty(currentPlayingVideo)) {
@@ -244,8 +289,10 @@ class CurrentChat {
         element.dispose();
       });
     }
+
     if (!timeStampOffsetStream.isClosed) timeStampOffsetStream.close();
     if (!showScrollDownStream.isClosed) showScrollDownStream.close();
+    if (!messageMarkerStream.isClosed) messageMarkerStream.close();
 
     _timeStampOffset = 0;
     currentShowScrollDown = false;

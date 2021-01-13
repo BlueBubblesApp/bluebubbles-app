@@ -1,8 +1,10 @@
 import 'dart:io';
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
+import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/attachment_sender.dart';
 import 'package:bluebubbles/helpers/contstants.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view_mixin.dart';
 import 'package:bluebubbles/layouts/conversation_view/messages_view.dart';
 import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/chat_selector_text_field.dart';
@@ -37,6 +39,8 @@ class ConversationView extends StatefulWidget {
     this.onSelect,
     this.selectIcon,
     this.customHeading,
+    this.customMessageBloc,
+    this.onMessagesViewComplete,
     this.type = ChatSelectorTypes.ALL,
   }) : super(key: key);
 
@@ -46,6 +50,8 @@ class ConversationView extends StatefulWidget {
   final String customHeading;
   final String type;
   final bool isCreator;
+  final MessageBloc customMessageBloc;
+  final Function onMessagesViewComplete;
 
   @override
   ConversationViewState createState() => ConversationViewState();
@@ -53,9 +59,15 @@ class ConversationView extends StatefulWidget {
 
 class ConversationViewState extends State<ConversationView>
     with ConversationViewMixin {
+  List<File> existingAttachments;
+  String existingText;
+
   @override
   void initState() {
     super.initState();
+
+    this.existingAttachments = widget.existingAttachments;
+    this.existingText = widget.existingText;
 
     // Initialize the current chat state
     if (widget.chat != null) {
@@ -64,6 +76,7 @@ class ConversationViewState extends State<ConversationView>
 
     isCreator = widget.isCreator ?? false;
     chat = widget.chat;
+
     initChatSelector();
     initConversationViewState();
 
@@ -105,17 +118,41 @@ class ConversationViewState extends State<ConversationView>
   }
 
   Future<bool> send(List<File> attachments, String text) async {
-    if (isCreator && chat == null) {
-      chat = await createChat();
+    if (isCreator) {
+      if (chat == null && selected.length == 1) {
+        try {
+          chat = await Chat.findOne(
+              {"chatIdentifier": sanitizeAddress(selected[0].address)});
+        } catch (ex) {}
+      }
 
+      // If the chat is null, create it
+      if (chat == null) chat = await createChat();
+
+      // If the chat is still null, return false
       if (chat == null) return false;
-      initCurrentChat(chat);
-      initConversationViewState();
-      initChatSelector();
+
+      // If the current chat is null, set it
+      bool isDifferentChat = currentChat == null || currentChat?.chat?.guid != chat.guid;
+      if (isDifferentChat) {
+        initCurrentChat(chat);
+      }
 
       // Fetch messages
-      messageBloc = initMessageBloc();
-      messageBloc.getMessages();
+      if (isDifferentChat || messageBloc == null) {
+        // Init the states
+        initCurrentChat(chat);
+        initConversationViewState();
+
+        messageBloc = initMessageBloc();
+        messageBloc.getMessages();
+      }
+    }
+
+    // If the current chat is null, set it
+    bool isDifferentChat = currentChat == null || currentChat?.chat?.guid != chat.guid;
+    if (isDifferentChat) {
+      initCurrentChat(chat);
     }
 
     if (attachments.length > 0) {
@@ -132,12 +169,17 @@ class ConversationViewState extends State<ConversationView>
         );
       }
     } else {
-      ActionHandler.sendMessage(chat, text);
+      // We include messageBloc here because the bloc listener may not be instantiated yet
+      ActionHandler.sendMessage(chat, text, messageBloc: messageBloc);
     }
+
     if (isCreator) {
       isCreator = false;
+      this.existingText = "";
+      this.existingAttachments = [];
       setState(() {});
     }
+
     return true;
   }
 
@@ -174,6 +216,15 @@ class ConversationViewState extends State<ConversationView>
   Widget build(BuildContext context) {
     currentChat?.isAlive = true;
 
+    if (widget.customMessageBloc != null && messageBloc == null) {
+      messageBloc = widget.customMessageBloc;
+    }
+
+    if (messageBloc == null) {
+      messageBloc = initMessageBloc();
+      messageBloc.getMessages();
+    }
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: Theme.of(context).backgroundColor,
@@ -191,8 +242,8 @@ class ConversationViewState extends State<ConversationView>
                 ? BlueBubblesTextField(
                     onSend: send,
                     isCreator: isCreator,
-                    existingAttachments: widget.existingAttachments,
-                    existingText: widget.existingText,
+                    existingAttachments: this.existingAttachments,
+                    existingText: this.existingText,
                   )
                 : Container(),
           ),
@@ -223,9 +274,10 @@ class ConversationViewState extends State<ConversationView>
                 child: (searchQuery.length == 0 || !isCreator) && chat != null
                     ? MessagesView(
                         key: new Key(chat?.guid ?? "unknown-chat"),
-                        messageBloc: messageBloc ?? initMessageBloc(),
+                        messageBloc: messageBloc,
                         showHandle: chat.participants.length > 1,
                         chat: chat,
+                        initComplete: widget.onMessagesViewComplete,
                       )
                     : buildChatSelectorBody(),
               ),

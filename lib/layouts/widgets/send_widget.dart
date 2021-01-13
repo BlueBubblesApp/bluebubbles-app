@@ -151,6 +151,7 @@ class _SendWidgetState extends State<SendWidget> {
         begin: 0,
       ),
     );
+
     return Material(
       type: MaterialType.transparency,
       child: FadeTransition(

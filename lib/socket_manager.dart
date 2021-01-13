@@ -142,7 +142,7 @@ class SocketManager {
         });
         if (SettingsManager().settings.finishedSetup)
           setup.startIncrementalSync(SettingsManager().settings,
-              onConnectionError: (String err) {
+              isIncremental: true, onConnectionError: (String err) {
             debugPrint(
                 "(SYNC) Error performing incremental sync. Not saving last sync date.");
             debugPrint(err);
@@ -507,6 +507,7 @@ class SocketManager {
   Future<List<dynamic>> fetchMessages(Chat chat,
       {int offset: 0,
       int limit: 100,
+      int after,
       bool onlyAttachments: false,
       List<Map<String, dynamic>> where: const []}) async {
     Completer<List<dynamic>> completer = new Completer();
@@ -520,6 +521,10 @@ class SocketManager {
     params["withHandle"] = true;
     params["sort"] = "DESC";
     params["where"] = where;
+
+    if (after != null) {
+      params["after"] = after;
+    }
 
     if (onlyAttachments) {
       params["where"].add({

@@ -2,10 +2,13 @@ import 'dart:async';
 import 'dart:ui';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
+import 'package:bluebubbles/blocs/setup_bloc.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/search/search_text_box.dart';
 import 'package:bluebubbles/layouts/search/search_view.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
+import 'package:bluebubbles/layouts/search/search_view.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
@@ -15,6 +18,7 @@ import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:device_info/device_info.dart';
+import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/services.dart';
 
 import './conversation_tile.dart';
@@ -35,8 +39,11 @@ class _ConversationListState extends State<ConversationList> {
   ScrollController scrollController;
   List<Chat> chats = <Chat>[];
   bool colorfulAvatars = false;
+  bool reducedForehead = false;
+  bool showIndicator = false;
 
   Brightness brightness = Brightness.light;
+  Color previousBackgroundColor;
   bool gotBrightness = false;
   String model;
 
@@ -55,7 +62,6 @@ class _ConversationListState extends State<ConversationList> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    getDeviceModel();
     if (this.mounted) {
       theme = Colors.transparent;
     }
@@ -87,10 +93,22 @@ class _ConversationListState extends State<ConversationList> {
     }
 
     colorfulAvatars = SettingsManager().settings.colorfulAvatars;
+    reducedForehead = SettingsManager().settings.reducedForehead;
+    showIndicator = SettingsManager().settings.showConnectionIndicator;
     SettingsManager().stream.listen((Settings newSettings) {
       if (newSettings.colorfulAvatars != colorfulAvatars && this.mounted) {
         setState(() {
           colorfulAvatars = newSettings.colorfulAvatars;
+        });
+      } else if (newSettings.reducedForehead != reducedForehead &&
+          this.mounted) {
+        setState(() {
+          reducedForehead = newSettings.reducedForehead;
+        });
+      } else if (newSettings.showConnectionIndicator != showIndicator &&
+          this.mounted) {
+        setState(() {
+          showIndicator = newSettings.showConnectionIndicator;
         });
       }
     });
@@ -119,35 +137,23 @@ class _ConversationListState extends State<ConversationList> {
     });
   }
 
-  void getDeviceModel() async {
-    if (model != null) return;
-
-    DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
-    AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
-
-    // If the device is a pixel device
-    String mod = androidInfo?.model ?? "";
-    if (mod.contains("4a") &&
-        (mod.contains("pixel") || mod.contains("gphone"))) {
-      model = "pixel";
-      if (this.mounted) setState(() {});
-    } else {
-      model = "other";
-    }
-  }
-
   void loadBrightness() {
-    if (gotBrightness) return;
+    Color now = Theme.of(context).backgroundColor;
+    bool themeChanged =
+        previousBackgroundColor == null || previousBackgroundColor != now;
+    if (!themeChanged && gotBrightness) return;
 
+    previousBackgroundColor = now;
     if (this.context == null) {
       brightness = Brightness.light;
       gotBrightness = true;
       return;
     }
 
-    bool isDark = Theme.of(context).backgroundColor.computeLuminance() < 0.179;
+    bool isDark = now.computeLuminance() < 0.179;
     brightness = isDark ? Brightness.dark : Brightness.light;
     gotBrightness = true;
+    if (this.mounted) setState(() {});
   }
 
   bool get _isAppBarExpanded {
@@ -279,7 +285,7 @@ class _Cupertino extends StatelessWidget {
         appBar: PreferredSize(
           preferredSize: Size(
             MediaQuery.of(context).size.width,
-            40,
+            parent.reducedForehead ? 10 : 40,
           ),
           child: ClipRRect(
             child: BackdropFilter(
@@ -355,17 +361,105 @@ class _Cupertino extends StatelessWidget {
                           Spacer(
                             flex: 5,
                           ),
-                          Container(
-                            child: Text(
-                              parent.widget.showArchivedChats
-                                  ? "Archive"
-                                  : "Messages",
-                              style: Theme.of(context).textTheme.headline1,
-                            ),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Text(
+                                parent.widget.showArchivedChats
+                                    ? "Archive"
+                                    : "Messages",
+                                style: Theme.of(context).textTheme.headline1,
+                              ),
+                              Container(width: 10.0),
+                              Stack(
+                                alignment: Alignment.center,
+                                children: [
+                                  (parent.showIndicator)
+                                      ? StreamBuilder(
+                                          stream: SocketManager()
+                                              .connectionStateStream,
+                                          builder: (context,
+                                              AsyncSnapshot<SocketState>
+                                                  snapshot) {
+                                            SocketState connectionStatus;
+                                            if (snapshot.hasData) {
+                                              connectionStatus = snapshot.data;
+                                            } else {
+                                              connectionStatus =
+                                                  SocketManager().state;
+                                            }
+
+                                            if (connectionStatus ==
+                                                    SocketState.CONNECTED ||
+                                                connectionStatus ==
+                                                    SocketState.CONNECTING) {
+                                              return Icon(
+                                                Icons.fiber_manual_record,
+                                                size: 8,
+                                                color: HexColor('32CD32')
+                                                    .withAlpha(200),
+                                              );
+                                            } else {
+                                              return Icon(
+                                                Icons.fiber_manual_record,
+                                                size: 8,
+                                                color: HexColor('DC143C')
+                                                    .withAlpha(200),
+                                              );
+                                            }
+                                          })
+                                      : Container(),
+                                  StreamBuilder(
+                                    stream: SocketManager().setup.stream,
+                                    initialData: SetupData(0, []),
+                                    builder: (context, snapshot) {
+                                      if (!snapshot.hasData ||
+                                          snapshot.data.progress < 1 ||
+                                          snapshot.data.progress >= 100)
+                                        return Container();
+
+                                      return Theme(
+                                        data: ThemeData(
+                                          cupertinoOverrideTheme:
+                                              CupertinoThemeData(
+                                                  brightness: parent.brightness),
+                                        ),
+                                        child: CupertinoActivityIndicator(
+                                          radius: 7,
+                                        ),
+                                      );
+                                    },
+                                  )
+                                ],
+                              )
+                            ],
                           ),
                           Spacer(
                             flex: 25,
                           ),
+                          ClipOval(
+                            child: Material(
+                              color:
+                                  Theme.of(context).accentColor, // button color
+                              child: InkWell(
+                                  child: SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: Icon(Icons.search,
+                                          color: Theme.of(context).primaryColor,
+                                          size: 12)),
+                                  onTap: () async {
+                                    Navigator.of(context).push(
+                                      CupertinoPageRoute(
+                                        builder: (context) => SearchView(),
+                                      ),
+                                    );
+                                  }),
+                            ),
+                          ),
+                          Container(width: 10.0),
                           parent.buildSettingsButton(),
                           Spacer(
                             flex: 1,

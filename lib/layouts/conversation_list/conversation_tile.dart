@@ -13,6 +13,7 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -133,6 +134,41 @@ class _ConversationTileState extends State<ConversationTile>
     isFetching = false;
   }
 
+  void onTapUp(details) {
+    if (widget.onTapGoToChat != null && widget.onTapGoToChat) {
+      Navigator.of(context).pushAndRemoveUntil(
+        CupertinoPageRoute(
+          builder: (BuildContext context) {
+            return ConversationView(
+              chat: widget.chat,
+              existingAttachments: widget.existingAttachments,
+              existingText: widget.existingText,
+            );
+          },
+        ),
+        (route) => route.isFirst,
+      );
+    } else if (widget.onTapCallback != null) {
+      widget.onTapCallback();
+    } else {
+      Navigator.of(context).push(
+        CupertinoPageRoute(
+          builder: (BuildContext context) {
+            return ConversationView(
+              chat: widget.chat,
+              existingAttachments: widget.existingAttachments,
+              existingText: widget.existingText,
+            );
+          },
+        ),
+      );
+    }
+  }
+
+  void onTapUpBypass() {
+    this.onTapUp(TapUpDetails(kind: PointerDeviceKind.touch));
+  }
+
   Widget buildSlider(Widget child) {
     return Slidable(
       actionPane: SlidableStrechActionPane(),
@@ -233,6 +269,8 @@ class _ConversationTileState extends State<ConversationTile>
         chat: widget.chat,
         width: 40,
         height: 40,
+        editable: false,
+        onTap: this.onTapUpBypass,
       );
     } else {
       return Container(
@@ -344,7 +382,8 @@ class __CupertinoState extends State<_Cupertino> {
             });
           },
           onTapUp: (details) {
-            widget.parent.onTap();
+            this.widget.parent.onTapUp(details);
+
             Future.delayed(Duration(milliseconds: 200), () {
               if (this.mounted)
                 setState(() {
@@ -552,3 +591,6 @@ class _Material extends StatelessWidget {
     );
   }
 }
+
+  @override
+  bool get wantKeepAlive => true;

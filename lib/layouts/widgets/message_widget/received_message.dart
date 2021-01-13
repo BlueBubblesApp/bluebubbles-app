@@ -1,5 +1,6 @@
 import 'package:bluebubbles/helpers/contstants.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/ballon_bundle_widget.dart';
@@ -7,6 +8,7 @@ import 'package:bluebubbles/layouts/widgets/message_widget/message_content/messa
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_time_stamp.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_popup_holder.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.dart';
+import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/message.dart';
@@ -48,11 +50,27 @@ class ReceivedMessage extends StatefulWidget {
 class _ReceivedMessageState extends State<ReceivedMessage>
     with MessageWidgetMixin {
   bool checkedHandle = false;
+
   @override
   initState() {
     super.initState();
     initMessageState(widget.message, widget.showHandle)
         .then((value) => {if (this.mounted) setState(() {})});
+
+    // We need this here, or else messages without an avatar may not change.
+    // Even if it fits the criteria
+    ContactManager().colorStream.listen((event) {
+      if (!event.containsKey(widget?.message?.handle?.address)) return;
+
+      Color color = event[widget?.message?.handle?.address];
+      if (color == null) {
+        widget.message.handle.color = null;
+      } else {
+        widget.message.handle.color = color.value.toRadixString(16);
+      }
+
+      if (this.mounted) setState(() {});
+    });
   }
 
   @override
@@ -91,7 +109,14 @@ class _ReceivedMessageState extends State<ReceivedMessage>
       Theme.of(context).accentColor
     ];
     if (SettingsManager().settings.colorfulBubbles) {
-      bubbleColors = toColorGradient(message?.handle?.address);
+      if (message?.handle?.color == null) {
+        bubbleColors = toColorGradient(message?.handle?.address);
+      } else {
+        bubbleColors = [
+          HexColor(message.handle.color),
+          lighten(HexColor(message.handle.color), 0.02),
+        ];
+      }
     }
 
     return Stack(
@@ -140,8 +165,11 @@ class _ReceivedMessageState extends State<ReceivedMessage>
           ),
           child: RichText(
             text: TextSpan(
-              children:
-                  MessageWidgetMixin.buildMessageSpans(context, widget.message),
+              children: MessageWidgetMixin.buildMessageSpans(
+                  context, widget.message,
+                  colors: widget.message?.handle?.color != null
+                      ? bubbleColors
+                      : null),
               style: Theme.of(context).textTheme.bodyText2,
             ),
           ),

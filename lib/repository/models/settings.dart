@@ -26,6 +26,11 @@ class Settings {
   bool doubleTapForDetails = false;
   bool denseChatTiles = false;
   bool smartReply = false;
+  bool reducedForehead = false;
+  bool preCachePreviewImages = true;
+  bool showConnectionIndicator = false;
+  int sendDelay;
+  bool recipientAsPlaceholder = false;
   // String emojiFontFamily;
 
   Skins skin = Skins.IOS;
@@ -79,6 +84,16 @@ class Settings {
         settings.denseChatTiles = entry.value;
       } else if (entry.name == "smartReply") {
         settings.smartReply = entry.value;
+      } else if (entry.name == "reducedForehead") {
+        settings.reducedForehead = entry.value;
+      } else if (entry.name == "preCachePreviewImages") {
+        settings.preCachePreviewImages = entry.value;
+      } else if (entry.name == "showConnectionIndicator") {
+        settings.showConnectionIndicator = entry.value;
+      } else if (entry.name == "sendDelay") {
+        settings.sendDelay = entry.value;
+      } else if (entry.name == "recipientAsPlaceholder") {
+        settings.recipientAsPlaceholder = entry.value;
       }
 
       // else if (entry.name == "emojiFontFamily") {
@@ -213,6 +228,26 @@ class Settings {
             name: "smartReply",
             value: this.smartReply,
             type: this.smartReply.runtimeType),
+        ConfigEntry(
+            name: "reducedForehead",
+            value: this.reducedForehead,
+            type: this.reducedForehead.runtimeType),
+        ConfigEntry(
+            name: "preCachePreviewImages",
+            value: this.preCachePreviewImages,
+            type: this.preCachePreviewImages.runtimeType),
+        ConfigEntry(
+            name: "showConnectionIndicator",
+            value: this.showConnectionIndicator,
+            type: this.showConnectionIndicator.runtimeType),
+        ConfigEntry(
+            name: "sendDelay",
+            value: this.sendDelay,
+            type: this.sendDelay.runtimeType),
+        ConfigEntry(
+            name: "recipientAsPlaceholder",
+            value: this.recipientAsPlaceholder,
+            type: this.recipientAsPlaceholder.runtimeType),
         // ConfigEntry(
         //     name: "emojiFontFamily",
         //     value: this.emojiFontFamily,

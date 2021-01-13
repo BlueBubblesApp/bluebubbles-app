@@ -58,6 +58,7 @@ class _ReactionDetailWidgetState extends State<ReactionDetailWidget> {
           child: ContactAvatarWidget(
             handle: widget.handle,
             borderThickness: 0.1,
+            editable: false,
           ),
         ),
         Padding(

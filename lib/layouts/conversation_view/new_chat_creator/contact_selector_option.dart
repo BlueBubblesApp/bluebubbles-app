@@ -74,10 +74,12 @@ class ContactSelectorOption extends StatelessWidget {
           ? ContactAvatarWidget(
               handle: Handle(address: item.address),
               borderThickness: 0.1,
+              editable: false,
             )
           : ContactAvatarGroupWidget(
               chat: item.chat,
               participants: item.chat.participants,
+              editable: false,
             ),
       trailing: item.isChat
           ? Icon(

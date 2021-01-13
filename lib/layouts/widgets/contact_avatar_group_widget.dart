@@ -10,12 +10,16 @@ class ContactAvatarGroupWidget extends StatefulWidget {
       @required this.participants,
       this.width,
       this.height,
+      this.editable = true,
+      this.onTap,
       @required this.chat})
       : super(key: key);
   final List<Handle> participants;
   final Chat chat;
   final double width;
   final double height;
+  final bool editable;
+  final Function() onTap;
 
   @override
   _ContactAvatarGroupWidgetState createState() =>
@@ -53,6 +57,8 @@ class _ContactAvatarGroupWidgetState extends State<ContactAvatarGroupWidget> {
                       handle: participants[0],
                       size: 26,
                       fontSize: 12,
+                      editable: false,
+                      onTap: widget.onTap,
                     ),
                   ),
                   Align(
@@ -61,6 +67,8 @@ class _ContactAvatarGroupWidgetState extends State<ContactAvatarGroupWidget> {
                       handle: participants[1],
                       size: 26,
                       fontSize: 12,
+                      editable: false,
+                      onTap: widget.onTap,
                     ),
                   ),
                 ],
@@ -76,6 +84,8 @@ class _ContactAvatarGroupWidgetState extends State<ContactAvatarGroupWidget> {
                             handle: participants[0],
                             size: 24.5,
                             fontSize: 10.5,
+                            editable: widget.editable,
+                            onTap: widget.onTap,
                           ),
                         ),
                         Align(
@@ -84,6 +94,8 @@ class _ContactAvatarGroupWidgetState extends State<ContactAvatarGroupWidget> {
                             handle: participants[1],
                             size: 24.5,
                             fontSize: 10.5,
+                            editable: widget.editable,
+                            onTap: widget.onTap,
                           ),
                         ),
                       ],
@@ -97,6 +109,8 @@ class _ContactAvatarGroupWidgetState extends State<ContactAvatarGroupWidget> {
                             handle: participants[0],
                             size: 21.5,
                             fontSize: 9,
+                            editable: widget.editable,
+                            onTap: widget.onTap,
                           ),
                         ),
                         Align(
@@ -105,6 +119,8 @@ class _ContactAvatarGroupWidgetState extends State<ContactAvatarGroupWidget> {
                             handle: participants[1],
                             size: 21.5,
                             fontSize: 9,
+                            editable: widget.editable,
+                            onTap: widget.onTap,
                           ),
                         ),
                         Align(
@@ -113,6 +129,8 @@ class _ContactAvatarGroupWidgetState extends State<ContactAvatarGroupWidget> {
                             handle: participants[2],
                             size: 21.5,
                             fontSize: 9,
+                            editable: widget.editable,
+                            onTap: widget.onTap,
                           ),
                         ),
                       ],
@@ -126,6 +144,8 @@ class _ContactAvatarGroupWidgetState extends State<ContactAvatarGroupWidget> {
                             handle: participants[0],
                             size: 20,
                             fontSize: 8.7,
+                            editable: widget.editable,
+                            onTap: widget.onTap,
                           ),
                         ),
                         Align(
@@ -134,6 +154,8 @@ class _ContactAvatarGroupWidgetState extends State<ContactAvatarGroupWidget> {
                             handle: participants[1],
                             size: 20,
                             fontSize: 8.7,
+                            editable: widget.editable,
+                            onTap: widget.onTap,
                           ),
                         ),
                         Align(
@@ -142,6 +164,8 @@ class _ContactAvatarGroupWidgetState extends State<ContactAvatarGroupWidget> {
                             handle: participants[2],
                             size: 20,
                             fontSize: 8.7,
+                            editable: widget.editable,
+                            onTap: widget.onTap,
                           ),
                         ),
                         Align(
@@ -150,6 +174,8 @@ class _ContactAvatarGroupWidgetState extends State<ContactAvatarGroupWidget> {
                             handle: participants[3],
                             size: 20,
                             fontSize: 8.7,
+                            editable: widget.editable,
+                            onTap: widget.onTap,
                           ),
                         ),
                       ],
@@ -161,6 +187,8 @@ class _ContactAvatarGroupWidgetState extends State<ContactAvatarGroupWidget> {
           : ContactAvatarWidget(
               handle: participants.first,
               borderThickness: 0.1,
+              editable: widget.editable,
+              onTap: widget.onTap,
             ),
     );
   }

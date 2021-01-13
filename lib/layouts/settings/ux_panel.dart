@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
@@ -21,6 +22,7 @@ class _UXPanelState extends State<UXPanel> {
   bool needToReconnect = false;
   bool showUrl = false;
   Brightness brightness;
+  Color previousBackgroundColor;
   bool gotBrightness = false;
 
   @override
@@ -41,16 +43,22 @@ class _UXPanelState extends State<UXPanel> {
   }
 
   void loadBrightness() {
-    if (gotBrightness) return;
-    if (context == null) {
+    Color now = Theme.of(context).backgroundColor;
+    bool themeChanged =
+        previousBackgroundColor == null || previousBackgroundColor != now;
+    if (!themeChanged && gotBrightness) return;
+
+    previousBackgroundColor = now;
+    if (this.context == null) {
       brightness = Brightness.light;
       gotBrightness = true;
       return;
     }
 
-    bool isDark = Theme.of(context).backgroundColor.computeLuminance() < 0.179;
+    bool isDark = now.computeLuminance() < 0.179;
     brightness = isDark ? Brightness.dark : Brightness.light;
     gotBrightness = true;
+    if (this.mounted) setState(() {});
   }
 
   @override
@@ -97,6 +105,13 @@ class _UXPanelState extends State<UXPanel> {
                   Container(padding: EdgeInsets.only(top: 5.0)),
                   SettingsSwitch(
                     onChanged: (bool val) {
+                      _settingsCopy.showConnectionIndicator = val;
+                    },
+                    initialVal: _settingsCopy.showConnectionIndicator,
+                    title: "Show Connection Indicator in Chat List",
+                  ),
+                  SettingsSwitch(
+                    onChanged: (bool val) {
                       _settingsCopy.hideTextPreviews = val;
                     },
                     initialVal: _settingsCopy.hideTextPreviews,
@@ -111,10 +126,31 @@ class _UXPanelState extends State<UXPanel> {
                   ),
                   SettingsSwitch(
                     onChanged: (bool val) {
+                      _settingsCopy.recipientAsPlaceholder = val;
+                    },
+                    initialVal: _settingsCopy.recipientAsPlaceholder,
+                    title: "Show Recipient (or Group Name) as Placeholder",
+                  ),
+                  SettingsSwitch(
+                    onChanged: (bool val) {
                       _settingsCopy.doubleTapForDetails = val;
                     },
                     initialVal: _settingsCopy.doubleTapForDetails,
                     title: "Double-Tap Message for Details",
+                  ),
+                  // SettingsSwitch(
+                  //   onChanged: (bool val) {
+                  //     _settingsCopy.sendTypingIndicators = val;
+                  //   },
+                  //   initialVal: _settingsCopy.sendTypingIndicators,
+                  //   title: "Send typing indicators (BlueBubblesHelper ONLY)",
+                  // ),
+                  SettingsSwitch(
+                    onChanged: (bool val) {
+                      _settingsCopy.smartReply = val;
+                    },
+                    initialVal: _settingsCopy.smartReply,
+                    title: "Smart Replies",
                   ),
                   SettingsSwitch(
                     onChanged: (bool val) {
@@ -136,6 +172,13 @@ class _UXPanelState extends State<UXPanel> {
                     },
                     initialVal: _settingsCopy.smartReply,
                     title: "Smart Replies",
+                  ),
+                  SettingsSwitch(
+                    onChanged: (bool val) {
+                      _settingsCopy.preCachePreviewImages = val;
+                    },
+                    initialVal: _settingsCopy.preCachePreviewImages,
+                    title: "Pre-Cache Preview Images",
                   ),
                   SettingsSwitch(
                     onChanged: (bool val) {
@@ -162,6 +205,25 @@ class _UXPanelState extends State<UXPanel> {
                       min: 0.20,
                       max: 1,
                       divisions: 8),
+                  SettingsSwitch(
+                    onChanged: (bool val) {
+                      _settingsCopy.sendDelay = val ? 3 : 0;
+                      setState(() {});
+                    },
+                    initialVal: !isNullOrZero(_settingsCopy.sendDelay),
+                    title: "Send Delay",
+                  ),
+                  if (!isNullOrZero(SettingsManager().settings.sendDelay))
+                    SettingsSlider(
+                        text: "Send Delay (Seconds)",
+                        startingVal: _settingsCopy.sendDelay.toDouble(),
+                        update: (double val) {
+                          _settingsCopy.sendDelay = val.toInt();
+                        },
+                        formatValue: ((double val) => val.toStringAsFixed(2)),
+                        min: 1,
+                        max: 10,
+                        divisions: 9),
                 ],
               ),
             ),
