@@ -229,13 +229,12 @@ class _ConversationListState extends State<ConversationList> {
             ),
             materialSkin: Icon(
               Icons.more_vert,
-              color: Theme.of(context).textTheme.subtitle1.color,
+              color: Theme.of(context).textTheme.bodyText1.color,
               size: 25,
             ),
           ),
         )
       : Container();
-
   FloatingActionButton buildFloatinActionButton() => FloatingActionButton(
         backgroundColor: Theme.of(context).primaryColor,
         child: Icon(Icons.message, color: Colors.white, size: 25),
@@ -500,7 +499,7 @@ class _Cupertino extends StatelessWidget {
                         child: Container(
                           padding: EdgeInsets.only(top: 50.0),
                           child: Text(
-                            "You have no chats :(",
+                            "You have no archived chats :(",
                             style: Theme.of(context).textTheme.subtitle1,
                           ),
                         ),
@@ -644,6 +643,29 @@ class __MaterialState extends State<_Material> {
                                 ),
                               ),
                             ),
+                            GestureDetector(
+                              onTap: () {
+                                selected.forEach((element) {
+                                  if (element.isPinned) {
+                                    element.unpin();
+                                  } else {
+                                    element.pin();
+                                  }
+                                });
+                                selected = [];
+                                setState(() {});
+                              },
+                              child: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Icon(
+                                    Icons.star,
+                                    color: Theme.of(context)
+                                        .textTheme
+                                        .bodyText1
+                                        .color,
+                                  ),
+                                ),
+                            ),
                           ],
                         ),
                       ],
@@ -664,7 +686,7 @@ class __MaterialState extends State<_Material> {
                   child: Container(
                     padding: EdgeInsets.only(top: 50.0),
                     child: Text(
-                      "You have no chats :(",
+                      "You have no archived chats :(",
                       style: Theme.of(context).textTheme.subtitle1,
                     ),
                   ),

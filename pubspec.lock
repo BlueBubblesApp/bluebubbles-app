@@ -330,13 +330,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.0.1"
-  devicelocale:
-    dependency: transitive
-    description:
-      name: devicelocale
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "0.3.3"
   encrypt:
     dependency: "direct main"
     description:
@@ -475,13 +468,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.7.5"
-  flutter_libphonenumber:
-    dependency: "direct main"
-    description:
-      name: flutter_libphonenumber
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "0.3.11"
   flutter_linkify:
     dependency: "direct main"
     description:
@@ -807,13 +793,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.11.4"
-  map_launcher:
-    dependency: "direct main"
-    description:
-      name: map_launcher
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "1.1.1"
   markdown:
     dependency: transitive
     description:
