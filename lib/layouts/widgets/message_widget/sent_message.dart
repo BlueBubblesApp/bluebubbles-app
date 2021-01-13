@@ -89,6 +89,7 @@ class SentMessageHelper {
         ],
       );
     }
+
     if (!padding) return msg;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -106,9 +107,8 @@ class SentMessageHelper {
     );
   }
 
-  static Widget getErrorWidget(
-      BuildContext context, Message message, Chat chat) {
-    if (chat == null) return Container();
+  static Widget getErrorWidget(BuildContext context, Message message, Chat chat,
+      {double rightPadding = 8.0}) {
     if (message != null && message.error > 0) {
       int errorCode = message != null ? message.error : 0;
       String errorText = "Server Error. Contact Support.";
@@ -119,7 +119,7 @@ class SentMessageHelper {
       }
 
       return Padding(
-        padding: EdgeInsets.only(right: 8.0),
+        padding: EdgeInsets.only(right: rightPadding),
         child: GestureDetector(
           onTap: () {
             showDialog(
@@ -138,31 +138,32 @@ class SentMessageHelper {
                         ActionHandler.retryMessage(message);
                       },
                     ),
-                    new FlatButton(
-                      child: new Text("Remove"),
-                      onPressed: () async {
-                        Navigator.of(context).pop();
-                        // Delete the message from the DB
-                        await Message.softDelete({'guid': message.guid});
+                    if (chat != null)
+                      new FlatButton(
+                        child: new Text("Remove"),
+                        onPressed: () async {
+                          Navigator.of(context).pop();
+                          // Delete the message from the DB
+                          await Message.softDelete({'guid': message.guid});
 
-                        // Remove the message from the Bloc
-                        NewMessageManager().removeMessage(chat, message.guid);
+                          // Remove the message from the Bloc
+                          NewMessageManager().removeMessage(chat, message.guid);
 
-                        // Get the "new" latest info
-                        List<Message> latest =
-                            await Chat.getMessages(chat, limit: 1);
-                        chat.latestMessageDate = latest.first != null
-                            ? latest.first.dateCreated
-                            : null;
-                        chat.latestMessageText = latest.first != null
-                            ? await MessageHelper.getNotificationText(
-                                latest.first)
-                            : null;
+                          // Get the "new" latest info
+                          List<Message> latest =
+                              await Chat.getMessages(chat, limit: 1);
+                          chat.latestMessageDate = latest.first != null
+                              ? latest.first.dateCreated
+                              : null;
+                          chat.latestMessageText = latest.first != null
+                              ? await MessageHelper.getNotificationText(
+                                  latest.first)
+                              : null;
 
-                        // Update it in the Bloc
-                        await ChatBloc().updateChatPosition(chat);
-                      },
-                    ),
+                          // Update it in the Bloc
+                          await ChatBloc().updateChatPosition(chat);
+                        },
+                      ),
                     new FlatButton(
                       child: new Text("Cancel"),
                       onPressed: () {
@@ -313,7 +314,10 @@ class _SentMessageState extends State<SentMessage>
             bottom: (widget.showTail && !isEmptyString(widget.message.fullText))
                 ? 5.0
                 : 3.0,
-            right: isEmptyString(widget.message.fullText) ? 10.0 : 0.0),
+            right: isEmptyString(widget.message.fullText) &&
+                    widget.message.error == 0
+                ? 10.0
+                : 0.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.end,

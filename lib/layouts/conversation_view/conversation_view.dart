@@ -3,6 +3,7 @@ import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/attachment_sender.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view_mixin.dart';
 import 'package:bluebubbles/layouts/conversation_view/messages_view.dart';
 import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/chat_selector_text_field.dart';
@@ -116,14 +117,27 @@ class ConversationViewState extends State<ConversationView>
 
   Future<bool> send(List<File> attachments, String text) async {
     if (isCreator) {
+      if (chat == null && selected.length == 1) {
+        try {
+          chat = await Chat.findOne(
+              {"chatIdentifier": sanitizeAddress(selected[0].address)});
+        } catch (ex) {}
+      }
+
       // If the chat is null, create it
       if (chat == null) chat = await createChat();
 
       // If the chat is still null, return false
       if (chat == null) return false;
 
+      // If the current chat is null, set it
+      bool isDifferentChat = currentChat == null || currentChat?.chat?.guid != chat.guid;
+      if (isDifferentChat) {
+        initCurrentChat(chat);
+      }
+
       // Fetch messages
-      if (messageBloc == null) {
+      if (isDifferentChat || messageBloc == null) {
         // Init the states
         initCurrentChat(chat);
         initConversationViewState();
@@ -134,7 +148,10 @@ class ConversationViewState extends State<ConversationView>
     }
 
     // If the current chat is null, set it
-    if (currentChat == null) initCurrentChat(chat);
+    bool isDifferentChat = currentChat == null || currentChat?.chat?.guid != chat.guid;
+    if (isDifferentChat) {
+      initCurrentChat(chat);
+    }
 
     if (attachments.length > 0) {
       for (int i = 0; i < attachments.length; i++) {

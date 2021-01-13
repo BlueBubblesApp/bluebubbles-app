@@ -87,10 +87,14 @@ Future<String> formatPhoneNumber(String str) async {
   return meta['national'];
 }
 
+String sanitizeAddress(String address) {
+  return address.replaceAll(RegExp(r'[-() \.]'), '').trim();
+}
+
 bool sameAddress(String address1, String address2) {
   String countryCode = SettingsManager().countryCode ?? "US";
-  String formattedNumber1 = address1.replaceAll(RegExp(r'[-() \.]'), '').trim();
-  String formattedNumber2 = address2.replaceAll(RegExp(r'[-() \.]'), '').trim();
+  String formattedNumber1 = sanitizeAddress(address1);
+  String formattedNumber2 = sanitizeAddress(address2);
 
   // Strip any unnecessary pluses and "1"s
   // If it starts with a plus, is in the US, and the length is 11, strip the +

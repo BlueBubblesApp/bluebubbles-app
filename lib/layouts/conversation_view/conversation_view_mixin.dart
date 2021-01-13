@@ -349,21 +349,35 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
 
     // Check and see if there are any matching chats to the select participants
     List<Chat> matchingChats = [];
-    for (var i in ChatBloc().chats) {
-      // If the lengths don't match continue
-      if (i.participants.length != selected.length) continue;
 
-      // Iterate over each selected contact
-      int matches = 0;
-      for (UniqueContact contact in selected) {
-        // If the selected contact doesn't match any participants int he chat, continue
-        if (i.participants.any((Handle participant) =>
-            sameAddress(contact.address, participant.address))) {
-          matches += 1;
+    // If it's just one recipient, try manual lookup
+    if (selected.length == 1) {
+      try {
+        Chat existingChat = await Chat.findOne(
+            {"chatIdentifier": sanitizeAddress(selected[0].address)});
+        if (existingChat != null) {
+          matchingChats.add(existingChat);
         }
-      }
+      } catch (ex) {}
+    }
 
-      if (matches == selected.length) matchingChats.add(i);
+    if (matchingChats.length == 0) {
+      for (var i in ChatBloc().chats) {
+        // If the lengths don't match continue
+        if (i.participants.length != selected.length) continue;
+
+        // Iterate over each selected contact
+        int matches = 0;
+        for (UniqueContact contact in selected) {
+          // If the selected contact doesn't match any participants int he chat, continue
+          if (i.participants.any((Handle participant) =>
+              sameAddress(contact.address, participant.address))) {
+            matches += 1;
+          }
+        }
+
+        if (matches == selected.length) matchingChats.add(i);
+      }
     }
 
     // If there are no matching chats, clear the chat and message bloc
@@ -537,47 +551,67 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
         ),
       ),
     );
-    params["participants"] = participants;
-    SocketManager().sendMessage(
-      "start-chat",
-      params,
-      (data) async {
-        if (data['status'] != 200) {
-          Navigator.of(context).pop();
-          showDialog(
-            barrierDismissible: false,
-            context: context,
-            child: AlertDialog(
-              title: Text(
-                "Could not create",
-              ),
-              content: Text(
-                "Reason: (${data["error"]["type"]}) -> ${data["error"]["message"]}",
-              ),
-              actions: [
-                FlatButton(
-                  child: Text(
-                    "Ok",
-                  ),
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                )
-              ],
-            ),
-          );
-          completer.complete(null);
-          return;
-        }
 
-        // If everything went well, let's add the chat to the bloc
-        Chat newChat = Chat.fromMap(data["data"]);
-        await newChat.save();
-        await ChatBloc().updateChatPosition(newChat);
-        completer.complete(newChat);
-        Navigator.of(context).pop();
-      },
-    );
+    params["participants"] = participants;
+    debugPrint("Starting chat with participants: ${participants.join(", ")}");
+
+    Function returnChat = (Chat newChat) async {
+      await newChat.save();
+      await ChatBloc().updateChatPosition(newChat);
+      completer.complete(newChat);
+      Navigator.of(context).pop();
+    };
+
+    // If there is only 1 participant, try to find the chat
+    Chat existingChat;
+    if (participants.length == 1) {
+      existingChat = await Chat.findOne(
+          {"chatIdentifier": sanitizeAddress(participants[0])});
+    }
+
+    if (existingChat == null) {
+      SocketManager().sendMessage(
+        "start-chat",
+        params,
+        (data) async {
+          if (data['status'] != 200) {
+            Navigator.of(context).pop();
+            showDialog(
+              barrierDismissible: false,
+              context: context,
+              child: AlertDialog(
+                title: Text(
+                  "Could not create",
+                ),
+                content: Text(
+                  "Reason: (${data["error"]["type"]}) -> ${data["error"]["message"]}",
+                ),
+                actions: [
+                  FlatButton(
+                    child: Text(
+                      "Ok",
+                    ),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                  )
+                ],
+              ),
+            );
+            completer.complete(null);
+            return;
+          }
+
+          // If everything went well, let's add the chat to the bloc
+          Chat newChat = Chat.fromMap(data["data"]);
+          await returnChat(newChat);
+        },
+      );
+    }
+
+    if (existingChat != null) {
+      await returnChat(existingChat);
+    }
 
     return completer.future;
   }
