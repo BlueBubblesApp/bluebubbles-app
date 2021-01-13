@@ -9,9 +9,11 @@ import 'package:bluebubbles/layouts/conversation_view/text_field/attachments/pic
 import 'package:bluebubbles/layouts/widgets/CustomCupertinoTextField.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/audio_player_widget.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
+import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:camera/camera.dart';
+import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -56,6 +58,9 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
   CameraController cameraController;
   int cameraIndex = 0;
   List<CameraDescription> cameras;
+  int sendCountdown;
+  bool stopSending;
+  String placeholder = "BlueBubbles";
 
   // bool selfTyping = false;
 
@@ -67,6 +72,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
   @override
   void initState() {
     super.initState();
+    getPlaceholder();
 
     if (CurrentChat.of(context)?.chat != null) {
       textFieldData =
@@ -92,9 +98,6 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
     //   }
     // });
 
-    if (widget.existingText != null) {
-      controller.text = widget.existingText;
-    }
     focusNode = new FocusNode();
     focusNode.addListener(() {
       if (focusNode.hasFocus && this.mounted) {
@@ -102,11 +105,18 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
         setState(() {});
       }
     });
+
+    if (widget.existingText != null) {
+      controller.text = widget.existingText;
+    }
+
     if (widget.existingAttachments != null) {
       pickedImages.addAll(widget.existingAttachments);
       updateTextFieldAttachments();
-    } else if (textFieldData != null) {
-      pickedImages.addAll(textFieldData.attachments);
+    }
+
+    if (textFieldData != null) {
+      pickedImages.addAll(textFieldData?.attachments ?? []);
     }
   }
 
@@ -186,7 +196,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
               onPressed: () async {
                 widget.onSend([file], "");
 
-                // Disposte of the audio controller
+                // Dispose of the audio controller
                 CurrentChat.of(originalContext)
                     ?.audioPlayers
                     ?.removeWhere((key, _) => key == file.path);
@@ -318,10 +328,47 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
         ),
       );
 
+  Future<void> getPlaceholder() async {
+    String placeholder = "BlueBubbles";
+
+    try {
+      // Don't do anything if this setting isn't enabled
+      if (SettingsManager().settings.recipientAsPlaceholder) {
+        // If it's a group chat, get the title of the chat
+        if (CurrentChat.of(context)?.chat?.isGroup() ?? false) {
+          String title = await CurrentChat.of(context)?.chat?.getTitle();
+          if (!isNullOrEmpty(title)) {
+            placeholder = title;
+          }
+        } else if (!isNullOrEmpty(
+            CurrentChat.of(context)?.chat?.participants)) {
+          // If it's not a group chat, get the participant's contact info
+          String address =
+              CurrentChat.of(context)?.chat?.participants[0].address;
+          Contact contact = ContactManager().getCachedContactSync(address);
+          if (contact == null) {
+            placeholder = await formatPhoneNumber(address);
+          } else {
+            placeholder = contact.displayName ?? "BlueBubbles";
+          }
+        }
+      }
+    } catch (ex) {
+      debugPrint("Error setting Text Field Placeholder!");
+      debugPrint(ex.toString());
+    }
+
+    if (placeholder != this.placeholder) {
+      this.placeholder = placeholder;
+      if (this.mounted) setState(() {});
+    }
+  }
+
   Widget buildActualTextField() {
     IconData rightIcon = Icons.arrow_upward;
     bool canRecord = controller.text.isEmpty && pickedImages.isEmpty;
     if (canRecord) rightIcon = Icons.mic;
+
     return Flexible(
       flex: 1,
       fit: FlexFit.loose,
@@ -334,12 +381,44 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
               vsync: this,
               curve: Curves.easeInOut,
               child: CustomCupertinoTextField(
+                enabled: sendCountdown == null,
                 textInputAction: SettingsManager().settings.sendWithReturn
                     ? TextInputAction.send
                     : TextInputAction.newline,
                 onSubmitted: (String value) async {
                   if (!SettingsManager().settings.sendWithReturn ||
                       isNullOrEmpty(value)) return;
+
+                  // If send delay is enabled, delay the sending
+                  if (!isNullOrZero(SettingsManager().settings.sendDelay)) {
+                    // Break the delay into 1 second intervals
+                    for (var i = 0;
+                        i < SettingsManager().settings.sendDelay;
+                        i++) {
+                      if (i != 0 && sendCountdown == null) break;
+
+                      // Update UI with new state information
+                      if (this.mounted) {
+                        setState(() {
+                          sendCountdown =
+                              SettingsManager().settings.sendDelay - i;
+                        });
+                      }
+
+                      await Future.delayed(new Duration(seconds: 1));
+                    }
+                  }
+
+                  if (this.mounted) {
+                    setState(() {
+                      sendCountdown = null;
+                    });
+                  }
+
+                  if (stopSending != null && stopSending) {
+                    stopSending = null;
+                    return;
+                  }
 
                   if (await widget.onSend(pickedImages, value)) {
                     controller.text = "";
@@ -396,7 +475,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                 keyboardType: TextInputType.multiline,
                 maxLines: 14,
                 minLines: 1,
-                placeholder: "BlueBubbles",
+                placeholder: this.placeholder,
                 padding:
                     EdgeInsets.only(left: 10, top: 10, right: 40, bottom: 10),
                 placeholderStyle: Theme.of(context).textTheme.subtitle1,
@@ -465,64 +544,118 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
 
   Widget buildSendButton(bool canRecord) => Align(
         alignment: Alignment.bottomRight,
-        child: ButtonTheme(
-          minWidth: 30,
-          height: 30,
-          child: RaisedButton(
-            padding: EdgeInsets.symmetric(
-              horizontal: 0,
-            ),
-            color: Theme.of(context).primaryColor,
-            onPressed: () async {
-              if (isRecording) {
-                await stopRecording();
-              } else if (canRecord &&
-                  !isRecording &&
-                  await Permission.microphone.request().isGranted) {
-                await startRecording();
-              } else {
-                if (await widget.onSend(pickedImages, controller.text)) {
-                  controller.text = "";
-                  pickedImages = <File>[];
-                  updateTextFieldAttachments();
-                }
-              }
-              if (this.mounted) setState(() {});
-            },
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                AnimatedOpacity(
-                  opacity: controller.text.isEmpty && pickedImages.isEmpty
-                      ? 1.0
-                      : 0.0,
-                  duration: Duration(milliseconds: 150),
-                  child: Icon(
-                    Icons.mic,
-                    color: (isRecording) ? Colors.red : Colors.white,
-                    size: 20,
+        child: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              if (sendCountdown != null) Text(sendCountdown.toString()),
+              ButtonTheme(
+                minWidth: 30,
+                height: 30,
+                child: RaisedButton(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 0,
+                  ),
+                  color: Theme.of(context).primaryColor,
+                  onPressed: () async {
+                    if (sendCountdown != null) {
+                      stopSending = true;
+                      sendCountdown = null;
+                      if (this.mounted) setState(() {});
+                    } else if (isRecording) {
+                      await stopRecording();
+                    } else if (canRecord &&
+                        !isRecording &&
+                        await Permission.microphone.request().isGranted) {
+                      await startRecording();
+                    } else {
+                      // If send delay is enabled, delay the sending
+                      if (!isNullOrZero(SettingsManager().settings.sendDelay)) {
+                        // Break the delay into 1 second intervals
+                        for (var i = 0;
+                            i < SettingsManager().settings.sendDelay;
+                            i++) {
+                          if (i != 0 && sendCountdown == null) break;
+
+                          // Update UI with new state information
+                          if (this.mounted) {
+                            setState(() {
+                              sendCountdown =
+                                  SettingsManager().settings.sendDelay - i;
+                            });
+                          }
+
+                          await Future.delayed(new Duration(seconds: 1));
+                        }
+                      }
+
+                      if (this.mounted) {
+                        setState(() {
+                          sendCountdown = null;
+                        });
+                      }
+
+                      if (stopSending != null && stopSending) {
+                        stopSending = null;
+                        return;
+                      }
+
+                      if (await widget.onSend(pickedImages, controller.text)) {
+                        controller.text = "";
+                        pickedImages = <File>[];
+                        updateTextFieldAttachments();
+                      }
+                    }
+
+                    if (this.mounted) setState(() {});
+                  },
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      AnimatedOpacity(
+                        opacity: sendCountdown == null &&
+                                controller.text.isEmpty &&
+                                pickedImages.isEmpty
+                            ? 1.0
+                            : 0.0,
+                        duration: Duration(milliseconds: 150),
+                        child: Icon(
+                          Icons.mic,
+                          color: (isRecording) ? Colors.red : Colors.white,
+                          size: 20,
+                        ),
+                      ),
+                      AnimatedOpacity(
+                        opacity: (sendCountdown == null &&
+                                    (controller.text.isNotEmpty ||
+                                        pickedImages.length > 0)) &&
+                                !isRecording
+                            ? 1.0
+                            : 0.0,
+                        duration: Duration(milliseconds: 150),
+                        child: Icon(
+                          Icons.arrow_upward,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                      ),
+                      AnimatedOpacity(
+                        opacity: sendCountdown != null ? 1.0 : 0.0,
+                        duration: Duration(milliseconds: 50),
+                        child: Icon(
+                          Icons.cancel_outlined,
+                          color: Colors.red,
+                          size: 20,
+                        ),
+                      ),
+                    ],
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(40),
                   ),
                 ),
-                AnimatedOpacity(
-                  opacity:
-                      (controller.text.isNotEmpty || pickedImages.length > 0) &&
-                              !isRecording
-                          ? 1.0
-                          : 0.0,
-                  duration: Duration(milliseconds: 150),
-                  child: Icon(
-                    Icons.arrow_upward,
-                    color: Colors.white,
-                    size: 20,
-                  ),
-                ),
-              ],
-            ),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(40),
-            ),
-          ),
-        ),
+              ),
+            ]),
       );
 
   Widget buildAttachmentPicker() => TextFieldAttachmentPicker(

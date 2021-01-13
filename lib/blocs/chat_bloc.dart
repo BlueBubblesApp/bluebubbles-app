@@ -7,6 +7,7 @@ import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/material.dart';
 
@@ -43,6 +44,10 @@ class ChatBloc {
     return _chatBloc;
   }
 
+  int get pageSize {
+    return (SettingsManager().settings.denseChatTiles) ? 12 : 10;
+  }
+
   Future<Chat> getChat(String guid) async {
     if (guid == null) return null;
     if (_chats == null) {
@@ -67,8 +72,8 @@ class ChatBloc {
       _messageSubscription = setupMessageListener();
     }
 
-    // Fetch the first 10 chats
-    _chats = await Chat.getChats(archived: false, limit: 10);
+    // Fetch the first x chats
+    _chats = await Chat.getChats(archived: false, limit: pageSize);
     _archivedChats = await Chat.getChats(archived: true);
 
     // Invoke and wait for the tile's values to be generated
@@ -168,7 +173,7 @@ class ChatBloc {
       } else {
         // If [defaultAvatar] is not loaded, load it from assets
         if (NotificationManager().defaultAvatar == null) {
-          ByteData file = await loadAsset("assets/images/person.png");
+          ByteData file = await loadAsset("assets/images/person64.png");
           NotificationManager().defaultAvatar = file.buffer.asUint8List();
         }
 
@@ -178,11 +183,15 @@ class ChatBloc {
       debugPrint("Failed to load contact avatar: ${ex.toString()}");
     }
 
-    await MethodChannelInterface().invokeMethod("push-share-targets", {
-      "title": chat.title,
-      "guid": chat.guid,
-      "icon": icon,
-    });
+    try {
+      await MethodChannelInterface().invokeMethod("push-share-targets", {
+        "title": chat.title,
+        "guid": chat.guid,
+        "icon": icon,
+      });
+    } catch (ex) {
+      // Ignore the error
+    }
   }
 
   Future<void> handleMessageAction(NewMessageEvent event) async {
@@ -207,7 +216,8 @@ class ChatBloc {
   void recursiveGetChats() async {
     // Get more chats
     int len = _chats.length;
-    List<Chat> newChats = await Chat.getChats(limit: 10, offset: _chats.length);
+    List<Chat> newChats =
+        await Chat.getChats(limit: pageSize, offset: _chats.length);
 
     // If there were indeed results, then continue
     if (newChats.length != 0) {
@@ -233,9 +243,11 @@ class ChatBloc {
         await this.addToSink(_chats);
         recursiveGetChats();
       } else {
+        debugPrint("[ChatBloc] -> Finished fetching chats (${_chats.length})");
         await updateAllShareTargets();
       }
     } else {
+      debugPrint("[ChatBloc] -> Finished fetching chats (${_chats?.length})");
       await updateAllShareTargets();
     }
   }

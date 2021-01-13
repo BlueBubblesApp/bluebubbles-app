@@ -168,10 +168,14 @@ class AttachmentHelper {
     }
   }
 
+  static String getBaseAttachmentsPath() {
+    String appDocPath = SettingsManager().appDocDir.path;
+    return "$appDocPath/attachments";
+  }
+
   static String getAttachmentPath(Attachment attachment) {
     String fileName = attachment.transferName;
-    String appDocPath = SettingsManager().appDocDir.path;
-    return "$appDocPath/attachments/${attachment.guid}/$fileName";
+    return "${getBaseAttachmentsPath()}/${attachment.guid}/$fileName";
   }
 
   /// Checks to see if an [attachment] exists in our attachment filesystem
@@ -229,8 +233,8 @@ class AttachmentHelper {
                 status == ConnectivityResult.wifi)));
   }
 
-  static Future<void> setDimensions(
-      Attachment attachment, {Uint8List data}) async {
+  static Future<void> setDimensions(Attachment attachment,
+      {Uint8List data}) async {
     // Handle break cases
     if (attachment.width != null &&
         attachment.height != null &&
@@ -244,7 +248,8 @@ class AttachmentHelper {
 
     Uint8List previewData = data;
     if (data == null) {
-      previewData = new File(AttachmentHelper.getAttachmentPath(attachment)).readAsBytesSync();
+      previewData = new File(AttachmentHelper.getAttachmentPath(attachment))
+          .readAsBytesSync();
     }
 
     if (attachment.mimeType == "image/gif") {

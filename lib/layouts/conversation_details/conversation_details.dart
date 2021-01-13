@@ -5,9 +5,6 @@ import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/layouts/conversation_details/attachment_details_card.dart';
 import 'package:bluebubbles/layouts/conversation_details/contact_tile.dart';
-import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
-import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/adding_participant_popup.dart';
-import 'package:bluebubbles/layouts/conversation_view/conversation_view_mixin.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
@@ -45,6 +42,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
     fetchAttachments();
     ChatBloc().chatStream.listen((event) async {
       Chat _chat = await Chat.findOne({"guid": widget.chat.guid});
+      if (_chat == null) return;
       await _chat.getParticipants();
       chat = _chat;
       if (this.mounted) setState(() {});
@@ -54,7 +52,10 @@ class _ConversationDetailsState extends State<ConversationDetails> {
   @override
   void didChangeDependencies() async {
     super.didChangeDependencies();
-    readOnly = !((await chat.getParticipants()).participants.length > 1);
+
+    await chat.getParticipants();
+    readOnly = !(chat.participants.length > 1);
+
     debugPrint("updated readonly $readOnly");
     if (this.mounted) setState(() {});
   }
@@ -131,54 +132,54 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                 childCount: chat.participants.length,
               ),
             ),
-            SliverToBoxAdapter(
-              child: chat.participants.length > 1
-                  ? InkWell(
-                      onTap: () async {
-                        Chat result = await Navigator.of(context).push(
-                          CupertinoPageRoute(
-                            builder: (context) => ConversationView(
-                              isCreator: true,
-                              type: ChatSelectorTypes.ONLY_CONTACTS,
-                              onSelect: (List<UniqueContact> items) {
-                                Navigator.of(context).pop();
-                                if (items.length == 0) return;
+            // SliverToBoxAdapter(
+            //   child: chat.participants.length > 1
+            //       ? InkWell(
+            //           onTap: () async {
+            //             Chat result = await Navigator.of(context).push(
+            //               CupertinoPageRoute(
+            //                 builder: (context) => ConversationView(
+            //                   isCreator: true,
+            //                   type: ChatSelectorTypes.ONLY_CONTACTS,
+            //                   onSelect: (List<UniqueContact> items) {
+            //                     Navigator.of(context).pop();
+            //                     if (items.length == 0) return;
 
-                                for (UniqueContact contact in items) {
-                                  if (contact.isChat) return;
-                                }
-                                showDialog(
-                                  context: context,
-                                  barrierDismissible: false,
-                                  builder: (context) => AddingParticipantPopup(
-                                    contacts: items,
-                                    chat: chat,
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                        );
-                        if (result != null && this.mounted) {
-                          chat = result;
-                          setState(() {});
-                        }
-                      },
-                      child: ListTile(
-                        title: Text(
-                          "Add Contact",
-                          style: TextStyle(
-                            color: Theme.of(context).primaryColor,
-                          ),
-                        ),
-                        leading: Icon(
-                          Icons.add,
-                          color: Theme.of(context).primaryColor,
-                        ),
-                      ),
-                    )
-                  : Container(),
-            ),
+            //                     for (UniqueContact contact in items) {
+            //                       if (contact.isChat) return;
+            //                     }
+            //                     showDialog(
+            //                       context: context,
+            //                       barrierDismissible: false,
+            //                       builder: (context) => AddingParticipantPopup(
+            //                         contacts: items,
+            //                         chat: chat,
+            //                       ),
+            //                     );
+            //                   },
+            //                 ),
+            //               ),
+            //             );
+            //             if (result != null && this.mounted) {
+            //               chat = result;
+            //               setState(() {});
+            //             }
+            //           },
+            //           child: ListTile(
+            //             title: Text(
+            //               "Add Contact",
+            //               style: TextStyle(
+            //                 color: Theme.of(context).primaryColor,
+            //               ),
+            //             ),
+            //             leading: Icon(
+            //               Icons.add,
+            //               color: Theme.of(context).primaryColor,
+            //             ),
+            //           ),
+            //         )
+            //       : Container(),
+            // ),
             SliverPadding(
               padding: EdgeInsets.symmetric(vertical: 20),
             ),

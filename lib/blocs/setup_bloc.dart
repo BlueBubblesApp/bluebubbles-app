@@ -225,6 +225,7 @@ class SetupBloc {
   void startIncrementalSync(Settings settings,
       {String chatGuid,
       bool saveDate = true,
+      bool isIncremental = false,
       Function onConnectionError,
       Function onComplete}) {
     // If we are already syncing, don't sync again
@@ -239,6 +240,7 @@ class SetupBloc {
 
     // if (onConnectionError != null) this.onConnectionError = onConnectionError;
     isSyncing = true;
+    _stream.sink.add(SetupData(1, []));
 
     // Store the time we started syncing
     debugPrint(
@@ -261,7 +263,7 @@ class SetupBloc {
     params["withAttachments"] = true; // We want the attachment data
     params["withHandle"] = true; // We want to know who sent it
     params["sort"] =
-        "ASC"; // Sort my ASC so we receive the earliest messages first
+        "DESC"; // Sort my DESC so we receive the newest messages first
     params["where"] = [
       {"statement": "message.service = 'iMessage'", "args": null}
     ];
@@ -285,7 +287,7 @@ class SetupBloc {
 
       if (messages.length > 0) {
         await MessageHelper.bulkAddMessages(null, messages,
-            notifyForNewMessage: true);
+            notifyForNewMessage: !isIncremental);
       }
 
       // Once we have added everything, save the last sync date
@@ -297,6 +299,8 @@ class SetupBloc {
         _settingsCopy.lastIncrementalSync = syncStart;
         SettingsManager().saveSettings(_settingsCopy);
       }
+
+      _stream.sink.add(SetupData(100, []));
 
       if (SettingsManager().settings.showIncrementalSync)
         // Show a nice lil toast/snackbar
