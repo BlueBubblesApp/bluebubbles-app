@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_attachment.dart';
+import 'package:bluebubbles/layouts/widgets/message_widget/sent_message.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/message.dart';
@@ -86,15 +87,31 @@ class _MessageAttachmentsState extends State<MessageAttachments>
         CurrentChat.of(context)?.getAttachmentsForMessage(widget.message) ?? [];
     for (Attachment attachment in items) {
       if (attachment.mimeType != null) {
-        content.add(
-          MessageAttachment(
-            message: widget.message,
-            attachment: attachment,
-            updateAttachment: () {
-              // attachment = AttachmentHelper.getContent(attachment);
-            },
-          ),
+        Widget attachmentWidget = MessageAttachment(
+          message: widget.message,
+          attachment: attachment,
+          updateAttachment: () {
+            // attachment = AttachmentHelper.getContent(attachment);
+          },
         );
+
+        if (widget.message.error == 0) {
+          content.add(attachmentWidget);
+        } else {
+          content.add(Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisSize: MainAxisSize.max,
+            children: [
+              attachmentWidget,
+              Container(width: 5),
+              SentMessageHelper.getErrorWidget(
+                context,
+                widget.message,
+                CurrentChat.of(context)?.chat,
+              ),
+            ],
+          ));
+        }
       }
     }
 

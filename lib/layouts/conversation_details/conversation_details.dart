@@ -3,7 +3,6 @@ import 'dart:ui';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
-import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_details/attachment_details_card.dart';
 import 'package:bluebubbles/layouts/conversation_details/contact_tile.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
@@ -43,6 +42,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
     fetchAttachments();
     ChatBloc().chatStream.listen((event) async {
       Chat _chat = await Chat.findOne({"guid": widget.chat.guid});
+      if (_chat == null) return;
       await _chat.getParticipants();
       chat = _chat;
       if (this.mounted) setState(() {});

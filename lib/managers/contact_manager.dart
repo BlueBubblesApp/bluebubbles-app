@@ -75,7 +75,7 @@ class ContactManager {
     getContactsFuture = new Completer<bool>();
 
     // Fetch the current list of contacts
-    debugPrint("ContactManager -> Fetching Contacts");
+    debugPrint("ContactManager -> Fetching contacts");
     contacts =
         ((await ContactsService.getContacts(withThumbnails: false)) ?? [])
             .toList();
@@ -97,6 +97,7 @@ class ContactManager {
       }
     }
 
+    debugPrint("ContactManager -> Finished fetching contacts (${handleToContact.length})");
     getContactsFuture.complete(true);
 
     // Lazy load thumbnails after rendering initial contacts.
@@ -130,6 +131,7 @@ class ContactManager {
       });
     }
 
+    debugPrint("ContactManager -> Finished fetching avatars");
     getAvatarsFuture.complete();
   }
 

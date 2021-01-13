@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:ui';
 
-import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/text_field_bloc.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/text_field/attachments/list/text_field_attachment_list.dart';
@@ -13,7 +12,6 @@ import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scrol
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:camera/camera.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/cupertino.dart';
@@ -572,7 +570,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                       await startRecording();
                     } else {
                       // If send delay is enabled, delay the sending
-                      if (isNullOrZero(SettingsManager().settings.sendDelay)) {
+                      if (!isNullOrZero(SettingsManager().settings.sendDelay)) {
                         // Break the delay into 1 second intervals
                         for (var i = 0;
                             i < SettingsManager().settings.sendDelay;

@@ -243,9 +243,11 @@ class ChatBloc {
         await this.addToSink(_chats);
         recursiveGetChats();
       } else {
+        debugPrint("[ChatBloc] -> Finished fetching chats (${_chats.length})");
         await updateAllShareTargets();
       }
     } else {
+      debugPrint("[ChatBloc] -> Finished fetching chats (${_chats?.length})");
       await updateAllShareTargets();
     }
   }
