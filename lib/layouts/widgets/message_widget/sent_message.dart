@@ -314,7 +314,10 @@ class _SentMessageState extends State<SentMessage>
             bottom: (widget.showTail && !isEmptyString(widget.message.fullText))
                 ? 5.0
                 : 3.0,
-            right: isEmptyString(widget.message.fullText) && widget.message.error == 0 ? 10.0 : 0.0),
+            right: isEmptyString(widget.message.fullText) &&
+                    widget.message.error == 0
+                ? 10.0
+                : 0.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.end,
