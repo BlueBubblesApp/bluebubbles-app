@@ -9,6 +9,8 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/helpers/contstants.dart';
 import 'package:flutter/material.dart';
 
 class UXPanel extends StatefulWidget {
@@ -166,13 +168,6 @@ class _UXPanelState extends State<UXPanel> {
                     },
                     initialVal: _settingsCopy.sendWithReturn,
                     title: "Send Message with Return Key",
-                  ),
-                  SettingsSwitch(
-                    onChanged: (bool val) {
-                      _settingsCopy.smartReply = val;
-                    },
-                    initialVal: _settingsCopy.smartReply,
-                    title: "Smart Replies",
                   ),
                   SettingsSwitch(
                     onChanged: (bool val) {
