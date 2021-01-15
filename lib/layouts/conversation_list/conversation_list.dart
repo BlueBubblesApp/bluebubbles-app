@@ -624,7 +624,7 @@ class __MaterialState extends State<_Material> {
 
                                       return Theme(
                                         data: ThemeData(
-                                          brightness: widget.parent.brightness;
+                                          brightness: widget.parent.brightness,
                                         ),
                                         child: CircularProgressIndicator(
                                           
