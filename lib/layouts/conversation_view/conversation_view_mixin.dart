@@ -209,9 +209,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
       Color fontColor = Theme.of(context).textTheme.headline1.color;
       if (chat.participants.length == 1 &&
           SettingsManager().settings.colorfulBubbles) {
-        backgroundColor =
-            toColorGradient(chat.participants.first.address).first;
-        fontColor = darken(backgroundColor, 0.35);
+            
       }
       return AppBar(
         title: Text(
