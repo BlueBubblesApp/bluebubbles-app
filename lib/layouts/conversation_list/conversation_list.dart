@@ -423,7 +423,8 @@ class _Cupertino extends StatelessWidget {
                                         data: ThemeData(
                                           cupertinoOverrideTheme:
                                               CupertinoThemeData(
-                                                  brightness: parent.brightness),
+                                                  brightness:
+                                                      parent.brightness),
                                         ),
                                         child: CupertinoActivityIndicator(
                                           radius: 7,
@@ -545,7 +546,6 @@ class _Material extends StatefulWidget {
 
 class __MaterialState extends State<_Material> {
   List<Chat> selected = [];
-
   @override
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
@@ -566,12 +566,75 @@ class __MaterialState extends State<_Material> {
                       ),
                       preferredSize: Size.fromHeight(0.5),
                     ),
-                    title: Text(
-                      "Messages",
-                      style: Theme.of(context)
-                          .textTheme
-                          .headline1
-                          .copyWith(fontSize: 20),
+                    title: Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Messages",
+                          style: Theme.of(context)
+                              .textTheme
+                              .headline1
+                              .copyWith(fontSize: 20),
+                        ),
+                        Container(width: 10.0),
+                        Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            (SettingsManager().settings.showConnectionIndicator)
+                                ? StreamBuilder(
+                                    stream:
+                                        SocketManager().connectionStateStream,
+                                    builder: (context,
+                                        AsyncSnapshot<SocketState> snapshot) {
+                                      SocketState connectionStatus;
+                                      if (snapshot.hasData) {
+                                        connectionStatus = snapshot.data;
+                                      } else {
+                                        connectionStatus =
+                                            SocketManager().state;
+                                      }
+                                      if (connectionStatus ==
+                                              SocketState.CONNECTED ||
+                                          connectionStatus ==
+                                              SocketState.CONNECTING) {
+                                        return Icon(
+                                          Icons.fiber_manual_record,
+                                          size: 15,
+                                          color:
+                                              HexColor('32CD32').withAlpha(200),
+                                        );
+                                      } else {
+                                        return Icon(
+                                          Icons.fiber_manual_record,
+                                          size: 15,
+                                          color:
+                                              HexColor('DC143C').withAlpha(200),
+                                        );
+                                      }
+                                    })
+                                : Container(),
+                                StreamBuilder(
+                                    stream: SocketManager().setup.stream,
+                                    initialData: SetupData(0, []),
+                                    builder: (context, snapshot) {
+                                      if (!snapshot.hasData ||
+                                          snapshot.data.progress < 1 ||
+                                          snapshot.data.progress >= 100)
+                                        return Container();
+
+                                      return Theme(
+                                        data: ThemeData(
+                                          brightness: widget.parent.brightness;
+                                        ),
+                                        child: CircularProgressIndicator(
+                                          
+                                        ),
+                                      );
+                                    },
+                                  )
+                          ],
+                        ),
+                      ],
                     ),
                     actions: [
                       Padding(
@@ -579,7 +642,7 @@ class __MaterialState extends State<_Material> {
                         child: Padding(
                           padding: EdgeInsets.symmetric(vertical: 15.5),
                           child: Container(
-                            width: 25,
+                            width: 40,
                             child: widget.parent.buildSettingsButton(),
                           ),
                         ),
@@ -656,15 +719,15 @@ class __MaterialState extends State<_Material> {
                                 setState(() {});
                               },
                               child: Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: Icon(
-                                    Icons.star,
-                                    color: Theme.of(context)
-                                        .textTheme
-                                        .bodyText1
-                                        .color,
-                                  ),
+                                padding: const EdgeInsets.all(8.0),
+                                child: Icon(
+                                  Icons.star,
+                                  color: Theme.of(context)
+                                      .textTheme
+                                      .bodyText1
+                                      .color,
                                 ),
+                              ),
                             ),
                           ],
                         ),
