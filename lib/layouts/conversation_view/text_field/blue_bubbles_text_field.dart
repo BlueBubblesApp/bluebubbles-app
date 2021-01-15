@@ -493,7 +493,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                   keyboardType: TextInputType.multiline,
                   maxLines: 14,
                   minLines: 1,
-                  placeholder: "BlueBubbles",
+                  placeholder: SettingsManager().settings.recipientAsPlaceholder == true ? placeholder : "BlueBubbles",
                   padding:
                       EdgeInsets.only(left: 10, top: 10, right: 40, bottom: 10),
                   placeholderStyle: Theme.of(context).textTheme.subtitle1,
@@ -550,7 +550,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                       ),
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    hintText: "BlueBubbles",
+                    hintText: SettingsManager().settings.recipientAsPlaceholder == true ? placeholder : "BlueBubbles",
                     hintStyle: Theme.of(context).textTheme.subtitle1,
                     contentPadding: EdgeInsets.only(
                       left: 10,
