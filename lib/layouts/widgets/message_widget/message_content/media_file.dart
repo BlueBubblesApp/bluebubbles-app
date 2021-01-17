@@ -1,4 +1,5 @@
 import 'package:bluebubbles/repository/models/attachment.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../socket_manager.dart';
@@ -65,7 +66,15 @@ class _MediaFileState extends State<MediaFile> {
             opacity: widget.attachment.originalROWID == null ? 1 : 0,
             duration: new Duration(milliseconds: 300),
             child: Container(
-              child: Icon(Icons.send, color: Colors.white70),
+              child: Theme(
+                data: ThemeData(
+                  cupertinoOverrideTheme:
+                      CupertinoThemeData(brightness: Brightness.dark),
+                ),
+                child: CupertinoActivityIndicator(
+                  radius: 10,
+                ),
+              ),
               height: 45,
               width: 45,
               decoration: BoxDecoration(
