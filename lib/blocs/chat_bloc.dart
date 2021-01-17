@@ -37,6 +37,8 @@ class ChatBloc {
   List<Chat> _archivedChats;
   List<Chat> get archivedChats => _archivedChats;
 
+  int lastRefresh = 0;
+
   static final ChatBloc _chatBloc = ChatBloc._internal();
   ChatBloc._internal();
 
@@ -62,6 +64,18 @@ class ChatBloc {
   }
 
   Future<void> refreshChats() async {
+    // Check if we've requested sometime in the last 1 minute
+    // If we have, exit, we don't need to re-fetch the chats again
+    int now = DateTime.now().toUtc().millisecondsSinceEpoch;
+    if (lastRefresh != 0 && now < lastRefresh + 60000) {
+      debugPrint(
+          "[ChatBloc] -> Not fetching chats; Not enough time has elapsed");
+      return;
+    }
+
+    // Set the last refresh time
+    lastRefresh = now;
+
     _chats = [];
     debugPrint("[ChatBloc] -> Fetching chats...");
 
@@ -183,6 +197,14 @@ class ChatBloc {
       debugPrint("Failed to load contact avatar: ${ex.toString()}");
     }
 
+    // If we don't have a title, try to get it
+    if (isNullOrEmpty(chat.title)) {
+      await chat.getTitle();
+    }
+
+    // If we still don't have a title, bye felicia
+    if (isNullOrEmpty(chat.title)) return;
+
     try {
       await MethodChannelInterface().invokeMethod("push-share-targets", {
         "title": chat.title,
@@ -190,7 +212,7 @@ class ChatBloc {
         "icon": icon,
       });
     } catch (ex) {
-      // Ignore the error
+      // Ignore the error, cuz whatever
     }
   }
 
