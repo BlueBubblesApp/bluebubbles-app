@@ -153,12 +153,20 @@ class MessagesViewState extends State<MessagesView>
 
     debugPrint("Getting smart replies for `${textMessage.text}`");
     replies = await FlutterSmartReply.getSmartReplies([textMessage]);
+    if (replies == null) return;
+
+    // De-duplicate the list
+    replies = replies.toSet().toList();
     debugPrint("Smart Replies found: $replies");
-    if (replies.length == 0) {
+
+    // If there is nothing in the list, get out
+    if (isNullOrEmpty(replies)) {
       resetReplies();
-    } else {
-      smartReplyController.sink.add(replies);
+      return;
     }
+
+    // If everything passes, add replies to the stream
+    smartReplyController.sink.add(replies);
   }
 
   Future<void> loadNextChunk() {
@@ -451,20 +459,19 @@ class MessagesViewState extends State<MessagesView>
                             _messages[index].originalROWID == null;
 
                         Widget messageWidget = Padding(
-                          padding: EdgeInsets.only(left: 5.0, right: 5.0),
-                          child: MessageWidget(
-                            key: Key(_messages[index].guid),
-                            message: _messages[index],
-                            olderMessage: olderMessage,
-                            newerMessage: newerMessage,
-                            showHandle: widget.showHandle,
-                            isFirstSentMessage:
-                                widget.messageBloc.firstSentMessage ==
-                                    _messages[index].guid,
-                            showHero: fullAnimation,
-                            onUpdate: (event) => onUpdateMessage(event),
-                          )
-                        );
+                            padding: EdgeInsets.only(left: 5.0, right: 5.0),
+                            child: MessageWidget(
+                              key: Key(_messages[index].guid),
+                              message: _messages[index],
+                              olderMessage: olderMessage,
+                              newerMessage: newerMessage,
+                              showHandle: widget.showHandle,
+                              isFirstSentMessage:
+                                  widget.messageBloc.firstSentMessage ==
+                                      _messages[index].guid,
+                              showHero: fullAnimation,
+                              onUpdate: (event) => onUpdateMessage(event),
+                            ));
 
                         if (fullAnimation) {
                           return SizeTransition(
