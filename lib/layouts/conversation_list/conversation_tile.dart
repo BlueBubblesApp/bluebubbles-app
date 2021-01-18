@@ -546,6 +546,7 @@ class _Material extends StatelessWidget {
                 : null,
           ),
           child: ListTile(
+            dense: parent.denseTiles,
             title: parent.buildTitle(),
             subtitle: parent.buildSubtitle(),
             leading: Stack(
