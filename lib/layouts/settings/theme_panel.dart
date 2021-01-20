@@ -8,6 +8,7 @@ import 'package:bluebubbles/layouts/settings/settings_panel.dart';
 import 'package:bluebubbles/layouts/theming/theming_panel.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
+import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:flutter/cupertino.dart';
@@ -154,6 +155,7 @@ class _ThemePanelState extends State<ThemePanel> {
                       } else {
                         _settingsCopy.hideDividers = false;
                       }
+                      ChatBloc().refreshChats();
                       setState(() {});
                     },
                     options: Skins.values,
