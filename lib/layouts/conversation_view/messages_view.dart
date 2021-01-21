@@ -372,7 +372,9 @@ class MessagesViewState extends State<MessagesView>
           ),
         ),
       );
-
+  hideKeyboard() {
+    FocusScope.of(context).requestFocus(FocusNode());
+  }
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -386,6 +388,9 @@ class MessagesViewState extends State<MessagesView>
       },
       onHorizontalDragCancel: () {
         CurrentChat.of(context).timeStampOffset = 0;
+      },
+      onVerticalDragDown: (_) {
+        hideKeyboard();
       },
       child: Stack(
         alignment: AlignmentDirectional.bottomCenter,
