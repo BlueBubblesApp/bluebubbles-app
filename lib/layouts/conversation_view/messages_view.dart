@@ -390,7 +390,9 @@ class MessagesViewState extends State<MessagesView>
         CurrentChat.of(context).timeStampOffset = 0;
       },
       onVerticalDragDown: (_) {
-        hideKeyboard();
+        if(SettingsManager().settings.hideKeyboardOnScroll){
+          hideKeyboard();
+        }
       },
       child: Stack(
         alignment: AlignmentDirectional.bottomCenter,

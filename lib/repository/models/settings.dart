@@ -31,6 +31,7 @@ class Settings {
   bool showConnectionIndicator = false;
   int sendDelay;
   bool recipientAsPlaceholder = false;
+  bool hideKeyboardOnScroll = false;
   // String emojiFontFamily;
 
   Skins skin = Skins.IOS;
@@ -94,6 +95,8 @@ class Settings {
         settings.sendDelay = entry.value;
       } else if (entry.name == "recipientAsPlaceholder") {
         settings.recipientAsPlaceholder = entry.value;
+      } else if (entry.name == "hideKeyboardOnScroll") {
+        settings.hideKeyboardOnScroll = entry.value;
       }
 
       // else if (entry.name == "emojiFontFamily") {
@@ -228,6 +231,10 @@ class Settings {
             name: "smartReply",
             value: this.smartReply,
             type: this.smartReply.runtimeType),
+        ConfigEntry(
+            name: "hideKeyboardOnScroll",
+            value: this.hideKeyboardOnScroll,
+            type: this.hideKeyboardOnScroll.runtimeType),
         ConfigEntry(
             name: "reducedForehead",
             value: this.reducedForehead,

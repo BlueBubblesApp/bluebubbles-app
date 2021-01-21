@@ -129,6 +129,13 @@ class _UXPanelState extends State<UXPanel> {
                   ),
                   SettingsSwitch(
                     onChanged: (bool val) {
+                      _settingsCopy.hideKeyboardOnScroll = val;
+                    },
+                    initialVal: _settingsCopy.hideKeyboardOnScroll,
+                    title: "Hide the keyboard on Scroll",
+                  ),
+                  SettingsSwitch(
+                    onChanged: (bool val) {
                       _settingsCopy.recipientAsPlaceholder = val;
                     },
                     initialVal: _settingsCopy.recipientAsPlaceholder,
