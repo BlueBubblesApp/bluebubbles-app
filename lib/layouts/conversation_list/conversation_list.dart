@@ -597,6 +597,7 @@ class __MaterialState extends State<_Material> {
                                               SocketState.CONNECTED ||
                                           connectionStatus ==
                                               SocketState.CONNECTING) {
+                                        ChatBloc().refreshChats();
                                         return Icon(
                                           Icons.fiber_manual_record,
                                           size: 15,

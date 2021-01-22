@@ -155,7 +155,6 @@ class _ThemePanelState extends State<ThemePanel> {
                       } else {
                         _settingsCopy.hideDividers = false;
                       }
-                      ChatBloc().refreshChats();
                       setState(() {});
                     },
                     options: Skins.values,
