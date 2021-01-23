@@ -20,6 +20,8 @@ import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_smart_reply/flutter_smart_reply.dart';
 
 class MessagesView extends StatefulWidget {
@@ -373,8 +375,11 @@ class MessagesViewState extends State<MessagesView>
         ),
       );
   hideKeyboard() {
-    FocusScope.of(context).requestFocus(FocusNode());
+    if (MediaQuery.of(context).viewInsets.bottom != 0) {
+      SystemChannels.textInput.invokeMethod('TextInput.hide');
+    }
   }
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -390,7 +395,7 @@ class MessagesViewState extends State<MessagesView>
         CurrentChat.of(context).timeStampOffset = 0;
       },
       onVerticalDragDown: (_) {
-        if(SettingsManager().settings.hideKeyboardOnScroll){
+        if (SettingsManager().settings.hideKeyboardOnScroll) {
           hideKeyboard();
         }
       },
@@ -525,7 +530,18 @@ class MessagesViewState extends State<MessagesView>
                           padding: EdgeInsets.symmetric(horizontal: 10),
                           child: Center(
                             child: GestureDetector(
-                              onTap: currentChat.scrollToBottom,
+                              onTap: () {
+                                currentChat.scrollToBottom();
+                                if (MediaQuery.of(context).viewInsets.bottom ==
+                                    0) {
+                                  if (SettingsManager()
+                                      .settings
+                                      .openKeyboardOnSTB) {
+                                    SystemChannels.textInput
+                                        .invokeMethod('TextInput.show');
+                                  }
+                                }
+                              },
                               child: Text(
                                 "\u{2193} Scroll to bottom \u{2193}",
                                 textAlign: TextAlign.center,

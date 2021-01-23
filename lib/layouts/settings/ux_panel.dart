@@ -132,7 +132,14 @@ class _UXPanelState extends State<UXPanel> {
                       _settingsCopy.hideKeyboardOnScroll = val;
                     },
                     initialVal: _settingsCopy.hideKeyboardOnScroll,
-                    title: "Hide the keyboard on Scroll",
+                    title: "Hide the keyboard on scroll",
+                  ),
+                  SettingsSwitch(
+                    onChanged: (bool val) {
+                      _settingsCopy.openKeyboardOnSTB = val;
+                    },
+                    initialVal: _settingsCopy.openKeyboardOnSTB,
+                    title: "Open the keyboard when scrolling to the bottom",
                   ),
                   SettingsSwitch(
                     onChanged: (bool val) {

@@ -32,6 +32,7 @@ class Settings {
   int sendDelay;
   bool recipientAsPlaceholder = false;
   bool hideKeyboardOnScroll = false;
+  bool openKeyboardOnSTB = false;
   // String emojiFontFamily;
 
   Skins skin = Skins.IOS;
@@ -97,6 +98,8 @@ class Settings {
         settings.recipientAsPlaceholder = entry.value;
       } else if (entry.name == "hideKeyboardOnScroll") {
         settings.hideKeyboardOnScroll = entry.value;
+      } else if (entry.name == "openKeyboardOnSTB") {
+        settings.openKeyboardOnSTB = entry.value;
       }
 
       // else if (entry.name == "emojiFontFamily") {
@@ -255,6 +258,10 @@ class Settings {
             name: "recipientAsPlaceholder",
             value: this.recipientAsPlaceholder,
             type: this.recipientAsPlaceholder.runtimeType),
+        ConfigEntry(
+            name: "openKeyboardOnSTB",
+            value: this.openKeyboardOnSTB,
+            type: this.openKeyboardOnSTB.runtimeType),
         // ConfigEntry(
         //     name: "emojiFontFamily",
         //     value: this.emojiFontFamily,

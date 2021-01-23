@@ -10,6 +10,7 @@ import 'package:bluebubbles/layouts/conversation_view/messages_view.dart';
 import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/chat_selector_text_field.dart';
 import 'package:bluebubbles/layouts/conversation_view/text_field/blue_bubbles_text_field.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/outgoing_queue.dart';
@@ -133,7 +134,8 @@ class ConversationViewState extends State<ConversationView>
       if (chat == null) return false;
 
       // If the current chat is null, set it
-      bool isDifferentChat = currentChat == null || currentChat?.chat?.guid != chat.guid;
+      bool isDifferentChat =
+          currentChat == null || currentChat?.chat?.guid != chat.guid;
       if (isDifferentChat) {
         initCurrentChat(chat);
       }
@@ -150,7 +152,8 @@ class ConversationViewState extends State<ConversationView>
     }
 
     // If the current chat is null, set it
-    bool isDifferentChat = currentChat == null || currentChat?.chat?.guid != chat.guid;
+    bool isDifferentChat =
+        currentChat == null || currentChat?.chat?.guid != chat.guid;
     if (isDifferentChat) {
       initCurrentChat(chat);
     }
@@ -200,7 +203,12 @@ class ConversationViewState extends State<ConversationView>
       return Padding(
         padding: const EdgeInsets.only(bottom: 55.0),
         child: FloatingActionButton(
-          onPressed: currentChat.scrollToBottom,
+          onPressed: () {
+            currentChat.scrollToBottom();
+            if (SettingsManager().settings.openKeyboardOnSTB) {
+              SystemChannels.textInput.invokeMethod('TextInput.show');
+            }
+          },
           child: Icon(
             Icons.arrow_downward,
             color: Theme.of(context).textTheme.bodyText1.color,
