@@ -11,6 +11,7 @@ import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:camera/camera.dart';
 import 'package:contacts_service/contacts_service.dart';
@@ -105,6 +106,15 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
       if (focusNode.hasFocus && this.mounted) {
         showImagePicker = false;
         setState(() {});
+      }
+
+      EventDispatcher().emit("keyboard-is-open", focusNode.hasFocus);
+    });
+
+    EventDispatcher().stream.listen((event) {
+      if (!event.containsKey("type")) return;
+      if (event["type"] == "unfocus-keyboard" && focusNode.hasFocus) {
+        focusNode.unfocus();
       }
     });
 

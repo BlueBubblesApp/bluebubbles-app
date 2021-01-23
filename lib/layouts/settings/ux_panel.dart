@@ -131,6 +131,14 @@ class _UXPanelState extends State<UXPanel> {
                   ),
                   SettingsSwitch(
                     onChanged: (bool val) {
+                      _settingsCopy.swipeToCloseKeyboard = val;
+                      saveSettings();
+                    },
+                    initialVal: _settingsCopy.swipeToCloseKeyboard,
+                    title: "Swipe to Close Keyboard",
+                  ),
+                  SettingsSwitch(
+                    onChanged: (bool val) {
                       _settingsCopy.recipientAsPlaceholder = val;
                       saveSettings();
                     },

@@ -9,10 +9,12 @@ import 'package:bluebubbles/layouts/conversation_view/messages_view.dart';
 import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/chat_selector_text_field.dart';
 import 'package:bluebubbles/layouts/conversation_view/text_field/blue_bubbles_text_field.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/outgoing_queue.dart';
 import 'package:bluebubbles/managers/queue_manager.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:keyboard_attachable/keyboard_attachable.dart';
@@ -60,6 +62,7 @@ class ConversationViewState extends State<ConversationView>
   List<File> existingAttachments;
   String existingText;
   bool wasCreator = false;
+  bool keyboardOpen = false;
 
   @override
   void initState() {
@@ -94,6 +97,13 @@ class ConversationViewState extends State<ConversationView>
         await _chat.getParticipants();
         currentChat.chat = _chat;
         if (this.mounted) setState(() {});
+      }
+    });
+
+    EventDispatcher().stream.listen((event) {
+      if (!event.containsKey("type")) return;
+      if (event["type"] == "keyboard-is-open") {
+        keyboardOpen = event.containsKey("data") ? event["data"] : false;
       }
     });
   }
@@ -198,6 +208,14 @@ class ConversationViewState extends State<ConversationView>
       messageBloc.getMessages();
     }
 
+    Widget textField = BlueBubblesTextField(
+      onSend: send,
+      wasCreator: wasCreator,
+      isCreator: isCreator,
+      existingAttachments: this.existingAttachments,
+      existingText: this.existingText,
+    );
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: Theme.of(context).backgroundColor,
@@ -212,13 +230,16 @@ class ConversationViewState extends State<ConversationView>
         body: FooterLayout(
           footer: KeyboardAttachable(
             child: widget.onSelect == null
-                ? BlueBubblesTextField(
-                    onSend: send,
-                    wasCreator: wasCreator,
-                    isCreator: isCreator,
-                    existingAttachments: this.existingAttachments,
-                    existingText: this.existingText,
-                  )
+                ? (SettingsManager().settings.swipeToCloseKeyboard)
+                  ? GestureDetector(
+                      onPanUpdate: (details) {
+                        if (details.delta.dy > 0 && keyboardOpen) {
+                          EventDispatcher().emit("unfocus-keyboard", null);
+                        }
+                      },
+                      child: textField
+                    )
+                  :  textField
                 : Container(),
           ),
           child: Column(
