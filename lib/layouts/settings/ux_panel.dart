@@ -139,6 +139,14 @@ class _UXPanelState extends State<UXPanel> {
                   ),
                   SettingsSwitch(
                     onChanged: (bool val) {
+                      _settingsCopy.moveNewMessageToheader = val;
+                      saveSettings();
+                    },
+                    initialVal: _settingsCopy.moveNewMessageToheader,
+                    title: "Move Chat Creator Button to Header",
+                  ),
+                  SettingsSwitch(
+                    onChanged: (bool val) {
                       _settingsCopy.recipientAsPlaceholder = val;
                       saveSettings();
                     },

@@ -36,6 +36,7 @@ class _ConversationListState extends State<ConversationList> {
   bool colorfulAvatars = false;
   bool reducedForehead = false;
   bool showIndicator = false;
+  bool moveChatCreatorButton = false;
 
   Brightness brightness = Brightness.light;
   Color previousBackgroundColor;
@@ -90,6 +91,7 @@ class _ConversationListState extends State<ConversationList> {
     colorfulAvatars = SettingsManager().settings.colorfulAvatars;
     reducedForehead = SettingsManager().settings.reducedForehead;
     showIndicator = SettingsManager().settings.showConnectionIndicator;
+    moveChatCreatorButton = SettingsManager().settings.moveNewMessageToheader;
     SettingsManager().stream.listen((Settings newSettings) {
       if (newSettings.colorfulAvatars != colorfulAvatars && this.mounted) {
         setState(() {
@@ -104,6 +106,11 @@ class _ConversationListState extends State<ConversationList> {
           this.mounted) {
         setState(() {
           showIndicator = newSettings.showConnectionIndicator;
+        });
+      } else if (newSettings.moveNewMessageToheader != moveChatCreatorButton &&
+          this.mounted) {
+        setState(() {
+          moveChatCreatorButton = newSettings.moveNewMessageToheader;
         });
       }
     });
@@ -155,6 +162,18 @@ class _ConversationListState extends State<ConversationList> {
     return _scrollController != null &&
         _scrollController.hasClients &&
         _scrollController.offset > (125 - kToolbarHeight);
+  }
+
+  void openNewChatCreator() {
+    Navigator.of(context).push(
+      CupertinoPageRoute(
+        builder: (BuildContext context) {
+          return ConversationView(
+            isCreator: true,
+          );
+        },
+      ),
+    );
   }
 
   @override
@@ -343,6 +362,24 @@ class _ConversationListState extends State<ConversationList> {
                             ),
                           ),
                           Container(width: 10.0),
+                          if (moveChatCreatorButton)
+                            ClipOval(
+                              child: Material(
+                                color:
+                                    Theme.of(context).accentColor, // button color
+                                child: InkWell(
+                                    child: SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: Icon(Icons.create,
+                                            color: Theme.of(context).primaryColor,
+                                            size: 12)),
+                                    onTap: this.openNewChatCreator
+                                ),
+                              ),
+                            ),
+                          if (moveChatCreatorButton)
+                            Container(width: 10.0),
                           !widget.showArchivedChats
                               ? PopupMenuButton(
                                   color: Theme.of(context).accentColor,
@@ -456,21 +493,13 @@ class _ConversationListState extends State<ConversationList> {
             ),
           ],
         ),
-        floatingActionButton: FloatingActionButton(
-          backgroundColor: Theme.of(context).primaryColor,
-          child: Icon(Icons.message, color: Colors.white, size: 25),
-          onPressed: () {
-            Navigator.of(context).push(
-              CupertinoPageRoute(
-                builder: (BuildContext context) {
-                  return ConversationView(
-                    isCreator: true,
-                  );
-                },
-              ),
-            );
-          },
-        ),
+        floatingActionButton: (moveChatCreatorButton)
+          ? null
+          : FloatingActionButton(
+              backgroundColor: Theme.of(context).primaryColor,
+              child: Icon(Icons.message, color: Colors.white, size: 25),
+              onPressed: this.openNewChatCreator,
+            ),
       ),
     );
   }

@@ -31,6 +31,7 @@ class Settings {
   int sendDelay;
   bool recipientAsPlaceholder = false;
   bool swipeToCloseKeyboard = true;
+  bool moveNewMessageToheader = false;
   // String emojiFontFamily;
 
   Skins skin = Skins.IOS;
@@ -92,6 +93,8 @@ class Settings {
         settings.recipientAsPlaceholder = entry.value;
       } else if (entry.name == "swipeToCloseKeyboard") {
         settings.swipeToCloseKeyboard = entry.value;
+      } else if (entry.name == "moveNewMessageToheader") {
+        settings.moveNewMessageToheader = entry.value;
       }
 
       // else if (entry.name == "emojiFontFamily") {
@@ -242,6 +245,10 @@ class Settings {
             name: "swipeToCloseKeyboard",
             value: this.swipeToCloseKeyboard,
             type: this.swipeToCloseKeyboard.runtimeType),
+        ConfigEntry(
+            name: "moveNewMessageToheader",
+            value: this.moveNewMessageToheader,
+            type: this.moveNewMessageToheader.runtimeType),
         // ConfigEntry(
         //     name: "emojiFontFamily",
         //     value: this.emojiFontFamily,
