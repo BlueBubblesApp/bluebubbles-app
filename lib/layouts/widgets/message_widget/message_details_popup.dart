@@ -81,7 +81,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
       if (this.mounted) {
         double menuHeight = 150;
         if (showDownload) {
-          menuHeight += 70;
+          menuHeight += 140;
         }
         setState(() {
           double totalHeight = MediaQuery.of(context).size.height -
@@ -463,6 +463,30 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
                 ),
               ),
               if (showDownload)
+                  Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () async {
+                        for (Attachment element in widget.message.attachments) {
+                          CurrentChat.of(context)?.clearImageData(element);
+                          await AttachmentHelper.redownloadAttachment(element);
+                          Navigator.pop(context);
+                          setState(() {});
+                        }
+                      },
+                      child: ListTile(
+                        title: Text(
+                          "Re-download from Server",
+                          style: Theme.of(context).textTheme.bodyText1,
+                        ),
+                        trailing: Icon(
+                          Icons.refresh,
+                          color: Theme.of(context).textTheme.bodyText1.color,
+                        ),
+                      ),
+                    ),
+                  ),
+              if (showDownload)
                 Material(
                   color: Colors.transparent,
                   child: InkWell(
@@ -477,7 +501,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
                     },
                     child: ListTile(
                       title: Text(
-                        "Download",
+                        "Download to Device",
                         style: Theme.of(context).textTheme.bodyText1,
                       ),
                       trailing: Icon(
@@ -495,7 +519,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
 
     double menuHeight = 150;
     if (showDownload) {
-      menuHeight += 70;
+      menuHeight += 140;
     }
 
     double topOffset = (messageTopOffset + widget.childSize.height)
@@ -506,6 +530,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
                 MediaQuery.of(context).viewInsets.bottom -
                 menuHeight -
                 20);
+
     double leftOffset = (widget.message.isFromMe
             ? size.width - maxMenuWidth - 15
             : 15 + (currentChat.chat.isGroup() ? 35 : 0))
