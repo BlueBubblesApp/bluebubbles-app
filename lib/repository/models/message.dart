@@ -4,6 +4,7 @@ import 'package:bluebubbles/helpers/reaction.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
+import 'package:metadata_fetch/metadata_fetch.dart';
 import 'package:sqflite/sqflite.dart';
 
 import '../database.dart';
@@ -341,6 +342,23 @@ class Message {
         where: "ROWID = ?", whereArgs: [existing.id]);
 
     return newMessage;
+  }
+
+  Future<Message> updateMetadata(Metadata metadata) async {
+    final Database db = await DBProvider.db.database;
+    if (this.id == null) return this;
+    this.metadata = metadata.toJson();
+
+    await db.update(
+        "message",
+        {
+          "metadata":
+              (isNullOrEmpty(this.metadata)) ? null : jsonEncode(this.metadata)
+        },
+        where: "ROWID = ?",
+        whereArgs: [this.id]);
+
+    return this;
   }
 
   Future<Message> update() async {
