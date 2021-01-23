@@ -254,7 +254,7 @@ class _ConversationListState extends State<ConversationList> {
   @override
   Widget build(BuildContext context) {
     loadBrightness();
-
+    ChatBloc().refreshChats();
     return ThemeSwitcher(
       iOSSkin: _Cupertino(parent: this),
       materialSkin: _Material(parent: this),
