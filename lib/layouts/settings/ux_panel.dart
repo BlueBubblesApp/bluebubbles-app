@@ -109,6 +109,7 @@ class _UXPanelState extends State<UXPanel> {
                   SettingsSwitch(
                     onChanged: (bool val) {
                       _settingsCopy.showConnectionIndicator = val;
+                      saveSettings();
                     },
                     initialVal: _settingsCopy.showConnectionIndicator,
                     title: "Show Connection Indicator in Chat List",
@@ -116,6 +117,7 @@ class _UXPanelState extends State<UXPanel> {
                   SettingsSwitch(
                     onChanged: (bool val) {
                       _settingsCopy.moveNewMessageToheader = val;
+                      saveSettings();
                     },
                     initialVal: _settingsCopy.moveNewMessageToheader,
                     title: "Move Chat Creator Button to Header",
@@ -123,6 +125,7 @@ class _UXPanelState extends State<UXPanel> {
                   SettingsSwitch(
                     onChanged: (bool val) {
                       _settingsCopy.hideTextPreviews = val;
+                      saveSettings();
                     },
                     initialVal: _settingsCopy.hideTextPreviews,
                     title: "Hide Text Previews (in notifications)",
@@ -130,6 +133,7 @@ class _UXPanelState extends State<UXPanel> {
                   SettingsSwitch(
                     onChanged: (bool val) {
                       _settingsCopy.autoOpenKeyboard = val;
+                      saveSettings();
                     },
                     initialVal: _settingsCopy.autoOpenKeyboard,
                     title: "Auto-open Keyboard",
@@ -137,6 +141,7 @@ class _UXPanelState extends State<UXPanel> {
                   SettingsSwitch(
                     onChanged: (bool val) {
                       _settingsCopy.swipeToCloseKeyboard = val;
+                      saveSettings();
                     },
                     initialVal: _settingsCopy.swipeToCloseKeyboard,
                     title: "Swipe on text field to close keyboard",
@@ -144,6 +149,7 @@ class _UXPanelState extends State<UXPanel> {
                   SettingsSwitch(
                     onChanged: (bool val) {
                       _settingsCopy.hideKeyboardOnScroll = val;
+                      saveSettings();
                     },
                     initialVal: _settingsCopy.hideKeyboardOnScroll,
                     title: "Hide the keyboard on scroll",
@@ -151,6 +157,7 @@ class _UXPanelState extends State<UXPanel> {
                   SettingsSwitch(
                     onChanged: (bool val) {
                       _settingsCopy.openKeyboardOnSTB = val;
+                      saveSettings();
                     },
                     initialVal: _settingsCopy.openKeyboardOnSTB,
                     title: "Open the keyboard when scrolling to the bottom",
@@ -158,6 +165,7 @@ class _UXPanelState extends State<UXPanel> {
                   SettingsSwitch(
                     onChanged: (bool val) {
                       _settingsCopy.recipientAsPlaceholder = val;
+                      saveSettings();
                     },
                     initialVal: _settingsCopy.recipientAsPlaceholder,
                     title: "Show Recipient (or Group Name) as Placeholder",
@@ -165,6 +173,7 @@ class _UXPanelState extends State<UXPanel> {
                   SettingsSwitch(
                     onChanged: (bool val) {
                       _settingsCopy.doubleTapForDetails = val;
+                      saveSettings();
                     },
                     initialVal: _settingsCopy.doubleTapForDetails,
                     title: "Double-Tap Message for Details",
@@ -179,6 +188,7 @@ class _UXPanelState extends State<UXPanel> {
                   SettingsSwitch(
                     onChanged: (bool val) {
                       _settingsCopy.smartReply = val;
+                      saveSettings();
                     },
                     initialVal: _settingsCopy.smartReply,
                     title: "Smart Replies",
@@ -186,6 +196,7 @@ class _UXPanelState extends State<UXPanel> {
                   SettingsSwitch(
                     onChanged: (bool val) {
                       _settingsCopy.sendTypingIndicators = val;
+                      saveSettings();
                     },
                     initialVal: _settingsCopy.sendTypingIndicators,
                     title: "Send typing indicators (BlueBubblesHelper ONLY)",
@@ -193,6 +204,7 @@ class _UXPanelState extends State<UXPanel> {
                   SettingsSwitch(
                     onChanged: (bool val) {
                       _settingsCopy.sendWithReturn = val;
+                      saveSettings();
                     },
                     initialVal: _settingsCopy.sendWithReturn,
                     title: "Send Message with Return Key",
@@ -200,6 +212,7 @@ class _UXPanelState extends State<UXPanel> {
                   SettingsSwitch(
                     onChanged: (bool val) {
                       _settingsCopy.preCachePreviewImages = val;
+                      saveSettings();
                     },
                     initialVal: _settingsCopy.preCachePreviewImages,
                     title: "Pre-Cache Preview Images",
@@ -207,6 +220,7 @@ class _UXPanelState extends State<UXPanel> {
                   SettingsSwitch(
                     onChanged: (bool val) {
                       _settingsCopy.lowMemoryMode = val;
+                      saveSettings();
                     },
                     initialVal: _settingsCopy.lowMemoryMode,
                     title: "Low Memory Mode",
@@ -214,6 +228,7 @@ class _UXPanelState extends State<UXPanel> {
                   SettingsSwitch(
                     onChanged: (bool val) {
                       _settingsCopy.showIncrementalSync = val;
+                      saveSettings();
                     },
                     initialVal: _settingsCopy.showIncrementalSync,
                     title: "Notify when incremental sync complete",
@@ -232,6 +247,7 @@ class _UXPanelState extends State<UXPanel> {
                   SettingsSwitch(
                     onChanged: (bool val) {
                       _settingsCopy.sendDelay = val ? 3 : 0;
+                      saveSettings();
                       setState(() {});
                     },
                     initialVal: !isNullOrZero(_settingsCopy.sendDelay),
