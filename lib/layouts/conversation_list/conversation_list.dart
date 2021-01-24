@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/setup_bloc.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/layouts/conversation_list/pinned_conversation_tile.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/search/search_view.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
@@ -33,6 +34,7 @@ class ConversationList extends StatefulWidget {
 class _ConversationListState extends State<ConversationList> {
   ScrollController _scrollController;
   List<Chat> _chats = <Chat>[];
+  List<Chat> _pinnedChats = <Chat>[];
   bool colorfulAvatars = false;
   bool reducedForehead = false;
   bool showIndicator = false;
@@ -75,6 +77,11 @@ class _ConversationListState extends State<ConversationList> {
     if (!widget.showArchivedChats) {
       ChatBloc().chatStream.listen((List<Chat> chats) {
         _chats = chats;
+        if (this.mounted) setState(() {});
+      });
+
+      ChatBloc().pinnedChatStream.listen((List<Chat> chats) {
+        _pinnedChats = chats;
         if (this.mounted) setState(() {});
       });
 
@@ -413,6 +420,48 @@ class _ConversationListState extends State<ConversationList> {
                   ],
                 ),
               ),
+            ),
+            StreamBuilder(
+              stream: ChatBloc().pinnedChatStream,
+              builder:
+                  (BuildContext context, AsyncSnapshot<List<Chat>> snapshot) {
+                if (snapshot.hasData || widget.showArchivedChats) {
+                  _pinnedChats.sort(Chat.sort);
+
+                  if (_pinnedChats.isEmpty) {
+                    return SliverToBoxAdapter(child: Container());
+                  }
+
+                  return SliverPadding(
+                    padding: EdgeInsets.all(30),
+                    sliver: SliverGrid(
+                      gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+                        maxCrossAxisExtent: 130.0,
+                        mainAxisSpacing: 30.0,
+                        crossAxisSpacing: 30.0,
+                        childAspectRatio: 0.85,
+                      ),
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) {
+                          if (!widget.showArchivedChats &&
+                              _pinnedChats[index].isArchived)
+                            return Container();
+                          if (widget.showArchivedChats &&
+                              !_pinnedChats[index].isArchived)
+                            return Container();
+                          return PinnedConversationTile(
+                            key: Key(_pinnedChats[index].guid.toString()),
+                            chat: _pinnedChats[index],
+                          );
+                        },
+                        childCount: _pinnedChats?.length ?? 0,
+                      ),
+                    ),
+                  );
+                } else {
+                  return SliverToBoxAdapter(child: Container());
+                }
+              },
             ),
             StreamBuilder(
               stream: ChatBloc().chatStream,

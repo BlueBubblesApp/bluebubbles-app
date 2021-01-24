@@ -30,12 +30,17 @@ class ChatBloc {
   final _archivedChatController = StreamController<List<Chat>>.broadcast();
   Stream<List<Chat>> get archivedChatStream => _archivedChatController.stream;
 
+  final _pinnedChatController = StreamController<List<Chat>>.broadcast();
+  Stream<List<Chat>> get pinnedChatStream => _pinnedChatController.stream;
+
   static StreamSubscription<NewMessageEvent> _messageSubscription;
 
   List<Chat> _chats;
   List<Chat> get chats => _chats;
   List<Chat> _archivedChats;
+  List<Chat> _pinnedChats;
   List<Chat> get archivedChats => _archivedChats;
+  List<Chat> get pinnedChats => _pinnedChats;
 
   static final ChatBloc _chatBloc = ChatBloc._internal();
   ChatBloc._internal();
@@ -73,11 +78,14 @@ class ChatBloc {
     }
 
     // Fetch the first x chats
-    _chats = await Chat.getChats(archived: false, limit: pageSize);
+    _chats =
+        await Chat.getChats(archived: false, pinned: false, limit: pageSize);
     _archivedChats = await Chat.getChats(archived: true);
+    _pinnedChats = await Chat.getChats(pinned: true);
 
     // Invoke and wait for the tile's values to be generated
     await initTileVals(_chats);
+    await initTileVals(_pinnedChats);
 
     // We don't care much about the result of these, so call them async
     recursiveGetChats();
@@ -85,6 +93,7 @@ class ChatBloc {
 
     // Update the sink so all listeners get the new chat list
     await this.addToSink(_chats);
+    await this.addToPinnedSink(_pinnedChats);
   }
 
   /// Inserts a [chat] into the chat bloc based on the lastMessage data
@@ -350,6 +359,16 @@ class ChatBloc {
     }
 
     _chatController.sink.add(chats);
+  }
+
+  Future<void> addToPinnedSink(List<Chat> chats) async {
+    for (int i = 0; i < chats.length; i++) {
+      if (isNullOrEmpty(chats[i].participants)) {
+        await chats[i].getParticipants();
+      }
+    }
+
+    _pinnedChatController.sink.add(chats);
   }
 
   dispose() {

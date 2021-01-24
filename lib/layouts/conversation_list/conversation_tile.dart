@@ -276,6 +276,7 @@ class _ConversationTileState extends State<ConversationTile>
                         : null,
                   ),
                   child: ListTile(
+                    isThreeLine: !denseTiles,
                     dense: denseTiles,
                     contentPadding: EdgeInsets.only(left: 0),
                     title: Text(
@@ -303,14 +304,14 @@ class _ConversationTileState extends State<ConversationTile>
                                         0.85,
                                       ),
                                 ),
-                            maxLines: 2,
+                            maxLines: denseTiles ? 1 : 2,
                             overflow: TextOverflow.ellipsis,
                           ),
                     leading: ContactAvatarGroupWidget(
                       participants: widget.chat.participants,
                       chat: widget.chat,
-                      width: 50,
-                      height: 50,
+                      width: denseTiles ? 40 : 55,
+                      height: denseTiles ? 40 : 55,
                       editable: false,
                       onTap: this.onTapUpBypass,
                     ),

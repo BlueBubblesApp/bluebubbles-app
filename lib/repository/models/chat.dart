@@ -825,6 +825,7 @@ class Chat {
 
   static Future<List<Chat>> getChats(
       {bool archived = false,
+      bool pinned = false,
       int limit = 15,
       int offset = 0,
       bool getFiltered = false}) async {
@@ -846,8 +847,8 @@ class Chat {
         " chat.latestMessageText as latestMessageText,"
         " chat.displayName as displayName"
         " FROM chat"
-        " WHERE chat.isArchived = ? ORDER BY chat.latestMessageDate DESC LIMIT $limit OFFSET $offset;",
-        [archived ? 1 : 0]);
+        " WHERE chat.isArchived = ? AND chat.isPinned = ? ORDER BY chat.latestMessageDate DESC LIMIT $limit OFFSET $offset;",
+        [archived ? 1 : 0, pinned ? 1 : 0]);
 
     if (res.isEmpty) return [];
 
