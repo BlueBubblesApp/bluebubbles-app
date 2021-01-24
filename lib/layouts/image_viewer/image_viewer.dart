@@ -7,6 +7,7 @@ import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:flutter/services.dart';
 import 'package:photo_view/photo_view.dart';
 
@@ -69,6 +70,10 @@ class _ImageViewerState extends State<ImageViewer>
   @override
   void didChangeDependencies() async {
     super.didChangeDependencies();
+        initBytes();
+  }
+
+  Future<void> initBytes() async {
     bytes = await widget.file.readAsBytes();
     if (this.mounted) setState(() {});
   }
@@ -176,6 +181,32 @@ class _ImageViewerState extends State<ImageViewer>
               padding: EdgeInsets.only(top: 40.0),
               child: CupertinoButton(
                 onPressed: () async {
+                  if (context != null) {
+                    CurrentChat.of(context)?.clearImageData(widget.attachment);
+                  }
+
+                  final snackBar = SnackBar(content: Text('Redownloading attachment. Please wait...'));
+                  Scaffold.of(context).showSnackBar(snackBar);
+
+                  await AttachmentHelper.redownloadAttachment(widget.attachment, onComplete: () {
+                    initBytes();
+                  }, onError: () {
+                    Navigator.pop(context);
+                  });
+
+                  bytes = null;
+                  if (this.mounted) setState(() {});
+                },
+                child: Icon(
+                  Icons.refresh,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+            Padding(
+              padding: EdgeInsets.only(top: 40.0),
+              child: CupertinoButton(
+                onPressed: () async {
                   await AttachmentHelper.saveToGallery(context, widget.file);
                 },
                 child: Icon(
@@ -188,7 +219,6 @@ class _ImageViewerState extends State<ImageViewer>
               padding: EdgeInsets.only(top: 40.0),
               child: CupertinoButton(
                 onPressed: () async {
-                  // final Uint8List bytes = await widget.file.readAsBytes();
                   await Share.file(
                     "Shared ${widget.attachment.mimeType.split("/")[0]} from BlueBubbles: ${widget.attachment.transferName}",
                     widget.attachment.transferName,
