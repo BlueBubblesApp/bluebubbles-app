@@ -40,6 +40,3 @@ pubspeck.lock
 #signing
 **/android/key.properties
 **/android/.settings
-ios/Flutter/Debug.xcconfig
-
-ios/Flutter/Release.xcconfig
