@@ -115,6 +115,13 @@ class _UXPanelState extends State<UXPanel> {
                   ),
                   SettingsSwitch(
                     onChanged: (bool val) {
+                      _settingsCopy.moveNewMessageToheader = val;
+                    },
+                    initialVal: _settingsCopy.moveNewMessageToheader,
+                    title: "Move Chat Creator Button to Header",
+                  ),
+                  SettingsSwitch(
+                    onChanged: (bool val) {
                       _settingsCopy.hideTextPreviews = val;
                     },
                     initialVal: _settingsCopy.hideTextPreviews,
@@ -126,6 +133,13 @@ class _UXPanelState extends State<UXPanel> {
                     },
                     initialVal: _settingsCopy.autoOpenKeyboard,
                     title: "Auto-open Keyboard",
+                  ),
+                  SettingsSwitch(
+                    onChanged: (bool val) {
+                      _settingsCopy.swipeToCloseKeyboard = val;
+                    },
+                    initialVal: _settingsCopy.swipeToCloseKeyboard,
+                    title: "Swipe on text field to close keyboard",
                   ),
                   SettingsSwitch(
                     onChanged: (bool val) {

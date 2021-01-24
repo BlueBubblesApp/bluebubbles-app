@@ -6,6 +6,8 @@ import 'package:bluebubbles/blocs/setup_bloc.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/search/search_text_box.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/helpers/contstants.dart';
 import 'package:bluebubbles/layouts/search/search_view.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/layouts/search/search_view.dart';
@@ -41,6 +43,7 @@ class _ConversationListState extends State<ConversationList> {
   bool colorfulAvatars = false;
   bool reducedForehead = false;
   bool showIndicator = false;
+  bool moveChatCreatorButton = false;
 
   Brightness brightness = Brightness.light;
   Color previousBackgroundColor;
@@ -76,7 +79,6 @@ class _ConversationListState extends State<ConversationList> {
   @override
   void initState() {
     super.initState();
-
     if (!widget.showArchivedChats) {
       ChatBloc().chatStream.listen((List<Chat> chats) {
         this.chats = chats;
@@ -95,6 +97,7 @@ class _ConversationListState extends State<ConversationList> {
     colorfulAvatars = SettingsManager().settings.colorfulAvatars;
     reducedForehead = SettingsManager().settings.reducedForehead;
     showIndicator = SettingsManager().settings.showConnectionIndicator;
+    moveChatCreatorButton = SettingsManager().settings.moveNewMessageToheader;
     SettingsManager().stream.listen((Settings newSettings) {
       if (newSettings.colorfulAvatars != colorfulAvatars && this.mounted) {
         setState(() {
@@ -109,6 +112,11 @@ class _ConversationListState extends State<ConversationList> {
           this.mounted) {
         setState(() {
           showIndicator = newSettings.showConnectionIndicator;
+        });
+      } else if (newSettings.moveNewMessageToheader != moveChatCreatorButton &&
+          this.mounted) {
+        setState(() {
+          moveChatCreatorButton = newSettings.moveNewMessageToheader;
         });
       }
     });
@@ -160,6 +168,18 @@ class _ConversationListState extends State<ConversationList> {
     return scrollController != null &&
         scrollController.hasClients &&
         scrollController.offset > (125 - kToolbarHeight);
+  }
+
+  void openNewChatCreator() {
+    Navigator.of(context).push(
+      CupertinoPageRoute(
+        builder: (BuildContext context) {
+          return ConversationView(
+            isCreator: true,
+          );
+        },
+      ),
+    );
   }
 
   void sortChats() {
@@ -235,7 +255,9 @@ class _ConversationListState extends State<ConversationList> {
           ),
         )
       : Container();
-  FloatingActionButton buildFloatinActionButton() => FloatingActionButton(
+  FloatingActionButton buildFloatinActionButton(){
+    return FloatingActionButton(
+        
         backgroundColor: Theme.of(context).primaryColor,
         child: Icon(Icons.message, color: Colors.white, size: 25),
         onPressed: () {
@@ -250,11 +272,11 @@ class _ConversationListState extends State<ConversationList> {
           );
         },
       );
+  } 
 
   @override
   Widget build(BuildContext context) {
     loadBrightness();
-    ChatBloc().refreshChats();
     return ThemeSwitcher(
       iOSSkin: _Cupertino(parent: this),
       materialSkin: _Material(parent: this),
@@ -274,6 +296,7 @@ class _ConversationListState extends State<ConversationList> {
 class _Cupertino extends StatelessWidget {
   const _Cupertino({Key key, @required this.parent}) : super(key: key);
   final _ConversationListState parent;
+
   @override
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
@@ -459,7 +482,37 @@ class _Cupertino extends StatelessWidget {
                                   }),
                             ),
                           ),
-                          Container(width: 10.0),
+                          Container(width: SettingsManager().settings.moveNewMessageToheader ? 7.0: 10.0),
+                          if (SettingsManager().settings.moveNewMessageToheader)
+                            ClipOval(
+                              child: Material(
+                                color: Theme.of(context)
+                                    .accentColor, // button color
+                                child: InkWell(
+                                    child: SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: Icon(Icons.create,
+                                            color:
+                                                Theme.of(context).primaryColor,
+                                            size: 12)),
+                                    onTap: () {
+                                      Navigator.of(context).push(
+                                        ThemeSwitcher.buildPageRoute(
+                                          builder: (BuildContext context) {
+                                            return ConversationView(
+                                              isCreator: true,
+                                            );
+                                          },
+                                        ),
+                                      );
+                                    }),
+                              ),
+                            ),
+                          if (SettingsManager()
+                              .settings
+                              .moveNewMessageToheader)
+                            Container(width: SettingsManager().settings.moveNewMessageToheader ? 7.0: 10.0),
                           parent.buildSettingsButton(),
                           Spacer(
                             flex: 1,
@@ -530,7 +583,8 @@ class _Cupertino extends StatelessWidget {
             ),
           ],
         ),
-        floatingActionButton: parent.buildFloatinActionButton(),
+        floatingActionButton:
+            !SettingsManager().settings.moveNewMessageToheader? parent.buildFloatinActionButton() : null,
       ),
     );
   }
@@ -613,30 +667,53 @@ class __MaterialState extends State<_Material> {
                                       }
                                     })
                                 : Container(),
-                                StreamBuilder(
-                                    stream: SocketManager().setup.stream,
-                                    initialData: SetupData(0, []),
-                                    builder: (context, snapshot) {
-                                      if (!snapshot.hasData ||
-                                          snapshot.data.progress < 1 ||
-                                          snapshot.data.progress >= 100)
-                                        return Container();
+                            StreamBuilder(
+                              stream: SocketManager().setup.stream,
+                              initialData: SetupData(0, []),
+                              builder: (context, snapshot) {
+                                if (!snapshot.hasData ||
+                                    snapshot.data.progress < 1 ||
+                                    snapshot.data.progress >= 100)
+                                  return Container();
 
-                                      return Theme(
-                                        data: ThemeData(
-                                          brightness: widget.parent.brightness,
-                                        ),
-                                        child: CircularProgressIndicator(
-                                          
-                                        ),
-                                      );
-                                    },
-                                  )
+                                return Theme(
+                                  data: ThemeData(
+                                    brightness: widget.parent.brightness,
+                                  ),
+                                  child: CircularProgressIndicator(),
+                                );
+                              },
+                            )
                           ],
                         ),
                       ],
                     ),
                     actions: [
+                      (SettingsManager().settings.moveNewMessageToheader)
+                          ? GestureDetector(
+                              onTap: () {
+                                Navigator.of(context).push(
+                                  ThemeSwitcher.buildPageRoute(
+                                    builder: (BuildContext context) {
+                                      return ConversationView(
+                                        isCreator: true,
+                                      );
+                                    },
+                                  ),
+                                );
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Icon(
+                                  Icons.create,
+                                  color: Theme.of(context)
+                                      .textTheme
+                                      .bodyText1
+                                      .color,
+                                ),
+                              ),
+                            )
+                          : Container(),
                       Padding(
                         padding: EdgeInsets.only(right: 20),
                         child: Padding(
@@ -789,7 +866,7 @@ class __MaterialState extends State<_Material> {
           },
         ),
         floatingActionButton:
-            selected.isEmpty ? widget.parent.buildFloatinActionButton() : null,
+            selected.isEmpty && !SettingsManager().settings.moveNewMessageToheader? widget.parent.buildFloatinActionButton() : null,
       ),
     );
   }

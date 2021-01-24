@@ -13,6 +13,7 @@ import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scrol
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:camera/camera.dart';
@@ -111,6 +112,21 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
       if (focusNode.hasFocus && this.mounted) {
         showImagePicker = false;
         setState(() {});
+      }
+
+      EventDispatcher().emit("keyboard-is-open", focusNode.hasFocus);
+      EventDispatcher().emit("keyboard-is-closed", !focusNode.hasFocus);
+    });
+
+    EventDispatcher().stream.listen((event) {
+      if (!event.containsKey("type")) return;
+      if (event["type"] == "unfocus-keyboard" && focusNode.hasFocus) {
+        focusNode.unfocus();
+        SystemChannels.textInput.invokeMethod('TextInput.hide');
+      }
+      else if (event["type"] == "focus-keyboard") {
+        focusNode.requestFocus(focusNode);
+        SystemChannels.textInput.invokeMethod('TextInput.show');
       }
     });
 
@@ -394,7 +410,6 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
     IconData rightIcon = Icons.arrow_upward;
 
     if (canRecord) rightIcon = Icons.mic;
-
     return Flexible(
       flex: 1,
       fit: FlexFit.loose,
@@ -435,46 +450,46 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                   },
                   onSubmitted: (String value) async {
                     if (!SettingsManager().settings.sendWithReturn ||
-                      isNullOrEmpty(value)) return;
+                        isNullOrEmpty(value)) return;
 
-                  // If send delay is enabled, delay the sending
-                  if (!isNullOrZero(SettingsManager().settings.sendDelay)) {
-                    // Break the delay into 1 second intervals
-                    for (var i = 0;
-                        i < SettingsManager().settings.sendDelay;
-                        i++) {
-                      if (i != 0 && sendCountdown == null) break;
+                    // If send delay is enabled, delay the sending
+                    if (!isNullOrZero(SettingsManager().settings.sendDelay)) {
+                      // Break the delay into 1 second intervals
+                      for (var i = 0;
+                          i < SettingsManager().settings.sendDelay;
+                          i++) {
+                        if (i != 0 && sendCountdown == null) break;
 
-                      // Update UI with new state information
-                      if (this.mounted) {
-                        setState(() {
-                          sendCountdown =
-                              SettingsManager().settings.sendDelay - i;
-                        });
+                        // Update UI with new state information
+                        if (this.mounted) {
+                          setState(() {
+                            sendCountdown =
+                                SettingsManager().settings.sendDelay - i;
+                          });
+                        }
+
+                        await Future.delayed(new Duration(seconds: 1));
                       }
-
-                      await Future.delayed(new Duration(seconds: 1));
                     }
-                  }
 
-                  if (this.mounted) {
-                    setState(() {
-                      sendCountdown = null;
-                    });
-                  }
+                    if (this.mounted) {
+                      setState(() {
+                        sendCountdown = null;
+                      });
+                    }
 
-                  if (stopSending != null && stopSending) {
-                    stopSending = null;
-                    return;
-                  }
+                    if (stopSending != null && stopSending) {
+                      stopSending = null;
+                      return;
+                    }
 
-                  if (await widget.onSend(pickedImages, value)) {
-                    controller.text = "";
-                    pickedImages = <File>[];
-                    updateTextFieldAttachments();
-                  }
+                    if (await widget.onSend(pickedImages, value)) {
+                      controller.text = "";
+                      pickedImages = <File>[];
+                      updateTextFieldAttachments();
+                    }
 
-                  if (this.mounted) setState(() {});
+                    if (this.mounted) setState(() {});
                   },
                   onContentCommited: onContentCommit,
                   textCapitalization: TextCapitalization.sentences,
@@ -493,7 +508,10 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                   keyboardType: TextInputType.multiline,
                   maxLines: 14,
                   minLines: 1,
-                  placeholder: SettingsManager().settings.recipientAsPlaceholder == true ? placeholder : "BlueBubbles",
+                  placeholder:
+                      SettingsManager().settings.recipientAsPlaceholder == true
+                          ? placeholder
+                          : "BlueBubbles",
                   padding:
                       EdgeInsets.only(left: 10, top: 10, right: 40, bottom: 10),
                   placeholderStyle: Theme.of(context).textTheme.subtitle1,
@@ -550,7 +568,11 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                       ),
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    hintText: SettingsManager().settings.recipientAsPlaceholder == true ? placeholder : "BlueBubbles",
+                    hintText:
+                        SettingsManager().settings.recipientAsPlaceholder ==
+                                true
+                            ? placeholder
+                            : "BlueBubbles",
                     hintStyle: Theme.of(context).textTheme.subtitle1,
                     contentPadding: EdgeInsets.only(
                       left: 10,

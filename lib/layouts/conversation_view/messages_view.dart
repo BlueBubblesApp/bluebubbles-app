@@ -54,6 +54,8 @@ class MessagesViewState extends State<MessagesView>
   bool initializedList = false;
   List<int> loadedPages = [];
   CurrentChat currentChat;
+  double currentOffset = 0;
+  bool keyboardOpen = false;
 
   List<TextMessage> currentMessages = [];
   List<String> replies = [];
@@ -88,25 +90,35 @@ class MessagesViewState extends State<MessagesView>
     smartReplyController = StreamController<List<String>>.broadcast();
 
     EventDispatcher().stream.listen((Map<String, dynamic> event) {
-      if (!["refresh-messagebloc"].contains(event["type"])) return;
-      if (!event["data"].containsKey("chatGuid")) return;
+      if (!this.mounted) return;
+      if (!event.containsKey("type")) return;
 
-      // Handle event's that require a matching guid
-      String chatGuid = event["data"]["chatGuid"];
-      if (widget.chat.guid == chatGuid) {
-        if (event["type"] == "refresh-messagebloc") {
-          // Clear state items
-          noMoreLocalMessages = false;
-          noMoreMessages = false;
-          _messages = [];
-          loadedPages = [];
+      if (event["type"] == "refresh-messagebloc" &&
+          event["data"].containsKey("chatGuid")) {
+        // Handle event's that require a matching guid
+        String chatGuid = event["data"]["chatGuid"];
+        if (widget.chat.guid == chatGuid) {
+          if (event["type"] == "refresh-messagebloc") {
+            // Clear state items
+            noMoreLocalMessages = false;
+            noMoreMessages = false;
+            _messages = [];
+            loadedPages = [];
 
-          // Reload the state after refreshing
-          widget.messageBloc.refresh().then((_) {
-            if (this.mounted) {
-              setState(() {});
-            }
-          });
+            // Reload the state after refreshing
+            widget.messageBloc.refresh().then((_) {
+              if (this.mounted) {
+                setState(() {});
+              }
+            });
+          }
+        }
+      } else if (event["type"] == "keyboard-is-open") {
+        if (!this.mounted) return;
+
+        keyboardOpen = event.containsKey("data") ? event["data"] : false;
+        if (scrollController.hasClients && scrollController.offset != null) {
+          currentOffset = scrollController.offset;
         }
       }
     });
@@ -120,7 +132,6 @@ class MessagesViewState extends State<MessagesView>
     currentChat = CurrentChat.of(context);
 
     scrollController?.addListener(() {
-      if (scrollController == null || !scrollController.hasClients) return;
       if (showScrollDown && scrollController.offset >= 500) return;
       if (!showScrollDown && scrollController.offset < 500) return;
 
@@ -376,7 +387,8 @@ class MessagesViewState extends State<MessagesView>
       );
   hideKeyboard() {
     if (MediaQuery.of(context).viewInsets.bottom != 0) {
-      SystemChannels.textInput.invokeMethod('TextInput.hide');
+      SystemChannels.textInput
+                                .invokeMethod('TextInput.hide');
     }
   }
 
@@ -538,7 +550,7 @@ class MessagesViewState extends State<MessagesView>
                                       .settings
                                       .openKeyboardOnSTB) {
                                     SystemChannels.textInput
-                                        .invokeMethod('TextInput.show');
+                                .invokeMethod('TextInput.show');
                                   }
                                 }
                               },

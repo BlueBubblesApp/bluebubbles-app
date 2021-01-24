@@ -62,6 +62,8 @@ class ConversationViewState extends State<ConversationView>
     with ConversationViewMixin {
   List<File> existingAttachments;
   String existingText;
+  bool keyboardOpen = false;
+  bool keyboardClosed = false;
 
   @override
   void initState() {
@@ -96,6 +98,15 @@ class ConversationViewState extends State<ConversationView>
         await _chat.getParticipants();
         currentChat.chat = _chat;
         if (this.mounted) setState(() {});
+      }
+    });
+    EventDispatcher().stream.listen((event) {
+      if (!event.containsKey("type")) return;
+      if (event["type"] == "keyboard-is-open") {
+        keyboardOpen = event.containsKey("data") ? event["data"] : false;
+      }
+      if (event["type"] == "keyboard-is-closed") {
+        keyboardClosed = event.containsKey("data") ? event["data"] : false;
       }
     });
   }
@@ -188,14 +199,17 @@ class ConversationViewState extends State<ConversationView>
 
   Widget buildFAB() {
     if (widget.onSelect != null) {
-      return FloatingActionButton(
-        onPressed: () => widget.onSelect(selected),
-        child: widget.selectIcon ??
-            Icon(
-              Icons.check,
-              color: Theme.of(context).textTheme.bodyText1.color,
-            ),
-        backgroundColor: Theme.of(context).primaryColor,
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 55.0),
+        child: FloatingActionButton(
+          onPressed: () => widget.onSelect(selected),
+          child: widget.selectIcon ??
+              Icon(
+                Icons.check,
+                color: Theme.of(context).textTheme.bodyText1.color,
+              ),
+          backgroundColor: Theme.of(context).primaryColor,
+        ),
       );
     } else if (currentChat != null &&
         currentChat.showScrollDown &&
@@ -206,7 +220,8 @@ class ConversationViewState extends State<ConversationView>
           onPressed: () {
             currentChat.scrollToBottom();
             if (SettingsManager().settings.openKeyboardOnSTB) {
-              SystemChannels.textInput.invokeMethod('TextInput.show');
+              SystemChannels.textInput
+                                .invokeMethod('TextInput.show');
             }
           },
           child: Icon(
@@ -233,6 +248,13 @@ class ConversationViewState extends State<ConversationView>
       messageBloc.getMessages();
     }
 
+    Widget textField = BlueBubblesTextField(
+      onSend: send,
+      isCreator: isCreator,
+      existingAttachments: this.existingAttachments,
+      existingText: this.existingText,
+    );
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: Theme.of(context).backgroundColor,
@@ -247,12 +269,20 @@ class ConversationViewState extends State<ConversationView>
         body: FooterLayout(
           footer: KeyboardAttachable(
             child: widget.onSelect == null
-                ? BlueBubblesTextField(
-                    onSend: send,
-                    isCreator: isCreator,
-                    existingAttachments: this.existingAttachments,
-                    existingText: this.existingText,
-                  )
+                ? (SettingsManager().settings.swipeToCloseKeyboard)
+                    ? GestureDetector(
+                        onPanUpdate: (details) {
+                          if (details.delta.dy > 0 && keyboardOpen) {
+                            SystemChannels.textInput
+                                .invokeMethod('TextInput.hide');
+                          }
+                          else if (details.delta.dy < 0) {
+                            SystemChannels.textInput
+                                .invokeMethod('TextInput.show');
+                          }
+                        },
+                        child: textField)
+                    : textField
                 : Container(),
           ),
           child: Column(

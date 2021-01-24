@@ -33,6 +33,8 @@ class Settings {
   bool recipientAsPlaceholder = false;
   bool hideKeyboardOnScroll = false;
   bool openKeyboardOnSTB = false;
+  bool moveNewMessageToheader = false;
+  bool swipeToCloseKeyboard = true;
   // String emojiFontFamily;
 
   Skins skin = Skins.IOS;
@@ -100,6 +102,10 @@ class Settings {
         settings.hideKeyboardOnScroll = entry.value;
       } else if (entry.name == "openKeyboardOnSTB") {
         settings.openKeyboardOnSTB = entry.value;
+      } else if (entry.name == "newMessageMenuBar") {
+        settings.moveNewMessageToheader = entry.value;
+      } else if (entry.name == "swipeToCloseKeyboard") {
+        settings.swipeToCloseKeyboard = entry.value;
       }
 
       // else if (entry.name == "emojiFontFamily") {
@@ -262,6 +268,14 @@ class Settings {
             name: "openKeyboardOnSTB",
             value: this.openKeyboardOnSTB,
             type: this.openKeyboardOnSTB.runtimeType),
+        ConfigEntry(
+            name: "newMessageMenuBar",
+            value: this.moveNewMessageToheader,
+            type: this.moveNewMessageToheader.runtimeType),
+        ConfigEntry(
+            name: "swipeToCloseKeyboard",
+            value: this.swipeToCloseKeyboard,
+            type: this.swipeToCloseKeyboard.runtimeType),
         // ConfigEntry(
         //     name: "emojiFontFamily",
         //     value: this.emojiFontFamily,
