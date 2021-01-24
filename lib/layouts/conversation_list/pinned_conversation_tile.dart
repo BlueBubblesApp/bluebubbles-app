@@ -51,6 +51,7 @@ class _PinnedConversationTileState extends State<PinnedConversationTile>
   bool hideDividers = false;
   bool isFetching = false;
   bool denseTiles = false;
+  var _tapPosition;
 
   @override
   void initState() {
@@ -168,12 +169,14 @@ class _PinnedConversationTileState extends State<PinnedConversationTile>
     super.build(context);
 
     return Material(
+        color: Theme.of(context).backgroundColor,
         child: GestureDetector(
             onTapDown: (details) {
               if (!this.mounted) return;
 
               setState(() {
                 isPressed = true;
+                _tapPosition = details.globalPosition;
               });
             },
             onTapUp: this.onTapUp,
@@ -186,8 +189,76 @@ class _PinnedConversationTileState extends State<PinnedConversationTile>
             },
             onLongPress: () async {
               HapticFeedback.mediumImpact();
-              await widget.chat.setUnreadStatus(!widget.chat.hasUnreadMessage);
-              if (this.mounted) setState(() {});
+              final RenderBox overlay =
+                  Overlay.of(context).context.findRenderObject();
+              showMenu(
+                context: context,
+                position: RelativeRect.fromRect(
+                    _tapPosition &
+                        const Size(40, 40), // smaller rect, the touch area
+                    Offset.zero & overlay.size // Bigger rect, the entire screen
+                    ),
+                // onSelected: () => {},
+
+                items: <PopupMenuEntry<int>>[
+                  PopupMenuItem(
+                    value: 0,
+                    child: Row(
+                      children: <Widget>[
+                        Icon(Icons.star),
+                        Text("Un-Pin"),
+                      ],
+                    ),
+                  ),
+                  PopupMenuItem(
+                    value: 1,
+                    child: Row(
+                      children: <Widget>[
+                        Container(
+                          padding: EdgeInsets.only(right: 4),
+                          child: SvgPicture.asset(
+                            "assets/icon/moon.svg",
+                            color: Theme.of(context).textTheme.subtitle1.color,
+                            width: Theme.of(context)
+                                .textTheme
+                                .bodyText2
+                                .apply(fontSizeFactor: 0.75)
+                                .fontSize,
+                            height: Theme.of(context)
+                                .textTheme
+                                .bodyText2
+                                .apply(fontSizeFactor: 0.75)
+                                .fontSize,
+                          ),
+                        ),
+                        Text(widget.chat.isMuted
+                            ? 'Show Alerts'
+                            : 'Hide Alerts'),
+                      ],
+                    ),
+                  ),
+                  // PopupMenuItem(
+                  //   value: 2,
+                  //   child: Row(
+                  //     children: <Widget>[
+                  //       Icon(Icons.delete),
+                  //       Text("Delete"),
+                  //     ],
+                  //   ),
+                  // )
+                ],
+              ).then<void>((int option) {
+                if (option == 0) {
+                  widget.chat.unpin();
+                  EventDispatcher().emit("refresh", null);
+                  if (this.mounted) setState(() {});
+                } else if (option == 1) {
+                  widget.chat.isMuted = !widget.chat.isMuted;
+                  widget.chat.save(updateLocalVals: true);
+                  EventDispatcher().emit("refresh", null);
+                  if (this.mounted) setState(() {});
+                }
+              });
             },
             child: Column(children: [
               ContactAvatarGroupWidget(
@@ -199,19 +270,44 @@ class _PinnedConversationTileState extends State<PinnedConversationTile>
                 onTap: this.onTapUpBypass,
               ),
               Container(
-                padding: EdgeInsets.only(top: 10),
-                child: Text(widget.chat.title != null ? widget.chat.title : "",
-                    style: Theme.of(context).textTheme.bodyText2.apply(
-                          fontSizeFactor: 0.75,
-                          color: Theme.of(context)
-                              .textTheme
-                              .subtitle1
-                              .color
-                              .withOpacity(
-                                0.85,
-                              ),
-                        )),
-              )
+                  padding: EdgeInsets.only(top: 10),
+                  child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        (widget.chat.isMuted)
+                            ? Container(
+                                padding: EdgeInsets.only(right: 4),
+                                child: SvgPicture.asset(
+                                  "assets/icon/moon.svg",
+                                  color: Theme.of(context)
+                                      .textTheme
+                                      .subtitle1
+                                      .color,
+                                  width: Theme.of(context)
+                                      .textTheme
+                                      .bodyText2
+                                      .apply(fontSizeFactor: 0.75)
+                                      .fontSize,
+                                  height: Theme.of(context)
+                                      .textTheme
+                                      .bodyText2
+                                      .apply(fontSizeFactor: 0.75)
+                                      .fontSize,
+                                ),
+                              )
+                            : Container(),
+                        Text(widget.chat.title != null ? widget.chat.title : "",
+                            style: Theme.of(context).textTheme.bodyText2.apply(
+                                  fontSizeFactor: 0.75,
+                                  color: Theme.of(context)
+                                      .textTheme
+                                      .subtitle1
+                                      .color
+                                      .withOpacity(
+                                        0.85,
+                                      ),
+                                ))
+                      ]))
             ])));
   }
 

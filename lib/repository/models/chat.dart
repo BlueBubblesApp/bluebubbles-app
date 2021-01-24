@@ -766,6 +766,30 @@ class Chat {
     return this;
   }
 
+  Future<Chat> pin() async {
+    final Database db = await DBProvider.db.database;
+    if (this.id == null) return this;
+
+    this.isPinned = true;
+    await db.update("chat", {"isPinned": 1},
+        where: "ROWID = ?", whereArgs: [this.id]);
+
+    ChatBloc()?.pinChat(this);
+    return this;
+  }
+
+  Future<Chat> unpin() async {
+    final Database db = await DBProvider.db.database;
+    if (this.id == null) return this;
+
+    this.isPinned = false;
+    await db.update("chat", {"isPinned": 0},
+        where: "ROWID = ?", whereArgs: [this.id]);
+
+    ChatBloc()?.unPinChat(this);
+    return this;
+  }
+
   static Future<Chat> findOne(Map<String, dynamic> filters) async {
     final Database db = await DBProvider.db.database;
 
