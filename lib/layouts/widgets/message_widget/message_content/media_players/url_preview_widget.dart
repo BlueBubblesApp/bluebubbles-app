@@ -114,7 +114,8 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
         }
       }
 
-      widget.message.updateMetadata(meta);
+      widget.message.metadata = meta.toJson();
+      widget.message.update();
 
       if (!MetadataHelper.isNotEmpty(data)) {
         data = meta;
@@ -156,9 +157,7 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
                   .textTheme
                   .bodyText1
                   .apply(fontWeightDelta: 2));
-        } else if (data != null &&
-            data.title != null &&
-            data.title != "Image Preview") {
+        } else if (data != null && data.title != null) {
           return Text(
             data.title,
             style:
@@ -166,8 +165,6 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
             overflow: TextOverflow.ellipsis,
             maxLines: 2,
           );
-        } else if (data.title == "Image Preview") {
-          return Container();
         } else {
           return Text("Unable to Load Preview",
               style: Theme.of(context)
@@ -261,11 +258,8 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
                                         ))
                                     : Container(),
                                 Padding(
-                                  padding: EdgeInsets.only(
-                                      top: (data?.title == "Image Preview"
-                                          ? 0
-                                          : 5.0),
-                                      bottom: 10.0),
+                                  padding:
+                                      EdgeInsets.only(top: 5.0, bottom: 10.0),
                                   child: Text(
                                     widget.message.text
                                         .replaceAll("https://", "")
