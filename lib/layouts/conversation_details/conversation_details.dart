@@ -257,10 +257,10 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                             Theme.of(context).accentColor.withOpacity(0.6),
                         inactiveThumbColor: Theme.of(context).accentColor,
                         onChanged: (value) async {
-                          if (value) {
-                            await widget.chat.pin();
+                          if (!value) {
+                            ChatBloc().unPinChat(widget.chat);
                           } else {
-                            await widget.chat.unpin();
+                            ChatBloc().pinChat(widget.chat);
                           }
 
                           EventDispatcher().emit("refresh", null);

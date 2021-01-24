@@ -167,27 +167,52 @@ class _PinnedConversationTileState extends State<PinnedConversationTile>
   Widget build(BuildContext context) {
     super.build(context);
 
-    return Column(children: [
-      ContactAvatarGroupWidget(
-        participants: widget.chat.participants,
-        chat: widget.chat,
-        width: 100,
-        height: 100,
-        editable: false,
-        onTap: this.onTapUpBypass,
-      ),
-      Container(
-        padding: EdgeInsets.only(top: 10),
-        child: Text(widget.chat.title != null ? widget.chat.title : "",
-            style: Theme.of(context).textTheme.bodyText2.apply(
-                  fontSizeFactor: 0.75,
-                  color:
-                      Theme.of(context).textTheme.subtitle1.color.withOpacity(
-                            0.85,
-                          ),
-                )),
-      )
-    ]);
+    return Material(
+        child: GestureDetector(
+            onTapDown: (details) {
+              if (!this.mounted) return;
+
+              setState(() {
+                isPressed = true;
+              });
+            },
+            onTapUp: this.onTapUp,
+            onTapCancel: () {
+              if (!this.mounted) return;
+
+              setState(() {
+                isPressed = false;
+              });
+            },
+            onLongPress: () async {
+              HapticFeedback.mediumImpact();
+              await widget.chat.setUnreadStatus(!widget.chat.hasUnreadMessage);
+              if (this.mounted) setState(() {});
+            },
+            child: Column(children: [
+              ContactAvatarGroupWidget(
+                participants: widget.chat.participants,
+                chat: widget.chat,
+                width: 100,
+                height: 100,
+                editable: false,
+                onTap: this.onTapUpBypass,
+              ),
+              Container(
+                padding: EdgeInsets.only(top: 10),
+                child: Text(widget.chat.title != null ? widget.chat.title : "",
+                    style: Theme.of(context).textTheme.bodyText2.apply(
+                          fontSizeFactor: 0.75,
+                          color: Theme.of(context)
+                              .textTheme
+                              .subtitle1
+                              .color
+                              .withOpacity(
+                                0.85,
+                              ),
+                        )),
+              )
+            ])));
   }
 
   @override

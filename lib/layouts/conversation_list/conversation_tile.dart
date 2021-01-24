@@ -177,9 +177,9 @@ class _ConversationTileState extends State<ConversationTile>
           icon: Icons.star,
           onTap: () async {
             if (widget.chat.isPinned) {
-              await widget.chat.unpin();
+              ChatBloc().unPinChat(widget.chat);
             } else {
-              await widget.chat.pin();
+              ChatBloc().pinChat(widget.chat);
             }
 
             EventDispatcher().emit("refresh", null);

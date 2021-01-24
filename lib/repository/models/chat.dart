@@ -195,6 +195,7 @@ class Chat {
       if (!updateLocalVals) {
         this.isMuted = existing.isMuted;
         this.isArchived = existing.isArchived;
+        this.isPinned = existing.isPinned;
         this.hasUnreadMessage = existing.hasUnreadMessage;
       }
     }
@@ -762,30 +763,6 @@ class Chat {
       this.participants.remove(participant);
     }
 
-    return this;
-  }
-
-  Future<Chat> pin() async {
-    final Database db = await DBProvider.db.database;
-    if (this.id == null) return this;
-
-    this.isPinned = true;
-    await db.update("chat", {"isPinned": 1},
-        where: "ROWID = ?", whereArgs: [this.id]);
-
-    ChatBloc()?.updateChat(this);
-    return this;
-  }
-
-  Future<Chat> unpin() async {
-    final Database db = await DBProvider.db.database;
-    if (this.id == null) return this;
-
-    this.isPinned = false;
-    await db.update("chat", {"isPinned": 0},
-        where: "ROWID = ?", whereArgs: [this.id]);
-
-    ChatBloc()?.updateChat(this);
     return this;
   }
 

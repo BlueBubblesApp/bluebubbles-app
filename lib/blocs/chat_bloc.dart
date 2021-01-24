@@ -303,6 +303,28 @@ class ChatBloc {
     await this.addToSink(_chats);
   }
 
+  void pinChat(Chat chat) async {
+    _chats.removeWhere((element) => element.guid == chat.guid);
+    _pinnedChats.add(chat);
+    chat.isPinned = true;
+    await chat.save(updateLocalVals: true);
+    initTileValsForChat(chat);
+    await this.addToSink(_chats);
+    await this.addToPinnedSink(_pinnedChats);
+    _pinnedChatController.sink.add(_pinnedChats);
+  }
+
+  void unPinChat(Chat chat) async {
+    _pinnedChats.removeWhere((element) => element.guid == chat.guid);
+    chat.isPinned = false;
+    await chat.save(updateLocalVals: true);
+    await initTileValsForChat(chat);
+    _chats.add(chat);
+    _pinnedChatController.sink.add(_pinnedChats);
+    await this.addToSink(_chats);
+    await this.addToPinnedSink(_pinnedChats);
+  }
+
   void deleteChat(Chat chat) async {
     _archivedChats.removeWhere((element) => element.id == chat.id);
     _chats.removeWhere((element) => element.id == chat.id);
