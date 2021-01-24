@@ -22,6 +22,7 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:device_info/device_info.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_displaymode/flutter_displaymode.dart';
 
 import './conversation_tile.dart';
 import 'package:flutter/cupertino.dart';
@@ -45,7 +46,7 @@ class _ConversationListState extends State<ConversationList> {
   bool showIndicator = false;
   bool moveChatCreatorButton = false;
 
-  Brightness brightness = Brightness.light;
+  Brightness brightness;
   Color previousBackgroundColor;
   bool gotBrightness = false;
   String model;
@@ -255,24 +256,23 @@ class _ConversationListState extends State<ConversationList> {
           ),
         )
       : Container();
-  FloatingActionButton buildFloatinActionButton(){
+  FloatingActionButton buildFloatinActionButton() {
     return FloatingActionButton(
-        
-        backgroundColor: Theme.of(context).primaryColor,
-        child: Icon(Icons.message, color: Colors.white, size: 25),
-        onPressed: () {
-          Navigator.of(context).push(
-            ThemeSwitcher.buildPageRoute(
-              builder: (BuildContext context) {
-                return ConversationView(
-                  isCreator: true,
-                );
-              },
-            ),
-          );
-        },
-      );
-  } 
+      backgroundColor: Theme.of(context).primaryColor,
+      child: Icon(Icons.message, color: Colors.white, size: 25),
+      onPressed: () {
+        Navigator.of(context).push(
+          ThemeSwitcher.buildPageRoute(
+            builder: (BuildContext context) {
+              return ConversationView(
+                isCreator: true,
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -482,7 +482,12 @@ class _Cupertino extends StatelessWidget {
                                   }),
                             ),
                           ),
-                          Container(width: SettingsManager().settings.moveNewMessageToheader ? 7.0: 10.0),
+                          Container(
+                              width: SettingsManager()
+                                      .settings
+                                      .moveNewMessageToheader
+                                  ? 7.0
+                                  : 10.0),
                           if (SettingsManager().settings.moveNewMessageToheader)
                             ClipOval(
                               child: Material(
@@ -509,10 +514,13 @@ class _Cupertino extends StatelessWidget {
                                     }),
                               ),
                             ),
-                          if (SettingsManager()
-                              .settings
-                              .moveNewMessageToheader)
-                            Container(width: SettingsManager().settings.moveNewMessageToheader ? 7.0: 10.0),
+                          if (SettingsManager().settings.moveNewMessageToheader)
+                            Container(
+                                width: SettingsManager()
+                                        .settings
+                                        .moveNewMessageToheader
+                                    ? 7.0
+                                    : 10.0),
                           parent.buildSettingsButton(),
                           Spacer(
                             flex: 1,
@@ -583,8 +591,9 @@ class _Cupertino extends StatelessWidget {
             ),
           ],
         ),
-        floatingActionButton:
-            !SettingsManager().settings.moveNewMessageToheader? parent.buildFloatinActionButton() : null,
+        floatingActionButton: !SettingsManager().settings.moveNewMessageToheader
+            ? parent.buildFloatinActionButton()
+            : null,
       ),
     );
   }
@@ -600,8 +609,33 @@ class _Material extends StatefulWidget {
 
 class __MaterialState extends State<_Material> {
   List<Chat> selected = [];
+  Settings _settingsCopy;
+  List<DisplayMode> modes;
+  DisplayMode currentMode;
+  Brightness brightness;
+  Color previousBackgroundColor;
+  bool gotBrightness = false;
+  void loadBrightness() {
+    Color now = Theme.of(context).backgroundColor;
+    bool themeChanged =
+        previousBackgroundColor == null || previousBackgroundColor != now;
+    if (!themeChanged && gotBrightness) return;
+
+    previousBackgroundColor = now;
+    if (this.context == null) {
+      brightness = Brightness.light;
+      gotBrightness = true;
+      return;
+    }
+
+    bool isDark = now.computeLuminance() < 0.179;
+    brightness = isDark ? Brightness.dark : Brightness.light;
+    gotBrightness = true;
+    if (this.mounted) setState(() {});
+  }
   @override
   Widget build(BuildContext context) {
+    loadBrightness();
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: Theme.of(context).backgroundColor,
@@ -613,6 +647,7 @@ class __MaterialState extends State<_Material> {
             duration: Duration(milliseconds: 500),
             child: selected.isEmpty
                 ? AppBar(
+                    brightness: brightness,
                     bottom: PreferredSize(
                       child: Container(
                         color: Theme.of(context).dividerColor,
@@ -865,8 +900,10 @@ class __MaterialState extends State<_Material> {
             }
           },
         ),
-        floatingActionButton:
-            selected.isEmpty && !SettingsManager().settings.moveNewMessageToheader? widget.parent.buildFloatinActionButton() : null,
+        floatingActionButton: selected.isEmpty &&
+                !SettingsManager().settings.moveNewMessageToheader
+            ? widget.parent.buildFloatinActionButton()
+            : null,
       ),
     );
   }

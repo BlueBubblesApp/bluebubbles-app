@@ -16,8 +16,10 @@ import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/outgoing_queue.dart';
 import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:keyboard_attachable/keyboard_attachable.dart';
 
 import '../../repository/models/chat.dart';
@@ -64,6 +66,13 @@ class ConversationViewState extends State<ConversationView>
   String existingText;
   bool keyboardOpen = false;
   bool keyboardClosed = false;
+  Settings _settingsCopy;
+  List<DisplayMode> modes;
+  DisplayMode currentMode;
+  Brightness brightness;
+  Color previousBackgroundColor;
+  bool gotBrightness = false;
+  
 
   @override
   void initState() {
@@ -220,8 +229,7 @@ class ConversationViewState extends State<ConversationView>
           onPressed: () {
             currentChat.scrollToBottom();
             if (SettingsManager().settings.openKeyboardOnSTB) {
-              SystemChannels.textInput
-                                .invokeMethod('TextInput.show');
+              SystemChannels.textInput.invokeMethod('TextInput.show');
             }
           },
           child: Icon(
@@ -234,9 +242,27 @@ class ConversationViewState extends State<ConversationView>
     }
     return Container();
   }
+  void loadBrightness() {
+    Color now = Theme.of(context).backgroundColor;
+    bool themeChanged =
+        previousBackgroundColor == null || previousBackgroundColor != now;
+    if (!themeChanged && gotBrightness) return;
 
+    previousBackgroundColor = now;
+    if (this.context == null) {
+      brightness = Brightness.light;
+      gotBrightness = true;
+      return;
+    }
+
+    bool isDark = now.computeLuminance() < 0.179;
+    brightness = isDark ? Brightness.dark : Brightness.light;
+    gotBrightness = true;
+    if (this.mounted) setState(() {});
+  }
   @override
   Widget build(BuildContext context) {
+    loadBrightness();
     currentChat?.isAlive = true;
 
     if (widget.customMessageBloc != null && messageBloc == null) {
@@ -275,8 +301,7 @@ class ConversationViewState extends State<ConversationView>
                           if (details.delta.dy > 0 && keyboardOpen) {
                             SystemChannels.textInput
                                 .invokeMethod('TextInput.hide');
-                          }
-                          else if (details.delta.dy < 0) {
+                          } else if (details.delta.dy < 0) {
                             SystemChannels.textInput
                                 .invokeMethod('TextInput.show');
                           }

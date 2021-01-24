@@ -10,10 +10,12 @@ import 'package:bluebubbles/layouts/settings/settings_panel.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/repository/models/message.dart';
+import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_displaymode/flutter_displaymode.dart';
 
 class ServerManagementPanel extends StatefulWidget {
   ServerManagementPanel({Key key}) : super(key: key);
@@ -26,9 +28,34 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
   int latency;
   String fetchStatus;
   int lastRestart;
+  Settings _settingsCopy;
+  List<DisplayMode> modes;
+  DisplayMode currentMode;
+  Brightness brightness;
+  Color previousBackgroundColor;
+  bool gotBrightness = false;
+  void loadBrightness() {
+    Color now = Theme.of(context).backgroundColor;
+    bool themeChanged =
+        previousBackgroundColor == null || previousBackgroundColor != now;
+    if (!themeChanged && gotBrightness) return;
+
+    previousBackgroundColor = now;
+    if (this.context == null) {
+      brightness = Brightness.light;
+      gotBrightness = true;
+      return;
+    }
+
+    bool isDark = now.computeLuminance() < 0.179;
+    brightness = isDark ? Brightness.dark : Brightness.light;
+    gotBrightness = true;
+    if (this.mounted) setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {
+    loadBrightness();
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: Theme.of(context).backgroundColor,
@@ -40,11 +67,14 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
           child: ClipRRect(
             child: BackdropFilter(
               child: AppBar(
-                brightness: getBrightness(context),
+                brightness: brightness,
                 toolbarHeight: 100.0,
                 elevation: 0,
                 leading: IconButton(
-                  icon: Icon(SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_back_ios : Icons.arrow_back,
+                  icon: Icon(
+                      SettingsManager().settings.skin == Skins.IOS
+                          ? Icons.arrow_back_ios
+                          : Icons.arrow_back,
                       color: Theme.of(context).primaryColor),
                   onPressed: () {
                     Navigator.of(context).pop();
