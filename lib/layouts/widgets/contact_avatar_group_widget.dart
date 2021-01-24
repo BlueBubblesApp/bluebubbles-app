@@ -53,7 +53,7 @@ class _ContactAvatarGroupWidgetState extends State<ContactAvatarGroupWidget> {
                   alignment: Alignment.topRight,
                   child: ContactAvatarWidget(
                     handle: participants[0],
-                    size: 26,
+                    size: 0.65 * (widget.width ?? 40),
                     fontSize: 12,
                     editable: false,
                     onTap: widget.onTap,
@@ -63,7 +63,7 @@ class _ContactAvatarGroupWidgetState extends State<ContactAvatarGroupWidget> {
                   alignment: Alignment.bottomLeft,
                   child: ContactAvatarWidget(
                     handle: participants[1],
-                    size: 26,
+                    size: 0.65 * (widget.width ?? 40),
                     fontSize: 12,
                     editable: false,
                     onTap: widget.onTap,
@@ -73,9 +73,10 @@ class _ContactAvatarGroupWidgetState extends State<ContactAvatarGroupWidget> {
             )
           : ContactAvatarWidget(
               handle: participants.first,
-              borderThickness: 0.1,
+              borderThickness: 0,
               editable: widget.editable,
               onTap: widget.onTap,
+              size: widget.width ?? 40,
             ),
     );
   }

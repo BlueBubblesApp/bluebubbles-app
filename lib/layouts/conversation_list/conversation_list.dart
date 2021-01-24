@@ -238,6 +238,7 @@ class _ConversationListState extends State<ConversationList> {
                   children: <Widget>[
                     Container(height: 20),
                     Container(
+                      padding: const EdgeInsets.only(right: 10.0),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: <Widget>[

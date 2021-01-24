@@ -230,6 +230,8 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget>
           ),
           child: CircleAvatar(
             radius: (widget.size != null) ? widget.size / 2 : 20,
+            backgroundImage:
+                state.contactImage == null ? null : state.contactImage,
             child: state.contactImage == null
                 ? Container(
                     decoration: BoxDecoration(
@@ -248,8 +250,9 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget>
                           : Text(
                               state.initials,
                               style: TextStyle(
+                                fontWeight: FontWeight.w600,
                                 fontSize: (widget.fontSize == null)
-                                    ? 18
+                                    ? 20
                                     : widget.fontSize,
                               ),
                               textAlign: TextAlign.center,
@@ -257,9 +260,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget>
                       alignment: AlignmentDirectional.center,
                     ),
                   )
-                : CircleAvatar(
-                    backgroundImage: state.contactImage,
-                  ),
+                : null,
           ),
         ));
   }

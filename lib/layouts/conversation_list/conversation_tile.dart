@@ -280,7 +280,10 @@ class _ConversationTileState extends State<ConversationTile>
                     contentPadding: EdgeInsets.only(left: 0),
                     title: Text(
                         widget.chat.title != null ? widget.chat.title : "",
-                        style: Theme.of(context).textTheme.bodyText1,
+                        style: Theme.of(context)
+                            .textTheme
+                            .bodyText1
+                            .apply(fontWeightDelta: 2),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis),
                     subtitle: widget.chat.latestMessageText != null &&
@@ -290,7 +293,8 @@ class _ConversationTileState extends State<ConversationTile>
                             widget.chat.latestMessageText != null
                                 ? widget.chat.latestMessageText
                                 : "",
-                            style: Theme.of(context).textTheme.subtitle1.apply(
+                            style: Theme.of(context).textTheme.bodyText2.apply(
+                                  fontSizeFactor: 0.75,
                                   color: Theme.of(context)
                                       .textTheme
                                       .subtitle1
@@ -299,47 +303,53 @@ class _ConversationTileState extends State<ConversationTile>
                                         0.85,
                                       ),
                                 ),
-                            maxLines: 1,
+                            maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
                     leading: ContactAvatarGroupWidget(
                       participants: widget.chat.participants,
                       chat: widget.chat,
-                      width: 40,
-                      height: 40,
+                      width: 50,
+                      height: 50,
                       editable: false,
                       onTap: this.onTapUpBypass,
                     ),
                     trailing: Container(
-                      padding: EdgeInsets.only(right: 3),
-                      width: 80,
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: <Widget>[
-                          Container(
-                            padding: EdgeInsets.only(right: 2),
-                            child: Text(
-                              widget.chat.getDateText(),
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .subtitle2
-                                  .apply(
-                                      color: Theme.of(context)
-                                          .textTheme
-                                          .subtitle2
-                                          .color
-                                          .withOpacity(0.85)),
+                        padding: EdgeInsets.only(right: 10),
+                        width: 100,
+                        child: Column(
+                          children: [
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: <Widget>[
+                                Container(
+                                  padding: EdgeInsets.only(right: 2),
+                                  child: Text(
+                                    widget.chat.getDateText(),
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .subtitle2
+                                        .apply(
+                                            color: Theme.of(context)
+                                                .textTheme
+                                                .subtitle2
+                                                .color
+                                                .withOpacity(0.85)),
+                                  ),
+                                ),
+                                Icon(
+                                  Icons.arrow_forward_ios,
+                                  color: Theme.of(context)
+                                      .textTheme
+                                      .subtitle1
+                                      .color,
+                                  size: 15,
+                                ),
+                              ],
                             ),
-                          ),
-                          Icon(
-                            Icons.arrow_forward_ios,
-                            color: Theme.of(context).textTheme.subtitle1.color,
-                            size: 15,
-                          ),
-                        ],
-                      ),
-                    ),
+                          ],
+                        )),
                   ),
                 ),
               ),
