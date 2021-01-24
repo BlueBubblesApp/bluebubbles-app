@@ -5,7 +5,7 @@ import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:sqflite/sqflite.dart';
-
+import 'package:metadata_fetch/metadata_fetch.dart';
 import '../database.dart';
 import 'chat.dart';
 import 'handle.dart';
@@ -342,7 +342,22 @@ class Message {
 
     return newMessage;
   }
+  Future<Message> updateMetadata(Metadata metadata) async {
+    final Database db = await DBProvider.db.database;
+    if (this.id == null) return this;
+    this.metadata = metadata.toJson();
 
+    await db.update(
+        "message",
+        {
+          "metadata":
+              (isNullOrEmpty(this.metadata)) ? null : jsonEncode(this.metadata)
+        },
+        where: "ROWID = ?",
+        whereArgs: [this.id]);
+
+    return this;
+  }
   Future<Message> update() async {
     final Database db = await DBProvider.db.database;
 

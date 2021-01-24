@@ -5,17 +5,26 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:metadata_fetch/metadata_fetch.dart';
 import 'package:http/http.dart' as http;
-import 'package:html/dom.dart' as dom;
+import 'package:html/parser.dart' as parser;
+import 'package:html/dom.dart';
 
+/// Adds getter/setter for the original [Response.request.url]
+extension HttpRequestData on Document {
+  static String _requestUrl;
+
+  String get requestUrl {
+    return _requestUrl;
+  }
+
+  set requestUrl(String newValue) {
+    _requestUrl = newValue;
+  }
+
+}
 class MetadataHelper {
   static bool mapIsNotEmpty(Map<String, dynamic> data) {
     if (data == null) return false;
-    return data.containsKey("title") &&
-        data["title"] != null &&
-        data.containsKey("description") &&
-        data["description"] != null &&
-        data.containsKey("image") &&
-        data["image"] != null;
+    return data.containsKey("title") && data["title"] != null;
   }
 
   static bool isNotEmpty(Metadata data) {
@@ -104,7 +113,7 @@ class MetadataHelper {
 
       // Since this is a short-URL, we need to get the actual URL out
       String href;
-      for (dom.Element i in document?.head?.children ?? []) {
+      for (var i in document?.head?.children ?? []) {
         // Skip over all links
         if (i.localName != "link") continue;
 
@@ -139,7 +148,12 @@ class MetadataHelper {
       data = await MetadataHelper._manuallyGetMetadata(url);
       data.url = url;
     }
-
+// If the URL is supposedly to an actual image, set the image to the URL manually
+    RegExp exp = new RegExp(r"(.png|.jpg|.gif|.tiff|.jpeg)$");
+    if (data?.image == null && data?.title == null && exp.hasMatch(data.url)) {
+      data.image = data.url;
+      data.title = "Image Preview";
+    }
     // Remove the image data if the image data links to an "empty image"
     String imageData = data?.image ?? "";
     if (imageData.contains("renderTimingPixel.png") ||
@@ -172,15 +186,35 @@ class MetadataHelper {
       return url;
     }
   }
+  /// Takes an [http.Response] and returns a [html.Document]
+  /// NOTE: I overrode this method from the library because there is
+  /// a bug in the library's code with parsing the document.
+static Document _responseToDocument(http.Response response) {
+  if (response.statusCode != 200) {
+    return null;
+  }
 
+  Document document;
+  try {
+    document = parser.parse(response.body.toString());
+    document.requestUrl = response.request.url.toString();
+  } catch (err) {
+    print("Error parsing HTML document: ${err.toString()}");
+    return document;
+  }
+
+  return document;
+}
   /// Manually tries to parse out metadata from a given [url]
   static Future<Metadata> _manuallyGetMetadata(String url) async {
     Metadata meta = new Metadata();
 
     var response = await http.get(url);
-    var document = responseToDocument(response);
+    var document = MetadataHelper._responseToDocument(response);
 
-    for (dom.Element i in document.head?.children ?? []) {
+    if (document == null) return meta;
+
+    for (var i in document.head?.children ?? []) {
       if (i.localName != "meta") continue;
       for (var entry in i.attributes.entries) {
         String prop = entry.key as String;
