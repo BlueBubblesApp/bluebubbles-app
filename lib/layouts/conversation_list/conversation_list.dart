@@ -44,6 +44,7 @@ class _ConversationListState extends State<ConversationList> {
   bool colorfulAvatars = false;
   bool reducedForehead = false;
   bool showIndicator = false;
+  bool hasPinnedChata = false;
   bool moveChatCreatorButton = false;
   int pinnedChats = 0;
   Brightness brightness;
@@ -634,17 +635,18 @@ class __MaterialState extends State<_Material> {
     if (this.mounted) setState(() {});
   }
 
-  void countPinnedChats() {
+  void hasPinnedChat() {
     for (var i = 0; i < widget.parent.chats.length; i++) {
       if (widget.parent.chats[i].isPinned) {
-        widget.parent.pinnedChats++;
+        widget.parent.hasPinnedChata = true;
+        break;
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    countPinnedChats();
+    hasPinnedChat();
     loadBrightness();
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
@@ -877,73 +879,79 @@ class __MaterialState extends State<_Material> {
                   ),
                 );
               }
-              countPinnedChats();
-              print(widget.parent.pinnedChats);
-              if (SettingsManager().settings.coolPinnedChatsMaterial &&
-                  widget.parent.pinnedChats > 0) {
+              hasPinnedChat();
+              print(widget.parent.hasPinnedChata);
+              if (SettingsManager().settings.coolPinnedChatsMaterial) {
                 return SingleChildScrollView(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     mainAxisSize: MainAxisSize.max,
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
-                      Container(
-                        height: 20.0,
-                        decoration: BoxDecoration(
-                            border: Border.all(
-                              color: Colors.transparent,
-                            ),
-                            borderRadius:
-                                BorderRadius.all(Radius.circular(20))),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.all(6.0),
-                        //  new Color(0xFF171717)
-                        decoration: new BoxDecoration(
-                            color: new Color(0xFF171717),
-                            borderRadius: new BorderRadius.only(
-                              topLeft: const Radius.circular(20.0),
-                              topRight: const Radius.circular(20.0),
-                              bottomLeft: const Radius.circular(20.0),
-                              bottomRight: const Radius.circular(20.0),
-                            )),
-                        child: ListView.builder(
-                          shrinkWrap: true,
-                          physics: NeverScrollableScrollPhysics(),
-                          itemBuilder: (context, index) {
-                            if (!widget.parent.widget.showArchivedChats &&
-                                widget.parent.chats[index].isArchived)
-                              return Container();
-                            if (widget.parent.widget.showArchivedChats &&
-                                !widget.parent.chats[index].isArchived)
-                              return Container();
-                            if (widget.parent.chats[index].isPinned) {
-                              return ConversationTile(
-                                key: Key(
-                                    widget.parent.chats[index].guid.toString()),
-                                chat: widget.parent.chats[index],
-                                inSelectMode: selected.isNotEmpty,
-                                selected: selected,
-                                onSelect: (bool selected) {
-                                  if (selected) {
-                                    this
-                                        .selected
-                                        .add(widget.parent.chats[index]);
-                                    setState(() {});
-                                  } else {
-                                    this.selected.removeWhere((element) =>
-                                        element.guid ==
-                                        widget.parent.chats[index].guid);
-                                    setState(() {});
+                      (widget.parent.hasPinnedChata)
+                          ? Container(
+                              height: 20.0,
+                              decoration: BoxDecoration(
+                                  border: Border.all(
+                                    color: Colors.transparent,
+                                  ),
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(20))),
+                            )
+                          : Container(width: 0.0, height: 0.0),
+                      (widget.parent.hasPinnedChata)
+                          ? Container(
+                              padding: EdgeInsets.fromLTRB(
+                                  6.0,
+                                  (widget.parent.hasPinnedChata) ? 6.0 : 0,
+                                  6.0,
+                                  (widget.parent.hasPinnedChata) ? 6.0 : 0),
+                              decoration: new BoxDecoration(
+                                  color: new Color(0xFF171717),
+                                  borderRadius: new BorderRadius.only(
+                                    topLeft: const Radius.circular(20.0),
+                                    topRight: const Radius.circular(20.0),
+                                    bottomLeft: const Radius.circular(20.0),
+                                    bottomRight: const Radius.circular(20.0),
+                                  )),
+                              child: ListView.builder(
+                                shrinkWrap: true,
+                                physics: NeverScrollableScrollPhysics(),
+                                itemBuilder: (context, index) {
+                                  if (!widget.parent.widget.showArchivedChats &&
+                                      widget.parent.chats[index].isArchived)
+                                    return Container();
+                                  if (widget.parent.widget.showArchivedChats &&
+                                      !widget.parent.chats[index].isArchived)
+                                    return Container();
+                                  if (widget.parent.chats[index].isPinned) {
+                                    return ConversationTile(
+                                      key: Key(widget.parent.chats[index].guid
+                                          .toString()),
+                                      chat: widget.parent.chats[index],
+                                      inSelectMode: selected.isNotEmpty,
+                                      selected: selected,
+                                      onSelect: (bool selected) {
+                                        if (selected) {
+                                          this
+                                              .selected
+                                              .add(widget.parent.chats[index]);
+                                          setState(() {});
+                                        } else {
+                                          this.selected.removeWhere((element) =>
+                                              element.guid ==
+                                              widget.parent.chats[index].guid);
+                                          setState(() {});
+                                        }
+                                      },
+                                    );
                                   }
+                                  return Container();
                                 },
-                              );
-                            }
-                            return Container();
-                          },
-                          itemCount: widget.parent.chats?.length ?? 0,
-                        ),
-                      ),
+                                itemCount: widget.parent.chats?.length ?? 0,
+                              ),
+                            )
+                          : Container(width: 0.0, height: 0.0),
                       Container(
                         height: 20.0,
                         decoration: BoxDecoration(

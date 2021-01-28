@@ -179,6 +179,7 @@ class _ConversationTileState extends State<ConversationTile>
           foregroundColor: Theme.of(context).textTheme.bodyText1.color,
           icon: Icons.star,
           onTap: () async {
+            
             if (widget.chat.isPinned) {
               await widget.chat.unpin();
             } else {
