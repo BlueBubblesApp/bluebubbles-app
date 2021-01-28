@@ -222,7 +222,7 @@ class ConversationViewState extends State<ConversationView>
       );
     } else if (currentChat != null &&
         currentChat.showScrollDown &&
-        SettingsManager().settings.skin == Skins.Material) {
+        (SettingsManager().settings.skin == Skins.Material || SettingsManager().settings.skin == Skins.Samsung)) {
       return Padding(
         padding: const EdgeInsets.only(bottom: 55.0),
         child: FloatingActionButton(

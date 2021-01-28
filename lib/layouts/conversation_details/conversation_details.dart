@@ -88,6 +88,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                 ),
               )
             : AppBar(
+                iconTheme: IconThemeData(color: Theme.of(context).primaryColor),
                 title: Text(
                   "Details",
                   style: Theme.of(context).textTheme.headline1,

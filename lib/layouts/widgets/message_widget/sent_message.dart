@@ -75,15 +75,25 @@ class SentMessageHelper {
             decoration: BoxDecoration(
               borderRadius: SettingsManager().settings.skin == Skins.IOS
                   ? BorderRadius.circular(20)
-                  : BorderRadius.only(
-                      topLeft: Radius.circular(20),
-                      topRight: olderMessage == null ||
-                              MessageHelper.getShowTail(olderMessage, message)
-                          ? Radius.circular(20)
-                          : Radius.circular(5),
-                      bottomLeft: Radius.circular(20),
-                      bottomRight: Radius.circular(showTail ? 20 : 5),
-                    ),
+                  : (SettingsManager().settings.skin == Skins.Material)
+                      ? BorderRadius.only(
+                          topLeft: Radius.circular(20),
+                          topRight: olderMessage == null ||
+                                  MessageHelper.getShowTail(
+                                      olderMessage, message)
+                              ? Radius.circular(20)
+                              : Radius.circular(5),
+                          bottomLeft: Radius.circular(20),
+                          bottomRight: Radius.circular(showTail ? 20 : 5),
+                        )
+                      : (SettingsManager().settings.skin == Skins.Samsung)
+                          ? BorderRadius.only(
+                              topLeft: Radius.circular(15),
+                              topRight: Radius.circular(15),
+                              bottomRight: Radius.circular(15),
+                              bottomLeft: Radius.circular(15),
+                            )
+                          : null,
               color: customColor ?? bubbleColor,
             ),
             child: customContent == null
@@ -341,18 +351,36 @@ class _SentMessageState extends State<SentMessage>
       mainAxisSize: MainAxisSize.max,
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
-        MessagePopupHolder(
-          message: widget.message,
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.end,
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: msgRow,
-          ),
-        ),
-        MessageTimeStamp(
-          message: widget.message,
-        )
+        (SettingsManager().settings.skin == Skins.IOS)
+            ? MessagePopupHolder(
+                message: widget.message,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: msgRow,
+                ),
+              )
+            : (!sameSender(widget.message, widget.olderMessage))
+                ? MessageTimeStamp(
+                    message: widget.message,
+                  )
+                : Container(),
+        (SettingsManager().settings.skin != Skins.IOS)
+            ? MessagePopupHolder(
+                message: widget.message,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: msgRow,
+                ),
+              )
+            : (!sameSender(widget.message, widget.olderMessage))
+                ? MessageTimeStamp(
+                    message: widget.message,
+                  )
+                : Container(),
       ],
     );
   }

@@ -147,16 +147,25 @@ class _ReceivedMessageState extends State<ReceivedMessage>
           decoration: BoxDecoration(
             borderRadius: SettingsManager().settings.skin == Skins.IOS
                 ? BorderRadius.circular(20)
-                : BorderRadius.only(
-                    topLeft: widget.olderMessage == null ||
-                            MessageHelper.getShowTail(
-                                widget.olderMessage, widget.message)
-                        ? Radius.circular(20)
-                        : Radius.circular(5),
-                    topRight: Radius.circular(20),
-                    bottomRight: Radius.circular(20),
-                    bottomLeft: Radius.circular(widget.showTail ? 20 : 5),
-                  ),
+                : (SettingsManager().settings.skin == Skins.Material)
+                    ? BorderRadius.only(
+                        topLeft: widget.olderMessage == null ||
+                                MessageHelper.getShowTail(
+                                    widget.olderMessage, widget.message)
+                            ? Radius.circular(20)
+                            : Radius.circular(5),
+                        topRight: Radius.circular(20),
+                        bottomRight: Radius.circular(20),
+                        bottomLeft: Radius.circular(widget.showTail ? 20 : 5),
+                      )
+                    : (SettingsManager().settings.skin == Skins.Samsung)
+                        ? BorderRadius.only(
+                            topLeft: Radius.circular(15),
+                            topRight: Radius.circular(15),
+                            bottomRight: Radius.circular(15),
+                            bottomLeft: Radius.circular(15),
+                          )
+                        : null,
             gradient: LinearGradient(
               begin: AlignmentDirectional.bottomCenter,
               end: AlignmentDirectional.topCenter,
@@ -293,7 +302,9 @@ class _ReceivedMessageState extends State<ReceivedMessage>
           bottom: (widget.showTail) ? 10.0 : 0.0),
       child: Row(
         mainAxisSize: MainAxisSize.max,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        mainAxisAlignment: (SettingsManager().settings.skin == Skins.IOS)
+            ? MainAxisAlignment.spaceBetween
+            : MainAxisAlignment.start,
         children: [
           MessagePopupHolder(
             message: widget.message,
@@ -304,9 +315,15 @@ class _ReceivedMessageState extends State<ReceivedMessage>
               children: msgRow,
             ),
           ),
-          MessageTimeStamp(
-            message: widget.message,
-          )
+          (SettingsManager().settings.skin == Skins.IOS)
+              ? MessageTimeStamp(
+                  message: widget.message,
+                )
+              : (!sameSender(widget.message, widget.olderMessage))
+                  ? MessageTimeStamp(
+                      message: widget.message,
+                    )
+                  : Container(),
         ],
       ),
     );

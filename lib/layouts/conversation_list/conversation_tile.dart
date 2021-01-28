@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
+import 'package:bluebubbles/helpers/contstants.dart';
 import 'package:bluebubbles/helpers/socket_singletons.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_group_widget.dart';
@@ -443,7 +444,7 @@ class __CupertinoState extends State<_Cupertino> {
                             child: widget.parent.buildDate(),
                           ),
                           Icon(
-                            Icons.arrow_forward_ios,
+                            SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_forward_ios : Icons.arrow_forward,
                             color: Theme.of(context).textTheme.subtitle1.color,
                             size: 15,
                           ),

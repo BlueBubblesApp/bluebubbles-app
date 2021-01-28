@@ -1,4 +1,6 @@
+import 'package:bluebubbles/helpers/contstants.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -18,7 +20,7 @@ class MessageTimeStamp extends StatelessWidget {
 
           return AnimatedContainer(
             duration: Duration(milliseconds: offset == 0 ? 150 : 0),
-            width: (-offset).clamp(0, 70).toDouble(),
+            width: (SettingsManager().settings.skin == Skins.IOS) ? (-offset).clamp(0, 70).toDouble() :79,
             height: 20,
             child: Stack(
               children: [

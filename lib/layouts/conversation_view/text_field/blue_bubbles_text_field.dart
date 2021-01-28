@@ -339,7 +339,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
       children: <Widget>[
         buildShareButton(),
         buildActualTextField(),
-        if (SettingsManager().settings.skin == Skins.Material)
+        if (SettingsManager().settings.skin == Skins.Material || SettingsManager().settings.skin == Skins.Samsung)
           buildSendButton(canRecord),
       ],
     );
@@ -541,7 +541,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                             : Colors.white,
                         fontSizeDelta: -0.25,
                       ),
-                  onContentCommited: onContentCommit,
+                  //onContentCommited: onContentCommit,
                   decoration: InputDecoration(
                     isDense: true,
                     enabledBorder: OutlineInputBorder(
@@ -647,6 +647,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               if (sendCountdown != null) Text(sendCountdown.toString()),
+              (SettingsManager().settings.skin == Skins.IOS) ?
               ButtonTheme(
                 minWidth: 30,
                 height: 30,
@@ -750,6 +751,118 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                   ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(40),
+                  ),
+                ),
+              )
+              : GestureDetector(
+                onTapDown: (_) async {
+                  if (canRecord && !isRecording) {
+                    await startRecording();
+                  }
+                },
+                onTapCancel: () async {
+                  await stopRecording();
+                },
+                child: ButtonTheme(
+                  minWidth: 30,
+                  height: 30,
+                  child: RaisedButton(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 0,
+                    ),
+                    color: Theme.of(context).primaryColor,
+                    onPressed: () async {
+                      if (sendCountdown != null) {
+                        stopSending = true;
+                        sendCountdown = null;
+                        if (this.mounted) setState(() {});
+                      } else {
+                        // If send delay is enabled, delay the sending
+                        if (!isNullOrZero(
+                            SettingsManager().settings.sendDelay)) {
+                          // Break the delay into 1 second intervals
+                          for (var i = 0;
+                              i < SettingsManager().settings.sendDelay;
+                              i++) {
+                            if (i != 0 && sendCountdown == null) break;
+
+                            // Update UI with new state information
+                            if (this.mounted) {
+                              setState(() {
+                                sendCountdown =
+                                    SettingsManager().settings.sendDelay - i;
+                              });
+                            }
+
+                            await Future.delayed(new Duration(seconds: 1));
+                          }
+                        }
+
+                        if (this.mounted) {
+                          setState(() {
+                            sendCountdown = null;
+                          });
+                        }
+
+                        if (stopSending != null && stopSending) {
+                          stopSending = null;
+                          return;
+                        }
+
+                        if (await widget.onSend(
+                            pickedImages, controller.text)) {
+                          controller.text = "";
+                          pickedImages = <File>[];
+                          updateTextFieldAttachments();
+                        }
+                      }
+
+                      if (this.mounted) setState(() {});
+                    },
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        AnimatedOpacity(
+                          opacity: sendCountdown == null &&
+                                  controller.text.isEmpty &&
+                                  pickedImages.isEmpty
+                              ? 1.0
+                              : 0.0,
+                          duration: Duration(milliseconds: 150),
+                          child: Icon(
+                            Icons.mic,
+                            color: (isRecording) ? Colors.red : Colors.white,
+                            size: 20,
+                          ),
+                        ),
+                        AnimatedOpacity(
+                          opacity: (sendCountdown == null &&
+                                      (controller.text.isNotEmpty ||
+                                          pickedImages.length > 0)) &&
+                                  !isRecording
+                              ? 1.0
+                              : 0.0,
+                          duration: Duration(milliseconds: 150),
+                          child: Icon(
+                            Icons.arrow_upward,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                        ),
+                        AnimatedOpacity(
+                          opacity: sendCountdown != null ? 1.0 : 0.0,
+                          duration: Duration(milliseconds: 50),
+                          child: Icon(
+                            Icons.cancel_outlined,
+                            color: Colors.red,
+                            size: 20,
+                          ),
+                        ),
+                      ],
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(40),
+                    ),
                   ),
                 ),
               ),

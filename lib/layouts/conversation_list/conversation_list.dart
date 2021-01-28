@@ -358,13 +358,27 @@ class _Cupertino extends StatelessWidget {
           physics: ThemeManager().scrollPhysics,
           slivers: <Widget>[
             SliverAppBar(
-              iconTheme: IconThemeData(
-                  color: Theme.of(context).textTheme.headline1.color),
+              leading: IconButton(
+                icon: Icon(
+                    (SettingsManager().settings.skin == Skins.IOS &&
+                            parent.widget.showArchivedChats)
+                        ? Icons.arrow_back_ios
+                        : ((SettingsManager().settings.skin == Skins.Material &&
+                                    SettingsManager().settings.skin ==
+                                        Skins.Samsung) &&
+                                !parent.widget.showArchivedChats)
+                            ? Icons.arrow_back
+                            : null,
+                    color: Theme.of(context).primaryColor),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
               stretch: true,
               onStretchTrigger: () {
                 return null;
               },
-              expandedHeight: 80,
+              expandedHeight: (!parent.widget.showArchivedChats) ? 80 : 50,
               backgroundColor: Colors.transparent,
               pinned: false,
               flexibleSpace: FlexibleSpaceBar(
@@ -463,33 +477,41 @@ class _Cupertino extends StatelessWidget {
                           Spacer(
                             flex: 25,
                           ),
-                          ClipOval(
-                            child: Material(
-                              color:
-                                  Theme.of(context).accentColor, // button color
-                              child: InkWell(
-                                  child: SizedBox(
-                                      width: 20,
-                                      height: 20,
-                                      child: Icon(Icons.search,
-                                          color: Theme.of(context).primaryColor,
-                                          size: 12)),
-                                  onTap: () async {
-                                    Navigator.of(context).push(
-                                      CupertinoPageRoute(
-                                        builder: (context) => SearchView(),
-                                      ),
-                                    );
-                                  }),
+                          if (SettingsManager()
+                                  .settings
+                                  .moveNewMessageToheader &&
+                              !parent.widget.showArchivedChats)
+                            ClipOval(
+                              child: Material(
+                                color: Theme.of(context)
+                                    .accentColor, // button color
+                                child: InkWell(
+                                    child: SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: Icon(Icons.search,
+                                            color:
+                                                Theme.of(context).primaryColor,
+                                            size: 12)),
+                                    onTap: () async {
+                                      Navigator.of(context).push(
+                                        CupertinoPageRoute(
+                                          builder: (context) => SearchView(),
+                                        ),
+                                      );
+                                    }),
+                              ),
                             ),
-                          ),
                           Container(
                               width: SettingsManager()
                                       .settings
                                       .moveNewMessageToheader
                                   ? 7.0
                                   : 10.0),
-                          if (SettingsManager().settings.moveNewMessageToheader)
+                          if (SettingsManager()
+                                  .settings
+                                  .moveNewMessageToheader &&
+                              !parent.widget.showArchivedChats)
                             ClipOval(
                               child: Material(
                                 color: Theme.of(context)
@@ -562,7 +584,9 @@ class _Cupertino extends StatelessWidget {
                         child: Container(
                           padding: EdgeInsets.only(top: 50.0),
                           child: Text(
-                            "You have no archived chats :(",
+                            (parent.widget.showArchivedChats)
+                                ? "You have no archived chats :("
+                                : "You have no chats :(",
                             style: Theme.of(context).textTheme.subtitle1,
                           ),
                         ),
@@ -659,6 +683,8 @@ class __MaterialState extends State<_Material> {
             duration: Duration(milliseconds: 500),
             child: selected.isEmpty
                 ? AppBar(
+                    iconTheme:
+                        IconThemeData(color: Theme.of(context).primaryColor),
                     brightness: brightness,
                     bottom: PreferredSize(
                       child: Container(
@@ -736,7 +762,29 @@ class __MaterialState extends State<_Material> {
                       ],
                     ),
                     actions: [
-                      (SettingsManager().settings.moveNewMessageToheader)
+                      (!widget.parent.widget.showArchivedChats)
+                          ? GestureDetector(
+                              onTap: () async {
+                                Navigator.of(context).push(
+                                  CupertinoPageRoute(
+                                    builder: (context) => SearchView(),
+                                  ),
+                                );
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Icon(
+                                  Icons.search,
+                                  color: Theme.of(context)
+                                      .textTheme
+                                      .bodyText1
+                                      .color,
+                                ),
+                              ),
+                            )
+                          : Container(),
+                      (SettingsManager().settings.moveNewMessageToheader &&
+                              !widget.parent.widget.showArchivedChats)
                           ? GestureDetector(
                               onTap: () {
                                 Navigator.of(context).push(

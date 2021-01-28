@@ -139,7 +139,10 @@ class _ThemePanelState extends State<ThemePanel> {
                   ),
                   SettingsTile(
                     title: "Theming",
-                    trailing: Icon(Icons.arrow_forward_ios,
+                    trailing: Icon(
+                        SettingsManager().settings.skin == Skins.IOS
+                            ? Icons.arrow_forward_ios
+                            : Icons.arrow_forward,
                         color: Theme.of(context).primaryColor),
                     onTap: () async {
                       Navigator.of(context).push(
@@ -190,7 +193,10 @@ class _ThemePanelState extends State<ThemePanel> {
                   ),
                   SettingsTile(
                     title: "Custom Avatar Colors",
-                    trailing: Icon(Icons.arrow_forward_ios,
+                    trailing: Icon(
+                        SettingsManager().settings.skin == Skins.IOS
+                            ? Icons.arrow_forward_ios
+                            : Icons.arrow_forward,
                         color: Theme.of(context).primaryColor),
                     onTap: () async {
                       Navigator.of(context).push(
