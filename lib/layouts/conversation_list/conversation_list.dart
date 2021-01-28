@@ -45,7 +45,7 @@ class _ConversationListState extends State<ConversationList> {
   bool reducedForehead = false;
   bool showIndicator = false;
   bool moveChatCreatorButton = false;
-
+  int pinnedChats = 0;
   Brightness brightness;
   Color previousBackgroundColor;
   bool gotBrightness = false;
@@ -633,8 +633,18 @@ class __MaterialState extends State<_Material> {
     gotBrightness = true;
     if (this.mounted) setState(() {});
   }
+
+  void countPinnedChats() {
+    for (var i = 0; i < widget.parent.chats.length; i++) {
+      if (widget.parent.chats[i].isPinned) {
+        widget.parent.pinnedChats++;
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    countPinnedChats();
     loadBrightness();
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
@@ -651,7 +661,7 @@ class __MaterialState extends State<_Material> {
                     bottom: PreferredSize(
                       child: Container(
                         color: Theme.of(context).dividerColor,
-                        height: 0.5,
+                        height: 0,
                       ),
                       preferredSize: Size.fromHeight(0.5),
                     ),
@@ -665,7 +675,7 @@ class __MaterialState extends State<_Material> {
                               .headline1
                               .copyWith(fontSize: 20),
                         ),
-                        Container(width: 10.0),
+                        Container(width: 10),
                         Stack(
                           alignment: Alignment.center,
                           children: [
@@ -867,34 +877,163 @@ class __MaterialState extends State<_Material> {
                   ),
                 );
               }
-
-              return ListView.builder(
-                physics: ThemeSwitcher.getScrollPhysics(),
-                itemBuilder: (context, index) {
-                  if (!widget.parent.widget.showArchivedChats &&
-                      widget.parent.chats[index].isArchived) return Container();
-                  if (widget.parent.widget.showArchivedChats &&
-                      !widget.parent.chats[index].isArchived)
-                    return Container();
-                  return ConversationTile(
-                    key: Key(widget.parent.chats[index].guid.toString()),
-                    chat: widget.parent.chats[index],
-                    inSelectMode: selected.isNotEmpty,
-                    selected: selected,
-                    onSelect: (bool selected) {
-                      if (selected) {
-                        this.selected.add(widget.parent.chats[index]);
-                        setState(() {});
-                      } else {
-                        this.selected.removeWhere((element) =>
-                            element.guid == widget.parent.chats[index].guid);
-                        setState(() {});
-                      }
+              countPinnedChats();
+              print(widget.parent.pinnedChats);
+              if (SettingsManager().settings.coolPinnedChatsMaterial &&
+                  widget.parent.pinnedChats > 0) {
+                return SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.max,
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      Container(
+                        height: 20.0,
+                        decoration: BoxDecoration(
+                            border: Border.all(
+                              color: Colors.transparent,
+                            ),
+                            borderRadius:
+                                BorderRadius.all(Radius.circular(20))),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.all(6.0),
+                        //  new Color(0xFF171717)
+                        decoration: new BoxDecoration(
+                            color: new Color(0xFF171717),
+                            borderRadius: new BorderRadius.only(
+                              topLeft: const Radius.circular(20.0),
+                              topRight: const Radius.circular(20.0),
+                              bottomLeft: const Radius.circular(20.0),
+                              bottomRight: const Radius.circular(20.0),
+                            )),
+                        child: ListView.builder(
+                          shrinkWrap: true,
+                          physics: NeverScrollableScrollPhysics(),
+                          itemBuilder: (context, index) {
+                            if (!widget.parent.widget.showArchivedChats &&
+                                widget.parent.chats[index].isArchived)
+                              return Container();
+                            if (widget.parent.widget.showArchivedChats &&
+                                !widget.parent.chats[index].isArchived)
+                              return Container();
+                            if (widget.parent.chats[index].isPinned) {
+                              return ConversationTile(
+                                key: Key(
+                                    widget.parent.chats[index].guid.toString()),
+                                chat: widget.parent.chats[index],
+                                inSelectMode: selected.isNotEmpty,
+                                selected: selected,
+                                onSelect: (bool selected) {
+                                  if (selected) {
+                                    this
+                                        .selected
+                                        .add(widget.parent.chats[index]);
+                                    setState(() {});
+                                  } else {
+                                    this.selected.removeWhere((element) =>
+                                        element.guid ==
+                                        widget.parent.chats[index].guid);
+                                    setState(() {});
+                                  }
+                                },
+                              );
+                            }
+                            return Container();
+                          },
+                          itemCount: widget.parent.chats?.length ?? 0,
+                        ),
+                      ),
+                      Container(
+                        height: 20.0,
+                        decoration: BoxDecoration(
+                            border: Border.all(
+                              color: Colors.transparent,
+                            ),
+                            borderRadius:
+                                BorderRadius.all(Radius.circular(20))),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.all(6.0),
+                        //  new Color(0xFF171717)
+                        decoration: new BoxDecoration(
+                            color: new Color(0xFF171717),
+                            borderRadius: new BorderRadius.only(
+                              topLeft: const Radius.circular(20.0),
+                              topRight: const Radius.circular(20.0),
+                              bottomLeft: const Radius.circular(20.0),
+                              bottomRight: const Radius.circular(20.0),
+                            )),
+                        child: ListView.builder(
+                          shrinkWrap: true,
+                          physics: NeverScrollableScrollPhysics(),
+                          itemBuilder: (context, index) {
+                            if (!widget.parent.widget.showArchivedChats &&
+                                widget.parent.chats[index].isArchived)
+                              return Container();
+                            if (widget.parent.widget.showArchivedChats &&
+                                !widget.parent.chats[index].isArchived)
+                              return Container();
+                            if (!widget.parent.chats[index].isPinned) {
+                              return ConversationTile(
+                                key: Key(
+                                    widget.parent.chats[index].guid.toString()),
+                                chat: widget.parent.chats[index],
+                                inSelectMode: selected.isNotEmpty,
+                                selected: selected,
+                                onSelect: (bool selected) {
+                                  if (selected) {
+                                    this
+                                        .selected
+                                        .add(widget.parent.chats[index]);
+                                    setState(() {});
+                                  } else {
+                                    this.selected.removeWhere((element) =>
+                                        element.guid ==
+                                        widget.parent.chats[index].guid);
+                                    setState(() {});
+                                  }
+                                },
+                              );
+                            }
+                            return Container();
+                          },
+                          itemCount: widget.parent.chats?.length ?? 0,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              } else {
+                return ListView.builder(
+                    physics: ThemeSwitcher.getScrollPhysics(),
+                    itemBuilder: (context, index) {
+                      if (!widget.parent.widget.showArchivedChats &&
+                          widget.parent.chats[index].isArchived)
+                        return Container();
+                      if (widget.parent.widget.showArchivedChats &&
+                          !widget.parent.chats[index].isArchived)
+                        return Container();
+                      return ConversationTile(
+                        key: Key(widget.parent.chats[index].guid.toString()),
+                        chat: widget.parent.chats[index],
+                        inSelectMode: selected.isNotEmpty,
+                        selected: selected,
+                        onSelect: (bool selected) {
+                          if (selected) {
+                            this.selected.add(widget.parent.chats[index]);
+                            setState(() {});
+                          } else {
+                            this.selected.removeWhere((element) =>
+                                element.guid ==
+                                widget.parent.chats[index].guid);
+                            setState(() {});
+                          }
+                        },
+                      );
                     },
-                  );
-                },
-                itemCount: widget.parent.chats?.length ?? 0,
-              );
+                    itemCount: widget.parent.chats?.length ?? 0);
+              }
             } else {
               return Container();
             }

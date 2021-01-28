@@ -96,7 +96,10 @@ class _ThemePanelState extends State<ThemePanel> {
                 toolbarHeight: 100.0,
                 elevation: 0,
                 leading: IconButton(
-                  icon: Icon(SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_back_ios : Icons.arrow_back,
+                  icon: Icon(
+                      SettingsManager().settings.skin == Skins.IOS
+                          ? Icons.arrow_back_ios
+                          : Icons.arrow_back,
                       color: Theme.of(context).primaryColor),
                   onPressed: () {
                     Navigator.of(context).pop();
@@ -152,8 +155,13 @@ class _ThemePanelState extends State<ThemePanel> {
                       _settingsCopy.skin = val;
                       if (val == Skins.Material) {
                         _settingsCopy.hideDividers = true;
+                        _settingsCopy.coolPinnedChatsMaterial = false;
+                      } else if (val == Skins.Samsung) {
+                        _settingsCopy.hideDividers = true;
+                        _settingsCopy.coolPinnedChatsMaterial = true;
                       } else {
                         _settingsCopy.hideDividers = false;
+                        _settingsCopy.coolPinnedChatsMaterial = false;
                       }
                       ChatBloc().refreshChats();
                       setState(() {});
@@ -208,16 +216,16 @@ class _ThemePanelState extends State<ThemePanel> {
                     initialVal: _settingsCopy.denseChatTiles,
                     title: "Dense Conversation Tiles",
                   ),
-                  if(SettingsManager().settings.skin == Skins.IOS)
+                  if (SettingsManager().settings.skin == Skins.IOS)
                     SettingsSwitch(
-                    onChanged: (bool val) {
-                      _settingsCopy.reducedForehead = val;
-                      saveSettings();
-                    },
-                    initialVal: _settingsCopy.reducedForehead,
-                    title: "Reduced Forehead",
+                      onChanged: (bool val) {
+                        _settingsCopy.reducedForehead = val;
+                        saveSettings();
+                      },
+                      initialVal: _settingsCopy.reducedForehead,
+                      title: "Reduced Forehead",
                     ),
-                  
+
                   // For whatever fucking reason, this needs to be down here, otherwise all of the switch values are false
                   if (currentMode != null && modes != null)
                     SettingsOptions<DisplayMode>(

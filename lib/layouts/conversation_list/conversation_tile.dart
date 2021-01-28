@@ -414,7 +414,11 @@ class __CupertinoState extends State<_Cupertino> {
                     border: (!widget.parent.hideDividers)
                         ? Border(
                             top: BorderSide(
-                              color: Theme.of(context).dividerColor,
+                              color: SettingsManager()
+                                      .settings
+                                      .coolPinnedChatsMaterial
+                                  ? new Color(0xff2F2F2F)
+                                  : Theme.of(context).dividerColor,
                               width: 0.5,
                             ),
                           )
@@ -536,10 +540,16 @@ class _Material extends StatelessWidget {
         },
         child: Container(
           decoration: BoxDecoration(
+            color: SettingsManager().settings.coolPinnedChatsMaterial
+                ? Color(0xFF171717)
+                : null,
             border: (!parent.hideDividers)
                 ? Border(
                     top: BorderSide(
-                      color: Theme.of(context).dividerColor,
+                      //
+                      color: SettingsManager().settings.coolPinnedChatsMaterial
+                          ? new Color(0xff2F2F2F)
+                          : null,
                       width: 0.5,
                     ),
                   )
@@ -573,12 +583,8 @@ class _Material extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: <Widget>[
-                  if( parent.widget.chat.isPinned)
-                    Icon(
-                      Icons.star,
-                      size:15,
-                      color: Colors.yellow
-                    ),
+                  if (parent.widget.chat.isPinned)
+                    Icon(Icons.star, size: 15, color: Colors.yellow),
                   if (parent.widget.chat.isMuted)
                     Icon(
                       Icons.notifications_off,
@@ -599,5 +605,5 @@ class _Material extends StatelessWidget {
   }
 }
 
-  @override
-  bool get wantKeepAlive => true;
+@override
+bool get wantKeepAlive => true;
