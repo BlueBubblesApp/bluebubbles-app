@@ -160,10 +160,10 @@ class _ReceivedMessageState extends State<ReceivedMessage>
                       )
                     : (SettingsManager().settings.skin == Skins.Samsung)
                         ? BorderRadius.only(
-                            topLeft: Radius.circular(15),
-                            topRight: Radius.circular(15),
-                            bottomRight: Radius.circular(15),
-                            bottomLeft: Radius.circular(15),
+                            topLeft: Radius.circular(17.5),
+                            topRight: Radius.circular(17.5),
+                            bottomRight: Radius.circular(17.5),
+                            bottomLeft: Radius.circular(17.5),
                           )
                         : null,
             gradient: LinearGradient(
