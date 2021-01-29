@@ -351,7 +351,7 @@ class _SentMessageState extends State<SentMessage>
       mainAxisSize: MainAxisSize.max,
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
-        (SettingsManager().settings.skin == Skins.IOS)
+        (SettingsManager().settings.skin == Skins.IOS || SettingsManager().settings.skin == Skins.Material)
             ? MessagePopupHolder(
                 message: widget.message,
                 child: Row(
@@ -366,7 +366,7 @@ class _SentMessageState extends State<SentMessage>
                     message: widget.message,
                   )
                 : Container(),
-        (SettingsManager().settings.skin != Skins.IOS)
+        (SettingsManager().settings.skin != Skins.IOS && SettingsManager().settings.skin != Skins.Material)
             ? MessagePopupHolder(
                 message: widget.message,
                 child: Row(

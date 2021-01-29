@@ -387,8 +387,7 @@ class MessagesViewState extends State<MessagesView>
       );
   hideKeyboard() {
     if (MediaQuery.of(context).viewInsets.bottom != 0) {
-      SystemChannels.textInput
-                                .invokeMethod('TextInput.hide');
+      SystemChannels.textInput.invokeMethod('TextInput.hide');
     }
   }
 
@@ -398,13 +397,19 @@ class MessagesViewState extends State<MessagesView>
       behavior: HitTestBehavior.deferToChild,
       onHorizontalDragStart: (details) {},
       onHorizontalDragUpdate: (details) {
-        CurrentChat.of(context).timeStampOffset += details.delta.dx * 0.3;
+        (SettingsManager().settings.skin == Skins.Samsung)
+            ? null
+            : CurrentChat.of(context).timeStampOffset += details.delta.dx * 0.3;
       },
       onHorizontalDragEnd: (details) {
-        CurrentChat.of(context).timeStampOffset = 0;
+        (SettingsManager().settings.skin == Skins.Samsung)
+            ? null
+            : CurrentChat.of(context).timeStampOffset = 0;
       },
       onHorizontalDragCancel: () {
-        CurrentChat.of(context).timeStampOffset = 0;
+        (SettingsManager().settings.skin == Skins.Samsung)
+            ? null
+            : CurrentChat.of(context).timeStampOffset = 0;
       },
       onVerticalDragDown: (_) {
         if (SettingsManager().settings.hideKeyboardOnScroll) {
@@ -550,7 +555,7 @@ class MessagesViewState extends State<MessagesView>
                                       .settings
                                       .openKeyboardOnSTB) {
                                     SystemChannels.textInput
-                                .invokeMethod('TextInput.show');
+                                        .invokeMethod('TextInput.show');
                                   }
                                 }
                               },

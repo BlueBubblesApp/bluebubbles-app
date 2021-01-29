@@ -302,7 +302,8 @@ class _ReceivedMessageState extends State<ReceivedMessage>
           bottom: (widget.showTail) ? 10.0 : 0.0),
       child: Row(
         mainAxisSize: MainAxisSize.max,
-        mainAxisAlignment: (SettingsManager().settings.skin == Skins.IOS)
+        mainAxisAlignment: (SettingsManager().settings.skin == Skins.IOS ||
+                SettingsManager().settings.skin == Skins.Material)
             ? MainAxisAlignment.spaceBetween
             : MainAxisAlignment.start,
         children: [
@@ -315,15 +316,11 @@ class _ReceivedMessageState extends State<ReceivedMessage>
               children: msgRow,
             ),
           ),
-          (SettingsManager().settings.skin == Skins.IOS)
+          (!sameSender(widget.message, widget.olderMessage))
               ? MessageTimeStamp(
                   message: widget.message,
                 )
-              : (!sameSender(widget.message, widget.olderMessage))
-                  ? MessageTimeStamp(
-                      message: widget.message,
-                    )
-                  : Container(),
+              : Container(),
         ],
       ),
     );
