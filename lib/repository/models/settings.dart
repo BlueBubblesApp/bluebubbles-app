@@ -36,10 +36,11 @@ class Settings {
   bool moveNewMessageToheader = false;
   bool swipeToCloseKeyboard = true;
   bool coolPinnedChatsMaterial = false;
+  bool swipeToDismiss = false;
   // String emojiFontFamily;
 
   Skins skin = Skins.IOS;
-  
+
   Settings();
 
   factory Settings.fromConfigEntries(List<ConfigEntry> entries) {
@@ -109,6 +110,8 @@ class Settings {
         settings.swipeToCloseKeyboard = entry.value;
       } else if (entry.name == "coolPinnedChatsMaterial") {
         settings.coolPinnedChatsMaterial = entry.value;
+      } else if (entry.name == "swipeToDismiss") {
+        settings.swipeToDismiss = entry.value;
       }
 
       // else if (entry.name == "emojiFontFamily") {
@@ -283,6 +286,10 @@ class Settings {
             name: "coolPinnedChatsMaterial",
             value: this.coolPinnedChatsMaterial,
             type: this.coolPinnedChatsMaterial.runtimeType),
+        ConfigEntry(
+            name: "swipeToDismiss",
+            value: this.swipeToDismiss,
+            type: this.swipeToDismiss.runtimeType),
         // ConfigEntry(
         //     name: "emojiFontFamily",
         //     value: this.emojiFontFamily,

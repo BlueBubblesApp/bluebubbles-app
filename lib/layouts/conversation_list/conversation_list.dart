@@ -43,9 +43,11 @@ class _ConversationListState extends State<ConversationList> {
   List<Chat> chats = <Chat>[];
   bool colorfulAvatars = false;
   bool reducedForehead = false;
+  Skins skinSet;
   bool showIndicator = false;
   bool hasPinnedChata = false;
   bool moveChatCreatorButton = false;
+  bool swipeToDismiss = false;
   int pinnedChats = 0;
   Brightness brightness;
   Color previousBackgroundColor;
@@ -100,6 +102,8 @@ class _ConversationListState extends State<ConversationList> {
     reducedForehead = SettingsManager().settings.reducedForehead;
     showIndicator = SettingsManager().settings.showConnectionIndicator;
     moveChatCreatorButton = SettingsManager().settings.moveNewMessageToheader;
+    swipeToDismiss = SettingsManager().settings.swipeToDismiss;
+    skinSet = SettingsManager().settings.skin;
     SettingsManager().stream.listen((Settings newSettings) {
       if (newSettings.colorfulAvatars != colorfulAvatars && this.mounted) {
         setState(() {
@@ -119,6 +123,15 @@ class _ConversationListState extends State<ConversationList> {
           this.mounted) {
         setState(() {
           moveChatCreatorButton = newSettings.moveNewMessageToheader;
+        });
+      } else if (newSettings.swipeToDismiss != swipeToDismiss && this.mounted) {
+        setState(() {
+          swipeToDismiss = newSettings.swipeToDismiss;
+        });
+      } else if (newSettings.skin != skinSet &&
+          this.mounted) {
+        setState(() {
+          skinSet = newSettings.skin;
         });
       }
     });
@@ -477,10 +490,7 @@ class _Cupertino extends StatelessWidget {
                           Spacer(
                             flex: 25,
                           ),
-                          if (SettingsManager()
-                                  .settings
-                                  .moveNewMessageToheader &&
-                              !parent.widget.showArchivedChats)
+                          if (!parent.widget.showArchivedChats)
                             ClipOval(
                               child: Material(
                                 color: Theme.of(context)
@@ -666,6 +676,122 @@ class __MaterialState extends State<_Material> {
         break;
       }
     }
+  }
+
+  Widget slideLeftBackground() {
+    return Container(
+      color: Colors.red,
+      child: Align(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: <Widget>[
+            Icon(
+              Icons.delete,
+              color: Colors.white,
+            ),
+            Text(
+              " Archive",
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+              ),
+              textAlign: TextAlign.right,
+            ),
+            SizedBox(
+              width: 20,
+            ),
+          ],
+        ),
+        alignment: Alignment.centerRight,
+      ),
+    );
+  }
+
+  Widget slideLeftBackgroundArchived() {
+    return Container(
+      color: Colors.green,
+      child: Align(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: <Widget>[
+            Icon(
+              Icons.restore_from_trash,
+              color: Colors.white,
+            ),
+            Text(
+              " Unarchive",
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+              ),
+              textAlign: TextAlign.right,
+            ),
+            SizedBox(
+              width: 20,
+            ),
+          ],
+        ),
+        alignment: Alignment.centerRight,
+      ),
+    );
+  }
+
+  Widget slideRightBackground() {
+    return Container(
+      color: Colors.yellow,
+      child: Align(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: <Widget>[
+            SizedBox(
+              width: 20,
+            ),
+            Icon(
+              Icons.star,
+              color: Colors.white,
+            ),
+            Text(
+              " Pin",
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+              ),
+              textAlign: TextAlign.left,
+            ),
+          ],
+        ),
+        alignment: Alignment.centerLeft,
+      ),
+    );
+  }
+
+  Widget slideRightBackgroundPinned() {
+    return Container(
+      color: Colors.yellow,
+      child: Align(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: <Widget>[
+            SizedBox(
+              width: 20,
+            ),
+            Icon(
+              Icons.star_outline,
+              color: Colors.white,
+            ),
+            Text(
+              " Unpin",
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+              ),
+              textAlign: TextAlign.left,
+            ),
+          ],
+        ),
+        alignment: Alignment.centerLeft,
+      ),
+    );
   }
 
   @override
@@ -966,35 +1092,144 @@ class __MaterialState extends State<_Material> {
                                 shrinkWrap: true,
                                 physics: NeverScrollableScrollPhysics(),
                                 itemBuilder: (context, index) {
-                                  if (!widget.parent.widget.showArchivedChats &&
-                                      widget.parent.chats[index].isArchived)
-                                    return Container();
-                                  if (widget.parent.widget.showArchivedChats &&
-                                      !widget.parent.chats[index].isArchived)
-                                    return Container();
-                                  if (widget.parent.chats[index].isPinned) {
-                                    return ConversationTile(
+                                  if (widget.parent.swipeToDismiss) {
+                                    return Dismissible(
+                                      background: slideRightBackgroundPinned(),
+                                      secondaryBackground: (!widget
+                                              .parent.widget.showArchivedChats)
+                                          ? slideLeftBackground()
+                                          : slideLeftBackgroundArchived(),
+                                      // Each Dismissible must contain a Key. Keys allow Flutter to
+                                      // uniquely identify widgets.
                                       key: Key(widget.parent.chats[index].guid
                                           .toString()),
-                                      chat: widget.parent.chats[index],
-                                      inSelectMode: selected.isNotEmpty,
-                                      selected: selected,
-                                      onSelect: (bool selected) {
-                                        if (selected) {
-                                          this
-                                              .selected
-                                              .add(widget.parent.chats[index]);
-                                          setState(() {});
+                                      // Provide a function that tells the app
+                                      // what to do after an item has been swiped away.
+                                      onDismissed: (direction) {
+                                        if (direction ==
+                                            DismissDirection.endToStart) {
+                                          (!widget.parent.widget
+                                                  .showArchivedChats)
+                                              ? widget.parent.chats[index]
+                                                  .unpin()
+                                              : null;
+                                          setState(() {
+                                            Scaffold.of(context)
+                                                .hideCurrentSnackBar();
+                                            (!widget.parent.widget
+                                                    .showArchivedChats)
+                                                ? ChatBloc().archiveChat(
+                                                    widget.parent.chats[index])
+                                                : ChatBloc().unArchiveChat(
+                                                    widget.parent.chats[index]);
+
+                                            widget.parent.chats.remove(index);
+                                          });
+
+                                          // Show a snackbar. This snackbar could also contain "Undo" actions.
+                                          (!widget.parent.widget
+                                                  .showArchivedChats)
+                                              ? Scaffold.of(context)
+                                                  .showSnackBar(SnackBar(
+                                                      content: Text(
+                                                          "Chat archived")))
+                                              : Scaffold.of(context)
+                                                  .showSnackBar(SnackBar(
+                                                      content: Text(
+                                                          "Chat unarchived")));
                                         } else {
-                                          this.selected.removeWhere((element) =>
-                                              element.guid ==
-                                              widget.parent.chats[index].guid);
-                                          setState(() {});
+                                          setState(() {
+                                            Scaffold.of(context)
+                                                .hideCurrentSnackBar();
+                                            widget.parent.chats[index].unpin();
+                                          });
+
+                                          // Show a snackbar. This snackbar could also contain "Undo" actions.
+                                          Scaffold.of(context).showSnackBar(
+                                              SnackBar(
+                                                  content:
+                                                      Text("Chat unpinned")));
                                         }
                                       },
+                                      child: (!widget.parent.widget
+                                                  .showArchivedChats &&
+                                              widget.parent.chats[index]
+                                                  .isArchived)
+                                          ? Container()
+                                          : (widget.parent.widget
+                                                      .showArchivedChats &&
+                                                  !widget.parent.chats[index]
+                                                      .isArchived)
+                                              ? Container()
+                                              : (widget.parent.chats[index]
+                                                      .isPinned)
+                                                  ? ConversationTile(
+                                                      key: Key(widget.parent
+                                                          .chats[index].guid
+                                                          .toString()),
+                                                      chat: widget
+                                                          .parent.chats[index],
+                                                      inSelectMode:
+                                                          selected.isNotEmpty,
+                                                      selected: selected,
+                                                      onSelect:
+                                                          (bool selected) {
+                                                        if (selected) {
+                                                          this.selected.add(
+                                                              widget.parent
+                                                                      .chats[
+                                                                  index]);
+                                                          setState(() {});
+                                                        } else {
+                                                          this.selected.removeWhere(
+                                                              (element) =>
+                                                                  element
+                                                                      .guid ==
+                                                                  widget
+                                                                      .parent
+                                                                      .chats[
+                                                                          index]
+                                                                      .guid);
+                                                          setState(() {});
+                                                        }
+                                                      },
+                                                    )
+                                                  : Container(),
                                     );
+                                  } else {
+                                    if (!widget
+                                            .parent.widget.showArchivedChats &&
+                                        widget.parent.chats[index].isArchived)
+                                      return Container();
+                                    if (widget
+                                            .parent.widget.showArchivedChats &&
+                                        !widget.parent.chats[index].isArchived)
+                                      return Container();
+                                    if (widget.parent.chats[index].isPinned) {
+                                      return ConversationTile(
+                                        key: Key(widget.parent.chats[index].guid
+                                            .toString()),
+                                        chat: widget.parent.chats[index],
+                                        inSelectMode: selected.isNotEmpty,
+                                        selected: selected,
+                                        onSelect: (bool selected) {
+                                          if (selected) {
+                                            this.selected.add(
+                                                widget.parent.chats[index]);
+                                            setState(() {});
+                                          } else {
+                                            this.selected.removeWhere(
+                                                (element) =>
+                                                    element.guid ==
+                                                    widget.parent.chats[index]
+                                                        .guid);
+                                            setState(() {});
+                                          }
+                                        },
+                                      );
+                                    }
+                                    return Container();
                                   }
-                                  return Container();
                                 },
                                 itemCount: widget.parent.chats?.length ?? 0,
                               ),
@@ -1024,35 +1259,125 @@ class __MaterialState extends State<_Material> {
                           shrinkWrap: true,
                           physics: NeverScrollableScrollPhysics(),
                           itemBuilder: (context, index) {
-                            if (!widget.parent.widget.showArchivedChats &&
-                                widget.parent.chats[index].isArchived)
-                              return Container();
-                            if (widget.parent.widget.showArchivedChats &&
-                                !widget.parent.chats[index].isArchived)
-                              return Container();
-                            if (!widget.parent.chats[index].isPinned) {
-                              return ConversationTile(
+                            if (widget.parent.swipeToDismiss) {
+                              return Dismissible(
+                                background: slideRightBackground(),
+                                secondaryBackground:
+                                    (!widget.parent.widget.showArchivedChats)
+                                        ? slideLeftBackground()
+                                        : slideLeftBackgroundArchived(),
+                                // Each Dismissible must contain a Key. Keys allow Flutter to
+                                // uniquely identify widgets.
                                 key: Key(
                                     widget.parent.chats[index].guid.toString()),
-                                chat: widget.parent.chats[index],
-                                inSelectMode: selected.isNotEmpty,
-                                selected: selected,
-                                onSelect: (bool selected) {
-                                  if (selected) {
-                                    this
-                                        .selected
-                                        .add(widget.parent.chats[index]);
-                                    setState(() {});
+                                // Provide a function that tells the app
+                                // what to do after an item has been swiped away.
+                                onDismissed: (direction) {
+                                  if (direction ==
+                                      DismissDirection.endToStart) {
+                                    (!widget.parent.widget.showArchivedChats)
+                                        ? widget.parent.chats[index].unpin()
+                                        : null;
+                                    setState(() {
+                                      Scaffold.of(context)
+                                          .hideCurrentSnackBar();
+                                      (!widget.parent.widget.showArchivedChats)
+                                          ? ChatBloc().archiveChat(
+                                              widget.parent.chats[index])
+                                          : ChatBloc().unArchiveChat(
+                                              widget.parent.chats[index]);
+                                      widget.parent.chats.remove(index);
+                                    });
+
+                                    // Show a snackbar. This snackbar could also contain "Undo" actions.
+                                    (!widget.parent.widget.showArchivedChats)
+                                        ? Scaffold.of(context).showSnackBar(
+                                            SnackBar(
+                                                content: Text("Chat archived")))
+                                        : Scaffold.of(context).showSnackBar(
+                                            SnackBar(
+                                                content:
+                                                    Text("Chat unarchived")));
                                   } else {
-                                    this.selected.removeWhere((element) =>
-                                        element.guid ==
-                                        widget.parent.chats[index].guid);
-                                    setState(() {});
+                                    setState(() {
+                                      Scaffold.of(context)
+                                          .hideCurrentSnackBar();
+                                      widget.parent.chats[index].pin();
+                                    });
+
+                                    // Show a snackbar. This snackbar could also contain "Undo" actions.
+                                    Scaffold.of(context).showSnackBar(
+                                        SnackBar(content: Text("Chat pinned")));
                                   }
                                 },
+                                child: (!widget
+                                            .parent.widget.showArchivedChats &&
+                                        widget.parent.chats[index].isArchived)
+                                    ? Container()
+                                    : (widget.parent.widget.showArchivedChats &&
+                                            !widget
+                                                .parent.chats[index].isArchived)
+                                        ? Container()
+                                        : (!widget.parent.chats[index].isPinned)
+                                            ? ConversationTile(
+                                                key: Key(widget
+                                                    .parent.chats[index].guid
+                                                    .toString()),
+                                                chat:
+                                                    widget.parent.chats[index],
+                                                inSelectMode:
+                                                    selected.isNotEmpty,
+                                                selected: selected,
+                                                onSelect: (bool selected) {
+                                                  if (selected) {
+                                                    this.selected.add(widget
+                                                        .parent.chats[index]);
+                                                    setState(() {});
+                                                  } else {
+                                                    this.selected.removeWhere(
+                                                        (element) =>
+                                                            element.guid ==
+                                                            widget
+                                                                .parent
+                                                                .chats[index]
+                                                                .guid);
+                                                    setState(() {});
+                                                  }
+                                                },
+                                              )
+                                            : Container(),
                               );
+                            } else {
+                              if (!widget.parent.widget.showArchivedChats &&
+                                  widget.parent.chats[index].isArchived)
+                                return Container();
+                              if (widget.parent.widget.showArchivedChats &&
+                                  !widget.parent.chats[index].isArchived)
+                                return Container();
+                              if (!widget.parent.chats[index].isPinned) {
+                                return ConversationTile(
+                                  key: Key(widget.parent.chats[index].guid
+                                      .toString()),
+                                  chat: widget.parent.chats[index],
+                                  inSelectMode: selected.isNotEmpty,
+                                  selected: selected,
+                                  onSelect: (bool selected) {
+                                    if (selected) {
+                                      this
+                                          .selected
+                                          .add(widget.parent.chats[index]);
+                                      setState(() {});
+                                    } else {
+                                      this.selected.removeWhere((element) =>
+                                          element.guid ==
+                                          widget.parent.chats[index].guid);
+                                      setState(() {});
+                                    }
+                                  },
+                                );
+                              }
+                              return Container();
                             }
-                            return Container();
                           },
                           itemCount: widget.parent.chats?.length ?? 0,
                         ),

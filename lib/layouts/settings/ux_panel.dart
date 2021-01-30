@@ -83,7 +83,10 @@ class _UXPanelState extends State<UXPanel> {
                 toolbarHeight: 100.0,
                 elevation: 0,
                 leading: IconButton(
-                  icon: Icon(SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_back_ios : Icons.arrow_back,
+                  icon: Icon(
+                      SettingsManager().settings.skin == Skins.IOS
+                          ? Icons.arrow_back_ios
+                          : Icons.arrow_back,
                       color: Theme.of(context).primaryColor),
                   onPressed: () {
                     Navigator.of(context).pop();
@@ -114,6 +117,15 @@ class _UXPanelState extends State<UXPanel> {
                     initialVal: _settingsCopy.showConnectionIndicator,
                     title: "Show Connection Indicator in Chat List",
                   ),
+                  if (SettingsManager().settings.skin == Skins.Samsung) 
+                    SettingsSwitch(
+                    onChanged: (bool val) {
+                      _settingsCopy.swipeToDismiss = val;
+                      saveSettings();
+                    },
+                    initialVal: _settingsCopy.swipeToDismiss,
+                    title: "Swipe on Conversation Tile to Pin and Archive",
+                    ),
                   SettingsSwitch(
                     onChanged: (bool val) {
                       _settingsCopy.moveNewMessageToheader = val;
