@@ -444,7 +444,7 @@ class __CupertinoState extends State<_Cupertino> {
                     border: (!widget.parent.hideDividers)
                         ? Border(
                             top: BorderSide(
-                              color: new Color(0xff2F2F2F),
+                              color: Theme.of(context).dividerColor,
                               width: 0.5,
                             ),
                           )
