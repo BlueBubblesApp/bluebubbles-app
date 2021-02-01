@@ -121,6 +121,12 @@ class _PrivateAPIPanelState extends State<PrivateAPIPanel> {
               delegate: SliverChildListDelegate(
                 <Widget>[
                   Container(padding: EdgeInsets.only(top: 5.0)),
+                  SettingsTile(
+                      title: "Please read before using these features!",
+                      subTitle:
+                          ("Private API features are only available to those running the nightly version of the server. " +
+                              "If you are not running the nightly version, you will not be able to utiulize these features, " +
+                              "even if you have it enabled.")),
                   SettingsSwitch(
                     onChanged: (bool val) {
                       _settingsCopy.enablePrivateAPI = val;
