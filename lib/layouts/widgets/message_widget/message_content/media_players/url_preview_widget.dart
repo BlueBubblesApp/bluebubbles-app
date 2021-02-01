@@ -97,8 +97,20 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
     // Let the UI know we are loading
     isLoading = true;
 
-    // Fetch the metadata
-    Metadata meta = await MetadataHelper.fetchMetadata(widget.message);
+    Metadata meta;
+
+    try {
+      // Fetch the metadata
+      meta = await MetadataHelper.fetchMetadata(widget.message);
+    } catch (ex) {
+      debugPrint("Failed to fetch metadata! Error: ${ex.toString()}");
+      isLoading = false;
+      if (this.mounted) {
+        setState(() {});
+      }
+
+      return;
+    }
 
     // If the data isn't empty, save/update it in the DB
     if (MetadataHelper.isNotEmpty(meta)) {
