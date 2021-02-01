@@ -208,6 +208,9 @@ class SocketManager {
   }
 
   Future<String> handleChatStatusChange(_data) async {
+    if (!SettingsManager().settings.enablePrivateAPI)
+      return new Future.value("");
+
     Map<String, dynamic> data = jsonDecode(_data);
     IncomingQueue().add(new QueueItem(
         event: IncomingQueue.HANDLE_CHAT_STATUS_CHANGE, item: {"data": data}));
@@ -284,9 +287,15 @@ class SocketManager {
       _manager.socket.subscribe("participant-removed", handleNewMessage);
       _manager.socket.subscribe("participant-added", handleNewMessage);
       _manager.socket.subscribe("participant-left", handleNewMessage);
+
+      /**
+       * Handle Private API features
+       */
       _manager.socket
           .subscribe("chat-read-status-changed", handleChatStatusChange);
       _manager.socket.subscribe("typing-indicator", (_data) {
+        if (!SettingsManager().settings.enablePrivateAPI) return;
+
         Map<String, dynamic> data = jsonDecode(_data);
         CurrentChat currentChat =
             AttachmentInfoBloc().getCurrentChat(data["guid"]);

@@ -20,7 +20,7 @@ class Settings {
   bool colorfulAvatars = false;
   bool colorfulBubbles = false;
   bool hideDividers = false;
-  bool sendTypingIndicators = true;
+  bool sendTypingIndicators = false;
   double scrollVelocity = 1.00;
   bool sendWithReturn = false;
   bool doubleTapForDetails = false;
@@ -38,6 +38,10 @@ class Settings {
   bool openKeyboardOnSTB = false;
   bool swipableConversationTiles = false;
   // String emojiFontFamily;
+
+  // Private API features
+  bool enablePrivateAPI = false;
+  bool privateSendTypingIndicators = false;
 
   Skins skin = Skins.IOS;
 
@@ -114,6 +118,10 @@ class Settings {
         settings.openKeyboardOnSTB = entry.value;
       } else if (entry.name == "swipableConversationTiles") {
         settings.swipableConversationTiles = entry.value;
+      } else if (entry.name == "enablePrivateAPI") {
+        settings.enablePrivateAPI = entry.value;
+      } else if (entry.name == "privateSendTypingIndicators") {
+        settings.privateSendTypingIndicators = entry.value;
       }
 
       // else if (entry.name == "emojiFontFamily") {
@@ -292,6 +300,14 @@ class Settings {
             name: "swipableConversationTiles",
             value: this.swipableConversationTiles,
             type: this.swipableConversationTiles.runtimeType),
+        ConfigEntry(
+            name: "enablePrivateAPI",
+            value: this.enablePrivateAPI,
+            type: this.enablePrivateAPI.runtimeType),
+        ConfigEntry(
+            name: "privateSendTypingIndicators",
+            value: this.privateSendTypingIndicators,
+            type: this.privateSendTypingIndicators.runtimeType),
         // ConfigEntry(
         //     name: "emojiFontFamily",
         //     value: this.emojiFontFamily,

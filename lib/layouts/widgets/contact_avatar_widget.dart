@@ -209,6 +209,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget>
         height: widget.size ?? 40,
       );
     }
+
     Color color1 = colors.length > 0 ? colors[0] : null;
     Color color2 = colors.length > 0 ? colors[1] : null;
     if (color1 == null ||
