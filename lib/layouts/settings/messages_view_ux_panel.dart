@@ -123,7 +123,15 @@ class _ConvoSettingsState extends State<ConvoSettings> {
                       saveSettings();
                     },
                     initialVal: _settingsCopy.swipeToCloseKeyboard,
-                    title: "Swipe on text field to close keyboard",
+                    title: "Swipe TextField to Close Keyboard",
+                  ),
+                  SettingsSwitch(
+                    onChanged: (bool val) {
+                      _settingsCopy.swipeToOpenKeyboard = val;
+                      saveSettings();
+                    },
+                    initialVal: _settingsCopy.swipeToOpenKeyboard,
+                    title: "Swipe TextField to Open Keyboard",
                   ),
                   SettingsSwitch(
                     onChanged: (bool val) {
@@ -131,7 +139,7 @@ class _ConvoSettingsState extends State<ConvoSettings> {
                       saveSettings();
                     },
                     initialVal: _settingsCopy.hideKeyboardOnScroll,
-                    title: "Hide the keyboard on scroll",
+                    title: "Hide Keyboard on Scroll",
                   ),
                   SettingsSwitch(
                     onChanged: (bool val) {
@@ -139,7 +147,7 @@ class _ConvoSettingsState extends State<ConvoSettings> {
                       saveSettings();
                     },
                     initialVal: _settingsCopy.openKeyboardOnSTB,
-                    title: "Open the keyboard when scrolling to the bottom",
+                    title: "Open Keyboard on Scrolling to Bottom Tap",
                   ),
                   SettingsSwitch(
                     onChanged: (bool val) {

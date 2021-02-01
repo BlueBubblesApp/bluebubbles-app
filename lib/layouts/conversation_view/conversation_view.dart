@@ -226,8 +226,9 @@ class ConversationViewState extends State<ConversationView>
         child: FloatingActionButton(
           onPressed: () {
             currentChat.scrollToBottom();
+
             if (SettingsManager().settings.openKeyboardOnSTB) {
-              SystemChannels.textInput.invokeMethod('TextInput.show');
+              EventDispatcher().emit("focus-keyboard", null);
             }
           },
           child: Icon(

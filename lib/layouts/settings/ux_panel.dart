@@ -130,6 +130,16 @@ class _UXPanelState extends State<UXPanel> {
                       _settingsCopy.showConnectionIndicator = val;
                       saveSettings();
                     },
+                    initialVal: _settingsCopy.showConnectionIndicator,
+                    title: "Show Connection Indicator in Chat List",
+                  ),
+                  SettingsSwitch(
+                    onChanged: (bool val) {
+                      _settingsCopy.hideTextPreviews = val;
+                      saveSettings();
+                    },
+                    initialVal: _settingsCopy.hideTextPreviews,
+                    title: "Hide Text Previews (in notifications)",
                   ),
                   SettingsTile(
                     title: "Conversation Settings",
@@ -157,76 +167,12 @@ class _UXPanelState extends State<UXPanel> {
                   ),
                   SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.autoOpenKeyboard = val;
-                      saveSettings();
-                    },
-                    initialVal: _settingsCopy.autoOpenKeyboard,
-                    title: "Auto-open Keyboard",
-                  ),
-                  SettingsSwitch(
-                    onChanged: (bool val) {
-                      _settingsCopy.swipeToCloseKeyboard = val;
-                      saveSettings();
-                    },
-                    initialVal: _settingsCopy.swipeToCloseKeyboard,
-                    title: "Swipe to Close Keyboard",
-                  ),
-                  SettingsSwitch(
-                    onChanged: (bool val) {
-                      _settingsCopy.swipeToOpenKeyboard = val;
-                      saveSettings();
-                    },
-                    initialVal: _settingsCopy.swipeToOpenKeyboard,
-                    title: "Swipe to Open Keyboard",
-                  ),
-                  SettingsSwitch(
-                    onChanged: (bool val) {
-                      _settingsCopy.openKeyboardOnSTB = val;
-                      saveSettings();
-                    },
-                    initialVal: _settingsCopy.openKeyboardOnSTB,
-                    title: "Open Keyboard on Scroll to Bottom",
-                  ),
-                  SettingsSwitch(
-                    onChanged: (bool val) {
                       _settingsCopy.moveChatCreatorToHeader = val;
                       saveSettings();
                     },
                     initialVal: _settingsCopy.moveChatCreatorToHeader,
                     title: "Move Chat Creator Button to Header",
                   ),
-                  SettingsSwitch(
-                    onChanged: (bool val) {
-                      _settingsCopy.recipientAsPlaceholder = val;
-                      saveSettings();
-                    },
-                    initialVal: _settingsCopy.recipientAsPlaceholder,
-                    title: "Show Recipient (or Group Name) as Placeholder",
-                  ),
-                  SettingsSwitch(
-                    onChanged: (bool val) {
-                      _settingsCopy.doubleTapForDetails = val;
-                      saveSettings();
-                    },
-                    initialVal: _settingsCopy.doubleTapForDetails,
-                    title: "Double-Tap Message for Details",
-                  ),
-                  SettingsSwitch(
-                    onChanged: (bool val) {
-                      _settingsCopy.smartReply = val;
-                      saveSettings();
-                    },
-                    initialVal: _settingsCopy.smartReply,
-                    title: "Smart Replies",
-                  ),
-                  // SettingsSwitch(
-                  //   onChanged: (bool val) {
-                  //     _settingsCopy.sendWithReturn = val;
-                  //     saveSettings();
-                  //   },
-                  //   initialVal: _settingsCopy.sendTypingIndicators,
-                  //   title: "Send typing indicators (BlueBubblesHelper ONLY)",
-                  // ),
                   SettingsSwitch(
                     onChanged: (bool val) {
                       _settingsCopy.preCachePreviewImages = val;

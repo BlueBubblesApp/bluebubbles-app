@@ -63,7 +63,7 @@ class MessagesViewState extends State<MessagesView>
   // ignore: close_sinks
   StreamController<List<String>> smartReplyController;
 
-  bool get showScrollDown => currentChat.showScrollDown;
+  bool get showScrollDown => currentChat?.showScrollDown;
   set showScrollDown(bool value) {
     if (currentChat.currentShowScrollDown == value) {
       return;
@@ -98,6 +98,28 @@ class MessagesViewState extends State<MessagesView>
     }
 
     smartReplyController = StreamController<List<String>>.broadcast();
+
+    scrollController.addListener(() {
+      if (!this.mounted) return;
+      if (scrollController == null || !scrollController.hasClients) return;
+
+      // Check and see if we need to unfocus the keyboard
+      // The +100 is relatively arbitrary. It was the threshold I thought was good
+      if (keyboardOpen &&
+          SettingsManager().settings.hideKeyboardOnScroll &&
+          scrollController.offset > currentOffset + 100) {
+        EventDispatcher().emit("unfocus-keyboard", null);
+      }
+
+      if (showScrollDown && scrollController.offset >= 500) return;
+      if (!showScrollDown && scrollController.offset < 500) return;
+
+      if (scrollController.offset >= 500) {
+        showScrollDown = true;
+      } else {
+        showScrollDown = false;
+      }
+    });
 
     EventDispatcher().stream.listen((Map<String, dynamic> event) {
       if (!this.mounted) return;
@@ -403,11 +425,6 @@ class MessagesViewState extends State<MessagesView>
         if (SettingsManager().settings.skin == Skins.Samsung)
           CurrentChat.of(context).timeStampOffset = 0;
       },
-      onVerticalDragDown: (_) {
-        if (SettingsManager().settings.hideKeyboardOnScroll) {
-          hideKeyboard();
-        }
-      },
       child: Stack(
         alignment: AlignmentDirectional.bottomCenter,
         children: [
@@ -435,11 +452,11 @@ class MessagesViewState extends State<MessagesView>
                     );
                   },
                 ),
-              SliverToBoxAdapter(
-                child: TypingIndicator(
-                  visible: currentChat.showTypingIndicator,
-                ),
-              ),
+              // SliverToBoxAdapter(
+              //   child: TypingIndicator(
+              //     visible: currentChat.showTypingIndicator,
+              //   ),
+              // ),
               _listKey != null
                   ? SliverAnimatedList(
                       initialItemCount: _messages.length + 1,
