@@ -66,7 +66,6 @@ class _PrivateAPIPanelState extends State<PrivateAPIPanel> {
     loadBrightness();
 
     List<Widget> privateWidgets = [];
-    print(enablePrivateAPI);
     if (enablePrivateAPI) {
       privateWidgets.addAll([
         SettingsSwitch(
