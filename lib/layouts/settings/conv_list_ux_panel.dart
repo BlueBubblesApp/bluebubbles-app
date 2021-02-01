@@ -121,18 +121,18 @@ class _ConvoListUXPanelState extends State<ConvoListUXPanel> {
                       SettingsManager().settings.skin == Skins.Material)
                     SettingsSwitch(
                       onChanged: (bool val) {
-                        _settingsCopy.swipeToDismiss = val;
+                        _settingsCopy.swipableConversationTiles = val;
                         saveSettings();
                       },
-                      initialVal: _settingsCopy.swipeToDismiss,
-                      title: "Swipe on Conversation Tile to Pin and Archive",
+                      initialVal: _settingsCopy.swipableConversationTiles,
+                      title: "Swipe Actions for Conversation Tiles",
                     ),
                   SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.moveNewMessageToheader = val;
+                      _settingsCopy.moveChatCreatorToHeader = val;
                       saveSettings();
                     },
-                    initialVal: _settingsCopy.moveNewMessageToheader,
+                    initialVal: _settingsCopy.moveChatCreatorToHeader,
                     title: "Move Chat Creator Button to Header",
                   ),
                 ],

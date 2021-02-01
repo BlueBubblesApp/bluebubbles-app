@@ -36,6 +36,7 @@ class Settings {
   bool swipeToCloseKeyboard = false;
   bool swipeToOpenKeyboard = false;
   bool openKeyboardOnSTB = false;
+  bool swipableConversationTiles = false;
   // String emojiFontFamily;
 
   Skins skin = Skins.IOS;
@@ -111,6 +112,8 @@ class Settings {
         settings.moveChatCreatorToHeader = entry.value;
       } else if (entry.name == "openKeyboardOnSTB") {
         settings.openKeyboardOnSTB = entry.value;
+      } else if (entry.name == "swipableConversationTiles") {
+        settings.swipableConversationTiles = entry.value;
       }
 
       // else if (entry.name == "emojiFontFamily") {
@@ -285,6 +288,10 @@ class Settings {
             name: "openKeyboardOnSTB",
             value: this.openKeyboardOnSTB,
             type: this.openKeyboardOnSTB.runtimeType),
+        ConfigEntry(
+            name: "swipableConversationTiles",
+            value: this.swipableConversationTiles,
+            type: this.swipableConversationTiles.runtimeType),
         // ConfigEntry(
         //     name: "emojiFontFamily",
         //     value: this.emojiFontFamily,

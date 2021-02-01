@@ -55,7 +55,7 @@ class _ConversationListState extends State<ConversationList> {
   int pinnedChats = 0;
   ScrollController scrollController;
   Skins skinSet;
-  bool swipeToDismiss = false;
+  bool swipableTiles = false;
 
   @override
   void didChangeDependencies() {
@@ -96,7 +96,7 @@ class _ConversationListState extends State<ConversationList> {
     reducedForehead = SettingsManager().settings.reducedForehead;
     showIndicator = SettingsManager().settings.showConnectionIndicator;
     moveChatCreatorButton = SettingsManager().settings.moveChatCreatorToHeader;
-    // swipeToDismiss = SettingsManager().settings.swipeToDismiss;
+    swipableTiles = SettingsManager().settings.swipableConversationTiles;
     skinSet = SettingsManager().settings.skin;
 
     SettingsManager().stream.listen((Settings newSettings) {
@@ -117,10 +117,10 @@ class _ConversationListState extends State<ConversationList> {
         setState(() {
           moveChatCreatorButton = newSettings.moveChatCreatorToHeader;
         });
-        // } else if (newSettings.swipeToDismiss != swipeToDismiss && this.mounted) {
-        //   setState(() {
-        //     swipeToDismiss = newSettings.swipeToDismiss;
-        //   });
+      } else if (newSettings.swipableConversationTiles != swipableTiles) {
+        setState(() {
+          swipableTiles = newSettings.swipableConversationTiles;
+        });
       } else if (newSettings.skin != skinSet) {
         setState(() {
           skinSet = newSettings.skin;
@@ -1075,7 +1075,7 @@ class __MaterialState extends State<_Material> {
               return ListView.builder(
                   physics: ThemeSwitcher.getScrollPhysics(),
                   itemBuilder: (context, index) {
-                    if (widget.parent.swipeToDismiss) {
+                    if (widget.parent.swipableTiles) {
                       return Dismissible(
                           background: (widget.parent.chats[index].isPinned)
                               ? slideRightBackgroundPinned()
@@ -1091,9 +1091,9 @@ class __MaterialState extends State<_Material> {
                           // what to do after an item has been swiped away.
                           onDismissed: (direction) {
                             if (direction == DismissDirection.endToStart) {
-                              (!widget.parent.widget.showArchivedChats)
-                                  ? widget.parent.chats[index].unpin()
-                                  : null;
+                              if (!widget.parent.widget.showArchivedChats)
+                                widget.parent.chats[index].unpin();
+
                               setState(() {
                                 Scaffold.of(context).hideCurrentSnackBar();
                                 (!widget.parent.widget.showArchivedChats)
@@ -1657,7 +1657,7 @@ class _SamsungState extends State<_Samsung> {
                               shrinkWrap: true,
                               physics: NeverScrollableScrollPhysics(),
                               itemBuilder: (context, index) {
-                                if (widget.parent.swipeToDismiss) {
+                                if (widget.parent.swipableTiles) {
                                   return Dismissible(
                                     background: slideRightBackgroundPinned(),
                                     secondaryBackground: (!widget
@@ -1672,10 +1672,9 @@ class _SamsungState extends State<_Samsung> {
                                     onDismissed: (direction) {
                                       if (direction ==
                                           DismissDirection.endToStart) {
-                                        (!widget.parent.widget
-                                                .showArchivedChats)
-                                            ? widget.parent.chats[index].unpin()
-                                            : null;
+                                        if (!widget
+                                            .parent.widget.showArchivedChats)
+                                          widget.parent.chats[index].unpin();
                                         setState(() {
                                           Scaffold.of(context)
                                               .hideCurrentSnackBar();
@@ -1797,7 +1796,7 @@ class _SamsungState extends State<_Samsung> {
                               shrinkWrap: true,
                               physics: NeverScrollableScrollPhysics(),
                               itemBuilder: (context, index) {
-                                if (widget.parent.swipeToDismiss) {
+                                if (widget.parent.swipableTiles) {
                                   return Dismissible(
                                     background: slideRightBackground(),
                                     secondaryBackground: (!widget
@@ -1812,10 +1811,9 @@ class _SamsungState extends State<_Samsung> {
                                     onDismissed: (direction) {
                                       if (direction ==
                                           DismissDirection.endToStart) {
-                                        (!widget.parent.widget
-                                                .showArchivedChats)
-                                            ? widget.parent.chats[index].unpin()
-                                            : null;
+                                        if (!widget
+                                            .parent.widget.showArchivedChats)
+                                          widget.parent.chats[index].unpin();
                                         setState(() {
                                           Scaffold.of(context)
                                               .hideCurrentSnackBar();
