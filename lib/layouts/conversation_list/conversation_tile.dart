@@ -655,8 +655,7 @@ class _Samsung extends StatelessWidget {
         },
         child: Container(
           decoration: BoxDecoration(
-            color: Theme.of(context)
-                                    .accentColor,
+            color: Theme.of(context).accentColor,
             border: (!parent.hideDividers)
                 ? Border(
                     top: BorderSide(

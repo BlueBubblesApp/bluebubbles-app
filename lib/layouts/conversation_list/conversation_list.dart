@@ -1641,7 +1641,6 @@ class _SamsungState extends State<_Samsung> {
                 );
               }
               hasPinnedChat();
-              print(hasPinnedChat());
               return SingleChildScrollView(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,

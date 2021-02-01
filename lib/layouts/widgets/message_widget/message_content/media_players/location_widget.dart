@@ -41,11 +41,8 @@ class _LocationWidgetState extends State<LocationWidget>
   }
 
   void openMaps() async {
-    print("TRYING");
     if (location == null) return;
     final availableMaps = await ML.MapLauncher.installedMaps;
-    print(
-        availableMaps); // [AvailableMap { mapName: Google Maps, mapType: google }, ...]
 
     await availableMaps.first.showMarker(
       coords: ML.Coords(location["longitude"], location["latitude"]),
