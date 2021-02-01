@@ -24,10 +24,12 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/repository/models/message.dart';
+import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/cupertino.dart' as Cupertino;
 import 'package:flutter/material.dart';
+import 'package:flutter_displaymode/flutter_displaymode.dart';
 
 mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
     on State<ConversationView> {
@@ -50,6 +52,30 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
   String searchQuery = "";
   bool currentlyProcessingDeleteKey = false;
   CurrentChat currentChat;
+  Settings _settingsCopy;
+  List<DisplayMode> modes;
+  DisplayMode currentMode;
+  Brightness brightness;
+  Color previousBackgroundColor;
+  bool gotBrightness = false;
+  void loadBrightness() {
+    Color now = Theme.of(context).backgroundColor;
+    bool themeChanged =
+        previousBackgroundColor == null || previousBackgroundColor != now;
+    if (!themeChanged && gotBrightness) return;
+
+    previousBackgroundColor = now;
+    if (this.context == null) {
+      brightness = Brightness.light;
+      gotBrightness = true;
+      return;
+    }
+
+    bool isDark = now.computeLuminance() < 0.179;
+    brightness = isDark ? Brightness.dark : Brightness.light;
+    gotBrightness = true;
+    if (this.mounted) setState(() {});
+  }
 
   TextEditingController chatSelectorController =
       new TextEditingController(text: " ");
@@ -202,18 +228,15 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
       ),
     );
   }
-
   Widget buildConversationViewHeader() {
-    if (SettingsManager().settings.skin == Skins.Material) {
+    loadBrightness();
+    if (SettingsManager().settings.skin == Skins.Material || SettingsManager().settings.skin == Skins.Samsung) {
       Color backgroundColor = Theme.of(context).backgroundColor;
       Color fontColor = Theme.of(context).textTheme.headline1.color;
       if (chat.participants.length == 1 &&
-          SettingsManager().settings.colorfulBubbles) {
-        backgroundColor =
-            toColorGradient(chat.participants.first.address).first;
-        fontColor = darken(backgroundColor, 0.35);
-      }
+          SettingsManager().settings.colorfulBubbles) {}
       return AppBar(
+        brightness: brightness,
         title: Text(
           chat.title,
           style: Theme.of(context).textTheme.headline1.apply(color: fontColor),

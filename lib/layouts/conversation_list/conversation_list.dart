@@ -5,21 +5,19 @@ import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/setup_bloc.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
-import 'package:bluebubbles/layouts/search/search_text_box.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/helpers/contstants.dart';
 import 'package:bluebubbles/layouts/search/search_view.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
-import 'package:bluebubbles/layouts/search/search_view.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/managers/theme_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
-import 'package:bluebubbles/helpers/utils.dart';
-import 'package:device_info/device_info.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_displaymode/flutter_displaymode.dart';
 
 import './conversation_tile.dart';
 import 'package:flutter/cupertino.dart';
@@ -29,6 +27,7 @@ import '../settings/settings_panel.dart';
 
 class ConversationList extends StatefulWidget {
   ConversationList({Key key, this.showArchivedChats}) : super(key: key);
+
   final bool showArchivedChats;
 
   @override
@@ -36,28 +35,25 @@ class ConversationList extends StatefulWidget {
 }
 
 class _ConversationListState extends State<ConversationList> {
-  ScrollController scrollController;
+  Brightness brightness;
   List<Chat> chats = <Chat>[];
   bool colorfulAvatars = false;
-  bool reducedForehead = false;
-  bool showIndicator = false;
-
-  Brightness brightness = Brightness.light;
-  Color previousBackgroundColor;
-  bool gotBrightness = false;
-  String model;
-
   Color currentHeaderColor;
+  bool gotBrightness = false;
+  bool hasPinnedChata = false;
+  // ignore: close_sinks
   StreamController<Color> headerColorStream =
       StreamController<Color>.broadcast();
 
-  Color get theme => currentHeaderColor;
-  set theme(Color color) {
-    if (currentHeaderColor == color) return;
-    currentHeaderColor = color;
-    if (!headerColorStream.isClosed)
-      headerColorStream.sink.add(currentHeaderColor);
-  }
+  String model;
+  bool moveChatCreatorButton = false;
+  int pinnedChats = 0;
+  Color previousBackgroundColor;
+  bool reducedForehead = false;
+  ScrollController scrollController;
+  bool showIndicator = false;
+  Skins skinSet;
+  bool swipeToDismiss = false;
 
   @override
   void didChangeDependencies() {
@@ -67,16 +63,18 @@ class _ConversationListState extends State<ConversationList> {
     }
   }
 
-  void scrollListener() {
-    !_isAppBarExpanded
-        ? theme = Colors.transparent
-        : theme = Theme.of(context).accentColor.withOpacity(0.5);
+  @override
+  void dispose() {
+    super.dispose();
+
+    // Remove the scroll listener from the state
+    if (scrollController != null)
+      scrollController.removeListener(scrollListener);
   }
 
   @override
   void initState() {
     super.initState();
-
     if (!widget.showArchivedChats) {
       ChatBloc().chatStream.listen((List<Chat> chats) {
         this.chats = chats;
@@ -95,6 +93,9 @@ class _ConversationListState extends State<ConversationList> {
     colorfulAvatars = SettingsManager().settings.colorfulAvatars;
     reducedForehead = SettingsManager().settings.reducedForehead;
     showIndicator = SettingsManager().settings.showConnectionIndicator;
+    moveChatCreatorButton = SettingsManager().settings.moveNewMessageToheader;
+    swipeToDismiss = SettingsManager().settings.swipeToDismiss;
+    skinSet = SettingsManager().settings.skin;
     SettingsManager().stream.listen((Settings newSettings) {
       if (newSettings.colorfulAvatars != colorfulAvatars && this.mounted) {
         setState(() {
@@ -109,6 +110,19 @@ class _ConversationListState extends State<ConversationList> {
           this.mounted) {
         setState(() {
           showIndicator = newSettings.showConnectionIndicator;
+        });
+      } else if (newSettings.moveNewMessageToheader != moveChatCreatorButton &&
+          this.mounted) {
+        setState(() {
+          moveChatCreatorButton = newSettings.moveNewMessageToheader;
+        });
+      } else if (newSettings.swipeToDismiss != swipeToDismiss && this.mounted) {
+        setState(() {
+          swipeToDismiss = newSettings.swipeToDismiss;
+        });
+      } else if (newSettings.skin != skinSet && this.mounted) {
+        setState(() {
+          skinSet = newSettings.skin;
         });
       }
     });
@@ -137,6 +151,21 @@ class _ConversationListState extends State<ConversationList> {
     });
   }
 
+  Color get theme => currentHeaderColor;
+
+  set theme(Color color) {
+    if (currentHeaderColor == color) return;
+    currentHeaderColor = color;
+    if (!headerColorStream.isClosed)
+      headerColorStream.sink.add(currentHeaderColor);
+  }
+
+  void scrollListener() {
+    !_isAppBarExpanded
+        ? theme = Colors.transparent
+        : theme = Theme.of(context).accentColor.withOpacity(0.5);
+  }
+
   void loadBrightness() {
     Color now = Theme.of(context).backgroundColor;
     bool themeChanged =
@@ -160,6 +189,18 @@ class _ConversationListState extends State<ConversationList> {
     return scrollController != null &&
         scrollController.hasClients &&
         scrollController.offset > (125 - kToolbarHeight);
+  }
+
+  void openNewChatCreator() {
+    Navigator.of(context).push(
+      CupertinoPageRoute(
+        builder: (BuildContext context) {
+          return ConversationView(
+            isCreator: true,
+          );
+        },
+      ),
+    );
   }
 
   void sortChats() {
@@ -232,48 +273,49 @@ class _ConversationListState extends State<ConversationList> {
               color: Theme.of(context).textTheme.bodyText1.color,
               size: 25,
             ),
+            samsungSkin: Icon(
+              Icons.more_vert,
+              color: Theme.of(context).textTheme.bodyText1.color,
+              size: 25,
+            ),
           ),
         )
       : Container();
-  FloatingActionButton buildFloatinActionButton() => FloatingActionButton(
-        backgroundColor: Theme.of(context).primaryColor,
-        child: Icon(Icons.message, color: Colors.white, size: 25),
-        onPressed: () {
-          Navigator.of(context).push(
-            ThemeSwitcher.buildPageRoute(
-              builder: (BuildContext context) {
-                return ConversationView(
-                  isCreator: true,
-                );
-              },
-            ),
-          );
-        },
-      );
 
-  @override
-  Widget build(BuildContext context) {
-    loadBrightness();
-
-    return ThemeSwitcher(
-      iOSSkin: _Cupertino(parent: this),
-      materialSkin: _Material(parent: this),
+  FloatingActionButton buildFloatinActionButton() {
+    return FloatingActionButton(
+      backgroundColor: Theme.of(context).primaryColor,
+      child: Icon(Icons.message, color: Colors.white, size: 25),
+      onPressed: () {
+        Navigator.of(context).push(
+          ThemeSwitcher.buildPageRoute(
+            builder: (BuildContext context) {
+              return ConversationView(
+                isCreator: true,
+              );
+            },
+          ),
+        );
+      },
     );
   }
 
   @override
-  void dispose() {
-    super.dispose();
-
-    // Remove the scroll listener from the state
-    if (scrollController != null)
-      scrollController.removeListener(scrollListener);
+  Widget build(BuildContext context) {
+    loadBrightness();
+    return ThemeSwitcher(
+      iOSSkin: _Cupertino(parent: this),
+      materialSkin: _Material(parent: this),
+      samsungSkin: _Samsung(parent: this),
+    );
   }
 }
 
 class _Cupertino extends StatelessWidget {
   const _Cupertino({Key key, @required this.parent}) : super(key: key);
+
   final _ConversationListState parent;
+
   @override
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
@@ -334,13 +376,27 @@ class _Cupertino extends StatelessWidget {
           physics: ThemeManager().scrollPhysics,
           slivers: <Widget>[
             SliverAppBar(
-              iconTheme: IconThemeData(
-                  color: Theme.of(context).textTheme.headline1.color),
+              leading: IconButton(
+                icon: Icon(
+                    (SettingsManager().settings.skin == Skins.IOS &&
+                            parent.widget.showArchivedChats)
+                        ? Icons.arrow_back_ios
+                        : ((SettingsManager().settings.skin == Skins.Material &&
+                                    SettingsManager().settings.skin ==
+                                        Skins.Samsung) &&
+                                !parent.widget.showArchivedChats)
+                            ? Icons.arrow_back
+                            : null,
+                    color: Theme.of(context).primaryColor),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
               stretch: true,
               onStretchTrigger: () {
                 return null;
               },
-              expandedHeight: 80,
+              expandedHeight: (!parent.widget.showArchivedChats) ? 80 : 50,
               backgroundColor: Colors.transparent,
               pinned: false,
               flexibleSpace: FlexibleSpaceBar(
@@ -423,7 +479,8 @@ class _Cupertino extends StatelessWidget {
                                         data: ThemeData(
                                           cupertinoOverrideTheme:
                                               CupertinoThemeData(
-                                                  brightness: parent.brightness),
+                                                  brightness:
+                                                      parent.brightness),
                                         ),
                                         child: CupertinoActivityIndicator(
                                           radius: 7,
@@ -438,27 +495,70 @@ class _Cupertino extends StatelessWidget {
                           Spacer(
                             flex: 25,
                           ),
-                          ClipOval(
-                            child: Material(
-                              color:
-                                  Theme.of(context).accentColor, // button color
-                              child: InkWell(
-                                  child: SizedBox(
-                                      width: 20,
-                                      height: 20,
-                                      child: Icon(Icons.search,
-                                          color: Theme.of(context).primaryColor,
-                                          size: 12)),
-                                  onTap: () async {
-                                    Navigator.of(context).push(
-                                      CupertinoPageRoute(
-                                        builder: (context) => SearchView(),
-                                      ),
-                                    );
-                                  }),
+                          if (!parent.widget.showArchivedChats)
+                            ClipOval(
+                              child: Material(
+                                color: Theme.of(context)
+                                    .accentColor, // button color
+                                child: InkWell(
+                                    child: SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: Icon(Icons.search,
+                                            color:
+                                                Theme.of(context).primaryColor,
+                                            size: 12)),
+                                    onTap: () async {
+                                      Navigator.of(context).push(
+                                        CupertinoPageRoute(
+                                          builder: (context) => SearchView(),
+                                        ),
+                                      );
+                                    }),
+                              ),
                             ),
-                          ),
-                          Container(width: 10.0),
+                          Container(
+                              width: SettingsManager()
+                                      .settings
+                                      .moveNewMessageToheader
+                                  ? 7.0
+                                  : 10.0),
+                          if (SettingsManager()
+                                  .settings
+                                  .moveNewMessageToheader &&
+                              !parent.widget.showArchivedChats)
+                            ClipOval(
+                              child: Material(
+                                color: Theme.of(context)
+                                    .accentColor, // button color
+                                child: InkWell(
+                                    child: SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: Icon(Icons.create,
+                                            color:
+                                                Theme.of(context).primaryColor,
+                                            size: 12)),
+                                    onTap: () {
+                                      Navigator.of(context).push(
+                                        ThemeSwitcher.buildPageRoute(
+                                          builder: (BuildContext context) {
+                                            return ConversationView(
+                                              isCreator: true,
+                                            );
+                                          },
+                                        ),
+                                      );
+                                    }),
+                              ),
+                            ),
+                          if (SettingsManager().settings.moveNewMessageToheader)
+                            Container(
+                                width: SettingsManager()
+                                        .settings
+                                        .moveNewMessageToheader
+                                    ? 7.0
+                                    : 10.0),
                           parent.buildSettingsButton(),
                           Spacer(
                             flex: 1,
@@ -499,7 +599,9 @@ class _Cupertino extends StatelessWidget {
                         child: Container(
                           padding: EdgeInsets.only(top: 50.0),
                           child: Text(
-                            "You have no archived chats :(",
+                            (parent.widget.showArchivedChats)
+                                ? "You have no archived chats :("
+                                : "You have no chats :(",
                             style: Theme.of(context).textTheme.subtitle1,
                           ),
                         ),
@@ -529,7 +631,9 @@ class _Cupertino extends StatelessWidget {
             ),
           ],
         ),
-        floatingActionButton: parent.buildFloatinActionButton(),
+        floatingActionButton: !SettingsManager().settings.moveNewMessageToheader
+            ? parent.buildFloatinActionButton()
+            : null,
       ),
     );
   }
@@ -537,6 +641,7 @@ class _Cupertino extends StatelessWidget {
 
 class _Material extends StatefulWidget {
   _Material({Key key, @required this.parent}) : super(key: key);
+
   final _ConversationListState parent;
 
   @override
@@ -544,10 +649,178 @@ class _Material extends StatefulWidget {
 }
 
 class __MaterialState extends State<_Material> {
+  Brightness brightness;
+  DisplayMode currentMode;
+  bool gotBrightness = false;
+  List<DisplayMode> modes;
+  Color previousBackgroundColor;
   List<Chat> selected = [];
+
+  void loadBrightness() {
+    Color now = Theme.of(context).backgroundColor;
+    bool themeChanged =
+        previousBackgroundColor == null || previousBackgroundColor != now;
+    if (!themeChanged && gotBrightness) return;
+
+    previousBackgroundColor = now;
+    if (this.context == null) {
+      brightness = Brightness.light;
+      gotBrightness = true;
+      return;
+    }
+
+    bool isDark = now.computeLuminance() < 0.179;
+    brightness = isDark ? Brightness.dark : Brightness.light;
+    gotBrightness = true;
+    if (this.mounted) setState(() {});
+  }
+
+  bool hasPinnedChat() {
+    for (var i = 0; i < widget.parent.chats.length; i++) {
+      if (widget.parent.chats[i].isPinned) {
+        widget.parent.hasPinnedChata = true;
+        return true;
+      } else {
+        return false;
+      }
+    }
+    return false;
+  }
+
+  bool hasNormalChats() {
+    int counter = 0;
+    for (var i = 0; i < widget.parent.chats.length; i++) {
+      if (widget.parent.chats[i].isPinned) {
+        counter++;
+      } else {}
+    }
+    if (counter == widget.parent.chats.length) {
+      return false;
+    } else {
+      return true;
+    }
+  }
+
+  Widget slideLeftBackground() {
+    return Container(
+      color: Colors.red,
+      child: Align(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: <Widget>[
+            Icon(
+              Icons.delete,
+              color: Colors.white,
+            ),
+            Text(
+              " Archive",
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+              ),
+              textAlign: TextAlign.right,
+            ),
+            SizedBox(
+              width: 20,
+            ),
+          ],
+        ),
+        alignment: Alignment.centerRight,
+      ),
+    );
+  }
+
+  Widget slideLeftBackgroundArchived() {
+    return Container(
+      color: Colors.green,
+      child: Align(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: <Widget>[
+            Icon(
+              Icons.restore_from_trash,
+              color: Colors.white,
+            ),
+            Text(
+              " Unarchive",
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+              ),
+              textAlign: TextAlign.right,
+            ),
+            SizedBox(
+              width: 20,
+            ),
+          ],
+        ),
+        alignment: Alignment.centerRight,
+      ),
+    );
+  }
+
+  Widget slideRightBackground() {
+    return Container(
+      color: Colors.yellow,
+      child: Align(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: <Widget>[
+            SizedBox(
+              width: 20,
+            ),
+            Icon(
+              Icons.star,
+              color: Colors.white,
+            ),
+            Text(
+              " Pin",
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+              ),
+              textAlign: TextAlign.left,
+            ),
+          ],
+        ),
+        alignment: Alignment.centerLeft,
+      ),
+    );
+  }
+
+  Widget slideRightBackgroundPinned() {
+    return Container(
+      color: Colors.yellow,
+      child: Align(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: <Widget>[
+            SizedBox(
+              width: 20,
+            ),
+            Icon(
+              Icons.star_outline,
+              color: Colors.white,
+            ),
+            Text(
+              " Unpin",
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+              ),
+              textAlign: TextAlign.left,
+            ),
+          ],
+        ),
+        alignment: Alignment.centerLeft,
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
+    hasPinnedChat();
+    loadBrightness();
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: Theme.of(context).backgroundColor,
@@ -559,27 +832,138 @@ class __MaterialState extends State<_Material> {
             duration: Duration(milliseconds: 500),
             child: selected.isEmpty
                 ? AppBar(
+                    iconTheme:
+                        IconThemeData(color: Theme.of(context).primaryColor),
+                    brightness: brightness,
                     bottom: PreferredSize(
                       child: Container(
                         color: Theme.of(context).dividerColor,
-                        height: 0.5,
+                        height: 0,
                       ),
                       preferredSize: Size.fromHeight(0.5),
                     ),
-                    title: Text(
-                      "Messages",
-                      style: Theme.of(context)
-                          .textTheme
-                          .headline1
-                          .copyWith(fontSize: 20),
+                    title: Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Messages",
+                          style: Theme.of(context)
+                              .textTheme
+                              .headline1
+                              .copyWith(fontSize: 20),
+                        ),
+                        Container(width: 10),
+                        Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            (SettingsManager().settings.showConnectionIndicator)
+                                ? StreamBuilder(
+                                    stream:
+                                        SocketManager().connectionStateStream,
+                                    builder: (context,
+                                        AsyncSnapshot<SocketState> snapshot) {
+                                      SocketState connectionStatus;
+                                      if (snapshot.hasData) {
+                                        connectionStatus = snapshot.data;
+                                      } else {
+                                        connectionStatus =
+                                            SocketManager().state;
+                                      }
+                                      if (connectionStatus ==
+                                              SocketState.CONNECTED ||
+                                          connectionStatus ==
+                                              SocketState.CONNECTING) {
+                                        return Icon(
+                                          Icons.fiber_manual_record,
+                                          size: 15,
+                                          color:
+                                              HexColor('32CD32').withAlpha(200),
+                                        );
+                                      } else {
+                                        return Icon(
+                                          Icons.fiber_manual_record,
+                                          size: 15,
+                                          color:
+                                              HexColor('DC143C').withAlpha(200),
+                                        );
+                                      }
+                                    })
+                                : Container(),
+                            StreamBuilder(
+                              stream: SocketManager().setup.stream,
+                              initialData: SetupData(0, []),
+                              builder: (context, snapshot) {
+                                if (!snapshot.hasData ||
+                                    snapshot.data.progress < 1 ||
+                                    snapshot.data.progress >= 100)
+                                  return Container();
+
+                                return Theme(
+                                  data: ThemeData(
+                                    brightness: widget.parent.brightness,
+                                  ),
+                                  child: CircularProgressIndicator(),
+                                );
+                              },
+                            )
+                          ],
+                        ),
+                      ],
                     ),
                     actions: [
+                      (!widget.parent.widget.showArchivedChats)
+                          ? GestureDetector(
+                              onTap: () async {
+                                Navigator.of(context).push(
+                                  CupertinoPageRoute(
+                                    builder: (context) => SearchView(),
+                                  ),
+                                );
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Icon(
+                                  Icons.search,
+                                  color: Theme.of(context)
+                                      .textTheme
+                                      .bodyText1
+                                      .color,
+                                ),
+                              ),
+                            )
+                          : Container(),
+                      (SettingsManager().settings.moveNewMessageToheader &&
+                              !widget.parent.widget.showArchivedChats)
+                          ? GestureDetector(
+                              onTap: () {
+                                Navigator.of(context).push(
+                                  ThemeSwitcher.buildPageRoute(
+                                    builder: (BuildContext context) {
+                                      return ConversationView(
+                                        isCreator: true,
+                                      );
+                                    },
+                                  ),
+                                );
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Icon(
+                                  Icons.create,
+                                  color: Theme.of(context)
+                                      .textTheme
+                                      .bodyText1
+                                      .color,
+                                ),
+                              ),
+                            )
+                          : Container(),
                       Padding(
                         padding: EdgeInsets.only(right: 20),
                         child: Padding(
                           padding: EdgeInsets.symmetric(vertical: 15.5),
                           child: Container(
-                            width: 25,
+                            width: 40,
                             child: widget.parent.buildSettingsButton(),
                           ),
                         ),
@@ -656,15 +1040,15 @@ class __MaterialState extends State<_Material> {
                                 setState(() {});
                               },
                               child: Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: Icon(
-                                    Icons.star,
-                                    color: Theme.of(context)
-                                        .textTheme
-                                        .bodyText1
-                                        .color,
-                                  ),
+                                padding: const EdgeInsets.all(8.0),
+                                child: Icon(
+                                  Icons.star,
+                                  color: Theme.of(context)
+                                      .textTheme
+                                      .bodyText1
+                                      .color,
                                 ),
+                              ),
                             ),
                           ],
                         ),
@@ -692,41 +1076,858 @@ class __MaterialState extends State<_Material> {
                   ),
                 );
               }
-
               return ListView.builder(
-                physics: ThemeSwitcher.getScrollPhysics(),
-                itemBuilder: (context, index) {
-                  if (!widget.parent.widget.showArchivedChats &&
-                      widget.parent.chats[index].isArchived) return Container();
-                  if (widget.parent.widget.showArchivedChats &&
-                      !widget.parent.chats[index].isArchived)
-                    return Container();
-                  return ConversationTile(
-                    key: Key(widget.parent.chats[index].guid.toString()),
-                    chat: widget.parent.chats[index],
-                    inSelectMode: selected.isNotEmpty,
-                    selected: selected,
-                    onSelect: (bool selected) {
-                      if (selected) {
-                        this.selected.add(widget.parent.chats[index]);
-                        setState(() {});
-                      } else {
-                        this.selected.removeWhere((element) =>
-                            element.guid == widget.parent.chats[index].guid);
-                        setState(() {});
-                      }
-                    },
-                  );
-                },
-                itemCount: widget.parent.chats?.length ?? 0,
+                  physics: ThemeSwitcher.getScrollPhysics(),
+                  itemBuilder: (context, index) {
+                    if (widget.parent.swipeToDismiss) {
+                      return Dismissible(
+                          background: (widget.parent.chats[index].isPinned)
+                              ? slideRightBackgroundPinned()
+                              : slideRightBackground(),
+                          secondaryBackground:
+                              (!widget.parent.widget.showArchivedChats)
+                                  ? slideLeftBackground()
+                                  : slideLeftBackgroundArchived(),
+                          // Each Dismissible must contain a Key. Keys allow Flutter to
+                          // uniquely identify widgets.
+                          key: UniqueKey(),
+                          // Provide a function that tells the app
+                          // what to do after an item has been swiped away.
+                          onDismissed: (direction) {
+                            if (direction == DismissDirection.endToStart) {
+                              (!widget.parent.widget.showArchivedChats)
+                                  ? widget.parent.chats[index].unpin()
+                                  : null;
+                              setState(() {
+                                Scaffold.of(context).hideCurrentSnackBar();
+                                (!widget.parent.widget.showArchivedChats)
+                                    ? ChatBloc()
+                                        .archiveChat(widget.parent.chats[index])
+                                    : ChatBloc().unArchiveChat(
+                                        widget.parent.chats[index]);
+                                widget.parent.chats.remove(index);
+                              });
+                            } else {
+                              setState(() {
+                                Scaffold.of(context).hideCurrentSnackBar();
+                                if (widget.parent.chats[index].isPinned) {
+                                  widget.parent.chats[index].unpin();
+                                  widget.parent.chats.remove(index);
+                                } else {
+                                  widget.parent.chats[index].pin();
+                                  widget.parent.chats.remove(index);
+                                }
+                              });
+                            }
+                          },
+                          child: (!widget.parent.widget.showArchivedChats &&
+                                  widget.parent.chats[index].isArchived)
+                              ? Container()
+                              : (widget.parent.widget.showArchivedChats &&
+                                      !widget.parent.chats[index].isArchived)
+                                  ? Container()
+                                  : ConversationTile(
+                                      key: UniqueKey(),
+                                      chat: widget.parent.chats[index],
+                                      inSelectMode: selected.isNotEmpty,
+                                      selected: selected,
+                                      onSelect: (bool selected) {
+                                        if (selected) {
+                                          this
+                                              .selected
+                                              .add(widget.parent.chats[index]);
+                                          setState(() {});
+                                        } else {
+                                          this.selected.removeWhere((element) =>
+                                              element.guid ==
+                                              widget.parent.chats[index].guid);
+                                          setState(() {});
+                                        }
+                                      },
+                                    ));
+                    } else {
+                      if (!widget.parent.widget.showArchivedChats &&
+                          widget.parent.chats[index].isArchived)
+                        return Container();
+                      if (widget.parent.widget.showArchivedChats &&
+                          !widget.parent.chats[index].isArchived)
+                        return Container();
+                      return ConversationTile(
+                        key: UniqueKey(),
+                        chat: widget.parent.chats[index],
+                        inSelectMode: selected.isNotEmpty,
+                        selected: selected,
+                        onSelect: (bool selected) {
+                          if (selected) {
+                            this.selected.add(widget.parent.chats[index]);
+                            setState(() {});
+                          } else {
+                            this.selected.removeWhere((element) =>
+                                element.guid ==
+                                widget.parent.chats[index].guid);
+                            setState(() {});
+                          }
+                        },
+                      );
+                    }
+                  },
+                  itemCount: widget.parent.chats?.length ?? 0);
+            } else {
+              return Container();
+            }
+          },
+        ),
+        floatingActionButton: selected.isEmpty &&
+                !SettingsManager().settings.moveNewMessageToheader
+            ? widget.parent.buildFloatinActionButton()
+            : null,
+      ),
+    );
+  }
+}
+
+class _Samsung extends StatefulWidget {
+  _Samsung({Key key, @required this.parent}) : super(key: key);
+
+  final _ConversationListState parent;
+
+  @override
+  _SamsungState createState() => _SamsungState();
+}
+
+class _SamsungState extends State<_Samsung> {
+  Brightness brightness;
+  DisplayMode currentMode;
+  bool gotBrightness = false;
+  List<DisplayMode> modes;
+  Color previousBackgroundColor;
+  List<Chat> selected = [];
+
+  void loadBrightness() {
+    Color now = Theme.of(context).backgroundColor;
+    bool themeChanged =
+        previousBackgroundColor == null || previousBackgroundColor != now;
+    if (!themeChanged && gotBrightness) return;
+
+    previousBackgroundColor = now;
+    if (this.context == null) {
+      brightness = Brightness.light;
+      gotBrightness = true;
+      return;
+    }
+
+    bool isDark = now.computeLuminance() < 0.179;
+    brightness = isDark ? Brightness.dark : Brightness.light;
+    gotBrightness = true;
+    if (this.mounted) setState(() {});
+  }
+
+  bool hasPinnedChat() {
+    for (var i = 0; i < widget.parent.chats.length; i++) {
+      if (widget.parent.chats[i].isPinned) {
+        widget.parent.hasPinnedChata = true;
+        return true;
+      } else {
+        return false;
+      }
+    }
+    return false;
+  }
+
+  bool hasNormalChats() {
+    int counter = 0;
+    for (var i = 0; i < widget.parent.chats.length; i++) {
+      if (widget.parent.chats[i].isPinned) {
+        counter++;
+      } else {}
+    }
+    if (counter == widget.parent.chats.length) {
+      return false;
+    } else {
+      return true;
+    }
+  }
+
+  Widget slideLeftBackground() {
+    return Container(
+      color: Colors.red,
+      child: Align(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: <Widget>[
+            Icon(
+              Icons.delete,
+              color: Colors.white,
+            ),
+            Text(
+              " Archive",
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+              ),
+              textAlign: TextAlign.right,
+            ),
+            SizedBox(
+              width: 20,
+            ),
+          ],
+        ),
+        alignment: Alignment.centerRight,
+      ),
+    );
+  }
+
+  Widget slideLeftBackgroundArchived() {
+    return Container(
+      color: Colors.green,
+      child: Align(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: <Widget>[
+            Icon(
+              Icons.restore_from_trash,
+              color: Colors.white,
+            ),
+            Text(
+              " Unarchive",
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+              ),
+              textAlign: TextAlign.right,
+            ),
+            SizedBox(
+              width: 20,
+            ),
+          ],
+        ),
+        alignment: Alignment.centerRight,
+      ),
+    );
+  }
+
+  Widget slideRightBackground() {
+    return Container(
+      color: Colors.yellow,
+      child: Align(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: <Widget>[
+            SizedBox(
+              width: 20,
+            ),
+            Icon(
+              Icons.star,
+              color: Colors.white,
+            ),
+            Text(
+              " Pin",
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+              ),
+              textAlign: TextAlign.left,
+            ),
+          ],
+        ),
+        alignment: Alignment.centerLeft,
+      ),
+    );
+  }
+
+  Widget slideRightBackgroundPinned() {
+    return Container(
+      color: Colors.yellow,
+      child: Align(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: <Widget>[
+            SizedBox(
+              width: 20,
+            ),
+            Icon(
+              Icons.star_outline,
+              color: Colors.white,
+            ),
+            Text(
+              " Unpin",
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+              ),
+              textAlign: TextAlign.left,
+            ),
+          ],
+        ),
+        alignment: Alignment.centerLeft,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    hasPinnedChat();
+    loadBrightness();
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle(
+        systemNavigationBarColor: Theme.of(context).backgroundColor,
+      ),
+      child: Scaffold(
+        appBar: PreferredSize(
+          preferredSize: Size.fromHeight(60),
+          child: AnimatedSwitcher(
+            duration: Duration(milliseconds: 500),
+            child: selected.isEmpty
+                ? AppBar(
+                    iconTheme:
+                        IconThemeData(color: Theme.of(context).primaryColor),
+                    brightness: brightness,
+                    bottom: PreferredSize(
+                      child: Container(
+                        color: Theme.of(context).dividerColor,
+                        height: 0,
+                      ),
+                      preferredSize: Size.fromHeight(0.5),
+                    ),
+                    title: Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Messages",
+                          style: Theme.of(context)
+                              .textTheme
+                              .headline1
+                              .copyWith(fontSize: 20),
+                        ),
+                        Container(width: 10),
+                        Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            (SettingsManager().settings.showConnectionIndicator)
+                                ? StreamBuilder(
+                                    stream:
+                                        SocketManager().connectionStateStream,
+                                    builder: (context,
+                                        AsyncSnapshot<SocketState> snapshot) {
+                                      SocketState connectionStatus;
+                                      if (snapshot.hasData) {
+                                        connectionStatus = snapshot.data;
+                                      } else {
+                                        connectionStatus =
+                                            SocketManager().state;
+                                      }
+                                      if (connectionStatus ==
+                                              SocketState.CONNECTED ||
+                                          connectionStatus ==
+                                              SocketState.CONNECTING) {
+                                        return Icon(
+                                          Icons.fiber_manual_record,
+                                          size: 15,
+                                          color:
+                                              HexColor('32CD32').withAlpha(200),
+                                        );
+                                      } else {
+                                        return Icon(
+                                          Icons.fiber_manual_record,
+                                          size: 15,
+                                          color:
+                                              HexColor('DC143C').withAlpha(200),
+                                        );
+                                      }
+                                    })
+                                : Container(),
+                            StreamBuilder(
+                              stream: SocketManager().setup.stream,
+                              initialData: SetupData(0, []),
+                              builder: (context, snapshot) {
+                                if (!snapshot.hasData ||
+                                    snapshot.data.progress < 1 ||
+                                    snapshot.data.progress >= 100)
+                                  return Container();
+
+                                return Theme(
+                                  data: ThemeData(
+                                    brightness: widget.parent.brightness,
+                                  ),
+                                  child: CircularProgressIndicator(),
+                                );
+                              },
+                            )
+                          ],
+                        ),
+                      ],
+                    ),
+                    actions: [
+                      (!widget.parent.widget.showArchivedChats)
+                          ? GestureDetector(
+                              onTap: () async {
+                                Navigator.of(context).push(
+                                  CupertinoPageRoute(
+                                    builder: (context) => SearchView(),
+                                  ),
+                                );
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Icon(
+                                  Icons.search,
+                                  color: Theme.of(context)
+                                      .textTheme
+                                      .bodyText1
+                                      .color,
+                                ),
+                              ),
+                            )
+                          : Container(),
+                      (SettingsManager().settings.moveNewMessageToheader &&
+                              !widget.parent.widget.showArchivedChats)
+                          ? GestureDetector(
+                              onTap: () {
+                                Navigator.of(context).push(
+                                  ThemeSwitcher.buildPageRoute(
+                                    builder: (BuildContext context) {
+                                      return ConversationView(
+                                        isCreator: true,
+                                      );
+                                    },
+                                  ),
+                                );
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Icon(
+                                  Icons.create,
+                                  color: Theme.of(context)
+                                      .textTheme
+                                      .bodyText1
+                                      .color,
+                                ),
+                              ),
+                            )
+                          : Container(),
+                      Padding(
+                        padding: EdgeInsets.only(right: 20),
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(vertical: 15.5),
+                          child: Container(
+                            width: 40,
+                            child: widget.parent.buildSettingsButton(),
+                          ),
+                        ),
+                      ),
+                    ],
+                    backgroundColor: Theme.of(context).backgroundColor,
+                  )
+                : Padding(
+                    padding: const EdgeInsets.all(20.0),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.max,
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            if (selected.length <= 1)
+                              GestureDetector(
+                                onTap: () {
+                                  selected.forEach((element) async {
+                                    element.isMuted = !element.isMuted;
+                                    await element.save(updateLocalVals: true);
+                                  });
+                                  if (this.mounted) setState(() {});
+                                  selected = [];
+                                  setState(() {});
+                                },
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Icon(
+                                    Icons.notifications_off,
+                                    color: Theme.of(context)
+                                        .textTheme
+                                        .bodyText1
+                                        .color,
+                                  ),
+                                ),
+                              ),
+                            GestureDetector(
+                              onTap: () {
+                                selected.forEach((element) {
+                                  if (element.isArchived) {
+                                    ChatBloc().unArchiveChat(element);
+                                  } else {
+                                    ChatBloc().archiveChat(element);
+                                  }
+                                });
+                                selected = [];
+                                setState(() {});
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Icon(
+                                  widget.parent.widget.showArchivedChats
+                                      ? Icons.restore_from_trash
+                                      : Icons.delete,
+                                  color: Theme.of(context)
+                                      .textTheme
+                                      .bodyText1
+                                      .color,
+                                ),
+                              ),
+                            ),
+                            GestureDetector(
+                              onTap: () {
+                                selected.forEach((element) {
+                                  if (element.isPinned) {
+                                    element.unpin();
+                                  } else {
+                                    element.pin();
+                                  }
+                                });
+                                selected = [];
+                                setState(() {});
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Icon(
+                                  Icons.star,
+                                  color: Theme.of(context)
+                                      .textTheme
+                                      .bodyText1
+                                      .color,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+          ),
+        ),
+        backgroundColor: Theme.of(context).backgroundColor,
+        body: StreamBuilder(
+          stream: ChatBloc().chatStream,
+          builder: (context, snapshot) {
+            if (snapshot.hasData ||
+                widget.parent.widget.showArchivedChats ||
+                widget.parent.chats.isNotEmpty) {
+              widget.parent.sortChats();
+              if (widget.parent.chats.isEmpty) {
+                return Center(
+                  child: Container(
+                    padding: EdgeInsets.only(top: 50.0),
+                    child: Text(
+                      "You have no archived chats :(",
+                      style: Theme.of(context).textTheme.subtitle1,
+                    ),
+                  ),
+                );
+              }
+              hasPinnedChat();
+              print(hasPinnedChat());
+              return SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.max,
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    (hasPinnedChat())
+                        ? Container(
+                            height: 20.0,
+                            decoration: BoxDecoration(
+                                border: Border.all(
+                                  color: Colors.transparent,
+                                ),
+                                borderRadius:
+                                    BorderRadius.all(Radius.circular(20))),
+                          )
+                        : Container(width: 0.0, height: 0.0),
+                    (hasPinnedChat())
+                        ? Container(
+                            padding: EdgeInsets.fromLTRB(
+                                6.0,
+                                (hasPinnedChat()) ? 6.0 : 0,
+                                6.0,
+                                (hasPinnedChat()) ? 6.0 : 0),
+                            decoration: new BoxDecoration(
+                                color: Theme.of(context)
+                                    .accentColor,
+                                borderRadius: new BorderRadius.only(
+                                  topLeft: const Radius.circular(20.0),
+                                  topRight: const Radius.circular(20.0),
+                                  bottomLeft: const Radius.circular(20.0),
+                                  bottomRight: const Radius.circular(20.0),
+                                )),
+                            child: ListView.builder(
+                              shrinkWrap: true,
+                              physics: NeverScrollableScrollPhysics(),
+                              itemBuilder: (context, index) {
+                                if (widget.parent.swipeToDismiss) {
+                                  return Dismissible(
+                                    background: slideRightBackgroundPinned(),
+                                    secondaryBackground: (!widget
+                                            .parent.widget.showArchivedChats)
+                                        ? slideLeftBackground()
+                                        : slideLeftBackgroundArchived(),
+                                    // Each Dismissible must contain a Key. Keys allow Flutter to
+                                    // uniquely identify widgets.
+                                    key: UniqueKey(),
+                                    // Provide a function that tells the app
+                                    // what to do after an item has been swiped away.
+                                    onDismissed: (direction) {
+                                      if (direction ==
+                                          DismissDirection.endToStart) {
+                                        (!widget.parent.widget
+                                                .showArchivedChats)
+                                            ? widget.parent.chats[index].unpin()
+                                            : null;
+                                        setState(() {
+                                          Scaffold.of(context)
+                                              .hideCurrentSnackBar();
+                                          (!widget.parent.widget
+                                                  .showArchivedChats)
+                                              ? ChatBloc().archiveChat(
+                                                  widget.parent.chats[index])
+                                              : ChatBloc().unArchiveChat(
+                                                  widget.parent.chats[index]);
+
+                                          widget.parent.chats.remove(index);
+                                        });
+                                      } else {
+                                        setState(() {
+                                          Scaffold.of(context)
+                                              .hideCurrentSnackBar();
+                                          widget.parent.chats[index].unpin();
+                                        });
+                                      }
+                                    },
+                                    child: (!widget.parent.widget
+                                                .showArchivedChats &&
+                                            widget
+                                                .parent.chats[index].isArchived)
+                                        ? Container()
+                                        : (widget.parent.widget
+                                                    .showArchivedChats &&
+                                                !widget.parent.chats[index]
+                                                    .isArchived)
+                                            ? Container()
+                                            : (widget.parent.chats[index]
+                                                    .isPinned)
+                                                ? ConversationTile(
+                                                    key: UniqueKey(),
+                                                    chat: widget
+                                                        .parent.chats[index],
+                                                    inSelectMode:
+                                                        selected.isNotEmpty,
+                                                    selected: selected,
+                                                    onSelect: (bool selected) {
+                                                      if (selected) {
+                                                        this.selected.add(widget
+                                                            .parent
+                                                            .chats[index]);
+                                                        setState(() {});
+                                                      } else {
+                                                        this.selected.removeWhere(
+                                                            (element) =>
+                                                                element.guid ==
+                                                                widget
+                                                                    .parent
+                                                                    .chats[
+                                                                        index]
+                                                                    .guid);
+                                                        setState(() {});
+                                                      }
+                                                    },
+                                                  )
+                                                : Container(),
+                                  );
+                                } else {
+                                  if (!widget.parent.widget.showArchivedChats &&
+                                      widget.parent.chats[index].isArchived)
+                                    return Container();
+                                  if (widget.parent.widget.showArchivedChats &&
+                                      !widget.parent.chats[index].isArchived)
+                                    return Container();
+                                  if (widget.parent.chats[index].isPinned) {
+                                    return ConversationTile(
+                                      key: UniqueKey(),
+                                      chat: widget.parent.chats[index],
+                                      inSelectMode: selected.isNotEmpty,
+                                      selected: selected,
+                                      onSelect: (bool selected) {
+                                        if (selected) {
+                                          this
+                                              .selected
+                                              .add(widget.parent.chats[index]);
+                                          setState(() {});
+                                        } else {
+                                          this.selected.removeWhere((element) =>
+                                              element.guid ==
+                                              widget.parent.chats[index].guid);
+                                          setState(() {});
+                                        }
+                                      },
+                                    );
+                                  }
+                                  return Container();
+                                }
+                              },
+                              itemCount: widget.parent.chats?.length ?? 0,
+                            ),
+                          )
+                        : Container(width: 0.0, height: 0.0),
+                    (hasNormalChats())
+                        ? Container(
+                            height: 20.0,
+                            decoration: BoxDecoration(
+                                border: Border.all(
+                                  color: Colors.transparent,
+                                ),
+                                borderRadius:
+                                    BorderRadius.all(Radius.circular(20))),
+                          )
+                        : Container(width: 0.0, height: 0.0),
+                    (hasNormalChats())
+                        ? Container(
+                            padding: const EdgeInsets.all(6.0),
+                            decoration: new BoxDecoration(
+                                color: Theme.of(context)
+                                    .accentColor,
+                                borderRadius: new BorderRadius.only(
+                                  topLeft: const Radius.circular(20.0),
+                                  topRight: const Radius.circular(20.0),
+                                  bottomLeft: const Radius.circular(20.0),
+                                  bottomRight: const Radius.circular(20.0),
+                                )),
+                            child: ListView.builder(
+                              shrinkWrap: true,
+                              physics: NeverScrollableScrollPhysics(),
+                              itemBuilder: (context, index) {
+                                if (widget.parent.swipeToDismiss) {
+                                  return Dismissible(
+                                    background: slideRightBackground(),
+                                    secondaryBackground: (!widget
+                                            .parent.widget.showArchivedChats)
+                                        ? slideLeftBackground()
+                                        : slideLeftBackgroundArchived(),
+                                    // Each Dismissible must contain a Key. Keys allow Flutter to
+                                    // uniquely identify widgets.
+                                    key: UniqueKey(),
+                                    // Provide a function that tells the app
+                                    // what to do after an item has been swiped away.
+                                    onDismissed: (direction) {
+                                      if (direction ==
+                                          DismissDirection.endToStart) {
+                                        (!widget.parent.widget
+                                                .showArchivedChats)
+                                            ? widget.parent.chats[index].unpin()
+                                            : null;
+                                        setState(() {
+                                          Scaffold.of(context)
+                                              .hideCurrentSnackBar();
+                                          (!widget.parent.widget
+                                                  .showArchivedChats)
+                                              ? ChatBloc().archiveChat(
+                                                  widget.parent.chats[index])
+                                              : ChatBloc().unArchiveChat(
+                                                  widget.parent.chats[index]);
+                                          widget.parent.chats.remove(index);
+                                        });
+                                      } else {
+                                        setState(() {
+                                          Scaffold.of(context)
+                                              .hideCurrentSnackBar();
+                                          widget.parent.chats[index].pin();
+                                        });
+                                      }
+                                    },
+                                    child: (!widget.parent.widget
+                                                .showArchivedChats &&
+                                            widget
+                                                .parent.chats[index].isArchived)
+                                        ? Container()
+                                        : (widget.parent.widget
+                                                    .showArchivedChats &&
+                                                !widget.parent.chats[index]
+                                                    .isArchived)
+                                            ? Container()
+                                            : (!widget.parent.chats[index]
+                                                    .isPinned)
+                                                ? ConversationTile(
+                                                    key: UniqueKey(),
+                                                    chat: widget
+                                                        .parent.chats[index],
+                                                    inSelectMode:
+                                                        selected.isNotEmpty,
+                                                    selected: selected,
+                                                    onSelect: (bool selected) {
+                                                      if (selected) {
+                                                        this.selected.add(widget
+                                                            .parent
+                                                            .chats[index]);
+                                                        setState(() {});
+                                                      } else {
+                                                        this.selected.removeWhere(
+                                                            (element) =>
+                                                                element.guid ==
+                                                                widget
+                                                                    .parent
+                                                                    .chats[
+                                                                        index]
+                                                                    .guid);
+                                                        setState(() {});
+                                                      }
+                                                    },
+                                                  )
+                                                : Container(),
+                                  );
+                                } else {
+                                  if (!widget.parent.widget.showArchivedChats &&
+                                      widget.parent.chats[index].isArchived)
+                                    return Container();
+                                  if (widget.parent.widget.showArchivedChats &&
+                                      !widget.parent.chats[index].isArchived)
+                                    return Container();
+                                  if (!widget.parent.chats[index].isPinned) {
+                                    return ConversationTile(
+                                      key: UniqueKey(),
+                                      chat: widget.parent.chats[index],
+                                      inSelectMode: selected.isNotEmpty,
+                                      selected: selected,
+                                      onSelect: (bool selected) {
+                                        if (selected) {
+                                          this
+                                              .selected
+                                              .add(widget.parent.chats[index]);
+                                          setState(() {});
+                                        } else {
+                                          this.selected.removeWhere((element) =>
+                                              element.guid ==
+                                              widget.parent.chats[index].guid);
+                                          setState(() {});
+                                        }
+                                      },
+                                    );
+                                  }
+                                  return Container();
+                                }
+                              },
+                              itemCount: widget.parent.chats?.length ?? 0,
+                            ),
+                          )
+                        : Container(width: 0.0, height: 0.0),
+                  ],
+                ),
               );
             } else {
               return Container();
             }
           },
         ),
-        floatingActionButton:
-            selected.isEmpty ? widget.parent.buildFloatinActionButton() : null,
+        floatingActionButton: selected.isEmpty &&
+                !SettingsManager().settings.moveNewMessageToheader
+            ? widget.parent.buildFloatinActionButton()
+            : null,
       ),
     );
   }

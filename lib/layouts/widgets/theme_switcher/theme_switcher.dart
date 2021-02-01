@@ -5,10 +5,11 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class ThemeSwitcher extends StatefulWidget {
-  ThemeSwitcher({Key key, @required this.iOSSkin, @required this.materialSkin})
+  ThemeSwitcher({Key key, @required this.iOSSkin, @required this.materialSkin, @required this.samsungSkin})
       : super(key: key);
   final Widget iOSSkin;
   final Widget materialSkin;
+  final Widget samsungSkin;
 
   static PageRoute buildPageRoute(
       {@required Function(BuildContext context) builder}) {
@@ -17,6 +18,9 @@ class ThemeSwitcher extends StatefulWidget {
         return CupertinoPageRoute(builder: builder);
         break;
       case Skins.Material:
+        return MaterialPageRoute(builder: builder);
+        break;
+      case Skins.Samsung:
         return MaterialPageRoute(builder: builder);
         break;
     }
@@ -30,6 +34,11 @@ class ThemeSwitcher extends StatefulWidget {
         );
         break;
       case Skins.Material:
+        return AlwaysScrollableScrollPhysics(
+          parent: ClampingScrollPhysics(),
+        );
+        break;
+      case Skins.Samsung:
         return AlwaysScrollableScrollPhysics(
           parent: ClampingScrollPhysics(),
         );
@@ -66,6 +75,8 @@ class _ThemeSwitcherState extends State<ThemeSwitcher> {
         return widget.iOSSkin;
       case Skins.Material:
         return widget.materialSkin;
+      case Skins.Samsung:
+        return widget.samsungSkin;
     }
   }
 }

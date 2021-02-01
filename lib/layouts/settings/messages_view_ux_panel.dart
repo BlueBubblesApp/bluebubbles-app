@@ -1,8 +1,6 @@
 import 'dart:ui';
 
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/layouts/settings/conv_list_ux_panel.dart';
-import 'package:bluebubbles/layouts/settings/messages_view_ux_panel.dart';
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
@@ -15,14 +13,14 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/helpers/contstants.dart';
 import 'package:flutter/material.dart';
 
-class UXPanel extends StatefulWidget {
-  UXPanel({Key key}) : super(key: key);
+class ConvoSettings extends StatefulWidget {
+  ConvoSettings({Key key}) : super(key: key);
 
   @override
-  _UXPanelState createState() => _UXPanelState();
+  _ConvoSettingsState createState() => _ConvoSettingsState();
 }
 
-class _UXPanelState extends State<UXPanel> {
+class _ConvoSettingsState extends State<ConvoSettings> {
   Settings _settingsCopy;
   bool needToReconnect = false;
   bool showUrl = false;
@@ -96,7 +94,7 @@ class _UXPanelState extends State<UXPanel> {
                 ),
                 backgroundColor: Theme.of(context).accentColor.withOpacity(0.5),
                 title: Text(
-                  "User Experience",
+                  "Conversation Settings",
                   style: Theme.of(context).textTheme.headline1,
                 ),
               ),
@@ -111,45 +109,53 @@ class _UXPanelState extends State<UXPanel> {
               delegate: SliverChildListDelegate(
                 <Widget>[
                   Container(padding: EdgeInsets.only(top: 5.0)),
-                  SettingsTile(
-                    title: "Chat List Settings",
-                    onTap: () {
-                      Navigator.of(context).push(
-                        CupertinoPageRoute(
-                          builder: (context) => ConvoListUXPanel(),
-                        ),
-                      );
+                  SettingsSwitch(
+                    onChanged: (bool val) {
+                      _settingsCopy.autoOpenKeyboard = val;
+                      saveSettings();
                     },
-                    trailing: Icon(
-                      SettingsManager().settings.skin == Skins.IOS
-                          ? Icons.arrow_forward_ios
-                          : Icons.arrow_forward,
-                      color: Theme.of(context).primaryColor,
-                    ),
-                  ),
-                  SettingsTile(
-                    title: "Conversation Settings",
-                    onTap: () {
-                      Navigator.of(context).push(
-                        CupertinoPageRoute(
-                          builder: (context) => ConvoSettings(),
-                        ),
-                      );
-                    },
-                    trailing: Icon(
-                      SettingsManager().settings.skin == Skins.IOS
-                          ? Icons.arrow_forward_ios
-                          : Icons.arrow_forward,
-                      color: Theme.of(context).primaryColor,
-                    ),
+                    initialVal: _settingsCopy.autoOpenKeyboard,
+                    title: "Auto-open Keyboard",
                   ),
                   SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.hideTextPreviews = val;
+                      _settingsCopy.swipeToCloseKeyboard = val;
                       saveSettings();
                     },
-                    initialVal: _settingsCopy.hideTextPreviews,
-                    title: "Hide Text Previews (in notifications)",
+                    initialVal: _settingsCopy.swipeToCloseKeyboard,
+                    title: "Swipe on text field to close keyboard",
+                  ),
+                  SettingsSwitch(
+                    onChanged: (bool val) {
+                      _settingsCopy.hideKeyboardOnScroll = val;
+                      saveSettings();
+                    },
+                    initialVal: _settingsCopy.hideKeyboardOnScroll,
+                    title: "Hide the keyboard on scroll",
+                  ),
+                  SettingsSwitch(
+                    onChanged: (bool val) {
+                      _settingsCopy.openKeyboardOnSTB = val;
+                      saveSettings();
+                    },
+                    initialVal: _settingsCopy.openKeyboardOnSTB,
+                    title: "Open the keyboard when scrolling to the bottom",
+                  ),
+                  SettingsSwitch(
+                    onChanged: (bool val) {
+                      _settingsCopy.recipientAsPlaceholder = val;
+                      saveSettings();
+                    },
+                    initialVal: _settingsCopy.recipientAsPlaceholder,
+                    title: "Show Recipient (or Group Name) as Placeholder",
+                  ),
+                  SettingsSwitch(
+                    onChanged: (bool val) {
+                      _settingsCopy.doubleTapForDetails = val;
+                      saveSettings();
+                    },
+                    initialVal: _settingsCopy.doubleTapForDetails,
+                    title: "Double-Tap Message for Details",
                   ),
                   // SettingsSwitch(
                   //   onChanged: (bool val) {
@@ -158,72 +164,22 @@ class _UXPanelState extends State<UXPanel> {
                   //   initialVal: _settingsCopy.sendTypingIndicators,
                   //   title: "Send typing indicators (BlueBubblesHelper ONLY)",
                   // ),
-
                   SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.sendTypingIndicators = val;
+                      _settingsCopy.smartReply = val;
                       saveSettings();
                     },
-                    initialVal: _settingsCopy.sendTypingIndicators,
-                    title: "Send typing indicators (BlueBubblesHelper ONLY)",
-                  ),
-
-                  SettingsSwitch(
-                    onChanged: (bool val) {
-                      _settingsCopy.preCachePreviewImages = val;
-                      saveSettings();
-                    },
-                    initialVal: _settingsCopy.preCachePreviewImages,
-                    title: "Pre-Cache Preview Images",
+                    initialVal: _settingsCopy.smartReply,
+                    title: "Smart Replies",
                   ),
                   SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.lowMemoryMode = val;
+                      _settingsCopy.sendWithReturn = val;
                       saveSettings();
                     },
-                    initialVal: _settingsCopy.lowMemoryMode,
-                    title: "Low Memory Mode",
+                    initialVal: _settingsCopy.sendWithReturn,
+                    title: "Send Message with Return Key",
                   ),
-                  SettingsSwitch(
-                    onChanged: (bool val) {
-                      _settingsCopy.showIncrementalSync = val;
-                      saveSettings();
-                    },
-                    initialVal: _settingsCopy.showIncrementalSync,
-                    title: "Notify when incremental sync complete",
-                  ),
-                  if (SettingsManager().settings.skin == Skins.IOS)
-                    SettingsSlider(
-                        text: "Scroll Speed Multiplier",
-                        startingVal: _settingsCopy.scrollVelocity,
-                        update: (double val) {
-                          _settingsCopy.scrollVelocity =
-                              double.parse(val.toStringAsFixed(2));
-                        },
-                        formatValue: ((double val) => val.toStringAsFixed(2)),
-                        min: 0.20,
-                        max: 1,
-                        divisions: 8),
-                  SettingsSwitch(
-                    onChanged: (bool val) {
-                      _settingsCopy.sendDelay = val ? 3 : 0;
-                      saveSettings();
-                      setState(() {});
-                    },
-                    initialVal: !isNullOrZero(_settingsCopy.sendDelay),
-                    title: "Send Delay",
-                  ),
-                  if (!isNullOrZero(SettingsManager().settings.sendDelay))
-                    SettingsSlider(
-                        text: "Send Delay (Seconds)",
-                        startingVal: _settingsCopy.sendDelay.toDouble(),
-                        update: (double val) {
-                          _settingsCopy.sendDelay = val.toInt();
-                        },
-                        formatValue: ((double val) => val.toStringAsFixed(2)),
-                        min: 1,
-                        max: 10,
-                        divisions: 9),
                 ],
               ),
             ),

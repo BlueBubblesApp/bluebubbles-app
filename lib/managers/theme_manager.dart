@@ -12,7 +12,7 @@ class ThemeManager {
   ThemeManager._internal();
 
   ScrollPhysics get scrollPhysics {
-    if (SettingsManager().settings.skin == Skins.Material) {
+    if (SettingsManager().settings.skin == Skins.Material || SettingsManager().settings.skin == Skins.Samsung) {
       return AlwaysScrollableScrollPhysics(
         parent: ClampingScrollPhysics(),
       );

@@ -109,7 +109,10 @@ class _SettingsPanelState extends State<SettingsPanel> {
                 toolbarHeight: 100.0,
                 elevation: 0,
                 leading: IconButton(
-                  icon: Icon(SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_back_ios : Icons.arrow_back,
+                  icon: Icon(
+                      SettingsManager().settings.skin == Skins.IOS
+                          ? Icons.arrow_back_ios
+                          : Icons.arrow_back,
                       color: Theme.of(context).primaryColor),
                   onPressed: () {
                     Navigator.of(context).pop();
@@ -315,7 +318,9 @@ class _SettingsPanelState extends State<SettingsPanel> {
                       );
                     },
                     trailing: Icon(
-                      Icons.arrow_forward_ios,
+                      SettingsManager().settings.skin == Skins.IOS
+                          ? Icons.arrow_forward_ios
+                          : Icons.arrow_forward,
                       color: Theme.of(context).primaryColor,
                     ),
                   ),
@@ -329,13 +334,18 @@ class _SettingsPanelState extends State<SettingsPanel> {
                       );
                     },
                     trailing: Icon(
-                      Icons.arrow_forward_ios,
+                      SettingsManager().settings.skin == Skins.IOS
+                          ? Icons.arrow_forward_ios
+                          : Icons.arrow_forward,
                       color: Theme.of(context).primaryColor,
                     ),
                   ),
                   SettingsTile(
                     title: "Server Management",
-                    trailing: Icon(Icons.arrow_forward_ios,
+                    trailing: Icon(
+                        SettingsManager().settings.skin == Skins.IOS
+                            ? Icons.arrow_forward_ios
+                            : Icons.arrow_forward,
                         color: Theme.of(context).primaryColor),
                     onTap: () async {
                       Navigator.of(context).push(
@@ -355,7 +365,9 @@ class _SettingsPanelState extends State<SettingsPanel> {
                       );
                     },
                     trailing: Icon(
-                      Icons.arrow_forward_ios,
+                      SettingsManager().settings.skin == Skins.IOS
+                          ? Icons.arrow_forward_ios
+                          : Icons.arrow_forward,
                       color: Theme.of(context).primaryColor,
                     ),
                   ),

@@ -31,6 +31,11 @@ class Settings {
   bool showConnectionIndicator = false;
   int sendDelay;
   bool recipientAsPlaceholder = false;
+  bool hideKeyboardOnScroll = false;
+  bool openKeyboardOnSTB = false;
+  bool moveNewMessageToheader = false;
+  bool swipeToCloseKeyboard = false;
+  bool swipeToDismiss = false;
   // String emojiFontFamily;
 
   Skins skin = Skins.IOS;
@@ -94,6 +99,16 @@ class Settings {
         settings.sendDelay = entry.value;
       } else if (entry.name == "recipientAsPlaceholder") {
         settings.recipientAsPlaceholder = entry.value;
+      } else if (entry.name == "hideKeyboardOnScroll") {
+        settings.hideKeyboardOnScroll = entry.value;
+      } else if (entry.name == "openKeyboardOnSTB") {
+        settings.openKeyboardOnSTB = entry.value;
+      } else if (entry.name == "newMessageMenuBar") {
+        settings.moveNewMessageToheader = entry.value;
+      } else if (entry.name == "swipeToCloseKeyboard") {
+        settings.swipeToCloseKeyboard = entry.value;
+      }  else if (entry.name == "swipeToDismiss") {
+        settings.swipeToDismiss = entry.value;
       }
 
       // else if (entry.name == "emojiFontFamily") {
@@ -229,6 +244,10 @@ class Settings {
             value: this.smartReply,
             type: this.smartReply.runtimeType),
         ConfigEntry(
+            name: "hideKeyboardOnScroll",
+            value: this.hideKeyboardOnScroll,
+            type: this.hideKeyboardOnScroll.runtimeType),
+        ConfigEntry(
             name: "reducedForehead",
             value: this.reducedForehead,
             type: this.reducedForehead.runtimeType),
@@ -248,6 +267,22 @@ class Settings {
             name: "recipientAsPlaceholder",
             value: this.recipientAsPlaceholder,
             type: this.recipientAsPlaceholder.runtimeType),
+        ConfigEntry(
+            name: "openKeyboardOnSTB",
+            value: this.openKeyboardOnSTB,
+            type: this.openKeyboardOnSTB.runtimeType),
+        ConfigEntry(
+            name: "newMessageMenuBar",
+            value: this.moveNewMessageToheader,
+            type: this.moveNewMessageToheader.runtimeType),
+        ConfigEntry(
+            name: "swipeToCloseKeyboard",
+            value: this.swipeToCloseKeyboard,
+            type: this.swipeToCloseKeyboard.runtimeType),
+        ConfigEntry(
+            name: "swipeToDismiss",
+            value: this.swipeToDismiss,
+            type: this.swipeToDismiss.runtimeType),
         // ConfigEntry(
         //     name: "emojiFontFamily",
         //     value: this.emojiFontFamily,

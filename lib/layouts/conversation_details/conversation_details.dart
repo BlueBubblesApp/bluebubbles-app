@@ -6,7 +6,6 @@ import 'package:bluebubbles/helpers/contstants.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/layouts/conversation_details/attachment_details_card.dart';
 import 'package:bluebubbles/layouts/conversation_details/contact_tile.dart';
-import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -88,6 +87,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                 ),
               )
             : AppBar(
+                iconTheme: IconThemeData(color: Theme.of(context).primaryColor),
                 title: Text(
                   "Details",
                   style: Theme.of(context).textTheme.headline1,

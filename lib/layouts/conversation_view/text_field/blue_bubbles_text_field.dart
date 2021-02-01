@@ -13,6 +13,7 @@ import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scrol
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:camera/camera.dart';
@@ -111,6 +112,21 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
       if (focusNode.hasFocus && this.mounted) {
         showImagePicker = false;
         setState(() {});
+      }
+
+      EventDispatcher().emit("keyboard-is-open", focusNode.hasFocus);
+      EventDispatcher().emit("keyboard-is-closed", !focusNode.hasFocus);
+    });
+
+    EventDispatcher().stream.listen((event) {
+      if (!event.containsKey("type")) return;
+      if (event["type"] == "unfocus-keyboard" && focusNode.hasFocus) {
+        focusNode.unfocus();
+        SystemChannels.textInput.invokeMethod('TextInput.hide');
+      }
+      else if (event["type"] == "focus-keyboard") {
+        focusNode.requestFocus(focusNode);
+        SystemChannels.textInput.invokeMethod('TextInput.show');
       }
     });
 
@@ -323,7 +339,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
       children: <Widget>[
         buildShareButton(),
         buildActualTextField(),
-        if (SettingsManager().settings.skin == Skins.Material)
+        if (SettingsManager().settings.skin == Skins.Material || SettingsManager().settings.skin == Skins.Samsung)
           buildSendButton(canRecord),
       ],
     );
@@ -394,7 +410,6 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
     IconData rightIcon = Icons.arrow_upward;
 
     if (canRecord) rightIcon = Icons.mic;
-
     return Flexible(
       flex: 1,
       fit: FlexFit.loose,
@@ -435,46 +450,46 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                   },
                   onSubmitted: (String value) async {
                     if (!SettingsManager().settings.sendWithReturn ||
-                      isNullOrEmpty(value)) return;
+                        isNullOrEmpty(value)) return;
 
-                  // If send delay is enabled, delay the sending
-                  if (!isNullOrZero(SettingsManager().settings.sendDelay)) {
-                    // Break the delay into 1 second intervals
-                    for (var i = 0;
-                        i < SettingsManager().settings.sendDelay;
-                        i++) {
-                      if (i != 0 && sendCountdown == null) break;
+                    // If send delay is enabled, delay the sending
+                    if (!isNullOrZero(SettingsManager().settings.sendDelay)) {
+                      // Break the delay into 1 second intervals
+                      for (var i = 0;
+                          i < SettingsManager().settings.sendDelay;
+                          i++) {
+                        if (i != 0 && sendCountdown == null) break;
 
-                      // Update UI with new state information
-                      if (this.mounted) {
-                        setState(() {
-                          sendCountdown =
-                              SettingsManager().settings.sendDelay - i;
-                        });
+                        // Update UI with new state information
+                        if (this.mounted) {
+                          setState(() {
+                            sendCountdown =
+                                SettingsManager().settings.sendDelay - i;
+                          });
+                        }
+
+                        await Future.delayed(new Duration(seconds: 1));
                       }
-
-                      await Future.delayed(new Duration(seconds: 1));
                     }
-                  }
 
-                  if (this.mounted) {
-                    setState(() {
-                      sendCountdown = null;
-                    });
-                  }
+                    if (this.mounted) {
+                      setState(() {
+                        sendCountdown = null;
+                      });
+                    }
 
-                  if (stopSending != null && stopSending) {
-                    stopSending = null;
-                    return;
-                  }
+                    if (stopSending != null && stopSending) {
+                      stopSending = null;
+                      return;
+                    }
 
-                  if (await widget.onSend(pickedImages, value)) {
-                    controller.text = "";
-                    pickedImages = <File>[];
-                    updateTextFieldAttachments();
-                  }
+                    if (await widget.onSend(pickedImages, value)) {
+                      controller.text = "";
+                      pickedImages = <File>[];
+                      updateTextFieldAttachments();
+                    }
 
-                  if (this.mounted) setState(() {});
+                    if (this.mounted) setState(() {});
                   },
                   onContentCommited: onContentCommit,
                   textCapitalization: TextCapitalization.sentences,
@@ -493,7 +508,10 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                   keyboardType: TextInputType.multiline,
                   maxLines: 14,
                   minLines: 1,
-                  placeholder: "BlueBubbles",
+                  placeholder:
+                      SettingsManager().settings.recipientAsPlaceholder == true
+                          ? placeholder
+                          : "BlueBubbles",
                   padding:
                       EdgeInsets.only(left: 10, top: 10, right: 40, bottom: 10),
                   placeholderStyle: Theme.of(context).textTheme.subtitle1,
@@ -550,7 +568,71 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                       ),
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    hintText: "BlueBubbles",
+                    hintText:
+                        SettingsManager().settings.recipientAsPlaceholder ==
+                                true
+                            ? placeholder
+                            : "BlueBubbles",
+                    hintStyle: Theme.of(context).textTheme.subtitle1,
+                    contentPadding: EdgeInsets.only(
+                      left: 10,
+                      top: 15,
+                      right: 10,
+                      bottom: 10,
+                    ),
+                  ),
+                  keyboardType: TextInputType.multiline,
+                  maxLines: 14,
+                  minLines: 1,
+                ),
+                samsungSkin: TextField(
+                  controller: controller,
+                  focusNode: focusNode,
+                  textCapitalization: TextCapitalization.sentences,
+                  autocorrect: true,
+                  autofocus: SettingsManager().settings.autoOpenKeyboard,
+                  cursorColor: Theme.of(context).primaryColor,
+                  key: _searchFormKey,
+                  style: Theme.of(context).textTheme.bodyText1.apply(
+                        color: ThemeData.estimateBrightnessForColor(
+                                    Theme.of(context).backgroundColor) ==
+                                Brightness.light
+                            ? Colors.black
+                            : Colors.white,
+                        fontSizeDelta: -0.25,
+                      ),
+                  //onContentCommited: onContentCommit,
+                  decoration: InputDecoration(
+                    isDense: true,
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(
+                        color: Theme.of(context).dividerColor,
+                        width: 1.5,
+                        style: BorderStyle.solid,
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    disabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(
+                        color: Theme.of(context).dividerColor,
+                        width: 1.5,
+                        style: BorderStyle.solid,
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(
+                        color: Theme.of(context).dividerColor,
+                        width: 1.5,
+                        style: BorderStyle.solid,
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    hintText:
+                        SettingsManager().settings.recipientAsPlaceholder ==
+                                true
+                            ? placeholder
+                            : "BlueBubbles",
                     hintStyle: Theme.of(context).textTheme.subtitle1,
                     contentPadding: EdgeInsets.only(
                       left: 10,
@@ -625,6 +707,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               if (sendCountdown != null) Text(sendCountdown.toString()),
+              (SettingsManager().settings.skin == Skins.IOS) ?
               ButtonTheme(
                 minWidth: 30,
                 height: 30,
@@ -728,6 +811,118 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                   ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(40),
+                  ),
+                ),
+              )
+              : GestureDetector(
+                onTapDown: (_) async {
+                  if (canRecord && !isRecording) {
+                    await startRecording();
+                  }
+                },
+                onTapCancel: () async {
+                  await stopRecording();
+                },
+                child: ButtonTheme(
+                  minWidth: 30,
+                  height: 30,
+                  child: RaisedButton(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 0,
+                    ),
+                    color: Theme.of(context).primaryColor,
+                    onPressed: () async {
+                      if (sendCountdown != null) {
+                        stopSending = true;
+                        sendCountdown = null;
+                        if (this.mounted) setState(() {});
+                      } else {
+                        // If send delay is enabled, delay the sending
+                        if (!isNullOrZero(
+                            SettingsManager().settings.sendDelay)) {
+                          // Break the delay into 1 second intervals
+                          for (var i = 0;
+                              i < SettingsManager().settings.sendDelay;
+                              i++) {
+                            if (i != 0 && sendCountdown == null) break;
+
+                            // Update UI with new state information
+                            if (this.mounted) {
+                              setState(() {
+                                sendCountdown =
+                                    SettingsManager().settings.sendDelay - i;
+                              });
+                            }
+
+                            await Future.delayed(new Duration(seconds: 1));
+                          }
+                        }
+
+                        if (this.mounted) {
+                          setState(() {
+                            sendCountdown = null;
+                          });
+                        }
+
+                        if (stopSending != null && stopSending) {
+                          stopSending = null;
+                          return;
+                        }
+
+                        if (await widget.onSend(
+                            pickedImages, controller.text)) {
+                          controller.text = "";
+                          pickedImages = <File>[];
+                          updateTextFieldAttachments();
+                        }
+                      }
+
+                      if (this.mounted) setState(() {});
+                    },
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        AnimatedOpacity(
+                          opacity: sendCountdown == null &&
+                                  controller.text.isEmpty &&
+                                  pickedImages.isEmpty
+                              ? 1.0
+                              : 0.0,
+                          duration: Duration(milliseconds: 150),
+                          child: Icon(
+                            Icons.mic,
+                            color: (isRecording) ? Colors.red : Colors.white,
+                            size: 20,
+                          ),
+                        ),
+                        AnimatedOpacity(
+                          opacity: (sendCountdown == null &&
+                                      (controller.text.isNotEmpty ||
+                                          pickedImages.length > 0)) &&
+                                  !isRecording
+                              ? 1.0
+                              : 0.0,
+                          duration: Duration(milliseconds: 150),
+                          child: Icon(
+                            Icons.arrow_upward,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                        ),
+                        AnimatedOpacity(
+                          opacity: sendCountdown != null ? 1.0 : 0.0,
+                          duration: Duration(milliseconds: 50),
+                          child: Icon(
+                            Icons.cancel_outlined,
+                            color: Colors.red,
+                            size: 20,
+                          ),
+                        ),
+                      ],
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(40),
+                    ),
                   ),
                 ),
               ),

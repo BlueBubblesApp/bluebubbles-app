@@ -1,4 +1,6 @@
+import 'package:bluebubbles/helpers/contstants.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -18,8 +20,8 @@ class MessageTimeStamp extends StatelessWidget {
 
           return AnimatedContainer(
             duration: Duration(milliseconds: offset == 0 ? 150 : 0),
-            width: (-offset).clamp(0, 70).toDouble(),
-            height: 20,
+            width: (SettingsManager().settings.skin == Skins.IOS || SettingsManager().settings.skin == Skins.Material) ? (-offset).clamp(0, 70).toDouble() : 60,
+            height: 25,
             child: Stack(
               children: [
                 AnimatedPositioned(
@@ -31,9 +33,9 @@ class MessageTimeStamp extends StatelessWidget {
                     DateFormat('h:mm a')
                         .format(message.dateCreated)
                         .toLowerCase(),
-                    style: Theme.of(context).textTheme.subtitle1,
+                    style: Theme.of(context).textTheme.subtitle1.apply(fontSizeDelta: 0.09),
                     overflow: TextOverflow.visible,
-                    maxLines: 1,
+                    maxLines: 2,
                   ),
                 ),
               ],

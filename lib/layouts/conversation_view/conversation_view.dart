@@ -10,13 +10,16 @@ import 'package:bluebubbles/layouts/conversation_view/messages_view.dart';
 import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/chat_selector_text_field.dart';
 import 'package:bluebubbles/layouts/conversation_view/text_field/blue_bubbles_text_field.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/outgoing_queue.dart';
 import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:keyboard_attachable/keyboard_attachable.dart';
 
 import '../../repository/models/chat.dart';
@@ -61,6 +64,15 @@ class ConversationViewState extends State<ConversationView>
     with ConversationViewMixin {
   List<File> existingAttachments;
   String existingText;
+  bool keyboardOpen = false;
+  bool keyboardClosed = false;
+  Settings _settingsCopy;
+  List<DisplayMode> modes;
+  DisplayMode currentMode;
+  Brightness brightness;
+  Color previousBackgroundColor;
+  bool gotBrightness = false;
+  
 
   @override
   void initState() {
@@ -95,6 +107,15 @@ class ConversationViewState extends State<ConversationView>
         await _chat.getParticipants();
         currentChat.chat = _chat;
         if (this.mounted) setState(() {});
+      }
+    });
+    EventDispatcher().stream.listen((event) {
+      if (!event.containsKey("type")) return;
+      if (event["type"] == "keyboard-is-open") {
+        keyboardOpen = event.containsKey("data") ? event["data"] : false;
+      }
+      if (event["type"] == "keyboard-is-closed") {
+        keyboardClosed = event.containsKey("data") ? event["data"] : false;
       }
     });
   }
@@ -133,7 +154,8 @@ class ConversationViewState extends State<ConversationView>
       if (chat == null) return false;
 
       // If the current chat is null, set it
-      bool isDifferentChat = currentChat == null || currentChat?.chat?.guid != chat.guid;
+      bool isDifferentChat =
+          currentChat == null || currentChat?.chat?.guid != chat.guid;
       if (isDifferentChat) {
         initCurrentChat(chat);
       }
@@ -150,7 +172,8 @@ class ConversationViewState extends State<ConversationView>
     }
 
     // If the current chat is null, set it
-    bool isDifferentChat = currentChat == null || currentChat?.chat?.guid != chat.guid;
+    bool isDifferentChat =
+        currentChat == null || currentChat?.chat?.guid != chat.guid;
     if (isDifferentChat) {
       initCurrentChat(chat);
     }
@@ -185,22 +208,30 @@ class ConversationViewState extends State<ConversationView>
 
   Widget buildFAB() {
     if (widget.onSelect != null) {
-      return FloatingActionButton(
-        onPressed: () => widget.onSelect(selected),
-        child: widget.selectIcon ??
-            Icon(
-              Icons.check,
-              color: Theme.of(context).textTheme.bodyText1.color,
-            ),
-        backgroundColor: Theme.of(context).primaryColor,
-      );
-    } else if (currentChat != null &&
-        currentChat.showScrollDown &&
-        SettingsManager().settings.skin == Skins.Material) {
       return Padding(
         padding: const EdgeInsets.only(bottom: 55.0),
         child: FloatingActionButton(
-          onPressed: currentChat.scrollToBottom,
+          onPressed: () => widget.onSelect(selected),
+          child: widget.selectIcon ??
+              Icon(
+                Icons.check,
+                color: Theme.of(context).textTheme.bodyText1.color,
+              ),
+          backgroundColor: Theme.of(context).primaryColor,
+        ),
+      );
+    } else if (currentChat != null &&
+        currentChat.showScrollDown &&
+        (SettingsManager().settings.skin == Skins.Material || SettingsManager().settings.skin == Skins.Samsung)) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 55.0),
+        child: FloatingActionButton(
+          onPressed: () {
+            currentChat.scrollToBottom();
+            if (SettingsManager().settings.openKeyboardOnSTB) {
+              SystemChannels.textInput.invokeMethod('TextInput.show');
+            }
+          },
           child: Icon(
             Icons.arrow_downward,
             color: Theme.of(context).textTheme.bodyText1.color,
@@ -211,9 +242,27 @@ class ConversationViewState extends State<ConversationView>
     }
     return Container();
   }
+  void loadBrightness() {
+    Color now = Theme.of(context).backgroundColor;
+    bool themeChanged =
+        previousBackgroundColor == null || previousBackgroundColor != now;
+    if (!themeChanged && gotBrightness) return;
 
+    previousBackgroundColor = now;
+    if (this.context == null) {
+      brightness = Brightness.light;
+      gotBrightness = true;
+      return;
+    }
+
+    bool isDark = now.computeLuminance() < 0.179;
+    brightness = isDark ? Brightness.dark : Brightness.light;
+    gotBrightness = true;
+    if (this.mounted) setState(() {});
+  }
   @override
   Widget build(BuildContext context) {
+    loadBrightness();
     currentChat?.isAlive = true;
 
     if (widget.customMessageBloc != null && messageBloc == null) {
@@ -224,6 +273,13 @@ class ConversationViewState extends State<ConversationView>
       messageBloc = initMessageBloc();
       messageBloc.getMessages();
     }
+
+    Widget textField = BlueBubblesTextField(
+      onSend: send,
+      isCreator: isCreator,
+      existingAttachments: this.existingAttachments,
+      existingText: this.existingText,
+    );
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
@@ -239,12 +295,19 @@ class ConversationViewState extends State<ConversationView>
         body: FooterLayout(
           footer: KeyboardAttachable(
             child: widget.onSelect == null
-                ? BlueBubblesTextField(
-                    onSend: send,
-                    isCreator: isCreator,
-                    existingAttachments: this.existingAttachments,
-                    existingText: this.existingText,
-                  )
+                ? (SettingsManager().settings.swipeToCloseKeyboard)
+                    ? GestureDetector(
+                        onPanUpdate: (details) {
+                          if (details.delta.dy > 0 && keyboardOpen) {
+                            SystemChannels.textInput
+                                .invokeMethod('TextInput.hide');
+                          } else if (details.delta.dy < 0) {
+                            SystemChannels.textInput
+                                .invokeMethod('TextInput.show');
+                          }
+                        },
+                        child: textField)
+                    : textField
                 : Container(),
           ),
           child: Column(

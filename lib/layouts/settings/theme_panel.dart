@@ -8,6 +8,7 @@ import 'package:bluebubbles/layouts/settings/settings_panel.dart';
 import 'package:bluebubbles/layouts/theming/theming_panel.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
+import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:flutter/cupertino.dart';
@@ -95,7 +96,10 @@ class _ThemePanelState extends State<ThemePanel> {
                 toolbarHeight: 100.0,
                 elevation: 0,
                 leading: IconButton(
-                  icon: Icon(SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_back_ios : Icons.arrow_back,
+                  icon: Icon(
+                      SettingsManager().settings.skin == Skins.IOS
+                          ? Icons.arrow_back_ios
+                          : Icons.arrow_back,
                       color: Theme.of(context).primaryColor),
                   onPressed: () {
                     Navigator.of(context).pop();
@@ -135,7 +139,10 @@ class _ThemePanelState extends State<ThemePanel> {
                   ),
                   SettingsTile(
                     title: "Theming",
-                    trailing: Icon(Icons.arrow_forward_ios,
+                    trailing: Icon(
+                        SettingsManager().settings.skin == Skins.IOS
+                            ? Icons.arrow_forward_ios
+                            : Icons.arrow_forward,
                         color: Theme.of(context).primaryColor),
                     onTap: () async {
                       Navigator.of(context).push(
@@ -151,9 +158,12 @@ class _ThemePanelState extends State<ThemePanel> {
                       _settingsCopy.skin = val;
                       if (val == Skins.Material) {
                         _settingsCopy.hideDividers = true;
+                      } else if (val == Skins.Samsung) {
+                        _settingsCopy.hideDividers = true;
                       } else {
                         _settingsCopy.hideDividers = false;
                       }
+                      ChatBloc().refreshChats();
                       setState(() {});
                     },
                     options: Skins.values,
@@ -180,7 +190,10 @@ class _ThemePanelState extends State<ThemePanel> {
                   ),
                   SettingsTile(
                     title: "Custom Avatar Colors",
-                    trailing: Icon(Icons.arrow_forward_ios,
+                    trailing: Icon(
+                        SettingsManager().settings.skin == Skins.IOS
+                            ? Icons.arrow_forward_ios
+                            : Icons.arrow_forward,
                         color: Theme.of(context).primaryColor),
                     onTap: () async {
                       Navigator.of(context).push(
@@ -206,14 +219,16 @@ class _ThemePanelState extends State<ThemePanel> {
                     initialVal: _settingsCopy.denseChatTiles,
                     title: "Dense Conversation Tiles",
                   ),
-                  SettingsSwitch(
-                    onChanged: (bool val) {
-                      _settingsCopy.reducedForehead = val;
-                      saveSettings();
-                    },
-                    initialVal: _settingsCopy.reducedForehead,
-                    title: "Reduced Forehead",
-                  ),
+                  if (SettingsManager().settings.skin == Skins.IOS)
+                    SettingsSwitch(
+                      onChanged: (bool val) {
+                        _settingsCopy.reducedForehead = val;
+                        saveSettings();
+                      },
+                      initialVal: _settingsCopy.reducedForehead,
+                      title: "Reduced Forehead",
+                    ),
+
                   // For whatever fucking reason, this needs to be down here, otherwise all of the switch values are false
                   if (currentMode != null && modes != null)
                     SettingsOptions<DisplayMode>(

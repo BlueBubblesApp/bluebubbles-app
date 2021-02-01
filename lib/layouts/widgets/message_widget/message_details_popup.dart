@@ -85,7 +85,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
       if (this.mounted) {
         double menuHeight = 150;
         if (showDownload) {
-          menuHeight += 70;
+          menuHeight += 140;
         }
         setState(() {
           double totalHeight = MediaQuery.of(context).size.height -
