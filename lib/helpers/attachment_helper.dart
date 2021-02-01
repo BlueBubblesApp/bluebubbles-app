@@ -273,4 +273,15 @@ class AttachmentHelper {
       }
     }
   }
+
+  static Future<void> redownloadAttachment(Attachment attachment,
+      {Function() onComplete, Function() onError}) async {
+    // 1. Delete the old file
+    File file = new File(attachment.getPath());
+    if (!file.existsSync()) return;
+    file.deleteSync();
+
+    // 2. Redownload the attachment
+    AttachmentDownloader(attachment, onComplete: onComplete, onError: onError);
+  }
 }

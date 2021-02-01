@@ -9,10 +9,12 @@ import 'package:bluebubbles/layouts/conversation_view/messages_view.dart';
 import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/chat_selector_text_field.dart';
 import 'package:bluebubbles/layouts/conversation_view/text_field/blue_bubbles_text_field.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/outgoing_queue.dart';
 import 'package:bluebubbles/managers/queue_manager.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:keyboard_attachable/keyboard_attachable.dart';
@@ -59,6 +61,8 @@ class ConversationViewState extends State<ConversationView>
     with ConversationViewMixin {
   List<File> existingAttachments;
   String existingText;
+  bool wasCreator = false;
+  bool keyboardOpen = false;
 
   @override
   void initState() {
@@ -95,6 +99,13 @@ class ConversationViewState extends State<ConversationView>
         if (this.mounted) setState(() {});
       }
     });
+
+    EventDispatcher().stream.listen((event) {
+      if (!event.containsKey("type")) return;
+      if (event["type"] == "keyboard-is-open") {
+        keyboardOpen = event.containsKey("data") ? event["data"] : false;
+      }
+    });
   }
 
   @override
@@ -116,6 +127,9 @@ class ConversationViewState extends State<ConversationView>
   }
 
   Future<bool> send(List<File> attachments, String text) async {
+    bool isDifferentChat =
+        currentChat == null || currentChat?.chat?.guid != chat.guid;
+
     if (isCreator) {
       if (chat == null && selected.length == 1) {
         try {
@@ -131,26 +145,23 @@ class ConversationViewState extends State<ConversationView>
       if (chat == null) return false;
 
       // If the current chat is null, set it
-      bool isDifferentChat = currentChat == null || currentChat?.chat?.guid != chat.guid;
       if (isDifferentChat) {
         initCurrentChat(chat);
       }
 
-      // Fetch messages
-      if (isDifferentChat || messageBloc == null) {
-        // Init the states
-        initCurrentChat(chat);
-        initConversationViewState();
+      bool isDifferentBloc =
+          messageBloc == null || messageBloc?.currentChat?.guid != chat.guid;
 
+      // Fetch messages
+      if (isDifferentBloc) {
+        // Init the states
         messageBloc = initMessageBloc();
         messageBloc.getMessages();
       }
-    }
-
-    // If the current chat is null, set it
-    bool isDifferentChat = currentChat == null || currentChat?.chat?.guid != chat.guid;
-    if (isDifferentChat) {
-      initCurrentChat(chat);
+    } else {
+      if (isDifferentChat) {
+        initCurrentChat(chat);
+      }
     }
 
     if (attachments.length > 0) {
@@ -161,6 +172,8 @@ class ConversationViewState extends State<ConversationView>
             item: new AttachmentSender(
               attachments[i],
               chat,
+              // This means to send the text when the last attachment is sent
+              // If we switched this to i == 0, then it will be send with the first attachment
               i == attachments.length - 1 ? text : "",
             ),
           ),
@@ -173,6 +186,7 @@ class ConversationViewState extends State<ConversationView>
 
     if (isCreator) {
       isCreator = false;
+      wasCreator = true;
       this.existingText = "";
       this.existingAttachments = [];
       setState(() {});
@@ -194,6 +208,14 @@ class ConversationViewState extends State<ConversationView>
       messageBloc.getMessages();
     }
 
+    Widget textField = BlueBubblesTextField(
+      onSend: send,
+      wasCreator: wasCreator,
+      isCreator: isCreator,
+      existingAttachments: this.existingAttachments,
+      existingText: this.existingText,
+    );
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: Theme.of(context).backgroundColor,
@@ -204,16 +226,20 @@ class ConversationViewState extends State<ConversationView>
         appBar: !isCreator
             ? buildConversationViewHeader()
             : buildChatSelectorHeader(),
-        resizeToAvoidBottomInset: false,
+        resizeToAvoidBottomInset: wasCreator,
         body: FooterLayout(
           footer: KeyboardAttachable(
             child: widget.onSelect == null
-                ? BlueBubblesTextField(
-                    onSend: send,
-                    isCreator: isCreator,
-                    existingAttachments: this.existingAttachments,
-                    existingText: this.existingText,
-                  )
+                ? (SettingsManager().settings.swipeToCloseKeyboard)
+                  ? GestureDetector(
+                      onPanUpdate: (details) {
+                        if (details.delta.dy > 0 && keyboardOpen) {
+                          EventDispatcher().emit("unfocus-keyboard", null);
+                        }
+                      },
+                      child: textField
+                    )
+                  :  textField
                 : Container(),
           ),
           child: Column(

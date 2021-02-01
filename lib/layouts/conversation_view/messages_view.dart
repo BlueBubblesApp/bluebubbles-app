@@ -51,6 +51,8 @@ class MessagesViewState extends State<MessagesView>
   ScrollController scrollController = new ScrollController();
   List<int> loadedPages = [];
   CurrentChat currentChat;
+  double currentOffset = 0;
+  bool keyboardOpen = false;
 
   List<TextMessage> currentMessages = [];
   List<String> replies = [];
@@ -88,7 +90,15 @@ class MessagesViewState extends State<MessagesView>
     smartReplyController = StreamController<List<String>>.broadcast();
 
     scrollController.addListener(() {
+      if (!this.mounted) return;
       if (scrollController == null || !scrollController.hasClients) return;
+
+      // Check and see if we need to unfocus the keyboard
+      // The +100 is relatively arbitrary. It was the threshold I thought was good
+      if (keyboardOpen && scrollController.offset > currentOffset + 100) {
+        EventDispatcher().emit("unfocus-keyboard", null);
+      }
+
       if (showScrollDown && scrollController.offset >= 500) return;
       if (!showScrollDown && scrollController.offset < 500) return;
 
@@ -100,25 +110,36 @@ class MessagesViewState extends State<MessagesView>
     });
 
     EventDispatcher().stream.listen((Map<String, dynamic> event) {
-      if (!["refresh-messagebloc"].contains(event["type"])) return;
-      if (!event["data"].containsKey("chatGuid")) return;
+      if (!this.mounted) return;
+      if (!event.containsKey("type")) return;
 
-      // Handle event's that require a matching guid
-      String chatGuid = event["data"]["chatGuid"];
-      if (widget.chat.guid == chatGuid) {
-        if (event["type"] == "refresh-messagebloc") {
-          // Clear state items
-          noMoreLocalMessages = false;
-          noMoreMessages = false;
-          _messages = [];
-          loadedPages = [];
+      if (event["type"] == "refresh-messagebloc" &&
+          event["data"].containsKey("chatGuid")) {
+        // Handle event's that require a matching guid
+        String chatGuid = event["data"]["chatGuid"];
+        if (widget.chat.guid == chatGuid) {
+          if (event["type"] == "refresh-messagebloc") {
+            // Clear state items
+            noMoreLocalMessages = false;
+            noMoreMessages = false;
+            _messages = [];
+            loadedPages = [];
 
-          // Reload the state after refreshing
-          widget.messageBloc.refresh().then((_) {
-            if (this.mounted) {
-              setState(() {});
-            }
-          });
+            // Reload the state after refreshing
+            widget.messageBloc.refresh().then((_) {
+              if (this.mounted) {
+                setState(() {});
+              }
+            });
+          }
+        }
+      } else if (event["type"] == "keyboard-is-open") {
+        if (!this.mounted) return;
+
+        keyboardOpen = event.containsKey("data") ? event["data"] : false;
+        if (scrollController.hasClients &&
+            scrollController.offset != null) {
+          currentOffset = scrollController.offset;
         }
       }
     });
@@ -153,12 +174,20 @@ class MessagesViewState extends State<MessagesView>
 
     debugPrint("Getting smart replies for `${textMessage.text}`");
     replies = await FlutterSmartReply.getSmartReplies([textMessage]);
+    if (replies == null) return;
+
+    // De-duplicate the list
+    replies = replies.toSet().toList();
     debugPrint("Smart Replies found: $replies");
-    if (replies.length == 0) {
+
+    // If there is nothing in the list, get out
+    if (isNullOrEmpty(replies)) {
       resetReplies();
-    } else {
-      smartReplyController.sink.add(replies);
+      return;
     }
+
+    // If everything passes, add replies to the stream
+    smartReplyController.sink.add(replies);
   }
 
   Future<void> loadNextChunk() {
@@ -451,20 +480,19 @@ class MessagesViewState extends State<MessagesView>
                             _messages[index].originalROWID == null;
 
                         Widget messageWidget = Padding(
-                          padding: EdgeInsets.only(left: 5.0, right: 5.0),
-                          child: MessageWidget(
-                            key: Key(_messages[index].guid),
-                            message: _messages[index],
-                            olderMessage: olderMessage,
-                            newerMessage: newerMessage,
-                            showHandle: widget.showHandle,
-                            isFirstSentMessage:
-                                widget.messageBloc.firstSentMessage ==
-                                    _messages[index].guid,
-                            showHero: fullAnimation,
-                            onUpdate: (event) => onUpdateMessage(event),
-                          )
-                        );
+                            padding: EdgeInsets.only(left: 5.0, right: 5.0),
+                            child: MessageWidget(
+                              key: Key(_messages[index].guid),
+                              message: _messages[index],
+                              olderMessage: olderMessage,
+                              newerMessage: newerMessage,
+                              showHandle: widget.showHandle,
+                              isFirstSentMessage:
+                                  widget.messageBloc.firstSentMessage ==
+                                      _messages[index].guid,
+                              showHero: fullAnimation,
+                              onUpdate: (event) => onUpdateMessage(event),
+                            ));
 
                         if (fullAnimation) {
                           return SizeTransition(

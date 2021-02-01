@@ -11,6 +11,7 @@ import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:camera/camera.dart';
 import 'package:contacts_service/contacts_service.dart';
@@ -27,12 +28,14 @@ class BlueBubblesTextField extends StatefulWidget {
   final List<File> existingAttachments;
   final String existingText;
   final bool isCreator;
+  final bool wasCreator;
   final Future<bool> Function(List<File> attachments, String text) onSend;
   BlueBubblesTextField({
     Key key,
     this.existingAttachments,
     this.existingText,
     @required this.isCreator,
+    @required this.wasCreator,
     @required this.onSend,
   }) : super(key: key);
   static BlueBubblesTextFieldState of(BuildContext context) {
@@ -103,6 +106,15 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
       if (focusNode.hasFocus && this.mounted) {
         showImagePicker = false;
         setState(() {});
+      }
+
+      EventDispatcher().emit("keyboard-is-open", focusNode.hasFocus);
+    });
+
+    EventDispatcher().stream.listen((event) {
+      if (!event.containsKey("type")) return;
+      if (event["type"] == "unfocus-keyboard" && focusNode.hasFocus) {
+        focusNode.unfocus();
       }
     });
 
@@ -479,7 +491,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                 padding:
                     EdgeInsets.only(left: 10, top: 10, right: 40, bottom: 10),
                 placeholderStyle: Theme.of(context).textTheme.subtitle1,
-                autofocus: SettingsManager().settings.autoOpenKeyboard,
+                autofocus: widget.wasCreator ||
+                    SettingsManager().settings.autoOpenKeyboard,
                 decoration: BoxDecoration(
                   color: Theme.of(context).backgroundColor,
                   border: Border.all(
