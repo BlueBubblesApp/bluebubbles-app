@@ -4,14 +4,11 @@ import 'dart:ui';
 
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
-import 'package:bluebubbles/helpers/contstants.dart';
 import 'package:bluebubbles/helpers/reaction.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/CustomCupertinoNavBar.dart';
-import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/reaction_detail_widget.dart';
-import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
@@ -223,7 +220,8 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
                       : Container(),
                 ),
               ),
-              buildReactionMenu(),
+              if (SettingsManager().settings.enablePrivateAPI)
+                buildReactionMenu(),
               buildCopyPasteMenu(),
             ],
           ),
@@ -240,9 +238,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
     double maxMenuWidth =
         (ReactionTypes.toList().length * reactionIconSize).toDouble();
     double menuHeight = (reactionIconSize).toDouble();
-
     double topPadding = -20;
-
     double topOffset = (messageTopOffset - menuHeight).toDouble().clamp(
         topMinimum,
         size.height -
@@ -254,9 +250,11 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
             : 25 + (currentChat.chat.isGroup() ? 20 : 0))
         .toDouble();
     Color iconColor = Colors.white;
+
     if (Theme.of(context).accentColor.computeLuminance() >= 0.179) {
       iconColor = Colors.black.withAlpha(95);
     }
+
     return Positioned(
       top: topOffset + topPadding,
       left: leftOffset,
@@ -484,29 +482,29 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
                 ),
               ),
               if (showDownload)
-                  Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: () async {
-                        for (Attachment element in widget.message.attachments) {
-                          CurrentChat.of(context)?.clearImageData(element);
-                          await AttachmentHelper.redownloadAttachment(element);
-                          Navigator.pop(context);
-                          setState(() {});
-                        }
-                      },
-                      child: ListTile(
-                        title: Text(
-                          "Re-download from Server",
-                          style: Theme.of(context).textTheme.bodyText1,
-                        ),
-                        trailing: Icon(
-                          Icons.refresh,
-                          color: Theme.of(context).textTheme.bodyText1.color,
-                        ),
+                Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () async {
+                      for (Attachment element in widget.message.attachments) {
+                        CurrentChat.of(context)?.clearImageData(element);
+                        await AttachmentHelper.redownloadAttachment(element);
+                        Navigator.pop(context);
+                        setState(() {});
+                      }
+                    },
+                    child: ListTile(
+                      title: Text(
+                        "Re-download from Server",
+                        style: Theme.of(context).textTheme.bodyText1,
+                      ),
+                      trailing: Icon(
+                        Icons.refresh,
+                        color: Theme.of(context).textTheme.bodyText1.color,
                       ),
                     ),
                   ),
+                ),
               if (showDownload)
                 Material(
                   color: Colors.transparent,

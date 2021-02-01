@@ -4,9 +4,7 @@ import 'dart:ui';
 import 'package:bluebubbles/helpers/contstants.dart';
 import "package:bluebubbles/helpers/string_extension.dart";
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/helpers/contstants.dart';
-import 'package:bluebubbles/helpers/contstants.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/layouts/settings/private_api_panel.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/layouts/settings/about_panel.dart';
 import 'package:bluebubbles/layouts/settings/server_management_panel.dart';
@@ -16,7 +14,6 @@ import 'package:bluebubbles/layouts/widgets/CustomCupertinoTextField.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/models/fcm_data.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
@@ -339,6 +336,21 @@ class _SettingsPanelState extends State<SettingsPanel> {
                           : Icons.arrow_forward,
                       color: Theme.of(context).primaryColor,
                     ),
+                  ),
+                  SettingsTile(
+                    title: "Private API Features",
+                    trailing: Icon(
+                        SettingsManager().settings.skin == Skins.IOS
+                            ? Icons.arrow_forward_ios
+                            : Icons.arrow_forward,
+                        color: Theme.of(context).primaryColor),
+                    onTap: () async {
+                      Navigator.of(context).push(
+                        CupertinoPageRoute(
+                          builder: (context) => PrivateAPIPanel(),
+                        ),
+                      );
+                    },
                   ),
                   SettingsTile(
                     title: "Server Management",

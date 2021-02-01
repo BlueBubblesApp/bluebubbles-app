@@ -452,11 +452,12 @@ class MessagesViewState extends State<MessagesView>
                     );
                   },
                 ),
-              // SliverToBoxAdapter(
-              //   child: TypingIndicator(
-              //     visible: currentChat.showTypingIndicator,
-              //   ),
-              // ),
+              if (SettingsManager().settings.enablePrivateAPI)
+                SliverToBoxAdapter(
+                  child: TypingIndicator(
+                    visible: currentChat.showTypingIndicator,
+                  ),
+                ),
               _listKey != null
                   ? SliverAnimatedList(
                       initialItemCount: _messages.length + 1,

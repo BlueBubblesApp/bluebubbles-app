@@ -91,8 +91,15 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
     controller = textFieldData != null
         ? textFieldData.controller
         : new TextEditingController();
+
+    // Add the text listener to detect when we should send the typing indicators
     controller.addListener(() {
       if (CurrentChat.of(context)?.chat == null) return;
+
+      // If the private API features are disabled, or sending the indicators is disabled, return
+      if (!SettingsManager().settings.enablePrivateAPI) return;
+      if (!SettingsManager().settings.sendTypingIndicators) return;
+
       if (controller.text.length == 0 &&
           pickedImages.length == 0 &&
           selfTyping) {
@@ -106,6 +113,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
           SocketManager().sendMessage("started-typing",
               {"chatGuid": CurrentChat.of(context).chat.guid}, (data) {});
       }
+
       if (this.mounted) setState(() {});
     });
 

@@ -38,7 +38,7 @@ class CurrentChat {
   List<VideoPlayerController> videoControllersToDispose = [];
   List<Attachment> chatAttachments = [];
   List<Message> sentMessages = [];
-  // bool showTypingIndicator = false;
+  bool showTypingIndicator = false;
   Timer indicatorHideTimer;
   OverlayEntry entry;
 
@@ -134,8 +134,8 @@ class CurrentChat {
     sentMessages = [];
     entry = null;
     isAlive = true;
-    // showTypingIndicator = false;
-    // indicatorHideTimer = null;
+    showTypingIndicator = false;
+    indicatorHideTimer = null;
     _timeStampOffset = 0;
     timeStampOffsetStream = StreamController<double>.broadcast();
     currentShowScrollDown = false;
@@ -227,17 +227,17 @@ class CurrentChat {
     }
   }
 
-  // void displayTypingIndicator() {
-  //   showTypingIndicator = true;
-  //   _stream.sink.add(null);
-  // }
+  void displayTypingIndicator() {
+    showTypingIndicator = true;
+    _stream.sink.add(null);
+  }
 
-  // void hideTypingIndicator() {
-  //   indicatorHideTimer?.cancel();
-  //   indicatorHideTimer = null;
-  //   showTypingIndicator = false;
-  //   _stream.sink.add(null);
-  // }
+  void hideTypingIndicator() {
+    indicatorHideTimer?.cancel();
+    indicatorHideTimer = null;
+    showTypingIndicator = false;
+    _stream.sink.add(null);
+  }
 
   /// Retreive all of the attachments associated with a chat
   Future<void> updateChatAttachments() async {
@@ -307,7 +307,7 @@ class CurrentChat {
     chatAttachments = [];
     sentMessages = [];
     isAlive = false;
-    // showTypingIndicator = false;
+    showTypingIndicator = false;
     scrollController.dispose();
     scrollController = ScrollController();
     if (entry != null) entry.remove();
