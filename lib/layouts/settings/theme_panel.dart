@@ -13,8 +13,6 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
-import 'package:bluebubbles/helpers/contstants.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:flutter/material.dart';
 
@@ -203,14 +201,15 @@ class _ThemePanelState extends State<ThemePanel> {
                       );
                     },
                   ),
-                  SettingsSwitch(
-                    onChanged: (bool val) {
-                      _settingsCopy.hideDividers = val;
-                      saveSettings();
-                    },
-                    initialVal: _settingsCopy.hideDividers,
-                    title: "Hide Dividers",
-                  ),
+                  if (SettingsManager().settings.skin != Skins.Samsung)
+                    SettingsSwitch(
+                      onChanged: (bool val) {
+                        _settingsCopy.hideDividers = val;
+                        saveSettings();
+                      },
+                      initialVal: _settingsCopy.hideDividers,
+                      title: "Hide Dividers",
+                    ),
                   SettingsSwitch(
                     onChanged: (bool val) {
                       _settingsCopy.denseChatTiles = val;

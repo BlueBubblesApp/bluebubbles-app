@@ -1640,156 +1640,139 @@ class _SamsungState extends State<_Samsung> {
                   ),
                 );
               }
-              hasPinnedChat();
+
+              bool hasPinned = hasPinnedChat();
               return SingleChildScrollView(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   mainAxisSize: MainAxisSize.max,
                   mainAxisAlignment: MainAxisAlignment.start,
                   children: [
-                    (hasPinnedChat())
-                        ? Container(
-                            height: 20.0,
-                            decoration: BoxDecoration(
-                                border: Border.all(
-                                  color: Colors.transparent,
-                                ),
-                                borderRadius:
-                                    BorderRadius.all(Radius.circular(20))),
-                          )
-                        : Container(width: 0.0, height: 0.0),
-                    (hasPinnedChat())
-                        ? Container(
-                            padding: EdgeInsets.fromLTRB(
-                                6.0,
-                                (hasPinnedChat()) ? 6.0 : 0,
-                                6.0,
-                                (hasPinnedChat()) ? 6.0 : 0),
-                            decoration: new BoxDecoration(
-                                color: Theme.of(context).accentColor,
-                                borderRadius: new BorderRadius.only(
-                                  topLeft: const Radius.circular(20.0),
-                                  topRight: const Radius.circular(20.0),
-                                  bottomLeft: const Radius.circular(20.0),
-                                  bottomRight: const Radius.circular(20.0),
-                                )),
-                            child: ListView.builder(
-                              shrinkWrap: true,
-                              physics: NeverScrollableScrollPhysics(),
-                              itemBuilder: (context, index) {
-                                if (widget.parent.swipableTiles) {
-                                  return Dismissible(
-                                    background: slideRightBackgroundPinned(),
-                                    secondaryBackground: (!widget
-                                            .parent.widget.showArchivedChats)
+                    if (hasPinned)
+                      Container(
+                        height: 20.0,
+                        decoration: BoxDecoration(
+                            border: Border.all(
+                              color: Colors.transparent,
+                            ),
+                            borderRadius:
+                                BorderRadius.all(Radius.circular(20))),
+                      ),
+                    if (hasPinned)
+                      Container(
+                        padding: EdgeInsets.all(6.0),
+                        decoration: new BoxDecoration(
+                            color: Theme.of(context).accentColor,
+                            borderRadius: BorderRadius.circular(20)),
+                        child: ListView.builder(
+                          shrinkWrap: true,
+                          physics: NeverScrollableScrollPhysics(),
+                          itemBuilder: (context, index) {
+                            if (widget.parent.swipableTiles) {
+                              return Dismissible(
+                                background: slideRightBackgroundPinned(),
+                                secondaryBackground:
+                                    (!widget.parent.widget.showArchivedChats)
                                         ? slideLeftBackground()
                                         : slideLeftBackgroundArchived(),
-                                    // Each Dismissible must contain a Key. Keys allow Flutter to
-                                    // uniquely identify widgets.
-                                    key: UniqueKey(),
-                                    // Provide a function that tells the app
-                                    // what to do after an item has been swiped away.
-                                    onDismissed: (direction) {
-                                      if (direction ==
-                                          DismissDirection.endToStart) {
-                                        if (!widget
-                                            .parent.widget.showArchivedChats)
-                                          widget.parent.chats[index].unpin();
-                                        setState(() {
-                                          Scaffold.of(context)
-                                              .hideCurrentSnackBar();
-                                          (!widget.parent.widget
-                                                  .showArchivedChats)
-                                              ? ChatBloc().archiveChat(
-                                                  widget.parent.chats[index])
-                                              : ChatBloc().unArchiveChat(
-                                                  widget.parent.chats[index]);
+                                // Each Dismissible must contain a Key. Keys allow Flutter to
+                                // uniquely identify widgets.
+                                key: UniqueKey(),
+                                // Provide a function that tells the app
+                                // what to do after an item has been swiped away.
+                                onDismissed: (direction) {
+                                  if (direction ==
+                                      DismissDirection.endToStart) {
+                                    if (!widget.parent.widget.showArchivedChats)
+                                      widget.parent.chats[index].unpin();
+                                    setState(() {
+                                      Scaffold.of(context)
+                                          .hideCurrentSnackBar();
+                                      (!widget.parent.widget.showArchivedChats)
+                                          ? ChatBloc().archiveChat(
+                                              widget.parent.chats[index])
+                                          : ChatBloc().unArchiveChat(
+                                              widget.parent.chats[index]);
 
-                                          widget.parent.chats.remove(index);
-                                        });
-                                      } else {
-                                        setState(() {
-                                          Scaffold.of(context)
-                                              .hideCurrentSnackBar();
-                                          widget.parent.chats[index].unpin();
-                                        });
-                                      }
-                                    },
-                                    child: (!widget.parent.widget
-                                                .showArchivedChats &&
-                                            widget
+                                      widget.parent.chats.remove(index);
+                                    });
+                                  } else {
+                                    setState(() {
+                                      Scaffold.of(context)
+                                          .hideCurrentSnackBar();
+                                      widget.parent.chats[index].unpin();
+                                    });
+                                  }
+                                },
+                                child: (!widget
+                                            .parent.widget.showArchivedChats &&
+                                        widget.parent.chats[index].isArchived)
+                                    ? Container()
+                                    : (widget.parent.widget.showArchivedChats &&
+                                            !widget
                                                 .parent.chats[index].isArchived)
                                         ? Container()
-                                        : (widget.parent.widget
-                                                    .showArchivedChats &&
-                                                !widget.parent.chats[index]
-                                                    .isArchived)
-                                            ? Container()
-                                            : (widget.parent.chats[index]
-                                                    .isPinned)
-                                                ? ConversationTile(
-                                                    key: UniqueKey(),
-                                                    chat: widget
-                                                        .parent.chats[index],
-                                                    inSelectMode:
-                                                        selected.isNotEmpty,
-                                                    selected: selected,
-                                                    onSelect: (bool selected) {
-                                                      if (selected) {
-                                                        this.selected.add(widget
-                                                            .parent
-                                                            .chats[index]);
-                                                        setState(() {});
-                                                      } else {
-                                                        this.selected.removeWhere(
-                                                            (element) =>
-                                                                element.guid ==
-                                                                widget
-                                                                    .parent
-                                                                    .chats[
-                                                                        index]
-                                                                    .guid);
-                                                        setState(() {});
-                                                      }
-                                                    },
-                                                  )
-                                                : Container(),
-                                  );
-                                } else {
-                                  if (!widget.parent.widget.showArchivedChats &&
-                                      widget.parent.chats[index].isArchived)
-                                    return Container();
-                                  if (widget.parent.widget.showArchivedChats &&
-                                      !widget.parent.chats[index].isArchived)
-                                    return Container();
-                                  if (widget.parent.chats[index].isPinned) {
-                                    return ConversationTile(
-                                      key: UniqueKey(),
-                                      chat: widget.parent.chats[index],
-                                      inSelectMode: selected.isNotEmpty,
-                                      selected: selected,
-                                      onSelect: (bool selected) {
-                                        if (selected) {
-                                          this
-                                              .selected
-                                              .add(widget.parent.chats[index]);
-                                          setState(() {});
-                                        } else {
-                                          this.selected.removeWhere((element) =>
-                                              element.guid ==
-                                              widget.parent.chats[index].guid);
-                                          setState(() {});
-                                        }
-                                      },
-                                    );
-                                  }
-                                  return Container();
-                                }
-                              },
-                              itemCount: widget.parent.chats?.length ?? 0,
-                            ),
-                          )
-                        : Container(width: 0.0, height: 0.0),
+                                        : (widget.parent.chats[index].isPinned)
+                                            ? ConversationTile(
+                                                key: UniqueKey(),
+                                                chat:
+                                                    widget.parent.chats[index],
+                                                inSelectMode:
+                                                    selected.isNotEmpty,
+                                                selected: selected,
+                                                onSelect: (bool selected) {
+                                                  if (selected) {
+                                                    this.selected.add(widget
+                                                        .parent.chats[index]);
+                                                    setState(() {});
+                                                  } else {
+                                                    this.selected.removeWhere(
+                                                        (element) =>
+                                                            element.guid ==
+                                                            widget
+                                                                .parent
+                                                                .chats[index]
+                                                                .guid);
+                                                    setState(() {});
+                                                  }
+                                                },
+                                              )
+                                            : Container(),
+                              );
+                            } else {
+                              if (!widget.parent.widget.showArchivedChats &&
+                                  widget.parent.chats[index].isArchived)
+                                return Container();
+                              if (widget.parent.widget.showArchivedChats &&
+                                  !widget.parent.chats[index].isArchived)
+                                return Container();
+                              if (widget.parent.chats[index].isPinned) {
+                                return ConversationTile(
+                                  key: UniqueKey(),
+                                  chat: widget.parent.chats[index],
+                                  inSelectMode: selected.isNotEmpty,
+                                  selected: selected,
+                                  onSelect: (bool selected) {
+                                    if (selected) {
+                                      this
+                                          .selected
+                                          .add(widget.parent.chats[index]);
+                                      setState(() {});
+                                    } else {
+                                      this.selected.removeWhere((element) =>
+                                          element.guid ==
+                                          widget.parent.chats[index].guid);
+                                      setState(() {});
+                                    }
+                                  },
+                                );
+                              }
+                              return Container();
+                            }
+                          },
+                          itemCount: widget.parent.chats?.length ?? 0,
+                        ),
+                      ),
                     (hasNormalChats())
                         ? Container(
                             height: 20.0,

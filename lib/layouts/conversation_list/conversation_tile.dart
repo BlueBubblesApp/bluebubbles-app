@@ -635,10 +635,9 @@ class _Samsung extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: parent.selected
-          ? Theme.of(context).primaryColor.withAlpha(120)
-          : Theme.of(context).backgroundColor,
+      color: Colors.transparent,
       child: InkWell(
+        hoverColor: Colors.red,
         onTap: () {
           if (parent.selected) {
             parent.onSelect();

@@ -1,7 +1,6 @@
 import 'dart:ui';
 
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/layouts/settings/conv_list_ux_panel.dart';
 import 'package:bluebubbles/layouts/settings/messages_view_ux_panel.dart';
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
@@ -110,11 +109,11 @@ class _UXPanelState extends State<UXPanel> {
                 <Widget>[
                   Container(padding: EdgeInsets.only(top: 5.0)),
                   SettingsTile(
-                    title: "Chat List Settings",
+                    title: "Conversation Settings",
                     onTap: () {
                       Navigator.of(context).push(
                         CupertinoPageRoute(
-                          builder: (context) => ConvoListUXPanel(),
+                          builder: (context) => ConvoSettings(),
                         ),
                       );
                     },
@@ -133,38 +132,16 @@ class _UXPanelState extends State<UXPanel> {
                     initialVal: _settingsCopy.showConnectionIndicator,
                     title: "Show Connection Indicator in Chat List",
                   ),
-                  SettingsSwitch(
-                    onChanged: (bool val) {
-                      _settingsCopy.hideTextPreviews = val;
-                      saveSettings();
-                    },
-                    initialVal: _settingsCopy.hideTextPreviews,
-                    title: "Hide Text Previews (in notifications)",
-                  ),
-                  SettingsTile(
-                    title: "Conversation Settings",
-                    onTap: () {
-                      Navigator.of(context).push(
-                        CupertinoPageRoute(
-                          builder: (context) => ConvoSettings(),
-                        ),
-                      );
-                    },
-                    trailing: Icon(
-                      SettingsManager().settings.skin == Skins.IOS
-                          ? Icons.arrow_forward_ios
-                          : Icons.arrow_forward,
-                      color: Theme.of(context).primaryColor,
+                  if (SettingsManager().settings.skin == Skins.Samsung ||
+                      SettingsManager().settings.skin == Skins.Material)
+                    SettingsSwitch(
+                      onChanged: (bool val) {
+                        _settingsCopy.swipableConversationTiles = val;
+                        saveSettings();
+                      },
+                      initialVal: _settingsCopy.swipableConversationTiles,
+                      title: "Swipe Actions for Conversation Tiles",
                     ),
-                  ),
-                  SettingsSwitch(
-                    onChanged: (bool val) {
-                      _settingsCopy.hideTextPreviews = val;
-                      saveSettings();
-                    },
-                    initialVal: _settingsCopy.hideTextPreviews,
-                    title: "Hide Text Previews (in notifications)",
-                  ),
                   SettingsSwitch(
                     onChanged: (bool val) {
                       _settingsCopy.moveChatCreatorToHeader = val;
@@ -172,6 +149,14 @@ class _UXPanelState extends State<UXPanel> {
                     },
                     initialVal: _settingsCopy.moveChatCreatorToHeader,
                     title: "Move Chat Creator Button to Header",
+                  ),
+                  SettingsSwitch(
+                    onChanged: (bool val) {
+                      _settingsCopy.hideTextPreviews = val;
+                      saveSettings();
+                    },
+                    initialVal: _settingsCopy.hideTextPreviews,
+                    title: "Hide Text Previews (in notifications)",
                   ),
                   SettingsSwitch(
                     onChanged: (bool val) {
