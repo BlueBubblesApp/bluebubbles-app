@@ -31,12 +31,14 @@ class BlueBubblesTextField extends StatefulWidget {
   final List<File> existingAttachments;
   final String existingText;
   final bool isCreator;
+  final bool wasCreator;
   final Future<bool> Function(List<File> attachments, String text) onSend;
   BlueBubblesTextField({
     Key key,
     this.existingAttachments,
     this.existingText,
     @required this.isCreator,
+    @required this.wasCreator,
     @required this.onSend,
   }) : super(key: key);
   static BlueBubblesTextFieldState of(BuildContext context) {
@@ -122,11 +124,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
       if (!event.containsKey("type")) return;
       if (event["type"] == "unfocus-keyboard" && focusNode.hasFocus) {
         focusNode.unfocus();
-        SystemChannels.textInput.invokeMethod('TextInput.hide');
-      }
-      else if (event["type"] == "focus-keyboard") {
-        focusNode.requestFocus(focusNode);
-        SystemChannels.textInput.invokeMethod('TextInput.show');
+      } else if (event["type"] == "focus-keyboard" && !focusNode.hasFocus) {
+        focusNode.requestFocus();
       }
     });
 
@@ -339,7 +338,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
       children: <Widget>[
         buildShareButton(),
         buildActualTextField(),
-        if (SettingsManager().settings.skin == Skins.Material || SettingsManager().settings.skin == Skins.Samsung)
+        if (SettingsManager().settings.skin == Skins.Material ||
+            SettingsManager().settings.skin == Skins.Samsung)
           buildSendButton(canRecord),
       ],
     );
@@ -641,9 +641,6 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                       bottom: 10,
                     ),
                   ),
-                  keyboardType: TextInputType.multiline,
-                  maxLines: 14,
-                  minLines: 1,
                 ),
               ),
             ),
@@ -707,225 +704,232 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               if (sendCountdown != null) Text(sendCountdown.toString()),
-              (SettingsManager().settings.skin == Skins.IOS) ?
-              ButtonTheme(
-                minWidth: 30,
-                height: 30,
-                child: RaisedButton(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 0,
-                  ),
-                  color: Theme.of(context).primaryColor,
-                  onPressed: () async {
-                    if (sendCountdown != null) {
-                      stopSending = true;
-                      sendCountdown = null;
-                      if (this.mounted) setState(() {});
-                    } else if (isRecording) {
-                      await stopRecording();
-                    } else if (canRecord &&
-                        !isRecording &&
-                        await Permission.microphone.request().isGranted) {
-                      await startRecording();
-                    } else {
-                      // If send delay is enabled, delay the sending
-                      if (!isNullOrZero(SettingsManager().settings.sendDelay)) {
-                        // Break the delay into 1 second intervals
-                        for (var i = 0;
-                            i < SettingsManager().settings.sendDelay;
-                            i++) {
-                          if (i != 0 && sendCountdown == null) break;
-
-                          // Update UI with new state information
-                          if (this.mounted) {
-                            setState(() {
-                              sendCountdown =
-                                  SettingsManager().settings.sendDelay - i;
-                            });
-                          }
-
-                          await Future.delayed(new Duration(seconds: 1));
-                        }
-                      }
-
-                      if (this.mounted) {
-                        setState(() {
-                          sendCountdown = null;
-                        });
-                      }
-
-                      if (stopSending != null && stopSending) {
-                        stopSending = null;
-                        return;
-                      }
-
-                      if (await widget.onSend(pickedImages, controller.text)) {
-                        controller.text = "";
-                        pickedImages = <File>[];
-                        updateTextFieldAttachments();
-                      }
-                    }
-
-                    if (this.mounted) setState(() {});
-                  },
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      AnimatedOpacity(
-                        opacity: sendCountdown == null &&
-                                controller.text.isEmpty &&
-                                pickedImages.isEmpty
-                            ? 1.0
-                            : 0.0,
-                        duration: Duration(milliseconds: 150),
-                        child: Icon(
-                          Icons.mic,
-                          color: (isRecording) ? Colors.red : Colors.white,
-                          size: 20,
+              (SettingsManager().settings.skin == Skins.IOS)
+                  ? ButtonTheme(
+                      minWidth: 30,
+                      height: 30,
+                      child: RaisedButton(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 0,
                         ),
-                      ),
-                      AnimatedOpacity(
-                        opacity: (sendCountdown == null &&
-                                    (controller.text.isNotEmpty ||
-                                        pickedImages.length > 0)) &&
-                                !isRecording
-                            ? 1.0
-                            : 0.0,
-                        duration: Duration(milliseconds: 150),
-                        child: Icon(
-                          Icons.arrow_upward,
-                          color: Colors.white,
-                          size: 20,
-                        ),
-                      ),
-                      AnimatedOpacity(
-                        opacity: sendCountdown != null ? 1.0 : 0.0,
-                        duration: Duration(milliseconds: 50),
-                        child: Icon(
-                          Icons.cancel_outlined,
-                          color: Colors.red,
-                          size: 20,
-                        ),
-                      ),
-                    ],
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(40),
-                  ),
-                ),
-              )
-              : GestureDetector(
-                onTapDown: (_) async {
-                  if (canRecord && !isRecording) {
-                    await startRecording();
-                  }
-                },
-                onTapCancel: () async {
-                  await stopRecording();
-                },
-                child: ButtonTheme(
-                  minWidth: 30,
-                  height: 30,
-                  child: RaisedButton(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 0,
-                    ),
-                    color: Theme.of(context).primaryColor,
-                    onPressed: () async {
-                      if (sendCountdown != null) {
-                        stopSending = true;
-                        sendCountdown = null;
-                        if (this.mounted) setState(() {});
-                      } else {
-                        // If send delay is enabled, delay the sending
-                        if (!isNullOrZero(
-                            SettingsManager().settings.sendDelay)) {
-                          // Break the delay into 1 second intervals
-                          for (var i = 0;
-                              i < SettingsManager().settings.sendDelay;
-                              i++) {
-                            if (i != 0 && sendCountdown == null) break;
+                        color: Theme.of(context).primaryColor,
+                        onPressed: () async {
+                          if (sendCountdown != null) {
+                            stopSending = true;
+                            sendCountdown = null;
+                            if (this.mounted) setState(() {});
+                          } else if (isRecording) {
+                            await stopRecording();
+                          } else if (canRecord &&
+                              !isRecording &&
+                              await Permission.microphone.request().isGranted) {
+                            await startRecording();
+                          } else {
+                            // If send delay is enabled, delay the sending
+                            if (!isNullOrZero(
+                                SettingsManager().settings.sendDelay)) {
+                              // Break the delay into 1 second intervals
+                              for (var i = 0;
+                                  i < SettingsManager().settings.sendDelay;
+                                  i++) {
+                                if (i != 0 && sendCountdown == null) break;
 
-                            // Update UI with new state information
+                                // Update UI with new state information
+                                if (this.mounted) {
+                                  setState(() {
+                                    sendCountdown =
+                                        SettingsManager().settings.sendDelay -
+                                            i;
+                                  });
+                                }
+
+                                await Future.delayed(new Duration(seconds: 1));
+                              }
+                            }
+
                             if (this.mounted) {
                               setState(() {
-                                sendCountdown =
-                                    SettingsManager().settings.sendDelay - i;
+                                sendCountdown = null;
                               });
                             }
 
-                            await Future.delayed(new Duration(seconds: 1));
+                            if (stopSending != null && stopSending) {
+                              stopSending = null;
+                              return;
+                            }
+
+                            if (await widget.onSend(
+                                pickedImages, controller.text)) {
+                              controller.text = "";
+                              pickedImages = <File>[];
+                              updateTextFieldAttachments();
+                            }
                           }
-                        }
 
-                        if (this.mounted) {
-                          setState(() {
-                            sendCountdown = null;
-                          });
+                          if (this.mounted) setState(() {});
+                        },
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            AnimatedOpacity(
+                              opacity: sendCountdown == null &&
+                                      controller.text.isEmpty &&
+                                      pickedImages.isEmpty
+                                  ? 1.0
+                                  : 0.0,
+                              duration: Duration(milliseconds: 150),
+                              child: Icon(
+                                Icons.mic,
+                                color:
+                                    (isRecording) ? Colors.red : Colors.white,
+                                size: 20,
+                              ),
+                            ),
+                            AnimatedOpacity(
+                              opacity: (sendCountdown == null &&
+                                          (controller.text.isNotEmpty ||
+                                              pickedImages.length > 0)) &&
+                                      !isRecording
+                                  ? 1.0
+                                  : 0.0,
+                              duration: Duration(milliseconds: 150),
+                              child: Icon(
+                                Icons.arrow_upward,
+                                color: Colors.white,
+                                size: 20,
+                              ),
+                            ),
+                            AnimatedOpacity(
+                              opacity: sendCountdown != null ? 1.0 : 0.0,
+                              duration: Duration(milliseconds: 50),
+                              child: Icon(
+                                Icons.cancel_outlined,
+                                color: Colors.red,
+                                size: 20,
+                              ),
+                            ),
+                          ],
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(40),
+                        ),
+                      ),
+                    )
+                  : GestureDetector(
+                      onTapDown: (_) async {
+                        if (canRecord && !isRecording) {
+                          await startRecording();
                         }
+                      },
+                      onTapCancel: () async {
+                        await stopRecording();
+                      },
+                      child: ButtonTheme(
+                        minWidth: 30,
+                        height: 30,
+                        child: RaisedButton(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 0,
+                          ),
+                          color: Theme.of(context).primaryColor,
+                          onPressed: () async {
+                            if (sendCountdown != null) {
+                              stopSending = true;
+                              sendCountdown = null;
+                              if (this.mounted) setState(() {});
+                            } else {
+                              // If send delay is enabled, delay the sending
+                              if (!isNullOrZero(
+                                  SettingsManager().settings.sendDelay)) {
+                                // Break the delay into 1 second intervals
+                                for (var i = 0;
+                                    i < SettingsManager().settings.sendDelay;
+                                    i++) {
+                                  if (i != 0 && sendCountdown == null) break;
 
-                        if (stopSending != null && stopSending) {
-                          stopSending = null;
-                          return;
-                        }
+                                  // Update UI with new state information
+                                  if (this.mounted) {
+                                    setState(() {
+                                      sendCountdown =
+                                          SettingsManager().settings.sendDelay -
+                                              i;
+                                    });
+                                  }
 
-                        if (await widget.onSend(
-                            pickedImages, controller.text)) {
-                          controller.text = "";
-                          pickedImages = <File>[];
-                          updateTextFieldAttachments();
-                        }
-                      }
+                                  await Future.delayed(
+                                      new Duration(seconds: 1));
+                                }
+                              }
 
-                      if (this.mounted) setState(() {});
-                    },
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        AnimatedOpacity(
-                          opacity: sendCountdown == null &&
-                                  controller.text.isEmpty &&
-                                  pickedImages.isEmpty
-                              ? 1.0
-                              : 0.0,
-                          duration: Duration(milliseconds: 150),
-                          child: Icon(
-                            Icons.mic,
-                            color: (isRecording) ? Colors.red : Colors.white,
-                            size: 20,
+                              if (this.mounted) {
+                                setState(() {
+                                  sendCountdown = null;
+                                });
+                              }
+
+                              if (stopSending != null && stopSending) {
+                                stopSending = null;
+                                return;
+                              }
+
+                              if (await widget.onSend(
+                                  pickedImages, controller.text)) {
+                                controller.text = "";
+                                pickedImages = <File>[];
+                                updateTextFieldAttachments();
+                              }
+                            }
+
+                            if (this.mounted) setState(() {});
+                          },
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              AnimatedOpacity(
+                                opacity: sendCountdown == null &&
+                                        controller.text.isEmpty &&
+                                        pickedImages.isEmpty
+                                    ? 1.0
+                                    : 0.0,
+                                duration: Duration(milliseconds: 150),
+                                child: Icon(
+                                  Icons.mic,
+                                  color:
+                                      (isRecording) ? Colors.red : Colors.white,
+                                  size: 20,
+                                ),
+                              ),
+                              AnimatedOpacity(
+                                opacity: (sendCountdown == null &&
+                                            (controller.text.isNotEmpty ||
+                                                pickedImages.length > 0)) &&
+                                        !isRecording
+                                    ? 1.0
+                                    : 0.0,
+                                duration: Duration(milliseconds: 150),
+                                child: Icon(
+                                  Icons.arrow_upward,
+                                  color: Colors.white,
+                                  size: 20,
+                                ),
+                              ),
+                              AnimatedOpacity(
+                                opacity: sendCountdown != null ? 1.0 : 0.0,
+                                duration: Duration(milliseconds: 50),
+                                child: Icon(
+                                  Icons.cancel_outlined,
+                                  color: Colors.red,
+                                  size: 20,
+                                ),
+                              ),
+                            ],
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(40),
                           ),
                         ),
-                        AnimatedOpacity(
-                          opacity: (sendCountdown == null &&
-                                      (controller.text.isNotEmpty ||
-                                          pickedImages.length > 0)) &&
-                                  !isRecording
-                              ? 1.0
-                              : 0.0,
-                          duration: Duration(milliseconds: 150),
-                          child: Icon(
-                            Icons.arrow_upward,
-                            color: Colors.white,
-                            size: 20,
-                          ),
-                        ),
-                        AnimatedOpacity(
-                          opacity: sendCountdown != null ? 1.0 : 0.0,
-                          duration: Duration(milliseconds: 50),
-                          child: Icon(
-                            Icons.cancel_outlined,
-                            color: Colors.red,
-                            size: 20,
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(40),
-                    ),
-                  ),
-                ),
-              ),
             ]),
       );
 

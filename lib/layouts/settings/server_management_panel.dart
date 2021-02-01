@@ -5,17 +5,14 @@ import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/contstants.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/helpers/share.dart';
-import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/repository/models/message.dart';
-import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_displaymode/flutter_displaymode.dart';
 
 class ServerManagementPanel extends StatefulWidget {
   ServerManagementPanel({Key key}) : super(key: key);
@@ -27,13 +24,16 @@ class ServerManagementPanel extends StatefulWidget {
 class _ServerManagementPanelState extends State<ServerManagementPanel> {
   int latency;
   String fetchStatus;
-  int lastRestart;
-  Settings _settingsCopy;
-  List<DisplayMode> modes;
-  DisplayMode currentMode;
   Brightness brightness;
   Color previousBackgroundColor;
   bool gotBrightness = false;
+
+  // Restart trackers
+  int lastRestart;
+  int lastRestartMessages;
+  bool isRestarting = false;
+  bool isRestartingMessages = false;
+
   void loadBrightness() {
     Color now = Theme.of(context).backgroundColor;
     bool themeChanged =
@@ -251,28 +251,147 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                           },
                         );
                       }),
+                  StreamBuilder(
+                      stream: SocketManager().connectionStateStream,
+                      builder: (context, AsyncSnapshot<SocketState> snapshot) {
+                        SocketState connectionStatus;
+                        if (snapshot.hasData) {
+                          connectionStatus = snapshot.data;
+                        } else {
+                          connectionStatus = SocketManager().state;
+                        }
+                        String subtitle;
+
+                        if (fetchStatus == null) {
+                          switch (connectionStatus) {
+                            case SocketState.CONNECTED:
+                              subtitle = (isRestartingMessages)
+                                  ? "Restart in progress..."
+                                  : "Instruct the server to restart the iMessage app.";
+                              break;
+                            default:
+                              subtitle = "Disconnected (Nothing to do)";
+                          }
+                        } else {
+                          subtitle = fetchStatus;
+                        }
+
+                        return SettingsTile(
+                            title: "Restart iMessage",
+                            subTitle: subtitle,
+                            onTap: () async {
+                              if (![SocketState.CONNECTED]
+                                      .contains(connectionStatus) ||
+                                  isRestartingMessages) return;
+
+                              if (this.mounted && !isRestartingMessages)
+                                setState(() {
+                                  isRestartingMessages = true;
+                                });
+
+                              // Prevent restarting more than once every 30 seconds
+                              int now =
+                                  DateTime.now().toUtc().millisecondsSinceEpoch;
+                              if (lastRestartMessages != null &&
+                                  now - lastRestartMessages < 1000 * 30) return;
+
+                              // Save the last time we restarted
+                              lastRestartMessages = now;
+
+                              // Create a temporary functon so we can call it easily
+                              Function stopRestarting = () {
+                                if (this.mounted && isRestartingMessages) {
+                                  setState(() {
+                                    isRestartingMessages = false;
+                                  });
+                                }
+                              };
+
+                              // Execute the restart
+                              try {
+                                // If it fails or there is an endpoint error, stop the loader
+                                await SocketManager()
+                                    .sendMessage("restart-imessage", null, (_) {
+                                  stopRestarting();
+                                }).catchError(() {
+                                  stopRestarting();
+                                });
+                              } finally {
+                                stopRestarting();
+                              }
+                            },
+                            trailing: (!isRestartingMessages)
+                                ? Icon(Icons.refresh,
+                                    color: Theme.of(context).primaryColor)
+                                : Container(
+                                    constraints: BoxConstraints(
+                                      maxHeight: 20,
+                                      maxWidth: 20,
+                                    ),
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 3,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                          Theme.of(context).primaryColor),
+                                    )));
+                      }),
                   SettingsTile(
-                    title: "Restart Server",
-                    subTitle:
-                        "Instruct the server to restart. This will disconnect you briefly.",
-                    onTap: () async {
-                      // Prevent restarting more than once every 30 seconds
-                      int now = DateTime.now().toUtc().millisecondsSinceEpoch;
-                      if (lastRestart != null && now - lastRestart < 1000 * 30)
-                        return;
+                      title: "Restart Server",
+                      subTitle: (isRestarting)
+                          ? "Restart in progress..."
+                          : "Instruct the server to restart. This will disconnect you briefly.",
+                      onTap: () async {
+                        if (isRestarting) return;
 
-                      // Perform the restart
-                      MethodChannelInterface().invokeMethod(
-                          "set-next-restart", {
-                        "value": DateTime.now().toUtc().millisecondsSinceEpoch
-                      });
+                        if (this.mounted && !isRestarting)
+                          setState(() {
+                            isRestarting = true;
+                          });
 
-                      // Save the last time we restarted
-                      lastRestart = now;
-                    },
-                    trailing: Icon(Icons.refresh,
-                        color: Theme.of(context).primaryColor),
-                  )
+                        // Prevent restarting more than once every 30 seconds
+                        int now = DateTime.now().toUtc().millisecondsSinceEpoch;
+                        if (lastRestart != null &&
+                            now - lastRestart < 1000 * 30) return;
+
+                        // Save the last time we restarted
+                        lastRestart = now;
+
+                        Function stopRestarting = () {
+                          if (this.mounted && isRestarting) {
+                            setState(() {
+                              isRestarting = false;
+                            });
+                          }
+                        };
+
+                        // Perform the restart
+                        try {
+                          MethodChannelInterface().invokeMethod(
+                              "set-next-restart", {
+                            "value":
+                                DateTime.now().toUtc().millisecondsSinceEpoch
+                          });
+                        } finally {
+                          stopRestarting();
+                        }
+
+                        // After 5 seconds, remove the restarting message
+                        Future.delayed(new Duration(seconds: 5), () {
+                          stopRestarting();
+                        });
+                      },
+                      trailing: (!isRestarting)
+                          ? Icon(Icons.refresh,
+                              color: Theme.of(context).primaryColor)
+                          : Container(
+                              constraints: BoxConstraints(
+                                maxHeight: 20,
+                                maxWidth: 20,
+                              ),
+                              child: CircularProgressIndicator(
+                                strokeWidth: 3,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                    Theme.of(context).primaryColor),
+                              )))
                 ],
               ),
             ),

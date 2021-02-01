@@ -4,14 +4,12 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/settings/conv_list_ux_panel.dart';
 import 'package:bluebubbles/layouts/settings/messages_view_ux_panel.dart';
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
-import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/helpers/contstants.dart';
 import 'package:flutter/material.dart';
 
@@ -127,6 +125,12 @@ class _UXPanelState extends State<UXPanel> {
                       color: Theme.of(context).primaryColor,
                     ),
                   ),
+                  SettingsSwitch(
+                    onChanged: (bool val) {
+                      _settingsCopy.showConnectionIndicator = val;
+                      saveSettings();
+                    },
+                  ),
                   SettingsTile(
                     title: "Conversation Settings",
                     onTap: () {
@@ -151,23 +155,78 @@ class _UXPanelState extends State<UXPanel> {
                     initialVal: _settingsCopy.hideTextPreviews,
                     title: "Hide Text Previews (in notifications)",
                   ),
+                  SettingsSwitch(
+                    onChanged: (bool val) {
+                      _settingsCopy.autoOpenKeyboard = val;
+                      saveSettings();
+                    },
+                    initialVal: _settingsCopy.autoOpenKeyboard,
+                    title: "Auto-open Keyboard",
+                  ),
+                  SettingsSwitch(
+                    onChanged: (bool val) {
+                      _settingsCopy.swipeToCloseKeyboard = val;
+                      saveSettings();
+                    },
+                    initialVal: _settingsCopy.swipeToCloseKeyboard,
+                    title: "Swipe to Close Keyboard",
+                  ),
+                  SettingsSwitch(
+                    onChanged: (bool val) {
+                      _settingsCopy.swipeToOpenKeyboard = val;
+                      saveSettings();
+                    },
+                    initialVal: _settingsCopy.swipeToOpenKeyboard,
+                    title: "Swipe to Open Keyboard",
+                  ),
+                  SettingsSwitch(
+                    onChanged: (bool val) {
+                      _settingsCopy.openKeyboardOnSTB = val;
+                      saveSettings();
+                    },
+                    initialVal: _settingsCopy.openKeyboardOnSTB,
+                    title: "Open Keyboard on Scroll to Bottom",
+                  ),
+                  SettingsSwitch(
+                    onChanged: (bool val) {
+                      _settingsCopy.moveChatCreatorToHeader = val;
+                      saveSettings();
+                    },
+                    initialVal: _settingsCopy.moveChatCreatorToHeader,
+                    title: "Move Chat Creator Button to Header",
+                  ),
+                  SettingsSwitch(
+                    onChanged: (bool val) {
+                      _settingsCopy.recipientAsPlaceholder = val;
+                      saveSettings();
+                    },
+                    initialVal: _settingsCopy.recipientAsPlaceholder,
+                    title: "Show Recipient (or Group Name) as Placeholder",
+                  ),
+                  SettingsSwitch(
+                    onChanged: (bool val) {
+                      _settingsCopy.doubleTapForDetails = val;
+                      saveSettings();
+                    },
+                    initialVal: _settingsCopy.doubleTapForDetails,
+                    title: "Double-Tap Message for Details",
+                  ),
+                  SettingsSwitch(
+                    onChanged: (bool val) {
+                      _settingsCopy.smartReply = val;
+                      saveSettings();
+                    },
+                    initialVal: _settingsCopy.smartReply,
+                    title: "Smart Replies",
+                  ),
                   // SettingsSwitch(
                   //   onChanged: (bool val) {
-                  //     _settingsCopy.sendTypingIndicators = val;
+                  //     _settingsCopy.sendWithReturn = val;
+                  //     saveSettings();
                   //   },
                   //   initialVal: _settingsCopy.sendTypingIndicators,
                   //   title: "Send typing indicators (BlueBubblesHelper ONLY)",
                   // ),
-
-                  SettingsSwitch(
-                    onChanged: (bool val) {
-                      _settingsCopy.sendTypingIndicators = val;
-                      saveSettings();
-                    },
-                    initialVal: _settingsCopy.sendTypingIndicators,
-                    title: "Send typing indicators (BlueBubblesHelper ONLY)",
-                  ),
-
                   SettingsSwitch(
                     onChanged: (bool val) {
                       _settingsCopy.preCachePreviewImages = val;

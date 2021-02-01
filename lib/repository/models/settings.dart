@@ -32,10 +32,10 @@ class Settings {
   int sendDelay;
   bool recipientAsPlaceholder = false;
   bool hideKeyboardOnScroll = false;
-  bool openKeyboardOnSTB = false;
-  bool moveNewMessageToheader = false;
+  bool moveChatCreatorToHeader = false;
   bool swipeToCloseKeyboard = false;
-  bool swipeToDismiss = false;
+  bool swipeToOpenKeyboard = false;
+  bool openKeyboardOnSTB = false;
   // String emojiFontFamily;
 
   Skins skin = Skins.IOS;
@@ -101,14 +101,16 @@ class Settings {
         settings.recipientAsPlaceholder = entry.value;
       } else if (entry.name == "hideKeyboardOnScroll") {
         settings.hideKeyboardOnScroll = entry.value;
-      } else if (entry.name == "openKeyboardOnSTB") {
-        settings.openKeyboardOnSTB = entry.value;
+      } else if (entry.name == "swipeToOpenKeyboard") {
+        settings.swipeToOpenKeyboard = entry.value;
       } else if (entry.name == "newMessageMenuBar") {
-        settings.moveNewMessageToheader = entry.value;
+        settings.moveChatCreatorToHeader = entry.value;
       } else if (entry.name == "swipeToCloseKeyboard") {
         settings.swipeToCloseKeyboard = entry.value;
-      }  else if (entry.name == "swipeToDismiss") {
-        settings.swipeToDismiss = entry.value;
+      } else if (entry.name == "moveChatCreatorToHeader") {
+        settings.moveChatCreatorToHeader = entry.value;
+      } else if (entry.name == "openKeyboardOnSTB") {
+        settings.openKeyboardOnSTB = entry.value;
       }
 
       // else if (entry.name == "emojiFontFamily") {
@@ -268,21 +270,21 @@ class Settings {
             value: this.recipientAsPlaceholder,
             type: this.recipientAsPlaceholder.runtimeType),
         ConfigEntry(
-            name: "openKeyboardOnSTB",
-            value: this.openKeyboardOnSTB,
-            type: this.openKeyboardOnSTB.runtimeType),
-        ConfigEntry(
-            name: "newMessageMenuBar",
-            value: this.moveNewMessageToheader,
-            type: this.moveNewMessageToheader.runtimeType),
+            name: "moveChatCreatorToHeader",
+            value: this.moveChatCreatorToHeader,
+            type: this.moveChatCreatorToHeader.runtimeType),
         ConfigEntry(
             name: "swipeToCloseKeyboard",
             value: this.swipeToCloseKeyboard,
             type: this.swipeToCloseKeyboard.runtimeType),
         ConfigEntry(
-            name: "swipeToDismiss",
-            value: this.swipeToDismiss,
-            type: this.swipeToDismiss.runtimeType),
+            name: "swipeToOpenKeyboard",
+            value: this.swipeToOpenKeyboard,
+            type: this.swipeToOpenKeyboard.runtimeType),
+        ConfigEntry(
+            name: "openKeyboardOnSTB",
+            value: this.openKeyboardOnSTB,
+            type: this.openKeyboardOnSTB.runtimeType),
         // ConfigEntry(
         //     name: "emojiFontFamily",
         //     value: this.emojiFontFamily,

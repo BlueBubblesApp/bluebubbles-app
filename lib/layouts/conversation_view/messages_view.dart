@@ -86,7 +86,17 @@ class MessagesViewState extends State<MessagesView>
   @override
   void initState() {
     super.initState();
-    widget.messageBloc.stream.listen(handleNewMessage);
+
+    currentChat = CurrentChat.of(context);
+    widget.messageBloc?.stream?.listen(handleNewMessage);
+
+    // See if we need to load anything from the message bloc
+    if (_messages.isEmpty && widget.messageBloc.messages.isEmpty) {
+      widget.messageBloc.getMessages();
+    } else if (_messages.isEmpty && widget.messageBloc.messages.isNotEmpty) {
+      widget.messageBloc.emitLoaded();
+    }
+
     smartReplyController = StreamController<List<String>>.broadcast();
 
     EventDispatcher().stream.listen((Map<String, dynamic> event) {
@@ -126,52 +136,40 @@ class MessagesViewState extends State<MessagesView>
     if (widget.initComplete != null) widget.initComplete();
   }
 
-  @override
-  void didChangeDependencies() async {
-    super.didChangeDependencies();
-    currentChat = CurrentChat.of(context);
+  void resetReplies() {
+    if (replies.length == 0) return;
+    replies = [];
+    return smartReplyController.sink.add(replies);
+  }
 
-    scrollController?.addListener(() {
-      if (showScrollDown && scrollController.offset >= 500) return;
-      if (!showScrollDown && scrollController.offset < 500) return;
+  void updateReplies() async {
+    if (isNullOrEmpty(_messages)) return resetReplies();
 
-      if (scrollController.offset >= 500) {
-        showScrollDown = true;
-      } else {
-        showScrollDown = false;
-      }
-    });
+    // If the first message has no text, don't do anything
+    Message msg = _messages.first;
+    if (isEmptyString(msg.text, stripWhitespace: true)) return resetReplies();
 
-    if (_messages.isEmpty) {
-      widget.messageBloc.getMessages();
+    // If the latest message is from yourself, clear the replies
+    if (msg.isFromMe) return resetReplies();
+
+    TextMessage textMessage = TextMessage.createForRemoteUser(
+        msg.text, msg.dateCreated.millisecondsSinceEpoch);
+
+    debugPrint("Getting smart replies for `${textMessage.text}`");
+    replies = await FlutterSmartReply.getSmartReplies([textMessage]);
+    if (replies == null) return;
+
+    // De-duplicate the list
+    replies = replies.toSet().toList();
+    debugPrint("Smart Replies found: $replies");
+
+    // If there is nothing in the list, get out
+    if (isNullOrEmpty(replies)) {
+      resetReplies();
+      return;
     }
-  }
 
-  @override
-  void dispose() {
-    // if (!smartReplyController.isClosed) smartReplyController.close();
-    super.dispose();
-  }
-
-  void addMessage(Message message, {bool fetch = true}) {
-    if (isEmptyString(message.text)) return;
-
-    TextMessage textMessage = message.isFromMe
-        ? TextMessage.createForLocalUser(
-            message.text, message.dateCreated.millisecondsSinceEpoch)
-        : TextMessage.createForRemoteUser(
-            message.text, message.dateCreated.millisecondsSinceEpoch);
-
-    currentMessages.add(textMessage);
-    if (currentMessages.length > 10) {
-      currentMessages.removeAt(0);
-    }
-    if (fetch) updateReplies();
-  }
-
-  Future<void> updateReplies() async {
-    currentMessages.sort((a, b) => a.timestamp.compareTo(b.timestamp));
-    replies = await FlutterSmartReply.getSmartReplies(currentMessages);
+    // If everything passes, add replies to the stream
     smartReplyController.sink.add(replies);
   }
 
@@ -280,7 +278,7 @@ class MessagesViewState extends State<MessagesView>
       }
 
       if (isNewMessage && SettingsManager().settings.smartReply) {
-        addMessage(event.message);
+        updateReplies();
       }
     } else if (event.type == MessageBlocEventType.remove) {
       for (int i = 0; i < _messages.length; i++) {
@@ -300,10 +298,7 @@ class MessagesViewState extends State<MessagesView>
       // We only want to update smart replies on the intial message fetch
       if (originalMessageLength == 0) {
         if (SettingsManager().settings.smartReply) {
-          for (Message message in _messages) {
-            addMessage(message, fetch: false);
-          }
-          updateReplies();
+          if (_messages.length > 0) updateReplies();
         }
       }
       if (_listKey == null) _listKey = GlobalKey<SliverAnimatedListState>();
@@ -397,19 +392,16 @@ class MessagesViewState extends State<MessagesView>
       behavior: HitTestBehavior.deferToChild,
       onHorizontalDragStart: (details) {},
       onHorizontalDragUpdate: (details) {
-        (SettingsManager().settings.skin == Skins.Samsung)
-            ? null
-            : CurrentChat.of(context).timeStampOffset += details.delta.dx * 0.3;
+        if (SettingsManager().settings.skin == Skins.Samsung)
+          CurrentChat.of(context).timeStampOffset += details.delta.dx * 0.3;
       },
       onHorizontalDragEnd: (details) {
-        (SettingsManager().settings.skin == Skins.Samsung)
-            ? null
-            : CurrentChat.of(context).timeStampOffset = 0;
+        if (SettingsManager().settings.skin == Skins.Samsung)
+          CurrentChat.of(context).timeStampOffset = 0;
       },
       onHorizontalDragCancel: () {
-        (SettingsManager().settings.skin == Skins.Samsung)
-            ? null
-            : CurrentChat.of(context).timeStampOffset = 0;
+        if (SettingsManager().settings.skin == Skins.Samsung)
+          CurrentChat.of(context).timeStampOffset = 0;
       },
       onVerticalDragDown: (_) {
         if (SettingsManager().settings.hideKeyboardOnScroll) {
@@ -479,45 +471,51 @@ class MessagesViewState extends State<MessagesView>
                           newerMessage = _messages[index - 1];
                         }
 
-                        return SizeTransition(
-                          axis: Axis.vertical,
-                          sizeFactor: animation.drive(
-                              Tween(begin: 0.0, end: 1.0)
-                                  .chain(CurveTween(curve: Curves.easeInOut))),
-                          child: SlideTransition(
-                            position: animation.drive(
-                              Tween(
-                                begin: Offset(0.0, 1),
-                                end: Offset(0.0, 0.0),
-                              ).chain(
-                                CurveTween(
-                                  curve: Curves.easeInOut,
+                        bool fullAnimation = index == 0 &&
+                            _messages[index].originalROWID == null;
+
+                        Widget messageWidget = Padding(
+                            padding: EdgeInsets.only(left: 5.0, right: 5.0),
+                            child: MessageWidget(
+                              key: Key(_messages[index].guid),
+                              message: _messages[index],
+                              olderMessage: olderMessage,
+                              newerMessage: newerMessage,
+                              showHandle: widget.showHandle,
+                              isFirstSentMessage:
+                                  widget.messageBloc.firstSentMessage ==
+                                      _messages[index].guid,
+                              showHero: fullAnimation,
+                              onUpdate: (event) => onUpdateMessage(event),
+                            ));
+
+                        if (fullAnimation) {
+                          return SizeTransition(
+                            axis: Axis.vertical,
+                            sizeFactor: animation.drive(Tween(
+                                    begin: 0.0, end: 1.0)
+                                .chain(CurveTween(curve: Curves.easeInOut))),
+                            child: SlideTransition(
+                              position: animation.drive(
+                                Tween(
+                                  begin: Offset(0.0, 1),
+                                  end: Offset(0.0, 0.0),
+                                ).chain(
+                                  CurveTween(
+                                    curve: Curves.easeInOut,
+                                  ),
                                 ),
                               ),
-                            ),
-                            child: FadeTransition(
-                              opacity: animation,
-                              child: Padding(
-                                padding: EdgeInsets.only(left: 5.0, right: 5.0),
-                                child: MessageWidget(
-                                  key: Key(_messages[index].guid),
-                                  message: _messages[index],
-                                  olderMessage: olderMessage,
-                                  newerMessage: newerMessage,
-                                  showHandle: widget.showHandle,
-                                  isFirstSentMessage:
-                                      widget.messageBloc.firstSentMessage ==
-                                          _messages[index].guid,
-                                  showHero: index == 0 &&
-                                      _messages[index].originalROWID == null,
-                                  onUpdate: (event) => onUpdateMessage(event),
-                                ),
+                              child: FadeTransition(
+                                opacity: animation,
+                                child: messageWidget,
                               ),
                             ),
-                          ),
-                        );
-                      },
-                    )
+                          );
+                        }
+
+                        return messageWidget;
+                      })
                   : SliverToBoxAdapter(child: Container()),
               SliverPadding(
                 padding: EdgeInsets.all(70),
@@ -576,5 +574,11 @@ class MessagesViewState extends State<MessagesView>
         ],
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    if (!smartReplyController.isClosed) smartReplyController.close();
+    super.dispose();
   }
 }

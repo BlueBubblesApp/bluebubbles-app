@@ -16,7 +16,6 @@ import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/outgoing_queue.dart';
 import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
@@ -65,14 +64,13 @@ class ConversationViewState extends State<ConversationView>
   List<File> existingAttachments;
   String existingText;
   bool keyboardOpen = false;
-  bool keyboardClosed = false;
-  Settings _settingsCopy;
   List<DisplayMode> modes;
   DisplayMode currentMode;
   Brightness brightness;
   Color previousBackgroundColor;
   bool gotBrightness = false;
-  
+
+  bool wasCreator = false;
 
   @override
   void initState() {
@@ -109,13 +107,11 @@ class ConversationViewState extends State<ConversationView>
         if (this.mounted) setState(() {});
       }
     });
+
     EventDispatcher().stream.listen((event) {
       if (!event.containsKey("type")) return;
       if (event["type"] == "keyboard-is-open") {
         keyboardOpen = event.containsKey("data") ? event["data"] : false;
-      }
-      if (event["type"] == "keyboard-is-closed") {
-        keyboardClosed = event.containsKey("data") ? event["data"] : false;
       }
     });
   }
@@ -139,6 +135,9 @@ class ConversationViewState extends State<ConversationView>
   }
 
   Future<bool> send(List<File> attachments, String text) async {
+    bool isDifferentChat =
+        currentChat == null || currentChat?.chat?.guid != chat.guid;
+
     if (isCreator) {
       if (chat == null && selected.length == 1) {
         try {
@@ -154,28 +153,23 @@ class ConversationViewState extends State<ConversationView>
       if (chat == null) return false;
 
       // If the current chat is null, set it
-      bool isDifferentChat =
-          currentChat == null || currentChat?.chat?.guid != chat.guid;
       if (isDifferentChat) {
         initCurrentChat(chat);
       }
 
-      // Fetch messages
-      if (isDifferentChat || messageBloc == null) {
-        // Init the states
-        initCurrentChat(chat);
-        initConversationViewState();
+      bool isDifferentBloc =
+          messageBloc == null || messageBloc?.currentChat?.guid != chat.guid;
 
+      // Fetch messages
+      if (isDifferentBloc) {
+        // Init the states
         messageBloc = initMessageBloc();
         messageBloc.getMessages();
       }
-    }
-
-    // If the current chat is null, set it
-    bool isDifferentChat =
-        currentChat == null || currentChat?.chat?.guid != chat.guid;
-    if (isDifferentChat) {
-      initCurrentChat(chat);
+    } else {
+      if (isDifferentChat) {
+        initCurrentChat(chat);
+      }
     }
 
     if (attachments.length > 0) {
@@ -186,6 +180,8 @@ class ConversationViewState extends State<ConversationView>
             item: new AttachmentSender(
               attachments[i],
               chat,
+              // This means to send the text when the last attachment is sent
+              // If we switched this to i == 0, then it will be send with the first attachment
               i == attachments.length - 1 ? text : "",
             ),
           ),
@@ -198,6 +194,7 @@ class ConversationViewState extends State<ConversationView>
 
     if (isCreator) {
       isCreator = false;
+      wasCreator = true;
       this.existingText = "";
       this.existingAttachments = [];
       setState(() {});
@@ -222,7 +219,8 @@ class ConversationViewState extends State<ConversationView>
       );
     } else if (currentChat != null &&
         currentChat.showScrollDown &&
-        (SettingsManager().settings.skin == Skins.Material || SettingsManager().settings.skin == Skins.Samsung)) {
+        (SettingsManager().settings.skin == Skins.Material ||
+            SettingsManager().settings.skin == Skins.Samsung)) {
       return Padding(
         padding: const EdgeInsets.only(bottom: 55.0),
         child: FloatingActionButton(
@@ -242,6 +240,7 @@ class ConversationViewState extends State<ConversationView>
     }
     return Container();
   }
+
   void loadBrightness() {
     Color now = Theme.of(context).backgroundColor;
     bool themeChanged =
@@ -260,6 +259,7 @@ class ConversationViewState extends State<ConversationView>
     gotBrightness = true;
     if (this.mounted) setState(() {});
   }
+
   @override
   Widget build(BuildContext context) {
     loadBrightness();
@@ -276,6 +276,7 @@ class ConversationViewState extends State<ConversationView>
 
     Widget textField = BlueBubblesTextField(
       onSend: send,
+      wasCreator: wasCreator,
       isCreator: isCreator,
       existingAttachments: this.existingAttachments,
       existingText: this.existingText,
@@ -291,7 +292,7 @@ class ConversationViewState extends State<ConversationView>
         appBar: !isCreator
             ? buildConversationViewHeader()
             : buildChatSelectorHeader(),
-        resizeToAvoidBottomInset: false,
+        resizeToAvoidBottomInset: wasCreator,
         body: FooterLayout(
           footer: KeyboardAttachable(
             child: widget.onSelect == null
@@ -299,11 +300,9 @@ class ConversationViewState extends State<ConversationView>
                     ? GestureDetector(
                         onPanUpdate: (details) {
                           if (details.delta.dy > 0 && keyboardOpen) {
-                            SystemChannels.textInput
-                                .invokeMethod('TextInput.hide');
-                          } else if (details.delta.dy < 0) {
-                            SystemChannels.textInput
-                                .invokeMethod('TextInput.show');
+                            EventDispatcher().emit("unfocus-keyboard", null);
+                          } else if (details.delta.dy < 0 && !keyboardOpen) {
+                            EventDispatcher().emit("focus-keyboard", null);
                           }
                         },
                         child: textField)

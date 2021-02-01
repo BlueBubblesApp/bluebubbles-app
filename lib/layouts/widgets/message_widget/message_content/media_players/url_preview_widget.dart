@@ -97,8 +97,20 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
     // Let the UI know we are loading
     isLoading = true;
 
-    // Fetch the metadata
-    Metadata meta = await MetadataHelper.fetchMetadata(widget.message);
+    Metadata meta;
+
+    try {
+      // Fetch the metadata
+      meta = await MetadataHelper.fetchMetadata(widget.message);
+    } catch (ex) {
+      debugPrint("Failed to fetch metadata! Error: ${ex.toString()}");
+      isLoading = false;
+      if (this.mounted) {
+        setState(() {});
+      }
+
+      return;
+    }
 
     // If the data isn't empty, save/update it in the DB
     if (MetadataHelper.isNotEmpty(meta)) {
@@ -114,8 +126,7 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
         }
       }
 
-      widget.message.metadata = meta.toJson();
-      widget.message.update();
+      widget.message.updateMetadata(meta);
 
       if (!MetadataHelper.isNotEmpty(data)) {
         data = meta;
@@ -157,7 +168,9 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
                   .textTheme
                   .bodyText1
                   .apply(fontWeightDelta: 2));
-        } else if (data != null && data.title != null) {
+        } else if (data != null &&
+            data.title != null &&
+            data.title != "Image Preview") {
           return Text(
             data.title,
             style:
@@ -165,6 +178,8 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
             overflow: TextOverflow.ellipsis,
             maxLines: 2,
           );
+        } else if (data.title == "Image Preview") {
+          return Container();
         } else {
           return Text("Unable to Load Preview",
               style: Theme.of(context)
@@ -258,8 +273,11 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
                                         ))
                                     : Container(),
                                 Padding(
-                                  padding:
-                                      EdgeInsets.only(top: 5.0, bottom: 10.0),
+                                  padding: EdgeInsets.only(
+                                      top: (data?.title == "Image Preview"
+                                          ? 0
+                                          : 5.0),
+                                      bottom: 10.0),
                                   child: Text(
                                     widget.message.text
                                         .replaceAll("https://", "")

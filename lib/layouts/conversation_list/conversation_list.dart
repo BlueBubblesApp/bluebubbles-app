@@ -35,9 +35,15 @@ class ConversationList extends StatefulWidget {
 }
 
 class _ConversationListState extends State<ConversationList> {
-  Brightness brightness;
   List<Chat> chats = <Chat>[];
   bool colorfulAvatars = false;
+  bool reducedForehead = false;
+  bool showIndicator = false;
+  bool moveChatCreatorButton = false;
+
+  Brightness brightness = Brightness.light;
+  Color previousBackgroundColor;
+
   Color currentHeaderColor;
   bool gotBrightness = false;
   bool hasPinnedChata = false;
@@ -46,12 +52,8 @@ class _ConversationListState extends State<ConversationList> {
       StreamController<Color>.broadcast();
 
   String model;
-  bool moveChatCreatorButton = false;
   int pinnedChats = 0;
-  Color previousBackgroundColor;
-  bool reducedForehead = false;
   ScrollController scrollController;
-  bool showIndicator = false;
   Skins skinSet;
   bool swipeToDismiss = false;
 
@@ -93,34 +95,33 @@ class _ConversationListState extends State<ConversationList> {
     colorfulAvatars = SettingsManager().settings.colorfulAvatars;
     reducedForehead = SettingsManager().settings.reducedForehead;
     showIndicator = SettingsManager().settings.showConnectionIndicator;
-    moveChatCreatorButton = SettingsManager().settings.moveNewMessageToheader;
-    swipeToDismiss = SettingsManager().settings.swipeToDismiss;
+    moveChatCreatorButton = SettingsManager().settings.moveChatCreatorToHeader;
+    // swipeToDismiss = SettingsManager().settings.swipeToDismiss;
     skinSet = SettingsManager().settings.skin;
+
     SettingsManager().stream.listen((Settings newSettings) {
-      if (newSettings.colorfulAvatars != colorfulAvatars && this.mounted) {
+      if (!this.mounted) return;
+      if (newSettings.colorfulAvatars != colorfulAvatars) {
         setState(() {
           colorfulAvatars = newSettings.colorfulAvatars;
         });
-      } else if (newSettings.reducedForehead != reducedForehead &&
-          this.mounted) {
+      } else if (newSettings.reducedForehead != reducedForehead) {
         setState(() {
           reducedForehead = newSettings.reducedForehead;
         });
-      } else if (newSettings.showConnectionIndicator != showIndicator &&
-          this.mounted) {
+      } else if (newSettings.showConnectionIndicator != showIndicator) {
         setState(() {
           showIndicator = newSettings.showConnectionIndicator;
         });
-      } else if (newSettings.moveNewMessageToheader != moveChatCreatorButton &&
-          this.mounted) {
+      } else if (newSettings.moveChatCreatorToHeader != moveChatCreatorButton) {
         setState(() {
-          moveChatCreatorButton = newSettings.moveNewMessageToheader;
+          moveChatCreatorButton = newSettings.moveChatCreatorToHeader;
         });
-      } else if (newSettings.swipeToDismiss != swipeToDismiss && this.mounted) {
-        setState(() {
-          swipeToDismiss = newSettings.swipeToDismiss;
-        });
-      } else if (newSettings.skin != skinSet && this.mounted) {
+        // } else if (newSettings.swipeToDismiss != swipeToDismiss && this.mounted) {
+        //   setState(() {
+        //     swipeToDismiss = newSettings.swipeToDismiss;
+        //   });
+      } else if (newSettings.skin != skinSet) {
         setState(() {
           skinSet = newSettings.skin;
         });
@@ -504,28 +505,23 @@ class _Cupertino extends StatelessWidget {
                                     child: SizedBox(
                                         width: 20,
                                         height: 20,
-                                        child: Icon(Icons.search,
+                                        child: Icon(Icons.create,
                                             color:
                                                 Theme.of(context).primaryColor,
                                             size: 12)),
-                                    onTap: () async {
-                                      Navigator.of(context).push(
-                                        CupertinoPageRoute(
-                                          builder: (context) => SearchView(),
-                                        ),
-                                      );
-                                    }),
+                                    onTap: this.parent.openNewChatCreator),
                               ),
                             ),
-                          Container(
-                              width: SettingsManager()
-                                      .settings
-                                      .moveNewMessageToheader
-                                  ? 7.0
-                                  : 10.0),
+                          if (this.parent.moveChatCreatorButton)
+                            Container(
+                                width: SettingsManager()
+                                        .settings
+                                        .moveChatCreatorToHeader
+                                    ? 7.0
+                                    : 10.0),
                           if (SettingsManager()
                                   .settings
-                                  .moveNewMessageToheader &&
+                                  .moveChatCreatorToHeader &&
                               !parent.widget.showArchivedChats)
                             ClipOval(
                               child: Material(
@@ -552,13 +548,12 @@ class _Cupertino extends StatelessWidget {
                                     }),
                               ),
                             ),
-                          if (SettingsManager().settings.moveNewMessageToheader)
-                            Container(
-                                width: SettingsManager()
-                                        .settings
-                                        .moveNewMessageToheader
-                                    ? 7.0
-                                    : 10.0),
+                          Container(
+                              width: SettingsManager()
+                                      .settings
+                                      .moveChatCreatorToHeader
+                                  ? 7.0
+                                  : 10.0),
                           parent.buildSettingsButton(),
                           Spacer(
                             flex: 1,
@@ -631,9 +626,10 @@ class _Cupertino extends StatelessWidget {
             ),
           ],
         ),
-        floatingActionButton: !SettingsManager().settings.moveNewMessageToheader
-            ? parent.buildFloatinActionButton()
-            : null,
+        floatingActionButton:
+            !SettingsManager().settings.moveChatCreatorToHeader
+                ? parent.buildFloatinActionButton()
+                : null,
       ),
     );
   }
@@ -932,7 +928,7 @@ class __MaterialState extends State<_Material> {
                               ),
                             )
                           : Container(),
-                      (SettingsManager().settings.moveNewMessageToheader &&
+                      (SettingsManager().settings.moveChatCreatorToHeader &&
                               !widget.parent.widget.showArchivedChats)
                           ? GestureDetector(
                               onTap: () {
@@ -1178,7 +1174,7 @@ class __MaterialState extends State<_Material> {
           },
         ),
         floatingActionButton: selected.isEmpty &&
-                !SettingsManager().settings.moveNewMessageToheader
+                !SettingsManager().settings.moveChatCreatorToHeader
             ? widget.parent.buildFloatinActionButton()
             : null,
       ),
@@ -1479,7 +1475,7 @@ class _SamsungState extends State<_Samsung> {
                               ),
                             )
                           : Container(),
-                      (SettingsManager().settings.moveNewMessageToheader &&
+                      (SettingsManager().settings.moveChatCreatorToHeader &&
                               !widget.parent.widget.showArchivedChats)
                           ? GestureDetector(
                               onTap: () {
@@ -1650,8 +1646,7 @@ class _SamsungState extends State<_Samsung> {
                                 6.0,
                                 (hasPinnedChat()) ? 6.0 : 0),
                             decoration: new BoxDecoration(
-                                color: Theme.of(context)
-                                    .accentColor,
+                                color: Theme.of(context).accentColor,
                                 borderRadius: new BorderRadius.only(
                                   topLeft: const Radius.circular(20.0),
                                   topRight: const Radius.circular(20.0),
@@ -1791,8 +1786,7 @@ class _SamsungState extends State<_Samsung> {
                         ? Container(
                             padding: const EdgeInsets.all(6.0),
                             decoration: new BoxDecoration(
-                                color: Theme.of(context)
-                                    .accentColor,
+                                color: Theme.of(context).accentColor,
                                 borderRadius: new BorderRadius.only(
                                   topLeft: const Radius.circular(20.0),
                                   topRight: const Radius.circular(20.0),
@@ -1925,7 +1919,7 @@ class _SamsungState extends State<_Samsung> {
           },
         ),
         floatingActionButton: selected.isEmpty &&
-                !SettingsManager().settings.moveNewMessageToheader
+                !SettingsManager().settings.moveChatCreatorToHeader
             ? widget.parent.buildFloatinActionButton()
             : null,
       ),

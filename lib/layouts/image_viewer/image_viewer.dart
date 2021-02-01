@@ -4,10 +4,10 @@ import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/share.dart';
 import 'package:bluebubbles/layouts/image_viewer/attachmet_fullscreen_viewer.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
+import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:flutter/services.dart';
 import 'package:photo_view/photo_view.dart';
 
@@ -70,7 +70,7 @@ class _ImageViewerState extends State<ImageViewer>
   @override
   void didChangeDependencies() async {
     super.didChangeDependencies();
-        initBytes();
+    initBytes();
   }
 
   Future<void> initBytes() async {
@@ -185,10 +185,13 @@ class _ImageViewerState extends State<ImageViewer>
                     CurrentChat.of(context)?.clearImageData(widget.attachment);
                   }
 
-                  final snackBar = SnackBar(content: Text('Redownloading attachment. Please wait...'));
+                  final snackBar = SnackBar(
+                      content:
+                          Text('Redownloading attachment. Please wait...'));
                   Scaffold.of(context).showSnackBar(snackBar);
 
-                  await AttachmentHelper.redownloadAttachment(widget.attachment, onComplete: () {
+                  await AttachmentHelper.redownloadAttachment(widget.attachment,
+                      onComplete: () {
                     initBytes();
                   }, onError: () {
                     Navigator.pop(context);
