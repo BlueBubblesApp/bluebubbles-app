@@ -34,8 +34,7 @@ class Settings {
   bool hideKeyboardOnScroll = false;
   bool openKeyboardOnSTB = false;
   bool moveNewMessageToheader = false;
-  bool swipeToCloseKeyboard = true;
-  bool coolPinnedChatsMaterial = false;
+  bool swipeToCloseKeyboard = false;
   bool swipeToDismiss = false;
   // String emojiFontFamily;
 
@@ -108,9 +107,7 @@ class Settings {
         settings.moveNewMessageToheader = entry.value;
       } else if (entry.name == "swipeToCloseKeyboard") {
         settings.swipeToCloseKeyboard = entry.value;
-      } else if (entry.name == "coolPinnedChatsMaterial") {
-        settings.coolPinnedChatsMaterial = entry.value;
-      } else if (entry.name == "swipeToDismiss") {
+      }  else if (entry.name == "swipeToDismiss") {
         settings.swipeToDismiss = entry.value;
       }
 
@@ -282,10 +279,6 @@ class Settings {
             name: "swipeToCloseKeyboard",
             value: this.swipeToCloseKeyboard,
             type: this.swipeToCloseKeyboard.runtimeType),
-        ConfigEntry(
-            name: "coolPinnedChatsMaterial",
-            value: this.coolPinnedChatsMaterial,
-            type: this.coolPinnedChatsMaterial.runtimeType),
         ConfigEntry(
             name: "swipeToDismiss",
             value: this.swipeToDismiss,

@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/contstants.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/socket_singletons.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_group_widget.dart';
@@ -16,6 +17,7 @@ import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -58,6 +60,29 @@ class _ConversationTileState extends State<ConversationTile>
   bool hideDividers = false;
   bool isFetching = false;
   bool denseTiles = false;
+  List<DisplayMode> modes;
+  DisplayMode currentMode;
+  Brightness brightness;
+  Color previousBackgroundColor;
+  bool gotBrightness = false;
+  void loadBrightness() {
+    Color now = Theme.of(context).backgroundColor;
+    bool themeChanged =
+        previousBackgroundColor == null || previousBackgroundColor != now;
+    if (!themeChanged && gotBrightness) return;
+
+    previousBackgroundColor = now;
+    if (this.context == null) {
+      brightness = Brightness.light;
+      gotBrightness = true;
+      return;
+    }
+
+    bool isDark = now.computeLuminance() < 0.179;
+    brightness = isDark ? Brightness.dark : Brightness.light;
+    gotBrightness = true;
+    if (this.mounted) setState(() {});
+  }
 
   bool get selected {
     if (widget.selected == null) return false;
@@ -180,7 +205,6 @@ class _ConversationTileState extends State<ConversationTile>
           foregroundColor: Theme.of(context).textTheme.bodyText1.color,
           icon: Icons.star,
           onTap: () async {
-            
             if (widget.chat.isPinned) {
               await widget.chat.unpin();
             } else {
@@ -341,10 +365,14 @@ class _ConversationTileState extends State<ConversationTile>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-
+    loadBrightness();
     return ThemeSwitcher(
       iOSSkin: _Cupertino(parent: this, parentProps: widget),
       materialSkin: _Material(
+        parent: this,
+        parentProps: widget,
+      ),
+      samsungSkin: _Samsung(
         parent: this,
         parentProps: widget,
       ),
@@ -416,11 +444,7 @@ class __CupertinoState extends State<_Cupertino> {
                     border: (!widget.parent.hideDividers)
                         ? Border(
                             top: BorderSide(
-                              color: SettingsManager()
-                                      .settings
-                                      .coolPinnedChatsMaterial
-                                  ? new Color(0xff2F2F2F)
-                                  : Theme.of(context).dividerColor,
+                              color: new Color(0xff2F2F2F),
                               width: 0.5,
                             ),
                           )
@@ -444,7 +468,9 @@ class __CupertinoState extends State<_Cupertino> {
                             child: widget.parent.buildDate(),
                           ),
                           Icon(
-                            SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_forward_ios : Icons.arrow_forward,
+                            SettingsManager().settings.skin == Skins.IOS
+                                ? Icons.arrow_forward_ios
+                                : Icons.arrow_forward,
                             color: Theme.of(context).textTheme.subtitle1.color,
                             size: 15,
                           ),
@@ -542,16 +568,100 @@ class _Material extends StatelessWidget {
         },
         child: Container(
           decoration: BoxDecoration(
-            color: SettingsManager().settings.coolPinnedChatsMaterial
-                ? Color(0xFF171717)
+            border: (!parent.hideDividers)
+                ? Border(
+                    top: BorderSide(
+                      color: Theme.of(context).dividerColor,
+                      width: 0.5,
+                    ),
+                  )
                 : null,
+          ),
+          child: ListTile(
+            dense: parent.denseTiles,
+            title: parent.buildTitle(),
+            subtitle: parent.buildSubtitle(),
+            leading: Stack(
+              alignment: Alignment.topRight,
+              children: [
+                parent.buildLeading(),
+                if (!parent.widget.chat.isMuted)
+                  Container(
+                    width: 15,
+                    height: 15,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(30),
+                      color: parent.widget.chat.hasUnreadMessage
+                          ? Theme.of(context).primaryColor
+                          : Colors.transparent,
+                    ),
+                  ),
+              ],
+            ),
+            trailing: Container(
+              padding: EdgeInsets.only(right: 3),
+              width: 80,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: <Widget>[
+                  if (parent.widget.chat.isPinned)
+                    Icon(Icons.star, size: 15, color: Colors.yellow),
+                  if (parent.widget.chat.isMuted)
+                    Icon(
+                      Icons.notifications_off,
+                      color: Theme.of(context).textTheme.subtitle1.color,
+                      size: 15,
+                    ),
+                  Container(
+                    padding: EdgeInsets.only(right: 2, left: 2),
+                    child: parent.buildDate(),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _Samsung extends StatelessWidget {
+  const _Samsung({Key key, @required this.parent, @required this.parentProps})
+      : super(key: key);
+  final _ConversationTileState parent;
+  final ConversationTile parentProps;
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: parent.selected
+          ? Theme.of(context).primaryColor.withAlpha(120)
+          : Theme.of(context).backgroundColor,
+      child: InkWell(
+        onTap: () {
+          if (parent.selected) {
+            parent.onSelect();
+            HapticFeedback.lightImpact();
+          } else if (parent.widget.inSelectMode) {
+            parent.onSelect();
+            HapticFeedback.lightImpact();
+          } else {
+            parent.onTap();
+          }
+        },
+        onLongPress: () {
+          parent.onSelect();
+        },
+        child: Container(
+          decoration: BoxDecoration(
+            color: Theme.of(context)
+                                    .accentColor,
             border: (!parent.hideDividers)
                 ? Border(
                     top: BorderSide(
                       //
-                      color: SettingsManager().settings.coolPinnedChatsMaterial
-                          ? new Color(0xff2F2F2F)
-                          : null,
+                      color: new Color(0xff2F2F2F),
                       width: 0.5,
                     ),
                   )

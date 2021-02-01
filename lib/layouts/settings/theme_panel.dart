@@ -158,13 +158,10 @@ class _ThemePanelState extends State<ThemePanel> {
                       _settingsCopy.skin = val;
                       if (val == Skins.Material) {
                         _settingsCopy.hideDividers = true;
-                        _settingsCopy.coolPinnedChatsMaterial = false;
                       } else if (val == Skins.Samsung) {
                         _settingsCopy.hideDividers = true;
-                        _settingsCopy.coolPinnedChatsMaterial = true;
                       } else {
                         _settingsCopy.hideDividers = false;
-                        _settingsCopy.coolPinnedChatsMaterial = false;
                       }
                       ChatBloc().refreshChats();
                       setState(() {});

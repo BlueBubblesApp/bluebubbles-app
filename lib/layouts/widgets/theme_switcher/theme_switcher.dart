@@ -5,10 +5,11 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class ThemeSwitcher extends StatefulWidget {
-  ThemeSwitcher({Key key, @required this.iOSSkin, @required this.materialSkin})
+  ThemeSwitcher({Key key, @required this.iOSSkin, @required this.materialSkin, @required this.samsungSkin})
       : super(key: key);
   final Widget iOSSkin;
   final Widget materialSkin;
+  final Widget samsungSkin;
 
   static PageRoute buildPageRoute(
       {@required Function(BuildContext context) builder}) {
@@ -75,7 +76,7 @@ class _ThemeSwitcherState extends State<ThemeSwitcher> {
       case Skins.Material:
         return widget.materialSkin;
       case Skins.Samsung:
-        return widget.materialSkin;
+        return widget.samsungSkin;
     }
   }
 }

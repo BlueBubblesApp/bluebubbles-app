@@ -585,6 +585,66 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                   maxLines: 14,
                   minLines: 1,
                 ),
+                samsungSkin: TextField(
+                  controller: controller,
+                  focusNode: focusNode,
+                  textCapitalization: TextCapitalization.sentences,
+                  autocorrect: true,
+                  autofocus: SettingsManager().settings.autoOpenKeyboard,
+                  cursorColor: Theme.of(context).primaryColor,
+                  key: _searchFormKey,
+                  style: Theme.of(context).textTheme.bodyText1.apply(
+                        color: ThemeData.estimateBrightnessForColor(
+                                    Theme.of(context).backgroundColor) ==
+                                Brightness.light
+                            ? Colors.black
+                            : Colors.white,
+                        fontSizeDelta: -0.25,
+                      ),
+                  //onContentCommited: onContentCommit,
+                  decoration: InputDecoration(
+                    isDense: true,
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(
+                        color: Theme.of(context).dividerColor,
+                        width: 1.5,
+                        style: BorderStyle.solid,
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    disabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(
+                        color: Theme.of(context).dividerColor,
+                        width: 1.5,
+                        style: BorderStyle.solid,
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(
+                        color: Theme.of(context).dividerColor,
+                        width: 1.5,
+                        style: BorderStyle.solid,
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    hintText:
+                        SettingsManager().settings.recipientAsPlaceholder ==
+                                true
+                            ? placeholder
+                            : "BlueBubbles",
+                    hintStyle: Theme.of(context).textTheme.subtitle1,
+                    contentPadding: EdgeInsets.only(
+                      left: 10,
+                      top: 15,
+                      right: 10,
+                      bottom: 10,
+                    ),
+                  ),
+                  keyboardType: TextInputType.multiline,
+                  maxLines: 14,
+                  minLines: 1,
+                ),
               ),
             ),
             if (SettingsManager().settings.skin == Skins.IOS)

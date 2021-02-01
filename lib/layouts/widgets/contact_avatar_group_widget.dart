@@ -183,6 +183,116 @@ class _ContactAvatarGroupWidgetState extends State<ContactAvatarGroupWidget> {
                   }
                 },
               ),
+              samsungSkin: Builder(
+                builder: (context) {
+                  if (widget.participants.length == 2) {
+                    return Stack(
+                      children: [
+                        Align(
+                          alignment: Alignment.topRight,
+                          child: ContactAvatarWidget(
+                            handle: participants[0],
+                            size: 24.5,
+                            fontSize: 10.5,
+                            editable: widget.editable,
+                            onTap: widget.onTap,
+                          ),
+                        ),
+                        Align(
+                          alignment: Alignment.bottomLeft,
+                          child: ContactAvatarWidget(
+                            handle: participants[1],
+                            size: 24.5,
+                            fontSize: 10.5,
+                            editable: widget.editable,
+                            onTap: widget.onTap,
+                          ),
+                        ),
+                      ],
+                    );
+                  } else if (widget.participants.length == 3) {
+                    return Stack(
+                      children: [
+                        Align(
+                          alignment: Alignment.bottomRight,
+                          child: ContactAvatarWidget(
+                            handle: participants[0],
+                            size: 21.5,
+                            fontSize: 9,
+                            editable: widget.editable,
+                            onTap: widget.onTap,
+                          ),
+                        ),
+                        Align(
+                          alignment: Alignment.bottomLeft,
+                          child: ContactAvatarWidget(
+                            handle: participants[1],
+                            size: 21.5,
+                            fontSize: 9,
+                            editable: widget.editable,
+                            onTap: widget.onTap,
+                          ),
+                        ),
+                        Align(
+                          alignment: Alignment.topCenter,
+                          child: ContactAvatarWidget(
+                            handle: participants[2],
+                            size: 21.5,
+                            fontSize: 9,
+                            editable: widget.editable,
+                            onTap: widget.onTap,
+                          ),
+                        ),
+                      ],
+                    );
+                  } else {
+                    return Stack(
+                      children: [
+                        Align(
+                          alignment: Alignment.bottomRight,
+                          child: ContactAvatarWidget(
+                            handle: participants[0],
+                            size: 20,
+                            fontSize: 8.7,
+                            editable: widget.editable,
+                            onTap: widget.onTap,
+                          ),
+                        ),
+                        Align(
+                          alignment: Alignment.bottomLeft,
+                          child: ContactAvatarWidget(
+                            handle: participants[1],
+                            size: 20,
+                            fontSize: 8.7,
+                            editable: widget.editable,
+                            onTap: widget.onTap,
+                          ),
+                        ),
+                        Align(
+                          alignment: Alignment.topLeft,
+                          child: ContactAvatarWidget(
+                            handle: participants[2],
+                            size: 20,
+                            fontSize: 8.7,
+                            editable: widget.editable,
+                            onTap: widget.onTap,
+                          ),
+                        ),
+                        Align(
+                          alignment: Alignment.topRight,
+                          child: ContactAvatarWidget(
+                            handle: participants[3],
+                            size: 20,
+                            fontSize: 8.7,
+                            editable: widget.editable,
+                            onTap: widget.onTap,
+                          ),
+                        ),
+                      ],
+                    );
+                  }
+                },
+              ),
             )
           : ContactAvatarWidget(
               handle: participants.first,
