@@ -700,7 +700,7 @@ class _Samsung extends StatelessWidget {
               padding: EdgeInsets.only(right: 3),
               width: 80,
               child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: <Widget>[
                   if (parent.widget.chat.isPinned)
