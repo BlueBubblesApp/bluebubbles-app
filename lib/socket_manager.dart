@@ -478,7 +478,7 @@ class SocketManager {
         completer.completeError(data['error']);
       }
 
-      completer.complete(data["data"]);
+      if (!completer.isCompleted) completer.complete(data["data"]);
     });
 
     return completer.future;

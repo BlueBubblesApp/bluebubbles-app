@@ -117,6 +117,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
       if (this.mounted) setState(() {});
     });
 
+    // Create the focus node and then add a an event emitter whenever
+    // the focus changes
     focusNode = new FocusNode();
     focusNode.addListener(() {
       if (focusNode.hasFocus && this.mounted) {
@@ -124,8 +126,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
         setState(() {});
       }
 
-      EventDispatcher().emit("keyboard-is-open", focusNode.hasFocus);
-      EventDispatcher().emit("keyboard-is-closed", !focusNode.hasFocus);
+      EventDispatcher().emit("keyboard-status", focusNode.hasFocus);
     });
 
     EventDispatcher().stream.listen((event) {

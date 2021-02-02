@@ -159,6 +159,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
     currentChat.updateChatAttachments().then((value) {
       if (this.mounted) setState(() {});
     });
+
     currentChat.stream.listen((event) {
       if (this.mounted) setState(() {});
     });
@@ -228,9 +229,11 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
       ),
     );
   }
+
   Widget buildConversationViewHeader() {
     loadBrightness();
-    if (SettingsManager().settings.skin == Skins.Material || SettingsManager().settings.skin == Skins.Samsung) {
+    if (SettingsManager().settings.skin == Skins.Material ||
+        SettingsManager().settings.skin == Skins.Samsung) {
       Color backgroundColor = Theme.of(context).backgroundColor;
       Color fontColor = Theme.of(context).textTheme.headline1.color;
       if (chat.participants.length == 1 &&

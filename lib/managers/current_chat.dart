@@ -6,7 +6,9 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_details_popup.dart';
 import 'package:bluebubbles/managers/attachment_info_bloc.dart';
+import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
@@ -41,6 +43,8 @@ class CurrentChat {
   bool showTypingIndicator = false;
   Timer indicatorHideTimer;
   OverlayEntry entry;
+  bool keyboardOpen = false;
+  double keyboardOpenOffset = 0;
 
   bool isAlive = false;
 
@@ -65,8 +69,8 @@ class CurrentChat {
   StreamController<bool> showScrollDownStream =
       StreamController<bool>.broadcast();
   ScrollController scrollController = ScrollController();
-  bool currentShowScrollDown = false;
-  bool get showScrollDown => currentShowScrollDown;
+  bool _showScrollDown = false;
+  bool get showScrollDown => _showScrollDown;
 
   CurrentChat(this.chat) {
     NewMessageManager().stream.listen((msgEvent) {
@@ -86,6 +90,20 @@ class CurrentChat {
           "myLastMessage": this.myLastMessage,
           "lastReadMessage": this.lastReadMessage
         });
+      }
+    });
+
+    EventDispatcher().stream.listen((Map<String, dynamic> event) {
+      if (!event.containsKey("type")) return;
+
+      // Track the offset for when the keyboard is opened
+      if (event["type"] == "keyboard-status" &&
+          scrollController.hasClients &&
+          scrollController.offset != null) {
+        keyboardOpen = event.containsKey("data") ? event["data"] : false;
+        if (keyboardOpen) {
+          keyboardOpenOffset = scrollController.offset;
+        }
       }
     });
   }
@@ -120,6 +138,55 @@ class CurrentChat {
     }
   }
 
+  void initScrollController() {
+    scrollController = ScrollController();
+
+    scrollController.addListener(() async {
+      if (scrollController == null || !scrollController.hasClients) return;
+
+      // Check and see if we need to unfocus the keyboard
+      // The +100 is relatively arbitrary. It was the threshold I thought was good
+      if (keyboardOpen &&
+          SettingsManager().settings.hideKeyboardOnScroll &&
+          scrollController.offset > keyboardOpenOffset + 100) {
+        EventDispatcher().emit("unfocus-keyboard", null);
+      }
+
+      if (_showScrollDown && scrollController.offset >= 500) return;
+      if (!_showScrollDown && scrollController.offset < 500) return;
+
+      if (scrollController.offset >= 500) {
+        _showScrollDown = true;
+      } else {
+        _showScrollDown = false;
+      }
+
+      showScrollDownStream.sink.add(_showScrollDown);
+    });
+  }
+
+  void initControllers() {
+    if (_stream?.isClosed ?? true) {
+      _stream = StreamController.broadcast();
+    }
+
+    if (_attachmentStream?.isClosed ?? true) {
+      _attachmentStream = StreamController.broadcast();
+    }
+
+    if (timeStampOffsetStream?.isClosed ?? true) {
+      timeStampOffsetStream = StreamController.broadcast();
+    }
+
+    if (messageMarkerStream?.isClosed ?? true) {
+      messageMarkerStream = StreamController.broadcast();
+    }
+
+    if (showScrollDownStream?.isClosed ?? true) {
+      showScrollDownStream = StreamController.broadcast();
+    }
+  }
+
   /// Initialize all the values for the currently open chat
   /// @param [chat] the chat object you are initializing for
   void init() {
@@ -138,9 +205,11 @@ class CurrentChat {
     indicatorHideTimer = null;
     _timeStampOffset = 0;
     timeStampOffsetStream = StreamController<double>.broadcast();
-    currentShowScrollDown = false;
+    _showScrollDown = false;
     showScrollDownStream = StreamController<bool>.broadcast();
-    scrollController = ScrollController();
+
+    initScrollController();
+    initControllers();
     // checkTypingIndicator();
   }
 
@@ -289,12 +358,14 @@ class CurrentChat {
       });
     }
 
+    if (_stream.isClosed) _stream.close();
+    if (!_attachmentStream.isClosed) _attachmentStream.close();
     if (!timeStampOffsetStream.isClosed) timeStampOffsetStream.close();
     if (!showScrollDownStream.isClosed) showScrollDownStream.close();
     if (!messageMarkerStream.isClosed) messageMarkerStream.close();
 
     _timeStampOffset = 0;
-    currentShowScrollDown = false;
+    _showScrollDown = false;
     imageData = {};
     currentPlayingVideo = {};
     audioPlayers = {};
@@ -309,17 +380,25 @@ class CurrentChat {
     isAlive = false;
     showTypingIndicator = false;
     scrollController.dispose();
-    scrollController = ScrollController();
+
+    initScrollController();
+    initControllers();
+
     if (entry != null) entry.remove();
   }
 
-  void scrollToBottom() {
+  Future<void> scrollToBottom() async {
     if (scrollController == null) return;
-    scrollController.animateTo(
+    await scrollController.animateTo(
       0.0,
       curve: Curves.easeOut,
       duration: const Duration(milliseconds: 300),
     );
+
+    if (SettingsManager().settings.openKeyboardOnSTB) {
+      EventDispatcher().emit("focus-keyboard", null);
+      keyboardOpenOffset = 0;
+    }
   }
 
   /// Dipose of the controllers which we no longer need

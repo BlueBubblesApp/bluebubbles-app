@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:ui';
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
@@ -63,7 +64,6 @@ class ConversationViewState extends State<ConversationView>
     with ConversationViewMixin {
   List<File> existingAttachments;
   String existingText;
-  bool keyboardOpen = false;
   List<DisplayMode> modes;
   DisplayMode currentMode;
   Brightness brightness;
@@ -105,13 +105,6 @@ class ConversationViewState extends State<ConversationView>
         await _chat.getParticipants();
         currentChat.chat = _chat;
         if (this.mounted) setState(() {});
-      }
-    });
-
-    EventDispatcher().stream.listen((event) {
-      if (!event.containsKey("type")) return;
-      if (event["type"] == "keyboard-is-open") {
-        keyboardOpen = event.containsKey("data") ? event["data"] : false;
       }
     });
   }
@@ -224,13 +217,7 @@ class ConversationViewState extends State<ConversationView>
       return Padding(
         padding: const EdgeInsets.only(bottom: 55.0),
         child: FloatingActionButton(
-          onPressed: () {
-            currentChat.scrollToBottom();
-
-            if (SettingsManager().settings.openKeyboardOnSTB) {
-              EventDispatcher().emit("focus-keyboard", null);
-            }
-          },
+          onPressed: currentChat.scrollToBottom,
           child: Icon(
             Icons.arrow_downward,
             color: Theme.of(context).textTheme.bodyText1.color,
@@ -238,7 +225,43 @@ class ConversationViewState extends State<ConversationView>
           backgroundColor: Theme.of(context).accentColor,
         ),
       );
+    } else if (currentChat != null &&
+        currentChat.showScrollDown &&
+        SettingsManager().settings.skin == Skins.IOS) {
+      return Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+        Padding(
+          padding: EdgeInsets.only(left: 25.0, bottom: 45),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(10.0),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+              child: FittedBox(
+                fit: BoxFit.fitWidth,
+                child: Container(
+                  height: 35,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).accentColor.withOpacity(0.7),
+                    borderRadius: BorderRadius.circular(10.0),
+                  ),
+                  padding: EdgeInsets.symmetric(horizontal: 10),
+                  child: Center(
+                    child: GestureDetector(
+                      onTap: currentChat.scrollToBottom,
+                      child: Text(
+                        "\u{2193} Scroll to bottom \u{2193}",
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodyText1,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ]);
     }
+
     return Container();
   }
 
@@ -300,9 +323,11 @@ class ConversationViewState extends State<ConversationView>
                 ? (SettingsManager().settings.swipeToCloseKeyboard)
                     ? GestureDetector(
                         onPanUpdate: (details) {
-                          if (details.delta.dy > 0 && keyboardOpen) {
+                          if (details.delta.dy > 0 &&
+                              (currentChat?.keyboardOpen ?? false)) {
                             EventDispatcher().emit("unfocus-keyboard", null);
-                          } else if (details.delta.dy < 0 && !keyboardOpen) {
+                          } else if (details.delta.dy < 0 &&
+                              !(currentChat?.keyboardOpen ?? false)) {
                             EventDispatcher().emit("focus-keyboard", null);
                           }
                         },
@@ -351,10 +376,14 @@ class ConversationViewState extends State<ConversationView>
             ? StreamBuilder<bool>(
                 stream: currentChat.showScrollDownStream.stream,
                 builder: (context, snapshot) {
-                  return buildFAB();
+                  return AnimatedOpacity(
+                      duration: Duration(milliseconds: 250),
+                      opacity: (snapshot?.data ?? false) ? 1 : 0,
+                      curve: Curves.easeInOut,
+                      child: buildFAB());
                 },
               )
-            : buildFAB(),
+            : null,
       ),
     );
   }

@@ -21,7 +21,6 @@ import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_smart_reply/flutter_smart_reply.dart';
 
 class MessagesView extends StatefulWidget {
@@ -54,32 +53,20 @@ class MessagesViewState extends State<MessagesView>
   bool initializedList = false;
   List<int> loadedPages = [];
   CurrentChat currentChat;
-  double currentOffset = 0;
   bool keyboardOpen = false;
 
   List<TextMessage> currentMessages = [];
   List<String> replies = [];
 
-  // ignore: close_sinks
   StreamController<List<String>> smartReplyController;
 
   bool get showScrollDown => currentChat?.showScrollDown;
-  set showScrollDown(bool value) {
-    if (currentChat.currentShowScrollDown == value) {
-      return;
-    }
-    currentChat.currentShowScrollDown = value;
-    if (!currentChat.showScrollDownStream.isClosed) {
-      currentChat.showScrollDownStream.sink
-          .add(currentChat.currentShowScrollDown);
-    }
-  }
-
   ScrollController get scrollController {
     if (currentChat == null) return null;
     if (currentChat.scrollController == null) {
       currentChat.scrollController = ScrollController();
     }
+
     return currentChat.scrollController;
   }
 
@@ -98,28 +85,6 @@ class MessagesViewState extends State<MessagesView>
     }
 
     smartReplyController = StreamController<List<String>>.broadcast();
-
-    scrollController.addListener(() {
-      if (!this.mounted) return;
-      if (scrollController == null || !scrollController.hasClients) return;
-
-      // Check and see if we need to unfocus the keyboard
-      // The +100 is relatively arbitrary. It was the threshold I thought was good
-      if (keyboardOpen &&
-          SettingsManager().settings.hideKeyboardOnScroll &&
-          scrollController.offset > currentOffset + 100) {
-        EventDispatcher().emit("unfocus-keyboard", null);
-      }
-
-      if (showScrollDown && scrollController.offset >= 500) return;
-      if (!showScrollDown && scrollController.offset < 500) return;
-
-      if (scrollController.offset >= 500) {
-        showScrollDown = true;
-      } else {
-        showScrollDown = false;
-      }
-    });
 
     EventDispatcher().stream.listen((Map<String, dynamic> event) {
       if (!this.mounted) return;
@@ -144,13 +109,6 @@ class MessagesViewState extends State<MessagesView>
               }
             });
           }
-        }
-      } else if (event["type"] == "keyboard-is-open") {
-        if (!this.mounted) return;
-
-        keyboardOpen = event.containsKey("data") ? event["data"] : false;
-        if (scrollController.hasClients && scrollController.offset != null) {
-          currentOffset = scrollController.offset;
         }
       }
     });
@@ -424,7 +382,7 @@ class MessagesViewState extends State<MessagesView>
         alignment: AlignmentDirectional.bottomCenter,
         children: [
           CustomScrollView(
-            controller: scrollController,
+            controller: scrollController ?? ScrollController(),
             reverse: true,
             physics: ThemeSwitcher.getScrollPhysics(),
             slivers: <Widget>[
@@ -535,55 +493,6 @@ class MessagesViewState extends State<MessagesView>
               ),
             ],
           ),
-          if (SettingsManager().settings.skin == Skins.IOS)
-            StreamBuilder<bool>(
-              stream: currentChat.showScrollDownStream.stream,
-              builder: (context, snapshot) {
-                return AnimatedOpacity(
-                  opacity: showScrollDown ? 1 : 0,
-                  duration: new Duration(milliseconds: 300),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(10.0),
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-                      child: FittedBox(
-                        fit: BoxFit.fitWidth,
-                        child: Container(
-                          height: 35,
-                          decoration: BoxDecoration(
-                            color:
-                                Theme.of(context).accentColor.withOpacity(0.7),
-                            borderRadius: BorderRadius.circular(10.0),
-                          ),
-                          padding: EdgeInsets.symmetric(horizontal: 10),
-                          child: Center(
-                            child: GestureDetector(
-                              onTap: () {
-                                currentChat.scrollToBottom();
-                                if (MediaQuery.of(context).viewInsets.bottom ==
-                                    0) {
-                                  if (SettingsManager()
-                                      .settings
-                                      .openKeyboardOnSTB) {
-                                    SystemChannels.textInput
-                                        .invokeMethod('TextInput.show');
-                                  }
-                                }
-                              },
-                              child: Text(
-                                "\u{2193} Scroll to bottom \u{2193}",
-                                textAlign: TextAlign.center,
-                                style: Theme.of(context).textTheme.bodyText1,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
         ],
       ),
     );
