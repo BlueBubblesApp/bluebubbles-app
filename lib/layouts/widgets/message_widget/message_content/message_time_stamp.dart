@@ -21,12 +21,10 @@ class MessageTimeStamp extends StatelessWidget {
 
           String text =
               DateFormat('h:mm a').format(message.dateCreated).toLowerCase();
-          // if (message.dateCreated.isYesterday()) {
-          //   text = "Yesterday\n$text";
-          // } else if (!message.dateCreated.isToday()) {
-          //   text =
-          //       "${message.dateCreated.month.toString()}/${message.dateCreated.day.toString()}/${message.dateCreated.year.toString()}\n$text";
-          // }
+          if (!message.dateCreated.isToday()) {
+            text =
+                "${message.dateCreated.month.toString()}/${message.dateCreated.day.toString()}\n$text";
+          }
 
           return AnimatedContainer(
             duration: Duration(milliseconds: offset == 0 ? 150 : 0),

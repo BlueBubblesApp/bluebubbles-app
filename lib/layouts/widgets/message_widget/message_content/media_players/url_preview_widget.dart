@@ -242,7 +242,8 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
                 );
               },
               child: Container(
-                width: MediaQuery.of(context).size.width * 2 / 3,
+                // The minus 5 here is so the timestamps show OK during swipe
+                width: (MediaQuery.of(context).size.width * 2 / 3) - 5,
                 child: Column(
                   children: <Widget>[
                     mainImage,
