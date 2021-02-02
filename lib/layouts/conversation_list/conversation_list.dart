@@ -304,6 +304,7 @@ class _ConversationListState extends State<ConversationList> {
   @override
   Widget build(BuildContext context) {
     loadBrightness();
+    print(this.moveChatCreatorButton);
     return ThemeSwitcher(
       iOSSkin: _Cupertino(parent: this),
       materialSkin: _Material(parent: this),
@@ -517,7 +518,8 @@ class _Cupertino extends StatelessWidget {
                             ),
                           ),
                           Container(width: 10.0),
-                          if (!parent.widget.showArchivedChats)
+                          if (parent.moveChatCreatorButton &&
+                              !parent.widget.showArchivedChats)
                             ClipOval(
                               child: Material(
                                 color: Theme.of(context)
@@ -533,48 +535,8 @@ class _Cupertino extends StatelessWidget {
                                     onTap: this.parent.openNewChatCreator),
                               ),
                             ),
-                          if (this.parent.moveChatCreatorButton)
-                            Container(
-                                width: SettingsManager()
-                                        .settings
-                                        .moveChatCreatorToHeader
-                                    ? 7.0
-                                    : 10.0),
-                          if (SettingsManager()
-                                  .settings
-                                  .moveChatCreatorToHeader &&
-                              !parent.widget.showArchivedChats)
-                            ClipOval(
-                              child: Material(
-                                color: Theme.of(context)
-                                    .accentColor, // button color
-                                child: InkWell(
-                                    child: SizedBox(
-                                        width: 20,
-                                        height: 20,
-                                        child: Icon(Icons.create,
-                                            color:
-                                                Theme.of(context).primaryColor,
-                                            size: 12)),
-                                    onTap: () {
-                                      Navigator.of(context).push(
-                                        ThemeSwitcher.buildPageRoute(
-                                          builder: (BuildContext context) {
-                                            return ConversationView(
-                                              isCreator: true,
-                                            );
-                                          },
-                                        ),
-                                      );
-                                    }),
-                              ),
-                            ),
-                          Container(
-                              width: SettingsManager()
-                                      .settings
-                                      .moveChatCreatorToHeader
-                                  ? 7.0
-                                  : 10.0),
+                          if (parent.moveChatCreatorButton)
+                            Container(width: 10.0),
                           parent.buildSettingsButton(),
                           Spacer(
                             flex: 1,
@@ -647,10 +609,9 @@ class _Cupertino extends StatelessWidget {
             ),
           ],
         ),
-        floatingActionButton:
-            !SettingsManager().settings.moveChatCreatorToHeader
-                ? parent.buildFloatinActionButton()
-                : null,
+        floatingActionButton: !parent.moveChatCreatorButton
+            ? parent.buildFloatinActionButton()
+            : null,
       ),
     );
   }
