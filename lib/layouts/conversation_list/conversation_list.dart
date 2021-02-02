@@ -915,11 +915,9 @@ class __MaterialState extends State<_Material> {
                                     snapshot.data.progress >= 100)
                                   return Container();
 
-                                return Theme(
-                                  data: ThemeData(
-                                    brightness: widget.parent.brightness,
-                                  ),
-                                  child: CircularProgressIndicator(),
+                                return CircularProgressIndicator(
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                      Theme.of(context).primaryColor),
                                 );
                               },
                             )
