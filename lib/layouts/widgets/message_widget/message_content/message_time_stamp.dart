@@ -34,7 +34,7 @@ class MessageTimeStamp extends StatelessWidget {
                     SettingsManager().settings.skin == Skins.Material)
                 ? (-offset).clamp(0, 70).toDouble()
                 : 60,
-            height: 30,
+            height: 35,
             child: Stack(
               children: [
                 AnimatedPositioned(

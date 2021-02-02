@@ -271,6 +271,7 @@ class _ConversationTileState extends State<ConversationTile>
         widget.chat.title != null ? widget.chat.title : "",
         style: Theme.of(context).textTheme.bodyText1,
         maxLines: 1,
+        overflow: TextOverflow.ellipsis,
       );
 
   Widget buildSubtitle() => widget.chat.latestMessageText != null &&
@@ -286,6 +287,7 @@ class _ConversationTileState extends State<ConversationTile>
                     ),
               ),
           maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         );
 
   Widget buildLeading() {
