@@ -325,12 +325,14 @@ class _ConversationTileState extends State<ConversationTile>
     return Padding(padding: EdgeInsets.only(top: 2, right: 2), child: avatar);
   }
 
-  Widget buildDate() => Text(
+  Widget buildDate() => Center(
+          child: Text(
         widget.chat.getDateText(),
+        textAlign: TextAlign.right,
         style: Theme.of(context).textTheme.subtitle2.apply(
             color:
                 Theme.of(context).textTheme.subtitle2.color.withOpacity(0.85)),
-      );
+      ));
 
   void onTap() {
     if (widget.onTapGoToChat != null && widget.onTapGoToChat) {
@@ -610,7 +612,7 @@ class _Material extends StatelessWidget {
               padding: EdgeInsets.only(right: 3),
               width: 80,
               child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: <Widget>[
                   if (parent.widget.chat.isPinned)
