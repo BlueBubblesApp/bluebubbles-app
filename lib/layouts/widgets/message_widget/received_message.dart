@@ -316,11 +316,10 @@ class _ReceivedMessageState extends State<ReceivedMessage>
               children: msgRow,
             ),
           ),
-          (!sameSender(widget.message, widget.olderMessage))
-              ? MessageTimeStamp(
-                  message: widget.message,
-                )
-              : Container(),
+          if (widget.message?.guid != widget.olderMessage?.guid)
+            MessageTimeStamp(
+              message: widget.message,
+            )
         ],
       ),
     );
