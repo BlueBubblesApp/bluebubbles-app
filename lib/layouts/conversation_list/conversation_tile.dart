@@ -293,8 +293,10 @@ class _ConversationTileState extends State<ConversationTile>
         );
 
   Widget buildLeading() {
+    Widget avatar;
+
     if (!selected) {
-      return ContactAvatarGroupWidget(
+      avatar = ContactAvatarGroupWidget(
         participants: widget.chat.participants,
         chat: widget.chat,
         width: 40,
@@ -303,7 +305,7 @@ class _ConversationTileState extends State<ConversationTile>
         onTap: this.onTapUpBypass,
       );
     } else {
-      return Container(
+      avatar = Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(30),
           color: Theme.of(context).primaryColor,
@@ -319,6 +321,8 @@ class _ConversationTileState extends State<ConversationTile>
         ),
       );
     }
+
+    return Padding(padding: EdgeInsets.only(top: 2, right: 2), child: avatar);
   }
 
   Widget buildDate() => Text(
