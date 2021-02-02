@@ -176,6 +176,8 @@ class _ConversationTileState extends State<ConversationTile>
       );
     } else if (widget.onTapCallback != null) {
       widget.onTapCallback();
+    } else if (widget.inSelectMode && widget.onSelect != null) {
+      onSelect();
     } else {
       Navigator.of(context).push(
         CupertinoPageRoute(
