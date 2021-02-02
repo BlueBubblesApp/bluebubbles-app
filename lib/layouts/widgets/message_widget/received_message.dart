@@ -18,6 +18,7 @@ class ReceivedMessage extends StatefulWidget {
   final bool showTail;
   final Message message;
   final Message olderMessage;
+  final Message newerMessage;
   final bool showHandle;
 
   // Sub-widgets
@@ -26,12 +27,11 @@ class ReceivedMessage extends StatefulWidget {
   final Widget reactionsWidget;
   final Widget urlPreviewWidget;
 
-  final bool isGroup;
-
   ReceivedMessage({
     Key key,
     @required this.showTail,
     @required this.olderMessage,
+    @required this.newerMessage,
     @required this.message,
     @required this.showHandle,
 
@@ -40,7 +40,6 @@ class ReceivedMessage extends StatefulWidget {
     @required this.attachmentsWidget,
     @required this.reactionsWidget,
     @required this.urlPreviewWidget,
-    this.isGroup = false,
   }) : super(key: key);
 
   @override
@@ -132,7 +131,9 @@ class _ReceivedMessageState extends State<ReceivedMessage>
             top: widget.message.getReactions().length > 0 &&
                     !widget.message.hasAttachments
                 ? 18
-                : 0,
+                : (widget.message?.isFromMe != widget.olderMessage?.isFromMe)
+                    ? 5.0
+                    : 0,
             left: 10,
             right: 10,
           ),
@@ -195,7 +196,8 @@ class _ReceivedMessageState extends State<ReceivedMessage>
     List<Widget> messageColumn = [];
 
     // First, add the message sender (if applicable)
-    if (CurrentChat.of(context).chat.isGroup() &&
+    bool isGroup = CurrentChat.of(context)?.chat?.isGroup() ?? false;
+    if (isGroup &&
         (!sameSender(widget.message, widget.olderMessage) ||
             !widget.message.dateCreated
                 .isWithin(widget.olderMessage.dateCreated, minutes: 30))) {
@@ -262,7 +264,7 @@ class _ReceivedMessageState extends State<ReceivedMessage>
     // -> Contact avatar
     // -> Message
     List<Widget> msgRow = [];
-    if (widget.showTail && CurrentChat.of(context).chat.isGroup()) {
+    if (widget.showTail && isGroup) {
       msgRow.add(
         Padding(
           padding: EdgeInsets.only(
@@ -295,28 +297,59 @@ class _ReceivedMessageState extends State<ReceivedMessage>
     return Padding(
       // Add padding when we are showing the avatar
       padding: EdgeInsets.only(
-          left: (!widget.showTail &&
-                  (CurrentChat.of(context).chat.isGroup() || widget.isGroup))
-              ? 35.0
+          top: (SettingsManager().settings.skin != Skins.IOS &&
+                  widget.message?.isFromMe == widget.olderMessage?.isFromMe)
+              ? 3.0
               : 0.0,
-          bottom: (widget.showTail) ? 10.0 : 0.0),
+          left: (!widget.showTail && isGroup) ? 35.0 : 0.0,
+          bottom:
+              (widget.showTail && SettingsManager().settings.skin == Skins.IOS)
+                  ? 10.0
+                  : 0.0),
       child: Row(
         mainAxisSize: MainAxisSize.max,
         mainAxisAlignment: (SettingsManager().settings.skin == Skins.IOS ||
                 SettingsManager().settings.skin == Skins.Material)
             ? MainAxisAlignment.spaceBetween
             : MainAxisAlignment.start,
+        crossAxisAlignment: (SettingsManager().settings.skin != Skins.Samsung)
+            ? CrossAxisAlignment.center
+            : CrossAxisAlignment.end,
         children: [
           MessagePopupHolder(
-            message: widget.message,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.start,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: msgRow,
-            ),
-          ),
-          if (widget.message?.guid != widget.olderMessage?.guid)
+              message: widget.message,
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: msgRow,
+                    ),
+                    // Add the timestamp for the samsung theme
+                    if (SettingsManager().settings.skin == Skins.Samsung &&
+                        widget.message?.dateCreated != null &&
+                        (widget.newerMessage?.dateCreated == null ||
+                            widget.message?.isFromMe !=
+                                widget.newerMessage?.isFromMe ||
+                            widget.message?.handleId !=
+                                widget.newerMessage?.handleId ||
+                            !widget.message.dateCreated.isWithin(
+                                widget.newerMessage.dateCreated,
+                                minutes: 5)))
+                      Padding(
+                        padding:
+                            EdgeInsets.only(top: 5, left: (isGroup) ? 60 : 25),
+                        child: MessageTimeStamp(
+                          message: widget.message,
+                          singleLine: true,
+                          useYesterday: true,
+                        ),
+                      )
+                  ])),
+          if ((SettingsManager().settings.skin != Skins.Samsung &&
+              widget.message?.guid != widget.olderMessage?.guid))
             MessageTimeStamp(
               message: widget.message,
             )

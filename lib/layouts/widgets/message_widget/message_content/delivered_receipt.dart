@@ -117,7 +117,7 @@ class _DeliveredReceiptState extends State<DeliveredReceipt>
     }
 
     return Padding(
-      padding: EdgeInsets.symmetric(vertical: shouldShow(null, null) ? 4 : 0),
+      padding: EdgeInsets.only(top: 2, bottom: 4),
       child: item,
     );
   }

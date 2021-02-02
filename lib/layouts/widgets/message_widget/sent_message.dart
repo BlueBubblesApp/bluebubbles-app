@@ -210,6 +210,7 @@ class SentMessage extends StatefulWidget {
   final bool showTail;
   final Message message;
   final Message olderMessage;
+  final Message newerMessage;
   final bool showHero;
   final bool shouldFadeIn;
   final bool showDeliveredReceipt;
@@ -224,6 +225,7 @@ class SentMessage extends StatefulWidget {
     Key key,
     @required this.showTail,
     @required this.olderMessage,
+    @required this.newerMessage,
     @required this.message,
     @required this.showHero,
     @required this.showDeliveredReceipt,
@@ -331,9 +333,17 @@ class _SentMessageState extends State<SentMessage>
       Padding(
         // Padding to shift the bubble up a bit, relative to the avatar
         padding: EdgeInsets.only(
-            bottom: (widget.showTail && !isEmptyString(widget.message.fullText))
+            top: (SettingsManager().settings.skin != Skins.IOS &&
+                    widget.message?.isFromMe == widget.olderMessage?.isFromMe)
+                ? 3.0
+                : 10,
+            bottom: (SettingsManager().settings.skin == Skins.IOS &&
+                    widget.showTail &&
+                    !isEmptyString(widget.message.fullText))
                 ? 5.0
-                : 3.0,
+                : (SettingsManager().settings.skin == Skins.IOS)
+                    ? 3.0
+                    : 0.0,
             right: isEmptyString(widget.message.fullText) &&
                     widget.message.error == 0
                 ? 10.0
@@ -350,39 +360,36 @@ class _SentMessageState extends State<SentMessage>
     return Row(
       mainAxisSize: MainAxisSize.max,
       mainAxisAlignment: MainAxisAlignment.end,
+      crossAxisAlignment: (SettingsManager().settings.skin == Skins.IOS)
+          ? CrossAxisAlignment.center
+          : CrossAxisAlignment.end,
       children: [
-        (SettingsManager().settings.skin == Skins.IOS ||
-                SettingsManager().settings.skin == Skins.Material)
-            ? MessagePopupHolder(
-                message: widget.message,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: msgRow,
-                ),
-              )
-            : (widget.message?.guid != widget.olderMessage?.guid)
-                ? MessageTimeStamp(
-                    message: widget.message,
-                  )
-                : Container(),
-        (SettingsManager().settings.skin != Skins.IOS &&
-                SettingsManager().settings.skin != Skins.Material)
-            ? MessagePopupHolder(
-                message: widget.message,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: msgRow,
-                ),
-              )
-            : (widget.message?.guid != widget.olderMessage?.guid)
-                ? MessageTimeStamp(
-                    message: widget.message,
-                  )
-                : Container(),
+        if (SettingsManager().settings.skin == Skins.IOS ||
+            SettingsManager().settings.skin == Skins.Material)
+          MessagePopupHolder(
+            message: widget.message,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.end,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: msgRow,
+            ),
+          ),
+        if (SettingsManager().settings.skin == Skins.Samsung)
+          MessagePopupHolder(
+            message: widget.message,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.end,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: msgRow,
+            ),
+          ),
+        if (SettingsManager().settings.skin != Skins.Samsung &&
+            widget.message?.guid != widget.olderMessage?.guid)
+          MessageTimeStamp(
+            message: widget.message,
+          )
       ],
     );
   }

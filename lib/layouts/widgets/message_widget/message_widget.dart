@@ -1,8 +1,7 @@
 import 'dart:async';
+import 'package:bluebubbles/helpers/contstants.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/action_handler.dart';
-import 'package:bluebubbles/blocs/message_bloc.dart';
-import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/group_event.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/url_preview_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_attachments.dart';
@@ -19,7 +18,6 @@ import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import '../../../helpers/utils.dart';
 import '../../../repository/models/message.dart';
 
 class MessageWidget extends StatefulWidget {
@@ -282,6 +280,7 @@ class _MessageState extends State<MessageWidget>
       message = SentMessage(
         showTail: showTail,
         olderMessage: widget.olderMessage,
+        newerMessage: widget.newerMessage,
         message: _message,
         urlPreviewWidget: urlPreviewWidget,
         stickersWidget: stickersWidget,
@@ -295,6 +294,7 @@ class _MessageState extends State<MessageWidget>
       message = ReceivedMessage(
         showTail: showTail,
         olderMessage: widget.olderMessage,
+        newerMessage: widget.newerMessage,
         message: _message,
         showHandle: widget.showHandle,
         urlPreviewWidget: urlPreviewWidget,
@@ -307,10 +307,11 @@ class _MessageState extends State<MessageWidget>
     return Column(
       children: [
         message,
-        MessageTimeStampSeparator(
-          newerMessage: _newerMessage,
-          message: _message,
-        )
+        if (SettingsManager().settings.skin != Skins.Samsung)
+          MessageTimeStampSeparator(
+            newerMessage: _newerMessage,
+            message: _message,
+          )
       ],
     );
   }
