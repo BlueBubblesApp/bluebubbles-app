@@ -22,8 +22,9 @@ class MessageTimeStamp extends StatelessWidget {
           String text =
               DateFormat('h:mm a').format(message.dateCreated).toLowerCase();
           if (!message.dateCreated.isToday()) {
-            text =
-                "${message.dateCreated.month.toString()}/${message.dateCreated.day.toString()}\n$text";
+            DateFormat formatter = DateFormat('MMMd');
+            String formatted = formatter.format(message.dateCreated);
+            text = "$formatted\n$text";
           }
 
           return AnimatedContainer(
