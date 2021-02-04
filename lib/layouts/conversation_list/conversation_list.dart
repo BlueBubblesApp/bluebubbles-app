@@ -430,52 +430,44 @@ class _Cupertino extends StatelessWidget {
                                 style: Theme.of(context).textTheme.headline1,
                               ),
                               Container(width: 10.0),
-                              Stack(
-                                alignment: Alignment.center,
-                                children: [
-                                  (parent.showIndicator)
-                                      ? StreamBuilder(
-                                          stream: SocketManager()
-                                              .connectionStateStream,
-                                          builder: (context,
-                                              AsyncSnapshot<SocketState>
-                                                  snapshot) {
-                                            SocketState connectionStatus;
-                                            if (snapshot.hasData) {
-                                              connectionStatus = snapshot.data;
-                                            } else {
-                                              connectionStatus =
-                                                  SocketManager().state;
-                                            }
+                              if (parent.showIndicator)
+                                StreamBuilder(
+                                    stream:
+                                        SocketManager().connectionStateStream,
+                                    builder: (context,
+                                        AsyncSnapshot<SocketState> snapshot) {
+                                      SocketState connectionStatus;
+                                      if (snapshot.hasData) {
+                                        connectionStatus = snapshot.data;
+                                      } else {
+                                        connectionStatus =
+                                            SocketManager().state;
+                                      }
 
-                                            return getIndicatorIcon(
-                                                connectionStatus,
-                                                size: 15);
-                                          })
-                                      : Container(),
-                                  StreamBuilder(
-                                    stream: SocketManager().setup.stream,
-                                    initialData: SetupData(0, []),
-                                    builder: (context, snapshot) {
-                                      if (!snapshot.hasData ||
-                                          snapshot.data.progress < 1 ||
-                                          snapshot.data.progress >= 100)
-                                        return Container();
+                                      return getIndicatorIcon(connectionStatus,
+                                          size: 15);
+                                    }),
+                              if (parent.showIndicator) Container(width: 10.0),
+                              StreamBuilder(
+                                stream: SocketManager().setup.stream,
+                                initialData: SetupData(0, []),
+                                builder: (context, snapshot) {
+                                  if (!snapshot.hasData ||
+                                      snapshot.data.progress < 1 ||
+                                      snapshot.data.progress >= 100)
+                                    return Container();
 
-                                      return Theme(
-                                        data: ThemeData(
-                                          cupertinoOverrideTheme:
-                                              CupertinoThemeData(
-                                                  brightness:
-                                                      parent.brightness),
-                                        ),
-                                        child: CupertinoActivityIndicator(
-                                          radius: 7,
-                                        ),
-                                      );
-                                    },
-                                  )
-                                ],
+                                  return Theme(
+                                    data: ThemeData(
+                                      cupertinoOverrideTheme:
+                                          CupertinoThemeData(
+                                              brightness: parent.brightness),
+                                    ),
+                                    child: CupertinoActivityIndicator(
+                                      radius: 6.5,
+                                    ),
+                                  );
+                                },
                               )
                             ],
                           ),
@@ -816,44 +808,42 @@ class __MaterialState extends State<_Material> {
                               .copyWith(fontSize: 20),
                         ),
                         Container(width: 10),
-                        Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            (SettingsManager().settings.showConnectionIndicator)
-                                ? StreamBuilder(
-                                    stream:
-                                        SocketManager().connectionStateStream,
-                                    builder: (context,
-                                        AsyncSnapshot<SocketState> snapshot) {
-                                      SocketState connectionStatus;
-                                      if (snapshot.hasData) {
-                                        connectionStatus = snapshot.data;
-                                      } else {
-                                        connectionStatus =
-                                            SocketManager().state;
-                                      }
+                        if (SettingsManager().settings.showConnectionIndicator)
+                          StreamBuilder(
+                              stream: SocketManager().connectionStateStream,
+                              builder: (context,
+                                  AsyncSnapshot<SocketState> snapshot) {
+                                SocketState connectionStatus;
+                                if (snapshot.hasData) {
+                                  connectionStatus = snapshot.data;
+                                } else {
+                                  connectionStatus = SocketManager().state;
+                                }
 
-                                      return getIndicatorIcon(connectionStatus,
-                                          size: 15);
-                                    })
-                                : Container(),
-                            StreamBuilder(
-                              stream: SocketManager().setup.stream,
-                              initialData: SetupData(0, []),
-                              builder: (context, snapshot) {
-                                if (!snapshot.hasData ||
-                                    snapshot.data.progress < 1 ||
-                                    snapshot.data.progress >= 100)
-                                  return Container();
+                                return getIndicatorIcon(connectionStatus,
+                                    size: 15);
+                              }),
+                        if (SettingsManager().settings.showConnectionIndicator)
+                          Container(width: 10),
+                        StreamBuilder(
+                          stream: SocketManager().setup.stream,
+                          initialData: SetupData(0, []),
+                          builder: (context, snapshot) {
+                            if (!snapshot.hasData ||
+                                snapshot.data.progress < 1 ||
+                                snapshot.data.progress >= 100)
+                              return Container();
 
-                                return CircularProgressIndicator(
+                            return Container(
+                                constraints:
+                                    BoxConstraints(maxHeight: 15, maxWidth: 15),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.0,
                                   valueColor: AlwaysStoppedAnimation<Color>(
                                       Theme.of(context).primaryColor),
-                                );
-                              },
-                            )
-                          ],
-                        ),
+                                ));
+                          },
+                        )
                       ],
                     ),
                     actions: [
@@ -1347,46 +1337,46 @@ class _SamsungState extends State<_Samsung> {
                               .copyWith(fontSize: 20),
                         ),
                         Container(width: 10),
-                        Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            (SettingsManager().settings.showConnectionIndicator)
-                                ? StreamBuilder(
-                                    stream:
-                                        SocketManager().connectionStateStream,
-                                    builder: (context,
-                                        AsyncSnapshot<SocketState> snapshot) {
-                                      SocketState connectionStatus;
-                                      if (snapshot.hasData) {
-                                        connectionStatus = snapshot.data;
-                                      } else {
-                                        connectionStatus =
-                                            SocketManager().state;
-                                      }
+                        if (SettingsManager().settings.showConnectionIndicator)
+                          StreamBuilder(
+                              stream: SocketManager().connectionStateStream,
+                              builder: (context,
+                                  AsyncSnapshot<SocketState> snapshot) {
+                                SocketState connectionStatus;
+                                if (snapshot.hasData) {
+                                  connectionStatus = snapshot.data;
+                                } else {
+                                  connectionStatus = SocketManager().state;
+                                }
 
-                                      return getIndicatorIcon(connectionStatus,
-                                          size: 15);
-                                    })
-                                : Container(),
-                            StreamBuilder(
-                              stream: SocketManager().setup.stream,
-                              initialData: SetupData(0, []),
-                              builder: (context, snapshot) {
-                                if (!snapshot.hasData ||
-                                    snapshot.data.progress < 1 ||
-                                    snapshot.data.progress >= 100)
-                                  return Container();
+                                return getIndicatorIcon(connectionStatus,
+                                    size: 15);
+                              }),
+                        if (SettingsManager().settings.showConnectionIndicator)
+                          Container(width: 10),
+                        StreamBuilder(
+                          stream: SocketManager().setup.stream,
+                          initialData: SetupData(0, []),
+                          builder: (context, snapshot) {
+                            if (!snapshot.hasData ||
+                                snapshot.data.progress < 1 ||
+                                snapshot.data.progress >= 100)
+                              return Container();
 
-                                return Theme(
+                            return Container(
+                                constraints:
+                                    BoxConstraints(maxHeight: 15, maxWidth: 15),
+                                child: Theme(
                                   data: ThemeData(
-                                    brightness: widget.parent.brightness,
+                                      brightness: widget.parent.brightness,
+                                      accentColor:
+                                          Theme.of(context).primaryColor),
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2.0,
                                   ),
-                                  child: CircularProgressIndicator(),
-                                );
-                              },
-                            )
-                          ],
-                        ),
+                                ));
+                          },
+                        )
                       ],
                     ),
                     actions: [
