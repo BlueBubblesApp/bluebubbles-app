@@ -172,13 +172,13 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
             data.title != null &&
             data.title != "Image Preview") {
           return Text(
-            data.title,
+            data?.title ?? "<No Title>",
             style:
                 Theme.of(context).textTheme.bodyText1.apply(fontWeightDelta: 2),
             overflow: TextOverflow.ellipsis,
             maxLines: 2,
           );
-        } else if (data.title == "Image Preview") {
+        } else if (data?.title == "Image Preview") {
           return Container();
         } else {
           return Text("Unable to Load Preview",
