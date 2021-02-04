@@ -11,6 +11,7 @@ import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/repository/models/message.dart';
+import 'package:bluebubbles/socket_manager.dart';
 import 'package:device_info/device_info.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -548,4 +549,34 @@ Future<File> saveImageFromUrl(String guid, String url) async {
   } catch (ex) {
     return null;
   }
+}
+
+Icon getIndicatorIcon(SocketState socketState, {double size = 24}) {
+  Icon icon;
+
+  if (SettingsManager().settings.colorblindMode) {
+    if (socketState == SocketState.CONNECTING) {
+      icon = Icon(Icons.cloud_upload,
+          color: HexColor('ffd500').withAlpha(200), size: size);
+    } else if (socketState == SocketState.CONNECTED) {
+      icon = Icon(Icons.cloud_done,
+          color: HexColor('32CD32').withAlpha(200), size: size);
+    } else {
+      icon = Icon(Icons.cloud_off,
+          color: HexColor('DC143C').withAlpha(200), size: size);
+    }
+  } else {
+    if (socketState == SocketState.CONNECTING) {
+      icon = Icon(Icons.fiber_manual_record,
+          color: HexColor('ffd500').withAlpha(200), size: size);
+    } else if (socketState == SocketState.CONNECTED) {
+      icon = Icon(Icons.fiber_manual_record,
+          color: HexColor('32CD32').withAlpha(200), size: size);
+    } else {
+      icon = Icon(Icons.fiber_manual_record,
+          color: HexColor('DC143C').withAlpha(200), size: size);
+    }
+  }
+
+  return icon;
 }

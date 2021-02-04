@@ -154,8 +154,6 @@ class MessagesViewState extends State<MessagesView>
         texts.add(TextMessage.createForRemoteUser(
             msg.fullText, msg.dateCreated.millisecondsSinceEpoch));
       }
-
-      print(msg.text);
     }
 
     debugPrint("Getting smart replies for ${texts.length} texts");
@@ -173,7 +171,7 @@ class MessagesViewState extends State<MessagesView>
     }
 
     // If everything passes, add replies to the stream
-    smartReplyController.sink.add(replies);
+    if (!smartReplyController.isClosed) smartReplyController.sink.add(replies);
   }
 
   Future<void> loadNextChunk() {

@@ -132,6 +132,14 @@ class _UXPanelState extends State<UXPanel> {
                     initialVal: _settingsCopy.showConnectionIndicator,
                     title: "Show Connection Indicator in Chat List",
                   ),
+                  SettingsSwitch(
+                    onChanged: (bool val) {
+                      _settingsCopy.colorblindMode = val;
+                      saveSettings();
+                    },
+                    initialVal: _settingsCopy.colorblindMode,
+                    title: "Colorblind Mode",
+                  ),
                   if (SettingsManager().settings.skin == Skins.Samsung ||
                       SettingsManager().settings.skin == Skins.Material)
                     SettingsSwitch(

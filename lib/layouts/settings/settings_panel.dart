@@ -207,16 +207,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                 content: Text("Address copied to clipboard"));
                             Scaffold.of(context).showSnackBar(snackBar);
                           },
-                          trailing: connectionStatus == SocketState.CONNECTED ||
-                                  connectionStatus == SocketState.CONNECTING
-                              ? Icon(
-                                  Icons.fiber_manual_record,
-                                  color: HexColor('32CD32').withAlpha(200),
-                                )
-                              : Icon(
-                                  Icons.fiber_manual_record,
-                                  color: HexColor('DC143C').withAlpha(200),
-                                ),
+                          trailing: getIndicatorIcon(connectionStatus),
                         );
                       }),
                   SettingsTile(

@@ -3,7 +3,7 @@ import 'dart:ui';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/setup_bloc.dart';
-import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/helpers/contstants.dart';
@@ -448,24 +448,9 @@ class _Cupertino extends StatelessWidget {
                                                   SocketManager().state;
                                             }
 
-                                            if (connectionStatus ==
-                                                    SocketState.CONNECTED ||
-                                                connectionStatus ==
-                                                    SocketState.CONNECTING) {
-                                              return Icon(
-                                                Icons.fiber_manual_record,
-                                                size: 8,
-                                                color: HexColor('32CD32')
-                                                    .withAlpha(200),
-                                              );
-                                            } else {
-                                              return Icon(
-                                                Icons.fiber_manual_record,
-                                                size: 8,
-                                                color: HexColor('DC143C')
-                                                    .withAlpha(200),
-                                              );
-                                            }
+                                            return getIndicatorIcon(
+                                                connectionStatus,
+                                                size: 15);
                                           })
                                       : Container(),
                                   StreamBuilder(
@@ -847,24 +832,9 @@ class __MaterialState extends State<_Material> {
                                         connectionStatus =
                                             SocketManager().state;
                                       }
-                                      if (connectionStatus ==
-                                              SocketState.CONNECTED ||
-                                          connectionStatus ==
-                                              SocketState.CONNECTING) {
-                                        return Icon(
-                                          Icons.fiber_manual_record,
-                                          size: 15,
-                                          color:
-                                              HexColor('32CD32').withAlpha(200),
-                                        );
-                                      } else {
-                                        return Icon(
-                                          Icons.fiber_manual_record,
-                                          size: 15,
-                                          color:
-                                              HexColor('DC143C').withAlpha(200),
-                                        );
-                                      }
+
+                                      return getIndicatorIcon(connectionStatus,
+                                          size: 15);
                                     })
                                 : Container(),
                             StreamBuilder(
@@ -1393,24 +1363,9 @@ class _SamsungState extends State<_Samsung> {
                                         connectionStatus =
                                             SocketManager().state;
                                       }
-                                      if (connectionStatus ==
-                                              SocketState.CONNECTED ||
-                                          connectionStatus ==
-                                              SocketState.CONNECTING) {
-                                        return Icon(
-                                          Icons.fiber_manual_record,
-                                          size: 15,
-                                          color:
-                                              HexColor('32CD32').withAlpha(200),
-                                        );
-                                      } else {
-                                        return Icon(
-                                          Icons.fiber_manual_record,
-                                          size: 15,
-                                          color:
-                                              HexColor('DC143C').withAlpha(200),
-                                        );
-                                      }
+
+                                      return getIndicatorIcon(connectionStatus,
+                                          size: 15);
                                     })
                                 : Container(),
                             StreamBuilder(
