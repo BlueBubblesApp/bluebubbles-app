@@ -123,20 +123,43 @@ class MessagesViewState extends State<MessagesView>
   }
 
   void updateReplies() async {
+    // If there are no messages or the latest message is from me, reset the replies
     if (isNullOrEmpty(_messages)) return resetReplies();
+    if (_messages.first.isFromMe) return resetReplies();
 
-    // If the first message has no text, don't do anything
-    Message msg = _messages.first;
-    if (isEmptyString(msg.text, stripWhitespace: true)) return resetReplies();
+    Iterable<Message> filtered = _messages.where((item) =>
+        !isNullOrEmpty(item.fullText, trimString: true) &&
+        item.associatedMessageGuid == null);
 
-    // If the latest message is from yourself, clear the replies
-    if (msg.isFromMe) return resetReplies();
+    if (isNullOrEmpty(filtered)) return resetReplies();
 
-    TextMessage textMessage = TextMessage.createForRemoteUser(
-        msg.text, msg.dateCreated.millisecondsSinceEpoch);
+    // Calculate the max amount of items
+    int max = SettingsManager().settings.smartReplySampleSize;
+    if (max > filtered.length) {
+      max = filtered.length;
+    }
 
-    debugPrint("Getting smart replies for `${textMessage.text}`");
-    replies = await FlutterSmartReply.getSmartReplies([textMessage]);
+    // Get the first 'x' messages
+    List<Message> msgs = filtered.toList().sublist(0, max);
+    List<TextMessage> texts = [];
+    for (var msg in msgs) {
+      // Skip empty messages
+      if (isEmptyString(msg.fullText, stripWhitespace: true)) continue;
+
+      // Add to list based on who sent the message
+      if (msg.isFromMe) {
+        texts.add(TextMessage.createForLocalUser(
+            msg.fullText, msg.dateCreated.millisecondsSinceEpoch));
+      } else {
+        texts.add(TextMessage.createForRemoteUser(
+            msg.fullText, msg.dateCreated.millisecondsSinceEpoch));
+      }
+
+      print(msg.text);
+    }
+
+    debugPrint("Getting smart replies for ${texts.length} texts");
+    replies = await FlutterSmartReply.getSmartReplies(texts.reversed.toList());
     if (replies == null) return;
 
     // De-duplicate the list

@@ -37,6 +37,7 @@ class Settings {
   bool swipeToOpenKeyboard = false;
   bool openKeyboardOnSTB = false;
   bool swipableConversationTiles = false;
+  int smartReplySampleSize = 2;
   // String emojiFontFamily;
 
   // Private API features
@@ -122,6 +123,8 @@ class Settings {
         settings.enablePrivateAPI = entry.value;
       } else if (entry.name == "privateSendTypingIndicators") {
         settings.privateSendTypingIndicators = entry.value;
+      } else if (entry.name == "smartReplySampleSize") {
+        settings.smartReplySampleSize = entry.value;
       }
 
       // else if (entry.name == "emojiFontFamily") {
@@ -308,6 +311,10 @@ class Settings {
             name: "privateSendTypingIndicators",
             value: this.privateSendTypingIndicators,
             type: this.privateSendTypingIndicators.runtimeType),
+        ConfigEntry(
+            name: "smartReplySampleSize",
+            value: this.smartReplySampleSize,
+            type: this.smartReplySampleSize.runtimeType),
         // ConfigEntry(
         //     name: "emojiFontFamily",
         //     value: this.emojiFontFamily,

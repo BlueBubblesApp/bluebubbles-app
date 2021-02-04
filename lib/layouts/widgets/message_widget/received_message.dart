@@ -340,7 +340,7 @@ class _ReceivedMessageState extends State<ReceivedMessage>
                                 minutes: 5)))
                       Padding(
                         padding:
-                            EdgeInsets.only(top: 5, left: (isGroup) ? 60 : 25),
+                            EdgeInsets.only(top: 5, left: (isGroup) ? 60 : 20),
                         child: MessageTimeStamp(
                           message: widget.message,
                           singleLine: true,
