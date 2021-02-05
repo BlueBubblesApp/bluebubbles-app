@@ -19,7 +19,6 @@ extension HttpRequestData on Document {
   set requestUrl(String newValue) {
     _requestUrl = newValue;
   }
-
 }
 
 class MetadataHelper {
@@ -181,7 +180,7 @@ class MetadataHelper {
   }
 
   static String _reformatUrl(String url) {
-    if (url.contains('youtube.com/watch?v=') || url.contains("youtu.be/")) {
+    if (url.contains('youtube.com/') || url.contains("youtu.be/")) {
       return "https://www.youtube.com/oembed?url=$url";
     } else if (url.contains("twitter.com") && url.contains("/status/")) {
       return "https://publish.twitter.com/oembed?url=$url";
@@ -193,22 +192,22 @@ class MetadataHelper {
   /// Takes an [http.Response] and returns a [html.Document]
   /// NOTE: I overrode this method from the library because there is
   /// a bug in the library's code with parsing the document.
-static Document _responseToDocument(http.Response response) {
-  if (response.statusCode != 200) {
-    return null;
-  }
+  static Document _responseToDocument(http.Response response) {
+    if (response.statusCode != 200) {
+      return null;
+    }
 
-  Document document;
-  try {
-    document = parser.parse(response.body.toString());
-    document.requestUrl = response.request.url.toString();
-  } catch (err) {
-    print("Error parsing HTML document: ${err.toString()}");
+    Document document;
+    try {
+      document = parser.parse(response.body.toString());
+      document.requestUrl = response.request.url.toString();
+    } catch (err) {
+      print("Error parsing HTML document: ${err.toString()}");
+      return document;
+    }
+
     return document;
   }
-
-  return document;
-}
 
   /// Manually tries to parse out metadata from a given [url]
   static Future<Metadata> _manuallyGetMetadata(String url) async {
