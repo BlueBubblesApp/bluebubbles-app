@@ -4,7 +4,6 @@ import 'package:assorted_layout_widgets/assorted_layout_widgets.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/contstants.dart';
-import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/socket_singletons.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_details/conversation_details.dart';
@@ -13,7 +12,6 @@ import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/contact_s
 import 'package:bluebubbles/layouts/widgets/CustomCupertinoNavBackButton.dart';
 import 'package:bluebubbles/layouts/widgets/CustomCupertinoNavBar.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
-import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
@@ -58,6 +56,8 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
   Brightness brightness;
   Color previousBackgroundColor;
   bool gotBrightness = false;
+  bool markingAsRead = false;
+  bool markedAsRead = false;
   void loadBrightness() {
     Color now = Theme.of(context).backgroundColor;
     bool themeChanged =
@@ -230,14 +230,46 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
     );
   }
 
+  void markChatAsRead() {
+    Function setProgress = (bool val) {
+      if (this.mounted) {
+        setState(() {
+          markingAsRead = val;
+
+          if (!val) {
+            markedAsRead = true;
+          }
+        });
+      }
+
+      // Unset the marked icon
+      Future.delayed(Duration(seconds: 3), () {
+        if (this.mounted) {
+          setState(() {
+            markedAsRead = false;
+          });
+        }
+      });
+    };
+
+    // Set that we are
+    setProgress(true);
+
+    SocketManager().sendMessage("mark-chat-read", {"chatGuid": chat.guid},
+        (data) {
+      setProgress(false);
+    }).catchError(() {
+      setProgress(false);
+    });
+  }
+
   Widget buildConversationViewHeader() {
     loadBrightness();
+    Color backgroundColor = Theme.of(context).backgroundColor;
+    Color fontColor = Theme.of(context).textTheme.headline1.color;
+
     if (SettingsManager().settings.skin == Skins.Material ||
         SettingsManager().settings.skin == Skins.Samsung) {
-      Color backgroundColor = Theme.of(context).backgroundColor;
-      Color fontColor = Theme.of(context).textTheme.headline1.color;
-      if (chat.participants.length == 1 &&
-          SettingsManager().settings.colorfulBubbles) {}
       return AppBar(
         brightness: brightness,
         title: Text(
@@ -255,7 +287,34 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
         actionsIconTheme: IconThemeData(color: Theme.of(context).primaryColor),
         iconTheme: IconThemeData(color: Theme.of(context).primaryColor),
         actions: [
-          Cupertino.Padding(
+          if (SettingsManager().settings.privateManualMarkAsRead &&
+              markingAsRead)
+            Padding(
+                padding: const EdgeInsets.only(right: 8.0),
+                child: Center(
+                    child: SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                          Theme.of(context).primaryColor)),
+                ))),
+          if (SettingsManager().settings.enablePrivateAPI &&
+              SettingsManager().settings.privateManualMarkAsRead &&
+              !markingAsRead)
+            Padding(
+              padding: const EdgeInsets.only(right: 8.0),
+              child: GestureDetector(
+                child: Icon(
+                  (markedAsRead)
+                      ? Icons.check_circle
+                      : Icons.check_circle_outline,
+                  color: fontColor,
+                ),
+                onTap: markChatAsRead,
+              ),
+            ),
+          Padding(
             padding: const EdgeInsets.only(right: 8.0),
             child: GestureDetector(
               child: Icon(
@@ -295,57 +354,88 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
     if (distance <= -30.0 && distance > -60) distance = -30.0;
     if (distance <= -60.0) distance = -35.0;
     return CupertinoNavigationBar(
-      backgroundColor: Theme.of(context).accentColor.withAlpha(125),
-      border: Border(
-        bottom: BorderSide(color: Colors.white.withOpacity(0.2), width: 0.2),
-      ),
-      leading: CustomCupertinoNavigationBarBackButton(
-        color: Theme.of(context).primaryColor,
-        notifications: newMessages.length,
-      ),
-      middle: ListView(
-        physics: Cupertino.NeverScrollableScrollPhysics(),
-        padding: EdgeInsets.only(right: 30),
-        children: <Widget>[
-          Container(height: 10.0),
-          GestureDetector(
-            onTap: openDetails,
-            child: Container(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  RowSuper(
-                    children: avatars,
-                    innerDistance: distance,
-                    alignment: Alignment.center,
-                  ),
-                  Container(height: 5.0),
-                  RichText(
-                    maxLines: 1,
-                    overflow: Cupertino.TextOverflow.ellipsis,
-                    textAlign: TextAlign.center,
-                    text: TextSpan(
-                      style: Theme.of(context).textTheme.headline2,
-                      children: [
-                        TextSpan(
-                          text: chat.title,
-                          style: Theme.of(context).textTheme.bodyText1,
-                        ),
-                        TextSpan(
-                          text: " >",
-                          style: Theme.of(context).textTheme.subtitle1,
-                        )
-                      ],
+        backgroundColor: Theme.of(context).accentColor.withAlpha(125),
+        border: Border(
+          bottom: BorderSide(color: Colors.white.withOpacity(0.2), width: 0.2),
+        ),
+        leading: CustomCupertinoNavigationBarBackButton(
+          color: Theme.of(context).primaryColor,
+          notifications: newMessages.length,
+        ),
+        middle: ListView(
+          physics: Cupertino.NeverScrollableScrollPhysics(),
+          padding: EdgeInsets.only(right: 5),
+          children: <Widget>[
+            Container(height: 10.0),
+            GestureDetector(
+              onTap: openDetails,
+              child: Container(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    RowSuper(
+                      children: avatars,
+                      innerDistance: distance,
+                      alignment: Alignment.center,
                     ),
-                  )
-                ],
+                    Container(height: 5.0),
+                    RichText(
+                      maxLines: 1,
+                      overflow: Cupertino.TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                      text: TextSpan(
+                        style: Theme.of(context).textTheme.headline2,
+                        children: [
+                          TextSpan(
+                            text: chat.title,
+                            style: Theme.of(context).textTheme.bodyText1,
+                          ),
+                          TextSpan(
+                            text: " >",
+                            style: Theme.of(context).textTheme.subtitle1,
+                          )
+                        ],
+                      ),
+                    )
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
-      ),
-      trailing: Container(width: 20),
-    );
+          ],
+        ),
+        trailing: (SettingsManager().settings.enablePrivateAPI &&
+                SettingsManager().settings.privateManualMarkAsRead)
+            ? Stack(
+                children: [
+                  if (markingAsRead)
+                    Padding(
+                        padding: const EdgeInsets.only(right: 10.0),
+                        child: Theme(
+                          data: ThemeData(
+                            cupertinoOverrideTheme:
+                                Cupertino.CupertinoThemeData(
+                                    brightness: brightness),
+                          ),
+                          child: Cupertino.CupertinoActivityIndicator(
+                            radius: 12,
+                          ),
+                        )),
+                  if (!markingAsRead)
+                    Padding(
+                      padding: const EdgeInsets.only(right: 2.0),
+                      child: GestureDetector(
+                        child: Icon(
+                          (markedAsRead)
+                              ? Icons.check_circle
+                              : Icons.check_circle_outline,
+                          color: fontColor,
+                        ),
+                        onTap: markChatAsRead,
+                      ),
+                    ),
+                ],
+              )
+            : Container(width: 33));
   }
 
   /// Chat selector methods

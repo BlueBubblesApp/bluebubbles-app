@@ -45,6 +45,7 @@ class Settings {
   bool enablePrivateAPI = false;
   bool privateSendTypingIndicators = false;
   bool privateMarkChatAsRead = false;
+  bool privateManualMarkAsRead = false;
 
   Skins skin = Skins.IOS;
 
@@ -131,6 +132,8 @@ class Settings {
         settings.colorblindMode = entry.value;
       } else if (entry.name == "privateMarkChatAsRead") {
         settings.privateMarkChatAsRead = entry.value;
+      } else if (entry.name == "privateManualMarkAsRead") {
+        settings.privateManualMarkAsRead = entry.value;
       }
 
       // else if (entry.name == "emojiFontFamily") {
@@ -329,6 +332,10 @@ class Settings {
             name: "privateMarkChatAsRead",
             value: this.privateMarkChatAsRead,
             type: this.privateMarkChatAsRead.runtimeType),
+        ConfigEntry(
+            name: "privateManualMarkAsRead",
+            value: this.privateManualMarkAsRead,
+            type: this.privateManualMarkAsRead.runtimeType),
         // ConfigEntry(
         //     name: "emojiFontFamily",
         //     value: this.emojiFontFamily,

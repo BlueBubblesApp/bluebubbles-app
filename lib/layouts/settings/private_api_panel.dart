@@ -84,6 +84,14 @@ class _PrivateAPIPanelState extends State<PrivateAPIPanel> {
           initialVal: _settingsCopy.privateMarkChatAsRead,
           title: "Mark Chats as Read / Send Read Receipts",
         ),
+        SettingsSwitch(
+          onChanged: (bool val) {
+            _settingsCopy.privateManualMarkAsRead = val;
+            saveSettings();
+          },
+          initialVal: _settingsCopy.privateManualMarkAsRead,
+          title: "Show Manually Mark Chat as Read Button",
+        ),
       ]);
     }
 
