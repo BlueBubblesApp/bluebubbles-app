@@ -97,8 +97,11 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
       if (CurrentChat.of(context)?.chat == null) return;
 
       // If the private API features are disabled, or sending the indicators is disabled, return
-      if (!SettingsManager().settings.enablePrivateAPI) return;
-      if (!SettingsManager().settings.sendTypingIndicators) return;
+      if (!SettingsManager().settings.enablePrivateAPI ||
+          !SettingsManager().settings.sendTypingIndicators) {
+        if (this.mounted) setState(() {});
+        return;
+      }
 
       if (controller.text.length == 0 &&
           pickedImages.length == 0 &&
@@ -834,8 +837,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                         await stopRecording();
                       },
                       child: ButtonTheme(
-                        minWidth: 30,
-                        height: 30,
+                        minWidth: 40,
+                        height: 40,
                         child: RaisedButton(
                           padding: EdgeInsets.symmetric(
                             horizontal: 0,
@@ -846,6 +849,14 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                               stopSending = true;
                               sendCountdown = null;
                               if (this.mounted) setState(() {});
+                            } else if (isRecording) {
+                              await stopRecording();
+                            } else if (canRecord &&
+                                !isRecording &&
+                                await Permission.microphone
+                                    .request()
+                                    .isGranted) {
+                              await startRecording();
                             } else {
                               // If send delay is enabled, delay the sending
                               if (!isNullOrZero(
@@ -917,7 +928,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                                     : 0.0,
                                 duration: Duration(milliseconds: 150),
                                 child: Icon(
-                                  Icons.arrow_upward,
+                                  Icons.send,
                                   color: Colors.white,
                                   size: 20,
                                 ),
