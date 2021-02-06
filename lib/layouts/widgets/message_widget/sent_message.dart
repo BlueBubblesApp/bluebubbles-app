@@ -335,15 +335,17 @@ class _SentMessageState extends State<SentMessage>
         padding: EdgeInsets.only(
             top: (SettingsManager().settings.skin != Skins.IOS &&
                     widget.message?.isFromMe == widget.olderMessage?.isFromMe)
-                ? 3.0
-                : 10,
+                ? (SettingsManager().settings.skin != Skins.IOS)
+                    ? 0
+                    : 3
+                : (SettingsManager().settings.skin == Skins.IOS)
+                    ? 0.0
+                    : 10,
             bottom: (SettingsManager().settings.skin == Skins.IOS &&
                     widget.showTail &&
                     !isEmptyString(widget.message.fullText))
                 ? 5.0
-                : (SettingsManager().settings.skin == Skins.IOS)
-                    ? 3.0
-                    : 0.0,
+                : 0,
             right: isEmptyString(widget.message.fullText) &&
                     widget.message.error == 0
                 ? 10.0

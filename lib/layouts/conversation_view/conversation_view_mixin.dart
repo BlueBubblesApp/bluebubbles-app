@@ -4,6 +4,7 @@ import 'package:assorted_layout_widgets/assorted_layout_widgets.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/contstants.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/socket_singletons.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_details/conversation_details.dart';
@@ -309,7 +310,9 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
                   (markedAsRead)
                       ? Icons.check_circle
                       : Icons.check_circle_outline,
-                  color: fontColor,
+                  color: (markedAsRead)
+                      ? HexColor('32CD32').withAlpha(200)
+                      : fontColor,
                 ),
                 onTap: markChatAsRead,
               ),
@@ -428,7 +431,9 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
                           (markedAsRead)
                               ? Icons.check_circle
                               : Icons.check_circle_outline,
-                          color: fontColor,
+                          color: (markedAsRead)
+                              ? HexColor('32CD32').withAlpha(200)
+                              : fontColor,
                         ),
                         onTap: markChatAsRead,
                       ),

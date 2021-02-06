@@ -709,6 +709,56 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
     }
   }
 
+  Future<void> sendAction() async {
+    if (sendCountdown != null) {
+      stopSending = true;
+      sendCountdown = null;
+      if (this.mounted) setState(() {});
+    } else if (isRecording) {
+      await stopRecording();
+    } else if (canRecord &&
+        !isRecording &&
+        await Permission.microphone.request().isGranted) {
+      await startRecording();
+    } else {
+      // If send delay is enabled, delay the sending
+      if (!isNullOrZero(SettingsManager().settings.sendDelay)) {
+        // Break the delay into 1 second intervals
+        for (var i = 0; i < SettingsManager().settings.sendDelay; i++) {
+          if (i != 0 && sendCountdown == null) break;
+
+          // Update UI with new state information
+          if (this.mounted) {
+            setState(() {
+              sendCountdown = SettingsManager().settings.sendDelay - i;
+            });
+          }
+
+          await Future.delayed(new Duration(seconds: 1));
+        }
+      }
+
+      if (this.mounted) {
+        setState(() {
+          sendCountdown = null;
+        });
+      }
+
+      if (stopSending != null && stopSending) {
+        stopSending = null;
+        return;
+      }
+
+      if (await widget.onSend(pickedImages, controller.text)) {
+        controller.text = "";
+        pickedImages = <File>[];
+        updateTextFieldAttachments();
+      }
+    }
+
+    if (this.mounted) setState(() {});
+  }
+
   Widget buildSendButton(bool canRecord) => Align(
         alignment: Alignment.bottomRight,
         child: Row(
@@ -725,61 +775,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                           horizontal: 0,
                         ),
                         color: Theme.of(context).primaryColor,
-                        onPressed: () async {
-                          if (sendCountdown != null) {
-                            stopSending = true;
-                            sendCountdown = null;
-                            if (this.mounted) setState(() {});
-                          } else if (isRecording) {
-                            await stopRecording();
-                          } else if (canRecord &&
-                              !isRecording &&
-                              await Permission.microphone.request().isGranted) {
-                            await startRecording();
-                          } else {
-                            // If send delay is enabled, delay the sending
-                            if (!isNullOrZero(
-                                SettingsManager().settings.sendDelay)) {
-                              // Break the delay into 1 second intervals
-                              for (var i = 0;
-                                  i < SettingsManager().settings.sendDelay;
-                                  i++) {
-                                if (i != 0 && sendCountdown == null) break;
-
-                                // Update UI with new state information
-                                if (this.mounted) {
-                                  setState(() {
-                                    sendCountdown =
-                                        SettingsManager().settings.sendDelay -
-                                            i;
-                                  });
-                                }
-
-                                await Future.delayed(new Duration(seconds: 1));
-                              }
-                            }
-
-                            if (this.mounted) {
-                              setState(() {
-                                sendCountdown = null;
-                              });
-                            }
-
-                            if (stopSending != null && stopSending) {
-                              stopSending = null;
-                              return;
-                            }
-
-                            if (await widget.onSend(
-                                pickedImages, controller.text)) {
-                              controller.text = "";
-                              pickedImages = <File>[];
-                              updateTextFieldAttachments();
-                            }
-                          }
-
-                          if (this.mounted) setState(() {});
-                        },
+                        onPressed: sendAction,
                         child: Stack(
                           alignment: Alignment.center,
                           children: [
@@ -844,64 +840,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                             horizontal: 0,
                           ),
                           color: Theme.of(context).primaryColor,
-                          onPressed: () async {
-                            if (sendCountdown != null) {
-                              stopSending = true;
-                              sendCountdown = null;
-                              if (this.mounted) setState(() {});
-                            } else if (isRecording) {
-                              await stopRecording();
-                            } else if (canRecord &&
-                                !isRecording &&
-                                await Permission.microphone
-                                    .request()
-                                    .isGranted) {
-                              await startRecording();
-                            } else {
-                              // If send delay is enabled, delay the sending
-                              if (!isNullOrZero(
-                                  SettingsManager().settings.sendDelay)) {
-                                // Break the delay into 1 second intervals
-                                for (var i = 0;
-                                    i < SettingsManager().settings.sendDelay;
-                                    i++) {
-                                  if (i != 0 && sendCountdown == null) break;
-
-                                  // Update UI with new state information
-                                  if (this.mounted) {
-                                    setState(() {
-                                      sendCountdown =
-                                          SettingsManager().settings.sendDelay -
-                                              i;
-                                    });
-                                  }
-
-                                  await Future.delayed(
-                                      new Duration(seconds: 1));
-                                }
-                              }
-
-                              if (this.mounted) {
-                                setState(() {
-                                  sendCountdown = null;
-                                });
-                              }
-
-                              if (stopSending != null && stopSending) {
-                                stopSending = null;
-                                return;
-                              }
-
-                              if (await widget.onSend(
-                                  pickedImages, controller.text)) {
-                                controller.text = "";
-                                pickedImages = <File>[];
-                                updateTextFieldAttachments();
-                              }
-                            }
-
-                            if (this.mounted) setState(() {});
-                          },
+                          onPressed: sendAction,
                           child: Stack(
                             alignment: Alignment.center,
                             children: [
