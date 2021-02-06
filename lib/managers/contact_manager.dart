@@ -31,6 +31,7 @@ class ContactManager {
   // We need these so we don't have threads fetching at the same time
   Completer getContactsFuture;
   Completer getAvatarsFuture;
+  int lastRefresh = 0;
 
   Future<Contact> getCachedContact(String address) async {
     if (contacts == null || !handleToContact.containsKey(address))
@@ -70,6 +71,18 @@ class ContactManager {
     if (getContactsFuture != null && !getContactsFuture.isCompleted) {
       return getContactsFuture.future;
     }
+
+    // Check if we've requested sometime in the last 1 minute
+    // If we have, exit, we don't need to re-fetch the chats again
+    int now = DateTime.now().toUtc().millisecondsSinceEpoch;
+    if (lastRefresh != 0 && now < lastRefresh + 60000) {
+      debugPrint(
+          "[ContactManager] -> Not fetching contacts; Not enough time has elapsed");
+      return;
+    }
+
+    // Set the last refresh time
+    lastRefresh = now;
 
     // Start a new completer
     getContactsFuture = new Completer<bool>();

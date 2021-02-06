@@ -36,8 +36,7 @@ class ChatBloc {
   List<Chat> get chats => _chats;
   List<Chat> _archivedChats;
   List<Chat> get archivedChats => _archivedChats;
-
-  int lastRefresh = 0;
+  Completer<void> chatRequest;
 
   static final ChatBloc _chatBloc = ChatBloc._internal();
   ChatBloc._internal();
@@ -64,17 +63,13 @@ class ChatBloc {
   }
 
   Future<void> refreshChats() async {
-    // Check if we've requested sometime in the last 1 minute
-    // If we have, exit, we don't need to re-fetch the chats again
-    int now = DateTime.now().toUtc().millisecondsSinceEpoch;
-    if (lastRefresh != 0 && now < lastRefresh + 60000) {
-      debugPrint(
-          "[ChatBloc] -> Not fetching chats; Not enough time has elapsed");
-      return;
+
+    // If we are fetching the contacts, return the current future so we can await it
+    if (chatRequest != null && !chatRequest.isCompleted) {
+      return chatRequest.future;
     }
 
-    // Set the last refresh time
-    lastRefresh = now;
+    chatRequest = new Completer<void>();
 
     _chats = [];
     debugPrint("[ChatBloc] -> Fetching chats...");
@@ -267,10 +262,18 @@ class ChatBloc {
       } else {
         debugPrint("[ChatBloc] -> Finished fetching chats (${_chats.length})");
         await updateAllShareTargets();
+
+        if (chatRequest != null && !chatRequest.isCompleted) {
+          chatRequest.complete();
+        }
       }
     } else {
       debugPrint("[ChatBloc] -> Finished fetching chats (${_chats?.length})");
       await updateAllShareTargets();
+
+      if (chatRequest != null && !chatRequest.isCompleted) {
+        chatRequest.complete();
+      }
     }
   }
 
