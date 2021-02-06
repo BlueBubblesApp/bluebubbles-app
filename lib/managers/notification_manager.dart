@@ -61,8 +61,10 @@ class NotificationManager {
     await chat.setUnreadStatus(false);
 
     if (SettingsManager().settings.enablePrivateAPI) {
-      SocketManager()
-          .sendMessage("mark-chat-read", {"chatGuid": chat.guid}, (data) {});
+      if (SettingsManager().settings.privateMarkChatAsRead) {
+        SocketManager()
+            .sendMessage("mark-chat-read", {"chatGuid": chat.guid}, (data) {});
+      }
 
       if (!MethodChannelInterface().headless &&
           SettingsManager().settings.sendTypingIndicators) {

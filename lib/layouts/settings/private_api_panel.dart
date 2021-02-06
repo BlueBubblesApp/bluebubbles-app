@@ -76,6 +76,14 @@ class _PrivateAPIPanelState extends State<PrivateAPIPanel> {
           initialVal: _settingsCopy.sendTypingIndicators,
           title: "Send Typing Indicators",
         ),
+        SettingsSwitch(
+          onChanged: (bool val) {
+            _settingsCopy.privateMarkChatAsRead = val;
+            saveSettings();
+          },
+          initialVal: _settingsCopy.privateMarkChatAsRead,
+          title: "Mark Chats as Read / Send Read Receipts",
+        ),
       ]);
     }
 
