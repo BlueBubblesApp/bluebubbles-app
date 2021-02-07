@@ -39,6 +39,7 @@ class _ConversationListState extends State<ConversationList> {
   bool colorfulAvatars = false;
   bool reducedForehead = false;
   bool showIndicator = false;
+  bool showSyncIndicator = false;
   bool moveChatCreatorButton = false;
 
   Brightness brightness = Brightness.light;
@@ -95,6 +96,7 @@ class _ConversationListState extends State<ConversationList> {
     colorfulAvatars = SettingsManager().settings.colorfulAvatars;
     reducedForehead = SettingsManager().settings.reducedForehead;
     showIndicator = SettingsManager().settings.showConnectionIndicator;
+    showSyncIndicator = SettingsManager().settings.showSyncIndicator;
     moveChatCreatorButton = SettingsManager().settings.moveChatCreatorToHeader;
     swipableTiles = SettingsManager().settings.swipableConversationTiles;
     skinSet = SettingsManager().settings.skin;
@@ -124,6 +126,10 @@ class _ConversationListState extends State<ConversationList> {
       } else if (newSettings.skin != skinSet) {
         setState(() {
           skinSet = newSettings.skin;
+        });
+      } else if (newSettings.showSyncIndicator != showSyncIndicator) {
+        setState(() {
+          showSyncIndicator = newSettings.showSyncIndicator;
         });
       }
     });
@@ -190,6 +196,52 @@ class _ConversationListState extends State<ConversationList> {
     return scrollController != null &&
         scrollController.hasClients &&
         scrollController.offset > (125 - kToolbarHeight);
+  }
+
+  List<Widget> getHeaderTextWidgets({double size}) {
+    TextStyle style = Theme.of(context).textTheme.headline1;
+    if (size != null) style = style.copyWith(fontSize: size);
+
+    return [
+      Text(widget.showArchivedChats ? "Archive" : "Messages", style: style),
+      Container(width: 10)
+    ];
+  }
+
+  List<Widget> getSyncIndicatorWidgets() {
+    if (!showSyncIndicator) return [];
+
+    return [
+      StreamBuilder(
+        stream: SocketManager().setup.stream,
+        initialData: SetupData(0, []),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData ||
+              snapshot.data.progress < 1 ||
+              snapshot.data.progress >= 100) return Container();
+
+          if (skinSet == Skins.IOS) {
+            return Theme(
+              data: ThemeData(
+                cupertinoOverrideTheme:
+                    CupertinoThemeData(brightness: brightness),
+              ),
+              child: CupertinoActivityIndicator(
+                radius: 6.5,
+              ),
+            );
+          }
+
+          return Container(
+              constraints: BoxConstraints(maxHeight: 15, maxWidth: 15),
+              child: CircularProgressIndicator(
+                strokeWidth: 2.0,
+                valueColor: AlwaysStoppedAnimation<Color>(
+                    Theme.of(context).primaryColor),
+              ));
+        },
+      )
+    ];
   }
 
   void openNewChatCreator() {
@@ -299,6 +351,26 @@ class _ConversationListState extends State<ConversationList> {
         );
       },
     );
+  }
+
+  List<Widget> getConnectionIndicatorWidgets() {
+    if (!showIndicator) return [];
+
+    return [
+      StreamBuilder(
+          stream: SocketManager().connectionStateStream,
+          builder: (context, AsyncSnapshot<SocketState> snapshot) {
+            SocketState connectionStatus;
+            if (snapshot.hasData) {
+              connectionStatus = snapshot.data;
+            } else {
+              connectionStatus = SocketManager().state;
+            }
+
+            return getIndicatorIcon(connectionStatus, size: 20);
+          }),
+      Container(width: 10.0)
+    ];
   }
 
   @override
@@ -412,88 +484,48 @@ class _Cupertino extends StatelessWidget {
                     Container(height: 20),
                     Container(
                       child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisAlignment: MainAxisAlignment.start,
                         children: <Widget>[
-                          Spacer(
-                            flex: 5,
-                          ),
+                          Container(
+                              width:
+                                  (!parent.widget.showArchivedChats) ? 20 : 50),
                           Row(
                             mainAxisSize: MainAxisSize.min,
-                            mainAxisAlignment: MainAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
-                              Text(
-                                parent.widget.showArchivedChats
-                                    ? "Archive"
-                                    : "Messages",
-                                style: Theme.of(context).textTheme.headline1,
-                              ),
-                              Container(width: 10.0),
-                              if (parent.showIndicator)
-                                StreamBuilder(
-                                    stream:
-                                        SocketManager().connectionStateStream,
-                                    builder: (context,
-                                        AsyncSnapshot<SocketState> snapshot) {
-                                      SocketState connectionStatus;
-                                      if (snapshot.hasData) {
-                                        connectionStatus = snapshot.data;
-                                      } else {
-                                        connectionStatus =
-                                            SocketManager().state;
-                                      }
-
-                                      return getIndicatorIcon(connectionStatus,
-                                          size: 15);
-                                    }),
-                              if (parent.showIndicator) Container(width: 10.0),
-                              StreamBuilder(
-                                stream: SocketManager().setup.stream,
-                                initialData: SetupData(0, []),
-                                builder: (context, snapshot) {
-                                  if (!snapshot.hasData ||
-                                      snapshot.data.progress < 1 ||
-                                      snapshot.data.progress >= 100)
-                                    return Container();
-
-                                  return Theme(
-                                    data: ThemeData(
-                                      cupertinoOverrideTheme:
-                                          CupertinoThemeData(
-                                              brightness: parent.brightness),
-                                    ),
-                                    child: CupertinoActivityIndicator(
-                                      radius: 6.5,
-                                    ),
-                                  );
-                                },
-                              )
+                              ...parent.getHeaderTextWidgets(),
+                              ...parent.getConnectionIndicatorWidgets(),
+                              ...parent.getSyncIndicatorWidgets(),
                             ],
                           ),
                           Spacer(
                             flex: 25,
                           ),
-                          ClipOval(
-                            child: Material(
-                              color:
-                                  Theme.of(context).accentColor, // button color
-                              child: InkWell(
-                                  child: SizedBox(
-                                      width: 20,
-                                      height: 20,
-                                      child: Icon(Icons.search,
-                                          color: Theme.of(context).primaryColor,
-                                          size: 12)),
-                                  onTap: () async {
-                                    Navigator.of(context).push(
-                                      CupertinoPageRoute(
-                                        builder: (context) => SearchView(),
-                                      ),
-                                    );
-                                  }),
+                          if (!parent.widget.showArchivedChats)
+                            ClipOval(
+                              child: Material(
+                                color: Theme.of(context)
+                                    .accentColor, // button color
+                                child: InkWell(
+                                    child: SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: Icon(Icons.search,
+                                            color:
+                                                Theme.of(context).primaryColor,
+                                            size: 12)),
+                                    onTap: () async {
+                                      Navigator.of(context).push(
+                                        CupertinoPageRoute(
+                                          builder: (context) => SearchView(),
+                                        ),
+                                      );
+                                    }),
+                              ),
                             ),
-                          ),
-                          Container(width: 10.0),
+                          if (!parent.widget.showArchivedChats)
+                            Container(width: 10.0),
                           if (parent.moveChatCreatorButton &&
                               !parent.widget.showArchivedChats)
                             ClipOval(
@@ -515,7 +547,7 @@ class _Cupertino extends StatelessWidget {
                             Container(width: 10.0),
                           parent.buildSettingsButton(),
                           Spacer(
-                            flex: 1,
+                            flex: 3,
                           ),
                         ],
                       ),
@@ -775,6 +807,7 @@ class __MaterialState extends State<_Material> {
   Widget build(BuildContext context) {
     hasPinnedChat();
     loadBrightness();
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: Theme.of(context).backgroundColor,
@@ -798,51 +831,11 @@ class __MaterialState extends State<_Material> {
                     ),
                     title: Row(
                       mainAxisAlignment: MainAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        Text(
-                          "Messages",
-                          style: Theme.of(context)
-                              .textTheme
-                              .headline1
-                              .copyWith(fontSize: 20),
-                        ),
-                        Container(width: 10),
-                        if (SettingsManager().settings.showConnectionIndicator)
-                          StreamBuilder(
-                              stream: SocketManager().connectionStateStream,
-                              builder: (context,
-                                  AsyncSnapshot<SocketState> snapshot) {
-                                SocketState connectionStatus;
-                                if (snapshot.hasData) {
-                                  connectionStatus = snapshot.data;
-                                } else {
-                                  connectionStatus = SocketManager().state;
-                                }
-
-                                return getIndicatorIcon(connectionStatus,
-                                    size: 15);
-                              }),
-                        if (SettingsManager().settings.showConnectionIndicator)
-                          Container(width: 10),
-                        StreamBuilder(
-                          stream: SocketManager().setup.stream,
-                          initialData: SetupData(0, []),
-                          builder: (context, snapshot) {
-                            if (!snapshot.hasData ||
-                                snapshot.data.progress < 1 ||
-                                snapshot.data.progress >= 100)
-                              return Container();
-
-                            return Container(
-                                constraints:
-                                    BoxConstraints(maxHeight: 15, maxWidth: 15),
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2.0,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                      Theme.of(context).primaryColor),
-                                ));
-                          },
-                        )
+                        ...widget.parent.getHeaderTextWidgets(size: 20),
+                        ...widget.parent.getConnectionIndicatorWidgets(),
+                        ...widget.parent.getSyncIndicatorWidgets(),
                       ],
                     ),
                     actions: [
@@ -1154,10 +1147,13 @@ class _SamsungState extends State<_Samsung> {
     bool isDark = now.computeLuminance() < 0.179;
     brightness = isDark ? Brightness.dark : Brightness.light;
     gotBrightness = true;
+
+    print("REMOUNDING loadBrightness");
     if (this.mounted) setState(() {});
   }
 
   bool hasPinnedChat() {
+    print("REMOUNDING loadBrightness");
     for (var i = 0; i < widget.parent.chats.length; i++) {
       if (widget.parent.chats[i].isPinned) {
         widget.parent.hasPinnedChata = true;
@@ -1301,7 +1297,6 @@ class _SamsungState extends State<_Samsung> {
 
   @override
   Widget build(BuildContext context) {
-    hasPinnedChat();
     loadBrightness();
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
@@ -1328,54 +1323,9 @@ class _SamsungState extends State<_Samsung> {
                     title: Row(
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: [
-                        Text(
-                          "Messages",
-                          style: Theme.of(context)
-                              .textTheme
-                              .headline1
-                              .copyWith(fontSize: 20),
-                        ),
-                        Container(width: 10),
-                        if (SettingsManager().settings.showConnectionIndicator)
-                          StreamBuilder(
-                              stream: SocketManager().connectionStateStream,
-                              builder: (context,
-                                  AsyncSnapshot<SocketState> snapshot) {
-                                SocketState connectionStatus;
-                                if (snapshot.hasData) {
-                                  connectionStatus = snapshot.data;
-                                } else {
-                                  connectionStatus = SocketManager().state;
-                                }
-
-                                return getIndicatorIcon(connectionStatus,
-                                    size: 15);
-                              }),
-                        if (SettingsManager().settings.showConnectionIndicator)
-                          Container(width: 10),
-                        StreamBuilder(
-                          stream: SocketManager().setup.stream,
-                          initialData: SetupData(0, []),
-                          builder: (context, snapshot) {
-                            if (!snapshot.hasData ||
-                                snapshot.data.progress < 1 ||
-                                snapshot.data.progress >= 100)
-                              return Container();
-
-                            return Container(
-                                constraints:
-                                    BoxConstraints(maxHeight: 15, maxWidth: 15),
-                                child: Theme(
-                                  data: ThemeData(
-                                      brightness: widget.parent.brightness,
-                                      accentColor:
-                                          Theme.of(context).primaryColor),
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2.0,
-                                  ),
-                                ));
-                          },
-                        )
+                        ...widget.parent.getHeaderTextWidgets(size: 20),
+                        ...widget.parent.getConnectionIndicatorWidgets(),
+                        ...widget.parent.getSyncIndicatorWidgets(),
                       ],
                     ),
                     actions: [
@@ -1589,6 +1539,8 @@ class _SamsungState extends State<_Samsung> {
                                       DismissDirection.endToStart) {
                                     if (!widget.parent.widget.showArchivedChats)
                                       widget.parent.chats[index].unpin();
+
+                                    print("REMOUNDING UNPIN");
                                     setState(() {
                                       Scaffold.of(context)
                                           .hideCurrentSnackBar();
@@ -1601,6 +1553,7 @@ class _SamsungState extends State<_Samsung> {
                                       widget.parent.chats.remove(index);
                                     });
                                   } else {
+                                    print("REMOUNDING UNPIN 2");
                                     setState(() {
                                       Scaffold.of(context)
                                           .hideCurrentSnackBar();
@@ -1628,6 +1581,9 @@ class _SamsungState extends State<_Samsung> {
                                                   if (selected) {
                                                     this.selected.add(widget
                                                         .parent.chats[index]);
+
+                                                    print(
+                                                        "REMOUNDING ON SELECT");
                                                     setState(() {});
                                                   } else {
                                                     this.selected.removeWhere(
@@ -1637,6 +1593,8 @@ class _SamsungState extends State<_Samsung> {
                                                                 .parent
                                                                 .chats[index]
                                                                 .guid);
+                                                    print(
+                                                        "REMOUNDING ON SELECT 2");
                                                     setState(() {});
                                                   }
                                                 },
@@ -1661,11 +1619,15 @@ class _SamsungState extends State<_Samsung> {
                                       this
                                           .selected
                                           .add(widget.parent.chats[index]);
+
+                                      print("REMOUNDING SOMETHING");
                                       setState(() {});
                                     } else {
                                       this.selected.removeWhere((element) =>
                                           element.guid ==
                                           widget.parent.chats[index].guid);
+
+                                      print("REMOUNDING SOMTEHING 2");
                                       setState(() {});
                                     }
                                   },
@@ -1719,6 +1681,8 @@ class _SamsungState extends State<_Samsung> {
                                       DismissDirection.endToStart) {
                                     if (!widget.parent.widget.showArchivedChats)
                                       widget.parent.chats[index].unpin();
+
+                                    print("REMOUNDING DISMISS");
                                     setState(() {
                                       Scaffold.of(context)
                                           .hideCurrentSnackBar();
@@ -1730,6 +1694,7 @@ class _SamsungState extends State<_Samsung> {
                                       widget.parent.chats.remove(index);
                                     });
                                   } else {
+                                    print("REMOUNDING DISMISS 2");
                                     setState(() {
                                       Scaffold.of(context)
                                           .hideCurrentSnackBar();
@@ -1757,6 +1722,9 @@ class _SamsungState extends State<_Samsung> {
                                                   if (selected) {
                                                     this.selected.add(widget
                                                         .parent.chats[index]);
+
+                                                    print(
+                                                        "REMOUNDING SELECTING ");
                                                     setState(() {});
                                                   } else {
                                                     this.selected.removeWhere(
@@ -1766,6 +1734,8 @@ class _SamsungState extends State<_Samsung> {
                                                                 .parent
                                                                 .chats[index]
                                                                 .guid);
+                                                    print(
+                                                        "REMOUNDING SELECTING 2");
                                                     setState(() {});
                                                   }
                                                 },
@@ -1790,11 +1760,15 @@ class _SamsungState extends State<_Samsung> {
                                       this
                                           .selected
                                           .add(widget.parent.chats[index]);
+
+                                      print("REMOUNDING SKDNJSNSD ");
                                       setState(() {});
                                     } else {
                                       this.selected.removeWhere((element) =>
                                           element.guid ==
                                           widget.parent.chats[index].guid);
+
+                                      print("REMOUNDING aksdskdaks");
                                       setState(() {});
                                     }
                                   },

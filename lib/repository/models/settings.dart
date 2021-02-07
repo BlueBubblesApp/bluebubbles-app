@@ -29,6 +29,7 @@ class Settings {
   bool reducedForehead = false;
   bool preCachePreviewImages = true;
   bool showConnectionIndicator = false;
+  bool showSyncIndicator = true;
   int sendDelay;
   bool recipientAsPlaceholder = false;
   bool hideKeyboardOnScroll = false;
@@ -134,6 +135,8 @@ class Settings {
         settings.privateMarkChatAsRead = entry.value;
       } else if (entry.name == "privateManualMarkAsRead") {
         settings.privateManualMarkAsRead = entry.value;
+      } else if (entry.name == "showSyncIndicator") {
+        settings.showSyncIndicator = entry.value;
       }
 
       // else if (entry.name == "emojiFontFamily") {
@@ -336,6 +339,10 @@ class Settings {
             name: "privateManualMarkAsRead",
             value: this.privateManualMarkAsRead,
             type: this.privateManualMarkAsRead.runtimeType),
+        ConfigEntry(
+            name: "showSyncIndicator",
+            value: this.showSyncIndicator,
+            type: this.showSyncIndicator.runtimeType),
         // ConfigEntry(
         //     name: "emojiFontFamily",
         //     value: this.emojiFontFamily,

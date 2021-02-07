@@ -134,6 +134,14 @@ class _UXPanelState extends State<UXPanel> {
                   ),
                   SettingsSwitch(
                     onChanged: (bool val) {
+                      _settingsCopy.showSyncIndicator = val;
+                      saveSettings();
+                    },
+                    initialVal: _settingsCopy.showSyncIndicator,
+                    title: "Show Sync Indicator in Chat List",
+                  ),
+                  SettingsSwitch(
+                    onChanged: (bool val) {
                       _settingsCopy.colorblindMode = val;
                       saveSettings();
                     },
