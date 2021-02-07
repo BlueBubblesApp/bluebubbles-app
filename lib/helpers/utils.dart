@@ -9,6 +9,7 @@ import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
+import 'package:bluebubbles/repository/models/fcm_data.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/socket_manager.dart';
@@ -579,4 +580,16 @@ Icon getIndicatorIcon(SocketState socketState, {double size = 24}) {
   }
 
   return icon;
+}
+
+FCMData parseFcmJson(Map<String, dynamic> fcmMeta) {
+  String clientId = fcmMeta["client"][0]["oauth_client"][0]["client_id"];
+  return FCMData(
+    projectID: fcmMeta["project_info"]["project_id"],
+    storageBucket: fcmMeta["project_info"]["storage_bucket"],
+    apiKey: fcmMeta["client"][0]["api_key"][0]["current_key"],
+    firebaseURL: fcmMeta["project_info"]["firebase_url"],
+    clientID: clientId,
+    applicationID: clientId.substring(0, clientId.indexOf("-")),
+  );
 }

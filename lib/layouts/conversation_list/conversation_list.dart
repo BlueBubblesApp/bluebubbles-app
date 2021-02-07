@@ -245,15 +245,15 @@ class _ConversationListState extends State<ConversationList> {
   }
 
   void openNewChatCreator() {
-    Navigator.of(context).push(
-      CupertinoPageRoute(
-        builder: (BuildContext context) {
-          return ConversationView(
-            isCreator: true,
-          );
-        },
-      ),
-    );
+    // Navigator.of(context).push(
+    //   CupertinoPageRoute(
+    //     builder: (BuildContext context) {
+    //       return ConversationView(
+    //         isCreator: true,
+    //       );
+    //     },
+    //   ),
+    // );
   }
 
   void sortChats() {
@@ -337,20 +337,9 @@ class _ConversationListState extends State<ConversationList> {
 
   FloatingActionButton buildFloatinActionButton() {
     return FloatingActionButton(
-      backgroundColor: Theme.of(context).primaryColor,
-      child: Icon(Icons.message, color: Colors.white, size: 25),
-      onPressed: () {
-        Navigator.of(context).push(
-          ThemeSwitcher.buildPageRoute(
-            builder: (BuildContext context) {
-              return ConversationView(
-                isCreator: true,
-              );
-            },
-          ),
-        );
-      },
-    );
+        backgroundColor: Theme.of(context).primaryColor,
+        child: Icon(Icons.message, color: Colors.white, size: 25),
+        onPressed: openNewChatCreator);
   }
 
   List<Widget> getConnectionIndicatorWidgets() {

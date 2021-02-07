@@ -48,14 +48,29 @@ class _QRScanState extends State<QRScan> {
       return;
     }
     if (result != null && result.length > 0) {
-      FCMData fcmData = FCMData(
-        projectID: result[2],
-        storageBucket: result[3],
-        apiKey: result[4],
-        firebaseURL: result[5],
-        clientID: result[6],
-        applicationID: result[7],
-      );
+      FCMData fcmData;
+
+      if (result.length > 2) {
+        fcmData = FCMData(
+          projectID: result[2],
+          storageBucket: result[3],
+          apiKey: result[4],
+          firebaseURL: result[5],
+          clientID: result[6],
+          applicationID: result[7],
+        );
+      } else {
+        try {
+          // Fetch FCM data from the server
+          Map<String, dynamic> fcmMeta = await SocketManager().getFcmClient();
+
+          // Parse out the new FCM data
+          fcmData = parseFcmJson(fcmMeta);
+        } catch (ex) {
+          // If we fail, who cares!
+        }
+      }
+
       String password = result[0];
       String serverURL = getServerAddress(address: result[1]);
 
@@ -71,7 +86,12 @@ class _QRScanState extends State<QRScan> {
         ),
         barrierDismissible: false,
       );
+
       try {
+        if (fcmData == null) {
+          throw Exception("FCM data was null! Failed to register device!");
+        }
+
         await SocketManager()
             .setup
             .connectToServer(fcmData, serverURL, password);

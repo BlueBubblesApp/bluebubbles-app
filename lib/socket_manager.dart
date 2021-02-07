@@ -15,6 +15,7 @@ import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/repository/models/fcm_data.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:flutter_socket_io/socket_io_manager.dart';
 import 'package:flutter_socket_io/flutter_socket_io.dart';
@@ -393,34 +394,59 @@ class SocketManager {
       debugPrint("No FCM Auth data found. Skipping FCM authentication");
       return;
     } else if (token != null && !force) {
-      debugPrint("already authorized fcm " + token);
+      debugPrint("Already authorized FCM device! Token: $token");
       if (_manager.socket != null) {
         String deviceName = await getDeviceName();
         _manager.sendMessage("add-fcm-device",
             {"deviceId": token, "deviceName": deviceName}, (data) {},
             reason: "authfcm", awaitResponse: false);
       }
+
       return;
     }
 
+    String result;
+
     try {
-      final String result = await MethodChannelInterface()
+      // First, try to send what we currently have
+      result = await MethodChannelInterface()
           .invokeMethod('auth', SettingsManager().fcmData.toMap());
+    } on PlatformException catch (_) {
+      // If the first try fails, let's try again, but first, get the FCM data from the server
+      Map<String, dynamic> fcmMeta = await this.getFcmClient();
+
+      try {
+        // Parse out the new FCM data
+        FCMData fcmData = parseFcmJson(fcmMeta);
+
+        // Save the FCM data in settings
+        SettingsManager().saveFCMData(fcmData);
+
+        // Retry authenticating with Firebase
+        result = await MethodChannelInterface()
+            .invokeMethod('auth', SettingsManager().fcmData.toMap());
+      } catch (e) {
+        if (!catchException) {
+          throw Exception("(AuthFCM) -> " + e.toString());
+        } else {
+          token = "Failed to get token: " + e.toString();
+          debugPrint(token);
+        }
+      }
+    }
+
+    try {
       token = result;
+      debugPrint(token);
+
       if (_manager.socket != null) {
         String deviceName = await getDeviceName();
         _manager.sendMessage("add-fcm-device",
             {"deviceId": token, "deviceName": deviceName}, (data) {},
             reason: "authfcm", awaitResponse: false);
-        debugPrint(token);
       }
-    } on PlatformException catch (e) {
-      if (!catchException) {
-        throw ("(AuthFCM) -> " + e.toString());
-      } else {
-        token = "Failed to get token: " + e.toString();
-        debugPrint(token);
-      }
+    } catch (ex) {
+      throw Exception("Failed to add FCM device to the server! Token: $token");
     }
   }
 
@@ -681,5 +707,27 @@ class SocketManager {
         startSocketIO(forceNewConnection: connectToSocket);
       }
     } catch (e) {}
+  }
+
+  Future<Map<String, dynamic>> getFcmClient() async {
+    Completer<Map<String, dynamic>> completer =
+        new Completer<Map<String, dynamic>>();
+
+    SocketManager().sendMessage("get-fcm-client", {}, (data) {
+      if (data["status"] == 200) {
+        completer.complete(data["data"] as Map<String, dynamic>);
+      } else {
+        String msg = "Failed to get FCM client data";
+        if (data.containsKey("error") && data["error"].containsKey("message")) {
+          msg = data["error"]["message"];
+        }
+
+        completer.completeError(new Exception(msg));
+      }
+    }).catchError((err) {
+      completer.completeError(err);
+    });
+
+    return completer.future;
   }
 }
