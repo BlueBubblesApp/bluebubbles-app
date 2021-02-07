@@ -101,6 +101,7 @@ class _ImageViewerState extends State<ImageViewer>
             Padding(
               padding: EdgeInsets.only(top: 40.0),
               child: CupertinoButton(
+                padding: EdgeInsets.symmetric(horizontal: 5),
                 onPressed: () async {
                   List<Widget> metaWidgets = [];
                   for (var entry
@@ -180,6 +181,7 @@ class _ImageViewerState extends State<ImageViewer>
             Padding(
               padding: EdgeInsets.only(top: 40.0),
               child: CupertinoButton(
+                padding: EdgeInsets.symmetric(horizontal: 5),
                 onPressed: () async {
                   if (context != null) {
                     CurrentChat.of(context)?.clearImageData(widget.attachment);
@@ -209,6 +211,7 @@ class _ImageViewerState extends State<ImageViewer>
             Padding(
               padding: EdgeInsets.only(top: 40.0),
               child: CupertinoButton(
+                padding: EdgeInsets.symmetric(horizontal: 5),
                 onPressed: () async {
                   await AttachmentHelper.saveToGallery(context, widget.file);
                 },
@@ -221,6 +224,7 @@ class _ImageViewerState extends State<ImageViewer>
             Padding(
               padding: EdgeInsets.only(top: 40.0),
               child: CupertinoButton(
+                padding: EdgeInsets.symmetric(horizontal: 5),
                 onPressed: () async {
                   await Share.file(
                     "Shared ${widget.attachment.mimeType.split("/")[0]} from BlueBubbles: ${widget.attachment.transferName}",
