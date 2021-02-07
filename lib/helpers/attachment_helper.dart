@@ -36,8 +36,32 @@ class AttachmentHelper {
 
   static Map<String, double> parseAppleLocation(String appleLocation) {
     List<String> lines = appleLocation.split("\n");
-    String url = lines[5];
-    String query = url.split("&q=")[1];
+
+    String url;
+    for (var i in lines) {
+      if (i.contains(".URL:h") || i.contains(".URL;h")) {
+        url = i;
+      }
+    }
+
+    if (url == null) return null;
+
+    String query;
+    List<String> opts = ["&q=", "&ll="];
+
+    for (var i in opts) {
+      if (url.contains(i)) {
+        var items = url.split(i);
+        if (items.length >= 1) {
+          query = items[1];
+        }
+      }
+    }
+
+    if (query == null) return null;
+    if (query.contains("&")) {
+      query = query.split("&").first;
+    }
 
     if (query.contains("\\")) {
       return {
