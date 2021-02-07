@@ -62,25 +62,23 @@ class _MediaFileState extends State<MediaFile> {
     } else {
       return Stack(alignment: Alignment.center, children: [
         widget.child,
-        AnimatedOpacity(
-            opacity: widget.attachment.originalROWID == null ? 1 : 0,
-            duration: new Duration(milliseconds: 300),
-            child: Container(
-              child: Theme(
-                data: ThemeData(
-                  cupertinoOverrideTheme:
-                      CupertinoThemeData(brightness: Brightness.dark),
-                ),
-                child: CupertinoActivityIndicator(
-                  radius: 10,
-                ),
+        if (widget.attachment.originalROWID == null)
+          Container(
+            child: Theme(
+              data: ThemeData(
+                cupertinoOverrideTheme:
+                    CupertinoThemeData(brightness: Brightness.dark),
               ),
-              height: 45,
-              width: 45,
-              decoration: BoxDecoration(
-                  borderRadius: BorderRadius.all(Radius.circular(10)),
-                  color: Colors.black.withOpacity(0.5)),
-            ))
+              child: CupertinoActivityIndicator(
+                radius: 10,
+              ),
+            ),
+            height: 45,
+            width: 45,
+            decoration: BoxDecoration(
+                borderRadius: BorderRadius.all(Radius.circular(10)),
+                color: Colors.black.withOpacity(0.5)),
+          ),
       ]);
     }
   }
