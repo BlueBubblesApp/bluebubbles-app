@@ -36,6 +36,7 @@ class AttachmentHelper {
 
   static Map<String, double> parseAppleLocation(String appleLocation) {
     List<String> lines = appleLocation.split("\n");
+    var emptyLocation = {'longitude': null, 'latitude': null};
 
     String url;
     for (var i in lines) {
@@ -44,7 +45,7 @@ class AttachmentHelper {
       }
     }
 
-    if (url == null) return null;
+    if (url == null) return emptyLocation;
 
     String query;
     List<String> opts = ["&q=", "&ll="];
@@ -58,7 +59,7 @@ class AttachmentHelper {
       }
     }
 
-    if (query == null) return null;
+    if (query == null) return emptyLocation;
     if (query.contains("&")) {
       query = query.split("&").first;
     }
