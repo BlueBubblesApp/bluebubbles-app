@@ -425,7 +425,7 @@ class SocketManager {
         // Retry authenticating with Firebase
         result = await MethodChannelInterface()
             .invokeMethod('auth', SettingsManager().fcmData.toMap());
-      } catch (e) {
+      } on PlatformException catch (e) {
         if (!catchException) {
           throw Exception("(AuthFCM) -> " + e.toString());
         } else {
