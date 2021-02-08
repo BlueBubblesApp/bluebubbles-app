@@ -58,6 +58,7 @@ class _MessageState extends State<MessageWidget>
   StreamSubscription<NewMessageEvent> subscription;
   Message _message;
   Message _newerMessage;
+  Message _olderMessage;
 
   @override
   void initState() {
@@ -77,6 +78,7 @@ class _MessageState extends State<MessageWidget>
     handledInit = true;
     _message = widget.message;
     _newerMessage = widget.newerMessage;
+    _olderMessage = widget.olderMessage;
 
     checkHandle();
     fetchAssociatedMessages();
@@ -236,6 +238,8 @@ class _MessageState extends State<MessageWidget>
     if (_newerMessage != null) {
       if (_newerMessage.isGroupEvent()) {
         showTail = true;
+      } else if (SettingsManager().settings.skin == Skins.Samsung) {
+        showTail = MessageHelper.getShowTailReversed(_message, _olderMessage);
       } else {
         showTail = MessageHelper.getShowTail(_message, _newerMessage);
       }

@@ -264,12 +264,18 @@ class _ReceivedMessageState extends State<ReceivedMessage>
     // -> Contact avatar
     // -> Message
     List<Widget> msgRow = [];
-    if (widget.showTail && isGroup) {
+    if (widget.showTail &&
+        (isGroup || SettingsManager().settings.skin == Skins.Samsung)) {
+      double topPadding = (isGroup) ? 5 : 0;
+      if (SettingsManager().settings.skin == Skins.Samsung) {
+        topPadding = 5.0;
+        if (isGroup) topPadding += 15;
+        if (widget.message.hasReactions) topPadding += 20;
+      }
+
       msgRow.add(
         Padding(
-          padding: EdgeInsets.only(
-            left: 5.0,
-          ),
+          padding: EdgeInsets.only(left: 5.0, top: topPadding),
           child: ContactAvatarWidget(
             handle: widget.message.handle,
             size: 30,
@@ -301,7 +307,10 @@ class _ReceivedMessageState extends State<ReceivedMessage>
                   widget.message?.isFromMe == widget.olderMessage?.isFromMe)
               ? 3.0
               : 0.0,
-          left: (!widget.showTail && isGroup) ? 35.0 : 0.0,
+          left: (!widget.showTail &&
+                  (isGroup || SettingsManager().settings.skin == Skins.Samsung))
+              ? 35.0
+              : 0.0,
           bottom:
               (widget.showTail && SettingsManager().settings.skin == Skins.IOS)
                   ? 10.0
@@ -324,7 +333,10 @@ class _ReceivedMessageState extends State<ReceivedMessage>
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       mainAxisAlignment: MainAxisAlignment.start,
-                      crossAxisAlignment: CrossAxisAlignment.end,
+                      crossAxisAlignment:
+                          (SettingsManager().settings.skin == Skins.Samsung)
+                              ? CrossAxisAlignment.start
+                              : CrossAxisAlignment.end,
                       children: msgRow,
                     ),
                     // Add the timestamp for the samsung theme
