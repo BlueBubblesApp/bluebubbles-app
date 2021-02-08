@@ -269,7 +269,7 @@ class _ReceivedMessageState extends State<ReceivedMessage>
       double topPadding = (isGroup) ? 5 : 0;
       if (SettingsManager().settings.skin == Skins.Samsung) {
         topPadding = 5.0;
-        if (isGroup) topPadding += 15;
+        if (isGroup) topPadding += 18;
         if (widget.message.hasReactions) topPadding += 20;
       }
 
