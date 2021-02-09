@@ -245,15 +245,15 @@ class _ConversationListState extends State<ConversationList> {
   }
 
   void openNewChatCreator() {
-    // Navigator.of(context).push(
-    //   CupertinoPageRoute(
-    //     builder: (BuildContext context) {
-    //       return ConversationView(
-    //         isCreator: true,
-    //       );
-    //     },
-    //   ),
-    // );
+    Navigator.of(context).push(
+      CupertinoPageRoute(
+        builder: (BuildContext context) {
+          return ConversationView(
+            isCreator: true,
+          );
+        },
+      ),
+    );
   }
 
   void sortChats() {
