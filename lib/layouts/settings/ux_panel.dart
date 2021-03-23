@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/layouts/settings/conversation_list_ux_panel.dart';
 import 'package:bluebubbles/layouts/settings/messages_view_ux_panel.dart';
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
@@ -124,21 +125,21 @@ class _UXPanelState extends State<UXPanel> {
                       color: Theme.of(context).primaryColor,
                     ),
                   ),
-                  SettingsSwitch(
-                    onChanged: (bool val) {
-                      _settingsCopy.showConnectionIndicator = val;
-                      saveSettings();
+                  SettingsTile(
+                    title: "Conversation List Settings",
+                    onTap: () {
+                      Navigator.of(context).push(
+                        CupertinoPageRoute(
+                          builder: (context) => ConvoListSettings(),
+                        ),
+                      );
                     },
-                    initialVal: _settingsCopy.showConnectionIndicator,
-                    title: "Show Connection Indicator in Chat List",
-                  ),
-                  SettingsSwitch(
-                    onChanged: (bool val) {
-                      _settingsCopy.showSyncIndicator = val;
-                      saveSettings();
-                    },
-                    initialVal: _settingsCopy.showSyncIndicator,
-                    title: "Show Sync Indicator in Chat List",
+                    trailing: Icon(
+                      SettingsManager().settings.skin == Skins.IOS
+                          ? Icons.arrow_forward_ios
+                          : Icons.arrow_forward,
+                      color: Theme.of(context).primaryColor,
+                    ),
                   ),
                   SettingsSwitch(
                     onChanged: (bool val) {
@@ -147,24 +148,6 @@ class _UXPanelState extends State<UXPanel> {
                     },
                     initialVal: _settingsCopy.colorblindMode,
                     title: "Colorblind Mode",
-                  ),
-                  if (SettingsManager().settings.skin == Skins.Samsung ||
-                      SettingsManager().settings.skin == Skins.Material)
-                    SettingsSwitch(
-                      onChanged: (bool val) {
-                        _settingsCopy.swipableConversationTiles = val;
-                        saveSettings();
-                      },
-                      initialVal: _settingsCopy.swipableConversationTiles,
-                      title: "Swipe Actions for Conversation Tiles",
-                    ),
-                  SettingsSwitch(
-                    onChanged: (bool val) {
-                      _settingsCopy.moveChatCreatorToHeader = val;
-                      saveSettings();
-                    },
-                    initialVal: _settingsCopy.moveChatCreatorToHeader,
-                    title: "Move Chat Creator Button to Header",
                   ),
                   SettingsSwitch(
                     onChanged: (bool val) {

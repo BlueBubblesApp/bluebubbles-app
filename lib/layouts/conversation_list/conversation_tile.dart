@@ -60,6 +60,11 @@ class _ConversationTileState extends State<ConversationTile>
   bool hideDividers = false;
   bool isFetching = false;
   bool denseTiles = false;
+  bool swipePinShow = true;
+  bool swipeArchiveShow = true;
+  bool swipeAlertsShow = true;
+  bool swipeUnreadShow = true;
+
   List<DisplayMode> modes;
   DisplayMode currentMode;
   Brightness brightness;
@@ -108,6 +113,30 @@ class _ConversationTileState extends State<ConversationTile>
       if (newSettings.denseChatTiles != denseTiles && this.mounted) {
         setState(() {
           denseTiles = newSettings.denseChatTiles;
+        });
+      }
+
+      if (newSettings.swipeMenuShowPin != swipePinShow && this.mounted) {
+        setState(() {
+          denseTiles = newSettings.swipeMenuShowPin;
+        });
+      }
+
+      if (newSettings.swipeMenuShowArchive != swipeArchiveShow && this.mounted) {
+        setState(() {
+          denseTiles = newSettings.swipeMenuShowArchive;
+        });
+      }
+
+      if (newSettings.swipeMenuShowHideAlerts != swipeAlertsShow && this.mounted) {
+        setState(() {
+          denseTiles = newSettings.swipeMenuShowHideAlerts;
+        });
+      }
+
+      if (newSettings.swipeMenuShowMarkUnread != swipeUnreadShow && this.mounted) {
+        setState(() {
+          denseTiles = newSettings.swipeMenuShowMarkUnread;
         });
       }
     });
@@ -201,25 +230,27 @@ class _ConversationTileState extends State<ConversationTile>
     return Slidable(
       actionPane: SlidableStrechActionPane(),
       actions: [
-        IconSlideAction(
-          caption: widget.chat.isPinned ? 'Unpin' : 'Pin',
-          color: Colors.yellow[800],
-          foregroundColor: Theme.of(context).textTheme.bodyText1.color,
-          icon: Icons.star,
-          onTap: () async {
-            if (widget.chat.isPinned) {
-              await widget.chat.unpin();
-            } else {
-              await widget.chat.pin();
-            }
+        if (SettingsManager().settings.swipeMenuShowPin)
+          IconSlideAction(
+            caption: widget.chat.isPinned ? 'Unpin' : 'Pin',
+            color: Colors.yellow[800],
+            foregroundColor: Theme.of(context).textTheme.bodyText1.color,
+            icon: Icons.star,
+            onTap: () async {
+              if (widget.chat.isPinned) {
+                await widget.chat.unpin();
+              } else {
+                await widget.chat.pin();
+              }
 
-            EventDispatcher().emit("refresh", null);
-            if (this.mounted) setState(() {});
-          },
-        ),
+              EventDispatcher().emit("refresh", null);
+              if (this.mounted) setState(() {});
+            },
+          ),
       ],
       secondaryActions: <Widget>[
-        if (!widget.chat.isArchived)
+        if (!widget.chat.isArchived &&
+            SettingsManager().settings.swipeMenuShowHideAlerts)
           IconSlideAction(
             caption: widget.chat.isMuted ? 'Show Alerts' : 'Hide Alerts',
             color: Colors.purple[700],
@@ -242,7 +273,8 @@ class _ConversationTileState extends State<ConversationTile>
               Chat.deleteChat(widget.chat);
             },
           ),
-        if (!widget.chat.hasUnreadMessage)
+        if (!widget.chat.hasUnreadMessage &&
+            SettingsManager().settings.swipeMenuShowMarkUnread)
           IconSlideAction(
             caption: 'Mark Unread',
             color: Colors.blue,
@@ -252,18 +284,19 @@ class _ConversationTileState extends State<ConversationTile>
               ChatBloc().updateChatPosition(widget.chat);
             },
           ),
-        IconSlideAction(
-          caption: widget.chat.isArchived ? 'UnArchive' : 'Archive',
-          color: widget.chat.isArchived ? Colors.blue : Colors.red,
-          icon: widget.chat.isArchived ? Icons.replay : Icons.delete,
-          onTap: () {
-            if (widget.chat.isArchived) {
-              ChatBloc().unArchiveChat(widget.chat);
-            } else {
-              ChatBloc().archiveChat(widget.chat);
-            }
-          },
-        ),
+        if (SettingsManager().settings.swipeMenuShowArchive)
+          IconSlideAction(
+            caption: widget.chat.isArchived ? 'UnArchive' : 'Archive',
+            color: widget.chat.isArchived ? Colors.blue : Colors.red,
+            icon: widget.chat.isArchived ? Icons.replay : Icons.delete,
+            onTap: () {
+              if (widget.chat.isArchived) {
+                ChatBloc().unArchiveChat(widget.chat);
+              } else {
+                ChatBloc().archiveChat(widget.chat);
+              }
+            },
+          ),
       ],
       child: child,
     );

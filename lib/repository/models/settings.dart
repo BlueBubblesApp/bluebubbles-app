@@ -40,6 +40,10 @@ class Settings {
   bool swipableConversationTiles = false;
   int smartReplySampleSize = 2;
   bool colorblindMode = false;
+  bool swipeMenuShowArchive = true;
+  bool swipeMenuShowPin = true;
+  bool swipeMenuShowHideAlerts = true;
+  bool swipeMenuShowMarkUnread = true;
   // String emojiFontFamily;
 
   // Private API features
@@ -137,6 +141,14 @@ class Settings {
         settings.privateManualMarkAsRead = entry.value;
       } else if (entry.name == "showSyncIndicator") {
         settings.showSyncIndicator = entry.value;
+      } else if (entry.name == "swipeMenuShowMarkUnread") {
+        settings.swipeMenuShowMarkUnread = entry.value;
+      } else if (entry.name == "swipeMenuShowHideAlerts") {
+        settings.swipeMenuShowHideAlerts = entry.value;
+      } else if (entry.name == "swipeMenuShowPin") {
+        settings.swipeMenuShowPin = entry.value;
+      } else if (entry.name == "swipeMenuShowArchive") {
+        settings.swipeMenuShowArchive = entry.value;
       }
 
       // else if (entry.name == "emojiFontFamily") {
@@ -343,6 +355,22 @@ class Settings {
             name: "showSyncIndicator",
             value: this.showSyncIndicator,
             type: this.showSyncIndicator.runtimeType),
+        ConfigEntry(
+            name: "swipeMenuShowArchive",
+            value: this.swipeMenuShowArchive,
+            type: this.swipeMenuShowArchive.runtimeType),
+        ConfigEntry(
+            name: "swipeMenuShowPin",
+            value: this.swipeMenuShowPin,
+            type: this.swipeMenuShowPin.runtimeType),
+        ConfigEntry(
+            name: "swipeMenuShowHideAlerts",
+            value: this.swipeMenuShowHideAlerts,
+            type: this.swipeMenuShowHideAlerts.runtimeType),
+        ConfigEntry(
+            name: "swipeMenuShowMarkUnread",
+            value: this.swipeMenuShowMarkUnread,
+            type: this.swipeMenuShowMarkUnread.runtimeType),
         // ConfigEntry(
         //     name: "emojiFontFamily",
         //     value: this.emojiFontFamily,
