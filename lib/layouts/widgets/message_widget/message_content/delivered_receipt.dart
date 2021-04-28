@@ -1,4 +1,5 @@
 import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -21,17 +22,16 @@ class DeliveredReceipt extends StatefulWidget {
 
 class _DeliveredReceiptState extends State<DeliveredReceipt>
     with TickerProviderStateMixin {
-  String _buildDate() {
-    DateTime timeOfnewerMessage = widget.message.dateRead;
-    String time = new DateFormat.jm().format(timeOfnewerMessage);
+  String _buildDate(DateTime dateTime) {
+    String time = new DateFormat.jm().format(dateTime);
     String date;
-    if (widget.message.dateRead.isToday()) {
+    if (dateTime.isToday()) {
       date = time;
-    } else if (widget.message.dateRead.isYesterday()) {
+    } else if (dateTime.isYesterday()) {
       date = "Yesterday";
     } else {
       date =
-          "${timeOfnewerMessage.month.toString()}/${timeOfnewerMessage.day.toString()}/${timeOfnewerMessage.year.toString()}";
+          "${dateTime.month.toString()}/${dateTime.day.toString()}/${dateTime.year.toString()}";
     }
     return date;
   }
@@ -66,7 +66,8 @@ class _DeliveredReceiptState extends State<DeliveredReceipt>
 
   String getText() {
     String text = "Delivered";
-    if (widget.message?.dateRead != null) text = "Read " + _buildDate();
+    if (SettingsManager().settings.showDeliveryTimestamps && widget.message?.dateDelivered != null) text = "Delivered " + _buildDate(widget.message.dateDelivered);
+    if (widget.message?.dateRead != null) text = "Read " + _buildDate(widget.message.dateRead);
     return text;
   }
 

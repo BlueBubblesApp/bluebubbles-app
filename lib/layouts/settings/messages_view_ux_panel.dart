@@ -111,6 +111,14 @@ class _ConvoSettingsState extends State<ConvoSettings> {
                   Container(padding: EdgeInsets.only(top: 5.0)),
                   SettingsSwitch(
                     onChanged: (bool val) {
+                      _settingsCopy.showDeliveryTimestamps = val;
+                      saveSettings();
+                    },
+                    initialVal: _settingsCopy.showDeliveryTimestamps,
+                    title: "Show Delivery Timestamps",
+                  ),
+                  SettingsSwitch(
+                    onChanged: (bool val) {
                       _settingsCopy.autoOpenKeyboard = val;
                       saveSettings();
                     },
