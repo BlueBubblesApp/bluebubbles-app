@@ -7,6 +7,7 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_list/conversation_list.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/setup/failure_to_start.dart';
+import 'package:bluebubbles/layouts/setup/setup_view.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/background_isolate.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
@@ -15,19 +16,17 @@ import 'package:bluebubbles/managers/navigator_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/database.dart';
-import 'package:bluebubbles/layouts/setup/setup_view.dart';
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/scheduler.dart' hide Priority;
+// import 'package:sentry/sentry.dart';
 
+import 'package:bluebubbles/socket_manager.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart' hide Priority;
 import 'package:flutter/services.dart';
 import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
-// import 'package:sentry/sentry.dart';
-
-import 'socket_manager.dart';
 
 // final SentryClient _sentry = SentryClient(
 //     dsn:
@@ -117,6 +116,9 @@ class Main extends StatelessWidget with WidgetsBindingObserver {
       /// This will be changed by [SettingsManager]
       initial: AdaptiveThemeMode.system,
       builder: (theme, darkTheme) => MaterialApp(
+        /// Hide the debug banner in debug mode
+        debugShowCheckedModeBanner: false,
+
         title: 'BlueBubbles',
 
         /// Set the light theme from the [AdaptiveTheme]

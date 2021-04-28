@@ -1,4 +1,4 @@
-import 'package:bluebubbles/helpers/contstants.dart';
+import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/models/config_entry.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
@@ -40,6 +40,7 @@ class Settings {
   bool swipableConversationTiles = false;
   int smartReplySampleSize = 2;
   bool colorblindMode = false;
+  bool showDeliveryTimestamps = false;
   // String emojiFontFamily;
 
   // Private API features

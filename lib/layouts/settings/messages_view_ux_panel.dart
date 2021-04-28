@@ -1,17 +1,14 @@
 import 'dart:ui';
 
-import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
-import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/services.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/helpers/contstants.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class ConvoSettings extends StatefulWidget {
   ConvoSettings({Key key}) : super(key: key);
@@ -109,6 +106,14 @@ class _ConvoSettingsState extends State<ConvoSettings> {
               delegate: SliverChildListDelegate(
                 <Widget>[
                   Container(padding: EdgeInsets.only(top: 5.0)),
+                  SettingsSwitch(
+                    onChanged: (bool val) {
+                      _settingsCopy.showDeliveryTimestamps = val;
+                      saveSettings();
+                    },
+                    initialVal: _settingsCopy.showDeliveryTimestamps,
+                    title: "Show Delivery Timestamps",
+                  ),
                   SettingsSwitch(
                     onChanged: (bool val) {
                       _settingsCopy.autoOpenKeyboard = val;

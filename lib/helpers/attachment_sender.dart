@@ -1,11 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
-
 import 'dart:io';
-
 import 'dart:typed_data';
 
-import 'package:bluebubbles/helpers/contstants.dart';
+import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';

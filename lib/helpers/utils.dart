@@ -2,10 +2,12 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
+
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/country_codes.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
@@ -13,20 +15,18 @@ import 'package:bluebubbles/repository/models/fcm_data.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/socket_manager.dart';
+import 'package:contacts_service/contacts_service.dart';
+import 'package:convert/convert.dart';
 import 'package:device_info/device_info.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
 import 'package:html/parser.dart';
-import 'package:convert/convert.dart';
-
-import 'package:bluebubbles/managers/contact_manager.dart';
-import 'package:contacts_service/contacts_service.dart';
-import 'package:flutter/services.dart';
+import 'package:http/http.dart' show get;
 import 'package:image_size_getter/image_size_getter.dart' as IMG;
 import 'package:intl/intl.dart' as intl;
 import 'package:video_thumbnail/video_thumbnail.dart';
-import 'package:http/http.dart' show get;
 
 DateTime parseDate(dynamic value) {
   if (value == null) return null;
@@ -51,11 +51,9 @@ bool isNullOrZero(int input) {
 }
 
 Size textSize(String text, TextStyle style) {
-  final TextPainter textPainter = TextPainter(
-      text: TextSpan(text: text, style: style),
-      maxLines: 1,
-      textDirection: TextDirection.ltr)
-    ..layout(minWidth: 0, maxWidth: double.infinity);
+  final TextPainter textPainter =
+      TextPainter(text: TextSpan(text: text, style: style), maxLines: 1, textDirection: TextDirection.ltr)
+        ..layout(minWidth: 0, maxWidth: double.infinity);
   return textPainter.size;
 }
 
@@ -72,8 +70,7 @@ Future<String> formatPhoneNumber(String str) async {
   } catch (ex) {
     if (!str.startsWith("+") && getCodeMap().containsKey(countryCode)) {
       try {
-        meta = await FlutterLibphonenumber()
-            .parse("${getCodeMap()[countryCode]}$str", region: countryCode);
+        meta = await FlutterLibphonenumber().parse("${getCodeMap()[countryCode]}$str", region: countryCode);
       } catch (x) {}
     }
   }
@@ -102,22 +99,14 @@ bool sameAddress(String address1, String address2) {
   // If it starts with a plus, is in the US, and the length is 11, strip the +
   // Having only 11 characters means it was missing the "1" after "+1"
   String ccUpper = countryCode.toUpperCase();
-  if (formattedNumber1.startsWith("+") &&
-      ccUpper == "US" &&
-      formattedNumber1.length == 11) {
+  if (formattedNumber1.startsWith("+") && ccUpper == "US" && formattedNumber1.length == 11) {
     formattedNumber1 = formattedNumber1.substring(1);
-  } else if (formattedNumber1.startsWith("1") &&
-      ccUpper == "US" &&
-      formattedNumber1.length == 11) {
+  } else if (formattedNumber1.startsWith("1") && ccUpper == "US" && formattedNumber1.length == 11) {
     formattedNumber1 = formattedNumber1.substring(1);
   }
-  if (formattedNumber2.startsWith("+") &&
-      ccUpper == "US" &&
-      formattedNumber2.length == 11) {
+  if (formattedNumber2.startsWith("+") && ccUpper == "US" && formattedNumber2.length == 11) {
     formattedNumber2 = formattedNumber1.substring(1);
-  } else if (!formattedNumber2.startsWith("1") &&
-      ccUpper == "US" &&
-      formattedNumber2.length == 11) {
+  } else if (!formattedNumber2.startsWith("1") && ccUpper == "US" && formattedNumber2.length == 11) {
     formattedNumber2 = formattedNumber2.substring(1);
   }
 
@@ -176,24 +165,31 @@ bool sameSender(Message first, Message second) {
       (first.isFromMe && second.isFromMe ||
           (!first.isFromMe &&
               !second.isFromMe &&
-              (first.handle != null &&
-                  second.handle != null &&
-                  first.handle.address == second.handle.address))));
+              (first.handle != null && second.handle != null && first.handle.address == second.handle.address))));
+}
+
+String buildDate(DateTime dateTime) {
+  String time = new intl.DateFormat.jm().format(dateTime);
+  String date;
+  if (dateTime.isToday()) {
+    date = time;
+  } else if (dateTime.isYesterday()) {
+    date = "Yesterday";
+  } else {
+    date = "${dateTime.month.toString()}/${dateTime.day.toString()}/${dateTime.year.toString()}";
+  }
+  return date;
 }
 
 extension DateHelpers on DateTime {
   bool isToday() {
     final now = DateTime.now();
-    return now.day == this.day &&
-        now.month == this.month &&
-        now.year == this.year;
+    return now.day == this.day && now.month == this.month && now.year == this.year;
   }
 
   bool isYesterday() {
     final yesterday = DateTime.now().subtract(Duration(days: 1));
-    return yesterday.day == this.day &&
-        yesterday.month == this.month &&
-        yesterday.year == this.year;
+    return yesterday.day == this.day && yesterday.month == this.month && yesterday.year == this.year;
   }
 
   bool isWithin(DateTime other, {int ms, int seconds, int minutes, int hours}) {
@@ -216,18 +212,14 @@ extension ColorHelpers on Color {
   Color darken([double percent = 10]) {
     assert(1 <= percent && percent <= 100);
     var f = 1 - percent / 100;
-    return Color.fromARGB(this.alpha, (this.red * f).round(),
-        (this.green * f).round(), (this.blue * f).round());
+    return Color.fromARGB(this.alpha, (this.red * f).round(), (this.green * f).round(), (this.blue * f).round());
   }
 
   Color lighten([double percent = 10]) {
     assert(1 <= percent && percent <= 100);
     var p = percent / 100;
-    return Color.fromARGB(
-        this.alpha,
-        this.red + ((255 - this.red) * p).round(),
-        this.green + ((255 - this.green) * p).round(),
-        this.blue + ((255 - this.blue) * p).round());
+    return Color.fromARGB(this.alpha, this.red + ((255 - this.red) * p).round(),
+        this.green + ((255 - this.green) * p).round(), this.blue + ((255 - this.blue) * p).round());
   }
 
   Color lightenOrDarken([double percent = 10]) {
@@ -257,8 +249,7 @@ bool isEmptyString(String input, {stripWhitespace = false}) {
 
 bool isParticipantEvent(Message message) {
   if (message == null) return false;
-  if (message.itemType == 1 && [0, 1].contains(message.groupActionType))
-    return true;
+  if (message.itemType == 1 && [0, 1].contains(message.groupActionType)) return true;
   if ([2, 3].contains(message.itemType)) return true;
   return false;
 }
@@ -308,8 +299,7 @@ Future<MemoryImage> loadAvatar(Chat chat, String address) async {
     }
 
     // See if the update contains the current conversation
-    int matchIdx =
-        chat.participants.map((i) => i.address).toList().indexOf(address);
+    int matchIdx = chat.participants.map((i) => i.address).toList().indexOf(address);
     if (matchIdx == -1) return null;
   }
 
@@ -355,8 +345,7 @@ Future<dynamic> loadAsset(String path) {
 bool isValidAddress(String value) {
   value = value.trim();
 
-  String phonePattern =
-      r'^\+?(\+?\d{1,2}\s?)?\-?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}$';
+  String phonePattern = r'^\+?(\+?\d{1,2}\s?)?\-?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}$';
   String emailPattern = r'^\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$';
   RegExp regExpPhone = new RegExp(phonePattern);
   RegExp regExpEmail = new RegExp(emailPattern);
@@ -436,8 +425,7 @@ Size getGifDimensions(Uint8List bytes) {
   return size;
 }
 
-Future<IMG.Size> getVideoDimensions(Attachment attachment,
-    {Uint8List bytes}) async {
+Future<IMG.Size> getVideoDimensions(Attachment attachment, {Uint8List bytes}) async {
   Uint8List imageData = await VideoThumbnail.thumbnailData(
     video: AttachmentHelper.getAttachmentPath(attachment),
     imageFormat: ImageFormat.JPEG,
@@ -448,9 +436,7 @@ Future<IMG.Size> getVideoDimensions(Attachment attachment,
 }
 
 Brightness getBrightness(BuildContext context) {
-  return AdaptiveTheme.of(context).mode == AdaptiveThemeMode.dark
-      ? Brightness.dark
-      : Brightness.light;
+  return AdaptiveTheme.of(context).mode == AdaptiveThemeMode.dark ? Brightness.dark : Brightness.light;
 }
 
 /// Take the passed [address] or serverAddress from Settings
@@ -459,8 +445,7 @@ String getServerAddress({String address}) {
   String serverAddress = address ?? SettingsManager().settings.serverAddress;
   if (serverAddress == null) return null;
 
-  String sanitized =
-      serverAddress.replaceAll("https://", "").replaceAll("http://", "").trim();
+  String sanitized = serverAddress.replaceAll("https://", "").replaceAll("http://", "").trim();
   if (sanitized.isEmpty) return null;
 
   // If the serverAddress doesn't start with HTTP, modify it
@@ -496,11 +481,9 @@ Future<String> getDeviceName() async {
     AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
 
     // Gather device info
-    List<String> items = [
-      androidInfo?.brand ?? androidInfo?.manufacturer,
-      androidInfo?.model,
-      androidInfo?.androidId
-    ].where((element) => element != null).toList();
+    List<String> items = [androidInfo?.brand ?? androidInfo?.manufacturer, androidInfo?.model, androidInfo?.androidId]
+        .where((element) => element != null)
+        .toList();
 
     // Set device name
     deviceName = items.join("_").toLowerCase();
@@ -536,8 +519,7 @@ Future<File> saveImageFromUrl(String guid, String url) async {
   try {
     var response = await get(url);
 
-    Directory baseDir =
-        new Directory("${AttachmentHelper.getBaseAttachmentsPath()}/$guid");
+    Directory baseDir = new Directory("${AttachmentHelper.getBaseAttachmentsPath()}/$guid");
     if (!baseDir.existsSync()) {
       baseDir.createSync(recursive: true);
     }
@@ -557,25 +539,19 @@ Icon getIndicatorIcon(SocketState socketState, {double size = 24}) {
 
   if (SettingsManager().settings.colorblindMode) {
     if (socketState == SocketState.CONNECTING) {
-      icon = Icon(Icons.cloud_upload,
-          color: HexColor('ffd500').withAlpha(200), size: size);
+      icon = Icon(Icons.cloud_upload, color: HexColor('ffd500').withAlpha(200), size: size);
     } else if (socketState == SocketState.CONNECTED) {
-      icon = Icon(Icons.cloud_done,
-          color: HexColor('32CD32').withAlpha(200), size: size);
+      icon = Icon(Icons.cloud_done, color: HexColor('32CD32').withAlpha(200), size: size);
     } else {
-      icon = Icon(Icons.cloud_off,
-          color: HexColor('DC143C').withAlpha(200), size: size);
+      icon = Icon(Icons.cloud_off, color: HexColor('DC143C').withAlpha(200), size: size);
     }
   } else {
     if (socketState == SocketState.CONNECTING) {
-      icon = Icon(Icons.fiber_manual_record,
-          color: HexColor('ffd500').withAlpha(200), size: size);
+      icon = Icon(Icons.fiber_manual_record, color: HexColor('ffd500').withAlpha(200), size: size);
     } else if (socketState == SocketState.CONNECTED) {
-      icon = Icon(Icons.fiber_manual_record,
-          color: HexColor('32CD32').withAlpha(200), size: size);
+      icon = Icon(Icons.fiber_manual_record, color: HexColor('32CD32').withAlpha(200), size: size);
     } else {
-      icon = Icon(Icons.fiber_manual_record,
-          color: HexColor('DC143C').withAlpha(200), size: size);
+      icon = Icon(Icons.fiber_manual_record, color: HexColor('DC143C').withAlpha(200), size: size);
     }
   }
 
