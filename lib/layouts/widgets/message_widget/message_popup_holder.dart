@@ -1,4 +1,3 @@
-import 'package:bluebubbles/helpers/contstants.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_details_popup.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
