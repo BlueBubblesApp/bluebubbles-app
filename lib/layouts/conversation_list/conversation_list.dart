@@ -48,9 +48,9 @@ class _ConversationListState extends State<ConversationList> {
   Color currentHeaderColor;
   bool gotBrightness = false;
   bool hasPinnedChata = false;
+
   // ignore: close_sinks
-  StreamController<Color> headerColorStream =
-      StreamController<Color>.broadcast();
+  StreamController<Color> headerColorStream = StreamController<Color>.broadcast();
 
   String model;
   int pinnedChats = 0;
@@ -71,8 +71,7 @@ class _ConversationListState extends State<ConversationList> {
     super.dispose();
 
     // Remove the scroll listener from the state
-    if (scrollController != null)
-      scrollController.removeListener(scrollListener);
+    if (scrollController != null) scrollController.removeListener(scrollListener);
   }
 
   @override
@@ -142,9 +141,7 @@ class _ConversationListState extends State<ConversationList> {
 
       if (event["type"] == 'show-snackbar') {
         // Make sure that the app is open and the conversation list is present
-        if (!LifeCycleManager().isAlive ||
-            CurrentChat.activeChat != null ||
-            context == null) return;
+        if (!LifeCycleManager().isAlive || CurrentChat.activeChat != null || context == null) return;
         final snackBar = SnackBar(content: Text(event["data"]["text"]));
         Scaffold.of(context).hideCurrentSnackBar();
         Scaffold.of(context).showSnackBar(snackBar);
@@ -163,20 +160,16 @@ class _ConversationListState extends State<ConversationList> {
   set theme(Color color) {
     if (currentHeaderColor == color) return;
     currentHeaderColor = color;
-    if (!headerColorStream.isClosed)
-      headerColorStream.sink.add(currentHeaderColor);
+    if (!headerColorStream.isClosed) headerColorStream.sink.add(currentHeaderColor);
   }
 
   void scrollListener() {
-    !_isAppBarExpanded
-        ? theme = Colors.transparent
-        : theme = Theme.of(context).accentColor.withOpacity(0.5);
+    !_isAppBarExpanded ? theme = Colors.transparent : theme = Theme.of(context).accentColor.withOpacity(0.5);
   }
 
   void loadBrightness() {
     Color now = Theme.of(context).backgroundColor;
-    bool themeChanged =
-        previousBackgroundColor == null || previousBackgroundColor != now;
+    bool themeChanged = previousBackgroundColor == null || previousBackgroundColor != now;
     if (!themeChanged && gotBrightness) return;
 
     previousBackgroundColor = now;
@@ -193,19 +186,14 @@ class _ConversationListState extends State<ConversationList> {
   }
 
   bool get _isAppBarExpanded {
-    return scrollController != null &&
-        scrollController.hasClients &&
-        scrollController.offset > (125 - kToolbarHeight);
+    return scrollController != null && scrollController.hasClients && scrollController.offset > (125 - kToolbarHeight);
   }
 
   List<Widget> getHeaderTextWidgets({double size}) {
     TextStyle style = Theme.of(context).textTheme.headline1;
     if (size != null) style = style.copyWith(fontSize: size);
 
-    return [
-      Text(widget.showArchivedChats ? "Archive" : "Messages", style: style),
-      Container(width: 10)
-    ];
+    return [Text(widget.showArchivedChats ? "Archive" : "Messages", style: style), Container(width: 10)];
   }
 
   List<Widget> getSyncIndicatorWidgets() {
@@ -216,15 +204,12 @@ class _ConversationListState extends State<ConversationList> {
         stream: SocketManager().setup.stream,
         initialData: SetupData(0, []),
         builder: (context, snapshot) {
-          if (!snapshot.hasData ||
-              snapshot.data.progress < 1 ||
-              snapshot.data.progress >= 100) return Container();
+          if (!snapshot.hasData || snapshot.data.progress < 1 || snapshot.data.progress >= 100) return Container();
 
           if (skinSet == Skins.IOS) {
             return Theme(
               data: ThemeData(
-                cupertinoOverrideTheme:
-                    CupertinoThemeData(brightness: brightness),
+                cupertinoOverrideTheme: CupertinoThemeData(brightness: brightness),
               ),
               child: CupertinoActivityIndicator(
                 radius: 6.5,
@@ -236,8 +221,7 @@ class _ConversationListState extends State<ConversationList> {
               constraints: BoxConstraints(maxHeight: 15, maxWidth: 15),
               child: CircularProgressIndicator(
                 strokeWidth: 2.0,
-                valueColor: AlwaysStoppedAnimation<Color>(
-                    Theme.of(context).primaryColor),
+                valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
               ));
         },
       )
@@ -397,13 +381,11 @@ class _Cupertino extends StatelessWidget {
                   stream: parent.headerColorStream.stream,
                   builder: (context, snapshot) {
                     return AnimatedCrossFade(
-                      crossFadeState: parent.theme == Colors.transparent
-                          ? CrossFadeState.showFirst
-                          : CrossFadeState.showSecond,
+                      crossFadeState:
+                          parent.theme == Colors.transparent ? CrossFadeState.showFirst : CrossFadeState.showSecond,
                       duration: Duration(milliseconds: 250),
                       secondChild: AppBar(
-                        iconTheme: IconThemeData(
-                            color: Theme.of(context).primaryColor),
+                        iconTheme: IconThemeData(color: Theme.of(context).primaryColor),
                         elevation: 0,
                         backgroundColor: parent.theme,
                         centerTitle: true,
@@ -412,9 +394,7 @@ class _Cupertino extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: <Widget>[
                             Text(
-                              parent.widget.showArchivedChats
-                                  ? "Archive"
-                                  : "Messages",
+                              parent.widget.showArchivedChats ? "Archive" : "Messages",
                               style: Theme.of(context).textTheme.bodyText1,
                             ),
                           ],
@@ -438,22 +418,21 @@ class _Cupertino extends StatelessWidget {
           physics: ThemeManager().scrollPhysics,
           slivers: <Widget>[
             SliverAppBar(
-              leading: IconButton(
-                icon: Icon(
-                    (SettingsManager().settings.skin == Skins.IOS &&
-                            parent.widget.showArchivedChats)
-                        ? Icons.arrow_back_ios
-                        : ((SettingsManager().settings.skin == Skins.Material &&
-                                    SettingsManager().settings.skin ==
-                                        Skins.Samsung) &&
-                                !parent.widget.showArchivedChats)
-                            ? Icons.arrow_back
-                            : null,
-                    color: Theme.of(context).primaryColor),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-              ),
+              leading: ((SettingsManager().settings.skin == Skins.IOS && parent.widget.showArchivedChats) ||
+                      (SettingsManager().settings.skin == Skins.Material ||
+                              SettingsManager().settings.skin == Skins.Samsung) &&
+                          !parent.widget.showArchivedChats)
+                  ? IconButton(
+                      icon: Icon(
+                          (SettingsManager().settings.skin == Skins.IOS && parent.widget.showArchivedChats)
+                              ? Icons.arrow_back_ios
+                              : Icons.arrow_back,
+                          color: Theme.of(context).primaryColor),
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                    )
+                  : new Container(),
               stretch: true,
               onStretchTrigger: () {
                 return null;
@@ -475,9 +454,7 @@ class _Cupertino extends StatelessWidget {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.start,
                         children: <Widget>[
-                          Container(
-                              width:
-                                  (!parent.widget.showArchivedChats) ? 20 : 50),
+                          Container(width: (!parent.widget.showArchivedChats) ? 20 : 50),
                           Row(
                             mainAxisSize: MainAxisSize.min,
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -494,16 +471,12 @@ class _Cupertino extends StatelessWidget {
                           if (!parent.widget.showArchivedChats)
                             ClipOval(
                               child: Material(
-                                color: Theme.of(context)
-                                    .accentColor, // button color
+                                color: Theme.of(context).accentColor, // button color
                                 child: InkWell(
                                     child: SizedBox(
                                         width: 20,
                                         height: 20,
-                                        child: Icon(Icons.search,
-                                            color:
-                                                Theme.of(context).primaryColor,
-                                            size: 12)),
+                                        child: Icon(Icons.search, color: Theme.of(context).primaryColor, size: 12)),
                                     onTap: () async {
                                       Navigator.of(context).push(
                                         CupertinoPageRoute(
@@ -513,27 +486,20 @@ class _Cupertino extends StatelessWidget {
                                     }),
                               ),
                             ),
-                          if (!parent.widget.showArchivedChats)
-                            Container(width: 10.0),
-                          if (parent.moveChatCreatorButton &&
-                              !parent.widget.showArchivedChats)
+                          if (!parent.widget.showArchivedChats) Container(width: 10.0),
+                          if (parent.moveChatCreatorButton && !parent.widget.showArchivedChats)
                             ClipOval(
                               child: Material(
-                                color: Theme.of(context)
-                                    .accentColor, // button color
+                                color: Theme.of(context).accentColor, // button color
                                 child: InkWell(
                                     child: SizedBox(
                                         width: 20,
                                         height: 20,
-                                        child: Icon(Icons.create,
-                                            color:
-                                                Theme.of(context).primaryColor,
-                                            size: 12)),
+                                        child: Icon(Icons.create, color: Theme.of(context).primaryColor, size: 12)),
                                     onTap: this.parent.openNewChatCreator),
                               ),
                             ),
-                          if (parent.moveChatCreatorButton)
-                            Container(width: 10.0),
+                          if (parent.moveChatCreatorButton) Container(width: 10.0),
                           parent.buildSettingsButton(),
                           Spacer(
                             flex: 3,
@@ -564,8 +530,7 @@ class _Cupertino extends StatelessWidget {
             // ),
             StreamBuilder(
               stream: ChatBloc().chatStream,
-              builder:
-                  (BuildContext context, AsyncSnapshot<List<Chat>> snapshot) {
+              builder: (BuildContext context, AsyncSnapshot<List<Chat>> snapshot) {
                 if (snapshot.hasData || parent.widget.showArchivedChats) {
                   parent.chats.sort(Chat.sort);
                   if (parent.chats.isEmpty) {
@@ -587,10 +552,8 @@ class _Cupertino extends StatelessWidget {
                   return SliverList(
                     delegate: SliverChildBuilderDelegate(
                       (context, index) {
-                        if (!parent.widget.showArchivedChats &&
-                            parent.chats[index].isArchived) return Container();
-                        if (parent.widget.showArchivedChats &&
-                            !parent.chats[index].isArchived) return Container();
+                        if (!parent.widget.showArchivedChats && parent.chats[index].isArchived) return Container();
+                        if (parent.widget.showArchivedChats && !parent.chats[index].isArchived) return Container();
                         return ConversationTile(
                           key: Key(parent.chats[index].guid.toString()),
                           chat: parent.chats[index],
@@ -606,9 +569,7 @@ class _Cupertino extends StatelessWidget {
             ),
           ],
         ),
-        floatingActionButton: !parent.moveChatCreatorButton
-            ? parent.buildFloatinActionButton()
-            : null,
+        floatingActionButton: !parent.moveChatCreatorButton ? parent.buildFloatinActionButton() : null,
       ),
     );
   }
@@ -633,8 +594,7 @@ class __MaterialState extends State<_Material> {
 
   void loadBrightness() {
     Color now = Theme.of(context).backgroundColor;
-    bool themeChanged =
-        previousBackgroundColor == null || previousBackgroundColor != now;
+    bool themeChanged = previousBackgroundColor == null || previousBackgroundColor != now;
     if (!themeChanged && gotBrightness) return;
 
     previousBackgroundColor = now;
@@ -808,8 +768,7 @@ class __MaterialState extends State<_Material> {
             duration: Duration(milliseconds: 500),
             child: selected.isEmpty
                 ? AppBar(
-                    iconTheme:
-                        IconThemeData(color: Theme.of(context).primaryColor),
+                    iconTheme: IconThemeData(color: Theme.of(context).primaryColor),
                     brightness: brightness,
                     bottom: PreferredSize(
                       child: Container(
@@ -841,16 +800,12 @@ class __MaterialState extends State<_Material> {
                                 padding: const EdgeInsets.all(8.0),
                                 child: Icon(
                                   Icons.search,
-                                  color: Theme.of(context)
-                                      .textTheme
-                                      .bodyText1
-                                      .color,
+                                  color: Theme.of(context).textTheme.bodyText1.color,
                                 ),
                               ),
                             )
                           : Container(),
-                      (SettingsManager().settings.moveChatCreatorToHeader &&
-                              !widget.parent.widget.showArchivedChats)
+                      (SettingsManager().settings.moveChatCreatorToHeader && !widget.parent.widget.showArchivedChats)
                           ? GestureDetector(
                               onTap: () {
                                 Navigator.of(context).push(
@@ -867,10 +822,7 @@ class __MaterialState extends State<_Material> {
                                 padding: const EdgeInsets.all(8.0),
                                 child: Icon(
                                   Icons.create,
-                                  color: Theme.of(context)
-                                      .textTheme
-                                      .bodyText1
-                                      .color,
+                                  color: Theme.of(context).textTheme.bodyText1.color,
                                 ),
                               ),
                             )
@@ -912,10 +864,7 @@ class __MaterialState extends State<_Material> {
                                   padding: const EdgeInsets.all(8.0),
                                   child: Icon(
                                     Icons.notifications_off,
-                                    color: Theme.of(context)
-                                        .textTheme
-                                        .bodyText1
-                                        .color,
+                                    color: Theme.of(context).textTheme.bodyText1.color,
                                   ),
                                 ),
                               ),
@@ -934,13 +883,8 @@ class __MaterialState extends State<_Material> {
                               child: Padding(
                                 padding: const EdgeInsets.all(8.0),
                                 child: Icon(
-                                  widget.parent.widget.showArchivedChats
-                                      ? Icons.restore_from_trash
-                                      : Icons.delete,
-                                  color: Theme.of(context)
-                                      .textTheme
-                                      .bodyText1
-                                      .color,
+                                  widget.parent.widget.showArchivedChats ? Icons.restore_from_trash : Icons.delete,
+                                  color: Theme.of(context).textTheme.bodyText1.color,
                                 ),
                               ),
                             ),
@@ -960,10 +904,7 @@ class __MaterialState extends State<_Material> {
                                 padding: const EdgeInsets.all(8.0),
                                 child: Icon(
                                   Icons.star,
-                                  color: Theme.of(context)
-                                      .textTheme
-                                      .bodyText1
-                                      .color,
+                                  color: Theme.of(context).textTheme.bodyText1.color,
                                 ),
                               ),
                             ),
@@ -978,9 +919,7 @@ class __MaterialState extends State<_Material> {
         body: StreamBuilder(
           stream: ChatBloc().chatStream,
           builder: (context, snapshot) {
-            if (snapshot.hasData ||
-                widget.parent.widget.showArchivedChats ||
-                widget.parent.chats.isNotEmpty) {
+            if (snapshot.hasData || widget.parent.widget.showArchivedChats || widget.parent.chats.isNotEmpty) {
               widget.parent.sortChats();
               if (widget.parent.chats.isEmpty) {
                 return Center(
@@ -1001,10 +940,9 @@ class __MaterialState extends State<_Material> {
                           background: (widget.parent.chats[index].isPinned)
                               ? slideRightBackgroundPinned()
                               : slideRightBackground(),
-                          secondaryBackground:
-                              (!widget.parent.widget.showArchivedChats)
-                                  ? slideLeftBackground()
-                                  : slideLeftBackgroundArchived(),
+                          secondaryBackground: (!widget.parent.widget.showArchivedChats)
+                              ? slideLeftBackground()
+                              : slideLeftBackgroundArchived(),
                           // Each Dismissible must contain a Key. Keys allow Flutter to
                           // uniquely identify widgets.
                           key: UniqueKey(),
@@ -1012,16 +950,13 @@ class __MaterialState extends State<_Material> {
                           // what to do after an item has been swiped away.
                           onDismissed: (direction) {
                             if (direction == DismissDirection.endToStart) {
-                              if (!widget.parent.widget.showArchivedChats)
-                                widget.parent.chats[index].unpin();
+                              if (!widget.parent.widget.showArchivedChats) widget.parent.chats[index].unpin();
 
                               setState(() {
                                 Scaffold.of(context).hideCurrentSnackBar();
                                 (!widget.parent.widget.showArchivedChats)
-                                    ? ChatBloc()
-                                        .archiveChat(widget.parent.chats[index])
-                                    : ChatBloc().unArchiveChat(
-                                        widget.parent.chats[index]);
+                                    ? ChatBloc().archiveChat(widget.parent.chats[index])
+                                    : ChatBloc().unArchiveChat(widget.parent.chats[index]);
                                 widget.parent.chats.remove(index);
                               });
                             } else {
@@ -1037,11 +972,9 @@ class __MaterialState extends State<_Material> {
                               });
                             }
                           },
-                          child: (!widget.parent.widget.showArchivedChats &&
-                                  widget.parent.chats[index].isArchived)
+                          child: (!widget.parent.widget.showArchivedChats && widget.parent.chats[index].isArchived)
                               ? Container()
-                              : (widget.parent.widget.showArchivedChats &&
-                                      !widget.parent.chats[index].isArchived)
+                              : (widget.parent.widget.showArchivedChats && !widget.parent.chats[index].isArchived)
                                   ? Container()
                                   : ConversationTile(
                                       key: UniqueKey(),
@@ -1050,24 +983,19 @@ class __MaterialState extends State<_Material> {
                                       selected: selected,
                                       onSelect: (bool selected) {
                                         if (selected) {
-                                          this
-                                              .selected
-                                              .add(widget.parent.chats[index]);
+                                          this.selected.add(widget.parent.chats[index]);
                                           setState(() {});
                                         } else {
-                                          this.selected.removeWhere((element) =>
-                                              element.guid ==
-                                              widget.parent.chats[index].guid);
+                                          this.selected.removeWhere(
+                                              (element) => element.guid == widget.parent.chats[index].guid);
                                           setState(() {});
                                         }
                                       },
                                     ));
                     } else {
-                      if (!widget.parent.widget.showArchivedChats &&
-                          widget.parent.chats[index].isArchived)
+                      if (!widget.parent.widget.showArchivedChats && widget.parent.chats[index].isArchived)
                         return Container();
-                      if (widget.parent.widget.showArchivedChats &&
-                          !widget.parent.chats[index].isArchived)
+                      if (widget.parent.widget.showArchivedChats && !widget.parent.chats[index].isArchived)
                         return Container();
                       return ConversationTile(
                         key: UniqueKey(),
@@ -1079,9 +1007,7 @@ class __MaterialState extends State<_Material> {
                             this.selected.add(widget.parent.chats[index]);
                             setState(() {});
                           } else {
-                            this.selected.removeWhere((element) =>
-                                element.guid ==
-                                widget.parent.chats[index].guid);
+                            this.selected.removeWhere((element) => element.guid == widget.parent.chats[index].guid);
                             setState(() {});
                           }
                         },
@@ -1094,8 +1020,7 @@ class __MaterialState extends State<_Material> {
             }
           },
         ),
-        floatingActionButton: selected.isEmpty &&
-                !SettingsManager().settings.moveChatCreatorToHeader
+        floatingActionButton: selected.isEmpty && !SettingsManager().settings.moveChatCreatorToHeader
             ? widget.parent.buildFloatinActionButton()
             : null,
       ),
@@ -1122,8 +1047,7 @@ class _SamsungState extends State<_Samsung> {
 
   void loadBrightness() {
     Color now = Theme.of(context).backgroundColor;
-    bool themeChanged =
-        previousBackgroundColor == null || previousBackgroundColor != now;
+    bool themeChanged = previousBackgroundColor == null || previousBackgroundColor != now;
     if (!themeChanged && gotBrightness) return;
 
     previousBackgroundColor = now;
@@ -1299,8 +1223,7 @@ class _SamsungState extends State<_Samsung> {
             child: selected.isEmpty
                 ? AppBar(
                     shadowColor: Colors.transparent,
-                    iconTheme:
-                        IconThemeData(color: Theme.of(context).primaryColor),
+                    iconTheme: IconThemeData(color: Theme.of(context).primaryColor),
                     brightness: brightness,
                     bottom: PreferredSize(
                       child: Container(
@@ -1331,16 +1254,12 @@ class _SamsungState extends State<_Samsung> {
                                 padding: const EdgeInsets.all(8.0),
                                 child: Icon(
                                   Icons.search,
-                                  color: Theme.of(context)
-                                      .textTheme
-                                      .bodyText1
-                                      .color,
+                                  color: Theme.of(context).textTheme.bodyText1.color,
                                 ),
                               ),
                             )
                           : Container(),
-                      (SettingsManager().settings.moveChatCreatorToHeader &&
-                              !widget.parent.widget.showArchivedChats)
+                      (SettingsManager().settings.moveChatCreatorToHeader && !widget.parent.widget.showArchivedChats)
                           ? GestureDetector(
                               onTap: () {
                                 Navigator.of(context).push(
@@ -1357,10 +1276,7 @@ class _SamsungState extends State<_Samsung> {
                                 padding: const EdgeInsets.all(8.0),
                                 child: Icon(
                                   Icons.create,
-                                  color: Theme.of(context)
-                                      .textTheme
-                                      .bodyText1
-                                      .color,
+                                  color: Theme.of(context).textTheme.bodyText1.color,
                                 ),
                               ),
                             )
@@ -1402,10 +1318,7 @@ class _SamsungState extends State<_Samsung> {
                                   padding: const EdgeInsets.all(8.0),
                                   child: Icon(
                                     Icons.notifications_off,
-                                    color: Theme.of(context)
-                                        .textTheme
-                                        .bodyText1
-                                        .color,
+                                    color: Theme.of(context).textTheme.bodyText1.color,
                                   ),
                                 ),
                               ),
@@ -1424,13 +1337,8 @@ class _SamsungState extends State<_Samsung> {
                               child: Padding(
                                 padding: const EdgeInsets.all(8.0),
                                 child: Icon(
-                                  widget.parent.widget.showArchivedChats
-                                      ? Icons.restore_from_trash
-                                      : Icons.delete,
-                                  color: Theme.of(context)
-                                      .textTheme
-                                      .bodyText1
-                                      .color,
+                                  widget.parent.widget.showArchivedChats ? Icons.restore_from_trash : Icons.delete,
+                                  color: Theme.of(context).textTheme.bodyText1.color,
                                 ),
                               ),
                             ),
@@ -1450,10 +1358,7 @@ class _SamsungState extends State<_Samsung> {
                                 padding: const EdgeInsets.all(8.0),
                                 child: Icon(
                                   Icons.star,
-                                  color: Theme.of(context)
-                                      .textTheme
-                                      .bodyText1
-                                      .color,
+                                  color: Theme.of(context).textTheme.bodyText1.color,
                                 ),
                               ),
                             ),
@@ -1468,9 +1373,7 @@ class _SamsungState extends State<_Samsung> {
         body: StreamBuilder(
           stream: ChatBloc().chatStream,
           builder: (context, snapshot) {
-            if (snapshot.hasData ||
-                widget.parent.widget.showArchivedChats ||
-                widget.parent.chats.isNotEmpty) {
+            if (snapshot.hasData || widget.parent.widget.showArchivedChats || widget.parent.chats.isNotEmpty) {
               widget.parent.sortChats();
               if (widget.parent.chats.isEmpty) {
                 return Center(
@@ -1498,15 +1401,13 @@ class _SamsungState extends State<_Samsung> {
                             border: Border.all(
                               color: Colors.transparent,
                             ),
-                            borderRadius:
-                                BorderRadius.all(Radius.circular(20))),
+                            borderRadius: BorderRadius.all(Radius.circular(20))),
                       ),
                     if (hasPinned)
                       Container(
                         padding: EdgeInsets.all(6.0),
                         decoration: new BoxDecoration(
-                            color: Theme.of(context).accentColor,
-                            borderRadius: BorderRadius.circular(20)),
+                            color: Theme.of(context).accentColor, borderRadius: BorderRadius.circular(20)),
                         child: ListView.builder(
                           shrinkWrap: true,
                           physics: NeverScrollableScrollPhysics(),
@@ -1514,76 +1415,56 @@ class _SamsungState extends State<_Samsung> {
                             if (widget.parent.swipableTiles) {
                               return Dismissible(
                                 background: slideRightBackgroundPinned(),
-                                secondaryBackground:
-                                    (!widget.parent.widget.showArchivedChats)
-                                        ? slideLeftBackground()
-                                        : slideLeftBackgroundArchived(),
+                                secondaryBackground: (!widget.parent.widget.showArchivedChats)
+                                    ? slideLeftBackground()
+                                    : slideLeftBackgroundArchived(),
                                 // Each Dismissible must contain a Key. Keys allow Flutter to
                                 // uniquely identify widgets.
                                 key: UniqueKey(),
                                 // Provide a function that tells the app
                                 // what to do after an item has been swiped away.
                                 onDismissed: (direction) {
-                                  if (direction ==
-                                      DismissDirection.endToStart) {
-                                    if (!widget.parent.widget.showArchivedChats)
-                                      widget.parent.chats[index].unpin();
+                                  if (direction == DismissDirection.endToStart) {
+                                    if (!widget.parent.widget.showArchivedChats) widget.parent.chats[index].unpin();
 
                                     print("REMOUNDING UNPIN");
                                     setState(() {
-                                      Scaffold.of(context)
-                                          .hideCurrentSnackBar();
+                                      Scaffold.of(context).hideCurrentSnackBar();
                                       (!widget.parent.widget.showArchivedChats)
-                                          ? ChatBloc().archiveChat(
-                                              widget.parent.chats[index])
-                                          : ChatBloc().unArchiveChat(
-                                              widget.parent.chats[index]);
+                                          ? ChatBloc().archiveChat(widget.parent.chats[index])
+                                          : ChatBloc().unArchiveChat(widget.parent.chats[index]);
 
                                       widget.parent.chats.remove(index);
                                     });
                                   } else {
                                     print("REMOUNDING UNPIN 2");
                                     setState(() {
-                                      Scaffold.of(context)
-                                          .hideCurrentSnackBar();
+                                      Scaffold.of(context).hideCurrentSnackBar();
                                       widget.parent.chats[index].unpin();
                                     });
                                   }
                                 },
-                                child: (!widget
-                                            .parent.widget.showArchivedChats &&
+                                child: (!widget.parent.widget.showArchivedChats &&
                                         widget.parent.chats[index].isArchived)
                                     ? Container()
-                                    : (widget.parent.widget.showArchivedChats &&
-                                            !widget
-                                                .parent.chats[index].isArchived)
+                                    : (widget.parent.widget.showArchivedChats && !widget.parent.chats[index].isArchived)
                                         ? Container()
                                         : (widget.parent.chats[index].isPinned)
                                             ? ConversationTile(
                                                 key: UniqueKey(),
-                                                chat:
-                                                    widget.parent.chats[index],
-                                                inSelectMode:
-                                                    selected.isNotEmpty,
+                                                chat: widget.parent.chats[index],
+                                                inSelectMode: selected.isNotEmpty,
                                                 selected: selected,
                                                 onSelect: (bool selected) {
                                                   if (selected) {
-                                                    this.selected.add(widget
-                                                        .parent.chats[index]);
+                                                    this.selected.add(widget.parent.chats[index]);
 
-                                                    print(
-                                                        "REMOUNDING ON SELECT");
+                                                    print("REMOUNDING ON SELECT");
                                                     setState(() {});
                                                   } else {
                                                     this.selected.removeWhere(
-                                                        (element) =>
-                                                            element.guid ==
-                                                            widget
-                                                                .parent
-                                                                .chats[index]
-                                                                .guid);
-                                                    print(
-                                                        "REMOUNDING ON SELECT 2");
+                                                        (element) => element.guid == widget.parent.chats[index].guid);
+                                                    print("REMOUNDING ON SELECT 2");
                                                     setState(() {});
                                                   }
                                                 },
@@ -1591,11 +1472,9 @@ class _SamsungState extends State<_Samsung> {
                                             : Container(),
                               );
                             } else {
-                              if (!widget.parent.widget.showArchivedChats &&
-                                  widget.parent.chats[index].isArchived)
+                              if (!widget.parent.widget.showArchivedChats && widget.parent.chats[index].isArchived)
                                 return Container();
-                              if (widget.parent.widget.showArchivedChats &&
-                                  !widget.parent.chats[index].isArchived)
+                              if (widget.parent.widget.showArchivedChats && !widget.parent.chats[index].isArchived)
                                 return Container();
                               if (widget.parent.chats[index].isPinned) {
                                 return ConversationTile(
@@ -1605,16 +1484,14 @@ class _SamsungState extends State<_Samsung> {
                                   selected: selected,
                                   onSelect: (bool selected) {
                                     if (selected) {
-                                      this
-                                          .selected
-                                          .add(widget.parent.chats[index]);
+                                      this.selected.add(widget.parent.chats[index]);
 
                                       print("REMOUNDING SOMETHING");
                                       setState(() {});
                                     } else {
-                                      this.selected.removeWhere((element) =>
-                                          element.guid ==
-                                          widget.parent.chats[index].guid);
+                                      this
+                                          .selected
+                                          .removeWhere((element) => element.guid == widget.parent.chats[index].guid);
 
                                       print("REMOUNDING SOMTEHING 2");
                                       setState(() {});
@@ -1635,8 +1512,7 @@ class _SamsungState extends State<_Samsung> {
                             border: Border.all(
                               color: Colors.transparent,
                             ),
-                            borderRadius:
-                                BorderRadius.all(Radius.circular(20))),
+                            borderRadius: BorderRadius.all(Radius.circular(20))),
                       ),
                     if (hasNormalChats())
                       Container(
@@ -1656,75 +1532,55 @@ class _SamsungState extends State<_Samsung> {
                             if (widget.parent.swipableTiles) {
                               return Dismissible(
                                 background: slideRightBackground(),
-                                secondaryBackground:
-                                    (!widget.parent.widget.showArchivedChats)
-                                        ? slideLeftBackground()
-                                        : slideLeftBackgroundArchived(),
+                                secondaryBackground: (!widget.parent.widget.showArchivedChats)
+                                    ? slideLeftBackground()
+                                    : slideLeftBackgroundArchived(),
                                 // Each Dismissible must contain a Key. Keys allow Flutter to
                                 // uniquely identify widgets.
                                 key: UniqueKey(),
                                 // Provide a function that tells the app
                                 // what to do after an item has been swiped away.
                                 onDismissed: (direction) {
-                                  if (direction ==
-                                      DismissDirection.endToStart) {
-                                    if (!widget.parent.widget.showArchivedChats)
-                                      widget.parent.chats[index].unpin();
+                                  if (direction == DismissDirection.endToStart) {
+                                    if (!widget.parent.widget.showArchivedChats) widget.parent.chats[index].unpin();
 
                                     print("REMOUNDING DISMISS");
                                     setState(() {
-                                      Scaffold.of(context)
-                                          .hideCurrentSnackBar();
+                                      Scaffold.of(context).hideCurrentSnackBar();
                                       (!widget.parent.widget.showArchivedChats)
-                                          ? ChatBloc().archiveChat(
-                                              widget.parent.chats[index])
-                                          : ChatBloc().unArchiveChat(
-                                              widget.parent.chats[index]);
+                                          ? ChatBloc().archiveChat(widget.parent.chats[index])
+                                          : ChatBloc().unArchiveChat(widget.parent.chats[index]);
                                       widget.parent.chats.remove(index);
                                     });
                                   } else {
                                     print("REMOUNDING DISMISS 2");
                                     setState(() {
-                                      Scaffold.of(context)
-                                          .hideCurrentSnackBar();
+                                      Scaffold.of(context).hideCurrentSnackBar();
                                       widget.parent.chats[index].pin();
                                     });
                                   }
                                 },
-                                child: (!widget
-                                            .parent.widget.showArchivedChats &&
+                                child: (!widget.parent.widget.showArchivedChats &&
                                         widget.parent.chats[index].isArchived)
                                     ? Container()
-                                    : (widget.parent.widget.showArchivedChats &&
-                                            !widget
-                                                .parent.chats[index].isArchived)
+                                    : (widget.parent.widget.showArchivedChats && !widget.parent.chats[index].isArchived)
                                         ? Container()
                                         : (!widget.parent.chats[index].isPinned)
                                             ? ConversationTile(
                                                 key: UniqueKey(),
-                                                chat:
-                                                    widget.parent.chats[index],
-                                                inSelectMode:
-                                                    selected.isNotEmpty,
+                                                chat: widget.parent.chats[index],
+                                                inSelectMode: selected.isNotEmpty,
                                                 selected: selected,
                                                 onSelect: (bool selected) {
                                                   if (selected) {
-                                                    this.selected.add(widget
-                                                        .parent.chats[index]);
+                                                    this.selected.add(widget.parent.chats[index]);
 
-                                                    print(
-                                                        "REMOUNDING SELECTING ");
+                                                    print("REMOUNDING SELECTING ");
                                                     setState(() {});
                                                   } else {
                                                     this.selected.removeWhere(
-                                                        (element) =>
-                                                            element.guid ==
-                                                            widget
-                                                                .parent
-                                                                .chats[index]
-                                                                .guid);
-                                                    print(
-                                                        "REMOUNDING SELECTING 2");
+                                                        (element) => element.guid == widget.parent.chats[index].guid);
+                                                    print("REMOUNDING SELECTING 2");
                                                     setState(() {});
                                                   }
                                                 },
@@ -1732,11 +1588,9 @@ class _SamsungState extends State<_Samsung> {
                                             : Container(),
                               );
                             } else {
-                              if (!widget.parent.widget.showArchivedChats &&
-                                  widget.parent.chats[index].isArchived)
+                              if (!widget.parent.widget.showArchivedChats && widget.parent.chats[index].isArchived)
                                 return Container();
-                              if (widget.parent.widget.showArchivedChats &&
-                                  !widget.parent.chats[index].isArchived)
+                              if (widget.parent.widget.showArchivedChats && !widget.parent.chats[index].isArchived)
                                 return Container();
                               if (!widget.parent.chats[index].isPinned) {
                                 return ConversationTile(
@@ -1746,16 +1600,14 @@ class _SamsungState extends State<_Samsung> {
                                   selected: selected,
                                   onSelect: (bool selected) {
                                     if (selected) {
-                                      this
-                                          .selected
-                                          .add(widget.parent.chats[index]);
+                                      this.selected.add(widget.parent.chats[index]);
 
                                       print("REMOUNDING SKDNJSNSD ");
                                       setState(() {});
                                     } else {
-                                      this.selected.removeWhere((element) =>
-                                          element.guid ==
-                                          widget.parent.chats[index].guid);
+                                      this
+                                          .selected
+                                          .removeWhere((element) => element.guid == widget.parent.chats[index].guid);
 
                                       print("REMOUNDING aksdskdaks");
                                       setState(() {});
@@ -1777,8 +1629,7 @@ class _SamsungState extends State<_Samsung> {
             }
           },
         ),
-        floatingActionButton: selected.isEmpty &&
-                !SettingsManager().settings.moveChatCreatorToHeader
+        floatingActionButton: selected.isEmpty && !SettingsManager().settings.moveChatCreatorToHeader
             ? widget.parent.buildFloatinActionButton()
             : null,
       ),
