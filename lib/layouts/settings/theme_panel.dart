@@ -2,19 +2,19 @@ import 'dart:async';
 import 'dart:ui';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
-import 'package:bluebubbles/helpers/contstants.dart';
+import 'package:bluebubbles/blocs/chat_bloc.dart';
+import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/layouts/settings/custom_avatar_panel.dart';
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
 import 'package:bluebubbles/layouts/theming/theming_panel.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
-import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
-import 'package:flutter/material.dart';
 
 class ThemePanel extends StatefulWidget {
   ThemePanel({Key key}) : super(key: key);

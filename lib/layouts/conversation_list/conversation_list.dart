@@ -3,27 +3,25 @@ import 'dart:ui';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/setup_bloc.dart';
+import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/layouts/conversation_list/conversation_tile.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/helpers/contstants.dart';
 import 'package:bluebubbles/layouts/search/search_view.dart';
+import 'package:bluebubbles/layouts/settings/settings_panel.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/managers/theme_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:bluebubbles/socket_manager.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_displaymode/flutter_displaymode.dart';
-
-import './conversation_tile.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-
-import '../settings/settings_panel.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_displaymode/flutter_displaymode.dart';
 
 class ConversationList extends StatefulWidget {
   ConversationList({Key key, this.showArchivedChats}) : super(key: key);

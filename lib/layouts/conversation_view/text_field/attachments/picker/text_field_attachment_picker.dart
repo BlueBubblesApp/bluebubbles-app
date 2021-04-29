@@ -1,16 +1,13 @@
 import 'dart:io';
 
-import 'package:bluebubbles/helpers/contstants.dart';
 import 'package:bluebubbles/helpers/share.dart';
 import 'package:bluebubbles/layouts/conversation_view/camera_widget.dart';
 import 'package:bluebubbles/layouts/conversation_view/text_field/attachments/picker/attachment_picked.dart';
 import 'package:bluebubbles/layouts/conversation_view/text_field/blue_bubbles_text_field.dart';
-import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:photo_manager/photo_manager.dart';
 

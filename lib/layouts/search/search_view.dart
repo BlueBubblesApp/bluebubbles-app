@@ -1,17 +1,17 @@
 import 'dart:ui';
 
 import 'package:bluebubbles/blocs/message_bloc.dart';
+import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:bluebubbles/helpers/contstants.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 
 class SearchView extends StatefulWidget {
   SearchView({

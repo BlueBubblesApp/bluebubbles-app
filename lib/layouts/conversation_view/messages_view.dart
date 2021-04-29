@@ -3,7 +3,7 @@ import 'dart:ui';
 
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
-import 'package:bluebubbles/helpers/contstants.dart';
+import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/new_message_loader.dart';
