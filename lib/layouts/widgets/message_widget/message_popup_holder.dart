@@ -48,6 +48,7 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
     await Navigator.push(
       context,
       PageRouteBuilder(
+        settings: RouteSettings(arguments: {"hideTail": true},),
         transitionDuration: Duration(milliseconds: 0),
         pageBuilder: (context, animation, secondaryAnimation) {
           return MessageDetailsPopup(
