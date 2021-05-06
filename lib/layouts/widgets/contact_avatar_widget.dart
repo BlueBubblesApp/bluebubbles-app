@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 class ContactAvatarWidgetState {
   MemoryImage contactImage;
   String initials;
+
   ContactAvatarWidgetState({
     this.initials,
     this.contactImage,
@@ -95,7 +96,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget>
     state.initials = await getInitials(handle: widget.handle);
 
     Contact contact =
-        await ContactManager().getCachedContact(widget.handle.address);
+    await ContactManager().getCachedContact(widget.handle.address);
 
     if (contact == null) {
       List<Contact> contactRes = [];
@@ -103,13 +104,13 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget>
         contactRes = ContactManager()
             .contacts
             .where((element) =>
-                element.emails.any((e) => e.value == widget.handle.address))
+            element.emails.any((e) => e.value == widget.handle.address))
             .toList();
       } else {
         contactRes = ContactManager()
             .contacts
             .where((element) =>
-                element.phones.any((e) => e.value == widget.handle.address))
+            element.phones.any((e) => e.value == widget.handle.address))
             .toList();
       }
 
@@ -145,7 +146,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget>
     if (test.length == 0) return null;
 
     List<String> items =
-        name.split(" ").where((element) => element.isNotEmpty).toList();
+    name.split(" ").where((element) => element.isNotEmpty).toList();
     switch (items.length) {
       case 1:
         return items[0][0].toUpperCase();
@@ -166,37 +167,38 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget>
     if (!widget.editable) return;
     showDialog(
       context: context,
-      builder: (context) => AvatarColorPickerPopup(
-        handle: widget.handle,
-        onReset: () async {
-          widget.handle.color = null;
-          await widget.handle.update();
-          ContactManager()
-              .colorStreamObject
-              .sink
-              .add({widget.handle.address: null});
-        },
-        onSet: (Color color) async {
-          if (color == null) return;
+      builder: (context) =>
+          AvatarColorPickerPopup(
+            handle: widget.handle,
+            onReset: () async {
+              widget.handle.color = null;
+              await widget.handle.update();
+              ContactManager()
+                  .colorStreamObject
+                  .sink
+                  .add({widget.handle.address: null});
+            },
+            onSet: (Color color) async {
+              if (color == null) return;
 
-          // Check if the color is the same as the real gradient, and if so, set it to null
-          // Because it is not custom, then just use the regular gradient
-          List gradient = toColorGradient(widget.handle?.address ?? "");
-          if (!isNullOrEmpty(gradient) && gradient[0] == color) {
-            widget.handle.color = null;
-          } else {
-            widget.handle.color = color.value.toRadixString(16);
-          }
+              // Check if the color is the same as the real gradient, and if so, set it to null
+              // Because it is not custom, then just use the regular gradient
+              List gradient = toColorGradient(widget.handle?.address ?? "");
+              if (!isNullOrEmpty(gradient) && gradient[0] == color) {
+                widget.handle.color = null;
+              } else {
+                widget.handle.color = color.value.toRadixString(16);
+              }
 
-          await widget.handle.updateColor(widget.handle.color);
+              await widget.handle.updateColor(widget.handle.color);
 
-          ContactManager().colorStreamObject.sink.add({
-            widget.handle.address: widget?.handle?.color == null
-                ? null
-                : HexColor(widget.handle.color)
-          });
-        },
-      ),
+              ContactManager().colorStreamObject.sink.add({
+                widget.handle.address: widget?.handle?.color == null
+                    ? null
+                    : HexColor(widget.handle.color)
+              });
+            },
+          ),
     );
   }
 
@@ -219,50 +221,58 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget>
       color2 = HexColor("928E8E");
     }
 
+    final bool hideLetterAvatars = SettingsManager().settings.redactedMode &&
+        SettingsManager().settings.removeLetterAvatars;
+    final bool hideAvatars = SettingsManager().settings.redactedMode && SettingsManager().settings.hideContactPhotos;
+
     return GestureDetector(
-        onTap: onAvatarTap,
-        child: Container(
-          width: widget.size ?? 40,
-          height: widget.size ?? 40,
-          padding: EdgeInsets.all(widget.borderThickness), // borde width
-          decoration: new BoxDecoration(
-            color: Theme.of(context).backgroundColor, // border color
-            shape: BoxShape.circle,
+      onTap: onAvatarTap,
+      child: Container(
+        width: widget.size ?? 40,
+        height: widget.size ?? 40,
+        padding: EdgeInsets.all(widget.borderThickness),
+        // borde width
+        decoration: new BoxDecoration(
+          color: Theme
+              .of(context)
+              .backgroundColor, // border color
+          shape: BoxShape.circle,
+        ),
+        child: CircleAvatar(
+          radius: (widget.size != null) ? widget.size / 2 : 20,
+          child: state.contactImage == null || hideAvatars
+              ? Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: AlignmentDirectional.topStart,
+                colors: [color2, color1],
+              ),
+              borderRadius: BorderRadius.circular(30),
+            ),
+            child: Container(
+              child: state.initials == null || hideLetterAvatars
+              ? Icon(
+              Icons.person,
+              size: (widget.size ?? 40) / 2,
+            )
+                : Text(
+            state.initials,
+            style: TextStyle(
+              fontSize: (widget.fontSize == null)
+                  ? 18
+                  : widget.fontSize,
+            ),
+            textAlign: TextAlign.center,
           ),
-          child: CircleAvatar(
-            radius: (widget.size != null) ? widget.size / 2 : 20,
-            child: state.contactImage == null
-                ? Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: AlignmentDirectional.topStart,
-                        colors: [color2, color1],
-                      ),
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                    child: Container(
-                      child: state.initials == null
-                          ? Icon(
-                              Icons.person,
-                              size: (widget.size ?? 40) / 2,
-                            )
-                          : Text(
-                              state.initials,
-                              style: TextStyle(
-                                fontSize: (widget.fontSize == null)
-                                    ? 18
-                                    : widget.fontSize,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                      alignment: AlignmentDirectional.center,
-                    ),
-                  )
-                : CircleAvatar(
-                    backgroundImage: state.contactImage,
-                  ),
-          ),
-        ));
+          alignment: AlignmentDirectional.center,
+        ),
+      )
+          : CircleAvatar(
+      backgroundImage: state.contactImage,
+    ),)
+    ,
+    )
+    );
   }
 
   @override

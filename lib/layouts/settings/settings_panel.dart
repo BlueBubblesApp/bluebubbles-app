@@ -7,6 +7,7 @@ import "package:bluebubbles/helpers/string_extension.dart";
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/settings/about_panel.dart';
 import 'package:bluebubbles/layouts/settings/private_api_panel.dart';
+import 'package:bluebubbles/layouts/settings/redacted_mode_panel.dart';
 import 'package:bluebubbles/layouts/settings/server_management_panel.dart';
 import 'package:bluebubbles/layouts/settings/theme_panel.dart';
 import 'package:bluebubbles/layouts/settings/ux_panel.dart';
@@ -340,6 +341,19 @@ class _SettingsPanelState extends State<SettingsPanel> {
                       Navigator.of(context).push(
                         CupertinoPageRoute(
                           builder: (context) => PrivateAPIPanel(),
+                        ),
+                      );
+                    },
+                  ),
+                  SettingsTile(
+                    title: "Redacted Mode",
+                    trailing: Icon(
+                        SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_forward_ios : Icons.arrow_forward,
+                        color: Theme.of(context).primaryColor),
+                    onTap: () async {
+                      Navigator.of(context).push(
+                        CupertinoPageRoute(
+                          builder: (context) => RedactedModePanel(),
                         ),
                       );
                     },

@@ -15,9 +15,7 @@ import 'package:flutter/material.dart';
 import 'package:metadata_fetch/metadata_fetch.dart';
 
 class UrlPreviewWidget extends StatefulWidget {
-  UrlPreviewWidget(
-      {Key key, @required this.linkPreviews, @required this.message})
-      : super(key: key);
+  UrlPreviewWidget({Key key, @required this.linkPreviews, @required this.message}) : super(key: key);
   final List<Attachment> linkPreviews;
   final Message message;
 
@@ -25,20 +23,18 @@ class UrlPreviewWidget extends StatefulWidget {
   _UrlPreviewWidgetState createState() => _UrlPreviewWidgetState();
 }
 
-class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
-    with TickerProviderStateMixin {
+class _UrlPreviewWidgetState extends State<UrlPreviewWidget> with TickerProviderStateMixin {
   Metadata data;
   bool currentIsLoading = false;
-  StreamController<bool> loadingStateStream =
-      StreamController<bool>.broadcast();
+  StreamController<bool> loadingStateStream = StreamController<bool>.broadcast();
 
   bool get isLoading => currentIsLoading;
+
   set isLoading(bool value) {
     if (currentIsLoading == value) return;
 
     currentIsLoading = value;
-    if (!loadingStateStream.isClosed)
-      loadingStateStream.sink.add(currentIsLoading);
+    if (!loadingStateStream.isClosed) loadingStateStream.sink.add(currentIsLoading);
   }
 
   bool fetchedMissing = false;
@@ -64,8 +60,7 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
   /// Returns a File object representing the [attachment]
   File attachmentFile(Attachment attachment) {
     String appDocPath = SettingsManager().appDocDir.path;
-    String pathName =
-        "$appDocPath/attachments/${attachment.guid}/${attachment.transferName}";
+    String pathName = "$appDocPath/attachments/${attachment.guid}/${attachment.transferName}";
     return new File(pathName);
   }
 
@@ -87,8 +82,7 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
 
   Future<void> fetchPreview() async {
     // Try to get any already loaded attachment data
-    if (CurrentChat.of(context).urlPreviews?.containsKey(widget.message.text) !=
-        null) {
+    if (CurrentChat.of(context).urlPreviews?.containsKey(widget.message.text) != null) {
       data = CurrentChat.of(context).urlPreviews[widget.message.text];
     }
 
@@ -115,8 +109,7 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
     // If the data isn't empty, save/update it in the DB
     if (MetadataHelper.isNotEmpty(meta)) {
       // If pre-caching is enabled, fetch the image and save it
-      if (SettingsManager().settings.preCachePreviewImages &&
-          !isNullOrEmpty(meta.image)) {
+      if (SettingsManager().settings.preCachePreviewImages && !isNullOrEmpty(meta.image)) {
         // Save from URL
         File newFile = await saveImageFromUrl(widget.message.guid, meta.image);
 
@@ -163,29 +156,18 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
       stream: loadingStateStream.stream,
       builder: (context, snapshot) {
         if (data == null && isLoading) {
-          return Text("Loading Preview...",
-              style: Theme.of(context)
-                  .textTheme
-                  .bodyText1
-                  .apply(fontWeightDelta: 2));
-        } else if (data != null &&
-            data.title != null &&
-            data.title != "Image Preview") {
+          return Text("Loading Preview...", style: Theme.of(context).textTheme.bodyText1.apply(fontWeightDelta: 2));
+        } else if (data != null && data.title != null && data.title != "Image Preview") {
           return Text(
             data?.title ?? "<No Title>",
-            style:
-                Theme.of(context).textTheme.bodyText1.apply(fontWeightDelta: 2),
+            style: Theme.of(context).textTheme.bodyText1.apply(fontWeightDelta: 2),
             overflow: TextOverflow.ellipsis,
             maxLines: 2,
           );
         } else if (data?.title == "Image Preview") {
           return Container();
         } else {
-          return Text("Unable to Load Preview",
-              style: Theme.of(context)
-                  .textTheme
-                  .bodyText1
-                  .apply(fontWeightDelta: 2));
+          return Text("Unable to Load Preview", style: Theme.of(context).textTheme.bodyText1.apply(fontWeightDelta: 2));
         }
       },
     );
@@ -195,24 +177,21 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
 
     // Build the main image
     Widget mainImage = Container();
-    if (widget.linkPreviews.length <= 1 &&
-        data?.image != null &&
-        data.image.isNotEmpty) {
+    if (widget.linkPreviews.length <= 1 && data?.image != null && data.image.isNotEmpty) {
       if (data.image.startsWith("/")) {
         mainImage = Image.file(new File(data.image),
-            filterQuality: FilterQuality.low,
-            errorBuilder: (context, error, stackTrace) => Container());
+            filterQuality: FilterQuality.low, errorBuilder: (context, error, stackTrace) => Container());
       } else {
         mainImage = Image.network(data.image,
-            filterQuality: FilterQuality.low,
-            errorBuilder: (context, error, stackTrace) => Container());
+            filterQuality: FilterQuality.low, errorBuilder: (context, error, stackTrace) => Container());
       }
-    } else if (widget.linkPreviews.length > 1 &&
-        AttachmentHelper.attachmentExists(widget.linkPreviews.last)) {
+    } else if (widget.linkPreviews.length > 1 && AttachmentHelper.attachmentExists(widget.linkPreviews.last)) {
       mainImage = Image.file(attachmentFile(widget.linkPreviews.last),
-          filterQuality: FilterQuality.low,
-          errorBuilder: (context, error, stackTrace) => Container());
+          filterQuality: FilterQuality.low, errorBuilder: (context, error, stackTrace) => Container());
     }
+
+    final bool hideContent = SettingsManager().settings.redactedMode && SettingsManager().settings.hideMessageContent;
+    final bool hideType = SettingsManager().settings.redactedMode && SettingsManager().settings.hideAttachmentTypes;
 
     return AnimatedSize(
       curve: Curves.easeInOut,
@@ -223,11 +202,8 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
         padding: EdgeInsets.only(
           top: widget.message.hasReactions ? 18.0 : 4,
           bottom: 4,
-          right: !widget.message.isFromMe && widget.message.hasReactions
-              ? 10.0
-              : 5.0,
-          left:
-              widget.message.isFromMe && widget.message.hasReactions ? 5.0 : 0,
+          right: !widget.message.isFromMe && widget.message.hasReactions ? 10.0 : 5.0,
+          left: widget.message.isFromMe && widget.message.hasReactions ? 5.0 : 0,
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(20),
@@ -244,79 +220,88 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
               child: Container(
                 // The minus 5 here is so the timestamps show OK during swipe
                 width: (MediaQuery.of(context).size.width * 2 / 3) - 5,
-                child: Column(
+                child: Stack(
                   children: <Widget>[
-                    mainImage,
-                    Padding(
-                      padding:
-                          EdgeInsets.only(left: 14.0, right: 14.0, top: 14.0),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: <Widget>[
-                          Flexible(
-                            fit: FlexFit.tight,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: <Widget>[
-                                titleWidget,
-                                data != null && data.description != null
-                                    ? Padding(
-                                        padding: EdgeInsets.only(top: 5.0),
-                                        child: Text(
-                                          data.description,
-                                          maxLines: 3,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .bodyText1
-                                              .apply(fontSizeDelta: -5),
-                                        ))
-                                    : Container(),
-                                Padding(
-                                  padding: EdgeInsets.only(
-                                      top: (data?.title == "Image Preview"
-                                          ? 0
-                                          : 5.0),
-                                      bottom: 10.0),
-                                  child: Text(
-                                    widget.message.text
-                                        .replaceAll("https://", "")
-                                        .replaceAll("http://", "")
-                                        .toLowerCase(),
-                                    style:
-                                        Theme.of(context).textTheme.subtitle2,
-                                    overflow: TextOverflow.ellipsis,
-                                    maxLines: 1,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          (widget.linkPreviews.length == 1 &&
-                                  data?.image == null &&
-                                  AttachmentHelper.attachmentExists(
-                                      widget.linkPreviews.last))
-                              ? Padding(
-                                  padding:
-                                      EdgeInsets.only(left: 10.0, bottom: 10.0),
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(10.0),
-                                    child: Image.file(
-                                      attachmentFile(widget.linkPreviews.first),
-                                      width: 40,
-                                      fit: BoxFit.contain,
-                                      errorBuilder: (BuildContext contenxt,
-                                          Object test, StackTrace trace) {
-                                        return Container();
-                                      },
+                    Column(
+                      children: <Widget>[
+                        mainImage,
+                        Padding(
+                          padding: EdgeInsets.only(left: 14.0, right: 14.0, top: 14.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              Flexible(
+                                fit: FlexFit.tight,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: <Widget>[
+                                    titleWidget,
+                                    data != null && data.description != null
+                                        ? Padding(
+                                            padding: EdgeInsets.only(top: 5.0),
+                                            child: Text(
+                                              data.description,
+                                              maxLines: 3,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: Theme.of(context).textTheme.bodyText1.apply(fontSizeDelta: -5),
+                                            ))
+                                        : Container(),
+                                    Padding(
+                                      padding: EdgeInsets.only(
+                                          top: (data?.title == "Image Preview" ? 0 : 5.0), bottom: 10.0),
+                                      child: Text(
+                                        widget.message.text
+                                            .replaceAll("https://", "")
+                                            .replaceAll("http://", "")
+                                            .toLowerCase(),
+                                        style: Theme.of(context).textTheme.subtitle2,
+                                        overflow: TextOverflow.ellipsis,
+                                        maxLines: 1,
+                                      ),
                                     ),
-                                  ),
-                                )
-                              : Container()
-                        ],
-                      ),
+                                  ],
+                                ),
+                              ),
+                              (widget.linkPreviews.length == 1 &&
+                                      data?.image == null &&
+                                      AttachmentHelper.attachmentExists(widget.linkPreviews.last))
+                                  ? Padding(
+                                      padding: EdgeInsets.only(left: 10.0, bottom: 10.0),
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(10.0),
+                                        child: Image.file(
+                                          attachmentFile(widget.linkPreviews.first),
+                                          width: 40,
+                                          fit: BoxFit.contain,
+                                          errorBuilder: (BuildContext contenxt, Object test, StackTrace trace) {
+                                            return Container();
+                                          },
+                                        ),
+                                      ),
+                                    )
+                                  : Container()
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
+                    if (hideContent)
+                      Positioned.fill(
+                        child: Container(
+                          color: Theme.of(context).accentColor,
+                        ),
+                      ),
+                    if (hideContent && !hideType)
+                      Positioned.fill(
+                        child: Container(
+                          alignment: Alignment.center,
+                          child: Text(
+                            "link",
+                            textAlign: TextAlign.center,
+                          )
+                        )
+                      )
                   ],
                 ),
               ),

@@ -116,8 +116,8 @@ class _MessageAttachmentState extends State<MessageAttachment>
             attachment: widget.attachment,
           ),
         );
-      } else if (widget.attachment.mimeType == null) {
-        return Container();
+      // } else if (widget.attachment.mimeType == null) {
+      //   return Container();
       } else {
         return MediaFile(
           attachment: widget.attachment,

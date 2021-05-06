@@ -268,6 +268,12 @@ Future<String> getGroupEventText(Message message) async {
     }
   }
 
+  final bool hideNames = SettingsManager().settings.redactedMode && SettingsManager().settings.hideContactInfo;
+  if (hideNames) {
+    handle = "Someone";
+    other = "someone";
+  }
+
   if (message.itemType == 1 && message.groupActionType == 1) {
     text = "$handle removed $other from the conversation";
   } else if (message.itemType == 1 && message.groupActionType == 0) {

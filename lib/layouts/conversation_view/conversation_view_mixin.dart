@@ -30,8 +30,7 @@ import 'package:flutter/cupertino.dart' as Cupertino;
 import 'package:flutter/material.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
 
-mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
-    on State<ConversationView> {
+mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on State<ConversationView> {
   /// Commonly shared variables
   Chat chat;
   bool isCreator;
@@ -59,10 +58,10 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
   bool gotBrightness = false;
   bool markingAsRead = false;
   bool markedAsRead = false;
+
   void loadBrightness() {
     Color now = Theme.of(context).backgroundColor;
-    bool themeChanged =
-        previousBackgroundColor == null || previousBackgroundColor != now;
+    bool themeChanged = previousBackgroundColor == null || previousBackgroundColor != now;
     if (!themeChanged && gotBrightness) return;
 
     previousBackgroundColor = now;
@@ -78,8 +77,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
     if (this.mounted) setState(() {});
   }
 
-  TextEditingController chatSelectorController =
-      new TextEditingController(text: " ");
+  TextEditingController chatSelectorController = new TextEditingController(text: " ");
 
   /// Conversation view methods
   ///
@@ -95,8 +93,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
     });
 
     EventDispatcher().stream.listen((Map<String, dynamic> event) {
-      if (!["add-unread-chat", "remove-unread-chat", "refresh-messagebloc"]
-          .contains(event["type"])) return;
+      if (!["add-unread-chat", "remove-unread-chat", "refresh-messagebloc"].contains(event["type"])) return;
       if (!event["data"].containsKey("chatGuid")) return;
 
       // Ignore any events having to do with this chat
@@ -104,11 +101,9 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
       if (chat.guid == chatGuid) return;
 
       int preLength = newMessages.length;
-      if (event["type"] == "add-unread-chat" &&
-          !newMessages.contains(chatGuid)) {
+      if (event["type"] == "add-unread-chat" && !newMessages.contains(chatGuid)) {
         newMessages.add(chatGuid);
-      } else if (event["type"] == "remove-unread-chat" &&
-          newMessages.contains(chatGuid)) {
+      } else if (event["type"] == "remove-unread-chat" && newMessages.contains(chatGuid)) {
         newMessages.remove(chatGuid);
       }
 
@@ -142,9 +137,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
     await widget.chat.getTitle();
 
     // If the original data is different, update the state
-    if (ogTitle != widget.chat.title ||
-        ogParticipants.length != widget.chat.participants.length ||
-        forceUpdate) {
+    if (ogTitle != widget.chat.title || ogParticipants.length != widget.chat.participants.length || forceUpdate) {
       if (this.mounted) setState(() {});
     }
   }
@@ -202,12 +195,10 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
         if (data != null) {
           await chat.getParticipants();
           if (chat.participants.isNotEmpty) {
-            debugPrint(
-                "(Convo View) Got new chat participants. Updating state.");
+            debugPrint("(Convo View) Got new chat participants. Updating state.");
             if (this.mounted) setState(() {});
           } else {
-            debugPrint(
-                "(Convo View) Participants list is still empty, please contact support!");
+            debugPrint("(Convo View) Participants list is still empty, please contact support!");
           }
         }
       } catch (ex) {
@@ -256,8 +247,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
     // Set that we are
     setProgress(true);
 
-    SocketManager().sendMessage("mark-chat-read", {"chatGuid": chat.guid},
-        (data) {
+    SocketManager().sendMessage("mark-chat-read", {"chatGuid": chat.guid}, (data) {
       setProgress(false);
     }).catchError(() {
       setProgress(false);
@@ -268,13 +258,21 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
     loadBrightness();
     Color backgroundColor = Theme.of(context).backgroundColor;
     Color fontColor = Theme.of(context).textTheme.headline1.color;
+    String title = chat.title;
 
-    if (SettingsManager().settings.skin == Skins.Material ||
-        SettingsManager().settings.skin == Skins.Samsung) {
+    final hideTitle = SettingsManager().settings.redactedMode && SettingsManager().settings.hideContactInfo;
+    final generateTitle =
+        SettingsManager().settings.redactedMode && SettingsManager().settings.generateFakeContactNames;
+
+    if (generateTitle)
+      title = chat.fakeParticipants.length > 1 ? "Group Chat" : chat.fakeParticipants[0];
+    else if (hideTitle) fontColor = Colors.transparent;
+
+    if (SettingsManager().settings.skin == Skins.Material || SettingsManager().settings.skin == Skins.Samsung) {
       return AppBar(
         brightness: brightness,
         title: Text(
-          chat.title,
+          title,
           style: Theme.of(context).textTheme.headline1.apply(color: fontColor),
         ),
         bottom: PreferredSize(
@@ -288,8 +286,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
         actionsIconTheme: IconThemeData(color: Theme.of(context).primaryColor),
         iconTheme: IconThemeData(color: Theme.of(context).primaryColor),
         actions: [
-          if (SettingsManager().settings.privateManualMarkAsRead &&
-              markingAsRead)
+          if (SettingsManager().settings.privateManualMarkAsRead && markingAsRead)
             Padding(
                 padding: const EdgeInsets.only(right: 8.0),
                 child: Center(
@@ -297,8 +294,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
                   width: 20,
                   height: 20,
                   child: CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                          Theme.of(context).primaryColor)),
+                      valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor)),
                 ))),
           if (SettingsManager().settings.enablePrivateAPI &&
               SettingsManager().settings.privateManualMarkAsRead &&
@@ -307,12 +303,8 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
               padding: const EdgeInsets.only(right: 8.0),
               child: GestureDetector(
                 child: Icon(
-                  (markedAsRead)
-                      ? Icons.check_circle
-                      : Icons.check_circle_outline,
-                  color: (markedAsRead)
-                      ? HexColor('32CD32').withAlpha(200)
-                      : fontColor,
+                  (markedAsRead) ? Icons.check_circle : Icons.check_circle_outline,
+                  color: (markedAsRead) ? HexColor('32CD32').withAlpha(200) : fontColor,
                 ),
                 onTap: markChatAsRead,
               ),
@@ -341,15 +333,14 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
           child: CircleAvatar(
             radius: 20,
             backgroundColor: Theme.of(context).accentColor,
-            child: ContactAvatarWidget(
-                handle: participant,
-                borderThickness: 0.1,
-                editable: false,
-                onTap: openDetails),
+            child: ContactAvatarWidget(handle: participant, borderThickness: 0.1, editable: false, onTap: openDetails),
           ),
         ),
       );
     });
+
+    TextStyle titleStyle = Theme.of(context).textTheme.bodyText1;
+    if (!generateTitle && hideTitle) titleStyle = titleStyle.copyWith(color: Colors.transparent);
 
     // Calculate separation factor
     // Anything below -60 won't work due to the alignment
@@ -390,8 +381,8 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
                         style: Theme.of(context).textTheme.headline2,
                         children: [
                           TextSpan(
-                            text: chat.title,
-                            style: Theme.of(context).textTheme.bodyText1,
+                            text: title,
+                            style: titleStyle,
                           ),
                           TextSpan(
                             text: " >",
@@ -406,8 +397,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
             ),
           ],
         ),
-        trailing: (SettingsManager().settings.enablePrivateAPI &&
-                SettingsManager().settings.privateManualMarkAsRead)
+        trailing: (SettingsManager().settings.enablePrivateAPI && SettingsManager().settings.privateManualMarkAsRead)
             ? Stack(
                 children: [
                   if (markingAsRead)
@@ -415,9 +405,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
                         padding: const EdgeInsets.only(right: 10.0),
                         child: Theme(
                           data: ThemeData(
-                            cupertinoOverrideTheme:
-                                Cupertino.CupertinoThemeData(
-                                    brightness: brightness),
+                            cupertinoOverrideTheme: Cupertino.CupertinoThemeData(brightness: brightness),
                           ),
                           child: Cupertino.CupertinoActivityIndicator(
                             radius: 12,
@@ -428,12 +416,8 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
                       padding: const EdgeInsets.only(right: 2.0),
                       child: GestureDetector(
                         child: Icon(
-                          (markedAsRead)
-                              ? Icons.check_circle
-                              : Icons.check_circle_outline,
-                          color: (markedAsRead)
-                              ? HexColor('32CD32').withAlpha(200)
-                              : fontColor,
+                          (markedAsRead) ? Icons.check_circle : Icons.check_circle_outline,
+                          color: (markedAsRead) ? HexColor('32CD32').withAlpha(200) : fontColor,
                         ),
                         onTap: markChatAsRead,
                       ),
@@ -469,9 +453,8 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
           resetCursor();
         }
       } else if (chatSelectorController.text[0] != " ") {
-        chatSelectorController.text = " " +
-            chatSelectorController.text
-                .substring(0, chatSelectorController.text.length - 1);
+        chatSelectorController.text =
+            " " + chatSelectorController.text.substring(0, chatSelectorController.text.length - 1);
         chatSelectorController.selection = TextSelection.fromPosition(
           TextPosition(offset: chatSelectorController.text.length),
         );
@@ -517,8 +500,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
     // If it's just one recipient, try manual lookup
     if (selected.length == 1) {
       try {
-        Chat existingChat = await Chat.findOne(
-            {"chatIdentifier": sanitizeAddress(selected[0].address)});
+        Chat existingChat = await Chat.findOne({"chatIdentifier": sanitizeAddress(selected[0].address)});
         if (existingChat != null) {
           matchingChats.add(existingChat);
         }
@@ -534,8 +516,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
         int matches = 0;
         for (UniqueContact contact in selected) {
           // If the selected contact doesn't match any participants int he chat, continue
-          if (i.participants.any((Handle participant) =>
-              sameAddress(contact.address, participant.address))) {
+          if (i.participants.any((Handle participant) => sameAddress(contact.address, participant.address))) {
             matches += 1;
           }
         }
@@ -550,8 +531,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
     }
 
     // Sort the chats and take the first one
-    matchingChats
-        .sort((a, b) => a.participants.length.compareTo(b.participants.length));
+    matchingChats.sort((a, b) => a.participants.length.compareTo(b.participants.length));
     chat = matchingChats.first;
 
     // Re-initialize the current chat and message bloc for the found chats
@@ -576,8 +556,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
       }
     }
 
-    if (widget.type == ChatSelectorTypes.ONLY_EXISTING ||
-        chatSelectorController.text.length > 1) {
+    if (widget.type == ChatSelectorTypes.ONLY_EXISTING || chatSelectorController.text.length > 1) {
       conversations.retainWhere((element) => element.participants.length > 1);
     }
 
@@ -600,8 +579,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
     Function addContactEntries = (Contact contact, {conditionally = false}) {
       for (Item phone in contact.phones) {
         String cleansed = cleansePhoneNumber(phone.value);
-        if (conditionally && !cleansed.contains(searchQuery.toLowerCase()))
-          continue;
+        if (conditionally && !cleansed.contains(searchQuery.toLowerCase())) continue;
 
         if (!cache.contains(cleansed)) {
           cache.add(cleansed);
@@ -616,8 +594,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
       }
 
       for (Item email in contact.emails) {
-        if (conditionally && !email.value.contains(searchQuery.toLowerCase()))
-          continue;
+        if (conditionally && !email.value.contains(searchQuery.toLowerCase())) continue;
 
         if (!cache.contains(email.value)) {
           cache.add(email.value);
@@ -644,12 +621,10 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
     }
 
     List<UniqueContact> _conversations = [];
-    if (selected.length == 0 &&
-        widget.type != ChatSelectorTypes.ONLY_CONTACTS) {
+    if (selected.length == 0 && widget.type != ChatSelectorTypes.ONLY_CONTACTS) {
       for (Chat chat in conversations) {
         String title = (chat?.title ?? "").toLowerCase();
-        if (widget.type != ChatSelectorTypes.ONLY_EXISTING &&
-            chatSelectorController.text.length > 1) {
+        if (widget.type != ChatSelectorTypes.ONLY_EXISTING && chatSelectorController.text.length > 1) {
           if (chat.participants.length == 1) continue;
         }
 
@@ -685,11 +660,9 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
     if (chat != null) return chat;
     Completer<Chat> completer = Completer();
     if (searchQuery.length > 0) {
-      selected.add(
-          new UniqueContact(address: searchQuery, displayName: searchQuery));
+      selected.add(new UniqueContact(address: searchQuery, displayName: searchQuery));
     }
-    List<String> participants =
-        selected.map((e) => cleansePhoneNumber(e.address)).toList();
+    List<String> participants = selected.map((e) => cleansePhoneNumber(e.address)).toList();
     Map<String, dynamic> params = {};
     showDialog(
       context: context,
@@ -707,8 +680,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
               // height: 70,
               // color: Colors.black,
               child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(
-                    Theme.of(context).primaryColor),
+                valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
               ),
             ),
           ],
@@ -729,8 +701,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
     // If there is only 1 participant, try to find the chat
     Chat existingChat;
     if (participants.length == 1) {
-      existingChat = await Chat.findOne(
-          {"chatIdentifier": sanitizeAddress(participants[0])});
+      existingChat = await Chat.findOne({"chatIdentifier": sanitizeAddress(participants[0])});
     }
 
     if (existingChat == null) {
@@ -790,10 +761,8 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
         for (Handle e in item?.chat?.participants ?? []) {
           UniqueContact contact = new UniqueContact(
               address: e.address,
-              displayName: ContactManager()
-                      .getCachedContactSync(e.address)
-                      ?.displayName ??
-                  await formatPhoneNumber(e.address));
+              displayName:
+                  ContactManager().getCachedContactSync(e.address)?.displayName ?? await formatPhoneNumber(e.address));
           selected.add(contact);
         }
 

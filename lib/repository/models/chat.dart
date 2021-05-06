@@ -1,6 +1,7 @@
-import 'dart:convert';
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
+
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
@@ -11,15 +12,16 @@ import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/socket_manager.dart';
+import 'package:faker/faker.dart';
 import 'package:flutter/widgets.dart';
 import 'package:intl/intl.dart';
 import 'package:metadata_fetch/metadata_fetch.dart';
 import 'package:sqflite/sqflite.dart';
 
+import '../../helpers/utils.dart';
 import '../database.dart';
 import 'handle.dart';
 import 'message.dart';
-import '../../helpers/utils.dart';
 
 Chat chatFromJson(String str) {
   final jsonData = json.decode(str);
@@ -44,8 +46,7 @@ Future<String> getFullChatTitle(Chat _chat) async {
 
     List<String> titles = [];
     for (int i = 0; i < chat.participants.length; i++) {
-      String name =
-          await ContactManager().getContactTitle(chat.participants[i].address);
+      String name = await ContactManager().getContactTitle(chat.participants[i].address);
 
       String test = name.replaceAll(RegExp(r'[-() \.]'), '');
       test = test.replaceAll(RegExp(r'[^0-9]'), "").trim();
@@ -67,8 +68,7 @@ Future<String> getFullChatTitle(Chat _chat) async {
     } else if (titles.length <= 4) {
       title = titles.join(", ");
       int pos = title.lastIndexOf(", ");
-      if (pos != -1)
-        title = "${title.substring(0, pos)} & ${title.substring(pos + 2)}";
+      if (pos != -1) title = "${title.substring(0, pos)} & ${title.substring(pos + 2)}";
     } else {
       title = titles.sublist(0, 3).join(", ");
       title = "$title & ${titles.length - 3} others";
@@ -82,8 +82,7 @@ Future<String> getFullChatTitle(Chat _chat) async {
 
 Future<String> getShortChatTitle(Chat _chat) async {
   if (_chat.participants.length == 1) {
-    return await ContactManager()
-        .getContactTitle(_chat.participants[0].address);
+    return await ContactManager().getContactTitle(_chat.participants[0].address);
   } else if (_chat.displayName != null && _chat.displayName.length != 0) {
     return _chat.displayName;
   } else {
@@ -104,9 +103,11 @@ class Chat {
   bool hasUnreadMessage;
   DateTime latestMessageDate;
   String latestMessageText;
+  String fakeLatestMessageText;
   String title;
   String displayName;
   List<Handle> participants = [];
+  List<String> fakeParticipants = [];
 
   Chat({
     this.id,
@@ -121,29 +122,29 @@ class Chat {
     this.hasUnreadMessage,
     this.displayName,
     this.participants = const [],
+    this.fakeParticipants = const [],
     this.latestMessageDate,
     this.latestMessageText,
+    this.fakeLatestMessageText,
   });
 
   factory Chat.fromMap(Map<String, dynamic> json) {
     List<Handle> participants = [];
+    List<String> fakeParticipants = [];
     if (json.containsKey('participants')) {
       (json['participants'] as List<dynamic>).forEach((item) {
         participants.add(Handle.fromMap(item));
+        fakeParticipants.add(ContactManager().handleToFakeName[participants.last.address]);
       });
     }
 
     var data = new Chat(
       id: json.containsKey("ROWID") ? json["ROWID"] : null,
-      originalROWID:
-          json.containsKey("originalROWID") ? json["originalROWID"] : null,
+      originalROWID: json.containsKey("originalROWID") ? json["originalROWID"] : null,
       guid: json["guid"],
       style: json['style'],
-      chatIdentifier:
-          json.containsKey("chatIdentifier") ? json["chatIdentifier"] : null,
-      isArchived: (json["isArchived"] is bool)
-          ? json['isArchived']
-          : ((json['isArchived'] == 1) ? true : false),
+      chatIdentifier: json.containsKey("chatIdentifier") ? json["chatIdentifier"] : null,
+      isArchived: (json["isArchived"] is bool) ? json['isArchived'] : ((json['isArchived'] == 1) ? true : false),
       isFiltered: json.containsKey("isFiltered")
           ? (json["isFiltered"] is bool)
               ? json['isFiltered']
@@ -164,16 +165,16 @@ class Chat {
               ? json['hasUnreadMessage']
               : ((json['hasUnreadMessage'] == 1) ? true : false)
           : false,
-      latestMessageText: json.containsKey("latestMessageText")
-          ? json["latestMessageText"]
+      latestMessageText: json.containsKey("latestMessageText") ? json["latestMessageText"] : null,
+      fakeLatestMessageText: json.containsKey("latestMessageText")
+          ? faker.lorem.words((json["latestMessageText"] ?? "").split(" ").length).join(" ")
           : null,
-      latestMessageDate: json.containsKey("latestMessageDate") &&
-              json['latestMessageDate'] != null
-          ? new DateTime.fromMillisecondsSinceEpoch(
-              json['latestMessageDate'] as int)
+      latestMessageDate: json.containsKey("latestMessageDate") && json['latestMessageDate'] != null
+          ? new DateTime.fromMillisecondsSinceEpoch(json['latestMessageDate'] as int)
           : null,
       displayName: json.containsKey("displayName") ? json["displayName"] : null,
       participants: participants,
+      fakeParticipants: fakeParticipants,
     );
 
     // Adds fallback getter for the ID
@@ -184,8 +185,7 @@ class Chat {
     return data;
   }
 
-  Future<Chat> save(
-      {bool updateIfAbsent = true, bool updateLocalVals = false}) async {
+  Future<Chat> save({bool updateIfAbsent = true, bool updateLocalVals = false}) async {
     final Database db = await DBProvider.db.database;
 
     // Try to find an existing chat before saving it
@@ -225,8 +225,7 @@ class Chat {
 
   Future<Chat> changeName(String name) async {
     final Database db = await DBProvider.db.database;
-    await db.update("chat", {'displayName': name},
-        where: "ROWID = ?", whereArgs: [this.id]);
+    await db.update("chat", {'displayName': name}, where: "ROWID = ?", whereArgs: [this.id]);
     this.displayName = name;
     return this;
   }
@@ -237,8 +236,7 @@ class Chat {
   }
 
   String getDateText() {
-    if (this.latestMessageDate == null ||
-        this.latestMessageDate.millisecondsSinceEpoch == 0) return "";
+    if (this.latestMessageDate == null || this.latestMessageDate.millisecondsSinceEpoch == 0) return "";
     if (this.latestMessageDate.isToday()) {
       return new DateFormat.jm().format(this.latestMessageDate);
     } else if (this.latestMessageDate.isYesterday()) {
@@ -264,8 +262,7 @@ class Chat {
     // Only update the latestMessage info if it's not null
     if (this.latestMessageDate != null) {
       params["latestMessageText"] = this.latestMessageText;
-      params["latestMessageDate"] =
-          this.latestMessageDate.millisecondsSinceEpoch;
+      params["latestMessageDate"] = this.latestMessageDate.millisecondsSinceEpoch;
     }
 
     // Add display name if it's been updated
@@ -291,10 +288,8 @@ class Chat {
       await db.delete("message", where: "ROWID = ?", whereArgs: [message.id]);
     }
     await db.delete("chat", where: "ROWID = ?", whereArgs: [chat.id]);
-    await db
-        .delete("chat_handle_join", where: "chatId = ?", whereArgs: [chat.id]);
-    await db
-        .delete("chat_message_join", where: "chatId = ?", whereArgs: [chat.id]);
+    await db.delete("chat_handle_join", where: "chatId = ?", whereArgs: [chat.id]);
+    await db.delete("chat_message_join", where: "chatId = ?", whereArgs: [chat.id]);
   }
 
   Future<Chat> setUnreadStatus(bool hasUnreadMessage) async {
@@ -324,8 +319,7 @@ class Chat {
     return this;
   }
 
-  Future<Chat> addMessage(Message message,
-      {bool changeUnreadStatus: true, bool checkForMessageText = true}) async {
+  Future<Chat> addMessage(Message message, {bool changeUnreadStatus: true, bool checkForMessageText = true}) async {
     final Database db = await DBProvider.db.database;
 
     // Save the message
@@ -347,14 +341,14 @@ class Chat {
     if (newMessage.id != null && checkForMessageText) {
       if (this.latestMessageDate == null) {
         isNewer = true;
-      } else if (this.latestMessageDate.millisecondsSinceEpoch <
-          message.dateCreated.millisecondsSinceEpoch) {
+      } else if (this.latestMessageDate.millisecondsSinceEpoch < message.dateCreated.millisecondsSinceEpoch) {
         isNewer = true;
       }
     }
 
     if (isNewer && checkForMessageText) {
       this.latestMessageText = await MessageHelper.getNotificationText(message);
+      this.fakeLatestMessageText = faker.lorem.words((this.latestMessageText ?? "").split(" ").length).join(" ");
       this.latestMessageDate = message.dateCreated;
     }
 
@@ -370,17 +364,13 @@ class Chat {
 
     try {
       // Add the relationship
-      await db.insert(
-          "chat_message_join", {"chatId": this.id, "messageId": message.id});
+      await db.insert("chat_message_join", {"chatId": this.id, "messageId": message.id});
     } catch (ex) {
       // Don't do anything if it already exists
     }
 
     // If the incoming message was newer than the "last" one, set the unread status accordingly
-    if (checkForMessageText &&
-        changeUnreadStatus &&
-        isNewer &&
-        existing == null) {
+    if (checkForMessageText && changeUnreadStatus && isNewer && existing == null) {
       // If the message is from me, mark it unread
       // If the message is not from the same chat as the current chat, mark unread
       if (message.isFromMe) {
@@ -402,8 +392,7 @@ class Chat {
     }
 
     // If this is a message preview and we don't already have metadata for this, get it
-    if (message.isUrlPreview() &&
-        !MetadataHelper.mapIsNotEmpty(message.metadata)) {
+    if (message.isUrlPreview() && !MetadataHelper.mapIsNotEmpty(message.metadata)) {
       MetadataHelper.fetchMetadata(message).then((Metadata meta) async {
         // If the metadata is empty, don't do anything
         if (!MetadataHelper.isNotEmpty(meta)) return;
@@ -416,8 +405,7 @@ class Chat {
             message.metadata.containsKey("image") &&
             !isNullOrEmpty(message.metadata["image"])) {
           // Save from URL
-          File newFile =
-              await saveImageFromUrl(message.guid, message.metadata["image"]);
+          File newFile = await saveImageFromUrl(message.guid, message.metadata["image"]);
 
           // If we downloaded a file, set the new metadata path
           if (newFile != null && newFile.existsSync()) {
@@ -435,8 +423,7 @@ class Chat {
 
   void serverSyncParticipants() {
     // Send message to server to get the participants
-    SocketManager().sendMessage("get-participants", {"identifier": this.guid},
-        (response) async {
+    SocketManager().sendMessage("get-participants", {"identifier": this.guid}, (response) async {
       if (response["status"] == 200) {
         // Get all the participants from the server
         List data = response["data"];
@@ -447,20 +434,13 @@ class Chat {
 
         // We want to determine all the participants that exist in the response that are not already in our locally saved chat (AKA all the new participants)
         List<Handle> newParticipants = handles
-            .where((a) => (this
-                    .participants
-                    .where((b) => b.address == a.address)
-                    .toList()
-                    .length ==
-                0))
+            .where((a) => (this.participants.where((b) => b.address == a.address).toList().length == 0))
             .toList();
 
         // We want to determine all the participants that exist in the locally saved chat that are not in the response (AKA all the removed participants)
         List<Handle> removedParticipants = this
             .participants
-            .where((a) =>
-                (handles.where((b) => b.address == a.address).toList().length ==
-                    0))
+            .where((a) => (handles.where((b) => b.address == a.address).toList().length == 0))
             .toList();
 
         // Add all participants that are missing from our local db
@@ -480,8 +460,7 @@ class Chat {
     });
   }
 
-  static Future<List<Attachment>> getAttachments(Chat chat,
-      {int offset = 0, int limit = 25}) async {
+  static Future<List<Attachment>> getAttachments(Chat chat, {int offset = 0, int limit = 25}) async {
     final Database db = await DBProvider.db.database;
     if (chat.id == null) return [];
 
@@ -508,9 +487,7 @@ class Chat {
     // Execute the query
     var res = await db.rawQuery("$query;", [chat.id]);
     if (res == null) return [];
-    List<Attachment> attachments = res
-        .map((attachment) => Attachment.fromMap(attachment))
-        .where((element) {
+    List<Attachment> attachments = res.map((attachment) => Attachment.fromMap(attachment)).where((element) {
       String mimeType = element.mimeType;
       if (mimeType == null) return false;
       mimeType = mimeType.substring(0, mimeType.indexOf("/"));
@@ -524,37 +501,29 @@ class Chat {
   }
 
   static Map<String, Completer<List<Message>>> _getMessagesRequests = {};
+
   static Future<List<Message>> getMessagesSingleton(Chat chat,
-      {bool reactionsOnly = false,
-      int offset = 0,
-      int limit = 25,
-      bool includeDeleted: false}) async {
+      {bool reactionsOnly = false, int offset = 0, int limit = 25, bool includeDeleted: false}) async {
     if (chat == null) return [];
 
     String req = "${chat?.guid}-$offset-$limit-$reactionsOnly-$includeDeleted";
 
     // If a current request is in progress, return that future
-    if (_getMessagesRequests.containsKey(req) &&
-        !_getMessagesRequests[req].isCompleted)
+    if (_getMessagesRequests.containsKey(req) && !_getMessagesRequests[req].isCompleted)
       return _getMessagesRequests[req].future;
 
     _getMessagesRequests[req] = new Completer();
 
     try {
       List<Message> messages = await Chat.getMessages(chat,
-          reactionsOnly: reactionsOnly,
-          offset: offset,
-          limit: limit,
-          includeDeleted: includeDeleted);
+          reactionsOnly: reactionsOnly, offset: offset, limit: limit, includeDeleted: includeDeleted);
 
-      if (_getMessagesRequests.containsKey(req) &&
-          !_getMessagesRequests[req].isCompleted)
+      if (_getMessagesRequests.containsKey(req) && !_getMessagesRequests[req].isCompleted)
         _getMessagesRequests[req].complete(messages);
     } catch (ex) {
       print(ex);
 
-      if (_getMessagesRequests.containsKey(req) &&
-          !_getMessagesRequests[req].isCompleted)
+      if (_getMessagesRequests.containsKey(req) && !_getMessagesRequests[req].isCompleted)
         _getMessagesRequests[req].completeError(ex);
     }
 
@@ -573,10 +542,7 @@ class Chat {
   }
 
   static Future<List<Message>> getMessages(Chat chat,
-      {bool reactionsOnly = false,
-      int offset = 0,
-      int limit = 25,
-      bool includeDeleted: false}) async {
+      {bool reactionsOnly = false, int offset = 0, int limit = 25, bool includeDeleted: false}) async {
     final Database db = await DBProvider.db.database;
     if (chat.id == null) return [];
 
@@ -634,15 +600,11 @@ class Chat {
     }
 
     // Add pagination
-    String pagination =
-        " ORDER BY message.originalROWID DESC LIMIT $limit OFFSET $offset;";
+    String pagination = " ORDER BY message.originalROWID DESC LIMIT $limit OFFSET $offset;";
 
     // Execute the query
-    var res = await db.rawQuery(
-        "$query" +
-            " AND message.originalROWID IS NOT NULL GROUP BY message.ROWID" +
-            pagination,
-        [chat.id]);
+    var res = await db
+        .rawQuery("$query" + " AND message.originalROWID IS NOT NULL GROUP BY message.ROWID" + pagination, [chat.id]);
 
     // Add the from/handle data to the messages
     List<Message> output = [];
@@ -652,8 +614,7 @@ class Chat {
       // If the handle is not null, load the handle data
       // The handle is null if the message.handleId is 0
       // the handleId is 0 when isFromMe is true and the chat is a group chat
-      if (res[i].containsKey('handleAddress') &&
-          res[i]['handleAddress'] != null) {
+      if (res[i].containsKey('handleAddress') && res[i]['handleAddress'] != null) {
         msg.handle = Handle.fromMap({
           'id': res[i]['handleId'],
           'originalROWID': res[i]['handleOriginalROWID'],
@@ -667,17 +628,14 @@ class Chat {
       output.add(msg);
     }
 
-    var res2 = await db.rawQuery(
-        "$query" + " AND message.originalROWID IS NULL GROUP BY message.ROWID;",
-        [chat.id]);
+    var res2 = await db.rawQuery("$query" + " AND message.originalROWID IS NULL GROUP BY message.ROWID;", [chat.id]);
     for (int i = 0; i < res2.length; i++) {
       Message msg = Message.fromMap(res2[i]);
 
       // If the handle is not null, load the handle data
       // The handle is null if the message.handleId is 0
       // the handleId is 0 when isFromMe is true and the chat is a group chat
-      if (res2[i].containsKey('handleAddress') &&
-          res2[i]['handleAddress'] != null) {
+      if (res2[i].containsKey('handleAddress') && res2[i]['handleAddress'] != null) {
         msg.handle = Handle.fromMap({
           'id': res2[i]['handleId'],
           'originalROWID': res2[i]['handleOriginalROWID'],
@@ -716,14 +674,15 @@ class Chat {
         " WHERE chat.ROWID = ?;",
         [this.id]);
 
-    this.participants =
-        (res.isNotEmpty) ? res.map((c) => Handle.fromMap(c)).toList() : [];
+    this.participants = (res.isNotEmpty) ? res.map((c) => Handle.fromMap(c)).toList() : [];
 
     // Remove dupe participants
     if (this.participants.length > 0) {
       final ids = this.participants.map((e) => e.id).toSet();
       this.participants.retainWhere((element) => ids.remove(element.id));
     }
+
+    this.fakeParticipants = this.participants.map((p) => ContactManager().handleToFakeName[p.address]).toList();
 
     return this;
   }
@@ -740,8 +699,7 @@ class Chat {
     }
 
     try {
-      await db.insert(
-          "chat_handle_join", {"chatId": this.id, "handleId": participant.id});
+      await db.insert("chat_handle_join", {"chatId": this.id, "handleId": participant.id});
     } catch (ex) {
       // Don't do anything if it already exists
     }
@@ -753,9 +711,7 @@ class Chat {
     final Database db = await DBProvider.db.database;
 
     // First, remove from the JOIN table
-    await db.delete("chat_handle_join",
-        where: "chatId = ? AND handleId = ?",
-        whereArgs: [this.id, participant.id]);
+    await db.delete("chat_handle_join", where: "chatId = ? AND handleId = ?", whereArgs: [this.id, participant.id]);
 
     // Second, remove from this object instance
     if (this.participants.contains(participant)) {
@@ -770,8 +726,7 @@ class Chat {
     if (this.id == null) return this;
 
     this.isPinned = true;
-    await db.update("chat", {"isPinned": 1},
-        where: "ROWID = ?", whereArgs: [this.id]);
+    await db.update("chat", {"isPinned": 1}, where: "ROWID = ?", whereArgs: [this.id]);
 
     ChatBloc()?.updateChat(this);
     return this;
@@ -782,8 +737,7 @@ class Chat {
     if (this.id == null) return this;
 
     this.isPinned = false;
-    await db.update("chat", {"isPinned": 0},
-        where: "ROWID = ?", whereArgs: [this.id]);
+    await db.update("chat", {"isPinned": 0}, where: "ROWID = ?", whereArgs: [this.id]);
 
     ChatBloc()?.updateChat(this);
     return this;
@@ -796,8 +750,7 @@ class Chat {
     filters.keys.forEach((filter) => whereParams.add('$filter = ?'));
     List<dynamic> whereArgs = [];
     filters.values.forEach((filter) => whereArgs.add(filter));
-    var res = await db.query("chat",
-        where: whereParams.join(" AND "), whereArgs: whereArgs, limit: 1);
+    var res = await db.query("chat", where: whereParams.join(" AND "), whereArgs: whereArgs, limit: 1);
 
     if (res.isEmpty) {
       return null;
@@ -806,8 +759,7 @@ class Chat {
     return Chat.fromMap(res.elementAt(0));
   }
 
-  static Future<List<Chat>> find(
-      [Map<String, dynamic> filters = const {}, limit, offset]) async {
+  static Future<List<Chat>> find([Map<String, dynamic> filters = const {}, limit, offset]) async {
     final Database db = await DBProvider.db.database;
 
     List<String> whereParams = [];
@@ -824,10 +776,7 @@ class Chat {
   }
 
   static Future<List<Chat>> getChats(
-      {bool archived = false,
-      int limit = 15,
-      int offset = 0,
-      bool getFiltered = false}) async {
+      {bool archived = false, int limit = 15, int offset = 0, bool getFiltered = false}) async {
     final Database db = await DBProvider.db.database;
 
     var res = await db.rawQuery(
@@ -905,9 +854,7 @@ class Chat {
         "displayName": displayName,
         "participants": participants.map((item) => item.toMap()),
         "hasUnreadMessage": hasUnreadMessage ? 1 : 0,
-        "latestMessageDate": latestMessageDate != null
-            ? latestMessageDate.millisecondsSinceEpoch
-            : 0,
+        "latestMessageDate": latestMessageDate != null ? latestMessageDate.millisecondsSinceEpoch : 0,
         "latestMessageText": latestMessageText
       };
 }
