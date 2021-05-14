@@ -311,6 +311,8 @@ class Message {
           return newMessage;
         }
       }
+
+      return newMessage;
     }
 
     Map<String, dynamic> params = newMessage.toMap();

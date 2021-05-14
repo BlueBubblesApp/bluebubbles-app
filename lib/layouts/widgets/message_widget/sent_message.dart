@@ -39,6 +39,8 @@ class SentMessageHelper {
 
     Widget msg;
     bool hasReactions = (message?.getReactions() ?? []).length > 0 ?? false;
+    Skins currentSkin = SettingsManager().settings.skin;
+
     if (message?.isBigEmoji() ?? false) {
       msg = Padding(
         padding: EdgeInsets.only(
@@ -77,7 +79,7 @@ class SentMessageHelper {
       msg = Stack(
         alignment: AlignmentDirectional.bottomEnd,
         children: [
-          if (showTail && SettingsManager().settings.skin == Skins.IOS)
+          if (showTail && currentSkin == Skins.IOS)
             MessageTail(
               message: message,
               color: customColor ?? bubbleColor,
@@ -96,9 +98,9 @@ class SentMessageHelper {
               horizontal: padding ? 14 : 0,
             ),
             decoration: BoxDecoration(
-              borderRadius: SettingsManager().settings.skin == Skins.IOS
+              borderRadius: currentSkin == Skins.IOS
                   ? BorderRadius.circular(20)
-                  : (SettingsManager().settings.skin == Skins.Material)
+                  : (currentSkin == Skins.Material)
                       ? BorderRadius.only(
                           topLeft: Radius.circular(20),
                           topRight: olderMessage == null || MessageHelper.getShowTail(olderMessage, message)
@@ -107,7 +109,7 @@ class SentMessageHelper {
                           bottomLeft: Radius.circular(20),
                           bottomRight: Radius.circular(showTail ? 20 : 5),
                         )
-                      : (SettingsManager().settings.skin == Skins.Samsung)
+                      : (currentSkin == Skins.Samsung)
                           ? BorderRadius.only(
                               topLeft: Radius.circular(17.5),
                               topRight: Radius.circular(17.5),

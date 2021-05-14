@@ -349,8 +349,9 @@ class MessagesViewState extends State<MessagesView>
     }
     if (!updatedAMessage) {
       debugPrint(
-          "(Message status) FAILED TO UPDATE A MESSAGE: [${message.text}] - [${message.guid}] - [$oldGuid]");
+          "(Message status) Message not updated (not found): [${message.text}] - [${message.guid}] - [$oldGuid]");
     }
+
     return message;
   }
 

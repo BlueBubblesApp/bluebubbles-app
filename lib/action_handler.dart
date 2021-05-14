@@ -34,7 +34,8 @@ class ActionHandler {
   /// sendMessage(chatObject, 'Hello world!')
   /// ```
   static Future<void> sendMessage(Chat chat, String text,
-      {MessageBloc messageBloc, List<Attachment> attachments = const []}) async {
+      {MessageBloc messageBloc,
+      List<Attachment> attachments = const []}) async {
     if (isNullOrEmpty(text, trimString: true)) return;
 
     List<Message> messages = <Message>[];
@@ -313,8 +314,12 @@ class ActionHandler {
       debugPrint(
           "(Message status) -> handleUpdatedMessage: " + updatedMessage.text);
     }
+
+    print("1");
     updatedMessage =
         await Message.replaceMessage(updatedMessage.guid, updatedMessage);
+
+    print("2");
 
     Chat chat;
     if (data["chats"] == null &&
@@ -324,6 +329,7 @@ class ActionHandler {
     } else if (data["chats"] != null) {
       chat = Chat.fromMap(data["chats"][0]);
     }
+    print("3");
 
     if (!headless && updatedMessage != null)
       NewMessageManager()
