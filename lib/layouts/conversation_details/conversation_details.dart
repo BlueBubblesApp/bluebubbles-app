@@ -136,7 +136,6 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                 (context, index) {
                   return ContactTile(
                     key: Key(chat.participants[index].id.toString()),
-                    address: chat.participants[index].address,
                     handle: chat.participants[index],
                     chat: chat,
                     updateChat: (Chat newChat) {

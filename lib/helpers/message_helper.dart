@@ -210,14 +210,9 @@ class MessageHelper {
       return;
     }
 
-    String handleAddress;
-    if (message.handle != null) {
-      handleAddress = message.handle.address;
-    }
-
     // Create the notification
-    String contactTitle = await ContactManager().getContactTitle(handleAddress);
-    Contact contact = await ContactManager().getCachedContact(handleAddress);
+    String contactTitle = await ContactManager().getContactTitle(message.handle);
+    Contact contact = await ContactManager().getCachedContact(message.handle);
     String title = await getFullChatTitle(chat);
     String notification = await MessageHelper.getNotificationText(message);
     if (SettingsManager().settings.hideTextPreviews) {
@@ -300,7 +295,7 @@ class MessageHelper {
           : await formatPhoneNumber(message.handle.address);
       if (!message.isFromMe && message.handle != null) {
         Contact contact =
-            await ContactManager().getCachedContact(message.handle.address);
+            await ContactManager().getCachedContact(message.handle);
         if (contact != null) {
           sender = contact.givenName ?? contact.displayName;
         }

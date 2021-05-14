@@ -22,7 +22,7 @@ abstract class MessageWidgetMixin {
     if (message.handle == null || !showHandle) return;
 
     String title =
-        await ContactManager().getContactTitle(message.handle.address);
+        await ContactManager().getContactTitle(message.handle);
 
     if (title != contactTitle) {
       contactTitle = title;

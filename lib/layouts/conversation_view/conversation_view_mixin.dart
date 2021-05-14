@@ -527,6 +527,11 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
     }
 
     if (matchingChats.length == 0) {
+      // If we haven't completed the chats request, wait for it to finish
+      if (!ChatBloc().chatRequest.isCompleted) {
+        await ChatBloc().chatRequest.future;
+      }
+
       for (var i in ChatBloc().chats) {
         // If the lengths don't match continue
         if (i.participants.length != selected.length) continue;
@@ -534,11 +539,24 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
         // Iterate over each selected contact
         int matches = 0;
         for (UniqueContact contact in selected) {
-          // If the selected contact doesn't match any participants int he chat, continue
-          if (i.participants.any((Handle participant) =>
-              sameAddress(contact.address, participant.address))) {
-            matches += 1;
+          bool match = false;
+          bool isEmail = contact.address.contains('@');
+          String lastDigits = contact.address.substring(contact.address.length - 4, contact.address.length);
+
+          for (var participant in i.participants) {
+            // If one is an email and the other isn't, skip
+            if (isEmail && !participant.address.contains('@')) continue;
+
+            // If the last 4 digits don't match, skip
+            if (!participant.address.endsWith(lastDigits)) continue;
+
+            // Get a list of comparable options
+            dynamic opts = await getCompareOpts(participant);
+            match = sameAddress(opts, contact.address);
+            if (match) break;
           }
+          
+          if (match) matches += 1;
         }
 
         if (matches == selected.length) matchingChats.add(i);
