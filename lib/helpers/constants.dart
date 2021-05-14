@@ -1,10 +1,4 @@
-enum MessageError {
-  NO_ERROR,
-  TIMEOUT,
-  NO_CONNECTION,
-  BAD_REQUEST,
-  SERVER_ERROR
-}
+enum MessageError { NO_ERROR, TIMEOUT, NO_CONNECTION, BAD_REQUEST, SERVER_ERROR }
 
 extension MessageErrorExtension on MessageError {
   static const codes = {
