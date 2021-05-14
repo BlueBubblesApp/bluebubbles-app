@@ -26,6 +26,7 @@ import 'package:html/parser.dart';
 import 'package:http/http.dart' show get;
 import 'package:image_size_getter/image_size_getter.dart' as IMG;
 import 'package:intl/intl.dart' as intl;
+import 'package:slugify/slugify.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
 
 DateTime parseDate(dynamic value) {
@@ -86,50 +87,62 @@ Future<String> formatPhoneNumber(String str) async {
   return meta['national'];
 }
 
-String sanitizeAddress(String address) {
-  return address.replaceAll(RegExp(r'[-() \.]'), '').trim();
-}
-
 bool sameAddress(String address1, String address2) {
   String countryCode = SettingsManager().countryCode ?? "US";
-  String formattedNumber1 = sanitizeAddress(address1);
-  String formattedNumber2 = sanitizeAddress(address2);
+  String formattedNumber1 = Slugify(address1, delimiter: '');
+  String formattedNumber2 = Slugify(address2, delimiter: '');
 
-  // Strip any unnecessary pluses and "1"s
-  // If it starts with a plus, is in the US, and the length is 11, strip the +
-  // Having only 11 characters means it was missing the "1" after "+1"
-  String ccUpper = countryCode.toUpperCase();
-  if (formattedNumber1.startsWith("+") && ccUpper == "US" && formattedNumber1.length == 11) {
-    formattedNumber1 = formattedNumber1.substring(1);
-  } else if (formattedNumber1.startsWith("1") && ccUpper == "US" && formattedNumber1.length == 11) {
-    formattedNumber1 = formattedNumber1.substring(1);
-  }
-  if (formattedNumber2.startsWith("+") && ccUpper == "US" && formattedNumber2.length == 11) {
-    formattedNumber2 = formattedNumber1.substring(1);
-  } else if (!formattedNumber2.startsWith("1") && ccUpper == "US" && formattedNumber2.length == 11) {
-    formattedNumber2 = formattedNumber2.substring(1);
-  }
-
-  // Now check if the values are equal
-  if (formattedNumber1 == formattedNumber2) return true;
-
-  // If they are not equal, try to strip the dial code (if any)
-  if (formattedNumber1.startsWith("+")) {
-    if (getCodeMap().containsKey(countryCode)) {
-      String dialCode = getCodeMap()[countryCode];
-      formattedNumber1 = formattedNumber1.substring(dialCode.length);
+  try {
+    // Strip any unnecessary pluses and "1"s
+    // If it starts with a plus, is in the US, and the length is 11, strip the +
+    // Having only 11 characters means it was missing the "1" after "+1"
+    String ccUpper = countryCode.toUpperCase();
+    if (formattedNumber1.startsWith("+") &&
+        ccUpper == "US" &&
+        formattedNumber1.length == 11) {
+      formattedNumber1 = formattedNumber1.substring(1);
+    } else if (formattedNumber1.startsWith("1") &&
+        ccUpper == "US" &&
+        formattedNumber1.length == 11) {
+      formattedNumber1 = formattedNumber1.substring(1);
     }
-  }
-
-  if (formattedNumber2.startsWith("+")) {
-    if (getCodeMap().containsKey(countryCode)) {
-      String dialCode = getCodeMap()[countryCode];
-      formattedNumber2 = formattedNumber2.substring(dialCode.length);
+    if (formattedNumber2.startsWith("+") &&
+        ccUpper == "US" &&
+        formattedNumber2.length == 11) {
+      formattedNumber2 = formattedNumber1.substring(1);
+    } else if (!formattedNumber2.startsWith("1") &&
+        ccUpper == "US" &&
+        formattedNumber2.length == 11) {
+      formattedNumber2 = formattedNumber2.substring(1);
     }
-  }
 
-  // Now that the dial code is stripped, check if they are the same
-  if (formattedNumber1 == formattedNumber2) return true;
+    // Now check if the values are equal
+    if (formattedNumber1 == formattedNumber2) return true;
+
+    // If they are not equal, try to strip the dial code (if any)
+    if (formattedNumber1.startsWith("+")) {
+      if (getCodeMap().containsKey(countryCode)) {
+        String dialCode = getCodeMap()[countryCode];
+        if (formattedNumber1.length > dialCode.length) {
+          formattedNumber1 = formattedNumber1.substring(dialCode.length);
+        }
+      }
+    }
+
+    if (formattedNumber2.startsWith("+")) {
+      if (getCodeMap().containsKey(countryCode)) {
+        String dialCode = getCodeMap()[countryCode];
+        if (formattedNumber1.length > dialCode.length) {
+          formattedNumber2 = formattedNumber2.substring(dialCode.length);
+        }
+      }
+    }
+
+    // Now that the dial code is stripped, check if they are the same
+    if (formattedNumber1 == formattedNumber2) return true;
+  } catch (ex) {
+    print('Failed to compare addresses in sameAddress(). Returning false: ${ex.toString()}');
+  }
 
   // I didn't return above in case we want to add more checks below here
   return false;
@@ -252,6 +265,32 @@ bool isParticipantEvent(Message message) {
   if (message.itemType == 1 && [0, 1].contains(message.groupActionType)) return true;
   if ([2, 3].contains(message.itemType)) return true;
   return false;
+}
+
+String uriToFilename(String uri, String mimeType) {
+  // Handle any unknown cases
+  String ext = mimeType != null ? mimeType.split('/')[1] : null;
+  ext = (ext != null && ext.contains('+')) ? ext.split('+')[0] : ext;
+  if (uri == null) return (ext != null) ? 'unknown.$ext' : 'unknown';
+
+  // Get the filename
+  String filename = uri;
+  if (filename.contains('/')) {
+    filename = filename.split('/').last;
+  }
+
+  // Get the extension
+  if (filename.contains('.')) {
+    dynamic split = filename.split('.');
+    ext = split[1];
+    filename = split[0];
+  }
+
+  // Slugify the filename
+  filename = Slugify(filename, delimiter: '_');
+
+  // Rebuild the filename
+  return (ext != null && ext.length > 0) ? '$filename.$ext' : filename;
 }
 
 Future<String> getGroupEventText(Message message) async {

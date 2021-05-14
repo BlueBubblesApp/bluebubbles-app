@@ -546,7 +546,7 @@ class CustomCupertinoTextField extends StatefulWidget {
   final ValueChanged<String> onChanged;
 
   /// Once new content is commited...
-  final ValueChanged<String> onContentCommited;
+  final ValueChanged<Map<String, Object>> onContentCommited;
 
   /// {@macro flutter.widgets.editableText.onEditingComplete}
   final VoidCallback onEditingComplete;

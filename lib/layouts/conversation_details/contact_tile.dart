@@ -230,14 +230,16 @@ class _ContactTileState extends State<ContactTile> {
                 onTap: () async {
                   showDialog(
                     context: context,
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                      child: SizedBox(
-                        height: 40,
-                        width: 40,
-                        child: CircularProgressIndicator(),
-                      ),
-                    ),
+                    builder: (BuildContext context) {
+                      return BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                        child: SizedBox(
+                          height: 40,
+                          width: 40,
+                          child: CircularProgressIndicator(),
+                        ),
+                      );
+                    }
                   );
 
                   Map<String, dynamic> params = new Map();

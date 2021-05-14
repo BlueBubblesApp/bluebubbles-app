@@ -80,7 +80,6 @@ class _ConversationDetailsState extends State<ConversationDetails> {
         appBar: SettingsManager().settings.skin == Skins.IOS
             ? CupertinoNavigationBar(
                 backgroundColor: Theme.of(context).accentColor.withAlpha(125),
-                actionsForegroundColor: Theme.of(context).primaryColor,
                 middle: Text(
                   "Details",
                   style: Theme.of(context).textTheme.headline1,
