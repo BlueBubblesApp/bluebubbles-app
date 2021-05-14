@@ -72,10 +72,10 @@ class ContactManager {
       return getContactsFuture.future;
     }
 
-    // Check if we've requested sometime in the last 1 minute
+    // Check if we've requested sometime in the last 5 minutes
     // If we have, exit, we don't need to re-fetch the chats again
     int now = DateTime.now().toUtc().millisecondsSinceEpoch;
-    if (lastRefresh != 0 && now < lastRefresh + 60000) {
+    if (lastRefresh != 0 && now < lastRefresh + (60000 * 5)) {
       debugPrint(
           "[ContactManager] -> Not fetching contacts; Not enough time has elapsed");
       return;
