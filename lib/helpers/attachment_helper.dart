@@ -36,8 +36,33 @@ class AttachmentHelper {
 
   static Map<String, double> parseAppleLocation(String appleLocation) {
     List<String> lines = appleLocation.split("\n");
-    String url = lines[5];
-    String query = url.split("&q=")[1];
+    var emptyLocation = {'longitude': null, 'latitude': null};
+
+    String url;
+    for (var i in lines) {
+      if (i.contains(".URL:h") || i.contains(".URL;h")) {
+        url = i;
+      }
+    }
+
+    if (url == null) return emptyLocation;
+
+    String query;
+    List<String> opts = ["&q=", "&ll="];
+
+    for (var i in opts) {
+      if (url.contains(i)) {
+        var items = url.split(i);
+        if (items.length >= 1) {
+          query = items[1];
+        }
+      }
+    }
+
+    if (query == null) return emptyLocation;
+    if (query.contains("&")) {
+      query = query.split("&").first;
+    }
 
     if (query.contains("\\")) {
       return {
@@ -272,5 +297,16 @@ class AttachmentHelper {
         attachment.height = size.height;
       }
     }
+  }
+
+  static Future<void> redownloadAttachment(Attachment attachment,
+      {Function() onComplete, Function() onError}) async {
+    // 1. Delete the old file
+    File file = new File(attachment.getPath());
+    if (!file.existsSync()) return;
+    file.deleteSync();
+
+    // 2. Redownload the attachment
+    AttachmentDownloader(attachment, onComplete: onComplete, onError: onError);
   }
 }

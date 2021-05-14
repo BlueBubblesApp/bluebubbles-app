@@ -16,14 +16,12 @@ import 'package:intent/action.dart' as android_action;
 import 'package:permission_handler/permission_handler.dart';
 
 class ContactTile extends StatefulWidget {
-  final String address;
   final Handle handle;
   final Chat chat;
   final Function updateChat;
   final bool canBeRemoved;
   ContactTile({
     Key key,
-    this.address,
     this.handle,
     this.chat,
     this.updateChat,
@@ -58,7 +56,7 @@ class _ContactTileState extends State<ContactTile> {
   }
 
   void fetchAvatar() async {
-    MemoryImage avatar = await loadAvatar(widget.chat, widget.handle.address);
+    MemoryImage avatar = await loadAvatar(widget.chat, widget.handle);
     if (contactImage == null ||
         contactImage.bytes.length != avatar.bytes.length) {
       contactImage = avatar;
@@ -67,7 +65,7 @@ class _ContactTileState extends State<ContactTile> {
   }
 
   void getContact() {
-    ContactManager().getCachedContact(widget.address).then((Contact contact) {
+    ContactManager().getCachedContact(widget.handle).then((Contact contact) {
       if (contact != null) {
         if (this.contact == null ||
             this.contact.identifier != contact.identifier) {
@@ -230,14 +228,16 @@ class _ContactTileState extends State<ContactTile> {
                 onTap: () async {
                   showDialog(
                     context: context,
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                      child: SizedBox(
-                        height: 40,
-                        width: 40,
-                        child: CircularProgressIndicator(),
-                      ),
-                    ),
+                    builder: (BuildContext context) {
+                      return BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                        child: SizedBox(
+                          height: 40,
+                          width: 40,
+                          child: CircularProgressIndicator(),
+                        ),
+                      );
+                    }
                   );
 
                   Map<String, dynamic> params = new Map();

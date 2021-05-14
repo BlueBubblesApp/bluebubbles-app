@@ -1,4 +1,5 @@
 import 'package:bluebubbles/repository/models/attachment.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../socket_manager.dart';
@@ -59,7 +60,26 @@ class _MediaFileState extends State<MediaFile> {
         ],
       );
     } else {
-      return widget.child;
+      return Stack(alignment: Alignment.center, children: [
+        widget.child,
+        if (widget.attachment.originalROWID == null)
+          Container(
+            child: Theme(
+              data: ThemeData(
+                cupertinoOverrideTheme:
+                    CupertinoThemeData(brightness: Brightness.dark),
+              ),
+              child: CupertinoActivityIndicator(
+                radius: 10,
+              ),
+            ),
+            height: 45,
+            width: 45,
+            decoration: BoxDecoration(
+                borderRadius: BorderRadius.all(Radius.circular(10)),
+                color: Colors.black.withOpacity(0.5)),
+          ),
+      ]);
     }
   }
 }

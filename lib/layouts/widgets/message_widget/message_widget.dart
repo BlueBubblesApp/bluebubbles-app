@@ -1,6 +1,8 @@
 import 'dart:async';
+
 import 'package:bluebubbles/action_handler.dart';
-import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/group_event.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/url_preview_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_attachments.dart';
@@ -11,13 +13,13 @@ import 'package:bluebubbles/layouts/widgets/message_widget/sent_message.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/stickers_widget.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
+import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import '../../../helpers/utils.dart';
-import '../../../repository/models/message.dart';
 
 class MessageWidget extends StatefulWidget {
   MessageWidget({
@@ -57,6 +59,7 @@ class _MessageState extends State<MessageWidget>
   StreamSubscription<NewMessageEvent> subscription;
   Message _message;
   Message _newerMessage;
+  Message _olderMessage;
 
   @override
   void initState() {
@@ -76,6 +79,7 @@ class _MessageState extends State<MessageWidget>
     handledInit = true;
     _message = widget.message;
     _newerMessage = widget.newerMessage;
+    _olderMessage = widget.olderMessage;
 
     checkHandle();
     fetchAssociatedMessages();
@@ -228,12 +232,6 @@ class _MessageState extends State<MessageWidget>
     if (!attachmentsRequest.isCompleted) attachmentsRequest.complete();
   }
 
-  bool withinTimeThreshold(Message first, Message second, {threshold: 5}) {
-    if (first == null || second == null) return false;
-    return second.dateCreated.difference(first.dateCreated).inMinutes.abs() >
-        threshold;
-  }
-
   @override
   Widget build(BuildContext context) {
     super.build(context);
@@ -241,13 +239,10 @@ class _MessageState extends State<MessageWidget>
     if (_newerMessage != null) {
       if (_newerMessage.isGroupEvent()) {
         showTail = true;
+      } else if (SettingsManager().settings.skin == Skins.Samsung) {
+        showTail = MessageHelper.getShowTailReversed(_message, _olderMessage);
       } else {
-        showTail = withinTimeThreshold(_message, _newerMessage, threshold: 1) ||
-            !sameSender(_message, _newerMessage) ||
-            (_message.isFromMe &&
-                _newerMessage.isFromMe &&
-                _message.dateDelivered != null &&
-                _newerMessage.dateDelivered == null);
+        showTail = MessageHelper.getShowTail(_message, _newerMessage);
       }
     }
 
@@ -290,6 +285,7 @@ class _MessageState extends State<MessageWidget>
       message = SentMessage(
         showTail: showTail,
         olderMessage: widget.olderMessage,
+        newerMessage: widget.newerMessage,
         message: _message,
         urlPreviewWidget: urlPreviewWidget,
         stickersWidget: stickersWidget,
@@ -303,6 +299,7 @@ class _MessageState extends State<MessageWidget>
       message = ReceivedMessage(
         showTail: showTail,
         olderMessage: widget.olderMessage,
+        newerMessage: widget.newerMessage,
         message: _message,
         showHandle: widget.showHandle,
         urlPreviewWidget: urlPreviewWidget,
@@ -315,10 +312,11 @@ class _MessageState extends State<MessageWidget>
     return Column(
       children: [
         message,
-        MessageTimeStampSeparator(
-          newerMessage: _newerMessage,
-          message: _message,
-        )
+        if (SettingsManager().settings.skin != Skins.Samsung)
+          MessageTimeStampSeparator(
+            newerMessage: _newerMessage,
+            message: _message,
+          )
       ],
     );
   }

@@ -1,28 +1,31 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
+
 import 'package:bluebubbles/blocs/chat_bloc.dart';
-import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/blocs/setup_bloc.dart';
-import 'package:bluebubbles/helpers/contstants.dart';
+import 'package:bluebubbles/helpers/attachment_downloader.dart';
+import 'package:bluebubbles/helpers/attachment_sender.dart';
+import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/crypto.dart';
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/managers/attachment_info_bloc.dart';
+import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/incoming_queue.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
+import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/repository/models/chat.dart';
+import 'package:bluebubbles/repository/models/fcm_data.dart';
+import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
-import 'package:flutter_socket_io/socket_io_manager.dart';
-import 'package:flutter_socket_io/flutter_socket_io.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
-import 'helpers/attachment_sender.dart';
-import 'managers/method_channel_interface.dart';
-import 'repository/models/message.dart';
-import './repository/models/chat.dart';
+import 'package:flutter_socket_io/flutter_socket_io.dart';
+import 'package:flutter_socket_io/socket_io_manager.dart';
 
 enum SocketState {
   CONNECTED,
@@ -41,7 +44,7 @@ class SocketManager {
 
   SocketManager._internal();
 
-  void removeChatNotification(Chat chat) async {
+  Future<void> removeChatNotification(Chat chat) async {
     await chat.setUnreadStatus(false);
     ChatBloc().updateChat(chat);
   }
@@ -150,7 +153,11 @@ class SocketManager {
         debugPrint("CONNECT ERROR");
         if (state != SocketState.ERROR && state != SocketState.FAILED) {
           state = SocketState.ERROR;
-          Timer(Duration(seconds: 10), () {
+          Timer(Duration(seconds: 5), () {
+            if (state != SocketState.ERROR) return;
+            refreshConnection(connectToSocket: true);
+          });
+          Timer(Duration(seconds: 20), () {
             if (state != SocketState.ERROR) return;
             debugPrint("UNABLE TO CONNECT");
 
@@ -202,6 +209,9 @@ class SocketManager {
   }
 
   Future<String> handleChatStatusChange(_data) async {
+    if (!SettingsManager().settings.enablePrivateAPI)
+      return new Future.value("");
+
     Map<String, dynamic> data = jsonDecode(_data);
     IncomingQueue().add(new QueueItem(
         event: IncomingQueue.HANDLE_CHAT_STATUS_CHANGE, item: {"data": data}));
@@ -278,19 +288,25 @@ class SocketManager {
       _manager.socket.subscribe("participant-removed", handleNewMessage);
       _manager.socket.subscribe("participant-added", handleNewMessage);
       _manager.socket.subscribe("participant-left", handleNewMessage);
+
+      /**
+       * Handle Private API features
+       */
       _manager.socket
           .subscribe("chat-read-status-changed", handleChatStatusChange);
-      // _manager.socket.subscribe("typing-indicator", (_data) {
-      //   Map<String, dynamic> data = jsonDecode(_data);
-      //   CurrentChat currentChat =
-      //       AttachmentInfoBloc().getCurrentChat(data["guid"]);
-      //   if (currentChat == null) return;
-      //   if (data["display"]) {
-      //     currentChat.displayTypingIndicator();
-      //   } else {
-      //     currentChat.hideTypingIndicator();
-      //   }
-      // });
+      _manager.socket.subscribe("typing-indicator", (_data) {
+        if (!SettingsManager().settings.enablePrivateAPI) return;
+
+        Map<String, dynamic> data = jsonDecode(_data);
+        CurrentChat currentChat =
+            AttachmentInfoBloc().getCurrentChat(data["guid"]);
+        if (currentChat == null) return;
+        if (data["display"]) {
+          currentChat.displayTypingIndicator();
+        } else {
+          currentChat.hideTypingIndicator();
+        }
+      });
 
       /**
        * Handle errors sent by the server
@@ -378,34 +394,59 @@ class SocketManager {
       debugPrint("No FCM Auth data found. Skipping FCM authentication");
       return;
     } else if (token != null && !force) {
-      debugPrint("already authorized fcm " + token);
+      debugPrint("Already authorized FCM device! Token: $token");
       if (_manager.socket != null) {
         String deviceName = await getDeviceName();
         _manager.sendMessage("add-fcm-device",
             {"deviceId": token, "deviceName": deviceName}, (data) {},
             reason: "authfcm", awaitResponse: false);
       }
+
       return;
     }
 
+    String result;
+
     try {
-      final String result = await MethodChannelInterface()
+      // First, try to send what we currently have
+      result = await MethodChannelInterface()
           .invokeMethod('auth', SettingsManager().fcmData.toMap());
+    } on PlatformException catch (_) {
+      // If the first try fails, let's try again, but first, get the FCM data from the server
+      Map<String, dynamic> fcmMeta = await this.getFcmClient();
+
+      try {
+        // Parse out the new FCM data
+        FCMData fcmData = parseFcmJson(fcmMeta);
+
+        // Save the FCM data in settings
+        SettingsManager().saveFCMData(fcmData);
+
+        // Retry authenticating with Firebase
+        result = await MethodChannelInterface()
+            .invokeMethod('auth', SettingsManager().fcmData.toMap());
+      } on PlatformException catch (e) {
+        if (!catchException) {
+          throw Exception("(AuthFCM) -> " + e.toString());
+        } else {
+          token = "Failed to get token: " + e.toString();
+          debugPrint(token);
+        }
+      }
+    }
+
+    try {
       token = result;
+      debugPrint(token);
+
       if (_manager.socket != null) {
         String deviceName = await getDeviceName();
         _manager.sendMessage("add-fcm-device",
             {"deviceId": token, "deviceName": deviceName}, (data) {},
             reason: "authfcm", awaitResponse: false);
-        debugPrint(token);
       }
-    } on PlatformException catch (e) {
-      if (!catchException) {
-        throw ("(AuthFCM) -> " + e.toString());
-      } else {
-        token = "Failed to get token: " + e.toString();
-        debugPrint(token);
-      }
+    } catch (ex) {
+      throw Exception("Failed to add FCM device to the server! Token: $token");
     }
   }
 
@@ -463,7 +504,7 @@ class SocketManager {
         completer.completeError(data['error']);
       }
 
-      completer.complete(data["data"]);
+      if (!completer.isCompleted) completer.complete(data["data"]);
     });
 
     return completer.future;
@@ -666,5 +707,27 @@ class SocketManager {
         startSocketIO(forceNewConnection: connectToSocket);
       }
     } catch (e) {}
+  }
+
+  Future<Map<String, dynamic>> getFcmClient() async {
+    Completer<Map<String, dynamic>> completer =
+        new Completer<Map<String, dynamic>>();
+
+    SocketManager().sendMessage("get-fcm-client", {}, (data) {
+      if (data["status"] == 200) {
+        completer.complete(data["data"] as Map<String, dynamic>);
+      } else {
+        String msg = "Failed to get FCM client data";
+        if (data.containsKey("error") && data["error"].containsKey("message")) {
+          msg = data["error"]["message"];
+        }
+
+        completer.completeError(new Exception(msg));
+      }
+    }).catchError((err) {
+      completer.completeError(err);
+    });
+
+    return completer.future;
   }
 }

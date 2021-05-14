@@ -1,14 +1,19 @@
 import 'dart:convert';
 import 'dart:ui';
 
+import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
 import "package:bluebubbles/helpers/string_extension.dart";
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/settings/about_panel.dart';
+import 'package:bluebubbles/layouts/settings/private_api_panel.dart';
 import 'package:bluebubbles/layouts/settings/server_management_panel.dart';
 import 'package:bluebubbles/layouts/settings/theme_panel.dart';
 import 'package:bluebubbles/layouts/settings/ux_panel.dart';
+import 'package:bluebubbles/layouts/setup/qr_code_scanner.dart';
 import 'package:bluebubbles/layouts/widgets/CustomCupertinoTextField.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
+import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -17,10 +22,9 @@ import 'package:bluebubbles/repository/models/fcm_data.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import '../../helpers/hex_color.dart';
-import 'package:flutter/material.dart';
 
 import '../setup/qr_code_scanner.dart';
 
@@ -103,7 +107,10 @@ class _SettingsPanelState extends State<SettingsPanel> {
                 toolbarHeight: 100.0,
                 elevation: 0,
                 leading: IconButton(
-                  icon: Icon(Icons.arrow_back_ios,
+                  icon: Icon(
+                      SettingsManager().settings.skin == Skins.IOS
+                          ? Icons.arrow_back_ios
+                          : Icons.arrow_back,
                       color: Theme.of(context).primaryColor),
                   onPressed: () {
                     Navigator.of(context).pop();
@@ -120,9 +127,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
           ),
         ),
         body: CustomScrollView(
-          physics: AlwaysScrollableScrollPhysics(
-            parent: CustomBouncingScrollPhysics(),
-          ),
+          physics: ThemeSwitcher.getScrollPhysics(),
           slivers: <Widget>[
             SliverList(
               delegate: SliverChildListDelegate(
@@ -203,16 +208,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                 content: Text("Address copied to clipboard"));
                             Scaffold.of(context).showSnackBar(snackBar);
                           },
-                          trailing: connectionStatus == SocketState.CONNECTED ||
-                                  connectionStatus == SocketState.CONNECTING
-                              ? Icon(
-                                  Icons.fiber_manual_record,
-                                  color: HexColor('32CD32').withAlpha(200),
-                                )
-                              : Icon(
-                                  Icons.fiber_manual_record,
-                                  color: HexColor('DC143C').withAlpha(200),
-                                ),
+                          trailing: getIndicatorIcon(connectionStatus),
                         );
                       }),
                   SettingsTile(
@@ -311,7 +307,9 @@ class _SettingsPanelState extends State<SettingsPanel> {
                       );
                     },
                     trailing: Icon(
-                      Icons.arrow_forward_ios,
+                      SettingsManager().settings.skin == Skins.IOS
+                          ? Icons.arrow_forward_ios
+                          : Icons.arrow_forward,
                       color: Theme.of(context).primaryColor,
                     ),
                   ),
@@ -325,13 +323,33 @@ class _SettingsPanelState extends State<SettingsPanel> {
                       );
                     },
                     trailing: Icon(
-                      Icons.arrow_forward_ios,
+                      SettingsManager().settings.skin == Skins.IOS
+                          ? Icons.arrow_forward_ios
+                          : Icons.arrow_forward,
                       color: Theme.of(context).primaryColor,
                     ),
                   ),
                   SettingsTile(
+                    title: "Private API Features",
+                    trailing: Icon(
+                        SettingsManager().settings.skin == Skins.IOS
+                            ? Icons.arrow_forward_ios
+                            : Icons.arrow_forward,
+                        color: Theme.of(context).primaryColor),
+                    onTap: () async {
+                      Navigator.of(context).push(
+                        CupertinoPageRoute(
+                          builder: (context) => PrivateAPIPanel(),
+                        ),
+                      );
+                    },
+                  ),
+                  SettingsTile(
                     title: "Server Management",
-                    trailing: Icon(Icons.arrow_forward_ios,
+                    trailing: Icon(
+                        SettingsManager().settings.skin == Skins.IOS
+                            ? Icons.arrow_forward_ios
+                            : Icons.arrow_forward,
                         color: Theme.of(context).primaryColor),
                     onTap: () async {
                       Navigator.of(context).push(
@@ -351,7 +369,9 @@ class _SettingsPanelState extends State<SettingsPanel> {
                       );
                     },
                     trailing: Icon(
-                      Icons.arrow_forward_ios,
+                      SettingsManager().settings.skin == Skins.IOS
+                          ? Icons.arrow_forward_ios
+                          : Icons.arrow_forward,
                       color: Theme.of(context).primaryColor,
                     ),
                   ),

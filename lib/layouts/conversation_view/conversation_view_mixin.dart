@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:assorted_layout_widgets/assorted_layout_widgets.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
+import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/socket_singletons.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_details/conversation_details.dart';
@@ -11,19 +13,23 @@ import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/contact_s
 import 'package:bluebubbles/layouts/widgets/CustomCupertinoNavBackButton.dart';
 import 'package:bluebubbles/layouts/widgets/CustomCupertinoNavBar.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
-import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
+import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/repository/models/message.dart';
+import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/cupertino.dart' as Cupertino;
 import 'package:flutter/material.dart';
+import 'package:flutter_displaymode/flutter_displaymode.dart';
+import 'package:slugify/slugify.dart';
 
 mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
     on State<ConversationView> {
@@ -46,6 +52,32 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
   String searchQuery = "";
   bool currentlyProcessingDeleteKey = false;
   CurrentChat currentChat;
+  Settings _settingsCopy;
+  List<DisplayMode> modes;
+  DisplayMode currentMode;
+  Brightness brightness;
+  Color previousBackgroundColor;
+  bool gotBrightness = false;
+  bool markingAsRead = false;
+  bool markedAsRead = false;
+  void loadBrightness() {
+    Color now = Theme.of(context).backgroundColor;
+    bool themeChanged =
+        previousBackgroundColor == null || previousBackgroundColor != now;
+    if (!themeChanged && gotBrightness) return;
+
+    previousBackgroundColor = now;
+    if (this.context == null) {
+      brightness = Brightness.light;
+      gotBrightness = true;
+      return;
+    }
+
+    bool isDark = now.computeLuminance() < 0.179;
+    brightness = isDark ? Brightness.dark : Brightness.light;
+    gotBrightness = true;
+    if (this.mounted) setState(() {});
+  }
 
   TextEditingController chatSelectorController =
       new TextEditingController(text: " ");
@@ -129,6 +161,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
     currentChat.updateChatAttachments().then((value) {
       if (this.mounted) setState(() {});
     });
+
     currentChat.stream.listen((event) {
       if (this.mounted) setState(() {});
     });
@@ -190,7 +223,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
   Future<void> openDetails() async {
     Chat _chat = await chat.getParticipants();
     Navigator.of(context).push(
-      Cupertino.CupertinoPageRoute(
+      ThemeSwitcher.buildPageRoute(
         builder: (context) => ConversationDetails(
           chat: _chat,
           messageBloc: messageBloc ?? initMessageBloc(),
@@ -199,7 +232,106 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
     );
   }
 
+  void markChatAsRead() {
+    Function setProgress = (bool val) {
+      if (this.mounted) {
+        setState(() {
+          markingAsRead = val;
+
+          if (!val) {
+            markedAsRead = true;
+          }
+        });
+      }
+
+      // Unset the marked icon
+      Future.delayed(Duration(seconds: 3), () {
+        if (this.mounted) {
+          setState(() {
+            markedAsRead = false;
+          });
+        }
+      });
+    };
+
+    // Set that we are
+    setProgress(true);
+
+    SocketManager().sendMessage("mark-chat-read", {"chatGuid": chat.guid},
+        (data) {
+      setProgress(false);
+    }).catchError(() {
+      setProgress(false);
+    });
+  }
+
   Widget buildConversationViewHeader() {
+    loadBrightness();
+    Color backgroundColor = Theme.of(context).backgroundColor;
+    Color fontColor = Theme.of(context).textTheme.headline1.color;
+
+    if (SettingsManager().settings.skin == Skins.Material ||
+        SettingsManager().settings.skin == Skins.Samsung) {
+      return AppBar(
+        brightness: brightness,
+        title: Text(
+          chat.title,
+          style: Theme.of(context).textTheme.headline1.apply(color: fontColor),
+        ),
+        bottom: PreferredSize(
+          child: Container(
+            color: Theme.of(context).dividerColor,
+            height: 0.5,
+          ),
+          preferredSize: Size.fromHeight(0.5),
+        ),
+        backgroundColor: backgroundColor,
+        actionsIconTheme: IconThemeData(color: Theme.of(context).primaryColor),
+        iconTheme: IconThemeData(color: Theme.of(context).primaryColor),
+        actions: [
+          if (SettingsManager().settings.privateManualMarkAsRead &&
+              markingAsRead)
+            Padding(
+                padding: const EdgeInsets.only(right: 8.0),
+                child: Center(
+                    child: SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                          Theme.of(context).primaryColor)),
+                ))),
+          if (SettingsManager().settings.enablePrivateAPI &&
+              SettingsManager().settings.privateManualMarkAsRead &&
+              !markingAsRead)
+            Padding(
+              padding: const EdgeInsets.only(right: 8.0),
+              child: GestureDetector(
+                child: Icon(
+                  (markedAsRead)
+                      ? Icons.check_circle
+                      : Icons.check_circle_outline,
+                  color: (markedAsRead)
+                      ? HexColor('32CD32').withAlpha(200)
+                      : fontColor,
+                ),
+                onTap: markChatAsRead,
+              ),
+            ),
+          Padding(
+            padding: const EdgeInsets.only(right: 8.0),
+            child: GestureDetector(
+              child: Icon(
+                Icons.more_vert,
+                color: fontColor,
+              ),
+              onTap: openDetails,
+            ),
+          ),
+        ],
+      );
+    }
+
     // Build the stack
     List<Widget> avatars = [];
     chat.participants.forEach((Handle participant) {
@@ -226,57 +358,90 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
     if (distance <= -30.0 && distance > -60) distance = -30.0;
     if (distance <= -60.0) distance = -35.0;
     return CupertinoNavigationBar(
-      backgroundColor: Theme.of(context).accentColor.withAlpha(125),
-      border: Border(
-        bottom: BorderSide(color: Colors.white.withOpacity(0.2), width: 0.2),
-      ),
-      leading: CustomCupertinoNavigationBarBackButton(
-        color: Theme.of(context).primaryColor,
-        notifications: newMessages.length,
-      ),
-      middle: ListView(
-        physics: Cupertino.NeverScrollableScrollPhysics(),
-        padding: EdgeInsets.only(right: 30),
-        children: <Widget>[
-          Container(height: 10.0),
-          GestureDetector(
-            onTap: openDetails,
-            child: Container(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  RowSuper(
-                    children: avatars,
-                    innerDistance: distance,
-                    alignment: Alignment.center,
-                  ),
-                  Container(height: 5.0),
-                  RichText(
-                    maxLines: 1,
-                    overflow: Cupertino.TextOverflow.ellipsis,
-                    textAlign: TextAlign.center,
-                    text: TextSpan(
-                      style: Theme.of(context).textTheme.headline2,
-                      children: [
-                        TextSpan(
-                          text: chat.title,
-                          style: Theme.of(context).textTheme.bodyText1,
-                        ),
-                        TextSpan(
-                          text: " >",
-                          style: Theme.of(context).textTheme.subtitle1,
-                        )
-                      ],
+        backgroundColor: Theme.of(context).accentColor.withAlpha(125),
+        border: Border(
+          bottom: BorderSide(color: Colors.white.withOpacity(0.2), width: 0.2),
+        ),
+        leading: CustomCupertinoNavigationBarBackButton(
+          color: Theme.of(context).primaryColor,
+          notifications: newMessages.length,
+        ),
+        middle: ListView(
+          physics: Cupertino.NeverScrollableScrollPhysics(),
+          padding: EdgeInsets.only(right: 5),
+          children: <Widget>[
+            Container(height: 10.0),
+            GestureDetector(
+              onTap: openDetails,
+              child: Container(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    RowSuper(
+                      children: avatars,
+                      innerDistance: distance,
+                      alignment: Alignment.center,
                     ),
-                  )
-                ],
+                    Container(height: 5.0),
+                    RichText(
+                      maxLines: 1,
+                      overflow: Cupertino.TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                      text: TextSpan(
+                        style: Theme.of(context).textTheme.headline2,
+                        children: [
+                          TextSpan(
+                            text: chat.title,
+                            style: Theme.of(context).textTheme.bodyText1,
+                          ),
+                          TextSpan(
+                            text: " >",
+                            style: Theme.of(context).textTheme.subtitle1,
+                          )
+                        ],
+                      ),
+                    )
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
-      ),
-      trailing: Container(width: 20),
-    );
+          ],
+        ),
+        trailing: (SettingsManager().settings.enablePrivateAPI &&
+                SettingsManager().settings.privateManualMarkAsRead)
+            ? Stack(
+                children: [
+                  if (markingAsRead)
+                    Padding(
+                        padding: const EdgeInsets.only(right: 10.0),
+                        child: Theme(
+                          data: ThemeData(
+                            cupertinoOverrideTheme:
+                                Cupertino.CupertinoThemeData(
+                                    brightness: brightness),
+                          ),
+                          child: Cupertino.CupertinoActivityIndicator(
+                            radius: 12,
+                          ),
+                        )),
+                  if (!markingAsRead)
+                    Padding(
+                      padding: const EdgeInsets.only(right: 2.0),
+                      child: GestureDetector(
+                        child: Icon(
+                          (markedAsRead)
+                              ? Icons.check_circle
+                              : Icons.check_circle_outline,
+                          color: (markedAsRead)
+                              ? HexColor('32CD32').withAlpha(200)
+                              : fontColor,
+                        ),
+                        onTap: markChatAsRead,
+                      ),
+                    ),
+                ],
+              )
+            : Container(width: 33));
   }
 
   /// Chat selector methods
@@ -354,7 +519,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
     if (selected.length == 1) {
       try {
         Chat existingChat = await Chat.findOne(
-            {"chatIdentifier": sanitizeAddress(selected[0].address)});
+            {"chatIdentifier": Slugify(selected[0].address, delimiter: '')});
         if (existingChat != null) {
           matchingChats.add(existingChat);
         }
@@ -362,6 +527,11 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
     }
 
     if (matchingChats.length == 0) {
+      // If we haven't completed the chats request, wait for it to finish
+      if (!ChatBloc().chatRequest.isCompleted) {
+        await ChatBloc().chatRequest.future;
+      }
+
       for (var i in ChatBloc().chats) {
         // If the lengths don't match continue
         if (i.participants.length != selected.length) continue;
@@ -369,11 +539,24 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
         // Iterate over each selected contact
         int matches = 0;
         for (UniqueContact contact in selected) {
-          // If the selected contact doesn't match any participants int he chat, continue
-          if (i.participants.any((Handle participant) =>
-              sameAddress(contact.address, participant.address))) {
-            matches += 1;
+          bool match = false;
+          bool isEmail = contact.address.contains('@');
+          String lastDigits = contact.address.substring(contact.address.length - 4, contact.address.length);
+
+          for (var participant in i.participants) {
+            // If one is an email and the other isn't, skip
+            if (isEmail && !participant.address.contains('@')) continue;
+
+            // If the last 4 digits don't match, skip
+            if (!participant.address.endsWith(lastDigits)) continue;
+
+            // Get a list of comparable options
+            dynamic opts = await getCompareOpts(participant);
+            match = sameAddress(opts, contact.address);
+            if (match) break;
           }
+          
+          if (match) matches += 1;
         }
 
         if (matches == selected.length) matchingChats.add(i);
@@ -401,8 +584,15 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
 
   Future<void> loadEntries() async {
     if (!isCreator) return;
-    if (isNullOrEmpty(ChatBloc().chats)) {
+
+    // If we don't have chats, fetch them
+    if (ChatBloc().chats == null) {
       await ChatBloc().refreshChats();
+    }
+
+    // If the chat request isn't finished, wait for it
+    if (!ChatBloc().chatRequest.isCompleted) {
+      await ChatBloc().chatRequest.future;
     }
 
     conversations = ChatBloc().chats;
@@ -529,27 +719,29 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
     Map<String, dynamic> params = {};
     showDialog(
       context: context,
-      child: AlertDialog(
-        backgroundColor: Theme.of(context).accentColor,
-        title: Text(
-          "Creating a new chat...",
-          style: Theme.of(context).textTheme.bodyText1,
-        ),
-        content: Row(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Container(
-              // height: 70,
-              // color: Colors.black,
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(
-                    Theme.of(context).primaryColor),
+       builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Theme.of(context).accentColor,
+          title: Text(
+            "Creating a new chat...",
+            style: Theme.of(context).textTheme.bodyText1,
+          ),
+          content: Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              Container(
+                // height: 70,
+                // color: Colors.black,
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                      Theme.of(context).primaryColor),
+                ),
               ),
-            ),
-          ],
-        ),
-      ),
+            ]
+          ),
+        );
+      }
     );
 
     params["participants"] = participants;
@@ -566,7 +758,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
     Chat existingChat;
     if (participants.length == 1) {
       existingChat = await Chat.findOne(
-          {"chatIdentifier": sanitizeAddress(participants[0])});
+          {"chatIdentifier": Slugify(participants[0], delimiter: '')});
     }
 
     if (existingChat == null) {
@@ -579,24 +771,26 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
             showDialog(
               barrierDismissible: false,
               context: context,
-              child: AlertDialog(
-                title: Text(
-                  "Could not create",
-                ),
-                content: Text(
-                  "Reason: (${data["error"]["type"]}) -> ${data["error"]["message"]}",
-                ),
-                actions: [
-                  FlatButton(
-                    child: Text(
-                      "Ok",
-                    ),
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                  )
-                ],
-              ),
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  title: Text(
+                    "Could not create",
+                  ),
+                  content: Text(
+                    "Reason: (${data["error"]["type"]}) -> ${data["error"]["message"]}",
+                  ),
+                  actions: [
+                    TextButton(
+                      child: Text(
+                        "Ok",
+                      ),
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                    )
+                  ],
+                );
+              }
             );
             completer.complete(null);
             return;
@@ -650,8 +844,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
   }
 
   Widget buildChatSelectorBody() => ListView.builder(
-        physics: AlwaysScrollableScrollPhysics(
-            parent: CustomBouncingScrollPhysics()),
+        physics: ThemeSwitcher.getScrollPhysics(),
         itemBuilder: (BuildContext context, int index) => ContactSelectorOption(
           key: new Key("selector-${contacts[index].displayName}"),
           item: contacts[index],

@@ -1,4 +1,4 @@
-import 'package:bluebubbles/helpers/contstants.dart';
+import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/cupertino.dart';
@@ -12,7 +12,7 @@ class ThemeManager {
   ThemeManager._internal();
 
   ScrollPhysics get scrollPhysics {
-    if (SettingsManager().settings.skin == Skins.Material) {
+    if (SettingsManager().settings.skin == Skins.Material || SettingsManager().settings.skin == Skins.Samsung) {
       return AlwaysScrollableScrollPhysics(
         parent: ClampingScrollPhysics(),
       );

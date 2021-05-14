@@ -1,4 +1,4 @@
-import 'package:bluebubbles/helpers/contstants.dart';
+import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/models/config_entry.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
@@ -20,6 +20,7 @@ class Settings {
   bool colorfulAvatars = false;
   bool colorfulBubbles = false;
   bool hideDividers = false;
+  bool sendTypingIndicators = false;
   double scrollVelocity = 1.00;
   bool sendWithReturn = false;
   bool doubleTapForDetails = false;
@@ -28,9 +29,25 @@ class Settings {
   bool reducedForehead = false;
   bool preCachePreviewImages = true;
   bool showConnectionIndicator = false;
+  bool showSyncIndicator = true;
   int sendDelay;
   bool recipientAsPlaceholder = false;
+  bool hideKeyboardOnScroll = false;
+  bool moveChatCreatorToHeader = false;
+  bool swipeToCloseKeyboard = false;
+  bool swipeToOpenKeyboard = false;
+  bool openKeyboardOnSTB = false;
+  bool swipableConversationTiles = false;
+  int smartReplySampleSize = 2;
+  bool colorblindMode = false;
+  bool showDeliveryTimestamps = false;
   // String emojiFontFamily;
+
+  // Private API features
+  bool enablePrivateAPI = false;
+  bool privateSendTypingIndicators = false;
+  bool privateMarkChatAsRead = false;
+  bool privateManualMarkAsRead = false;
 
   Skins skin = Skins.IOS;
 
@@ -69,6 +86,10 @@ class Settings {
         settings.colorfulBubbles = entry.value;
       } else if (entry.name == "hideDividers") {
         settings.hideDividers = entry.value;
+      } else if (entry.name == "skin") {
+        settings.skin = Skins.values[entry.value];
+      } else if (entry.name == "sendTypingIndicators") {
+        settings.sendTypingIndicators = entry.value;
       } else if (entry.name == "scrollVelocity") {
         settings.scrollVelocity = entry.value;
       } else if (entry.name == "sendWithReturn") {
@@ -89,6 +110,36 @@ class Settings {
         settings.sendDelay = entry.value;
       } else if (entry.name == "recipientAsPlaceholder") {
         settings.recipientAsPlaceholder = entry.value;
+      } else if (entry.name == "hideKeyboardOnScroll") {
+        settings.hideKeyboardOnScroll = entry.value;
+      } else if (entry.name == "swipeToOpenKeyboard") {
+        settings.swipeToOpenKeyboard = entry.value;
+      } else if (entry.name == "newMessageMenuBar") {
+        settings.moveChatCreatorToHeader = entry.value;
+      } else if (entry.name == "swipeToCloseKeyboard") {
+        settings.swipeToCloseKeyboard = entry.value;
+      } else if (entry.name == "moveChatCreatorToHeader") {
+        settings.moveChatCreatorToHeader = entry.value;
+      } else if (entry.name == "openKeyboardOnSTB") {
+        settings.openKeyboardOnSTB = entry.value;
+      } else if (entry.name == "swipableConversationTiles") {
+        settings.swipableConversationTiles = entry.value;
+      } else if (entry.name == "enablePrivateAPI") {
+        settings.enablePrivateAPI = entry.value;
+      } else if (entry.name == "privateSendTypingIndicators") {
+        settings.privateSendTypingIndicators = entry.value;
+      } else if (entry.name == "smartReplySampleSize") {
+        settings.smartReplySampleSize = entry.value;
+      } else if (entry.name == "colorblindMode") {
+        settings.colorblindMode = entry.value;
+      } else if (entry.name == "privateMarkChatAsRead") {
+        settings.privateMarkChatAsRead = entry.value;
+      } else if (entry.name == "privateManualMarkAsRead") {
+        settings.privateManualMarkAsRead = entry.value;
+      } else if (entry.name == "showSyncIndicator") {
+        settings.showSyncIndicator = entry.value;
+      } else if (entry.name == "showDeliveryTimestamps") {
+        settings.showDeliveryTimestamps = entry.value;
       }
 
       // else if (entry.name == "emojiFontFamily") {
@@ -196,6 +247,14 @@ class Settings {
             value: this.hideDividers,
             type: this.hideDividers.runtimeType),
         ConfigEntry(
+            name: "skin",
+            value: this.skin.index,
+            type: this.skin.index.runtimeType),
+        ConfigEntry(
+            name: "sendTypingIndicators",
+            value: this.sendTypingIndicators,
+            type: this.sendTypingIndicators.runtimeType),
+        ConfigEntry(
             name: "scrollVelocity",
             value: this.scrollVelocity,
             type: this.scrollVelocity.runtimeType),
@@ -216,6 +275,10 @@ class Settings {
             value: this.smartReply,
             type: this.smartReply.runtimeType),
         ConfigEntry(
+            name: "hideKeyboardOnScroll",
+            value: this.hideKeyboardOnScroll,
+            type: this.hideKeyboardOnScroll.runtimeType),
+        ConfigEntry(
             name: "reducedForehead",
             value: this.reducedForehead,
             type: this.reducedForehead.runtimeType),
@@ -235,6 +298,58 @@ class Settings {
             name: "recipientAsPlaceholder",
             value: this.recipientAsPlaceholder,
             type: this.recipientAsPlaceholder.runtimeType),
+        ConfigEntry(
+            name: "moveChatCreatorToHeader",
+            value: this.moveChatCreatorToHeader,
+            type: this.moveChatCreatorToHeader.runtimeType),
+        ConfigEntry(
+            name: "swipeToCloseKeyboard",
+            value: this.swipeToCloseKeyboard,
+            type: this.swipeToCloseKeyboard.runtimeType),
+        ConfigEntry(
+            name: "swipeToOpenKeyboard",
+            value: this.swipeToOpenKeyboard,
+            type: this.swipeToOpenKeyboard.runtimeType),
+        ConfigEntry(
+            name: "openKeyboardOnSTB",
+            value: this.openKeyboardOnSTB,
+            type: this.openKeyboardOnSTB.runtimeType),
+        ConfigEntry(
+            name: "swipableConversationTiles",
+            value: this.swipableConversationTiles,
+            type: this.swipableConversationTiles.runtimeType),
+        ConfigEntry(
+            name: "enablePrivateAPI",
+            value: this.enablePrivateAPI,
+            type: this.enablePrivateAPI.runtimeType),
+        ConfigEntry(
+            name: "privateSendTypingIndicators",
+            value: this.privateSendTypingIndicators,
+            type: this.privateSendTypingIndicators.runtimeType),
+        ConfigEntry(
+            name: "smartReplySampleSize",
+            value: this.smartReplySampleSize,
+            type: this.smartReplySampleSize.runtimeType),
+        ConfigEntry(
+            name: "colorblindMode",
+            value: this.colorblindMode,
+            type: this.colorblindMode.runtimeType),
+        ConfigEntry(
+            name: "privateMarkChatAsRead",
+            value: this.privateMarkChatAsRead,
+            type: this.privateMarkChatAsRead.runtimeType),
+        ConfigEntry(
+            name: "privateManualMarkAsRead",
+            value: this.privateManualMarkAsRead,
+            type: this.privateManualMarkAsRead.runtimeType),
+        ConfigEntry(
+            name: "showSyncIndicator",
+            value: this.showSyncIndicator,
+            type: this.showSyncIndicator.runtimeType),
+        ConfigEntry(
+          name: "showDeliveryTimestamps",
+          value: this.showDeliveryTimestamps,
+          type: this.showDeliveryTimestamps.runtimeType),
         // ConfigEntry(
         //     name: "emojiFontFamily",
         //     value: this.emojiFontFamily,

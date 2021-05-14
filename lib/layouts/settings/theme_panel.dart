@@ -2,17 +2,19 @@ import 'dart:async';
 import 'dart:ui';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
+import 'package:bluebubbles/blocs/chat_bloc.dart';
+import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/layouts/settings/custom_avatar_panel.dart';
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
 import 'package:bluebubbles/layouts/theming/theming_panel.dart';
-import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
+import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
-import 'package:flutter/material.dart';
 
 class ThemePanel extends StatefulWidget {
   ThemePanel({Key key}) : super(key: key);
@@ -92,7 +94,10 @@ class _ThemePanelState extends State<ThemePanel> {
                 toolbarHeight: 100.0,
                 elevation: 0,
                 leading: IconButton(
-                  icon: Icon(Icons.arrow_back_ios,
+                  icon: Icon(
+                      SettingsManager().settings.skin == Skins.IOS
+                          ? Icons.arrow_back_ios
+                          : Icons.arrow_back,
                       color: Theme.of(context).primaryColor),
                   onPressed: () {
                     Navigator.of(context).pop();
@@ -109,9 +114,7 @@ class _ThemePanelState extends State<ThemePanel> {
           ),
         ),
         body: CustomScrollView(
-          physics: AlwaysScrollableScrollPhysics(
-            parent: CustomBouncingScrollPhysics(),
-          ),
+          physics: ThemeSwitcher.getScrollPhysics(),
           slivers: <Widget>[
             SliverList(
               delegate: SliverChildListDelegate(
@@ -134,7 +137,10 @@ class _ThemePanelState extends State<ThemePanel> {
                   ),
                   SettingsTile(
                     title: "Theming",
-                    trailing: Icon(Icons.arrow_forward_ios,
+                    trailing: Icon(
+                        SettingsManager().settings.skin == Skins.IOS
+                            ? Icons.arrow_forward_ios
+                            : Icons.arrow_forward,
                         color: Theme.of(context).primaryColor),
                     onTap: () async {
                       Navigator.of(context).push(
@@ -143,6 +149,26 @@ class _ThemePanelState extends State<ThemePanel> {
                         ),
                       );
                     },
+                  ),
+                  SettingsOptions<Skins>(
+                    initial: _settingsCopy.skin,
+                    onChanged: (val) {
+                      _settingsCopy.skin = val;
+                      if (val == Skins.Material) {
+                        _settingsCopy.hideDividers = true;
+                      } else if (val == Skins.Samsung) {
+                        _settingsCopy.hideDividers = true;
+                      } else {
+                        _settingsCopy.hideDividers = false;
+                      }
+                      ChatBloc().refreshChats();
+                      setState(() {});
+                    },
+                    options: Skins.values,
+                    textProcessing: (dynamic val) =>
+                        val.toString().split(".").last,
+                    title: "App Skin",
+                    showDivider: false,
                   ),
                   SettingsSwitch(
                     onChanged: (bool val) {
@@ -162,7 +188,10 @@ class _ThemePanelState extends State<ThemePanel> {
                   ),
                   SettingsTile(
                     title: "Custom Avatar Colors",
-                    trailing: Icon(Icons.arrow_forward_ios,
+                    trailing: Icon(
+                        SettingsManager().settings.skin == Skins.IOS
+                            ? Icons.arrow_forward_ios
+                            : Icons.arrow_forward,
                         color: Theme.of(context).primaryColor),
                     onTap: () async {
                       Navigator.of(context).push(
@@ -172,14 +201,15 @@ class _ThemePanelState extends State<ThemePanel> {
                       );
                     },
                   ),
-                  SettingsSwitch(
-                    onChanged: (bool val) {
-                      _settingsCopy.hideDividers = val;
-                      saveSettings();
-                    },
-                    initialVal: _settingsCopy.hideDividers,
-                    title: "Hide Dividers",
-                  ),
+                  if (SettingsManager().settings.skin != Skins.Samsung)
+                    SettingsSwitch(
+                      onChanged: (bool val) {
+                        _settingsCopy.hideDividers = val;
+                        saveSettings();
+                      },
+                      initialVal: _settingsCopy.hideDividers,
+                      title: "Hide Dividers",
+                    ),
                   SettingsSwitch(
                     onChanged: (bool val) {
                       _settingsCopy.denseChatTiles = val;
@@ -188,14 +218,16 @@ class _ThemePanelState extends State<ThemePanel> {
                     initialVal: _settingsCopy.denseChatTiles,
                     title: "Dense Conversation Tiles",
                   ),
-                  SettingsSwitch(
-                    onChanged: (bool val) {
-                      _settingsCopy.reducedForehead = val;
-                      saveSettings();
-                    },
-                    initialVal: _settingsCopy.reducedForehead,
-                    title: "Reduced Forehead",
-                  ),
+                  if (SettingsManager().settings.skin == Skins.IOS)
+                    SettingsSwitch(
+                      onChanged: (bool val) {
+                        _settingsCopy.reducedForehead = val;
+                        saveSettings();
+                      },
+                      initialVal: _settingsCopy.reducedForehead,
+                      title: "Reduced Forehead",
+                    ),
+
                   // For whatever fucking reason, this needs to be down here, otherwise all of the switch values are false
                   if (currentMode != null && modes != null)
                     SettingsOptions<DisplayMode>(

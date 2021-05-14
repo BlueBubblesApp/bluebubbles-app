@@ -34,7 +34,7 @@ class _ReactionDetailWidgetState extends State<ReactionDetailWidget> {
     if (widget.message.isFromMe || widget.handle == null) return;
 
     ContactManager()
-        .getContactTitle(widget.handle.address)
+        .getContactTitle(widget.handle)
         .then((String title) {
       if (title != contactTitle) {
         contactTitle = title;

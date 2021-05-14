@@ -41,11 +41,8 @@ class _LocationWidgetState extends State<LocationWidget>
   }
 
   void openMaps() async {
-    print("TRYING");
     if (location == null) return;
     final availableMaps = await ML.MapLauncher.installedMaps;
-    print(
-        availableMaps); // [AvailableMap { mapName: Google Maps, mapType: google }, ...]
 
     await availableMaps.first.showMarker(
       coords: ML.Coords(location["longitude"], location["latitude"]),
@@ -57,7 +54,8 @@ class _LocationWidgetState extends State<LocationWidget>
   Widget build(BuildContext context) {
     super.build(context);
 
-    if (location["longitude"] != null &&
+    if (location != null &&
+        location["longitude"] != null &&
         location["longitude"].abs() < 90 &&
         location["latitude"] != null) {
       return GestureDetector(

@@ -22,7 +22,7 @@ abstract class MessageWidgetMixin {
     if (message.handle == null || !showHandle) return;
 
     String title =
-        await ContactManager().getContactTitle(message.handle.address);
+        await ContactManager().getContactTitle(message.handle);
 
     if (title != contactTitle) {
       contactTitle = title;
@@ -80,23 +80,6 @@ abstract class MessageWidgetMixin {
         linkIndexMatches.add(match.end);
       });
 
-      if (!isNullOrEmpty(message.subject)) {
-        textSpans.add(
-          TextSpan(
-            text: "${message.subject}\n",
-            style: message.isFromMe
-                ? Theme.of(context)
-                    .textTheme
-                    .bodyText1
-                    .apply(color: Colors.white, fontWeightDelta: 2)
-                : Theme.of(context)
-                    .textTheme
-                    .bodyText1
-                    .apply(fontWeightDelta: 2),
-          ),
-        );
-      }
-
       TextStyle textStyle = Theme.of(context).textTheme.bodyText2;
       if (!message.isFromMe) {
         if (SettingsManager().settings.colorfulBubbles) {
@@ -118,6 +101,17 @@ abstract class MessageWidgetMixin {
         }
       } else {
         textStyle = textStyle.apply(color: Colors.white);
+      }
+
+      if (!isNullOrEmpty(message.subject)) {
+        textSpans.add(
+          TextSpan(
+            text: "${message.subject}\n",
+            style: message.isFromMe
+                ? textStyle.apply(color: Colors.white, fontWeightDelta: 2)
+                : textStyle.apply(fontWeightDelta: 2),
+          ),
+        );
       }
 
       if (linkIndexMatches.length > 0) {

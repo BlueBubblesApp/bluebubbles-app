@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
+import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -13,6 +14,7 @@ import 'package:bluebubbles/layouts/widgets/message_widget/message_popup_holder.
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/cupertino.dart';
@@ -22,6 +24,7 @@ class SentMessageHelper {
   static Widget buildMessageWithTail(BuildContext context, Message message,
       bool showTail, bool hasReactions, bool bigEmoji,
       {Widget customContent,
+      Message olderMessage,
       CurrentChat currentChat,
       Color customColor,
       bool padding = true,
@@ -49,7 +52,7 @@ class SentMessageHelper {
       msg = Stack(
         alignment: AlignmentDirectional.bottomEnd,
         children: [
-          if (showTail)
+          if (showTail && SettingsManager().settings.skin == Skins.IOS)
             MessageTail(
               message: message,
               color: customColor ?? bubbleColor,
@@ -70,7 +73,27 @@ class SentMessageHelper {
               horizontal: padding ? 14 : 0,
             ),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: SettingsManager().settings.skin == Skins.IOS
+                  ? BorderRadius.circular(20)
+                  : (SettingsManager().settings.skin == Skins.Material)
+                      ? BorderRadius.only(
+                          topLeft: Radius.circular(20),
+                          topRight: olderMessage == null ||
+                                  MessageHelper.getShowTail(
+                                      olderMessage, message)
+                              ? Radius.circular(20)
+                              : Radius.circular(5),
+                          bottomLeft: Radius.circular(20),
+                          bottomRight: Radius.circular(showTail ? 20 : 5),
+                        )
+                      : (SettingsManager().settings.skin == Skins.Samsung)
+                          ? BorderRadius.only(
+                              topLeft: Radius.circular(17.5),
+                              topRight: Radius.circular(17.5),
+                              bottomRight: Radius.circular(17.5),
+                              bottomLeft: Radius.circular(17.5),
+                            )
+                          : null,
               color: customColor ?? bubbleColor,
             ),
             child: customContent == null
@@ -187,6 +210,7 @@ class SentMessage extends StatefulWidget {
   final bool showTail;
   final Message message;
   final Message olderMessage;
+  final Message newerMessage;
   final bool showHero;
   final bool shouldFadeIn;
   final bool showDeliveredReceipt;
@@ -201,6 +225,7 @@ class SentMessage extends StatefulWidget {
     Key key,
     @required this.showTail,
     @required this.olderMessage,
+    @required this.newerMessage,
     @required this.message,
     @required this.showHero,
     @required this.showDeliveredReceipt,
@@ -259,13 +284,10 @@ class _SentMessageState extends State<SentMessage>
         widget.message.balloonBundleId !=
             'com.apple.messages.URLBalloonProvider') {
       message = BalloonBundleWidget(message: widget.message);
-    } else if (!isEmptyString(widget.message.fullText)) {
-      message = SentMessageHelper.buildMessageWithTail(
-          context,
-          widget.message,
-          widget.showTail,
-          widget.message.hasReactions,
-          widget.message.bigEmoji);
+    } else if (!isEmptyString(widget.message.text)) {
+      message = SentMessageHelper.buildMessageWithTail(context, widget.message,
+          widget.showTail, widget.message.hasReactions, widget.message.bigEmoji,
+          olderMessage: widget.olderMessage);
       if (widget.showHero) {
         message = Hero(
           tag: "first",
@@ -311,9 +333,19 @@ class _SentMessageState extends State<SentMessage>
       Padding(
         // Padding to shift the bubble up a bit, relative to the avatar
         padding: EdgeInsets.only(
-            bottom: (widget.showTail && !isEmptyString(widget.message.fullText))
+            top: (SettingsManager().settings.skin != Skins.IOS &&
+                    widget.message?.isFromMe == widget.olderMessage?.isFromMe)
+                ? (SettingsManager().settings.skin != Skins.IOS)
+                    ? 0
+                    : 3
+                : (SettingsManager().settings.skin == Skins.IOS)
+                    ? 0.0
+                    : 10,
+            bottom: (SettingsManager().settings.skin == Skins.IOS &&
+                    widget.showTail &&
+                    !isEmptyString(widget.message.fullText))
                 ? 5.0
-                : 3.0,
+                : 0,
             right: isEmptyString(widget.message.fullText) &&
                     widget.message.error == 0
                 ? 10.0
@@ -330,19 +362,36 @@ class _SentMessageState extends State<SentMessage>
     return Row(
       mainAxisSize: MainAxisSize.max,
       mainAxisAlignment: MainAxisAlignment.end,
+      crossAxisAlignment: (SettingsManager().settings.skin == Skins.IOS)
+          ? CrossAxisAlignment.center
+          : CrossAxisAlignment.end,
       children: [
-        MessagePopupHolder(
-          message: widget.message,
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.end,
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: msgRow,
+        if (SettingsManager().settings.skin == Skins.IOS ||
+            SettingsManager().settings.skin == Skins.Material)
+          MessagePopupHolder(
+            message: widget.message,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.end,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: msgRow,
+            ),
           ),
-        ),
-        MessageTimeStamp(
-          message: widget.message,
-        )
+        if (SettingsManager().settings.skin == Skins.Samsung)
+          MessagePopupHolder(
+            message: widget.message,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.end,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: msgRow,
+            ),
+          ),
+        if (SettingsManager().settings.skin != Skins.Samsung &&
+            widget.message?.guid != widget.olderMessage?.guid)
+          MessageTimeStamp(
+            message: widget.message,
+          )
       ],
     );
   }

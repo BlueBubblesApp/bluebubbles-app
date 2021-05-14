@@ -1,4 +1,4 @@
-import 'package:bluebubbles/helpers/contstants.dart';
+import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/models/theme_entry.dart';
@@ -23,7 +23,7 @@ class ThemeObject {
   factory ThemeObject.fromData(ThemeData data, String name,
       {bool isPreset = false}) {
     ThemeObject object = new ThemeObject(
-      data: data,
+      data: data.copyWith(),
       name: name,
     );
     object.entries = object.toEntries();
@@ -273,19 +273,18 @@ class ThemeObject {
     }
 
     return ThemeData(
-      textTheme: TextTheme(
-        headline1: data[ThemeColors.Headline1].style,
-        headline2: data[ThemeColors.Headline2].style,
-        bodyText1: data[ThemeColors.Bodytext1].style,
-        bodyText2: data[ThemeColors.Bodytext2].style,
-        subtitle1: data[ThemeColors.Subtitle1].style,
-        subtitle2: data[ThemeColors.Subtitle2].style,
-      ),
-      accentColor: data[ThemeColors.AccentColor].style,
-      dividerColor: data[ThemeColors.DividerColor].style,
-      backgroundColor: data[ThemeColors.BackgroundColor].style,
-      primaryColor: data[ThemeColors.PrimaryColor].style
-    );
+        textTheme: TextTheme(
+          headline1: data[ThemeColors.Headline1].style,
+          headline2: data[ThemeColors.Headline2].style,
+          bodyText1: data[ThemeColors.Bodytext1].style,
+          bodyText2: data[ThemeColors.Bodytext2].style,
+          subtitle1: data[ThemeColors.Subtitle1].style,
+          subtitle2: data[ThemeColors.Subtitle2].style,
+        ),
+        accentColor: data[ThemeColors.AccentColor].style,
+        dividerColor: data[ThemeColors.DividerColor].style,
+        backgroundColor: data[ThemeColors.BackgroundColor].style,
+        primaryColor: data[ThemeColors.PrimaryColor].style);
   }
 
   @override

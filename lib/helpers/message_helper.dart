@@ -210,14 +210,9 @@ class MessageHelper {
       return;
     }
 
-    String handleAddress;
-    if (message.handle != null) {
-      handleAddress = message.handle.address;
-    }
-
     // Create the notification
-    String contactTitle = await ContactManager().getContactTitle(handleAddress);
-    Contact contact = await ContactManager().getCachedContact(handleAddress);
+    String contactTitle = await ContactManager().getContactTitle(message.handle);
+    Contact contact = await ContactManager().getCachedContact(message.handle);
     String title = await getFullChatTitle(chat);
     String notification = await MessageHelper.getNotificationText(message);
     if (SettingsManager().settings.hideTextPreviews) {
@@ -300,7 +295,7 @@ class MessageHelper {
           : await formatPhoneNumber(message.handle.address);
       if (!message.isFromMe && message.handle != null) {
         Contact contact =
-            await ContactManager().getCachedContact(message.handle.address);
+            await ContactManager().getCachedContact(message.handle);
         if (contact != null) {
           sender = contact.givenName ?? contact.displayName;
         }
@@ -376,6 +371,24 @@ class MessageHelper {
     List<String> items = val.split(":").reversed.toList();
     return (items.length > 0) ? items[0] : val;
   }
+
+  static bool withinTimeThreshold(Message first, Message second,
+      {threshold: 5}) {
+    if (first == null || second == null) return false;
+    return second.dateCreated.difference(first.dateCreated).inMinutes.abs() >
+        threshold;
+  }
+
+  static bool getShowTail(Message message, Message newerMessage) =>
+      MessageHelper.withinTimeThreshold(message, newerMessage, threshold: 1) ||
+      !sameSender(message, newerMessage) ||
+      (message.isFromMe &&
+          newerMessage.isFromMe &&
+          message.dateDelivered != null &&
+          newerMessage.dateDelivered == null);
+
+  static bool getShowTailReversed(Message message, Message olderMessage) =>
+      getShowTail(message, olderMessage);
 
   // static List<TextSpan> buildEmojiText(String text, TextStyle style) {
   //   final children = <TextSpan>[];

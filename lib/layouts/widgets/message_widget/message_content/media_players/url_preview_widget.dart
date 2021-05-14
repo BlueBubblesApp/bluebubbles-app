@@ -126,8 +126,7 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
         }
       }
 
-      widget.message.metadata = meta.toJson();
-      widget.message.update();
+      widget.message.updateMetadata(meta);
 
       if (!MetadataHelper.isNotEmpty(data)) {
         data = meta;
@@ -169,14 +168,18 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
                   .textTheme
                   .bodyText1
                   .apply(fontWeightDelta: 2));
-        } else if (data != null && data.title != null) {
+        } else if (data != null &&
+            data.title != null &&
+            data.title != "Image Preview") {
           return Text(
-            data.title,
+            data?.title ?? "<No Title>",
             style:
                 Theme.of(context).textTheme.bodyText1.apply(fontWeightDelta: 2),
             overflow: TextOverflow.ellipsis,
             maxLines: 2,
           );
+        } else if (data?.title == "Image Preview") {
+          return Container();
         } else {
           return Text("Unable to Load Preview",
               style: Theme.of(context)
@@ -239,7 +242,8 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
                 );
               },
               child: Container(
-                width: MediaQuery.of(context).size.width * 2 / 3,
+                // The minus 5 here is so the timestamps show OK during swipe
+                width: (MediaQuery.of(context).size.width * 2 / 3) - 5,
                 child: Column(
                   children: <Widget>[
                     mainImage,
@@ -270,8 +274,11 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget>
                                         ))
                                     : Container(),
                                 Padding(
-                                  padding:
-                                      EdgeInsets.only(top: 5.0, bottom: 10.0),
+                                  padding: EdgeInsets.only(
+                                      top: (data?.title == "Image Preview"
+                                          ? 0
+                                          : 5.0),
+                                      bottom: 10.0),
                                   child: Text(
                                     widget.message.text
                                         .replaceAll("https://", "")
