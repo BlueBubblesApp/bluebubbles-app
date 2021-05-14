@@ -156,7 +156,7 @@ class _ThemePanelState extends State<ThemePanel> {
                       ChatBloc().refreshChats();
                       setState(() {});
                     },
-                    options: Skins.values,
+                    options: Skins.values.where((item) => item != Skins.Samsung),
                     textProcessing: (dynamic val) => val.toString().split(".").last,
                     title: "App Skin",
                     showDivider: false,
