@@ -177,12 +177,22 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     super.dispose();
   }
 
-  void onContentCommit(String url) async {
-    debugPrint("got attachment " + url);
-    List<String> fnParts = url.split("/");
-    fnParts = (fnParts.length > 2) ? fnParts.sublist(fnParts.length - 2) : fnParts.last;
-    File file = await _downloadFile(url, fnParts.join("_"));
+  void onContentCommit(Map<String, Object> content) async {
+    // Add some debugging logs
+    debugPrint("[Content Commit] Keyboard received content");
+    debugPrint("  -> Content Type: ${content['mimeType']}");
+    debugPrint("  -> URI: ${content['uri']}");
+    debugPrint("  -> Content Length: ${content['data'] != null ? (content['data'] as List<dynamic>).length : "null"}");
+
+    // Parse the filename from the URI and read the data as a List<int>
+    String filename = uriToFilename(content['uri'], content['mimeType']);
+    List<int> data = (content['data'] as List)?.map((e) => e as int)?.toList();
+
+    // Save the data to a location and add it to the file picker
+    File file = await _saveData(data, filename);
     pickedImages.add(file);
+
+    // Update the state
     updateTextFieldAttachments();
     if (this.mounted) setState(() {});
   }
@@ -270,6 +280,17 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     }
     File file = new File('$dir/tempAssets/$filename');
     await file.writeAsBytes(bytes);
+    return file;
+  }
+
+  Future<File> _saveData(List<int> data, String filename) async {
+    String dir = SettingsManager().appDocDir.path;
+    Directory tempAssets = Directory("$dir/tempAssets");
+    if (!await tempAssets.exists()) {
+      await tempAssets.create();
+    }
+    File file = new File('$dir/tempAssets/$filename');
+    await file.writeAsBytes(data);
     return file;
   }
 

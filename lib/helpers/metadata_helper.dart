@@ -140,7 +140,11 @@ class MetadataHelper {
       data.url = url;
       alreadyManual = true;
     } else {
-      data = await extract(url);
+      try {
+        data = await extract(url);
+      } catch (ex) {
+        print('An error occurred while fetching URL Preview Metadata: ${ex.toString()}');
+      }
     }
 
     // If the data or title was null, try to manually parse
@@ -213,26 +217,30 @@ class MetadataHelper {
   static Future<Metadata> _manuallyGetMetadata(String url) async {
     Metadata meta = new Metadata();
 
-    var response = await http.get(url);
-    var document = MetadataHelper._responseToDocument(response);
+    try {
+      var response = await http.get(url);
+      var document = MetadataHelper._responseToDocument(response);
 
-    if (document == null) return meta;
+      if (document == null) return meta;
 
-    for (var i in document.head?.children ?? []) {
-      if (i.localName != "meta") continue;
-      for (var entry in i.attributes.entries) {
-        String prop = entry.key as String;
-        String value = entry.value;
-        if (prop != "property" && prop != "name") continue;
+      for (var i in document.head?.children ?? []) {
+        if (i.localName != "meta") continue;
+        for (var entry in i.attributes.entries) {
+          String prop = entry.key as String;
+          String value = entry.value;
+          if (prop != "property" && prop != "name") continue;
 
-        if (value.contains("title")) {
-          meta.title = i.attributes["content"];
-        } else if (value.contains("description")) {
-          meta.description = i.attributes["content"];
-        } else if (value == "og:image") {
-          meta.image = i.attributes["content"];
+          if (value.contains("title")) {
+            meta.title = i.attributes["content"];
+          } else if (value.contains("description")) {
+            meta.description = i.attributes["content"];
+          } else if (value == "og:image") {
+            meta.image = i.attributes["content"];
+          }
         }
       }
+    } catch (ex) {
+      print('Failed to manually get metadata: ${ex.toString()}');
     }
 
     return meta;

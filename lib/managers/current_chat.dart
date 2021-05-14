@@ -308,7 +308,7 @@ class CurrentChat {
     _stream.sink.add(null);
   }
 
-  /// Retreive all of the attachments associated with a chat
+  /// Retrieve all of the attachments associated with a chat
   Future<void> updateChatAttachments() async {
     chatAttachments = await Chat.getAttachments(chat);
   }

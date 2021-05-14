@@ -23,6 +23,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:keyboard_attachable/keyboard_attachable.dart';
+import 'package:slugify/slugify.dart';
 
 abstract class ChatSelectorTypes {
   static const String ALL = "ALL";
@@ -135,7 +136,7 @@ class ConversationViewState extends State<ConversationView>
       if (chat == null && selected.length == 1) {
         try {
           chat = await Chat.findOne(
-              {"chatIdentifier": sanitizeAddress(selected[0].address)});
+              {"chatIdentifier": Slugify(selected[0].address, delimiter: '')});
         } catch (ex) {}
       }
 

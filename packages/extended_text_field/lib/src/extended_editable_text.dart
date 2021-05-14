@@ -2271,7 +2271,7 @@ class ExtendedEditableTextState extends State<ExtendedEditableText>
   }
 
   @override
-  void commitContent(String contentUri) {
+  void commitContent(Map<String, Object> content) {
     // TODO: implement commitContent
   }
 }

@@ -29,6 +29,7 @@ import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/cupertino.dart' as Cupertino;
 import 'package:flutter/material.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
+import 'package:slugify/slugify.dart';
 
 mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on State<ConversationView> {
   /// Commonly shared variables
@@ -500,7 +501,8 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     // If it's just one recipient, try manual lookup
     if (selected.length == 1) {
       try {
-        Chat existingChat = await Chat.findOne({"chatIdentifier": sanitizeAddress(selected[0].address)});
+        Chat existingChat = await Chat.findOne(
+            {"chatIdentifier": Slugify(selected[0].address, delimiter: '')});
         if (existingChat != null) {
           matchingChats.add(existingChat);
         }
@@ -666,26 +668,29 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     Map<String, dynamic> params = {};
     showDialog(
       context: context,
-      child: AlertDialog(
-        backgroundColor: Theme.of(context).accentColor,
-        title: Text(
-          "Creating a new chat...",
-          style: Theme.of(context).textTheme.bodyText1,
-        ),
-        content: Row(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Container(
-              // height: 70,
-              // color: Colors.black,
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
+       builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Theme.of(context).accentColor,
+          title: Text(
+            "Creating a new chat...",
+            style: Theme.of(context).textTheme.bodyText1,
+          ),
+          content: Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              Container(
+                // height: 70,
+                // color: Colors.black,
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                      Theme.of(context).primaryColor),
+                ),
               ),
-            ),
-          ],
-        ),
-      ),
+            ]
+          ),
+        );
+      }
     );
 
     params["participants"] = participants;
@@ -701,7 +706,8 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     // If there is only 1 participant, try to find the chat
     Chat existingChat;
     if (participants.length == 1) {
-      existingChat = await Chat.findOne({"chatIdentifier": sanitizeAddress(participants[0])});
+      existingChat = await Chat.findOne(
+          {"chatIdentifier": Slugify(participants[0], delimiter: '')});
     }
 
     if (existingChat == null) {
@@ -714,24 +720,26 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
             showDialog(
               barrierDismissible: false,
               context: context,
-              child: AlertDialog(
-                title: Text(
-                  "Could not create",
-                ),
-                content: Text(
-                  "Reason: (${data["error"]["type"]}) -> ${data["error"]["message"]}",
-                ),
-                actions: [
-                  FlatButton(
-                    child: Text(
-                      "Ok",
-                    ),
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                  )
-                ],
-              ),
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  title: Text(
+                    "Could not create",
+                  ),
+                  content: Text(
+                    "Reason: (${data["error"]["type"]}) -> ${data["error"]["message"]}",
+                  ),
+                  actions: [
+                    TextButton(
+                      child: Text(
+                        "Ok",
+                      ),
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                    )
+                  ],
+                );
+              }
             );
             completer.complete(null);
             return;

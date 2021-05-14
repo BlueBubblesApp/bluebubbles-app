@@ -151,6 +151,8 @@ class Settings {
         settings.privateManualMarkAsRead = entry.value;
       } else if (entry.name == "showSyncIndicator") {
         settings.showSyncIndicator = entry.value;
+      } else if (entry.name == "showDeliveryTimestamps") {
+        settings.showDeliveryTimestamps = entry.value;
       } else if (entry.name == "redactedMode") {
         settings.redactedMode = entry.value;
       } else if (entry.name == "hideMessageContent") {
@@ -412,6 +414,14 @@ class Settings {
           value: this.privateManualMarkAsRead,
           type: this.privateManualMarkAsRead.runtimeType,
         ),
+        ConfigEntry(
+            name: "showSyncIndicator",
+            value: this.showSyncIndicator,
+            type: this.showSyncIndicator.runtimeType),
+        ConfigEntry(
+            name: "showDeliveryTimestamps",
+            value: this.showDeliveryTimestamps,
+            type: this.showDeliveryTimestamps.runtimeType),
         ConfigEntry(
           name: "showSyncIndicator",
           value: this.showSyncIndicator,
