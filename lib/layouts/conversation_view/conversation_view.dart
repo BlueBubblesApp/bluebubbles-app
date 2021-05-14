@@ -6,7 +6,6 @@ import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/attachment_sender.dart';
 import 'package:bluebubbles/helpers/constants.dart';
-import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view_mixin.dart';
 import 'package:bluebubbles/layouts/conversation_view/messages_view.dart';
 import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/chat_selector_text_field.dart';
@@ -61,8 +60,7 @@ class ConversationView extends StatefulWidget {
   ConversationViewState createState() => ConversationViewState();
 }
 
-class ConversationViewState extends State<ConversationView>
-    with ConversationViewMixin {
+class ConversationViewState extends State<ConversationView> with ConversationViewMixin {
   List<File> existingAttachments;
   String existingText;
   List<DisplayMode> modes;
@@ -129,14 +127,12 @@ class ConversationViewState extends State<ConversationView>
   }
 
   Future<bool> send(List<File> attachments, String text) async {
-    bool isDifferentChat =
-        currentChat == null || currentChat?.chat?.guid != chat.guid;
+    bool isDifferentChat = currentChat == null || currentChat?.chat?.guid != chat.guid;
 
     if (isCreator) {
       if (chat == null && selected.length == 1) {
         try {
-          chat = await Chat.findOne(
-              {"chatIdentifier": Slugify(selected[0].address, delimiter: '')});
+          chat = await Chat.findOne({"chatIdentifier": Slugify(selected[0].address, delimiter: '')});
         } catch (ex) {}
       }
 
@@ -151,8 +147,7 @@ class ConversationViewState extends State<ConversationView>
         initCurrentChat(chat);
       }
 
-      bool isDifferentBloc =
-          messageBloc == null || messageBloc?.currentChat?.guid != chat.guid;
+      bool isDifferentBloc = messageBloc == null || messageBloc?.currentChat?.guid != chat.guid;
 
       // Fetch messages
       if (isDifferentBloc) {
@@ -213,8 +208,7 @@ class ConversationViewState extends State<ConversationView>
       );
     } else if (currentChat != null &&
         currentChat.showScrollDown &&
-        (SettingsManager().settings.skin == Skins.Material ||
-            SettingsManager().settings.skin == Skins.Samsung)) {
+        (SettingsManager().settings.skin == Skins.Material || SettingsManager().settings.skin == Skins.Samsung)) {
       return Padding(
         padding: const EdgeInsets.only(bottom: 55.0),
         child: FloatingActionButton(
@@ -226,9 +220,7 @@ class ConversationViewState extends State<ConversationView>
           backgroundColor: Theme.of(context).accentColor,
         ),
       );
-    } else if (currentChat != null &&
-        currentChat.showScrollDown &&
-        SettingsManager().settings.skin == Skins.IOS) {
+    } else if (currentChat != null && currentChat.showScrollDown && SettingsManager().settings.skin == Skins.IOS) {
       return Row(mainAxisAlignment: MainAxisAlignment.center, children: [
         Padding(
           padding: EdgeInsets.only(left: 25.0, bottom: 45),
@@ -268,8 +260,7 @@ class ConversationViewState extends State<ConversationView>
 
   void loadBrightness() {
     Color now = Theme.of(context).backgroundColor;
-    bool themeChanged =
-        previousBackgroundColor == null || previousBackgroundColor != now;
+    bool themeChanged = previousBackgroundColor == null || previousBackgroundColor != now;
     if (!themeChanged && gotBrightness) return;
 
     previousBackgroundColor = now;
@@ -314,9 +305,7 @@ class ConversationViewState extends State<ConversationView>
       child: Scaffold(
         backgroundColor: Theme.of(context).backgroundColor,
         extendBodyBehindAppBar: !isCreator,
-        appBar: !isCreator
-            ? buildConversationViewHeader()
-            : buildChatSelectorHeader(),
+        appBar: !isCreator ? buildConversationViewHeader() : buildChatSelectorHeader(),
         resizeToAvoidBottomInset: wasCreator,
         body: FooterLayout(
           footer: KeyboardAttachable(
@@ -324,11 +313,9 @@ class ConversationViewState extends State<ConversationView>
                 ? (SettingsManager().settings.swipeToCloseKeyboard)
                     ? GestureDetector(
                         onPanUpdate: (details) {
-                          if (details.delta.dy > 0 &&
-                              (currentChat?.keyboardOpen ?? false)) {
+                          if (details.delta.dy > 0 && (currentChat?.keyboardOpen ?? false)) {
                             EventDispatcher().emit("unfocus-keyboard", null);
-                          } else if (details.delta.dy < 0 &&
-                              !(currentChat?.keyboardOpen ?? false)) {
+                          } else if (details.delta.dy < 0 && !(currentChat?.keyboardOpen ?? false)) {
                             EventDispatcher().emit("focus-keyboard", null);
                           }
                         },
@@ -344,8 +331,7 @@ class ConversationViewState extends State<ConversationView>
                   controller: chatSelectorController,
                   onRemove: (UniqueContact item) {
                     if (item.isChat) {
-                      selected.removeWhere(
-                          (e) => (e.chat?.guid ?? null) == item.chat.guid);
+                      selected.removeWhere((e) => (e.chat?.guid ?? null) == item.chat.guid);
                     } else {
                       selected.removeWhere((e) => e.address == item.address);
                     }
