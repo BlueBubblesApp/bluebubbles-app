@@ -48,7 +48,7 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
     await Navigator.push(
       context,
       PageRouteBuilder(
-        settings: RouteSettings(arguments: {"hideTail": true},),
+        settings: RouteSettings(arguments: {"hideTail": true}),
         transitionDuration: Duration(milliseconds: 0),
         pageBuilder: (context, animation, secondaryAnimation) {
           return MessageDetailsPopup(
@@ -75,10 +75,10 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
   Widget build(BuildContext context) {
     return GestureDetector(
       key: containerKey,
-      onDoubleTap: SettingsManager().settings.doubleTapForDetails
+      onDoubleTap: SettingsManager().settings.doubleTapForDetails && widget.message.guid.startsWith('temp')
           ? this.openMessageDetails
           : null,
-      onLongPress: this.openMessageDetails,
+      onLongPress: (widget.message.guid.startsWith('temp')) ? null : this.openMessageDetails,
       child: Opacity(
         child: widget.child,
         opacity: visible ? 1 : 0,
