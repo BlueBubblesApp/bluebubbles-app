@@ -584,8 +584,15 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget>
 
   Future<void> loadEntries() async {
     if (!isCreator) return;
-    if (isNullOrEmpty(ChatBloc().chats)) {
+
+    // If we don't have chats, fetch them
+    if (ChatBloc().chats == null) {
       await ChatBloc().refreshChats();
+    }
+
+    // If the chat request isn't finished, wait for it
+    if (!ChatBloc().chatRequest.isCompleted) {
+      await ChatBloc().chatRequest.future;
     }
 
     conversations = ChatBloc().chats;

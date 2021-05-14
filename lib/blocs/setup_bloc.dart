@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
@@ -216,8 +217,11 @@ class SetupBloc {
 
     Settings _settingsCopy = SettingsManager().settings;
     _settingsCopy.finishedSetup = true;
+
     ContactManager().contacts = [];
-    await ContactManager().getContacts();
+    await ContactManager().getContacts(force: true);
+    await ChatBloc().refreshChats();
+
     SettingsManager().saveSettings(_settingsCopy);
     SocketManager().finishSetup();
   }

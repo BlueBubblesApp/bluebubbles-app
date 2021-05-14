@@ -65,7 +65,7 @@ class ContactManager {
     return output;
   }
 
-  Future getContacts({bool headless = false}) async {
+  Future getContacts({bool headless = false, bool force = false}) async {
     if (!(await canAccessContacts())) return false;
 
     // If we are fetching the contacts, return the current future so we can await it
@@ -78,7 +78,7 @@ class ContactManager {
     // Check if we've requested sometime in the last 5 minutes
     // If we have, exit, we don't need to re-fetch the chats again
     int now = DateTime.now().toUtc().millisecondsSinceEpoch;
-    if (lastRefresh != 0 && now < lastRefresh + (60000 * 5)) {
+    if (!force && lastRefresh != 0 && now < lastRefresh + (60000 * 5)) {
       debugPrint(
           "[ContactManager] -> Not fetching contacts; Not enough time has elapsed");
       return;
@@ -98,20 +98,15 @@ class ContactManager {
 
     // Match handles to contacts
     List<Handle> handles = await Handle.find({});
-    int count  = 0;
-    print("FOUND HANDLES: ${handles.length}");
     for (Handle handle in handles) {
       // If we already have a "match", skip
       if (handleToContact.containsKey(handle.address)) {
-        print("SKIPPING");
         continue;
       }
 
       // Find a contact match
       Contact contactMatch = await getContact(handle);
-
       handleToContact[handle.address] = contactMatch;
-      count += 1;
 
       // If we have a match, add it to the mapping, then break out
       // of the loop so we don't "over-process" more than we need
@@ -119,8 +114,6 @@ class ContactManager {
         _stream.sink.add([handle.address]);
       }
     }
-
-    print("COUNT: $count");
 
     debugPrint("ContactManager -> Finished fetching contacts (${handleToContact.length})");
     getContactsFuture.complete(true);
