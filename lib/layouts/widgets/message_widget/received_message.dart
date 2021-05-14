@@ -228,7 +228,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                 ? generateName
                     ? fakeName
                     : "Participant " + (index + 1).toString()
-                : widget.message.handle.address,
+                : contactTitle,
             style: Theme.of(context).textTheme.subtitle1,
           ),
         ),
