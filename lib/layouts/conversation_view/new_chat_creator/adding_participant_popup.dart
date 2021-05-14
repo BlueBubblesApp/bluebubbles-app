@@ -1,8 +1,8 @@
 import 'dart:async';
 
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view_mixin.dart';
+import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/material.dart';
 

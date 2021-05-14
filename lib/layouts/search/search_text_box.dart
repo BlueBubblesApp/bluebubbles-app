@@ -1,6 +1,6 @@
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:bluebubbles/helpers/utils.dart';
 
 class SearchTextBox extends StatefulWidget {
   SearchTextBox({Key key, this.autoFocus = false}) : super(key: key);

@@ -11,8 +11,8 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/material.dart';
 
-import '../repository/models/handle.dart';
 import '../repository/models/chat.dart';
+import '../repository/models/handle.dart';
 
 class ChatBloc {
   // Stream controller is the 'Admin' that manages

@@ -1,6 +1,7 @@
+import 'dart:math' as math;
+
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/material.dart';
-import 'dart:math' as math;
 
 /// Scroll physics for environments that allow the scroll offset to go beyond
 /// the bounds of the content, but then bounce the content back to the edge of

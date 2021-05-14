@@ -11,8 +11,8 @@ import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
-import 'package:intent/intent.dart' as android_intent;
 import 'package:intent/action.dart' as android_action;
+import 'package:intent/intent.dart' as android_intent;
 import 'package:permission_handler/permission_handler.dart';
 
 class ContactTile extends StatefulWidget {

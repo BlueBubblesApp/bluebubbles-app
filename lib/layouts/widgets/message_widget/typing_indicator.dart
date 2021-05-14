@@ -1,7 +1,8 @@
+import 'dart:math' as Math;
+
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.dart';
 import 'package:flutter/material.dart';
-import 'package:bluebubbles/helpers/utils.dart';
-import 'dart:math' as Math;
 
 class TypingIndicator extends StatefulWidget {
   TypingIndicator({Key key, this.visible}) : super(key: key);

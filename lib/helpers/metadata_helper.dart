@@ -3,10 +3,10 @@ import 'dart:convert';
 
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/repository/models/message.dart';
-import 'package:metadata_fetch/metadata_fetch.dart';
-import 'package:http/http.dart' as http;
-import 'package:html/parser.dart' as parser;
 import 'package:html/dom.dart';
+import 'package:html/parser.dart' as parser;
+import 'package:http/http.dart' as http;
+import 'package:metadata_fetch/metadata_fetch.dart';
 
 /// Adds getter/setter for the original [Response.request.url]
 extension HttpRequestData on Document {

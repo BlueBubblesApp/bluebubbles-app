@@ -1,8 +1,9 @@
 import 'dart:convert';
+
 import 'package:sqflite/sqflite.dart';
 
-import '../database.dart';
 import './chat.dart';
+import '../database.dart';
 
 ScheduledMessage scheduledFromJson(String str) {
   final jsonData = json.decode(str);
