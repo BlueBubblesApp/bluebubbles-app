@@ -38,42 +38,45 @@ class AttachmentHelper {
     List<String> lines = appleLocation.split("\n");
     var emptyLocation = {'longitude': null, 'latitude': null};
 
-    String url;
-    for (var i in lines) {
-      if (i.contains(".URL:h") || i.contains(".URL;h")) {
-        url = i;
-      }
-    }
-
-    if (url == null) return emptyLocation;
-
-    String query;
-    List<String> opts = ["&q=", "&ll="];
-
-    for (var i in opts) {
-      if (url.contains(i)) {
-        var items = url.split(i);
-        if (items.length >= 1) {
-          query = items[1];
+    try {
+      String url;
+      for (var i in lines) {
+        if (i.contains(".URL:") || i.contains(".URL;")) {
+          url = i;
         }
       }
-    }
 
-    if (query == null) return emptyLocation;
-    if (query.contains("&")) {
-      query = query.split("&").first;
-    }
+      if (url == null) return emptyLocation;
 
-    if (query.contains("\\")) {
-      return {
-        "longitude": double.tryParse((query.split("\\,")[0])),
-        "latitude": double.tryParse(query.split("\\,")[1])
-      };
-    } else {
-      return {
-        "longitude": double.tryParse((query.split(",")[0])),
-        "latitude": double.tryParse(query.split(",")[1])
-      };
+      String query;
+      List<String> opts = ["&q=", "&ll="];
+      for (var i in opts) {
+        if (url.contains(i)) {
+          var items = url.split(i);
+          if (items.length >= 1) {
+            query = items[1];
+          }
+        }
+      }
+
+      if (query == null) return emptyLocation;
+      if (query.contains("&")) {
+        query = query.split("&").first;
+      }
+
+      if (query.contains("\\")) {
+        return {
+          "longitude": double.tryParse((query.split("\\,")[0])),
+          "latitude": double.tryParse(query.split("\\,")[1])
+        };
+      } else {
+        return {
+          "longitude": double.tryParse((query.split(",")[0])),
+          "latitude": double.tryParse(query.split(",")[1])
+        };
+      }
+    } catch (ex) {
+      return emptyLocation;
     }
   }
 
