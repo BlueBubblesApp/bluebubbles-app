@@ -87,65 +87,54 @@ Future<String> formatPhoneNumber(String str) async {
   return meta['national'];
 }
 
-bool sameAddress(String address1, String address2) {
-  String countryCode = SettingsManager().countryCode ?? "US";
-  String formattedNumber1 = Slugify(address1, delimiter: '');
-  String formattedNumber2 = Slugify(address2, delimiter: '');
+Future<List<String>> getCompareOpts(Handle handle) async {
+  if (handle.address.contains('@')) return [handle.address];
+  String formatted = handle.address.toString();
+  List<String> opts = [formatted, formatted.substring(1), formatted.substring(2)];
+  Map<String, dynamic> parsed = await parsePhoneNumber(handle.address, handle.country ?? "US");
+  opts.addAll(parsed.values.map((item) => item.toString()).where((item) => item != 'fixedOrMobile'));
+  return opts;
+}
 
-  try {
-    // Strip any unnecessary pluses and "1"s
-    // If it starts with a plus, is in the US, and the length is 11, strip the +
-    // Having only 11 characters means it was missing the "1" after "+1"
-    String ccUpper = countryCode.toUpperCase();
-    if (formattedNumber1.startsWith("+") &&
-        ccUpper == "US" &&
-        formattedNumber1.length == 11) {
-      formattedNumber1 = formattedNumber1.substring(1);
-    } else if (formattedNumber1.startsWith("1") &&
-        ccUpper == "US" &&
-        formattedNumber1.length == 11) {
-      formattedNumber1 = formattedNumber1.substring(1);
-    }
-    if (formattedNumber2.startsWith("+") &&
-        ccUpper == "US" &&
-        formattedNumber2.length == 11) {
-      formattedNumber2 = formattedNumber1.substring(1);
-    } else if (!formattedNumber2.startsWith("1") &&
-        ccUpper == "US" &&
-        formattedNumber2.length == 11) {
-      formattedNumber2 = formattedNumber2.substring(1);
+bool sameAddress(List<String> options, String compared) {
+  bool match = false;
+  for (String opt in options) {
+    if (opt == compared) {
+      match = true;
+      break;
     }
 
-    // Now check if the values are equal
-    if (formattedNumber1 == formattedNumber2) return true;
+    if (opt.contains('@') && !compared.contains('@')) continue;
 
-    // If they are not equal, try to strip the dial code (if any)
-    if (formattedNumber1.startsWith("+")) {
-      if (getCodeMap().containsKey(countryCode)) {
-        String dialCode = getCodeMap()[countryCode];
-        if (formattedNumber1.length > dialCode.length) {
-          formattedNumber1 = formattedNumber1.substring(dialCode.length);
-        }
-      }
+    String formatted = Slugify(compared, delimiter: '').toString().replaceAll('-', '');
+    if (options.contains(formatted)) {
+      match = true;
+      break;
     }
-
-    if (formattedNumber2.startsWith("+")) {
-      if (getCodeMap().containsKey(countryCode)) {
-        String dialCode = getCodeMap()[countryCode];
-        if (formattedNumber1.length > dialCode.length) {
-          formattedNumber2 = formattedNumber2.substring(dialCode.length);
-        }
-      }
-    }
-
-    // Now that the dial code is stripped, check if they are the same
-    if (formattedNumber1 == formattedNumber2) return true;
-  } catch (ex) {
-    print('Failed to compare addresses in sameAddress(). Returning false: ${ex.toString()}');
   }
 
-  // I didn't return above in case we want to add more checks below here
-  return false;
+  return match;
+
+
+
+  // // Handle easiest option
+  // if (handle.address == compared) return true;
+
+  // // Handle easy non-email address comparison
+  // if (handle.address.contains('@') && !compared.contains('@')) return false;
+  
+  // // Handle phone numbers
+  // String formattedNumber1 = Slugify(handle.address, delimiter: '');
+  
+
+  // String country = handle?.country ?? "US";
+  
+
+  // print("Match Attempt");
+  // print(matchOptions);
+  // print(formattedNumber2);
+  // print(matchOptions.contains(formattedNumber2));
+  // return matchOptions.contains(formattedNumber2);
 }
 
 // Future<Uint8List> blurHashDecode(String blurhash, int width, int height) async {
@@ -162,6 +151,15 @@ bool sameAddress(String address1, String address2) {
 //       ((map["height"] / 200) as double).toInt());
 //   return imageDataBytes.toList();
 // }
+
+Future<Map<String, dynamic>> parsePhoneNumber(String number, String region) async {
+  Map<String, dynamic> meta = {};
+  try {
+    return await FlutterLibphonenumber().parse(number, region: region);
+  } catch (ex) {
+    return meta;
+  }
+}
 
 String randomString(int length) {
   var rand = new Random();
@@ -297,13 +295,13 @@ Future<String> getGroupEventText(Message message) async {
   String text = "Unknown group event";
   String handle = "You";
   if (!message.isFromMe && message.handleId != null && message.handle != null)
-    handle = await ContactManager().getContactTitle(message.handle.address);
+    handle = await ContactManager().getContactTitle(message.handle);
 
   String other = "someone";
   if (message.otherHandle != null && [1, 2].contains(message.itemType)) {
     Handle item = await Handle.findOne({"originalROWID": message.otherHandle});
     if (item != null) {
-      other = await ContactManager().getContactTitle(item.address);
+      other = await ContactManager().getContactTitle(item);
     }
   }
 
@@ -326,7 +324,7 @@ Future<String> getGroupEventText(Message message) async {
   return text;
 }
 
-Future<MemoryImage> loadAvatar(Chat chat, String address) async {
+Future<MemoryImage> loadAvatar(Chat chat, Handle handle) async {
   if (chat != null) {
     // If the chat hasn't been saved, save it
     if (chat.id == null) await chat.save();
@@ -339,17 +337,18 @@ Future<MemoryImage> loadAvatar(Chat chat, String address) async {
     // If there are no participants, return
     if (chat.participants == null) return null;
 
+    String address = handle != null ? handle.address : null;
     if (address == null) {
       address = chat.participants.first.address;
     }
 
     // See if the update contains the current conversation
-    int matchIdx = chat.participants.map((i) => i.address).toList().indexOf(address);
+    int matchIdx = chat.participants.map((i) => i.address).toList().indexOf(handle.address);
     if (matchIdx == -1) return null;
   }
 
   // Get the contact
-  Contact contact = await ContactManager().getCachedContact(address);
+  Contact contact = await ContactManager().getCachedContact(handle);
   if (isNullOrEmpty(contact?.avatar)) return null;
 
   // Set the contact image

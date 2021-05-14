@@ -33,7 +33,7 @@ class ConversationList extends StatefulWidget {
 }
 
 class _ConversationListState extends State<ConversationList> {
-  List<Chat> chats = <Chat>[];
+  List<Chat> chats = [];
   bool colorfulAvatars = false;
   bool reducedForehead = false;
   bool showIndicator = false;
@@ -77,6 +77,7 @@ class _ConversationListState extends State<ConversationList> {
     super.initState();
     if (!widget.showArchivedChats) {
       ChatBloc().chatStream.listen((List<Chat> chats) {
+        if (chats == null || chats.length == 0) return;
         this.chats = chats;
         if (this.mounted) setState(() {});
       });
@@ -84,6 +85,7 @@ class _ConversationListState extends State<ConversationList> {
       ChatBloc().refreshChats();
     } else {
       ChatBloc().archivedChatStream.listen((List<Chat> chats) {
+        if (chats == null || chats.length == 0) return;
         this.chats = chats;
         if (this.mounted) setState(() {});
       });

@@ -96,7 +96,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget>
     state.initials = await getInitials(handle: widget.handle);
 
     Contact contact =
-    await ContactManager().getCachedContact(widget.handle.address);
+        await ContactManager().getCachedContact(widget.handle);
 
     if (contact == null) {
       List<Contact> contactRes = [];
@@ -137,7 +137,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget>
 
   Future<String> getInitials({Handle handle, double size = 30}) async {
     if (handle == null) return null;
-    String name = await ContactManager().getContactTitle(handle.address);
+    String name = await ContactManager().getContactTitle(handle);
     if (name.contains("@")) return name[0].toUpperCase();
 
     // Check if it's just a regular number, no contact

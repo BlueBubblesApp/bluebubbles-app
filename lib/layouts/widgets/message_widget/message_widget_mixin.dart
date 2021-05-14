@@ -22,7 +22,8 @@ abstract class MessageWidgetMixin {
   Future<void> getContactTitle(Message message, bool showHandle) async {
     if (message.handle == null || !showHandle) return;
 
-    String title = await ContactManager().getContactTitle(message.handle.address);
+    String title =
+        await ContactManager().getContactTitle(message.handle);
 
     if (title != contactTitle) {
       contactTitle = title;

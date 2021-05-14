@@ -46,7 +46,8 @@ Future<String> getFullChatTitle(Chat _chat) async {
 
     List<String> titles = [];
     for (int i = 0; i < chat.participants.length; i++) {
-      String name = await ContactManager().getContactTitle(chat.participants[i].address);
+      String name =
+          await ContactManager().getContactTitle(chat.participants[i]);
 
       String test = name.replaceAll(RegExp(r'[-() \.]'), '');
       test = test.replaceAll(RegExp(r'[^0-9]'), "").trim();
@@ -82,7 +83,8 @@ Future<String> getFullChatTitle(Chat _chat) async {
 
 Future<String> getShortChatTitle(Chat _chat) async {
   if (_chat.participants.length == 1) {
-    return await ContactManager().getContactTitle(_chat.participants[0].address);
+    return await ContactManager()
+        .getContactTitle(_chat.participants[0]);
   } else if (_chat.displayName != null && _chat.displayName.length != 0) {
     return _chat.displayName;
   } else {
@@ -460,7 +462,14 @@ class Chat {
     });
   }
 
-  static Future<List<Attachment>> getAttachments(Chat chat, {int offset = 0, int limit = 25}) async {
+  static Future<int> count() async {
+    final Database db = await DBProvider.db.database;
+    dynamic test = await db.rawQuery("SELECT COUNT(*) FROM chat;");
+    return (test[0] as Map<String, dynamic>)['COUNT(*)'];
+  }
+
+  static Future<List<Attachment>> getAttachments(Chat chat,
+      {int offset = 0, int limit = 25}) async {
     final Database db = await DBProvider.db.database;
     if (chat.id == null) return [];
 

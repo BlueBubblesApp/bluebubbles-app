@@ -37,10 +37,12 @@ class ContactManager {
   Completer getAvatarsFuture;
   int lastRefresh = 0;
 
-  Future<Contact> getCachedContact(String address) async {
-    if (contacts == null || !handleToContact.containsKey(address)) await getContacts();
-    if (!handleToContact.containsKey(address)) return null;
-    return handleToContact[address];
+  Future<Contact> getCachedContact(Handle handle) async {
+    if (handle == null) return null;
+    if (contacts == null || !handleToContact.containsKey(handle.address))
+      await getContacts();
+    if (!handleToContact.containsKey(handle.address)) return null;
+    return handleToContact[handle.address];
   }
 
   Contact getCachedContactSync(String address) {
@@ -67,18 +69,20 @@ class ContactManager {
     return output;
   }
 
-  Future getContacts({bool headless = false}) async {
+  Future getContacts({bool headless = false, bool force = false}) async {
     if (!(await canAccessContacts())) return false;
 
     // If we are fetching the contacts, return the current future so we can await it
     if (getContactsFuture != null && !getContactsFuture.isCompleted) {
+      debugPrint(
+          "[ContactManager] -> Already fetching contacts, returning future...");
       return getContactsFuture.future;
     }
 
     // Check if we've requested sometime in the last 5 minutes
     // If we have, exit, we don't need to re-fetch the chats again
     int now = DateTime.now().toUtc().millisecondsSinceEpoch;
-    if (lastRefresh != 0 && now < lastRefresh + (60000 * 5)) {
+    if (!force && lastRefresh != 0 && now < lastRefresh + (60000 * 5)) {
       debugPrint(
           "[ContactManager] -> Not fetching contacts; Not enough time has elapsed");
       return;
@@ -98,10 +102,12 @@ class ContactManager {
     List<Handle> handles = await Handle.find({});
     for (Handle handle in handles) {
       // If we already have a "match", skip
-      if (handleToContact.containsKey(handle.address)) continue;
+      if (handleToContact.containsKey(handle.address)) {
+        continue;
+      }
 
       // Find a contact match
-      Contact contactMatch = await getContact(handle.address);
+      Contact contactMatch = await getContact(handle);
       handleToContact[handle.address] = contactMatch;
 
       // If we have a match, add it to the mapping, then break out
@@ -153,9 +159,14 @@ class ContactManager {
     getAvatarsFuture.complete();
   }
 
-  Future<Contact> getContact(String address, {bool fetchAvatar = false}) async {
-    if (address == null) return null;
+  Future<Contact> getContact(Handle handle, {bool fetchAvatar = false}) async {
+    if (handle == null) return null;
     Contact contact;
+
+    // Get a list of comparable options
+    dynamic opts = await getCompareOpts(handle);
+    bool isEmail = handle.address.contains('@');
+    String lastDigits = handle.address.substring(handle.address.length - 4, handle.address.length);
 
     // If the contact list is null, get the contacts
     try {
@@ -166,24 +177,31 @@ class ContactManager {
 
     for (Contact c in contacts ?? []) {
       // Get a phone number match
-      for (Item item in c?.phones ?? []) {
-        if (sameAddress(item.value, address)) {
-          contact = c;
-          break;
+      if (!isEmail) {
+        for (Item item in c?.phones ?? []) {
+          if (!item.value.endsWith(lastDigits)) continue;
+
+          if (sameAddress(opts, item.value)) {
+            contact = c;
+            break;
+          }
         }
       }
 
       // Get an email match
-      for (Item item in c?.emails ?? []) {
-        if (item.value == address) {
-          contact = c;
-          break;
+      if (isEmail) {
+        for (Item item in c?.emails ?? []) {
+          if (item.value == handle.address) {
+            contact = c;
+            break;
+          }
         }
       }
 
       // If we have a match, break out of the loop
       if (contact != null) break;
     }
+
     if (fetchAvatar) {
       contact.avatar = await ContactsService.getAvatar(contact, photoHighRes: false);
     }
@@ -191,14 +209,17 @@ class ContactManager {
     return contact;
   }
 
-  Future<String> getContactTitle(String address) async {
-    if (address == null) return "You";
+  Future<String> getContactTitle(Handle handle) async {
+    if (handle == null) return "You";
     if (contacts == null) await getContacts();
 
-    if (handleToContact.containsKey(address) && handleToContact[address] != null)
+    String address = handle.address;
+    if (handleToContact.containsKey(address) &&
+        handleToContact[address] != null)
       return handleToContact[address].displayName;
-    Contact contact = await getContact(address);
-    if (contact != null && contact.displayName != null) return contact.displayName;
+    Contact contact = await getContact(handle);
+    if (contact != null && contact.displayName != null)
+      return contact.displayName;
     String contactTitle = address;
     if (contactTitle == address && !contactTitle.contains("@")) {
       return await formatPhoneNumber(contactTitle);
