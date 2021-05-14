@@ -22,8 +22,7 @@ abstract class MessageWidgetMixin {
   Future<void> getContactTitle(Message message, bool showHandle) async {
     if (message.handle == null || !showHandle) return;
 
-    String title =
-        await ContactManager().getContactTitle(message.handle);
+    String title = await ContactManager().getContactTitle(message.handle);
 
     if (title != contactTitle) {
       contactTitle = title;
@@ -65,7 +64,7 @@ abstract class MessageWidgetMixin {
 
     if (message != null && !isEmptyString(message.text)) {
       RegExp exp = new RegExp(
-          r'((https?:\/\/)|(www\.))[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}([-a-zA-Z0-9\/()@:%_.~#?&=\*\[\]]{0,})\b');
+          r'((https?://)|(www\.))[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}([-a-zA-Z0-9/()@:%_.~#?&=*\[\]]*)\b');
       List<RegExpMatch> matches = exp.allMatches(message.text).toList();
 
       List<int> linkIndexMatches = <int>[];

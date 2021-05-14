@@ -294,14 +294,12 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget> with TickerProvider
                       ),
                     if (hideContent && !hideType)
                       Positioned.fill(
-                        child: Container(
-                          alignment: Alignment.center,
-                          child: Text(
-                            "link",
-                            textAlign: TextAlign.center,
-                          )
-                        )
-                      )
+                          child: Container(
+                              alignment: Alignment.center,
+                              child: Text(
+                                "link",
+                                textAlign: TextAlign.center,
+                              )))
                   ],
                 ),
               ),

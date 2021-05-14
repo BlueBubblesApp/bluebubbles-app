@@ -32,10 +32,7 @@ class _PrepareToDownloadState extends State<PrepareToDownload> {
                 padding: EdgeInsets.symmetric(horizontal: 20.0),
                 child: Text(
                   "For the final step, BlueBubbles will download the first 25 messages for each of your chats.",
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodyText1
-                      .apply(fontSizeFactor: 1.5),
+                  style: Theme.of(context).textTheme.bodyText1.apply(fontSizeFactor: 1.5),
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -44,10 +41,7 @@ class _PrepareToDownloadState extends State<PrepareToDownload> {
                 padding: EdgeInsets.symmetric(horizontal: 20.0),
                 child: Text(
                   "Don't worry, you can see your chat history by scrolling up in a chat.",
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodyText1
-                      .apply(fontSizeFactor: 1.5),
+                  style: Theme.of(context).textTheme.bodyText1.apply(fontSizeFactor: 1.5),
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -71,8 +65,7 @@ class _PrepareToDownloadState extends State<PrepareToDownload> {
                       numberOfMessages = value == 0 ? 1 : value;
                     });
                   },
-                  label:
-                      numberOfMessages == 0 ? "1" : numberOfMessages.toString(),
+                  label: numberOfMessages == 0 ? "1" : numberOfMessages.toString(),
                   divisions: 50,
                   min: 0,
                   max: 250,
@@ -124,12 +117,9 @@ class _PrepareToDownloadState extends State<PrepareToDownload> {
                     Switch(
                       value: skipEmptyChats,
                       activeColor: Theme.of(context).primaryColor,
-                      activeTrackColor:
-                          Theme.of(context).primaryColor.withAlpha(200),
-                      inactiveTrackColor:
-                          Theme.of(context).primaryColor.withAlpha(75),
-                      inactiveThumbColor:
-                          Theme.of(context).textTheme.bodyText1.color,
+                      activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
+                      inactiveTrackColor: Theme.of(context).primaryColor.withAlpha(75),
+                      inactiveThumbColor: Theme.of(context).textTheme.bodyText1.color,
                       onChanged: (bool value) {
                         if (!this.mounted) return;
 
@@ -156,10 +146,8 @@ class _PrepareToDownloadState extends State<PrepareToDownload> {
                     ),
                     onTap: () async {
                       // Set the number of messages to sync
-                      SocketManager().setup.numberOfMessagesPerPage =
-                          numberOfMessages;
-                      SocketManager().setup.downloadAttachments =
-                          downloadAttachments;
+                      SocketManager().setup.numberOfMessagesPerPage = numberOfMessages;
+                      SocketManager().setup.downloadAttachments = downloadAttachments;
                       SocketManager().setup.skipEmptyChats = skipEmptyChats;
 
                       // Start syncing

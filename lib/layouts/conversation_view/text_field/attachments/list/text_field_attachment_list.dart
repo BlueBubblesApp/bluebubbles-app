@@ -5,18 +5,15 @@ import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:flutter/material.dart';
 
 class TextFieldAttachmentList extends StatefulWidget {
-  TextFieldAttachmentList({Key key, this.attachments, this.onRemove})
-      : super(key: key);
+  TextFieldAttachmentList({Key key, this.attachments, this.onRemove}) : super(key: key);
   final List<File> attachments;
   final Function(File) onRemove;
 
   @override
-  _TextFieldAttachmentListState createState() =>
-      _TextFieldAttachmentListState();
+  _TextFieldAttachmentListState createState() => _TextFieldAttachmentListState();
 }
 
-class _TextFieldAttachmentListState extends State<TextFieldAttachmentList>
-    with SingleTickerProviderStateMixin {
+class _TextFieldAttachmentListState extends State<TextFieldAttachmentList> with SingleTickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     return AnimatedSize(

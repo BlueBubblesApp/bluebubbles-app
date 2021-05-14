@@ -20,25 +20,28 @@ class ChatBloc {
   // new data, change the state of the stream
   // and broadcast it to observers/subscribers
   final _chatController = StreamController<List<Chat>>.broadcast();
-  final _tileValController =
-      StreamController<Map<String, Map<String, dynamic>>>.broadcast();
+  final _tileValController = StreamController<Map<String, Map<String, dynamic>>>.broadcast();
 
   Stream<List<Chat>> get chatStream => _chatController.stream;
-  Stream<Map<String, Map<String, dynamic>>> get tileStream =>
-      _tileValController.stream;
+
+  Stream<Map<String, Map<String, dynamic>>> get tileStream => _tileValController.stream;
 
   final _archivedChatController = StreamController<List<Chat>>.broadcast();
+
   Stream<List<Chat>> get archivedChatStream => _archivedChatController.stream;
 
   static StreamSubscription<NewMessageEvent> _messageSubscription;
 
   List<Chat> _chats;
+
   List<Chat> get chats => _chats;
   List<Chat> _archivedChats;
+
   List<Chat> get archivedChats => _archivedChats;
   Completer<void> chatRequest;
 
   static final ChatBloc _chatBloc = ChatBloc._internal();
+
   ChatBloc._internal();
 
   factory ChatBloc() {
@@ -63,7 +66,6 @@ class ChatBloc {
   }
 
   Future<void> refreshChats() async {
-
     // If we are fetching the contacts, return the current future so we can await it
     if (chatRequest != null && !chatRequest.isCompleted) {
       return chatRequest.future;
@@ -104,12 +106,8 @@ class ChatBloc {
       if (_chats[i].guid != chat.guid) continue;
 
       // Don't move/update the chat if the latest message for it is newer than the incoming one
-      int latest = chat.latestMessageDate != null
-          ? chat.latestMessageDate.millisecondsSinceEpoch
-          : 0;
-      if (_chats[i].latestMessageDate != null &&
-              _chats[i].latestMessageDate.millisecondsSinceEpoch > latest ??
-          0) {
+      int latest = chat.latestMessageDate != null ? chat.latestMessageDate.millisecondsSinceEpoch : 0;
+      if (_chats[i].latestMessageDate != null && _chats[i].latestMessageDate.millisecondsSinceEpoch > latest ?? 0) {
         shouldUpdate = false;
       }
 
@@ -131,8 +129,7 @@ class ChatBloc {
         // If the chat is older, that's where we want to insert
         if (_chats[i].latestMessageDate == null ||
                 chat.latestMessageDate == null ||
-                _chats[i].latestMessageDate.millisecondsSinceEpoch <
-                    chat.latestMessageDate.millisecondsSinceEpoch ??
+                _chats[i].latestMessageDate.millisecondsSinceEpoch < chat.latestMessageDate.millisecondsSinceEpoch ??
             0) {
           _chats.insert(i, chat);
           break;
@@ -161,9 +158,8 @@ class ChatBloc {
 
   Future<void> updateShareTarget(Chat chat) async {
     Uint8List icon;
-    Contact contact = chat.participants.length == 1
-        ? await ContactManager().getCachedContact(chat.participants.first)
-        : null;
+    Contact contact =
+        chat.participants.length == 1 ? await ContactManager().getCachedContact(chat.participants.first) : null;
     try {
       // If there is a contact specified, we can use it's avatar
       if (contact != null && contact.avatar.isNotEmpty) {
@@ -220,7 +216,7 @@ class ChatBloc {
     return NewMessageManager().stream.listen(handleMessageAction);
   }
 
-  Future<void> getChatBatches({ int batchSize = 10, bool archived = false }) async {
+  Future<void> getChatBatches({int batchSize = 10, bool archived = false}) async {
     int count = await Chat.count();
     int batches = (count < batchSize) ? batchSize : (count / batchSize).floor();
 
@@ -306,8 +302,7 @@ class ChatBloc {
     await this.addToSink(_chats);
   }
 
-  void updateTileVals(Chat chat, Map<String, dynamic> chatMap,
-      Map<String, Map<String, dynamic>> map) {
+  void updateTileVals(Chat chat, Map<String, dynamic> chatMap, Map<String, Map<String, dynamic>> map) {
     if (map.containsKey(chat.guid)) {
       map.remove(chat.guid);
     }

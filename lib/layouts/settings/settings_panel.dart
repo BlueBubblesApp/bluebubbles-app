@@ -29,11 +29,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 import '../setup/qr_code_scanner.dart';
 
-List disconnectedStates = [
-  SocketState.DISCONNECTED,
-  SocketState.ERROR,
-  SocketState.FAILED
-];
+List disconnectedStates = [SocketState.DISCONNECTED, SocketState.ERROR, SocketState.FAILED];
 
 class SettingsPanel extends StatefulWidget {
   SettingsPanel({Key key}) : super(key: key);
@@ -72,8 +68,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
 
   void loadBrightness() {
     Color now = Theme.of(context).backgroundColor;
-    bool themeChanged =
-        previousBackgroundColor == null || previousBackgroundColor != now;
+    bool themeChanged = previousBackgroundColor == null || previousBackgroundColor != now;
     if (!themeChanged && gotBrightness) return;
 
     previousBackgroundColor = now;
@@ -108,10 +103,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                 toolbarHeight: 100.0,
                 elevation: 0,
                 leading: IconButton(
-                  icon: Icon(
-                      SettingsManager().settings.skin == Skins.IOS
-                          ? Icons.arrow_back_ios
-                          : Icons.arrow_back,
+                  icon: Icon(SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_back_ios : Icons.arrow_back,
                       color: Theme.of(context).primaryColor),
                   onPressed: () {
                     Navigator.of(context).pop();
@@ -148,8 +140,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                         switch (connectionStatus) {
                           case SocketState.CONNECTED:
                             if (showUrl) {
-                              subtitle =
-                                  "Connected (${this._settingsCopy.serverAddress})";
+                              subtitle = "Connected (${this._settingsCopy.serverAddress})";
                             } else {
                               subtitle = "Connected (Tap to view URL)";
                             }
@@ -164,8 +155,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                             subtitle = "Connecting...";
                             break;
                           case SocketState.FAILED:
-                            subtitle =
-                                "Failed to connect (Tap to restart Server)";
+                            subtitle = "Failed to connect (Tap to restart Server)";
                             break;
                         }
 
@@ -176,25 +166,18 @@ class _SettingsPanelState extends State<SettingsPanel> {
                             // If we are disconnected, tap to restart server
                             if (disconnectedStates.contains(connectionStatus)) {
                               // Prevent restarting more than once per 30 seconds
-                              int now =
-                                  DateTime.now().toUtc().millisecondsSinceEpoch;
-                              if (lastRestart != null &&
-                                  now - lastRestart < 1000 * 30) return;
+                              int now = DateTime.now().toUtc().millisecondsSinceEpoch;
+                              if (lastRestart != null && now - lastRestart < 1000 * 30) return;
 
                               // Restart the server
                               MethodChannelInterface().invokeMethod(
-                                  "set-next-restart", {
-                                "value": DateTime.now()
-                                    .toUtc()
-                                    .millisecondsSinceEpoch
-                              });
+                                  "set-next-restart", {"value": DateTime.now().toUtc().millisecondsSinceEpoch});
 
                               lastRestart = now;
                             }
 
                             // If we are connected, tap to show the URL
-                            if ([SocketState.CONNECTED]
-                                .contains(connectionStatus)) {
+                            if ([SocketState.CONNECTED].contains(connectionStatus)) {
                               if (this.mounted) {
                                 setState(() {
                                   showUrl = !showUrl;
@@ -203,10 +186,8 @@ class _SettingsPanelState extends State<SettingsPanel> {
                             }
                           },
                           onLongPress: () {
-                            Clipboard.setData(new ClipboardData(
-                                text: _settingsCopy.serverAddress));
-                            final snackBar = SnackBar(
-                                content: Text("Address copied to clipboard"));
+                            Clipboard.setData(new ClipboardData(text: _settingsCopy.serverAddress));
+                            final snackBar = SnackBar(content: Text("Address copied to clipboard"));
                             Scaffold.of(context).showSnackBar(snackBar);
                           },
                           trailing: getIndicatorIcon(connectionStatus),
@@ -214,8 +195,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                       }),
                   SettingsTile(
                     title: "Re-configure with MacOS Server",
-                    trailing: Icon(Icons.camera,
-                        color: Theme.of(context).primaryColor.withAlpha(200)),
+                    trailing: Icon(Icons.camera, color: Theme.of(context).primaryColor.withAlpha(200)),
                     onTap: () async {
                       var fcmData;
                       try {
@@ -241,8 +221,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                           applicationID: fcmData[7],
                         );
                         _settingsCopy.guidAuthKey = fcmData[0];
-                        _settingsCopy.serverAddress =
-                            getServerAddress(address: fcmData[1]);
+                        _settingsCopy.serverAddress = getServerAddress(address: fcmData[1]);
 
                         SettingsManager().saveSettings(_settingsCopy);
                         SettingsManager().saveFCMData(_fcmDataCopy);
@@ -308,9 +287,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                       );
                     },
                     trailing: Icon(
-                      SettingsManager().settings.skin == Skins.IOS
-                          ? Icons.arrow_forward_ios
-                          : Icons.arrow_forward,
+                      SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_forward_ios : Icons.arrow_forward,
                       color: Theme.of(context).primaryColor,
                     ),
                   ),
@@ -324,18 +301,14 @@ class _SettingsPanelState extends State<SettingsPanel> {
                       );
                     },
                     trailing: Icon(
-                      SettingsManager().settings.skin == Skins.IOS
-                          ? Icons.arrow_forward_ios
-                          : Icons.arrow_forward,
+                      SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_forward_ios : Icons.arrow_forward,
                       color: Theme.of(context).primaryColor,
                     ),
                   ),
                   SettingsTile(
                     title: "Private API Features",
                     trailing: Icon(
-                        SettingsManager().settings.skin == Skins.IOS
-                            ? Icons.arrow_forward_ios
-                            : Icons.arrow_forward,
+                        SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_forward_ios : Icons.arrow_forward,
                         color: Theme.of(context).primaryColor),
                     onTap: () async {
                       Navigator.of(context).push(
@@ -361,9 +334,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                   SettingsTile(
                     title: "Server Management",
                     trailing: Icon(
-                        SettingsManager().settings.skin == Skins.IOS
-                            ? Icons.arrow_forward_ios
-                            : Icons.arrow_forward,
+                        SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_forward_ios : Icons.arrow_forward,
                         color: Theme.of(context).primaryColor),
                     onTap: () async {
                       Navigator.of(context).push(
@@ -383,17 +354,14 @@ class _SettingsPanelState extends State<SettingsPanel> {
                       );
                     },
                     trailing: Icon(
-                      SettingsManager().settings.skin == Skins.IOS
-                          ? Icons.arrow_forward_ios
-                          : Icons.arrow_forward,
+                      SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_forward_ios : Icons.arrow_forward,
                       color: Theme.of(context).primaryColor,
                     ),
                   ),
                   SettingsTile(
                     title: "Join Our Discord",
                     onTap: () {
-                      MethodChannelInterface().invokeMethod("open-link",
-                          {"link": "https://discord.gg/hbx7EhNFjp"});
+                      MethodChannelInterface().invokeMethod("open-link", {"link": "https://discord.gg/hbx7EhNFjp"});
                     },
                     trailing: SvgPicture.asset(
                       "assets/icon/discord.svg",
@@ -405,8 +373,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                   SettingsTile(
                     title: "Support the Developers!",
                     onTap: () {
-                      MethodChannelInterface().invokeMethod("open-link",
-                          {"link": "https://bluebubbles.app/donate/"});
+                      MethodChannelInterface().invokeMethod("open-link", {"link": "https://bluebubbles.app/donate/"});
                     },
                     trailing: Icon(
                       Icons.attach_money,
@@ -433,8 +400,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                   await SettingsManager().resetConnection();
 
                                   SocketManager().finishedSetup.sink.add(false);
-                                  Navigator.of(context)
-                                      .popUntil((route) => route.isFirst);
+                                  Navigator.of(context).popUntil((route) => route.isFirst);
                                 },
                               ),
                               FlatButton(
@@ -479,13 +445,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
 }
 
 class SettingsTile extends StatelessWidget {
-  const SettingsTile(
-      {Key key,
-      this.onTap,
-      this.onLongPress,
-      this.title,
-      this.trailing,
-      this.subTitle})
+  const SettingsTile({Key key, this.onTap, this.onLongPress, this.title, this.trailing, this.subTitle})
       : super(key: key);
 
   final Function onTap;
@@ -579,9 +539,7 @@ class SettingsTextField extends StatelessWidget {
                   controller: controller,
                   scrollPhysics: CustomBouncingScrollPhysics(),
                   style: Theme.of(context).textTheme.bodyText1.apply(
-                      color: ThemeData.estimateBrightnessForColor(
-                                  Theme.of(context).backgroundColor) ==
-                              Brightness.light
+                      color: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor) == Brightness.light
                           ? Colors.black
                           : Colors.white,
                       fontSizeDelta: -0.25),
@@ -589,8 +547,7 @@ class SettingsTextField extends StatelessWidget {
                   maxLines: maxLines,
                   minLines: 1,
                   placeholder: placeholder ?? "Enter your text here",
-                  padding:
-                      EdgeInsets.only(left: 10, top: 10, right: 40, bottom: 10),
+                  padding: EdgeInsets.only(left: 10, top: 10, right: 40, bottom: 10),
                   placeholderStyle: Theme.of(context).textTheme.subtitle1,
                   autofocus: SettingsManager().settings.autoOpenKeyboard,
                   decoration: BoxDecoration(
@@ -803,6 +760,7 @@ class SettingsSlider extends StatefulWidget {
 
 class _SettingsSliderState extends State<SettingsSlider> {
   double currentVal = 500;
+
   @override
   void initState() {
     super.initState();

@@ -17,8 +17,8 @@ class AlarmManager {
   /// @param [id] is an identifier for a particular alarm. This would be saved to disk,
   /// and then when an alarm is needed, using the id it is retreived from disk and the action is executed
   Future<void> setAlarm(int id, DateTime dateTime) async {
-    await MethodChannelInterface().invokeMethod("schedule-alarm",
-        {"id": id, "milliseconds": dateTime.millisecondsSinceEpoch});
+    await MethodChannelInterface()
+        .invokeMethod("schedule-alarm", {"id": id, "milliseconds": dateTime.millisecondsSinceEpoch});
   }
 
   /// Defines what to do when a specific alarm goes off

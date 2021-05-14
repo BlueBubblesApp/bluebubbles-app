@@ -39,8 +39,7 @@ class ContactManager {
 
   Future<Contact> getCachedContact(Handle handle) async {
     if (handle == null) return null;
-    if (contacts == null || !handleToContact.containsKey(handle.address))
-      await getContacts();
+    if (contacts == null || !handleToContact.containsKey(handle.address)) await getContacts();
     if (!handleToContact.containsKey(handle.address)) return null;
     return handleToContact[handle.address];
   }
@@ -74,8 +73,7 @@ class ContactManager {
 
     // If we are fetching the contacts, return the current future so we can await it
     if (getContactsFuture != null && !getContactsFuture.isCompleted) {
-      debugPrint(
-          "[ContactManager] -> Already fetching contacts, returning future...");
+      debugPrint("[ContactManager] -> Already fetching contacts, returning future...");
       return getContactsFuture.future;
     }
 
@@ -83,8 +81,7 @@ class ContactManager {
     // If we have, exit, we don't need to re-fetch the chats again
     int now = DateTime.now().toUtc().millisecondsSinceEpoch;
     if (!force && lastRefresh != 0 && now < lastRefresh + (60000 * 5)) {
-      debugPrint(
-          "[ContactManager] -> Not fetching contacts; Not enough time has elapsed");
+      debugPrint("[ContactManager] -> Not fetching contacts; Not enough time has elapsed");
       return;
     }
 
@@ -214,12 +211,10 @@ class ContactManager {
     if (contacts == null) await getContacts();
 
     String address = handle.address;
-    if (handleToContact.containsKey(address) &&
-        handleToContact[address] != null)
+    if (handleToContact.containsKey(address) && handleToContact[address] != null)
       return handleToContact[address].displayName;
     Contact contact = await getContact(handle);
-    if (contact != null && contact.displayName != null)
-      return contact.displayName;
+    if (contact != null && contact.displayName != null) return contact.displayName;
     String contactTitle = address;
     if (contactTitle == address && !contactTitle.contains("@")) {
       return await formatPhoneNumber(contactTitle);

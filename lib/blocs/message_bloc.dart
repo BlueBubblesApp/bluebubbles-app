@@ -31,6 +31,7 @@ class MessageBlocEvent {
 
 class MessageBloc {
   final _messageController = StreamController<MessageBlocEvent>.broadcast();
+
   Stream<MessageBlocEvent> get stream => _messageController.stream;
   LinkedHashMap<String, Message> _allMessages = new LinkedHashMap();
 
@@ -75,13 +76,11 @@ class MessageBloc {
       MessageBlocEvent baseEvent = new MessageBlocEvent();
 
       // If we want to remove something, set the event data correctly
-      if (msgEvent.type == NewMessageType.REMOVE &&
-          _allMessages.containsKey(msgEvent.event["guid"])) {
+      if (msgEvent.type == NewMessageType.REMOVE && _allMessages.containsKey(msgEvent.event["guid"])) {
         _allMessages.remove(msgEvent.event["guid"]);
         baseEvent.remove = msgEvent.event["guid"];
         baseEvent.type = MessageBlocEventType.remove;
-      } else if (msgEvent.type == NewMessageType.UPDATE &&
-          _allMessages.containsKey(msgEvent.event["oldGuid"])) {
+      } else if (msgEvent.type == NewMessageType.UPDATE && _allMessages.containsKey(msgEvent.event["oldGuid"])) {
         // If we want to updating an existing message, remove the old one, and add the new one
         _allMessages.remove(msgEvent.event["oldGuid"]);
         insert(msgEvent.event["message"], addToSink: false);
@@ -91,8 +90,7 @@ class MessageBloc {
       } else if (msgEvent.type == NewMessageType.ADD) {
         // If we want to add a message, just add it through `insert`
         addToSink = false;
-        insert(msgEvent.event["message"],
-            sentFromThisClient: msgEvent.event["outgoing"]);
+        insert(msgEvent.event["message"], sentFromThisClient: msgEvent.event["outgoing"]);
         baseEvent.message = msgEvent.event["message"];
         baseEvent.type = MessageBlocEventType.insert;
       }
@@ -105,15 +103,12 @@ class MessageBloc {
     });
   }
 
-  void insert(Message message,
-      {bool sentFromThisClient = false, bool addToSink = true}) {
+  void insert(Message message, {bool sentFromThisClient = false, bool addToSink = true}) {
     if (message.associatedMessageGuid != null) {
       if (_allMessages.containsKey(message.associatedMessageGuid)) {
-        Message messageWithReaction =
-            _allMessages[message.associatedMessageGuid];
+        Message messageWithReaction = _allMessages[message.associatedMessageGuid];
         messageWithReaction.hasReactions = true;
-        _allMessages.update(
-            message.associatedMessageGuid, (value) => messageWithReaction);
+        _allMessages.update(message.associatedMessageGuid, (value) => messageWithReaction);
         if (addToSink) {
           MessageBlocEvent event = MessageBlocEvent();
           event.messages = _allMessages.values.toList();
@@ -143,8 +138,7 @@ class MessageBloc {
     }
 
     if (sentFromThisClient) {
-      _allMessages =
-          linkedHashMapInsert(_allMessages, 0, message.guid, message);
+      _allMessages = linkedHashMapInsert(_allMessages, 0, message.guid, message);
     } else {
       List<Message> messages = _allMessages.values.toList();
       for (int i = 0; i < messages.length; i++) {
@@ -152,11 +146,9 @@ class MessageBloc {
         if ((messages[i].originalROWID != null &&
                 message.originalROWID != null &&
                 message.originalROWID > messages[i].originalROWID) ||
-            ((messages[i].originalROWID == null ||
-                    message.originalROWID == null) &&
+            ((messages[i].originalROWID == null || message.originalROWID == null) &&
                 messages[i].dateCreated.compareTo(message.dateCreated) < 0)) {
-          _allMessages =
-              linkedHashMapInsert(_allMessages, i, message.guid, message);
+          _allMessages = linkedHashMapInsert(_allMessages, i, message.guid, message);
           index = i;
 
           break;
@@ -181,8 +173,7 @@ class MessageBloc {
     keys.insert(index, key);
     values.insert(index, value);
 
-    return LinkedHashMap<String, Message>.from(
-        LinkedHashMap.fromIterables(keys, values));
+    return LinkedHashMap<String, Message>.from(LinkedHashMap.fromIterables(keys, values));
   }
 
   void emitLoaded() {
@@ -260,9 +251,7 @@ class MessageBloc {
   }
 
   Future<LoadMessageResult> loadMessageChunk(int offset,
-      {bool includeReactions = true,
-      bool checkLocal = true,
-      CurrentChat currentChat}) async {
+      {bool includeReactions = true, bool checkLocal = true, CurrentChat currentChat}) async {
     int reactionCnt = includeReactions ? _reactions : 0;
     Completer<LoadMessageResult> completer = new Completer();
     if (!this._canLoadMore) {
@@ -277,17 +266,14 @@ class MessageBloc {
       int count = 0;
 
       // Should we check locally first?
-      if (checkLocal)
-        messages =
-            await Chat.getMessages(currChat, offset: offset + reactionCnt);
+      if (checkLocal) messages = await Chat.getMessages(currChat, offset: offset + reactionCnt);
 
       // Fetch messages from the socket
       count = messages.length;
       if (isNullOrEmpty(messages)) {
         try {
           // Fetch messages from the server
-          List<dynamic> _messages = await SocketManager()
-              .loadMessageChunk(currChat, offset + reactionCnt);
+          List<dynamic> _messages = await SocketManager().loadMessageChunk(currChat, offset + reactionCnt);
           count = _messages.length;
 
           // Handle the messages
@@ -295,14 +281,10 @@ class MessageBloc {
             debugPrint("(CHUNK) No message chunks left from server");
             completer.complete(LoadMessageResult.RETREIVED_NO_MESSAGES);
           } else {
-            debugPrint(
-                "(CHUNK) Received ${_messages.length} messages from socket");
+            debugPrint("(CHUNK) Received ${_messages.length} messages from socket");
 
-            messages = await MessageHelper.bulkAddMessages(
-                _currentChat, _messages,
-                notifyMessageManager: false,
-                notifyForNewMessage: false,
-                checkForLatestMessageText: false);
+            messages = await MessageHelper.bulkAddMessages(_currentChat, _messages,
+                notifyMessageManager: false, notifyForNewMessage: false, checkForLatestMessageText: false);
 
             // If the handle is empty, load it
             for (Message msg in messages) {
@@ -328,10 +310,8 @@ class MessageBloc {
       }
 
       if (currentChat != null) {
-        List<Message> messagesWithAttachment =
-            messages.where((element) => element.hasAttachments).toList();
-        await currentChat.preloadMessageAttachments(
-            specificMessages: messagesWithAttachment);
+        List<Message> messagesWithAttachment = messages.where((element) => element.hasAttachments).toList();
+        await currentChat.preloadMessageAttachments(specificMessages: messagesWithAttachment);
       }
 
       // Emit messages to listeners
@@ -366,9 +346,4 @@ class MessageBloc {
   }
 }
 
-enum LoadMessageResult {
-  RETREIVED_MESSAGES,
-  RETREIVED_NO_MESSAGES,
-  FAILED_TO_RETREIVE,
-  RETREIVED_LAST_PAGE
-}
+enum LoadMessageResult { RETREIVED_MESSAGES, RETREIVED_NO_MESSAGES, FAILED_TO_RETREIVE, RETREIVED_LAST_PAGE }

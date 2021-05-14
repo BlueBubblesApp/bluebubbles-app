@@ -39,7 +39,6 @@ abstract class QueueManager {
       await handleQueueItem(queued);
       await afterProcessing(queued, {});
     } catch (ex) {
-
       debugPrint("Failed to handle queued item! " + ex.toString());
       debugPrint(StackTrace.current.toString());
     }

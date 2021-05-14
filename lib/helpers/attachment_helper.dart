@@ -17,8 +17,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:vcard_parser/vcard_parser.dart';
 
 class AttachmentHelper {
-  static String createAppleLocation(double longitude, double latitude,
-      {iosVersion = "13.4.1"}) {
+  static String createAppleLocation(double longitude, double latitude, {iosVersion = "13.4.1"}) {
     List<String> lines = [
       "BEGIN:VCARD",
       "VERSION:3.0",
@@ -70,10 +69,7 @@ class AttachmentHelper {
         "latitude": double.tryParse(query.split("\\,")[1])
       };
     } else {
-      return {
-        "longitude": double.tryParse((query.split(",")[0])),
-        "latitude": double.tryParse(query.split(",")[1])
-      };
+      return {"longitude": double.tryParse((query.split(",")[0])), "latitude": double.tryParse(query.split(",")[1])};
     }
   }
 
@@ -94,9 +90,7 @@ class AttachmentHelper {
     List<Item> phones = <Item>[];
     _contact.keys.forEach((String key) {
       if (key.contains("EMAIL")) {
-        String label = key.contains("type=")
-            ? key.split("type=")[2].replaceAll(";", "")
-            : "HOME";
+        String label = key.contains("type=") ? key.split("type=")[2].replaceAll(";", "") : "HOME";
         emails.add(
           Item(
             value: (_contact[key] as Map<String, dynamic>)["value"],
@@ -125,8 +119,7 @@ class AttachmentHelper {
 
     // If the file is an image, compress it for the preview
     if ((attachment.mimeType ?? "").startsWith("image/")) {
-      String fn =
-          fileName.split(".").sublist(0, fileName.length - 1).join("") + "prev";
+      String fn = fileName.split(".").sublist(0, fileName.length - 1).join("") + "prev";
       String ext = fileName.split(".").last;
       pathName = "$appDocPath/attachments/${attachment.guid}/$fn.$ext";
     }
@@ -140,14 +133,10 @@ class AttachmentHelper {
     return mime.startsWith("image/") && !blacklist.contains(mime);
   }
 
-  static double getImageAspectRatio(
-      BuildContext context, Attachment attachment) {
+  static double getImageAspectRatio(BuildContext context, Attachment attachment) {
     double width = attachment.width?.toDouble() ?? 0.0;
     double factor = attachment.height?.toDouble() ?? 0.0;
-    if (attachment.width == null ||
-        attachment.width == 0 ||
-        attachment.height == null ||
-        attachment.height == 0) {
+    if (attachment.width == null || attachment.width == 0 || attachment.height == null || attachment.height == 0) {
       width = MediaQuery.of(context).size.width;
       factor = 2;
     }
@@ -164,8 +153,7 @@ class AttachmentHelper {
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
             child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
+              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(25.0),
                 color: Theme.of(context).accentColor.withOpacity(0.1),
@@ -206,22 +194,18 @@ class AttachmentHelper {
   /// Checks to see if an [attachment] exists in our attachment filesystem
   static bool attachmentExists(Attachment attachment) {
     String pathName = AttachmentHelper.getAttachmentPath(attachment);
-    return !(FileSystemEntity.typeSync(pathName) ==
-        FileSystemEntityType.notFound);
+    return !(FileSystemEntity.typeSync(pathName) == FileSystemEntityType.notFound);
   }
 
   static dynamic getContent(Attachment attachment, {String path}) {
     String appDocPath = SettingsManager().appDocDir.path;
-    String pathName = path ??
-        "$appDocPath/attachments/${attachment.guid}/${attachment.transferName}";
+    String pathName = path ?? "$appDocPath/attachments/${attachment.guid}/${attachment.transferName}";
 
     if (SocketManager().attachmentDownloaders.containsKey(attachment.guid)) {
       return SocketManager().attachmentDownloaders[attachment.guid];
-    } else if (FileSystemEntity.typeSync(pathName) !=
-        FileSystemEntityType.notFound) {
+    } else if (FileSystemEntity.typeSync(pathName) != FileSystemEntityType.notFound) {
       return File(pathName);
-    } else if (attachment.mimeType == null ||
-        attachment.mimeType.startsWith("text/")) {
+    } else if (attachment.mimeType == null || attachment.mimeType.startsWith("text/")) {
       return AttachmentDownloader(attachment);
     } else {
       return attachment;
@@ -254,17 +238,13 @@ class AttachmentHelper {
     // only wifi download enabled, and we have wifi)
     return (SettingsManager().settings.autoDownload &&
         (!SettingsManager().settings.onlyWifiDownload ||
-            (SettingsManager().settings.onlyWifiDownload &&
-                status == ConnectivityResult.wifi)));
+            (SettingsManager().settings.onlyWifiDownload && status == ConnectivityResult.wifi)));
   }
 
-  static Future<void> setDimensions(Attachment attachment,
-      {Uint8List data}) async {
+  static Future<void> setDimensions(Attachment attachment, {Uint8List data}) async {
     // Handle break cases
-    if (attachment.width != null &&
-        attachment.height != null &&
-        attachment.height != 0 &&
-        attachment.width != 0) return;
+    if (attachment.width != null && attachment.height != null && attachment.height != 0 && attachment.width != 0)
+      return;
     if (attachment.mimeType == null) return;
 
     // Make sure the attachment is an image or video
@@ -273,8 +253,7 @@ class AttachmentHelper {
 
     Uint8List previewData = data;
     if (data == null) {
-      previewData = new File(AttachmentHelper.getAttachmentPath(attachment))
-          .readAsBytesSync();
+      previewData = new File(AttachmentHelper.getAttachmentPath(attachment)).readAsBytesSync();
     }
 
     if (attachment.mimeType == "image/gif") {
@@ -299,8 +278,7 @@ class AttachmentHelper {
     }
   }
 
-  static Future<void> redownloadAttachment(Attachment attachment,
-      {Function() onComplete, Function() onError}) async {
+  static Future<void> redownloadAttachment(Attachment attachment, {Function() onComplete, Function() onError}) async {
     // 1. Delete the old file
     File file = new File(attachment.getPath());
     if (!file.existsSync()) return;

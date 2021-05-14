@@ -13,11 +13,10 @@ String encryptAESCryptoJS(String plainText, String passphrase) {
     final key = encrypt.Key(keyndIV.item1);
     final iv = encrypt.IV(keyndIV.item2);
 
-    final encrypter = encrypt.Encrypter(
-        encrypt.AES(key, mode: encrypt.AESMode.cbc, padding: "PKCS7"));
+    final encrypter = encrypt.Encrypter(encrypt.AES(key, mode: encrypt.AESMode.cbc, padding: "PKCS7"));
     final encrypted = encrypter.encrypt(plainText, iv: iv);
-    Uint8List encryptedBytesWithSalt = Uint8List.fromList(
-        createUint8ListFromString("Salted__") + salt + encrypted.bytes);
+    Uint8List encryptedBytesWithSalt =
+        Uint8List.fromList(createUint8ListFromString("Salted__") + salt + encrypted.bytes);
     return base64.encode(encryptedBytesWithSalt);
   } catch (error) {
     throw error;
@@ -28,17 +27,14 @@ String decryptAESCryptoJS(String encrypted, String passphrase) {
   try {
     Uint8List encryptedBytesWithSalt = base64.decode(encrypted);
 
-    Uint8List encryptedBytes =
-        encryptedBytesWithSalt.sublist(16, encryptedBytesWithSalt.length);
+    Uint8List encryptedBytes = encryptedBytesWithSalt.sublist(16, encryptedBytesWithSalt.length);
     final salt = encryptedBytesWithSalt.sublist(8, 16);
     var keyndIV = deriveKeyAndIV(passphrase, salt);
     final key = encrypt.Key(keyndIV.item1);
     final iv = encrypt.IV(keyndIV.item2);
 
-    final encrypter = encrypt.Encrypter(
-        encrypt.AES(key, mode: encrypt.AESMode.cbc, padding: "PKCS7"));
-    final decrypted =
-        encrypter.decrypt64(base64.encode(encryptedBytes), iv: iv);
+    final encrypter = encrypt.Encrypter(encrypt.AES(key, mode: encrypt.AESMode.cbc, padding: "PKCS7"));
+    final decrypted = encrypter.decrypt64(base64.encode(encryptedBytes), iv: iv);
     return decrypted;
   } catch (error) {
     throw error;
@@ -55,11 +51,9 @@ Tuple2<Uint8List, Uint8List> deriveKeyAndIV(String passphrase, Uint8List salt) {
   while (!enoughBytesForKey) {
     // int preHashLength = currentHash.length + password.length + salt.length;
     if (currentHash.length > 0)
-      preHash = Uint8List.fromList(
-          currentHash + password + salt);
+      preHash = Uint8List.fromList(currentHash + password + salt);
     else
-      preHash = Uint8List.fromList(
-          password + salt);
+      preHash = Uint8List.fromList(password + salt);
 
     currentHash = md5.convert(preHash).bytes;
     concatenatedHashes = Uint8List.fromList(concatenatedHashes + currentHash);
@@ -83,8 +77,8 @@ Uint8List genRandomWithNonZero(int seedLength) {
   final random = Random.secure();
   const int randomMax = 245;
   final Uint8List uint8list = Uint8List(seedLength);
-  for (int i=0; i < seedLength; i++) {
-    uint8list[i] = random.nextInt(randomMax)+1;
+  for (int i = 0; i < seedLength; i++) {
+    uint8list[i] = random.nextInt(randomMax) + 1;
   }
   return uint8list;
 }

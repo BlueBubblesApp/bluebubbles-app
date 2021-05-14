@@ -28,9 +28,7 @@ class MetadataHelper {
   }
 
   static bool isNotEmpty(Metadata data) {
-    return data?.title != null ||
-        data?.description != null ||
-        data?.image != null;
+    return data?.title != null || data?.description != null || data?.image != null;
   }
 
   static Map<String, dynamic> safeJsonDecode(String input) {
@@ -42,6 +40,7 @@ class MetadataHelper {
   }
 
   static Map<String, Completer<Metadata>> _metaCache = {};
+
   static Future<Metadata> fetchMetadata(Message message) async {
     Metadata data;
 
@@ -58,8 +57,7 @@ class MetadataHelper {
 
     // Make sure there is a schema with the URL
     String url = message.text;
-    if (!url.toLowerCase().startsWith("http://") &&
-        !url.toLowerCase().startsWith("https://")) {
+    if (!url.toLowerCase().startsWith("http://") && !url.toLowerCase().startsWith("https://")) {
       url = "https://" + url;
     }
 
@@ -79,12 +77,9 @@ class MetadataHelper {
       }
 
       data = Metadata();
-      data.image =
-          json.containsKey("thumbnail_url") ? json["thumbnail_url"] : null;
+      data.image = json.containsKey("thumbnail_url") ? json["thumbnail_url"] : null;
       data.title = json.containsKey("title") ? json["title"] : null;
-      data.description = json.containsKey("author_name")
-          ? "User: ${json["author_name"]}"
-          : null;
+      data.description = json.containsKey("author_name") ? "User: ${json["author_name"]}" : null;
 
       // Set the URL to the original URL
       data.url = url;
@@ -101,9 +96,7 @@ class MetadataHelper {
 
       data = new Metadata();
       data.title = (res.containsKey("author_name")) ? res["author_name"] : "";
-      data.description = (res.containsKey("html"))
-          ? stripHtmlTags(res["html"].replaceAll("<br>", "\n")).trim()
-          : "";
+      data.description = (res.containsKey("html")) ? stripHtmlTags(res["html"].replaceAll("<br>", "\n")).trim() : "";
 
       // Set the URL to the original URL
       data.url = url;
@@ -120,9 +113,7 @@ class MetadataHelper {
         // Find an href and save it
         for (var entry in i.attributes.entries) {
           String prop = entry.key as String;
-          if (prop != "href" ||
-              entry.value.contains("amp.") ||
-              !entry.value.contains("reddit.com")) continue;
+          if (prop != "href" || entry.value.contains("amp.") || !entry.value.contains("reddit.com")) continue;
           href = entry.value;
           break;
         }
@@ -162,8 +153,7 @@ class MetadataHelper {
 
     // Remove the image data if the image data links to an "empty image"
     String imageData = data?.image ?? "";
-    if (imageData.contains("renderTimingPixel.png") ||
-        imageData.contains("fls-na.amazon.com")) {
+    if (imageData.contains("renderTimingPixel.png") || imageData.contains("fls-na.amazon.com")) {
       data?.image = null;
     }
 

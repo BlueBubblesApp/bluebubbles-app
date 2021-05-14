@@ -46,8 +46,7 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
       );
       if (this.mounted) setState(() {});
     } else if (mimeType == null || mimeType.startsWith("image/")) {
-      preview = await FlutterImageCompress.compressWithFile(
-          widget.file.absolute.path,
+      preview = await FlutterImageCompress.compressWithFile(widget.file.absolute.path,
           quality: SettingsManager().settings.lowMemoryMode ? 5 : 10);
       if (this.mounted) setState(() {});
     }
@@ -66,8 +65,7 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
           if (mime(widget.file.path) == null) return;
           if (!this.mounted) return;
 
-          Attachment fakeAttachment = new Attachment(
-              transferName: widget.file.path, mimeType: mimeType);
+          Attachment fakeAttachment = new Attachment(transferName: widget.file.path, mimeType: mimeType);
           await Navigator.of(context).push(
             MaterialPageRoute(
               builder: (context) => AttachmentFullscreenViewer(
@@ -79,9 +77,7 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
         },
       );
     } else {
-      if (mimeType == null ||
-          mimeType.startsWith("video/") ||
-          mimeType.startsWith("image/")) {
+      if (mimeType == null || mimeType.startsWith("video/") || mimeType.startsWith("image/")) {
         // If the preview is null and the mimetype is video or image,
         // then that means that we are in the process of loading things
         return Container(
@@ -119,10 +115,7 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
                   padding: const EdgeInsets.fromLTRB(8, 0, 8, 10),
                   child: Text(
                     name,
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodyText1
-                        .apply(fontSizeDelta: -2),
+                    style: Theme.of(context).textTheme.bodyText1.apply(fontSizeDelta: -2),
                     textAlign: TextAlign.center,
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,

@@ -58,8 +58,7 @@ class _ThemePanelState extends State<ThemePanel> {
 
   void loadBrightness() {
     Color now = Theme.of(context).backgroundColor;
-    bool themeChanged =
-        previousBackgroundColor == null || previousBackgroundColor != now;
+    bool themeChanged = previousBackgroundColor == null || previousBackgroundColor != now;
     if (!themeChanged && gotBrightness) return;
 
     previousBackgroundColor = now;
@@ -94,10 +93,7 @@ class _ThemePanelState extends State<ThemePanel> {
                 toolbarHeight: 100.0,
                 elevation: 0,
                 leading: IconButton(
-                  icon: Icon(
-                      SettingsManager().settings.skin == Skins.IOS
-                          ? Icons.arrow_back_ios
-                          : Icons.arrow_back,
+                  icon: Icon(SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_back_ios : Icons.arrow_back,
                       color: Theme.of(context).primaryColor),
                   onPressed: () {
                     Navigator.of(context).pop();
@@ -126,21 +122,17 @@ class _ThemePanelState extends State<ThemePanel> {
                       AdaptiveTheme.of(context).setThemeMode(val);
 
                       // This needs to be on a delay so the background color has time to change
-                      Timer(Duration(seconds: 1),
-                          () => EventDispatcher().emit('theme-update', null));
+                      Timer(Duration(seconds: 1), () => EventDispatcher().emit('theme-update', null));
                     },
                     options: AdaptiveThemeMode.values,
-                    textProcessing: (dynamic val) =>
-                        val.toString().split(".").last,
+                    textProcessing: (dynamic val) => val.toString().split(".").last,
                     title: "App Theme",
                     showDivider: false,
                   ),
                   SettingsTile(
                     title: "Theming",
                     trailing: Icon(
-                        SettingsManager().settings.skin == Skins.IOS
-                            ? Icons.arrow_forward_ios
-                            : Icons.arrow_forward,
+                        SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_forward_ios : Icons.arrow_forward,
                         color: Theme.of(context).primaryColor),
                     onTap: () async {
                       Navigator.of(context).push(
@@ -165,8 +157,7 @@ class _ThemePanelState extends State<ThemePanel> {
                       setState(() {});
                     },
                     options: Skins.values,
-                    textProcessing: (dynamic val) =>
-                        val.toString().split(".").last,
+                    textProcessing: (dynamic val) => val.toString().split(".").last,
                     title: "App Skin",
                     showDivider: false,
                   ),
@@ -189,9 +180,7 @@ class _ThemePanelState extends State<ThemePanel> {
                   SettingsTile(
                     title: "Custom Avatar Colors",
                     trailing: Icon(
-                        SettingsManager().settings.skin == Skins.IOS
-                            ? Icons.arrow_forward_ios
-                            : Icons.arrow_forward,
+                        SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_forward_ios : Icons.arrow_forward,
                         color: Theme.of(context).primaryColor),
                     onTap: () async {
                       Navigator.of(context).push(

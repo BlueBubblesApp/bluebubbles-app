@@ -44,8 +44,7 @@ class _PrivateAPIPanelState extends State<PrivateAPIPanel> {
 
   void loadBrightness() {
     Color now = Theme.of(context).backgroundColor;
-    bool themeChanged =
-        previousBackgroundColor == null || previousBackgroundColor != now;
+    bool themeChanged = previousBackgroundColor == null || previousBackgroundColor != now;
     if (!themeChanged && gotBrightness) return;
 
     previousBackgroundColor = now;
@@ -110,10 +109,7 @@ class _PrivateAPIPanelState extends State<PrivateAPIPanel> {
                 toolbarHeight: 100.0,
                 elevation: 0,
                 leading: IconButton(
-                  icon: Icon(
-                      SettingsManager().settings.skin == Skins.IOS
-                          ? Icons.arrow_back_ios
-                          : Icons.arrow_back,
+                  icon: Icon(SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_back_ios : Icons.arrow_back,
                       color: Theme.of(context).primaryColor),
                   onPressed: () {
                     Navigator.of(context).pop();

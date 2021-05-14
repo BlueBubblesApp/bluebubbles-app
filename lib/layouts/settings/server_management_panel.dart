@@ -36,8 +36,7 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
 
   void loadBrightness() {
     Color now = Theme.of(context).backgroundColor;
-    bool themeChanged =
-        previousBackgroundColor == null || previousBackgroundColor != now;
+    bool themeChanged = previousBackgroundColor == null || previousBackgroundColor != now;
     if (!themeChanged && gotBrightness) return;
 
     previousBackgroundColor = now;
@@ -71,10 +70,7 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                 toolbarHeight: 100.0,
                 elevation: 0,
                 leading: IconButton(
-                  icon: Icon(
-                      SettingsManager().settings.skin == Skins.IOS
-                          ? Icons.arrow_back_ios
-                          : Icons.arrow_back,
+                  icon: Icon(SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_back_ios : Icons.arrow_back,
                       color: Theme.of(context).primaryColor),
                   onPressed: () {
                     Navigator.of(context).pop();
@@ -120,16 +116,11 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                           title: "Test Latency",
                           subTitle: subtitle,
                           onTap: () async {
-                            if (![SocketState.CONNECTED]
-                                .contains(connectionStatus)) return;
+                            if (![SocketState.CONNECTED].contains(connectionStatus)) return;
 
-                            int now =
-                                DateTime.now().toUtc().millisecondsSinceEpoch;
-                            SocketManager()
-                                .sendMessage("get-server-metadata", {},
-                                    (Map<String, dynamic> res) {
-                              int later =
-                                  DateTime.now().toUtc().millisecondsSinceEpoch;
+                            int now = DateTime.now().toUtc().millisecondsSinceEpoch;
+                            SocketManager().sendMessage("get-server-metadata", {}, (Map<String, dynamic> res) {
+                              int later = DateTime.now().toUtc().millisecondsSinceEpoch;
                               if (this.mounted) {
                                 setState(() {
                                   latency = later - now;
@@ -137,8 +128,7 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                               }
                             });
                           },
-                          trailing:
-                              Text((latency == null) ? "N/A" : "$latency ms"),
+                          trailing: Text((latency == null) ? "N/A" : "$latency ms"),
                         );
                       }),
                   StreamBuilder(
@@ -197,8 +187,7 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                           title: "Fetch Server Logs & Share",
                           subTitle: subtitle,
                           onTap: () {
-                            if (![SocketState.CONNECTED]
-                                .contains(connectionStatus)) return;
+                            if (![SocketState.CONNECTED].contains(connectionStatus)) return;
 
                             if (this.mounted) {
                               setState(() {
@@ -206,9 +195,7 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                               });
                             }
 
-                            SocketManager()
-                                .sendMessage("get-logs", {"count": 500},
-                                    (Map<String, dynamic> res) {
+                            SocketManager().sendMessage("get-logs", {"count": 500}, (Map<String, dynamic> res) {
                               if (res['status'] != 200) {
                                 if (this.mounted) {
                                   setState(() {
@@ -219,10 +206,8 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                                 return;
                               }
 
-                              String appDocPath =
-                                  SettingsManager().appDocDir.path;
-                              File logFile =
-                                  new File("$appDocPath/attachments/main.log");
+                              String appDocPath = SettingsManager().appDocDir.path;
+                              File logFile = new File("$appDocPath/attachments/main.log");
 
                               if (logFile.existsSync()) {
                                 logFile.deleteSync();
@@ -231,8 +216,7 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                               logFile.writeAsStringSync(res['data']);
 
                               try {
-                                Share.file("BlueBubbles Server Log", "main.log",
-                                    logFile.absolute.path, "text/log");
+                                Share.file("BlueBubbles Server Log", "main.log", logFile.absolute.path, "text/log");
 
                                 if (this.mounted) {
                                   setState(() {
@@ -242,8 +226,7 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                               } catch (ex) {
                                 if (this.mounted) {
                                   setState(() {
-                                    fetchStatus =
-                                        "Failed to share file! ${ex.toString()}";
+                                    fetchStatus = "Failed to share file! ${ex.toString()}";
                                   });
                                 }
                               }
@@ -280,9 +263,7 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                             title: "Restart iMessage",
                             subTitle: subtitle,
                             onTap: () async {
-                              if (![SocketState.CONNECTED]
-                                      .contains(connectionStatus) ||
-                                  isRestartingMessages) return;
+                              if (![SocketState.CONNECTED].contains(connectionStatus) || isRestartingMessages) return;
 
                               if (this.mounted && !isRestartingMessages)
                                 setState(() {
@@ -290,10 +271,8 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                                 });
 
                               // Prevent restarting more than once every 30 seconds
-                              int now =
-                                  DateTime.now().toUtc().millisecondsSinceEpoch;
-                              if (lastRestartMessages != null &&
-                                  now - lastRestartMessages < 1000 * 30) return;
+                              int now = DateTime.now().toUtc().millisecondsSinceEpoch;
+                              if (lastRestartMessages != null && now - lastRestartMessages < 1000 * 30) return;
 
                               // Save the last time we restarted
                               lastRestartMessages = now;
@@ -310,8 +289,7 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                               // Execute the restart
                               try {
                                 // If it fails or there is an endpoint error, stop the loader
-                                await SocketManager()
-                                    .sendMessage("restart-imessage", null, (_) {
+                                await SocketManager().sendMessage("restart-imessage", null, (_) {
                                   stopRestarting();
                                 }).catchError(() {
                                   stopRestarting();
@@ -321,8 +299,7 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                               }
                             },
                             trailing: (!isRestartingMessages)
-                                ? Icon(Icons.refresh,
-                                    color: Theme.of(context).primaryColor)
+                                ? Icon(Icons.refresh, color: Theme.of(context).primaryColor)
                                 : Container(
                                     constraints: BoxConstraints(
                                       maxHeight: 20,
@@ -330,8 +307,7 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                                     ),
                                     child: CircularProgressIndicator(
                                       strokeWidth: 3,
-                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                          Theme.of(context).primaryColor),
+                                      valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
                                     )));
                       }),
                   SettingsTile(
@@ -349,8 +325,7 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
 
                         // Prevent restarting more than once every 30 seconds
                         int now = DateTime.now().toUtc().millisecondsSinceEpoch;
-                        if (lastRestart != null &&
-                            now - lastRestart < 1000 * 30) return;
+                        if (lastRestart != null && now - lastRestart < 1000 * 30) return;
 
                         // Save the last time we restarted
                         lastRestart = now;
@@ -366,10 +341,7 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                         // Perform the restart
                         try {
                           MethodChannelInterface().invokeMethod(
-                              "set-next-restart", {
-                            "value":
-                                DateTime.now().toUtc().millisecondsSinceEpoch
-                          });
+                              "set-next-restart", {"value": DateTime.now().toUtc().millisecondsSinceEpoch});
                         } finally {
                           stopRestarting();
                         }
@@ -380,8 +352,7 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                         });
                       },
                       trailing: (!isRestarting)
-                          ? Icon(Icons.refresh,
-                              color: Theme.of(context).primaryColor)
+                          ? Icon(Icons.refresh, color: Theme.of(context).primaryColor)
                           : Container(
                               constraints: BoxConstraints(
                                 maxHeight: 20,
@@ -389,8 +360,7 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                               ),
                               child: CircularProgressIndicator(
                                 strokeWidth: 3,
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                    Theme.of(context).primaryColor),
+                                valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
                               )))
                 ],
               ),
@@ -426,17 +396,14 @@ class _SyncDialogState extends State<SyncDialog> {
     if (lookback == null) return;
 
     DateTime now = DateTime.now().toUtc().subtract(lookback);
-    SocketManager()
-        .fetchMessages(null, after: now.millisecondsSinceEpoch)
-        .then((List<dynamic> messages) {
+    SocketManager().fetchMessages(null, after: now.millisecondsSinceEpoch).then((List<dynamic> messages) {
       if (this.mounted) {
         setState(() {
           message = "Adding ${messages.length} messages...";
         });
       }
 
-      MessageHelper.bulkAddMessages(null, messages,
-          onProgress: (int progress, int length) {
+      MessageHelper.bulkAddMessages(null, messages, onProgress: (int progress, int length) {
         if (progress == 0 || length == 0) {
           this.progress = null;
         } else {
@@ -445,8 +412,7 @@ class _SyncDialogState extends State<SyncDialog> {
 
         if (this.mounted)
           setState(() {
-            message =
-                "Adding $progress of $length (${((this.progress ?? 0) * 100).floor().toInt()}%)";
+            message = "Adding $progress of $length (${((this.progress ?? 0) * 100).floor().toInt()}%)";
           });
       }).then((List<Message> items) {
         onFinish(true, items.length);

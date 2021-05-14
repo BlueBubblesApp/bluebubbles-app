@@ -21,13 +21,12 @@ class TextFieldAttachmentPicker extends StatefulWidget {
   final Function(File) onAddAttachment;
 
   @override
-  _TextFieldAttachmentPickerState createState() =>
-      _TextFieldAttachmentPickerState();
+  _TextFieldAttachmentPickerState createState() => _TextFieldAttachmentPickerState();
 }
 
-class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker>
-    with SingleTickerProviderStateMixin {
+class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> with SingleTickerProviderStateMixin {
   List<AssetEntity> _images = <AssetEntity>[];
+
   @override
   void initState() {
     super.initState();
@@ -39,10 +38,8 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker>
 
   Future<void> getAttachments() async {
     if (!this.mounted) return;
-    List<AssetPathEntity> list =
-        await PhotoManager.getAssetPathList(onlyAll: true);
-    List<AssetEntity> images =
-        await list.first.getAssetListRange(start: 0, end: 60);
+    List<AssetPathEntity> list = await PhotoManager.getAssetPathList(onlyAll: true);
+    List<AssetEntity> images = await list.first.getAssetListRange(start: 0, end: 60);
     _images = images;
     setState(() {});
   }
@@ -76,14 +73,10 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker>
                                 borderRadius: BorderRadius.circular(18),
                               ),
                               onPressed: () async {
-                                await BlueBubblesTextField.of(context)
-                                    .cameraController
-                                    ?.dispose();
-                                String res = await MethodChannelInterface()
-                                    .invokeMethod("pick-file");
+                                await BlueBubblesTextField.of(context).cameraController?.dispose();
+                                String res = await MethodChannelInterface().invokeMethod("pick-file");
 
-                                await BlueBubblesTextField.of(context)
-                                    .initializeCameraController();
+                                await BlueBubblesTextField.of(context).initializeCameraController();
                                 if (res == null) return;
                                 widget.onAddAttachment(File(res));
                               },
@@ -95,19 +88,13 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker>
                                     padding: const EdgeInsets.all(8.0),
                                     child: Icon(
                                       Icons.video_library,
-                                      color: Theme.of(context)
-                                          .textTheme
-                                          .bodyText1
-                                          .color,
+                                      color: Theme.of(context).textTheme.bodyText1.color,
                                     ),
                                   ),
                                   Text(
                                     "Files",
                                     style: TextStyle(
-                                      color: Theme.of(context)
-                                          .textTheme
-                                          .bodyText1
-                                          .color,
+                                      color: Theme.of(context).textTheme.bodyText1.color,
                                       fontSize: 13,
                                     ),
                                   ),
@@ -126,34 +113,27 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker>
                                 showDialog(
                                   context: context,
                                   builder: (buildContext) => AlertDialog(
-                                    backgroundColor:
-                                        Theme.of(context).accentColor,
+                                    backgroundColor: Theme.of(context).accentColor,
                                     title: Text(
                                       "Send Current Location?",
-                                      style:
-                                          Theme.of(context).textTheme.headline1,
+                                      style: Theme.of(context).textTheme.headline1,
                                     ),
                                     actions: <Widget>[
                                       FlatButton(
                                         color: Colors.blue[600],
                                         child: Text(
                                           "Send",
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .bodyText1,
+                                          style: Theme.of(context).textTheme.bodyText1,
                                         ),
                                         onPressed: () async {
-                                          Share.location(
-                                              CurrentChat.of(context).chat);
+                                          Share.location(CurrentChat.of(context).chat);
                                           Navigator.of(context).pop();
                                         },
                                       ),
                                       FlatButton(
                                         child: Text(
                                           "Cancel",
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .bodyText1,
+                                          style: Theme.of(context).textTheme.bodyText1,
                                         ),
                                         color: Colors.red,
                                         onPressed: () {
@@ -172,19 +152,13 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker>
                                     padding: const EdgeInsets.all(8.0),
                                     child: Icon(
                                       Icons.location_on,
-                                      color: Theme.of(context)
-                                          .textTheme
-                                          .bodyText1
-                                          .color,
+                                      color: Theme.of(context).textTheme.bodyText1.color,
                                     ),
                                   ),
                                   Text(
                                     "Location",
                                     style: TextStyle(
-                                      color: Theme.of(context)
-                                          .textTheme
-                                          .bodyText1
-                                          .color,
+                                      color: Theme.of(context).textTheme.bodyText1.color,
                                       fontSize: 13,
                                     ),
                                   ),

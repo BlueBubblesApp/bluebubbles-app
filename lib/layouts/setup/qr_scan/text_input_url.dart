@@ -8,8 +8,7 @@ import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/material.dart';
 
 class TextInputURL extends StatefulWidget {
-  TextInputURL({Key key, @required this.onConnect, @required this.onClose})
-      : super(key: key);
+  TextInputURL({Key key, @required this.onConnect, @required this.onClose}) : super(key: key);
   final Function() onConnect;
   final Function() onClose;
 
@@ -44,8 +43,7 @@ class _TextInputURLState extends State<TextInputURL> {
     copy.guidAuthKey = password;
     await SettingsManager().saveSettings(copy);
     try {
-      await SocketManager()
-          .startSocketIO(forceNewConnection: true, catchException: false);
+      await SocketManager().startSocketIO(forceNewConnection: true, catchException: false);
     } catch (e) {
       error = e.toString();
       if (this.mounted) setState(() {});

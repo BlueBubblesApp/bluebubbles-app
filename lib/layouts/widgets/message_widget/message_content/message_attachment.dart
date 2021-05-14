@@ -30,8 +30,7 @@ class MessageAttachment extends StatefulWidget {
   _MessageAttachmentState createState() => _MessageAttachmentState();
 }
 
-class _MessageAttachmentState extends State<MessageAttachment>
-    with AutomaticKeepAliveClientMixin {
+class _MessageAttachmentState extends State<MessageAttachment> with AutomaticKeepAliveClientMixin {
   Widget attachmentWidget;
   var content;
 
@@ -76,8 +75,7 @@ class _MessageAttachmentState extends State<MessageAttachment>
     // If it's a file, it's already been downlaoded, so just display it
     if (content is File) {
       String mimeType = widget.attachment.mimeType;
-      if (mimeType != null)
-        mimeType = mimeType.substring(0, mimeType.indexOf("/"));
+      if (mimeType != null) mimeType = mimeType.substring(0, mimeType.indexOf("/"));
       if (mimeType == "image") {
         return MediaFile(
           attachment: widget.attachment,
@@ -94,8 +92,7 @@ class _MessageAttachmentState extends State<MessageAttachment>
             file: content,
           ),
         );
-      } else if (mimeType == "audio" &&
-          !widget.attachment.mimeType.contains("caf")) {
+      } else if (mimeType == "audio" && !widget.attachment.mimeType.contains("caf")) {
         return MediaFile(
           attachment: widget.attachment,
           child: AudioPlayerWiget(file: content, context: context, width: 250),
@@ -187,8 +184,7 @@ class _MessageAttachmentState extends State<MessageAttachment>
                           valueColor: AlwaysStoppedAnimation(Colors.white),
                         ),
                       ),
-                      ((content as AttachmentDownloader).attachment.mimeType !=
-                              null)
+                      ((content as AttachmentDownloader).attachment.mimeType != null)
                           ? Container(height: 5.0)
                           : Container(),
                       (content.attachment.mimeType != null)

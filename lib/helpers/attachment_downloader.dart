@@ -19,12 +19,11 @@ class AttachmentDownloader {
   Attachment _attachment;
   Function _onComplete;
 
-  double get progress =>
-      (_totalChunks == 0) ? 0 : (_currentChunk) / _totalChunks;
+  double get progress => (_totalChunks == 0) ? 0 : (_currentChunk) / _totalChunks;
+
   Attachment get attachment => _attachment;
 
-  AttachmentDownloader(Attachment attachment,
-      {Function onComplete, Function onError, bool autoFetch = true}) {
+  AttachmentDownloader(Attachment attachment, {Function onComplete, Function onError, bool autoFetch = true}) {
     // Set default chunk size based on the current settings
     _chunkSize = SettingsManager().settings.chunkSize * 1024;
     _attachment = attachment;
@@ -37,19 +36,16 @@ class AttachmentDownloader {
     if (autoFetch) fetchAttachment(attachment);
   }
 
-  getChunkRecursive(
-      String guid, int index, int total, List<int> currentBytes, Function cb) {
+  getChunkRecursive(String guid, int index, int total, List<int> currentBytes, Function cb) {
     // if (index <= total) {
     Map<String, dynamic> params = new Map();
     params["identifier"] = guid;
     params["start"] = index * _chunkSize;
     params["chunkSize"] = _chunkSize;
     params["compress"] = false;
-    SocketManager().sendMessage("get-attachment-chunk", params,
-        (attachmentResponse) async {
+    SocketManager().sendMessage("get-attachment-chunk", params, (attachmentResponse) async {
       if (attachmentResponse['status'] != "200" ||
-          (attachmentResponse.containsKey("error") &&
-              attachmentResponse["error"] != null)) {
+          (attachmentResponse.containsKey("error") && attachmentResponse["error"] != null)) {
         File file = new File(attachment.getPath());
         if (await file.exists()) {
           await file.delete();
@@ -83,9 +79,7 @@ class AttachmentDownloader {
         debugPrint("Finished fetching attachment");
         if (cb != null) await cb();
       }
-    },
-        reason: "Attachment downloader " + attachment.guid,
-        path: _attachment.getPath());
+    }, reason: "Attachment downloader " + attachment.guid, path: _attachment.getPath());
   }
 
   Future<void> fetchAttachment(Attachment attachment) async {
@@ -102,8 +96,7 @@ class AttachmentDownloader {
 
     _cb = () async {
       stopwatch.stop();
-      debugPrint(
-          "Attachment downloaded in ${stopwatch.elapsedMilliseconds} ms");
+      debugPrint("Attachment downloaded in ${stopwatch.elapsedMilliseconds} ms");
 
       try {
         // Get the dimensions of the attachment

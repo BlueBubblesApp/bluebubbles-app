@@ -24,8 +24,7 @@ class CurrentChat {
 
   Stream get stream => _stream.stream;
 
-  StreamController<Map<String, List<Attachment>>> _attachmentStream =
-      StreamController.broadcast();
+  StreamController<Map<String, List<Attachment>>> _attachmentStream = StreamController.broadcast();
 
   Stream get attachmentStream => _attachmentStream.stream;
 
@@ -52,24 +51,22 @@ class CurrentChat {
 
   double _timeStampOffset = 0.0;
 
-  StreamController<double> timeStampOffsetStream =
-      StreamController<double>.broadcast();
+  StreamController<double> timeStampOffsetStream = StreamController<double>.broadcast();
 
-  StreamController<Map<String, Message>> messageMarkerStream =
-      StreamController<Map<String, Message>>.broadcast();
+  StreamController<Map<String, Message>> messageMarkerStream = StreamController<Map<String, Message>>.broadcast();
 
   double get timeStampOffset => _timeStampOffset;
+
   set timeStampOffset(double value) {
     if (_timeStampOffset == value) return;
     _timeStampOffset = value;
-    if (!timeStampOffsetStream.isClosed)
-      timeStampOffsetStream.sink.add(_timeStampOffset);
+    if (!timeStampOffsetStream.isClosed) timeStampOffsetStream.sink.add(_timeStampOffset);
   }
 
-  StreamController<bool> showScrollDownStream =
-      StreamController<bool>.broadcast();
+  StreamController<bool> showScrollDownStream = StreamController<bool>.broadcast();
   ScrollController scrollController = ScrollController();
   bool _showScrollDown = false;
+
   bool get showScrollDown => _showScrollDown;
 
   CurrentChat(this.chat) {
@@ -80,16 +77,12 @@ class CurrentChat {
       if (msgEvent?.chatGuid != chat?.guid) return;
 
       // If it's the event we want
-      if (msgEvent.type == NewMessageType.UPDATE ||
-          msgEvent.type == NewMessageType.ADD) {
+      if (msgEvent.type == NewMessageType.UPDATE || msgEvent.type == NewMessageType.ADD) {
         tryUpdateMessageMarkers(msgEvent.event["message"]);
       }
 
       if (messageMarkerStream.isClosed) {
-        messageMarkerStream.sink.add({
-          "myLastMessage": this.myLastMessage,
-          "lastReadMessage": this.lastReadMessage
-        });
+        messageMarkerStream.sink.add({"myLastMessage": this.myLastMessage, "lastReadMessage": this.lastReadMessage});
       }
     });
 
@@ -97,9 +90,7 @@ class CurrentChat {
       if (!event.containsKey("type")) return;
 
       // Track the offset for when the keyboard is opened
-      if (event["type"] == "keyboard-status" &&
-          scrollController.hasClients &&
-          scrollController.offset != null) {
+      if (event["type"] == "keyboard-status" && scrollController.hasClients && scrollController.offset != null) {
         keyboardOpen = event.containsKey("data") ? event["data"] : false;
         if (keyboardOpen) {
           keyboardOpenOffset = scrollController.offset;
@@ -120,15 +111,11 @@ class CurrentChat {
     return currentChat;
   }
 
-  static bool isActive(String chatGuid) =>
-      AttachmentInfoBloc().getCurrentChat(chatGuid)?.isAlive ?? false;
+  static bool isActive(String chatGuid) => AttachmentInfoBloc().getCurrentChat(chatGuid)?.isAlive ?? false;
 
   static CurrentChat get activeChat {
     if (AttachmentInfoBloc().chatData.isNotEmpty) {
-      var res = AttachmentInfoBloc()
-          .chatData
-          .values
-          .where((element) => element.isAlive);
+      var res = AttachmentInfoBloc().chatData.values.where((element) => element.isAlive);
 
       if (res.isNotEmpty) return res.first;
 
@@ -216,12 +203,8 @@ class CurrentChat {
   static CurrentChat of(BuildContext context) {
     if (context == null) return null;
 
-    return context
-            .findAncestorStateOfType<ConversationViewState>()
-            ?.currentChat ??
-        context
-            .findAncestorStateOfType<MessageDetailsPopupState>()
-            ?.currentChat ??
+    return context.findAncestorStateOfType<ConversationViewState>()?.currentChat ??
+        context.findAncestorStateOfType<MessageDetailsPopupState>()?.currentChat ??
         null;
   }
 
@@ -282,12 +265,10 @@ class CurrentChat {
     imageData.remove(attachment.guid);
   }
 
-  Future<void> preloadMessageAttachments(
-      {List<Message> specificMessages}) async {
+  Future<void> preloadMessageAttachments({List<Message> specificMessages}) async {
     assert(chat != null);
-    List<Message> messages = specificMessages != null
-        ? specificMessages
-        : await Chat.getMessagesSingleton(chat, limit: 25);
+    List<Message> messages =
+        specificMessages != null ? specificMessages : await Chat.getMessagesSingleton(chat, limit: 25);
     for (Message message in messages) {
       if (message.hasAttachments) {
         List<Attachment> attachments = await message.fetchAttachments();
@@ -330,16 +311,14 @@ class CurrentChat {
     if (myLastMessage == null ||
         (myLastMessage?.dateCreated != null &&
             msg.dateCreated != null &&
-            msg.dateCreated.millisecondsSinceEpoch >
-                myLastMessage.dateCreated.millisecondsSinceEpoch)) {
+            msg.dateCreated.millisecondsSinceEpoch > myLastMessage.dateCreated.millisecondsSinceEpoch)) {
       myLastMessage = msg;
     }
 
     if ((lastReadMessage == null && msg.dateRead != null) ||
         (lastReadMessage?.dateRead != null &&
             msg.dateRead != null &&
-            msg.dateRead.millisecondsSinceEpoch >
-                lastReadMessage.dateRead.millisecondsSinceEpoch)) {
+            msg.dateRead.millisecondsSinceEpoch > lastReadMessage.dateRead.millisecondsSinceEpoch)) {
       lastReadMessage = msg;
     }
   }

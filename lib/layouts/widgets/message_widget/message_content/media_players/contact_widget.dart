@@ -55,10 +55,7 @@ class _ContactWidgetState extends State<ContactWidget> {
               MethodChannelInterface().invokeMethod(
                 "open_file",
                 {
-                  "path": "/attachments/" +
-                      widget.attachment.guid +
-                      "/" +
-                      basename(widget.file.path),
+                  "path": "/attachments/" + widget.attachment.guid + "/" + basename(widget.file.path),
                   "mimeType": "text/x-vcard",
                 },
               );
@@ -110,9 +107,7 @@ class _ContactWidgetState extends State<ContactWidget> {
                       Padding(
                         padding: EdgeInsets.only(left: 5.0),
                         child: Icon(
-                          SettingsManager().settings.skin == Skins.IOS
-                              ? Icons.arrow_forward_ios
-                              : Icons.arrow_forward,
+                          SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_forward_ios : Icons.arrow_forward,
                           color: Colors.grey,
                           size: 15,
                         ),

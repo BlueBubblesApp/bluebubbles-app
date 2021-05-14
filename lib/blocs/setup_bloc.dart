@@ -30,8 +30,7 @@ class SetupOutputData {
 
 class SetupBloc {
   StreamController<SetupData> _stream = StreamController<SetupData>.broadcast();
-  StreamController<SocketState> _connectionStatusStream =
-      StreamController<SocketState>.broadcast();
+  StreamController<SocketState> _connectionStatusStream = StreamController<SocketState>.broadcast();
   StreamSubscription connectionSubscription;
 
   Stream<SocketState> get conenctionStatus => _connectionStatusStream.stream;
@@ -45,6 +44,7 @@ class SetupBloc {
   bool skipEmptyChats = true;
 
   Stream<SetupData> get stream => _stream.stream;
+
   double get progress => _progress;
   int processId;
 
@@ -52,8 +52,7 @@ class SetupBloc {
 
   SetupBloc();
 
-  Future<void> connectToServer(
-      FCMData data, String serverURL, String password) async {
+  Future<void> connectToServer(FCMData data, String serverURL, String password) async {
     Settings settingsCopy = SettingsManager().settings;
     settingsCopy.serverAddress = getServerAddress(address: serverURL);
     settingsCopy.guidAuthKey = password;
@@ -61,10 +60,8 @@ class SetupBloc {
     await SettingsManager().saveSettings(settingsCopy);
     await SettingsManager().saveFCMData(data);
     await SocketManager().authFCM(catchException: false, force: true);
-    await SocketManager()
-        .startSocketIO(forceNewConnection: true, catchException: false);
-    connectionSubscription =
-        SocketManager().connectionStateStream.listen((event) {
+    await SocketManager().startSocketIO(forceNewConnection: true, catchException: false);
+    connectionSubscription = SocketManager().connectionStateStream.listen((event) {
       if (_connectionStatusStream.isClosed) return;
       _connectionStatusStream.sink.add(event);
       if (isSyncing) {
@@ -79,8 +76,7 @@ class SetupBloc {
             addOutput("Reconnecting to socket...", SetupOutputType.LOG);
             break;
           case SocketState.FAILED:
-            addOutput("Connection failed, cancelling download.",
-                SetupOutputType.ERROR);
+            addOutput("Connection failed, cancelling download.", SetupOutputType.ERROR);
             closeSync();
             break;
           default:
@@ -103,8 +99,7 @@ class SetupBloc {
     if (isSyncing) return;
 
     // Setup syncing process
-    processId =
-        SocketManager().addSocketProcess(([bool finishWithError = false]) {});
+    processId = SocketManager().addSocketProcess(([bool finishWithError = false]) {});
     isSyncing = true;
 
     // Set the last sync date (for incremental, even though this isn't incremental)
@@ -117,8 +112,7 @@ class SetupBloc {
     // Get the chats to sync
     Timer timer = Timer(Duration(seconds: 15), () {
       if (_progress == 0) {
-        addOutput(
-            "This is taking a while! Please Ensure that System Disk Access is granted on the mac!",
+        addOutput("This is taking a while! Please Ensure that System Disk Access is granted on the mac!",
             SetupOutputType.ERROR);
       }
     });
@@ -129,8 +123,7 @@ class SetupBloc {
         receivedChats(data);
         timer.cancel();
       } else {
-        handleError(
-            "An error occured while getting the chats, cancelling setup: ${data['error']['message']}");
+        handleError("An error occured while getting the chats, cancelling setup: ${data['error']['message']}");
       }
     });
   }
@@ -155,8 +148,7 @@ class SetupBloc {
   void getChatMessagesRecursive(List chats, int index) async {
     Chat chat = Chat.fromMap(chats[index]);
     await chat.save();
-    addOutput(
-        "Received data for chat ${chat?.guid}, fetching ${numberOfMessagesPerPage.round()} messages...",
+    addOutput("Received data for chat ${chat?.guid}, fetching ${numberOfMessagesPerPage.round()} messages...",
         SetupOutputType.LOG);
 
     Map<String, dynamic> params = Map();
@@ -169,8 +161,7 @@ class SetupBloc {
 
     SocketManager().sendMessage("get-chat-messages", params, (data) async {
       if (data['status'] != 200) {
-        addOutput(
-            "An error occured when getting messages for chat ${chat.guid}, skipping: ${data['error']['message']}",
+        addOutput("An error occured when getting messages for chat ${chat.guid}, skipping: ${data['error']['message']}",
             SetupOutputType.ERROR);
         return;
       }
@@ -186,23 +177,19 @@ class SetupBloc {
     });
   }
 
-  Future<void> receivedMessagesForChat(
-      Chat chat, Map<String, dynamic> data) async {
+  Future<void> receivedMessagesForChat(Chat chat, Map<String, dynamic> data) async {
     List messages = data["data"];
-    addOutput(
-        "Received ${messages?.length} messages for chat!", SetupOutputType.LOG);
+    addOutput("Received ${messages?.length} messages for chat!", SetupOutputType.LOG);
 
     // Since we got the messages in desc order, we want to reverse it.
     // Reversing it will add older messages before newer one. This should help fix
     // issues with associated message GUIDs
     if (!skipEmptyChats || (skipEmptyChats && messages.length > 0)) {
-      MessageHelper.bulkAddMessages(chat, messages.reversed.toList(),
-          notifyForNewMessage: false);
+      MessageHelper.bulkAddMessages(chat, messages.reversed.toList(), notifyForNewMessage: false);
 
       // If we want to download the attachments, do it, and wait for them to finish before continuing
       if (downloadAttachments) {
-        await MessageHelper.bulkDownloadAttachments(
-            chat, messages.reversed.toList());
+        await MessageHelper.bulkDownloadAttachments(chat, messages.reversed.toList());
       }
     }
 
@@ -234,21 +221,17 @@ class SetupBloc {
       Function onComplete}) {
     // If we are already syncing, don't sync again
     // If the last sync date is empty, then we've never synced, so don't.
-    if (isSyncing ||
-        settings.lastIncrementalSync == 0 ||
-        SocketManager().state != SocketState.CONNECTED) return;
+    if (isSyncing || settings.lastIncrementalSync == 0 || SocketManager().state != SocketState.CONNECTED) return;
 
     // Setup the socket process and error handler
-    processId =
-        SocketManager().addSocketProcess(([bool finishWithError = false]) {});
+    processId = SocketManager().addSocketProcess(([bool finishWithError = false]) {});
 
     // if (onConnectionError != null) this.onConnectionError = onConnectionError;
     isSyncing = true;
     _stream.sink.add(SetupData(1, []));
 
     // Store the time we started syncing
-    debugPrint(
-        "(SYNC) Starting incremental sync for messages since: ${settings.lastIncrementalSync}");
+    debugPrint("(SYNC) Starting incremental sync for messages since: ${settings.lastIncrementalSync}");
     int syncStart = DateTime.now().millisecondsSinceEpoch;
 
     // Build request params. We want all details on the messages
@@ -258,16 +241,12 @@ class SetupBloc {
     }
 
     params["withBlurhash"] = false; // Maybe we want it?
-    params["limit"] =
-        1000; // This is arbitrary, hopefully there aren't more messages
-    params["after"] =
-        settings.lastIncrementalSync; // Get everything since the last sync
-    params["withChats"] =
-        true; // We want the chats too so we can save them correctly
+    params["limit"] = 1000; // This is arbitrary, hopefully there aren't more messages
+    params["after"] = settings.lastIncrementalSync; // Get everything since the last sync
+    params["withChats"] = true; // We want the chats too so we can save them correctly
     params["withAttachments"] = true; // We want the attachment data
     params["withHandle"] = true; // We want to know who sent it
-    params["sort"] =
-        "DESC"; // Sort my DESC so we receive the newest messages first
+    params["sort"] = "DESC"; // Sort my DESC so we receive the newest messages first
     params["where"] = [
       {"statement": "message.service = 'iMessage'", "args": null}
     ];
@@ -275,8 +254,7 @@ class SetupBloc {
     SocketManager().sendMessage("get-messages", params, (data) async {
       if (data['status'] != 200) {
         addOutput(
-            "An error occured in incremental sync, cancelling: ${data['error']['message']}",
-            SetupOutputType.ERROR);
+            "An error occured in incremental sync, cancelling: ${data['error']['message']}", SetupOutputType.ERROR);
         return;
       }
 
@@ -285,19 +263,16 @@ class SetupBloc {
       if (messages.isEmpty) {
         debugPrint("(SYNC) No new messages found during incremental sync");
       } else {
-        debugPrint(
-            "(SYNC) Incremental sync found ${messages.length} messages. Syncing...");
+        debugPrint("(SYNC) Incremental sync found ${messages.length} messages. Syncing...");
       }
 
       if (messages.length > 0) {
-        await MessageHelper.bulkAddMessages(null, messages,
-            notifyForNewMessage: !isIncremental);
+        await MessageHelper.bulkAddMessages(null, messages, notifyForNewMessage: !isIncremental);
       }
 
       // Once we have added everything, save the last sync date
       if (saveDate) {
-        debugPrint(
-            "(SYNC) Finished incremental sync. Saving last sync date: $syncStart");
+        debugPrint("(SYNC) Finished incremental sync. Saving last sync date: $syncStart");
 
         Settings _settingsCopy = SettingsManager().settings;
         _settingsCopy.lastIncrementalSync = syncStart;
@@ -308,8 +283,7 @@ class SetupBloc {
 
       if (SettingsManager().settings.showIncrementalSync)
         // Show a nice lil toast/snackbar
-        EventDispatcher()
-            .emit("show-snackbar", {"text": "🔄 Incremental sync complete 🔄"});
+        EventDispatcher().emit("show-snackbar", {"text": "🔄 Incremental sync complete 🔄"});
 
       if (onComplete != null) {
         onComplete();

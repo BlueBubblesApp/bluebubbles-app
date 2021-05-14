@@ -325,13 +325,14 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
     final generateContent = redactedMode && generateFakeMessageContent;
 
     TextStyle style = Theme.of(context).textTheme.subtitle1.apply(
-      color: Theme.of(context).textTheme.subtitle1.color.withOpacity(
-        0.85,
-      ),
-    );
+          color: Theme.of(context).textTheme.subtitle1.color.withOpacity(
+                0.85,
+              ),
+        );
     String message = widget.chat.latestMessageText != null ? widget.chat.latestMessageText : "";
 
-    if (generateContent) message = widget.chat.fakeLatestMessageText;
+    if (generateContent)
+      message = widget.chat.fakeLatestMessageText;
     else if (hideContent) style = style.copyWith(color: Colors.transparent);
 
     return widget.chat.latestMessageText != null && !(widget.chat.latestMessageText is String)

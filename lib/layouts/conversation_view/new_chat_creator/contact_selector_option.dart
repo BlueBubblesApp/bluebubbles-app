@@ -9,9 +9,7 @@ import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:flutter/material.dart';
 
 class ContactSelectorOption extends StatelessWidget {
-  const ContactSelectorOption(
-      {Key key, @required this.item, @required this.onSelected})
-      : super(key: key);
+  const ContactSelectorOption({Key key, @required this.item, @required this.onSelected}) : super(key: key);
   final UniqueContact item;
   final Function(UniqueContact item) onSelected;
 
@@ -25,8 +23,7 @@ class ContactSelectorOption extends StatelessWidget {
 
     List<String> formatted = [];
     for (var item in item.chat.participants) {
-      String contact =
-          ContactManager().getCachedContactSync(item.address)?.displayName;
+      String contact = ContactManager().getCachedContactSync(item.address)?.displayName;
       if (contact == null) {
         contact = await formatPhoneNumber(item.address);
       }
@@ -53,9 +50,7 @@ class ContactSelectorOption extends StatelessWidget {
       key: new Key("chat-${item.displayName}"),
       onTap: () => onSelected(item),
       title: Text(
-        !item.isChat
-            ? "${item.displayName}${getTypeStr(item.label)}"
-            : item.chat.title ?? "Group Chat",
+        !item.isChat ? "${item.displayName}${getTypeStr(item.label)}" : item.chat.title ?? "Group Chat",
         style: Theme.of(context).textTheme.bodyText1,
         overflow: TextOverflow.ellipsis,
       ),
@@ -65,8 +60,7 @@ class ContactSelectorOption extends StatelessWidget {
               future: chatParticipants,
               builder: (context, snapshot) {
                 if (!snapshot.hasData) {
-                  return getTextWidget(
-                      item.displayName ?? item.address ?? "Person");
+                  return getTextWidget(item.displayName ?? item.address ?? "Person");
                 }
 
                 return getTextWidget(snapshot.data);

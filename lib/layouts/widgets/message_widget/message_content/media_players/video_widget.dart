@@ -27,8 +27,7 @@ class VideoWidget extends StatefulWidget {
   _VideoWidgetState createState() => _VideoWidgetState();
 }
 
-class _VideoWidgetState extends State<VideoWidget>
-    with TickerProviderStateMixin {
+class _VideoWidgetState extends State<VideoWidget> with TickerProviderStateMixin {
   bool showPlayPauseOverlay = true;
   bool isVisible = false;
   Timer hideOverlayTimer;
@@ -38,8 +37,7 @@ class _VideoWidgetState extends State<VideoWidget>
   @override
   void initState() {
     super.initState();
-    Map<String, VideoPlayerController> controllers =
-        CurrentChat.of(context).currentPlayingVideo;
+    Map<String, VideoPlayerController> controllers = CurrentChat.of(context).currentPlayingVideo;
     showPlayPauseOverlay = controllers == null ||
         !controllers.containsKey(widget.attachment.guid) ||
         !controllers[widget.attachment.guid].value.isPlaying;
@@ -66,11 +64,9 @@ class _VideoWidgetState extends State<VideoWidget>
   @override
   Widget build(BuildContext context) {
     VideoPlayerController controller;
-    Map<String, VideoPlayerController> controllers =
-        CurrentChat.of(context).currentPlayingVideo;
+    Map<String, VideoPlayerController> controllers = CurrentChat.of(context).currentPlayingVideo;
     // If the currently playing video is this attachment guid
-    if (controllers != null &&
-        controllers.containsKey(widget.attachment.guid)) {
+    if (controllers != null && controllers.containsKey(widget.attachment.guid)) {
       controller = controllers[widget.attachment.guid];
     }
     return VisibilityDetector(
@@ -198,12 +194,10 @@ class _VideoWidgetState extends State<VideoWidget>
 
   Widget buildPreview() => GestureDetector(
         onTap: () async {
-          VideoPlayerController controller =
-              VideoPlayerController.file(widget.file);
+          VideoPlayerController controller = VideoPlayerController.file(widget.file);
           await controller.initialize();
           controller.play();
-          CurrentChat.of(context)
-              .changeCurrentPlayingVideo({widget.attachment.guid: controller});
+          CurrentChat.of(context).changeCurrentPlayingVideo({widget.attachment.guid: controller});
         },
         child: Stack(
           children: [
@@ -239,8 +233,7 @@ class _VideoWidgetState extends State<VideoWidget>
   Widget buildPlaceHolder() {
     if (widget.attachment.hasValidSize) {
       return AspectRatio(
-        aspectRatio: widget.attachment.width.toDouble() /
-            widget.attachment.height.toDouble(),
+        aspectRatio: widget.attachment.width.toDouble() / widget.attachment.height.toDouble(),
         child: Container(
           width: widget.attachment.width.toDouble(),
           height: widget.attachment.height.toDouble(),

@@ -24,8 +24,7 @@ class ImageWidget extends StatefulWidget {
   _ImageWidgetState createState() => _ImageWidgetState();
 }
 
-class _ImageWidgetState extends State<ImageWidget>
-    with TickerProviderStateMixin, AutomaticKeepAliveClientMixin {
+class _ImageWidgetState extends State<ImageWidget> with TickerProviderStateMixin, AutomaticKeepAliveClientMixin {
   bool navigated = false;
   bool visible = true;
   Uint8List data;
@@ -42,9 +41,7 @@ class _ImageWidgetState extends State<ImageWidget>
     if (data == null) {
       // If it's an image, compress the image when loading it
       if (AttachmentHelper.canCompress(widget.attachment)) {
-        data = await FlutterImageCompress.compressWithFile(
-            widget.file.absolute.path,
-            quality: 25);
+        data = await FlutterImageCompress.compressWithFile(widget.file.absolute.path, quality: 25);
 
         // All other attachments can be held in memory as bytes
       } else {
@@ -140,16 +137,14 @@ class _ImageWidgetState extends State<ImageWidget>
   Widget buildPlaceHolder() {
     if (widget.attachment.hasValidSize) {
       return AspectRatio(
-        aspectRatio: widget.attachment.width.toDouble() /
-            widget.attachment.height.toDouble(),
+        aspectRatio: widget.attachment.width.toDouble() / widget.attachment.height.toDouble(),
         child: Container(
             width: widget.attachment.width.toDouble(),
             height: widget.attachment.height.toDouble(),
             color: Theme.of(context).accentColor,
             child: Center(
                 child: CircularProgressIndicator(
-                    valueColor: new AlwaysStoppedAnimation<Color>(
-                        Theme.of(context).primaryColor)))),
+                    valueColor: new AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor)))),
       );
     } else {
       return Container(
