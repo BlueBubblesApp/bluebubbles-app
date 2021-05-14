@@ -340,7 +340,7 @@ class _ConversationListState extends State<ConversationList> {
               connectionStatus = SocketManager().state;
             }
 
-            return getIndicatorIcon(connectionStatus, size: 20);
+            return getIndicatorIcon(connectionStatus, size: 12);
           }),
       Container(width: 10.0)
     ];
