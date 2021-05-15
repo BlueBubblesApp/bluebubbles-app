@@ -14,12 +14,10 @@ class AttachmentDownloaderWidget extends StatefulWidget {
   final Attachment attachment;
 
   @override
-  _AttachmentDownloaderWidgetState createState() =>
-      _AttachmentDownloaderWidgetState();
+  _AttachmentDownloaderWidgetState createState() => _AttachmentDownloaderWidgetState();
 }
 
-class _AttachmentDownloaderWidgetState
-    extends State<AttachmentDownloaderWidget> {
+class _AttachmentDownloaderWidgetState extends State<AttachmentDownloaderWidget> {
   @override
   Widget build(BuildContext context) {
     return Stack(

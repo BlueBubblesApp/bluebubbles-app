@@ -41,6 +41,7 @@ class Settings {
   int smartReplySampleSize = 2;
   bool colorblindMode = false;
   bool showDeliveryTimestamps = false;
+
   // String emojiFontFamily;
 
   // Private API features
@@ -48,6 +49,18 @@ class Settings {
   bool privateSendTypingIndicators = false;
   bool privateMarkChatAsRead = false;
   bool privateManualMarkAsRead = false;
+
+  // Redacted Mode Settings
+  bool redactedMode = false;
+  bool hideMessageContent = true;
+  bool hideReactions = false;
+  bool hideAttachments = true;
+  bool hideAttachmentTypes = false;
+  bool hideContactPhotos = true;
+  bool hideContactInfo = true;
+  bool removeLetterAvatars = true;
+  bool generateFakeContactNames = false;
+  bool generateFakeMessageContent = false;
 
   Skins skin = Skins.IOS;
 
@@ -140,6 +153,26 @@ class Settings {
         settings.showSyncIndicator = entry.value;
       } else if (entry.name == "showDeliveryTimestamps") {
         settings.showDeliveryTimestamps = entry.value;
+      } else if (entry.name == "redactedMode") {
+        settings.redactedMode = entry.value;
+      } else if (entry.name == "hideMessageContent") {
+        settings.hideMessageContent = entry.value;
+      } else if (entry.name == "hideReactions") {
+        settings.hideReactions = entry.value;
+      } else if (entry.name == "hideAttachments") {
+        settings.hideAttachments = entry.value;
+      } else if (entry.name == "hideAttachmentTypes") {
+        settings.hideAttachmentTypes = entry.value;
+      } else if (entry.name == "hideContactPhotos") {
+        settings.hideContactPhotos = entry.value;
+      } else if (entry.name == "hideContactInfo") {
+        settings.hideContactInfo = entry.value;
+      } else if (entry.name == "removeLetterAvatars") {
+        settings.removeLetterAvatars = entry.value;
+      } else if (entry.name == "generateFakeContactNames") {
+        settings.generateFakeContactNames = entry.value;
+      } else if (entry.name == "generateFakeMessageContent") {
+        settings.generateFakeMessageContent = entry.value;
       }
 
       // else if (entry.name == "emojiFontFamily") {
@@ -187,169 +220,258 @@ class Settings {
 
   List<ConfigEntry> toEntries() => [
         ConfigEntry(
-            name: "serverAddress",
-            value: this.serverAddress,
-            type: this.serverAddress.runtimeType),
+          name: "serverAddress",
+          value: this.serverAddress,
+          type: this.serverAddress.runtimeType,
+        ),
         ConfigEntry(
-            name: "guidAuthKey",
-            value: this.guidAuthKey,
-            type: this.guidAuthKey.runtimeType),
+          name: "guidAuthKey",
+          value: this.guidAuthKey,
+          type: this.guidAuthKey.runtimeType,
+        ),
         ConfigEntry(
-            name: "finishedSetup",
-            value: this.finishedSetup,
-            type: this.finishedSetup.runtimeType),
+          name: "finishedSetup",
+          value: this.finishedSetup,
+          type: this.finishedSetup.runtimeType,
+        ),
         ConfigEntry(
-            name: "chunkSize",
-            value: this.chunkSize,
-            type: this.chunkSize.runtimeType),
+          name: "chunkSize",
+          value: this.chunkSize,
+          type: this.chunkSize.runtimeType,
+        ),
         ConfigEntry(
-            name: "autoOpenKeyboard",
-            value: this.autoOpenKeyboard,
-            type: this.autoOpenKeyboard.runtimeType),
+          name: "autoOpenKeyboard",
+          value: this.autoOpenKeyboard,
+          type: this.autoOpenKeyboard.runtimeType,
+        ),
         ConfigEntry(
-            name: "autoDownload",
-            value: this.autoDownload,
-            type: this.autoDownload.runtimeType),
+          name: "autoDownload",
+          value: this.autoDownload,
+          type: this.autoDownload.runtimeType,
+        ),
         ConfigEntry(
-            name: "onlyWifiDownload",
-            value: this.onlyWifiDownload,
-            type: this.onlyWifiDownload.runtimeType),
+          name: "onlyWifiDownload",
+          value: this.onlyWifiDownload,
+          type: this.onlyWifiDownload.runtimeType,
+        ),
         ConfigEntry(
-            name: "hideTextPreviews",
-            value: this.hideTextPreviews,
-            type: this.hideTextPreviews.runtimeType),
+          name: "hideTextPreviews",
+          value: this.hideTextPreviews,
+          type: this.hideTextPreviews.runtimeType,
+        ),
         ConfigEntry(
-            name: "showIncrementalSync",
-            value: this.showIncrementalSync,
-            type: this.showIncrementalSync.runtimeType),
+          name: "showIncrementalSync",
+          value: this.showIncrementalSync,
+          type: this.showIncrementalSync.runtimeType,
+        ),
         ConfigEntry(
-            name: "lowMemoryMode",
-            value: this.lowMemoryMode,
-            type: this.lowMemoryMode.runtimeType),
+          name: "lowMemoryMode",
+          value: this.lowMemoryMode,
+          type: this.lowMemoryMode.runtimeType,
+        ),
         ConfigEntry(
-            name: "lastIncrementalSync",
-            value: this.lastIncrementalSync,
-            type: this.lastIncrementalSync.runtimeType),
+          name: "lastIncrementalSync",
+          value: this.lastIncrementalSync,
+          type: this.lastIncrementalSync.runtimeType,
+        ),
         ConfigEntry(
-            name: "displayMode",
-            value: this.displayMode,
-            type: this.displayMode.runtimeType),
+          name: "displayMode",
+          value: this.displayMode,
+          type: this.displayMode.runtimeType,
+        ),
         ConfigEntry(
-            name: "rainbowBubbles",
-            value: this.colorfulAvatars,
-            type: this.colorfulAvatars.runtimeType),
+          name: "rainbowBubbles",
+          value: this.colorfulAvatars,
+          type: this.colorfulAvatars.runtimeType,
+        ),
         ConfigEntry(
-            name: "colorfulBubbles",
-            value: this.colorfulBubbles,
-            type: this.colorfulBubbles.runtimeType),
+          name: "colorfulBubbles",
+          value: this.colorfulBubbles,
+          type: this.colorfulBubbles.runtimeType,
+        ),
         ConfigEntry(
-            name: "hideDividers",
-            value: this.hideDividers,
-            type: this.hideDividers.runtimeType),
+          name: "hideDividers",
+          value: this.hideDividers,
+          type: this.hideDividers.runtimeType,
+        ),
         ConfigEntry(
-            name: "skin",
-            value: this.skin.index,
-            type: this.skin.index.runtimeType),
+          name: "skin",
+          value: this.skin.index,
+          type: this.skin.index.runtimeType,
+        ),
         ConfigEntry(
-            name: "sendTypingIndicators",
-            value: this.sendTypingIndicators,
-            type: this.sendTypingIndicators.runtimeType),
+          name: "sendTypingIndicators",
+          value: this.sendTypingIndicators,
+          type: this.sendTypingIndicators.runtimeType,
+        ),
         ConfigEntry(
-            name: "scrollVelocity",
-            value: this.scrollVelocity,
-            type: this.scrollVelocity.runtimeType),
+          name: "scrollVelocity",
+          value: this.scrollVelocity,
+          type: this.scrollVelocity.runtimeType,
+        ),
         ConfigEntry(
-            name: "sendWithReturn",
-            value: this.sendWithReturn,
-            type: this.sendWithReturn.runtimeType),
+          name: "sendWithReturn",
+          value: this.sendWithReturn,
+          type: this.sendWithReturn.runtimeType,
+        ),
         ConfigEntry(
-            name: "doubleTapForDetails",
-            value: this.doubleTapForDetails,
-            type: this.doubleTapForDetails.runtimeType),
+          name: "doubleTapForDetails",
+          value: this.doubleTapForDetails,
+          type: this.doubleTapForDetails.runtimeType,
+        ),
         ConfigEntry(
-            name: "denseChatTiles",
-            value: this.denseChatTiles,
-            type: this.denseChatTiles.runtimeType),
+          name: "denseChatTiles",
+          value: this.denseChatTiles,
+          type: this.denseChatTiles.runtimeType,
+        ),
         ConfigEntry(
-            name: "smartReply",
-            value: this.smartReply,
-            type: this.smartReply.runtimeType),
+          name: "smartReply",
+          value: this.smartReply,
+          type: this.smartReply.runtimeType,
+        ),
         ConfigEntry(
-            name: "hideKeyboardOnScroll",
-            value: this.hideKeyboardOnScroll,
-            type: this.hideKeyboardOnScroll.runtimeType),
+          name: "hideKeyboardOnScroll",
+          value: this.hideKeyboardOnScroll,
+          type: this.hideKeyboardOnScroll.runtimeType,
+        ),
         ConfigEntry(
-            name: "reducedForehead",
-            value: this.reducedForehead,
-            type: this.reducedForehead.runtimeType),
+          name: "reducedForehead",
+          value: this.reducedForehead,
+          type: this.reducedForehead.runtimeType,
+        ),
         ConfigEntry(
-            name: "preCachePreviewImages",
-            value: this.preCachePreviewImages,
-            type: this.preCachePreviewImages.runtimeType),
+          name: "preCachePreviewImages",
+          value: this.preCachePreviewImages,
+          type: this.preCachePreviewImages.runtimeType,
+        ),
         ConfigEntry(
-            name: "showConnectionIndicator",
-            value: this.showConnectionIndicator,
-            type: this.showConnectionIndicator.runtimeType),
+          name: "showConnectionIndicator",
+          value: this.showConnectionIndicator,
+          type: this.showConnectionIndicator.runtimeType,
+        ),
         ConfigEntry(
-            name: "sendDelay",
-            value: this.sendDelay,
-            type: this.sendDelay.runtimeType),
+          name: "sendDelay",
+          value: this.sendDelay,
+          type: this.sendDelay.runtimeType,
+        ),
         ConfigEntry(
-            name: "recipientAsPlaceholder",
-            value: this.recipientAsPlaceholder,
-            type: this.recipientAsPlaceholder.runtimeType),
+          name: "recipientAsPlaceholder",
+          value: this.recipientAsPlaceholder,
+          type: this.recipientAsPlaceholder.runtimeType,
+        ),
         ConfigEntry(
-            name: "moveChatCreatorToHeader",
-            value: this.moveChatCreatorToHeader,
-            type: this.moveChatCreatorToHeader.runtimeType),
+          name: "moveChatCreatorToHeader",
+          value: this.moveChatCreatorToHeader,
+          type: this.moveChatCreatorToHeader.runtimeType,
+        ),
         ConfigEntry(
-            name: "swipeToCloseKeyboard",
-            value: this.swipeToCloseKeyboard,
-            type: this.swipeToCloseKeyboard.runtimeType),
+          name: "swipeToCloseKeyboard",
+          value: this.swipeToCloseKeyboard,
+          type: this.swipeToCloseKeyboard.runtimeType,
+        ),
         ConfigEntry(
-            name: "swipeToOpenKeyboard",
-            value: this.swipeToOpenKeyboard,
-            type: this.swipeToOpenKeyboard.runtimeType),
+          name: "swipeToOpenKeyboard",
+          value: this.swipeToOpenKeyboard,
+          type: this.swipeToOpenKeyboard.runtimeType,
+        ),
         ConfigEntry(
-            name: "openKeyboardOnSTB",
-            value: this.openKeyboardOnSTB,
-            type: this.openKeyboardOnSTB.runtimeType),
+          name: "openKeyboardOnSTB",
+          value: this.openKeyboardOnSTB,
+          type: this.openKeyboardOnSTB.runtimeType,
+        ),
         ConfigEntry(
-            name: "swipableConversationTiles",
-            value: this.swipableConversationTiles,
-            type: this.swipableConversationTiles.runtimeType),
+          name: "swipableConversationTiles",
+          value: this.swipableConversationTiles,
+          type: this.swipableConversationTiles.runtimeType,
+        ),
         ConfigEntry(
-            name: "enablePrivateAPI",
-            value: this.enablePrivateAPI,
-            type: this.enablePrivateAPI.runtimeType),
+          name: "enablePrivateAPI",
+          value: this.enablePrivateAPI,
+          type: this.enablePrivateAPI.runtimeType,
+        ),
         ConfigEntry(
-            name: "privateSendTypingIndicators",
-            value: this.privateSendTypingIndicators,
-            type: this.privateSendTypingIndicators.runtimeType),
+          name: "privateSendTypingIndicators",
+          value: this.privateSendTypingIndicators,
+          type: this.privateSendTypingIndicators.runtimeType,
+        ),
         ConfigEntry(
-            name: "smartReplySampleSize",
-            value: this.smartReplySampleSize,
-            type: this.smartReplySampleSize.runtimeType),
+          name: "smartReplySampleSize",
+          value: this.smartReplySampleSize,
+          type: this.smartReplySampleSize.runtimeType,
+        ),
         ConfigEntry(
-            name: "colorblindMode",
-            value: this.colorblindMode,
-            type: this.colorblindMode.runtimeType),
+          name: "colorblindMode",
+          value: this.colorblindMode,
+          type: this.colorblindMode.runtimeType,
+        ),
         ConfigEntry(
-            name: "privateMarkChatAsRead",
-            value: this.privateMarkChatAsRead,
-            type: this.privateMarkChatAsRead.runtimeType),
+          name: "privateMarkChatAsRead",
+          value: this.privateMarkChatAsRead,
+          type: this.privateMarkChatAsRead.runtimeType,
+        ),
         ConfigEntry(
-            name: "privateManualMarkAsRead",
-            value: this.privateManualMarkAsRead,
-            type: this.privateManualMarkAsRead.runtimeType),
+          name: "privateManualMarkAsRead",
+          value: this.privateManualMarkAsRead,
+          type: this.privateManualMarkAsRead.runtimeType,
+        ),
         ConfigEntry(
             name: "showSyncIndicator",
             value: this.showSyncIndicator,
             type: this.showSyncIndicator.runtimeType),
         ConfigEntry(
-          name: "showDeliveryTimestamps",
-          value: this.showDeliveryTimestamps,
-          type: this.showDeliveryTimestamps.runtimeType),
+            name: "showDeliveryTimestamps",
+            value: this.showDeliveryTimestamps,
+            type: this.showDeliveryTimestamps.runtimeType),
+        ConfigEntry(
+          name: "showSyncIndicator",
+          value: this.showSyncIndicator,
+          type: this.showSyncIndicator.runtimeType,
+        ),
+        ConfigEntry(
+          name: "redactedMode",
+          value: this.redactedMode,
+          type: this.redactedMode.runtimeType,
+        ),
+        ConfigEntry(
+          name: "hideMessageContent",
+          value: this.hideMessageContent,
+          type: this.hideMessageContent.runtimeType,
+        ),
+        ConfigEntry(
+          name: "hideAttachments",
+          value: this.hideAttachments,
+          type: this.hideAttachments.runtimeType,
+        ),
+        ConfigEntry(
+          name: "hideAttachmentTypes",
+          value: this.hideAttachmentTypes,
+          type: this.hideAttachmentTypes.runtimeType,
+        ),
+        ConfigEntry(
+          name: "hideContactPhotos",
+          value: this.hideContactPhotos,
+          type: this.hideContactPhotos.runtimeType,
+        ),
+        ConfigEntry(
+          name: "hideContactInfo",
+          value: this.hideContactInfo,
+          type: this.hideContactInfo.runtimeType,
+        ),
+        ConfigEntry(
+          name: "removeLetterAvatars",
+          value: this.removeLetterAvatars,
+          type: this.removeLetterAvatars.runtimeType,
+        ),
+        ConfigEntry(
+          name: "generateFakeContactNames",
+          value: this.generateFakeContactNames,
+          type: this.generateFakeContactNames.runtimeType,
+        ),
+        ConfigEntry(
+          name: "generateFakeMessageContent",
+          value: this.generateFakeMessageContent,
+          type: this.generateFakeMessageContent.runtimeType,
+        ),
         // ConfigEntry(
         //     name: "emojiFontFamily",
         //     value: this.emojiFontFamily,

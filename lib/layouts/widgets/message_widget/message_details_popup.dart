@@ -42,8 +42,7 @@ class MessageDetailsPopup extends StatefulWidget {
   MessageDetailsPopupState createState() => MessageDetailsPopupState();
 }
 
-class MessageDetailsPopupState extends State<MessageDetailsPopup>
-    with TickerProviderStateMixin {
+class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerProviderStateMixin {
   List<Widget> reactionWidgets = <Widget>[];
   bool showTools = false;
   String selfReaction;
@@ -60,8 +59,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
     currentChat = widget.currentChat;
 
     messageTopOffset = widget.childOffset.dy;
-    topMinimum = CupertinoNavigationBar().preferredSize.height +
-        (widget.message.hasReactions ? 110 : 50);
+    topMinimum = CupertinoNavigationBar().preferredSize.height + (widget.message.hasReactions ? 110 : 50);
 
     fetchReactions();
 
@@ -85,18 +83,13 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
           menuHeight += 140;
         }
         setState(() {
-          double totalHeight = MediaQuery.of(context).size.height -
-              MediaQuery.of(context).viewInsets.bottom -
-              menuHeight -
-              20;
-          double offset =
-              (widget.childOffset.dy + widget.childSize.height) - totalHeight;
-          messageTopOffset =
-              widget.childOffset.dy.clamp(topMinimum + 40, double.infinity);
+          double totalHeight =
+              MediaQuery.of(context).size.height - MediaQuery.of(context).viewInsets.bottom - menuHeight - 20;
+          double offset = (widget.childOffset.dy + widget.childSize.height) - totalHeight;
+          messageTopOffset = widget.childOffset.dy.clamp(topMinimum + 40, double.infinity);
           if (offset > 0) {
             messageTopOffset -= offset;
-            messageTopOffset =
-                messageTopOffset.clamp(topMinimum + 40, double.infinity);
+            messageTopOffset = messageTopOffset.clamp(topMinimum + 40, double.infinity);
           }
         });
       }
@@ -118,8 +111,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
     }
 
     // Filter down the messages to the unique ones (one per user, newest)
-    List<Message> reactionMessages =
-        Reaction.getUniqueReactionMessages(reactions);
+    List<Message> reactionMessages = Reaction.getUniqueReactionMessages(reactions);
 
     reactionWidgets = [];
     for (Message reaction in reactionMessages) {
@@ -220,8 +212,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
                       : Container(),
                 ),
               ),
-              if (SettingsManager().settings.enablePrivateAPI)
-                buildReactionMenu(),
+              if (SettingsManager().settings.enablePrivateAPI) buildReactionMenu(),
               buildCopyPasteMenu(),
             ],
           ),
@@ -233,22 +224,16 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
   Widget buildReactionMenu() {
     Size size = MediaQuery.of(context).size;
 
-    double reactionIconSize =
-        ((8.5 / 10 * size.width) / (ReactionTypes.toList().length).toDouble());
-    double maxMenuWidth =
-        (ReactionTypes.toList().length * reactionIconSize).toDouble();
+    double reactionIconSize = ((8.5 / 10 * size.width) / (ReactionTypes.toList().length).toDouble());
+    double maxMenuWidth = (ReactionTypes.toList().length * reactionIconSize).toDouble();
     double menuHeight = (reactionIconSize).toDouble();
     double topPadding = -20;
-    double topOffset = (messageTopOffset - menuHeight).toDouble().clamp(
-        topMinimum,
-        size.height -
-            MediaQuery.of(context).viewInsets.bottom -
-            120 -
-            menuHeight);
-    double leftOffset = (widget.message.isFromMe
-            ? size.width - maxMenuWidth - 25
-            : 25 + (currentChat.chat.isGroup() ? 20 : 0))
-        .toDouble();
+    double topOffset = (messageTopOffset - menuHeight)
+        .toDouble()
+        .clamp(topMinimum, size.height - MediaQuery.of(context).viewInsets.bottom - 120 - menuHeight);
+    double leftOffset =
+        (widget.message.isFromMe ? size.width - maxMenuWidth - 25 : 25 + (currentChat.chat.isGroup() ? 20 : 0))
+            .toDouble();
     Color iconColor = Colors.white;
 
     if (Theme.of(context).accentColor.computeLuminance() >= 0.179) {
@@ -275,8 +260,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
               children: ReactionTypes.toList()
                   .map(
                     (e) => Padding(
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 7.5, horizontal: 7.5),
+                      padding: const EdgeInsets.symmetric(vertical: 7.5, horizontal: 7.5),
                       child: Container(
                         width: reactionIconSize - 15,
                         height: reactionIconSize - 15,
@@ -323,14 +307,8 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
 
   bool get showDownload =>
       widget.message.hasAttachments &&
-      widget.message.attachments
-              .where((element) => element.mimeStart != null)
-              .length >
-          0 &&
-      widget.message.attachments
-              .where((element) => AttachmentHelper.getContent(element) is File)
-              .length >
-          0;
+      widget.message.attachments.where((element) => element.mimeStart != null).length > 0 &&
+      widget.message.attachments.where((element) => AttachmentHelper.getContent(element) is File).length > 0;
 
   Widget buildCopyPasteMenu() {
     Size size = MediaQuery.of(context).size;
@@ -351,30 +329,24 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
                 color: Colors.transparent,
                 child: InkWell(
                   onTap: () {
-                    if (!isEmptyString(widget.message.fullText))
-                      FlutterClipboard.copy(widget.message.fullText);
+                    if (!isEmptyString(widget.message.fullText)) FlutterClipboard.copy(widget.message.fullText);
                     FlutterToast flutterToast = FlutterToast(context);
                     Widget toast = ClipRRect(
                       borderRadius: BorderRadius.circular(25.0),
                       child: BackdropFilter(
                         filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
                         child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 24.0, vertical: 12.0),
+                          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(25.0),
-                            color:
-                                Theme.of(context).accentColor.withOpacity(0.1),
+                            color: Theme.of(context).accentColor.withOpacity(0.1),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(
-                                !isEmptyString(widget.message.fullText)
-                                    ? Icons.check
-                                    : Icons.close,
-                                color:
-                                    Theme.of(context).textTheme.bodyText1.color,
+                                !isEmptyString(widget.message.fullText) ? Icons.check : Icons.close,
+                                color: Theme.of(context).textTheme.bodyText1.color,
                               ),
                               SizedBox(
                                 width: 12.0,
@@ -398,8 +370,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
                     );
                   },
                   child: ListTile(
-                    title: Text("Copy",
-                        style: Theme.of(context).textTheme.bodyText1),
+                    title: Text("Copy", style: Theme.of(context).textTheme.bodyText1),
                     trailing: Icon(
                       Icons.content_copy,
                       color: Theme.of(context).textTheme.bodyText1.color,
@@ -422,8 +393,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
                         ),
                         content: Container(
                           constraints: BoxConstraints(
-                            maxHeight:
-                                MediaQuery.of(context).size.height * 2 / 3,
+                            maxHeight: MediaQuery.of(context).size.height * 2 / 3,
                           ),
                           child: SingleChildScrollView(
                             physics: ThemeSwitcher.getScrollPhysics(),
@@ -440,8 +410,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
                               style: Theme.of(context).textTheme.bodyText1,
                             ),
                             onPressed: () {
-                              Navigator.of(context, rootNavigator: true)
-                                  .pop('dialog');
+                              Navigator.of(context, rootNavigator: true).pop('dialog');
                             },
                           )
                         ],
@@ -464,8 +433,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
                 color: Colors.transparent,
                 child: InkWell(
                   onTap: () async {
-                    NewMessageManager().removeMessage(
-                        widget.currentChat.chat, widget.message.guid);
+                    NewMessageManager().removeMessage(widget.currentChat.chat, widget.message.guid);
                     await Message.softDelete({"guid": widget.message.guid});
                     Navigator.of(context).pop();
                   },
@@ -513,8 +481,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
                       for (Attachment element in widget.message.attachments) {
                         dynamic content = AttachmentHelper.getContent(element);
                         if (content is File) {
-                          await AttachmentHelper.saveToGallery(
-                              context, content);
+                          await AttachmentHelper.saveToGallery(context, content);
                         }
                       }
                     },
@@ -543,17 +510,11 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup>
 
     double topOffset = (messageTopOffset + widget.childSize.height)
         .toDouble()
-        .clamp(
-            topMinimum,
-            size.height -
-                MediaQuery.of(context).viewInsets.bottom -
-                menuHeight -
-                20);
+        .clamp(topMinimum, size.height - MediaQuery.of(context).viewInsets.bottom - menuHeight - 20);
 
-    double leftOffset = (widget.message.isFromMe
-            ? size.width - maxMenuWidth - 15
-            : 15 + (currentChat.chat.isGroup() ? 35 : 0))
-        .toDouble();
+    double leftOffset =
+        (widget.message.isFromMe ? size.width - maxMenuWidth - 15 : 15 + (currentChat.chat.isGroup() ? 35 : 0))
+            .toDouble();
     return Positioned(
       top: topOffset + 5,
       left: leftOffset,

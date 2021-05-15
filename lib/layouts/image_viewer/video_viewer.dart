@@ -11,12 +11,7 @@ import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
 
 class VideoViewer extends StatefulWidget {
-  VideoViewer(
-      {Key key,
-      @required this.file,
-      @required this.attachment,
-      this.showInteractions})
-      : super(key: key);
+  VideoViewer({Key key, @required this.file, @required this.attachment, this.showInteractions}) : super(key: key);
   final File file;
   final Attachment attachment;
   final bool showInteractions;
@@ -40,8 +35,7 @@ class _VideoViewerState extends State<VideoViewer> {
       if (this.mounted && controller.value.isPlaying) {
         Duration duration = await controller.position;
         if (controller.value.duration != null) {
-          if (!videoProgressStream.isClosed)
-            videoProgressStream.sink.add(duration.inMilliseconds.toDouble());
+          if (!videoProgressStream.isClosed) videoProgressStream.sink.add(duration.inMilliseconds.toDouble());
         }
       }
     });
@@ -200,36 +194,30 @@ class _VideoViewerState extends State<VideoViewer> {
                           height: MediaQuery.of(context).size.height * 1 / 10,
                           child: Slider(
                             min: 0,
-                            max: controller.value.duration.inMilliseconds
-                                .toDouble(),
+                            max: controller.value.duration.inMilliseconds.toDouble(),
                             onChangeStart: (value) {
                               controller.pause();
                               videoProgressStream.sink.add(value);
-                              controller.seekTo(
-                                  Duration(milliseconds: value.toInt()));
+                              controller.seekTo(Duration(milliseconds: value.toInt()));
                               resetTimer();
                             },
                             onChanged: (double value) async {
                               // controller.pause();
                               videoProgressStream.sink.add(value);
 
-                              if ((await controller.position).inMilliseconds !=
-                                  value.toInt()) {
-                                controller.seekTo(
-                                    Duration(milliseconds: value.toInt()));
+                              if ((await controller.position).inMilliseconds != value.toInt()) {
+                                controller.seekTo(Duration(milliseconds: value.toInt()));
                               }
                             },
                             onChangeEnd: (double value) {
                               controller.play();
                               videoProgressStream.sink.add(value);
 
-                              controller.seekTo(
-                                  Duration(milliseconds: value.toInt()));
+                              controller.seekTo(Duration(milliseconds: value.toInt()));
                               setTimer();
                             },
                             value: (snapshot.hasData ? snapshot.data : 0.0)
-                                .clamp(
-                                    0, controller.value.duration.inMilliseconds)
+                                .clamp(0, controller.value.duration.inMilliseconds)
                                 .toDouble(),
                           ),
                         ),

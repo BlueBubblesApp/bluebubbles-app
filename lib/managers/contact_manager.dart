@@ -4,6 +4,7 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:contacts_service/contacts_service.dart';
+import 'package:faker/faker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -16,16 +17,19 @@ class ContactManager {
 
   StreamController<List<String>> _stream = new StreamController.broadcast();
 
-  StreamController<Map<String, Color>> _colorStream =
-      new StreamController.broadcast();
+  StreamController<Map<String, Color>> _colorStream = new StreamController.broadcast();
+
   Stream<Map<String, Color>> get colorStream => _colorStream.stream;
+
   StreamController<Map<String, Color>> get colorStreamObject => _colorStream;
 
   Stream<List<String>> get stream => _stream.stream;
 
   ContactManager._internal();
+
   List<Contact> contacts;
   Map<String, Contact> handleToContact = new Map();
+  Map<String, String> handleToFakeName = new Map();
   Map<String, ContactAvatarWidgetState> contactWidgetStates = new Map();
 
   // We need these so we don't have threads fetching at the same time
@@ -35,8 +39,7 @@ class ContactManager {
 
   Future<Contact> getCachedContact(Handle handle) async {
     if (handle == null) return null;
-    if (contacts == null || !handleToContact.containsKey(handle.address))
-      await getContacts();
+    if (contacts == null || !handleToContact.containsKey(handle.address)) await getContacts();
     if (!handleToContact.containsKey(handle.address)) return null;
     return handleToContact[handle.address];
   }
@@ -70,8 +73,7 @@ class ContactManager {
 
     // If we are fetching the contacts, return the current future so we can await it
     if (getContactsFuture != null && !getContactsFuture.isCompleted) {
-      debugPrint(
-          "[ContactManager] -> Already fetching contacts, returning future...");
+      debugPrint("[ContactManager] -> Already fetching contacts, returning future...");
       return getContactsFuture.future;
     }
 
@@ -79,8 +81,7 @@ class ContactManager {
     // If we have, exit, we don't need to re-fetch the chats again
     int now = DateTime.now().toUtc().millisecondsSinceEpoch;
     if (!force && lastRefresh != 0 && now < lastRefresh + (60000 * 5)) {
-      debugPrint(
-          "[ContactManager] -> Not fetching contacts; Not enough time has elapsed");
+      debugPrint("[ContactManager] -> Not fetching contacts; Not enough time has elapsed");
       return;
     }
 
@@ -92,9 +93,7 @@ class ContactManager {
 
     // Fetch the current list of contacts
     debugPrint("ContactManager -> Fetching contacts");
-    contacts =
-        ((await ContactsService.getContacts(withThumbnails: false)) ?? [])
-            .toList();
+    contacts = ((await ContactsService.getContacts(withThumbnails: false)) ?? []).toList();
 
     // Match handles to contacts
     List<Handle> handles = await Handle.find({});
@@ -114,6 +113,11 @@ class ContactManager {
         _stream.sink.add([handle.address]);
       }
     }
+
+    handleToFakeName = Map.fromEntries(handleToContact.entries.map((entry) =>
+        !handleToFakeName.keys.contains(entry.key) || handleToFakeName[entry.key] == null
+            ? MapEntry(entry.key, faker.person.name())
+            : MapEntry(entry.key, handleToFakeName[entry.key])));
 
     debugPrint("ContactManager -> Finished fetching contacts (${handleToContact.length})");
     getContactsFuture.complete(true);
@@ -136,8 +140,7 @@ class ContactManager {
       Contact contact = handleToContact[address];
       if (handleToContact[address] == null) continue;
 
-      ContactsService.getAvatar(handleToContact[address], photoHighRes: false)
-          .then((avatar) {
+      ContactsService.getAvatar(handleToContact[address], photoHighRes: false).then((avatar) {
         if (avatar == null) return;
 
         // Update the avatar in the master list
@@ -197,8 +200,7 @@ class ContactManager {
     }
 
     if (fetchAvatar) {
-      contact.avatar =
-          await ContactsService.getAvatar(contact, photoHighRes: false);
+      contact.avatar = await ContactsService.getAvatar(contact, photoHighRes: false);
     }
 
     return contact;
@@ -209,12 +211,10 @@ class ContactManager {
     if (contacts == null) await getContacts();
 
     String address = handle.address;
-    if (handleToContact.containsKey(address) &&
-        handleToContact[address] != null)
+    if (handleToContact.containsKey(address) && handleToContact[address] != null)
       return handleToContact[address].displayName;
     Contact contact = await getContact(handle);
-    if (contact != null && contact.displayName != null)
-      return contact.displayName;
+    if (contact != null && contact.displayName != null) return contact.displayName;
     String contactTitle = address;
     if (contactTitle == address && !contactTitle.contains("@")) {
       return await formatPhoneNumber(contactTitle);

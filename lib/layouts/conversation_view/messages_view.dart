@@ -41,8 +41,7 @@ class MessagesView extends StatefulWidget {
   MessagesViewState createState() => MessagesViewState();
 }
 
-class MessagesViewState extends State<MessagesView>
-    with TickerProviderStateMixin {
+class MessagesViewState extends State<MessagesView> with TickerProviderStateMixin {
   Completer<LoadMessageResult> loader;
   bool noMoreMessages = false;
   bool noMoreLocalMessages = false;
@@ -61,6 +60,7 @@ class MessagesViewState extends State<MessagesView>
   StreamController<List<String>> smartReplyController;
 
   bool get showScrollDown => currentChat?.showScrollDown;
+
   ScrollController get scrollController {
     if (currentChat == null) return null;
     if (currentChat.scrollController == null) {
@@ -90,8 +90,7 @@ class MessagesViewState extends State<MessagesView>
       if (!this.mounted) return;
       if (!event.containsKey("type")) return;
 
-      if (event["type"] == "refresh-messagebloc" &&
-          event["data"].containsKey("chatGuid")) {
+      if (event["type"] == "refresh-messagebloc" && event["data"].containsKey("chatGuid")) {
         // Handle event's that require a matching guid
         String chatGuid = event["data"]["chatGuid"];
         if (widget.chat.guid == chatGuid) {
@@ -127,9 +126,8 @@ class MessagesViewState extends State<MessagesView>
     if (isNullOrEmpty(_messages)) return resetReplies();
     if (_messages.first.isFromMe) return resetReplies();
 
-    Iterable<Message> filtered = _messages.where((item) =>
-        !isNullOrEmpty(item.fullText, trimString: true) &&
-        item.associatedMessageGuid == null);
+    Iterable<Message> filtered = _messages
+        .where((item) => !isNullOrEmpty(item.fullText, trimString: true) && item.associatedMessageGuid == null);
 
     if (isNullOrEmpty(filtered)) return resetReplies();
 
@@ -148,11 +146,9 @@ class MessagesViewState extends State<MessagesView>
 
       // Add to list based on who sent the message
       if (msg.isFromMe) {
-        texts.add(TextMessage.createForLocalUser(
-            msg.fullText, msg.dateCreated.millisecondsSinceEpoch));
+        texts.add(TextMessage.createForLocalUser(msg.fullText, msg.dateCreated.millisecondsSinceEpoch));
       } else {
-        texts.add(TextMessage.createForRemoteUser(
-            msg.fullText, msg.dateCreated.millisecondsSinceEpoch));
+        texts.add(TextMessage.createForRemoteUser(msg.fullText, msg.dateCreated.millisecondsSinceEpoch));
       }
     }
 
@@ -222,9 +218,7 @@ class MessagesViewState extends State<MessagesView>
     // Skip deleted messages
     if (event.message != null && event.message.dateDeleted != null) return;
     if (!isNullOrEmpty(event.messages)) {
-      event.messages = event.messages
-          .where((element) => element.dateDeleted == null)
-          .toList();
+      event.messages = event.messages.where((element) => element.dateDeleted == null).toList();
     }
 
     if (event.type == MessageBlocEventType.insert) {
@@ -235,8 +229,7 @@ class MessagesViewState extends State<MessagesView>
       if (event.outGoing) {
         currentChat.sentMessages.add(event.message);
         Future.delayed(SendWidget.SEND_DURATION * 2, () {
-          currentChat.sentMessages
-              .removeWhere((element) => element.guid == event.message.guid);
+          currentChat.sentMessages.removeWhere((element) => element.guid == event.message.guid);
         });
 
         if (context != null)
@@ -283,18 +276,15 @@ class MessagesViewState extends State<MessagesView>
       }
     } else if (event.type == MessageBlocEventType.remove) {
       for (int i = 0; i < _messages.length; i++) {
-        if (_messages[i].guid == event.remove &&
-            _listKey.currentState != null) {
+        if (_messages[i].guid == event.remove && _listKey.currentState != null) {
           _messages.removeAt(i);
-          _listKey.currentState
-              .removeItem(i, (context, animation) => Container());
+          _listKey.currentState.removeItem(i, (context, animation) => Container());
         }
       }
     } else {
       int originalMessageLength = _messages.length;
       _messages = event.messages;
-      _messages
-          .forEach((message) => currentChat.getAttachmentsForMessage(message));
+      _messages.forEach((message) => currentChat.getAttachmentsForMessage(message));
 
       // We only want to update smart replies on the intial message fetch
       if (originalMessageLength == 0) {
@@ -307,16 +297,14 @@ class MessagesViewState extends State<MessagesView>
       if (originalMessageLength < _messages.length) {
         for (int i = originalMessageLength; i < _messages.length; i++) {
           if (_listKey != null && _listKey.currentState != null)
-            _listKey.currentState
-                .insertItem(i, duration: Duration(milliseconds: 0));
+            _listKey.currentState.insertItem(i, duration: Duration(milliseconds: 0));
         }
       } else if (originalMessageLength > _messages.length) {
         for (int i = originalMessageLength; i >= _messages.length; i--) {
           if (_listKey != null && _listKey.currentState != null) {
             try {
-              _listKey.currentState.removeItem(
-                  i, (context, animation) => Container(),
-                  duration: Duration(milliseconds: 0));
+              _listKey.currentState
+                  .removeItem(i, (context, animation) => Container(), duration: Duration(milliseconds: 0));
             } catch (ex) {
               debugPrint("Error removing item animation");
               debugPrint(ex.toString());
@@ -340,8 +328,7 @@ class MessagesViewState extends State<MessagesView>
     bool updatedAMessage = false;
     for (int i = 0; i < _messages.length; i++) {
       if (_messages[i].guid == oldGuid) {
-        debugPrint(
-            "(Message status) Update message: [${message.text}] - [${message.guid}] - [$oldGuid]");
+        debugPrint("(Message status) Update message: [${message.text}] - [${message.guid}] - [$oldGuid]");
         _messages[i] = message;
         updatedAMessage = true;
         break;
@@ -373,8 +360,7 @@ class MessagesViewState extends State<MessagesView>
             ActionHandler.sendMessage(currentChat.chat, text);
           },
           child: Padding(
-            padding:
-                const EdgeInsets.symmetric(vertical: 8.0, horizontal: 13.0),
+            padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 13.0),
             child: Text(
               text,
               style: Theme.of(context).textTheme.bodyText1,
@@ -393,12 +379,10 @@ class MessagesViewState extends State<MessagesView>
           CurrentChat.of(context).timeStampOffset += details.delta.dx * 0.3;
       },
       onHorizontalDragEnd: (details) {
-        if (SettingsManager().settings.skin != Skins.Samsung)
-          CurrentChat.of(context).timeStampOffset = 0;
+        if (SettingsManager().settings.skin != Skins.Samsung) CurrentChat.of(context).timeStampOffset = 0;
       },
       onHorizontalDragCancel: () {
-        if (SettingsManager().settings.skin != Skins.Samsung)
-          CurrentChat.of(context).timeStampOffset = 0;
+        if (SettingsManager().settings.skin != Skins.Samsung) CurrentChat.of(context).timeStampOffset = 0;
       },
       child: Stack(
         alignment: AlignmentDirectional.bottomCenter,
@@ -439,15 +423,12 @@ class MessagesViewState extends State<MessagesView>
                   ? SliverAnimatedList(
                       initialItemCount: _messages.length + 1,
                       key: _listKey,
-                      itemBuilder: (BuildContext context, int index,
-                          Animation<double> animation) {
+                      itemBuilder: (BuildContext context, int index, Animation<double> animation) {
                         // Load more messages if we are at the top and we aren't alrady loading
                         // and we have more messages to load
                         if (index == _messages.length) {
                           if (!noMoreMessages &&
-                              (loader == null ||
-                                  !loader.isCompleted ||
-                                  !loadedPages.contains(_messages.length))) {
+                              (loader == null || !loader.isCompleted || !loadedPages.contains(_messages.length))) {
                             loadNextChunk();
                             return NewMessageLoader();
                           }
@@ -466,8 +447,7 @@ class MessagesViewState extends State<MessagesView>
                           newerMessage = _messages[index - 1];
                         }
 
-                        bool fullAnimation = index == 0 &&
-                            _messages[index].originalROWID == null;
+                        bool fullAnimation = index == 0 && _messages[index].originalROWID == null;
 
                         Widget messageWidget = Padding(
                             padding: EdgeInsets.only(left: 5.0, right: 5.0),
@@ -477,9 +457,7 @@ class MessagesViewState extends State<MessagesView>
                               olderMessage: olderMessage,
                               newerMessage: newerMessage,
                               showHandle: widget.showHandle,
-                              isFirstSentMessage:
-                                  widget.messageBloc.firstSentMessage ==
-                                      _messages[index].guid,
+                              isFirstSentMessage: widget.messageBloc.firstSentMessage == _messages[index].guid,
                               showHero: fullAnimation,
                               onUpdate: (event) => onUpdateMessage(event),
                             ));
@@ -487,9 +465,8 @@ class MessagesViewState extends State<MessagesView>
                         if (fullAnimation) {
                           return SizeTransition(
                             axis: Axis.vertical,
-                            sizeFactor: animation.drive(Tween(
-                                    begin: 0.0, end: 1.0)
-                                .chain(CurveTween(curve: Curves.easeInOut))),
+                            sizeFactor:
+                                animation.drive(Tween(begin: 0.0, end: 1.0).chain(CurveTween(curve: Curves.easeInOut))),
                             child: SlideTransition(
                               position: animation.drive(
                                 Tween(

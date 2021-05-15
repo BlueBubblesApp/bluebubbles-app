@@ -29,6 +29,7 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget> with TickerProvider
   StreamController<bool> loadingStateStream = StreamController<bool>.broadcast();
 
   bool get isLoading => currentIsLoading;
+
   set isLoading(bool value) {
     if (currentIsLoading == value) return;
 
@@ -189,6 +190,9 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget> with TickerProvider
           filterQuality: FilterQuality.low, errorBuilder: (context, error, stackTrace) => Container());
     }
 
+    final bool hideContent = SettingsManager().settings.redactedMode && SettingsManager().settings.hideMessageContent;
+    final bool hideType = SettingsManager().settings.redactedMode && SettingsManager().settings.hideAttachmentTypes;
+
     return AnimatedSize(
       curve: Curves.easeInOut,
       alignment: Alignment.center,
@@ -216,7 +220,7 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget> with TickerProvider
               child: Container(
                 // The minus 5 here is so the timestamps show OK during swipe
                 width: (MediaQuery.of(context).size.width * 2 / 3) - 5,
-                child: Column(
+                child: Stack(
                   children: <Widget>[
                     mainImage,
                     Padding(
@@ -278,6 +282,20 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget> with TickerProvider
                         ],
                       ),
                     ),
+                    if (hideContent)
+                      Positioned.fill(
+                        child: Container(
+                          color: Theme.of(context).accentColor,
+                        ),
+                      ),
+                    if (hideContent && !hideType)
+                      Positioned.fill(
+                          child: Container(
+                              alignment: Alignment.center,
+                              child: Text(
+                                "link",
+                                textAlign: TextAlign.center,
+                              )))
                   ],
                 ),
               ),

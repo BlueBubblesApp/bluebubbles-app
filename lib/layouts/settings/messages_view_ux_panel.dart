@@ -44,8 +44,7 @@ class _ConvoSettingsState extends State<ConvoSettings> {
 
   void loadBrightness() {
     Color now = Theme.of(context).backgroundColor;
-    bool themeChanged =
-        previousBackgroundColor == null || previousBackgroundColor != now;
+    bool themeChanged = previousBackgroundColor == null || previousBackgroundColor != now;
     if (!themeChanged && gotBrightness) return;
 
     previousBackgroundColor = now;
@@ -80,10 +79,7 @@ class _ConvoSettingsState extends State<ConvoSettings> {
                 toolbarHeight: 100.0,
                 elevation: 0,
                 leading: IconButton(
-                  icon: Icon(
-                      SettingsManager().settings.skin == Skins.IOS
-                          ? Icons.arrow_back_ios
-                          : Icons.arrow_back,
+                  icon: Icon(SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_back_ios : Icons.arrow_back,
                       color: Theme.of(context).primaryColor),
                   onPressed: () {
                     Navigator.of(context).pop();
@@ -189,8 +185,7 @@ class _ConvoSettingsState extends State<ConvoSettings> {
                   if (_settingsCopy.smartReply)
                     SettingsSlider(
                         text: "Smart Reply Sample SIze",
-                        startingVal:
-                            _settingsCopy.smartReplySampleSize.toDouble(),
+                        startingVal: _settingsCopy.smartReplySampleSize.toDouble(),
                         update: (double val) {
                           _settingsCopy.smartReplySampleSize = val.toInt();
                         },

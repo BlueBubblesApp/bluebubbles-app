@@ -18,8 +18,7 @@ class OutgoingQueue extends QueueManager {
       case "send-message":
         {
           Map<String, dynamic> params = item.item;
-          await ActionHandler.sendMessageHelper(
-              params["chat"], params["message"]);
+          await ActionHandler.sendMessageHelper(params["chat"], params["message"]);
           break;
         }
       case "send-attachment":
@@ -31,8 +30,7 @@ class OutgoingQueue extends QueueManager {
       case "send-reaction":
         {
           Map<String, dynamic> params = item.item;
-          await ActionHandler.sendReactionHelper(
-              params["chat"], params["message"], params["reaction"]);
+          await ActionHandler.sendReactionHelper(params["chat"], params["message"], params["reaction"]);
           break;
         }
       default:

@@ -1,20 +1,20 @@
 import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui';
-import 'package:bluebubbles/helpers/utils.dart';
-import 'package:connectivity/connectivity.dart';
 
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/socket_manager.dart';
+import 'package:connectivity/connectivity.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:image_gallery_saver/image_gallery_saver.dart';
+import 'package:image_size_getter/image_size_getter.dart' as IMG;
 import 'package:permission_handler/permission_handler.dart';
 import 'package:vcard_parser/vcard_parser.dart';
-import 'package:image_size_getter/image_size_getter.dart' as IMG;
 
 class AttachmentHelper {
   static String createAppleLocation(double longitude, double latitude, {iosVersion = "13.4.1"}) {

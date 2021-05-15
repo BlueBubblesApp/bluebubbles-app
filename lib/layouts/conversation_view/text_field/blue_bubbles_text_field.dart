@@ -33,6 +33,7 @@ class BlueBubblesTextField extends StatefulWidget {
   final bool isCreator;
   final bool wasCreator;
   final Future<bool> Function(List<File> attachments, String text) onSend;
+
   BlueBubblesTextField({
     Key key,
     this.existingAttachments,
@@ -41,6 +42,7 @@ class BlueBubblesTextField extends StatefulWidget {
     @required this.wasCreator,
     @required this.onSend,
   }) : super(key: key);
+
   static BlueBubblesTextFieldState of(BuildContext context) {
     assert(context != null);
     return context.findAncestorStateOfType<BlueBubblesTextFieldState>();
@@ -50,8 +52,7 @@ class BlueBubblesTextField extends StatefulWidget {
   BlueBubblesTextFieldState createState() => BlueBubblesTextFieldState();
 }
 
-class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
-    with TickerProviderStateMixin {
+class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerProviderStateMixin {
   TextEditingController controller;
   FocusNode focusNode;
   bool showImagePicker = false;
@@ -75,8 +76,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
 
   bool get canRecord => controller.text.isEmpty && pickedImages.isEmpty;
 
-  static final GlobalKey<FormFieldState<String>> _searchFormKey =
-      GlobalKey<FormFieldState<String>>();
+  static final GlobalKey<FormFieldState<String>> _searchFormKey = GlobalKey<FormFieldState<String>>();
 
   @override
   void initState() {
@@ -84,37 +84,28 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
     getPlaceholder();
 
     if (CurrentChat.of(context)?.chat != null) {
-      textFieldData =
-          TextFieldBloc().getTextField(CurrentChat.of(context).chat.guid);
+      textFieldData = TextFieldBloc().getTextField(CurrentChat.of(context).chat.guid);
     }
 
-    controller = textFieldData != null
-        ? textFieldData.controller
-        : new TextEditingController();
+    controller = textFieldData != null ? textFieldData.controller : new TextEditingController();
 
     // Add the text listener to detect when we should send the typing indicators
     controller.addListener(() {
       if (CurrentChat.of(context)?.chat == null) return;
 
       // If the private API features are disabled, or sending the indicators is disabled, return
-      if (!SettingsManager().settings.enablePrivateAPI ||
-          !SettingsManager().settings.sendTypingIndicators) {
+      if (!SettingsManager().settings.enablePrivateAPI || !SettingsManager().settings.sendTypingIndicators) {
         if (this.mounted) setState(() {});
         return;
       }
 
-      if (controller.text.length == 0 &&
-          pickedImages.length == 0 &&
-          selfTyping) {
+      if (controller.text.length == 0 && pickedImages.length == 0 && selfTyping) {
         selfTyping = false;
-        SocketManager().sendMessage("stopped-typing",
-            {"chatGuid": CurrentChat.of(context).chat.guid}, (data) {});
-      } else if (!selfTyping &&
-          (controller.text.length > 0 || pickedImages.length > 0)) {
+        SocketManager().sendMessage("stopped-typing", {"chatGuid": CurrentChat.of(context).chat.guid}, (data) {});
+      } else if (!selfTyping && (controller.text.length > 0 || pickedImages.length > 0)) {
         selfTyping = true;
         if (SettingsManager().settings.sendTypingIndicators)
-          SocketManager().sendMessage("started-typing",
-              {"chatGuid": CurrentChat.of(context).chat.guid}, (data) {});
+          SocketManager().sendMessage("started-typing", {"chatGuid": CurrentChat.of(context).chat.guid}, (data) {});
       }
 
       if (this.mounted) setState(() {});
@@ -157,8 +148,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
 
   void updateTextFieldAttachments() {
     if (textFieldData != null) {
-      textFieldData.attachments =
-          pickedImages.where((element) => mime(element.path) != null).toList();
+      textFieldData.attachments = pickedImages.where((element) => mime(element.path) != null).toList();
       _streamController.sink.add(null);
     }
   }
@@ -213,13 +203,11 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
       builder: (BuildContext context) {
         return AlertDialog(
           backgroundColor: Theme.of(context).accentColor,
-          title: new Text("Send it?",
-              style: Theme.of(context).textTheme.headline1),
+          title: new Text("Send it?", style: Theme.of(context).textTheme.headline1),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text("Review your audio snippet before sending it",
-                  style: Theme.of(context).textTheme.subtitle1),
+              Text("Review your audio snippet before sending it", style: Theme.of(context).textTheme.subtitle1),
               Container(height: 10.0),
               AudioPlayerWiget(
                 key: new Key("AudioMessage-${file.length().toString()}"),
@@ -230,13 +218,10 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
           ),
           actions: <Widget>[
             new FlatButton(
-                child: new Text("Discard",
-                    style: Theme.of(context).textTheme.subtitle1),
+                child: new Text("Discard", style: Theme.of(context).textTheme.subtitle1),
                 onPressed: () {
                   // Dispose of the audio controller
-                  CurrentChat.of(originalContext)
-                      ?.audioPlayers
-                      ?.removeWhere((key, _) => key == file.path);
+                  CurrentChat.of(originalContext)?.audioPlayers?.removeWhere((key, _) => key == file.path);
 
                   // Delete the file
                   file.delete();
@@ -253,9 +238,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                 widget.onSend([file], "");
 
                 // Dispose of the audio controller
-                CurrentChat.of(originalContext)
-                    ?.audioPlayers
-                    ?.removeWhere((key, _) => key == file.path);
+                CurrentChat.of(originalContext)?.audioPlayers?.removeWhere((key, _) => key == file.path);
 
                 // Remove the OG alert dialog
                 Navigator.of(originalContext).pop();
@@ -269,8 +252,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
 
   Future<void> initializeCameraController() async {
     cameras = await availableCameras();
-    cameraController =
-        CameraController(cameras[cameraIndex], ResolutionPreset.max);
+    cameraController = CameraController(cameras[cameraIndex], ResolutionPreset.max);
     await cameraController.initialize();
   }
 
@@ -354,8 +336,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
         child: TextFieldAttachmentList(
           attachments: pickedImages,
           onRemove: (File attachment) {
-            pickedImages
-                .removeWhere((element) => element.path == attachment.path);
+            pickedImages.removeWhere((element) => element.path == attachment.path);
             updateTextFieldAttachments();
             if (this.mounted) setState(() {});
           },
@@ -369,8 +350,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
       children: <Widget>[
         buildShareButton(),
         buildActualTextField(),
-        if (SettingsManager().settings.skin == Skins.Material ||
-            SettingsManager().settings.skin == Skins.Samsung)
+        if (SettingsManager().settings.skin == Skins.Material || SettingsManager().settings.skin == Skins.Samsung)
           buildSendButton(canRecord),
       ],
     );
@@ -407,22 +387,37 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
     try {
       // Don't do anything if this setting isn't enabled
       if (SettingsManager().settings.recipientAsPlaceholder) {
+        // Redacted mode stuff
+        final bool hideInfo = SettingsManager().settings.redactedMode && SettingsManager().settings.hideContactInfo;
+        final bool generateNames =
+            SettingsManager().settings.redactedMode && SettingsManager().settings.generateFakeContactNames;
+
         // If it's a group chat, get the title of the chat
         if (CurrentChat.of(context)?.chat?.isGroup() ?? false) {
-          String title = await CurrentChat.of(context)?.chat?.getTitle();
-          if (!isNullOrEmpty(title)) {
-            placeholder = title;
-          }
-        } else if (!isNullOrEmpty(
-            CurrentChat.of(context)?.chat?.participants)) {
-          // If it's not a group chat, get the participant's contact info
-          String address =
-              CurrentChat.of(context)?.chat?.participants[0].address;
-          Contact contact = ContactManager().getCachedContactSync(address);
-          if (contact == null) {
-            placeholder = await formatPhoneNumber(address);
+          if (generateNames) {
+            placeholder = "Group Chat";
+          } else if (hideInfo) {
+            placeholder = "BlueBubbles";
           } else {
-            placeholder = contact.displayName ?? "BlueBubbles";
+            String title = await CurrentChat.of(context)?.chat?.getTitle();
+            if (!isNullOrEmpty(title)) {
+              placeholder = title;
+            }
+          }
+        } else if (!isNullOrEmpty(CurrentChat.of(context)?.chat?.participants)) {
+          if (generateNames) {
+            placeholder = CurrentChat.of(context).chat.fakeParticipants[0];
+          } else if (hideInfo) {
+            placeholder = "BlueBubbles";
+          } else {
+            // If it's not a group chat, get the participant's contact info
+            String address = CurrentChat.of(context)?.chat?.participants[0].address;
+            Contact contact = ContactManager().getCachedContactSync(address);
+            if (contact == null) {
+              placeholder = await formatPhoneNumber(address);
+            } else {
+              placeholder = contact.displayName ?? "BlueBubbles";
+            }
           }
         }
       }
@@ -455,9 +450,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
               child: ThemeSwitcher(
                 iOSSkin: CustomCupertinoTextField(
                   enabled: sendCountdown == null,
-                  textInputAction: SettingsManager().settings.sendWithReturn
-                      ? TextInputAction.send
-                      : TextInputAction.newline,
+                  textInputAction:
+                      SettingsManager().settings.sendWithReturn ? TextInputAction.send : TextInputAction.newline,
                   cursorColor: Theme.of(context).primaryColor,
                   onLongPressStart: () {
                     Feedback.forLongPress(context);
@@ -471,31 +465,25 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                       setState(() {
                         rightIcon = Icons.mic;
                       });
-                    } else if (value.isNotEmpty &&
-                        rightIcon == Icons.mic &&
-                        this.mounted) {
+                    } else if (value.isNotEmpty && rightIcon == Icons.mic && this.mounted) {
                       setState(() {
                         rightIcon = Icons.arrow_upward;
                       });
                     }
                   },
                   onSubmitted: (String value) async {
-                    if (!SettingsManager().settings.sendWithReturn ||
-                        isNullOrEmpty(value)) return;
+                    if (!SettingsManager().settings.sendWithReturn || isNullOrEmpty(value)) return;
 
                     // If send delay is enabled, delay the sending
                     if (!isNullOrZero(SettingsManager().settings.sendDelay)) {
                       // Break the delay into 1 second intervals
-                      for (var i = 0;
-                          i < SettingsManager().settings.sendDelay;
-                          i++) {
+                      for (var i = 0; i < SettingsManager().settings.sendDelay; i++) {
                         if (i != 0 && sendCountdown == null) break;
 
                         // Update UI with new state information
                         if (this.mounted) {
                           setState(() {
-                            sendCountdown =
-                                SettingsManager().settings.sendDelay - i;
+                            sendCountdown = SettingsManager().settings.sendDelay - i;
                           });
                         }
 
@@ -529,22 +517,17 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                   controller: controller,
                   scrollPhysics: CustomBouncingScrollPhysics(),
                   style: Theme.of(context).textTheme.bodyText1.apply(
-                        color: ThemeData.estimateBrightnessForColor(
-                                    Theme.of(context).backgroundColor) ==
-                                Brightness.light
-                            ? Colors.black
-                            : Colors.white,
+                        color:
+                            ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor) == Brightness.light
+                                ? Colors.black
+                                : Colors.white,
                         fontSizeDelta: -0.25,
                       ),
                   keyboardType: TextInputType.multiline,
                   maxLines: 14,
                   minLines: 1,
-                  placeholder:
-                      SettingsManager().settings.recipientAsPlaceholder == true
-                          ? placeholder
-                          : "BlueBubbles",
-                  padding:
-                      EdgeInsets.only(left: 10, top: 10, right: 40, bottom: 10),
+                  placeholder: SettingsManager().settings.recipientAsPlaceholder == true ? placeholder : "BlueBubbles",
+                  padding: EdgeInsets.only(left: 10, top: 10, right: 40, bottom: 10),
                   placeholderStyle: Theme.of(context).textTheme.subtitle1,
                   autofocus: SettingsManager().settings.autoOpenKeyboard,
                   decoration: BoxDecoration(
@@ -565,11 +548,10 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                   cursorColor: Theme.of(context).primaryColor,
                   key: _searchFormKey,
                   style: Theme.of(context).textTheme.bodyText1.apply(
-                        color: ThemeData.estimateBrightnessForColor(
-                                    Theme.of(context).backgroundColor) ==
-                                Brightness.light
-                            ? Colors.black
-                            : Colors.white,
+                        color:
+                            ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor) == Brightness.light
+                                ? Colors.black
+                                : Colors.white,
                         fontSizeDelta: -0.25,
                       ),
                   onContentCommited: onContentCommit,
@@ -599,11 +581,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                       ),
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    hintText:
-                        SettingsManager().settings.recipientAsPlaceholder ==
-                                true
-                            ? placeholder
-                            : "BlueBubbles",
+                    hintText: SettingsManager().settings.recipientAsPlaceholder == true ? placeholder : "BlueBubbles",
                     hintStyle: Theme.of(context).textTheme.subtitle1,
                     contentPadding: EdgeInsets.only(
                       left: 10,
@@ -625,11 +603,10 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                   cursorColor: Theme.of(context).primaryColor,
                   key: _searchFormKey,
                   style: Theme.of(context).textTheme.bodyText1.apply(
-                        color: ThemeData.estimateBrightnessForColor(
-                                    Theme.of(context).backgroundColor) ==
-                                Brightness.light
-                            ? Colors.black
-                            : Colors.white,
+                        color:
+                            ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor) == Brightness.light
+                                ? Colors.black
+                                : Colors.white,
                         fontSizeDelta: -0.25,
                       ),
                   onContentCommited: onContentCommit,
@@ -659,11 +636,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                       ),
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    hintText:
-                        SettingsManager().settings.recipientAsPlaceholder ==
-                                true
-                            ? placeholder
-                            : "BlueBubbles",
+                    hintText: SettingsManager().settings.recipientAsPlaceholder == true ? placeholder : "BlueBubbles",
                     hintStyle: Theme.of(context).textTheme.subtitle1,
                     contentPadding: EdgeInsets.only(
                       left: 10,
@@ -675,8 +648,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
                 ),
               ),
             ),
-            if (SettingsManager().settings.skin == Skins.IOS)
-              buildSendButton(canRecord),
+            if (SettingsManager().settings.skin == Skins.IOS) buildSendButton(canRecord),
           ],
         ),
       ),
@@ -735,9 +707,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
       if (this.mounted) setState(() {});
     } else if (isRecording) {
       await stopRecording();
-    } else if (canRecord &&
-        !isRecording &&
-        await Permission.microphone.request().isGranted) {
+    } else if (canRecord && !isRecording && await Permission.microphone.request().isGranted) {
       await startRecording();
     } else {
       // If send delay is enabled, delay the sending
@@ -780,135 +750,120 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField>
 
   Widget buildSendButton(bool canRecord) => Align(
         alignment: Alignment.bottomRight,
-        child: Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              if (sendCountdown != null) Text(sendCountdown.toString()),
-              (SettingsManager().settings.skin == Skins.IOS)
-                  ? ButtonTheme(
-                      minWidth: 30,
-                      height: 30,
-                      child: RaisedButton(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 0,
-                        ),
-                        color: Theme.of(context).primaryColor,
-                        onPressed: sendAction,
-                        child: Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            AnimatedOpacity(
-                              opacity: sendCountdown == null &&
-                                      controller.text.isEmpty &&
-                                      pickedImages.isEmpty
-                                  ? 1.0
-                                  : 0.0,
-                              duration: Duration(milliseconds: 150),
-                              child: Icon(
-                                Icons.mic,
-                                color:
-                                    (isRecording) ? Colors.red : Colors.white,
-                                size: 20,
-                              ),
-                            ),
-                            AnimatedOpacity(
-                              opacity: (sendCountdown == null &&
-                                          (controller.text.isNotEmpty ||
-                                              pickedImages.length > 0)) &&
-                                      !isRecording
-                                  ? 1.0
-                                  : 0.0,
-                              duration: Duration(milliseconds: 150),
-                              child: Icon(
-                                Icons.arrow_upward,
-                                color: Colors.white,
-                                size: 20,
-                              ),
-                            ),
-                            AnimatedOpacity(
-                              opacity: sendCountdown != null ? 1.0 : 0.0,
-                              duration: Duration(milliseconds: 50),
-                              child: Icon(
-                                Icons.cancel_outlined,
-                                color: Colors.red,
-                                size: 20,
-                              ),
-                            ),
-                          ],
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(40),
-                        ),
-                      ),
-                    )
-                  : GestureDetector(
-                      onTapDown: (_) async {
-                        if (canRecord && !isRecording) {
-                          await startRecording();
-                        }
-                      },
-                      onTapCancel: () async {
-                        await stopRecording();
-                      },
-                      child: ButtonTheme(
-                        minWidth: 40,
-                        height: 40,
-                        child: RaisedButton(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 0,
+        child: Row(mainAxisAlignment: MainAxisAlignment.end, crossAxisAlignment: CrossAxisAlignment.center, children: [
+          if (sendCountdown != null) Text(sendCountdown.toString()),
+          (SettingsManager().settings.skin == Skins.IOS)
+              ? ButtonTheme(
+                  minWidth: 30,
+                  height: 30,
+                  child: RaisedButton(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 0,
+                    ),
+                    color: Theme.of(context).primaryColor,
+                    onPressed: sendAction,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        AnimatedOpacity(
+                          opacity: sendCountdown == null && controller.text.isEmpty && pickedImages.isEmpty ? 1.0 : 0.0,
+                          duration: Duration(milliseconds: 150),
+                          child: Icon(
+                            Icons.mic,
+                            color: (isRecording) ? Colors.red : Colors.white,
+                            size: 20,
                           ),
-                          color: Theme.of(context).primaryColor,
-                          onPressed: sendAction,
-                          child: Stack(
-                            alignment: Alignment.center,
-                            children: [
-                              AnimatedOpacity(
-                                opacity: sendCountdown == null &&
-                                        controller.text.isEmpty &&
-                                        pickedImages.isEmpty
-                                    ? 1.0
-                                    : 0.0,
-                                duration: Duration(milliseconds: 150),
-                                child: Icon(
-                                  Icons.mic,
-                                  color:
-                                      (isRecording) ? Colors.red : Colors.white,
-                                  size: 20,
-                                ),
-                              ),
-                              AnimatedOpacity(
-                                opacity: (sendCountdown == null &&
-                                            (controller.text.isNotEmpty ||
-                                                pickedImages.length > 0)) &&
+                        ),
+                        AnimatedOpacity(
+                          opacity: (sendCountdown == null && (controller.text.isNotEmpty || pickedImages.length > 0)) &&
+                                  !isRecording
+                              ? 1.0
+                              : 0.0,
+                          duration: Duration(milliseconds: 150),
+                          child: Icon(
+                            Icons.arrow_upward,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                        ),
+                        AnimatedOpacity(
+                          opacity: sendCountdown != null ? 1.0 : 0.0,
+                          duration: Duration(milliseconds: 50),
+                          child: Icon(
+                            Icons.cancel_outlined,
+                            color: Colors.red,
+                            size: 20,
+                          ),
+                        ),
+                      ],
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(40),
+                    ),
+                  ),
+                )
+              : GestureDetector(
+                  onTapDown: (_) async {
+                    if (canRecord && !isRecording) {
+                      await startRecording();
+                    }
+                  },
+                  onTapCancel: () async {
+                    await stopRecording();
+                  },
+                  child: ButtonTheme(
+                    minWidth: 40,
+                    height: 40,
+                    child: RaisedButton(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 0,
+                      ),
+                      color: Theme.of(context).primaryColor,
+                      onPressed: sendAction,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          AnimatedOpacity(
+                            opacity:
+                                sendCountdown == null && controller.text.isEmpty && pickedImages.isEmpty ? 1.0 : 0.0,
+                            duration: Duration(milliseconds: 150),
+                            child: Icon(
+                              Icons.mic,
+                              color: (isRecording) ? Colors.red : Colors.white,
+                              size: 20,
+                            ),
+                          ),
+                          AnimatedOpacity(
+                            opacity:
+                                (sendCountdown == null && (controller.text.isNotEmpty || pickedImages.length > 0)) &&
                                         !isRecording
                                     ? 1.0
                                     : 0.0,
-                                duration: Duration(milliseconds: 150),
-                                child: Icon(
-                                  Icons.send,
-                                  color: Colors.white,
-                                  size: 20,
-                                ),
-                              ),
-                              AnimatedOpacity(
-                                opacity: sendCountdown != null ? 1.0 : 0.0,
-                                duration: Duration(milliseconds: 50),
-                                child: Icon(
-                                  Icons.cancel_outlined,
-                                  color: Colors.red,
-                                  size: 20,
-                                ),
-                              ),
-                            ],
+                            duration: Duration(milliseconds: 150),
+                            child: Icon(
+                              Icons.send,
+                              color: Colors.white,
+                              size: 20,
+                            ),
                           ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(40),
+                          AnimatedOpacity(
+                            opacity: sendCountdown != null ? 1.0 : 0.0,
+                            duration: Duration(milliseconds: 50),
+                            child: Icon(
+                              Icons.cancel_outlined,
+                              color: Colors.red,
+                              size: 20,
+                            ),
                           ),
-                        ),
+                        ],
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(40),
                       ),
                     ),
-            ]),
+                  ),
+                ),
+        ]),
       );
 
   Widget buildAttachmentPicker() => TextFieldAttachmentPicker(

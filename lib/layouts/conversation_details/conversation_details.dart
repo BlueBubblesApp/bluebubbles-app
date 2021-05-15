@@ -100,8 +100,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                   preferredSize: Size.fromHeight(0.5),
                 ),
               ),
-        extendBodyBehindAppBar:
-            SettingsManager().settings.skin == Skins.IOS ? true : false,
+        extendBodyBehindAppBar: SettingsManager().settings.skin == Skins.IOS ? true : false,
         body: CustomScrollView(
           physics: ThemeSwitcher.getScrollPhysics(),
           slivers: <Widget>[
@@ -125,8 +124,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                         autocorrect: false,
                         decoration: InputDecoration(
                           labelText: "NAME",
-                          labelStyle:
-                              TextStyle(color: Theme.of(context).primaryColor),
+                          labelStyle: TextStyle(color: Theme.of(context).primaryColor),
                         ),
                       ),
                     ),
@@ -204,11 +202,8 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                 onTap: () async {
                   await showDialog(
                     context: context,
-                    builder: (context) => SyncDialog(
-                        chat: chat,
-                        withOffset: true,
-                        initialMessage: "Fetching messages...",
-                        limit: 100),
+                    builder: (context) =>
+                        SyncDialog(chat: chat, withOffset: true, initialMessage: "Fetching messages...", limit: 100),
                   );
 
                   fetchAttachments();
@@ -235,10 +230,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                 onTap: () async {
                   showDialog(
                     context: context,
-                    builder: (context) => SyncDialog(
-                        chat: chat,
-                        initialMessage: "Syncing messages...",
-                        limit: 25),
+                    builder: (context) => SyncDialog(chat: chat, initialMessage: "Syncing messages...", limit: 25),
                   );
                 },
                 child: ListTile(
@@ -267,10 +259,8 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                     trailing: Switch(
                         value: widget.chat.isPinned,
                         activeColor: Theme.of(context).primaryColor,
-                        activeTrackColor:
-                            Theme.of(context).primaryColor.withAlpha(200),
-                        inactiveTrackColor:
-                            Theme.of(context).accentColor.withOpacity(0.6),
+                        activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
+                        inactiveTrackColor: Theme.of(context).accentColor.withOpacity(0.6),
                         inactiveThumbColor: Theme.of(context).accentColor,
                         onChanged: (value) async {
                           if (value) {
@@ -292,10 +282,8 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                     trailing: Switch(
                         value: widget.chat.isMuted,
                         activeColor: Theme.of(context).primaryColor,
-                        activeTrackColor:
-                            Theme.of(context).primaryColor.withAlpha(200),
-                        inactiveTrackColor:
-                            Theme.of(context).accentColor.withOpacity(0.6),
+                        activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
+                        inactiveTrackColor: Theme.of(context).accentColor.withOpacity(0.6),
                         inactiveThumbColor: Theme.of(context).accentColor,
                         onChanged: (value) async {
                           widget.chat.isMuted = value;
@@ -313,10 +301,8 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                     trailing: Switch(
                         value: widget.chat.isArchived,
                         activeColor: Theme.of(context).primaryColor,
-                        activeTrackColor:
-                            Theme.of(context).primaryColor.withAlpha(200),
-                        inactiveTrackColor:
-                            Theme.of(context).accentColor.withOpacity(0.6),
+                        activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
+                        inactiveTrackColor: Theme.of(context).accentColor.withOpacity(0.6),
                         inactiveThumbColor: Theme.of(context).accentColor,
                         onChanged: (value) {
                           if (value) {
@@ -338,8 +324,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
 
                   try {
                     await widget.chat.clearTranscript();
-                    EventDispatcher().emit(
-                        "refresh-messagebloc", {"chatGuid": widget.chat.guid});
+                    EventDispatcher().emit("refresh-messagebloc", {"chatGuid": widget.chat.guid});
                     if (this.mounted)
                       setState(() {
                         isClearing = false;
@@ -364,8 +349,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                     padding: EdgeInsets.only(right: 15),
                     child: (isClearing)
                         ? CircularProgressIndicator(
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                                Theme.of(context).primaryColor),
+                            valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
                           )
                         : (isCleared)
                             ? Icon(
@@ -388,8 +372,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                 (context, int index) {
                   return Container(
                     decoration: BoxDecoration(
-                      border: Border.all(
-                          color: Theme.of(context).accentColor, width: 3),
+                      border: Border.all(color: Theme.of(context).accentColor, width: 3),
                     ),
                     child: AttachmentDetailsCard(
                       attachment: attachmentsForChat[index],
@@ -408,13 +391,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
 }
 
 class SyncDialog extends StatefulWidget {
-  SyncDialog(
-      {Key key,
-      this.chat,
-      this.initialMessage,
-      this.withOffset = false,
-      this.limit = 100})
-      : super(key: key);
+  SyncDialog({Key key, this.chat, this.initialMessage, this.withOffset = false, this.limit = 100}) : super(key: key);
   final Chat chat;
   final String initialMessage;
   final bool withOffset;
@@ -443,17 +420,14 @@ class _SyncDialogState extends State<SyncDialog> {
       offset = await Message.countForChat(widget.chat);
     }
 
-    SocketManager()
-        .fetchMessages(widget.chat, offset: offset, limit: widget.limit)
-        .then((List<dynamic> messages) {
+    SocketManager().fetchMessages(widget.chat, offset: offset, limit: widget.limit).then((List<dynamic> messages) {
       if (this.mounted) {
         setState(() {
           message = "Adding ${messages.length} messages...";
         });
       }
 
-      MessageHelper.bulkAddMessages(widget.chat, messages,
-          onProgress: (int progress, int length) {
+      MessageHelper.bulkAddMessages(widget.chat, messages, onProgress: (int progress, int length) {
         if (progress == 0 || length == 0) {
           this.progress = null;
         } else {
@@ -485,8 +459,7 @@ class _SyncDialogState extends State<SyncDialog> {
                 child: LinearProgressIndicator(
                   value: progress,
                   backgroundColor: Colors.white,
-                  valueColor:
-                      AlwaysStoppedAnimation(Theme.of(context).primaryColor),
+                  valueColor: AlwaysStoppedAnimation(Theme.of(context).primaryColor),
                 ),
               ),
             ),

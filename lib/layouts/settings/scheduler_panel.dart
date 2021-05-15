@@ -23,6 +23,7 @@ List<dynamic> timeOptions = [
 
 class SchedulePanel extends StatefulWidget {
   final Chat chat;
+
   SchedulePanel({Key key, this.chat}) : super(key: key);
 
   @override
@@ -47,9 +48,7 @@ class _SchedulePanelState extends State<SchedulePanel> {
 
     messageController = new TextEditingController();
     messageController.addListener(() {
-      if (messageController.text.length > 0 &&
-          errors.length > 0 &&
-          this.mounted) {
+      if (messageController.text.length > 0 && errors.length > 0 && this.mounted) {
         setState(() {
           errors = [];
         });
@@ -73,9 +72,7 @@ class _SchedulePanelState extends State<SchedulePanel> {
 
     if (_chat == null || _chat.guid != chat.guid) {
       _chat = chat;
-      title = isNullOrEmpty(chat.displayName)
-          ? chat.chatIdentifier
-          : chat.displayName;
+      title = isNullOrEmpty(chat.displayName) ? chat.chatIdentifier : chat.displayName;
 
       fetchChatTitle(_chat);
     }
@@ -92,8 +89,7 @@ class _SchedulePanelState extends State<SchedulePanel> {
 
     if (scheduleSeconds == -1) {
       if (messageDate != null && messageTime != null) {
-        output =
-            "${messageDate.year}-${messageDate.month}-${messageDate.day} ${messageTime.format(context)}";
+        output = "${messageDate.year}-${messageDate.month}-${messageDate.day} ${messageTime.format(context)}";
       }
       return "Custom: $output";
     } else {
@@ -146,18 +142,12 @@ class _SchedulePanelState extends State<SchedulePanel> {
                       ? SettingsTile(
                           title: "Selected chat",
                           subTitle: title,
-                          trailing: Icon(Icons.timer,
-                              color: Theme.of(context)
-                                  .primaryColor
-                                  .withAlpha(200)),
+                          trailing: Icon(Icons.timer, color: Theme.of(context).primaryColor.withAlpha(200)),
                         )
                       : SettingsTile(
                           title: "Select a chat to schedule a message for",
                           subTitle: 'Tap here',
-                          trailing: Icon(Icons.chat_bubble,
-                              color: Theme.of(context)
-                                  .primaryColor
-                                  .withAlpha(200)),
+                          trailing: Icon(Icons.chat_bubble, color: Theme.of(context).primaryColor.withAlpha(200)),
                           onTap: () async {
                             Navigator.of(context).push(
                               ThemeSwitcher.buildPageRoute(
@@ -167,9 +157,7 @@ class _SchedulePanelState extends State<SchedulePanel> {
                                   type: ChatSelectorTypes.ONLY_EXISTING,
                                   onSelect: (List<UniqueContact> selection) {
                                     Navigator.of(context).pop();
-                                    if (selection.length > 0 &&
-                                        selection[0].isChat &&
-                                        this.mounted) {
+                                    if (selection.length > 0 && selection[0].isChat && this.mounted) {
                                       setState(() {
                                         setChat(selection[0].chat);
                                         errors = [];
@@ -183,9 +171,7 @@ class _SchedulePanelState extends State<SchedulePanel> {
                             );
                           },
                         ),
-                  SettingsTextField(
-                      title: "Enter a message",
-                      controller: this.messageController),
+                  SettingsTextField(title: "Enter a message", controller: this.messageController),
                   SettingsOptions<dynamic>(
                     initial: timeOptions.first,
                     subtitle: getTimeText(context),
@@ -198,8 +184,7 @@ class _SchedulePanelState extends State<SchedulePanel> {
                             initialDate: DateTime.now(),
                             firstDate: DateTime.now(),
                             lastDate: DateTime.now().add(Duration(days: 365)));
-                        messageTime = await showTimePicker(
-                            context: context, initialTime: TimeOfDay.now());
+                        messageTime = await showTimePicker(context: context, initialTime: TimeOfDay.now());
                       }
 
                       if (this.mounted)
@@ -215,10 +200,7 @@ class _SchedulePanelState extends State<SchedulePanel> {
                   Center(
                       child: Text(
                     isNullOrEmpty(errors) ? "" : errors.join("\n"),
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodyText1
-                        .apply(color: Colors.red[300]),
+                    style: Theme.of(context).textTheme.bodyText1.apply(color: Colors.red[300]),
                     textAlign: TextAlign.center,
                   ))
                 ],
@@ -237,27 +219,23 @@ class _SchedulePanelState extends State<SchedulePanel> {
           onPressed: () async {
             errors = [];
             if (_chat == null) errors.add("Please select a chat!");
-            if (scheduleSeconds == -1 &&
-                (messageDate == null || messageTime == null))
+            if (scheduleSeconds == -1 && (messageDate == null || messageTime == null))
               errors.add("Please set a date and time!");
-            if (messageController.text.length == 0)
-              errors.add("Please enter a message!");
+            if (messageController.text.length == 0) errors.add("Please enter a message!");
 
             if (errors.length > 0 && this.mounted) {
               setState(() {});
             } else {
               DateTime occurs;
               if (scheduleSeconds == -1) {
-                occurs = new DateTime(messageDate.year, messageDate.month,
-                    messageDate.day, messageTime.hour, messageTime.minute);
+                occurs = new DateTime(
+                    messageDate.year, messageDate.month, messageDate.day, messageTime.hour, messageTime.minute);
               } else {
                 occurs = DateTime.now().add(Duration(seconds: scheduleSeconds));
               }
 
               ScheduledMessage scheduled = new ScheduledMessage(
-                  chatGuid: _chat.guid,
-                  message: messageController.text,
-                  epochTime: occurs.millisecondsSinceEpoch);
+                  chatGuid: _chat.guid, message: messageController.text, epochTime: occurs.millisecondsSinceEpoch);
 
               await scheduled.save();
               Navigator.of(context).pop();

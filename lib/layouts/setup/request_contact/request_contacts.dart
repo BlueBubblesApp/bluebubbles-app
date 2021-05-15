@@ -26,10 +26,7 @@ class _RequestContactsState extends State<RequestContacts> {
               padding: EdgeInsets.symmetric(horizontal: 20.0),
               child: Text(
                 "BlueBubbles needs to access contacts. Tap the check to allow the permission.",
-                style: Theme.of(context)
-                    .textTheme
-                    .bodyText1
-                    .apply(fontSizeFactor: 1.5),
+                style: Theme.of(context).textTheme.bodyText1.apply(fontSizeFactor: 1.5),
                 textAlign: TextAlign.center,
               ),
             ),
@@ -38,10 +35,7 @@ class _RequestContactsState extends State<RequestContacts> {
               child: Material(
                 color: Theme.of(context).primaryColor, // button color
                 child: InkWell(
-                  child: SizedBox(
-                      width: 60,
-                      height: 60,
-                      child: Icon(Icons.check, color: Colors.white)),
+                  child: SizedBox(width: 60, height: 60, child: Icon(Icons.check, color: Colors.white)),
                   onTap: () async {
                     if (!await ContactManager().getContacts()) {
                       bool result = await showDialog(
@@ -74,12 +68,10 @@ class ContactPermissionWarningDialog extends StatefulWidget {
   ContactPermissionWarningDialog({Key key}) : super(key: key);
 
   @override
-  _ContactPermissionWarningDialogState createState() =>
-      _ContactPermissionWarningDialogState();
+  _ContactPermissionWarningDialogState createState() => _ContactPermissionWarningDialogState();
 }
 
-class _ContactPermissionWarningDialogState
-    extends State<ContactPermissionWarningDialog> {
+class _ContactPermissionWarningDialogState extends State<ContactPermissionWarningDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
@@ -87,10 +79,7 @@ class _ContactPermissionWarningDialogState
         FlatButton(
           child: Text(
             "Accept",
-            style: Theme.of(context)
-                .textTheme
-                .bodyText1
-                .apply(color: Theme.of(context).primaryColor),
+            style: Theme.of(context).textTheme.bodyText1.apply(color: Theme.of(context).primaryColor),
           ),
           onPressed: () {
             Navigator.of(context).pop(true);
@@ -99,10 +88,7 @@ class _ContactPermissionWarningDialogState
         FlatButton(
           child: Text(
             "Cancel",
-            style: Theme.of(context)
-                .textTheme
-                .bodyText1
-                .apply(color: Theme.of(context).primaryColor),
+            style: Theme.of(context).textTheme.bodyText1.apply(color: Theme.of(context).primaryColor),
           ),
           onPressed: () {
             Navigator.of(context).pop(false);

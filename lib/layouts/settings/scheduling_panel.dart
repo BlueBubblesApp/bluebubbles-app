@@ -39,8 +39,7 @@ class _SchedulingPanelState extends State<SchedulingPanel> {
 
     for (ScheduledMessage msg in messages) {
       DateTime time = DateTime.fromMillisecondsSinceEpoch(msg.epochTime);
-      String timeStr =
-          DateFormat.yMd().add_jm().format(time).replaceFirst(" ", "\n");
+      String timeStr = DateFormat.yMd().add_jm().format(time).replaceFirst(" ", "\n");
       rows.add(TableRow(children: [
         Padding(
           padding: EdgeInsets.all(10.0),
@@ -55,9 +54,7 @@ class _SchedulingPanelState extends State<SchedulingPanel> {
                 style: Theme.of(context).textTheme.bodyText1,
               ),
               Text(msg.message,
-                  maxLines: 4,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.subtitle1)
+                  maxLines: 4, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.subtitle1)
             ],
           ),
         ),
@@ -76,10 +73,9 @@ class _SchedulingPanelState extends State<SchedulingPanel> {
   @override
   Widget build(BuildContext context) {
     DateTime now = DateTime.now();
-    Iterable<ScheduledMessage> upcoming = (scheduled ?? [])
-        .where((item) => now.millisecondsSinceEpoch <= item.epochTime);
-    Iterable<ScheduledMessage> old = (scheduled ?? [])
-        .where((item) => now.millisecondsSinceEpoch > item.epochTime);
+    Iterable<ScheduledMessage> upcoming =
+        (scheduled ?? []).where((item) => now.millisecondsSinceEpoch <= item.epochTime);
+    Iterable<ScheduledMessage> old = (scheduled ?? []).where((item) => now.millisecondsSinceEpoch > item.epochTime);
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
@@ -121,11 +117,9 @@ class _SchedulingPanelState extends State<SchedulingPanel> {
                 <Widget>[
                   Padding(
                       padding: EdgeInsets.fromLTRB(25.0, 25.0, 25.0, 0.0),
-                      child: Text("Upcoming Messages",
-                          style: Theme.of(context).textTheme.headline1)),
+                      child: Text("Upcoming Messages", style: Theme.of(context).textTheme.headline1)),
                   Padding(
-                    padding:
-                        EdgeInsets.symmetric(horizontal: 25.0, vertical: 25.0),
+                    padding: EdgeInsets.symmetric(horizontal: 25.0, vertical: 25.0),
                     child: (upcoming.length > 0)
                         ? Container(
                             decoration: BoxDecoration(
@@ -133,8 +127,7 @@ class _SchedulingPanelState extends State<SchedulingPanel> {
                                 color: Theme.of(context).accentColor,
                                 width: 1,
                               ),
-                              borderRadius:
-                                  BorderRadius.all(Radius.circular(10)),
+                              borderRadius: BorderRadius.all(Radius.circular(10)),
                             ),
                             child: Table(
                                 columnWidths: {
@@ -142,22 +135,17 @@ class _SchedulingPanelState extends State<SchedulingPanel> {
                                   1: FractionColumnWidth(.4),
                                 },
                                 border: TableBorder.symmetric(
-                                  inside: BorderSide(
-                                      width: 1,
-                                      color: Theme.of(context).accentColor),
+                                  inside: BorderSide(width: 1, color: Theme.of(context).accentColor),
                                 ),
                                 children: _buildRows(upcoming)))
                         : Text("No upcoming messages to send",
-                            textAlign: TextAlign.left,
-                            style: Theme.of(context).textTheme.subtitle1),
+                            textAlign: TextAlign.left, style: Theme.of(context).textTheme.subtitle1),
                   ),
                   Padding(
                       padding: EdgeInsets.fromLTRB(25.0, 25.0, 25.0, 0.0),
-                      child: Text("Past Messages",
-                          style: Theme.of(context).textTheme.headline1)),
+                      child: Text("Past Messages", style: Theme.of(context).textTheme.headline1)),
                   Padding(
-                      padding: EdgeInsets.symmetric(
-                          horizontal: 25.0, vertical: 25.0),
+                      padding: EdgeInsets.symmetric(horizontal: 25.0, vertical: 25.0),
                       child: (old.length > 0)
                           ? Container(
                               decoration: BoxDecoration(
@@ -165,8 +153,7 @@ class _SchedulingPanelState extends State<SchedulingPanel> {
                                   color: Theme.of(context).accentColor,
                                   width: 1,
                                 ),
-                                borderRadius:
-                                    BorderRadius.all(Radius.circular(10)),
+                                borderRadius: BorderRadius.all(Radius.circular(10)),
                               ),
                               child: Table(
                                   columnWidths: {
@@ -174,14 +161,11 @@ class _SchedulingPanelState extends State<SchedulingPanel> {
                                     1: FractionColumnWidth(.4),
                                   },
                                   border: TableBorder.symmetric(
-                                    inside: BorderSide(
-                                        width: 1,
-                                        color: Theme.of(context).accentColor),
+                                    inside: BorderSide(width: 1, color: Theme.of(context).accentColor),
                                   ),
                                   children: _buildRows(old)))
                           : Text("No scheduled messages have been sent",
-                              textAlign: TextAlign.left,
-                              style: Theme.of(context).textTheme.subtitle1)),
+                              textAlign: TextAlign.left, style: Theme.of(context).textTheme.subtitle1)),
                 ],
               ),
             ),

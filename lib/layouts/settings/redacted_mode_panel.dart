@@ -10,25 +10,25 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-class PrivateAPIPanel extends StatefulWidget {
-  PrivateAPIPanel({Key key}) : super(key: key);
+class RedactedModePanel extends StatefulWidget {
+  RedactedModePanel({Key key}) : super(key: key);
 
   @override
-  _PrivateAPIPanelState createState() => _PrivateAPIPanelState();
+  _RedactedModePanelState createState() => _RedactedModePanelState();
 }
 
-class _PrivateAPIPanelState extends State<PrivateAPIPanel> {
+class _RedactedModePanelState extends State<RedactedModePanel> {
   Settings _settingsCopy;
   Brightness brightness;
   Color previousBackgroundColor;
   bool gotBrightness = false;
-  bool enablePrivateAPI = false;
+  bool redactedMode = false;
 
   @override
   void initState() {
     super.initState();
     _settingsCopy = SettingsManager().settings;
-    enablePrivateAPI = _settingsCopy.enablePrivateAPI;
+    redactedMode = _settingsCopy.redactedMode;
 
     // Listen for any incoming events
     EventDispatcher().stream.listen((Map<String, dynamic> event) {
@@ -64,32 +64,83 @@ class _PrivateAPIPanelState extends State<PrivateAPIPanel> {
   Widget build(BuildContext context) {
     loadBrightness();
 
-    List<Widget> privateWidgets = [];
-    if (enablePrivateAPI) {
-      privateWidgets.addAll([
+    List<Widget> redactedWidgets = [];
+    if (redactedMode) {
+      redactedWidgets.addAll([
         SettingsSwitch(
           onChanged: (bool val) {
-            _settingsCopy.sendTypingIndicators = val;
+            _settingsCopy.hideMessageContent = val;
             saveSettings();
           },
-          initialVal: _settingsCopy.sendTypingIndicators,
-          title: "Send Typing Indicators",
+          initialVal: _settingsCopy.hideMessageContent,
+          title: "Hide Message Content",
+        ),
+        Divider(),
+        SettingsSwitch(
+          onChanged: (bool val) {
+            _settingsCopy.hideReactions = val;
+            saveSettings();
+          },
+          initialVal: _settingsCopy.hideReactions,
+          title: "Hide Reactions",
         ),
         SettingsSwitch(
           onChanged: (bool val) {
-            _settingsCopy.privateMarkChatAsRead = val;
+            _settingsCopy.hideAttachments = val;
             saveSettings();
           },
-          initialVal: _settingsCopy.privateMarkChatAsRead,
-          title: "Mark Chats as Read / Send Read Receipts",
+          initialVal: _settingsCopy.hideAttachments,
+          title: "Hide Attachments",
         ),
         SettingsSwitch(
           onChanged: (bool val) {
-            _settingsCopy.privateManualMarkAsRead = val;
+            _settingsCopy.hideAttachmentTypes = val;
             saveSettings();
           },
-          initialVal: _settingsCopy.privateManualMarkAsRead,
-          title: "Show Manually Mark Chat as Read Button",
+          initialVal: _settingsCopy.hideAttachmentTypes,
+          title: "Hide Attachment Types",
+        ),
+        Divider(),
+        SettingsSwitch(
+          onChanged: (bool val) {
+            _settingsCopy.hideContactPhotos = val;
+            saveSettings();
+          },
+          initialVal: _settingsCopy.hideContactPhotos,
+          title: "Hide Contact Photos",
+        ),
+        SettingsSwitch(
+          onChanged: (bool val) {
+            _settingsCopy.hideContactInfo = val;
+            saveSettings();
+          },
+          initialVal: _settingsCopy.hideContactInfo,
+          title: "Hide Contact Info",
+        ),
+        SettingsSwitch(
+          onChanged: (bool val) {
+            _settingsCopy.removeLetterAvatars = val;
+            saveSettings();
+          },
+          initialVal: _settingsCopy.removeLetterAvatars,
+          title: "Remove Letter Avatars",
+        ),
+        Divider(),
+        SettingsSwitch(
+          onChanged: (bool val) {
+            _settingsCopy.generateFakeContactNames = val;
+            saveSettings();
+          },
+          initialVal: _settingsCopy.generateFakeContactNames,
+          title: "Generate Fake Contact Names",
+        ),
+        SettingsSwitch(
+          onChanged: (bool val) {
+            _settingsCopy.generateFakeMessageContent = val;
+            saveSettings();
+          },
+          initialVal: _settingsCopy.generateFakeMessageContent,
+          title: "Generate Fake Message Content",
         ),
       ]);
     }
@@ -117,7 +168,7 @@ class _PrivateAPIPanelState extends State<PrivateAPIPanel> {
                 ),
                 backgroundColor: Theme.of(context).accentColor.withOpacity(0.5),
                 title: Text(
-                  "Private API Features",
+                  "Redacted Mode Settings",
                   style: Theme.of(context).textTheme.headline1,
                 ),
               ),
@@ -133,26 +184,24 @@ class _PrivateAPIPanelState extends State<PrivateAPIPanel> {
                 <Widget>[
                   Container(padding: EdgeInsets.only(top: 5.0)),
                   SettingsTile(
-                      title: "Please read before using these features!",
+                      title: "What is Redacted Mode?",
                       subTitle:
-                          ("Private API features are only available to those running the nightly version of the server. " +
-                              "If you are not running the nightly version, you will not be able to utiulize these features, " +
-                              "even if you have it enabled.")),
+                          ("Redacted Mode hides your personal information such as contact names, message content, and more. This is useful when taking screenshots to send to developers.")),
                   SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.enablePrivateAPI = val;
+                      _settingsCopy.redactedMode = val;
                       if (this.mounted) {
                         setState(() {
-                          enablePrivateAPI = val;
+                          redactedMode = val;
                         });
                       }
 
                       saveSettings();
                     },
-                    initialVal: _settingsCopy.enablePrivateAPI,
-                    title: "Enable Private API Features",
+                    initialVal: _settingsCopy.redactedMode,
+                    title: "Enable Redacted Mode",
                   ),
-                  ...privateWidgets
+                  ...redactedWidgets
                 ],
               ),
             ),

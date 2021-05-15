@@ -1,16 +1,16 @@
 import 'dart:async';
 
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view_mixin.dart';
+import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/material.dart';
 
 class AddingParticipantPopup extends StatefulWidget {
   final List<UniqueContact> contacts;
   final Chat chat;
-  AddingParticipantPopup({Key key, @required this.contacts, this.chat})
-      : super(key: key);
+
+  AddingParticipantPopup({Key key, @required this.contacts, this.chat}) : super(key: key);
 
   @override
   _AddingParticipantPopupState createState() => _AddingParticipantPopupState();
@@ -38,8 +38,7 @@ class _AddingParticipantPopupState extends State<AddingParticipantPopup> {
       if (data['status'] != 200) {
         if (this.mounted)
           setState(() {
-            title =
-                "Failed to add participant ${widget.contacts[i].displayName}";
+            title = "Failed to add participant ${widget.contacts[i].displayName}";
           });
         Timer(Duration(seconds: 3), () {
           if (i < widget.contacts.length - 1) {
@@ -82,8 +81,7 @@ class _AddingParticipantPopupState extends State<AddingParticipantPopup> {
         child: Center(
           child: LinearProgressIndicator(
             backgroundColor: Colors.grey,
-            valueColor:
-                AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
+            valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
             value: (index) / widget.contacts.length,
           ),
         ),

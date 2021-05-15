@@ -1,6 +1,6 @@
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:bluebubbles/helpers/utils.dart';
 
 class SearchTextBox extends StatefulWidget {
   SearchTextBox({Key key, this.autoFocus = false}) : super(key: key);
@@ -24,11 +24,7 @@ class _SearchTextBoxState extends State<SearchTextBox> {
         ),
         placeholder: "Search",
         placeholderStyle: Theme.of(context).textTheme.bodyText1.apply(
-              color: Theme.of(context)
-                  .textTheme
-                  .bodyText1
-                  .color
-                  .lightenOrDarken(40),
+              color: Theme.of(context).textTheme.bodyText1.color.lightenOrDarken(40),
             ),
         style: Theme.of(context).textTheme.bodyText1,
         padding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),

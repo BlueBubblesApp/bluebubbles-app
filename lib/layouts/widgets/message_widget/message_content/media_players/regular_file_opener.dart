@@ -48,16 +48,12 @@ class _RegularFileOpenerState extends State<RegularFileOpener> {
                 await MethodChannelInterface().invokeMethod(
                   "open_file",
                   {
-                    "path": "/attachments/" +
-                        widget.attachment.guid +
-                        "/" +
-                        basename(widget.file.path),
+                    "path": "/attachments/" + widget.attachment.guid + "/" + basename(widget.file.path),
                     "mimeType": widget.attachment.mimeType,
                   },
                 );
               } catch (ex) {
-                final snackBar =
-                    SnackBar(content: Text("No handler for this file type!"));
+                final snackBar = SnackBar(content: Text("No handler for this file type!"));
                 Scaffold.of(context).showSnackBar(snackBar);
               }
             },

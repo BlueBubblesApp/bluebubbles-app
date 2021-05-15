@@ -5,8 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:photo_manager/photo_manager.dart';
 
 class AttachmentPicked extends StatefulWidget {
-  AttachmentPicked({Key key, @required this.onTap, @required this.data})
-      : super(key: key);
+  AttachmentPicked({Key key, @required this.onTap, @required this.data}) : super(key: key);
   final AssetEntity data;
   final Function onTap;
 
@@ -14,8 +13,7 @@ class AttachmentPicked extends StatefulWidget {
   _AttachmentPickedState createState() => _AttachmentPickedState();
 }
 
-class _AttachmentPickedState extends State<AttachmentPicked>
-    with AutomaticKeepAliveClientMixin {
+class _AttachmentPickedState extends State<AttachmentPicked> with AutomaticKeepAliveClientMixin {
   Uint8List image;
   String path;
 
@@ -40,11 +38,7 @@ class _AttachmentPickedState extends State<AttachmentPicked>
   }
 
   bool get containsThis =>
-      BlueBubblesTextField.of(context)
-          .pickedImages
-          .where((element) => element.path == path)
-          .length >
-      0;
+      BlueBubblesTextField.of(context).pickedImages.where((element) => element.path == path).length > 0;
 
   @override
   Widget build(BuildContext context) {

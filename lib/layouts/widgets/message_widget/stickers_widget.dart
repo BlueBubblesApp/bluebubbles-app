@@ -63,13 +63,11 @@ class _StickersWidgetState extends State<StickersWidget> {
         String pathName = AttachmentHelper.getAttachmentPath(attachment);
 
         // Check if the attachment exists
-        if (FileSystemEntity.typeSync(pathName) ==
-            FileSystemEntityType.notFound) {
+        if (FileSystemEntity.typeSync(pathName) == FileSystemEntityType.notFound) {
           // Download the attachment and when complete, re-render the UI
           AttachmentDownloader(attachment, onComplete: () {
             // Make sure it downloaded correctly
-            if (FileSystemEntity.typeSync(pathName) ==
-                FileSystemEntityType.notFound) {
+            if (FileSystemEntity.typeSync(pathName) == FileSystemEntityType.notFound) {
               // Add the attachment as a sticker, and re-render the UI
               stickers.add(attachment);
               if (this.mounted) setState(() {});
@@ -94,8 +92,7 @@ class _StickersWidgetState extends State<StickersWidget> {
     List<Widget> stickers = this.stickers.map((item) {
       String pathName = AttachmentHelper.getAttachmentPath(item);
       return Image.file(new File(pathName),
-          width: MediaQuery.of(context).size.width * 2 / 3,
-          height: MediaQuery.of(context).size.width * 2 / 4);
+          width: MediaQuery.of(context).size.width * 2 / 3, height: MediaQuery.of(context).size.width * 2 / 4);
     }).toList();
 
     return GestureDetector(

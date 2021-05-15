@@ -115,20 +115,16 @@ bool sameAddress(List<String> options, String compared) {
 
   return match;
 
-
-
   // // Handle easiest option
   // if (handle.address == compared) return true;
 
   // // Handle easy non-email address comparison
   // if (handle.address.contains('@') && !compared.contains('@')) return false;
-  
+
   // // Handle phone numbers
   // String formattedNumber1 = Slugify(handle.address, delimiter: '');
-  
 
   // String country = handle?.country ?? "US";
-  
 
   // print("Match Attempt");
   // print(matchOptions);
@@ -305,6 +301,12 @@ Future<String> getGroupEventText(Message message) async {
     }
   }
 
+  final bool hideNames = SettingsManager().settings.redactedMode && SettingsManager().settings.hideContactInfo;
+  if (hideNames) {
+    handle = "Someone";
+    other = "someone";
+  }
+
   if (message.itemType == 1 && message.groupActionType == 1) {
     text = "$handle removed $other from the conversation";
   } else if (message.itemType == 1 && message.groupActionType == 0) {
@@ -353,7 +355,7 @@ Future<MemoryImage> loadAvatar(Chat chat, Handle handle) async {
 
 List<RegExpMatch> parseLinks(String text) {
   RegExp exp = new RegExp(
-      r'(((h|H)ttps?:\/\/)|(www\.))[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}([-a-zA-Z0-9\/()@:%_.~#?&=\*\[\]]{0,})');
+      r'((([hH])ttps?://)|(www\.))[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}([-a-zA-Z0-9/()@:%_.~#?&=*\[\]]*)');
   return exp.allMatches(text).toList();
 }
 

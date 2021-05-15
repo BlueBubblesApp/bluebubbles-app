@@ -1,4 +1,3 @@
-
 import 'package:bluebubbles/layouts/setup/connecting_alert/failed_to_connect_dialog.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/material.dart';
@@ -20,8 +19,7 @@ class _ConnectingAlertState extends State<ConnectingAlert> {
       debugPrint("Connection Status Changed");
       if (event == SocketState.CONNECTED) {
         widget.onConnect(true);
-      } else if (event == SocketState.ERROR ||
-          event == SocketState.DISCONNECTED) {
+      } else if (event == SocketState.ERROR || event == SocketState.DISCONNECTED) {
         widget.onConnect(false);
       }
       if (this.mounted) setState(() {});
@@ -43,8 +41,7 @@ class _ConnectingAlertState extends State<ConnectingAlert> {
           title: Text("Connecting..."),
           content: LinearProgressIndicator(
             backgroundColor: Colors.grey,
-            valueColor:
-                AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
+            valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
           ),
         ),
       );

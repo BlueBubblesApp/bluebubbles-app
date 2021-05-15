@@ -24,8 +24,7 @@ class MessageAttachments extends StatefulWidget {
   _MessageAttachmentsState createState() => _MessageAttachmentsState();
 }
 
-class _MessageAttachmentsState extends State<MessageAttachments>
-    with TickerProviderStateMixin {
+class _MessageAttachmentsState extends State<MessageAttachments> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
@@ -36,11 +35,8 @@ class _MessageAttachmentsState extends State<MessageAttachments>
     EdgeInsets padding = EdgeInsets.all(0.0);
     if (widget.message.hasReactions && widget.message.hasAttachments) {
       if (widget.message.isFromMe) {
-        padding = EdgeInsets.only(
-            top: 15.0,
-            bottom: (widget.message.hasAttachments) ? 2.0 : 10.0,
-            left: 12.0,
-            right: 0.0);
+        padding =
+            EdgeInsets.only(top: 15.0, bottom: (widget.message.hasAttachments) ? 2.0 : 10.0, left: 12.0, right: 0.0);
       } else {
         padding = EdgeInsets.only(
             top: (widget.showHandle) ? 18.0 : 15.0,
@@ -59,9 +55,7 @@ class _MessageAttachmentsState extends State<MessageAttachments>
     }
 
     return Column(
-      mainAxisAlignment: widget.message.isFromMe
-          ? MainAxisAlignment.end
-          : MainAxisAlignment.start,
+      mainAxisAlignment: widget.message.isFromMe ? MainAxisAlignment.end : MainAxisAlignment.start,
       crossAxisAlignment: CrossAxisAlignment.end,
       children: <Widget>[
         Stack(
@@ -83,8 +77,7 @@ class _MessageAttachmentsState extends State<MessageAttachments>
   List<Widget> _buildAttachments() {
     List<Widget> content = <Widget>[];
 
-    var items =
-        CurrentChat.of(context)?.getAttachmentsForMessage(widget.message) ?? [];
+    var items = CurrentChat.of(context)?.getAttachmentsForMessage(widget.message) ?? [];
     for (Attachment attachment in items) {
       if (attachment.mimeType != null) {
         Widget attachmentWidget = MessageAttachment(
@@ -104,12 +97,7 @@ class _MessageAttachmentsState extends State<MessageAttachments>
             children: [
               attachmentWidget,
               Container(width: 5),
-              SentMessageHelper.getErrorWidget(
-                context,
-                widget.message,
-                CurrentChat.of(context)?.chat,
-                rightPadding: 0
-              ),
+              SentMessageHelper.getErrorWidget(context, widget.message, CurrentChat.of(context)?.chat, rightPadding: 0),
             ],
           ));
         }

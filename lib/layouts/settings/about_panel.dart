@@ -43,8 +43,7 @@ class _AboutPanelState extends State<AboutPanel> {
 
   void loadBrightness() {
     Color now = Theme.of(context).backgroundColor;
-    bool themeChanged =
-        previousBackgroundColor == null || previousBackgroundColor != now;
+    bool themeChanged = previousBackgroundColor == null || previousBackgroundColor != now;
     if (!themeChanged && gotBrightness) return;
 
     previousBackgroundColor = now;
@@ -106,8 +105,7 @@ class _AboutPanelState extends State<AboutPanel> {
                   SettingsTile(
                     title: "Donations",
                     onTap: () {
-                      MethodChannelInterface().invokeMethod("open-link",
-                          {"link": "https://bluebubbles.app/donate/"});
+                      MethodChannelInterface().invokeMethod("open-link", {"link": "https://bluebubbles.app/donate/"});
                     },
                     trailing: Icon(
                       Icons.attach_money,
@@ -117,8 +115,7 @@ class _AboutPanelState extends State<AboutPanel> {
                   SettingsTile(
                     title: "Website",
                     onTap: () {
-                      MethodChannelInterface().invokeMethod(
-                          "open-link", {"link": "https://bluebubbles.app/"});
+                      MethodChannelInterface().invokeMethod("open-link", {"link": "https://bluebubbles.app/"});
                     },
                     trailing: Icon(
                       Icons.link,
@@ -128,8 +125,7 @@ class _AboutPanelState extends State<AboutPanel> {
                   SettingsTile(
                     title: "Source Code",
                     onTap: () {
-                      MethodChannelInterface().invokeMethod("open-link",
-                          {"link": "https://github.com/BlueBubblesApp"});
+                      MethodChannelInterface().invokeMethod("open-link", {"link": "https://github.com/BlueBubblesApp"});
                     },
                     trailing: Icon(
                       Icons.code,
@@ -139,8 +135,8 @@ class _AboutPanelState extends State<AboutPanel> {
                   SettingsTile(
                     title: "Changelog",
                     onTap: () async {
-                      String changelog = await DefaultAssetBundle.of(context)
-                          .loadString('assets/changelog/changelog.md');
+                      String changelog =
+                          await DefaultAssetBundle.of(context).loadString('assets/changelog/changelog.md');
                       Navigator.of(context).push(
                         ThemeSwitcher.buildPageRoute(
                           builder: (context) => Scaffold(
@@ -160,21 +156,15 @@ class _AboutPanelState extends State<AboutPanel> {
                                 h1: Theme.of(context)
                                     .textTheme
                                     .headline1
-                                    .copyWith(
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.bold),
+                                    .copyWith(fontSize: 20, fontWeight: FontWeight.bold),
                                 h2: Theme.of(context)
                                     .textTheme
                                     .headline2
-                                    .copyWith(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold),
+                                    .copyWith(fontSize: 18, fontWeight: FontWeight.bold),
                                 h3: Theme.of(context)
                                     .textTheme
                                     .headline3
-                                    .copyWith(
-                                        fontSize: 17,
-                                        fontWeight: FontWeight.bold),
+                                    .copyWith(fontSize: 17, fontWeight: FontWeight.bold),
                               ),
                             ),
                             backgroundColor: Theme.of(context).backgroundColor,
@@ -197,8 +187,7 @@ class _AboutPanelState extends State<AboutPanel> {
                   SettingsTile(
                     title: "Join Our Discord",
                     onTap: () {
-                      MethodChannelInterface().invokeMethod("open-link",
-                          {"link": "https://discord.gg/hbx7EhNFjp"});
+                      MethodChannelInterface().invokeMethod("open-link", {"link": "https://discord.gg/hbx7EhNFjp"});
                     },
                     trailing: SvgPicture.asset(
                       "assets/icon/discord.svg",
@@ -232,8 +221,7 @@ class _AboutPanelState extends State<AboutPanel> {
                                   padding: EdgeInsets.all(8),
                                   child: Text(
                                     "Zach",
-                                    style:
-                                        Theme.of(context).textTheme.bodyText1,
+                                    style: Theme.of(context).textTheme.bodyText1,
                                   ),
                                 ),
                                 Container(
@@ -241,8 +229,7 @@ class _AboutPanelState extends State<AboutPanel> {
                                   padding: EdgeInsets.all(8),
                                   child: Text(
                                     "Maxwell",
-                                    style:
-                                        Theme.of(context).textTheme.bodyText1,
+                                    style: Theme.of(context).textTheme.bodyText1,
                                   ),
                                 ),
                               ],
@@ -252,10 +239,7 @@ class _AboutPanelState extends State<AboutPanel> {
                             FlatButton(
                               child: Text(
                                 "Close",
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodyText1
-                                    .copyWith(
+                                style: Theme.of(context).textTheme.bodyText1.copyWith(
                                       color: Theme.of(context).primaryColor,
                                     ),
                               ),

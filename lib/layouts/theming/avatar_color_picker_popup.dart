@@ -7,8 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 
 class AvatarColorPickerPopup extends StatefulWidget {
-  AvatarColorPickerPopup({Key key, this.handle, this.onSet, this.onReset})
-      : super(key: key);
+  AvatarColorPickerPopup({Key key, this.handle, this.onSet, this.onReset}) : super(key: key);
   final Handle handle;
   final Function(Color color) onSet;
   final Function() onReset;
@@ -40,11 +39,9 @@ class _AvatarColorPickerPopupState extends State<AvatarColorPickerPopup> {
     return AlertDialog(
       backgroundColor: Colors.black.withOpacity(0.8),
       title: Text("Choose a new color for this person",
-          style:
-              whiteLightTheme.textTheme.headline1.apply(color: Colors.white)),
+          style: whiteLightTheme.textTheme.headline1.apply(color: Colors.white)),
       content: SingleChildScrollView(
-        physics: AlwaysScrollableScrollPhysics(
-            parent: CustomBouncingScrollPhysics()),
+        physics: AlwaysScrollableScrollPhysics(parent: CustomBouncingScrollPhysics()),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -53,25 +50,20 @@ class _AvatarColorPickerPopupState extends State<AvatarColorPickerPopup> {
                 onColorChanged: (Color color) => currentColor = color,
                 showLabel: true,
                 pickerAreaHeightPercent: 0.8,
-                labelTextStyle: whiteLightTheme.textTheme.bodyText1
-                    .apply(color: Colors.white)),
+                labelTextStyle: whiteLightTheme.textTheme.bodyText1.apply(color: Colors.white)),
           ],
         ),
       ),
       actions: <Widget>[
         FlatButton(
-          child: Text("RESTORE",
-              style: whiteLightTheme.textTheme.bodyText1
-                  .apply(color: Colors.white)),
+          child: Text("RESTORE", style: whiteLightTheme.textTheme.bodyText1.apply(color: Colors.white)),
           onPressed: () {
             widget.onReset();
             Navigator.of(context).pop();
           },
         ),
         FlatButton(
-          child: Text("OK",
-              style: whiteLightTheme.textTheme.bodyText1
-                  .apply(color: Colors.white)),
+          child: Text("OK", style: whiteLightTheme.textTheme.bodyText1.apply(color: Colors.white)),
           onPressed: () {
             widget.onSet(currentColor);
             Navigator.of(context).pop();

@@ -12,6 +12,7 @@ import 'package:flutter/services.dart';
 
 class EditController {
   StreamController controller = StreamController.broadcast();
+
   Stream get stream => controller.stream;
 }
 
@@ -22,8 +23,7 @@ class ThemingPanel extends StatefulWidget {
   _ThemingPanelState createState() => _ThemingPanelState();
 }
 
-class _ThemingPanelState extends State<ThemingPanel>
-    with TickerProviderStateMixin {
+class _ThemingPanelState extends State<ThemingPanel> with TickerProviderStateMixin {
   TabController controller;
   EditController editController;
 

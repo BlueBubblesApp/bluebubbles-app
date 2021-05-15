@@ -45,8 +45,7 @@ class MessageWidget extends StatefulWidget {
   _MessageState createState() => _MessageState();
 }
 
-class _MessageState extends State<MessageWidget>
-    with AutomaticKeepAliveClientMixin {
+class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMixin {
   bool showTail = true;
   Completer<void> associatedMessageRequest;
   Completer<void> attachmentsRequest;
@@ -99,8 +98,7 @@ class _MessageState extends State<MessageWidget>
         bool fetchAttach = false;
         Message message = data.event["message"];
         if (message == null) return;
-        if (message.associatedMessageGuid == widget.message.guid)
-          fetchAssoc = true;
+        if (message.associatedMessageGuid == widget.message.guid) fetchAssoc = true;
         if (message.hasAttachments) fetchAttach = true;
 
         // If the associated message GUID matches this one, fetch associated messages
@@ -156,8 +154,7 @@ class _MessageState extends State<MessageWidget>
 
   Future<void> fetchAssociatedMessages({bool forceReload = false}) async {
     // If there is already a request being made, return that request
-    if (!forceReload && associatedMessageRequest != null)
-      return associatedMessageRequest.future;
+    if (!forceReload && associatedMessageRequest != null) return associatedMessageRequest.future;
 
     // Create a new request and get the messages
     associatedMessageRequest = new Completer();
@@ -191,8 +188,7 @@ class _MessageState extends State<MessageWidget>
 
   Future<void> fetchAttachments({bool forceReload = false}) async {
     // If there is already a request being made, return that request
-    if (!forceReload && attachmentsRequest != null)
-      return attachmentsRequest.future;
+    if (!forceReload && attachmentsRequest != null) return attachmentsRequest.future;
 
     // Create a new request and get the attachments
     attachmentsRequest = new Completer();
@@ -210,11 +206,9 @@ class _MessageState extends State<MessageWidget>
       if (lastRequestCount != nullAttachments.length) {
         lastRequestCount = nullAttachments.length;
 
-        List<dynamic> msgs = await SocketManager()
-            .getAttachments(currentChat.chat.guid, _message.guid);
+        List<dynamic> msgs = await SocketManager().getAttachments(currentChat.chat.guid, _message.guid);
 
-        for (var msg in msgs)
-          await ActionHandler.handleMessage(msg, forceProcess: true);
+        for (var msg in msgs) await ActionHandler.handleMessage(msg, forceProcess: true);
       }
     }
 
@@ -247,8 +241,7 @@ class _MessageState extends State<MessageWidget>
     }
 
     if (_message.isGroupEvent()) {
-      return GroupEvent(
-          key: Key("group-event-${_message.guid}"), message: _message);
+      return GroupEvent(key: Key("group-event-${_message.guid}"), message: _message);
     }
 
     ////////// READ //////////
@@ -268,12 +261,9 @@ class _MessageState extends State<MessageWidget>
     );
 
     UrlPreviewWidget urlPreviewWidget = UrlPreviewWidget(
-        key: new Key("preview-${_message.guid}"),
-        linkPreviews: _message.getPreviewAttachments(),
-        message: _message);
-    StickersWidget stickersWidget = StickersWidget(
-        key: new Key("stickers-${associatedCount.toString()}"),
-        messages: _message.associatedMessages);
+        key: new Key("preview-${_message.guid}"), linkPreviews: _message.getPreviewAttachments(), message: _message);
+    StickersWidget stickersWidget =
+        StickersWidget(key: new Key("stickers-${associatedCount.toString()}"), messages: _message.associatedMessages);
     ReactionsWidget reactionsWidget = ReactionsWidget(
         key: new Key("reactions-${associatedCount.toString()}"),
         message: _message,

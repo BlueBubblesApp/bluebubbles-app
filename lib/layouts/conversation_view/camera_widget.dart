@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/text_field/blue_bubbles_text_field.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
@@ -9,6 +10,7 @@ import 'package:flutter/material.dart';
 
 class CameraWidget extends StatefulWidget {
   final Function addAttachment;
+
   CameraWidget({
     Key key,
     @required this.addAttachment,
@@ -18,8 +20,7 @@ class CameraWidget extends StatefulWidget {
   _CameraWidgetState createState() => _CameraWidgetState();
 }
 
-class _CameraWidgetState extends State<CameraWidget>
-    with WidgetsBindingObserver {
+class _CameraWidgetState extends State<CameraWidget> with WidgetsBindingObserver {
   CameraController controller;
 
   @override
@@ -35,8 +36,7 @@ class _CameraWidgetState extends State<CameraWidget>
     if (context == null) return;
     if (BlueBubblesTextField.of(context) == null) return;
     await BlueBubblesTextField.of(context).initializeCameraController();
-    if (context == null)
-      return; // After the await, so could have been some time
+    if (context == null) return; // After the await, so could have been some time
     controller = BlueBubblesTextField.of(context).cameraController;
     if (this.mounted) setState(() {});
   }
@@ -64,10 +64,8 @@ class _CameraWidgetState extends State<CameraWidget>
   @override
   Widget build(BuildContext context) {
     if (BlueBubblesTextField.of(context) == null) return Container();
-    CameraController controller =
-        BlueBubblesTextField.of(context).cameraController;
-    if (controller == null || !controller.value.isInitialized)
-      return Container();
+    CameraController controller = BlueBubblesTextField.of(context).cameraController;
+    if (controller == null || !controller.value.isInitialized) return Container();
     return AspectRatio(
       aspectRatio: MediaQuery.of(context).orientation == Orientation.portrait
           ? controller.value.aspectRatio
@@ -80,10 +78,7 @@ class _CameraWidgetState extends State<CameraWidget>
             children: <Widget>[
               RotatedBox(
                 child: CameraPreview(controller),
-                quarterTurns:
-                    MediaQuery.of(context).orientation == Orientation.portrait
-                        ? 0
-                        : 3,
+                quarterTurns: MediaQuery.of(context).orientation == Orientation.portrait ? 0 : 3,
               ),
               Padding(
                 padding: EdgeInsets.only(
@@ -94,10 +89,8 @@ class _CameraWidgetState extends State<CameraWidget>
                   onPressed: () async {
                     String appDocPath = SettingsManager().appDocDir.path;
 
-                    String pathName =
-                        "$appDocPath/tempAssets/${DateTime.now().toString()}.jpg";
-                    await Directory("$appDocPath/tempAssets")
-                        .create(recursive: true);
+                    String pathName = "$appDocPath/tempAssets/${DateTime.now().toString()}.jpg";
+                    await Directory("$appDocPath/tempAssets").create(recursive: true);
 
                     await controller.takePicture(pathName);
 
@@ -131,11 +124,9 @@ class _CameraWidgetState extends State<CameraWidget>
                 color: Colors.transparent,
                 onPressed: () async {
                   String appDocPath = SettingsManager().appDocDir.path;
-                  File file = new File(
-                      "$appDocPath/attachments/" + randomString(16) + ".png");
+                  File file = new File("$appDocPath/attachments/" + randomString(16) + ".png");
                   await file.create(recursive: true);
-                  await MethodChannelInterface().invokeMethod(
-                      "open-camera", {"path": file.path, "type": "camera"});
+                  await MethodChannelInterface().invokeMethod("open-camera", {"path": file.path, "type": "camera"});
 
                   if (!file.existsSync()) return;
                   if (file.statSync().size == 0) {
@@ -165,11 +156,9 @@ class _CameraWidgetState extends State<CameraWidget>
                 color: Colors.transparent,
                 onPressed: () async {
                   String appDocPath = SettingsManager().appDocDir.path;
-                  File file = new File(
-                      "$appDocPath/attachments/" + randomString(16) + ".mp4");
+                  File file = new File("$appDocPath/attachments/" + randomString(16) + ".mp4");
                   await file.create(recursive: true);
-                  await MethodChannelInterface().invokeMethod(
-                      "open-camera", {"path": file.path, "type": "video"});
+                  await MethodChannelInterface().invokeMethod("open-camera", {"path": file.path, "type": "video"});
 
                   if (!file.existsSync()) return;
                   if (file.statSync().size == 0) {
@@ -198,11 +187,9 @@ class _CameraWidgetState extends State<CameraWidget>
               onPressed: () async {
                 if (BlueBubblesTextField.of(context) == null) return;
 
-                BlueBubblesTextField.of(context).cameraIndex =
-                    (BlueBubblesTextField.of(context).cameraIndex - 1).abs();
+                BlueBubblesTextField.of(context).cameraIndex = (BlueBubblesTextField.of(context).cameraIndex - 1).abs();
 
-                await BlueBubblesTextField.of(context)
-                    .initializeCameraController();
+                await BlueBubblesTextField.of(context).initializeCameraController();
                 if (this.mounted) setState(() {});
               },
               child: Icon(

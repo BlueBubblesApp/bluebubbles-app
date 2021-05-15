@@ -25,6 +25,7 @@ import 'package:flutter/services.dart';
 
 class SendWidget extends StatefulWidget {
   static const Duration SEND_DURATION = Duration(milliseconds: 300);
+
   SendWidget({
     Key key,
     this.text,
@@ -78,10 +79,7 @@ class _SendWidgetState extends State<SendWidget> {
               customContent: RichText(
                 text: TextSpan(
                   text: widget.text,
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodyText2
-                      .apply(color: Colors.white),
+                  style: Theme.of(context).textTheme.bodyText2.apply(color: Colors.white),
                 ),
               ),
             ),
@@ -143,8 +141,7 @@ class _SendWidgetState extends State<SendWidget> {
     );
   }
 
-  Widget buildAnimation(flightContext, _animation, flightDirection,
-      fromHeroContext, toHeroContext) {
+  Widget buildAnimation(flightContext, _animation, flightDirection, fromHeroContext, toHeroContext) {
     Animation<double> animation = _animation.drive(
       Tween<double>(
         end: MediaQuery.of(context).size.width * 3 / 4 + 37,
@@ -175,8 +172,7 @@ class _SendWidgetState extends State<SendWidget> {
                     constraints: BoxConstraints(
                       minWidth: animation.value,
                       maxWidth: animation.value.clamp(
-                        MediaQuery.of(context).size.width *
-                            MessageWidgetMixin.MAX_SIZE,
+                        MediaQuery.of(context).size.width * MessageWidgetMixin.MAX_SIZE,
                         MediaQuery.of(context).size.width * 3 / 4 + 37,
                       ),
                     ),
@@ -197,10 +193,7 @@ class _SendWidgetState extends State<SendWidget> {
               customContent: RichText(
                 text: TextSpan(
                   text: widget.text,
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodyText2
-                      .apply(color: Colors.white),
+                  style: Theme.of(context).textTheme.bodyText2.apply(color: Colors.white),
                 ),
               ),
             ),
@@ -231,8 +224,7 @@ class SendPageBuilder extends PageRoute<void> {
   String get barrierLabel => null;
 
   @override
-  Widget buildPage(BuildContext context, Animation<double> animation,
-      Animation<double> secondaryAnimation) {
+  Widget buildPage(BuildContext context, Animation<double> animation, Animation<double> secondaryAnimation) {
     final result = builder(context);
     return result;
   }

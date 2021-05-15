@@ -17,8 +17,7 @@ class NewMessageLoader extends StatelessWidget {
           padding: const EdgeInsets.all(16.0),
           child: Theme(
             data: ThemeData(
-              cupertinoOverrideTheme:
-                  CupertinoThemeData(brightness: Brightness.dark),
+              cupertinoOverrideTheme: CupertinoThemeData(brightness: Brightness.dark),
             ),
             child: CupertinoActivityIndicator(),
           ),

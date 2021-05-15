@@ -33,9 +33,7 @@ class _ReactionDetailWidgetState extends State<ReactionDetailWidget> {
     super.didChangeDependencies();
     if (widget.message.isFromMe || widget.handle == null) return;
 
-    ContactManager()
-        .getContactTitle(widget.handle)
-        .then((String title) {
+    ContactManager().getContactTitle(widget.handle).then((String title) {
       if (title != contactTitle) {
         contactTitle = title;
         if (this.mounted) setState(() {});
@@ -65,8 +63,7 @@ class _ReactionDetailWidgetState extends State<ReactionDetailWidget> {
           padding: EdgeInsets.only(bottom: 8.0),
           child: Text(
             contactTitle,
-            style:
-                Theme.of(context).textTheme.bodyText1.apply(fontSizeDelta: -5),
+            style: Theme.of(context).textTheme.bodyText1.apply(fontSizeDelta: -5),
           ),
         ),
         Container(
@@ -83,13 +80,10 @@ class _ReactionDetailWidgetState extends State<ReactionDetailWidget> {
             ],
           ),
           child: Padding(
-            padding: const EdgeInsets.only(
-                top: 8.0, left: 7.0, right: 7.0, bottom: 7.0),
+            padding: const EdgeInsets.only(top: 8.0, left: 7.0, right: 7.0, bottom: 7.0),
             child: SvgPicture.asset(
               'assets/reactions/${widget.message.associatedMessageType}-black.svg',
-              color: widget.message.associatedMessageType == "love"
-                  ? Colors.pink
-                  : iconColor,
+              color: widget.message.associatedMessageType == "love" ? Colors.pink : iconColor,
             ),
           ),
         )

@@ -33,6 +33,7 @@ abstract class ChatSelectorTypes {
 class ConversationView extends StatefulWidget {
   final List<File> existingAttachments;
   final String existingText;
+
   ConversationView({
     Key key,
     this.chat,

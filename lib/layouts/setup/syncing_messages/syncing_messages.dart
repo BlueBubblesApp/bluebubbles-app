@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:bluebubbles/blocs/setup_bloc.dart';
 import 'package:bluebubbles/layouts/setup/qr_scan/failed_to_scan_dialog.dart';
-import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -25,9 +24,8 @@ class _SyncingMessagesState extends State<SyncingMessages> {
         subscription.cancel();
         await showDialog(
           context: context,
-          builder: (context) => FailedToScan(
-              exception: event.output.last.text,
-              title: "An error occured during setup!"),
+          builder: (context) =>
+              FailedToScan(exception: event.output.last.text, title: "An error occured during setup!"),
         );
 
         widget.controller.animateToPage(
@@ -64,26 +62,19 @@ class _SyncingMessagesState extends State<SyncingMessages> {
                     ),
                     Text(
                       "${(progress * 100).floor()}%",
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodyText1
-                          .apply(fontSizeFactor: 1.5),
+                      style: Theme.of(context).textTheme.bodyText1.apply(fontSizeFactor: 1.5),
                     ),
                     Spacer(
                       flex: 5,
                     ),
                     Padding(
-                      padding: EdgeInsets.symmetric(
-                          horizontal: MediaQuery.of(context).size.width / 4),
+                      padding: EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width / 4),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(20),
                         child: LinearProgressIndicator(
-                          value: progress != 1.0 && progress != 0.0
-                              ? progress
-                              : null,
+                          value: progress != 1.0 && progress != 0.0 ? progress : null,
                           backgroundColor: Colors.white,
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                              Theme.of(context).primaryColor),
+                          valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
                         ),
                       ),
                     ),
@@ -100,17 +91,13 @@ class _SyncingMessagesState extends State<SyncingMessages> {
                         ),
                         padding: EdgeInsets.all(10),
                         child: ListView.builder(
-                          physics: AlwaysScrollableScrollPhysics(
-                              parent: BouncingScrollPhysics()),
+                          physics: AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
                           itemBuilder: (context, index) {
-                            SetupOutputData data =
-                                snapshot.data.output.reversed.toList()[index];
+                            SetupOutputData data = snapshot.data.output.reversed.toList()[index];
                             return Text(
                               data.text,
                               style: TextStyle(
-                                color: data.type == SetupOutputType.LOG
-                                    ? Colors.grey
-                                    : Colors.red,
+                                color: data.type == SetupOutputType.LOG ? Colors.grey : Colors.red,
                                 fontSize: 10,
                               ),
                             );
@@ -128,8 +115,7 @@ class _SyncingMessagesState extends State<SyncingMessages> {
             } else {
               return Center(
                 child: Padding(
-                  padding: EdgeInsets.symmetric(
-                      horizontal: MediaQuery.of(context).size.width / 4),
+                  padding: EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width / 4),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: <Widget>[
@@ -151,8 +137,7 @@ class _SyncingMessagesState extends State<SyncingMessages> {
                         borderRadius: BorderRadius.circular(20),
                         child: LinearProgressIndicator(
                           backgroundColor: Colors.white,
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                              Theme.of(context).primaryColor),
+                          valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
                         ),
                       ),
                       Spacer(

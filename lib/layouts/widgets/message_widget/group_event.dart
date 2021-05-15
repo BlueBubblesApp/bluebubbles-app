@@ -125,21 +125,20 @@ class _GroupEventState extends State<GroupEvent> {
       Flexible(
         fit: FlexFit.tight,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 25.0, vertical: 10.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                text,
-                style: Theme.of(context).textTheme.subtitle2,
-                overflow: TextOverflow.ellipsis,
-                maxLines: 2,
-                textAlign: TextAlign.center,
-              ),
-              ...extras
-            ],
-          ) 
-        ),
+            padding: const EdgeInsets.symmetric(horizontal: 25.0, vertical: 10.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  text,
+                  style: Theme.of(context).textTheme.subtitle2,
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 2,
+                  textAlign: TextAlign.center,
+                ),
+                ...extras
+              ],
+            )),
       ),
     ]);
   }

@@ -1,5 +1,4 @@
 import 'package:bluebubbles/helpers/themes.dart';
-import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/repository/models/theme_entry.dart';
 import 'package:flutter/material.dart';
@@ -11,8 +10,7 @@ class ThemingColorPickerPopup extends StatefulWidget {
   final Function(Color color, {int fontSize}) onSet;
 
   @override
-  _ThemingColorPickerPopupState createState() =>
-      _ThemingColorPickerPopupState();
+  _ThemingColorPickerPopupState createState() => _ThemingColorPickerPopupState();
 }
 
 class _ThemingColorPickerPopupState extends State<ThemingColorPickerPopup> {
@@ -30,9 +28,7 @@ class _ThemingColorPickerPopupState extends State<ThemingColorPickerPopup> {
   Widget build(BuildContext context) {
     return AlertDialog(
       backgroundColor: Colors.black.withOpacity(0.8),
-      title: Text("Choose a Color",
-          style:
-              whiteLightTheme.textTheme.headline1.apply(color: Colors.white)),
+      title: Text("Choose a Color", style: whiteLightTheme.textTheme.headline1.apply(color: Colors.white)),
       content: SingleChildScrollView(
         physics: ThemeSwitcher.getScrollPhysics(),
         child: Column(
@@ -43,13 +39,11 @@ class _ThemingColorPickerPopupState extends State<ThemingColorPickerPopup> {
                 onColorChanged: (Color color) => currentColor = color,
                 showLabel: true,
                 pickerAreaHeightPercent: 0.8,
-                labelTextStyle: whiteLightTheme.textTheme.bodyText1
-                    .apply(color: Colors.white)),
+                labelTextStyle: whiteLightTheme.textTheme.bodyText1.apply(color: Colors.white)),
             if (widget.entry.isFont)
               Text(
                 "Font Size",
-                style: whiteLightTheme.textTheme.bodyText1
-                    .apply(color: Colors.white),
+                style: whiteLightTheme.textTheme.bodyText1.apply(color: Colors.white),
               ),
             if (widget.entry.isFont)
               Slider(
@@ -69,9 +63,7 @@ class _ThemingColorPickerPopupState extends State<ThemingColorPickerPopup> {
       ),
       actions: <Widget>[
         FlatButton(
-          child: Text("OK",
-              style: whiteLightTheme.textTheme.bodyText1
-                  .apply(color: Colors.white)),
+          child: Text("OK", style: whiteLightTheme.textTheme.bodyText1.apply(color: Colors.white)),
           onPressed: () {
             widget.onSet(currentColor, fontSize: currentFontSize);
             Navigator.of(context).pop();

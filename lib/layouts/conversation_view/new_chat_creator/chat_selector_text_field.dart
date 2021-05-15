@@ -62,8 +62,7 @@ class _ChatSelectorTextFieldState extends State<ChatSelectorTextField> {
                   mainAxisAlignment: MainAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
-                    Text(contact.displayName.trim(),
-                        style: Theme.of(context).textTheme.bodyText1),
+                    Text(contact.displayName.trim(), style: Theme.of(context).textTheme.bodyText1),
                     SizedBox(
                       width: 5.0,
                     ),
@@ -94,12 +93,10 @@ class _ChatSelectorTextFieldState extends State<ChatSelectorTextField> {
             if (isValidAddress(done)) {
               Contact contact = ContactManager().getCachedContactSync(done);
               if (contact == null) {
-                widget.onSelected(new UniqueContact(
-                    address: done,
-                    displayName: (await formatPhoneNumber(done)) ?? done));
+                widget
+                    .onSelected(new UniqueContact(address: done, displayName: (await formatPhoneNumber(done)) ?? done));
               } else {
-                widget.onSelected(new UniqueContact(
-                    address: done, displayName: contact.displayName ?? done));
+                widget.onSelected(new UniqueContact(address: done, displayName: contact.displayName ?? done));
               }
             } else {
               if (widget.allContacts.isEmpty) {
@@ -123,9 +120,7 @@ class _ChatSelectorTextFieldState extends State<ChatSelectorTextField> {
           padding: EdgeInsets.only(right: 5.0, top: 2.0, bottom: 2.0),
           autofocus: true,
           style: Theme.of(context).textTheme.bodyText1.apply(
-                color: ThemeData.estimateBrightnessForColor(
-                            Theme.of(context).backgroundColor) ==
-                        Brightness.light
+                color: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor) == Brightness.light
                     ? Colors.black
                     : Colors.white,
                 fontSizeDelta: -0.25,

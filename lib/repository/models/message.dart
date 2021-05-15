@@ -1,4 +1,5 @@
 import 'dart:convert';
+
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/reaction.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
@@ -7,10 +8,10 @@ import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:metadata_fetch/metadata_fetch.dart';
 import 'package:sqflite/sqflite.dart';
 
+import '../../helpers/utils.dart';
 import '../database.dart';
 import 'chat.dart';
 import 'handle.dart';
-import '../../helpers/utils.dart';
 
 Message messageFromJson(String str) {
   final jsonData = json.decode(str);

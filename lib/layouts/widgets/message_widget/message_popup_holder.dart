@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 class MessagePopupHolder extends StatefulWidget {
   final Widget child;
   final Message message;
+
   MessagePopupHolder({
     Key key,
     @required this.child,

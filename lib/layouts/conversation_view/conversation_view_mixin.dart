@@ -59,6 +59,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
   bool gotBrightness = false;
   bool markingAsRead = false;
   bool markedAsRead = false;
+
   void loadBrightness() {
     Color now = Theme.of(context).backgroundColor;
     bool themeChanged = previousBackgroundColor == null || previousBackgroundColor != now;
@@ -316,12 +317,21 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     loadBrightness();
     Color backgroundColor = Theme.of(context).backgroundColor;
     Color fontColor = Theme.of(context).textTheme.headline1.color;
+    String title = chat.title;
+
+    final hideTitle = SettingsManager().settings.redactedMode && SettingsManager().settings.hideContactInfo;
+    final generateTitle =
+        SettingsManager().settings.redactedMode && SettingsManager().settings.generateFakeContactNames;
+
+    if (generateTitle)
+      title = chat.fakeParticipants.length > 1 ? "Group Chat" : chat.fakeParticipants[0];
+    else if (hideTitle) fontColor = Colors.transparent;
 
     if (SettingsManager().settings.skin == Skins.Material || SettingsManager().settings.skin == Skins.Samsung) {
       return AppBar(
         brightness: brightness,
         title: Text(
-          chat.title,
+          title,
           style: Theme.of(context).textTheme.headline1.apply(color: fontColor),
         ),
         bottom: PreferredSize(
@@ -401,6 +411,9 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
       );
     });
 
+    TextStyle titleStyle = Theme.of(context).textTheme.bodyText1;
+    if (!generateTitle && hideTitle) titleStyle = titleStyle.copyWith(color: Colors.transparent);
+
     // Calculate separation factor
     // Anything below -60 won't work due to the alignment
     double distance = avatars.length * -4.0;
@@ -440,8 +453,8 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
                         style: Theme.of(context).textTheme.headline2,
                         children: [
                           TextSpan(
-                            text: chat.title,
-                            style: Theme.of(context).textTheme.bodyText1,
+                            text: title,
+                            style: titleStyle,
                           ),
                           TextSpan(
                             text: " >",

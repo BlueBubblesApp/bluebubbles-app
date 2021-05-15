@@ -6,7 +6,6 @@ import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/layouts/image_viewer/image_viewer.dart';
 import 'package:bluebubbles/layouts/image_viewer/video_viewer.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/attachment_downloader_widget.dart';
-import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
@@ -28,17 +27,14 @@ class AttachmentFullscreenViewer extends StatefulWidget {
   static AttachmentFullscreenViewerState of(BuildContext context) {
     if (context == null) return null;
 
-    return context.findAncestorStateOfType<AttachmentFullscreenViewerState>() ??
-        null;
+    return context.findAncestorStateOfType<AttachmentFullscreenViewerState>() ?? null;
   }
 
   @override
-  AttachmentFullscreenViewerState createState() =>
-      AttachmentFullscreenViewerState();
+  AttachmentFullscreenViewerState createState() => AttachmentFullscreenViewerState();
 }
 
-class AttachmentFullscreenViewerState
-    extends State<AttachmentFullscreenViewer> {
+class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> {
   PageController controller;
   int startingIndex;
   int currentIndex;
@@ -81,8 +77,7 @@ class AttachmentFullscreenViewerState
               " to " +
               (newer.length - older.length + currentIndex).toString());
           currentIndex += newer.length - older.length;
-          controller.animateToPage(currentIndex,
-              duration: Duration(milliseconds: 0), curve: Curves.easeIn);
+          controller.animateToPage(currentIndex, duration: Duration(milliseconds: 0), curve: Curves.easeIn);
         }
       });
 
@@ -93,8 +88,7 @@ class AttachmentFullscreenViewerState
   void getStartingIndex() {
     if (widget.currentChat == null) return;
     for (int i = 0; i < widget.currentChat.chatAttachments.length; i++) {
-      if (widget.currentChat.chatAttachments[i].guid ==
-          widget.attachment.guid) {
+      if (widget.currentChat.chatAttachments[i].guid == widget.attachment.guid) {
         startingIndex = i;
       }
     }
@@ -135,15 +129,12 @@ class AttachmentFullscreenViewerState
                 itemCount: widget.currentChat?.chatAttachments?.length ?? 1,
                 itemBuilder: (BuildContext context, int index) {
                   debugPrint("Showing index: " + index.toString());
-                  Attachment attachment = widget.currentChat != null
-                      ? widget.currentChat.chatAttachments[index]
-                      : widget.attachment;
+                  Attachment attachment =
+                      widget.currentChat != null ? widget.currentChat.chatAttachments[index] : widget.attachment;
                   String mimeType = attachment.mimeType;
                   mimeType = mimeType.substring(0, mimeType.indexOf("/"));
                   dynamic content = AttachmentHelper.getContent(attachment,
-                      path: attachment.guid == null
-                          ? attachment.transferName
-                          : null);
+                      path: attachment.guid == null ? attachment.transferName : null);
 
                   if (content is File) {
                     content = content as File;
@@ -223,27 +214,20 @@ class AttachmentFullscreenViewerState
                                   mainAxisSize: MainAxisSize.min,
                                   children: <Widget>[
                                     Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
+                                      mainAxisAlignment: MainAxisAlignment.center,
                                       children: <Widget>[
                                         CircularProgressIndicator(
                                           value: progress,
                                           backgroundColor: Colors.grey,
-                                          valueColor: AlwaysStoppedAnimation(
-                                              Colors.white),
+                                          valueColor: AlwaysStoppedAnimation(Colors.white),
                                         ),
-                                        ((content as AttachmentDownloader)
-                                                    .attachment
-                                                    .mimeType !=
-                                                null)
+                                        ((content as AttachmentDownloader).attachment.mimeType != null)
                                             ? Container(height: 5.0)
                                             : Container(),
                                         (content.attachment.mimeType != null)
                                             ? Text(
                                                 content.attachment.mimeType,
-                                                style: Theme.of(context)
-                                                    .textTheme
-                                                    .bodyText1,
+                                                style: Theme.of(context).textTheme.bodyText1,
                                               )
                                             : Container()
                                       ],

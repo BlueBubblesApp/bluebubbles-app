@@ -6,8 +6,7 @@ import 'package:bluebubbles/repository/models/theme_object.dart';
 import 'package:flutter/material.dart';
 
 class ThemingColorSelector extends StatefulWidget {
-  ThemingColorSelector({Key key, this.currentTheme, this.entry, this.editable})
-      : super(key: key);
+  ThemingColorSelector({Key key, this.currentTheme, this.entry, this.editable}) : super(key: key);
   final ThemeObject currentTheme;
   final ThemeEntry entry;
   final bool editable;
@@ -41,11 +40,9 @@ class _ThemingColorSelectorState extends State<ThemingColorSelector> {
                       await widget.entry.save(widget.currentTheme);
                       await widget.currentTheme.fetchData();
                       if (widget.currentTheme.selectedDarkTheme) {
-                        await SettingsManager().saveSelectedTheme(_context,
-                            selectedDarkTheme: widget.currentTheme);
+                        await SettingsManager().saveSelectedTheme(_context, selectedDarkTheme: widget.currentTheme);
                       } else if (widget.currentTheme.selectedLightTheme) {
-                        await SettingsManager().saveSelectedTheme(_context,
-                            selectedLightTheme: widget.currentTheme);
+                        await SettingsManager().saveSelectedTheme(_context, selectedLightTheme: widget.currentTheme);
                       }
                     },
                   ),

@@ -9,6 +9,7 @@ class ThemeManager {
   }
 
   static final ThemeManager _manager = ThemeManager._internal();
+
   ThemeManager._internal();
 
   ScrollPhysics get scrollPhysics {

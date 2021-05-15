@@ -20,9 +20,9 @@ class LocationWidget extends StatefulWidget {
   _LocationWidgetState createState() => _LocationWidgetState();
 }
 
-class _LocationWidgetState extends State<LocationWidget>
-    with AutomaticKeepAliveClientMixin {
+class _LocationWidgetState extends State<LocationWidget> with AutomaticKeepAliveClientMixin {
   Map<String, dynamic> location;
+
   @override
   void initState() {
     super.initState();
@@ -72,14 +72,12 @@ class _LocationWidgetState extends State<LocationWidget>
                         height: 200,
                         child: FlutterMap(
                           options: MapOptions(
-                            center: LatLng(
-                                location["longitude"], location["latitude"]),
+                            center: LatLng(location["longitude"], location["latitude"]),
                             zoom: 14.0,
                           ),
                           layers: [
                             new TileLayerOptions(
-                              urlTemplate:
-                                  "http://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}",
+                              urlTemplate: "http://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}",
                               subdomains: ['0', '1', '2', '3'],
                               tileSize: 256,
                             ),
@@ -88,11 +86,9 @@ class _LocationWidgetState extends State<LocationWidget>
                                 new Marker(
                                   width: 40.0,
                                   height: 40.0,
-                                  point: new LatLng(location["longitude"],
-                                      location["latitude"]),
+                                  point: new LatLng(location["longitude"], location["latitude"]),
                                   builder: (ctx) => new Container(
-                                    child: Icon(Icons.pin_drop,
-                                        color: Colors.red, size: 45),
+                                    child: Icon(Icons.pin_drop, color: Colors.red, size: 45),
                                   ),
                                 ),
                               ],
@@ -103,8 +99,7 @@ class _LocationWidgetState extends State<LocationWidget>
                         onTap: openMaps,
                         child: Padding(
                             padding: EdgeInsets.only(top: 11, bottom: 10),
-                            child: Text("Open in Maps",
-                                style: Theme.of(context).textTheme.bodyText1)))
+                            child: Text("Open in Maps", style: Theme.of(context).textTheme.bodyText1)))
                   ])));
     } else {
       return Container(
