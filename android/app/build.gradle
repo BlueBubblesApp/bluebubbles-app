@@ -52,13 +52,13 @@ android {
         // version code: 1  0114                    0                70      64
 
         //noinspection AccidentalOctal
-        versionCode 10115170
+        versionCode 10115770
         versionName flutterVersionName
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
-//        ndk {
-//            abiFilters 'armeabi-v7a', 'arm64-v8a'
-//        }
+        // ndk {
+        //     abiFilters 'armeabi-v7a'
+        // }
     }
 
     compileOptions {
