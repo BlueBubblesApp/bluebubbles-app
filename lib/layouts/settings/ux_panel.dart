@@ -124,7 +124,7 @@ class _UXPanelState extends State<UXPanel> {
                       saveSettings();
                     },
                     initialVal: _settingsCopy.showConnectionIndicator,
-                    title: "Show Connection Indicator in Chat List",
+                    title: "Show Connection Indicator",
                   ),
                   SettingsSwitch(
                     onChanged: (bool val) {

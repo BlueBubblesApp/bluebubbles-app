@@ -40,7 +40,7 @@ class AttachmentHelper {
     try {
       String url;
       for (var i in lines) {
-        if (i.contains(".URL:") || i.contains(".URL;")) {
+        if (i.contains("URL:") || i.contains("URL;")) {
           url = i;
         }
       }
@@ -69,12 +69,11 @@ class AttachmentHelper {
           "latitude": double.tryParse(query.split("\\,")[1])
         };
       } else {
-        return {
-          "longitude": double.tryParse((query.split(",")[0])),
-          "latitude": double.tryParse(query.split(",")[1])
-        };
+        return {"longitude": double.tryParse((query.split(",")[0])), "latitude": double.tryParse(query.split(",")[1])};
       }
     } catch (ex) {
+      debugPrint("Faled to parse location!");
+      debugPrint(ex.toString());
       return emptyLocation;
     }
   }

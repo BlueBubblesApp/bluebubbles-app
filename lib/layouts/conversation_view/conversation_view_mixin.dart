@@ -255,6 +255,64 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     });
   }
 
+  Widget buildCupertinoTrailing() {
+    Color fontColor = Theme.of(context).textTheme.headline1.color;
+    bool manualMark = SettingsManager().settings.enablePrivateAPI && SettingsManager().settings.privateManualMarkAsRead;
+    List<Widget> items = [
+      if (manualMark && markingAsRead)
+        Padding(
+            padding: const EdgeInsets.only(right: 10.0),
+            child: Theme(
+              data: ThemeData(
+                cupertinoOverrideTheme: Cupertino.CupertinoThemeData(brightness: brightness),
+              ),
+              child: Cupertino.CupertinoActivityIndicator(
+                radius: 12,
+              ),
+            )),
+      if (manualMark && !markingAsRead)
+        Padding(
+          padding: const EdgeInsets.only(right: 2.0),
+          child: GestureDetector(
+            child: Icon(
+              (markedAsRead) ? Icons.check_circle : Icons.check_circle_outline,
+              color: (markedAsRead) ? HexColor('32CD32').withAlpha(200) : fontColor,
+            ),
+            onTap: markChatAsRead,
+          ),
+        ),
+    ];
+
+    double leftoverPadding = 33;
+    if (SettingsManager().settings.showConnectionIndicator) {
+      leftoverPadding = leftoverPadding - 12;
+
+      items.add(StreamBuilder(
+          stream: SocketManager().connectionStateStream,
+          builder: (context, AsyncSnapshot<SocketState> snapshot) {
+            SocketState connectionStatus;
+            if (snapshot.hasData) {
+              connectionStatus = snapshot.data;
+            } else {
+              connectionStatus = SocketManager().state;
+            }
+
+            return getIndicatorIcon(connectionStatus, size: 12);
+          }));
+    }
+
+    if (items.length <= 1) {
+      items.add(Container(width: leftoverPadding));
+    }
+
+    return Stack(
+      alignment: (!SettingsManager().settings.showConnectionIndicator || !manualMark)
+          ? AlignmentDirectional.center
+          : AlignmentDirectional.topEnd,
+      children: items,
+    );
+  }
+
   Widget buildConversationViewHeader() {
     loadBrightness();
     Color backgroundColor = Theme.of(context).backgroundColor;
@@ -287,6 +345,19 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
         actionsIconTheme: IconThemeData(color: Theme.of(context).primaryColor),
         iconTheme: IconThemeData(color: Theme.of(context).primaryColor),
         actions: [
+          if (SettingsManager().settings.showConnectionIndicator)
+            StreamBuilder(
+                stream: SocketManager().connectionStateStream,
+                builder: (context, AsyncSnapshot<SocketState> snapshot) {
+                  SocketState connectionStatus;
+                  if (snapshot.hasData) {
+                    connectionStatus = snapshot.data;
+                  } else {
+                    connectionStatus = SocketManager().state;
+                  }
+
+                  return getIndicatorIcon(connectionStatus, size: 12);
+                }),
           if (SettingsManager().settings.privateManualMarkAsRead && markingAsRead)
             Padding(
                 padding: const EdgeInsets.only(right: 8.0),
@@ -388,44 +459,17 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
                           TextSpan(
                             text: " >",
                             style: Theme.of(context).textTheme.subtitle1,
-                          )
+                          ),
                         ],
                       ),
-                    )
+                    ),
                   ],
                 ),
               ),
             ),
           ],
         ),
-        trailing: (SettingsManager().settings.enablePrivateAPI && SettingsManager().settings.privateManualMarkAsRead)
-            ? Stack(
-                children: [
-                  if (markingAsRead)
-                    Padding(
-                        padding: const EdgeInsets.only(right: 10.0),
-                        child: Theme(
-                          data: ThemeData(
-                            cupertinoOverrideTheme: Cupertino.CupertinoThemeData(brightness: brightness),
-                          ),
-                          child: Cupertino.CupertinoActivityIndicator(
-                            radius: 12,
-                          ),
-                        )),
-                  if (!markingAsRead)
-                    Padding(
-                      padding: const EdgeInsets.only(right: 2.0),
-                      child: GestureDetector(
-                        child: Icon(
-                          (markedAsRead) ? Icons.check_circle : Icons.check_circle_outline,
-                          color: (markedAsRead) ? HexColor('32CD32').withAlpha(200) : fontColor,
-                        ),
-                        onTap: markChatAsRead,
-                      ),
-                    ),
-                ],
-              )
-            : Container(width: 33));
+        trailing: this.buildCupertinoTrailing());
   }
 
   /// Chat selector methods

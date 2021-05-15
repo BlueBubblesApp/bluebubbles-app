@@ -82,8 +82,13 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget> with TickerProvider
 
   Future<void> fetchPreview() async {
     // Try to get any already loaded attachment data
-    if (CurrentChat.of(context).urlPreviews?.containsKey(widget.message.text) != null) {
-      data = CurrentChat.of(context).urlPreviews[widget.message.text];
+    if (CurrentChat
+        .of(context)
+        .urlPreviews
+        ?.containsKey(widget.message.text) != null) {
+      data = CurrentChat
+          .of(context)
+          .urlPreviews[widget.message.text];
     }
 
     if (data != null || isLoading) return;
@@ -128,7 +133,9 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget> with TickerProvider
 
     // Save the metadata
     if (context != null && data != null) {
-      CurrentChat.of(context).urlPreviews[widget.message.text] = data;
+      CurrentChat
+          .of(context)
+          .urlPreviews[widget.message.text] = data;
     }
 
     // We are done loading
@@ -156,18 +163,30 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget> with TickerProvider
       stream: loadingStateStream.stream,
       builder: (context, snapshot) {
         if (data == null && isLoading) {
-          return Text("Loading Preview...", style: Theme.of(context).textTheme.bodyText1.apply(fontWeightDelta: 2));
+          return Text("Loading Preview...", style: Theme
+              .of(context)
+              .textTheme
+              .bodyText1
+              .apply(fontWeightDelta: 2));
         } else if (data != null && data.title != null && data.title != "Image Preview") {
           return Text(
             data?.title ?? "<No Title>",
-            style: Theme.of(context).textTheme.bodyText1.apply(fontWeightDelta: 2),
+            style: Theme
+                .of(context)
+                .textTheme
+                .bodyText1
+                .apply(fontWeightDelta: 2),
             overflow: TextOverflow.ellipsis,
             maxLines: 2,
           );
         } else if (data?.title == "Image Preview") {
           return Container();
         } else {
-          return Text("Unable to Load Preview", style: Theme.of(context).textTheme.bodyText1.apply(fontWeightDelta: 2));
+          return Text("Unable to Load Preview", style: Theme
+              .of(context)
+              .textTheme
+              .bodyText1
+              .apply(fontWeightDelta: 2));
         }
       },
     );
@@ -194,119 +213,132 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget> with TickerProvider
     final bool hideType = SettingsManager().settings.redactedMode && SettingsManager().settings.hideAttachmentTypes;
 
     return AnimatedSize(
-      curve: Curves.easeInOut,
-      alignment: Alignment.center,
-      duration: Duration(milliseconds: 200),
-      vsync: this,
-      child: Padding(
-        padding: EdgeInsets.only(
-          top: widget.message.hasReactions ? 18.0 : 4,
-          bottom: 4,
-          right: !widget.message.isFromMe && widget.message.hasReactions ? 10.0 : 5.0,
-          left: widget.message.isFromMe && widget.message.hasReactions ? 5.0 : 0,
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(20),
-          child: Material(
-            color: Theme.of(context).accentColor,
-            child: InkResponse(
+        curve: Curves.easeInOut,
+        alignment: Alignment.center,
+        duration: Duration(milliseconds: 200),
+        vsync: this,
+        child: Padding(
+            padding: EdgeInsets.only(
+              top: widget.message.hasReactions ? 18.0 : 4,
+              bottom: 4,
+              right: !widget.message.isFromMe && widget.message.hasReactions ? 10.0 : 5.0,
+              left: widget.message.isFromMe && widget.message.hasReactions ? 5.0 : 0,
+            ),
+            child: ClipRRect(
               borderRadius: BorderRadius.circular(20),
-              onTap: () {
-                MethodChannelInterface().invokeMethod(
-                  "open-link",
-                  {"link": data?.url ?? widget.message.text},
-                );
-              },
-              child: Container(
-                // The minus 5 here is so the timestamps show OK during swipe
-                width: (MediaQuery.of(context).size.width * 2 / 3) - 5,
-                child: Stack(
-                  children: <Widget>[
-                    Column(
-                      children: <Widget>[
-                        mainImage,
-                        Padding(
-                          padding: EdgeInsets.only(left: 14.0, right: 14.0, top: 14.0),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: <Widget>[
-                              Flexible(
-                                fit: FlexFit.tight,
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: <Widget>[
-                                    titleWidget,
-                                    data != null && data.description != null
-                                        ? Padding(
+              child: Material(
+                color: Theme
+                    .of(context)
+                    .accentColor,
+                child: InkResponse(
+                    borderRadius: BorderRadius.circular(20),
+                    onTap: () {
+                      MethodChannelInterface().invokeMethod(
+                        "open-link",
+                        {"link": data?.url ?? widget.message.text},
+                      );
+                    },
+                    child: Container(
+                      // The minus 5 here is so the timestamps show OK during swipe
+                        width: (MediaQuery
+                            .of(context)
+                            .size
+                            .width * 2 / 3) - 5,
+                        child: Stack(
+                          children: <Widget>[
+                            mainImage,
+                            Padding(
+                              padding: EdgeInsets.only(left: 14.0, right: 14.0, top: 14.0),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: <Widget>[
+                                  Flexible(
+                                    fit: FlexFit.tight,
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: <Widget>[
+                                        titleWidget,
+                                        data != null && data.description != null
+                                            ? Padding(
                                             padding: EdgeInsets.only(top: 5.0),
                                             child: Text(
                                               data.description,
                                               maxLines: 3,
                                               overflow: TextOverflow.ellipsis,
-                                              style: Theme.of(context).textTheme.bodyText1.apply(fontSizeDelta: -5),
+                                              style: Theme
+                                                  .of(context)
+                                                  .textTheme
+                                                  .bodyText1
+                                                  .apply(fontSizeDelta: -5),
                                             ))
-                                        : Container(),
-                                    Padding(
-                                      padding: EdgeInsets.only(
-                                          top: (data?.title == "Image Preview" ? 0 : 5.0), bottom: 10.0),
-                                      child: Text(
-                                        widget.message.text
-                                            .replaceAll("https://", "")
-                                            .replaceAll("http://", "")
-                                            .toLowerCase(),
-                                        style: Theme.of(context).textTheme.subtitle2,
-                                        overflow: TextOverflow.ellipsis,
-                                        maxLines: 1,
-                                      ),
+                                            : Container(),
+                                        Padding(
+                                          padding:
+                                          EdgeInsets.only(
+                                              top: (data?.title == "Image Preview" ? 0 : 5.0), bottom: 10.0),
+                                          child: Text(
+                                            widget.message.text
+                                                .replaceAll("https://", "")
+                                                .replaceAll("http://", "")
+                                                .toLowerCase(),
+                                            style: Theme
+                                                .of(context)
+                                                .textTheme
+                                                .subtitle2,
+                                            overflow: TextOverflow.ellipsis,
+                                            maxLines: 1,
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                  ],
-                                ),
-                              ),
-                              (widget.linkPreviews.length == 1 &&
+                                  ),
+                                  (widget.linkPreviews.length == 1 &&
                                       data?.image == null &&
                                       AttachmentHelper.attachmentExists(widget.linkPreviews.last))
-                                  ? Padding(
-                                      padding: EdgeInsets.only(left: 10.0, bottom: 10.0),
-                                      child: ClipRRect(
-                                        borderRadius: BorderRadius.circular(10.0),
-                                        child: Image.file(
-                                          attachmentFile(widget.linkPreviews.first),
-                                          width: 40,
-                                          fit: BoxFit.contain,
-                                          errorBuilder: (BuildContext contenxt, Object test, StackTrace trace) {
-                                            return Container();
-                                          },
-                                        ),
+                                      ? Padding(
+                                    padding: EdgeInsets.only(left: 10.0, bottom: 10.0),
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(10.0),
+                                      child: Image.file(
+                                        attachmentFile(widget.linkPreviews.first),
+                                        width: 40,
+                                        fit: BoxFit.contain,
+                                        errorBuilder: (BuildContext contenxt, Object test, StackTrace trace) {
+                                          return Container();
+                                        },
                                       ),
-                                    )
-                                  : Container()
-                            ],
-                          ),
+                                    ),
+                                  )
+                                      : Container()
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                    if (hideContent)
-                      Positioned.fill(
-                        child: Container(
-                          color: Theme.of(context).accentColor,
-                        ),
-                      ),
-                    if (hideContent && !hideType)
-                      Positioned.fill(
-                          child: Container(
-                              alignment: Alignment.center,
-                              child: Text(
-                                "link",
-                                textAlign: TextAlign.center,
-                              )))
-                  ],
-                ),
+                        if (hideContent)
+                    Positioned.fill(
+                child: Container(
+                color: Theme.of(context).accentColor,
               ),
             ),
-          ),
-        ),
-      ),
+            if (hideContent && !hideType)
+        Positioned.fill(
+    child: Container(
+    alignment: Alignment.center,
+        child: Text(
+          "link",
+          textAlign: TextAlign.center,
+        )))
+    ],
+    ),
+    ),
+    ),
+    ),
+    )
+    ,
+    )
+    ,
     );
   }
 }

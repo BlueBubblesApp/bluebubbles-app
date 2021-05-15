@@ -61,6 +61,7 @@ class MetadataHelper {
       url = "https://" + url;
     }
 
+    String originalUrl = url;
     String newUrl = MetadataHelper._reformatUrl(url);
 
     // Handle specific cases
@@ -128,7 +129,6 @@ class MetadataHelper {
       }
     } else if (url.contains("linkedin.com/posts/")) {
       data = await MetadataHelper._manuallyGetMetadata(url);
-      data.url = url;
       alreadyManual = true;
     } else {
       try {
@@ -141,7 +141,6 @@ class MetadataHelper {
     // If the data or title was null, try to manually parse
     if (!alreadyManual && isNullOrEmpty(data?.title)) {
       data = await MetadataHelper._manuallyGetMetadata(url);
-      data.url = url;
     }
 
     // If the URL is supposedly to an actual image, set the image to the URL manually
@@ -160,6 +159,9 @@ class MetadataHelper {
     // Remove title or description if either are the "null" string
     if (data?.title == "null") data?.title = null;
     if (data?.description == "null") data?.description = null;
+
+    // Set the OG URL
+    data.url = originalUrl;
 
     // Delete from the cache after 15 seconds (arbitrary)
     Future.delayed(Duration(seconds: 15), () {
