@@ -18,7 +18,6 @@ import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_smart_reply/flutter_smart_reply.dart';
@@ -69,6 +68,10 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
 
     return currentChat.scrollController;
   }
+
+  bool get showSmartReplies =>
+      SettingsManager().settings.smartReply &&
+      (!SettingsManager().settings.redactedMode || !SettingsManager().settings.hideMessageContent);
 
   @override
   void initState() {
@@ -271,7 +274,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
         if (this.mounted) setState(() {});
       }
 
-      if (isNewMessage && SettingsManager().settings.smartReply) {
+      if (isNewMessage && this.showSmartReplies) {
         updateReplies();
       }
     } else if (event.type == MessageBlocEventType.remove) {
@@ -288,7 +291,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
 
       // We only want to update smart replies on the intial message fetch
       if (originalMessageLength == 0) {
-        if (SettingsManager().settings.smartReply) {
+        if (this.showSmartReplies) {
           if (_messages.length > 0) updateReplies();
         }
       }
@@ -392,7 +395,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
             reverse: true,
             physics: ThemeSwitcher.getScrollPhysics(),
             slivers: <Widget>[
-              if (SettingsManager().settings.smartReply)
+              if (this.showSmartReplies)
                 StreamBuilder<List<String>>(
                   stream: smartReplyController.stream,
                   builder: (context, snapshot) {
