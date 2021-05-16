@@ -97,7 +97,7 @@ class _MessageAttachmentState extends State<MessageAttachment> with AutomaticKee
           attachment: widget.attachment,
           child: AudioPlayerWiget(file: content, context: context, width: 250),
         );
-      } else if (widget.attachment.mimeType == "text/x-vlocation") {
+      } else if (widget.attachment.mimeType == "text/x-vlocation" || widget.attachment.uti == 'public.vlocation') {
         return MediaFile(
           attachment: widget.attachment,
           child: LocationWidget(
