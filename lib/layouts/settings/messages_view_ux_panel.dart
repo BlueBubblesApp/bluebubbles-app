@@ -184,7 +184,7 @@ class _ConvoSettingsState extends State<ConvoSettings> {
                   ),
                   if (_settingsCopy.smartReply)
                     SettingsSlider(
-                        text: "Smart Reply Sample SIze",
+                        text: "Smart Reply Sample Size",
                         startingVal: _settingsCopy.smartReplySampleSize.toDouble(),
                         update: (double val) {
                           _settingsCopy.smartReplySampleSize = val.toInt();
