@@ -695,7 +695,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       }
 
       String appDocPath = SettingsManager().appDocDir.path;
-      String pathName = "$appDocPath/attachments/AudioMessage.m4a";
+      String pathName = "$appDocPath/attachments/OutgoingAudioMessage.m4a";
       reviewAudio(context, new File(pathName));
     }
   }
