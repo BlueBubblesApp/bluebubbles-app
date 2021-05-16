@@ -107,13 +107,15 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
     generateFakeContactNames = SettingsManager().settings.generateFakeContactNames;
     generateFakeMessageContent = SettingsManager().settings.generateFakeMessageContent;
     SettingsManager().stream.listen((Settings newSettings) {
-      if (newSettings.hideDividers != hideDividers && this.mounted) {
+      if (!this.mounted) return;
+
+      if (newSettings.hideDividers != hideDividers) {
         setState(() {
           hideDividers = newSettings.hideDividers;
         });
       }
 
-      if (newSettings.denseChatTiles != denseTiles && this.mounted) {
+      if (newSettings.denseChatTiles != denseTiles) {
         setState(() {
           denseTiles = newSettings.denseChatTiles;
         });

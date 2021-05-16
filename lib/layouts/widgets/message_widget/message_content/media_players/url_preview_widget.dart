@@ -192,6 +192,81 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget> with TickerProvider
 
     final bool hideContent = SettingsManager().settings.redactedMode && SettingsManager().settings.hideMessageContent;
     final bool hideType = SettingsManager().settings.redactedMode && SettingsManager().settings.hideAttachmentTypes;
+    print(hideContent);
+    print(hideType);
+
+    List<Widget> items = [
+      mainImage,
+      Padding(
+        padding: EdgeInsets.only(left: 14.0, right: 14.0, top: 14.0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Flexible(
+              fit: FlexFit.tight,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  titleWidget,
+                  data != null && data.description != null
+                      ? Padding(
+                          padding: EdgeInsets.only(top: 5.0),
+                          child: Text(
+                            data.description,
+                            maxLines: 3,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.bodyText1.apply(fontSizeDelta: -5),
+                          ))
+                      : Container(),
+                  Padding(
+                    padding: EdgeInsets.only(top: (data?.title == "Image Preview" ? 0 : 5.0), bottom: 10.0),
+                    child: Text(
+                      widget.message.text.replaceAll("https://", "").replaceAll("http://", "").toLowerCase(),
+                      style: Theme.of(context).textTheme.subtitle2,
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            (widget.linkPreviews.length == 1 &&
+                    data?.image == null &&
+                    AttachmentHelper.attachmentExists(widget.linkPreviews.last))
+                ? Padding(
+                    padding: EdgeInsets.only(left: 10.0, bottom: 10.0),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(10.0),
+                      child: Image.file(
+                        attachmentFile(widget.linkPreviews.first),
+                        width: 40,
+                        fit: BoxFit.contain,
+                        errorBuilder: (BuildContext contenxt, Object test, StackTrace trace) {
+                          return Container();
+                        },
+                      ),
+                    ),
+                  )
+                : Container()
+          ],
+        ),
+      ),
+      if (hideContent)
+        Positioned.fill(
+          child: Container(
+            color: Theme.of(context).accentColor,
+          ),
+        ),
+      if (hideContent && !hideType)
+        Positioned.fill(
+            child: Container(
+                alignment: Alignment.center,
+                child: Text(
+                  "link",
+                  textAlign: TextAlign.center,
+                )))
+    ];
 
     return AnimatedSize(
       curve: Curves.easeInOut,
@@ -220,84 +295,7 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget> with TickerProvider
               child: Container(
                 // The minus 5 here is so the timestamps show OK during swipe
                 width: (MediaQuery.of(context).size.width * 2 / 3) - 5,
-                child: Stack(
-                  children: <Widget>[
-                    mainImage,
-                    Padding(
-                      padding: EdgeInsets.only(left: 14.0, right: 14.0, top: 14.0),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: <Widget>[
-                          Flexible(
-                            fit: FlexFit.tight,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: <Widget>[
-                                titleWidget,
-                                data != null && data.description != null
-                                    ? Padding(
-                                        padding: EdgeInsets.only(top: 5.0),
-                                        child: Text(
-                                          data.description,
-                                          maxLines: 3,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: Theme.of(context).textTheme.bodyText1.apply(fontSizeDelta: -5),
-                                        ))
-                                    : Container(),
-                                Padding(
-                                  padding:
-                                      EdgeInsets.only(top: (data?.title == "Image Preview" ? 0 : 5.0), bottom: 10.0),
-                                  child: Text(
-                                    widget.message.text
-                                        .replaceAll("https://", "")
-                                        .replaceAll("http://", "")
-                                        .toLowerCase(),
-                                    style: Theme.of(context).textTheme.subtitle2,
-                                    overflow: TextOverflow.ellipsis,
-                                    maxLines: 1,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          (widget.linkPreviews.length == 1 &&
-                                  data?.image == null &&
-                                  AttachmentHelper.attachmentExists(widget.linkPreviews.last))
-                              ? Padding(
-                                  padding: EdgeInsets.only(left: 10.0, bottom: 10.0),
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(10.0),
-                                    child: Image.file(
-                                      attachmentFile(widget.linkPreviews.first),
-                                      width: 40,
-                                      fit: BoxFit.contain,
-                                      errorBuilder: (BuildContext contenxt, Object test, StackTrace trace) {
-                                        return Container();
-                                      },
-                                    ),
-                                  ),
-                                )
-                              : Container()
-                        ],
-                      ),
-                    ),
-                    if (hideContent)
-                      Positioned.fill(
-                        child: Container(
-                          color: Theme.of(context).accentColor,
-                        ),
-                      ),
-                    if (hideContent && !hideType)
-                      Positioned.fill(
-                          child: Container(
-                              alignment: Alignment.center,
-                              child: Text(
-                                "link",
-                                textAlign: TextAlign.center,
-                              )))
-                  ],
-                ),
+                child: (hideContent || hideType) ? Stack(children: items) : Column(children: items),
               ),
             ),
           ),
