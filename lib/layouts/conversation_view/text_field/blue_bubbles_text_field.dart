@@ -226,8 +226,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                   // Delete the file
                   file.delete();
 
-                  // REmove the OG alert dialog
-                  Navigator.of(context).pop();
+                  // Remove the OG alert dialog
+                  Navigator.of(originalContext).pop();
                 }),
             new FlatButton(
               child: new Text(
