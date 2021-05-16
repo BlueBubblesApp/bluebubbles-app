@@ -128,7 +128,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
   }
 
   Future<bool> send(List<File> attachments, String text) async {
-    bool isDifferentChat = currentChat == null || currentChat?.chat?.guid != chat.guid;
+    bool isDifferentChat = currentChat == null || currentChat?.chat?.guid != chat?.guid;
 
     if (isCreator) {
       if (chat == null && selected.length == 1) {

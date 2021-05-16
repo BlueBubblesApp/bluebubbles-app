@@ -627,10 +627,6 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
       }
     }
 
-    if (widget.type == ChatSelectorTypes.ONLY_EXISTING || chatSelectorController.text.length > 1) {
-      conversations.retainWhere((element) => element.participants.length > 1);
-    }
-
     filterContacts();
     if (this.mounted) setState(() {});
   }
@@ -643,14 +639,20 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
           contacts = [];
         });
     }
-    searchQuery = (searchQuery ?? "");
+
+    Function slugText = (String text) {
+      return Slugify((text ?? ""), delimiter: '').toString().replaceAll('-', '');
+    };
+
+    // Slugify the search query for matching
+    searchQuery = slugText(searchQuery);
 
     List<UniqueContact> _contacts = [];
     List<String> cache = [];
     Function addContactEntries = (Contact contact, {conditionally = false}) {
       for (Item phone in contact.phones) {
-        String cleansed = cleansePhoneNumber(phone.value);
-        if (conditionally && !cleansed.contains(searchQuery.toLowerCase())) continue;
+        String cleansed = slugText(phone.value);
+        if (conditionally && !cleansed.contains(searchQuery)) continue;
 
         if (!cache.contains(cleansed)) {
           cache.add(cleansed);
@@ -665,10 +667,11 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
       }
 
       for (Item email in contact.emails) {
-        if (conditionally && !email.value.contains(searchQuery.toLowerCase())) continue;
+        String emailVal = slugText(email.value);
+        if (conditionally && !emailVal.contains(searchQuery)) continue;
 
-        if (!cache.contains(email.value)) {
-          cache.add(email.value);
+        if (!cache.contains(emailVal)) {
+          cache.add(emailVal);
           _contacts.add(
             new UniqueContact(
               address: email.value,
@@ -682,8 +685,8 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
 
     if (widget.type != ChatSelectorTypes.ONLY_EXISTING) {
       for (Contact contact in ContactManager().contacts) {
-        String name = (contact.displayName ?? "").toLowerCase();
-        if (name.contains(searchQuery.toLowerCase())) {
+        String name = slugText(contact.displayName);
+        if (name.contains(searchQuery)) {
           addContactEntries(contact);
         } else {
           addContactEntries(contact, conditionally: true);
@@ -694,12 +697,8 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     List<UniqueContact> _conversations = [];
     if (selected.length == 0 && widget.type != ChatSelectorTypes.ONLY_CONTACTS) {
       for (Chat chat in conversations) {
-        String title = (chat?.title ?? "").toLowerCase();
-        if (widget.type != ChatSelectorTypes.ONLY_EXISTING && chatSelectorController.text.length > 1) {
-          if (chat.participants.length == 1) continue;
-        }
-
-        if (title.contains(searchQuery.toLowerCase())) {
+        String title = slugText(chat?.title);
+        if (title.contains(searchQuery)) {
           if (!cache.contains(chat.guid)) {
             cache.add(chat.guid);
             _conversations.add(
@@ -712,6 +711,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
         }
       }
     }
+
     _conversations.addAll(_contacts);
     if (searchQuery.length > 0)
       _conversations.sort((a, b) {
@@ -733,6 +733,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     if (searchQuery.length > 0) {
       selected.add(new UniqueContact(address: searchQuery, displayName: searchQuery));
     }
+
     List<String> participants = selected.map((e) => cleansePhoneNumber(e.address)).toList();
     Map<String, dynamic> params = {};
     showDialog(
