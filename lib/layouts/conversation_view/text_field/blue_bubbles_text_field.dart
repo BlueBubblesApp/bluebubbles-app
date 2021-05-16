@@ -609,7 +609,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                 : Colors.white,
                         fontSizeDelta: -0.25,
                       ),
-                  onContentCommited: onContentCommit,
+                  // onContentCommited: onContentCommit,
                   decoration: InputDecoration(
                     isDense: true,
                     enabledBorder: OutlineInputBorder(
@@ -662,7 +662,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     if (!await directory.exists()) {
       directory.createSync();
     }
-    String pathName = "$appDocPath/attachments/AudioMessage.m4a";
+    String pathName = "$appDocPath/attachments/OutgoingAudioMessage.m4a";
     File file = new File(pathName);
     if (file.existsSync()) file.deleteSync();
 
