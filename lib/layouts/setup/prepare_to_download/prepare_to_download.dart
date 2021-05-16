@@ -151,9 +151,7 @@ class _PrepareToDownloadState extends State<PrepareToDownload> {
                       SocketManager().setup.skipEmptyChats = skipEmptyChats;
 
                       // Start syncing
-                      SocketManager().setup.startSync(
-                            SettingsManager().settings,
-                          );
+                      SocketManager().setup.startFullSync(SettingsManager().settings);
                       widget.controller.nextPage(
                         duration: Duration(milliseconds: 300),
                         curve: Curves.easeInOut,

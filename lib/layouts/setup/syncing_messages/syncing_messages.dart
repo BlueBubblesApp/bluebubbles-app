@@ -61,7 +61,7 @@ class _SyncingMessagesState extends State<SyncingMessages> {
                       flex: 100,
                     ),
                     Text(
-                      "${(progress * 100).floor()}%",
+                      "${progress.floor()}%",
                       style: Theme.of(context).textTheme.bodyText1.apply(fontSizeFactor: 1.5),
                     ),
                     Spacer(

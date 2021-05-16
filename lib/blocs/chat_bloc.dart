@@ -33,6 +33,8 @@ class ChatBloc {
   static StreamSubscription<NewMessageEvent> _messageSubscription;
 
   List<Chat> _chats;
+  bool _hasChats;
+  bool get hasChats => _hasChats == null || _hasChats;
 
   List<Chat> get chats => _chats;
   List<Chat> _archivedChats;
@@ -65,17 +67,20 @@ class ChatBloc {
     return null;
   }
 
-  Future<void> refreshChats() async {
+  Future<void> refreshChats({bool force = false}) async {
     // If we are fetching the contacts, return the current future so we can await it
-    if (chatRequest != null && !chatRequest.isCompleted) {
+    if (!force && chatRequest != null && !chatRequest.isCompleted) {
       return chatRequest.future;
+    }
+
+    // If we force a reload, we should wait until the previous one is finished
+    if (force && chatRequest != null && !chatRequest.isCompleted) {
+      await chatRequest.future;
     }
 
     chatRequest = new Completer<void>();
 
-    _chats = [];
-    _archivedChats = [];
-    debugPrint("[ChatBloc] -> Fetching chats...");
+    debugPrint("[ChatBloc] -> Fetching chats (${force ? 'forced' : 'normal'})...");
 
     // Get the contacts in case we haven't
     await ContactManager().getContacts();
@@ -218,8 +223,20 @@ class ChatBloc {
 
   Future<void> getChatBatches({int batchSize = 10, bool archived = false}) async {
     int count = await Chat.count();
-    int batches = (count < batchSize) ? batchSize : (count / batchSize).floor();
+    if (count == 0) {
+      _hasChats = false;
+    } else {
+      _hasChats = true;
+    }
 
+    // Reset chat lists
+    if (archived) {
+      _archivedChats = [];
+    } else {
+      _chats = [];
+    }
+
+    int batches = (count < batchSize) ? batchSize : (count / batchSize).floor();
     for (int i = 0; i < batches; i++) {
       List<Chat> chats = await Chat.getChats(limit: batchSize, offset: i * batchSize, archived: archived);
       if (chats.length == 0) break;
