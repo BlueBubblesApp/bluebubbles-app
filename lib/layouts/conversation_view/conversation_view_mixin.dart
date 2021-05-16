@@ -261,7 +261,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     List<Widget> items = [
       if (manualMark && markingAsRead)
         Padding(
-            padding: const EdgeInsets.only(right: 10.0),
+            padding: EdgeInsets.only(right: SettingsManager().settings.colorblindMode ? 15.0 : 10.0),
             child: Theme(
               data: ThemeData(
                 cupertinoOverrideTheme: Cupertino.CupertinoThemeData(brightness: brightness),
@@ -272,7 +272,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
             )),
       if (manualMark && !markingAsRead)
         Padding(
-          padding: const EdgeInsets.only(right: 2.0),
+          padding: EdgeInsets.only(right: SettingsManager().settings.colorblindMode ? 10.0 : 5.0),
           child: GestureDetector(
             child: Icon(
               (markedAsRead) ? Icons.check_circle : Icons.check_circle_outline,
@@ -283,10 +283,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
         ),
     ];
 
-    double leftoverPadding = 33;
     if (SettingsManager().settings.showConnectionIndicator) {
-      leftoverPadding = leftoverPadding - 12;
-
       items.add(StreamBuilder(
           stream: SocketManager().connectionStateStream,
           builder: (context, AsyncSnapshot<SocketState> snapshot) {
@@ -302,7 +299,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     }
 
     if (items.length <= 1) {
-      items.add(Container(width: leftoverPadding));
+      items.add(Container(width: 40));
     }
 
     return Stack(
