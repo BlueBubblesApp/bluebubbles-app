@@ -136,7 +136,7 @@ class SetupBloc {
         await chat.save();
 
         try {
-          await synChat(chat);
+          await syncChat(chat);
           addOutput("Finished syncing chat, '${chat.chatIdentifier}'", SetupOutputType.LOG);
         } catch (ex) {
           addOutput("Failed to sync chat, '${chat.chatIdentifier}'", SetupOutputType.ERROR);
@@ -157,7 +157,7 @@ class SetupBloc {
     }
   }
 
-  Future<void> synChat(Chat chat) async {
+  Future<void> syncChat(Chat chat) async {
     Map<String, dynamic> params = Map();
     params["identifier"] = chat.guid;
     params["withBlurhash"] = false;
