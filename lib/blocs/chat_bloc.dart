@@ -32,12 +32,12 @@ class ChatBloc {
 
   static StreamSubscription<NewMessageEvent> _messageSubscription;
 
-  List<Chat> _chats;
+  List<Chat> _chats = [];
   bool _hasChats;
   bool get hasChats => _hasChats == null || _hasChats;
 
   List<Chat> get chats => _chats;
-  List<Chat> _archivedChats;
+  List<Chat> _archivedChats = [];
 
   List<Chat> get archivedChats => _archivedChats;
   Completer<void> chatRequest;
@@ -99,6 +99,7 @@ class ChatBloc {
     if (chat == null) return;
     if (isNullOrEmpty(_chats)) {
       await this.refreshChats();
+      if (isNullOrEmpty(_chats)) return;
     }
 
     int currentIndex = -1;
@@ -106,7 +107,7 @@ class ChatBloc {
 
     // Get the current index of the chat, (if there),
     // and figure out if we need to update the chat.
-    for (int i = 0; i < _chats.length; i++) {
+    for (int i = 0; i < (_chats ?? []).length; i++) {
       // Skip over non-matching chats
       if (_chats[i].guid != chat.guid) continue;
 

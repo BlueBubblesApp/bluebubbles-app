@@ -125,11 +125,8 @@ class Message {
       hasAttachments = (json['attachments'] as List).length > 0 ? true : false;
     }
 
-    List<Attachment> attachments = json.containsKey("attachments")
-        ? (json['attachments'] as List)
-            .map((a) => Attachment.fromMap(a))
-            .toList()
-        : [];
+    List<Attachment> attachments =
+        json.containsKey("attachments") ? (json['attachments'] as List).map((a) => Attachment.fromMap(a)).toList() : [];
 
     // Load the metadata
     dynamic metadata = json.containsKey("metadata") ? json["metadata"] : null;
@@ -143,21 +140,17 @@ class Message {
     }
 
     String associatedMessageGuid;
-    if (json.containsKey("associatedMessageGuid") &&
-        json["associatedMessageGuid"] != null) {
+    if (json.containsKey("associatedMessageGuid") && json["associatedMessageGuid"] != null) {
       if ((json["associatedMessageGuid"] as String).contains("/")) {
-        associatedMessageGuid =
-            (json["associatedMessageGuid"] as String).split("/").last;
+        associatedMessageGuid = (json["associatedMessageGuid"] as String).split("/").last;
       } else {
-        associatedMessageGuid =
-            (json["associatedMessageGuid"] as String).split(":").last;
+        associatedMessageGuid = (json["associatedMessageGuid"] as String).split(":").last;
       }
     }
 
     var data = new Message(
       id: json.containsKey("ROWID") ? json["ROWID"] : null,
-      originalROWID:
-          json.containsKey("originalROWID") ? json["originalROWID"] : null,
+      originalROWID: json.containsKey("originalROWID") ? json["originalROWID"] : null,
       guid: json["guid"],
       handleId: (json["handleId"] != null) ? json["handleId"] : 0,
       otherHandle: (json["otherHandle"] != null) ? json["otherHandle"] : null,
@@ -165,75 +158,40 @@ class Message {
       subject: json.containsKey("subject") ? json["subject"] : null,
       country: json.containsKey("country") ? json["country"] : null,
       error: json.containsKey("error") ? json["error"] : 0,
-      dateCreated: json.containsKey("dateCreated")
-          ? parseDate(json["dateCreated"])
-          : null,
-      dateRead:
-          json.containsKey("dateRead") ? parseDate(json["dateRead"]) : null,
-      dateDelivered: json.containsKey("dateDelivered")
-          ? parseDate(json["dateDelivered"])
-          : null,
-      isFromMe: (json["isFromMe"] is bool)
-          ? json['isFromMe']
-          : ((json['isFromMe'] == 1) ? true : false),
-      isDelayed: (json["isDelayed"] is bool)
-          ? json['isDelayed']
-          : ((json['isDelayed'] == 1) ? true : false),
-      isAutoReply: (json["isAutoReply"] is bool)
-          ? json['isAutoReply']
-          : ((json['isAutoReply'] == 1) ? true : false),
-      isSystemMessage: (json["isSystemMessage"] is bool)
-          ? json['isSystemMessage']
-          : ((json['isSystemMessage'] == 1) ? true : false),
+      dateCreated: json.containsKey("dateCreated") ? parseDate(json["dateCreated"]) : null,
+      dateRead: json.containsKey("dateRead") ? parseDate(json["dateRead"]) : null,
+      dateDelivered: json.containsKey("dateDelivered") ? parseDate(json["dateDelivered"]) : null,
+      isFromMe: (json["isFromMe"] is bool) ? json['isFromMe'] : ((json['isFromMe'] == 1) ? true : false),
+      isDelayed: (json["isDelayed"] is bool) ? json['isDelayed'] : ((json['isDelayed'] == 1) ? true : false),
+      isAutoReply: (json["isAutoReply"] is bool) ? json['isAutoReply'] : ((json['isAutoReply'] == 1) ? true : false),
+      isSystemMessage:
+          (json["isSystemMessage"] is bool) ? json['isSystemMessage'] : ((json['isSystemMessage'] == 1) ? true : false),
       isServiceMessage: (json["isServiceMessage"] is bool)
           ? json['isServiceMessage']
           : ((json['isServiceMessage'] == 1) ? true : false),
-      isForward: (json["isForward"] is bool)
-          ? json['isForward']
-          : ((json['isForward'] == 1) ? true : false),
-      isArchived: (json["isArchived"] is bool)
-          ? json['isArchived']
-          : ((json['isArchived'] == 1) ? true : false),
-      hasDdResults: (json["hasDdResults"] is bool)
-          ? json['hasDdResults']
-          : ((json['hasDdResults'] == 1) ? true : false),
-      cacheRoomnames:
-          json.containsKey("cacheRoomnames") ? json["cacheRoomnames"] : null,
-      isAudioMessage: (json["isAudioMessage"] is bool)
-          ? json['isAudioMessage']
-          : ((json['isAudioMessage'] == 1) ? true : false),
-      datePlayed:
-          json.containsKey("datePlayed") ? parseDate(json["datePlayed"]) : null,
+      isForward: (json["isForward"] is bool) ? json['isForward'] : ((json['isForward'] == 1) ? true : false),
+      isArchived: (json["isArchived"] is bool) ? json['isArchived'] : ((json['isArchived'] == 1) ? true : false),
+      hasDdResults:
+          (json["hasDdResults"] is bool) ? json['hasDdResults'] : ((json['hasDdResults'] == 1) ? true : false),
+      cacheRoomnames: json.containsKey("cacheRoomnames") ? json["cacheRoomnames"] : null,
+      isAudioMessage:
+          (json["isAudioMessage"] is bool) ? json['isAudioMessage'] : ((json['isAudioMessage'] == 1) ? true : false),
+      datePlayed: json.containsKey("datePlayed") ? parseDate(json["datePlayed"]) : null,
       itemType: json.containsKey("itemType") ? json["itemType"] : null,
       groupTitle: json.containsKey("groupTitle") ? json["groupTitle"] : null,
-      groupActionType:
-          (json["groupActionType"] != null) ? json["groupActionType"] : 0,
-      isExpired: (json["isExpired"] is bool)
-          ? json['isExpired']
-          : ((json['isExpired'] == 1) ? true : false),
-      balloonBundleId:
-          json.containsKey("balloonBundleId") ? json["balloonBundleId"] : null,
+      groupActionType: (json["groupActionType"] != null) ? json["groupActionType"] : 0,
+      isExpired: (json["isExpired"] is bool) ? json['isExpired'] : ((json['isExpired'] == 1) ? true : false),
+      balloonBundleId: json.containsKey("balloonBundleId") ? json["balloonBundleId"] : null,
       associatedMessageGuid: associatedMessageGuid,
-      associatedMessageType: json.containsKey("associatedMessageType")
-          ? json["associatedMessageType"]
-          : null,
-      expressiveSendStyleId: json.containsKey("expressiveSendStyleId")
-          ? json["expressiveSendStyleId"]
-          : null,
-      timeExpressiveSendStyleId: json.containsKey("timeExpressiveSendStyleId")
-          ? parseDate(json["timeExpressiveSendStyleId"])
-          : null,
-      handle: json.containsKey("handle")
-          ? (json['handle'] != null ? Handle.fromMap(json['handle']) : null)
-          : null,
+      associatedMessageType: json.containsKey("associatedMessageType") ? json["associatedMessageType"] : null,
+      expressiveSendStyleId: json.containsKey("expressiveSendStyleId") ? json["expressiveSendStyleId"] : null,
+      timeExpressiveSendStyleId:
+          json.containsKey("timeExpressiveSendStyleId") ? parseDate(json["timeExpressiveSendStyleId"]) : null,
+      handle: json.containsKey("handle") ? (json['handle'] != null ? Handle.fromMap(json['handle']) : null) : null,
       hasAttachments: hasAttachments,
       attachments: attachments,
-      hasReactions: json.containsKey('hasReactions')
-          ? ((json['hasReactions'] == 1) ? true : false)
-          : false,
-      dateDeleted: json.containsKey("dateDeleted")
-          ? parseDate(json["dateDeleted"])
-          : null,
+      hasReactions: json.containsKey('hasReactions') ? ((json['hasReactions'] == 1) ? true : false) : false,
+      dateDeleted: json.containsKey("dateDeleted") ? parseDate(json["dateDeleted"]) : null,
       metadata: metadata is String ? null : metadata,
     );
 
@@ -258,17 +216,14 @@ class Message {
       await this.handle.save();
       this.handleId = this.handle.id;
     }
-    if (this.associatedMessageType != null &&
-        this.associatedMessageGuid != null) {
-      Message associatedMessage =
-          await Message.findOne({"guid": this.associatedMessageGuid});
+    if (this.associatedMessageType != null && this.associatedMessageGuid != null) {
+      Message associatedMessage = await Message.findOne({"guid": this.associatedMessageGuid});
       if (associatedMessage != null) {
         associatedMessage.hasReactions = true;
         await associatedMessage.save();
       }
     } else if (!this.hasReactions) {
-      Message reaction =
-          await Message.findOne({"associatedMessageGuid": this.guid});
+      Message reaction = await Message.findOne({"associatedMessageGuid": this.guid});
       if (reaction != null) {
         this.hasReactions = true;
       }
@@ -302,8 +257,7 @@ class Message {
     if (existing == null) {
       if (awaitNewMessageEvent) {
         await Future.delayed(Duration(milliseconds: 500));
-        return replaceMessage(oldGuid, newMessage,
-            awaitNewMessageEvent: false, chat: chat);
+        return replaceMessage(oldGuid, newMessage, awaitNewMessageEvent: false, chat: chat);
       } else {
         if (chat != null) {
           await chat.addMessage(newMessage);
@@ -341,8 +295,7 @@ class Message {
       newMessage.metadata = existing.metadata;
     }
 
-    await db.update("message", params,
-        where: "ROWID = ?", whereArgs: [existing.id]);
+    await db.update("message", params, where: "ROWID = ?", whereArgs: [existing.id]);
 
     return newMessage;
   }
@@ -352,14 +305,8 @@ class Message {
     if (this.id == null) return this;
     this.metadata = metadata.toJson();
 
-    await db.update(
-        "message",
-        {
-          "metadata":
-              (isNullOrEmpty(this.metadata)) ? null : jsonEncode(this.metadata)
-        },
-        where: "ROWID = ?",
-        whereArgs: [this.id]);
+    await db.update("message", {"metadata": (isNullOrEmpty(this.metadata)) ? null : jsonEncode(this.metadata)},
+        where: "ROWID = ?", whereArgs: [this.id]);
 
     return this;
   }
@@ -368,23 +315,15 @@ class Message {
     final Database db = await DBProvider.db.database;
 
     Map<String, dynamic> params = {
-      "dateCreated": (this.dateCreated == null)
-          ? null
-          : this.dateCreated.millisecondsSinceEpoch,
-      "dateRead":
-          (this.dateRead == null) ? null : this.dateRead.millisecondsSinceEpoch,
-      "dateDelivered": (this.dateDelivered == null)
-          ? null
-          : this.dateDelivered.millisecondsSinceEpoch,
+      "dateCreated": (this.dateCreated == null) ? null : this.dateCreated.millisecondsSinceEpoch,
+      "dateRead": (this.dateRead == null) ? null : this.dateRead.millisecondsSinceEpoch,
+      "dateDelivered": (this.dateDelivered == null) ? null : this.dateDelivered.millisecondsSinceEpoch,
       "isArchived": (this.isArchived) ? 1 : 0,
-      "datePlayed": (this.datePlayed == null)
-          ? null
-          : this.datePlayed.millisecondsSinceEpoch,
+      "datePlayed": (this.datePlayed == null) ? null : this.datePlayed.millisecondsSinceEpoch,
       "error": this.error,
       "hasReactions": this.hasReactions ? 1 : 0,
       "hasDdResults": this.hasDdResults ? 1 : 0,
-      "metadata":
-          (isNullOrEmpty(this.metadata)) ? null : jsonEncode(this.metadata)
+      "metadata": (isNullOrEmpty(this.metadata)) ? null : jsonEncode(this.metadata)
     };
 
     if (this.originalROWID != null) {
@@ -393,8 +332,7 @@ class Message {
 
     // If it already exists, update it
     if (this.id != null) {
-      await db
-          .update("message", params, where: "ROWID = ?", whereArgs: [this.id]);
+      await db.update("message", params, where: "ROWID = ?", whereArgs: [this.id]);
     } else {
       await this.save(false);
     }
@@ -403,9 +341,7 @@ class Message {
   }
 
   Future<List<Attachment>> fetchAttachments({CurrentChat currentChat}) async {
-    if (this.hasAttachments &&
-        this.attachments != null &&
-        this.attachments.length != 0) {
+    if (this.hasAttachments && this.attachments != null && this.attachments.length != 0) {
       return this.attachments;
     }
 
@@ -440,8 +376,7 @@ class Message {
         " WHERE message.ROWID = ?;",
         [this.id]);
 
-    this.attachments =
-        (res.isNotEmpty) ? res.map((c) => Attachment.fromMap(c)).toList() : [];
+    this.attachments = (res.isNotEmpty) ? res.map((c) => Attachment.fromMap(c)).toList() : [];
 
     return this.attachments;
   }
@@ -468,12 +403,9 @@ class Message {
   }
 
   Future<Message> fetchAssociatedMessages() async {
-    associatedMessages =
-        await Message.find({"associatedMessageGuid": this.guid});
-    associatedMessages
-        .sort((a, b) => a.originalROWID.compareTo(b.originalROWID));
-    associatedMessages =
-        MessageHelper.normalizedAssociatedMessages(associatedMessages);
+    associatedMessages = await Message.find({"associatedMessageGuid": this.guid});
+    associatedMessages.sort((a, b) => a.originalROWID.compareTo(b.originalROWID));
+    associatedMessages = MessageHelper.normalizedAssociatedMessages(associatedMessages);
     return this;
   }
 
@@ -493,8 +425,7 @@ class Message {
         " WHERE message.ROWID = ?;",
         [this.id]);
 
-    this.handle =
-        (res.isNotEmpty) ? res.map((c) => Handle.fromMap(c)).toList()[0] : null;
+    this.handle = (res.isNotEmpty) ? res.map((c) => Handle.fromMap(c)).toList()[0] : null;
     return this.handle;
   }
 
@@ -505,8 +436,7 @@ class Message {
     filters.keys.forEach((filter) => whereParams.add('$filter = ?'));
     List<dynamic> whereArgs = [];
     filters.values.forEach((filter) => whereArgs.add(filter));
-    var res = await db.query("message",
-        where: whereParams.join(" AND "), whereArgs: whereArgs, limit: 1);
+    var res = await db.query("message", where: whereParams.join(" AND "), whereArgs: whereArgs, limit: 1);
 
     if (res.isEmpty) {
       return null;
@@ -515,8 +445,7 @@ class Message {
     return Message.fromMap(res.elementAt(0));
   }
 
-  static Future<List<Message>> find(
-      [Map<String, dynamic> filters = const {}]) async {
+  static Future<List<Message>> find([Map<String, dynamic> filters = const {}]) async {
     final Database db = await DBProvider.db.database;
 
     List<String> whereParams = [];
@@ -540,8 +469,7 @@ class Message {
 
     List<Message> toDelete = await Message.find(where);
     for (Message msg in toDelete) {
-      await db.delete("chat_message_join",
-          where: "messageId = ?", whereArgs: [msg.id]);
+      await db.delete("chat_message_join", where: "messageId = ?", whereArgs: [msg.id]);
       await db.delete("message", where: "ROWID = ?", whereArgs: [msg.id]);
     }
   }
@@ -556,8 +484,7 @@ class Message {
 
     List<Message> toDelete = await Message.find(where);
     for (Message msg in toDelete ?? []) {
-      await db.update("message",
-          {'dateDeleted': DateTime.now().toUtc().millisecondsSinceEpoch},
+      await db.update("message", {'dateDeleted': DateTime.now().toUtc().millisecondsSinceEpoch},
           where: "ROWID = ?", whereArgs: [msg.id]);
     }
   }
@@ -574,8 +501,7 @@ class Message {
   }
 
   bool isInteractive() {
-    return this.balloonBundleId != null &&
-        this.balloonBundleId != "com.apple.messages.URLBalloonProvider";
+    return this.balloonBundleId != null && this.balloonBundleId != "com.apple.messages.URLBalloonProvider";
   }
 
   bool hasText({stripWhitespace = false}) {
@@ -583,9 +509,7 @@ class Message {
   }
 
   bool isGroupEvent() {
-    return isEmptyString(this.fullText) &&
-        !this.hasAttachments &&
-        this.balloonBundleId == null;
+    return isEmptyString(this.fullText) && !this.hasAttachments && this.balloonBundleId == null;
   }
 
   bool isBigEmoji() {
@@ -609,8 +533,7 @@ class Message {
   List<Message> getReactions() {
     return this
         .associatedMessages
-        .where((item) =>
-            ReactionTypes.toList().contains(item.associatedMessageType))
+        .where((item) => ReactionTypes.toList().contains(item.associatedMessageType))
         .toList();
   }
 
@@ -675,12 +598,9 @@ class Message {
         "subject": subject,
         "country": country,
         "error": error,
-        "dateCreated":
-            (dateCreated == null) ? null : dateCreated.millisecondsSinceEpoch,
+        "dateCreated": (dateCreated == null) ? null : dateCreated.millisecondsSinceEpoch,
         "dateRead": (dateRead == null) ? null : dateRead.millisecondsSinceEpoch,
-        "dateDelivered": (dateDelivered == null)
-            ? null
-            : dateDelivered.millisecondsSinceEpoch,
+        "dateDelivered": (dateDelivered == null) ? null : dateDelivered.millisecondsSinceEpoch,
         "isFromMe": isFromMe ? 1 : 0,
         "isDelayed": isDelayed ? 1 : 0,
         "isAutoReply": isAutoReply ? 1 : 0,
@@ -691,8 +611,7 @@ class Message {
         "hasDdResults": hasDdResults ? 1 : 0,
         "cacheRoomnames": cacheRoomnames,
         "isAudioMessage": isAudioMessage ? 1 : 0,
-        "datePlayed":
-            (datePlayed == null) ? null : datePlayed.millisecondsSinceEpoch,
+        "datePlayed": (datePlayed == null) ? null : datePlayed.millisecondsSinceEpoch,
         "itemType": itemType,
         "groupTitle": groupTitle,
         "groupActionType": groupActionType,
@@ -701,14 +620,12 @@ class Message {
         "associatedMessageGuid": associatedMessageGuid,
         "associatedMessageType": associatedMessageType,
         "expressiveSendStyleId": expressiveSendStyleId,
-        "timeExpressiveSendStyleId": (timeExpressiveSendStyleId == null)
-            ? null
-            : timeExpressiveSendStyleId.millisecondsSinceEpoch,
+        "timeExpressiveSendStyleId":
+            (timeExpressiveSendStyleId == null) ? null : timeExpressiveSendStyleId.millisecondsSinceEpoch,
         "handle": (handle != null) ? handle.toMap() : null,
         "hasAttachments": hasAttachments ? 1 : 0,
         "hasReactions": hasReactions ? 1 : 0,
-        "dateDeleted":
-            (dateDeleted == null) ? null : dateDeleted.millisecondsSinceEpoch,
+        "dateDeleted": (dateDeleted == null) ? null : dateDeleted.millisecondsSinceEpoch,
         "metadata": jsonEncode(metadata),
       };
 }

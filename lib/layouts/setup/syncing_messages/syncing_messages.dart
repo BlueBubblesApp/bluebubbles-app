@@ -72,7 +72,7 @@ class _SyncingMessagesState extends State<SyncingMessages> {
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(20),
                         child: LinearProgressIndicator(
-                          value: progress != 1.0 && progress != 0.0 ? progress : null,
+                          value: progress != 100.0 && progress != 0.0 ? (progress / 100) : null,
                           backgroundColor: Colors.white,
                           valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
                         ),

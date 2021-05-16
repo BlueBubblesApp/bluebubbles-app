@@ -437,7 +437,7 @@ class SocketManager {
   }
 
   Future<List<dynamic>> getChatMessages(Map<String, dynamic> params, {Function(List<dynamic>) cb}) {
-    return fetch('get-chats', params, cb: cb);
+    return fetch('get-chat-messages', params, cb: cb);
   }
 
   Future<dynamic> fetch(String path, Map<String, dynamic> params, {Function(List<dynamic>) cb}) {
