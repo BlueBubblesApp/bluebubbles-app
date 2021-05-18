@@ -373,18 +373,14 @@ class SocketManager {
 
   Future<void> authFCM({bool catchException = true, bool force = false}) async {
     if (SettingsManager().fcmData.isNull) {
-      debugPrint("No FCM Auth data found. Skipping FCM authentication");
+      debugPrint("[FCM Auth] -> No FCM Auth data found. Skipping FCM authentication");
       return;
     }
 
+    String deviceName = await getDeviceName();
     if (token != null && !force) {
-      debugPrint("Already authorized FCM device! Token: $token");
-      if (_manager.socket != null) {
-        String deviceName = await getDeviceName();
-        _manager.sendMessage("add-fcm-device", {"deviceId": token, "deviceName": deviceName}, (data) {},
-            reason: "authfcm", awaitResponse: false);
-      }
-
+      debugPrint("[FCM Auth] -> Already authorized FCM device! Token: $token");
+      await registerDevice(deviceName, token);
       return;
     }
 
@@ -392,10 +388,15 @@ class SocketManager {
 
     try {
       // First, try to send what we currently have
+      debugPrint('[FCM Auth] -> Authenticating with FCM');
       result = await MethodChannelInterface().invokeMethod('auth', SettingsManager().fcmData.toMap());
-    } on PlatformException catch (_) {
+    } on PlatformException catch (ex) {
+      debugPrint('[FCM Auth] -> Failed to perform initial FCM authentication: ${ex.toString()}');
+      debugPrint('[FCM Auth] -> Fetching FCM data from the server...');
+
       // If the first try fails, let's try again, but first, get the FCM data from the server
       Map<String, dynamic> fcmMeta = await this.getFcmClient();
+      debugPrint('[FCM Auth] -> Received FCM data from the server. Attempting to re-authenticate');
 
       try {
         // Parse out the new FCM data
@@ -408,54 +409,58 @@ class SocketManager {
         result = await MethodChannelInterface().invokeMethod('auth', SettingsManager().fcmData.toMap());
       } on PlatformException catch (e) {
         if (!catchException) {
-          throw Exception("(AuthFCM) -> " + e.toString());
+          throw Exception("[FCM Auth] -> " + e.toString());
         } else {
-          token = "Failed to get token: " + e.toString();
-          debugPrint(token);
+          debugPrint("[FCM Auth] -> Failed to register with FCM: " + e.toString());
         }
       }
     }
 
+    if (isNullOrEmpty(result)) {
+      debugPrint("[FCM Auth] -> Empty results, not registering device with the server.");
+    }
+
     try {
       token = result;
-      debugPrint(token);
-
-      if (_manager.socket != null) {
-        String deviceName = await getDeviceName();
-        _manager.sendMessage("add-fcm-device", {"deviceId": token, "deviceName": deviceName}, (data) {},
-            reason: "authfcm", awaitResponse: false);
-      }
+      debugPrint('[FCM Auth] -> Registering device with server...');
+      await registerDevice(deviceName, token);
     } catch (ex) {
+      debugPrint('[FCM Auth] -> Failed to register device with server: ${ex.toString()}');
       throw Exception("Failed to add FCM device to the server! Token: $token");
     }
   }
 
+  Future<void> registerDevice(String name, String token) {
+    if (name == null || name.trim().length == 0 || token == null || token.trim().length == 0) return null;
+    dynamic params = {"deviceId": token.trim(), "deviceName": name.trim()};
+    return request("add-fcm-device", params);
+  }
+
   Future<List<dynamic>> getChats(Map<String, dynamic> params, {Function(List<dynamic>) cb}) {
-    return fetch('get-chats', params, cb: cb);
+    return request('get-chats', params, cb: cb);
   }
 
   Future<List<dynamic>> getMessages(Map<String, dynamic> params, {Function(List<dynamic>) cb}) {
-    return fetch('get-messages', params, cb: cb);
+    return request('get-messages', params, cb: cb);
   }
 
   Future<List<dynamic>> getChatMessages(Map<String, dynamic> params, {Function(List<dynamic>) cb}) {
-    return fetch('get-chat-messages', params, cb: cb);
+    return request('get-chat-messages', params, cb: cb);
   }
 
-  Future<dynamic> fetch(String path, Map<String, dynamic> params, {Function(List<dynamic>) cb}) {
+  Future<dynamic> request(String path, Map<String, dynamic> params, {Function(List<dynamic>) cb}) {
     Completer<List<dynamic>> completer = new Completer();
+    if (_manager.socket == null) return null;
 
-    _manager.socket.sendMessage(path, jsonEncode(params), (String data) async {
-      dynamic json = jsonDecode(data);
-      if (json["status"] != 200) return completer.completeError(json);
+    _manager.sendMessage(path, params, (Map<String, dynamic> data) async {
+      if (data["status"] != 200) return completer.completeError(data);
 
-      List<dynamic> output = [];
-      if (json.containsKey("data") && json["data"].length > 0) {
-        output = json["data"];
+      dynamic output;
+      if (data.containsKey("data")) {
+        output = data["data"];
       }
 
       completer.complete(output);
-
       if (cb != null) cb(output);
     });
 
