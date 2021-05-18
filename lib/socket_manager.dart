@@ -375,7 +375,9 @@ class SocketManager {
     if (SettingsManager().fcmData.isNull) {
       debugPrint("No FCM Auth data found. Skipping FCM authentication");
       return;
-    } else if (token != null && !force) {
+    }
+
+    if (token != null && !force) {
       debugPrint("Already authorized FCM device! Token: $token");
       if (_manager.socket != null) {
         String deviceName = await getDeviceName();
