@@ -107,7 +107,7 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     implementation 'com.github.judemanutd:autostarter:1.0.8'
     implementation "androidx.core:core:1.3.2"
-    implementation "androidx.sharetarget:sharetarget:1.0.0"
+    implementation "androidx.sharetarget:sharetarget:1.1.0"
 
 
     //for notifications
@@ -118,10 +118,9 @@ dependencies {
 
 
     // Add the SDK for Firebase Cloud Messaging
-    implementation 'com.google.firebase:firebase-messaging:20.1.5'
+    implementation 'com.google.firebase:firebase-messaging:20.1.6'
     implementation 'com.google.firebase:firebase-analytics:17.2.1'
     implementation 'com.google.firebase:firebase-database:19.2.0'
-    implementation 'androidx.work:work-runtime:2.1.0'
     implementation 'com.google.firebase:firebase-messaging-directboot:20.2.0'
 
     //for json string to map
