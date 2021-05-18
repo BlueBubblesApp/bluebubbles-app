@@ -526,10 +526,17 @@ Future<String> getDeviceName() async {
         .toList();
 
     // Set device name
-    deviceName = items.join("_").toLowerCase();
+    if (items.length > 0) {
+      deviceName = items.join("_").toLowerCase();
+    }
   } catch (ex) {
     debugPrint("Failed to get device name! Defaulting to 'android-client'");
     debugPrint(ex.toString());
+  }
+
+  // Fallback for if it happens to be empty or null, somehow... idk
+  if (isNullOrEmpty((deviceName ?? "").trim())) {
+    deviceName = "android-client";
   }
 
   return deviceName;

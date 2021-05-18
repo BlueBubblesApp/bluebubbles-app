@@ -174,7 +174,7 @@ class SetupBloc {
     // issues with associated message GUIDs
     if (!skipEmptyChats || (skipEmptyChats && messages.length > 0)) {
       await MessageHelper.bulkAddMessages(chat, messages.reversed.toList(),
-          notifyForNewMessage: false, checkForLatestMessageText: false);
+          notifyForNewMessage: false, checkForLatestMessageText: true);
 
       // If we want to download the attachments, do it, and wait for them to finish before continuing
       if (downloadAttachments) {
