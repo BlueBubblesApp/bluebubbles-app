@@ -47,7 +47,7 @@ dependencies:
   flutter_map: ^0.11.0
   vcard_parser: ^0.1.6
   video_thumbnail: ^0.2.1
-  camera: ^0.5.8+2
+  camera: ^0.7.0+4
   android_intent: ^0.3.7+2
   flutter_slidable: ^0.5.7
   image_size_getter: ^0.3.0
@@ -62,7 +62,7 @@ dependencies:
   fluttertoast: ^6.0.1
   map_launcher: ^1.1.2
   flutter_colorpicker: ^0.3.4
-  image_gallery_saver: ^1.6.6
+  image_gallery_saver: ^1.6.8
   flutter_image_compress: ^0.7.0
   extended_text_field:
     path: packages/extended_text_field

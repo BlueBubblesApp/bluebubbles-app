@@ -92,7 +92,8 @@ class _CameraWidgetState extends State<CameraWidget> with WidgetsBindingObserver
                     String pathName = "$appDocPath/tempAssets/${DateTime.now().toString()}.jpg";
                     await Directory("$appDocPath/tempAssets").create(recursive: true);
 
-                    await controller.takePicture(pathName);
+                    XFile savedImage = await controller.takePicture();
+                    savedImage.saveTo(pathName);
 
                     File file = new File(pathName);
                     if (!file.existsSync()) return;

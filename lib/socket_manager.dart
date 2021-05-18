@@ -237,7 +237,7 @@ class SocketManager {
     try {
       // Create a new socket connection
       _manager.socket = SocketIOManager().createSocketIO(serverAddress, "/",
-          query: "guid=${Uri.encodeFull(SettingsManager().settings.guidAuthKey)}",
+          query: "guid=${encodeUri(SettingsManager().settings.guidAuthKey)}",
           socketStatusCallback: (data) => socketStatusUpdate(data));
 
       if (_manager.socket == null) {
