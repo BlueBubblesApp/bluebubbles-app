@@ -68,8 +68,8 @@ class _CameraWidgetState extends State<CameraWidget> with WidgetsBindingObserver
     if (controller == null || !controller.value.isInitialized) return Container();
     return AspectRatio(
       aspectRatio: MediaQuery.of(context).orientation == Orientation.portrait
-          ? controller.value.aspectRatio
-          : 1 / controller.value.aspectRatio,
+          ? (controller.value.previewSize.height / controller.value.previewSize.width)
+          : 1 / (controller.value.previewSize.height / controller.value.previewSize.width),
       child: Stack(
         alignment: Alignment.topRight,
         children: <Widget>[
