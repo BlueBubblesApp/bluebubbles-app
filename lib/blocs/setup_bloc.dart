@@ -177,9 +177,10 @@ class SetupBloc {
           notifyForNewMessage: false, checkForLatestMessageText: true);
 
       // If we want to download the attachments, do it, and wait for them to finish before continuing
-      if (downloadAttachments) {
-        await MessageHelper.bulkDownloadAttachments(chat, messages.reversed.toList());
-      }
+      // Commented out because I think this negatively effects sync performance and causes disconnects
+      // if (downloadAttachments) {
+      //   await MessageHelper.bulkDownloadAttachments(chat, messages.reversed.toList());
+      // }
     }
   }
 

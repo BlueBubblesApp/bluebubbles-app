@@ -61,6 +61,12 @@ class _CameraWidgetState extends State<CameraWidget> with WidgetsBindingObserver
     super.dispose();
   }
 
+  void showSnackbar(String text) {
+    if (context == null) return;
+    final snackBar = SnackBar(content: Text(text));
+    Scaffold.of(context).showSnackBar(snackBar);
+  }
+
   @override
   Widget build(BuildContext context) {
     if (BlueBubblesTextField.of(context) == null) return Container();
@@ -87,21 +93,21 @@ class _CameraWidgetState extends State<CameraWidget> with WidgetsBindingObserver
                 child: FlatButton(
                   color: Colors.transparent,
                   onPressed: () async {
-                    String appDocPath = SettingsManager().appDocDir.path;
-
-                    String pathName = "$appDocPath/tempAssets/${DateTime.now().toString()}.jpg";
-                    await Directory("$appDocPath/tempAssets").create(recursive: true);
-
                     XFile savedImage = await controller.takePicture();
-                    savedImage.saveTo(pathName);
+                    File file = new File(savedImage.path);
 
-                    File file = new File(pathName);
-                    if (!file.existsSync()) return;
-                    if (file.statSync().size == 0) {
-                      file.deleteSync();
-                      return;
+                    // Fail if the file doesn't exist after taking the picture
+                    if (!file.existsSync()) {
+                      return this.showSnackbar('Failed to take picture! File improperly saved by Camera lib');
                     }
 
+                    // Fail if the file size is equal to 0
+                    if (file.statSync().size == 0) {
+                      file.deleteSync();
+                      return this.showSnackbar('Failed to take picture! File was empty!');
+                    }
+
+                    // If all passes, add the attachment
                     widget.addAttachment(file);
                   },
                   child: Icon(

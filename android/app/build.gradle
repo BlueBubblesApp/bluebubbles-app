@@ -107,7 +107,7 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     implementation 'com.github.judemanutd:autostarter:1.0.8'
     implementation "androidx.core:core:1.3.2"
-    implementation "androidx.sharetarget:sharetarget:1.1.0"
+    implementation "androidx.sharetarget:sharetarget:1.0.0"
 
 
     //for notifications
