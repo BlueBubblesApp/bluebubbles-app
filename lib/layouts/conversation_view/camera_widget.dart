@@ -87,12 +87,15 @@ class _CameraWidgetState extends State<CameraWidget> with WidgetsBindingObserver
     if (SettingsManager().settings.redactedMode)
       return [
         Positioned.fill(
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(20),
-            child: Container(
-              color: Theme.of(context).accentColor,
-              child: Center(
-                child: Text("Camera"),
+          child: Padding(
+            padding: EdgeInsets.all(5),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: Container(
+                color: Theme.of(context).accentColor,
+                child: Center(
+                  child: Text("Camera"),
+                ),
               ),
             ),
           ),
