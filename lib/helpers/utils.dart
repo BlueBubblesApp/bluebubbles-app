@@ -176,12 +176,15 @@ bool sameSender(Message first, Message second) {
 }
 
 String buildDate(DateTime dateTime) {
+  if (dateTime == null || dateTime.millisecondsSinceEpoch == 0) return "";
   String time = new intl.DateFormat.jm().format(dateTime);
   String date;
   if (dateTime.isToday()) {
     date = time;
   } else if (dateTime.isYesterday()) {
     date = "Yesterday";
+  } else if (DateTime.now().difference(dateTime.toLocal()).inDays <= 7) {
+    date = intl.DateFormat("EEEE").format(dateTime);
   } else {
     date = "${dateTime.month.toString()}/${dateTime.day.toString()}/${dateTime.year.toString()}";
   }
@@ -499,17 +502,6 @@ String getServerAddress({String address}) {
   }
 
   return serverAddress;
-}
-
-String dateToShortString(DateTime timestamp) {
-  if (timestamp == null || timestamp.millisecondsSinceEpoch == 0) return "";
-  if (timestamp.isToday()) {
-    return new intl.DateFormat.jm().format(timestamp);
-  } else if (timestamp.isYesterday()) {
-    return "Yesterday";
-  } else {
-    return "${timestamp.month.toString()}/${timestamp.day.toString()}/${timestamp.year.toString()}";
-  }
 }
 
 Future<String> getDeviceName() async {

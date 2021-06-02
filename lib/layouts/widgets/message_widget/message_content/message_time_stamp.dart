@@ -21,11 +21,8 @@ class MessageTimeStamp extends StatelessWidget {
         builder: (context, snapshot) {
           double offset = CurrentChat.of(context)?.timeStampOffset;
           String text = DateFormat('h:mm a').format(message.dateCreated).toLowerCase();
-          if (message.dateCreated.isYesterday()) {
-            text = "Yesterday${singleLine ? ", " : "\n"}$text";
-          } else if (!message.dateCreated.isToday()) {
-            DateFormat formatter = DateFormat('MMMd');
-            String formatted = formatter.format(message.dateCreated);
+          if (!message.dateCreated.isToday()) {
+            String formatted = buildDate(message.dateCreated);
             text = "$formatted${singleLine ? " " : "\n"}$text";
           }
 

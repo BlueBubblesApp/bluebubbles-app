@@ -14,7 +14,6 @@ import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:faker/faker.dart';
 import 'package:flutter/widgets.dart';
-import 'package:intl/intl.dart';
 import 'package:metadata_fetch/metadata_fetch.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -236,14 +235,7 @@ class Chat {
   }
 
   String getDateText() {
-    if (this.latestMessageDate == null || this.latestMessageDate.millisecondsSinceEpoch == 0) return "";
-    if (this.latestMessageDate.isToday()) {
-      return new DateFormat.jm().format(this.latestMessageDate);
-    } else if (this.latestMessageDate.isYesterday()) {
-      return "Yesterday";
-    } else {
-      return "${this.latestMessageDate.month.toString()}/${this.latestMessageDate.day.toString()}/${this.latestMessageDate.year.toString()}";
-    }
+    return buildDate(this.latestMessageDate);
   }
 
   Future<Chat> update() async {

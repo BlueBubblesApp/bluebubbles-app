@@ -21,17 +21,10 @@ class MessageTimeStampSeparator extends StatelessWidget {
     if (newerMessage != null &&
         (!isEmptyString(message.fullText) || message.hasAttachments) &&
         withinTimeThreshold(message, newerMessage, threshold: 30)) {
+
       DateTime timeOfnewerMessage = newerMessage.dateCreated;
       String time = new DateFormat.jm().format(timeOfnewerMessage);
-      String date;
-      if (newerMessage.dateCreated.isToday()) {
-        date = "Today";
-      } else if (newerMessage.dateCreated.isYesterday()) {
-        date = "Yesterday";
-      } else {
-        date =
-            "${timeOfnewerMessage.month.toString()}/${timeOfnewerMessage.day.toString()}/${timeOfnewerMessage.year.toString()}";
-      }
+      String date = timeOfnewerMessage.isToday() ? "Today" : buildDate(timeOfnewerMessage);
       return {"date": date, "time": time};
     } else {
       return null;
