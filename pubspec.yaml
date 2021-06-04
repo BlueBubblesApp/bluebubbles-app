@@ -22,9 +22,7 @@ dependencies:
   shared_preferences: ^0.5.12
   flutter_socket_io:
     path: packages/flutter_socket_io-0.6.0
-  qr_code_scanner:
-    git:
-      url: git://github.com/juliuscanute/qr_code_scanner.git
+  qr_code_scanner: ^0.3.5
   connectivity: ^2.0.2
   tuple: ^1.0.3
   encrypt: ^4.1.0
