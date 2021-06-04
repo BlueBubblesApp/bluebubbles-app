@@ -78,136 +78,157 @@ class _CameraWidgetState extends State<CameraWidget> with WidgetsBindingObserver
           : 1 / (controller.value.previewSize.height / controller.value.previewSize.width),
       child: Stack(
         alignment: Alignment.topRight,
+        children: _buildCameraStack(context),
+      ),
+    );
+  }
+
+  List<Widget> _buildCameraStack(BuildContext context) {
+    if (SettingsManager().settings.redactedMode)
+      return [
+        Positioned.fill(
+          child: Padding(
+            padding: EdgeInsets.all(5),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: Container(
+                color: Theme.of(context).accentColor,
+                child: Center(
+                  child: Text("Camera"),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ];
+    return [
+      Stack(
+        alignment: Alignment.bottomCenter,
         children: <Widget>[
-          Stack(
-            alignment: Alignment.bottomCenter,
-            children: <Widget>[
-              RotatedBox(
-                child: CameraPreview(controller),
-                quarterTurns: MediaQuery.of(context).orientation == Orientation.portrait ? 0 : 3,
-              ),
-              Padding(
-                padding: EdgeInsets.only(
-                  bottom: MediaQuery.of(context).size.height / 30,
-                ),
-                child: FlatButton(
-                  color: Colors.transparent,
-                  onPressed: () async {
-                    XFile savedImage = await controller.takePicture();
-                    File file = new File(savedImage.path);
-
-                    // Fail if the file doesn't exist after taking the picture
-                    if (!file.existsSync()) {
-                      return this.showSnackbar('Failed to take picture! File improperly saved by Camera lib');
-                    }
-
-                    // Fail if the file size is equal to 0
-                    if (file.statSync().size == 0) {
-                      file.deleteSync();
-                      return this.showSnackbar('Failed to take picture! File was empty!');
-                    }
-
-                    // If all passes, add the attachment
-                    widget.addAttachment(file);
-                  },
-                  child: Icon(
-                    Icons.radio_button_checked,
-                    color: Colors.white,
-                    size: 30,
-                  ),
-                ),
-              )
-            ],
-          ),
-          Align(
-            alignment: Alignment.topLeft,
-            child: Padding(
-              padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context).size.height / 30,
-              ),
-              child: FlatButton(
-                padding: EdgeInsets.only(left: 10),
-                minWidth: 30,
-                color: Colors.transparent,
-                onPressed: () async {
-                  String appDocPath = SettingsManager().appDocDir.path;
-                  File file = new File("$appDocPath/attachments/" + randomString(16) + ".png");
-                  await file.create(recursive: true);
-                  await MethodChannelInterface().invokeMethod("open-camera", {"path": file.path, "type": "camera"});
-
-                  if (!file.existsSync()) return;
-                  if (file.statSync().size == 0) {
-                    file.deleteSync();
-                    return;
-                  }
-
-                  widget.addAttachment(file);
-                },
-                child: Icon(
-                  Icons.fullscreen,
-                  color: Colors.white,
-                  size: 30,
-                ),
-              ),
-            ),
-          ),
-          Align(
-            alignment: Alignment.topCenter,
-            child: Padding(
-              padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context).size.height / 30,
-              ),
-              child: FlatButton(
-                padding: EdgeInsets.all(0),
-                minWidth: 30,
-                color: Colors.transparent,
-                onPressed: () async {
-                  String appDocPath = SettingsManager().appDocDir.path;
-                  File file = new File("$appDocPath/attachments/" + randomString(16) + ".mp4");
-                  await file.create(recursive: true);
-                  await MethodChannelInterface().invokeMethod("open-camera", {"path": file.path, "type": "video"});
-
-                  if (!file.existsSync()) return;
-                  if (file.statSync().size == 0) {
-                    file.deleteSync();
-                    return;
-                  }
-
-                  widget.addAttachment(file);
-                },
-                child: Icon(
-                  Icons.videocam,
-                  color: Colors.white,
-                  size: 30,
-                ),
-              ),
-            ),
+          RotatedBox(
+            child: CameraPreview(controller),
+            quarterTurns: MediaQuery.of(context).orientation == Orientation.portrait ? 0 : 3,
           ),
           Padding(
             padding: EdgeInsets.only(
               bottom: MediaQuery.of(context).size.height / 30,
             ),
             child: FlatButton(
-              padding: EdgeInsets.only(right: 10),
-              minWidth: 30,
               color: Colors.transparent,
               onPressed: () async {
-                if (BlueBubblesTextField.of(context) == null) return;
+                XFile savedImage = await controller.takePicture();
+                File file = new File(savedImage.path);
 
-                BlueBubblesTextField.of(context).cameraIndex = (BlueBubblesTextField.of(context).cameraIndex - 1).abs();
+                // Fail if the file doesn't exist after taking the picture
+                if (!file.existsSync()) {
+                  return this.showSnackbar('Failed to take picture! File improperly saved by Camera lib');
+                }
 
-                await BlueBubblesTextField.of(context).initializeCameraController();
-                if (this.mounted) setState(() {});
+                // Fail if the file size is equal to 0
+                if (file.statSync().size == 0) {
+                  file.deleteSync();
+                  return this.showSnackbar('Failed to take picture! File was empty!');
+                }
+
+                // If all passes, add the attachment
+                widget.addAttachment(file);
               },
               child: Icon(
-                Icons.switch_camera,
+                Icons.radio_button_checked,
                 color: Colors.white,
                 size: 30,
               ),
             ),
-          ),
+          )
         ],
       ),
-    );
+      Align(
+        alignment: Alignment.topLeft,
+        child: Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).size.height / 30,
+          ),
+          child: FlatButton(
+            padding: EdgeInsets.only(left: 10),
+            minWidth: 30,
+            color: Colors.transparent,
+            onPressed: () async {
+              String appDocPath = SettingsManager().appDocDir.path;
+              File file = new File("$appDocPath/attachments/" + randomString(16) + ".png");
+              await file.create(recursive: true);
+              await MethodChannelInterface().invokeMethod("open-camera", {"path": file.path, "type": "camera"});
+
+              if (!file.existsSync()) return;
+              if (file.statSync().size == 0) {
+                file.deleteSync();
+                return;
+              }
+
+              widget.addAttachment(file);
+            },
+            child: Icon(
+              Icons.fullscreen,
+              color: Colors.white,
+              size: 30,
+            ),
+          ),
+        ),
+      ),
+      Align(
+        alignment: Alignment.topCenter,
+        child: Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).size.height / 30,
+          ),
+          child: FlatButton(
+            padding: EdgeInsets.all(0),
+            minWidth: 30,
+            color: Colors.transparent,
+            onPressed: () async {
+              String appDocPath = SettingsManager().appDocDir.path;
+              File file = new File("$appDocPath/attachments/" + randomString(16) + ".mp4");
+              await file.create(recursive: true);
+              await MethodChannelInterface().invokeMethod("open-camera", {"path": file.path, "type": "video"});
+
+              if (!file.existsSync()) return;
+              if (file.statSync().size == 0) {
+                file.deleteSync();
+                return;
+              }
+
+              widget.addAttachment(file);
+            },
+            child: Icon(
+              Icons.videocam,
+              color: Colors.white,
+              size: 30,
+            ),
+          ),
+        ),
+      ),
+      Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).size.height / 30,
+        ),
+        child: FlatButton(
+          padding: EdgeInsets.only(right: 10),
+          minWidth: 30,
+          color: Colors.transparent,
+          onPressed: () async {
+            if (BlueBubblesTextField.of(context) == null) return;
+
+            BlueBubblesTextField.of(context).cameraIndex = (BlueBubblesTextField.of(context).cameraIndex - 1).abs();
+
+            await BlueBubblesTextField.of(context).initializeCameraController();
+            if (this.mounted) setState(() {});
+          },
+          child: Icon(
+            Icons.switch_camera,
+            color: Colors.white,
+            size: 30,
+          ),
+        ),
+      ),
+    ];
   }
 }

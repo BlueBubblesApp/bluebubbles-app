@@ -1,7 +1,9 @@
 import 'dart:typed_data';
 
 import 'package:bluebubbles/layouts/conversation_view/text_field/blue_bubbles_text_field.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/material.dart';
+import 'package:mime_type/mime_type.dart';
 import 'package:photo_manager/photo_manager.dart';
 
 class AttachmentPicked extends StatefulWidget {
@@ -43,6 +45,9 @@ class _AttachmentPickedState extends State<AttachmentPicked> with AutomaticKeepA
   @override
   Widget build(BuildContext context) {
     super.build(context);
+    final bool hideAttachments = SettingsManager().settings.redactedMode && SettingsManager().settings.hideAttachments;
+    final bool hideAttachmentTypes =
+        SettingsManager().settings.redactedMode && SettingsManager().settings.hideAttachmentTypes;
     return image != null
         ? AnimatedContainer(
             duration: Duration(milliseconds: 250),
@@ -52,11 +57,31 @@ class _AttachmentPickedState extends State<AttachmentPicked> with AutomaticKeepA
               children: <Widget>[
                 ClipRRect(
                   borderRadius: BorderRadius.circular(20),
-                  child: Image.memory(
-                    image,
-                    fit: BoxFit.cover,
-                    width: 150,
-                    height: 150,
+                  child: Stack(
+                    children: <Widget>[
+                      Image.memory(
+                        image,
+                        fit: BoxFit.cover,
+                        width: 150,
+                        height: 150,
+                      ),
+                      if (hideAttachments)
+                        Positioned.fill(
+                          child: Container(
+                            color: Theme.of(context).accentColor,
+                          ),
+                        ),
+                      if (hideAttachments && !hideAttachmentTypes)
+                        Positioned.fill(
+                          child: Container(
+                            alignment: Alignment.center,
+                            child: Text(
+                              mime(path),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                 ),
                 if (containsThis)
