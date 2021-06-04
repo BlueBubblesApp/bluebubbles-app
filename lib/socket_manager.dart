@@ -137,7 +137,7 @@ class SocketManager {
           element();
         });
         if (SettingsManager().settings.finishedSetup)
-          setup.startIncrementalSync(SettingsManager().settings, isIncremental: true, onConnectionError: (String err) {
+          setup.startIncrementalSync(SettingsManager().settings, onConnectionError: (String err) {
             debugPrint("(SYNC) Error performing incremental sync. Not saving last sync date.");
             debugPrint(err);
           });

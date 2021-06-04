@@ -33,10 +33,23 @@ class _SyncingMessagesState extends State<SyncingMessages> {
           duration: Duration(milliseconds: 500),
           curve: Curves.easeInOut,
         );
-      } else if (event.progress == 1.0) {
+      } else if (event.progress >= 100) {
         subscription.cancel();
       }
     });
+  }
+
+  String getProgressText(double progress) {
+    String txt = 'Setup in progress';
+    if (progress == 0.0) {
+      txt = 'Starting setup';
+    } else if (progress == -1.0) {
+      txt = 'Cancelling';
+    } else if (progress >= 100) {
+      txt = 'Finishing setup';
+    }
+
+    return '$txt...';
   }
 
   @override
@@ -123,11 +136,7 @@ class _SyncingMessagesState extends State<SyncingMessages> {
                         flex: 100,
                       ),
                       Text(
-                        progress == 0.0
-                            ? "Starting setup"
-                            : progress == -1.0
-                                ? "Cancelling..."
-                                : "Finishing setup",
+                        getProgressText(progress),
                         style: Theme.of(context).textTheme.bodyText1,
                       ),
                       Spacer(

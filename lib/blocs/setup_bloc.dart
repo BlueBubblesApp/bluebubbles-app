@@ -106,8 +106,7 @@ class SetupBloc {
     // We won't try an incremental sync until the last (full) sync date is set
     Settings _settingsCopy = SettingsManager().settings;
     _settingsCopy.lastIncrementalSync = DateTime.now().millisecondsSinceEpoch;
-
-    SettingsManager().saveSettings(_settingsCopy);
+    await SettingsManager().saveSettings(_settingsCopy);
 
     // Some safetly logging
     Timer timer = Timer(Duration(seconds: 15), () {
@@ -155,6 +154,9 @@ class SetupBloc {
     } finally {
       finishSetup();
     }
+
+    // Start an incremental sync to catch any messages we missed during setup
+    this.startIncrementalSync(settings);
   }
 
   Future<void> syncChat(Chat chat) async {
@@ -188,10 +190,7 @@ class SetupBloc {
     addOutput("Finished Setup! Cleaning up...", SetupOutputType.LOG);
     Settings _settingsCopy = SettingsManager().settings;
     _settingsCopy.finishedSetup = true;
-    SettingsManager().saveSettings(_settingsCopy);
-
-    isSyncing = false;
-    if (processId != null) SocketManager().finishSocketProcess(processId);
+    await SettingsManager().saveSettings(_settingsCopy);
 
     ContactManager().contacts = [];
     await ContactManager().getContacts(force: true);
@@ -210,12 +209,11 @@ class SetupBloc {
   Future<void> startIncrementalSync(Settings settings,
       {String chatGuid,
       bool saveDate = true,
-      bool isIncremental = false,
       Function onConnectionError,
       Function onComplete}) async {
     // If we are already syncing, don't sync again
-    // If the last sync date is empty, then we've never synced, so don't.
-    if (isSyncing || settings.lastIncrementalSync == 0 || SocketManager().state != SocketState.CONNECTED) return;
+    // Or, if we haven't finished setup, or we aren't connected, don't sync
+    if (isSyncing || !settings.finishedSetup || SocketManager().state != SocketState.CONNECTED) return;
 
     // Reset the progress
     _progress = 0;
@@ -256,8 +254,7 @@ class SetupBloc {
     }
 
     if (messages.length > 0) {
-      await MessageHelper.bulkAddMessages(null, messages, notifyForNewMessage: !isIncremental,
-          onProgress: (progress, total) {
+      await MessageHelper.bulkAddMessages(null, messages, onProgress: (progress, total) {
         _progress = (progress / total) * 100;
         _stream.sink.add(SetupData(_progress, output));
       });
