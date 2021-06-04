@@ -612,20 +612,28 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
       await ChatBloc().refreshChats();
     }
 
-    // If the chat request isn't finished, wait for it
-    if (!ChatBloc().chatRequest.isCompleted) {
-      await ChatBloc().chatRequest.future;
-    }
-
-    conversations = ChatBloc().chats;
-    for (int i = 0; i < conversations.length; i++) {
-      if (isNullOrEmpty(conversations[i].participants)) {
-        await conversations[i].getParticipants();
+    Function setChats = (List<Chat> newChats) async {
+      conversations = newChats;
+      for (int i = 0; i < conversations.length; i++) {
+        if (isNullOrEmpty(conversations[i].participants)) {
+          await conversations[i].getParticipants();
+        }
       }
-    }
 
-    filterContacts();
-    if (this.mounted) setState(() {});
+      filterContacts();
+      if (this.mounted) setState(() {});
+    };
+
+    // If there are any changes to the chatbloc, use them
+    ChatBloc().chatStream.listen((List<Chat> chats) async {
+      if (chats == null || chats.length == 0) return;
+      await setChats(chats);
+    });
+
+    // If the chat request is finished, set the chats
+    if (ChatBloc().chatRequest.isCompleted) {
+      await setChats(ChatBloc().chats);
+    }
   }
 
   void filterContacts() {
