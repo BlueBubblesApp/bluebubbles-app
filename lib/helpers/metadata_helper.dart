@@ -145,7 +145,7 @@ class MetadataHelper {
 
     // If the URL is supposedly to an actual image, set the image to the URL manually
     RegExp exp = new RegExp(r"(.png|.jpg|.gif|.tiff|.jpeg)$");
-    if (data?.image == null && data?.title == null && exp.hasMatch(data.url)) {
+    if (data?.image == null && data?.title == null && data.url != null && exp.hasMatch(data.url)) {
       data.image = data.url;
       data.title = "Image Preview";
     }
