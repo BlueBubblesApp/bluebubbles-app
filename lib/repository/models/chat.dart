@@ -259,8 +259,10 @@ class Chat {
       params["originalROWID"] = this.originalROWID;
     }
 
-    // Only update the latestMessage info if it's not null
-    if (this.latestMessageDate != null) {
+    // Only update the latestMessage info if it's not null,
+    // and it's not some time in the future
+    dynamic now = DateTime.now().toUtc().millisecondsSinceEpoch;
+    if (this.latestMessageDate != null && now > this.latestMessageDate.millisecondsSinceEpoch) {
       params["latestMessageText"] = this.latestMessageText;
       params["latestMessageDate"] = this.latestMessageDate.millisecondsSinceEpoch;
     }
