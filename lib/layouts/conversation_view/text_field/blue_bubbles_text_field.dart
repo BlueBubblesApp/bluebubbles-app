@@ -252,7 +252,9 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
 
   Future<void> initializeCameraController() async {
     cameras = await availableCameras();
-    cameraController = CameraController(cameras[cameraIndex], ResolutionPreset.max);
+
+    // Disable audio so that background music doesn't stop playing
+    cameraController = CameraController(cameras[cameraIndex], ResolutionPreset.max, enableAudio: false);
     await cameraController.initialize();
   }
 
