@@ -59,6 +59,10 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
   bool gotBrightness = false;
   bool markingAsRead = false;
   bool markedAsRead = false;
+  String previousSearch = '';
+  
+  final _contactStreamController = StreamController<List<UniqueContact>>.broadcast();
+  Stream<List<UniqueContact>> get contactStream => _contactStreamController.stream;
 
   void loadBrightness() {
     Color now = Theme.of(context).backgroundColor;
@@ -165,8 +169,9 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     return messageBloc;
   }
 
-  void disposeConversationView() {
+  void dispose() {
     messageBloc?.dispose();
+    _contactStreamController.close();
     // NotificationManager().leaveChat();
     super.dispose();
   }
@@ -621,7 +626,6 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
       }
 
       filterContacts();
-      if (this.mounted) setState(() {});
     };
 
     // If there are any changes to the chatbloc, use them
@@ -636,13 +640,21 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     }
   }
 
+  void setContacts(List<UniqueContact> contacts, {bool addToStream = true, refreshState = false}) {
+    this.contacts = contacts;
+    if (addToStream && !_contactStreamController.isClosed) {
+      _contactStreamController.sink.add(contacts);
+    }
+
+    if (refreshState && this.mounted) {
+      setState(() {});
+    }
+  }
+
   void filterContacts() {
     if (!isCreator) return;
     if (selected.length == 1 && selected.first.isChat) {
-      if (this.mounted)
-        setState(() {
-          contacts = [];
-        });
+      this.setContacts([], addToStream: false);
     }
 
     Function slugText = (String text) {
@@ -720,16 +732,17 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     _conversations.addAll(_contacts);
     if (searchQuery.length > 0)
       _conversations.sort((a, b) {
+        if (a.isChat && a.chat.participants.length == 1) return -1;
+        if (b.isChat && b.chat.participants.length == 1) return 1;
         if (a.isChat && !b.isChat) return 1;
         if (b.isChat && !a.isChat) return -1;
         if (!b.isChat && !a.isChat) return 0;
         return a.chat.participants.length.compareTo(b.chat.participants.length);
       });
 
-    if (this.mounted)
-      setState(() {
-        contacts = _conversations;
-      });
+    bool shouldRefreshState = searchQuery != previousSearch || contacts.length == 0 || conversations.length == 0;
+    this.setContacts(_conversations, refreshState: shouldRefreshState);
+    previousSearch = searchQuery;
   }
 
   Future<Chat> createChat() async {
@@ -832,7 +845,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
       if (widget.type == ChatSelectorTypes.ONLY_EXISTING) {
         selected.add(item);
         chat = item.chat;
-        contacts = [];
+        this.setContacts([], addToStream: false, refreshState: true);
       } else {
         for (Handle e in item?.chat?.participants ?? []) {
           UniqueContact contact = new UniqueContact(
@@ -858,15 +871,22 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     if (this.mounted) setState(() {});
   }
 
-  Widget buildChatSelectorBody() => ListView.builder(
+  Widget buildChatSelectorBody() => StreamBuilder(
+    initialData: contacts,
+    stream: contactStream,
+    builder: (BuildContext context, AsyncSnapshot<List<UniqueContact>> snapshot) {
+      List data = snapshot.hasData ? snapshot.data : [];
+      return ListView.builder(
         physics: ThemeSwitcher.getScrollPhysics(),
         itemBuilder: (BuildContext context, int index) => ContactSelectorOption(
-          key: new Key("selector-${contacts[index].displayName}"),
-          item: contacts[index],
+          key: new Key("selector-${data[index].displayName}"),
+          item: data[index],
           onSelected: onSelected,
         ),
-        itemCount: contacts.length,
+        itemCount: data.length,
       );
+    }
+  );
 
   Widget buildChatSelectorHeader() => PreferredSize(
         preferredSize: Size.fromHeight(40),

@@ -54,18 +54,18 @@ class ContactSelectorOption extends StatelessWidget {
         style: Theme.of(context).textTheme.bodyText1,
         overflow: TextOverflow.ellipsis,
       ),
-      subtitle: (!item.isChat)
-          ? getTextWidget(item.address)
+      subtitle: (!item.isChat || item.chat.participants.length == 1)
+          ? getTextWidget(item?.address ?? item.chat.participants[0]?.address ?? "Person")
           : FutureBuilder(
-              future: chatParticipants,
-              builder: (context, snapshot) {
-                if (!snapshot.hasData) {
-                  return getTextWidget(item.displayName ?? item.address ?? "Person");
-                }
+            future: chatParticipants,
+            builder: (context, snapshot) {
+              if (!snapshot.hasData) {
+                return getTextWidget(item.displayName ?? item.address ?? "Person");
+              }
 
-                return getTextWidget(snapshot.data);
-              },
-            ),
+              return getTextWidget(snapshot.data);
+            },
+          ),
       leading: !item.isChat
           ? ContactAvatarWidget(
               handle: Handle(address: item.address),
