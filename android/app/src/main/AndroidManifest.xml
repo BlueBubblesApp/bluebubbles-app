@@ -71,6 +71,7 @@
             android:windowSoftInputMode="adjustResize"
             android:allowEmbedded="true"
             android:resizeableActivity="true"
+            android:documentLaunchMode="always"
             >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

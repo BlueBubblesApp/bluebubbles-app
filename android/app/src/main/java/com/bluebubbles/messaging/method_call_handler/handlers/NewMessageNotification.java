@@ -69,7 +69,13 @@ public class NewMessageNotification implements Handler {
 
         // Set the style based on if there is already a matching notification
         if (style == null) {
-            style = new NotificationCompat.MessagingStyle(androidx.core.app.Person.fromAndroidPerson(new Person.Builder().setName("You").build()));
+            androidx.core.app.Person myPerson = androidx.core.app.Person.fromAndroidPerson(
+                new Person.Builder()
+                    .setName("You")
+                    .setImportant(true)
+                    .build()
+            );
+            style = new NotificationCompat.MessagingStyle(myPerson);
             if (call.argument("groupConversation")) {
                 style.setConversationTitle(call.argument("contentTitle"));
             }
@@ -88,14 +94,17 @@ public class NewMessageNotification implements Handler {
         }
 
         // Build the sender icon
-        Icon icon = null;
+        IconCompat icon = null;
         if (call.argument("contactIcon") != null) {
             Bitmap bmp = BitmapFactory.decodeByteArray((byte[]) call.argument("contactIcon"), 0, ((byte[]) call.argument("contactIcon")).length);
-            icon = Icon.createWithBitmap(HelperUtils.getCircleBitmap(bmp));
+            icon = IconCompat.createWithAdaptiveBitmap(HelperUtils.getCircleBitmap(bmp));
         }
-        Person.Builder person = new Person.Builder().setName(call.argument("name"));
+
+        Person.Builder person = new Person.Builder()
+            .setName(call.argument("name"))
+            .setImportant(true);
         if (icon != null) {
-            person.setIcon(icon);
+            person.setIcon(icon.toIcon());
         }
 
         // Add the message to the notification
@@ -159,19 +168,22 @@ public class NewMessageNotification implements Handler {
                                 (String) call.argument("group"))
                         .setType("NotificationOpen"),
                 Intent.FILL_IN_ACTION);
-        NotificationCompat.BubbleMetadata bubbleMetadata = null;
-        if (call.argument("contactIcon") != null) {
 
-            Bitmap bmp = BitmapFactory.decodeByteArray((byte[]) call.argument("contactIcon"), 0, ((byte[]) call.argument("contactIcon")).length);
+        // Build the metadata
+        NotificationCompat.BubbleMetadata.Builder bubbleMetadata = new NotificationCompat.BubbleMetadata.Builder()
+            .setIntent(bubbleIntent)
+            .setDesiredHeight(600)
+            .setAutoExpandBubble(true)
+            .setSuppressNotification(false);
 
-            bubbleMetadata = new NotificationCompat.BubbleMetadata.Builder()
-                    .setIntent(bubbleIntent)
-                    .setDesiredHeight(600)
-                    .setIcon(IconCompat.createWithAdaptiveBitmap(bmp))
-                    .setAutoExpandBubble(true)
-                    .setSuppressNotification(false)
-                    .build();
+        // Dynamically set the icon
+        if (icon != null) {
+            bubbleMetadata.setIcon(icon);
         }
+
+        // Make sure it gets built
+        NotificationCompat.BubbleMetadata bubbleData = bubbleMetadata.build();
+
         // Build the actual notification
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, call.argument("CHANNEL_ID"))
                 .setSmallIcon(R.mipmap.ic_stat_icon)
@@ -184,10 +196,8 @@ public class NewMessageNotification implements Handler {
                 .setStyle(style)
                 .setShortcutId(call.argument("group"))
                 .addExtras(extras)
-                .setColor(4888294);
-//        if (bubbleMetadata != null) {
-//            builder.setBubbleMetadata(bubbleMetadata);
-//        }
+                .setColor(4888294)
+                .setBubbleMetadata(bubbleData);
 
         // Send the notification
         NotificationManagerCompat notificationManagerCompat = NotificationManagerCompat.from(context);
