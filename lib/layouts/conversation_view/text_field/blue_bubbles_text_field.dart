@@ -137,13 +137,19 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     }
 
     if (widget.existingAttachments != null) {
-      pickedImages.addAll(widget.existingAttachments);
+      this.addAttachments(widget.existingAttachments);
       updateTextFieldAttachments();
     }
 
     if (textFieldData != null) {
-      pickedImages.addAll(textFieldData?.attachments ?? []);
+      this.addAttachments(textFieldData?.attachments ?? []);
     }
+  }
+
+  void addAttachments(List<File> attachments) {
+    pickedImages.addAll(attachments);
+    final ids = pickedImages.map((e) => e.path).toSet();
+    pickedImages.retainWhere((element) => ids.remove(element.path));
   }
 
   void updateTextFieldAttachments() {
@@ -190,7 +196,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
 
     // Save the data to a location and add it to the file picker
     File file = await _saveData(data, filename);
-    pickedImages.add(file);
+    this.addAttachments([file]);
 
     // Update the state
     updateTextFieldAttachments();
@@ -884,7 +890,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
             }
           }
 
-          pickedImages.add(file);
+          this.addAttachments([file]);
           updateTextFieldAttachments();
           if (this.mounted) setState(() {});
         },
