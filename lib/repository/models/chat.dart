@@ -683,15 +683,8 @@ class Chat {
         [this.id]);
 
     this.participants = (res.isNotEmpty) ? res.map((c) => Handle.fromMap(c)).toList() : [];
-
-    // Remove dupe participants
-    if (this.participants.length > 0) {
-      final ids = this.participants.map((e) => e.id).toSet();
-      this.participants.retainWhere((element) => ids.remove(element.id));
-    }
-
+    this._deduplicateParticipants();
     this.fakeParticipants = this.participants.map((p) => ContactManager().handleToFakeName[p.address]).toList();
-
     return this;
   }
 
@@ -702,15 +695,15 @@ class Chat {
     await participant.save();
     if (participant.id == null) return this;
 
-    if (!this.participants.contains(participant)) {
-      this.participants.add(participant);
-    }
-
     try {
       await db.insert("chat_handle_join", {"chatId": this.id, "handleId": participant.id});
     } catch (ex) {
       // Don't do anything if it already exists
     }
+
+    // Add to the class and deduplicate
+    this.participants.add(participant);
+    this._deduplicateParticipants();
 
     return this;
   }
@@ -722,11 +715,16 @@ class Chat {
     await db.delete("chat_handle_join", where: "chatId = ? AND handleId = ?", whereArgs: [this.id, participant.id]);
 
     // Second, remove from this object instance
-    if (this.participants.contains(participant)) {
-      this.participants.remove(participant);
-    }
+    this.participants.removeWhere((element) => participant.id == element.id);
+    this._deduplicateParticipants();
 
     return this;
+  }
+
+  void _deduplicateParticipants() {
+    if (this.participants.length == 0) return;
+    final ids = this.participants.map((e) => e.address).toSet();
+    this.participants.retainWhere((element) => ids.remove(element.address));
   }
 
   Future<Chat> pin() async {
