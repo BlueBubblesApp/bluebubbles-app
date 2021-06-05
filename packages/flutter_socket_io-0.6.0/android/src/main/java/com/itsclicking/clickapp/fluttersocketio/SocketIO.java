@@ -438,7 +438,7 @@ public class SocketIO {
 
     public boolean isConnected() {
         if (_socket != null) {
-            Utils.log(TAG, "socket id: " + getId() + " is connected: " + _socket.connected());
+            // Utils.log(TAG, "socket id: " + getId() + " is connected: " + _socket.connected());
             return _socket.connected();
         } else {
             Utils.log(TAG, "socket id: " + getId() + " is NULL");

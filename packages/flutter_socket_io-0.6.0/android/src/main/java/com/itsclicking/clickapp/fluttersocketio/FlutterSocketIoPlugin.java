@@ -37,7 +37,7 @@ public class FlutterSocketIoPlugin implements MethodCallHandler {
         String socketDomain = call.argument(SocketIOManager.MethodCallArgumentsName.SOCKET_DOMAIN);
         String callback = call.argument(SocketIOManager.MethodCallArgumentsName.SOCKET_CALLBACK);
 
-        Utils.log(TAG, "onMethodCall: " + call.method + " - domain: " + socketDomain + " - with namespace: " + socketNameSpace);
+        // Utils.log(TAG, "onMethodCall: " + call.method + " - domain: " + socketDomain + " - with namespace: " + socketNameSpace);
 
         try {
 
