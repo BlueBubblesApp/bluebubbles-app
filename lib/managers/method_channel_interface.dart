@@ -103,6 +103,7 @@ class MethodChannelInterface {
 
         return new Future.value("");
       case "ChatOpen":
+        print("Opening Chat with GUID: ${call.arguments}");
         openChat(call.arguments);
 
         return new Future.value("");
@@ -259,10 +260,10 @@ class MethodChannelInterface {
   void closeThread() {
     // Only do this if we are indeed running in the background
     if (headless) {
+      debugPrint("(CloseThread) -> Closing the background isolate...");
+  
       // Tells the native code to close the isolate
       invokeMethod("close-background-isolate");
-
-      debugPrint("(closeThread) -> Closed the background isolate");
     }
   }
 

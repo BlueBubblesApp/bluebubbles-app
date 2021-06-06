@@ -66,72 +66,54 @@
             android:name=".MainActivity"
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
             android:hardwareAccelerated="true"
-            android:launchMode="singleTask"
+            android:launchMode="singleTop"
             android:theme="@style/LaunchTheme"
             android:windowSoftInputMode="adjustResize"
             android:allowEmbedded="true"
             android:resizeableActivity="true"
-            android:documentLaunchMode="always"
-            >
+            android:documentLaunchMode="always">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
-
                 <category android:name="android.intent.category.DEFAULT" />
-
                 <data android:mimeType="image/*" />
             </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.SEND_MULTIPLE" />
-
                 <category android:name="android.intent.category.DEFAULT" />
-
                 <data android:mimeType="image/*" />
             </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
-
                 <category android:name="android.intent.category.DEFAULT" />
-
                 <data android:mimeType="video/*" />
             </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.SEND_MULTIPLE" />
-
                 <category android:name="android.intent.category.DEFAULT" />
-
                 <data android:mimeType="video/*" />
             </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
-
                 <category android:name="android.intent.category.DEFAULT" />
-
                 <data android:mimeType="text/plain" />
             </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
-
                 <category android:name="android.intent.category.DEFAULT" />
-
                 <data android:mimeType="text/x-vcard" />
             </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
-
                 <category android:name="android.intent.category.DEFAULT" />
-
                 <data android:mimeType="application/*" />
             </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
-
                 <category android:name="android.intent.category.DEFAULT" />
-
                 <data android:mimeType="audio/*" />
             </intent-filter>
 

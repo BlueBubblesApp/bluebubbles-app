@@ -69,6 +69,8 @@ public class FCMWorker extends Worker implements DartWorker {
 
     @Override
     public void onStopped() {
+        Log.d("Stop", "Stopping FCM Worker...");
+
         // When this worker gets cancelled, we need to clean up
         destroyHeadlessThread();
         super.onStopped();
@@ -111,12 +113,12 @@ public class FCMWorker extends Worker implements DartWorker {
         new Handler(Looper.getMainLooper()).post(() -> {
             if (backgroundView != null) {
                 try {
+                    Log.d("Destroy", "Destroying FCM Worker isolate...");
                     backgroundView.destroy();
                     backgroundView = null;
                     backgroundChannel = null;
-                    Log.d("Destroy", "Destroyed isolate");
                 } catch (Exception e) {
-
+                    Log.d("Destroy", "Failed to destroy FCM Worker isolate!");
                 }
             }
         });

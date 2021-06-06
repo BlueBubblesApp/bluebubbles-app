@@ -460,7 +460,7 @@ class SocketManager {
         output = data["data"];
       }
 
-      completer.complete(output);
+      if (!completer.isCompleted) completer.complete(output);
       if (cb != null) cb(output);
     });
 

@@ -159,19 +159,9 @@ public class NewMessageNotification implements Handler {
                         .setHintDisplayActionInline(true))
                 .build();
 
-        PendingIntent bubbleIntent = PendingIntent.getActivity(
-                context,
-                existingNotificationId,
-                new Intent(context, MainActivity.class)
-                        .putExtra("id", existingNotificationId)
-                        .putExtra("chatGUID",
-                                (String) call.argument("group"))
-                        .setType("NotificationOpen"),
-                Intent.FILL_IN_ACTION);
-
         // Build the metadata
         NotificationCompat.BubbleMetadata.Builder bubbleMetadata = new NotificationCompat.BubbleMetadata.Builder()
-            .setIntent(bubbleIntent)
+            .setIntent(openIntent)
             .setDesiredHeight(600)
             .setAutoExpandBubble(true)
             .setSuppressNotification(false);
