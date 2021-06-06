@@ -69,7 +69,9 @@ class ContactManager {
     return output;
   }
 
-  Future getContacts({bool headless = false, bool force = false}) async {
+  Future getContacts(
+      {bool headless = false,
+      bool force = false}) async {
     if (!(await canAccessContacts())) return false;
 
     // If we are fetching the contacts, return the current future so we can await it
@@ -96,10 +98,22 @@ class ContactManager {
 
     // Fetch the current list of contacts
     debugPrint("ContactManager -> Fetching contacts");
-    contacts =
-        ((await ContactsService.getContacts(withThumbnails: false)) ?? [])
+    contacts = ((await ContactsService.getContacts(withThumbnails: false)) ?? [])
             .toList();
 
+    // Match handles in the database with contacts
+    await this.matchHandles();
+
+    debugPrint(
+        "ContactManager -> Finished fetching contacts (${handleToContact.length})");
+    getContactsFuture.complete(true);
+
+    // Lazy load thumbnails after rendering initial contacts.
+    getAvatars();
+    return true;
+  }
+
+  Future<void> matchHandles() async {
     // Match handles to contacts
     List<Handle> handles = await Handle.find({});
     for (Handle handle in handles) {
@@ -124,14 +138,6 @@ class ContactManager {
                 handleToFakeName[entry.key] == null
             ? MapEntry(entry.key, faker.person.name())
             : MapEntry(entry.key, handleToFakeName[entry.key])));
-
-    debugPrint(
-        "ContactManager -> Finished fetching contacts (${handleToContact.length})");
-    getContactsFuture.complete(true);
-
-    // Lazy load thumbnails after rendering initial contacts.
-    getAvatars();
-    return true;
   }
 
   Future<void> getAvatars() async {

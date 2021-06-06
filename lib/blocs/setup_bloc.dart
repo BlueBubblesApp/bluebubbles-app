@@ -10,6 +10,7 @@ import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/fcm_data.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:bluebubbles/socket_manager.dart';
+import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/material.dart';
 
 enum SetupOutputType { ERROR, LOG }
@@ -98,6 +99,9 @@ class SetupBloc {
     // Make sure we aren't already syncing
     if (isSyncing) return;
 
+    // Load & cache contacts to be used later
+    List<Contact> contacts = ((await ContactsService.getContacts(withThumbnails: false)) ?? []).toList();
+
     // Setup syncing process
     processId = SocketManager().addSocketProcess(([bool finishWithError = false]) {});
     isSyncing = true;
@@ -133,6 +137,9 @@ class SetupBloc {
       for (dynamic item in chats) {
         Chat chat = Chat.fromMap(item);
         await chat.save();
+
+        // Re-match the handles with the contacts
+        await ContactManager().matchHandles();
 
         try {
           await syncChat(chat);
