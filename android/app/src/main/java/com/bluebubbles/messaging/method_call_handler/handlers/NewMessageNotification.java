@@ -186,8 +186,8 @@ public class NewMessageNotification implements Handler {
                 .setStyle(style)
                 .setShortcutId(call.argument("group"))
                 .addExtras(extras)
-                .setColor(4888294)
-                .setBubbleMetadata(bubbleData);
+                // .setBubbleMetadata(bubbleData)
+                .setColor(4888294);
 
         // Send the notification
         NotificationManagerCompat notificationManagerCompat = NotificationManagerCompat.from(context);
