@@ -159,20 +159,19 @@ public class NewMessageNotification implements Handler {
                         .setHintDisplayActionInline(true))
                 .build();
 
-        // Build the metadata
-        NotificationCompat.BubbleMetadata.Builder bubbleMetadata = new NotificationCompat.BubbleMetadata.Builder()
-            .setIntent(openIntent)
-            .setDesiredHeight(600)
-            .setAutoExpandBubble(true)
-            .setSuppressNotification(false);
+        // // Build the metadata
+        // NotificationCompat.BubbleMetadata.Builder bubbleMetadata = new NotificationCompat.BubbleMetadata.Builder()
+        //     .setIntent(openIntent)
+        //     .setDesiredHeight(600)
+        //     .setAutoExpandBubble(true)
+        //     .setSuppressNotification(false);
 
-        // Dynamically set the icon
-        if (icon != null) {
-            bubbleMetadata.setIcon(icon);
-        }
-
-        // Make sure it gets built
-        NotificationCompat.BubbleMetadata bubbleData = bubbleMetadata.build();
+        // // Dynamically set the icon
+        // NotificationCompat.BubbleMetadata bubbleData = null;
+        // if (icon != null) {
+        //     bubbleMetadata.setIcon(icon);
+        //     bubbleData = bubbleMetadata.build();
+        // }
 
         // Build the actual notification
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, call.argument("CHANNEL_ID"))
@@ -194,6 +193,4 @@ public class NewMessageNotification implements Handler {
         notificationManagerCompat.notify(existingNotificationId, builder.build());
         result.success("");
     }
-
-
 }

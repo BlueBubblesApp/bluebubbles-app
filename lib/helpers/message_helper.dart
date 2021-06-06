@@ -198,7 +198,9 @@ class MessageHelper {
     if (!SettingsManager().settings.finishedSetup) return; // Don't notify if not fully setup
     if (existingMessage != null || chat.isMuted) return; // Don''t notify if the chat is muted
     if (message.isFromMe || message.handle == null) return; // Don't notify if the text is from me
-    if (LifeCycleManager().isAlive && CurrentChat.isActive(chat.guid)) {
+
+    CurrentChat currChat = CurrentChat.activeChat;
+    if (LifeCycleManager().isAlive && (currChat == null || currChat.chat.guid == chat.guid)) {
       // Don't notify if the the chat is the active chat
       return;
     }
