@@ -51,22 +51,23 @@ class ContactManager {
   }
 
   Future<bool> canAccessContacts() async {
-    bool output = false;
-
     try {
       bool granted = await Permission.contacts.isGranted;
       if (granted) return true;
 
       bool totallyDisabled = await Permission.contacts.isPermanentlyDenied;
       if (!totallyDisabled) {
-        return await Permission.contacts.request().isGranted;
+        return (await Permission.contacts.request()).isGranted;
+      } else {
+        debugPrint(
+          "[ContactManager] -> Contacts permissions are permanently denied...");
       }
     } catch (ex) {
-      debugPrint("Error getting access to contacts!");
+      debugPrint("[ContactManager] -> Error getting access to contacts!");
       debugPrint(ex.toString());
     }
 
-    return output;
+    return false;
   }
 
   Future getContacts(
