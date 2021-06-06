@@ -60,6 +60,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
   bool markingAsRead = false;
   bool markedAsRead = false;
   String previousSearch = '';
+  int previousContactCount = 0;
   
   final _contactStreamController = StreamController<List<UniqueContact>>.broadcast();
   Stream<List<UniqueContact>> get contactStream => _contactStreamController.stream;
@@ -510,10 +511,6 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
       searchQuery = chatSelectorController.text.substring(1);
       filterContacts();
     });
-
-    ChatBloc().chatStream.listen((List<Chat> chats) {
-      if (this.mounted) loadEntries();
-    });
   }
 
   void resetCursor() {
@@ -631,11 +628,22 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     // If there are any changes to the chatbloc, use them
     ChatBloc().chatStream.listen((List<Chat> chats) async {
       if (chats == null || chats.length == 0) return;
+
+      // Make sure the contact count changed, otherwise, don't set the chats
+      if (chats.length == previousContactCount) return;
+      previousContactCount = chats.length;
+
+      // We only care about getting the first 25, for updating the state
+      // 25 is relatively arbitrary. We just want the most recent...
+      if (chats.length > 25) return;
+
+      // Update and filter the chats
       await setChats(chats);
     });
 
-    // If the chat request is finished, set the chats
-    if (ChatBloc().chatRequest.isCompleted) {
+    // When the chat request is finished, set the chats
+    if (ChatBloc().chatRequest != null) {
+      await ChatBloc().chatRequest.future;
       await setChats(ChatBloc().chats);
     }
   }
@@ -701,7 +709,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     };
 
     if (widget.type != ChatSelectorTypes.ONLY_EXISTING) {
-      for (Contact contact in ContactManager().contacts) {
+      for (Contact contact in ContactManager().contacts ?? []) {
         String name = slugText(contact.displayName);
         if (name.contains(searchQuery)) {
           addContactEntries(contact);
@@ -713,7 +721,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
 
     List<UniqueContact> _conversations = [];
     if (selected.length == 0 && widget.type != ChatSelectorTypes.ONLY_CONTACTS) {
-      for (Chat chat in conversations) {
+      for (Chat chat in conversations ?? []) {
         String title = slugText(chat?.title);
         if (title.contains(searchQuery)) {
           if (!cache.contains(chat.guid)) {

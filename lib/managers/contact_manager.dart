@@ -40,8 +40,7 @@ class ContactManager {
 
   Future<Contact> getCachedContact(Handle handle) async {
     if (handle == null) return null;
-    if (contacts == null || !handleToContact.containsKey(handle.address))
-      await getContacts();
+    if (contacts == null) await getContacts();
     if (!handleToContact.containsKey(handle.address)) return null;
     return handleToContact[handle.address];
   }
