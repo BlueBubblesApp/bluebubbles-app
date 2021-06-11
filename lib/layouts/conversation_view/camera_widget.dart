@@ -72,7 +72,8 @@ class _CameraWidgetState extends State<CameraWidget> with WidgetsBindingObserver
   Future<void> openFullCamera({String type: 'camera'}) async {
     // Create a file that the camera can write to
     String appDocPath = SettingsManager().appDocDir.path;
-    File file = new File("$appDocPath/attachments/" + randomString(16) + ".png");
+    String ext = (type == 'video') ? ".mp4" : ".png";
+    File file = new File("$appDocPath/attachments/" + randomString(16) + ext);
     await file.create(recursive: true);
 
     // Take the picture after opening the camera
