@@ -23,6 +23,10 @@ class CameraWidget extends StatefulWidget {
 class _CameraWidgetState extends State<CameraWidget> with WidgetsBindingObserver {
   CameraController controller;
 
+  get hasCameraContext {
+    return context != null && BlueBubblesTextField.of(context) != null;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -33,11 +37,9 @@ class _CameraWidgetState extends State<CameraWidget> with WidgetsBindingObserver
   }
 
   Future<void> initCameras() async {
-    if (context == null) return;
-    if (BlueBubblesTextField.of(context) == null) return;
+    if (!this.hasCameraContext) return;
     await BlueBubblesTextField.of(context).initializeCameraController();
-    if (context == null) return; // After the await, so could have been some time
-    controller = BlueBubblesTextField.of(context).cameraController;
+    if (!this.hasCameraContext) return; // After the await, so could have been some time
     if (this.mounted) setState(() {});
   }
 
@@ -45,7 +47,7 @@ class _CameraWidgetState extends State<CameraWidget> with WidgetsBindingObserver
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     // Call the [LifeCycleManager] events based on the [state]
-    if (state == AppLifecycleState.paused) {
+    if (state == AppLifecycleState.paused && controller != null) {
       controller?.dispose();
     } else if (state == AppLifecycleState.resumed) {
       initCameras();
@@ -67,10 +69,30 @@ class _CameraWidgetState extends State<CameraWidget> with WidgetsBindingObserver
     Scaffold.of(context).showSnackBar(snackBar);
   }
 
+  Future<void> openFullCamera({String type: 'camera'}) async {
+    // Create a file that the camera can write to
+    String appDocPath = SettingsManager().appDocDir.path;
+    File file = new File("$appDocPath/attachments/" + randomString(16) + ".png");
+    await file.create(recursive: true);
+
+    // Take the picture after opening the camera
+    await MethodChannelInterface().invokeMethod("open-camera", {"path": file.path, "type": type});
+
+    // If we don't get data back, return outta here
+    if (!file.existsSync()) return;
+    if (file.statSync().size == 0) {
+      file.deleteSync();
+      return;
+    }
+
+    widget.addAttachment(file);
+  }
+
   @override
   Widget build(BuildContext context) {
     if (BlueBubblesTextField.of(context) == null) return Container();
-    CameraController controller = BlueBubblesTextField.of(context).cameraController;
+    controller = BlueBubblesTextField.of(context).cameraController;
+
     if (controller == null || !controller.value.isInitialized) return Container();
     return AspectRatio(
       aspectRatio: MediaQuery.of(context).orientation == Orientation.portrait
@@ -101,6 +123,7 @@ class _CameraWidgetState extends State<CameraWidget> with WidgetsBindingObserver
           ),
         ),
       ];
+
     return [
       Stack(
         alignment: Alignment.bottomCenter,
@@ -153,18 +176,7 @@ class _CameraWidgetState extends State<CameraWidget> with WidgetsBindingObserver
             minWidth: 30,
             color: Colors.transparent,
             onPressed: () async {
-              String appDocPath = SettingsManager().appDocDir.path;
-              File file = new File("$appDocPath/attachments/" + randomString(16) + ".png");
-              await file.create(recursive: true);
-              await MethodChannelInterface().invokeMethod("open-camera", {"path": file.path, "type": "camera"});
-
-              if (!file.existsSync()) return;
-              if (file.statSync().size == 0) {
-                file.deleteSync();
-                return;
-              }
-
-              widget.addAttachment(file);
+              await this.openFullCamera(type: 'camera');
             },
             child: Icon(
               Icons.fullscreen,
@@ -185,18 +197,7 @@ class _CameraWidgetState extends State<CameraWidget> with WidgetsBindingObserver
             minWidth: 30,
             color: Colors.transparent,
             onPressed: () async {
-              String appDocPath = SettingsManager().appDocDir.path;
-              File file = new File("$appDocPath/attachments/" + randomString(16) + ".mp4");
-              await file.create(recursive: true);
-              await MethodChannelInterface().invokeMethod("open-camera", {"path": file.path, "type": "video"});
-
-              if (!file.existsSync()) return;
-              if (file.statSync().size == 0) {
-                file.deleteSync();
-                return;
-              }
-
-              widget.addAttachment(file);
+              await this.openFullCamera(type: 'video');
             },
             child: Icon(
               Icons.videocam,
