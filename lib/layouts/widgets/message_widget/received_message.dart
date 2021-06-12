@@ -215,12 +215,12 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
         if (index >= 0 && index < fakeNames.length) {
           contactName = currentChat?.fakeParticipants[index];
         }
+      }
 
-        // If the contact name still equals the contact title, override it
-        if (index == -1 || contactName == contactTitle) {
-          index = (index < 0) ? 0 : index;
-          contactName = "Participant ${index + 1}";
-        }
+      // If the contact name still equals the contact title, override it
+      if (index == -1 || contactName == contactTitle) {
+        index = (index < 0) ? 0 : index;
+        contactName = "Participant ${index + 1}";
       }
     }
 
