@@ -37,7 +37,7 @@ class MessageTail extends StatelessWidget {
         Container(
           margin: EdgeInsets.only(bottom: 2),
           height: 28,
-          width: 11,
+          width: 10,
           decoration: BoxDecoration(
             color: Theme.of(context).backgroundColor,
             borderRadius: BorderRadius.only(

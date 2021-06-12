@@ -61,7 +61,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
   bool markedAsRead = false;
   String previousSearch = '';
   int previousContactCount = 0;
-  
+
   final _contactStreamController = StreamController<List<UniqueContact>>.broadcast();
   Stream<List<UniqueContact>> get contactStream => _contactStreamController.stream;
 
@@ -880,21 +880,20 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
   }
 
   Widget buildChatSelectorBody() => StreamBuilder(
-    initialData: contacts,
-    stream: contactStream,
-    builder: (BuildContext context, AsyncSnapshot<List<UniqueContact>> snapshot) {
-      List data = snapshot.hasData ? snapshot.data : [];
-      return ListView.builder(
-        physics: ThemeSwitcher.getScrollPhysics(),
-        itemBuilder: (BuildContext context, int index) => ContactSelectorOption(
-          key: new Key("selector-${data[index].displayName}"),
-          item: data[index],
-          onSelected: onSelected,
-        ),
-        itemCount: data.length,
-      );
-    }
-  );
+      initialData: contacts,
+      stream: contactStream,
+      builder: (BuildContext context, AsyncSnapshot<List<UniqueContact>> snapshot) {
+        List data = snapshot.hasData ? snapshot.data : [];
+        return ListView.builder(
+          physics: ThemeSwitcher.getScrollPhysics(),
+          itemBuilder: (BuildContext context, int index) => ContactSelectorOption(
+            key: new Key("selector-${data[index].displayName}"),
+            item: data[index],
+            onSelected: onSelected,
+          ),
+          itemCount: data?.length ?? 0,
+        );
+      });
 
   Widget buildChatSelectorHeader() => PreferredSize(
         preferredSize: Size.fromHeight(40),

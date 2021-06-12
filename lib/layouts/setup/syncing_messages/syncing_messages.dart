@@ -115,7 +115,7 @@ class _SyncingMessagesState extends State<SyncingMessages> {
                               ),
                             );
                           },
-                          itemCount: snapshot.data.output.length,
+                          itemCount: snapshot?.data?.output?.length ?? 0,
                         ),
                       ),
                     ),

@@ -29,8 +29,7 @@ class MethodChannelInterface {
     return _interface;
   }
 
-  static final MethodChannelInterface _interface =
-      MethodChannelInterface._internal();
+  static final MethodChannelInterface _interface = MethodChannelInterface._internal();
 
   MethodChannelInterface._internal();
 
@@ -77,8 +76,7 @@ class MethodChannelInterface {
         String address = call.arguments.toString();
 
         // We remove the brackets from the formatting
-        address =
-            getServerAddress(address: address.substring(1, address.length - 1));
+        address = getServerAddress(address: address.substring(1, address.length - 1));
 
         // And then tell the socket to set the new server address
         await SocketManager().newServer(address);
@@ -89,8 +87,7 @@ class MethodChannelInterface {
         Map<String, dynamic> data = jsonDecode(call.arguments);
 
         // Add it to the queue with the data as the item
-        IncomingQueue().add(new QueueItem(
-            event: IncomingQueue.HANDLE_MESSAGE_EVENT, item: {"data": data}));
+        IncomingQueue().add(new QueueItem(event: IncomingQueue.HANDLE_MESSAGE_EVENT, item: {"data": data}));
 
         return new Future.value("");
       case "updated-message":
@@ -98,12 +95,11 @@ class MethodChannelInterface {
         Map<String, dynamic> data = jsonDecode(call.arguments);
 
         // Add it to the queue with the data as the item
-        IncomingQueue().add(new QueueItem(
-            event: IncomingQueue.HANDLE_UPDATE_MESSAGE, item: {"data": data}));
+        IncomingQueue().add(new QueueItem(event: IncomingQueue.HANDLE_UPDATE_MESSAGE, item: {"data": data}));
 
         return new Future.value("");
       case "ChatOpen":
-        print("Opening Chat with GUID: ${call.arguments}");
+        debugPrint("Opening Chat with GUID: ${call.arguments}");
         openChat(call.arguments);
 
         return new Future.value("");
@@ -146,8 +142,7 @@ class MethodChannelInterface {
         await SocketManager().removeChatNotification(chat);
 
         if (SettingsManager().settings.privateMarkChatAsRead) {
-          SocketManager().sendMessage(
-              "mark-chat-read", {"chatGuid": chat.guid}, (data) {});
+          SocketManager().sendMessage("mark-chat-read", {"chatGuid": chat.guid}, (data) {});
         }
 
         // In case this method is called when the app is in a background isolate
@@ -176,10 +171,7 @@ class MethodChannelInterface {
 
         // If it is a direct shortcut, try and find the chat and navigate to it
         if (guid != null) {
-          List<Chat> chats = ChatBloc()
-              .chats
-              .where((element) => element.guid == guid)
-              .toList();
+          List<Chat> chats = ChatBloc().chats.where((element) => element.guid == guid).toList();
 
           // If we did find a chat matching the criteria
           if (chats.length != 0) {
@@ -218,10 +210,7 @@ class MethodChannelInterface {
 
         // If it is a direct shortcut, try and find the chat and navigate to it
         if (guid != null) {
-          List<Chat> chats = ChatBloc()
-              .chats
-              .where((element) => element.guid == guid)
-              .toList();
+          List<Chat> chats = ChatBloc().chats.where((element) => element.guid == guid).toList();
 
           // If we did find a chat matching the criteria
           if (chats.length != 0) {
@@ -261,14 +250,13 @@ class MethodChannelInterface {
     // Only do this if we are indeed running in the background
     if (headless) {
       debugPrint("(CloseThread) -> Closing the background isolate...");
-  
+
       // Tells the native code to close the isolate
       invokeMethod("close-background-isolate");
     }
   }
 
-  Future<void> openChat(String id,
-      {List<File> existingAttachments, String existingText}) async {
+  Future<void> openChat(String id, {List<File> existingAttachments, String existingText}) async {
     if (CurrentChat.activeChat?.chat?.guid == id) {
       NotificationManager().switchChat(CurrentChat.activeChat.chat);
       return;

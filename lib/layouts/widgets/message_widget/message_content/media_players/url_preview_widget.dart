@@ -192,8 +192,6 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget> with TickerProvider
 
     final bool hideContent = SettingsManager().settings.redactedMode && SettingsManager().settings.hideMessageContent;
     final bool hideType = SettingsManager().settings.redactedMode && SettingsManager().settings.hideAttachmentTypes;
-    print(hideContent);
-    print(hideType);
 
     List<Widget> items = [
       mainImage,

@@ -201,9 +201,13 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                                   physics: ThemeSwitcher.getScrollPhysics(),
                                   scrollDirection: Axis.horizontal,
                                   itemBuilder: (context, index) {
-                                    return reactionWidgets[index];
+                                    if (index >= 0 && index < reactionWidgets.length) {
+                                      return reactionWidgets[index];
+                                    } else {
+                                      return Container();
+                                    }
                                   },
-                                  itemCount: reactionWidgets.length,
+                                  itemCount: reactionWidgets?.length ?? 0,
                                 ),
                               ),
                             ),

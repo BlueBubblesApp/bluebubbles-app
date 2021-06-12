@@ -324,7 +324,7 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     mainAxisAlignment: MainAxisAlignment.start,
                                     children: [
-                                      Text("${dateToShortString(message.dateCreated)}",
+                                      Text("${buildDate(message.dateCreated)}",
                                           style: Theme.of(context).textTheme.subtitle1.apply(fontSizeDelta: -2)),
                                       Container(height: 5.0),
                                       Text(chat?.title, style: Theme.of(context).textTheme.bodyText1),

@@ -380,9 +380,9 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
     return Padding(padding: EdgeInsets.only(top: 2, right: 2), child: avatar);
   }
 
-  Widget buildDate() => Center(
+  Widget _buildDate() => Center(
           child: Text(
-        widget.chat.getDateText(),
+        buildDate(widget.chat.latestMessageDate),
         textAlign: TextAlign.right,
         style: Theme.of(context)
             .textTheme
@@ -530,7 +530,7 @@ class __CupertinoState extends State<_Cupertino> {
                         children: <Widget>[
                           Container(
                             padding: EdgeInsets.only(right: 2),
-                            child: widget.parent.buildDate(),
+                            child: widget.parent._buildDate(),
                           ),
                           Icon(
                             SettingsManager().settings.skin == Skins.IOS
@@ -666,7 +666,7 @@ class _Material extends StatelessWidget {
                     ),
                   Container(
                     padding: EdgeInsets.only(right: 2, left: 2),
-                    child: parent.buildDate(),
+                    child: parent._buildDate(),
                   ),
                 ],
               ),
@@ -751,7 +751,7 @@ class _Samsung extends StatelessWidget {
                     ),
                   Container(
                     padding: EdgeInsets.only(right: 2, left: 2),
-                    child: parent.buildDate(),
+                    child: parent._buildDate(),
                   ),
                 ],
               ),

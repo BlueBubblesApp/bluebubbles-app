@@ -4,6 +4,8 @@ import 'dart:io';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/share.dart';
+import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/video_widget.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -25,21 +27,56 @@ class _VideoViewerState extends State<VideoViewer> {
   bool showPlayPauseOverlay = false;
   Timer hideOverlayTimer;
   VideoPlayerController controller;
+  PlayerStatus status = PlayerStatus.NONE;
+  bool hasListener = false;
 
   @override
   void initState() {
     super.initState();
     controller = new VideoPlayerController.file(widget.file);
     controller.setVolume(1);
+    this.createListener(controller);
+    showPlayPauseOverlay = !controller.value.isPlaying;
+  }
+
+  void setVideoProgress(double value) {
+    if (!videoProgressStream.isClosed) videoProgressStream.sink.add(value);
+  }
+
+  void createListener(VideoPlayerController controller) {
+    if (controller == null || hasListener) return;
+
     controller.addListener(() async {
-      if (this.mounted && controller.value.isPlaying) {
-        Duration duration = await controller.position;
-        if (controller.value.duration != null) {
-          if (!videoProgressStream.isClosed) videoProgressStream.sink.add(duration.inMilliseconds.toDouble());
+      if (controller == null) return;
+
+      // Get the current status
+      PlayerStatus currentStatus = await getControllerStatus(controller);
+      if (controller == null) return;
+
+      // If we are playing, update the video progress
+      if (this.status == PlayerStatus.PLAYING) {
+        Duration pos = controller.value.position;
+        if (pos != null) {
+          this.setVideoProgress(pos.inMilliseconds.toDouble());
         }
       }
+
+      // If the status hasn't changed, don't do anything
+      if (currentStatus == status) return;
+      this.status = currentStatus;
+
+      // If the status is ended, restart
+      if (this.status == PlayerStatus.ENDED) {
+        showPlayPauseOverlay = true;
+        await controller.pause();
+        await controller.seekTo(Duration());
+        this.setVideoProgress(0);
+      }
+
+      if (this.mounted) setState(() {});
     });
-    showPlayPauseOverlay = !controller.value.isPlaying;
+
+    hasListener = true;
   }
 
   @override

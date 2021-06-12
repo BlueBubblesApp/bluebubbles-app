@@ -148,8 +148,17 @@ class _ImageWidgetState extends State<ImageWidget> with TickerProviderStateMixin
       );
     } else {
       return Container(
-        width: 0,
-        height: 0,
+        padding: EdgeInsets.all(5),
+        height: 150,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(20),
+          child: Container(
+            color: Theme.of(context).accentColor,
+            child: Center(
+              child: Text("Invalid Image"),
+            ),
+          ),
+        ),
       );
     }
   }
