@@ -7,6 +7,7 @@ import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/country_codes.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/video_widget.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
@@ -27,6 +28,7 @@ import 'package:http/http.dart' show get;
 import 'package:image_size_getter/image_size_getter.dart' as IMG;
 import 'package:intl/intl.dart' as intl;
 import 'package:slugify/slugify.dart';
+import 'package:video_player/video_player.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
 
 DateTime parseDate(dynamic value) {
@@ -611,13 +613,30 @@ FCMData parseFcmJson(Map<String, dynamic> fcmMeta) {
 
 String encodeUri(String uri) {
   return Uri.encodeFull(uri)
-    .replaceAll('-', '%2D')
-    .replaceAll('_', '%5F')
-    .replaceAll('.', '%2E')
-    .replaceAll('!', '%21')
-    .replaceAll('~', '%7E')
-    .replaceAll('*', '%2A')
-    .replaceAll('\'', '%27')
-    .replaceAll('(', '%28')
-    .replaceAll(')', '%29');
+      .replaceAll('-', '%2D')
+      .replaceAll('_', '%5F')
+      .replaceAll('.', '%2E')
+      .replaceAll('!', '%21')
+      .replaceAll('~', '%7E')
+      .replaceAll('*', '%2A')
+      .replaceAll('\'', '%27')
+      .replaceAll('(', '%28')
+      .replaceAll(')', '%29');
+}
+
+Future<PlayerStatus> getControllerStatus(VideoPlayerController controller) async {
+  if (controller == null) return PlayerStatus.NONE;
+
+  Duration currentPos = controller.value.position;
+  if (controller.value.duration == currentPos) {
+    return PlayerStatus.ENDED;
+  } else if (!controller.value.isPlaying && currentPos.inMilliseconds == 0) {
+    return PlayerStatus.STOPPED;
+  } else if (!controller.value.isPlaying && currentPos.inMilliseconds != 0) {
+    return PlayerStatus.PAUSED;
+  } else if (controller.value.isPlaying) {
+    return PlayerStatus.PLAYING;
+  }
+
+  return PlayerStatus.NONE;
 }

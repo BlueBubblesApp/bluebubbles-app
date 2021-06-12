@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/image_viewer/attachmet_fullscreen_viewer.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
@@ -13,6 +14,8 @@ import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
 import 'package:visibility_detector/visibility_detector.dart';
+
+enum PlayerStatus { NONE, STOPPED, PAUSED, PLAYING, ENDED }
 
 class VideoWidget extends StatefulWidget {
   VideoWidget({
@@ -33,6 +36,8 @@ class _VideoWidgetState extends State<VideoWidget> with TickerProviderStateMixin
   Timer hideOverlayTimer;
   bool navigated = false;
   Uint8List thumbnail;
+  PlayerStatus status = PlayerStatus.NONE;
+  bool hasListener = false;
 
   @override
   void initState() {
@@ -41,6 +46,36 @@ class _VideoWidgetState extends State<VideoWidget> with TickerProviderStateMixin
     showPlayPauseOverlay = controllers == null ||
         !controllers.containsKey(widget.attachment.guid) ||
         !controllers[widget.attachment.guid].value.isPlaying;
+
+    if (controllers.containsKey(widget.attachment.guid)) {
+      createListener(controllers[widget.attachment.guid]);
+    }
+  }
+
+  void createListener(VideoPlayerController controller) {
+    if (controller == null || hasListener) return;
+
+    controller.addListener(() async {
+      if (controller == null) return;
+
+      // Get the current status
+      PlayerStatus currentStatus = await getControllerStatus(controller);
+
+      // If the status hasn't changed, don't do anything
+      if (controller == null || currentStatus == status) return;
+      this.status = currentStatus;
+
+      // If the status is ended, restart
+      if (this.status == PlayerStatus.ENDED) {
+        showPlayPauseOverlay = true;
+        await controller.pause();
+        await controller.seekTo(Duration());
+      }
+
+      if (this.mounted) setState(() {});
+    });
+
+    hasListener = true;
   }
 
   @override
@@ -68,17 +103,19 @@ class _VideoWidgetState extends State<VideoWidget> with TickerProviderStateMixin
     // If the currently playing video is this attachment guid
     if (controllers != null && controllers.containsKey(widget.attachment.guid)) {
       controller = controllers[widget.attachment.guid];
+      this.createListener(controller);
     }
+
     return VisibilityDetector(
       onVisibilityChanged: (info) {
         if (info.visibleFraction == 0 && isVisible && !navigated) {
           isVisible = false;
-          if (controller != null) {
+          if (controller != null && context != null) {
             controller = null;
-            CurrentChat.of(context).changeCurrentPlayingVideo(null);
+            CurrentChat.of(context)?.changeCurrentPlayingVideo(null);
           }
-          if (SettingsManager().settings.lowMemoryMode) {
-            CurrentChat.of(context).clearImageData(widget.attachment);
+          if (SettingsManager().settings.lowMemoryMode && context != null) {
+            CurrentChat.of(context)?.clearImageData(widget.attachment);
           }
         } else if (!isVisible) {
           isVisible = true;
