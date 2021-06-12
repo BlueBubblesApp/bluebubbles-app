@@ -521,7 +521,7 @@ class Chat {
       if (_getMessagesRequests.containsKey(req) && !_getMessagesRequests[req].isCompleted)
         _getMessagesRequests[req].complete(messages);
     } catch (ex) {
-      print(ex);
+      debugPrint(ex);
 
       if (_getMessagesRequests.containsKey(req) && !_getMessagesRequests[req].isCompleted)
         _getMessagesRequests[req].completeError(ex);

@@ -1060,13 +1060,10 @@ class _SamsungState extends State<_Samsung> {
     bool isDark = now.computeLuminance() < 0.179;
     brightness = isDark ? Brightness.dark : Brightness.light;
     gotBrightness = true;
-
-    print("REMOUNDING loadBrightness");
     if (this.mounted) setState(() {});
   }
 
   bool hasPinnedChat() {
-    print("REMOUNDING loadBrightness");
     for (var i = 0; i < widget.parent.chats.length; i++) {
       if (widget.parent.chats[i].isPinned) {
         widget.parent.hasPinnedChata = true;
@@ -1426,8 +1423,6 @@ class _SamsungState extends State<_Samsung> {
                                 onDismissed: (direction) {
                                   if (direction == DismissDirection.endToStart) {
                                     if (!widget.parent.widget.showArchivedChats) widget.parent.chats[index].unpin();
-
-                                    print("REMOUNDING UNPIN");
                                     setState(() {
                                       Scaffold.of(context).hideCurrentSnackBar();
                                       (!widget.parent.widget.showArchivedChats)
@@ -1437,7 +1432,6 @@ class _SamsungState extends State<_Samsung> {
                                       widget.parent.chats.remove(index);
                                     });
                                   } else {
-                                    print("REMOUNDING UNPIN 2");
                                     setState(() {
                                       Scaffold.of(context).hideCurrentSnackBar();
                                       widget.parent.chats[index].unpin();
@@ -1458,15 +1452,12 @@ class _SamsungState extends State<_Samsung> {
                                                 onSelect: (bool selected) {
                                                   if (selected) {
                                                     this.selected.add(widget.parent.chats[index]);
-
-                                                    print("REMOUNDING ON SELECT");
-                                                    setState(() {});
                                                   } else {
                                                     this.selected.removeWhere(
                                                         (element) => element.guid == widget.parent.chats[index].guid);
-                                                    print("REMOUNDING ON SELECT 2");
-                                                    setState(() {});
                                                   }
+
+                                                  if (this.mounted) setState(() {});
                                                 },
                                               )
                                             : Container(),
@@ -1485,16 +1476,12 @@ class _SamsungState extends State<_Samsung> {
                                   onSelect: (bool selected) {
                                     if (selected) {
                                       this.selected.add(widget.parent.chats[index]);
-
-                                      print("REMOUNDING SOMETHING");
-                                      setState(() {});
+                                      if (this.mounted) setState(() {});
                                     } else {
                                       this
                                           .selected
                                           .removeWhere((element) => element.guid == widget.parent.chats[index].guid);
-
-                                      print("REMOUNDING SOMTEHING 2");
-                                      setState(() {});
+                                      if (this.mounted) setState(() {});
                                     }
                                   },
                                 );
@@ -1543,8 +1530,6 @@ class _SamsungState extends State<_Samsung> {
                                 onDismissed: (direction) {
                                   if (direction == DismissDirection.endToStart) {
                                     if (!widget.parent.widget.showArchivedChats) widget.parent.chats[index].unpin();
-
-                                    print("REMOUNDING DISMISS");
                                     setState(() {
                                       Scaffold.of(context).hideCurrentSnackBar();
                                       (!widget.parent.widget.showArchivedChats)
@@ -1553,7 +1538,6 @@ class _SamsungState extends State<_Samsung> {
                                       widget.parent.chats.remove(index);
                                     });
                                   } else {
-                                    print("REMOUNDING DISMISS 2");
                                     setState(() {
                                       Scaffold.of(context).hideCurrentSnackBar();
                                       widget.parent.chats[index].pin();
@@ -1574,15 +1558,12 @@ class _SamsungState extends State<_Samsung> {
                                                 onSelect: (bool selected) {
                                                   if (selected) {
                                                     this.selected.add(widget.parent.chats[index]);
-
-                                                    print("REMOUNDING SELECTING ");
-                                                    setState(() {});
                                                   } else {
                                                     this.selected.removeWhere(
                                                         (element) => element.guid == widget.parent.chats[index].guid);
-                                                    print("REMOUNDING SELECTING 2");
-                                                    setState(() {});
                                                   }
+
+                                                  if (this.mounted) setState(() {});
                                                 },
                                               )
                                             : Container(),
@@ -1601,17 +1582,13 @@ class _SamsungState extends State<_Samsung> {
                                   onSelect: (bool selected) {
                                     if (selected) {
                                       this.selected.add(widget.parent.chats[index]);
-
-                                      print("REMOUNDING SKDNJSNSD ");
-                                      setState(() {});
                                     } else {
                                       this
                                           .selected
                                           .removeWhere((element) => element.guid == widget.parent.chats[index].guid);
-
-                                      print("REMOUNDING aksdskdaks");
-                                      setState(() {});
                                     }
+
+                                    if (this.mounted) setState(() {});
                                   },
                                 );
                               }
