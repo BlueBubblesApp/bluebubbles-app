@@ -201,13 +201,35 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
     );
   }
 
+  String getContactName() {
+    final bool redactedMode = SettingsManager()?.settings?.redactedMode ?? false;
+    final bool hideInfo = redactedMode && (SettingsManager()?.settings?.hideContactInfo ?? false);
+    final bool generateName = redactedMode && (SettingsManager()?.settings?.generateFakeContactNames ?? false);
+
+    String contactName = contactTitle;
+    if (hideInfo) {
+      Chat currentChat = CurrentChat.of(context)?.chat;
+      int index = (currentChat?.participants ?? []).indexWhere((h) => h.address == widget.message.handle.address);
+      List<String> fakeNames = currentChat?.fakeParticipants ?? [];
+      if (generateName) {
+        if (index >= 0 && index < fakeNames.length) {
+          contactName = currentChat?.fakeParticipants[index];
+        }
+
+        // If the contact name still equals the contact title, override it
+        if (index == -1 || contactName == contactTitle) {
+          index = (index < 0) ? 0 : index;
+          contactName = "Participant ${index + 1}";
+        }
+      }
+    }
+
+    return contactName;
+  }
+
   @override
   Widget build(BuildContext context) {
     if (widget.message == null) return Container();
-
-    final bool redactedMode = SettingsManager().settings.redactedMode;
-    final bool hideInfo = redactedMode && SettingsManager().settings.hideContactInfo;
-    final bool generateName = redactedMode && SettingsManager().settings.generateFakeContactNames;
 
     // The column that holds all the "messages"
     List<Widget> messageColumn = [];
@@ -217,20 +239,10 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
     if (isGroup &&
         (!sameSender(widget.message, widget.olderMessage) ||
             !widget.message.dateCreated.isWithin(widget.olderMessage.dateCreated, minutes: 30))) {
-      Chat currentChat = CurrentChat.of(context)?.chat;
-      int index = currentChat?.participants?.indexWhere((h) => h.address == widget.message.handle.address);
-      String fakeName = currentChat?.fakeParticipants[index];
       messageColumn.add(
         Padding(
           padding: EdgeInsets.only(left: 15.0, top: 5.0, bottom: widget.message.getReactions().length > 0 ? 0.0 : 3.0),
-          child: Text(
-            hideInfo
-                ? generateName
-                    ? fakeName
-                    : "Participant " + (index + 1).toString()
-                : contactTitle,
-            style: Theme.of(context).textTheme.subtitle1,
-          ),
+          child: Text(this.getContactName(), style: Theme.of(context).textTheme.subtitle1),
         ),
       );
     }
