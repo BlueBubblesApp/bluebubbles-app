@@ -1,6 +1,7 @@
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
+import 'package:bluebubbles/helpers/redacted_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/balloon_bundle_widget.dart';
@@ -11,7 +12,6 @@ import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/material.dart';
 
@@ -201,32 +201,6 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
     );
   }
 
-  String getContactName() {
-    final bool redactedMode = SettingsManager()?.settings?.redactedMode ?? false;
-    final bool hideInfo = redactedMode && (SettingsManager()?.settings?.hideContactInfo ?? false);
-    final bool generateName = redactedMode && (SettingsManager()?.settings?.generateFakeContactNames ?? false);
-
-    String contactName = contactTitle;
-    if (hideInfo) {
-      Chat currentChat = CurrentChat.of(context)?.chat;
-      int index = (currentChat?.participants ?? []).indexWhere((h) => h.address == widget.message.handle.address);
-      List<String> fakeNames = currentChat?.fakeParticipants ?? [];
-      if (generateName) {
-        if (index >= 0 && index < fakeNames.length) {
-          contactName = currentChat?.fakeParticipants[index];
-        }
-      }
-
-      // If the contact name still equals the contact title, override it
-      if (index == -1 || contactName == contactTitle) {
-        index = (index < 0) ? 0 : index;
-        contactName = "Participant ${index + 1}";
-      }
-    }
-
-    return contactName;
-  }
-
   @override
   Widget build(BuildContext context) {
     if (widget.message == null) return Container();
@@ -242,7 +216,8 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
       messageColumn.add(
         Padding(
           padding: EdgeInsets.only(left: 15.0, top: 5.0, bottom: widget.message.getReactions().length > 0 ? 0.0 : 3.0),
-          child: Text(this.getContactName(), style: Theme.of(context).textTheme.subtitle1),
+          child: Text(getContactName(context, contactTitle, widget.message.handle.address),
+              style: Theme.of(context).textTheme.subtitle1),
         ),
       );
     }

@@ -1,3 +1,4 @@
+import 'package:bluebubbles/helpers/redacted_helper.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
@@ -62,7 +63,7 @@ class _ReactionDetailWidgetState extends State<ReactionDetailWidget> {
         Padding(
           padding: EdgeInsets.only(bottom: 8.0),
           child: Text(
-            contactTitle,
+            getContactName(context, contactTitle, widget.handle.address),
             style: Theme.of(context).textTheme.bodyText1.apply(fontSizeDelta: -5),
           ),
         ),
