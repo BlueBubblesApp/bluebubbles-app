@@ -42,20 +42,20 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
         video: widget.file.path,
         imageFormat: ImageFormat.PNG,
         maxHeight: 100,
-        quality: 25,
+        quality: SettingsManager().compressionQuality,
       );
       if (this.mounted) setState(() {});
     } else if (mimeType == null || mimeType.startsWith("image/")) {
       preview = await FlutterImageCompress.compressWithFile(widget.file.absolute.path,
-          quality: SettingsManager().settings.lowMemoryMode ? 5 : 10);
+          quality: SettingsManager().compressionQuality);
       if (this.mounted) setState(() {});
     }
   }
 
   Widget getThumbnail() {
     if (preview != null) {
-
-      final bool hideAttachments = SettingsManager().settings.redactedMode && SettingsManager().settings.hideAttachments;
+      final bool hideAttachments =
+          SettingsManager().settings.redactedMode && SettingsManager().settings.hideAttachments;
       final bool hideAttachmentTypes =
           SettingsManager().settings.redactedMode && SettingsManager().settings.hideAttachmentTypes;
 
