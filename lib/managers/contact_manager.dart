@@ -73,8 +73,6 @@ class ContactManager {
   }
 
   Future getContacts({bool headless = false, bool force = false}) async {
-    if (!(await canAccessContacts())) return false;
-
     // If we are fetching the contacts, return the current future so we can await it
     if (getContactsFuture != null && !getContactsFuture.isCompleted) {
       debugPrint(
@@ -90,6 +88,9 @@ class ContactManager {
           "[ContactManager] -> Not fetching contacts; Not enough time has elapsed");
       return;
     }
+
+    // Make sure we have contacts access
+    if (!(await canAccessContacts())) return false;
 
     // Set the last refresh time
     lastRefresh = now;
