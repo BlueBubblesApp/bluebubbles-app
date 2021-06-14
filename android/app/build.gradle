@@ -37,6 +37,7 @@ android {
     compileSdkVersion 29
 
     lintOptions {
+        checkReleaseBuilds false
         disable 'InvalidPackage'
     }
 
@@ -52,7 +53,7 @@ android {
         // version code: 1  0114                    0                70      64
 
         //noinspection AccidentalOctal
-        versionCode 10115770
+        versionCode 11000070
         versionName flutterVersionName
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
