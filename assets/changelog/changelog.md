@@ -27,6 +27,7 @@ This version encompasses all release candidates for the unreleased v0.1.16. I ha
 * New Feature: Attachment Preview Quality Slider
 * New Feature: Colorblind Mode
 * New Feature: Ability to restart the BlueBubbles Server, remotely
+* Bug Fix: Fixes issue where the contact address would not auto-fill the fields when creating a new contact
 * Bug Fix: Fixes placeholder text not updating
 * Bug Fix: Fixes message subject color
 * Bug Fix: Fixes issue with background refreshing happening too much (for contacts & chats)
