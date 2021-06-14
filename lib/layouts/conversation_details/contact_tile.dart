@@ -112,7 +112,8 @@ class _ContactTileState extends State<ContactTile> {
       },
       onTap: () async {
         if (contact == null) {
-          await ContactsService.openContactForm();
+          await ContactsService.openContactForm(
+              address: widget.handle.address, addressType: widget.handle.address.contains('@') ? 'email' : 'phone');
         } else {
           await ContactsService.openExistingContact(contact);
         }

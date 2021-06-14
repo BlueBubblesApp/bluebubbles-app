@@ -140,9 +140,12 @@ public class SocketIO {
             _handler.post(new Runnable() {
                 @Override
                 public void run() {
-                    try {
+                    if (_methodChannel == null) return;
 
-                        _methodChannel.invokeMethod(getId() + "|" + _statusCallback + "|" + _statusCallback, status);
+                    try {
+                        String socketId = getId();
+                        if (socketId == null) return;
+                        _methodChannel.invokeMethod(socketId + "|" + _statusCallback + "|" + _statusCallback, status);
                     } catch (Exception e) {
                         //Log.d("Error", "EXCEPTION CAUGHT WHILE EXECUTING DATABASE TRANSACTION");
                         e.printStackTrace();
