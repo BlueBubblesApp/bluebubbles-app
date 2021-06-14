@@ -52,16 +52,18 @@ class ContactManager {
 
   Future<bool> canAccessContacts() async {
     try {
-      bool granted = await Permission.contacts.isGranted;
-      if (granted) return true;
+      PermissionStatus status = await Permission.contacts.status;
+      if (status.isGranted) return true;
+      debugPrint(
+          "[ContactManager] -> Contacts Permission Status: ${status.toString()}");
 
-      bool totallyDisabled = await Permission.contacts.isPermanentlyDenied;
-      if (!totallyDisabled) {
+      // If it's not permanently denied, request access
+      if (!status.isPermanentlyDenied) {
         return (await Permission.contacts.request()).isGranted;
-      } else {
-        debugPrint(
-          "[ContactManager] -> Contacts permissions are permanently denied...");
       }
+
+      debugPrint(
+          "[ContactManager] -> Contacts permissions are permanently denied...");
     } catch (ex) {
       debugPrint("[ContactManager] -> Error getting access to contacts!");
       debugPrint(ex.toString());
@@ -70,9 +72,7 @@ class ContactManager {
     return false;
   }
 
-  Future getContacts(
-      {bool headless = false,
-      bool force = false}) async {
+  Future getContacts({bool headless = false, bool force = false}) async {
     if (!(await canAccessContacts())) return false;
 
     // If we are fetching the contacts, return the current future so we can await it
@@ -99,7 +99,8 @@ class ContactManager {
 
     // Fetch the current list of contacts
     debugPrint("ContactManager -> Fetching contacts");
-    contacts = ((await ContactsService.getContacts(withThumbnails: false)) ?? [])
+    contacts =
+        ((await ContactsService.getContacts(withThumbnails: false)) ?? [])
             .toList();
 
     // Match handles in the database with contacts
