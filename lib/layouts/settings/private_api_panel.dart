@@ -4,6 +4,7 @@ import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
+import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:flutter/cupertino.dart';
@@ -131,13 +132,25 @@ class _PrivateAPIPanelState extends State<PrivateAPIPanel> {
             SliverList(
               delegate: SliverChildListDelegate(
                 <Widget>[
-                  Container(padding: EdgeInsets.only(top: 5.0)),
                   SettingsTile(
-                      title: "Please read before using these features!",
-                      subTitle:
-                          ("Private API features are only available to those running the nightly version of the server. " +
-                              "If you are not running the nightly version, you will not be able to utiulize these features, " +
-                              "even if you have it enabled.")),
+                      title: "",
+                      subTitle: ("Private API features give you the ability to send tapbacks, send read receipts, and receive typing indicators. " +
+                          "These features are only available to those running the nightly version of the Server. " +
+                          "If you are not running the nightly version of the Server, you will not be able to utilize these features, " +
+                          "even if you have it enabled here. If you would like to find out how to setup these features, please visit " +
+                          "the link below")),
+                  SettingsTile(
+                    title: "How to setup Private API features",
+                    onTap: () {
+                      MethodChannelInterface().invokeMethod("open-link", {
+                        "link": "https://github.com/BlueBubblesApp/BlueBubbles-Server/wiki/Using-Private-API-Features"
+                      });
+                    },
+                    trailing: Icon(
+                      Icons.privacy_tip_rounded,
+                      color: Theme.of(context).primaryColor,
+                    ),
+                  ),
                   SettingsSwitch(
                     onChanged: (bool val) {
                       _settingsCopy.enablePrivateAPI = val;
