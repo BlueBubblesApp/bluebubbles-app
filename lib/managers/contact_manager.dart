@@ -51,29 +51,28 @@ class ContactManager {
   }
 
   Future<bool> canAccessContacts() async {
-    bool output = false;
-
     try {
-      bool granted = await Permission.contacts.isGranted;
-      if (granted) return true;
+      PermissionStatus status = await Permission.contacts.status;
+      if (status.isGranted) return true;
+      debugPrint(
+          "[ContactManager] -> Contacts Permission Status: ${status.toString()}");
 
-      bool totallyDisabled = await Permission.contacts.isPermanentlyDenied;
-      if (!totallyDisabled) {
-        return await Permission.contacts.request().isGranted;
+      // If it's not permanently denied, request access
+      if (!status.isPermanentlyDenied) {
+        return (await Permission.contacts.request()).isGranted;
       }
+
+      debugPrint(
+          "[ContactManager] -> Contacts permissions are permanently denied...");
     } catch (ex) {
-      debugPrint("Error getting access to contacts!");
+      debugPrint("[ContactManager] -> Error getting access to contacts!");
       debugPrint(ex.toString());
     }
 
-    return output;
+    return false;
   }
 
-  Future getContacts(
-      {bool headless = false,
-      bool force = false}) async {
-    if (!(await canAccessContacts())) return false;
-
+  Future getContacts({bool headless = false, bool force = false}) async {
     // If we are fetching the contacts, return the current future so we can await it
     if (getContactsFuture != null && !getContactsFuture.isCompleted) {
       debugPrint(
@@ -90,6 +89,9 @@ class ContactManager {
       return;
     }
 
+    // Make sure we have contacts access
+    if (!(await canAccessContacts())) return false;
+
     // Set the last refresh time
     lastRefresh = now;
 
@@ -98,7 +100,8 @@ class ContactManager {
 
     // Fetch the current list of contacts
     debugPrint("ContactManager -> Fetching contacts");
-    contacts = ((await ContactsService.getContacts(withThumbnails: false)) ?? [])
+    contacts =
+        ((await ContactsService.getContacts(withThumbnails: false)) ?? [])
             .toList();
 
     // Match handles in the database with contacts
