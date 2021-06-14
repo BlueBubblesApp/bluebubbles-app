@@ -2,6 +2,53 @@
 
 Below are the last few BlueBubbles App release changelogs
 
+## v1.0.0
+
+This version encompasses all release candidates for the unreleased v0.1.16. I have rolled up and summarized all the changes since v0.1.15 below:
+
+* Official v1.0.0 release!
+* New Feature: Smart Replies
+* New Feature: Material Theme
+* New Feature: Hide Keyboard on Scroll
+* New Feature: Open Keyboard on Scroll to Bottom
+* New Feature: Swipe to Close Keyboard
+* New Feature: Move chat creator button to header
+* New Feature: Improved URL previews (faster & cached)
+* New Feature: Re-download Attachment (long-press)
+* New Feature: Ability to restart iMessage on your Mac
+* New Feature: Private API Features are now toggle-able
+* New Feature: Delivered Timestamps
+* New Feature: Last message texts are now ellipsed
+* New Feature: Existing chats now show before contact addresses in share screen
+* New Feature: Double-tap to show message details
+* New Feature: Chat message search
+* New Feature: Redacted Mode
+* New Feature: More granular timestamps
+* New Feature: Attachment Preview Quality Slider
+* New Feature: Colorblind Mode
+* New Feature: Ability to restart the BlueBubbles Server, remotely
+* Bug Fix: Fixes placeholder text not updating
+* Bug Fix: Fixes message subject color
+* Bug Fix: Fixes issue with background refreshing happening too much (for contacts & chats)
+* Bug Fix: Settings panel header doesn't change on theme change
+* Bug Fix: Fixes issues around when read receipts are shown
+* Bug Fix: Fixes issues around sharing (direct share & more)
+* Bug Fix: Fixes issues around share screen performance
+* Bug Fix: Fixes issues with sharing content from other keyboards (Samsung Keyboard, Bitmoji Keyboard, & more)
+* Bug Fix: Fixes issue with parsing new Apple Maps locations
+* Bug Fix: Improves reliability of QR Scanning
+* Bug Fix: Fixes issue loading some emojis as big-emojis
+* Bug Fix: Fixes issue with showing duplicate contacts for a chat
+* Bug Fix: Fixes issue with message tails not being "fluid"
+* Bug Fix: Fixes issue showing invalid attachments
+* Bug Fix: Fixes some issues around international phone numbers
+* Bug Fix: Fixes issue where a video could not be replayed until you re-entered the chat
+* Bug Fix: Fixes issue where the camera preview would not be able to be flipped correctly
+* Other: Optimizations to chat syncing
+* Other: Optimizations to chat loading
+* Other: Optimizations to contact loading
+* Other: A ton more...
+
 ## v0.1.15
 
 * Adds Option: Send Delay
