@@ -99,9 +99,6 @@ class SetupBloc {
     // Make sure we aren't already syncing
     if (isSyncing) return;
 
-    // Load & cache contacts to be used later
-    List<Contact> contacts = ((await ContactsService.getContacts(withThumbnails: false)) ?? []).toList();
-
     // Setup syncing process
     processId = SocketManager().addSocketProcess(([bool finishWithError = false]) {});
     isSyncing = true;
@@ -135,22 +132,35 @@ class SetupBloc {
 
       addOutput("Received initial chat list. Size: ${chats.length}", SetupOutputType.LOG);
       for (dynamic item in chats) {
-        Chat chat = Chat.fromMap(item);
-        await chat.save();
-
-        // Re-match the handles with the contacts
-        await ContactManager().matchHandles();
+        Chat chat;
 
         try {
+          chat = Chat.fromMap(item);
+          await chat.save();
+
+          // Re-match the handles with the contacts
+          await ContactManager().matchHandles();
+
           await syncChat(chat);
           addOutput("Finished syncing chat, '${chat.chatIdentifier}'", SetupOutputType.LOG);
         } catch (ex) {
-          addOutput("Failed to sync chat, '${chat.chatIdentifier}'", SetupOutputType.ERROR);
+          if (chat != null) {
+            addOutput("Failed to sync chat, '${chat.chatIdentifier}'", SetupOutputType.ERROR);
+          } else {
+            addOutput("Failed to save chat data, '${item.toString()}'", SetupOutputType.ERROR);
+          }
         }
 
-        // Set the new progress
-        _currentIndex += 1;
-        _progress = (_currentIndex / chats.length) * 100;
+        // If we have no chats, we can't divide by 0
+        // Also means there are not chats to sync
+        // It should never be 0... but still want to check to be safe.
+        if (chats.length == 0) {
+          break;
+        } else {
+          // Set the new progress
+          _currentIndex += 1;
+          _progress = (_currentIndex / chats.length) * 100;
+        }
       }
 
       // If everything passes, finish the setup
@@ -214,10 +224,7 @@ class SetupBloc {
   }
 
   Future<void> startIncrementalSync(Settings settings,
-      {String chatGuid,
-      bool saveDate = true,
-      Function onConnectionError,
-      Function onComplete}) async {
+      {String chatGuid, bool saveDate = true, Function onConnectionError, Function onComplete}) async {
     // If we are already syncing, don't sync again
     // Or, if we haven't finished setup, or we aren't connected, don't sync
     if (isSyncing || !settings.finishedSetup || SocketManager().state != SocketState.CONNECTED) return;
