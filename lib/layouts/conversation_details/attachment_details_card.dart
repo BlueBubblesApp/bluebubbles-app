@@ -58,7 +58,7 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
 
   void getCompressedImage() {
     String path = AttachmentHelper.getAttachmentPath(widget.attachment);
-    FlutterImageCompress.compressWithFile(path, quality: 20).then((data) {
+    FlutterImageCompress.compressWithFile(path, quality: SettingsManager().compressionQuality).then((data) {
       if (this.mounted) {
         setState(() {
           previewImage = data;

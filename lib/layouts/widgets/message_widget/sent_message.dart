@@ -99,7 +99,12 @@ class SentMessageHelper {
             ),
             decoration: BoxDecoration(
               borderRadius: currentSkin == Skins.IOS
-                  ? BorderRadius.circular(20)
+                  ? BorderRadius.only(
+                      bottomLeft: Radius.circular(20),
+                      bottomRight: Radius.circular(17),
+                      topLeft: Radius.circular(20),
+                      topRight: Radius.circular(20),
+                    )
                   : (currentSkin == Skins.Material)
                       ? BorderRadius.only(
                           topLeft: Radius.circular(20),

@@ -41,6 +41,7 @@ class Settings {
   int smartReplySampleSize = 2;
   bool colorblindMode = false;
   bool showDeliveryTimestamps = false;
+  int previewCompressionQuality = 25;
 
   // String emojiFontFamily;
 
@@ -173,6 +174,8 @@ class Settings {
         settings.generateFakeContactNames = entry.value;
       } else if (entry.name == "generateFakeMessageContent") {
         settings.generateFakeMessageContent = entry.value;
+      } else if (entry.name == "previewCompressionQuality") {
+        settings.previewCompressionQuality = entry.value;
       }
 
       // else if (entry.name == "emojiFontFamily") {
@@ -414,10 +417,7 @@ class Settings {
           value: this.privateManualMarkAsRead,
           type: this.privateManualMarkAsRead.runtimeType,
         ),
-        ConfigEntry(
-            name: "showSyncIndicator",
-            value: this.showSyncIndicator,
-            type: this.showSyncIndicator.runtimeType),
+        ConfigEntry(name: "showSyncIndicator", value: this.showSyncIndicator, type: this.showSyncIndicator.runtimeType),
         ConfigEntry(
             name: "showDeliveryTimestamps",
             value: this.showDeliveryTimestamps,
@@ -471,6 +471,11 @@ class Settings {
           name: "generateFakeMessageContent",
           value: this.generateFakeMessageContent,
           type: this.generateFakeMessageContent.runtimeType,
+        ),
+        ConfigEntry(
+          name: "previewCompressionQuality",
+          value: this.previewCompressionQuality,
+          type: this.previewCompressionQuality.runtimeType,
         ),
         // ConfigEntry(
         //     name: "emojiFontFamily",

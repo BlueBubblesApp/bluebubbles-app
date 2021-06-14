@@ -6,6 +6,7 @@ import 'package:bluebubbles/helpers/hex_color.dart';
 import "package:bluebubbles/helpers/string_extension.dart";
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/settings/about_panel.dart';
+import 'package:bluebubbles/layouts/settings/attachment_panel.dart';
 import 'package:bluebubbles/layouts/settings/private_api_panel.dart';
 import 'package:bluebubbles/layouts/settings/redacted_mode_panel.dart';
 import 'package:bluebubbles/layouts/settings/server_management_panel.dart';
@@ -87,6 +88,11 @@ class _SettingsPanelState extends State<SettingsPanel> {
   @override
   Widget build(BuildContext context) {
     loadBrightness();
+
+    Widget nextIcon = Icon(
+      SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_forward_ios : Icons.arrow_forward,
+      color: Theme.of(context).primaryColor,
+    );
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
@@ -229,30 +235,6 @@ class _SettingsPanelState extends State<SettingsPanel> {
                       }
                     },
                   ),
-                  SettingsSwitch(
-                    onChanged: (bool val) {
-                      _settingsCopy.autoDownload = val;
-                    },
-                    initialVal: _settingsCopy.autoDownload,
-                    title: "Auto-download Attachments",
-                  ),
-                  SettingsSwitch(
-                    onChanged: (bool val) {
-                      _settingsCopy.onlyWifiDownload = val;
-                    },
-                    initialVal: _settingsCopy.onlyWifiDownload,
-                    title: "Only Auto-download Attachments on WiFi",
-                  ),
-                  SettingsSlider(
-                      text: "Attachment Chunk Size",
-                      startingVal: _settingsCopy.chunkSize.toDouble(),
-                      update: (double val) {
-                        _settingsCopy.chunkSize = val.floor();
-                      },
-                      formatValue: ((double val) => getSizeString(val)),
-                      min: 100,
-                      max: 3000,
-                      divisions: 29),
                   // SettingsTile(
                   //   title: "Message Scheduling",
                   //   trailing: Icon(Icons.arrow_forward_ios,
@@ -278,6 +260,17 @@ class _SettingsPanelState extends State<SettingsPanel> {
                   //   },
                   // ),
                   SettingsTile(
+                    title: "Attachment Settings",
+                    onTap: () {
+                      Navigator.of(context).push(
+                        CupertinoPageRoute(
+                          builder: (context) => AttachmentPanel(),
+                        ),
+                      );
+                    },
+                    trailing: nextIcon,
+                  ),
+                  SettingsTile(
                     title: "Theme Settings",
                     onTap: () {
                       Navigator.of(context).push(
@@ -286,10 +279,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                         ),
                       );
                     },
-                    trailing: Icon(
-                      SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_forward_ios : Icons.arrow_forward,
-                      color: Theme.of(context).primaryColor,
-                    ),
+                    trailing: nextIcon,
                   ),
                   SettingsTile(
                     title: "User Experience Settings",
@@ -300,10 +290,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                         ),
                       );
                     },
-                    trailing: Icon(
-                      SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_forward_ios : Icons.arrow_forward,
-                      color: Theme.of(context).primaryColor,
-                    ),
+                    trailing: nextIcon,
                   ),
                   SettingsTile(
                     title: "Private API Features",
@@ -320,9 +307,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                   ),
                   SettingsTile(
                     title: "Redacted Mode",
-                    trailing: Icon(
-                        SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_forward_ios : Icons.arrow_forward,
-                        color: Theme.of(context).primaryColor),
+                    trailing: nextIcon,
                     onTap: () async {
                       Navigator.of(context).push(
                         CupertinoPageRoute(
@@ -333,9 +318,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                   ),
                   SettingsTile(
                     title: "Server Management",
-                    trailing: Icon(
-                        SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_forward_ios : Icons.arrow_forward,
-                        color: Theme.of(context).primaryColor),
+                    trailing: nextIcon,
                     onTap: () async {
                       Navigator.of(context).push(
                         CupertinoPageRoute(
@@ -353,10 +336,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                         ),
                       );
                     },
-                    trailing: Icon(
-                      SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_forward_ios : Icons.arrow_forward,
-                      color: Theme.of(context).primaryColor,
-                    ),
+                    trailing: nextIcon,
                   ),
                   SettingsTile(
                     title: "Join Our Discord",

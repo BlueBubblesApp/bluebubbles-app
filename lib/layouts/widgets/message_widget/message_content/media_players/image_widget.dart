@@ -41,7 +41,8 @@ class _ImageWidgetState extends State<ImageWidget> with TickerProviderStateMixin
     if (data == null) {
       // If it's an image, compress the image when loading it
       if (AttachmentHelper.canCompress(widget.attachment)) {
-        data = await FlutterImageCompress.compressWithFile(widget.file.absolute.path, quality: 25);
+        data = await FlutterImageCompress.compressWithFile(widget.file.absolute.path,
+            quality: SettingsManager().compressionQuality);
 
         // All other attachments can be held in memory as bytes
       } else {

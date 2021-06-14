@@ -43,6 +43,14 @@ class SettingsManager {
   List<ThemeObject> themes;
   String countryCode;
 
+  int get compressionQuality {
+    if (settings.lowMemoryMode) {
+      return 10;
+    }
+
+    return SettingsManager().settings.previewCompressionQuality;
+  }
+
   /// [sharedPreferences] is just an instance of [SharedPreferences] and it is stored here because it is commonly used
   SharedPreferences sharedPreferences;
 
@@ -59,8 +67,7 @@ class SettingsManager {
   ///
   /// @param [context] is an optional parameter to be used for setting the adaptive theme based on the settings.
   /// Setting to null will prevent the theme from being set and will be set to null in the background isolate
-  Future<void> getSavedSettings(
-      {bool headless = false, BuildContext context}) async {
+  Future<void> getSavedSettings({bool headless = false, BuildContext context}) async {
     await DBProvider.setupConfigRows();
     settings = await Settings.getSettings();
     fcmData = await FCMData.getFCM();
@@ -127,9 +134,7 @@ class SettingsManager {
   }) async {
     await selectedLightTheme?.save();
     await selectedDarkTheme?.save();
-    await ThemeObject.setSelectedTheme(
-        light: selectedLightTheme?.id ?? null,
-        dark: selectedDarkTheme?.id ?? null);
+    await ThemeObject.setSelectedTheme(light: selectedLightTheme?.id ?? null, dark: selectedDarkTheme?.id ?? null);
 
     ThemeData lightTheme = (await ThemeObject.getLightTheme()).themeData;
     ThemeData darkTheme = (await ThemeObject.getDarkTheme()).themeData;

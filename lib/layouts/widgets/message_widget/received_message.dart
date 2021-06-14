@@ -164,7 +164,12 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
           ),
           decoration: BoxDecoration(
             borderRadius: SettingsManager().settings.skin == Skins.IOS
-                ? BorderRadius.circular(20)
+                ? BorderRadius.only(
+                    bottomLeft: Radius.circular(17),
+                    bottomRight: Radius.circular(20),
+                    topLeft: Radius.circular(20),
+                    topRight: Radius.circular(20),
+                  )
                 : (SettingsManager().settings.skin == Skins.Material)
                     ? BorderRadius.only(
                         topLeft: widget.olderMessage == null ||
