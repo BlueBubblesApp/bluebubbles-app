@@ -40,3 +40,4 @@ pubspeck.lock
 #signing
 **/android/key.properties
 **/android/.settings
+**/releases

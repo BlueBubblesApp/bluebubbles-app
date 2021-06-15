@@ -31,8 +31,7 @@ class FailureToStrt extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.only(top: 20.0),
                   child: Center(
-                    child: Text("Error: ${e.toString()}",
-                        style: TextStyle(color: Colors.white, fontSize: 10)),
+                    child: Text("Error: ${e.toString()}", style: TextStyle(color: Colors.white, fontSize: 10)),
                   ),
                 )
               ],

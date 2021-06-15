@@ -1,28 +1,31 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
+
 import 'package:bluebubbles/blocs/chat_bloc.dart';
-import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/blocs/setup_bloc.dart';
-import 'package:bluebubbles/helpers/contstants.dart';
+import 'package:bluebubbles/helpers/attachment_downloader.dart';
+import 'package:bluebubbles/helpers/attachment_sender.dart';
+import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/crypto.dart';
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/managers/attachment_info_bloc.dart';
+import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/incoming_queue.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
+import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/repository/models/chat.dart';
+import 'package:bluebubbles/repository/models/fcm_data.dart';
+import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
-import 'package:flutter_socket_io/socket_io_manager.dart';
-import 'package:flutter_socket_io/flutter_socket_io.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
-import 'helpers/attachment_sender.dart';
-import 'managers/method_channel_interface.dart';
-import 'repository/models/message.dart';
-import './repository/models/chat.dart';
+import 'package:flutter_socket_io/flutter_socket_io.dart';
+import 'package:flutter_socket_io/socket_io_manager.dart';
 
 enum SocketState {
   CONNECTED,
@@ -41,7 +44,7 @@ class SocketManager {
 
   SocketManager._internal();
 
-  void removeChatNotification(Chat chat) async {
+  Future<void> removeChatNotification(Chat chat) async {
     await chat.setUnreadStatus(false);
     ChatBloc().updateChat(chat);
   }
@@ -60,11 +63,9 @@ class SocketManager {
 
   SocketState _state = SocketState.DISCONNECTED;
 
-  StreamController<SocketState> _connectionStateStream =
-      StreamController<SocketState>.broadcast();
+  StreamController<SocketState> _connectionStateStream = StreamController<SocketState>.broadcast();
 
-  Stream<SocketState> get connectionStateStream =>
-      _connectionStateStream.stream;
+  Stream<SocketState> get connectionStateStream => _connectionStateStream.stream;
 
   SocketState get state => _state;
 
@@ -93,15 +94,12 @@ class SocketManager {
     });
   }
 
-  StreamController _socketProcessUpdater =
-      StreamController<List<int>>.broadcast();
+  StreamController _socketProcessUpdater = StreamController<List<int>>.broadcast();
 
   Stream<List<int>> get socketProcessUpdater => _socketProcessUpdater.stream;
 
-  StreamController _attachmentSenderCompleter =
-      StreamController<String>.broadcast();
-  Stream<String> get attachmentSenderCompleter =>
-      _attachmentSenderCompleter.stream;
+  StreamController _attachmentSenderCompleter = StreamController<String>.broadcast();
+  Stream<String> get attachmentSenderCompleter => _attachmentSenderCompleter.stream;
 
   void addAttachmentDownloader(String guid, AttachmentDownloader downloader) {
     attachmentDownloaders[guid] = downloader;
@@ -139,10 +137,8 @@ class SocketManager {
           element();
         });
         if (SettingsManager().settings.finishedSetup)
-          setup.startIncrementalSync(SettingsManager().settings,
-              isIncremental: true, onConnectionError: (String err) {
-            debugPrint(
-                "(SYNC) Error performing incremental sync. Not saving last sync date.");
+          setup.startIncrementalSync(SettingsManager().settings, onConnectionError: (String err) {
+            debugPrint("(SYNC) Error performing incremental sync. Not saving last sync date.");
             debugPrint(err);
           });
         return;
@@ -150,7 +146,11 @@ class SocketManager {
         debugPrint("CONNECT ERROR");
         if (state != SocketState.ERROR && state != SocketState.FAILED) {
           state = SocketState.ERROR;
-          Timer(Duration(seconds: 10), () {
+          Timer(Duration(seconds: 5), () {
+            if (state != SocketState.ERROR) return;
+            refreshConnection(connectToSocket: true);
+          });
+          Timer(Duration(seconds: 20), () {
             if (state != SocketState.ERROR) return;
             debugPrint("UNABLE TO CONNECT");
 
@@ -179,8 +179,7 @@ class SocketManager {
         debugPrint("disconnected");
         state = SocketState.DISCONNECTED;
 
-        EventDispatcher()
-            .emit("show-snackbar", {"text": "Disconnected from socket! 🔌"});
+        EventDispatcher().emit("show-snackbar", {"text": "Disconnected from socket! 🔌"});
         return;
       case "reconnect":
         debugPrint("RECONNECTED");
@@ -196,27 +195,25 @@ class SocketManager {
 
   Future<String> handleNewMessage(_data) async {
     Map<String, dynamic> data = jsonDecode(_data);
-    IncomingQueue()
-        .add(new QueueItem(event: "handle-message", item: {"data": data}));
+    IncomingQueue().add(new QueueItem(event: "handle-message", item: {"data": data}));
     return new Future.value("");
   }
 
   Future<String> handleChatStatusChange(_data) async {
+    if (!SettingsManager().settings.enablePrivateAPI) return new Future.value("");
+
     Map<String, dynamic> data = jsonDecode(_data);
-    IncomingQueue().add(new QueueItem(
-        event: IncomingQueue.HANDLE_CHAT_STATUS_CHANGE, item: {"data": data}));
+    IncomingQueue().add(new QueueItem(event: IncomingQueue.HANDLE_CHAT_STATUS_CHANGE, item: {"data": data}));
     return new Future.value("");
   }
 
-  Future<void> startSocketIO(
-      {bool forceNewConnection = false, bool catchException = true}) async {
+  Future<void> startSocketIO({bool forceNewConnection = false, bool catchException = true}) async {
     if (SettingsManager().settings == null) {
       debugPrint("Settings have not loaded yet, not starting socket...");
       return;
     }
 
-    if ((state == SocketState.CONNECTING || state == SocketState.CONNECTED) &&
-        !forceNewConnection) {
+    if ((state == SocketState.CONNECTING || state == SocketState.CONNECTED) && !forceNewConnection) {
       debugPrint("already connected");
       return;
     }
@@ -240,8 +237,7 @@ class SocketManager {
     try {
       // Create a new socket connection
       _manager.socket = SocketIOManager().createSocketIO(serverAddress, "/",
-          query:
-              "guid=${Uri.encodeFull(SettingsManager().settings.guidAuthKey)}",
+          query: "guid=${encodeUri(SettingsManager().settings.guidAuthKey)}",
           socketStatusCallback: (data) => socketStatusUpdate(data));
 
       if (_manager.socket == null) {
@@ -278,19 +274,23 @@ class SocketManager {
       _manager.socket.subscribe("participant-removed", handleNewMessage);
       _manager.socket.subscribe("participant-added", handleNewMessage);
       _manager.socket.subscribe("participant-left", handleNewMessage);
-      _manager.socket
-          .subscribe("chat-read-status-changed", handleChatStatusChange);
-      // _manager.socket.subscribe("typing-indicator", (_data) {
-      //   Map<String, dynamic> data = jsonDecode(_data);
-      //   CurrentChat currentChat =
-      //       AttachmentInfoBloc().getCurrentChat(data["guid"]);
-      //   if (currentChat == null) return;
-      //   if (data["display"]) {
-      //     currentChat.displayTypingIndicator();
-      //   } else {
-      //     currentChat.hideTypingIndicator();
-      //   }
-      // });
+
+      /**
+       * Handle Private API features
+       */
+      _manager.socket.subscribe("chat-read-status-changed", handleChatStatusChange);
+      _manager.socket.subscribe("typing-indicator", (_data) {
+        if (!SettingsManager().settings.enablePrivateAPI) return;
+
+        Map<String, dynamic> data = jsonDecode(_data);
+        CurrentChat currentChat = AttachmentInfoBloc().getCurrentChat(data["guid"]);
+        if (currentChat == null) return;
+        if (data["display"]) {
+          currentChat.displayTypingIndicator();
+        } else {
+          currentChat.hideTypingIndicator();
+        }
+      });
 
       /**
        * Handle errors sent by the server
@@ -346,9 +346,7 @@ class SocketManager {
        * This may be when a read/delivered date has been changed.
        */
       _manager.socket.subscribe("updated-message", (_data) async {
-        IncomingQueue().add(new QueueItem(
-            event: "handle-updated-message",
-            item: {"data": jsonDecode(_data)}));
+        IncomingQueue().add(new QueueItem(event: "handle-updated-message", item: {"data": jsonDecode(_data)}));
       });
     } catch (e) {
       if (!catchException) {
@@ -375,42 +373,101 @@ class SocketManager {
 
   Future<void> authFCM({bool catchException = true, bool force = false}) async {
     if (SettingsManager().fcmData.isNull) {
-      debugPrint("No FCM Auth data found. Skipping FCM authentication");
+      debugPrint("[FCM Auth] -> No FCM Auth data found. Skipping FCM authentication");
       return;
-    } else if (token != null && !force) {
-      debugPrint("already authorized fcm " + token);
-      if (_manager.socket != null) {
-        String deviceName = await getDeviceName();
-        _manager.sendMessage("add-fcm-device",
-            {"deviceId": token, "deviceName": deviceName}, (data) {},
-            reason: "authfcm", awaitResponse: false);
+    }
+
+    String deviceName = await getDeviceName();
+    if (token != null && !force) {
+      debugPrint("[FCM Auth] -> Already authorized FCM device! Token: $token");
+      await registerDevice(deviceName, token);
+      return;
+    }
+
+    String result;
+
+    try {
+      // First, try to send what we currently have
+      debugPrint('[FCM Auth] -> Authenticating with FCM');
+      result = await MethodChannelInterface().invokeMethod('auth', SettingsManager().fcmData.toMap());
+    } on PlatformException catch (ex) {
+      debugPrint('[FCM Auth] -> Failed to perform initial FCM authentication: ${ex.toString()}');
+      debugPrint('[FCM Auth] -> Fetching FCM data from the server...');
+
+      // If the first try fails, let's try again, but first, get the FCM data from the server
+      Map<String, dynamic> fcmMeta = await this.getFcmClient();
+      debugPrint('[FCM Auth] -> Received FCM data from the server. Attempting to re-authenticate');
+
+      try {
+        // Parse out the new FCM data
+        FCMData fcmData = parseFcmJson(fcmMeta);
+
+        // Save the FCM data in settings
+        SettingsManager().saveFCMData(fcmData);
+
+        // Retry authenticating with Firebase
+        result = await MethodChannelInterface().invokeMethod('auth', SettingsManager().fcmData.toMap());
+      } on PlatformException catch (e) {
+        if (!catchException) {
+          throw Exception("[FCM Auth] -> " + e.toString());
+        } else {
+          debugPrint("[FCM Auth] -> Failed to register with FCM: " + e.toString());
+        }
       }
-      return;
+    }
+
+    if (isNullOrEmpty(result)) {
+      debugPrint("[FCM Auth] -> Empty results, not registering device with the server.");
     }
 
     try {
-      final String result = await MethodChannelInterface()
-          .invokeMethod('auth', SettingsManager().fcmData.toMap());
       token = result;
-      if (_manager.socket != null) {
-        String deviceName = await getDeviceName();
-        _manager.sendMessage("add-fcm-device",
-            {"deviceId": token, "deviceName": deviceName}, (data) {},
-            reason: "authfcm", awaitResponse: false);
-        debugPrint(token);
-      }
-    } on PlatformException catch (e) {
-      if (!catchException) {
-        throw ("(AuthFCM) -> " + e.toString());
-      } else {
-        token = "Failed to get token: " + e.toString();
-        debugPrint(token);
-      }
+      debugPrint('[FCM Auth] -> Registering device with server...');
+      await registerDevice(deviceName, token);
+    } catch (ex) {
+      debugPrint('[FCM Auth] -> Failed to register device with server: ${ex.toString()}');
+      throw Exception("Failed to add FCM device to the server! Token: $token");
     }
   }
 
-  Future<List<dynamic>> getAttachments(String chatGuid, String messageGuid,
-      {Function(List<dynamic>) cb}) {
+  Future<void> registerDevice(String name, String token) {
+    if (name == null || name.trim().length == 0 || token == null || token.trim().length == 0) return null;
+    dynamic params = {"deviceId": token.trim(), "deviceName": name.trim()};
+    return request("add-fcm-device", params);
+  }
+
+  Future<List<dynamic>> getChats(Map<String, dynamic> params, {Function(List<dynamic>) cb}) {
+    return request('get-chats', params, cb: cb);
+  }
+
+  Future<List<dynamic>> getMessages(Map<String, dynamic> params, {Function(List<dynamic>) cb}) {
+    return request('get-messages', params, cb: cb);
+  }
+
+  Future<List<dynamic>> getChatMessages(Map<String, dynamic> params, {Function(List<dynamic>) cb}) {
+    return request('get-chat-messages', params, cb: cb);
+  }
+
+  Future<dynamic> request(String path, Map<String, dynamic> params, {Function(List<dynamic>) cb}) {
+    Completer<List<dynamic>> completer = new Completer();
+    if (_manager.socket == null) return null;
+
+    _manager.sendMessage(path, params, (Map<String, dynamic> data) async {
+      if (data["status"] != 200) return completer.completeError(data);
+
+      dynamic output;
+      if (data.containsKey("data")) {
+        output = data["data"];
+      }
+
+      if (!completer.isCompleted) completer.complete(output);
+      if (cb != null) cb(output);
+    });
+
+    return completer.future;
+  }
+
+  Future<List<dynamic>> getAttachments(String chatGuid, String messageGuid, {Function(List<dynamic>) cb}) {
     Completer<List<dynamic>> completer = new Completer();
 
     dynamic params = {
@@ -427,8 +484,7 @@ class SocketManager {
       ]
     };
 
-    _manager.socket.sendMessage("get-messages", jsonEncode(params),
-        (String data) async {
+    _manager.socket.sendMessage("get-messages", jsonEncode(params), (String data) async {
       dynamic json = jsonDecode(data);
       if (json["status"] != 200) return completer.completeError(json);
 
@@ -445,8 +501,7 @@ class SocketManager {
     return completer.future;
   }
 
-  Future<List<dynamic>> loadMessageChunk(Chat chat, int offset,
-      {limit = 25}) async {
+  Future<List<dynamic>> loadMessageChunk(Chat chat, int offset, {limit = 25}) async {
     Completer<List<dynamic>> completer = new Completer();
 
     Map<String, dynamic> params = Map();
@@ -463,7 +518,7 @@ class SocketManager {
         completer.completeError(data['error']);
       }
 
-      completer.complete(data["data"]);
+      if (!completer.isCompleted) completer.complete(data["data"]);
     });
 
     return completer.future;
@@ -527,26 +582,11 @@ class SocketManager {
       });
     }
 
-    SocketManager().sendMessage("get-messages", params, (data) async {
-      if (data['status'] != 200) {
-        return completer.completeError(new Exception(data['error']['message']));
-      }
-
-      List<dynamic> messageData = data["data"];
-      if (messageData == null) {
-        debugPrint("(Fetch Messages) Server returned no messages.");
-        return completer.complete(null);
-      }
-
-      debugPrint("(Fetch Messages) Got ${messageData.length} messages");
-      completer.complete(messageData);
-    });
-
-    return completer.future;
+    return getMessages(params);
   }
 
-  Future<Map<String, dynamic>> sendMessage(String event,
-      Map<String, dynamic> message, Function(Map<String, dynamic>) cb,
+  Future<Map<String, dynamic>> sendMessage(
+      String event, Map<String, dynamic> message, Function(Map<String, dynamic>) cb,
       {String reason, bool awaitResponse = true, String path}) {
     Completer<Map<String, dynamic>> completer = Completer();
     int _processId = 0;
@@ -563,16 +603,14 @@ class SocketManager {
         if (awaitResponse) _manager.finishSocketProcess(_processId);
       } else {
         if (path == null) {
-          _manager.socket.sendMessage(event, jsonEncode(message),
-              (String data) {
+          _manager.socket.sendMessage(event, jsonEncode(message), (String data) {
             Map<String, dynamic> response = jsonDecode(data);
             if (response.containsKey('encrypted') && response['encrypted']) {
               try {
-                response['data'] = jsonDecode(decryptAESCryptoJS(
-                    response['data'], SettingsManager().settings.guidAuthKey));
+                response['data'] =
+                    jsonDecode(decryptAESCryptoJS(response['data'], SettingsManager().settings.guidAuthKey));
               } catch (ex) {
-                response['data'] = decryptAESCryptoJS(
-                    response['data'], SettingsManager().settings.guidAuthKey);
+                response['data'] = decryptAESCryptoJS(response['data'], SettingsManager().settings.guidAuthKey);
               }
             }
 
@@ -581,8 +619,8 @@ class SocketManager {
             if (awaitResponse) _manager.finishSocketProcess(_processId);
           });
         } else {
-          _manager.socket.sendMessageWithoutReturn(event, jsonEncode(message),
-              path, SettingsManager().settings.guidAuthKey, (String data) {
+          _manager.socket.sendMessageWithoutReturn(
+              event, jsonEncode(message), path, SettingsManager().settings.guidAuthKey, (String data) {
             debugPrint(data);
             Map<String, dynamic> response = jsonDecode(data);
             cb(response);
@@ -598,18 +636,13 @@ class SocketManager {
     } else {
       socketCB();
     }
-    if (reason != null)
-      debugPrint("added process with id " +
-          _processId.toString() +
-          " because $reason");
+    if (reason != null) debugPrint("added process with id " + _processId.toString() + " because $reason");
 
     return completer.future;
   }
 
   void finishSetup() {
     finishedSetup.sink.add(true);
-    ChatBloc().refreshChats();
-    // notify();
   }
 
   /// Updates and saves a new server address and then forces a new reconnection to the socket with this address
@@ -644,15 +677,13 @@ class SocketManager {
     debugPrint("Fetching new server URL from Firebase");
 
     if (MethodChannelInterface() == null) {
-      debugPrint(
-          "Method channel interface is null, not refreshing connection...");
+      debugPrint("Method channel interface is null, not refreshing connection...");
       return;
     }
 
     // Get the server URL
     try {
-      String url =
-          await MethodChannelInterface().invokeMethod("get-server-url");
+      String url = await MethodChannelInterface().invokeMethod("get-server-url");
       url = getServerAddress(address: url);
 
       debugPrint("New server URL: $url");
@@ -666,5 +697,26 @@ class SocketManager {
         startSocketIO(forceNewConnection: connectToSocket);
       }
     } catch (e) {}
+  }
+
+  Future<Map<String, dynamic>> getFcmClient() async {
+    Completer<Map<String, dynamic>> completer = new Completer<Map<String, dynamic>>();
+
+    SocketManager().sendMessage("get-fcm-client", {}, (data) {
+      if (data["status"] == 200) {
+        completer.complete(data["data"] as Map<String, dynamic>);
+      } else {
+        String msg = "Failed to get FCM client data";
+        if (data.containsKey("error") && data["error"].containsKey("message")) {
+          msg = data["error"]["message"];
+        }
+
+        completer.completeError(new Exception(msg));
+      }
+    }).catchError((err) {
+      completer.completeError(err);
+    });
+
+    return completer.future;
   }
 }

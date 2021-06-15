@@ -6,16 +6,17 @@ class MessageTail extends StatelessWidget {
   final Color color;
   final Message message;
 
-  const MessageTail({Key key, @required this.message, this.color})
-      : super(key: key);
+  const MessageTail({Key key, @required this.message, this.color}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    ModalRoute routeCtx = ModalRoute.of(context);
+    bool hideTail = ((routeCtx?.settings?.arguments ?? {"hideTail": false}) as Map)["hideTail"] ?? false;
+    if (hideTail) return Container();
+
     bool isFromMe = message?.isFromMe ?? true;
     return Stack(
-      alignment: isFromMe
-          ? AlignmentDirectional.bottomEnd
-          : AlignmentDirectional.bottomStart,
+      alignment: isFromMe ? AlignmentDirectional.bottomEnd : AlignmentDirectional.bottomStart,
       children: [
         Container(
           margin: EdgeInsets.only(
@@ -26,8 +27,7 @@ class MessageTail extends StatelessWidget {
           width: 20,
           height: 15,
           decoration: BoxDecoration(
-            color: color
-                ?? Theme.of(context).primaryColor,
+            color: color ?? Theme.of(context).primaryColor,
             borderRadius: BorderRadius.only(
               bottomRight: isFromMe ? Radius.zero : Radius.circular(12),
               bottomLeft: isFromMe ? Radius.circular(12) : Radius.zero,
@@ -37,12 +37,12 @@ class MessageTail extends StatelessWidget {
         Container(
           margin: EdgeInsets.only(bottom: 2),
           height: 28,
-          width: 11,
+          width: 10,
           decoration: BoxDecoration(
             color: Theme.of(context).backgroundColor,
             borderRadius: BorderRadius.only(
-              bottomRight:isFromMe ? Radius.zero : Radius.circular(8),
-              bottomLeft:isFromMe ? Radius.circular(8) : Radius.zero,
+              bottomRight: isFromMe ? Radius.zero : Radius.circular(8),
+              bottomLeft: isFromMe ? Radius.circular(8) : Radius.zero,
             ),
           ),
         ),

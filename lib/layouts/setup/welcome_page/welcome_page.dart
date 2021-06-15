@@ -12,10 +12,10 @@ class WelcomePage extends StatefulWidget {
   _WelcomePageState createState() => _WelcomePageState();
 }
 
-class _WelcomePageState extends State<WelcomePage>
-    with TickerProviderStateMixin {
+class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin {
   AnimationController _titleController;
   AnimationController _subtitleController;
+
   // Animation<double> opacityTitle;
   Animation<double> opacityTitle;
   Animation<Offset> titleOffset;
@@ -26,34 +26,28 @@ class _WelcomePageState extends State<WelcomePage>
   @override
   void initState() {
     super.initState();
-    _titleController = AnimationController(
-        duration: const Duration(milliseconds: 2000), vsync: this);
+    _titleController = AnimationController(duration: const Duration(milliseconds: 2000), vsync: this);
 
     SchedulerBinding.instance.addPostFrameCallback((_) async {
       await animateTitle();
       await animateSubtitle();
     });
-    _titleController =
-        AnimationController(vsync: this, duration: Duration(seconds: 1));
+    _titleController = AnimationController(vsync: this, duration: Duration(seconds: 1));
     titleOffset = Tween<Offset>(begin: Offset(0.0, 3), end: Offset(0.0, 0.0))
-        .animate(new CurvedAnimation(
-            parent: _titleController, curve: Curves.easeInOut));
+        .animate(new CurvedAnimation(parent: _titleController, curve: Curves.easeInOut));
 
-    opacityTitle = Tween<double>(begin: 0, end: 1).animate(
-        new CurvedAnimation(parent: _titleController, curve: Curves.easeInOut));
+    opacityTitle =
+        Tween<double>(begin: 0, end: 1).animate(new CurvedAnimation(parent: _titleController, curve: Curves.easeInOut));
 
-    _subtitleController =
-        AnimationController(vsync: this, duration: Duration(seconds: 1));
+    _subtitleController = AnimationController(vsync: this, duration: Duration(seconds: 1));
     subtitleOffset = Tween<Offset>(begin: Offset(0.0, 5), end: Offset(0.0, 2))
-        .animate(new CurvedAnimation(
-            parent: _subtitleController, curve: Curves.easeInOut));
+        .animate(new CurvedAnimation(parent: _subtitleController, curve: Curves.easeInOut));
 
-    opacitySubtitle = Tween<double>(begin: 0, end: 1).animate(
-        new CurvedAnimation(
-            parent: _subtitleController, curve: Curves.easeInOut));
+    opacitySubtitle = Tween<double>(begin: 0, end: 1)
+        .animate(new CurvedAnimation(parent: _subtitleController, curve: Curves.easeInOut));
 
-    opacityButton = Tween<double>(begin: 0, end: 1).animate(new CurvedAnimation(
-        parent: _subtitleController, curve: Curves.easeInOut));
+    opacityButton = Tween<double>(begin: 0, end: 1)
+        .animate(new CurvedAnimation(parent: _subtitleController, curve: Curves.easeInOut));
   }
 
   Future<void> animateTitle() async {
@@ -113,11 +107,7 @@ class _WelcomePageState extends State<WelcomePage>
                     child: Material(
                       color: Theme.of(context).primaryColor, // button color
                       child: InkWell(
-                          child: SizedBox(
-                              width: 60,
-                              height: 60,
-                              child: Icon(Icons.arrow_forward,
-                                  color: Colors.white)),
+                          child: SizedBox(width: 60, height: 60, child: Icon(Icons.arrow_forward, color: Colors.white)),
                           onTap: () async {
                             if (await Permission.contacts.isGranted) {
                               widget.controller.animateToPage(

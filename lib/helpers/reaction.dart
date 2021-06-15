@@ -6,14 +6,19 @@ import 'package:flutter_svg/svg.dart';
 class ReactionTypes {
   // ignore: non_constant_identifier_names
   static final String LIKE = "like";
+
   // ignore: non_constant_identifier_names
   static final String LOVE = "love";
+
   // ignore: non_constant_identifier_names
   static final String DISLIKE = "dislike";
+
   // ignore: non_constant_identifier_names
   static final String QUESTION = "question";
+
   // ignore: non_constant_identifier_names
   static final String EMPHASIZE = "emphasize";
+
   // ignore: non_constant_identifier_names
   static final String LAUGH = "laugh";
 
@@ -51,8 +56,7 @@ class Reaction {
         handleCache.add(cache);
 
         // Only add the reaction if it's not a "negative"
-        if (msg.associatedMessageType != null &&
-            !msg.associatedMessageType.startsWith("-")) output.add(msg);
+        if (msg.associatedMessageType != null && !msg.associatedMessageType.startsWith("-")) output.add(msg);
       }
     }
 
@@ -61,18 +65,12 @@ class Reaction {
 
   static Map<String, Reaction> getLatestReactionMap(List<Message> messages) {
     Map<String, Reaction> reactions = {};
-    reactions[ReactionTypes.LIKE] =
-        new Reaction(reactionType: ReactionTypes.LIKE);
-    reactions[ReactionTypes.LOVE] =
-        new Reaction(reactionType: ReactionTypes.LOVE);
-    reactions[ReactionTypes.DISLIKE] =
-        new Reaction(reactionType: ReactionTypes.DISLIKE);
-    reactions[ReactionTypes.QUESTION] =
-        new Reaction(reactionType: ReactionTypes.QUESTION);
-    reactions[ReactionTypes.EMPHASIZE] =
-        new Reaction(reactionType: ReactionTypes.EMPHASIZE);
-    reactions[ReactionTypes.LAUGH] =
-        new Reaction(reactionType: ReactionTypes.LAUGH);
+    reactions[ReactionTypes.LIKE] = new Reaction(reactionType: ReactionTypes.LIKE);
+    reactions[ReactionTypes.LOVE] = new Reaction(reactionType: ReactionTypes.LOVE);
+    reactions[ReactionTypes.DISLIKE] = new Reaction(reactionType: ReactionTypes.DISLIKE);
+    reactions[ReactionTypes.QUESTION] = new Reaction(reactionType: ReactionTypes.QUESTION);
+    reactions[ReactionTypes.EMPHASIZE] = new Reaction(reactionType: ReactionTypes.EMPHASIZE);
+    reactions[ReactionTypes.LAUGH] = new Reaction(reactionType: ReactionTypes.LAUGH);
 
     // Iterate over the messages and insert the latest reaction for each user
     for (Message msg in Reaction.getUniqueReactionMessages(messages)) {
@@ -127,8 +125,7 @@ class Reaction {
 
     for (int i = 0; i < this.messages.length; i++) {
       Color iconColor = Colors.white;
-      if (!this.messages[i].isFromMe &&
-          Theme.of(context).accentColor.computeLuminance() >= 0.179) {
+      if (!this.messages[i].isFromMe && Theme.of(context).accentColor.computeLuminance() >= 0.179) {
         iconColor = Colors.black.withAlpha(95);
       }
 
@@ -145,9 +142,7 @@ class Reaction {
             width: 28,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(100),
-              color: this.messages[i].isFromMe
-                  ? Colors.blue
-                  : Theme.of(context).accentColor,
+              color: this.messages[i].isFromMe ? Colors.blue : Theme.of(context).accentColor,
               boxShadow: [
                 new BoxShadow(
                   blurRadius: 1.0,
@@ -156,8 +151,7 @@ class Reaction {
               ],
             ),
             child: Padding(
-              padding: const EdgeInsets.only(
-                  top: 8.0, left: 7.0, right: 7.0, bottom: 7.0),
+              padding: const EdgeInsets.only(top: 8.0, left: 7.0, right: 7.0, bottom: 7.0),
               child: getReactionIcon(reactionType, iconColor),
             ),
           ),

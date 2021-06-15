@@ -59,7 +59,7 @@ public class FirebaseAuth implements Handler {
                 .addOnCompleteListener(new OnCompleteListener<InstanceIdResult>() {
                     @Override
                     public void onComplete(@NonNull Task<InstanceIdResult> task) {
-                        if (!task.isSuccessful()) {
+                        if (task.getResult() == null || !task.isSuccessful()) {
                             Log.d("FCM", "getInstanceId failed", task.getException());
                             try {
 

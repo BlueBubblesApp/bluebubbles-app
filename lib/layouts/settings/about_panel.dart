@@ -1,15 +1,17 @@
 import 'dart:ui';
 
+import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
-import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
+import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import '../../helpers/hex_color.dart';
-import 'package:flutter/material.dart';
 
 class AboutPanel extends StatefulWidget {
   AboutPanel({Key key}) : super(key: key);
@@ -41,8 +43,7 @@ class _AboutPanelState extends State<AboutPanel> {
 
   void loadBrightness() {
     Color now = Theme.of(context).backgroundColor;
-    bool themeChanged =
-        previousBackgroundColor == null || previousBackgroundColor != now;
+    bool themeChanged = previousBackgroundColor == null || previousBackgroundColor != now;
     if (!themeChanged && gotBrightness) return;
 
     previousBackgroundColor = now;
@@ -78,7 +79,7 @@ class _AboutPanelState extends State<AboutPanel> {
                 toolbarHeight: 100.0,
                 elevation: 0,
                 leading: IconButton(
-                  icon: Icon(Icons.arrow_back_ios,
+                  icon: Icon(SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_back_ios : Icons.arrow_back,
                       color: Theme.of(context).primaryColor),
                   onPressed: () {
                     Navigator.of(context).pop();
@@ -95,9 +96,7 @@ class _AboutPanelState extends State<AboutPanel> {
           ),
         ),
         body: CustomScrollView(
-          physics: AlwaysScrollableScrollPhysics(
-            parent: CustomBouncingScrollPhysics(),
-          ),
+          physics: ThemeSwitcher.getScrollPhysics(),
           slivers: <Widget>[
             SliverList(
               delegate: SliverChildListDelegate(
@@ -106,8 +105,7 @@ class _AboutPanelState extends State<AboutPanel> {
                   SettingsTile(
                     title: "Donations",
                     onTap: () {
-                      MethodChannelInterface().invokeMethod("open-link",
-                          {"link": "https://bluebubbles.app/donate/"});
+                      MethodChannelInterface().invokeMethod("open-link", {"link": "https://bluebubbles.app/donate/"});
                     },
                     trailing: Icon(
                       Icons.attach_money,
@@ -117,8 +115,7 @@ class _AboutPanelState extends State<AboutPanel> {
                   SettingsTile(
                     title: "Website",
                     onTap: () {
-                      MethodChannelInterface().invokeMethod(
-                          "open-link", {"link": "https://bluebubbles.app/"});
+                      MethodChannelInterface().invokeMethod("open-link", {"link": "https://bluebubbles.app/"});
                     },
                     trailing: Icon(
                       Icons.link,
@@ -128,8 +125,7 @@ class _AboutPanelState extends State<AboutPanel> {
                   SettingsTile(
                     title: "Source Code",
                     onTap: () {
-                      MethodChannelInterface().invokeMethod("open-link",
-                          {"link": "https://github.com/BlueBubblesApp"});
+                      MethodChannelInterface().invokeMethod("open-link", {"link": "https://github.com/BlueBubblesApp"});
                     },
                     trailing: Icon(
                       Icons.code,
@@ -139,10 +135,10 @@ class _AboutPanelState extends State<AboutPanel> {
                   SettingsTile(
                     title: "Changelog",
                     onTap: () async {
-                      String changelog = await DefaultAssetBundle.of(context)
-                          .loadString('assets/changelog/changelog.md');
+                      String changelog =
+                          await DefaultAssetBundle.of(context).loadString('assets/changelog/changelog.md');
                       Navigator.of(context).push(
-                        CupertinoPageRoute(
+                        ThemeSwitcher.buildPageRoute(
                           builder: (context) => Scaffold(
                             body: Markdown(
                               data: changelog,
@@ -160,21 +156,15 @@ class _AboutPanelState extends State<AboutPanel> {
                                 h1: Theme.of(context)
                                     .textTheme
                                     .headline1
-                                    .copyWith(
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.bold),
+                                    .copyWith(fontSize: 20, fontWeight: FontWeight.bold),
                                 h2: Theme.of(context)
                                     .textTheme
                                     .headline2
-                                    .copyWith(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold),
+                                    .copyWith(fontSize: 18, fontWeight: FontWeight.bold),
                                 h3: Theme.of(context)
                                     .textTheme
                                     .headline3
-                                    .copyWith(
-                                        fontSize: 17,
-                                        fontWeight: FontWeight.bold),
+                                    .copyWith(fontSize: 17, fontWeight: FontWeight.bold),
                               ),
                             ),
                             backgroundColor: Theme.of(context).backgroundColor,
@@ -197,8 +187,7 @@ class _AboutPanelState extends State<AboutPanel> {
                   SettingsTile(
                     title: "Join Our Discord",
                     onTap: () {
-                      MethodChannelInterface().invokeMethod("open-link",
-                          {"link": "https://discord.gg/hbx7EhNFjp"});
+                      MethodChannelInterface().invokeMethod("open-link", {"link": "https://discord.gg/hbx7EhNFjp"});
                     },
                     trailing: SvgPicture.asset(
                       "assets/icon/discord.svg",
@@ -232,8 +221,7 @@ class _AboutPanelState extends State<AboutPanel> {
                                   padding: EdgeInsets.all(8),
                                   child: Text(
                                     "Zach",
-                                    style:
-                                        Theme.of(context).textTheme.bodyText1,
+                                    style: Theme.of(context).textTheme.bodyText1,
                                   ),
                                 ),
                                 Container(
@@ -241,8 +229,7 @@ class _AboutPanelState extends State<AboutPanel> {
                                   padding: EdgeInsets.all(8),
                                   child: Text(
                                     "Maxwell",
-                                    style:
-                                        Theme.of(context).textTheme.bodyText1,
+                                    style: Theme.of(context).textTheme.bodyText1,
                                   ),
                                 ),
                               ],
@@ -252,10 +239,7 @@ class _AboutPanelState extends State<AboutPanel> {
                             FlatButton(
                               child: Text(
                                 "Close",
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodyText1
-                                    .copyWith(
+                                style: Theme.of(context).textTheme.bodyText1.copyWith(
                                       color: Theme.of(context).primaryColor,
                                     ),
                               ),

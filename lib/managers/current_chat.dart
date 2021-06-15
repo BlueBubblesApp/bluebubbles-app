@@ -6,7 +6,9 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_details_popup.dart';
 import 'package:bluebubbles/managers/attachment_info_bloc.dart';
+import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
@@ -22,8 +24,7 @@ class CurrentChat {
 
   Stream get stream => _stream.stream;
 
-  StreamController<Map<String, List<Attachment>>> _attachmentStream =
-      StreamController.broadcast();
+  StreamController<Map<String, List<Attachment>>> _attachmentStream = StreamController.broadcast();
 
   Stream get attachmentStream => _attachmentStream.stream;
 
@@ -38,9 +39,11 @@ class CurrentChat {
   List<VideoPlayerController> videoControllersToDispose = [];
   List<Attachment> chatAttachments = [];
   List<Message> sentMessages = [];
-  // bool showTypingIndicator = false;
-  // Timer indicatorHideTimer;
+  bool showTypingIndicator = false;
+  Timer indicatorHideTimer;
   OverlayEntry entry;
+  bool keyboardOpen = false;
+  double keyboardOpenOffset = 0;
 
   bool isAlive = false;
 
@@ -48,19 +51,23 @@ class CurrentChat {
 
   double _timeStampOffset = 0.0;
 
-  StreamController<double> timeStampOffsetStream =
-      StreamController<double>.broadcast();
+  StreamController<double> timeStampOffsetStream = StreamController<double>.broadcast();
 
-  StreamController<Map<String, Message>> messageMarkerStream =
-      StreamController<Map<String, Message>>.broadcast();
+  StreamController<Map<String, Message>> messageMarkerStream = StreamController<Map<String, Message>>.broadcast();
 
   double get timeStampOffset => _timeStampOffset;
+
   set timeStampOffset(double value) {
     if (_timeStampOffset == value) return;
     _timeStampOffset = value;
-    if (!timeStampOffsetStream.isClosed)
-      timeStampOffsetStream.sink.add(_timeStampOffset);
+    if (!timeStampOffsetStream.isClosed) timeStampOffsetStream.sink.add(_timeStampOffset);
   }
+
+  StreamController<bool> showScrollDownStream = StreamController<bool>.broadcast();
+  ScrollController scrollController = ScrollController();
+  bool _showScrollDown = false;
+
+  bool get showScrollDown => _showScrollDown;
 
   CurrentChat(this.chat) {
     NewMessageManager().stream.listen((msgEvent) {
@@ -70,16 +77,24 @@ class CurrentChat {
       if (msgEvent?.chatGuid != chat?.guid) return;
 
       // If it's the event we want
-      if (msgEvent.type == NewMessageType.UPDATE ||
-          msgEvent.type == NewMessageType.ADD) {
+      if (msgEvent.type == NewMessageType.UPDATE || msgEvent.type == NewMessageType.ADD) {
         tryUpdateMessageMarkers(msgEvent.event["message"]);
       }
 
       if (messageMarkerStream.isClosed) {
-        messageMarkerStream.sink.add({
-          "myLastMessage": this.myLastMessage,
-          "lastReadMessage": this.lastReadMessage
-        });
+        messageMarkerStream.sink.add({"myLastMessage": this.myLastMessage, "lastReadMessage": this.lastReadMessage});
+      }
+    });
+
+    EventDispatcher().stream.listen((Map<String, dynamic> event) {
+      if (!event.containsKey("type")) return;
+
+      // Track the offset for when the keyboard is opened
+      if (event["type"] == "keyboard-status" && scrollController.hasClients && scrollController.offset != null) {
+        keyboardOpen = event.containsKey("data") ? event["data"] : false;
+        if (keyboardOpen) {
+          keyboardOpenOffset = scrollController.offset;
+        }
       }
     });
   }
@@ -96,21 +111,66 @@ class CurrentChat {
     return currentChat;
   }
 
-  static bool isActive(String chatGuid) =>
-      AttachmentInfoBloc().getCurrentChat(chatGuid)?.isAlive ?? false;
+  static bool isActive(String chatGuid) => AttachmentInfoBloc().getCurrentChat(chatGuid)?.isAlive ?? false;
 
   static CurrentChat get activeChat {
     if (AttachmentInfoBloc().chatData.isNotEmpty) {
-      var res = AttachmentInfoBloc()
-          .chatData
-          .values
-          .where((element) => element.isAlive);
+      var res = AttachmentInfoBloc().chatData.values.where((element) => element.isAlive);
 
       if (res.isNotEmpty) return res.first;
 
       return null;
     } else {
       return null;
+    }
+  }
+
+  void initScrollController() {
+    scrollController = ScrollController();
+
+    scrollController.addListener(() async {
+      if (scrollController == null || !scrollController.hasClients) return;
+
+      // Check and see if we need to unfocus the keyboard
+      // The +100 is relatively arbitrary. It was the threshold I thought was good
+      if (keyboardOpen &&
+          SettingsManager().settings.hideKeyboardOnScroll &&
+          scrollController.offset > keyboardOpenOffset + 100) {
+        EventDispatcher().emit("unfocus-keyboard", null);
+      }
+
+      if (_showScrollDown && scrollController.offset >= 500) return;
+      if (!_showScrollDown && scrollController.offset < 500) return;
+
+      if (scrollController.offset >= 500) {
+        _showScrollDown = true;
+      } else {
+        _showScrollDown = false;
+      }
+
+      showScrollDownStream.sink.add(_showScrollDown);
+    });
+  }
+
+  void initControllers() {
+    if (_stream?.isClosed ?? true) {
+      _stream = StreamController.broadcast();
+    }
+
+    if (_attachmentStream?.isClosed ?? true) {
+      _attachmentStream = StreamController.broadcast();
+    }
+
+    if (timeStampOffsetStream?.isClosed ?? true) {
+      timeStampOffsetStream = StreamController.broadcast();
+    }
+
+    if (messageMarkerStream?.isClosed ?? true) {
+      messageMarkerStream = StreamController.broadcast();
+    }
+
+    if (showScrollDownStream?.isClosed ?? true) {
+      showScrollDownStream = StreamController.broadcast();
     }
   }
 
@@ -128,22 +188,23 @@ class CurrentChat {
     sentMessages = [];
     entry = null;
     isAlive = true;
+    showTypingIndicator = false;
+    indicatorHideTimer = null;
     _timeStampOffset = 0;
     timeStampOffsetStream = StreamController<double>.broadcast();
-    // showTypingIndicator = false;
-    // indicatorHideTimer = null;
+    _showScrollDown = false;
+    showScrollDownStream = StreamController<bool>.broadcast();
+
+    initScrollController();
+    initControllers();
     // checkTypingIndicator();
   }
 
   static CurrentChat of(BuildContext context) {
     if (context == null) return null;
 
-    return context
-            .findAncestorStateOfType<ConversationViewState>()
-            ?.currentChat ??
-        context
-            .findAncestorStateOfType<MessageDetailsPopupState>()
-            ?.currentChat ??
+    return context.findAncestorStateOfType<ConversationViewState>()?.currentChat ??
+        context.findAncestorStateOfType<MessageDetailsPopupState>()?.currentChat ??
         null;
   }
 
@@ -204,12 +265,10 @@ class CurrentChat {
     imageData.remove(attachment.guid);
   }
 
-  Future<void> preloadMessageAttachments(
-      {List<Message> specificMessages}) async {
+  Future<void> preloadMessageAttachments({List<Message> specificMessages}) async {
     assert(chat != null);
-    List<Message> messages = specificMessages != null
-        ? specificMessages
-        : await Chat.getMessagesSingleton(chat, limit: 25);
+    List<Message> messages =
+        specificMessages != null ? specificMessages : await Chat.getMessagesSingleton(chat, limit: 25);
     for (Message message in messages) {
       if (message.hasAttachments) {
         List<Attachment> attachments = await message.fetchAttachments();
@@ -218,38 +277,19 @@ class CurrentChat {
     }
   }
 
-  // void checkTypingIndicator() {
-  //   if (chat == null) return;
-  //   SocketManager().sendMessage("get-typing-indicator", {"guid": chat.guid},
-  //       (data) {
-  //     if (data['status'] == 200) {
-  //       if (data['data']['isTyping']) {
-  //         displayTypingIndicator();
-  //       } else {
-  //         hideTypingIndicator();
-  //       }
-  //     } else {
-  //       hideTypingIndicator();
-  //     }
-  //   });
-  // }
+  void displayTypingIndicator() {
+    showTypingIndicator = true;
+    _stream.sink.add(null);
+  }
 
-  // void displayTypingIndicator() {
-  //   showTypingIndicator = true;
-  //   indicatorHideTimer = new Timer(Duration(seconds: 5), () {
-  //     checkTypingIndicator();
-  //   });
-  //   _stream.sink.add(null);
-  // }
+  void hideTypingIndicator() {
+    indicatorHideTimer?.cancel();
+    indicatorHideTimer = null;
+    showTypingIndicator = false;
+    _stream.sink.add(null);
+  }
 
-  // void hideTypingIndicator() {
-  //   indicatorHideTimer.cancel();
-  //   indicatorHideTimer = null;
-  //   showTypingIndicator = false;
-  //   _stream.sink.add(null);
-  // }
-
-  /// Retreive all of the attachments associated with a chat
+  /// Retrieve all of the attachments associated with a chat
   Future<void> updateChatAttachments() async {
     chatAttachments = await Chat.getAttachments(chat);
   }
@@ -271,16 +311,14 @@ class CurrentChat {
     if (myLastMessage == null ||
         (myLastMessage?.dateCreated != null &&
             msg.dateCreated != null &&
-            msg.dateCreated.millisecondsSinceEpoch >
-                myLastMessage.dateCreated.millisecondsSinceEpoch)) {
+            msg.dateCreated.millisecondsSinceEpoch > myLastMessage.dateCreated.millisecondsSinceEpoch)) {
       myLastMessage = msg;
     }
 
     if ((lastReadMessage == null && msg.dateRead != null) ||
         (lastReadMessage?.dateRead != null &&
             msg.dateRead != null &&
-            msg.dateRead.millisecondsSinceEpoch >
-                lastReadMessage.dateRead.millisecondsSinceEpoch)) {
+            msg.dateRead.millisecondsSinceEpoch > lastReadMessage.dateRead.millisecondsSinceEpoch)) {
       lastReadMessage = msg;
     }
   }
@@ -299,10 +337,14 @@ class CurrentChat {
       });
     }
 
+    if (_stream.isClosed) _stream.close();
+    if (!_attachmentStream.isClosed) _attachmentStream.close();
     if (!timeStampOffsetStream.isClosed) timeStampOffsetStream.close();
+    if (!showScrollDownStream.isClosed) showScrollDownStream.close();
     if (!messageMarkerStream.isClosed) messageMarkerStream.close();
 
     _timeStampOffset = 0;
+    _showScrollDown = false;
     imageData = {};
     currentPlayingVideo = {};
     audioPlayers = {};
@@ -315,8 +357,27 @@ class CurrentChat {
     chatAttachments = [];
     sentMessages = [];
     isAlive = false;
-    // showTypingIndicator = false;
+    showTypingIndicator = false;
+    scrollController.dispose();
+
+    initScrollController();
+    initControllers();
+
     if (entry != null) entry.remove();
+  }
+
+  Future<void> scrollToBottom() async {
+    if (scrollController == null) return;
+    await scrollController.animateTo(
+      0.0,
+      curve: Curves.easeOut,
+      duration: const Duration(milliseconds: 300),
+    );
+
+    if (SettingsManager().settings.openKeyboardOnSTB) {
+      EventDispatcher().emit("focus-keyboard", null);
+      keyboardOpenOffset = 0;
+    }
   }
 
   /// Dipose of the controllers which we no longer need

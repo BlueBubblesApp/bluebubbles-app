@@ -1,4 +1,5 @@
 import 'package:bluebubbles/helpers/reaction.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/material.dart';
 
@@ -15,19 +16,18 @@ class ReactionsWidget extends StatefulWidget {
   _ReactionsWidgetState createState() => _ReactionsWidgetState();
 }
 
-class _ReactionsWidgetState extends State<ReactionsWidget>
-    with TickerProviderStateMixin {
+class _ReactionsWidgetState extends State<ReactionsWidget> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     Map<String, Reaction> reactionsMap = new Map();
     // Filter associated messages down to just the sticker
-    List<Message> reactions = widget.associatedMessages
-        .where((item) =>
-            ReactionTypes.toList().contains(item.associatedMessageType))
-        .toList();
+    List<Message> reactions =
+        widget.associatedMessages.where((item) => ReactionTypes.toList().contains(item.associatedMessageType)).toList();
+
+    final bool hideReactions = SettingsManager().settings.redactedMode && SettingsManager().settings.hideReactions;
 
     // If the reactions are empty, return nothing
-    if (reactions.isEmpty) {
+    if (reactions.isEmpty || hideReactions) {
       return Container();
     }
 

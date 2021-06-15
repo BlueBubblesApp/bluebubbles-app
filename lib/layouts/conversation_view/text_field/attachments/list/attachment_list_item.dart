@@ -3,7 +3,6 @@ import 'dart:typed_data';
 
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/layouts/image_viewer/attachmet_fullscreen_viewer.dart';
-import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:flutter/material.dart';
@@ -43,46 +42,67 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
         video: widget.file.path,
         imageFormat: ImageFormat.PNG,
         maxHeight: 100,
-        quality: 25,
+        quality: SettingsManager().compressionQuality,
       );
       if (this.mounted) setState(() {});
     } else if (mimeType == null || mimeType.startsWith("image/")) {
-      preview = await FlutterImageCompress.compressWithFile(
-          widget.file.absolute.path,
-          quality: SettingsManager().settings.lowMemoryMode ? 5 : 10);
+      preview = await FlutterImageCompress.compressWithFile(widget.file.absolute.path,
+          quality: SettingsManager().compressionQuality);
       if (this.mounted) setState(() {});
     }
   }
 
   Widget getThumbnail() {
     if (preview != null) {
-      return InkWell(
-        child: Image.memory(
-          preview,
-          height: 100,
-          width: 100,
-          fit: BoxFit.cover,
-        ),
-        onTap: () async {
-          if (mime(widget.file.path) == null) return;
-          if (!this.mounted) return;
+      final bool hideAttachments =
+          SettingsManager().settings.redactedMode && SettingsManager().settings.hideAttachments;
+      final bool hideAttachmentTypes =
+          SettingsManager().settings.redactedMode && SettingsManager().settings.hideAttachmentTypes;
 
-          Attachment fakeAttachment = new Attachment(
-              transferName: widget.file.path, mimeType: mimeType);
-          await Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (context) => AttachmentFullscreenViewer(
-                attachment: fakeAttachment,
-                showInteractions: false,
+      final mimeType = mime(widget.file.path);
+
+      return Stack(children: <Widget>[
+        InkWell(
+          child: Image.memory(
+            preview,
+            height: 100,
+            width: 100,
+            fit: BoxFit.cover,
+          ),
+          onTap: () async {
+            if (mimeType == null) return;
+            if (!this.mounted) return;
+
+            Attachment fakeAttachment = new Attachment(transferName: widget.file.path, mimeType: mimeType);
+            await Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => AttachmentFullscreenViewer(
+                  attachment: fakeAttachment,
+                  showInteractions: false,
+                ),
+              ),
+            );
+          },
+        ),
+        if (hideAttachments)
+          Positioned.fill(
+            child: Container(
+              color: Theme.of(context).accentColor,
+            ),
+          ),
+        if (hideAttachments && !hideAttachmentTypes)
+          Positioned.fill(
+            child: Container(
+              alignment: Alignment.center,
+              child: Text(
+                mimeType,
+                textAlign: TextAlign.center,
               ),
             ),
-          );
-        },
-      );
+          ),
+      ]);
     } else {
-      if (mimeType == null ||
-          mimeType.startsWith("video/") ||
-          mimeType.startsWith("image/")) {
+      if (mimeType == null || mimeType.startsWith("video/") || mimeType.startsWith("image/")) {
         // If the preview is null and the mimetype is video or image,
         // then that means that we are in the process of loading things
         return Container(
@@ -120,10 +140,7 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
                   padding: const EdgeInsets.fromLTRB(8, 0, 8, 10),
                   child: Text(
                     name,
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodyText1
-                        .apply(fontSizeDelta: -2),
+                    style: Theme.of(context).textTheme.bodyText1.apply(fontSizeDelta: -2),
                     textAlign: TextAlign.center,
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,

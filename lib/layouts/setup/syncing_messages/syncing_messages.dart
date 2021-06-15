@@ -24,9 +24,8 @@ class _SyncingMessagesState extends State<SyncingMessages> {
         subscription.cancel();
         await showDialog(
           context: context,
-          builder: (context) => FailedToScan(
-              exception: event.output.last.text,
-              title: "An error occured during setup!"),
+          builder: (context) =>
+              FailedToScan(exception: event.output.last.text, title: "An error occured during setup!"),
         );
 
         widget.controller.animateToPage(
@@ -34,10 +33,23 @@ class _SyncingMessagesState extends State<SyncingMessages> {
           duration: Duration(milliseconds: 500),
           curve: Curves.easeInOut,
         );
-      } else if (event.progress == 1.0) {
+      } else if (event.progress >= 100) {
         subscription.cancel();
       }
     });
+  }
+
+  String getProgressText(double progress) {
+    String txt = 'Setup in progress';
+    if (progress == 0.0) {
+      txt = 'Starting setup';
+    } else if (progress == -1.0) {
+      txt = 'Cancelling';
+    } else if (progress >= 100) {
+      txt = 'Finishing setup';
+    }
+
+    return '$txt...';
   }
 
   @override
@@ -62,27 +74,20 @@ class _SyncingMessagesState extends State<SyncingMessages> {
                       flex: 100,
                     ),
                     Text(
-                      "${(progress * 100).floor()}%",
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodyText1
-                          .apply(fontSizeFactor: 1.5),
+                      "${progress.floor()}%",
+                      style: Theme.of(context).textTheme.bodyText1.apply(fontSizeFactor: 1.5),
                     ),
                     Spacer(
                       flex: 5,
                     ),
                     Padding(
-                      padding: EdgeInsets.symmetric(
-                          horizontal: MediaQuery.of(context).size.width / 4),
+                      padding: EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width / 4),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(20),
                         child: LinearProgressIndicator(
-                          value: progress != 1.0 && progress != 0.0
-                              ? progress
-                              : null,
+                          value: progress != 100.0 && progress != 0.0 ? (progress / 100) : null,
                           backgroundColor: Colors.white,
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                              Theme.of(context).primaryColor),
+                          valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
                         ),
                       ),
                     ),
@@ -99,22 +104,18 @@ class _SyncingMessagesState extends State<SyncingMessages> {
                         ),
                         padding: EdgeInsets.all(10),
                         child: ListView.builder(
-                          physics: AlwaysScrollableScrollPhysics(
-                              parent: BouncingScrollPhysics()),
+                          physics: AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
                           itemBuilder: (context, index) {
-                            SetupOutputData data =
-                                snapshot.data.output.reversed.toList()[index];
+                            SetupOutputData data = snapshot.data.output.reversed.toList()[index];
                             return Text(
                               data.text,
                               style: TextStyle(
-                                color: data.type == SetupOutputType.LOG
-                                    ? Colors.grey
-                                    : Colors.red,
+                                color: data.type == SetupOutputType.LOG ? Colors.grey : Colors.red,
                                 fontSize: 10,
                               ),
                             );
                           },
-                          itemCount: snapshot.data.output.length,
+                          itemCount: snapshot?.data?.output?.length ?? 0,
                         ),
                       ),
                     ),
@@ -127,8 +128,7 @@ class _SyncingMessagesState extends State<SyncingMessages> {
             } else {
               return Center(
                 child: Padding(
-                  padding: EdgeInsets.symmetric(
-                      horizontal: MediaQuery.of(context).size.width / 4),
+                  padding: EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width / 4),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: <Widget>[
@@ -136,11 +136,7 @@ class _SyncingMessagesState extends State<SyncingMessages> {
                         flex: 100,
                       ),
                       Text(
-                        progress == 0.0
-                            ? "Starting setup"
-                            : progress == -1.0
-                                ? "Cancelling..."
-                                : "Finishing setup",
+                        getProgressText(progress),
                         style: Theme.of(context).textTheme.bodyText1,
                       ),
                       Spacer(
@@ -150,8 +146,7 @@ class _SyncingMessagesState extends State<SyncingMessages> {
                         borderRadius: BorderRadius.circular(20),
                         child: LinearProgressIndicator(
                           backgroundColor: Colors.white,
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                              Theme.of(context).primaryColor),
+                          valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
                         ),
                       ),
                       Spacer(

@@ -37,6 +37,7 @@ android {
     compileSdkVersion 29
 
     lintOptions {
+        checkReleaseBuilds false
         disable 'InvalidPackage'
     }
 
@@ -52,13 +53,13 @@ android {
         // version code: 1  0114                    0                70      64
 
         //noinspection AccidentalOctal
-        versionCode 10115170
+        versionCode 11000070
         versionName flutterVersionName
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
-//        ndk {
-//            abiFilters 'armeabi-v7a', 'arm64-v8a'
-//        }
+        // ndk {
+        //     abiFilters 'armeabi-v7a'
+        // }
     }
 
     compileOptions {
@@ -118,10 +119,9 @@ dependencies {
 
 
     // Add the SDK for Firebase Cloud Messaging
-    implementation 'com.google.firebase:firebase-messaging:20.1.5'
+    implementation 'com.google.firebase:firebase-messaging:20.1.6'
     implementation 'com.google.firebase:firebase-analytics:17.2.1'
     implementation 'com.google.firebase:firebase-database:19.2.0'
-    implementation 'androidx.work:work-runtime:2.1.0'
     implementation 'com.google.firebase:firebase-messaging-directboot:20.2.0'
 
     //for json string to map

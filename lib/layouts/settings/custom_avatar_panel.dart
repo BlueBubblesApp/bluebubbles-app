@@ -11,9 +11,9 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
-import 'package:flutter/material.dart';
 
 class CustomAvatarPanel extends StatefulWidget {
   CustomAvatarPanel({Key key}) : super(key: key);
@@ -53,8 +53,7 @@ class _CustomAvatarPanelState extends State<CustomAvatarPanel> {
 
   void loadBrightness() {
     Color now = Theme.of(context).backgroundColor;
-    bool themeChanged =
-        previousBackgroundColor == null || previousBackgroundColor != now;
+    bool themeChanged = previousBackgroundColor == null || previousBackgroundColor != now;
     if (!themeChanged && gotBrightness) return;
 
     previousBackgroundColor = now;
@@ -83,8 +82,7 @@ class _CustomAvatarPanelState extends State<CustomAvatarPanel> {
     for (var item in handles) {
       items.add(SettingsTile(
         title:
-            ContactManager().getCachedContactSync(item.address)?.displayName ??
-                await formatPhoneNumber(item.address),
+            ContactManager().getCachedContactSync(item.address)?.displayName ?? await formatPhoneNumber(item.address),
         subTitle: "Tap avatar to change color",
         trailing: ContactAvatarWidget(handle: item),
       ));
@@ -116,8 +114,7 @@ class _CustomAvatarPanelState extends State<CustomAvatarPanel> {
                 toolbarHeight: 100.0,
                 elevation: 0,
                 leading: IconButton(
-                  icon: Icon(Icons.arrow_back_ios,
-                      color: Theme.of(context).primaryColor),
+                  icon: Icon(Icons.arrow_back_ios, color: Theme.of(context).primaryColor),
                   onPressed: () {
                     Navigator.of(context).pop();
                   },
@@ -149,8 +146,7 @@ class _CustomAvatarPanelState extends State<CustomAvatarPanel> {
                           style: Theme.of(context).textTheme.subtitle1,
                           textAlign: TextAlign.center,
                         )),
-                  for (Widget handleWidget in this.handleWidgets ?? [])
-                    handleWidget
+                  for (Widget handleWidget in this.handleWidgets ?? []) handleWidget
                 ],
               ),
             ),

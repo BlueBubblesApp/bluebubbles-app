@@ -1,9 +1,11 @@
 import 'dart:ui';
 
 import 'package:bluebubbles/blocs/message_bloc.dart';
+import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/socket_manager.dart';
@@ -25,8 +27,7 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
 
   GlobalKey<AnimatedListState> _listKey = GlobalKey<AnimatedListState>();
   final Duration animationDuration = Duration(milliseconds: 400);
-  final TextEditingController textEditingController =
-      new TextEditingController();
+  final TextEditingController textEditingController = new TextEditingController();
 
   Brightness brightness;
   Color previousBackgroundColor;
@@ -54,9 +55,7 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
 
     // When the user types again after no results, reset no results
     textEditingController.addListener(() {
-      if (textEditingController.text != previousSearch &&
-          noResults &&
-          this.mounted) {
+      if (textEditingController.text != previousSearch && noResults && this.mounted) {
         setState(() {
           noResults = false;
         });
@@ -68,8 +67,7 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
 
   void loadBrightness() {
     Color now = Theme.of(context).backgroundColor;
-    bool themeChanged =
-        previousBackgroundColor == null || previousBackgroundColor != now;
+    bool themeChanged = previousBackgroundColor == null || previousBackgroundColor != now;
     if (!themeChanged && gotBrightness) return;
 
     previousBackgroundColor = now;
@@ -92,9 +90,7 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
     previousSearch = term;
 
     // If we've already searched for the results and there are none, set no results and return
-    if (resultCache.containsKey(term) &&
-        resultCache[term] == 0 &&
-        this.mounted) {
+    if (resultCache.containsKey(term) && resultCache[term] == 0 && this.mounted) {
       setState(() {
         noResults = true;
       });
@@ -107,8 +103,7 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
         isSearching = true;
       });
 
-    List<dynamic> results =
-        await SocketManager().fetchMessages(null, limit: 50, where: [
+    List<dynamic> results = await SocketManager().fetchMessages(null, limit: 50, where: [
       {
         'statement': 'message.text LIKE :term',
         'args': {'term': "%${textEditingController.text}%"}
@@ -119,10 +114,7 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
     List<dynamic> _results = [];
     for (dynamic item in results) {
       // Build the data map
-      Map<String, dynamic> data = {
-        'message': Message.fromMap(item),
-        'chat': Chat.fromMap(item['chats'][0])
-      };
+      Map<String, dynamic> data = {'message': Message.fromMap(item), 'chat': Chat.fromMap(item['chats'][0])};
 
       // If we've already got this chat, use the cached one
       if (chatCache.containsKey(data['chat'].guid)) {
@@ -184,7 +176,7 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
                 toolbarHeight: 100.0,
                 elevation: 0,
                 leading: IconButton(
-                  icon: Icon(Icons.arrow_back_ios,
+                  icon: Icon(SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_back_ios : Icons.arrow_back,
                       color: Theme.of(context).primaryColor),
                   onPressed: () {
                     Navigator.of(context).pop();
@@ -209,8 +201,7 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Icon(Icons.search,
-                          color: Theme.of(context).textTheme.bodyText1.color),
+                      Icon(Icons.search, color: Theme.of(context).textTheme.bodyText1.color),
                       Container(padding: EdgeInsets.only(right: 5.0)),
                       Flexible(
                           fit: FlexFit.loose,
@@ -220,29 +211,22 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
                               search(textEditingController.text);
                             },
                             focusNode: _focusNode,
-                            padding: EdgeInsets.symmetric(
-                                horizontal: 15.0, vertical: 10),
+                            padding: EdgeInsets.symmetric(horizontal: 15.0, vertical: 10),
                             controller: textEditingController,
                             placeholder: "Enter a search term...",
                             style: Theme.of(context).textTheme.bodyText1,
-                            placeholderStyle:
-                                Theme.of(context).textTheme.subtitle1,
+                            placeholderStyle: Theme.of(context).textTheme.subtitle1,
                             decoration: BoxDecoration(
                                 color: Theme.of(context).backgroundColor,
                                 borderRadius: BorderRadius.circular(20),
-                                border: Border.all(
-                                    color: Theme.of(context).accentColor)),
+                                border: Border.all(color: Theme.of(context).accentColor)),
                             maxLines: 1,
                           )),
                       (!this.isSearching)
                           ? CupertinoButton(
                               padding: EdgeInsets.all(0),
                               child: Icon(Icons.arrow_forward,
-                                  color: Theme.of(context)
-                                      .textTheme
-                                      .bodyText1
-                                      .color,
-                                  size: 30),
+                                  color: Theme.of(context).textTheme.bodyText1.color, size: 30),
                               onPressed: () {
                                 search(textEditingController.text);
                               })
@@ -250,8 +234,7 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
                               padding: const EdgeInsets.all(12.0),
                               child: Theme(
                                 data: ThemeData(
-                                  cupertinoOverrideTheme: CupertinoThemeData(
-                                      brightness: brightness),
+                                  cupertinoOverrideTheme: CupertinoThemeData(brightness: brightness),
                                 ),
                                 child: CupertinoActivityIndicator(),
                               ),
@@ -261,16 +244,14 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
             (!this.isSearching && noResults)
                 ? Padding(
                     padding: EdgeInsets.only(top: 25.0),
-                    child: Text("No results found!",
-                        style: Theme.of(context).textTheme.bodyText1))
+                    child: Text("No results found!", style: Theme.of(context).textTheme.bodyText1))
                 : (!this.isSearching)
                     ? Flexible(
                         fit: FlexFit.loose,
                         child: AnimatedList(
                           key: _listKey,
                           initialItemCount: results.length,
-                          itemBuilder: (BuildContext context, int index,
-                              Animation<double> animation) {
+                          itemBuilder: (BuildContext context, int index, Animation<double> animation) {
                             Message message = results[index]['message'];
                             Chat chat = results[index]['chat'];
 
@@ -278,35 +259,24 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
                             List<InlineSpan> spans = [];
 
                             // Get the current position of the search term
-                            int termIndex = (message.text ?? "")
-                                .toLowerCase()
-                                .indexOf(
-                                    textEditingController.text.toLowerCase());
-                            int termEnd =
-                                termIndex + textEditingController.text.length;
+                            int termIndex =
+                                (message.text ?? "").toLowerCase().indexOf(textEditingController.text.toLowerCase());
+                            int termEnd = termIndex + textEditingController.text.length;
 
                             if (termIndex >= 0) {
                               // We only want a snippet of the text, so only get a 50x50 range
                               // of characters from the string, with the search term in the middle
-                              String subText = message.text.substring(
-                                  (termIndex - 50 >= 0) ? termIndex - 50 : 0,
-                                  (termEnd + 50 < message.text.length)
-                                      ? termEnd + 50
-                                      : message.text.length);
+                              String subText = message.text.substring((termIndex - 50 >= 0) ? termIndex - 50 : 0,
+                                  (termEnd + 50 < message.text.length) ? termEnd + 50 : message.text.length);
 
                               // Recarculate the term position in the snippet
-                              termIndex = subText.toLowerCase().indexOf(
-                                  textEditingController.text.toLowerCase());
-                              termEnd =
-                                  termIndex + textEditingController.text.length;
+                              termIndex = subText.toLowerCase().indexOf(textEditingController.text.toLowerCase());
+                              termEnd = termIndex + textEditingController.text.length;
 
                               // Add the beginning string
                               spans.add(TextSpan(
-                                  text: subText
-                                      .substring(0, termIndex)
-                                      .trimLeft(),
-                                  style:
-                                      Theme.of(context).textTheme.subtitle1));
+                                  text: subText.substring(0, termIndex).trimLeft(),
+                                  style: Theme.of(context).textTheme.subtitle1));
 
                               // Add the search term
                               spans.add(TextSpan(
@@ -314,22 +284,14 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
                                   style: Theme.of(context)
                                       .textTheme
                                       .subtitle1
-                                      .apply(
-                                          color: Theme.of(context).primaryColor,
-                                          fontWeightDelta: 2)));
+                                      .apply(color: Theme.of(context).primaryColor, fontWeightDelta: 2)));
 
                               // Add the ending string
                               spans.add(TextSpan(
-                                  text: subText
-                                      .substring(termEnd, subText.length)
-                                      .trimRight(),
-                                  style:
-                                      Theme.of(context).textTheme.subtitle1));
+                                  text: subText.substring(termEnd, subText.length).trimRight(),
+                                  style: Theme.of(context).textTheme.subtitle1));
                             } else {
-                              spans.add(TextSpan(
-                                  text: message.text,
-                                  style:
-                                      Theme.of(context).textTheme.subtitle1));
+                              spans.add(TextSpan(text: message.text, style: Theme.of(context).textTheme.subtitle1));
                             }
 
                             return Column(
@@ -341,9 +303,7 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
                                     Navigator.of(context).push(
                                       CupertinoPageRoute(
                                         builder: (BuildContext context) {
-                                          MessageBloc customBloc =
-                                              new MessageBloc(chat,
-                                                  canLoadMore: false);
+                                          MessageBloc customBloc = new MessageBloc(chat, canLoadMore: false);
 
                                           return ConversationView(
                                             chat: chat,
@@ -352,8 +312,7 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
                                             isCreator: false,
                                             customMessageBloc: customBloc,
                                             onMessagesViewComplete: () {
-                                              customBloc
-                                                  .loadSearchChunk(message);
+                                              customBloc.loadSearchChunk(message);
                                             },
                                           );
                                         },
@@ -362,21 +321,13 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
                                   },
                                   dense: true,
                                   title: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     mainAxisAlignment: MainAxisAlignment.start,
                                     children: [
-                                      Text(
-                                          "${dateToShortString(message.dateCreated)}",
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .subtitle1
-                                              .apply(fontSizeDelta: -2)),
+                                      Text("${buildDate(message.dateCreated)}",
+                                          style: Theme.of(context).textTheme.subtitle1.apply(fontSizeDelta: -2)),
                                       Container(height: 5.0),
-                                      Text(chat?.title,
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .bodyText1),
+                                      Text(chat?.title, style: Theme.of(context).textTheme.bodyText1),
                                     ],
                                   ),
                                   subtitle: Padding(
@@ -387,10 +338,7 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
                                   ),
                                   trailing: Icon(
                                     Icons.arrow_forward_ios,
-                                    color: Theme.of(context)
-                                        .textTheme
-                                        .bodyText1
-                                        .color,
+                                    color: Theme.of(context).textTheme.bodyText1.color,
                                   ),
                                 ),
                                 Divider(color: Theme.of(context).accentColor)

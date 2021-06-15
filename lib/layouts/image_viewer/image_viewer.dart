@@ -1,8 +1,11 @@
 import 'dart:io';
 import 'dart:typed_data';
+
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/share.dart';
 import 'package:bluebubbles/layouts/image_viewer/attachmet_fullscreen_viewer.dart';
+import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
+import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -26,8 +29,7 @@ class ImageViewer extends StatefulWidget {
   _ImageViewerState createState() => _ImageViewerState();
 }
 
-class _ImageViewerState extends State<ImageViewer>
-    with AutomaticKeepAliveClientMixin {
+class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClientMixin {
   double top = 0;
   int duration = 0;
   PhotoViewController controller;
@@ -40,27 +42,19 @@ class _ImageViewerState extends State<ImageViewer>
     controller = new PhotoViewController();
 
     controller.outputStateStream.listen((event) {
-      if (AttachmentFullscreenViewer.of(context) == null ||
-          event.boundaries == null ||
-          event.scale == null) return;
+      if (AttachmentFullscreenViewer.of(context) == null || event.boundaries == null || event.scale == null) return;
       if (this.mounted) {
-        AttachmentFullscreenViewerState state =
-            AttachmentFullscreenViewer.of(context);
+        AttachmentFullscreenViewerState state = AttachmentFullscreenViewer.of(context);
         if (event.scale > event.boundaries.minScale) {
           if (state.physics != NeverScrollableScrollPhysics()) {
             AttachmentFullscreenViewer.of(context).setState(() {
-              AttachmentFullscreenViewer.of(context).physics =
-                  NeverScrollableScrollPhysics();
+              AttachmentFullscreenViewer.of(context).physics = NeverScrollableScrollPhysics();
             });
           }
         } else {
-          if (state.physics !=
-              AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics())) {
+          if (state.physics != ThemeSwitcher.getScrollPhysics()) {
             AttachmentFullscreenViewer.of(context).setState(() {
-              AttachmentFullscreenViewer.of(context).physics =
-                  AlwaysScrollableScrollPhysics(
-                parent: BouncingScrollPhysics(),
-              );
+              AttachmentFullscreenViewer.of(context).physics = ThemeSwitcher.getScrollPhysics();
             });
           }
         }
@@ -71,6 +65,10 @@ class _ImageViewerState extends State<ImageViewer>
   @override
   void didChangeDependencies() async {
     super.didChangeDependencies();
+    initBytes();
+  }
+
+  Future<void> initBytes() async {
     bytes = await widget.file.readAsBytes();
     if (this.mounted) setState(() {});
   }
@@ -98,31 +96,23 @@ class _ImageViewerState extends State<ImageViewer>
             Padding(
               padding: EdgeInsets.only(top: 40.0),
               child: CupertinoButton(
+                padding: EdgeInsets.symmetric(horizontal: 5),
                 onPressed: () async {
                   List<Widget> metaWidgets = [];
-                  for (var entry
-                      in widget.attachment.metadata?.entries ?? {}.entries) {
+                  for (var entry in widget.attachment.metadata?.entries ?? {}.entries) {
                     metaWidgets.add(RichText(
                         text: TextSpan(children: [
                       TextSpan(
                           text: "${entry.key}: ",
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodyText1
-                              .apply(fontWeightDelta: 2)),
-                      TextSpan(
-                          text: entry.value.toString(),
-                          style: Theme.of(context).textTheme.bodyText1)
+                          style: Theme.of(context).textTheme.bodyText1.apply(fontWeightDelta: 2)),
+                      TextSpan(text: entry.value.toString(), style: Theme.of(context).textTheme.bodyText1)
                     ])));
                   }
 
                   if (metaWidgets.length == 0) {
                     metaWidgets.add(Text(
                       "No metadata available",
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodyText1
-                          .apply(fontWeightDelta: 2),
+                      style: Theme.of(context).textTheme.bodyText1.apply(fontWeightDelta: 2),
                       textAlign: TextAlign.center,
                     ));
                   }
@@ -143,8 +133,7 @@ class _ImageViewerState extends State<ImageViewer>
                           padding: EdgeInsets.all(10.0),
                           decoration: BoxDecoration(
                               color: Theme.of(context).backgroundColor,
-                              borderRadius:
-                                  BorderRadius.all(Radius.circular(10))),
+                              borderRadius: BorderRadius.all(Radius.circular(10))),
                           child: ListView(
                             physics: AlwaysScrollableScrollPhysics(
                               parent: BouncingScrollPhysics(),
@@ -157,10 +146,9 @@ class _ImageViewerState extends State<ImageViewer>
                         FlatButton(
                           child: Text(
                             "Close",
-                            style:
-                                Theme.of(context).textTheme.bodyText1.copyWith(
-                                      color: Theme.of(context).primaryColor,
-                                    ),
+                            style: Theme.of(context).textTheme.bodyText1.copyWith(
+                                  color: Theme.of(context).primaryColor,
+                                ),
                           ),
                           onPressed: () => Navigator.of(context).pop(),
                         ),
@@ -177,6 +165,34 @@ class _ImageViewerState extends State<ImageViewer>
             Padding(
               padding: EdgeInsets.only(top: 40.0),
               child: CupertinoButton(
+                padding: EdgeInsets.symmetric(horizontal: 5),
+                onPressed: () async {
+                  if (context != null) {
+                    CurrentChat.of(context)?.clearImageData(widget.attachment);
+                  }
+
+                  final snackBar = SnackBar(content: Text('Redownloading attachment. Please wait...'));
+                  Scaffold.of(context).showSnackBar(snackBar);
+
+                  await AttachmentHelper.redownloadAttachment(widget.attachment, onComplete: () {
+                    initBytes();
+                  }, onError: () {
+                    Navigator.pop(context);
+                  });
+
+                  bytes = null;
+                  if (this.mounted) setState(() {});
+                },
+                child: Icon(
+                  Icons.refresh,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+            Padding(
+              padding: EdgeInsets.only(top: 40.0),
+              child: CupertinoButton(
+                padding: EdgeInsets.symmetric(horizontal: 5),
                 onPressed: () async {
                   await AttachmentHelper.saveToGallery(context, widget.file);
                 },
@@ -189,8 +205,8 @@ class _ImageViewerState extends State<ImageViewer>
             Padding(
               padding: EdgeInsets.only(top: 40.0),
               child: CupertinoButton(
+                padding: EdgeInsets.symmetric(horizontal: 5),
                 onPressed: () async {
-                  // final Uint8List bytes = await widget.file.readAsBytes();
                   await Share.file(
                     "Shared ${widget.attachment.mimeType.split("/")[0]} from BlueBubbles: ${widget.attachment.transferName}",
                     widget.attachment.transferName,
@@ -238,8 +254,7 @@ class _ImageViewerState extends State<ImageViewer>
                       maxScale: PhotoViewComputedScale.contained * 13,
                       controller: controller,
                       imageProvider: MemoryImage(bytes),
-                      loadingBuilder:
-                          (BuildContext context, ImageChunkEvent ev) {
+                      loadingBuilder: (BuildContext context, ImageChunkEvent ev) {
                         return loader;
                       },
                     )

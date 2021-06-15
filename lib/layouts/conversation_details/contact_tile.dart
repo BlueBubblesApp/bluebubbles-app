@@ -11,19 +11,18 @@ import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
-import 'package:intent/intent.dart' as android_intent;
 import 'package:intent/action.dart' as android_action;
+import 'package:intent/intent.dart' as android_intent;
 import 'package:permission_handler/permission_handler.dart';
 
 class ContactTile extends StatefulWidget {
-  final String address;
   final Handle handle;
   final Chat chat;
   final Function updateChat;
   final bool canBeRemoved;
+
   ContactTile({
     Key key,
-    this.address,
     this.handle,
     this.chat,
     this.updateChat,
@@ -58,19 +57,17 @@ class _ContactTileState extends State<ContactTile> {
   }
 
   void fetchAvatar() async {
-    MemoryImage avatar = await loadAvatar(widget.chat, widget.handle.address);
-    if (contactImage == null ||
-        contactImage.bytes.length != avatar.bytes.length) {
+    MemoryImage avatar = await loadAvatar(widget.chat, widget.handle);
+    if (contactImage == null || contactImage.bytes.length != avatar.bytes.length) {
       contactImage = avatar;
       if (this.mounted) setState(() {});
     }
   }
 
   void getContact() {
-    ContactManager().getCachedContact(widget.address).then((Contact contact) {
+    ContactManager().getCachedContact(widget.handle).then((Contact contact) {
       if (contact != null) {
-        if (this.contact == null ||
-            this.contact.identifier != contact.identifier) {
+        if (this.contact == null || this.contact.identifier != contact.identifier) {
           this.contact = contact;
           if (this.mounted) setState(() {});
         }
@@ -92,8 +89,7 @@ class _ContactTileState extends State<ContactTile> {
     for (Item phone in numbers) {
       bool exists = false;
       for (Item current in phones) {
-        if (cleansePhoneNumber(phone.value) ==
-            cleansePhoneNumber(current.value)) {
+        if (cleansePhoneNumber(phone.value) == cleansePhoneNumber(current.value)) {
           exists = true;
           break;
         }
@@ -116,7 +112,8 @@ class _ContactTileState extends State<ContactTile> {
       },
       onTap: () async {
         if (contact == null) {
-          await ContactsService.openContactForm();
+          await ContactsService.openContactForm(
+              address: widget.handle.address, addressType: widget.handle.address.contains('@') ? 'email' : 'phone');
         } else {
           await ContactsService.openExistingContact(contact);
         }
@@ -166,29 +163,18 @@ class _ContactTileState extends State<ContactTile> {
                               context: context,
                               builder: (BuildContext context) {
                                 return AlertDialog(
-                                  backgroundColor:
-                                      Theme.of(context).accentColor,
+                                  backgroundColor: Theme.of(context).accentColor,
                                   title: new Text("Select a Phone Number",
-                                      style: TextStyle(
-                                          color: Theme.of(context)
-                                              .textTheme
-                                              .bodyText1
-                                              .color)),
+                                      style: TextStyle(color: Theme.of(context).textTheme.bodyText1.color)),
                                   content: Column(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     mainAxisSize: MainAxisSize.min,
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       for (int i = 0; i < phones.length; i++)
                                         FlatButton(
-                                          child: Text(
-                                              "${phones[i].value} (${phones[i].label})",
-                                              style: TextStyle(
-                                                  color: Theme.of(context)
-                                                      .textTheme
-                                                      .bodyText1
-                                                      .color),
+                                          child: Text("${phones[i].value} (${phones[i].label})",
+                                              style: TextStyle(color: Theme.of(context).textTheme.bodyText1.color),
                                               textAlign: TextAlign.start),
                                           onPressed: () async {
                                             makeCall(phones[i].value);
@@ -229,32 +215,29 @@ class _ContactTileState extends State<ContactTile> {
                 icon: Icons.delete,
                 onTap: () async {
                   showDialog(
-                    context: context,
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                      child: SizedBox(
-                        height: 40,
-                        width: 40,
-                        child: CircularProgressIndicator(),
-                      ),
-                    ),
-                  );
+                      context: context,
+                      builder: (BuildContext context) {
+                        return BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                          child: SizedBox(
+                            height: 40,
+                            width: 40,
+                            child: CircularProgressIndicator(),
+                          ),
+                        );
+                      });
 
                   Map<String, dynamic> params = new Map();
                   params["identifier"] = widget.chat.guid;
                   params["address"] = widget.handle.address;
-                  SocketManager().sendMessage("remove-participant", params,
-                      (response) async {
-                    debugPrint("removed participant participant " +
-                        response.toString());
+                  SocketManager().sendMessage("remove-participant", params, (response) async {
+                    debugPrint("removed participant participant " + response.toString());
                     if (response["status"] == 200) {
                       Chat updatedChat = Chat.fromMap(response["data"]);
                       await updatedChat.save();
                       await ChatBloc().updateChatPosition(updatedChat);
-                      Chat chatWithParticipants =
-                          await updatedChat.getParticipants();
-                      debugPrint(
-                          "updating chat with ${chatWithParticipants.participants.length} participants");
+                      Chat chatWithParticipants = await updatedChat.getParticipants();
+                      debugPrint("updating chat with ${chatWithParticipants.participants.length} participants");
                       widget.updateChat(chatWithParticipants);
                       Navigator.of(context).pop();
                     }

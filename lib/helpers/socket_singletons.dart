@@ -28,7 +28,7 @@ Future<Chat> fetchChatSingleton(String chatGuid, {withParticipants: true}) async
     chatCache[chatGuid].complete(chat);
 
     // Remove the item from the cache after 5 seconds
-    new Future.delayed(const Duration(seconds : 5)).then((_) {
+    new Future.delayed(const Duration(seconds: 5)).then((_) {
       removeFromCache(chatGuid);
     });
   }).catchError((e) {

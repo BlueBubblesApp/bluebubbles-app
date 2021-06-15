@@ -14,8 +14,7 @@ class AnimationOptions {
   final VoidCallback onEnd;
 }
 
-typedef WithOffsetBuilder = Widget Function(
-    BuildContext context, Offset offset);
+typedef WithOffsetBuilder = Widget Function(BuildContext context, Offset offset);
 
 class AnimatedCompositedTransformFollower extends StatelessWidget {
   /// Creates a composited transform target widget.
@@ -148,10 +147,8 @@ class _AnimatedPositionedState extends AnimatedWidgetBaseState<AnimatedOffset> {
 
   @override
   void forEachTween(TweenVisitor<dynamic> visitor) {
-    _dx = visitor(
-        _dx, widget.offset.dx, (dynamic value) => Tween<double>(begin: value));
-    _dy = visitor(
-        _dy, widget.offset.dy, (dynamic value) => Tween<double>(begin: value));
+    _dx = visitor(_dx, widget.offset.dx, (dynamic value) => Tween<double>(begin: value));
+    _dy = visitor(_dy, widget.offset.dy, (dynamic value) => Tween<double>(begin: value));
   }
 
   @override

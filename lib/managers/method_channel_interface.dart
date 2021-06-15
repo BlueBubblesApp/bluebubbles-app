@@ -7,6 +7,7 @@ import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/settings/server_management_panel.dart';
+import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/alarm_manager.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/incoming_queue.dart';
@@ -28,8 +29,7 @@ class MethodChannelInterface {
     return _interface;
   }
 
-  static final MethodChannelInterface _interface =
-      MethodChannelInterface._internal();
+  static final MethodChannelInterface _interface = MethodChannelInterface._internal();
 
   MethodChannelInterface._internal();
 
@@ -76,8 +76,7 @@ class MethodChannelInterface {
         String address = call.arguments.toString();
 
         // We remove the brackets from the formatting
-        address =
-            getServerAddress(address: address.substring(1, address.length - 1));
+        address = getServerAddress(address: address.substring(1, address.length - 1));
 
         // And then tell the socket to set the new server address
         await SocketManager().newServer(address);
@@ -88,8 +87,7 @@ class MethodChannelInterface {
         Map<String, dynamic> data = jsonDecode(call.arguments);
 
         // Add it to the queue with the data as the item
-        IncomingQueue().add(new QueueItem(
-            event: IncomingQueue.HANDLE_MESSAGE_EVENT, item: {"data": data}));
+        IncomingQueue().add(new QueueItem(event: IncomingQueue.HANDLE_MESSAGE_EVENT, item: {"data": data}));
 
         return new Future.value("");
       case "updated-message":
@@ -97,17 +95,17 @@ class MethodChannelInterface {
         Map<String, dynamic> data = jsonDecode(call.arguments);
 
         // Add it to the queue with the data as the item
-        IncomingQueue().add(new QueueItem(
-            event: IncomingQueue.HANDLE_UPDATE_MESSAGE, item: {"data": data}));
+        IncomingQueue().add(new QueueItem(event: IncomingQueue.HANDLE_UPDATE_MESSAGE, item: {"data": data}));
 
         return new Future.value("");
       case "ChatOpen":
+        debugPrint("Opening Chat with GUID: ${call.arguments}");
         openChat(call.arguments);
 
         return new Future.value("");
       case "socket-error-open":
         NavigatorManager().navigatorKey.currentState.push(
-              CupertinoPageRoute(
+              ThemeSwitcher.buildPageRoute(
                 builder: (context) => ServerManagementPanel(),
               ),
             );
@@ -141,7 +139,11 @@ class MethodChannelInterface {
         }
 
         // Remove the notificaiton from that chat
-        SocketManager().removeChatNotification(chat);
+        await SocketManager().removeChatNotification(chat);
+
+        if (SettingsManager().settings.privateMarkChatAsRead) {
+          SocketManager().sendMessage("mark-chat-read", {"chatGuid": chat.guid}, (data) {});
+        }
 
         // In case this method is called when the app is in a background isolate
         closeThread();
@@ -169,10 +171,7 @@ class MethodChannelInterface {
 
         // If it is a direct shortcut, try and find the chat and navigate to it
         if (guid != null) {
-          List<Chat> chats = ChatBloc()
-              .chats
-              .where((element) => element.guid == guid)
-              .toList();
+          List<Chat> chats = ChatBloc().chats.where((element) => element.guid == guid).toList();
 
           // If we did find a chat matching the criteria
           if (chats.length != 0) {
@@ -190,7 +189,7 @@ class MethodChannelInterface {
 
         // Go to the new chat creator with all of these attachments to select a chat in case it wasn't a direct share
         NavigatorManager().navigatorKey.currentState.pushAndRemoveUntil(
-              CupertinoPageRoute(
+              ThemeSwitcher.buildPageRoute(
                 builder: (context) => ConversationView(
                   existingAttachments: attachments,
                   isCreator: true,
@@ -211,10 +210,7 @@ class MethodChannelInterface {
 
         // If it is a direct shortcut, try and find the chat and navigate to it
         if (guid != null) {
-          List<Chat> chats = ChatBloc()
-              .chats
-              .where((element) => element.guid == guid)
-              .toList();
+          List<Chat> chats = ChatBloc().chats.where((element) => element.guid == guid).toList();
 
           // If we did find a chat matching the criteria
           if (chats.length != 0) {
@@ -231,7 +227,7 @@ class MethodChannelInterface {
         }
         // Navigate to the new chat creator with the specified text
         NavigatorManager().navigatorKey.currentState.pushAndRemoveUntil(
-              CupertinoPageRoute(
+              ThemeSwitcher.buildPageRoute(
                 builder: (context) => ConversationView(
                   existingText: text,
                   isCreator: true,
@@ -253,15 +249,14 @@ class MethodChannelInterface {
   void closeThread() {
     // Only do this if we are indeed running in the background
     if (headless) {
+      debugPrint("(CloseThread) -> Closing the background isolate...");
+
       // Tells the native code to close the isolate
       invokeMethod("close-background-isolate");
-
-      debugPrint("(closeThread) -> Closed the background isolate");
     }
   }
 
-  Future<void> openChat(String id,
-      {List<File> existingAttachments, String existingText}) async {
+  Future<void> openChat(String id, {List<File> existingAttachments, String existingText}) async {
     if (CurrentChat.activeChat?.chat?.guid == id) {
       NotificationManager().switchChat(CurrentChat.activeChat.chat);
       return;
@@ -284,7 +279,7 @@ class MethodChannelInterface {
       // Actually navigate to the chat page
       NavigatorManager().navigatorKey.currentState
         ..pushAndRemoveUntil(
-          CupertinoPageRoute(
+          ThemeSwitcher.buildPageRoute(
             builder: (context) => ConversationView(
               chat: openedChat,
               existingAttachments: existingAttachments,

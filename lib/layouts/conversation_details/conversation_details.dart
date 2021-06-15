@@ -2,11 +2,13 @@ import 'dart:ui';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
+import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/layouts/conversation_details/attachment_details_card.dart';
 import 'package:bluebubbles/layouts/conversation_details/contact_tile.dart';
-import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
+import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
@@ -75,25 +77,39 @@ class _ConversationDetailsState extends State<ConversationDetails> {
       ),
       child: Scaffold(
         backgroundColor: Theme.of(context).backgroundColor,
-        appBar: CupertinoNavigationBar(
-          backgroundColor: Theme.of(context).accentColor.withAlpha(125),
-          actionsForegroundColor: Theme.of(context).primaryColor,
-          middle: Text(
-            "Details",
-            style: Theme.of(context).textTheme.headline1,
-          ),
-        ),
-        extendBodyBehindAppBar: true,
-        body: CustomScrollView(
-          physics: AlwaysScrollableScrollPhysics(
-            parent: CustomBouncingScrollPhysics(),
-          ),
-          slivers: <Widget>[
-            SliverToBoxAdapter(
-              child: Container(
-                height: 100,
+        appBar: SettingsManager().settings.skin == Skins.IOS
+            ? CupertinoNavigationBar(
+                backgroundColor: Theme.of(context).accentColor.withAlpha(125),
+                middle: Text(
+                  "Details",
+                  style: Theme.of(context).textTheme.headline1,
+                ),
+              )
+            : AppBar(
+                iconTheme: IconThemeData(color: Theme.of(context).primaryColor),
+                title: Text(
+                  "Details",
+                  style: Theme.of(context).textTheme.headline1,
+                ),
+                backgroundColor: Theme.of(context).backgroundColor,
+                bottom: PreferredSize(
+                  child: Container(
+                    color: Theme.of(context).dividerColor,
+                    height: 0.5,
+                  ),
+                  preferredSize: Size.fromHeight(0.5),
+                ),
               ),
-            ),
+        extendBodyBehindAppBar: SettingsManager().settings.skin == Skins.IOS ? true : false,
+        body: CustomScrollView(
+          physics: ThemeSwitcher.getScrollPhysics(),
+          slivers: <Widget>[
+            if (SettingsManager().settings.skin == Skins.IOS)
+              SliverToBoxAdapter(
+                child: Container(
+                  height: 100,
+                ),
+              ),
             SliverToBoxAdapter(
               child: readOnly
                   ? Container()
@@ -108,8 +124,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                         autocorrect: false,
                         decoration: InputDecoration(
                           labelText: "NAME",
-                          labelStyle:
-                              TextStyle(color: Theme.of(context).primaryColor),
+                          labelStyle: TextStyle(color: Theme.of(context).primaryColor),
                         ),
                       ),
                     ),
@@ -119,7 +134,6 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                 (context, index) {
                   return ContactTile(
                     key: Key(chat.participants[index].id.toString()),
-                    address: chat.participants[index].address,
                     handle: chat.participants[index],
                     chat: chat,
                     updateChat: (Chat newChat) {
@@ -188,11 +202,8 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                 onTap: () async {
                   await showDialog(
                     context: context,
-                    builder: (context) => SyncDialog(
-                        chat: chat,
-                        withOffset: true,
-                        initialMessage: "Fetching messages...",
-                        limit: 100),
+                    builder: (context) =>
+                        SyncDialog(chat: chat, withOffset: true, initialMessage: "Fetching messages...", limit: 100),
                   );
 
                   fetchAttachments();
@@ -219,10 +230,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                 onTap: () async {
                   showDialog(
                     context: context,
-                    builder: (context) => SyncDialog(
-                        chat: chat,
-                        initialMessage: "Syncing messages...",
-                        limit: 25),
+                    builder: (context) => SyncDialog(chat: chat, initialMessage: "Syncing messages...", limit: 25),
                   );
                 },
                 child: ListTile(
@@ -251,10 +259,8 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                     trailing: Switch(
                         value: widget.chat.isPinned,
                         activeColor: Theme.of(context).primaryColor,
-                        activeTrackColor:
-                            Theme.of(context).primaryColor.withAlpha(200),
-                        inactiveTrackColor:
-                            Theme.of(context).accentColor.withOpacity(0.6),
+                        activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
+                        inactiveTrackColor: Theme.of(context).accentColor.withOpacity(0.6),
                         inactiveThumbColor: Theme.of(context).accentColor,
                         onChanged: (value) async {
                           if (value) {
@@ -276,10 +282,8 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                     trailing: Switch(
                         value: widget.chat.isMuted,
                         activeColor: Theme.of(context).primaryColor,
-                        activeTrackColor:
-                            Theme.of(context).primaryColor.withAlpha(200),
-                        inactiveTrackColor:
-                            Theme.of(context).accentColor.withOpacity(0.6),
+                        activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
+                        inactiveTrackColor: Theme.of(context).accentColor.withOpacity(0.6),
                         inactiveThumbColor: Theme.of(context).accentColor,
                         onChanged: (value) async {
                           widget.chat.isMuted = value;
@@ -297,10 +301,8 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                     trailing: Switch(
                         value: widget.chat.isArchived,
                         activeColor: Theme.of(context).primaryColor,
-                        activeTrackColor:
-                            Theme.of(context).primaryColor.withAlpha(200),
-                        inactiveTrackColor:
-                            Theme.of(context).accentColor.withOpacity(0.6),
+                        activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
+                        inactiveTrackColor: Theme.of(context).accentColor.withOpacity(0.6),
                         inactiveThumbColor: Theme.of(context).accentColor,
                         onChanged: (value) {
                           if (value) {
@@ -322,8 +324,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
 
                   try {
                     await widget.chat.clearTranscript();
-                    EventDispatcher().emit(
-                        "refresh-messagebloc", {"chatGuid": widget.chat.guid});
+                    EventDispatcher().emit("refresh-messagebloc", {"chatGuid": widget.chat.guid});
                     if (this.mounted)
                       setState(() {
                         isClearing = false;
@@ -348,8 +349,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                     padding: EdgeInsets.only(right: 15),
                     child: (isClearing)
                         ? CircularProgressIndicator(
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                                Theme.of(context).primaryColor),
+                            valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
                           )
                         : (isCleared)
                             ? Icon(
@@ -372,8 +372,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                 (context, int index) {
                   return Container(
                     decoration: BoxDecoration(
-                      border: Border.all(
-                          color: Theme.of(context).accentColor, width: 3),
+                      border: Border.all(color: Theme.of(context).accentColor, width: 3),
                     ),
                     child: AttachmentDetailsCard(
                       attachment: attachmentsForChat[index],
@@ -392,13 +391,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
 }
 
 class SyncDialog extends StatefulWidget {
-  SyncDialog(
-      {Key key,
-      this.chat,
-      this.initialMessage,
-      this.withOffset = false,
-      this.limit = 100})
-      : super(key: key);
+  SyncDialog({Key key, this.chat, this.initialMessage, this.withOffset = false, this.limit = 100}) : super(key: key);
   final Chat chat;
   final String initialMessage;
   final bool withOffset;
@@ -427,17 +420,14 @@ class _SyncDialogState extends State<SyncDialog> {
       offset = await Message.countForChat(widget.chat);
     }
 
-    SocketManager()
-        .fetchMessages(widget.chat, offset: offset, limit: widget.limit)
-        .then((List<dynamic> messages) {
+    SocketManager().fetchMessages(widget.chat, offset: offset, limit: widget.limit).then((List<dynamic> messages) {
       if (this.mounted) {
         setState(() {
           message = "Adding ${messages.length} messages...";
         });
       }
 
-      MessageHelper.bulkAddMessages(widget.chat, messages,
-          onProgress: (int progress, int length) {
+      MessageHelper.bulkAddMessages(widget.chat, messages, onProgress: (int progress, int length) {
         if (progress == 0 || length == 0) {
           this.progress = null;
         } else {
@@ -469,8 +459,7 @@ class _SyncDialogState extends State<SyncDialog> {
                 child: LinearProgressIndicator(
                   value: progress,
                   backgroundColor: Colors.white,
-                  valueColor:
-                      AlwaysStoppedAnimation(Theme.of(context).primaryColor),
+                  valueColor: AlwaysStoppedAnimation(Theme.of(context).primaryColor),
                 ),
               ),
             ),

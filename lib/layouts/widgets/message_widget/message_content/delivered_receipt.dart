@@ -1,8 +1,8 @@
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
-import 'package:bluebubbles/helpers/utils.dart';
 
 class DeliveredReceipt extends StatefulWidget {
   DeliveredReceipt({
@@ -19,23 +19,7 @@ class DeliveredReceipt extends StatefulWidget {
   _DeliveredReceiptState createState() => _DeliveredReceiptState();
 }
 
-class _DeliveredReceiptState extends State<DeliveredReceipt>
-    with TickerProviderStateMixin {
-  String _buildDate() {
-    DateTime timeOfnewerMessage = widget.message.dateRead;
-    String time = new DateFormat.jm().format(timeOfnewerMessage);
-    String date;
-    if (widget.message.dateRead.isToday()) {
-      date = time;
-    } else if (widget.message.dateRead.isYesterday()) {
-      date = "Yesterday";
-    } else {
-      date =
-          "${timeOfnewerMessage.month.toString()}/${timeOfnewerMessage.day.toString()}/${timeOfnewerMessage.year.toString()}";
-    }
-    return date;
-  }
-
+class _DeliveredReceiptState extends State<DeliveredReceipt> with TickerProviderStateMixin {
   bool shouldShow(Message myLastMessage, Message lastReadMessage) {
     // If we have no delivered date, don't show anything
     if (widget.message.dateDelivered == null) return false;
@@ -44,10 +28,8 @@ class _DeliveredReceiptState extends State<DeliveredReceipt>
     if (context == null) return widget.showDeliveredReceipt;
 
     // If the passed params are null, try to get it from the current chat
-    if (myLastMessage == null)
-      myLastMessage = CurrentChat.of(context)?.myLastMessage;
-    if (lastReadMessage == null)
-      lastReadMessage = CurrentChat.of(context)?.lastReadMessage;
+    if (myLastMessage == null) myLastMessage = CurrentChat.of(context)?.myLastMessage;
+    if (lastReadMessage == null) lastReadMessage = CurrentChat.of(context)?.lastReadMessage;
 
     // This is logic so that we can have both a read receipt on an older message
     // As well as a delivered receipt on the newest message
@@ -66,7 +48,9 @@ class _DeliveredReceiptState extends State<DeliveredReceipt>
 
   String getText() {
     String text = "Delivered";
-    if (widget.message?.dateRead != null) text = "Read " + _buildDate();
+    if (SettingsManager().settings.showDeliveryTimestamps && widget.message?.dateDelivered != null)
+      text = "Delivered " + buildDate(widget.message.dateDelivered);
+    if (widget.message?.dateRead != null) text = "Read " + buildDate(widget.message.dateRead);
     return text;
   }
 
@@ -89,8 +73,7 @@ class _DeliveredReceiptState extends State<DeliveredReceipt>
                       style: Theme.of(context).textTheme.subtitle2,
                     );
                   } else if (snapshot.hasData &&
-                      shouldShow(snapshot.data["myLastMessage"],
-                          snapshot.data["lastReadMessage"])) {
+                      shouldShow(snapshot.data["myLastMessage"], snapshot.data["lastReadMessage"])) {
                     return Text(
                       getText(),
                       style: Theme.of(context).textTheme.subtitle2,
@@ -117,7 +100,7 @@ class _DeliveredReceiptState extends State<DeliveredReceipt>
     }
 
     return Padding(
-      padding: EdgeInsets.symmetric(vertical: shouldShow(null, null) ? 4 : 0),
+      padding: EdgeInsets.only(top: 2, bottom: 4),
       child: item,
     );
   }

@@ -15,20 +15,13 @@ import 'package:flutter/widgets.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class Share {
-  static const MethodChannel _channel =
-      const MethodChannel('com.bluebubbles.messaging');
+  static const MethodChannel _channel = const MethodChannel('com.bluebubbles.messaging');
 
   /// Share a file with other apps.
-  static Future<void> file(
-      String subject, String filename, String filepath, String mimeType) async {
+  static Future<void> file(String subject, String filename, String filepath, String mimeType) async {
     Map<String, dynamic> argsMap = Map<String, dynamic>();
 
-    argsMap.addAll({
-      'subject': '$subject',
-      'filename': '$filename',
-      'filepath': '$filepath',
-      'mimeType': '$mimeType'
-    });
+    argsMap.addAll({'subject': '$subject', 'filename': '$filename', 'filepath': '$filepath', 'mimeType': '$mimeType'});
     await _channel.invokeMethod('share-file', argsMap);
   }
 
@@ -37,16 +30,14 @@ class Share {
     if (!(await Permission.locationWhenInUse.request().isGranted)) return;
 
     // Tell Android Native code to get us the last known location
-    final result =
-        await MethodChannelInterface().invokeMethod("get-last-location");
+    final result = await MethodChannelInterface().invokeMethod("get-last-location");
 
     if (result == null) {
       debugPrint("Failed to load last location!");
       return;
     }
 
-    String vcfString = AttachmentHelper.createAppleLocation(
-        result["latitude"], result["longitude"]);
+    String vcfString = AttachmentHelper.createAppleLocation(result["latitude"], result["longitude"]);
 
     // Build out the file we are going to send
     String _attachmentGuid = "temp-${randomString(8)}";

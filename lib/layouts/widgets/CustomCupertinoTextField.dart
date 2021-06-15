@@ -13,12 +13,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
 export 'package:flutter/services.dart'
-    show
-        TextInputType,
-        TextInputAction,
-        TextCapitalization,
-        SmartQuotesType,
-        SmartDashesType;
+    show TextInputType, TextInputAction, TextCapitalization, SmartQuotesType, SmartDashesType;
 
 // Value inspected from Xcode 11 & iOS 13.0 Simulator.
 const BorderSide _kDefaultRoundedBorderSide = BorderSide(
@@ -52,8 +47,7 @@ const Color _kDisabledBackground = CupertinoDynamicColor.withBrightness(
 
 // Value inspected from Xcode 11 & iOS 13.0 Simulator.
 // Note it may not be consistent with https://developer.apple.com/design/resources/.
-const CupertinoDynamicColor _kClearButtonColor =
-    CupertinoDynamicColor.withBrightness(
+const CupertinoDynamicColor _kClearButtonColor = CupertinoDynamicColor.withBrightness(
   color: Color(0xFF636366),
   darkColor: Color(0xFFAEAEB2),
 );
@@ -90,8 +84,7 @@ enum OverlayVisibilityMode {
   always,
 }
 
-class _CupertinoTextFieldSelectionGestureDetectorBuilder
-    extends TextSelectionGestureDetectorBuilder {
+class _CupertinoTextFieldSelectionGestureDetectorBuilder extends TextSelectionGestureDetectorBuilder {
   _CupertinoTextFieldSelectionGestureDetectorBuilder({
     @required _CupertinoTextFieldState state,
   })  : _state = state,
@@ -106,10 +99,8 @@ class _CupertinoTextFieldSelectionGestureDetectorBuilder
     // this handler. If the clear button widget recognizes the up event,
     // then do not handle it.
     if (_state._clearGlobalKey.currentContext != null) {
-      final RenderBox renderBox =
-          _state._clearGlobalKey.currentContext.findRenderObject() as RenderBox;
-      final Offset localOffset =
-          renderBox.globalToLocal(details.globalPosition);
+      final RenderBox renderBox = _state._clearGlobalKey.currentContext.findRenderObject() as RenderBox;
+      final Offset localOffset = renderBox.globalToLocal(details.globalPosition);
       if (renderBox.hitTest(BoxHitTestResult(), position: localOffset)) {
         return;
       }
@@ -126,8 +117,7 @@ class _CupertinoTextFieldSelectionGestureDetectorBuilder
   @override
   void onSingleLongTapStart(LongPressStartDetails details) {
     super.onSingleLongTapStart(details);
-    if (_state.widget.onLongPressStart != null)
-      _state.widget.onLongPressStart();
+    if (_state.widget.onLongPressStart != null) _state.widget.onLongPressStart();
   }
 
   @override
@@ -298,10 +288,8 @@ class CustomCupertinoTextField extends StatefulWidget {
         assert(obscuringCharacter != null && obscuringCharacter.length == 1),
         assert(obscureText != null),
         assert(autocorrect != null),
-        smartDashesType = smartDashesType ??
-            (obscureText ? SmartDashesType.disabled : SmartDashesType.enabled),
-        smartQuotesType = smartQuotesType ??
-            (obscureText ? SmartQuotesType.disabled : SmartQuotesType.enabled),
+        smartDashesType = smartDashesType ?? (obscureText ? SmartDashesType.disabled : SmartDashesType.enabled),
+        smartQuotesType = smartQuotesType ?? (obscureText ? SmartQuotesType.disabled : SmartQuotesType.enabled),
         assert(enableSuggestions != null),
         assert(maxLengthEnforced != null),
         assert(scrollPadding != null),
@@ -319,8 +307,7 @@ class CustomCupertinoTextField extends StatefulWidget {
           !expands || (maxLines == null && minLines == null),
           'minLines and maxLines must be null when expands is true.',
         ),
-        assert(!obscureText || maxLines == 1,
-            'Obscured fields cannot be multiline.'),
+        assert(!obscureText || maxLines == 1, 'Obscured fields cannot be multiline.'),
         assert(maxLength == null || maxLength > 0),
         assert(clearButtonMode != null),
         assert(prefixMode != null),
@@ -331,8 +318,7 @@ class CustomCupertinoTextField extends StatefulWidget {
                 maxLines == 1 ||
                 !identical(keyboardType, TextInputType.text),
             'Use keyboardType TextInputType.multiline when using TextInputAction.newline on a multiline TextField.'),
-        keyboardType = keyboardType ??
-            (maxLines == 1 ? TextInputType.text : TextInputType.multiline),
+        keyboardType = keyboardType ?? (maxLines == 1 ? TextInputType.text : TextInputType.multiline),
         toolbarOptions = toolbarOptions ??
             (obscureText
                 ? const ToolbarOptions(
@@ -546,7 +532,7 @@ class CustomCupertinoTextField extends StatefulWidget {
   final ValueChanged<String> onChanged;
 
   /// Once new content is commited...
-  final ValueChanged<String> onContentCommited;
+  final ValueChanged<Map<String, Object>> onContentCommited;
 
   /// {@macro flutter.widgets.editableText.onEditingComplete}
   final VoidCallback onEditingComplete;
@@ -640,78 +626,41 @@ class CustomCupertinoTextField extends StatefulWidget {
   @override
   void debugFillProperties(DiagnosticPropertiesBuilder properties) {
     super.debugFillProperties(properties);
-    properties.add(DiagnosticsProperty<TextEditingController>(
-        'controller', controller,
-        defaultValue: null));
-    properties.add(DiagnosticsProperty<FocusNode>('focusNode', focusNode,
-        defaultValue: null));
-    properties
-        .add(DiagnosticsProperty<BoxDecoration>('decoration', decoration));
+    properties.add(DiagnosticsProperty<TextEditingController>('controller', controller, defaultValue: null));
+    properties.add(DiagnosticsProperty<FocusNode>('focusNode', focusNode, defaultValue: null));
+    properties.add(DiagnosticsProperty<BoxDecoration>('decoration', decoration));
     properties.add(DiagnosticsProperty<EdgeInsetsGeometry>('padding', padding));
     properties.add(StringProperty('placeholder', placeholder));
-    properties.add(
-        DiagnosticsProperty<TextStyle>('placeholderStyle', placeholderStyle));
-    properties.add(DiagnosticsProperty<OverlayVisibilityMode>(
-        'prefix', prefix == null ? null : prefixMode));
-    properties.add(DiagnosticsProperty<OverlayVisibilityMode>(
-        'suffix', suffix == null ? null : suffixMode));
-    properties.add(DiagnosticsProperty<OverlayVisibilityMode>(
-        'clearButtonMode', clearButtonMode));
-    properties.add(DiagnosticsProperty<TextInputType>(
-        'keyboardType', keyboardType,
-        defaultValue: TextInputType.text));
-    properties.add(
-        DiagnosticsProperty<TextStyle>('style', style, defaultValue: null));
-    properties.add(
-        DiagnosticsProperty<bool>('autofocus', autofocus, defaultValue: false));
-    properties.add(DiagnosticsProperty<String>(
-        'obscuringCharacter', obscuringCharacter,
-        defaultValue: '•'));
-    properties.add(DiagnosticsProperty<bool>('obscureText', obscureText,
-        defaultValue: false));
-    properties.add(DiagnosticsProperty<bool>('autocorrect', autocorrect,
-        defaultValue: true));
-    properties.add(EnumProperty<SmartDashesType>(
-        'smartDashesType', smartDashesType,
-        defaultValue:
-            obscureText ? SmartDashesType.disabled : SmartDashesType.enabled));
-    properties.add(EnumProperty<SmartQuotesType>(
-        'smartQuotesType', smartQuotesType,
-        defaultValue:
-            obscureText ? SmartQuotesType.disabled : SmartQuotesType.enabled));
-    properties.add(DiagnosticsProperty<bool>(
-        'enableSuggestions', enableSuggestions,
-        defaultValue: true));
+    properties.add(DiagnosticsProperty<TextStyle>('placeholderStyle', placeholderStyle));
+    properties.add(DiagnosticsProperty<OverlayVisibilityMode>('prefix', prefix == null ? null : prefixMode));
+    properties.add(DiagnosticsProperty<OverlayVisibilityMode>('suffix', suffix == null ? null : suffixMode));
+    properties.add(DiagnosticsProperty<OverlayVisibilityMode>('clearButtonMode', clearButtonMode));
+    properties.add(DiagnosticsProperty<TextInputType>('keyboardType', keyboardType, defaultValue: TextInputType.text));
+    properties.add(DiagnosticsProperty<TextStyle>('style', style, defaultValue: null));
+    properties.add(DiagnosticsProperty<bool>('autofocus', autofocus, defaultValue: false));
+    properties.add(DiagnosticsProperty<String>('obscuringCharacter', obscuringCharacter, defaultValue: '•'));
+    properties.add(DiagnosticsProperty<bool>('obscureText', obscureText, defaultValue: false));
+    properties.add(DiagnosticsProperty<bool>('autocorrect', autocorrect, defaultValue: true));
+    properties.add(EnumProperty<SmartDashesType>('smartDashesType', smartDashesType,
+        defaultValue: obscureText ? SmartDashesType.disabled : SmartDashesType.enabled));
+    properties.add(EnumProperty<SmartQuotesType>('smartQuotesType', smartQuotesType,
+        defaultValue: obscureText ? SmartQuotesType.disabled : SmartQuotesType.enabled));
+    properties.add(DiagnosticsProperty<bool>('enableSuggestions', enableSuggestions, defaultValue: true));
     properties.add(IntProperty('maxLines', maxLines, defaultValue: 1));
     properties.add(IntProperty('minLines', minLines, defaultValue: null));
-    properties.add(
-        DiagnosticsProperty<bool>('expands', expands, defaultValue: false));
+    properties.add(DiagnosticsProperty<bool>('expands', expands, defaultValue: false));
     properties.add(IntProperty('maxLength', maxLength, defaultValue: null));
-    properties.add(FlagProperty('maxLengthEnforced',
-        value: maxLengthEnforced, ifTrue: 'max length enforced'));
-    properties
-        .add(DoubleProperty('cursorWidth', cursorWidth, defaultValue: 2.0));
-    properties
-        .add(DoubleProperty('cursorHeight', cursorHeight, defaultValue: null));
-    properties.add(DiagnosticsProperty<Radius>('cursorRadius', cursorRadius,
-        defaultValue: null));
-    properties.add(createCupertinoColorProperty('cursorColor', cursorColor,
-        defaultValue: null));
-    properties.add(FlagProperty('selectionEnabled',
-        value: selectionEnabled,
-        defaultValue: true,
-        ifFalse: 'selection disabled'));
-    properties.add(DiagnosticsProperty<ScrollController>(
-        'scrollController', scrollController,
-        defaultValue: null));
-    properties.add(DiagnosticsProperty<ScrollPhysics>(
-        'scrollPhysics', scrollPhysics,
-        defaultValue: null));
-    properties.add(EnumProperty<TextAlign>('textAlign', textAlign,
-        defaultValue: TextAlign.start));
-    properties.add(DiagnosticsProperty<TextAlignVertical>(
-        'textAlignVertical', textAlignVertical,
-        defaultValue: null));
+    properties.add(FlagProperty('maxLengthEnforced', value: maxLengthEnforced, ifTrue: 'max length enforced'));
+    properties.add(DoubleProperty('cursorWidth', cursorWidth, defaultValue: 2.0));
+    properties.add(DoubleProperty('cursorHeight', cursorHeight, defaultValue: null));
+    properties.add(DiagnosticsProperty<Radius>('cursorRadius', cursorRadius, defaultValue: null));
+    properties.add(createCupertinoColorProperty('cursorColor', cursorColor, defaultValue: null));
+    properties.add(
+        FlagProperty('selectionEnabled', value: selectionEnabled, defaultValue: true, ifFalse: 'selection disabled'));
+    properties.add(DiagnosticsProperty<ScrollController>('scrollController', scrollController, defaultValue: null));
+    properties.add(DiagnosticsProperty<ScrollPhysics>('scrollPhysics', scrollPhysics, defaultValue: null));
+    properties.add(EnumProperty<TextAlign>('textAlign', textAlign, defaultValue: TextAlign.start));
+    properties.add(DiagnosticsProperty<TextAlignVertical>('textAlignVertical', textAlignVertical, defaultValue: null));
   }
 }
 
@@ -721,35 +670,33 @@ class _CupertinoTextFieldState extends State<CustomCupertinoTextField>
   final GlobalKey _clearGlobalKey = GlobalKey();
 
   TextEditingController _controller;
-  TextEditingController get _effectiveController =>
-      widget.controller ?? _controller;
+
+  TextEditingController get _effectiveController => widget.controller ?? _controller;
 
   FocusNode _focusNode;
-  FocusNode get _effectiveFocusNode =>
-      widget.focusNode ?? (_focusNode ??= FocusNode());
+
+  FocusNode get _effectiveFocusNode => widget.focusNode ?? (_focusNode ??= FocusNode());
 
   bool _showSelectionHandles = false;
 
-  _CupertinoTextFieldSelectionGestureDetectorBuilder
-      _selectionGestureDetectorBuilder;
+  _CupertinoTextFieldSelectionGestureDetectorBuilder _selectionGestureDetectorBuilder;
 
   // API for TextSelectionGestureDetectorBuilderDelegate.
   @override
   bool get forcePressEnabled => true;
 
   @override
-  final GlobalKey<EditableTextState> editableTextKey =
-      GlobalKey<EditableTextState>();
+  final GlobalKey<EditableTextState> editableTextKey = GlobalKey<EditableTextState>();
 
   @override
   bool get selectionEnabled => widget.selectionEnabled;
+
   // End of API for TextSelectionGestureDetectorBuilderDelegate.
 
   @override
   void initState() {
     super.initState();
-    _selectionGestureDetectorBuilder =
-        _CupertinoTextFieldSelectionGestureDetectorBuilder(state: this);
+    _selectionGestureDetectorBuilder = _CupertinoTextFieldSelectionGestureDetectorBuilder(state: this);
     if (widget.controller == null) {
       _controller = TextEditingController();
       _controller.addListener(updateKeepAlive);
@@ -791,8 +738,7 @@ class _CupertinoTextFieldState extends State<CustomCupertinoTextField>
   bool _shouldShowSelectionHandles(SelectionChangedCause cause) {
     // When the text field is activated by something that doesn't trigger the
     // selection overlay, we shouldn't show the handles either.
-    if (!_selectionGestureDetectorBuilder.shouldShowSelectionToolbar)
-      return false;
+    if (!_selectionGestureDetectorBuilder.shouldShowSelectionToolbar) return false;
 
     // On iOS, we don't show handles when the selection is collapsed.
     if (_effectiveController.selection.isCollapsed) return false;
@@ -804,8 +750,7 @@ class _CupertinoTextFieldState extends State<CustomCupertinoTextField>
     return false;
   }
 
-  void _handleSelectionChanged(
-      TextSelection selection, SelectionChangedCause cause) {
+  void _handleSelectionChanged(TextSelection selection, SelectionChangedCause cause) {
     if (cause == SelectionChangedCause.longPress) {
       _editableText?.bringIntoView(selection.base);
     }
@@ -879,8 +824,7 @@ class _CupertinoTextFieldState extends State<CustomCupertinoTextField>
     return _hasDecoration ? TextAlignVertical.center : TextAlignVertical.top;
   }
 
-  Widget _addTextDependentAttachments(
-      Widget editableText, TextStyle textStyle, TextStyle placeholderStyle) {
+  Widget _addTextDependentAttachments(Widget editableText, TextStyle textStyle, TextStyle placeholderStyle) {
     assert(editableText != null);
     assert(textStyle != null);
     assert(placeholderStyle != null);
@@ -933,11 +877,9 @@ class _CupertinoTextFieldState extends State<CustomCupertinoTextField>
                   ? () {
                       // Special handle onChanged for ClearButton
                       // Also call onChanged when the clear button is tapped.
-                      final bool textChanged =
-                          _effectiveController.text.isNotEmpty;
+                      final bool textChanged = _effectiveController.text.isNotEmpty;
                       _effectiveController.clear();
-                      if (widget.onChanged != null && textChanged)
-                        widget.onChanged(_effectiveController.text);
+                      if (widget.onChanged != null && textChanged) widget.onChanged(_effectiveController.text);
                     }
                   : null,
               child: Padding(
@@ -945,8 +887,7 @@ class _CupertinoTextFieldState extends State<CustomCupertinoTextField>
                 child: Icon(
                   CupertinoIcons.clear_thick_circled,
                   size: 18.0,
-                  color: CupertinoDynamicColor.resolve(
-                      _kClearButtonColor, context),
+                  color: CupertinoDynamicColor.resolve(_kClearButtonColor, context),
                 ),
               ),
             ),
@@ -960,13 +901,9 @@ class _CupertinoTextFieldState extends State<CustomCupertinoTextField>
     super.build(context); // See AutomaticKeepAliveClientMixin.
     assert(debugCheckHasDirectionality(context));
     final TextEditingController controller = _effectiveController;
-    final List<TextInputFormatter> formatters =
-        widget.inputFormatters ?? <TextInputFormatter>[];
+    final List<TextInputFormatter> formatters = widget.inputFormatters ?? <TextInputFormatter>[];
     final bool enabled = widget.enabled ?? true;
-    final Offset cursorOffset = Offset(
-        _iOSHorizontalCursorOffsetPixels /
-            MediaQuery.of(context).devicePixelRatio,
-        0);
+    final Offset cursorOffset = Offset(_iOSHorizontalCursorOffsetPixels / MediaQuery.of(context).devicePixelRatio, 0);
     if (widget.maxLength != null && widget.maxLengthEnforced) {
       formatters.add(LengthLimitingTextInputFormatter(widget.maxLength));
     }
@@ -974,34 +911,23 @@ class _CupertinoTextFieldState extends State<CustomCupertinoTextField>
 
     final TextStyle resolvedStyle = widget.style?.copyWith(
       color: CupertinoDynamicColor.resolve(widget.style?.color, context),
-      backgroundColor:
-          CupertinoDynamicColor.resolve(widget.style?.backgroundColor, context),
+      backgroundColor: CupertinoDynamicColor.resolve(widget.style?.backgroundColor, context),
     );
 
-    final TextStyle textStyle =
-        themeData.textTheme.textStyle.merge(resolvedStyle);
+    final TextStyle textStyle = themeData.textTheme.textStyle.merge(resolvedStyle);
 
-    final TextStyle resolvedPlaceholderStyle =
-        widget.placeholderStyle?.copyWith(
-      color: CupertinoDynamicColor.resolve(
-          widget.placeholderStyle?.color, context),
-      backgroundColor: CupertinoDynamicColor.resolve(
-          widget.placeholderStyle?.backgroundColor, context),
+    final TextStyle resolvedPlaceholderStyle = widget.placeholderStyle?.copyWith(
+      color: CupertinoDynamicColor.resolve(widget.placeholderStyle?.color, context),
+      backgroundColor: CupertinoDynamicColor.resolve(widget.placeholderStyle?.backgroundColor, context),
     );
 
-    final TextStyle placeholderStyle =
-        textStyle.merge(resolvedPlaceholderStyle);
+    final TextStyle placeholderStyle = textStyle.merge(resolvedPlaceholderStyle);
 
-    final Brightness keyboardAppearance =
-        widget.keyboardAppearance ?? CupertinoTheme.brightnessOf(context);
-    final Color cursorColor =
-        CupertinoDynamicColor.resolve(widget.cursorColor, context) ??
-            themeData.primaryColor;
-    final Color disabledColor =
-        CupertinoDynamicColor.resolve(_kDisabledBackground, context);
+    final Brightness keyboardAppearance = widget.keyboardAppearance ?? CupertinoTheme.brightnessOf(context);
+    final Color cursorColor = CupertinoDynamicColor.resolve(widget.cursorColor, context) ?? themeData.primaryColor;
+    final Color disabledColor = CupertinoDynamicColor.resolve(_kDisabledBackground, context);
 
-    final Color decorationColor =
-        CupertinoDynamicColor.resolve(widget.decoration?.color, context);
+    final Color decorationColor = CupertinoDynamicColor.resolve(widget.decoration?.color, context);
 
     final BoxBorder border = widget.decoration?.border;
     Border resolvedBorder = border as Border;
@@ -1009,8 +935,7 @@ class _CupertinoTextFieldState extends State<CustomCupertinoTextField>
       BorderSide resolveBorderSide(BorderSide side) {
         return side == BorderSide.none
             ? side
-            : side.copyWith(
-                color: CupertinoDynamicColor.resolve(side.color, context));
+            : side.copyWith(color: CupertinoDynamicColor.resolve(side.color, context));
       }
 
       resolvedBorder = border == null || border.runtimeType != Border
@@ -1028,8 +953,7 @@ class _CupertinoTextFieldState extends State<CustomCupertinoTextField>
       color: enabled ? decorationColor : (decorationColor ?? disabledColor),
     );
 
-    final Color selectionColor =
-        CupertinoTheme.of(context).primaryColor.withOpacity(0.2);
+    final Color selectionColor = CupertinoTheme.of(context).primaryColor.withOpacity(0.2);
 
     final Widget paddedEditable = Padding(
       padding: widget.padding,
@@ -1059,8 +983,7 @@ class _CupertinoTextFieldState extends State<CustomCupertinoTextField>
           minLines: widget.minLines,
           expands: widget.expands,
           selectionColor: selectionColor,
-          selectionControls:
-              widget.selectionEnabled ? cupertinoTextSelectionControls : null,
+          selectionControls: widget.selectionEnabled ? cupertinoTextSelectionControls : null,
           onChanged: widget.onChanged,
           onContentCommited: widget.onContentCommited,
           onSelectionChanged: _handleSelectionChanged,
@@ -1075,8 +998,7 @@ class _CupertinoTextFieldState extends State<CustomCupertinoTextField>
           cursorOffset: cursorOffset,
           paintCursorAboveText: true,
           autocorrectionTextRectColor: selectionColor,
-          backgroundCursorColor: CupertinoDynamicColor.resolve(
-              CupertinoColors.inactiveGray, context),
+          backgroundCursorColor: CupertinoDynamicColor.resolve(CupertinoColors.inactiveGray, context),
           selectionHeightStyle: widget.selectionHeightStyle,
           selectionWidthStyle: widget.selectionWidthStyle,
           scrollPadding: widget.scrollPadding,
@@ -1096,8 +1018,7 @@ class _CupertinoTextFieldState extends State<CustomCupertinoTextField>
           ? null
           : () {
               if (!controller.selection.isValid) {
-                controller.selection =
-                    TextSelection.collapsed(offset: controller.text.length);
+                controller.selection = TextSelection.collapsed(offset: controller.text.length);
               }
               _requestKeyboard();
             },
@@ -1111,8 +1032,7 @@ class _CupertinoTextFieldState extends State<CustomCupertinoTextField>
               alignment: Alignment(-1.0, _textAlignVertical.y),
               widthFactor: 1.0,
               heightFactor: 1.0,
-              child: _addTextDependentAttachments(
-                  paddedEditable, textStyle, placeholderStyle),
+              child: _addTextDependentAttachments(paddedEditable, textStyle, placeholderStyle),
             ),
           ),
         ),

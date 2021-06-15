@@ -1,14 +1,16 @@
 import 'dart:ui';
 
+import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/layouts/settings/messages_view_ux_panel.dart';
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
-import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
+import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class UXPanel extends StatefulWidget {
   UXPanel({Key key}) : super(key: key);
@@ -44,8 +46,7 @@ class _UXPanelState extends State<UXPanel> {
 
   void loadBrightness() {
     Color now = Theme.of(context).backgroundColor;
-    bool themeChanged =
-        previousBackgroundColor == null || previousBackgroundColor != now;
+    bool themeChanged = previousBackgroundColor == null || previousBackgroundColor != now;
     if (!themeChanged && gotBrightness) return;
 
     previousBackgroundColor = now;
@@ -80,7 +81,7 @@ class _UXPanelState extends State<UXPanel> {
                 toolbarHeight: 100.0,
                 elevation: 0,
                 leading: IconButton(
-                  icon: Icon(Icons.arrow_back_ios,
+                  icon: Icon(SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_back_ios : Icons.arrow_back,
                       color: Theme.of(context).primaryColor),
                   onPressed: () {
                     Navigator.of(context).pop();
@@ -97,73 +98,80 @@ class _UXPanelState extends State<UXPanel> {
           ),
         ),
         body: CustomScrollView(
-          physics: AlwaysScrollableScrollPhysics(
-            parent: CustomBouncingScrollPhysics(),
-          ),
+          physics: ThemeSwitcher.getScrollPhysics(),
           slivers: <Widget>[
             SliverList(
               delegate: SliverChildListDelegate(
                 <Widget>[
                   Container(padding: EdgeInsets.only(top: 5.0)),
+                  SettingsTile(
+                    title: "Conversation Settings",
+                    onTap: () {
+                      Navigator.of(context).push(
+                        CupertinoPageRoute(
+                          builder: (context) => ConvoSettings(),
+                        ),
+                      );
+                    },
+                    trailing: Icon(
+                      SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_forward_ios : Icons.arrow_forward,
+                      color: Theme.of(context).primaryColor,
+                    ),
+                  ),
                   SettingsSwitch(
                     onChanged: (bool val) {
                       _settingsCopy.showConnectionIndicator = val;
+                      saveSettings();
                     },
                     initialVal: _settingsCopy.showConnectionIndicator,
-                    title: "Show Connection Indicator in Chat List",
+                    title: "Show Connection Indicator",
+                  ),
+                  SettingsSwitch(
+                    onChanged: (bool val) {
+                      _settingsCopy.showSyncIndicator = val;
+                      saveSettings();
+                    },
+                    initialVal: _settingsCopy.showSyncIndicator,
+                    title: "Show Sync Indicator in Chat List",
+                  ),
+                  SettingsSwitch(
+                    onChanged: (bool val) {
+                      _settingsCopy.colorblindMode = val;
+                      saveSettings();
+                    },
+                    initialVal: _settingsCopy.colorblindMode,
+                    title: "Colorblind Mode",
+                  ),
+                  if (SettingsManager().settings.skin == Skins.Samsung ||
+                      SettingsManager().settings.skin == Skins.Material)
+                    SettingsSwitch(
+                      onChanged: (bool val) {
+                        _settingsCopy.swipableConversationTiles = val;
+                        saveSettings();
+                      },
+                      initialVal: _settingsCopy.swipableConversationTiles,
+                      title: "Swipe Actions for Conversation Tiles",
+                    ),
+                  SettingsSwitch(
+                    onChanged: (bool val) {
+                      _settingsCopy.moveChatCreatorToHeader = val;
+                      saveSettings();
+                    },
+                    initialVal: _settingsCopy.moveChatCreatorToHeader,
+                    title: "Move Chat Creator Button to Header",
                   ),
                   SettingsSwitch(
                     onChanged: (bool val) {
                       _settingsCopy.hideTextPreviews = val;
+                      saveSettings();
                     },
                     initialVal: _settingsCopy.hideTextPreviews,
                     title: "Hide Text Previews (in notifications)",
                   ),
                   SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.autoOpenKeyboard = val;
-                    },
-                    initialVal: _settingsCopy.autoOpenKeyboard,
-                    title: "Auto-open Keyboard",
-                  ),
-                  SettingsSwitch(
-                    onChanged: (bool val) {
-                      _settingsCopy.recipientAsPlaceholder = val;
-                    },
-                    initialVal: _settingsCopy.recipientAsPlaceholder,
-                    title: "Show Recipient (or Group Name) as Placeholder",
-                  ),
-                  SettingsSwitch(
-                    onChanged: (bool val) {
-                      _settingsCopy.doubleTapForDetails = val;
-                    },
-                    initialVal: _settingsCopy.doubleTapForDetails,
-                    title: "Double-Tap Message for Details",
-                  ),
-                  // SettingsSwitch(
-                  //   onChanged: (bool val) {
-                  //     _settingsCopy.sendTypingIndicators = val;
-                  //   },
-                  //   initialVal: _settingsCopy.sendTypingIndicators,
-                  //   title: "Send typing indicators (BlueBubblesHelper ONLY)",
-                  // ),
-                  SettingsSwitch(
-                    onChanged: (bool val) {
-                      _settingsCopy.smartReply = val;
-                    },
-                    initialVal: _settingsCopy.smartReply,
-                    title: "Smart Replies",
-                  ),
-                  SettingsSwitch(
-                    onChanged: (bool val) {
-                      _settingsCopy.sendWithReturn = val;
-                    },
-                    initialVal: _settingsCopy.sendWithReturn,
-                    title: "Send Message with Return Key",
-                  ),
-                  SettingsSwitch(
-                    onChanged: (bool val) {
                       _settingsCopy.preCachePreviewImages = val;
+                      saveSettings();
                     },
                     initialVal: _settingsCopy.preCachePreviewImages,
                     title: "Pre-Cache Preview Images",
@@ -171,6 +179,7 @@ class _UXPanelState extends State<UXPanel> {
                   SettingsSwitch(
                     onChanged: (bool val) {
                       _settingsCopy.lowMemoryMode = val;
+                      saveSettings();
                     },
                     initialVal: _settingsCopy.lowMemoryMode,
                     title: "Low Memory Mode",
@@ -178,24 +187,26 @@ class _UXPanelState extends State<UXPanel> {
                   SettingsSwitch(
                     onChanged: (bool val) {
                       _settingsCopy.showIncrementalSync = val;
+                      saveSettings();
                     },
                     initialVal: _settingsCopy.showIncrementalSync,
                     title: "Notify when incremental sync complete",
                   ),
-                  SettingsSlider(
-                      text: "Scroll Speed Multiplier",
-                      startingVal: _settingsCopy.scrollVelocity,
-                      update: (double val) {
-                        _settingsCopy.scrollVelocity =
-                            double.parse(val.toStringAsFixed(2));
-                      },
-                      formatValue: ((double val) => val.toStringAsFixed(2)),
-                      min: 0.20,
-                      max: 1,
-                      divisions: 8),
+                  if (SettingsManager().settings.skin == Skins.IOS)
+                    SettingsSlider(
+                        text: "Scroll Speed Multiplier",
+                        startingVal: _settingsCopy.scrollVelocity,
+                        update: (double val) {
+                          _settingsCopy.scrollVelocity = double.parse(val.toStringAsFixed(2));
+                        },
+                        formatValue: ((double val) => val.toStringAsFixed(2)),
+                        min: 0.20,
+                        max: 1,
+                        divisions: 8),
                   SettingsSwitch(
                     onChanged: (bool val) {
                       _settingsCopy.sendDelay = val ? 3 : 0;
+                      saveSettings();
                       setState(() {});
                     },
                     initialVal: !isNullOrZero(_settingsCopy.sendDelay),

@@ -92,9 +92,10 @@ public class MainActivity extends FlutterActivity {
             handleSendMultipleImages(intent);
         } else {
             if (type.equals("NotificationOpen")) {
-                Log.d("Notifications", "tapped on notification by id " + intent.getExtras().getInt("id"));
+                Log.d("Notifications", "Tapped on notification with ID: " + intent.getExtras().getInt("id"));
                 startingChat = intent.getStringExtra("chatGUID");
 
+                Log.d("Notifications", "Opening Chat with GUID: " + startingChat);
                 new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod("ChatOpen", intent.getExtras().getString("chatGUID"));
             } else if (type.equals(SocketIssueWarning.TYPE)) {
                 new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod("socket-error-open", null);
@@ -269,10 +270,17 @@ public class MainActivity extends FlutterActivity {
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     protected void onDestroy() {
-        Log.d("MainActivity", "removed from memory");
+        Log.d("MainActivity", "Removing Activity from memory");
         SocketIOManager.getInstance().destroyAllSockets();
         engine = null;
         super.onDestroy();
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    @Override
+    protected void onStop() {
+        Log.d("MainActivity", "Stopping Activity (isFinishing: " + isFinishing() + ")");
+        super.onStop();
     }
 
     private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {

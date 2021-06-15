@@ -30,8 +30,7 @@ class _AudioPlayerWigetState extends State<AudioPlayerWiget> {
   void initState() {
     super.initState();
 
-    if (context != null &&
-        CurrentChat.of(widget.context).audioPlayers.containsKey(widget.file.path)) {
+    if (context != null && CurrentChat.of(widget.context).audioPlayers.containsKey(widget.file.path)) {
       player = CurrentChat.of(widget.context).audioPlayers[widget.file.path];
     } else {
       player = new AssetsAudioPlayer();
@@ -66,8 +65,7 @@ class _AudioPlayerWigetState extends State<AudioPlayerWiget> {
 
     // Update the current position if it's changed
     player.currentPosition.listen((Duration position) {
-      if (position.inSeconds != (current ?? Duration()).inSeconds &&
-          this.mounted) {
+      if (position.inSeconds != (current ?? Duration()).inSeconds && this.mounted) {
         current = position;
         setState(() {});
       }
@@ -128,14 +126,12 @@ class _AudioPlayerWigetState extends State<AudioPlayerWiget> {
               Padding(
                 padding: EdgeInsets.only(right: 20.0),
                 child: (playing == null)
-                  ? Text("00:00 / 00:00",
-                      style: Theme.of(context).textTheme.bodyText1)
-                  : Text(
-                      (playing.audio.duration == null ||
-                              playing.audio.duration.inSeconds == 0)
-                          ? formatDuration(current)
-                          : "${formatDuration(current)} / ${formatDuration(playing.audio.duration)}",
-                      style: Theme.of(context).textTheme.bodyText1),
+                    ? Text("00:00 / 00:00", style: Theme.of(context).textTheme.bodyText1)
+                    : Text(
+                        (playing.audio.duration == null || playing.audio.duration.inSeconds == 0)
+                            ? formatDuration(current)
+                            : "${formatDuration(current)} / ${formatDuration(playing.audio.duration)}",
+                        style: Theme.of(context).textTheme.bodyText1),
               ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,

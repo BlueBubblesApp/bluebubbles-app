@@ -1,7 +1,8 @@
+import 'dart:math' as Math;
+
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.dart';
 import 'package:flutter/material.dart';
-import 'package:bluebubbles/helpers/utils.dart';
-import 'dart:math' as Math;
 
 class TypingIndicator extends StatefulWidget {
   TypingIndicator({Key key, this.visible}) : super(key: key);
@@ -11,16 +12,14 @@ class TypingIndicator extends StatefulWidget {
   _TypingIndicatorState createState() => _TypingIndicatorState();
 }
 
-class _TypingIndicatorState extends State<TypingIndicator>
-    with TickerProviderStateMixin {
+class _TypingIndicatorState extends State<TypingIndicator> with TickerProviderStateMixin {
   AnimationController _controller;
   Animation animation;
 
   @override
   void initState() {
     super.initState();
-    _controller =
-        AnimationController(vsync: this, duration: Duration(milliseconds: 700));
+    _controller = AnimationController(vsync: this, duration: Duration(milliseconds: 700));
     _controller.addListener(() {});
 
     animation = Tween(
@@ -78,14 +77,12 @@ class _TypingIndicatorState extends State<TypingIndicator>
                     ),
                     Container(
                       margin: EdgeInsets.only(
-                        top: 18,
                         left: 10,
                         right: 10,
                         bottom: 13,
                       ),
                       constraints: BoxConstraints(
-                        maxWidth: MediaQuery.of(context).size.width *
-                            MessageWidgetMixin.MAX_SIZE,
+                        maxWidth: MediaQuery.of(context).size.width * MessageWidgetMixin.MAX_SIZE,
                       ),
                       padding: EdgeInsets.symmetric(
                         vertical: 8,
@@ -124,9 +121,7 @@ class _TypingIndicatorState extends State<TypingIndicator>
           return Container(
             decoration: BoxDecoration(
               color: Theme.of(context).accentColor.lightenOrDarken(
-                  (Math.sin(animation.value + (index) * Math.pi / 4).abs() * 20)
-                      .clamp(1, 20)
-                      .toDouble()),
+                  (Math.sin(animation.value + (index) * Math.pi / 4).abs() * 20).clamp(1, 20).toDouble()),
               borderRadius: BorderRadius.circular(30),
             ),
             width: 10,

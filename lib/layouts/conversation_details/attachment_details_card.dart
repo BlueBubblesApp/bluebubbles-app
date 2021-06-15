@@ -6,6 +6,7 @@ import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/layouts/image_viewer/attachmet_fullscreen_viewer.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/regular_file_opener.dart';
+import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
@@ -18,8 +19,7 @@ import 'package:path/path.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
 
 class AttachmentDetailsCard extends StatefulWidget {
-  AttachmentDetailsCard({Key key, this.attachment, this.allAttachments})
-      : super(key: key);
+  AttachmentDetailsCard({Key key, this.attachment, this.allAttachments}) : super(key: key);
   final Attachment attachment;
   final List<Attachment> allAttachments;
 
@@ -45,14 +45,8 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
   }
 
   void subscribeToDownloadStream() {
-    if (SocketManager()
-            .attachmentDownloaders
-            .containsKey(widget.attachment.guid) &&
-        downloadStream == null) {
-      downloadStream = SocketManager()
-          .attachmentDownloaders[widget.attachment.guid]
-          .stream
-          .listen((event) {
+    if (SocketManager().attachmentDownloaders.containsKey(widget.attachment.guid) && downloadStream == null) {
+      downloadStream = SocketManager().attachmentDownloaders[widget.attachment.guid].stream.listen((event) {
         if (event is File && this.mounted) {
           Future.delayed(Duration(milliseconds: 500), () {
             setState(() {});
@@ -64,7 +58,7 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
 
   void getCompressedImage() {
     String path = AttachmentHelper.getAttachmentPath(widget.attachment);
-    FlutterImageCompress.compressWithFile(path, quality: 20).then((data) {
+    FlutterImageCompress.compressWithFile(path, quality: SettingsManager().compressionQuality).then((data) {
       if (this.mounted) {
         setState(() {
           previewImage = data;
@@ -90,16 +84,11 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
           Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
-              !SocketManager()
-                      .attachmentDownloaders
-                      .containsKey(attachment.guid)
+              !SocketManager().attachmentDownloaders.containsKey(attachment.guid)
                   ? CupertinoButton(
-                      padding: EdgeInsets.only(
-                          left: 20, right: 20, top: 10, bottom: 10),
+                      padding: EdgeInsets.only(left: 20, right: 20, top: 10, bottom: 10),
                       onPressed: () async {
-                        AttachmentDownloader downloader =
-                            new AttachmentDownloader(attachment,
-                                autoFetch: false);
+                        AttachmentDownloader downloader = new AttachmentDownloader(attachment, autoFetch: false);
                         await downloader.fetchAttachment(attachment);
                         subscribeToDownloadStream();
                         if (this.mounted) setState(() {});
@@ -122,16 +111,13 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
                       ),
                     )
                   : StreamBuilder<Object>(
-                      stream: SocketManager()
-                          .attachmentDownloaders[attachment.guid]
-                          .stream,
+                      stream: SocketManager().attachmentDownloaders[attachment.guid].stream,
                       builder: (context, snapshot) {
                         return CircularProgressIndicator(
                           backgroundColor: Colors.grey,
                           valueColor: AlwaysStoppedAnimation(Colors.white),
                           value: snapshot.hasData && snapshot.data is Map
-                              ? (snapshot.data
-                                  as Map<String, double>)["Progress"]
+                              ? (snapshot.data as Map<String, double>)["Progress"]
                               : 0,
                         );
                       },
@@ -190,7 +176,7 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
               onTap: () {
                 CurrentChat currentChat = CurrentChat.of(context);
                 Navigator.of(context).push(
-                  CupertinoPageRoute(
+                  ThemeSwitcher.buildPageRoute(
                     builder: (context) => AttachmentFullscreenViewer(
                       currentChat: currentChat,
                       attachment: widget.attachment,
@@ -227,11 +213,9 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
             color: Colors.transparent,
             child: InkWell(
               onTap: () {
-                CurrentChat currentChat = CurrentChat.of(context);
                 Navigator.of(context).push(
-                  CupertinoPageRoute(
+                  ThemeSwitcher.buildPageRoute(
                     builder: (context) => AttachmentFullscreenViewer(
-                      currentChat: currentChat,
                       attachment: widget.attachment,
                       showInteractions: true,
                     ),

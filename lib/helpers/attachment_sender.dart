@@ -1,11 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
-
 import 'dart:io';
-
 import 'dart:typed_data';
 
-import 'package:bluebubbles/helpers/contstants.dart';
+import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -27,6 +25,7 @@ class AttachmentSender {
   int _totalChunks = 0;
   int _chunkSize = 500;
   Chat _chat;
+
   // String _tempGuid;
 
   File _attachment;
@@ -95,21 +94,16 @@ class AttachmentSender {
       } else {
         debugPrint("failed to send");
         String tempGuid = sentMessage.guid;
-        sentMessage.guid = sentMessage.guid
-            .replaceAll("temp", "error-${response['error']['message']}");
-        sentMessage.error = response['status'] == 400
-            ? MessageError.BAD_REQUEST.code
-            : MessageError.SERVER_ERROR.code;
+        sentMessage.guid = sentMessage.guid.replaceAll("temp", "error-${response['error']['message']}");
+        sentMessage.error = response['status'] == 400 ? MessageError.BAD_REQUEST.code : MessageError.SERVER_ERROR.code;
 
         await Message.replaceMessage(tempGuid, sentMessage);
         NewMessageManager().updateMessage(_chat, tempGuid, sentMessage);
         if (messageWithText != null) {
           tempGuid = messageWithText.guid;
-          messageWithText.guid = messageWithText.guid
-              .replaceAll("temp", "error-${response['error']['message']}");
-          messageWithText.error = response['status'] == 400
-              ? MessageError.BAD_REQUEST.code
-              : MessageError.SERVER_ERROR.code;
+          messageWithText.guid = messageWithText.guid.replaceAll("temp", "error-${response['error']['message']}");
+          messageWithText.error =
+              response['status'] == 400 ? MessageError.BAD_REQUEST.code : MessageError.SERVER_ERROR.code;
 
           await Message.replaceMessage(tempGuid, messageWithText);
           NewMessageManager().updateMessage(_chat, tempGuid, messageWithText);
@@ -136,12 +130,8 @@ class AttachmentSender {
       uti: "public.jpg",
       transferName: _attachmentName,
       mimeType: mime(_attachmentName),
-      width: mime(_attachmentName).startsWith("image")
-          ? ImageSizeGetter.getSize(FileInput(_attachment)).width
-          : null,
-      height: mime(_attachmentName).startsWith("image")
-          ? ImageSizeGetter.getSize(FileInput(_attachment)).height
-          : null,
+      width: mime(_attachmentName).startsWith("image") ? ImageSizeGetter.getSize(FileInput(_attachment)).width : null,
+      height: mime(_attachmentName).startsWith("image") ? ImageSizeGetter.getSize(FileInput(_attachment)).height : null,
     );
 
     sentMessage = Message(
@@ -162,8 +152,7 @@ class AttachmentSender {
 
     // Save the attachment to device
     String appDocPath = SettingsManager().appDocDir.path;
-    String pathName =
-        "$appDocPath/attachments/${messageAttachment.guid}/$_attachmentName";
+    String pathName = "$appDocPath/attachments/${messageAttachment.guid}/$_attachmentName";
     debugPrint("(Sigabrt) Before saving to device");
     File file = await new File(pathName).create(recursive: true);
     await file.writeAsBytes(Uint8List.fromList(_imageBytes));
@@ -183,11 +172,6 @@ class AttachmentSender {
     _totalChunks = numOfChunks;
     SocketManager().addAttachmentSender(this);
     debugPrint("(Sigabrt) Before sending first chunk");
-    sendChunkRecursive(
-        0,
-        _totalChunks,
-        messageWithText == null
-            ? "temp-${randomString(8)}"
-            : messageWithText.guid);
+    sendChunkRecursive(0, _totalChunks, messageWithText == null ? "temp-${randomString(8)}" : messageWithText.guid);
   }
 }

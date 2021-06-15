@@ -23,21 +23,15 @@ class IncomingQueue extends QueueManager {
           Map<String, dynamic> params = item.item;
           await ActionHandler.handleMessage(params["data"],
               createAttachmentNotification:
-                  params.containsKey("createAttachmentNotification")
-                      ? params["createAttachmentNotification"]
-                      : false,
-              isHeadless: params.containsKey("isHeadless")
-                  ? params["isHeadless"]
-                  : false);
+                  params.containsKey("createAttachmentNotification") ? params["createAttachmentNotification"] : false,
+              isHeadless: params.containsKey("isHeadless") ? params["isHeadless"] : false);
           break;
         }
       case HANDLE_UPDATE_MESSAGE:
         {
           Map<String, dynamic> params = item.item;
           await ActionHandler.handleUpdatedMessage(params["data"],
-              headless: params.containsKey("isHeadless")
-                  ? params["isHeadless"]
-                  : false);
+              headless: params.containsKey("isHeadless") ? params["isHeadless"] : false);
           break;
         }
       case HANDLE_CHAT_STATUS_CHANGE:

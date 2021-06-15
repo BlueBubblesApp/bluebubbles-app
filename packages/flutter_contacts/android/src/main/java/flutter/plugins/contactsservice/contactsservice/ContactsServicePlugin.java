@@ -143,7 +143,7 @@ public class ContactsServicePlugin implements MethodCallHandler, FlutterPlugin, 
       } case "openContactForm": {
         if (delegate != null) {
           delegate.setResult(result);
-          delegate.openContactForm();
+          delegate.openContactForm((HashMap) call.arguments);
         } else {
           result.success(FORM_COULD_NOT_BE_OPEN);
         }
@@ -301,10 +301,20 @@ public class ContactsServicePlugin implements MethodCallHandler, FlutterPlugin, 
       }
     }
 
-    void openContactForm() {
+    void openContactForm(HashMap args) {
       try {
         Intent intent = new Intent(Intent.ACTION_INSERT, ContactsContract.Contacts.CONTENT_URI);
         intent.putExtra("finishActivityOnSaveCompleted", true);
+
+        if (args.containsKey("address") && args.get("address") != null) {
+          String intentType = ContactsContract.Intents.Insert.PHONE;
+          if (args.containsKey("addressType") && ((String) args.get("addressType")).equals("email")) {
+            intentType = ContactsContract.Intents.Insert.EMAIL;
+          }
+
+          intent.putExtra(intentType, (String) args.get("address"));
+        }
+
         startIntent(intent, REQUEST_OPEN_CONTACT_FORM);
       }catch(Exception e) {
       }

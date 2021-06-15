@@ -14,25 +14,17 @@ class MessageTimeStampSeparator extends StatelessWidget {
 
   bool withinTimeThreshold(Message first, Message second, {threshold: 5}) {
     if (first == null || second == null) return false;
-    return second.dateCreated.difference(first.dateCreated).inMinutes.abs() >
-        threshold;
+    return second.dateCreated.difference(first.dateCreated).inMinutes.abs() > threshold;
   }
 
   Map<String, String> _buildTimeStamp() {
     if (newerMessage != null &&
         (!isEmptyString(message.fullText) || message.hasAttachments) &&
         withinTimeThreshold(message, newerMessage, threshold: 30)) {
+
       DateTime timeOfnewerMessage = newerMessage.dateCreated;
       String time = new DateFormat.jm().format(timeOfnewerMessage);
-      String date;
-      if (newerMessage.dateCreated.isToday()) {
-        date = "Today";
-      } else if (newerMessage.dateCreated.isYesterday()) {
-        date = "Yesterday";
-      } else {
-        date =
-            "${timeOfnewerMessage.month.toString()}/${timeOfnewerMessage.day.toString()}/${timeOfnewerMessage.year.toString()}";
-      }
+      String date = timeOfnewerMessage.isToday() ? "Today" : buildDate(timeOfnewerMessage);
       return {"date": date, "time": time};
     } else {
       return null;
@@ -52,10 +44,7 @@ class MessageTimeStampSeparator extends StatelessWidget {
                 children: [
                   TextSpan(
                     text: "${timeStamp["date"]}, ",
-                    style: Theme.of(context)
-                        .textTheme
-                        .subtitle2
-                        .apply(fontWeightDelta: 10),
+                    style: Theme.of(context).textTheme.subtitle2.apply(fontWeightDelta: 10),
                   ),
                   TextSpan(text: "${timeStamp["time"]}")
                 ],

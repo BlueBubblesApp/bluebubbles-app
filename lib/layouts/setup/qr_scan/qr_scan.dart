@@ -48,14 +48,29 @@ class _QRScanState extends State<QRScan> {
       return;
     }
     if (result != null && result.length > 0) {
-      FCMData fcmData = FCMData(
-        projectID: result[2],
-        storageBucket: result[3],
-        apiKey: result[4],
-        firebaseURL: result[5],
-        clientID: result[6],
-        applicationID: result[7],
-      );
+      FCMData fcmData;
+
+      if (result.length > 2) {
+        fcmData = FCMData(
+          projectID: result[2],
+          storageBucket: result[3],
+          apiKey: result[4],
+          firebaseURL: result[5],
+          clientID: result[6],
+          applicationID: result[7],
+        );
+      } else {
+        try {
+          // Fetch FCM data from the server
+          Map<String, dynamic> fcmMeta = await SocketManager().getFcmClient();
+
+          // Parse out the new FCM data
+          fcmData = parseFcmJson(fcmMeta);
+        } catch (ex) {
+          // If we fail, who cares!
+        }
+      }
+
       String password = result[0];
       String serverURL = getServerAddress(address: result[1]);
 
@@ -71,10 +86,13 @@ class _QRScanState extends State<QRScan> {
         ),
         barrierDismissible: false,
       );
+
       try {
-        await SocketManager()
-            .setup
-            .connectToServer(fcmData, serverURL, password);
+        if (fcmData == null) {
+          throw Exception("FCM data was null! Failed to register device!");
+        }
+
+        await SocketManager().setup.connectToServer(fcmData, serverURL, password);
       } catch (e) {
         Navigator.of(context).pop();
         showDialog(
@@ -104,10 +122,7 @@ class _QRScanState extends State<QRScan> {
                 padding: EdgeInsets.symmetric(horizontal: 20.0),
                 child: Text(
                   "BlueBubbles tries to make the setup process as easy as possible. We've created a QR code on your server that you can use to easily register this device with the server.",
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodyText1
-                      .apply(fontSizeFactor: 1.5),
+                  style: Theme.of(context).textTheme.bodyText1.apply(fontSizeFactor: 1.5),
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -133,10 +148,7 @@ class _QRScanState extends State<QRScan> {
                 padding: EdgeInsets.symmetric(horizontal: 20.0),
                 child: Text(
                   "Or alternatively... you can enter in your url here",
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodyText1
-                      .apply(fontSizeFactor: 1.15),
+                  style: Theme.of(context).textTheme.bodyText1.apply(fontSizeFactor: 1.15),
                   textAlign: TextAlign.center,
                 ),
               ),

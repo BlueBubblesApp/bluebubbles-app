@@ -24,8 +24,8 @@ class _QRCodeScannerState extends State<QRCodeScanner> {
     this.controller = controller;
     controller.scannedDataStream.listen((scanData) {
       if (qrText.isEmpty) {
-        qrText = scanData;
-        Navigator.of(context).pop(scanData);
+        qrText = scanData.code;
+        Navigator.of(context).pop(qrText);
       }
     });
   }

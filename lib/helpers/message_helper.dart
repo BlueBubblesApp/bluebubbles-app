@@ -9,10 +9,11 @@ import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
-import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:contacts_service/contacts_service.dart';
+import 'package:emojis/emoji.dart';
 
 class EmojiConst {
   static final String charNonSpacingMark = String.fromCharCode(0xfe0f);
@@ -26,8 +27,7 @@ Map<String, String> nameMap = {
 };
 
 class MessageHelper {
-  static Future<List<Message>> bulkAddMessages(
-      Chat chat, List<dynamic> messages,
+  static Future<List<Message>> bulkAddMessages(Chat chat, List<dynamic> messages,
       {bool notifyForNewMessage = false,
       bool notifyMessageManager = true,
       bool checkForLatestMessageText = true,
@@ -79,8 +79,7 @@ class MessageHelper {
       );
 
       if (existing == null) {
-        if (isIncremental &&
-            !notificationMessages.containsValue(msgChat.guid)) {
+        if (isIncremental && !notificationMessages.containsValue(msgChat.guid)) {
           notificationMessages[message] = msgChat.guid;
         } else if (!isIncremental) {
           notificationMessages[message] = msgChat.guid;
@@ -119,8 +118,7 @@ class MessageHelper {
     return _messages;
   }
 
-  static Future<void> bulkDownloadAttachments(
-      Chat chat, List<dynamic> messages) async {
+  static Future<void> bulkDownloadAttachments(Chat chat, List<dynamic> messages) async {
     // Create master list for all the messages and a chat cache
     Map<String, Chat> chats = <String, Chat>{};
 
@@ -175,8 +173,7 @@ class MessageHelper {
   static List<Chat> parseChats(Map<String, dynamic> data) {
     List<Chat> chats = [];
 
-    if (data.containsKey("chats") && data["chats"] != null ||
-        data["chats"].length > 0) {
+    if (data.containsKey("chats") && data["chats"] != null || data["chats"].length > 0) {
       for (int i = 0; i < data["chats"].length; i++) {
         Chat chat = Chat.fromMap(data["chats"][i]);
         chats.add(chat);
@@ -186,8 +183,7 @@ class MessageHelper {
     return chats;
   }
 
-  static Future<void> handleNotification(Message message, Chat chat,
-      {bool force = false}) async {
+  static Future<void> handleNotification(Message message, Chat chat, {bool force = false}) async {
     // See if there is an existing message for the given GUID
     Message existingMessage;
     if (!force) existingMessage = await Message.findOne({"guid": message.guid});
@@ -199,25 +195,19 @@ class MessageHelper {
     NotificationManager().addProcessed(message.guid);
 
     // Handle all the cases that would mean we don't show the notification
-    if (!SettingsManager().settings.finishedSetup)
-      return; // Don't notify if not fully setup
-    if (existingMessage != null || chat.isMuted)
-      return; // Don''t notify if the chat is muted
-    if (message.isFromMe || message.handle == null)
-      return; // Don't notify if the text is from me
-    if (LifeCycleManager().isAlive && CurrentChat.isActive(chat.guid)) {
+    if (!SettingsManager().settings.finishedSetup) return; // Don't notify if not fully setup
+    if (existingMessage != null || chat.isMuted) return; // Don''t notify if the chat is muted
+    if (message.isFromMe || message.handle == null) return; // Don't notify if the text is from me
+
+    CurrentChat currChat = CurrentChat.activeChat;
+    if (LifeCycleManager().isAlive && (currChat == null || currChat.chat.guid == chat.guid)) {
       // Don't notify if the the chat is the active chat
       return;
     }
 
-    String handleAddress;
-    if (message.handle != null) {
-      handleAddress = message.handle.address;
-    }
-
     // Create the notification
-    String contactTitle = await ContactManager().getContactTitle(handleAddress);
-    Contact contact = await ContactManager().getCachedContact(handleAddress);
+    String contactTitle = await ContactManager().getContactTitle(message.handle);
+    Contact contact = await ContactManager().getCachedContact(message.handle);
     String title = await getFullChatTitle(chat);
     String notification = await MessageHelper.getNotificationText(message);
     if (SettingsManager().settings.hideTextPreviews) {
@@ -248,8 +238,7 @@ class MessageHelper {
       return "Interactive: ${MessageHelper.getInteractiveText(message)}";
     }
 
-    if (isNullOrEmpty(message.text, trimString: true) &&
-        !message.hasAttachments) {
+    if (isNullOrEmpty(message.text, trimString: true) && !message.hasAttachments) {
       return "Empty message";
     }
 
@@ -295,12 +284,9 @@ class MessageHelper {
       return "$output: ${attachmentStr.join(attachmentStr.length == 2 ? " & " : ", ")}";
     } else if (![null, ""].contains(message.associatedMessageGuid)) {
       // It's a reaction message, get the "sender"
-      String sender = (message.isFromMe)
-          ? "You"
-          : await formatPhoneNumber(message.handle.address);
+      String sender = (message.isFromMe) ? "You" : await formatPhoneNumber(message.handle.address);
       if (!message.isFromMe && message.handle != null) {
-        Contact contact =
-            await ContactManager().getCachedContact(message.handle.address);
+        Contact contact = await ContactManager().getCachedContact(message.handle);
         if (contact != null) {
           sender = contact.givenName ?? contact.displayName;
         }
@@ -316,32 +302,18 @@ class MessageHelper {
   static bool shouldShowBigEmoji(String text) {
     if (isEmptyString(text)) return false;
 
-    RegExp pattern = new RegExp(
-        r'(\u00a9|\u00ae|[\u2000-\u3300]|\ud83c[\ud000-\udfff]|\ud83d[\ud000-\udfff]|\ud83e[\ud000-\udfff])');
+    RegExp pattern = emojiRegex;
     List<RegExpMatch> matches = pattern.allMatches(text).toList();
     if (matches.isEmpty) return false;
 
-    List<String> items = matches.map((item) => item.group(0)).toList();
-    items = items
-        .map((item) => item.replaceAll(String.fromCharCode(8205), ""))
-        .map((item) => item.replaceAll(String.fromCharCode(55356), ""))
-        .map((item) => item.replaceAll(String.fromCharCode(9794), ""))
-        .map((item) => item.replaceAll(String.fromCharCode(57282), ""))
-        .map((item) => item.replaceAll(String.fromCharCode(57341), ""))
-        .where((item) => item.isNotEmpty)
-        .toList();
+    List<String> items = matches.map((m) => m.toString()).toList();
 
-    String replaced = text
-        .replaceAll(pattern, "")
-        .replaceAll(String.fromCharCode(65039), "")
-        .trim();
-
+    String replaced = text.replaceAll(pattern, "").replaceAll(String.fromCharCode(65039), "").trim();
     return items.length <= 3 && replaced.isEmpty;
   }
 
   /// Removes duplicate associated message guids from a list of [associatedMessages]
-  static List<Message> normalizedAssociatedMessages(
-      List<Message> associatedMessages) {
+  static List<Message> normalizedAssociatedMessages(List<Message> associatedMessages) {
     Set<int> guids = associatedMessages.map((e) => e.handleId ?? 0).toSet();
     List<Message> normalized = [];
 
@@ -377,27 +349,42 @@ class MessageHelper {
     return (items.length > 0) ? items[0] : val;
   }
 
-  // static List<TextSpan> buildEmojiText(String text, TextStyle style) {
-  //   final children = <TextSpan>[];
-  //   final runes = text.runes;
+  static bool withinTimeThreshold(Message first, Message second, {threshold: 5}) {
+    if (first == null || second == null) return false;
+    return second.dateCreated.difference(first.dateCreated).inMinutes.abs() > threshold;
+  }
 
-  //   for (int i = 0; i < runes.length; /* empty */) {
-  //     int current = runes.elementAt(i);
-  //     final isEmoji = current > 255;
-  //     final shouldBreak = isEmoji ? (x) => x <= 255 : (x) => x > 255;
+  static bool getShowTail(Message message, Message newerMessage) =>
+      MessageHelper.withinTimeThreshold(message, newerMessage, threshold: 1) ||
+      !sameSender(message, newerMessage) ||
+      (message.isFromMe &&
+          newerMessage.isFromMe &&
+          message.dateDelivered != null &&
+          newerMessage.dateDelivered == null);
 
-  //     final chunk = <int>[];
-  //     while (!shouldBreak(current)) {
-  //       chunk.add(current);
-  //       if (++i >= runes.length) break;
-  //       current = runes.elementAt(i);
-  //     }
+  static bool getShowTailReversed(Message message, Message olderMessage) => getShowTail(message, olderMessage);
 
-  //     children.add(
-  //       TextSpan(text: String.fromCharCodes(chunk), style: style),
-  //     );
-  //   }
+// static List<TextSpan> buildEmojiText(String text, TextStyle style) {
+//   final children = <TextSpan>[];
+//   final runes = text.runes;
 
-  //   return children;
-  // }
+//   for (int i = 0; i < runes.length; /* empty */) {
+//     int current = runes.elementAt(i);
+//     final isEmoji = current > 255;
+//     final shouldBreak = isEmoji ? (x) => x <= 255 : (x) => x > 255;
+
+//     final chunk = <int>[];
+//     while (!shouldBreak(current)) {
+//       chunk.add(current);
+//       if (++i >= runes.length) break;
+//       current = runes.elementAt(i);
+//     }
+
+//     children.add(
+//       TextSpan(text: String.fromCharCodes(chunk), style: style),
+//     );
+//   }
+
+//   return children;
+// }
 }

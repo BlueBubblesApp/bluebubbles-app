@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 class ContactAvatarWidgetState {
   MemoryImage contactImage;
   String initials;
+
   ContactAvatarWidgetState({
     this.initials,
     this.contactImage,
@@ -94,20 +95,18 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget>
         !force) return;
     state.initials = await getInitials(handle: widget.handle);
 
-    Contact contact =
-        await ContactManager().getCachedContact(widget.handle.address);
+    Contact contact = await ContactManager().getCachedContact(widget.handle);
 
     if (contact == null) {
       List<Contact> contactRes = [];
+      List<Contact> contacts = ContactManager().contacts ?? [];
       if (widget.handle.address.contains("@")) {
-        contactRes = ContactManager()
-            .contacts
+        contactRes = contacts
             .where((element) =>
                 element.emails.any((e) => e.value == widget.handle.address))
             .toList();
       } else {
-        contactRes = ContactManager()
-            .contacts
+        contactRes = contacts
             .where((element) =>
                 element.phones.any((e) => e.value == widget.handle.address))
             .toList();
@@ -136,7 +135,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget>
 
   Future<String> getInitials({Handle handle, double size = 30}) async {
     if (handle == null) return null;
-    String name = await ContactManager().getContactTitle(handle.address);
+    String name = await ContactManager().getContactTitle(handle);
     if (name.contains("@")) return name[0].toUpperCase();
 
     // Check if it's just a regular number, no contact
@@ -209,6 +208,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget>
         height: widget.size ?? 40,
       );
     }
+
     Color color1 = colors.length > 0 ? colors[0] : null;
     Color color2 = colors.length > 0 ? colors[1] : null;
     if (color1 == null ||
@@ -218,19 +218,25 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget>
       color2 = HexColor("928E8E");
     }
 
+    final bool hideLetterAvatars = SettingsManager().settings.redactedMode &&
+        SettingsManager().settings.removeLetterAvatars;
+    final bool hideAvatars = SettingsManager().settings.redactedMode &&
+        SettingsManager().settings.hideContactPhotos;
+
     return GestureDetector(
         onTap: onAvatarTap,
         child: Container(
           width: widget.size ?? 40,
           height: widget.size ?? 40,
-          padding: EdgeInsets.all(widget.borderThickness), // borde width
+          padding: EdgeInsets.all(widget.borderThickness),
+          // borde width
           decoration: new BoxDecoration(
             color: Theme.of(context).backgroundColor, // border color
             shape: BoxShape.circle,
           ),
           child: CircleAvatar(
             radius: (widget.size != null) ? widget.size / 2 : 20,
-            child: state.contactImage == null
+            child: state.contactImage == null || hideAvatars
                 ? Container(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
@@ -240,7 +246,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget>
                       borderRadius: BorderRadius.circular(30),
                     ),
                     child: Container(
-                      child: state.initials == null
+                      child: state.initials == null || hideLetterAvatars
                           ? Icon(
                               Icons.person,
                               size: (widget.size ?? 40) / 2,

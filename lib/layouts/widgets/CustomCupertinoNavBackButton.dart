@@ -1,19 +1,14 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-class CustomCupertinoNavigationBarBackButton
-    extends CupertinoNavigationBarBackButton {
+class CustomCupertinoNavigationBarBackButton extends CupertinoNavigationBarBackButton {
   /// Construct a [CustomCupertinoNavigationBarBackButton] that can be used to pop
   /// the current route.
   ///
   /// The [color] parameter must not be null.
-  const CustomCupertinoNavigationBarBackButton({
-    Key key,
-    this.color,
-    this.previousPageTitle,
-    this.onPressed,
-    this.notifications
-  })  : _backChevron = null,
+  const CustomCupertinoNavigationBarBackButton(
+      {Key key, this.color, this.previousPageTitle, this.onPressed, this.notifications})
+      : _backChevron = null,
         _backLabel = null,
         super(key: key);
 
@@ -55,11 +50,9 @@ class CustomCupertinoNavigationBarBackButton
       );
     }
 
-    TextStyle actionTextStyle =
-        CupertinoTheme.of(context).textTheme.navActionTextStyle;
+    TextStyle actionTextStyle = CupertinoTheme.of(context).textTheme.navActionTextStyle;
     if (color != null) {
-      actionTextStyle = actionTextStyle.copyWith(
-          color: CupertinoDynamicColor.resolve(color, context));
+      actionTextStyle = actionTextStyle.copyWith(color: CupertinoDynamicColor.resolve(color, context));
     }
 
     return CupertinoButton(
@@ -84,14 +77,11 @@ class CustomCupertinoNavigationBarBackButton
                     : Container(
                         width: 20.0,
                         height: 20.0,
-                        decoration: BoxDecoration(
-                            color: Theme.of(context).primaryColor,
-                            shape: BoxShape.circle),
+                        decoration: BoxDecoration(color: Theme.of(context).primaryColor, shape: BoxShape.circle),
                         child: Center(
-                          child: Text(notifications.toString(),
-                            textAlign: TextAlign.center,
-                            style: TextStyle(color: Colors.white, fontSize: 10.0))),
-                    ),
+                            child: Text(notifications.toString(),
+                                textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 10.0))),
+                      ),
                 Flexible(
                   child: _backLabel ??
                       _BackLabel(
@@ -169,8 +159,7 @@ class _BackLabel extends StatelessWidget {
 
   // `child` is never passed in into ValueListenableBuilder so it's always
   // null here and unused.
-  Widget _buildPreviousTitleWidget(
-      BuildContext context, String previousTitle, Widget child) {
+  Widget _buildPreviousTitleWidget(BuildContext context, String previousTitle, Widget child) {
     if (previousTitle == null) {
       return const SizedBox(height: 0.0, width: 0.0);
     }
@@ -197,8 +186,7 @@ class _BackLabel extends StatelessWidget {
     if (specifiedPreviousTitle != null) {
       return _buildPreviousTitleWidget(context, specifiedPreviousTitle, null);
     } else if (route is CupertinoPageRoute<dynamic> && !route.isFirst) {
-      final CupertinoPageRoute<dynamic> cupertinoRoute =
-          route as CupertinoPageRoute<dynamic>;
+      final CupertinoPageRoute<dynamic> cupertinoRoute = route as CupertinoPageRoute<dynamic>;
       // There is no timing issue because the previousTitle Listenable changes
       // happen during route modifications before the ValueListenableBuilder
       // is built.

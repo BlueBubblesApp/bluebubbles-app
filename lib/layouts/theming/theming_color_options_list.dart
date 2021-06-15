@@ -1,22 +1,20 @@
-import 'package:bluebubbles/helpers/contstants.dart';
+import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/layouts/theming/theming_color_selector.dart';
 import 'package:bluebubbles/layouts/theming/theming_panel.dart';
-import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
+import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/theme_object.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class ThemingColorOptionsList extends StatefulWidget {
-  ThemingColorOptionsList({Key key, this.isDarkMode, this.controller})
-      : super(key: key);
+  ThemingColorOptionsList({Key key, this.isDarkMode, this.controller}) : super(key: key);
   final bool isDarkMode;
   final EditController controller;
 
   @override
-  _ThemingColorOptionsListState createState() =>
-      _ThemingColorOptionsListState();
+  _ThemingColorOptionsListState createState() => _ThemingColorOptionsListState();
 }
 
 class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
@@ -44,16 +42,13 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
         builder: (context) => NewThemeCreateAlert(
           onCreate: (String name) async {
             Navigator.of(context).pop();
-            ThemeObject newTheme =
-                new ThemeObject(data: currentTheme.themeData, name: name);
+            ThemeObject newTheme = new ThemeObject(data: currentTheme.themeData, name: name);
             allThemes.add(newTheme);
             currentTheme = newTheme;
             if (widget.isDarkMode) {
-              await SettingsManager()
-                  .saveSelectedTheme(_context, selectedDarkTheme: currentTheme);
+              await SettingsManager().saveSelectedTheme(_context, selectedDarkTheme: currentTheme);
             } else {
-              await SettingsManager().saveSelectedTheme(_context,
-                  selectedLightTheme: currentTheme);
+              await SettingsManager().saveSelectedTheme(_context, selectedLightTheme: currentTheme);
             }
             setState(() {});
           },
@@ -89,14 +84,11 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
     editable = currentTheme != null && !currentTheme.isPreset;
     return currentTheme != null
         ? CustomScrollView(
-            physics: AlwaysScrollableScrollPhysics(
-              parent: CustomBouncingScrollPhysics(),
-            ),
+            physics: ThemeSwitcher.getScrollPhysics(),
             slivers: <Widget>[
               SliverToBoxAdapter(
                 child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 20),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 20),
                   child: Container(
                     child: Text(
                       widget.isDarkMode ? "Dark Theme" : "Light Theme",
@@ -128,15 +120,12 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
                           value.data = value.themeData;
                           await value.save();
                           if (widget.isDarkMode) {
-                            SettingsManager().saveSelectedTheme(context,
-                                selectedDarkTheme: value);
+                            SettingsManager().saveSelectedTheme(context, selectedDarkTheme: value);
                           } else {
-                            SettingsManager().saveSelectedTheme(context,
-                                selectedLightTheme: value);
+                            SettingsManager().saveSelectedTheme(context, selectedLightTheme: value);
                           }
                           currentTheme = value;
-                          editable =
-                              currentTheme != null && !currentTheme.isPreset;
+                          editable = currentTheme != null && !currentTheme.isPreset;
                           setState(() {});
                         },
                         value: currentTheme,
@@ -173,19 +162,15 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
                     ),
                     color: whiteLightTheme.accentColor,
                     onPressed: () async {
-                      allThemes.removeWhere(
-                          (element) => element == this.currentTheme);
+                      allThemes.removeWhere((element) => element == this.currentTheme);
                       await this.currentTheme.delete();
-                      this.currentTheme = widget.isDarkMode
-                          ? await ThemeObject.getDarkTheme()
-                          : await ThemeObject.getLightTheme();
+                      this.currentTheme =
+                          widget.isDarkMode ? await ThemeObject.getDarkTheme() : await ThemeObject.getLightTheme();
                       allThemes = await ThemeObject.getThemes();
                       if (widget.isDarkMode) {
-                        await SettingsManager().saveSelectedTheme(context,
-                            selectedDarkTheme: currentTheme);
+                        await SettingsManager().saveSelectedTheme(context, selectedDarkTheme: currentTheme);
                       } else {
-                        await SettingsManager().saveSelectedTheme(context,
-                            selectedLightTheme: currentTheme);
+                        await SettingsManager().saveSelectedTheme(context, selectedLightTheme: currentTheme);
                       }
                       setState(() {});
                     },
@@ -206,8 +191,7 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
 }
 
 class NewThemeCreateAlert extends StatefulWidget {
-  NewThemeCreateAlert({Key key, this.onCreate, this.onCancel})
-      : super(key: key);
+  NewThemeCreateAlert({Key key, this.onCreate, this.onCancel}) : super(key: key);
   final Function(String name) onCreate;
   final Function() onCancel;
 
@@ -226,9 +210,7 @@ class _NewThemeCreateAlertState extends State<NewThemeCreateAlert> {
         FlatButton(
           child: Text("OK"),
           onPressed: () async {
-            if ((await ThemeObject.findOne({"name": controller.text})) !=
-                    null ||
-                controller.text.isEmpty) {
+            if ((await ThemeObject.findOne({"name": controller.text})) != null || controller.text.isEmpty) {
               setState(() {
                 showError = true;
               });

@@ -4,6 +4,7 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:contacts_service/contacts_service.dart';
+import 'package:faker/faker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -18,25 +19,30 @@ class ContactManager {
 
   StreamController<Map<String, Color>> _colorStream =
       new StreamController.broadcast();
+
   Stream<Map<String, Color>> get colorStream => _colorStream.stream;
+
   StreamController<Map<String, Color>> get colorStreamObject => _colorStream;
 
   Stream<List<String>> get stream => _stream.stream;
 
   ContactManager._internal();
+
   List<Contact> contacts;
   Map<String, Contact> handleToContact = new Map();
+  Map<String, String> handleToFakeName = new Map();
   Map<String, ContactAvatarWidgetState> contactWidgetStates = new Map();
 
   // We need these so we don't have threads fetching at the same time
   Completer getContactsFuture;
   Completer getAvatarsFuture;
+  int lastRefresh = 0;
 
-  Future<Contact> getCachedContact(String address) async {
-    if (contacts == null || !handleToContact.containsKey(address))
-      await getContacts();
-    if (!handleToContact.containsKey(address)) return null;
-    return handleToContact[address];
+  Future<Contact> getCachedContact(Handle handle) async {
+    if (handle == null) return null;
+    if (contacts == null) await getContacts();
+    if (!handleToContact.containsKey(handle.address)) return null;
+    return handleToContact[handle.address];
   }
 
   Contact getCachedContactSync(String address) {
@@ -45,31 +51,49 @@ class ContactManager {
   }
 
   Future<bool> canAccessContacts() async {
-    bool output = false;
-
     try {
-      bool granted = await Permission.contacts.isGranted;
-      if (granted) return true;
+      PermissionStatus status = await Permission.contacts.status;
+      if (status.isGranted) return true;
+      debugPrint(
+          "[ContactManager] -> Contacts Permission Status: ${status.toString()}");
 
-      bool totallyDisabled = await Permission.contacts.isPermanentlyDenied;
-      if (!totallyDisabled) {
-        return await Permission.contacts.request().isGranted;
+      // If it's not permanently denied, request access
+      if (!status.isPermanentlyDenied) {
+        return (await Permission.contacts.request()).isGranted;
       }
+
+      debugPrint(
+          "[ContactManager] -> Contacts permissions are permanently denied...");
     } catch (ex) {
-      debugPrint("Error getting access to contacts!");
+      debugPrint("[ContactManager] -> Error getting access to contacts!");
       debugPrint(ex.toString());
     }
 
-    return output;
+    return false;
   }
 
-  Future getContacts({bool headless = false}) async {
-    if (!(await canAccessContacts())) return false;
-
+  Future getContacts({bool headless = false, bool force = false}) async {
     // If we are fetching the contacts, return the current future so we can await it
     if (getContactsFuture != null && !getContactsFuture.isCompleted) {
+      debugPrint(
+          "[ContactManager] -> Already fetching contacts, returning future...");
       return getContactsFuture.future;
     }
+
+    // Check if we've requested sometime in the last 5 minutes
+    // If we have, exit, we don't need to re-fetch the chats again
+    int now = DateTime.now().toUtc().millisecondsSinceEpoch;
+    if (!force && lastRefresh != 0 && now < lastRefresh + (60000 * 5)) {
+      debugPrint(
+          "[ContactManager] -> Not fetching contacts; Not enough time has elapsed");
+      return;
+    }
+
+    // Make sure we have contacts access
+    if (!(await canAccessContacts())) return false;
+
+    // Set the last refresh time
+    lastRefresh = now;
 
     // Start a new completer
     getContactsFuture = new Completer<bool>();
@@ -80,14 +104,29 @@ class ContactManager {
         ((await ContactsService.getContacts(withThumbnails: false)) ?? [])
             .toList();
 
+    // Match handles in the database with contacts
+    await this.matchHandles();
+
+    debugPrint(
+        "ContactManager -> Finished fetching contacts (${handleToContact.length})");
+    getContactsFuture.complete(true);
+
+    // Lazy load thumbnails after rendering initial contacts.
+    getAvatars();
+    return true;
+  }
+
+  Future<void> matchHandles() async {
     // Match handles to contacts
     List<Handle> handles = await Handle.find({});
     for (Handle handle in handles) {
       // If we already have a "match", skip
-      if (handleToContact.containsKey(handle.address)) continue;
+      if (handleToContact.containsKey(handle.address)) {
+        continue;
+      }
 
       // Find a contact match
-      Contact contactMatch = await getContact(handle.address);
+      Contact contactMatch = await getContact(handle);
       handleToContact[handle.address] = contactMatch;
 
       // If we have a match, add it to the mapping, then break out
@@ -97,12 +136,11 @@ class ContactManager {
       }
     }
 
-    debugPrint("ContactManager -> Finished fetching contacts (${handleToContact.length})");
-    getContactsFuture.complete(true);
-
-    // Lazy load thumbnails after rendering initial contacts.
-    getAvatars();
-    return true;
+    handleToFakeName = Map.fromEntries(handleToContact.entries.map((entry) =>
+        !handleToFakeName.keys.contains(entry.key) ||
+                handleToFakeName[entry.key] == null
+            ? MapEntry(entry.key, faker.person.name())
+            : MapEntry(entry.key, handleToFakeName[entry.key])));
   }
 
   Future<void> getAvatars() async {
@@ -135,9 +173,17 @@ class ContactManager {
     getAvatarsFuture.complete();
   }
 
-  Future<Contact> getContact(String address, {bool fetchAvatar = false}) async {
-    if (address == null) return null;
+  Future<Contact> getContact(Handle handle, {bool fetchAvatar = false}) async {
+    if (handle == null) return null;
     Contact contact;
+
+    // Get a list of comparable options
+    dynamic opts = await getCompareOpts(handle);
+    bool isEmail = handle.address.contains('@');
+    String lastDigits = handle.address.length < 4
+        ? handle.address
+        : handle.address
+            .substring(handle.address.length - 4, handle.address.length);
 
     // If the contact list is null, get the contacts
     try {
@@ -148,24 +194,31 @@ class ContactManager {
 
     for (Contact c in contacts ?? []) {
       // Get a phone number match
-      for (Item item in c?.phones ?? []) {
-        if (sameAddress(item.value, address)) {
-          contact = c;
-          break;
+      if (!isEmail) {
+        for (Item item in c?.phones ?? []) {
+          if (!item.value.endsWith(lastDigits)) continue;
+
+          if (sameAddress(opts, item.value)) {
+            contact = c;
+            break;
+          }
         }
       }
 
       // Get an email match
-      for (Item item in c?.emails ?? []) {
-        if (item.value == address) {
-          contact = c;
-          break;
+      if (isEmail) {
+        for (Item item in c?.emails ?? []) {
+          if (item.value == handle.address) {
+            contact = c;
+            break;
+          }
         }
       }
 
       // If we have a match, break out of the loop
       if (contact != null) break;
     }
+
     if (fetchAvatar) {
       contact.avatar =
           await ContactsService.getAvatar(contact, photoHighRes: false);
@@ -174,14 +227,15 @@ class ContactManager {
     return contact;
   }
 
-  Future<String> getContactTitle(String address) async {
-    if (address == null) return "You";
+  Future<String> getContactTitle(Handle handle) async {
+    if (handle == null) return "You";
     if (contacts == null) await getContacts();
 
+    String address = handle.address;
     if (handleToContact.containsKey(address) &&
         handleToContact[address] != null)
       return handleToContact[address].displayName;
-    Contact contact = await getContact(address);
+    Contact contact = await getContact(handle);
     if (contact != null && contact.displayName != null)
       return contact.displayName;
     String contactTitle = address;
