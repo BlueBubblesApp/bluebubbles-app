@@ -42,7 +42,7 @@ class _VideoWidgetState extends State<VideoWidget> with TickerProviderStateMixin
   @override
   void initState() {
     super.initState();
-    Map<String, VideoPlayerController> controllers = CurrentChat.of(context).currentPlayingVideo;
+    Map<String, VideoPlayerController> controllers = CurrentChat.of(context).currentPlayingVideo ?? {};
     showPlayPauseOverlay = controllers == null ||
         !controllers.containsKey(widget.attachment.guid) ||
         !controllers[widget.attachment.guid].value.isPlaying;
