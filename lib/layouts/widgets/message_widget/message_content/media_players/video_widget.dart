@@ -90,9 +90,10 @@ class _VideoWidgetState extends State<VideoWidget> with TickerProviderStateMixin
     thumbnail = await VideoThumbnail.thumbnailData(
       video: widget.file.path,
       imageFormat: ImageFormat.JPEG,
-      quality: 25,
+      quality: SettingsManager().compressionQuality,
     );
-    CurrentChat.of(context).saveImageData(thumbnail, widget.attachment);
+
+    CurrentChat.of(context)?.saveImageData(thumbnail, widget.attachment);
     if (this.mounted) this.setState(() {});
   }
 

@@ -79,19 +79,20 @@ class _PrivateAPIPanelState extends State<PrivateAPIPanel> {
         SettingsSwitch(
           onChanged: (bool val) {
             _settingsCopy.privateMarkChatAsRead = val;
-            saveSettings();
+            saveSettings(updateState: true);
           },
           initialVal: _settingsCopy.privateMarkChatAsRead,
           title: "Mark Chats as Read / Send Read Receipts",
         ),
-        SettingsSwitch(
-          onChanged: (bool val) {
-            _settingsCopy.privateManualMarkAsRead = val;
-            saveSettings();
-          },
-          initialVal: _settingsCopy.privateManualMarkAsRead,
-          title: "Show Manually Mark Chat as Read Button",
-        ),
+        if (!_settingsCopy.privateMarkChatAsRead)
+          SettingsSwitch(
+            onChanged: (bool val) {
+              _settingsCopy.privateManualMarkAsRead = val;
+              saveSettings();
+            },
+            initialVal: _settingsCopy.privateManualMarkAsRead,
+            title: "Show Manually Mark Chat as Read Button",
+          ),
       ]);
     }
 
@@ -180,8 +181,11 @@ class _PrivateAPIPanelState extends State<PrivateAPIPanel> {
     );
   }
 
-  void saveSettings() {
-    SettingsManager().saveSettings(_settingsCopy);
+  void saveSettings({bool updateState = false}) async {
+    await SettingsManager().saveSettings(_settingsCopy);
+    if (updateState && this.mounted) {
+      this.setState(() {});
+    }
   }
 
   @override
