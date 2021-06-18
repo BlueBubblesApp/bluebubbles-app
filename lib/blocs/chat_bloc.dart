@@ -157,6 +157,21 @@ class ChatBloc {
     await updateShareTarget(chat);
   }
 
+  Future<void> markAllAsRead() async {
+    // Enumerate the unread chats
+    List<Chat> unread = this.chats.where((element) => element.hasUnreadMessage).toList();
+
+    // Mark them as unread
+    for (Chat chat in unread) {
+      await chat.setUnreadStatus(false);
+    }
+
+    // Update their position in the chat list
+    for (Chat chat in unread) {
+      this.updateChatPosition(chat);
+    }
+  }
+
   Future<void> updateAllShareTargets() async {
     List<Chat> chats = this.chats.sublist(0);
     chats.sort(Chat.sort);
