@@ -38,7 +38,7 @@ class CircleProgressBarState extends State<CircleProgressBar> with SingleTickerP
     super.initState();
 
     this._controller = AnimationController(
-      duration: this.widget.animationDuration ?? const Duration(seconds: 1),
+      duration: this.widget.animationDuration ?? const Duration(milliseconds: 250),
       vsync: this,
     );
 

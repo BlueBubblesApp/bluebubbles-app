@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/layouts/image_viewer/attachmet_fullscreen_viewer.dart';
+import 'package:bluebubbles/layouts/widgets/circle_progress_bar.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/regular_file_opener.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
@@ -113,13 +114,20 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
                   : StreamBuilder<Object>(
                       stream: SocketManager().attachmentDownloaders[attachment.guid].stream,
                       builder: (context, snapshot) {
-                        return CircularProgressIndicator(
-                          backgroundColor: Colors.grey,
-                          valueColor: AlwaysStoppedAnimation(Colors.white),
-                          value: snapshot.hasData && snapshot.data is Map
-                              ? (snapshot.data as Map<String, double>)["Progress"]
-                              : 0,
-                        );
+                        double value = 0;
+                        if (snapshot.hasData) {
+                          if (snapshot.data is Map) {
+                            value = (snapshot.data as Map<String, num>)["progress"].toDouble();
+                          } else if (snapshot.data is File) {
+                            value = 1;
+                          }
+                        }
+
+                        return Container(
+                            height: 40,
+                            width: 40,
+                            child: CircleProgressBar(
+                                foregroundColor: Colors.white, backgroundColor: Colors.grey, value: value));
                       },
                     ),
             ],
