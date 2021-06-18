@@ -64,7 +64,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
     fetchReactions();
 
     // Animate showing the copy menu, slightly delayed
-    Future.delayed(Duration(milliseconds: 200), () {
+    Future.delayed(Duration(milliseconds: 400), () {
       if (this.mounted)
         setState(() {
           showTools = true;
