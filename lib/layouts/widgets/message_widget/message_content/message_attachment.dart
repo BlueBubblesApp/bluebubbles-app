@@ -10,6 +10,7 @@ import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/location_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/regular_file_opener.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/video_widget.dart';
+import 'package:bluebubbles/layouts/widgets/circle_progress_bar.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/cupertino.dart';
@@ -178,10 +179,14 @@ class _MessageAttachmentState extends State<MessageAttachment> with AutomaticKee
                   Column(
                     children: <Widget>[
                       Center(
-                        child: CircularProgressIndicator(
-                          value: progress == 1.0 ? null : (progress ?? 0),
-                          backgroundColor: Colors.grey,
-                          valueColor: AlwaysStoppedAnimation(Colors.white),
+                        child: Container(
+                          height: 40,
+                          width: 40,
+                          child: CircleProgressBar(
+                            value: progress == 1.0 ? null : (progress ?? 0),
+                            backgroundColor: Colors.grey,
+                            foregroundColor: Colors.white,
+                          ),
                         ),
                       ),
                       ((content as AttachmentDownloader).attachment.mimeType != null)
