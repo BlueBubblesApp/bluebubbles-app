@@ -81,7 +81,7 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
       onDoubleTap: SettingsManager().settings.doubleTapForDetails && !widget.message.guid.startsWith('temp')
           ? this.openMessageDetails
           : null,
-      onLongPress: (widget.message.guid.startsWith('temp')) ? null : this.openMessageDetails,
+      onLongPress: this.openMessageDetails,
       child: Opacity(
         child: widget.child,
         opacity: visible ? 1 : 0,

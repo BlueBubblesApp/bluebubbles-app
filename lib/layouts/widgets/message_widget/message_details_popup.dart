@@ -144,6 +144,8 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
 
   @override
   Widget build(BuildContext context) {
+    bool isSent = !widget.message.guid.startsWith('temp') && !widget.message.guid.startsWith('error');
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: Theme.of(context).backgroundColor,
@@ -216,7 +218,8 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                       : Container(),
                 ),
               ),
-              if (SettingsManager().settings.enablePrivateAPI) buildReactionMenu(),
+              // Only show the reaction menu if it's enabled and the message isn't temporary
+              if (SettingsManager().settings.enablePrivateAPI && isSent) buildReactionMenu(),
               buildCopyPasteMenu(),
             ],
           ),
