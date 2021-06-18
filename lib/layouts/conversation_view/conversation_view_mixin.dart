@@ -264,7 +264,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
   Widget buildCupertinoTrailing() {
     Color fontColor = Theme.of(context).textTheme.headline1.color;
     bool manualMark = SettingsManager().settings.enablePrivateAPI && SettingsManager().settings.privateManualMarkAsRead;
-    bool showManual = !SettingsManager().settings.privateMarkChatAsRead && !widget.chat.isGroup();
+    bool showManual = !SettingsManager().settings.privateMarkChatAsRead && !(widget.chat?.isGroup() ?? false);
     List<Widget> items = [
       if (showManual && manualMark && markingAsRead)
         Padding(
