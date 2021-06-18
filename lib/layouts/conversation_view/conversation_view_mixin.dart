@@ -264,8 +264,9 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
   Widget buildCupertinoTrailing() {
     Color fontColor = Theme.of(context).textTheme.headline1.color;
     bool manualMark = SettingsManager().settings.enablePrivateAPI && SettingsManager().settings.privateManualMarkAsRead;
+    bool showManual = !SettingsManager().settings.privateMarkChatAsRead && !widget.chat.isGroup();
     List<Widget> items = [
-      if (manualMark && markingAsRead)
+      if (showManual && manualMark && markingAsRead)
         Padding(
             padding: EdgeInsets.only(right: SettingsManager().settings.colorblindMode ? 15.0 : 10.0),
             child: Theme(
@@ -276,7 +277,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
                 radius: 12,
               ),
             )),
-      if (manualMark && !markingAsRead)
+      if (showManual && manualMark && !markingAsRead)
         Padding(
           padding: EdgeInsets.only(right: SettingsManager().settings.colorblindMode ? 10.0 : 5.0),
           child: GestureDetector(

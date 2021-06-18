@@ -50,15 +50,16 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
       context,
       PageRouteBuilder(
         settings: RouteSettings(arguments: {"hideTail": true}),
-        transitionDuration: Duration(milliseconds: 0),
         pageBuilder: (context, animation, secondaryAnimation) {
-          return MessageDetailsPopup(
-            currentChat: currentChat,
-            child: widget.child,
-            childOffset: childOffset,
-            childSize: childSize,
-            message: widget.message,
-          );
+          return FadeTransition(
+              opacity: animation,
+              child: MessageDetailsPopup(
+                currentChat: currentChat,
+                child: widget.child,
+                childOffset: childOffset,
+                childSize: childSize,
+                message: widget.message,
+              ));
         },
         fullscreenDialog: true,
         opaque: false,

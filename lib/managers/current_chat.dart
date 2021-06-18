@@ -81,7 +81,7 @@ class CurrentChat {
         tryUpdateMessageMarkers(msgEvent.event["message"]);
       }
 
-      if (messageMarkerStream.isClosed) {
+      if (!messageMarkerStream.isClosed) {
         messageMarkerStream.sink.add({"myLastMessage": this.myLastMessage, "lastReadMessage": this.lastReadMessage});
       }
     });
@@ -148,7 +148,9 @@ class CurrentChat {
         _showScrollDown = false;
       }
 
-      showScrollDownStream.sink.add(_showScrollDown);
+      if (!showScrollDownStream.isClosed) {
+        showScrollDownStream.sink.add(_showScrollDown);
+      }
     });
   }
 
