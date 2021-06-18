@@ -7,6 +7,7 @@ import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class CameraWidget extends StatefulWidget {
   final Function addAttachment;
@@ -140,6 +141,8 @@ class _CameraWidgetState extends State<CameraWidget> with WidgetsBindingObserver
             child: FlatButton(
               color: Colors.transparent,
               onPressed: () async {
+                HapticFeedback.mediumImpact();
+
                 XFile savedImage = await controller.takePicture();
                 File file = new File(savedImage.path);
 
@@ -177,6 +180,7 @@ class _CameraWidgetState extends State<CameraWidget> with WidgetsBindingObserver
             minWidth: 30,
             color: Colors.transparent,
             onPressed: () async {
+              HapticFeedback.lightImpact();
               await this.openFullCamera(type: 'camera');
             },
             child: Icon(
@@ -198,6 +202,7 @@ class _CameraWidgetState extends State<CameraWidget> with WidgetsBindingObserver
             minWidth: 30,
             color: Colors.transparent,
             onPressed: () async {
+              HapticFeedback.lightImpact();
               await this.openFullCamera(type: 'video');
             },
             child: Icon(
@@ -219,8 +224,8 @@ class _CameraWidgetState extends State<CameraWidget> with WidgetsBindingObserver
           onPressed: () async {
             if (BlueBubblesTextField.of(context) == null) return;
 
+            HapticFeedback.lightImpact();
             BlueBubblesTextField.of(context).cameraIndex = (BlueBubblesTextField.of(context).cameraIndex - 1).abs();
-
             await BlueBubblesTextField.of(context).initializeCameraController();
             if (this.mounted) setState(() {});
           },
