@@ -2,10 +2,12 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:bluebubbles/helpers/attachment_helper.dart';
+import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/share.dart';
 import 'package:bluebubbles/layouts/image_viewer/attachmet_fullscreen_viewer.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -87,142 +89,156 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
       opacity: showOverlay ? 1.0 : 0.0,
       duration: Duration(milliseconds: 125),
       child: Container(
-        height: 150.0,
-        width: MediaQuery.of(context).size.width,
-        color: Colors.black.withOpacity(0.65),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
+          height: 150.0,
+          width: MediaQuery.of(context).size.width,
+          color: Colors.black.withOpacity(0.65),
+          child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
             Padding(
-              padding: EdgeInsets.only(top: 40.0),
+              padding: EdgeInsets.only(top: 40.0, left: 5),
               child: CupertinoButton(
                 padding: EdgeInsets.symmetric(horizontal: 5),
                 onPressed: () async {
-                  List<Widget> metaWidgets = [];
-                  for (var entry in widget.attachment.metadata?.entries ?? {}.entries) {
-                    metaWidgets.add(RichText(
-                        text: TextSpan(children: [
-                      TextSpan(
-                          text: "${entry.key}: ",
-                          style: Theme.of(context).textTheme.bodyText1.apply(fontWeightDelta: 2)),
-                      TextSpan(text: entry.value.toString(), style: Theme.of(context).textTheme.bodyText1)
-                    ])));
-                  }
+                  Navigator.pop(context);
+                },
+                child: Icon(
+                  SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_back_ios : Icons.arrow_back,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Padding(
+                  padding: EdgeInsets.only(top: 40.0),
+                  child: CupertinoButton(
+                    padding: EdgeInsets.symmetric(horizontal: 5),
+                    onPressed: () async {
+                      List<Widget> metaWidgets = [];
+                      for (var entry in widget.attachment.metadata?.entries ?? {}.entries) {
+                        metaWidgets.add(RichText(
+                            text: TextSpan(children: [
+                          TextSpan(
+                              text: "${entry.key}: ",
+                              style: Theme.of(context).textTheme.bodyText1.apply(fontWeightDelta: 2)),
+                          TextSpan(text: entry.value.toString(), style: Theme.of(context).textTheme.bodyText1)
+                        ])));
+                      }
 
-                  if (metaWidgets.length == 0) {
-                    metaWidgets.add(Text(
-                      "No metadata available",
-                      style: Theme.of(context).textTheme.bodyText1.apply(fontWeightDelta: 2),
-                      textAlign: TextAlign.center,
-                    ));
-                  }
+                      if (metaWidgets.length == 0) {
+                        metaWidgets.add(Text(
+                          "No metadata available",
+                          style: Theme.of(context).textTheme.bodyText1.apply(fontWeightDelta: 2),
+                          textAlign: TextAlign.center,
+                        ));
+                      }
 
-                  showDialog(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                      title: Text(
-                        "Metadata",
-                        style: Theme.of(context).textTheme.headline1,
-                        textAlign: TextAlign.center,
-                      ),
-                      backgroundColor: Theme.of(context).accentColor,
-                      content: SizedBox(
-                        width: MediaQuery.of(context).size.width * 3 / 5,
-                        height: MediaQuery.of(context).size.height * 1 / 4,
-                        child: Container(
-                          padding: EdgeInsets.all(10.0),
-                          decoration: BoxDecoration(
-                              color: Theme.of(context).backgroundColor,
-                              borderRadius: BorderRadius.all(Radius.circular(10))),
-                          child: ListView(
-                            physics: AlwaysScrollableScrollPhysics(
-                              parent: BouncingScrollPhysics(),
-                            ),
-                            children: metaWidgets,
+                      showDialog(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: Text(
+                            "Metadata",
+                            style: Theme.of(context).textTheme.headline1,
+                            textAlign: TextAlign.center,
                           ),
-                        ),
-                      ),
-                      actions: [
-                        FlatButton(
-                          child: Text(
-                            "Close",
-                            style: Theme.of(context).textTheme.bodyText1.copyWith(
-                                  color: Theme.of(context).primaryColor,
+                          backgroundColor: Theme.of(context).accentColor,
+                          content: SizedBox(
+                            width: MediaQuery.of(context).size.width * 3 / 5,
+                            height: MediaQuery.of(context).size.height * 1 / 4,
+                            child: Container(
+                              padding: EdgeInsets.all(10.0),
+                              decoration: BoxDecoration(
+                                  color: Theme.of(context).backgroundColor,
+                                  borderRadius: BorderRadius.all(Radius.circular(10))),
+                              child: ListView(
+                                physics: AlwaysScrollableScrollPhysics(
+                                  parent: BouncingScrollPhysics(),
                                 ),
+                                children: metaWidgets,
+                              ),
+                            ),
                           ),
-                          onPressed: () => Navigator.of(context).pop(),
+                          actions: [
+                            FlatButton(
+                              child: Text(
+                                "Close",
+                                style: Theme.of(context).textTheme.bodyText1.copyWith(
+                                      color: Theme.of(context).primaryColor,
+                                    ),
+                              ),
+                              onPressed: () => Navigator.of(context).pop(),
+                            ),
+                          ],
                         ),
-                      ],
+                      );
+                    },
+                    child: Icon(
+                      Icons.info,
+                      color: Colors.white,
                     ),
-                  );
-                },
-                child: Icon(
-                  Icons.info,
-                  color: Colors.white,
+                  ),
                 ),
-              ),
-            ),
-            Padding(
-              padding: EdgeInsets.only(top: 40.0),
-              child: CupertinoButton(
-                padding: EdgeInsets.symmetric(horizontal: 5),
-                onPressed: () async {
-                  if (context != null) {
-                    CurrentChat.of(context)?.clearImageData(widget.attachment);
-                  }
+                Padding(
+                  padding: EdgeInsets.only(top: 40.0),
+                  child: CupertinoButton(
+                    padding: EdgeInsets.symmetric(horizontal: 5),
+                    onPressed: () async {
+                      if (context != null) {
+                        CurrentChat.of(context)?.clearImageData(widget.attachment);
+                      }
 
-                  final snackBar = SnackBar(content: Text('Redownloading attachment. Please wait...'));
-                  Scaffold.of(context).showSnackBar(snackBar);
+                      final snackBar = SnackBar(content: Text('Redownloading attachment. Please wait...'));
+                      Scaffold.of(context).showSnackBar(snackBar);
 
-                  await AttachmentHelper.redownloadAttachment(widget.attachment, onComplete: () {
-                    initBytes();
-                  }, onError: () {
-                    Navigator.pop(context);
-                  });
+                      await AttachmentHelper.redownloadAttachment(widget.attachment, onComplete: () {
+                        initBytes();
+                      }, onError: () {
+                        Navigator.pop(context);
+                      });
 
-                  bytes = null;
-                  if (this.mounted) setState(() {});
-                },
-                child: Icon(
-                  Icons.refresh,
-                  color: Colors.white,
+                      bytes = null;
+                      if (this.mounted) setState(() {});
+                    },
+                    child: Icon(
+                      Icons.refresh,
+                      color: Colors.white,
+                    ),
+                  ),
                 ),
-              ),
-            ),
-            Padding(
-              padding: EdgeInsets.only(top: 40.0),
-              child: CupertinoButton(
-                padding: EdgeInsets.symmetric(horizontal: 5),
-                onPressed: () async {
-                  await AttachmentHelper.saveToGallery(context, widget.file);
-                },
-                child: Icon(
-                  Icons.file_download,
-                  color: Colors.white,
+                Padding(
+                  padding: EdgeInsets.only(top: 40.0),
+                  child: CupertinoButton(
+                    padding: EdgeInsets.symmetric(horizontal: 5),
+                    onPressed: () async {
+                      await AttachmentHelper.saveToGallery(context, widget.file);
+                    },
+                    child: Icon(
+                      Icons.file_download,
+                      color: Colors.white,
+                    ),
+                  ),
                 ),
-              ),
-            ),
-            Padding(
-              padding: EdgeInsets.only(top: 40.0),
-              child: CupertinoButton(
-                padding: EdgeInsets.symmetric(horizontal: 5),
-                onPressed: () async {
-                  await Share.file(
-                    "Shared ${widget.attachment.mimeType.split("/")[0]} from BlueBubbles: ${widget.attachment.transferName}",
-                    widget.attachment.transferName,
-                    widget.file.path,
-                    widget.attachment.mimeType,
-                  );
-                },
-                child: Icon(
-                  Icons.share,
-                  color: Colors.white,
+                Padding(
+                  padding: EdgeInsets.only(top: 40.0),
+                  child: CupertinoButton(
+                    padding: EdgeInsets.symmetric(horizontal: 5),
+                    onPressed: () async {
+                      await Share.file(
+                        "Shared ${widget.attachment.mimeType.split("/")[0]} from BlueBubbles: ${widget.attachment.transferName}",
+                        widget.attachment.transferName,
+                        widget.file.path,
+                        widget.attachment.mimeType,
+                      );
+                    },
+                    child: Icon(
+                      Icons.share,
+                      color: Colors.white,
+                    ),
+                  ),
                 ),
-              ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ])),
     );
 
     var loader = Center(
