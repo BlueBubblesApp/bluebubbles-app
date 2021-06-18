@@ -420,7 +420,8 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                 },
                 childCount: attachmentsForChat.length,
               ),
-            )
+            ),
+            SliverToBoxAdapter(child: Container(height: 50))
           ],
         ),
       ),
