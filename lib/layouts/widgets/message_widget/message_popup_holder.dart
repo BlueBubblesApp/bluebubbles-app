@@ -50,6 +50,7 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
       context,
       PageRouteBuilder(
         settings: RouteSettings(arguments: {"hideTail": true}),
+        transitionDuration: Duration(milliseconds: 200),
         pageBuilder: (context, animation, secondaryAnimation) {
           return FadeTransition(
               opacity: animation,
