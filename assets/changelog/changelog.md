@@ -2,6 +2,10 @@
 
 Below are the last few BlueBubbles App release changelogs
 
+## v1.1.1
+
+* Bug Fix: Fixes grey screen when creating a new chat
+
 ## v1.1.0
 
 * New Feature: Adds back button to image viewer
