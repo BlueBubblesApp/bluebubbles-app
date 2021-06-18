@@ -143,9 +143,10 @@ class SetupBloc {
 
           await syncChat(chat);
           addOutput("Finished syncing chat, '${chat.chatIdentifier}'", SetupOutputType.LOG);
-        } catch (ex) {
+        } catch (ex, stacktrace) {
           if (chat != null) {
             addOutput("Failed to sync chat, '${chat.chatIdentifier}'", SetupOutputType.ERROR);
+            addOutput(stacktrace.toString(), SetupOutputType.ERROR);
           } else {
             addOutput("Failed to save chat data, '${item.toString()}'", SetupOutputType.ERROR);
           }
@@ -186,7 +187,7 @@ class SetupBloc {
     ];
 
     List<dynamic> messages = await SocketManager().getChatMessages(params);
-    addOutput("Received ${messages?.length} messages for chat, '${chat.chatIdentifier}'!", SetupOutputType.LOG);
+    addOutput("Received ${messages?.length ?? 0} messages for chat, '${chat.chatIdentifier}'!", SetupOutputType.LOG);
 
     // Since we got the messages in desc order, we want to reverse it.
     // Reversing it will add older messages before newer one. This should help fix

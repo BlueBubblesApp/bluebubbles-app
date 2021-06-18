@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:typed_data';
 
+import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/attachment_info_bloc.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
@@ -57,7 +58,7 @@ class ChatBloc {
   }
 
   int get pageSize {
-    return (SettingsManager().settings.denseChatTiles) ? 12 : 10;
+    return (SettingsManager().settings.denseChatTiles || SettingsManager().settings.skin != Skins.IOS) ? 12 : 10;
   }
 
   Future<Chat> getChat(String guid) async {
@@ -155,6 +156,21 @@ class ChatBloc {
     // Update the sink so all listeners get the new chat list
     await this.addToSink(this.chats);
     await updateShareTarget(chat);
+  }
+
+  Future<void> markAllAsRead() async {
+    // Enumerate the unread chats
+    List<Chat> unread = this.chats.where((element) => element.hasUnreadMessage).toList();
+
+    // Mark them as unread
+    for (Chat chat in unread) {
+      await chat.setUnreadStatus(false);
+    }
+
+    // Update their position in the chat list
+    for (Chat chat in unread) {
+      this.updateChatPosition(chat);
+    }
   }
 
   Future<void> updateAllShareTargets() async {

@@ -11,6 +11,7 @@ import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
+import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
@@ -34,6 +35,20 @@ class _ConversationDetailsState extends State<ConversationDetails> {
   List<Attachment> attachmentsForChat = <Attachment>[];
   bool isClearing = false;
   bool isCleared = false;
+  int maxPageSize = 5;
+  bool showMore = false;
+
+  bool get shouldShowMore {
+    return chat.participants.length > maxPageSize;
+  }
+
+  List<Handle> get participants {
+    // If we are showing all, return everything
+    if (showMore) return chat.participants;
+
+    // If we aren't showing all, show the max we can show
+    return chat.participants.length > maxPageSize ? chat.participants.sublist(0, maxPageSize) : chat.participants;
+  }
 
   @override
   void initState() {
@@ -130,21 +145,44 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                     ),
             ),
             SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (context, index) {
-                  return ContactTile(
-                    key: Key(chat.participants[index].id.toString()),
-                    handle: chat.participants[index],
-                    chat: chat,
-                    updateChat: (Chat newChat) {
-                      chat = newChat;
-                      if (this.mounted) setState(() {});
+              delegate: SliverChildBuilderDelegate((context, index) {
+                if (index >= participants.length && shouldShowMore) {
+                  return ListTile(
+                    onTap: () {
+                      if (!this.mounted) return;
+                      setState(() {
+                        showMore = !showMore;
+                      });
                     },
-                    canBeRemoved: chat.participants.length > 1,
+                    leading: Text(
+                      showMore ? "Show less" : "Show more",
+                      style: TextStyle(
+                        color: Theme.of(context).primaryColor,
+                      ),
+                    ),
+                    trailing: Padding(
+                      padding: EdgeInsets.only(right: 15),
+                      child: Icon(
+                        Icons.more_horiz,
+                        color: Theme.of(context).primaryColor,
+                      ),
+                    ),
                   );
-                },
-                childCount: chat.participants.length,
-              ),
+                }
+
+                if (index >= chat.participants.length) return Container();
+
+                return ContactTile(
+                  key: Key(chat.participants[index].id.toString()),
+                  handle: chat.participants[index],
+                  chat: chat,
+                  updateChat: (Chat newChat) {
+                    chat = newChat;
+                    if (this.mounted) setState(() {});
+                  },
+                  canBeRemoved: chat.participants.length > 1,
+                );
+              }, childCount: participants.length + 1),
             ),
             // SliverToBoxAdapter(
             //   child: chat.participants.length > 1
@@ -382,7 +420,8 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                 },
                 childCount: attachmentsForChat.length,
               ),
-            )
+            ),
+            SliverToBoxAdapter(child: Container(height: 50))
           ],
         ),
       ),

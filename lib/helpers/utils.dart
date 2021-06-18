@@ -91,8 +91,19 @@ Future<String> formatPhoneNumber(String str) async {
 
 Future<List<String>> getCompareOpts(Handle handle) async {
   if (handle.address.contains('@')) return [handle.address];
+
+  // Build a list of formatted address (max: 3)
   String formatted = handle.address.toString();
-  List<String> opts = [formatted, formatted.substring(1), formatted.substring(2)];
+  List<String> opts = [];
+  int maxOpts = 4;  // This is relatively arbitrary
+  for (int i = 0; i < formatted.length; i += 1) {
+    String val = formatted.substring(i);
+    if (val.length == 0) break;
+
+    opts.add(val);
+    if (i + 1 >= maxOpts) break;
+  }
+
   Map<String, dynamic> parsed = await parsePhoneNumber(handle.address, handle.country ?? "US");
   opts.addAll(parsed.values.map((item) => item.toString()).where((item) => item != 'fixedOrMobile'));
   return opts;

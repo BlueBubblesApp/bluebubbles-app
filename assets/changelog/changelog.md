@@ -2,6 +2,24 @@
 
 Below are the last few BlueBubbles App release changelogs
 
+## v1.1.0
+
+* New Feature: Adds back button to image viewer
+* New Feature: Adds contact addresses under their name in the message details page
+* New Feature: Adds haptic feedback to camera preview
+* New Feature: Ability to mark all chats as read via the 3 dot menu
+* New Feature: Message details popup now fades in for a smoother animation
+* New Feature: Attachment downloader now animates progress instead of "jumping" progress
+* UX: Increases chat page size to 12 for material skin to avoid visual stutters during chat loading
+* Bug Fix: Fixes issue where avatar colors were editable even when the option was disabled
+* Bug Fix: Fixes issue where you wouldn't be able to delete a message if it wasn't sent
+* Bug Fix: Fixes grey box issues in reactions popup
+* Bug Fix: Fixes issue where your own reaction wouldn't show an avatar
+* Bug Fix: Fixes grey box issues for incoming video attachments
+* Bug Fix: Manual mark chat as read button now only shows when auto-mark chat as read is off
+* Bug Fix: Fixes attachment details page not having bottom margin/spacing, thus interfering with the navigation bar
+* Bug Fix: Fixes attachment downloading issues in the details page
+
 ## v1.0.0
 
 This version encompasses all release candidates for the unreleased v0.1.16. I have rolled up and summarized all the changes since v0.1.15 below:
@@ -27,6 +45,7 @@ This version encompasses all release candidates for the unreleased v0.1.16. I ha
 * New Feature: Attachment Preview Quality Slider
 * New Feature: Colorblind Mode
 * New Feature: Ability to restart the BlueBubbles Server, remotely
+* New Feature: Show connection indicator in chat
 * Bug Fix: Fixes issue where the contact address would not auto-fill the fields when creating a new contact
 * Bug Fix: Fixes placeholder text not updating
 * Bug Fix: Fixes message subject color

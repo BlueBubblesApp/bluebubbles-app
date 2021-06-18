@@ -126,8 +126,14 @@ class ContactManager {
       }
 
       // Find a contact match
-      Contact contactMatch = await getContact(handle);
-      handleToContact[handle.address] = contactMatch;
+      Contact contactMatch;
+
+      try {
+        contactMatch = await getContact(handle);
+        handleToContact[handle.address] = contactMatch;
+      } catch (ex) {
+        debugPrint('Failed to match handle for address, "${handle.address}": ${ex.toString()}');
+      }
 
       // If we have a match, add it to the mapping, then break out
       // of the loop so we don't "over-process" more than we need
@@ -235,20 +241,32 @@ class ContactManager {
     if (handleToContact.containsKey(address) &&
         handleToContact[address] != null)
       return handleToContact[address].displayName;
-    Contact contact = await getContact(handle);
-    if (contact != null && contact.displayName != null)
-      return contact.displayName;
-    String contactTitle = address;
-    if (contactTitle == address && !contactTitle.contains("@")) {
-      return await formatPhoneNumber(contactTitle);
+
+    try {
+      Contact contact = await getContact(handle);
+      if (contact != null && contact.displayName != null)
+        return contact.displayName;
+    } catch (ex) {
+      debugPrint('Failed to getContact() in getContactTitle(), for address, "$address": ${ex.toString()}');
+    }
+  
+    try {
+      String contactTitle = address;
+      if (contactTitle == address && !contactTitle.contains("@")) {
+        return await formatPhoneNumber(contactTitle);
+      }
+
+      // If it's an email and starts with "e:", strip it out
+      if (contactTitle.contains("@") && contactTitle.startsWith("e:")) {
+        contactTitle = contactTitle.substring(2);
+      }
+
+      return contactTitle;
+    } catch (ex) {
+      debugPrint('Failed to formatPhoneNumber() in getContactTitle(), for address, "$address": ${ex.toString()}');
     }
 
-    // If it's an email and starts with "e:", strip it out
-    if (contactTitle.contains("@") && contactTitle.startsWith("e:")) {
-      contactTitle = contactTitle.substring(2);
-    }
-
-    return contactTitle;
+    return address;
   }
 
   ContactAvatarWidgetState getState(String key) {

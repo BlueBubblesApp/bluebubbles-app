@@ -256,6 +256,8 @@ class _ConversationListState extends State<ConversationList> {
           color: Theme.of(context).accentColor,
           onSelected: (value) {
             if (value == 0) {
+              ChatBloc().markAllAsRead();
+            } else if (value == 1) {
               Navigator.of(context).push(
                 ThemeSwitcher.buildPageRoute(
                   builder: (context) => ConversationList(
@@ -263,7 +265,7 @@ class _ConversationListState extends State<ConversationList> {
                   ),
                 ),
               );
-            } else if (value == 1) {
+            } else if (value == 2) {
               Navigator.of(context).push(
                 ThemeSwitcher.buildPageRoute(
                   builder: (BuildContext context) {
@@ -278,12 +280,19 @@ class _ConversationListState extends State<ConversationList> {
               PopupMenuItem(
                 value: 0,
                 child: Text(
-                  'Archived',
+                  'Mark all as read',
                   style: Theme.of(context).textTheme.bodyText1,
                 ),
               ),
               PopupMenuItem(
                 value: 1,
+                child: Text(
+                  'Archived',
+                  style: Theme.of(context).textTheme.bodyText1,
+                ),
+              ),
+              PopupMenuItem(
+                value: 2,
                 child: Text(
                   'Settings',
                   style: Theme.of(context).textTheme.bodyText1,

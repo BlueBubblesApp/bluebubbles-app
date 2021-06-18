@@ -42,7 +42,7 @@ class _VideoWidgetState extends State<VideoWidget> with TickerProviderStateMixin
   @override
   void initState() {
     super.initState();
-    Map<String, VideoPlayerController> controllers = CurrentChat.of(context).currentPlayingVideo;
+    Map<String, VideoPlayerController> controllers = CurrentChat.of(context).currentPlayingVideo ?? {};
     showPlayPauseOverlay = controllers == null ||
         !controllers.containsKey(widget.attachment.guid) ||
         !controllers[widget.attachment.guid].value.isPlaying;
@@ -90,9 +90,10 @@ class _VideoWidgetState extends State<VideoWidget> with TickerProviderStateMixin
     thumbnail = await VideoThumbnail.thumbnailData(
       video: widget.file.path,
       imageFormat: ImageFormat.JPEG,
-      quality: 25,
+      quality: SettingsManager().compressionQuality,
     );
-    CurrentChat.of(context).saveImageData(thumbnail, widget.attachment);
+
+    CurrentChat.of(context)?.saveImageData(thumbnail, widget.attachment);
     if (this.mounted) this.setState(() {});
   }
 
