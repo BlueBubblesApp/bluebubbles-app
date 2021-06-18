@@ -139,6 +139,23 @@ class _ContactTileState extends State<ContactTile> {
                     style: Theme.of(context).textTheme.bodyText1,
                   );
                 }),
+        subtitle: (contact == null)
+            ? null
+            : FutureBuilder(
+                future: formatPhoneNumber(widget.handle?.address ?? ""),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) {
+                    return Text(
+                      widget.handle?.address ?? "",
+                      style: Theme.of(context).textTheme.subtitle1.apply(fontSizeDelta: -0.5),
+                    );
+                  }
+
+                  return Text(
+                    snapshot.data,
+                    style: Theme.of(context).textTheme.subtitle1.apply(fontSizeDelta: -0.5),
+                  );
+                }),
         leading: ContactAvatarWidget(
           handle: widget.handle,
           borderThickness: 0.1,
