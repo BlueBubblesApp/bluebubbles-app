@@ -521,25 +521,24 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                                         ),
                                       ),
                                     ),
-                                  if (currentChat.chat.isGroup() && !widget.message.isFromMe)
-                                    Material(
-                                      color: Colors.transparent,
-                                      child: InkWell(
-                                        onTap: () async {
-                                          //todo set up forwarding functionality
-                                        },
-                                        child: ListTile(
-                                          title: Text(
-                                            "Forward message",
-                                            style: Theme.of(context).textTheme.bodyText1,
-                                          ),
-                                          trailing: Icon(
-                                            Icons.forward,
-                                            color: Theme.of(context).textTheme.bodyText1.color,
-                                          ),
+                                  Material(
+                                    color: Colors.transparent,
+                                    child: InkWell(
+                                      onTap: () async {
+                                        //todo set up forwarding functionality
+                                      },
+                                      child: ListTile(
+                                        title: Text(
+                                          "Forward message",
+                                          style: Theme.of(context).textTheme.bodyText1,
+                                        ),
+                                        trailing: Icon(
+                                          Icons.forward,
+                                          color: Theme.of(context).textTheme.bodyText1.color,
                                         ),
                                       ),
                                     ),
+                                  ),
                                   if (currentChat.chat.isGroup() && !widget.message.isFromMe)
                                     Material(
                                       color: Colors.transparent,
