@@ -3,15 +3,19 @@ import 'dart:io';
 import 'dart:ui';
 
 import 'package:bluebubbles/action_handler.dart';
+import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/reaction.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/widgets/CustomCupertinoNavBar.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/reaction_detail_widget.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
+import 'package:bluebubbles/managers/navigator_manager.dart';
+import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/message.dart';
@@ -462,30 +466,6 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                   child: InkWell(
                     onTap: () async {
                       for (Attachment element in widget.message.attachments) {
-                        CurrentChat.of(context)?.clearImageData(element);
-                        await AttachmentHelper.redownloadAttachment(element);
-                        Navigator.pop(context);
-                        setState(() {});
-                      }
-                    },
-                    child: ListTile(
-                      title: Text(
-                        "Re-download from Server",
-                        style: Theme.of(context).textTheme.bodyText1,
-                      ),
-                      trailing: Icon(
-                        Icons.refresh,
-                        color: Theme.of(context).textTheme.bodyText1.color,
-                      ),
-                    ),
-                  ),
-                ),
-              if (showDownload)
-                Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: () async {
-                      for (Attachment element in widget.message.attachments) {
                         dynamic content = AttachmentHelper.getContent(element);
                         if (content is File) {
                           await AttachmentHelper.saveToGallery(context, content);
@@ -504,6 +484,115 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                     ),
                   ),
                 ),
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () {
+                    showDialog(
+                        context: context,
+                        builder: (_) {
+                          return AlertDialog(
+                              backgroundColor: Theme.of(context).accentColor,
+                              content: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  if (showDownload)
+                                    Material(
+                                      color: Colors.transparent,
+                                      child: InkWell(
+                                        onTap: () async {
+                                          for (Attachment element in widget.message.attachments) {
+                                            CurrentChat.of(context)?.clearImageData(element);
+                                            await AttachmentHelper.redownloadAttachment(element);
+                                            Navigator.pop(context);
+                                            setState(() {});
+                                          }
+                                        },
+                                        child: ListTile(
+                                          title: Text(
+                                            "Re-download from Server",
+                                            style: Theme.of(context).textTheme.bodyText1,
+                                          ),
+                                          trailing: Icon(
+                                            Icons.refresh,
+                                            color: Theme.of(context).textTheme.bodyText1.color,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  if (currentChat.chat.isGroup() && !widget.message.isFromMe)
+                                    Material(
+                                      color: Colors.transparent,
+                                      child: InkWell(
+                                        onTap: () async {
+                                          //todo set up forwarding functionality
+                                        },
+                                        child: ListTile(
+                                          title: Text(
+                                            "Forward message",
+                                            style: Theme.of(context).textTheme.bodyText1,
+                                          ),
+                                          trailing: Icon(
+                                            Icons.forward,
+                                            color: Theme.of(context).textTheme.bodyText1.color,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  if (currentChat.chat.isGroup() && !widget.message.isFromMe)
+                                    Material(
+                                      color: Colors.transparent,
+                                      child: InkWell(
+                                        onTap: () async {
+                                          // todo set up DM functionality
+                                          // I (tneotia) tried to do this but don't know enough about the library to complete it
+                                          /*try {
+                                        // try to find an existing chat
+                                        final chat = ChatBloc().chats.firstWhere(
+                                                (e) => e.participants.length == 1
+                                                && e.participants.first.id == widget.message.handle.id
+                                        );
+                                        NavigatorManager().navigatorKey.currentState
+                                          ..push(
+                                            ThemeSwitcher.buildPageRoute(
+                                              builder: (context) => ConversationView(
+                                                chat: chat,
+                                              ),
+                                            ),
+                                          );
+                                        NotificationManager().switchChat(chat);
+                                      } catch (_) {
+                                        // otherwise ask to create a new one?
+                                      }*/
+                                        },
+                                        child: ListTile(
+                                          title: Text(
+                                            "Direct message",
+                                            style: Theme.of(context).textTheme.bodyText1,
+                                          ),
+                                          trailing: Icon(
+                                            Icons.message,
+                                            color: Theme.of(context).textTheme.bodyText1.color,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              )
+                          );
+                        }
+                    );
+                  },
+                  child: ListTile(
+                    title: Text("More...", style: Theme.of(context).textTheme.bodyText1),
+                    trailing: Icon(
+                      Icons.more_vert,
+                      color: Theme.of(context).textTheme.bodyText1.color,
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
         ),
