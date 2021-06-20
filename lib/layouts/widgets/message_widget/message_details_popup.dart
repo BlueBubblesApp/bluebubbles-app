@@ -3,10 +3,12 @@ import 'dart:io';
 import 'dart:ui';
 
 import 'package:bluebubbles/action_handler.dart';
+import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/reaction.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/widgets/CustomCupertinoNavBar.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/reaction_detail_widget.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
@@ -14,8 +16,10 @@ import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
+import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:clipboard/clipboard.dart';
+import 'package:flutter/cupertino.dart' as cupertino;
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
@@ -49,6 +53,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
   String currentlySelectedReaction;
   Completer fetchRequest;
   CurrentChat currentChat;
+  Chat dmChat;
 
   double messageTopOffset;
   double topMinimum;
@@ -60,6 +65,12 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
 
     messageTopOffset = widget.childOffset.dy;
     topMinimum = CupertinoNavigationBar().preferredSize.height + (widget.message.hasReactions ? 110 : 50);
+
+    dmChat = ChatBloc().chats.firstWhere(
+          (chat) =>
+      !chat.isGroup() && chat.participants.where((handle) => handle.id == widget.message.handleId).length == 1,
+      orElse: () => null,
+    );
 
     fetchReactions();
 
@@ -78,13 +89,9 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
     fetchReactions();
     SchedulerBinding.instance.addPostFrameCallback((_) {
       if (this.mounted) {
-        double menuHeight = 150;
-        if (showDownload) {
-          menuHeight += 140;
-        }
         setState(() {
           double totalHeight =
-              MediaQuery.of(context).size.height - MediaQuery.of(context).viewInsets.bottom - menuHeight - 20;
+              MediaQuery.of(context).size.height - MediaQuery.of(context).viewInsets.bottom - detailsMenuHeight - 20;
           double offset = (widget.childOffset.dy + widget.childSize.height) - totalHeight;
           messageTopOffset = widget.childOffset.dy.clamp(topMinimum + 40, double.infinity);
           if (offset > 0) {
@@ -317,10 +324,26 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
       widget.message.attachments.where((element) => element.mimeStart != null).length > 0 &&
       widget.message.attachments.where((element) => AttachmentHelper.getContent(element) is File).length > 0;
 
+  double get detailsMenuHeight {
+    double menuHeight = 150;
+    if (showDownload) {
+      menuHeight += 90;
+    }
+    if (!isEmptyString(widget.message.fullText)) {
+      menuHeight += 90;
+    }
+    if (widget.currentChat.chat.isGroup() && !widget.message.isFromMe) {
+      menuHeight += 50;
+    }
+    return menuHeight;
+  }
+
+
   Widget buildCopyPasteMenu() {
     Size size = MediaQuery.of(context).size;
 
     double maxMenuWidth = size.width * 2 / 3;
+
     Widget menu = ClipRRect(
       borderRadius: BorderRadius.circular(20.0),
       child: BackdropFilter(
@@ -332,6 +355,106 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              if (widget.currentChat.chat.isGroup() && !widget.message.isFromMe && dmChat != null)
+                Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () async {
+                      Navigator.pushReplacement(
+                        context,
+                        cupertino.CupertinoPageRoute(
+                          builder: (BuildContext context) {
+                            return ConversationView(
+                              chat: dmChat,
+                            );
+                          },
+                        ),
+                      );
+                    },
+                    child: ListTile(
+                      title: Text(
+                        "Open Direct Message",
+                        style: Theme.of(context).textTheme.bodyText1,
+                      ),
+                      trailing: Icon(
+                        Icons.open_in_new,
+                        color: Theme.of(context).textTheme.bodyText1.color,
+                      ),
+                    ),
+                  ),
+                ),
+              if (widget.currentChat.chat.isGroup() && !widget.message.isFromMe && dmChat == null)
+                Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    splashColor: Colors.transparent,
+                    highlightColor: Colors.transparent,
+                    onTap: () {},
+                    child: ListTile(
+                      title: Text(
+                        "Start Conversation",
+                        style: Theme.of(context).textTheme.bodyText1.copyWith(color: Colors.grey[600]),
+                      ),
+                      trailing: Icon(
+                        Icons.message,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ),
+                ),
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () {
+                    Navigator.pushReplacement(
+                      context,
+                      cupertino.CupertinoPageRoute(
+                        builder: (BuildContext context) {
+                          List<File> existingAttachments = [];
+                          if (!widget.message.isUrlPreview()) {
+                            existingAttachments = widget.message.attachments.map((attachment) => File(attachment.getPath())).toList();
+                          }
+                          return ConversationView(
+                            isCreator: true,
+                            existingText: widget.message.text,
+                            existingAttachments: existingAttachments,
+                          );
+                        },
+                      ),
+                    );
+                  },
+                  child: ListTile(
+                    title: Text(
+                      "Forward",
+                      style: Theme.of(context).textTheme.bodyText1,
+                    ),
+                    trailing: Icon(
+                      Icons.forward,
+                      color: Theme.of(context).textTheme.bodyText1.color,
+                    ),
+                  ),
+                ),
+              ),
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () async {
+                    NewMessageManager().removeMessage(widget.currentChat.chat, widget.message.guid);
+                    await Message.softDelete({"guid": widget.message.guid});
+                    Navigator.of(context).pop();
+                  },
+                  child: ListTile(
+                    title: Text(
+                      "Delete",
+                      style: Theme.of(context).textTheme.bodyText1,
+                    ),
+                    trailing: Icon(
+                      Icons.delete,
+                      color: Theme.of(context).textTheme.bodyText1.color,
+                    ),
+                  ),
+                ),
+              ),
               if (!isEmptyString(widget.message.fullText))
                 Material(
                   color: Colors.transparent,
@@ -436,65 +559,6 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                     ),
                   ),
                 ),
-              if (widget.currentChat.chat.isGroup())
-                Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: () async {
-                      //TODO
-                      Navigator.of(context).pop();
-                    },
-                    child: ListTile(
-                      title: Text(
-                        "Direct Message",
-                        style: Theme.of(context).textTheme.bodyText1,
-                      ),
-                      trailing: Icon(
-                        Icons.reply,
-                        color: Theme.of(context).textTheme.bodyText1.color,
-                      ),
-                    ),
-                  ),
-                ),
-              Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: () async {
-                    //TODO
-                    Navigator.of(context).pop();
-                  },
-                  child: ListTile(
-                    title: Text(
-                      "Forward",
-                      style: Theme.of(context).textTheme.bodyText1,
-                    ),
-                    trailing: Icon(
-                      Icons.forward,
-                      color: Theme.of(context).textTheme.bodyText1.color,
-                    ),
-                  ),
-                ),
-              ),
-              Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: () async {
-                    NewMessageManager().removeMessage(widget.currentChat.chat, widget.message.guid);
-                    await Message.softDelete({"guid": widget.message.guid});
-                    Navigator.of(context).pop();
-                  },
-                  child: ListTile(
-                    title: Text(
-                      "Delete",
-                      style: Theme.of(context).textTheme.bodyText1,
-                    ),
-                    trailing: Icon(
-                      Icons.delete,
-                      color: Theme.of(context).textTheme.bodyText1.color,
-                    ),
-                  ),
-                ),
-              ),
               if (showDownload)
                 Material(
                   color: Colors.transparent,
@@ -549,14 +613,11 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
       ),
     );
 
-    double menuHeight = 150;
-    if (showDownload) {
-      menuHeight += 140;
-    }
-
+    print(topMinimum);
+    print(size.height - MediaQuery.of(context).viewInsets.bottom - detailsMenuHeight - 20);
     double topOffset = (messageTopOffset + widget.childSize.height)
         .toDouble()
-        .clamp(topMinimum, size.height - MediaQuery.of(context).viewInsets.bottom - menuHeight - 20);
+        .clamp(topMinimum, size.height - MediaQuery.of(context).viewInsets.bottom - detailsMenuHeight - 20);
 
     double leftOffset =
         (widget.message.isFromMe ? size.width - maxMenuWidth - 15 : 15 + (currentChat.chat.isGroup() ? 35 : 0))
