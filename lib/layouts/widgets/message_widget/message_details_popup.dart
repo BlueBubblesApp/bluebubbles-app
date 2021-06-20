@@ -332,105 +332,144 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: () {
-                    if (!isEmptyString(widget.message.fullText)) FlutterClipboard.copy(widget.message.fullText);
-                    FlutterToast flutterToast = FlutterToast(context);
-                    Widget toast = ClipRRect(
-                      borderRadius: BorderRadius.circular(25.0),
-                      child: BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(25.0),
-                            color: Theme.of(context).accentColor.withOpacity(0.1),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                !isEmptyString(widget.message.fullText) ? Icons.check : Icons.close,
-                                color: Theme.of(context).textTheme.bodyText1.color,
-                              ),
-                              SizedBox(
-                                width: 12.0,
-                              ),
-                              Text(
-                                !isEmptyString(widget.message.fullText)
-                                    ? "Copied to clipboard"
-                                    : "Failed to copy empty message",
-                                style: Theme.of(context).textTheme.bodyText1,
-                              ),
-                            ],
+              if (!isEmptyString(widget.message.fullText))
+                Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () {
+                      FlutterClipboard.copy(widget.message.fullText);
+                      FlutterToast flutterToast = FlutterToast(context);
+                      Widget toast = ClipRRect(
+                        borderRadius: BorderRadius.circular(25.0),
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(25.0),
+                              color: Theme.of(context).accentColor.withOpacity(0.1),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  !isEmptyString(widget.message.fullText) ? Icons.check : Icons.close,
+                                  color: Theme.of(context).textTheme.bodyText1.color,
+                                ),
+                                SizedBox(
+                                  width: 12.0,
+                                ),
+                                Text(
+                                  "Copied to clipboard",
+                                  style: Theme.of(context).textTheme.bodyText1,
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                      ),
-                    );
+                      );
 
-                    flutterToast.showToast(
-                      child: toast,
-                      gravity: ToastGravity.BOTTOM,
-                      toastDuration: Duration(seconds: 2),
-                    );
-                  },
-                  child: ListTile(
-                    title: Text("Copy", style: Theme.of(context).textTheme.bodyText1),
-                    trailing: Icon(
-                      Icons.content_copy,
-                      color: Theme.of(context).textTheme.bodyText1.color,
+                      flutterToast.showToast(
+                        child: toast,
+                        gravity: ToastGravity.BOTTOM,
+                        toastDuration: Duration(seconds: 2),
+                      );
+                    },
+                    child: ListTile(
+                      title: Text("Copy", style: Theme.of(context).textTheme.bodyText1),
+                      trailing: Icon(
+                        Icons.content_copy,
+                        color: Theme.of(context).textTheme.bodyText1.color,
+                      ),
                     ),
                   ),
                 ),
-              ),
+              if (!isEmptyString(widget.message.fullText))
+                Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () {
+                      if (isEmptyString(widget.message.fullText)) return;
+                      showDialog(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          backgroundColor: Theme.of(context).accentColor,
+                          title: Text(
+                            "Copy",
+                            style: Theme.of(context).textTheme.headline1,
+                          ),
+                          content: Container(
+                            constraints: BoxConstraints(
+                              maxHeight: MediaQuery.of(context).size.height * 2 / 3,
+                            ),
+                            child: SingleChildScrollView(
+                              physics: ThemeSwitcher.getScrollPhysics(),
+                              child: SelectableText(
+                                widget.message.fullText,
+                                style: Theme.of(context).textTheme.bodyText1,
+                              ),
+                            ),
+                          ),
+                          actions: <Widget>[
+                            FlatButton(
+                              child: Text(
+                                "Done",
+                                style: Theme.of(context).textTheme.bodyText1,
+                              ),
+                              onPressed: () {
+                                Navigator.of(context, rootNavigator: true).pop('dialog');
+                              },
+                            )
+                          ],
+                        ),
+                      );
+                    },
+                    child: ListTile(
+                      title: Text(
+                        "Copy Selection",
+                        style: Theme.of(context).textTheme.bodyText1,
+                      ),
+                      trailing: Icon(
+                        Icons.content_copy,
+                        color: Theme.of(context).textTheme.bodyText1.color,
+                      ),
+                    ),
+                  ),
+                ),
+              if (widget.currentChat.chat.isGroup())
+                Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () async {
+                      //TODO
+                      Navigator.of(context).pop();
+                    },
+                    child: ListTile(
+                      title: Text(
+                        "Direct Message",
+                        style: Theme.of(context).textTheme.bodyText1,
+                      ),
+                      trailing: Icon(
+                        Icons.reply,
+                        color: Theme.of(context).textTheme.bodyText1.color,
+                      ),
+                    ),
+                  ),
+                ),
               Material(
                 color: Colors.transparent,
                 child: InkWell(
-                  onTap: () {
-                    if (isEmptyString(widget.message.fullText)) return;
-                    showDialog(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        backgroundColor: Theme.of(context).accentColor,
-                        title: Text(
-                          "Copy",
-                          style: Theme.of(context).textTheme.headline1,
-                        ),
-                        content: Container(
-                          constraints: BoxConstraints(
-                            maxHeight: MediaQuery.of(context).size.height * 2 / 3,
-                          ),
-                          child: SingleChildScrollView(
-                            physics: ThemeSwitcher.getScrollPhysics(),
-                            child: SelectableText(
-                              widget.message.fullText,
-                              style: Theme.of(context).textTheme.bodyText1,
-                            ),
-                          ),
-                        ),
-                        actions: <Widget>[
-                          FlatButton(
-                            child: Text(
-                              "Done",
-                              style: Theme.of(context).textTheme.bodyText1,
-                            ),
-                            onPressed: () {
-                              Navigator.of(context, rootNavigator: true).pop('dialog');
-                            },
-                          )
-                        ],
-                      ),
-                    );
+                  onTap: () async {
+                    //TODO
+                    Navigator.of(context).pop();
                   },
                   child: ListTile(
                     title: Text(
-                      "Copy Selection",
+                      "Forward",
                       style: Theme.of(context).textTheme.bodyText1,
                     ),
                     trailing: Icon(
-                      Icons.content_copy,
+                      Icons.forward,
                       color: Theme.of(context).textTheme.bodyText1.color,
                     ),
                   ),
