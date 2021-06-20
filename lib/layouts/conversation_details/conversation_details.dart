@@ -141,11 +141,11 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                               readOnly: !chat.isGroup(),
                               onSubmitted: (String newName) async {
                                 await widget.chat.changeName(newName);
-                                widget.chat.getTitle();
+                                await widget.chat.getTitle();
                                 setState(() {
                                   showNameField = newName.isNotEmpty;
                                 });
-                                EventDispatcher().emit("refresh", null);
+                                ChatBloc().updateChat(chat);
                               },
                               controller: controller,
                               style: Theme.of(context).textTheme.bodyText1,
