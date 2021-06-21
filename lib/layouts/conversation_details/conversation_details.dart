@@ -37,6 +37,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
   bool isCleared = false;
   int maxPageSize = 5;
   bool showMore = false;
+  bool showNameField = false;
 
   bool get shouldShowMore {
     return chat.participants.length > maxPageSize;
@@ -55,6 +56,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
     super.initState();
     chat = widget.chat;
     controller = new TextEditingController(text: chat.displayName);
+    showNameField = chat.displayName.isNotEmpty;
 
     fetchAttachments();
     ChatBloc().chatStream.listen((event) async {
@@ -128,21 +130,81 @@ class _ConversationDetailsState extends State<ConversationDetails> {
             SliverToBoxAdapter(
               child: readOnly
                   ? Container()
-                  : Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: TextField(
-                        cursorColor: Theme.of(context).primaryColor,
-                        readOnly: true,
-                        controller: controller,
-                        style: Theme.of(context).textTheme.bodyText1,
-                        autofocus: false,
-                        autocorrect: false,
-                        decoration: InputDecoration(
-                          labelText: "NAME",
-                          labelStyle: TextStyle(color: Theme.of(context).primaryColor),
+                  : showNameField ?
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.only(left: 16.0, right: 8.0, bottom: 8.0),
+                            child: TextField(
+                              cursorColor: Theme.of(context).primaryColor,
+                              readOnly: !chat.isGroup(),
+                              onSubmitted: (String newName) async {
+                                await widget.chat.changeName(newName);
+                                await widget.chat.getTitle();
+                                setState(() {
+                                  showNameField = newName.isNotEmpty;
+                                });
+                                ChatBloc().updateChat(chat);
+                              },
+                              controller: controller,
+                              style: Theme.of(context).textTheme.bodyText1,
+                              autofocus: false,
+                              autocorrect: false,
+                              decoration: InputDecoration(
+                                labelText: chat.displayName.isEmpty ? "SET NAME" : "NAME",
+                                labelStyle: TextStyle(color: Theme.of(context).primaryColor),
+                                enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.grey))
+                              ),
+                            ),
+                          ),
                         ),
+                        if (chat.displayName.isEmpty)
+                          Padding(
+                              padding: const EdgeInsets.only(left: 8.0, right: 16.0, bottom: 8.0),
+                              child: RaisedButton(
+                                highlightColor: Colors.red,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(18),
+                                ),
+                                onPressed: () async {
+                                  setState(() {
+                                    showNameField = false;
+                                  });
+                                },
+                                color: Theme.of(context).accentColor,
+                                child: Text(
+                                  "CANCEL",
+                                  style: TextStyle(
+                                    color: Theme.of(context).textTheme.bodyText1.color,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ),
+                          ),
+                      ],
+                    )
+              : Padding(
+                  padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 8.0),
+                  child: RaisedButton(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                    onPressed: () async {
+                      setState(() {
+                        showNameField = true;
+                      });
+                    },
+                    color: Theme.of(context).accentColor,
+                    child: Text(
+                      "ADD NAME",
+                      style: TextStyle(
+                        color: Theme.of(context).textTheme.bodyText1.color,
+                        fontSize: 13,
                       ),
                     ),
+                  )
+                ),
             ),
             SliverList(
               delegate: SliverChildBuilderDelegate((context, index) {
