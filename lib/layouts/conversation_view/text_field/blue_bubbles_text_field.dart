@@ -76,7 +76,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
 
   bool get canRecord => controller.text.isEmpty && pickedImages.isEmpty;
 
-  static final GlobalKey<FormFieldState<String>> _searchFormKey = GlobalKey<FormFieldState<String>>();
+  final GlobalKey<FormFieldState<String>> _searchFormKey = GlobalKey<FormFieldState<String>>();
 
   @override
   void initState() {

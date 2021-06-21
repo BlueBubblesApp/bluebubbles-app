@@ -43,9 +43,9 @@ class CustomCupertinoNavigationBarBackButton extends CupertinoNavigationBarBackB
   @override
   Widget build(BuildContext context) {
     final ModalRoute<dynamic> currentRoute = ModalRoute.of(context);
-    if (onPressed == null) {
+    if (currentRoute != null && onPressed == null) {
       assert(
-        currentRoute?.canPop == true,
+        currentRoute.canPop == true,
         'CupertinoNavigationBarBackButton should only be used in routes that can be popped',
       );
     }
