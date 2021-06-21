@@ -224,38 +224,59 @@ class _VideoViewerState extends State<VideoViewer> {
                 ? StreamBuilder(
                     stream: videoProgressStream.stream,
                     builder: (context, AsyncSnapshot<double> snapshot) {
-                      return AnimatedOpacity(
-                        opacity: showPlayPauseOverlay ? 1 : 0,
-                        duration: Duration(milliseconds: 500),
-                        child: SizedBox(
-                          height: MediaQuery.of(context).size.height * 1 / 10,
-                          child: Slider(
-                            min: 0,
-                            max: controller.value.duration.inMilliseconds.toDouble(),
-                            onChangeStart: (value) {
-                              controller.pause();
-                              videoProgressStream.sink.add(value);
-                              controller.seekTo(Duration(milliseconds: value.toInt()));
-                              resetTimer();
-                            },
-                            onChanged: (double value) async {
-                              // controller.pause();
-                              videoProgressStream.sink.add(value);
+                      return AbsorbPointer(
+                        absorbing: !showPlayPauseOverlay,
+                        child: AnimatedOpacity(
+                          opacity: showPlayPauseOverlay ? 1 : 0,
+                          duration: Duration(milliseconds: 500),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: SizedBox(
+                                  height: MediaQuery.of(context).size.height * 1 / 10,
+                                  child: Slider(
+                                    min: 0,
+                                    max: controller.value.duration.inMilliseconds.toDouble(),
+                                    onChangeStart: (value) {
+                                      controller.pause();
+                                      videoProgressStream.sink.add(value);
+                                      controller.seekTo(Duration(milliseconds: value.toInt()));
+                                      resetTimer();
+                                    },
+                                    onChanged: (double value) async {
+                                      // controller.pause();
+                                      videoProgressStream.sink.add(value);
 
-                              if ((await controller.position).inMilliseconds != value.toInt()) {
-                                controller.seekTo(Duration(milliseconds: value.toInt()));
-                              }
-                            },
-                            onChangeEnd: (double value) {
-                              controller.play();
-                              videoProgressStream.sink.add(value);
+                                      if ((await controller.position).inMilliseconds != value.toInt()) {
+                                        controller.seekTo(Duration(milliseconds: value.toInt()));
+                                      }
+                                    },
+                                    onChangeEnd: (double value) {
+                                      controller.play();
+                                      videoProgressStream.sink.add(value);
 
-                              controller.seekTo(Duration(milliseconds: value.toInt()));
-                              setTimer();
-                            },
-                            value: (snapshot.hasData ? snapshot.data : 0.0)
-                                .clamp(0, controller.value.duration.inMilliseconds)
-                                .toDouble(),
+                                      controller.seekTo(Duration(milliseconds: value.toInt()));
+                                      setTimer();
+                                    },
+                                    value: (snapshot.hasData ? snapshot.data : 0.0)
+                                        .clamp(0, controller.value.duration.inMilliseconds)
+                                        .toDouble(),
+                                  ),
+                                ),
+                              ),
+                              GestureDetector(
+                                child: Padding(
+                                  padding: const EdgeInsets.only(right: 20.0),
+                                  child: Icon(
+                                    controller.value.volume == 0.0 ? Icons.volume_mute : Icons.volume_up,
+                                    color: Theme.of(context).primaryColor,
+                                  ),
+                                ),
+                                onTap: () {
+                                  controller.setVolume(controller.value.volume != 0.0 ? 0.0 : 1.0);
+                                },
+                              ),
+                            ],
                           ),
                         ),
                       );
