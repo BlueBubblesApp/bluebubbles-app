@@ -134,7 +134,7 @@ class _AttachmentPanelState extends State<AttachmentPanel> {
                       formatValue: ((double val) => val.toInt().toString() + "%"),
                       min: 10,
                       max: 100,
-                      divisions: 9),
+                      divisions: 18),
                 ],
               ),
             ),
