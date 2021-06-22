@@ -72,10 +72,11 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
   }
 
   Future<void> initBytes() async {
-    bytes = await widget.file.readAsBytes();
     if (widget.attachment.mimeType == "image/heic") {
       bytes = await FlutterImageCompress.compressWithFile(widget.file.absolute.path,
           quality: 100);
+    } else {
+      bytes = await widget.file.readAsBytes();
     }
     if (this.mounted) setState(() {});
   }
@@ -279,7 +280,7 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
                         return loader;
                       },
                       loadFailedChild: Center(
-                          child: Text("Failed to load image",
+                          child: Text("Failed to display image",
                               style: TextStyle(fontSize: 16, color: Colors.white))
                       )
                     )
