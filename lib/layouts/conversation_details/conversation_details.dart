@@ -88,6 +88,10 @@ class _ConversationDetailsState extends State<ConversationDetails> {
 
   @override
   Widget build(BuildContext context) {
+    final bool redactedMode = SettingsManager()?.settings?.redactedMode ?? false;
+    final bool hideInfo = redactedMode && (SettingsManager()?.settings?.hideContactInfo ?? false);
+    final bool generateName = redactedMode && (SettingsManager()?.settings?.generateFakeContactNames ?? false);
+    if (generateName) controller.text = "Group Chat";
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: Theme.of(context).backgroundColor,
@@ -130,7 +134,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
             SliverToBoxAdapter(
               child: readOnly
                   ? Container()
-                  : showNameField ?
+                  : (showNameField && !hideInfo) || generateName ?
                     Row(
                       children: [
                         Expanded(
@@ -138,7 +142,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                             padding: const EdgeInsets.only(left: 16.0, right: 8.0, bottom: 8.0),
                             child: TextField(
                               cursorColor: Theme.of(context).primaryColor,
-                              readOnly: !chat.isGroup(),
+                              readOnly: !chat.isGroup() || redactedMode,
                               onSubmitted: (String newName) async {
                                 await widget.chat.changeName(newName);
                                 await widget.chat.getTitle();
@@ -184,7 +188,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                           ),
                       ],
                     )
-              : Padding(
+              : !hideInfo ? Padding(
                   padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 8.0),
                   child: RaisedButton(
                     shape: RoundedRectangleBorder(
@@ -204,7 +208,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                       ),
                     ),
                   )
-                ),
+                ) : Container(),
             ),
             SliverList(
               delegate: SliverChildBuilderDelegate((context, index) {
