@@ -81,12 +81,7 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
     if (hideAttachments && !hideAttachmentTypes)
       return Container(
         alignment: Alignment.center,
-        decoration: BoxDecoration(
-            color: Theme.of(context).accentColor,
-            border: Border.fromBorderSide(
-                BorderSide(color: Theme.of(context).scaffoldBackgroundColor, width: 2)
-            )
-        ),
+        color: Theme.of(context).accentColor,
         child: Text(
           widget.attachment.mimeType,
           textAlign: TextAlign.center,
@@ -94,12 +89,7 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
       );
     if (hideAttachments)
       return Container(
-        decoration: BoxDecoration(
-          color: Theme.of(context).accentColor,
-          border: Border.fromBorderSide(
-            BorderSide(color: Theme.of(context).scaffoldBackgroundColor, width: 2)
-          )
-        ),
+        color: Theme.of(context).accentColor,
       );
     if (!file.existsSync()) {
       return Stack(

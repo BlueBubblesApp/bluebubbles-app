@@ -476,7 +476,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                 (context, int index) {
                   return Container(
                     decoration: BoxDecoration(
-                      border: Border.all(color: Theme.of(context).accentColor, width: 3),
+                      border: Border.all(color: Theme.of(context).backgroundColor, width: 3),
                     ),
                     child: AttachmentDetailsCard(
                       attachment: attachmentsForChat[index],
