@@ -2,6 +2,23 @@
 
 Below are the last few BlueBubbles App release changelogs
 
+## v1.2.0
+
+* UX: Adds `%` symbol to the attachment preview quality slider
+* UX: Attachment preview quality slider now increments in steps of 5 instead of 10
+* UX: Message details popup menu is now re-organized a bit for better user-experience
+* UX: Adds better support for .heic images (at partial quality)
+* UX: Sets the priority of notifications to `high` in effort to fix notification issues
+* New Feature: Ability to start a new conversation within message details popup
+* New Feature: Ability to forward a message within message details popup
+* New Feature: Ability to rename a conversation (locally on Android only)
+* New Feature: Ability to mute/unmute videos from the preview
+* New Feature: Redacted mode is now honored in the conversation details page
+* New Feature: Settings toggle to enable/disable filtered chats (leave this disabled if you don't have issues)
+* Bug Fix: Fixes issue where not all chats would load into your chat list (only top 10)
+* Bug Fix: Removes copy options for messages without text (or images)
+* Bug Fix: Fixes issue where the recipient's avatar would show for your reactions
+
 ## v1.1.1
 
 * Bug Fix: Fixes grey screen when creating a new chat
