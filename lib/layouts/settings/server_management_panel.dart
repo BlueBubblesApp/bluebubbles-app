@@ -361,7 +361,69 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                               child: CircularProgressIndicator(
                                 strokeWidth: 3,
                                 valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
-                              )))
+                              ))),
+                  SettingsTile(
+                      title: "Server Info",
+                      subTitle: "Fetch server version & OS",
+                      onTap: () async {
+                        SocketManager().sendMessage("get-server-metadata", {}, (Map<String, dynamic> res) {
+                          List<Widget> metaWidgets = [
+                            RichText(
+                                text: TextSpan(children: [
+                                  TextSpan(
+                                      text: "MacOS Version: ",
+                                      style: Theme.of(context).textTheme.bodyText1.apply(fontWeightDelta: 2)),
+                                  TextSpan(text: res['data']['os_version'], style: Theme.of(context).textTheme.bodyText1)
+                                ])),
+                            RichText(
+                                text: TextSpan(children: [
+                                  TextSpan(
+                                      text: "BlueBubbles Server Version: ",
+                                      style: Theme.of(context).textTheme.bodyText1.apply(fontWeightDelta: 2)),
+                                  TextSpan(text: res['data']['server_version'], style: Theme.of(context).textTheme.bodyText1)
+                                ]))
+                          ];
+                          showDialog(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              title: Text(
+                                "Metadata",
+                                style: Theme.of(context).textTheme.headline1,
+                                textAlign: TextAlign.center,
+                              ),
+                              backgroundColor: Theme.of(context).accentColor,
+                              content: SizedBox(
+                                width: MediaQuery.of(context).size.width * 3 / 5,
+                                height: MediaQuery.of(context).size.height * 1 / 4,
+                                child: Container(
+                                  padding: EdgeInsets.all(10.0),
+                                  decoration: BoxDecoration(
+                                      color: Theme.of(context).backgroundColor,
+                                      borderRadius: BorderRadius.all(Radius.circular(10))),
+                                  child: ListView(
+                                    physics: AlwaysScrollableScrollPhysics(
+                                      parent: BouncingScrollPhysics(),
+                                    ),
+                                    children: metaWidgets,
+                                  ),
+                                ),
+                              ),
+                              actions: [
+                                FlatButton(
+                                  child: Text(
+                                    "Close",
+                                    style: Theme.of(context).textTheme.bodyText1.copyWith(
+                                      color: Theme.of(context).primaryColor,
+                                    ),
+                                  ),
+                                  onPressed: () => Navigator.of(context).pop(),
+                                ),
+                              ],
+                            ),
+                          );
+                        });
+                      },
+                      trailing: Icon(Icons.info, color: Theme.of(context).primaryColor)),
                 ],
               ),
             ),
