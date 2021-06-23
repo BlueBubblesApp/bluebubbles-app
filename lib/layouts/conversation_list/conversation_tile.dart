@@ -8,7 +8,10 @@ import 'package:bluebubbles/helpers/socket_singletons.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_group_widget.dart';
+import 'package:bluebubbles/layouts/widgets/message_widget/typing_indicator.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
+import 'package:bluebubbles/managers/attachment_info_bloc.dart';
+import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -68,6 +71,9 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
   bool removeLetterAvatars = true;
   bool generateFakeContactNames = false;
   bool generateFakeMessageContent = false;
+
+  // Typing indicator
+  bool showTypingIndicator = false;
 
   void loadBrightness() {
     Color now = Theme.of(context).backgroundColor;
@@ -164,6 +170,24 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
       await fetchChatSingleton(widget.chat.guid);
       this.setNewChatData(forceUpdate: true);
     });
+
+    if (SettingsManager().settings.enablePrivateAPI) {
+      CurrentChat currentChat = AttachmentInfoBloc().getCurrentChat(widget.chat.guid);
+      if (currentChat != null) {
+        showTypingIndicator = currentChat.showTypingIndicator;
+        currentChat.stream.listen((event) async {
+          if (this.mounted) {
+            setState(() {
+              if (showTypingIndicator != currentChat.showTypingIndicator) {
+                showTypingIndicator = currentChat.showTypingIndicator;
+              }
+            });
+          } else {
+            showTypingIndicator = false;
+          }
+        });
+      }
+    }
   }
 
   void setNewChatData({forceUpdate: false}) async {
@@ -323,6 +347,26 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
   }
 
   Widget buildSubtitle() {
+    double height = Theme.of(context).textTheme.subtitle1.fontSize;
+    if (showTypingIndicator) {
+      return Container(
+        height: height,
+        child: OverflowBox(
+          alignment: Alignment.topLeft,
+          maxHeight: height * 2,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxHeight: height * 2),
+            child: FittedBox(
+              alignment: Alignment.centerLeft,
+              child: TypingIndicator(
+                visible: true,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
     final hideContent = redactedMode && hideMessageContent;
     final generateContent = redactedMode && generateFakeMessageContent;
 
