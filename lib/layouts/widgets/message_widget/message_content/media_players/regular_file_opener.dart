@@ -37,11 +37,12 @@ class _RegularFileOpenerState extends State<RegularFileOpener> {
             textAlign: TextAlign.center,
             maxLines: 3,
             overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.bodyText2,
           ),
           CupertinoButton(
             child: Icon(
               fileIcon,
-              color: Colors.white,
+              color: Theme.of(context).textTheme.bodyText2.color,
             ),
             onPressed: () async {
               try {
@@ -58,7 +59,7 @@ class _RegularFileOpenerState extends State<RegularFileOpener> {
               }
             },
           ),
-          Text(widget.attachment.mimeType),
+          Text(widget.attachment.mimeType, style: Theme.of(context).textTheme.bodyText2),
         ],
       ),
     );
