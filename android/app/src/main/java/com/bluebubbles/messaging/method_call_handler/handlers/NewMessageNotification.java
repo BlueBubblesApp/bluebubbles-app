@@ -178,7 +178,10 @@ public class NewMessageNotification implements Handler {
                 .setSmallIcon(R.mipmap.ic_stat_icon)
                 .setAllowSystemGeneratedContextualActions(true)
                 .setAutoCancel(true)
+                // Tell android that it's a message/conversation
                 .setCategory(NotificationCompat.CATEGORY_MESSAGE)
+                // Set the priority to high since it's a message they should see
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setContentIntent(openIntent)
                 .addAction(dismissAction)
                 .addAction(replyAction)
