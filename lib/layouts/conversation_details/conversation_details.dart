@@ -37,6 +37,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
   bool isCleared = false;
   int maxPageSize = 5;
   bool showMore = false;
+  bool showNameField = false;
 
   bool get shouldShowMore {
     return chat.participants.length > maxPageSize;
@@ -55,6 +56,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
     super.initState();
     chat = widget.chat;
     controller = new TextEditingController(text: chat.displayName);
+    showNameField = chat.displayName.isNotEmpty;
 
     fetchAttachments();
     ChatBloc().chatStream.listen((event) async {
@@ -86,6 +88,12 @@ class _ConversationDetailsState extends State<ConversationDetails> {
 
   @override
   Widget build(BuildContext context) {
+    final bool redactedMode = SettingsManager()?.settings?.redactedMode ?? false;
+    final bool hideInfo = redactedMode && (SettingsManager()?.settings?.hideContactInfo ?? false);
+    final bool generateName = redactedMode && (SettingsManager()?.settings?.generateFakeContactNames ?? false);
+    if (generateName) controller.text = "Group Chat";
+
+    final bool showGroupNameInfo = (showNameField && !hideInfo) || generateName;
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: Theme.of(context).backgroundColor,
@@ -128,21 +136,122 @@ class _ConversationDetailsState extends State<ConversationDetails> {
             SliverToBoxAdapter(
               child: readOnly
                   ? Container()
-                  : Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: TextField(
-                        cursorColor: Theme.of(context).primaryColor,
-                        readOnly: true,
-                        controller: controller,
-                        style: Theme.of(context).textTheme.bodyText1,
-                        autofocus: false,
-                        autocorrect: false,
-                        decoration: InputDecoration(
-                          labelText: "NAME",
-                          labelStyle: TextStyle(color: Theme.of(context).primaryColor),
-                        ),
-                      ),
-                    ),
+                  : showGroupNameInfo
+                      ? Row(
+                          children: [
+                            Expanded(
+                              child: Padding(
+                                padding: const EdgeInsets.only(left: 16.0, right: 8.0, bottom: 8.0),
+                                child: TextField(
+                                  cursorColor: Theme.of(context).primaryColor,
+                                  readOnly: !chat.isGroup() || redactedMode,
+                                  onSubmitted: (String newName) async {
+                                    await widget.chat.changeName(newName);
+                                    await widget.chat.getTitle();
+                                    setState(() {
+                                      showNameField = newName.isNotEmpty;
+                                    });
+                                    ChatBloc().updateChat(chat);
+                                  },
+                                  controller: controller,
+                                  style: Theme.of(context).textTheme.bodyText1,
+                                  autofocus: false,
+                                  autocorrect: false,
+                                  decoration: InputDecoration(
+                                      labelText: chat.displayName.isEmpty ? "SET NAME" : "NAME",
+                                      labelStyle: TextStyle(color: Theme.of(context).primaryColor),
+                                      enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.grey))),
+                                ),
+                              ),
+                            ),
+                            if (showGroupNameInfo && chat.displayName.isNotEmpty)
+                              Container(
+                                  padding: EdgeInsets.only(right: 10),
+                                  child: GestureDetector(
+                                      onTap: () {
+                                        showDialog(
+                                          context: context,
+                                          builder: (BuildContext context) {
+                                            return AlertDialog(
+                                                backgroundColor: Theme.of(context).accentColor,
+                                                title: new Text("Group Naming",
+                                                    style:
+                                                        TextStyle(color: Theme.of(context).textTheme.bodyText1.color)),
+                                                content: Column(
+                                                  mainAxisAlignment: MainAxisAlignment.center,
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                  children: [
+                                                    Text(
+                                                        "Changing the group name will only change it locally for you. It will not change the group name on any of your other devices, or for other members of the chat.",
+                                                        style: Theme.of(context).textTheme.bodyText1),
+                                                  ],
+                                                ),
+                                                actions: <Widget>[
+                                                  FlatButton(
+                                                      child: Text("OK",
+                                                          style: Theme.of(context)
+                                                              .textTheme
+                                                              .subtitle1
+                                                              .apply(color: Theme.of(context).primaryColor)),
+                                                      onPressed: () {
+                                                        Navigator.of(context).pop();
+                                                      }),
+                                                ]);
+                                          },
+                                        );
+                                      },
+                                      child: Icon(
+                                        Icons.info_outline,
+                                        color: Theme.of(context).primaryColor,
+                                      ))),
+                            if (chat.displayName.isEmpty)
+                              Padding(
+                                padding: const EdgeInsets.only(left: 8.0, right: 16.0, bottom: 8.0),
+                                child: RaisedButton(
+                                  highlightColor: Colors.red,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(18),
+                                  ),
+                                  onPressed: () async {
+                                    setState(() {
+                                      showNameField = false;
+                                    });
+                                  },
+                                  color: Theme.of(context).accentColor,
+                                  child: Text(
+                                    "CANCEL",
+                                    style: TextStyle(
+                                      color: Theme.of(context).textTheme.bodyText1.color,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        )
+                      : !hideInfo
+                          ? Padding(
+                              padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 8.0),
+                              child: RaisedButton(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(18),
+                                ),
+                                onPressed: () async {
+                                  setState(() {
+                                    showNameField = true;
+                                  });
+                                },
+                                color: Theme.of(context).accentColor,
+                                child: Text(
+                                  "ADD NAME",
+                                  style: TextStyle(
+                                    color: Theme.of(context).textTheme.bodyText1.color,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ))
+                          : Container(),
             ),
             SliverList(
               delegate: SliverChildBuilderDelegate((context, index) {
@@ -410,7 +519,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                 (context, int index) {
                   return Container(
                     decoration: BoxDecoration(
-                      border: Border.all(color: Theme.of(context).accentColor, width: 3),
+                      border: Border.all(color: Theme.of(context).backgroundColor, width: 3),
                     ),
                     child: AttachmentDetailsCard(
                       attachment: attachmentsForChat[index],

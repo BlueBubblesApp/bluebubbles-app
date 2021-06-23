@@ -42,6 +42,7 @@ class Settings {
   bool colorblindMode = false;
   bool showDeliveryTimestamps = false;
   int previewCompressionQuality = 25;
+  bool filteredChatList = false;
 
   // String emojiFontFamily;
 
@@ -176,6 +177,8 @@ class Settings {
         settings.generateFakeMessageContent = entry.value;
       } else if (entry.name == "previewCompressionQuality") {
         settings.previewCompressionQuality = entry.value;
+      } else if (entry.name == "filteredChatList") {
+        settings.filteredChatList = entry.value;
       }
 
       // else if (entry.name == "emojiFontFamily") {
@@ -476,6 +479,11 @@ class Settings {
           name: "previewCompressionQuality",
           value: this.previewCompressionQuality,
           type: this.previewCompressionQuality.runtimeType,
+        ),
+        ConfigEntry(
+          name: "filteredChatList",
+          value: this.filteredChatList,
+          type: this.filteredChatList.runtimeType,
         ),
         // ConfigEntry(
         //     name: "emojiFontFamily",

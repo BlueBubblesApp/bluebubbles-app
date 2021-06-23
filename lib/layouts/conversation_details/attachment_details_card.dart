@@ -74,7 +74,23 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
     File file = new File(
       "${SettingsManager().appDocDir.path}/attachments/${attachment.guid}/${attachment.transferName}",
     );
-
+    final bool hideAttachments =
+        SettingsManager().settings.redactedMode && SettingsManager().settings.hideAttachments;
+    final bool hideAttachmentTypes =
+        SettingsManager().settings.redactedMode && SettingsManager().settings.hideAttachmentTypes;
+    if (hideAttachments && !hideAttachmentTypes)
+      return Container(
+        alignment: Alignment.center,
+        color: Theme.of(context).accentColor,
+        child: Text(
+          widget.attachment.mimeType,
+          textAlign: TextAlign.center,
+        ),
+      );
+    if (hideAttachments)
+      return Container(
+        color: Theme.of(context).accentColor,
+      );
     if (!file.existsSync()) {
       return Stack(
         alignment: Alignment.center,

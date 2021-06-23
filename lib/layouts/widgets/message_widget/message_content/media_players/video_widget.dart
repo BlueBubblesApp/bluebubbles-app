@@ -38,6 +38,7 @@ class _VideoWidgetState extends State<VideoWidget> with TickerProviderStateMixin
   Uint8List thumbnail;
   PlayerStatus status = PlayerStatus.NONE;
   bool hasListener = false;
+  bool muted = false;
 
   @override
   void initState() {
@@ -223,6 +224,41 @@ class _VideoWidgetState extends State<VideoWidget> with TickerProviderStateMixin
                                 ),
                         ),
                       ),
+                      Positioned.fill(
+                        child: Align(
+                          alignment: Alignment.bottomRight,
+                          child: Padding(
+                            padding: const EdgeInsets.only(bottom: 8.0, right: 8.0),
+                            child: AnimatedOpacity(
+                              opacity: showPlayPauseOverlay ? 1 : 0,
+                              duration: Duration(milliseconds: 250),
+                              child: AbsorbPointer(
+                                absorbing: !showPlayPauseOverlay,
+                                child: GestureDetector(
+                                  onTap: () {
+                                    setState(() {
+                                      muted = !muted;
+                                    });
+                                    controller.setVolume(muted ? 0.0 : 1.0);
+                                  },
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: HexColor('26262a').withOpacity(0.5),
+                                      borderRadius: BorderRadius.circular(40),
+                                    ),
+                                    padding: EdgeInsets.all(5),
+                                    child: Icon(
+                                      muted ? Icons.volume_mute : Icons.volume_up,
+                                      color: Colors.white,
+                                      size: 15,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -234,6 +270,7 @@ class _VideoWidgetState extends State<VideoWidget> with TickerProviderStateMixin
         onTap: () async {
           VideoPlayerController controller = VideoPlayerController.file(widget.file);
           await controller.initialize();
+          controller.setVolume(muted ? 0.0 : 1.0);
           controller.play();
           CurrentChat.of(context).changeCurrentPlayingVideo({widget.attachment.guid: controller});
         },
@@ -256,6 +293,33 @@ class _VideoWidgetState extends State<VideoWidget> with TickerProviderStateMixin
                 Icons.play_arrow,
                 color: Colors.white,
                 size: 45,
+              ),
+            ),
+            Positioned.fill(
+              child: Align(
+                alignment: Alignment.bottomRight,
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 8.0, right: 8.0),
+                  child: GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        muted = !muted;
+                      });
+                    },
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: HexColor('26262a').withOpacity(0.5),
+                        borderRadius: BorderRadius.circular(40),
+                      ),
+                      padding: EdgeInsets.all(5),
+                      child: Icon(
+                        muted ? Icons.volume_mute : Icons.volume_up,
+                        color: Colors.white,
+                        size: 15,
+                      ),
+                    ),
+                  ),
+                ),
               ),
             ),
           ],

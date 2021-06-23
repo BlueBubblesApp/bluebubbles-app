@@ -308,7 +308,9 @@ class MessageHelper {
 
     List<String> items = matches.map((m) => m.toString()).toList();
 
-    String replaced = text.replaceAll(pattern, "").replaceAll(String.fromCharCode(65039), "").trim();
+    String replaced = text.replaceAll(pattern, "").replaceAll(String.fromCharCode(65039), "");
+    RegExp darkSunglasses = RegExp('\u{1F576}');
+    replaced = replaced.replaceAll(darkSunglasses, "").trim();
     return items.length <= 3 && replaced.isEmpty;
   }
 

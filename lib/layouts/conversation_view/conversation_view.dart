@@ -33,6 +33,7 @@ abstract class ChatSelectorTypes {
 class ConversationView extends StatefulWidget {
   final List<File> existingAttachments;
   final String existingText;
+  final List<UniqueContact> selected;
 
   ConversationView({
     Key key,
@@ -45,6 +46,7 @@ class ConversationView extends StatefulWidget {
     this.customHeading,
     this.customMessageBloc,
     this.onMessagesViewComplete,
+    this.selected,
     this.type = ChatSelectorTypes.ALL,
   }) : super(key: key);
 
@@ -76,6 +78,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
   void initState() {
     super.initState();
 
+    this.selected = widget.selected ?? [];
     this.existingAttachments = widget.existingAttachments;
     this.existingText = widget.existingText;
 
@@ -87,7 +90,9 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
     isCreator = widget.isCreator ?? false;
     chat = widget.chat;
 
-    initChatSelector();
+    if (widget.selected == null) {
+      initChatSelector();
+    }
     initConversationViewState();
 
     LifeCycleManager().stream.listen((event) {
