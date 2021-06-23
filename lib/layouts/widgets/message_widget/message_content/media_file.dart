@@ -1,3 +1,4 @@
+import 'package:bluebubbles/layouts/widgets/circle_progress_bar.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/socket_manager.dart';
@@ -47,13 +48,16 @@ class _MediaFileState extends State<MediaFile> {
                   style: Theme.of(context).textTheme.bodyText1,
                 );
               }
-              return CircularProgressIndicator(
-                backgroundColor: Colors.grey,
-                valueColor: AlwaysStoppedAnimation(Colors.white),
-                value: snapshot.hasData
-                    ? snapshot.data
-                    : SocketManager().attachmentSenders[widget.attachment.guid].progress,
-              );
+
+              return Container(
+                  height: 40,
+                  width: 40,
+                  child: CircleProgressBar(
+                      foregroundColor: Colors.white,
+                      backgroundColor: Colors.grey,
+                      value: snapshot.hasData
+                          ? snapshot.data
+                          : SocketManager().attachmentSenders[widget.attachment.guid].progress));
             },
             stream: SocketManager().attachmentSenders[widget.attachment.guid].stream,
           ),

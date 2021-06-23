@@ -77,7 +77,7 @@ class _MessageAttachmentState extends State<MessageAttachment> with AutomaticKee
     if (content is File) {
       String mimeType = widget.attachment.mimeType;
       if (mimeType != null) mimeType = mimeType.substring(0, mimeType.indexOf("/"));
-      if (mimeType == "image") {
+      if (mimeType == "image" && !widget.attachment.mimeType.endsWith("tiff")) {
         return MediaFile(
           attachment: widget.attachment,
           child: ImageWidget(
