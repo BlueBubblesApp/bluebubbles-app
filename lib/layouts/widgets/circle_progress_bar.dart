@@ -1,5 +1,6 @@
 import 'dart:math' as Math;
 
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/widgets.dart';
 
 /// Draws a circular animated progress bar.
@@ -36,9 +37,11 @@ class CircleProgressBarState extends State<CircleProgressBar> with SingleTickerP
   @override
   void initState() {
     super.initState();
+    int duration = SettingsManager().settings.chunkSize;
+    duration = duration.clamp(200, 1000); // Don't go lower than 200 ms or higher than 1000
 
     this._controller = AnimationController(
-      duration: this.widget.animationDuration ?? const Duration(milliseconds: 250),
+      duration: this.widget.animationDuration ?? Duration(milliseconds: duration),
       vsync: this,
     );
 
