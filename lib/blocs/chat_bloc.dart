@@ -45,8 +45,12 @@ class ChatBloc {
   }
 
   List<Chat> _archivedChats = [];
+  List<Chat> get archivedChats {
+    final ids = _archivedChats.map((e) => e.guid).toSet();
+    _archivedChats.retainWhere((element) => ids.remove(element.guid));
+    return _archivedChats;
+  }
 
-  List<Chat> get archivedChats => _archivedChats;
   Completer<void> chatRequest;
 
   static final ChatBloc _chatBloc = ChatBloc._internal();
@@ -258,14 +262,14 @@ class ChatBloc {
       _chats = [];
     }
 
-    int batches = (count < batchSize) ? batchSize : (count / batchSize).floor();
+    int batches = (count < batchSize) ? batchSize : (count / batchSize).ceil();
     for (int i = 0; i < batches; i++) {
       List<Chat> chats = await Chat.getChats(limit: batchSize, offset: i * batchSize, archived: archived);
       if (chats.length == 0) break;
 
       for (Chat chat in chats) {
         bool existing = false;
-        for (Chat existingChat in _chats) {
+        for (Chat existingChat in (archived ? _archivedChats : _chats)) {
           if (existingChat.guid == chat.guid) {
             existing = true;
             break;
@@ -273,18 +277,23 @@ class ChatBloc {
         }
 
         if (existing) continue;
-        _chats.add(chat);
+        if (archived) {
+          _archivedChats.add(chat);
+        } else {
+          _chats.add(chat);
+        }
+
         await initTileValsForChat(chat);
       }
 
-      await this.addToSink(this.chats);
+      await this.addToSink((archived) ? this.archivedChats : this.chats, archived: archived);
     }
 
     // If this is for archived chats, return now
     if (archived) return;
 
     // For non-archived chats, do some more processing
-    debugPrint("[ChatBloc] -> Finished fetching chats (${_chats.length})");
+    debugPrint("[ChatBloc] -> Finished fetching chats (${_chats.length}). (archived: $archived)");
     await updateAllShareTargets();
 
     if (chatRequest != null && !chatRequest.isCompleted) {
@@ -381,14 +390,18 @@ class ChatBloc {
     refreshChats();
   }
 
-  Future<void> addToSink(List<Chat> chats) async {
+  Future<void> addToSink(List<Chat> chats, {bool archived = false}) async {
     for (int i = 0; i < chats.length; i++) {
       if (isNullOrEmpty(chats[i].participants)) {
         await chats[i].getParticipants();
       }
     }
 
-    _chatController.sink.add(chats);
+    if (archived && !_archivedChatController.isClosed) {
+      _archivedChatController.sink.add(chats);
+    } else if (!_chatController.isClosed) {
+      _chatController.sink.add(chats);
+    }
   }
 
   dispose() {
