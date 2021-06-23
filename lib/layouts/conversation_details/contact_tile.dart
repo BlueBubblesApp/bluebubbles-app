@@ -1,9 +1,11 @@
 import 'dart:ui';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
+import 'package:bluebubbles/helpers/redacted_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/socket_manager.dart';
@@ -104,6 +106,9 @@ class _ContactTileState extends State<ContactTile> {
   }
 
   Widget _buildContactTile() {
+    final bool redactedMode = SettingsManager()?.settings?.redactedMode ?? false;
+    final bool hideInfo = redactedMode && (SettingsManager()?.settings?.hideContactInfo ?? false);
+    final bool generateName = redactedMode && (SettingsManager()?.settings?.generateFakeContactNames ?? false);
     return InkWell(
       onLongPress: () {
         Clipboard.setData(new ClipboardData(text: widget.handle.address));
@@ -119,9 +124,9 @@ class _ContactTileState extends State<ContactTile> {
         }
       },
       child: ListTile(
-        title: (contact?.displayName != null)
+        title: (contact?.displayName != null || hideInfo || generateName)
             ? Text(
-                contact.displayName ?? "",
+                getContactName(context, contact?.displayName, widget.handle?.address, currentChat: widget.chat),
                 style: Theme.of(context).textTheme.bodyText1,
               )
             : FutureBuilder(
@@ -139,7 +144,7 @@ class _ContactTileState extends State<ContactTile> {
                     style: Theme.of(context).textTheme.bodyText1,
                   );
                 }),
-        subtitle: (contact == null)
+        subtitle: (contact == null || hideInfo || generateName)
             ? null
             : FutureBuilder(
                 future: formatPhoneNumber(widget.handle?.address ?? ""),
