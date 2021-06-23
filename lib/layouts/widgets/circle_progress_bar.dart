@@ -38,7 +38,11 @@ class CircleProgressBarState extends State<CircleProgressBar> with SingleTickerP
   void initState() {
     super.initState();
     int duration = SettingsManager().settings.chunkSize;
-    duration = duration.clamp(200, 1000); // Don't go lower than 200 ms or higher than 1000
+
+    // Don't go lower than 200 ms or higher than 800
+    // These are arbitrary, but just what I found worked best
+    // What works best may vary depending on network speeds
+    duration = duration.clamp(200, 800);
 
     this._controller = AnimationController(
       duration: this.widget.animationDuration ?? Duration(milliseconds: duration),
