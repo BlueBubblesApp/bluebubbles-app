@@ -529,32 +529,32 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                   context: context,
                   builder: (_) {
                     Widget title = Text(
-                            "Copy",
-                            style: Theme.of(context).textTheme.headline1,
-                          );
+                      "Copy",
+                      style: Theme.of(context).textTheme.headline1,
+                    );
                     Widget content = Container(
-                            constraints: BoxConstraints(
-                              maxHeight: MediaQuery.of(context).size.height * 2 / 3,
-                            ),
-                            child: SingleChildScrollView(
-                              physics: ThemeSwitcher.getScrollPhysics(),
-                              child: SelectableText(
-                                widget.message.fullText,
-                                style: Theme.of(context).textTheme.bodyText1,
-                              ),
-                            ),
-                          );
+                      constraints: BoxConstraints(
+                        maxHeight: MediaQuery.of(context).size.height * 2 / 3,
+                      ),
+                      child: SingleChildScrollView(
+                        physics: ThemeSwitcher.getScrollPhysics(),
+                        child: SelectableText(
+                          widget.message.fullText,
+                          style: Theme.of(context).textTheme.bodyText1,
+                        ),
+                      ),
+                    );
                     List<Widget> actions = <Widget>[
-                          FlatButton(
-                            child: Text(
-                              "Done",
-                              // style: Theme.of(context).textTheme.bodyText1,
-                            ),
-                            onPressed: () {
-                              Navigator.of(context, rootNavigator: true).pop('dialog');
-                            },
-                          ),
-                        ];
+                      FlatButton(
+                        child: Text(
+                          "Done",
+                          // style: Theme.of(context).textTheme.bodyText1,
+                        ),
+                        onPressed: () {
+                          Navigator.of(context, rootNavigator: true).pop('dialog');
+                        },
+                      ),
+                    ];
                     if (SettingsManager().settings.skin == Skins.IOS) {
                       return CupertinoAlertDialog(
                         title: title,
@@ -702,10 +702,12 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
       ),
     );
 
-    double topOffset = (messageTopOffset + widget.childSize.height)
-        .toDouble()
-        .clamp(topMinimum, size.height - MediaQuery.of(context).viewInsets.bottom - detailsMenuHeight);
+    double upperLimit = size.height - MediaQuery.of(context).viewInsets.bottom - detailsMenuHeight;
+    if (topMinimum > upperLimit) {
+      topMinimum = upperLimit;
+    }
 
+    double topOffset = (messageTopOffset + widget.childSize.height).toDouble().clamp(topMinimum, upperLimit);
     double leftOffset =
         (widget.message.isFromMe ? size.width - maxMenuWidth - 15 : 15 + (currentChat.chat.isGroup() ? 35 : 0))
             .toDouble();
