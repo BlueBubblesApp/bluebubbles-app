@@ -142,6 +142,14 @@ class _UXPanelState extends State<UXPanel> {
                     initialVal: _settingsCopy.colorblindMode,
                     title: "Colorblind Mode",
                   ),
+                  SettingsSwitch(
+                    onChanged: (bool val) {
+                      _settingsCopy.filteredChatList = val;
+                      saveSettings();
+                    },
+                    initialVal: _settingsCopy.filteredChatList,
+                    title: "Filtered Chat List",
+                  ),
                   if (SettingsManager().settings.skin == Skins.Samsung ||
                       SettingsManager().settings.skin == Skins.Material)
                     SettingsSwitch(

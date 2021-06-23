@@ -773,8 +773,7 @@ class Chat {
     return (res.isNotEmpty) ? res.map((c) => Chat.fromMap(c)).toList() : [];
   }
 
-  static Future<List<Chat>> getChats(
-      {bool archived = false, int limit = 15, int offset = 0, bool getFiltered = false}) async {
+  static Future<List<Chat>> getChats({bool archived = false, int limit = 15, int offset = 0}) async {
     final Database db = await DBProvider.db.database;
 
     var res = await db.rawQuery(
@@ -799,8 +798,9 @@ class Chat {
     if (res.isEmpty) return [];
 
     Iterable<Chat> output = res.map((c) => Chat.fromMap(c));
-    if (!getFiltered) {
-      output = output.where((item) => item.isFiltered == false);
+    bool shouldFilter = !SettingsManager().settings.filteredChatList;
+    if (shouldFilter) {
+      output = output.where((item) => !item.isFiltered);
     }
 
     return output.toList();
