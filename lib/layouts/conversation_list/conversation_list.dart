@@ -228,16 +228,21 @@ class _ConversationListState extends State<ConversationList> {
     ];
   }
 
-  void openNewChatCreator() {
-    Navigator.of(context).push(
-      CupertinoPageRoute(
-        builder: (BuildContext context) {
-          return ConversationView(
-            isCreator: true,
-          );
-        },
-      ),
-    );
+  void openNewChatCreator() async {
+    if ((await SettingsManager().getMacOSVersion()) < 11) {
+      Navigator.of(context).push(
+        CupertinoPageRoute(
+          builder: (BuildContext context) {
+            return ConversationView(
+              isCreator: true,
+            );
+          },
+        ),
+      );
+    } else {
+      final snackBar = SnackBar(content: Text('Creating chats is currently not supported on MacOS 11 (Big Sur) and up!'));
+      Scaffold.of(context).showSnackBar(snackBar);
+    }
   }
 
   void sortChats() {
@@ -328,11 +333,16 @@ class _ConversationListState extends State<ConversationList> {
         )
       : Container();
 
-  FloatingActionButton buildFloatinActionButton() {
-    return FloatingActionButton(
-        backgroundColor: Theme.of(context).primaryColor,
-        child: Icon(Icons.message, color: Colors.white, size: 25),
-        onPressed: openNewChatCreator);
+  FutureBuilder buildFloatinActionButton() {
+    return FutureBuilder<int>(
+      future: SettingsManager().getMacOSVersion(),
+      builder: (context, snapshot) {
+        return FloatingActionButton(
+            backgroundColor: Theme.of(context).primaryColor.withOpacity(snapshot.hasData && snapshot.data >= 11 ? 0.5 : 1),
+            child: Icon(Icons.message, color: Colors.white, size: 25),
+            onPressed: openNewChatCreator);
+      }
+    );
   }
 
   List<Widget> getConnectionIndicatorWidgets() {

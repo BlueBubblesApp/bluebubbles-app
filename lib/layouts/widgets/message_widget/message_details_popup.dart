@@ -375,77 +375,119 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
           ),
         ),
       if (widget.currentChat.chat.isGroup() && !widget.message.isFromMe && dmChat == null)
-        Material(
-          color: Colors.transparent,
-          child: InkWell(
-            splashColor: Colors.transparent,
-            highlightColor: Colors.transparent,
-            onTap: () async {
-              String address = widget.message.handle.address;
-              Contact contact = ContactManager().getCachedContactSync(address);
-              UniqueContact uniqueContact;
-              if (contact == null) {
-                uniqueContact = UniqueContact(address: address, displayName: (await formatPhoneNumber(address)));
-              } else {
-                uniqueContact = UniqueContact(address: address, displayName: contact.displayName ?? address);
-              }
-              Navigator.pushReplacement(
-                context,
-                cupertino.CupertinoPageRoute(
-                  builder: (BuildContext context) {
-                    return ConversationView(
-                      isCreator: true,
-                      selected: [uniqueContact],
+        FutureBuilder<int>(
+          future: SettingsManager().getMacOSVersion(),
+          builder: (context, snapshot) {
+            return AnimatedSwitcher(
+              duration: Duration(milliseconds: 500),
+              child: snapshot.hasData && snapshot.data < 11 ? Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  splashColor: Colors.transparent,
+                  highlightColor: Colors.transparent,
+                  onTap: () async {
+                    String address = widget.message.handle.address;
+                    Contact contact = ContactManager().getCachedContactSync(address);
+                    UniqueContact uniqueContact;
+                    if (contact == null) {
+                      uniqueContact = UniqueContact(address: address, displayName: (await formatPhoneNumber(address)));
+                    } else {
+                      uniqueContact = UniqueContact(address: address, displayName: contact.displayName ?? address);
+                    }
+                    Navigator.pushReplacement(
+                      context,
+                      cupertino.CupertinoPageRoute(
+                        builder: (BuildContext context) {
+                          return ConversationView(
+                            isCreator: true,
+                            selected: [uniqueContact],
+                          );
+                        },
+                      ),
                     );
                   },
+                  child: ListTile(
+                    title: Text(
+                      "Start Conversation",
+                      style: Theme.of(context).textTheme.bodyText1,
+                    ),
+                    trailing: Icon(
+                      Icons.message,
+                      color: Theme.of(context).textTheme.bodyText1.color,
+                    ),
+                  ),
                 ),
-              );
-            },
-            child: ListTile(
-              title: Text(
-                "Start Conversation",
-                style: Theme.of(context).textTheme.bodyText1,
-              ),
-              trailing: Icon(
-                Icons.message,
-                color: Theme.of(context).textTheme.bodyText1.color,
-              ),
-            ),
-          ),
-        ),
-      Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () {
-            Navigator.pushReplacement(
-              context,
-              cupertino.CupertinoPageRoute(
-                builder: (BuildContext context) {
-                  List<File> existingAttachments = [];
-                  if (!widget.message.isUrlPreview()) {
-                    existingAttachments =
-                        widget.message.attachments.map((attachment) => File(attachment.getPath())).toList();
-                  }
-                  return ConversationView(
-                    isCreator: true,
-                    existingText: widget.message.text,
-                    existingAttachments: existingAttachments,
-                  );
-                },
+              ) : Material(
+                color: Colors.transparent,
+                child: ListTile(
+                  title: Text(
+                    "Start Conversation",
+                    style: Theme.of(context).textTheme.bodyText1
+                        .copyWith(color: Theme.of(context).textTheme.bodyText1.color.withOpacity(0.5)),
+                  ),
+                  trailing: Icon(
+                    Icons.message,
+                    color: Theme.of(context).textTheme.bodyText1.color.withOpacity(0.5),
+                  ),
+                ),
               ),
             );
-          },
-          child: ListTile(
-            title: Text(
-              "Forward",
-              style: Theme.of(context).textTheme.bodyText1,
-            ),
-            trailing: Icon(
-              Icons.forward,
-              color: Theme.of(context).textTheme.bodyText1.color,
-            ),
-          ),
+          }
         ),
+      FutureBuilder<int>(
+        future: SettingsManager().getMacOSVersion(),
+        builder: (context, snapshot) {
+          return AnimatedSwitcher(
+            duration: Duration(milliseconds: 500),
+            child: snapshot.hasData && snapshot.data < 11 ? Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () async {
+                  Navigator.pushReplacement(
+                    context,
+                    cupertino.CupertinoPageRoute(
+                      builder: (BuildContext context) {
+                        List<File> existingAttachments = [];
+                        if (!widget.message.isUrlPreview()) {
+                          existingAttachments =
+                              widget.message.attachments.map((attachment) => File(attachment.getPath())).toList();
+                        }
+                        return ConversationView(
+                          isCreator: true,
+                          existingText: widget.message.text,
+                          existingAttachments: existingAttachments,
+                        );
+                      },
+                    ),
+                  );
+                },
+                child: ListTile(
+                  title: Text(
+                    "Forward",
+                    style: Theme.of(context).textTheme.bodyText1,
+                  ),
+                  trailing: Icon(
+                    Icons.forward,
+                    color: Theme.of(context).textTheme.bodyText1.color,
+                  ),
+                ),
+              ),
+            ) : Material(
+              color: Colors.transparent,
+              child: ListTile(
+                title: Text(
+                  "Forward",
+                  style: Theme.of(context).textTheme.bodyText1
+                      .copyWith(color: Theme.of(context).textTheme.bodyText1.color.withOpacity(0.5)),
+                ),
+                trailing: Icon(
+                  Icons.forward,
+                  color: Theme.of(context).textTheme.bodyText1.color.withOpacity(0.5),
+                ),
+              ),
+            ),
+          );
+        }
       ),
       Material(
         color: Colors.transparent,

@@ -42,6 +42,7 @@ class SettingsManager {
   FCMData fcmData;
   List<ThemeObject> themes;
   String countryCode;
+  int _macOSVersion;
 
   int get compressionQuality {
     if (settings.lowMemoryMode) {
@@ -165,5 +166,13 @@ class SettingsManager {
 
   void dispose() {
     _stream.close();
+  }
+
+  FutureOr<int> getMacOSVersion() async {
+    if (_macOSVersion == null) {
+      var res = await SocketManager().sendMessage("get-server-metadata", {}, (_) {});
+      _macOSVersion = int.tryParse(res['data']['os_version'].split(".")[0]);
+    }
+    return _macOSVersion;
   }
 }
