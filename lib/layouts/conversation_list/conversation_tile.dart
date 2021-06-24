@@ -74,6 +74,7 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
 
   // Typing indicator
   bool showTypingIndicator = false;
+  StreamSubscription chatStream;
 
   void loadBrightness() {
     Color now = Theme.of(context).backgroundColor;
@@ -174,19 +175,25 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
     if (SettingsManager().settings.enablePrivateAPI) {
       CurrentChat currentChat = AttachmentInfoBloc().getCurrentChat(widget.chat.guid);
       if (currentChat != null) {
+        chatStream = currentChat.stream.listen((event) {});
         showTypingIndicator = currentChat.showTypingIndicator;
-        currentChat.stream.listen((event) async {
-          if (this.mounted) {
-            setState(() {
-              if (showTypingIndicator != currentChat.showTypingIndicator) {
-                showTypingIndicator = currentChat.showTypingIndicator;
-              }
-            });
-          } else {
-            showTypingIndicator = false;
-          }
+        chatStream.onData((event) {
+          setState(() {
+            if (showTypingIndicator != currentChat.showTypingIndicator) {
+              showTypingIndicator = currentChat.showTypingIndicator;
+            }
+          });
         });
       }
+    }
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+
+    if (chatStream != null) {
+      chatStream.cancel();
     }
   }
 
@@ -265,7 +272,7 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
           caption: widget.chat.isPinned ? 'Unpin' : 'Pin',
           color: Colors.yellow[800],
           foregroundColor: Theme.of(context).textTheme.bodyText1.color,
-          icon: Icons.star,
+          icon: widget.chat.isPinned ? Icons.star_outline : Icons.star,
           onTap: () async {
             if (widget.chat.isPinned) {
               await widget.chat.unpin();
@@ -300,20 +307,19 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
               Chat.deleteChat(widget.chat);
             },
           ),
-        if (!widget.chat.hasUnreadMessage)
-          IconSlideAction(
-            caption: 'Mark Unread',
-            color: Colors.blue,
-            icon: Icons.notifications,
-            onTap: () {
-              widget.chat.setUnreadStatus(true);
-              ChatBloc().updateChatPosition(widget.chat);
-            },
-          ),
+        IconSlideAction(
+          caption: widget.chat.hasUnreadMessage ? 'Mark Read' : 'Mark Unread',
+          color: Colors.blue,
+          icon: widget.chat.hasUnreadMessage ? Icons.mark_chat_read : Icons.mark_chat_unread,
+          onTap: () {
+            widget.chat.setUnreadStatus(true);
+            ChatBloc().updateChatPosition(widget.chat);
+          },
+        ),
         IconSlideAction(
           caption: widget.chat.isArchived ? 'UnArchive' : 'Archive',
           color: widget.chat.isArchived ? Colors.blue : Colors.red,
-          icon: widget.chat.isArchived ? Icons.replay : Icons.delete,
+          icon: widget.chat.isArchived ? Icons.restore_from_trash_rounded : Icons.delete,
           onTap: () {
             if (widget.chat.isArchived) {
               ChatBloc().unArchiveChat(widget.chat);
@@ -604,8 +610,9 @@ class __CupertinoState extends State<_Cupertino> {
                           (!widget.parent.widget.chat.isMuted && widget.parent.widget.chat.hasUnreadMessage)
                               ? Container(
                                   decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(35),
-                                      color: Theme.of(context).primaryColor.withOpacity(0.8)),
+                                    borderRadius: BorderRadius.circular(35),
+                                    color: Theme.of(context).primaryColor.withOpacity(0.8),
+                                  ),
                                   width: 10,
                                   height: 10,
                                 )
@@ -708,7 +715,9 @@ class _Material extends StatelessWidget {
                     if (parent.widget.chat.isMuted)
                       Icon(
                         Icons.notifications_off,
-                        color: Theme.of(context).textTheme.subtitle1.color,
+                        color: parent.widget.chat.hasUnreadMessage
+                            ? Theme.of(context).primaryColor.withOpacity(0.8)
+                            : Theme.of(context).textTheme.subtitle1.color,
                         size: 15,
                       ),
                     Container(
