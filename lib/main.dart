@@ -288,14 +288,12 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
       systemNavigationBarColor: Get.theme.backgroundColor, // navigation bar color
-      systemNavigationBarIconBrightness: Get.theme.brightness,
       statusBarColor: Colors.transparent, // status bar color
     ));
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: Get.theme.backgroundColor,
-      ),
+          systemNavigationBarColor: Get.theme.backgroundColor, systemNavigationBarIconBrightness: Get.theme.brightness),
       child: Scaffold(
         backgroundColor: Colors.black,
         // The stream builder connects to the [SocketManager] to check if the app has finished the setup or not
@@ -346,6 +344,7 @@ class ThemeController extends GetxController {
 
   Future<void> setThemeData(ThemeData themeData, {bool updateState = true}) async {
     Get.changeTheme(themeData);
+
     _themeData = themeData;
     if (updateState) update();
   }
@@ -366,7 +365,12 @@ class ThemeController extends GetxController {
     ThemeData lightTheme = (await ThemeObject.getLightTheme()).themeData;
     ThemeData darkTheme = (await ThemeObject.getDarkTheme()).themeData;
 
-    setThemeData(Get.isDarkMode ? darkTheme : lightTheme, updateState: false);
+    ThemeData usedTheme = lightTheme;
+    if (Get.mediaQuery.platformBrightness == Brightness.dark || themeMode == ThemeMode.dark) {
+      usedTheme = darkTheme;
+    }
+
+    setThemeData(usedTheme, updateState: false);
     update();
 
     SettingsManager().settings.theme = themeMode;
