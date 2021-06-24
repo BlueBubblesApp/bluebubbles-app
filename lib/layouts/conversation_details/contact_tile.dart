@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:get/get.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/redacted_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -127,7 +128,7 @@ class _ContactTileState extends State<ContactTile> {
         title: (contact?.displayName != null || hideInfo || generateName)
             ? Text(
                 getContactName(context, contact?.displayName, widget.handle?.address, currentChat: widget.chat),
-                style: Theme.of(context).textTheme.bodyText1,
+                style: Get.theme.textTheme.bodyText1,
               )
             : FutureBuilder(
                 future: formatPhoneNumber(widget.handle?.address ?? ""),
@@ -135,13 +136,13 @@ class _ContactTileState extends State<ContactTile> {
                   if (!snapshot.hasData) {
                     return Text(
                       widget.handle?.address ?? "",
-                      style: Theme.of(context).textTheme.bodyText1,
+                      style: Get.theme.textTheme.bodyText1,
                     );
                   }
 
                   return Text(
                     snapshot.data,
-                    style: Theme.of(context).textTheme.bodyText1,
+                    style: Get.theme.textTheme.bodyText1,
                   );
                 }),
         subtitle: (contact == null || hideInfo || generateName)
@@ -152,13 +153,13 @@ class _ContactTileState extends State<ContactTile> {
                   if (!snapshot.hasData) {
                     return Text(
                       widget.handle?.address ?? "",
-                      style: Theme.of(context).textTheme.subtitle1.apply(fontSizeDelta: -0.5),
+                      style: Get.theme.textTheme.subtitle1.apply(fontSizeDelta: -0.5),
                     );
                   }
 
                   return Text(
                     snapshot.data,
-                    style: Theme.of(context).textTheme.subtitle1.apply(fontSizeDelta: -0.5),
+                    style: Get.theme.textTheme.subtitle1.apply(fontSizeDelta: -0.5),
                   );
                 }),
         leading: ContactAvatarWidget(
@@ -166,7 +167,7 @@ class _ContactTileState extends State<ContactTile> {
           borderThickness: 0.1,
         ),
         trailing: SizedBox(
-          width: MediaQuery.of(context).size.width / 5,
+          width: Get.mediaQuery.size.width / 5,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: <Widget>[
@@ -175,7 +176,7 @@ class _ContactTileState extends State<ContactTile> {
                       minWidth: 1,
                       child: FlatButton(
                         shape: CircleBorder(),
-                        color: Theme.of(context).accentColor,
+                        color: Get.theme.accentColor,
                         onPressed: () {
                           List<Item> phones = getUniqueNumbers(contact.phones);
                           if (phones.length == 1) {
@@ -185,9 +186,9 @@ class _ContactTileState extends State<ContactTile> {
                               context: context,
                               builder: (BuildContext context) {
                                 return AlertDialog(
-                                  backgroundColor: Theme.of(context).accentColor,
+                                  backgroundColor: Get.theme.accentColor,
                                   title: new Text("Select a Phone Number",
-                                      style: TextStyle(color: Theme.of(context).textTheme.bodyText1.color)),
+                                      style: TextStyle(color: Get.theme.textTheme.bodyText1.color)),
                                   content: Column(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     mainAxisSize: MainAxisSize.min,
@@ -196,7 +197,7 @@ class _ContactTileState extends State<ContactTile> {
                                       for (int i = 0; i < phones.length; i++)
                                         FlatButton(
                                           child: Text("${phones[i].value} (${phones[i].label})",
-                                              style: TextStyle(color: Theme.of(context).textTheme.bodyText1.color),
+                                              style: TextStyle(color: Get.theme.textTheme.bodyText1.color),
                                               textAlign: TextAlign.start),
                                           onPressed: () async {
                                             makeCall(phones[i].value);
@@ -212,7 +213,7 @@ class _ContactTileState extends State<ContactTile> {
                         },
                         child: Icon(
                           Icons.call,
-                          color: Theme.of(context).primaryColor,
+                          color: Get.theme.primaryColor,
                         ),
                       ),
                     )

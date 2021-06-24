@@ -1,3 +1,4 @@
+import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
@@ -73,22 +74,20 @@ abstract class MessageWidgetMixin {
         linkIndexMatches.add(match.end);
       });
 
-      TextStyle textStyle = Theme.of(context).textTheme.bodyText2;
+      TextStyle textStyle = Get.theme.textTheme.bodyText2;
       if (!message.isFromMe) {
         if (SettingsManager().settings.colorfulBubbles) {
           if (!isNullOrEmpty(colors)) {
             bool dark = colors[0].computeLuminance() < 0.179;
             if (!dark) {
-              textStyle = Theme.of(context)
-                  .textTheme
-                  .bodyText2
+              textStyle = Get.theme.textTheme.bodyText2
                   .apply(color: hideContent ? Colors.transparent : darken(colors[0], 0.35));
             } else {
-              textStyle = Theme.of(context).textTheme.bodyText2;
+              textStyle = Get.theme.textTheme.bodyText2;
               if (hideContent) textStyle = textStyle.apply(color: Colors.transparent);
             }
           } else {
-            textStyle = Theme.of(context).textTheme.bodyText2.apply(
+            textStyle = Get.theme.textTheme.bodyText2.apply(
                 color: hideContent
                     ? Colors.transparent
                     : darken(toColorGradient(message?.handle?.address ?? "")[0], 0.35));

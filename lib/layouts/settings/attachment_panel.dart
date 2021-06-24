@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
@@ -42,7 +43,7 @@ class _AttachmentPanelState extends State<AttachmentPanel> {
   }
 
   void loadBrightness() {
-    Color now = Theme.of(context).backgroundColor;
+    Color now = Get.theme.backgroundColor;
     bool themeChanged = previousBackgroundColor == null || previousBackgroundColor != now;
     if (!themeChanged && gotBrightness) return;
 
@@ -65,12 +66,12 @@ class _AttachmentPanelState extends State<AttachmentPanel> {
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: Theme.of(context).backgroundColor,
+        systemNavigationBarColor: Get.theme.backgroundColor,
       ),
       child: Scaffold(
-        backgroundColor: Theme.of(context).backgroundColor,
+        backgroundColor: Get.theme.backgroundColor,
         appBar: PreferredSize(
-          preferredSize: Size(MediaQuery.of(context).size.width, 80),
+          preferredSize: Size(Get.mediaQuery.size.width, 80),
           child: ClipRRect(
             child: BackdropFilter(
               child: AppBar(
@@ -79,15 +80,15 @@ class _AttachmentPanelState extends State<AttachmentPanel> {
                 elevation: 0,
                 leading: IconButton(
                   icon: Icon(SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_back_ios : Icons.arrow_back,
-                      color: Theme.of(context).primaryColor),
+                      color: Get.theme.primaryColor),
                   onPressed: () {
                     Navigator.of(context).pop();
                   },
                 ),
-                backgroundColor: Theme.of(context).accentColor.withOpacity(0.5),
+                backgroundColor: Get.theme.accentColor.withOpacity(0.5),
                 title: Text(
                   "Attachment Settings",
-                  style: Theme.of(context).textTheme.headline1,
+                  style: Get.theme.textTheme.headline1,
                 ),
               ),
               filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),

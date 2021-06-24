@@ -1,3 +1,4 @@
+import 'package:get/get.dart';
 import 'package:bluebubbles/layouts/setup/connecting_alert/failed_to_connect_dialog.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/material.dart';
@@ -41,7 +42,7 @@ class _ConnectingAlertState extends State<ConnectingAlert> {
           title: Text("Connecting..."),
           content: LinearProgressIndicator(
             backgroundColor: Colors.grey,
-            valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
+            valueColor: AlwaysStoppedAnimation<Color>(Get.theme.primaryColor),
           ),
         ),
       );

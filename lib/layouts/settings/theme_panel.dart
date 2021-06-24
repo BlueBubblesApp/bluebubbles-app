@@ -8,13 +8,16 @@ import 'package:bluebubbles/layouts/settings/custom_avatar_panel.dart';
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
 import 'package:bluebubbles/layouts/theming/theming_panel.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
+import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
+import 'package:bluebubbles/repository/models/theme_object.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
+import 'package:get/get.dart';
 
 class ThemePanel extends StatefulWidget {
   ThemePanel({Key key}) : super(key: key);
@@ -27,25 +30,11 @@ class _ThemePanelState extends State<ThemePanel> {
   Settings _settingsCopy;
   List<DisplayMode> modes;
   DisplayMode currentMode;
-  Brightness brightness;
-  Color previousBackgroundColor;
-  bool gotBrightness = false;
 
   @override
   void initState() {
     super.initState();
     _settingsCopy = SettingsManager().settings;
-
-    // Listen for any incoming events
-    EventDispatcher().stream.listen((Map<String, dynamic> event) {
-      if (!event.containsKey("type")) return;
-
-      if (event["type"] == 'theme-update' && this.mounted) {
-        setState(() {
-          gotBrightness = false;
-        });
-      }
-    });
   }
 
   @override
@@ -56,53 +45,33 @@ class _ThemePanelState extends State<ThemePanel> {
     setState(() {});
   }
 
-  void loadBrightness() {
-    Color now = Theme.of(context).backgroundColor;
-    bool themeChanged = previousBackgroundColor == null || previousBackgroundColor != now;
-    if (!themeChanged && gotBrightness) return;
-
-    previousBackgroundColor = now;
-    if (this.context == null) {
-      brightness = Brightness.light;
-      gotBrightness = true;
-      return;
-    }
-
-    bool isDark = now.computeLuminance() < 0.179;
-    brightness = isDark ? Brightness.dark : Brightness.light;
-    gotBrightness = true;
-    if (this.mounted) setState(() {});
-  }
-
   @override
   Widget build(BuildContext context) {
-    loadBrightness();
-
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: Theme.of(context).backgroundColor,
+        systemNavigationBarColor: Get.theme.backgroundColor,
       ),
       child: Scaffold(
-        backgroundColor: Theme.of(context).backgroundColor,
+        backgroundColor: Get.theme.backgroundColor,
         appBar: PreferredSize(
-          preferredSize: Size(MediaQuery.of(context).size.width, 80),
+          preferredSize: Size(Get.mediaQuery.size.width, 80),
           child: ClipRRect(
             child: BackdropFilter(
               child: AppBar(
-                brightness: brightness,
+                brightness: Get.theme.brightness,
                 toolbarHeight: 100.0,
                 elevation: 0,
                 leading: IconButton(
                   icon: Icon(SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_back_ios : Icons.arrow_back,
-                      color: Theme.of(context).primaryColor),
+                      color: Get.theme.primaryColor),
                   onPressed: () {
                     Navigator.of(context).pop();
                   },
                 ),
-                backgroundColor: Theme.of(context).accentColor.withOpacity(0.5),
+                backgroundColor: Get.theme.accentColor.withOpacity(0.5),
                 title: Text(
                   "Theming & Styles",
-                  style: Theme.of(context).textTheme.headline1,
+                  style: Get.theme.textTheme.headline1,
                 ),
               ),
               filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
@@ -116,15 +85,13 @@ class _ThemePanelState extends State<ThemePanel> {
               delegate: SliverChildListDelegate(
                 <Widget>[
                   Container(padding: EdgeInsets.only(top: 5.0)),
-                  SettingsOptions<AdaptiveThemeMode>(
-                    initial: AdaptiveTheme.of(context).mode,
-                    onChanged: (val) {
-                      AdaptiveTheme.of(context).setThemeMode(val);
-
-                      // This needs to be on a delay so the background color has time to change
-                      Timer(Duration(seconds: 1), () => EventDispatcher().emit('theme-update', null));
+                  SettingsOptions<ThemeMode>(
+                    initial: SettingsManager()?.settings?.theme ?? ThemeMode.system,
+                    onChanged: (val) async {
+                      print(val);
+                      ThemeController.to.setThemeMode(val);
                     },
-                    options: AdaptiveThemeMode.values,
+                    options: ThemeMode.values,
                     textProcessing: (dynamic val) => val.toString().split(".").last,
                     title: "App Theme",
                     showDivider: false,
@@ -133,7 +100,7 @@ class _ThemePanelState extends State<ThemePanel> {
                     title: "Theming",
                     trailing: Icon(
                         SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_forward_ios : Icons.arrow_forward,
-                        color: Theme.of(context).primaryColor),
+                        color: Get.theme.primaryColor),
                     onTap: () async {
                       Navigator.of(context).push(
                         CupertinoPageRoute(
@@ -181,7 +148,7 @@ class _ThemePanelState extends State<ThemePanel> {
                     title: "Custom Avatar Colors",
                     trailing: Icon(
                         SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_forward_ios : Icons.arrow_forward,
-                        color: Theme.of(context).primaryColor),
+                        color: Get.theme.primaryColor),
                     onTap: () async {
                       Navigator.of(context).push(
                         CupertinoPageRoute(

@@ -1,3 +1,4 @@
+import 'package:get/get.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/material.dart';
@@ -20,10 +21,10 @@ class _PrepareToDownloadState extends State<PrepareToDownload> {
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: Theme.of(context).backgroundColor,
+        systemNavigationBarColor: Get.theme.backgroundColor,
       ),
       child: Scaffold(
-        backgroundColor: Theme.of(context).accentColor,
+        backgroundColor: Get.theme.accentColor,
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -32,7 +33,7 @@ class _PrepareToDownloadState extends State<PrepareToDownload> {
                 padding: EdgeInsets.symmetric(horizontal: 20.0),
                 child: Text(
                   "For the final step, BlueBubbles will download the first 25 messages for each of your chats.",
-                  style: Theme.of(context).textTheme.bodyText1.apply(fontSizeFactor: 1.5),
+                  style: Get.theme.textTheme.bodyText1.apply(fontSizeFactor: 1.5),
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -41,7 +42,7 @@ class _PrepareToDownloadState extends State<PrepareToDownload> {
                 padding: EdgeInsets.symmetric(horizontal: 20.0),
                 child: Text(
                   "Don't worry, you can see your chat history by scrolling up in a chat.",
-                  style: Theme.of(context).textTheme.bodyText1.apply(fontSizeFactor: 1.5),
+                  style: Get.theme.textTheme.bodyText1.apply(fontSizeFactor: 1.5),
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -50,7 +51,7 @@ class _PrepareToDownloadState extends State<PrepareToDownload> {
                 padding: EdgeInsets.symmetric(horizontal: 20.0),
                 child: Text(
                   "Number of Messages to Sync Per Chat: $numberOfMessages",
-                  style: Theme.of(context).textTheme.bodyText1,
+                  style: Get.theme.textTheme.bodyText1,
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -80,18 +81,18 @@ class _PrepareToDownloadState extends State<PrepareToDownload> {
               //     children: [
               //       Text(
               //         "Download Attachments (long sync)",
-              //         style: Theme.of(context).textTheme.bodyText1,
+              //         style: Get.theme.textTheme.bodyText1,
               //         textAlign: TextAlign.center,
               //       ),
               //       Switch(
               //         value: downloadAttachments,
-              //         activeColor: Theme.of(context).primaryColor,
+              //         activeColor: Get.theme.primaryColor,
               //         activeTrackColor:
-              //             Theme.of(context).primaryColor.withAlpha(200),
+              //             Get.theme.primaryColor.withAlpha(200),
               //         inactiveTrackColor:
-              //             Theme.of(context).primaryColor.withAlpha(75),
+              //             Get.theme.primaryColor.withAlpha(75),
               //         inactiveThumbColor:
-              //             Theme.of(context).textTheme.bodyText1.color,
+              //             Get.theme.textTheme.bodyText1.color,
               //         onChanged: (bool value) {
               //           if (!this.mounted) return;
 
@@ -111,15 +112,15 @@ class _PrepareToDownloadState extends State<PrepareToDownload> {
                   children: [
                     Text(
                       "Skip empty chats",
-                      style: Theme.of(context).textTheme.bodyText1,
+                      style: Get.theme.textTheme.bodyText1,
                       textAlign: TextAlign.center,
                     ),
                     Switch(
                       value: skipEmptyChats,
-                      activeColor: Theme.of(context).primaryColor,
-                      activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
-                      inactiveTrackColor: Theme.of(context).primaryColor.withAlpha(75),
-                      inactiveThumbColor: Theme.of(context).textTheme.bodyText1.color,
+                      activeColor: Get.theme.primaryColor,
+                      activeTrackColor: Get.theme.primaryColor.withAlpha(200),
+                      inactiveTrackColor: Get.theme.primaryColor.withAlpha(75),
+                      inactiveThumbColor: Get.theme.textTheme.bodyText1.color,
                       onChanged: (bool value) {
                         if (!this.mounted) return;
 

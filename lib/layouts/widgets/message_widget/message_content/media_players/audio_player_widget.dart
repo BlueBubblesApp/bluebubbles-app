@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:get/get.dart';
 import 'package:assets_audio_player/assets_audio_player.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:flutter/material.dart';
@@ -94,7 +95,7 @@ class _AudioPlayerWigetState extends State<AudioPlayerWiget> {
   @override
   Widget build(BuildContext context) {
     Playing playing = player.current.value;
-    double maxWidth = widget.width ?? MediaQuery.of(context).size.width * 3 / 4;
+    double maxWidth = widget.width ?? Get.mediaQuery.size.width * 3 / 4;
 
     double currentValue = current?.inSeconds?.toDouble() ?? 0.0;
     double maxValue = (playing?.audio?.duration ?? current).inSeconds.toDouble();
@@ -104,7 +105,7 @@ class _AudioPlayerWigetState extends State<AudioPlayerWiget> {
 
     return Container(
       alignment: Alignment.center,
-      color: Theme.of(context).accentColor,
+      color: Get.theme.accentColor,
       constraints: new BoxConstraints(maxWidth: maxWidth),
       child: GestureDetector(
         onTap: () async {
@@ -126,12 +127,12 @@ class _AudioPlayerWigetState extends State<AudioPlayerWiget> {
               Padding(
                 padding: EdgeInsets.only(right: 20.0),
                 child: (playing == null)
-                    ? Text("00:00 / 00:00", style: Theme.of(context).textTheme.bodyText1)
+                    ? Text("00:00 / 00:00", style: Get.theme.textTheme.bodyText1)
                     : Text(
                         (playing.audio.duration == null || playing.audio.duration.inSeconds == 0)
                             ? formatDuration(current)
                             : "${formatDuration(current)} / ${formatDuration(playing.audio.duration)}",
-                        style: Theme.of(context).textTheme.bodyText1),
+                        style: Get.theme.textTheme.bodyText1),
               ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -142,17 +143,17 @@ class _AudioPlayerWigetState extends State<AudioPlayerWiget> {
                       ? Icon(
                           Icons.pause_circle_outline,
                           size: 50.0,
-                          color: Theme.of(context).textTheme.subtitle1.color,
+                          color: Get.theme.textTheme.subtitle1.color,
                         )
                       : Icon(
                           Icons.play_circle_filled,
                           size: 50.0,
-                          color: Theme.of(context).textTheme.subtitle1.color,
+                          color: Get.theme.textTheme.subtitle1.color,
                         ),
                   Flexible(
                     child: Slider(
-                      activeColor: Theme.of(context).primaryColor,
-                      inactiveColor: Theme.of(context).backgroundColor,
+                      activeColor: Get.theme.primaryColor,
+                      inactiveColor: Get.theme.backgroundColor,
                       value: currentValue,
                       min: 0.0,
                       max: maxValue,

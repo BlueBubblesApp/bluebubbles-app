@@ -1,3 +1,4 @@
+import 'package:get/get.dart';
 import 'package:bluebubbles/layouts/widgets/circle_progress_bar.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
@@ -45,7 +46,7 @@ class _MediaFileState extends State<MediaFile> {
               if (snapshot.hasError) {
                 return Text(
                   "Unable to send",
-                  style: Theme.of(context).textTheme.bodyText1,
+                  style: Get.theme.textTheme.bodyText1,
                 );
               }
 
@@ -84,7 +85,7 @@ class _MediaFileState extends State<MediaFile> {
         if (hideAttachments)
           Positioned.fill(
             child: Container(
-              color: Theme.of(context).accentColor,
+              color: Get.theme.accentColor,
             ),
           ),
         if (hideAttachments && !hideAttachmentTypes)

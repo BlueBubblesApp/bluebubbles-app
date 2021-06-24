@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/share.dart';
@@ -73,8 +74,7 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
 
   Future<void> initBytes() async {
     if (widget.attachment.mimeType == "image/heic") {
-      bytes = await FlutterImageCompress.compressWithFile(widget.file.absolute.path,
-          quality: 100);
+      bytes = await FlutterImageCompress.compressWithFile(widget.file.absolute.path, quality: 100);
     } else {
       bytes = await widget.file.readAsBytes();
     }
@@ -96,7 +96,7 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
       duration: Duration(milliseconds: 125),
       child: Container(
           height: 150.0,
-          width: MediaQuery.of(context).size.width,
+          width: Get.mediaQuery.size.width,
           color: Colors.black.withOpacity(0.65),
           child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
             Padding(
@@ -125,16 +125,15 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
                         metaWidgets.add(RichText(
                             text: TextSpan(children: [
                           TextSpan(
-                              text: "${entry.key}: ",
-                              style: Theme.of(context).textTheme.bodyText1.apply(fontWeightDelta: 2)),
-                          TextSpan(text: entry.value.toString(), style: Theme.of(context).textTheme.bodyText1)
+                              text: "${entry.key}: ", style: Get.theme.textTheme.bodyText1.apply(fontWeightDelta: 2)),
+                          TextSpan(text: entry.value.toString(), style: Get.theme.textTheme.bodyText1)
                         ])));
                       }
 
                       if (metaWidgets.length == 0) {
                         metaWidgets.add(Text(
                           "No metadata available",
-                          style: Theme.of(context).textTheme.bodyText1.apply(fontWeightDelta: 2),
+                          style: Get.theme.textTheme.bodyText1.apply(fontWeightDelta: 2),
                           textAlign: TextAlign.center,
                         ));
                       }
@@ -144,17 +143,17 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
                         builder: (context) => AlertDialog(
                           title: Text(
                             "Metadata",
-                            style: Theme.of(context).textTheme.headline1,
+                            style: Get.theme.textTheme.headline1,
                             textAlign: TextAlign.center,
                           ),
-                          backgroundColor: Theme.of(context).accentColor,
+                          backgroundColor: Get.theme.accentColor,
                           content: SizedBox(
-                            width: MediaQuery.of(context).size.width * 3 / 5,
-                            height: MediaQuery.of(context).size.height * 1 / 4,
+                            width: Get.mediaQuery.size.width * 3 / 5,
+                            height: Get.mediaQuery.size.height * 1 / 4,
                             child: Container(
                               padding: EdgeInsets.all(10.0),
                               decoration: BoxDecoration(
-                                  color: Theme.of(context).backgroundColor,
+                                  color: Get.theme.backgroundColor,
                                   borderRadius: BorderRadius.all(Radius.circular(10))),
                               child: ListView(
                                 physics: AlwaysScrollableScrollPhysics(
@@ -168,9 +167,9 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
                             FlatButton(
                               child: Text(
                                 "Close",
-                                style: Theme.of(context).textTheme.bodyText1.copyWith(
-                                      color: Theme.of(context).primaryColor,
-                                    ),
+                                style: Get.theme.textTheme.bodyText1.copyWith(
+                                  color: Get.theme.primaryColor,
+                                ),
                               ),
                               onPressed: () => Navigator.of(context).pop(),
                             ),
@@ -249,8 +248,8 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
 
     var loader = Center(
       child: CircularProgressIndicator(
-        backgroundColor: Theme.of(context).accentColor,
-        valueColor: AlwaysStoppedAnimation(Theme.of(context).primaryColor),
+        backgroundColor: Get.theme.accentColor,
+        valueColor: AlwaysStoppedAnimation(Get.theme.primaryColor),
       ),
     );
 
@@ -280,10 +279,7 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
                         return loader;
                       },
                       loadFailedChild: Center(
-                          child: Text("Failed to display image",
-                              style: TextStyle(fontSize: 16, color: Colors.white))
-                      )
-                    )
+                          child: Text("Failed to display image", style: TextStyle(fontSize: 16, color: Colors.white))))
                   : loader,
               overlay
             ],

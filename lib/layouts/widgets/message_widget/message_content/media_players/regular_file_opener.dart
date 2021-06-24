@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
@@ -28,7 +29,7 @@ class _RegularFileOpenerState extends State<RegularFileOpener> {
     return Container(
       height: 140,
       width: 200,
-      color: Theme.of(context).accentColor,
+      color: Get.theme.accentColor,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
@@ -37,12 +38,12 @@ class _RegularFileOpenerState extends State<RegularFileOpener> {
             textAlign: TextAlign.center,
             maxLines: 3,
             overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.bodyText2,
+            style: Get.theme.textTheme.bodyText2,
           ),
           CupertinoButton(
             child: Icon(
               fileIcon,
-              color: Theme.of(context).textTheme.bodyText2.color,
+              color: Get.theme.textTheme.bodyText2.color,
             ),
             onPressed: () async {
               try {
@@ -59,7 +60,7 @@ class _RegularFileOpenerState extends State<RegularFileOpener> {
               }
             },
           ),
-          Text(widget.attachment.mimeType, style: Theme.of(context).textTheme.bodyText2),
+          Text(widget.attachment.mimeType, style: Get.theme.textTheme.bodyText2),
         ],
       ),
     );

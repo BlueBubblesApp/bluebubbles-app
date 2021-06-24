@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:get/get.dart';
 import 'package:bluebubbles/layouts/conversation_view/text_field/blue_bubbles_text_field.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/material.dart';
@@ -68,7 +69,7 @@ class _AttachmentPickedState extends State<AttachmentPicked> with AutomaticKeepA
                       if (hideAttachments)
                         Positioned.fill(
                           child: Container(
-                            color: Theme.of(context).accentColor,
+                            color: Get.theme.accentColor,
                           ),
                         ),
                       if (hideAttachments && !hideAttachmentTypes)
@@ -122,9 +123,9 @@ class _AttachmentPickedState extends State<AttachmentPicked> with AutomaticKeepA
             height: 100,
             child: Center(
               child: CircularProgressIndicator(
-                backgroundColor: Theme.of(context).backgroundColor,
+                backgroundColor: Get.theme.backgroundColor,
                 valueColor: AlwaysStoppedAnimation<Color>(
-                  Theme.of(context).primaryColor,
+                  Get.theme.primaryColor,
                 ),
               ),
             ),

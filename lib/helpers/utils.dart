@@ -23,6 +23,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
+import 'package:get/get.dart';
 import 'package:html/parser.dart';
 import 'package:http/http.dart' show get;
 import 'package:image_size_getter/image_size_getter.dart' as IMG;
@@ -95,7 +96,7 @@ Future<List<String>> getCompareOpts(Handle handle) async {
   // Build a list of formatted address (max: 3)
   String formatted = handle.address.toString();
   List<String> opts = [];
-  int maxOpts = 4;  // This is relatively arbitrary
+  int maxOpts = 4; // This is relatively arbitrary
   for (int i = 0; i < formatted.length; i += 1) {
     String val = formatted.substring(i);
     if (val.length == 0) break;
@@ -251,6 +252,14 @@ extension ColorHelpers on Color {
     } else {
       return this.lighten(percent);
     }
+  }
+}
+
+Color lightenOrDarken(Color color, [double percent = 10]) {
+  if (color.computeLuminance() >= 0.5) {
+    return color.darken(percent);
+  } else {
+    return color.lighten(percent);
   }
 }
 
@@ -489,10 +498,6 @@ Future<IMG.Size> getVideoDimensions(Attachment attachment, {Uint8List bytes}) as
   );
 
   return IMG.ImageSizeGetter.getSize(IMG.MemoryInput(imageData));
-}
-
-Brightness getBrightness(BuildContext context) {
-  return AdaptiveTheme.of(context).mode == AdaptiveThemeMode.dark ? Brightness.dark : Brightness.light;
 }
 
 /// Take the passed [address] or serverAddress from Settings

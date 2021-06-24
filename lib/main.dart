@@ -24,6 +24,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart' hide Priority;
 import 'package:flutter/services.dart';
 import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
+import 'package:get/get.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
@@ -78,12 +79,28 @@ Future<Null> main() async {
   try {
     await DBProvider.db.initDB();
     await initializeDateFormatting('fr_FR', null);
+    await SettingsManager().getSavedSettings(headless: true);
   } catch (e) {
     exception = e;
   }
+
   if (exception == null) {
     runZonedGuarded<Future<Null>>(() async {
-      runApp(Main());
+      // runApp(Main());
+
+      Get.lazyPut<ThemeController>(() => ThemeController());
+
+      ThemeController.to.getThemeModeFromPreferences();
+      print(SettingsManager()?.settings?.theme);
+
+      runApp(GetMaterialApp(
+          title: 'BlueBubbles',
+          theme: whiteLightTheme,
+          darkTheme: oledDarkTheme,
+          themeMode: SettingsManager()?.settings?.theme ?? ThemeMode.system,
+          debugShowCheckedModeBanner: false,
+          navigatorKey: NavigatorManager().navigatorKey,
+          home: Home()));
     }, (Object error, StackTrace stackTrace) async {
       // Whenever an error occurs, call the `_reportError` function. This sends
       // Dart errors to the dev console or Sentry depending on the environment.
@@ -151,9 +168,12 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> with WidgetsBindingObserver {
+  ThemeMode _themeMode;
+
   @override
   void initState() {
     super.initState();
+
     // Initalize a bunch of managers
     SettingsManager().init();
     MethodChannelInterface().init();
@@ -166,8 +186,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
 
     // Get sharing media from files shared to the app from cold start
     // This one only handles files, not text
-    ReceiveSharingIntent.getInitialMedia()
-        .then((List<SharedMediaFile> value) async {
+    ReceiveSharingIntent.getInitialMedia().then((List<SharedMediaFile> value) async {
       if (value == null) return;
 
       // If we don't have storage permission, we can't do anything
@@ -233,8 +252,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     );
 
     // Get the saved settings from the settings manager after the first frame
-    SchedulerBinding.instance.addPostFrameCallback(
-        (_) => SettingsManager().getSavedSettings(context: context));
+    SchedulerBinding.instance.addPostFrameCallback((_) => SettingsManager().getSavedSettings(context: context));
 
     // Bind the lifecycle events
     WidgetsBinding.instance.addObserver(this);
@@ -270,16 +288,16 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   /// Render
   @override
   Widget build(BuildContext context) {
+    _themeMode = ThemeController.to.themeMode;
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
-      systemNavigationBarColor:
-          Theme.of(context).backgroundColor, // navigation bar color
-      systemNavigationBarIconBrightness: getBrightness(context),
+      systemNavigationBarColor: Get.theme.backgroundColor, // navigation bar color
+      systemNavigationBarIconBrightness: Get.theme.brightness,
       statusBarColor: Colors.transparent, // status bar color
     ));
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: Theme.of(context).backgroundColor,
+        systemNavigationBarColor: Get.theme.backgroundColor,
       ),
       child: Scaffold(
         backgroundColor: Colors.black,
@@ -316,5 +334,28 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
         ),
       ),
     );
+  }
+}
+
+class ThemeController extends GetxController {
+  static ThemeController get to => Get.find();
+
+  ThemeMode _themeMode;
+  ThemeMode get themeMode => _themeMode;
+
+  Future<void> setThemeMode(ThemeMode themeMode) async {
+    Get.changeThemeMode(themeMode);
+    _themeMode = themeMode;
+    update();
+
+    print("SETTING AND SAFVING");
+    print(themeMode);
+
+    SettingsManager().settings.theme = themeMode;
+    await SettingsManager().saveSettings(SettingsManager().settings);
+  }
+
+  getThemeModeFromPreferences() async {
+    return SettingsManager()?.settings?.theme ?? ThemeMode.system;
   }
 }

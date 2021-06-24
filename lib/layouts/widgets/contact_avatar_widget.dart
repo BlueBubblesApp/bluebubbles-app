@@ -1,3 +1,4 @@
+import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/theming/avatar_color_picker_popup.dart';
@@ -203,7 +204,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
           padding: EdgeInsets.all(widget.borderThickness),
           // borde width
           decoration: new BoxDecoration(
-            color: Theme.of(context).backgroundColor, // border color
+            color: Get.theme.backgroundColor, // border color
             shape: BoxShape.circle,
           ),
           child: CircleAvatar(

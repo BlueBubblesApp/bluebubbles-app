@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:get/get.dart';
 import 'package:bluebubbles/blocs/setup_bloc.dart';
 import 'package:bluebubbles/layouts/setup/qr_scan/failed_to_scan_dialog.dart';
 import 'package:bluebubbles/socket_manager.dart';
@@ -56,10 +57,10 @@ class _SyncingMessagesState extends State<SyncingMessages> {
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: Theme.of(context).accentColor,
+        systemNavigationBarColor: Get.theme.accentColor,
       ),
       child: Scaffold(
-        backgroundColor: Theme.of(context).accentColor,
+        backgroundColor: Get.theme.accentColor,
         body: StreamBuilder(
           stream: SocketManager().setup.stream,
           builder: (BuildContext context, AsyncSnapshot<SetupData> snapshot) {
@@ -75,19 +76,19 @@ class _SyncingMessagesState extends State<SyncingMessages> {
                     ),
                     Text(
                       "${progress.floor()}%",
-                      style: Theme.of(context).textTheme.bodyText1.apply(fontSizeFactor: 1.5),
+                      style: Get.theme.textTheme.bodyText1.apply(fontSizeFactor: 1.5),
                     ),
                     Spacer(
                       flex: 5,
                     ),
                     Padding(
-                      padding: EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width / 4),
+                      padding: EdgeInsets.symmetric(horizontal: Get.mediaQuery.size.width / 4),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(20),
                         child: LinearProgressIndicator(
                           value: progress != 100.0 && progress != 0.0 ? (progress / 100) : null,
                           backgroundColor: Colors.white,
-                          valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
+                          valueColor: AlwaysStoppedAnimation<Color>(Get.theme.primaryColor),
                         ),
                       ),
                     ),
@@ -95,8 +96,8 @@ class _SyncingMessagesState extends State<SyncingMessages> {
                       flex: 20,
                     ),
                     SizedBox(
-                      width: MediaQuery.of(context).size.width * 4 / 5,
-                      height: MediaQuery.of(context).size.height * 1 / 3,
+                      width: Get.mediaQuery.size.width * 4 / 5,
+                      height: Get.mediaQuery.size.height * 1 / 3,
                       child: Container(
                         decoration: BoxDecoration(
                           color: Colors.black,
@@ -128,7 +129,7 @@ class _SyncingMessagesState extends State<SyncingMessages> {
             } else {
               return Center(
                 child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width / 4),
+                  padding: EdgeInsets.symmetric(horizontal: Get.mediaQuery.size.width / 4),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: <Widget>[
@@ -137,7 +138,7 @@ class _SyncingMessagesState extends State<SyncingMessages> {
                       ),
                       Text(
                         getProgressText(progress),
-                        style: Theme.of(context).textTheme.bodyText1,
+                        style: Get.theme.textTheme.bodyText1,
                       ),
                       Spacer(
                         flex: 5,
@@ -146,7 +147,7 @@ class _SyncingMessagesState extends State<SyncingMessages> {
                         borderRadius: BorderRadius.circular(20),
                         child: LinearProgressIndicator(
                           backgroundColor: Colors.white,
-                          valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
+                          valueColor: AlwaysStoppedAnimation<Color>(Get.theme.primaryColor),
                         ),
                       ),
                       Spacer(

@@ -1,3 +1,4 @@
+import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -70,13 +71,13 @@ class _DeliveredReceiptState extends State<DeliveredReceipt> with TickerProvider
                   if (!snapshot.hasData && shouldShow(null, null)) {
                     return Text(
                       getText(),
-                      style: Theme.of(context).textTheme.subtitle2,
+                      style: Get.theme.textTheme.subtitle2,
                     );
                   } else if (snapshot.hasData &&
                       shouldShow(snapshot.data["myLastMessage"], snapshot.data["lastReadMessage"])) {
                     return Text(
                       getText(),
-                      style: Theme.of(context).textTheme.subtitle2,
+                      style: Get.theme.textTheme.subtitle2,
                     );
                   } else {
                     return Container();

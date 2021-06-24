@@ -1,3 +1,4 @@
+import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view_mixin.dart';
 import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/contact_selector_custom_cupertino_textfield.dart';
@@ -57,12 +58,12 @@ class _ChatSelectorTextFieldState extends State<ChatSelectorTextField> {
               borderRadius: BorderRadius.all(Radius.circular(5.0)),
               child: Container(
                 padding: EdgeInsets.all(5.0),
-                color: Theme.of(context).primaryColor,
+                color: Get.theme.primaryColor,
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
-                    Text(contact.displayName.trim(), style: Theme.of(context).textTheme.bodyText1),
+                    Text(contact.displayName.trim(), style: Get.theme.textTheme.bodyText1),
                     SizedBox(
                       width: 5.0,
                     ),
@@ -85,7 +86,7 @@ class _ChatSelectorTextFieldState extends State<ChatSelectorTextField> {
       ConstrainedBox(
         constraints: BoxConstraints(maxWidth: 255.0),
         child: ContactSelectorCustomCupertinoTextfield(
-          cursorColor: Theme.of(context).primaryColor,
+          cursorColor: Get.theme.primaryColor,
           focusNode: inputFieldNode,
           onSubmitted: (String done) async {
             FocusScope.of(context).requestFocus(inputFieldNode);
@@ -116,17 +117,17 @@ class _ChatSelectorTextFieldState extends State<ChatSelectorTextField> {
           maxLines: 1,
           autocorrect: false,
           placeholder: "  Type a name...",
-          placeholderStyle: Theme.of(context).textTheme.subtitle1,
+          placeholderStyle: Get.theme.textTheme.subtitle1,
           padding: EdgeInsets.only(right: 5.0, top: 2.0, bottom: 2.0),
           autofocus: true,
-          style: Theme.of(context).textTheme.bodyText1.apply(
-                color: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor) == Brightness.light
-                    ? Colors.black
-                    : Colors.white,
-                fontSizeDelta: -0.25,
-              ),
+          style: Get.theme.textTheme.bodyText1.apply(
+            color: ThemeData.estimateBrightnessForColor(Get.theme.backgroundColor) == Brightness.light
+                ? Colors.black
+                : Colors.white,
+            fontSizeDelta: -0.25,
+          ),
           decoration: BoxDecoration(
-            color: Theme.of(context).backgroundColor,
+            color: Get.theme.backgroundColor,
           ),
         ),
       ),
@@ -142,7 +143,7 @@ class _ChatSelectorTextFieldState extends State<ChatSelectorTextField> {
             padding: const EdgeInsets.only(right: 12),
             child: Text(
               "To: ",
-              style: Theme.of(context).textTheme.subtitle1,
+              style: Get.theme.textTheme.subtitle1,
             ),
           ),
           Flexible(
@@ -160,13 +161,13 @@ class _ChatSelectorTextFieldState extends State<ChatSelectorTextField> {
           // Padding(
           //   padding: EdgeInsets.only(left: 12, right: 10.0),
           //   child: FlatButton(
-          //     color: Theme.of(context).accentColor,
+          //     color: Get.theme.accentColor,
           //     onPressed: () async {
           //       // widget.onCreate();
           //     },
           //     child: Text(
           //       ChatSelector.of(context).widget.isCreator ? "Create" : "Add",
-          //       style: Theme.of(context).textTheme.bodyText1,
+          //       style: Get.theme.textTheme.bodyText1,
           //     ),
           //   ),
           // )

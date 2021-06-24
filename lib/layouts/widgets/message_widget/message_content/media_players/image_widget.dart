@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/layouts/image_viewer/attachmet_fullscreen_viewer.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
@@ -76,8 +77,8 @@ class _ImageWidgetState extends State<ImageWidget> with TickerProviderStateMixin
         children: <Widget>[
           Container(
             constraints: BoxConstraints(
-              maxWidth: MediaQuery.of(context).size.width / 2,
-              maxHeight: MediaQuery.of(context).size.height / 2,
+              maxWidth: Get.mediaQuery.size.width / 2,
+              maxHeight: Get.mediaQuery.size.height / 2,
             ),
             child: buildSwitcher(),
           ),
@@ -142,10 +143,10 @@ class _ImageWidgetState extends State<ImageWidget> with TickerProviderStateMixin
         child: Container(
             width: widget.attachment.width.toDouble(),
             height: widget.attachment.height.toDouble(),
-            color: Theme.of(context).accentColor,
+            color: Get.theme.accentColor,
             child: Center(
-                child: CircularProgressIndicator(
-                    valueColor: new AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor)))),
+                child:
+                    CircularProgressIndicator(valueColor: new AlwaysStoppedAnimation<Color>(Get.theme.primaryColor)))),
       );
     } else {
       return Container(
@@ -154,7 +155,7 @@ class _ImageWidgetState extends State<ImageWidget> with TickerProviderStateMixin
         child: ClipRRect(
           borderRadius: BorderRadius.circular(20),
           child: Container(
-            color: Theme.of(context).accentColor,
+            color: Get.theme.accentColor,
             child: Center(
               child: Text("Invalid Image"),
             ),

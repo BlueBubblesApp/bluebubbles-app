@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:ui';
 
+import 'package:get/get.dart';
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
@@ -207,9 +208,9 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
           child: widget.selectIcon ??
               Icon(
                 Icons.check,
-                color: Theme.of(context).textTheme.bodyText1.color,
+                color: Get.theme.textTheme.bodyText1.color,
               ),
-          backgroundColor: Theme.of(context).primaryColor,
+          backgroundColor: Get.theme.primaryColor,
         ),
       );
     } else if (currentChat != null &&
@@ -221,9 +222,9 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
           onPressed: currentChat.scrollToBottom,
           child: Icon(
             Icons.arrow_downward,
-            color: Theme.of(context).textTheme.bodyText1.color,
+            color: Get.theme.textTheme.bodyText1.color,
           ),
-          backgroundColor: Theme.of(context).accentColor,
+          backgroundColor: Get.theme.accentColor,
         ),
       );
     } else if (currentChat != null && currentChat.showScrollDown && SettingsManager().settings.skin == Skins.IOS) {
@@ -239,7 +240,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                 child: Container(
                   height: 35,
                   decoration: BoxDecoration(
-                    color: Theme.of(context).accentColor.withOpacity(0.7),
+                    color: Get.theme.accentColor.withOpacity(0.7),
                     borderRadius: BorderRadius.circular(10.0),
                   ),
                   padding: EdgeInsets.symmetric(horizontal: 10),
@@ -249,7 +250,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                       child: Text(
                         "\u{2193} Scroll to bottom \u{2193}",
                         textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.bodyText1,
+                        style: Get.theme.textTheme.bodyText1,
                       ),
                     ),
                   ),
@@ -265,7 +266,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
   }
 
   void loadBrightness() {
-    Color now = Theme.of(context).backgroundColor;
+    Color now = Get.theme.backgroundColor;
     bool themeChanged = previousBackgroundColor == null || previousBackgroundColor != now;
     if (!themeChanged && gotBrightness) return;
 
@@ -306,10 +307,10 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: Theme.of(context).backgroundColor,
+        systemNavigationBarColor: Get.theme.backgroundColor,
       ),
       child: Scaffold(
-        backgroundColor: Theme.of(context).backgroundColor,
+        backgroundColor: Get.theme.backgroundColor,
         extendBodyBehindAppBar: !isCreator,
         appBar: !isCreator ? buildConversationViewHeader() : buildChatSelectorHeader(),
         resizeToAvoidBottomInset: wasCreator,

@@ -1,3 +1,4 @@
+import 'package:get/get.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -10,7 +11,7 @@ class NewMessageLoader extends StatelessWidget {
           padding: const EdgeInsets.all(8.0),
           child: Text(
             "Loading more messages...",
-            style: Theme.of(context).textTheme.subtitle2,
+            style: Get.theme.textTheme.subtitle2,
           ),
         ),
         Padding(

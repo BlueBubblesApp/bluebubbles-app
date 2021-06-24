@@ -1,3 +1,4 @@
+import 'package:get/get.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
@@ -125,7 +126,7 @@ class Reaction {
 
     for (int i = 0; i < this.messages.length; i++) {
       Color iconColor = Colors.white;
-      if (!this.messages[i].isFromMe && Theme.of(context).accentColor.computeLuminance() >= 0.179) {
+      if (!this.messages[i].isFromMe && Get.theme.accentColor.computeLuminance() >= 0.179) {
         iconColor = Colors.black.withAlpha(95);
       }
 
@@ -142,7 +143,7 @@ class Reaction {
             width: 28,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(100),
-              color: this.messages[i].isFromMe ? Colors.blue : Theme.of(context).accentColor,
+              color: this.messages[i].isFromMe ? Colors.blue : Get.theme.accentColor,
               boxShadow: [
                 new BoxShadow(
                   blurRadius: 1.0,

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/layouts/image_viewer/image_viewer.dart';
@@ -114,7 +115,7 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
       child: Container(
         height: 150,
         width: 200,
-        color: Theme.of(context).accentColor,
+        color: Get.theme.accentColor,
       ),
     );
     return AnnotatedRegion<SystemUiOverlayStyle>(
@@ -190,7 +191,7 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
                         if (snapshot.hasError) {
                           return Text(
                             "Error loading",
-                            style: Theme.of(context).textTheme.bodyText1,
+                            style: Get.theme.textTheme.bodyText1,
                           );
                         }
                         if (snapshot.data is File) {
@@ -227,7 +228,7 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
                                         (content.attachment.mimeType != null)
                                             ? Text(
                                                 content.attachment.mimeType,
-                                                style: Theme.of(context).textTheme.bodyText1,
+                                                style: Get.theme.textTheme.bodyText1,
                                               )
                                             : Container()
                                       ],
@@ -246,7 +247,7 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
                       children: [
                         Text(
                           "Error loading",
-                          style: Theme.of(context).textTheme.bodyText1,
+                          style: Get.theme.textTheme.bodyText1,
                         ),
                       ],
                     );

@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
@@ -42,7 +43,7 @@ class _AboutPanelState extends State<AboutPanel> {
   }
 
   void loadBrightness() {
-    Color now = Theme.of(context).backgroundColor;
+    Color now = Get.theme.backgroundColor;
     bool themeChanged = previousBackgroundColor == null || previousBackgroundColor != now;
     if (!themeChanged && gotBrightness) return;
 
@@ -65,13 +66,13 @@ class _AboutPanelState extends State<AboutPanel> {
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: Theme.of(context).backgroundColor,
+        systemNavigationBarColor: Get.theme.backgroundColor,
       ),
       child: Scaffold(
         // extendBodyBehindAppBar: true,
-        backgroundColor: Theme.of(context).backgroundColor,
+        backgroundColor: Get.theme.backgroundColor,
         appBar: PreferredSize(
-          preferredSize: Size(MediaQuery.of(context).size.width, 80),
+          preferredSize: Size(Get.mediaQuery.size.width, 80),
           child: ClipRRect(
             child: BackdropFilter(
               child: AppBar(
@@ -80,15 +81,15 @@ class _AboutPanelState extends State<AboutPanel> {
                 elevation: 0,
                 leading: IconButton(
                   icon: Icon(SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_back_ios : Icons.arrow_back,
-                      color: Theme.of(context).primaryColor),
+                      color: Get.theme.primaryColor),
                   onPressed: () {
                     Navigator.of(context).pop();
                   },
                 ),
-                backgroundColor: Theme.of(context).accentColor.withOpacity(0.5),
+                backgroundColor: Get.theme.accentColor.withOpacity(0.5),
                 title: Text(
                   "About & Links",
-                  style: Theme.of(context).textTheme.headline1,
+                  style: Get.theme.textTheme.headline1,
                 ),
               ),
               filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
@@ -109,7 +110,7 @@ class _AboutPanelState extends State<AboutPanel> {
                     },
                     trailing: Icon(
                       Icons.attach_money,
-                      color: Theme.of(context).primaryColor,
+                      color: Get.theme.primaryColor,
                     ),
                   ),
                   SettingsTile(
@@ -119,7 +120,7 @@ class _AboutPanelState extends State<AboutPanel> {
                     },
                     trailing: Icon(
                       Icons.link,
-                      color: Theme.of(context).primaryColor,
+                      color: Get.theme.primaryColor,
                     ),
                   ),
                   SettingsTile(
@@ -129,7 +130,7 @@ class _AboutPanelState extends State<AboutPanel> {
                     },
                     trailing: Icon(
                       Icons.code,
-                      color: Theme.of(context).primaryColor,
+                      color: Get.theme.primaryColor,
                     ),
                   ),
                   SettingsTile(
@@ -146,33 +147,24 @@ class _AboutPanelState extends State<AboutPanel> {
                                 parent: BouncingScrollPhysics(),
                               ),
                               styleSheet: MarkdownStyleSheet.fromTheme(
-                                Theme.of(context)
+                                Get.theme
                                   ..textTheme.copyWith(
                                     headline1: TextStyle(
                                       color: Colors.white,
                                     ),
                                   ),
                               ).copyWith(
-                                h1: Theme.of(context)
-                                    .textTheme
-                                    .headline1
-                                    .copyWith(fontSize: 20, fontWeight: FontWeight.bold),
-                                h2: Theme.of(context)
-                                    .textTheme
-                                    .headline2
-                                    .copyWith(fontSize: 18, fontWeight: FontWeight.bold),
-                                h3: Theme.of(context)
-                                    .textTheme
-                                    .headline3
-                                    .copyWith(fontSize: 17, fontWeight: FontWeight.bold),
+                                h1: Get.theme.textTheme.headline1.copyWith(fontSize: 20, fontWeight: FontWeight.bold),
+                                h2: Get.theme.textTheme.headline2.copyWith(fontSize: 18, fontWeight: FontWeight.bold),
+                                h3: Get.theme.textTheme.headline3.copyWith(fontSize: 17, fontWeight: FontWeight.bold),
                               ),
                             ),
-                            backgroundColor: Theme.of(context).backgroundColor,
+                            backgroundColor: Get.theme.backgroundColor,
                             appBar: CupertinoNavigationBar(
-                              backgroundColor: Theme.of(context).accentColor,
+                              backgroundColor: Get.theme.accentColor,
                               middle: Text(
                                 "Changelog",
-                                style: Theme.of(context).textTheme.headline1,
+                                style: Get.theme.textTheme.headline1,
                               ),
                             ),
                           ),
@@ -181,7 +173,7 @@ class _AboutPanelState extends State<AboutPanel> {
                     },
                     trailing: Icon(
                       Icons.code,
-                      color: Theme.of(context).primaryColor,
+                      color: Get.theme.primaryColor,
                     ),
                   ),
                   SettingsTile(
@@ -204,13 +196,13 @@ class _AboutPanelState extends State<AboutPanel> {
                         builder: (context) => AlertDialog(
                           title: Text(
                             "Developers! Developers!",
-                            style: Theme.of(context).textTheme.headline1,
+                            style: Get.theme.textTheme.headline1,
                             textAlign: TextAlign.center,
                           ),
-                          backgroundColor: Theme.of(context).accentColor,
+                          backgroundColor: Get.theme.accentColor,
                           content: SizedBox(
-                            width: MediaQuery.of(context).size.width * 3 / 5,
-                            height: MediaQuery.of(context).size.height * 1 / 9,
+                            width: Get.mediaQuery.size.width * 3 / 5,
+                            height: Get.mediaQuery.size.height * 1 / 9,
                             child: ListView(
                               physics: AlwaysScrollableScrollPhysics(
                                 parent: BouncingScrollPhysics(),
@@ -221,7 +213,7 @@ class _AboutPanelState extends State<AboutPanel> {
                                   padding: EdgeInsets.all(8),
                                   child: Text(
                                     "Zach",
-                                    style: Theme.of(context).textTheme.bodyText1,
+                                    style: Get.theme.textTheme.bodyText1,
                                   ),
                                 ),
                                 Container(
@@ -229,7 +221,7 @@ class _AboutPanelState extends State<AboutPanel> {
                                   padding: EdgeInsets.all(8),
                                   child: Text(
                                     "Maxwell",
-                                    style: Theme.of(context).textTheme.bodyText1,
+                                    style: Get.theme.textTheme.bodyText1,
                                   ),
                                 ),
                               ],
@@ -239,9 +231,9 @@ class _AboutPanelState extends State<AboutPanel> {
                             FlatButton(
                               child: Text(
                                 "Close",
-                                style: Theme.of(context).textTheme.bodyText1.copyWith(
-                                      color: Theme.of(context).primaryColor,
-                                    ),
+                                style: Get.theme.textTheme.bodyText1.copyWith(
+                                  color: Get.theme.primaryColor,
+                                ),
                               ),
                               onPressed: () => Navigator.of(context).pop(),
                             ),
@@ -251,7 +243,7 @@ class _AboutPanelState extends State<AboutPanel> {
                     },
                     trailing: Icon(
                       Icons.info_outline,
-                      color: Theme.of(context).primaryColor,
+                      color: Get.theme.primaryColor,
                     ),
                   ),
                   SettingsTile(
@@ -269,7 +261,7 @@ class _AboutPanelState extends State<AboutPanel> {
                     },
                     trailing: Icon(
                       Icons.info_outline,
-                      color: Theme.of(context).primaryColor,
+                      color: Get.theme.primaryColor,
                     ),
                   ),
                 ],

@@ -1,3 +1,4 @@
+import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
@@ -47,7 +48,7 @@ class MessageTimeStamp extends StatelessWidget {
                     textAlign: (message.isFromMe && SettingsManager().settings.skin == Skins.Samsung)
                         ? TextAlign.right
                         : TextAlign.left,
-                    style: Theme.of(context).textTheme.subtitle1.apply(fontSizeFactor: 0.8),
+                    style: Get.theme.textTheme.subtitle1.apply(fontSizeFactor: 0.8),
                     overflow: TextOverflow.visible,
                     maxLines: 2,
                   ),

@@ -1,3 +1,4 @@
+import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
@@ -100,13 +101,13 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
           children: <Widget>[
             Text(
               message.text,
-              style: Theme.of(context).textTheme.bodyText2.apply(fontSizeFactor: 4),
+              style: Get.theme.textTheme.bodyText2.apply(fontSizeFactor: 4),
             ),
             if (hideContent)
               Positioned.fill(
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(25.0),
-                  child: Container(color: Theme.of(context).accentColor),
+                  child: Container(color: Get.theme.accentColor),
                 ),
               ),
             if (hideContent && !hideType)
@@ -116,7 +117,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                   child: Text(
                     "emoji",
                     textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyText1,
+                    style: Get.theme.textTheme.bodyText1,
                   ),
                 ),
               ),
@@ -125,7 +126,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
       );
     }
 
-    List<Color> bubbleColors = [Theme.of(context).accentColor, Theme.of(context).accentColor];
+    List<Color> bubbleColors = [Get.theme.accentColor, Get.theme.accentColor];
     if (SettingsManager().settings.colorfulBubbles) {
       if (message?.handle?.color == null) {
         bubbleColors = toColorGradient(message?.handle?.address);
@@ -156,7 +157,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
             right: 10,
           ),
           constraints: BoxConstraints(
-            maxWidth: MediaQuery.of(context).size.width * MessageWidgetMixin.MAX_SIZE,
+            maxWidth: Get.mediaQuery.size.width * MessageWidgetMixin.MAX_SIZE,
           ),
           padding: EdgeInsets.symmetric(
             vertical: 8,
@@ -198,7 +199,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
             text: TextSpan(
               children: MessageWidgetMixin.buildMessageSpans(context, widget.message,
                   colors: widget.message?.handle?.color != null ? bubbleColors : null),
-              style: Theme.of(context).textTheme.bodyText2,
+              style: Get.theme.textTheme.bodyText2,
             ),
           ),
         ),
@@ -222,7 +223,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
         Padding(
           padding: EdgeInsets.only(left: 15.0, top: 5.0, bottom: widget.message.getReactions().length > 0 ? 0.0 : 3.0),
           child: Text(getContactName(context, contactTitle, widget.message.handle.address),
-              style: Theme.of(context).textTheme.subtitle1),
+              style: Get.theme.textTheme.subtitle1),
         ),
       );
     }

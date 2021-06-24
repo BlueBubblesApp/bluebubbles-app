@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
@@ -49,7 +50,7 @@ class _ContactWidgetState extends State<ContactWidget> {
         height: 60,
         width: 250,
         child: Material(
-          color: Theme.of(context).accentColor,
+          color: Get.theme.accentColor,
           child: InkWell(
             onTap: () async {
               MethodChannelInterface().invokeMethod(
@@ -73,11 +74,11 @@ class _ContactWidgetState extends State<ContactWidget> {
                         children: [
                           Text(
                             "Contact Card",
-                            style: Theme.of(context).textTheme.subtitle2,
+                            style: Get.theme.textTheme.subtitle2,
                           ),
                           Text(
                             contact?.displayName ?? "No Name",
-                            style: Theme.of(context).textTheme.bodyText1,
+                            style: Get.theme.textTheme.bodyText1,
                             overflow: TextOverflow.ellipsis,
                             maxLines: 2,
                             softWrap: true,
@@ -99,7 +100,7 @@ class _ContactWidgetState extends State<ContactWidget> {
                         child: Container(
                           child: Text(
                             contact?.initials() ?? "?",
-                            style: Theme.of(context).textTheme.headline1,
+                            style: Get.theme.textTheme.headline1,
                           ),
                           alignment: AlignmentDirectional.center,
                         ),

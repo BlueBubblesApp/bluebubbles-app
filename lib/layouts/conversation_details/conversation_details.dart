@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:get/get.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
@@ -96,28 +97,28 @@ class _ConversationDetailsState extends State<ConversationDetails> {
     final bool showGroupNameInfo = (showNameField && !hideInfo) || generateName;
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: Theme.of(context).backgroundColor,
+        systemNavigationBarColor: Get.theme.backgroundColor,
       ),
       child: Scaffold(
-        backgroundColor: Theme.of(context).backgroundColor,
+        backgroundColor: Get.theme.backgroundColor,
         appBar: SettingsManager().settings.skin == Skins.IOS
             ? CupertinoNavigationBar(
-                backgroundColor: Theme.of(context).accentColor.withAlpha(125),
+                backgroundColor: Get.theme.accentColor.withAlpha(125),
                 middle: Text(
                   "Details",
-                  style: Theme.of(context).textTheme.headline1,
+                  style: Get.theme.textTheme.headline1,
                 ),
               )
             : AppBar(
-                iconTheme: IconThemeData(color: Theme.of(context).primaryColor),
+                iconTheme: IconThemeData(color: Get.theme.primaryColor),
                 title: Text(
                   "Details",
-                  style: Theme.of(context).textTheme.headline1,
+                  style: Get.theme.textTheme.headline1,
                 ),
-                backgroundColor: Theme.of(context).backgroundColor,
+                backgroundColor: Get.theme.backgroundColor,
                 bottom: PreferredSize(
                   child: Container(
-                    color: Theme.of(context).dividerColor,
+                    color: Get.theme.dividerColor,
                     height: 0.5,
                   ),
                   preferredSize: Size.fromHeight(0.5),
@@ -143,7 +144,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                               child: Padding(
                                 padding: const EdgeInsets.only(left: 16.0, right: 8.0, bottom: 8.0),
                                 child: TextField(
-                                  cursorColor: Theme.of(context).primaryColor,
+                                  cursorColor: Get.theme.primaryColor,
                                   readOnly: !chat.isGroup() || redactedMode,
                                   onSubmitted: (String newName) async {
                                     await widget.chat.changeName(newName);
@@ -154,12 +155,12 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                                     ChatBloc().updateChat(chat);
                                   },
                                   controller: controller,
-                                  style: Theme.of(context).textTheme.bodyText1,
+                                  style: Get.theme.textTheme.bodyText1,
                                   autofocus: false,
                                   autocorrect: false,
                                   decoration: InputDecoration(
                                       labelText: chat.displayName.isEmpty ? "SET NAME" : "NAME",
-                                      labelStyle: TextStyle(color: Theme.of(context).primaryColor),
+                                      labelStyle: TextStyle(color: Get.theme.primaryColor),
                                       enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.grey))),
                                 ),
                               ),
@@ -173,10 +174,9 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                                           context: context,
                                           builder: (BuildContext context) {
                                             return AlertDialog(
-                                                backgroundColor: Theme.of(context).accentColor,
+                                                backgroundColor: Get.theme.accentColor,
                                                 title: new Text("Group Naming",
-                                                    style:
-                                                        TextStyle(color: Theme.of(context).textTheme.bodyText1.color)),
+                                                    style: TextStyle(color: Get.theme.textTheme.bodyText1.color)),
                                                 content: Column(
                                                   mainAxisAlignment: MainAxisAlignment.center,
                                                   mainAxisSize: MainAxisSize.min,
@@ -184,16 +184,14 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                                                   children: [
                                                     Text(
                                                         "Changing the group name will only change it locally for you. It will not change the group name on any of your other devices, or for other members of the chat.",
-                                                        style: Theme.of(context).textTheme.bodyText1),
+                                                        style: Get.theme.textTheme.bodyText1),
                                                   ],
                                                 ),
                                                 actions: <Widget>[
                                                   FlatButton(
                                                       child: Text("OK",
-                                                          style: Theme.of(context)
-                                                              .textTheme
-                                                              .subtitle1
-                                                              .apply(color: Theme.of(context).primaryColor)),
+                                                          style: Get.theme.textTheme.subtitle1
+                                                              .apply(color: Get.theme.primaryColor)),
                                                       onPressed: () {
                                                         Navigator.of(context).pop();
                                                       }),
@@ -203,7 +201,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                                       },
                                       child: Icon(
                                         Icons.info_outline,
-                                        color: Theme.of(context).primaryColor,
+                                        color: Get.theme.primaryColor,
                                       ))),
                             if (chat.displayName.isEmpty)
                               Padding(
@@ -218,11 +216,11 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                                       showNameField = false;
                                     });
                                   },
-                                  color: Theme.of(context).accentColor,
+                                  color: Get.theme.accentColor,
                                   child: Text(
                                     "CANCEL",
                                     style: TextStyle(
-                                      color: Theme.of(context).textTheme.bodyText1.color,
+                                      color: Get.theme.textTheme.bodyText1.color,
                                       fontSize: 13,
                                     ),
                                   ),
@@ -242,11 +240,11 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                                     showNameField = true;
                                   });
                                 },
-                                color: Theme.of(context).accentColor,
+                                color: Get.theme.accentColor,
                                 child: Text(
                                   "ADD NAME",
                                   style: TextStyle(
-                                    color: Theme.of(context).textTheme.bodyText1.color,
+                                    color: Get.theme.textTheme.bodyText1.color,
                                     fontSize: 13,
                                   ),
                                 ),
@@ -266,14 +264,14 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                     leading: Text(
                       showMore ? "Show less" : "Show more",
                       style: TextStyle(
-                        color: Theme.of(context).primaryColor,
+                        color: Get.theme.primaryColor,
                       ),
                     ),
                     trailing: Padding(
                       padding: EdgeInsets.only(right: 15),
                       child: Icon(
                         Icons.more_horiz,
-                        color: Theme.of(context).primaryColor,
+                        color: Get.theme.primaryColor,
                       ),
                     ),
                   );
@@ -330,12 +328,12 @@ class _ConversationDetailsState extends State<ConversationDetails> {
             //             title: Text(
             //               "Add Contact",
             //               style: TextStyle(
-            //                 color: Theme.of(context).primaryColor,
+            //                 color: Get.theme.primaryColor,
             //               ),
             //             ),
             //             leading: Icon(
             //               Icons.add,
-            //               color: Theme.of(context).primaryColor,
+            //               color: Get.theme.primaryColor,
             //             ),
             //           ),
             //         )
@@ -359,14 +357,14 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                   leading: Text(
                     "Fetch more messages",
                     style: TextStyle(
-                      color: Theme.of(context).primaryColor,
+                      color: Get.theme.primaryColor,
                     ),
                   ),
                   trailing: Padding(
                     padding: EdgeInsets.only(right: 15),
                     child: Icon(
                       Icons.file_download,
-                      color: Theme.of(context).primaryColor,
+                      color: Get.theme.primaryColor,
                     ),
                   ),
                 ),
@@ -384,14 +382,14 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                   leading: Text(
                     "Sync last 25 messages",
                     style: TextStyle(
-                      color: Theme.of(context).primaryColor,
+                      color: Get.theme.primaryColor,
                     ),
                   ),
                   trailing: Padding(
                     padding: EdgeInsets.only(right: 15),
                     child: Icon(
                       Icons.replay,
-                      color: Theme.of(context).primaryColor,
+                      color: Get.theme.primaryColor,
                     ),
                   ),
                 ),
@@ -401,14 +399,14 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                 child: ListTile(
                     leading: Text("Pin Conversation",
                         style: TextStyle(
-                          color: Theme.of(context).primaryColor,
+                          color: Get.theme.primaryColor,
                         )),
                     trailing: Switch(
                         value: widget.chat.isPinned,
-                        activeColor: Theme.of(context).primaryColor,
-                        activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
-                        inactiveTrackColor: Theme.of(context).accentColor.withOpacity(0.6),
-                        inactiveThumbColor: Theme.of(context).accentColor,
+                        activeColor: Get.theme.primaryColor,
+                        activeTrackColor: Get.theme.primaryColor.withAlpha(200),
+                        inactiveTrackColor: Get.theme.accentColor.withOpacity(0.6),
+                        inactiveThumbColor: Get.theme.accentColor,
                         onChanged: (value) async {
                           if (value) {
                             await widget.chat.pin();
@@ -424,14 +422,14 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                 child: ListTile(
                     leading: Text("Mute Conversation",
                         style: TextStyle(
-                          color: Theme.of(context).primaryColor,
+                          color: Get.theme.primaryColor,
                         )),
                     trailing: Switch(
                         value: widget.chat.isMuted,
-                        activeColor: Theme.of(context).primaryColor,
-                        activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
-                        inactiveTrackColor: Theme.of(context).accentColor.withOpacity(0.6),
-                        inactiveThumbColor: Theme.of(context).accentColor,
+                        activeColor: Get.theme.primaryColor,
+                        activeTrackColor: Get.theme.primaryColor.withAlpha(200),
+                        inactiveTrackColor: Get.theme.accentColor.withOpacity(0.6),
+                        inactiveThumbColor: Get.theme.accentColor,
                         onChanged: (value) async {
                           widget.chat.isMuted = value;
                           await widget.chat.save(updateLocalVals: true);
@@ -443,14 +441,14 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                 child: ListTile(
                     leading: Text("Archive Conversation",
                         style: TextStyle(
-                          color: Theme.of(context).primaryColor,
+                          color: Get.theme.primaryColor,
                         )),
                     trailing: Switch(
                         value: widget.chat.isArchived,
-                        activeColor: Theme.of(context).primaryColor,
-                        activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
-                        inactiveTrackColor: Theme.of(context).accentColor.withOpacity(0.6),
-                        inactiveThumbColor: Theme.of(context).accentColor,
+                        activeColor: Get.theme.primaryColor,
+                        activeTrackColor: Get.theme.primaryColor.withAlpha(200),
+                        inactiveTrackColor: Get.theme.accentColor.withOpacity(0.6),
+                        inactiveThumbColor: Get.theme.accentColor,
                         onChanged: (value) {
                           if (value) {
                             ChatBloc().archiveChat(widget.chat);
@@ -489,23 +487,23 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                   leading: Text(
                     "Clear Transcript (Local Only)",
                     style: TextStyle(
-                      color: Theme.of(context).primaryColor,
+                      color: Get.theme.primaryColor,
                     ),
                   ),
                   trailing: Padding(
                     padding: EdgeInsets.only(right: 15),
                     child: (isClearing)
                         ? CircularProgressIndicator(
-                            valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
+                            valueColor: AlwaysStoppedAnimation<Color>(Get.theme.primaryColor),
                           )
                         : (isCleared)
                             ? Icon(
                                 Icons.done,
-                                color: Theme.of(context).primaryColor,
+                                color: Get.theme.primaryColor,
                               )
                             : Icon(
                                 Icons.delete_forever,
-                                color: Theme.of(context).primaryColor,
+                                color: Get.theme.primaryColor,
                               ),
                   ),
                 ),
@@ -519,7 +517,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                 (context, int index) {
                   return Container(
                     decoration: BoxDecoration(
-                      border: Border.all(color: Theme.of(context).backgroundColor, width: 3),
+                      border: Border.all(color: Get.theme.backgroundColor, width: 3),
                     ),
                     child: AttachmentDetailsCard(
                       attachment: attachmentsForChat[index],
@@ -607,7 +605,7 @@ class _SyncDialogState extends State<SyncDialog> {
                 child: LinearProgressIndicator(
                   value: progress,
                   backgroundColor: Colors.white,
-                  valueColor: AlwaysStoppedAnimation(Theme.of(context).primaryColor),
+                  valueColor: AlwaysStoppedAnimation(Get.theme.primaryColor),
                 ),
               ),
             ),
@@ -618,9 +616,9 @@ class _SyncDialogState extends State<SyncDialog> {
           },
           child: Text(
             "Ok",
-            style: Theme.of(context).textTheme.bodyText1.apply(
-                  color: Theme.of(context).primaryColor,
-                ),
+            style: Get.theme.textTheme.bodyText1.apply(
+              color: Get.theme.primaryColor,
+            ),
           ),
         )
       ],

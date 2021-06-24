@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view_mixin.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
@@ -71,17 +72,17 @@ class _AddingParticipantPopupState extends State<AddingParticipantPopup> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      backgroundColor: Theme.of(context).accentColor,
+      backgroundColor: Get.theme.accentColor,
       title: Text(
         title,
-        style: Theme.of(context).textTheme.bodyText1,
+        style: Get.theme.textTheme.bodyText1,
       ),
       content: Container(
         height: 5,
         child: Center(
           child: LinearProgressIndicator(
             backgroundColor: Colors.grey,
-            valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
+            valueColor: AlwaysStoppedAnimation<Color>(Get.theme.primaryColor),
             value: (index) / widget.contacts.length,
           ),
         ),
