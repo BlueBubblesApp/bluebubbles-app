@@ -287,7 +287,7 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
 
     // Third, let's add the message or URL preview
     Widget message;
-    if (widget.message.hasDdResults && this.hasHyperlinks) {
+    if (widget.message.isUrlPreview()) {
       message = Padding(
         padding: EdgeInsets.only(left: 10.0),
         child: widget.urlPreviewWidget,
