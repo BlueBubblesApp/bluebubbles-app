@@ -192,6 +192,7 @@ class ThemeObject {
       } else if (name == "Nord Theme") {
         this.data = nordDarkTheme;
       }
+
       this.entries = this.toEntries();
       return this.entries;
     }
@@ -249,6 +250,7 @@ class ThemeObject {
     }
 
     return ThemeData(
+        brightness: this.data?.brightness ?? Brightness.light,
         textTheme: TextTheme(
           headline1: data[ThemeColors.Headline1].style,
           headline2: data[ThemeColors.Headline2].style,
