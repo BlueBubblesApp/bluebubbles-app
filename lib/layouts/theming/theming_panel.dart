@@ -6,6 +6,7 @@ import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/layouts/theming/theming_color_options_list.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
+import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -32,6 +33,9 @@ class _ThemingPanelState extends State<ThemingPanel> with TickerProviderStateMix
   void didChangeDependencies() {
     super.didChangeDependencies();
     print(Get.isDarkMode);
+    print(ThemeController.to.themeMode);
+    print(Get.theme.backgroundColor);
+    print(Get.theme.brightness);
     if (Get.isDarkMode) {
       controller = TabController(vsync: this, initialIndex: 1, length: 2);
     } else {

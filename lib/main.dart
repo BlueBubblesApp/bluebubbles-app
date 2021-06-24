@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
+import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_list/conversation_list.dart';
@@ -16,6 +17,7 @@ import 'package:bluebubbles/managers/navigator_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/database.dart';
+import 'package:bluebubbles/repository/models/theme_object.dart';
 // import 'package:sentry/sentry.dart';
 
 import 'package:bluebubbles/socket_manager.dart';
@@ -89,15 +91,13 @@ Future<Null> main() async {
       // runApp(Main());
 
       Get.lazyPut<ThemeController>(() => ThemeController());
-
       ThemeController.to.getThemeModeFromPreferences();
-      print(SettingsManager()?.settings?.theme);
 
       runApp(GetMaterialApp(
           title: 'BlueBubbles',
-          theme: whiteLightTheme,
-          darkTheme: oledDarkTheme,
-          themeMode: SettingsManager()?.settings?.theme ?? ThemeMode.system,
+          theme: (await ThemeObject.getLightTheme()).themeData,
+          darkTheme: (await ThemeObject.getDarkTheme()).themeData,
+          themeMode: ThemeController.to.themeMode ?? ThemeMode.system,
           debugShowCheckedModeBanner: false,
           navigatorKey: NavigatorManager().navigatorKey,
           home: Home()));
@@ -168,8 +168,6 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> with WidgetsBindingObserver {
-  ThemeMode _themeMode;
-
   @override
   void initState() {
     super.initState();
@@ -288,7 +286,6 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   /// Render
   @override
   Widget build(BuildContext context) {
-    _themeMode = ThemeController.to.themeMode;
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
       systemNavigationBarColor: Get.theme.backgroundColor, // navigation bar color
       systemNavigationBarIconBrightness: Get.theme.brightness,
@@ -342,14 +339,35 @@ class ThemeController extends GetxController {
 
   ThemeMode _themeMode;
   ThemeMode get themeMode => _themeMode;
+  Skins _skin;
+  Skins get skin => _skin;
+  ThemeData _themeData;
+  ThemeData get themeData => _themeData;
+
+  Future<void> setThemeData(ThemeData themeData, {bool updateState = true}) async {
+    Get.changeTheme(themeData);
+    _themeData = themeData;
+    if (updateState) update();
+  }
+
+  Future<void> setSkin(Skins skin) async {
+    _skin = skin;
+    update();
+
+    SettingsManager().settings.skin = skin;
+    await SettingsManager().saveSettings(SettingsManager().settings);
+  }
 
   Future<void> setThemeMode(ThemeMode themeMode) async {
     Get.changeThemeMode(themeMode);
     _themeMode = themeMode;
-    update();
 
-    print("SETTING AND SAFVING");
-    print(themeMode);
+    // After setting the mode, we need to use the selected theme data to update the theme
+    ThemeData lightTheme = (await ThemeObject.getLightTheme()).themeData;
+    ThemeData darkTheme = (await ThemeObject.getDarkTheme()).themeData;
+
+    setThemeData(Get.isDarkMode ? darkTheme : lightTheme, updateState: false);
+    update();
 
     SettingsManager().settings.theme = themeMode;
     await SettingsManager().saveSettings(SettingsManager().settings);
