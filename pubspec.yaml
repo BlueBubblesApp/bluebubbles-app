@@ -20,8 +20,7 @@ dependencies:
   flutter:
     sdk: flutter
   shared_preferences: ^0.5.12
-  flutter_socket_io:
-    path: packages/flutter_socket_io-0.6.0
+  socket_io_client: ^2.0.0-beta.3
   qr_code_scanner: ^0.3.5
   connectivity: ^2.0.2
   tuple: ^1.0.3

@@ -12,7 +12,6 @@ import com.bluebubbles.messaging.workers.FCMWorker;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.ValueEventListener;
-import com.itsclicking.clickapp.fluttersocketio.FlutterSocketIoPlugin;
 import com.tekartik.sqflite.SqflitePlugin;
 
 import java.util.ArrayList;
