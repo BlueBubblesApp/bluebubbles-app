@@ -6,6 +6,7 @@ import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class StickersWidget extends StatefulWidget {
   StickersWidget({Key key, @required this.messages}) : super(key: key);
@@ -92,7 +93,7 @@ class _StickersWidgetState extends State<StickersWidget> {
     List<Widget> stickers = this.stickers.map((item) {
       String pathName = AttachmentHelper.getAttachmentPath(item);
       return Image.file(new File(pathName),
-          width: MediaQuery.of(context).size.width * 2 / 3, height: MediaQuery.of(context).size.width * 2 / 4);
+          width: Get.mediaQuery.size.width * 2 / 3, height: Get.mediaQuery.size.width * 2 / 4);
     }).toList();
 
     return GestureDetector(

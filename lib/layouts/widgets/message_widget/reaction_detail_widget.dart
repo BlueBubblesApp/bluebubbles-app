@@ -1,3 +1,4 @@
+import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/redacted_helper.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
@@ -45,7 +46,7 @@ class _ReactionDetailWidgetState extends State<ReactionDetailWidget> {
   @override
   Widget build(BuildContext context) {
     Color iconColor = Colors.white;
-    if (Theme.of(context).accentColor.computeLuminance() >= 0.179) {
+    if (Get.theme.accentColor.computeLuminance() >= 0.179) {
       iconColor = Colors.black.withAlpha(95);
     }
 
@@ -64,7 +65,7 @@ class _ReactionDetailWidgetState extends State<ReactionDetailWidget> {
           padding: EdgeInsets.only(bottom: 8.0),
           child: Text(
             getContactName(context, contactTitle, widget.handle?.address),
-            style: Theme.of(context).textTheme.bodyText1.apply(fontSizeDelta: -5),
+            style: Get.theme.textTheme.bodyText1.apply(fontSizeDelta: -5),
           ),
         ),
         Container(
@@ -72,7 +73,7 @@ class _ReactionDetailWidgetState extends State<ReactionDetailWidget> {
           width: 28,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(100),
-            color: Theme.of(context).accentColor,
+            color: Get.theme.accentColor,
             boxShadow: [
               new BoxShadow(
                 blurRadius: 1.0,

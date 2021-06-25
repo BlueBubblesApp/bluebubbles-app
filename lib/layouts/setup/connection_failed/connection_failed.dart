@@ -1,3 +1,4 @@
+import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 
 class ConnectionFailedPopup extends StatefulWidget {
@@ -18,9 +19,9 @@ class _ConnectionFailedPopupState extends State<ConnectionFailedPopup> {
         FlatButton(
           child: Text(
             "Start over",
-            style: Theme.of(context).textTheme.bodyText1.apply(
-                  color: Theme.of(context).primaryColor,
-                ),
+            style: Get.theme.textTheme.bodyText1.apply(
+              color: Get.theme.primaryColor,
+            ),
           ),
           onPressed: () {
             Navigator.of(context).pop();

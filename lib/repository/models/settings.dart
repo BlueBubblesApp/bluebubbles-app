@@ -1,6 +1,7 @@
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/models/config_entry.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -65,6 +66,7 @@ class Settings {
   bool generateFakeMessageContent = false;
 
   Skins skin = Skins.IOS;
+  ThemeMode theme = ThemeMode.system;
 
   Settings();
 
@@ -101,6 +103,8 @@ class Settings {
         settings.colorfulBubbles = entry.value;
       } else if (entry.name == "hideDividers") {
         settings.hideDividers = entry.value;
+      } else if (entry.name == "theme") {
+        settings.theme = ThemeMode.values[entry.value];
       } else if (entry.name == "skin") {
         settings.skin = Skins.values[entry.value];
       } else if (entry.name == "sendTypingIndicators") {
@@ -299,6 +303,11 @@ class Settings {
           name: "hideDividers",
           value: this.hideDividers,
           type: this.hideDividers.runtimeType,
+        ),
+        ConfigEntry(
+          name: "theme",
+          value: this.theme.index,
+          type: this.theme.index.runtimeType,
         ),
         ConfigEntry(
           name: "skin",

@@ -1,3 +1,4 @@
+import 'package:get/get.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
@@ -70,10 +71,10 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: Theme.of(context).accentColor,
+        systemNavigationBarColor: Get.theme.accentColor,
       ),
       child: Scaffold(
-        backgroundColor: Theme.of(context).accentColor,
+        backgroundColor: Get.theme.accentColor,
         body: Padding(
           padding: const EdgeInsets.symmetric(vertical: 80.0, horizontal: 24.0),
           child: Stack(
@@ -84,9 +85,9 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
                   opacity: opacityTitle,
                   child: Text(
                     "Welcome to BlueBubbles",
-                    style: Theme.of(context).textTheme.headline1.apply(
-                          fontSizeDelta: 7,
-                        ),
+                    style: Get.theme.textTheme.headline1.apply(
+                      fontSizeDelta: 7,
+                    ),
                   ),
                 ),
               ),
@@ -96,7 +97,7 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
                   opacity: opacitySubtitle,
                   child: Text(
                     "Let's get started",
-                    style: Theme.of(context).textTheme.headline1,
+                    style: Get.theme.textTheme.headline1,
                   ),
                 ),
               ),
@@ -105,7 +106,7 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
                   opacity: opacityButton,
                   child: ClipOval(
                     child: Material(
-                      color: Theme.of(context).primaryColor, // button color
+                      color: Get.theme.primaryColor, // button color
                       child: InkWell(
                           child: SizedBox(width: 60, height: 60, child: Icon(Icons.arrow_forward, color: Colors.white)),
                           onTap: () async {

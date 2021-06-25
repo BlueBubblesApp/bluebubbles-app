@@ -95,7 +95,7 @@ Future<List<String>> getCompareOpts(Handle handle) async {
   // Build a list of formatted address (max: 3)
   String formatted = handle.address.toString();
   List<String> opts = [];
-  int maxOpts = 4;  // This is relatively arbitrary
+  int maxOpts = 4; // This is relatively arbitrary
   for (int i = 0; i < formatted.length; i += 1) {
     String val = formatted.substring(i);
     if (val.length == 0) break;
@@ -251,6 +251,14 @@ extension ColorHelpers on Color {
     } else {
       return this.lighten(percent);
     }
+  }
+}
+
+Color lightenOrDarken(Color color, [double percent = 10]) {
+  if (color.computeLuminance() >= 0.5) {
+    return color.darken(percent);
+  } else {
+    return color.lighten(percent);
   }
 }
 

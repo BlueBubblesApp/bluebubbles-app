@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:ui';
 
+import 'package:get/get.dart';
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
@@ -96,8 +97,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
     SchedulerBinding.instance.addPostFrameCallback((_) {
       if (this.mounted) {
         setState(() {
-          double totalHeight =
-              MediaQuery.of(context).size.height - MediaQuery.of(context).viewInsets.bottom - detailsMenuHeight - 20;
+          double totalHeight = Get.mediaQuery.size.height - Get.mediaQuery.viewInsets.bottom - detailsMenuHeight - 20;
           double offset = (widget.childOffset.dy + widget.childSize.height) - totalHeight;
           messageTopOffset = widget.childOffset.dy.clamp(topMinimum + 40, double.infinity);
           if (offset > 0) {
@@ -161,7 +161,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: Theme.of(context).backgroundColor,
+        systemNavigationBarColor: Get.theme.backgroundColor,
       ),
       child: Scaffold(
         backgroundColor: Colors.transparent,
@@ -207,8 +207,8 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                             child: Container(
                               alignment: Alignment.center,
                               height: 120,
-                              width: MediaQuery.of(context).size.width - 20,
-                              color: Theme.of(context).accentColor,
+                              width: Get.mediaQuery.size.width - 20,
+                              color: Get.theme.accentColor,
                               child: Padding(
                                 padding: EdgeInsets.symmetric(horizontal: 0),
                                 child: ListView.builder(
@@ -242,7 +242,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
   }
 
   Widget buildReactionMenu() {
-    Size size = MediaQuery.of(context).size;
+    Size size = Get.mediaQuery.size;
 
     double reactionIconSize = ((8.5 / 10 * size.width) / (ReactionTypes.toList().length).toDouble());
     double maxMenuWidth = (ReactionTypes.toList().length * reactionIconSize).toDouble();
@@ -250,13 +250,13 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
     double topPadding = -20;
     double topOffset = (messageTopOffset - menuHeight)
         .toDouble()
-        .clamp(topMinimum, size.height - MediaQuery.of(context).viewInsets.bottom - 120 - menuHeight);
+        .clamp(topMinimum, size.height - Get.mediaQuery.viewInsets.bottom - 120 - menuHeight);
     double leftOffset =
         (widget.message.isFromMe ? size.width - maxMenuWidth - 25 : 25 + (currentChat.chat.isGroup() ? 20 : 0))
             .toDouble();
     Color iconColor = Colors.white;
 
-    if (Theme.of(context).accentColor.computeLuminance() >= 0.179) {
+    if (Get.theme.accentColor.computeLuminance() >= 0.179) {
       iconColor = Colors.black.withAlpha(95);
     }
 
@@ -271,7 +271,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
             padding: const EdgeInsets.all(5),
             height: menuHeight,
             decoration: BoxDecoration(
-              color: Theme.of(context).accentColor.withAlpha(150),
+              color: Get.theme.accentColor.withAlpha(150),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Row(
@@ -286,8 +286,8 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                         height: reactionIconSize - 15,
                         decoration: BoxDecoration(
                           color: currentlySelectedReaction == e
-                              ? Theme.of(context).primaryColor
-                              : Theme.of(context).accentColor.withAlpha(150),
+                              ? Get.theme.primaryColor
+                              : Get.theme.accentColor.withAlpha(150),
                           borderRadius: BorderRadius.circular(
                             20,
                           ),
@@ -339,7 +339,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
   }
 
   Widget buildCopyPasteMenu() {
-    Size size = MediaQuery.of(context).size;
+    Size size = Get.mediaQuery.size;
 
     double maxMenuWidth = size.width * 2 / 3;
 
@@ -365,11 +365,11 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
             child: ListTile(
               title: Text(
                 "Open Direct Message",
-                style: Theme.of(context).textTheme.bodyText1,
+                style: Get.theme.textTheme.bodyText1,
               ),
               trailing: Icon(
                 Icons.open_in_new,
-                color: Theme.of(context).textTheme.bodyText1.color,
+                color: Get.theme.textTheme.bodyText1.color,
               ),
             ),
           ),
@@ -404,11 +404,11 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
             child: ListTile(
               title: Text(
                 "Start Conversation",
-                style: Theme.of(context).textTheme.bodyText1,
+                style: Get.theme.textTheme.bodyText1,
               ),
               trailing: Icon(
                 Icons.message,
-                color: Theme.of(context).textTheme.bodyText1.color,
+                color: Get.theme.textTheme.bodyText1.color,
               ),
             ),
           ),
@@ -438,11 +438,11 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
           child: ListTile(
             title: Text(
               "Forward",
-              style: Theme.of(context).textTheme.bodyText1,
+              style: Get.theme.textTheme.bodyText1,
             ),
             trailing: Icon(
               Icons.forward,
-              color: Theme.of(context).textTheme.bodyText1.color,
+              color: Get.theme.textTheme.bodyText1.color,
             ),
           ),
         ),
@@ -458,11 +458,11 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
           child: ListTile(
             title: Text(
               "Delete",
-              style: Theme.of(context).textTheme.bodyText1,
+              style: Get.theme.textTheme.bodyText1,
             ),
             trailing: Icon(
               Icons.delete,
-              color: Theme.of(context).textTheme.bodyText1.color,
+              color: Get.theme.textTheme.bodyText1.color,
             ),
           ),
         ),
@@ -482,21 +482,21 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                     padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(25.0),
-                      color: Theme.of(context).accentColor.withOpacity(0.1),
+                      color: Get.theme.accentColor.withOpacity(0.1),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
                           !isEmptyString(widget.message.fullText) ? Icons.check : Icons.close,
-                          color: Theme.of(context).textTheme.bodyText1.color,
+                          color: Get.theme.textTheme.bodyText1.color,
                         ),
                         SizedBox(
                           width: 12.0,
                         ),
                         Text(
                           "Copied to clipboard",
-                          style: Theme.of(context).textTheme.bodyText1,
+                          style: Get.theme.textTheme.bodyText1,
                         ),
                       ],
                     ),
@@ -511,10 +511,10 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
               );
             },
             child: ListTile(
-              title: Text("Copy", style: Theme.of(context).textTheme.bodyText1),
+              title: Text("Copy", style: Get.theme.textTheme.bodyText1),
               trailing: Icon(
                 Icons.content_copy,
-                color: Theme.of(context).textTheme.bodyText1.color,
+                color: Get.theme.textTheme.bodyText1.color,
               ),
             ),
           ),
@@ -530,17 +530,17 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                   builder: (_) {
                     Widget title = Text(
                       "Copy",
-                      style: Theme.of(context).textTheme.headline1,
+                      style: Get.theme.textTheme.headline1,
                     );
                     Widget content = Container(
                       constraints: BoxConstraints(
-                        maxHeight: MediaQuery.of(context).size.height * 2 / 3,
+                        maxHeight: Get.mediaQuery.size.height * 2 / 3,
                       ),
                       child: SingleChildScrollView(
                         physics: ThemeSwitcher.getScrollPhysics(),
                         child: SelectableText(
                           widget.message.fullText,
-                          style: Theme.of(context).textTheme.bodyText1,
+                          style: Get.theme.textTheme.bodyText1,
                         ),
                       ),
                     );
@@ -548,7 +548,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                       FlatButton(
                         child: Text(
                           "Done",
-                          // style: Theme.of(context).textTheme.bodyText1,
+                          // style: Get.theme.textTheme.bodyText1,
                         ),
                         onPressed: () {
                           Navigator.of(context, rootNavigator: true).pop('dialog');
@@ -558,13 +558,13 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                     if (SettingsManager().settings.skin == Skins.IOS) {
                       return CupertinoAlertDialog(
                         title: title,
-                        backgroundColor: Theme.of(context).accentColor,
+                        backgroundColor: Get.theme.accentColor,
                         content: content,
                       );
                     }
                     return AlertDialog(
                       title: title,
-                      backgroundColor: Theme.of(context).accentColor,
+                      backgroundColor: Get.theme.accentColor,
                       content: content,
                       actions: actions,
                     );
@@ -573,11 +573,11 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
             child: ListTile(
               title: Text(
                 "Copy Selection",
-                style: Theme.of(context).textTheme.bodyText1,
+                style: Get.theme.textTheme.bodyText1,
               ),
               trailing: Icon(
                 Icons.content_copy,
-                color: Theme.of(context).textTheme.bodyText1.color,
+                color: Get.theme.textTheme.bodyText1.color,
               ),
             ),
           ),
@@ -597,11 +597,11 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
             child: ListTile(
               title: Text(
                 "Re-download from Server",
-                style: Theme.of(context).textTheme.bodyText1,
+                style: Get.theme.textTheme.bodyText1,
               ),
               trailing: Icon(
                 Icons.refresh,
-                color: Theme.of(context).textTheme.bodyText1.color,
+                color: Get.theme.textTheme.bodyText1.color,
               ),
             ),
           ),
@@ -621,11 +621,11 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
             child: ListTile(
               title: Text(
                 "Download to Device",
-                style: Theme.of(context).textTheme.bodyText1,
+                style: Get.theme.textTheme.bodyText1,
               ),
               trailing: Icon(
                 Icons.file_download,
-                color: Theme.of(context).textTheme.bodyText1.color,
+                color: Get.theme.textTheme.bodyText1.color,
               ),
             ),
           ),
@@ -655,7 +655,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
         child: Container(
-          color: Theme.of(context).accentColor.withAlpha(150),
+          color: Get.theme.accentColor.withAlpha(150),
           width: maxMenuWidth,
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -677,21 +677,21 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                             );
                             if (SettingsManager().settings.skin == Skins.IOS) {
                               return CupertinoAlertDialog(
-                                backgroundColor: Theme.of(context).accentColor,
+                                backgroundColor: Get.theme.accentColor,
                                 content: content,
                               );
                             }
                             return AlertDialog(
-                              backgroundColor: Theme.of(context).accentColor,
+                              backgroundColor: Get.theme.accentColor,
                               content: content,
                             );
                           });
                     },
                     child: ListTile(
-                      title: Text("More...", style: Theme.of(context).textTheme.bodyText1),
+                      title: Text("More...", style: Get.theme.textTheme.bodyText1),
                       trailing: Icon(
                         Icons.more_vert,
-                        color: Theme.of(context).textTheme.bodyText1.color,
+                        color: Get.theme.textTheme.bodyText1.color,
                       ),
                     ),
                   ),
@@ -702,7 +702,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
       ),
     );
 
-    double upperLimit = size.height - MediaQuery.of(context).viewInsets.bottom - detailsMenuHeight;
+    double upperLimit = size.height - Get.mediaQuery.viewInsets.bottom - detailsMenuHeight;
     if (topMinimum > upperLimit) {
       topMinimum = upperLimit;
     }

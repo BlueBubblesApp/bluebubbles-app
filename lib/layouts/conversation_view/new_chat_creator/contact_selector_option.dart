@@ -1,3 +1,4 @@
+import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view_mixin.dart';
@@ -41,7 +42,7 @@ class ContactSelectorOption extends StatelessWidget {
     var getTextWidget = (String text) {
       return Text(
         text,
-        style: Theme.of(context).textTheme.subtitle1,
+        style: Get.theme.textTheme.subtitle1,
         overflow: TextOverflow.ellipsis,
       );
     };
@@ -51,21 +52,21 @@ class ContactSelectorOption extends StatelessWidget {
       onTap: () => onSelected(item),
       title: Text(
         !item.isChat ? "${item.displayName}${getTypeStr(item.label)}" : item.chat.title ?? "Group Chat",
-        style: Theme.of(context).textTheme.bodyText1,
+        style: Get.theme.textTheme.bodyText1,
         overflow: TextOverflow.ellipsis,
       ),
       subtitle: (!item.isChat || item.chat.participants.length == 1)
           ? getTextWidget(item?.address ?? item.chat.participants[0]?.address ?? "Person")
           : FutureBuilder(
-            future: chatParticipants,
-            builder: (context, snapshot) {
-              if (!snapshot.hasData) {
-                return getTextWidget(item.displayName ?? item.address ?? "Person");
-              }
+              future: chatParticipants,
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) {
+                  return getTextWidget(item.displayName ?? item.address ?? "Person");
+                }
 
-              return getTextWidget(snapshot.data);
-            },
-          ),
+                return getTextWidget(snapshot.data);
+              },
+            ),
       leading: !item.isChat
           ? ContactAvatarWidget(
               handle: Handle(address: item.address),
@@ -80,7 +81,7 @@ class ContactSelectorOption extends StatelessWidget {
       trailing: item.isChat
           ? Icon(
               SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_forward_ios : Icons.arrow_forward,
-              color: Theme.of(context).primaryColor,
+              color: Get.theme.primaryColor,
             )
           : null,
     );

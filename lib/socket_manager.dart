@@ -392,7 +392,7 @@ class SocketManager {
     try {
       // First, try to send what we currently have
       debugPrint('[FCM Auth] -> Authenticating with FCM');
-      result = await MethodChannelInterface().invokeMethod('auth', SettingsManager().fcmData.toMap());
+      result = await MethodChannelInterface()?.invokeMethod('auth', SettingsManager().fcmData.toMap());
     } on PlatformException catch (ex) {
       debugPrint('[FCM Auth] -> Failed to perform initial FCM authentication: ${ex.toString()}');
       debugPrint('[FCM Auth] -> Fetching FCM data from the server...');

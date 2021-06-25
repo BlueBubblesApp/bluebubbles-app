@@ -1,4 +1,5 @@
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:get/get.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -16,17 +17,17 @@ class _SearchTextBoxState extends State<SearchTextBox> {
     return Hero(
       tag: "search_text_box",
       child: CupertinoTextField(
-        cursorColor: Theme.of(context).primaryColor,
+        cursorColor: Get.theme.primaryColor,
         autofocus: widget.autoFocus,
         decoration: BoxDecoration(
-          color: Theme.of(context).accentColor,
+          color: Get.theme.accentColor,
           borderRadius: BorderRadius.circular(10),
         ),
         placeholder: "Search",
-        placeholderStyle: Theme.of(context).textTheme.bodyText1.apply(
-              color: Theme.of(context).textTheme.bodyText1.color.lightenOrDarken(40),
-            ),
-        style: Theme.of(context).textTheme.bodyText1,
+        placeholderStyle: Get.theme.textTheme.bodyText1.apply(
+          color: lightenOrDarken(Get.theme.textTheme.bodyText1.color, 40),
+        ),
+        style: Get.theme.textTheme.bodyText1,
         padding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
       ),
     );

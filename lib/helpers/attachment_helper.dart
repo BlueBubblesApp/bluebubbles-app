@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui';
 
+import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -104,7 +105,7 @@ class AttachmentHelper {
             label = splitData[2].replaceAll(';', '');
           }
         }
-        
+
         emails.add(
           Item(
             value: (_contact[key] as Map<String, dynamic>)["value"],
@@ -151,7 +152,7 @@ class AttachmentHelper {
     double width = attachment.width?.toDouble() ?? 0.0;
     double factor = attachment.height?.toDouble() ?? 0.0;
     if (attachment.width == null || attachment.width == 0 || attachment.height == null || attachment.height == 0) {
-      width = MediaQuery.of(context).size.width;
+      width = Get.mediaQuery.size.width;
       factor = 2;
     }
 
@@ -170,21 +171,21 @@ class AttachmentHelper {
               padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(25.0),
-                color: Theme.of(context).accentColor.withOpacity(0.1),
+                color: Get.theme.accentColor.withOpacity(0.1),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
                     Icons.check,
-                    color: Theme.of(context).textTheme.bodyText1.color,
+                    color: Get.theme.textTheme.bodyText1.color,
                   ),
                   SizedBox(
                     width: 12.0,
                   ),
                   Text(
                     "Saved to gallery",
-                    style: Theme.of(context).textTheme.bodyText1,
+                    style: Get.theme.textTheme.bodyText1,
                   ),
                 ],
               ),

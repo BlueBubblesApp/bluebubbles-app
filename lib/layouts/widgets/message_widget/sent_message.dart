@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:get/get.dart';
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
@@ -31,8 +32,8 @@ class SentMessageHelper {
       bool margin = true}) {
     Color bubbleColor;
     bubbleColor = message == null || message.guid.startsWith("temp")
-        ? darken(Theme.of(context).primaryColor, 0.2)
-        : Theme.of(context).primaryColor;
+        ? darken(Get.theme.primaryColor, 0.2)
+        : Get.theme.primaryColor;
 
     final bool hideContent = SettingsManager().settings.redactedMode && SettingsManager().settings.hideMessageContent;
     final bool hideType = SettingsManager().settings.redactedMode && SettingsManager().settings.hideAttachmentTypes;
@@ -52,13 +53,13 @@ class SentMessageHelper {
           children: <Widget>[
             Text(
               message.text,
-              style: Theme.of(context).textTheme.bodyText2.apply(fontSizeFactor: 4),
+              style: Get.theme.textTheme.bodyText2.apply(fontSizeFactor: 4),
             ),
             if (hideContent)
               Positioned.fill(
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(25.0),
-                  child: Container(color: Theme.of(context).accentColor),
+                  child: Container(color: Get.theme.accentColor),
                 ),
               ),
             if (hideContent && !hideType)
@@ -68,7 +69,7 @@ class SentMessageHelper {
                   child: Text(
                     "emoji",
                     textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyText1,
+                    style: Get.theme.textTheme.bodyText1,
                   ),
                 ),
               ),
@@ -91,7 +92,7 @@ class SentMessageHelper {
               right: margin ? 10 : 0,
             ),
             constraints: BoxConstraints(
-              maxWidth: MediaQuery.of(context).size.width * MessageWidgetMixin.MAX_SIZE + (!padding ? 100 : 0),
+              maxWidth: Get.mediaQuery.size.width * MessageWidgetMixin.MAX_SIZE + (!padding ? 100 : 0),
             ),
             padding: EdgeInsets.symmetric(
               vertical: padding ? 8 : 0,
@@ -128,7 +129,7 @@ class SentMessageHelper {
                 ? RichText(
                     text: TextSpan(
                       children: MessageWidgetMixin.buildMessageSpans(context, message),
-                      style: Theme.of(context).textTheme.bodyText1.apply(color: Colors.white),
+                      style: Get.theme.textTheme.bodyText1.apply(color: Colors.white),
                     ),
                   )
                 : customContent,

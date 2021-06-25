@@ -1,3 +1,4 @@
+import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/material.dart';
@@ -67,11 +68,11 @@ class _BalloonBubbleState extends State<BalloonBundleWidget> {
       borderRadius: BorderRadius.circular(20),
       child: Container(
           constraints: BoxConstraints(
-            maxWidth: MediaQuery.of(context).size.width * 3 / 4,
+            maxWidth: Get.mediaQuery.size.width * 3 / 4,
           ),
           child: Container(
             width: 200,
-            color: Theme.of(context).accentColor,
+            color: Get.theme.accentColor,
             child: Padding(
               padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 10.0),
               child: Column(
@@ -81,14 +82,14 @@ class _BalloonBubbleState extends State<BalloonBundleWidget> {
                       textAlign: TextAlign.center,
                       maxLines: 3,
                       overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.headline1),
+                      style: Get.theme.textTheme.headline1),
                   Text("Interactive Message",
-                      textAlign: TextAlign.center, maxLines: 1, style: Theme.of(context).textTheme.subtitle1),
+                      textAlign: TextAlign.center, maxLines: 1, style: Get.theme.textTheme.subtitle1),
                   Container(height: 10.0),
-                  Icon(bundleIcon, color: Theme.of(context).textTheme.bodyText1.color, size: 48),
+                  Icon(bundleIcon, color: Get.theme.textTheme.bodyText1.color, size: 48),
                   Container(height: 10.0),
                   Text("(Cannot open on Android)",
-                      textAlign: TextAlign.center, maxLines: 1, style: Theme.of(context).textTheme.subtitle2),
+                      textAlign: TextAlign.center, maxLines: 1, style: Get.theme.textTheme.subtitle2),
                 ],
               ),
             ),

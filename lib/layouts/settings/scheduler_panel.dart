@@ -12,6 +12,7 @@ import 'package:bluebubbles/repository/models/scheduled.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:get/get.dart';
 
 List<dynamic> timeOptions = [
   [300, "5 Minutes"],
@@ -101,12 +102,12 @@ class _SchedulePanelState extends State<SchedulePanel> {
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: Theme.of(context).backgroundColor,
+        systemNavigationBarColor: Get.theme.backgroundColor,
       ),
       child: Scaffold(
-        backgroundColor: Theme.of(context).backgroundColor,
+        backgroundColor: Get.theme.backgroundColor,
         appBar: PreferredSize(
-          preferredSize: Size(MediaQuery.of(context).size.width, 80),
+          preferredSize: Size(Get.mediaQuery.size.width, 80),
           child: ClipRRect(
             child: BackdropFilter(
               child: AppBar(
@@ -115,15 +116,15 @@ class _SchedulePanelState extends State<SchedulePanel> {
                 elevation: 0,
                 leading: IconButton(
                   icon: Icon(SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_back_ios : Icons.arrow_back,
-                      color: Theme.of(context).primaryColor),
+                      color: Get.theme.primaryColor),
                   onPressed: () {
                     Navigator.of(context).pop();
                   },
                 ),
-                backgroundColor: Theme.of(context).accentColor.withOpacity(0.5),
+                backgroundColor: Get.theme.accentColor.withOpacity(0.5),
                 title: Text(
                   "Message Scheduler",
-                  style: Theme.of(context).textTheme.headline1,
+                  style: Get.theme.textTheme.headline1,
                 ),
               ),
               filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
@@ -142,12 +143,12 @@ class _SchedulePanelState extends State<SchedulePanel> {
                       ? SettingsTile(
                           title: "Selected chat",
                           subTitle: title,
-                          trailing: Icon(Icons.timer, color: Theme.of(context).primaryColor.withAlpha(200)),
+                          trailing: Icon(Icons.timer, color: Get.theme.primaryColor.withAlpha(200)),
                         )
                       : SettingsTile(
                           title: "Select a chat to schedule a message for",
                           subTitle: 'Tap here',
-                          trailing: Icon(Icons.chat_bubble, color: Theme.of(context).primaryColor.withAlpha(200)),
+                          trailing: Icon(Icons.chat_bubble, color: Get.theme.primaryColor.withAlpha(200)),
                           onTap: () async {
                             Navigator.of(context).push(
                               ThemeSwitcher.buildPageRoute(
@@ -200,7 +201,7 @@ class _SchedulePanelState extends State<SchedulePanel> {
                   Center(
                       child: Text(
                     isNullOrEmpty(errors) ? "" : errors.join("\n"),
-                    style: Theme.of(context).textTheme.bodyText1.apply(color: Colors.red[300]),
+                    style: Get.theme.textTheme.bodyText1.apply(color: Colors.red[300]),
                     textAlign: TextAlign.center,
                   ))
                 ],
@@ -214,7 +215,7 @@ class _SchedulePanelState extends State<SchedulePanel> {
           ],
         ),
         floatingActionButton: FloatingActionButton(
-          backgroundColor: Theme.of(context).primaryColor,
+          backgroundColor: Get.theme.primaryColor,
           child: Icon(Icons.done, color: Colors.white, size: 25),
           onPressed: () async {
             errors = [];

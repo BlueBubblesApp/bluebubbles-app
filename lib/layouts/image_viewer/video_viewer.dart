@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/share.dart';
@@ -138,10 +139,10 @@ class _VideoViewerState extends State<VideoViewer> {
     }
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: Theme.of(context).backgroundColor,
+        systemNavigationBarColor: Get.theme.backgroundColor,
       ),
       child: Scaffold(
-        backgroundColor: Theme.of(context).backgroundColor,
+        backgroundColor: Get.theme.backgroundColor,
         body: Stack(
           alignment: Alignment.bottomCenter,
           children: <Widget>[
@@ -164,8 +165,8 @@ class _VideoViewerState extends State<VideoViewer> {
                     children: <Widget>[
                       Container(
                         constraints: BoxConstraints(
-                          maxHeight: MediaQuery.of(context).size.height,
-                          maxWidth: MediaQuery.of(context).size.width,
+                          maxHeight: Get.mediaQuery.size.height,
+                          maxWidth: Get.mediaQuery.size.width,
                         ),
                         child: AspectRatio(
                           aspectRatio: controller.value.aspectRatio,
@@ -233,7 +234,7 @@ class _VideoViewerState extends State<VideoViewer> {
                             children: [
                               Expanded(
                                 child: SizedBox(
-                                  height: MediaQuery.of(context).size.height * 1 / 10,
+                                  height: Get.mediaQuery.size.height * 1 / 10,
                                   child: Slider(
                                     min: 0,
                                     max: controller.value.duration.inMilliseconds.toDouble(),
@@ -269,7 +270,7 @@ class _VideoViewerState extends State<VideoViewer> {
                                   padding: const EdgeInsets.only(right: 20.0),
                                   child: Icon(
                                     controller.value.volume == 0.0 ? Icons.volume_mute : Icons.volume_up,
-                                    color: Theme.of(context).primaryColor,
+                                    color: Get.theme.primaryColor,
                                   ),
                                 ),
                                 onTap: () {

@@ -9,6 +9,7 @@ import 'package:bluebubbles/repository/models/scheduled.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
 class SchedulingPanel extends StatefulWidget {
@@ -51,10 +52,9 @@ class _SchedulingPanelState extends State<SchedulingPanel> {
                 "Chat",
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.bodyText1,
+                style: Get.theme.textTheme.bodyText1,
               ),
-              Text(msg.message,
-                  maxLines: 4, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.subtitle1)
+              Text(msg.message, maxLines: 4, overflow: TextOverflow.ellipsis, style: Get.theme.textTheme.subtitle1)
             ],
           ),
         ),
@@ -79,13 +79,13 @@ class _SchedulingPanelState extends State<SchedulingPanel> {
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: Theme.of(context).backgroundColor,
+        systemNavigationBarColor: Get.theme.backgroundColor,
       ),
       child: Scaffold(
         // extendBodyBehindAppBar: true,
-        backgroundColor: Theme.of(context).backgroundColor,
+        backgroundColor: Get.theme.backgroundColor,
         appBar: PreferredSize(
-          preferredSize: Size(MediaQuery.of(context).size.width, 80),
+          preferredSize: Size(Get.mediaQuery.size.width, 80),
           child: ClipRRect(
             child: BackdropFilter(
               child: AppBar(
@@ -94,15 +94,15 @@ class _SchedulingPanelState extends State<SchedulingPanel> {
                 elevation: 0,
                 leading: IconButton(
                   icon: Icon(SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_back_ios : Icons.arrow_back,
-                      color: Theme.of(context).primaryColor),
+                      color: Get.theme.primaryColor),
                   onPressed: () {
                     Navigator.of(context).pop();
                   },
                 ),
-                backgroundColor: Theme.of(context).accentColor.withOpacity(0.5),
+                backgroundColor: Get.theme.accentColor.withOpacity(0.5),
                 title: Text(
                   "Message Scheduling",
-                  style: Theme.of(context).textTheme.headline1,
+                  style: Get.theme.textTheme.headline1,
                 ),
               ),
               filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
@@ -117,14 +117,14 @@ class _SchedulingPanelState extends State<SchedulingPanel> {
                 <Widget>[
                   Padding(
                       padding: EdgeInsets.fromLTRB(25.0, 25.0, 25.0, 0.0),
-                      child: Text("Upcoming Messages", style: Theme.of(context).textTheme.headline1)),
+                      child: Text("Upcoming Messages", style: Get.theme.textTheme.headline1)),
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 25.0, vertical: 25.0),
                     child: (upcoming.length > 0)
                         ? Container(
                             decoration: BoxDecoration(
                               border: Border.all(
-                                color: Theme.of(context).accentColor,
+                                color: Get.theme.accentColor,
                                 width: 1,
                               ),
                               borderRadius: BorderRadius.all(Radius.circular(10)),
@@ -135,22 +135,22 @@ class _SchedulingPanelState extends State<SchedulingPanel> {
                                   1: FractionColumnWidth(.4),
                                 },
                                 border: TableBorder.symmetric(
-                                  inside: BorderSide(width: 1, color: Theme.of(context).accentColor),
+                                  inside: BorderSide(width: 1, color: Get.theme.accentColor),
                                 ),
                                 children: _buildRows(upcoming)))
                         : Text("No upcoming messages to send",
-                            textAlign: TextAlign.left, style: Theme.of(context).textTheme.subtitle1),
+                            textAlign: TextAlign.left, style: Get.theme.textTheme.subtitle1),
                   ),
                   Padding(
                       padding: EdgeInsets.fromLTRB(25.0, 25.0, 25.0, 0.0),
-                      child: Text("Past Messages", style: Theme.of(context).textTheme.headline1)),
+                      child: Text("Past Messages", style: Get.theme.textTheme.headline1)),
                   Padding(
                       padding: EdgeInsets.symmetric(horizontal: 25.0, vertical: 25.0),
                       child: (old.length > 0)
                           ? Container(
                               decoration: BoxDecoration(
                                 border: Border.all(
-                                  color: Theme.of(context).accentColor,
+                                  color: Get.theme.accentColor,
                                   width: 1,
                                 ),
                                 borderRadius: BorderRadius.all(Radius.circular(10)),
@@ -161,11 +161,11 @@ class _SchedulingPanelState extends State<SchedulingPanel> {
                                     1: FractionColumnWidth(.4),
                                   },
                                   border: TableBorder.symmetric(
-                                    inside: BorderSide(width: 1, color: Theme.of(context).accentColor),
+                                    inside: BorderSide(width: 1, color: Get.theme.accentColor),
                                   ),
                                   children: _buildRows(old)))
                           : Text("No scheduled messages have been sent",
-                              textAlign: TextAlign.left, style: Theme.of(context).textTheme.subtitle1)),
+                              textAlign: TextAlign.left, style: Get.theme.textTheme.subtitle1)),
                 ],
               ),
             ),
@@ -177,7 +177,7 @@ class _SchedulingPanelState extends State<SchedulingPanel> {
           ],
         ),
         floatingActionButton: FloatingActionButton(
-          backgroundColor: Theme.of(context).primaryColor,
+          backgroundColor: Get.theme.primaryColor,
           child: Icon(Icons.create, color: Colors.white, size: 25),
           onPressed: () async {
             Navigator.of(context).push(

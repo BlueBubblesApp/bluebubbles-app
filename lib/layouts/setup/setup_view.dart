@@ -1,3 +1,4 @@
+import 'package:get/get.dart';
 import 'package:bluebubbles/layouts/setup/connecting_alert/failed_to_connect_dialog.dart';
 import 'package:bluebubbles/layouts/setup/prepare_to_download/prepare_to_download.dart';
 import 'package:bluebubbles/layouts/setup/qr_scan/qr_scan.dart';
@@ -86,7 +87,7 @@ class _SetupViewState extends State<SetupView> {
             children: <Widget>[
               Text(
                 "$currentPage/6",
-                style: Theme.of(context).textTheme.bodyText1,
+                style: Get.theme.textTheme.bodyText1,
               ),
             ],
           ),

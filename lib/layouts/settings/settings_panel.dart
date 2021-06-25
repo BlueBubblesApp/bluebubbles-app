@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:ui';
 
+import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import "package:bluebubbles/helpers/string_extension.dart";
@@ -44,9 +45,6 @@ class _SettingsPanelState extends State<SettingsPanel> {
   FCMData _fcmDataCopy;
   bool needToReconnect = false;
   bool showUrl = false;
-  Brightness brightness;
-  Color previousBackgroundColor;
-  bool gotBrightness = false;
   int lastRestart;
 
   @override
@@ -60,65 +58,43 @@ class _SettingsPanelState extends State<SettingsPanel> {
       if (!event.containsKey("type")) return;
 
       if (event["type"] == 'theme-update' && this.mounted) {
-        setState(() {
-          gotBrightness = false;
-        });
+        setState(() {});
       }
     });
   }
 
-  void loadBrightness() {
-    Color now = Theme.of(context).backgroundColor;
-    bool themeChanged = previousBackgroundColor == null || previousBackgroundColor != now;
-    if (!themeChanged && gotBrightness) return;
-
-    previousBackgroundColor = now;
-    if (this.context == null) {
-      brightness = Brightness.light;
-      gotBrightness = true;
-      return;
-    }
-
-    bool isDark = now.computeLuminance() < 0.179;
-    brightness = isDark ? Brightness.dark : Brightness.light;
-    gotBrightness = true;
-    if (this.mounted) setState(() {});
-  }
-
   @override
   Widget build(BuildContext context) {
-    loadBrightness();
-
     Widget nextIcon = Icon(
       SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_forward_ios : Icons.arrow_forward,
-      color: Theme.of(context).primaryColor,
+      color: Get.theme.primaryColor,
     );
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: Theme.of(context).backgroundColor,
+        systemNavigationBarColor: Get.theme.backgroundColor,
       ),
       child: Scaffold(
-        backgroundColor: Theme.of(context).backgroundColor,
+        backgroundColor: Get.theme.backgroundColor,
         appBar: PreferredSize(
-          preferredSize: Size(MediaQuery.of(context).size.width, 80),
+          preferredSize: Size(Get.mediaQuery.size.width, 80),
           child: ClipRRect(
             child: BackdropFilter(
               child: AppBar(
-                brightness: brightness,
+                brightness: ThemeData.estimateBrightnessForColor(Get.theme.backgroundColor),
                 toolbarHeight: 100.0,
                 elevation: 0,
                 leading: IconButton(
                   icon: Icon(SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_back_ios : Icons.arrow_back,
-                      color: Theme.of(context).primaryColor),
+                      color: Get.theme.primaryColor),
                   onPressed: () {
                     Navigator.of(context).pop();
                   },
                 ),
-                backgroundColor: Theme.of(context).accentColor.withOpacity(0.5),
+                backgroundColor: Get.theme.accentColor.withOpacity(0.5),
                 title: Text(
                   "Settings",
-                  style: Theme.of(context).textTheme.headline1,
+                  style: Get.theme.textTheme.headline1,
                 ),
               ),
               filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
@@ -201,7 +177,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                       }),
                   SettingsTile(
                     title: "Re-configure with MacOS Server",
-                    trailing: Icon(Icons.camera, color: Theme.of(context).primaryColor.withAlpha(200)),
+                    trailing: Icon(Icons.camera, color: Get.theme.primaryColor.withAlpha(200)),
                     onTap: () async {
                       var fcmData;
                       try {
@@ -238,7 +214,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                   // SettingsTile(
                   //   title: "Message Scheduling",
                   //   trailing: Icon(Icons.arrow_forward_ios,
-                  //       color: Theme.of(context).primaryColor),
+                  //       color: Get.theme.primaryColor),
                   //   onTap: () async {
                   //     Navigator.of(context).push(
                   //       CupertinoPageRoute(
@@ -250,7 +226,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                   // SettingsTile(
                   //   title: "Search",
                   //   trailing: Icon(Icons.arrow_forward_ios,
-                  //       color: Theme.of(context).primaryColor),
+                  //       color: Get.theme.primaryColor),
                   //   onTap: () async {
                   //     Navigator.of(context).push(
                   //       CupertinoPageRoute(
@@ -296,7 +272,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                     title: "Private API Features",
                     trailing: Icon(
                         SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_forward_ios : Icons.arrow_forward,
-                        color: Theme.of(context).primaryColor),
+                        color: Get.theme.primaryColor),
                     onTap: () async {
                       Navigator.of(context).push(
                         CupertinoPageRoute(
@@ -357,7 +333,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                     },
                     trailing: Icon(
                       Icons.attach_money,
-                      color: Theme.of(context).primaryColor,
+                      color: Get.theme.primaryColor,
                     ),
                   ),
                   SettingsTile(
@@ -369,9 +345,9 @@ class _SettingsPanelState extends State<SettingsPanel> {
                           return AlertDialog(
                             title: Text(
                               "Are you sure?",
-                              style: Theme.of(context).textTheme.bodyText1,
+                              style: Get.theme.textTheme.bodyText1,
                             ),
-                            backgroundColor: Theme.of(context).backgroundColor,
+                            backgroundColor: Get.theme.backgroundColor,
                             actions: <Widget>[
                               FlatButton(
                                 child: Text("Yes"),
@@ -437,7 +413,7 @@ class SettingsTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Theme.of(context).backgroundColor,
+      color: Get.theme.backgroundColor,
       child: InkWell(
         onLongPress: this.onLongPress,
         onTap: this.onTap,
@@ -446,18 +422,18 @@ class SettingsTile extends StatelessWidget {
             ListTile(
               title: Text(
                 this.title,
-                style: Theme.of(context).textTheme.bodyText1,
+                style: Get.theme.textTheme.bodyText1,
               ),
               trailing: this.trailing,
               subtitle: subTitle != null
                   ? Text(
                       subTitle,
-                      style: Theme.of(context).textTheme.subtitle1,
+                      style: Get.theme.textTheme.subtitle1,
                     )
                   : null,
             ),
             Divider(
-              color: Theme.of(context).accentColor.withOpacity(0.5),
+              color: Get.theme.accentColor.withOpacity(0.5),
               thickness: 1,
             ),
           ],
@@ -492,7 +468,7 @@ class SettingsTextField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Theme.of(context).backgroundColor,
+      color: Get.theme.backgroundColor,
       child: InkWell(
         onTap: this.onTap,
         child: Column(
@@ -500,13 +476,13 @@ class SettingsTextField extends StatelessWidget {
             ListTile(
               title: Text(
                 this.title,
-                style: Theme.of(context).textTheme.bodyText1,
+                style: Get.theme.textTheme.bodyText1,
               ),
               trailing: this.trailing,
               subtitle: Padding(
                 padding: EdgeInsets.only(top: 10.0),
                 child: CustomCupertinoTextField(
-                  cursorColor: Theme.of(context).primaryColor,
+                  cursorColor: Get.theme.primaryColor,
                   onLongPressStart: () {
                     Feedback.forLongPress(context);
                   },
@@ -518,8 +494,8 @@ class SettingsTextField extends StatelessWidget {
                   autocorrect: true,
                   controller: controller,
                   scrollPhysics: CustomBouncingScrollPhysics(),
-                  style: Theme.of(context).textTheme.bodyText1.apply(
-                      color: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor) == Brightness.light
+                  style: Get.theme.textTheme.bodyText1.apply(
+                      color: ThemeData.estimateBrightnessForColor(Get.theme.backgroundColor) == Brightness.light
                           ? Colors.black
                           : Colors.white,
                       fontSizeDelta: -0.25),
@@ -528,12 +504,12 @@ class SettingsTextField extends StatelessWidget {
                   minLines: 1,
                   placeholder: placeholder ?? "Enter your text here",
                   padding: EdgeInsets.only(left: 10, top: 10, right: 40, bottom: 10),
-                  placeholderStyle: Theme.of(context).textTheme.subtitle1,
+                  placeholderStyle: Get.theme.textTheme.subtitle1,
                   autofocus: SettingsManager().settings.autoOpenKeyboard,
                   decoration: BoxDecoration(
-                    color: Theme.of(context).backgroundColor,
+                    color: Get.theme.backgroundColor,
                     border: Border.all(
-                      color: Theme.of(context).dividerColor,
+                      color: Get.theme.dividerColor,
                       width: 1.5,
                     ),
                     borderRadius: BorderRadius.circular(20),
@@ -542,7 +518,7 @@ class SettingsTextField extends StatelessWidget {
               ),
             ),
             Divider(
-              color: Theme.of(context).accentColor.withOpacity(0.5),
+              color: Get.theme.accentColor.withOpacity(0.5),
               thickness: 1,
             ),
           ],
@@ -581,13 +557,13 @@ class _SettingsSwitchState extends State<SettingsSwitch> {
     return SwitchListTile(
       title: Text(
         widget.title,
-        style: Theme.of(context).textTheme.bodyText1,
+        style: Get.theme.textTheme.bodyText1,
       ),
       value: _value,
-      activeColor: Theme.of(context).primaryColor,
-      activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
-      inactiveTrackColor: Theme.of(context).accentColor.withOpacity(0.6),
-      inactiveThumbColor: Theme.of(context).accentColor,
+      activeColor: Get.theme.primaryColor,
+      activeTrackColor: Get.theme.primaryColor.withAlpha(200),
+      inactiveTrackColor: Get.theme.accentColor.withOpacity(0.6),
+      inactiveThumbColor: Get.theme.accentColor,
       onChanged: (bool val) {
         widget.onChanged(val);
 
@@ -648,7 +624,7 @@ class _SettingsOptionsState<T> extends State<SettingsOptions<T>> {
                   Container(
                     child: Text(
                       widget.title,
-                      style: Theme.of(context).textTheme.bodyText1,
+                      style: Get.theme.textTheme.bodyText1,
                     ),
                   ),
                   (widget.subtitle != null)
@@ -657,7 +633,7 @@ class _SettingsOptionsState<T> extends State<SettingsOptions<T>> {
                             padding: EdgeInsets.only(top: 3.0),
                             child: Text(
                               widget.subtitle ?? "",
-                              style: Theme.of(context).textTheme.subtitle1,
+                              style: Get.theme.textTheme.subtitle1,
                             ),
                           ),
                         )
@@ -667,23 +643,23 @@ class _SettingsOptionsState<T> extends State<SettingsOptions<T>> {
               padding: EdgeInsets.symmetric(horizontal: 9),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(8),
-                color: Theme.of(context).accentColor,
+                color: Get.theme.accentColor,
               ),
               child: Center(
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<T>(
-                    dropdownColor: Theme.of(context).accentColor,
+                    dropdownColor: Get.theme.accentColor,
                     icon: Icon(
                       Icons.arrow_drop_down,
-                      color: Theme.of(context).textTheme.bodyText1.color,
+                      color: Get.theme.textTheme.bodyText1.color,
                     ),
                     value: currentVal,
                     items: widget.options.map<DropdownMenuItem<T>>((e) {
                       return DropdownMenuItem(
                         value: e,
                         child: Text(
-                          widget.textProcessing(e).capitalize(),
-                          style: Theme.of(context).textTheme.bodyText1,
+                          GetUtils.capitalize(widget.textProcessing(e)),
+                          style: Get.theme.textTheme.bodyText1,
                         ),
                       );
                     }).toList(),
@@ -706,7 +682,7 @@ class _SettingsOptionsState<T> extends State<SettingsOptions<T>> {
       ),
       (widget.showDivider)
           ? Divider(
-              color: Theme.of(context).accentColor.withOpacity(0.5),
+              color: Get.theme.accentColor.withOpacity(0.5),
               thickness: 1,
             )
           : Container()
@@ -761,11 +737,11 @@ class _SettingsSliderState extends State<SettingsSlider> {
         ListTile(
           title: Text(
             "${widget.text}: $value",
-            style: Theme.of(context).textTheme.bodyText1,
+            style: Get.theme.textTheme.bodyText1,
           ),
           subtitle: Slider(
-            activeColor: Theme.of(context).primaryColor,
-            inactiveColor: Theme.of(context).primaryColor.withOpacity(0.2),
+            activeColor: Get.theme.primaryColor,
+            inactiveColor: Get.theme.primaryColor.withOpacity(0.2),
             value: currentVal,
             onChanged: (double value) {
               if (!this.mounted) return;
@@ -782,7 +758,7 @@ class _SettingsSliderState extends State<SettingsSlider> {
           ),
         ),
         Divider(
-          color: Theme.of(context).accentColor.withOpacity(0.5),
+          color: Get.theme.accentColor.withOpacity(0.5),
           thickness: 1,
         ),
       ],

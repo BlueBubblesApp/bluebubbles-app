@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:flutter/material.dart';
@@ -62,7 +63,7 @@ class _LocationWidgetState extends State<LocationWidget> with AutomaticKeepAlive
           onTap: openMaps,
           child: Container(
               height: 240,
-              color: Theme.of(context).accentColor,
+              color: Get.theme.accentColor,
               child: Column(
                   mainAxisAlignment: MainAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
@@ -99,14 +100,14 @@ class _LocationWidgetState extends State<LocationWidget> with AutomaticKeepAlive
                         onTap: openMaps,
                         child: Padding(
                             padding: EdgeInsets.only(top: 11, bottom: 10),
-                            child: Text("Open in Maps", style: Theme.of(context).textTheme.bodyText1)))
+                            child: Text("Open in Maps", style: Get.theme.textTheme.bodyText1)))
                   ])));
     } else {
       return Container(
         padding: EdgeInsets.all(10),
         child: Text(
           "Could not load location",
-          style: Theme.of(context).textTheme.bodyText1,
+          style: Get.theme.textTheme.bodyText1,
         ),
       );
     }

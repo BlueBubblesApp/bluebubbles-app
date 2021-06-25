@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:get/get.dart';
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
@@ -75,7 +76,7 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
   bool showTypingIndicator = false;
 
   void loadBrightness() {
-    Color now = Theme.of(context).backgroundColor;
+    Color now = Get.theme.backgroundColor;
     bool themeChanged = previousBackgroundColor == null || previousBackgroundColor != now;
     if (!themeChanged && gotBrightness) return;
 
@@ -245,7 +246,7 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
         IconSlideAction(
           caption: widget.chat.isPinned ? 'Unpin' : 'Pin',
           color: Colors.yellow[800],
-          foregroundColor: Theme.of(context).textTheme.bodyText1.color,
+          foregroundColor: Get.theme.textTheme.bodyText1.color,
           icon: widget.chat.isPinned ? Icons.star_outline : Icons.star,
           onTap: () async {
             if (widget.chat.isPinned) {
@@ -311,7 +312,7 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
     final hideInfo = redactedMode && hideContactInfo;
     final generateNames = redactedMode && generateFakeContactNames;
 
-    TextStyle style = Theme.of(context).textTheme.bodyText1;
+    TextStyle style = Get.theme.textTheme.bodyText1;
     String title = widget.chat.title != null ? widget.chat.title : "";
 
     if (generateNames)
@@ -336,7 +337,7 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
           showTypingIndicator = snapshot.data["data"];
         }
         if (showTypingIndicator) {
-          double height = Theme.of(context).textTheme.subtitle1.fontSize;
+          double height = Get.theme.textTheme.subtitle1.fontSize;
           double indicatorHeight = (height * 2).clamp(height, height + 13);
           return Container(
             height: height,
@@ -359,11 +360,11 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
         final hideContent = redactedMode && hideMessageContent;
         final generateContent = redactedMode && generateFakeMessageContent;
 
-        TextStyle style = Theme.of(context).textTheme.subtitle1.apply(
-              color: Theme.of(context).textTheme.subtitle1.color.withOpacity(
-                    0.85,
-                  ),
-            );
+        TextStyle style = Get.theme.textTheme.subtitle1.apply(
+          color: Get.theme.textTheme.subtitle1.color.withOpacity(
+            0.85,
+          ),
+        );
         String message = widget.chat.latestMessageText != null ? widget.chat.latestMessageText : "";
 
         if (generateContent)
@@ -398,14 +399,14 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
       avatar = Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(30),
-          color: Theme.of(context).primaryColor,
+          color: Get.theme.primaryColor,
         ),
         width: 40,
         height: 40,
         child: Center(
           child: Icon(
             Icons.check,
-            color: Theme.of(context).textTheme.bodyText1.color,
+            color: Get.theme.textTheme.bodyText1.color,
             size: 20,
           ),
         ),
@@ -419,9 +420,9 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
         constraints: BoxConstraints(maxWidth: 100.0),
         child: Text(buildDate(widget.chat.latestMessageDate),
             textAlign: TextAlign.right,
-            style: Theme.of(context).textTheme.subtitle2.apply(
-                  color: Theme.of(context).textTheme.subtitle2.color.withOpacity(0.85),
-                ),
+            style: Get.theme.textTheme.subtitle2.apply(
+              color: Get.theme.textTheme.subtitle2.color.withOpacity(0.85),
+            ),
             overflow: TextOverflow.clip),
       );
 
@@ -503,7 +504,7 @@ class __CupertinoState extends State<_Cupertino> {
   Widget build(BuildContext context) {
     return widget.parent.buildSlider(
       Material(
-        color: !isPressed ? Theme.of(context).backgroundColor : Theme.of(context).backgroundColor.lightenOrDarken(30),
+        color: !isPressed ? Get.theme.backgroundColor : Get.theme.backgroundColor.lightenOrDarken(30),
         child: GestureDetector(
           onTapDown: (details) {
             if (!this.mounted) return;
@@ -544,7 +545,7 @@ class __CupertinoState extends State<_Cupertino> {
                     border: (!widget.parent.hideDividers)
                         ? Border(
                             top: BorderSide(
-                              color: Theme.of(context).dividerColor,
+                              color: Get.theme.dividerColor,
                               width: 0.5,
                             ),
                           )
@@ -572,7 +573,7 @@ class __CupertinoState extends State<_Cupertino> {
                               SettingsManager().settings.skin == Skins.IOS
                                   ? Icons.arrow_forward_ios
                                   : Icons.arrow_forward,
-                              color: Theme.of(context).textTheme.subtitle1.color,
+                              color: Get.theme.textTheme.subtitle1.color,
                               size: 15,
                             ),
                           ],
@@ -596,7 +597,7 @@ class __CupertinoState extends State<_Cupertino> {
                               ? Container(
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(35),
-                                    color: Theme.of(context).primaryColor.withOpacity(0.8),
+                                    color: Get.theme.primaryColor.withOpacity(0.8),
                                   ),
                                   width: 10,
                                   height: 10,
@@ -616,8 +617,8 @@ class __CupertinoState extends State<_Cupertino> {
                           ? SvgPicture.asset(
                               "assets/icon/moon.svg",
                               color: widget.parentProps.chat.hasUnreadMessage
-                                  ? Theme.of(context).primaryColor.withOpacity(0.8)
-                                  : Theme.of(context).textTheme.subtitle1.color,
+                                  ? Get.theme.primaryColor.withOpacity(0.8)
+                                  : Get.theme.textTheme.subtitle1.color,
                               width: 10,
                               height: 10,
                             )
@@ -642,7 +643,7 @@ class _Material extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: parent.selected ? Theme.of(context).primaryColor.withAlpha(120) : Theme.of(context).backgroundColor,
+      color: parent.selected ? Get.theme.primaryColor.withAlpha(120) : Get.theme.backgroundColor,
       child: InkWell(
         onTap: () {
           if (parent.selected) {
@@ -663,7 +664,7 @@ class _Material extends StatelessWidget {
             border: (!parent.hideDividers)
                 ? Border(
                     top: BorderSide(
-                      color: Theme.of(context).dividerColor,
+                      color: Get.theme.dividerColor,
                       width: 0.5,
                     ),
                   )
@@ -683,7 +684,7 @@ class _Material extends StatelessWidget {
                     height: 10,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(20),
-                      color: parent.widget.chat.hasUnreadMessage ? Theme.of(context).primaryColor : Colors.transparent,
+                      color: parent.widget.chat.hasUnreadMessage ? Get.theme.primaryColor : Colors.transparent,
                     ),
                   ),
               ],
@@ -701,8 +702,8 @@ class _Material extends StatelessWidget {
                       Icon(
                         Icons.notifications_off,
                         color: parent.widget.chat.hasUnreadMessage
-                            ? Theme.of(context).primaryColor.withOpacity(0.8)
-                            : Theme.of(context).textTheme.subtitle1.color,
+                            ? Get.theme.primaryColor.withOpacity(0.8)
+                            : Get.theme.textTheme.subtitle1.color,
                         size: 15,
                       ),
                     Container(
@@ -747,7 +748,7 @@ class _Samsung extends StatelessWidget {
         },
         child: Container(
           decoration: BoxDecoration(
-            color: Theme.of(context).accentColor,
+            color: Get.theme.accentColor,
             border: (!parent.hideDividers)
                 ? Border(
                     top: BorderSide(
@@ -772,7 +773,7 @@ class _Samsung extends StatelessWidget {
                     height: 15,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(30),
-                      color: parent.widget.chat.hasUnreadMessage ? Theme.of(context).primaryColor : Colors.transparent,
+                      color: parent.widget.chat.hasUnreadMessage ? Get.theme.primaryColor : Colors.transparent,
                     ),
                   ),
               ],
@@ -789,7 +790,7 @@ class _Samsung extends StatelessWidget {
                     if (parent.widget.chat.isMuted)
                       Icon(
                         Icons.notifications_off,
-                        color: Theme.of(context).textTheme.subtitle1.color,
+                        color: Get.theme.textTheme.subtitle1.color,
                         size: 15,
                       ),
                     Container(

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/layouts/image_viewer/attachmet_fullscreen_viewer.dart';
@@ -74,14 +75,13 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
     File file = new File(
       "${SettingsManager().appDocDir.path}/attachments/${attachment.guid}/${attachment.transferName}",
     );
-    final bool hideAttachments =
-        SettingsManager().settings.redactedMode && SettingsManager().settings.hideAttachments;
+    final bool hideAttachments = SettingsManager().settings.redactedMode && SettingsManager().settings.hideAttachments;
     final bool hideAttachmentTypes =
         SettingsManager().settings.redactedMode && SettingsManager().settings.hideAttachmentTypes;
     if (hideAttachments && !hideAttachmentTypes)
       return Container(
         alignment: Alignment.center,
-        color: Theme.of(context).accentColor,
+        color: Get.theme.accentColor,
         child: Text(
           widget.attachment.mimeType,
           textAlign: TextAlign.center,
@@ -89,14 +89,14 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
       );
     if (hideAttachments)
       return Container(
-        color: Theme.of(context).accentColor,
+        color: Get.theme.accentColor,
       );
     if (!file.existsSync()) {
       return Stack(
         alignment: Alignment.center,
         children: <Widget>[
           Container(
-            color: Theme.of(context).accentColor,
+            color: Get.theme.accentColor,
           ),
           Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -115,13 +115,13 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
                         children: <Widget>[
                           Text(
                             attachment.getFriendlySize(),
-                            style: Theme.of(context).textTheme.bodyText1,
+                            style: Get.theme.textTheme.bodyText1,
                           ),
                           Icon(Icons.cloud_download, size: 28.0),
                           (attachment.mimeType != null)
                               ? Text(
                                   basename(file.path),
-                                  style: Theme.of(context).textTheme.bodyText1,
+                                  style: Get.theme.textTheme.bodyText1,
                                 )
                               : Container()
                         ],
@@ -152,7 +152,7 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
       );
     } else {
       return SizedBox(
-        width: MediaQuery.of(context).size.width / 2,
+        width: Get.mediaQuery.size.width / 2,
         child: _buildPreview(file, context),
       );
     }
@@ -191,8 +191,8 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
                         alignment: Alignment.center,
                       )
                     : Container()),
-            width: MediaQuery.of(context).size.width / 2,
-            height: MediaQuery.of(context).size.width / 2,
+            width: Get.mediaQuery.size.width / 2,
+            height: Get.mediaQuery.size.width / 2,
           ),
           Material(
             color: Colors.transparent,
@@ -230,8 +230,8 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
                     )
                   : Container(),
             ),
-            width: MediaQuery.of(context).size.width / 2,
-            height: MediaQuery.of(context).size.width / 2,
+            width: Get.mediaQuery.size.width / 2,
+            height: Get.mediaQuery.size.width / 2,
           ),
           Material(
             color: Colors.transparent,
@@ -259,7 +259,7 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
       );
     } else {
       return Container(
-        color: Theme.of(context).accentColor,
+        color: Get.theme.accentColor,
         child: Center(
           child: RegularFileOpener(
             file: file,

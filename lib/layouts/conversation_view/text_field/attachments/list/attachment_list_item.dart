@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/layouts/image_viewer/attachmet_fullscreen_viewer.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -87,7 +88,7 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
         if (hideAttachments)
           Positioned.fill(
             child: Container(
-              color: Theme.of(context).accentColor,
+              color: Get.theme.accentColor,
             ),
           ),
         if (hideAttachments && !hideAttachmentTypes)
@@ -111,7 +112,7 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
             child: LinearProgressIndicator(
               backgroundColor: Colors.grey,
               valueColor: AlwaysStoppedAnimation(
-                Theme.of(context).primaryColor,
+                Get.theme.primaryColor,
               ),
             ),
           ),
@@ -125,14 +126,14 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
         return Container(
           height: 100,
           width: 100,
-          color: Theme.of(context).accentColor,
+          color: Get.theme.accentColor,
           padding: EdgeInsets.only(top: 20),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(
                 AttachmentHelper.getIcon(mimeType),
-                color: Theme.of(context).textTheme.bodyText1.color,
+                color: Get.theme.textTheme.bodyText1.color,
               ),
               Align(
                 alignment: Alignment.bottomCenter,
@@ -140,7 +141,7 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
                   padding: const EdgeInsets.fromLTRB(8, 0, 8, 10),
                   child: Text(
                     name,
-                    style: Theme.of(context).textTheme.bodyText1.apply(fontSizeDelta: -2),
+                    style: Get.theme.textTheme.bodyText1.apply(fontSizeDelta: -2),
                     textAlign: TextAlign.center,
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,

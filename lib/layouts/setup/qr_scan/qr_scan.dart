@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/setup/connecting_alert/connecting_alert.dart';
 import 'package:bluebubbles/layouts/setup/qr_code_scanner.dart';
@@ -110,10 +111,10 @@ class _QRScanState extends State<QRScan> {
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: Theme.of(context).accentColor,
+        systemNavigationBarColor: Get.theme.accentColor,
       ),
       child: Scaffold(
-        backgroundColor: Theme.of(context).accentColor,
+        backgroundColor: Get.theme.accentColor,
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -122,14 +123,14 @@ class _QRScanState extends State<QRScan> {
                 padding: EdgeInsets.symmetric(horizontal: 20.0),
                 child: Text(
                   "BlueBubbles tries to make the setup process as easy as possible. We've created a QR code on your server that you can use to easily register this device with the server.",
-                  style: Theme.of(context).textTheme.bodyText1.apply(fontSizeFactor: 1.5),
+                  style: Get.theme.textTheme.bodyText1.apply(fontSizeFactor: 1.5),
                   textAlign: TextAlign.center,
                 ),
               ),
               Container(height: 20.0),
               ClipOval(
                 child: Material(
-                  color: Theme.of(context).primaryColor, // button color
+                  color: Get.theme.primaryColor, // button color
                   child: InkWell(
                     child: SizedBox(
                       width: 60,
@@ -148,7 +149,7 @@ class _QRScanState extends State<QRScan> {
                 padding: EdgeInsets.symmetric(horizontal: 20.0),
                 child: Text(
                   "Or alternatively... you can enter in your url here",
-                  style: Theme.of(context).textTheme.bodyText1.apply(fontSizeFactor: 1.15),
+                  style: Get.theme.textTheme.bodyText1.apply(fontSizeFactor: 1.15),
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -156,7 +157,7 @@ class _QRScanState extends State<QRScan> {
                 padding: EdgeInsets.only(top: 15.0),
                 child: ClipOval(
                   child: Material(
-                    color: Theme.of(context).primaryColor,
+                    color: Get.theme.primaryColor,
                     child: InkWell(
                       child: SizedBox(
                         width: 60,

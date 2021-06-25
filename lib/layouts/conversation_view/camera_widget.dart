@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/text_field/blue_bubbles_text_field.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
@@ -97,7 +98,7 @@ class _CameraWidgetState extends State<CameraWidget> with WidgetsBindingObserver
 
     if (controller == null || !controller.value.isInitialized) return Container();
     return AspectRatio(
-      aspectRatio: MediaQuery.of(context).orientation == Orientation.portrait
+      aspectRatio: Get.mediaQuery.orientation == Orientation.portrait
           ? (controller.value.previewSize.height / controller.value.previewSize.width)
           : 1 / (controller.value.previewSize.height / controller.value.previewSize.width),
       child: Stack(
@@ -116,7 +117,7 @@ class _CameraWidgetState extends State<CameraWidget> with WidgetsBindingObserver
             child: ClipRRect(
               borderRadius: BorderRadius.circular(20),
               child: Container(
-                color: Theme.of(context).accentColor,
+                color: Get.theme.accentColor,
                 child: Center(
                   child: Text("Camera"),
                 ),
@@ -132,11 +133,11 @@ class _CameraWidgetState extends State<CameraWidget> with WidgetsBindingObserver
         children: <Widget>[
           RotatedBox(
             child: CameraPreview(controller),
-            quarterTurns: MediaQuery.of(context).orientation == Orientation.portrait ? 0 : 3,
+            quarterTurns: Get.mediaQuery.orientation == Orientation.portrait ? 0 : 3,
           ),
           Padding(
             padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).size.height / 30,
+              bottom: Get.mediaQuery.size.height / 30,
             ),
             child: FlatButton(
               color: Colors.transparent,
@@ -173,7 +174,7 @@ class _CameraWidgetState extends State<CameraWidget> with WidgetsBindingObserver
         alignment: Alignment.topLeft,
         child: Padding(
           padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).size.height / 30,
+            bottom: Get.mediaQuery.size.height / 30,
           ),
           child: FlatButton(
             padding: EdgeInsets.only(left: 10),
@@ -195,7 +196,7 @@ class _CameraWidgetState extends State<CameraWidget> with WidgetsBindingObserver
         alignment: Alignment.topCenter,
         child: Padding(
           padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).size.height / 30,
+            bottom: Get.mediaQuery.size.height / 30,
           ),
           child: FlatButton(
             padding: EdgeInsets.all(0),
@@ -215,7 +216,7 @@ class _CameraWidgetState extends State<CameraWidget> with WidgetsBindingObserver
       ),
       Padding(
         padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).size.height / 30,
+          bottom: Get.mediaQuery.size.height / 30,
         ),
         child: FlatButton(
           padding: EdgeInsets.only(right: 10),

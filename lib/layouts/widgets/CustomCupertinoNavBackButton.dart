@@ -1,3 +1,4 @@
+import 'package:get/get.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -77,7 +78,7 @@ class CustomCupertinoNavigationBarBackButton extends CupertinoNavigationBarBackB
                     : Container(
                         width: 20.0,
                         height: 20.0,
-                        decoration: BoxDecoration(color: Theme.of(context).primaryColor, shape: BoxShape.circle),
+                        decoration: BoxDecoration(color: Get.theme.primaryColor, shape: BoxShape.circle),
                         child: Center(
                             child: Text(notifications.toString(),
                                 textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 10.0))),

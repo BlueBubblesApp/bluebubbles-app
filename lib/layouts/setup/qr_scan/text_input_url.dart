@@ -1,3 +1,4 @@
+import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/setup/connecting_alert/connecting_alert.dart';
 import 'package:bluebubbles/layouts/setup/qr_scan/failed_to_scan_dialog.dart';
@@ -75,7 +76,7 @@ class _TextInputURLState extends State<TextInputURL> {
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
-              cursorColor: Theme.of(context).primaryColor,
+              cursorColor: Get.theme.primaryColor,
               autocorrect: false,
               autofocus: true,
               controller: urlController,
@@ -85,7 +86,7 @@ class _TextInputURLState extends State<TextInputURL> {
               ),
             ),
             TextField(
-              cursorColor: Theme.of(context).primaryColor,
+              cursorColor: Get.theme.primaryColor,
               autocorrect: false,
               autofocus: true,
               controller: passwordController,

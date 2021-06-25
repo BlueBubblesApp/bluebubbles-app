@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:ui';
 
+import 'package:get/get.dart';
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
@@ -351,7 +352,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
           border: Border.all(
             width: 2,
             style: BorderStyle.solid,
-            color: Theme.of(context).accentColor,
+            color: Get.theme.accentColor,
           ),
           borderRadius: BorderRadius.circular(19),
         ),
@@ -366,7 +367,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
             padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 13.0),
             child: Text(
               text,
-              style: Theme.of(context).textTheme.bodyText1,
+              style: Get.theme.textTheme.bodyText1,
             ),
           ),
         ),

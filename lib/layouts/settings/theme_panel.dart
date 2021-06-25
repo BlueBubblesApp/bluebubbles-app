@@ -15,6 +15,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
+import 'package:get/get.dart';
 
 class ThemePanel extends StatefulWidget {
   ThemePanel({Key key}) : super(key: key);
@@ -27,9 +28,6 @@ class _ThemePanelState extends State<ThemePanel> {
   Settings _settingsCopy;
   List<DisplayMode> modes;
   DisplayMode currentMode;
-  Brightness brightness;
-  Color previousBackgroundColor;
-  bool gotBrightness = false;
 
   @override
   void initState() {
@@ -41,9 +39,7 @@ class _ThemePanelState extends State<ThemePanel> {
       if (!event.containsKey("type")) return;
 
       if (event["type"] == 'theme-update' && this.mounted) {
-        setState(() {
-          gotBrightness = false;
-        });
+        setState(() {});
       }
     });
   }
@@ -56,53 +52,31 @@ class _ThemePanelState extends State<ThemePanel> {
     setState(() {});
   }
 
-  void loadBrightness() {
-    Color now = Theme.of(context).backgroundColor;
-    bool themeChanged = previousBackgroundColor == null || previousBackgroundColor != now;
-    if (!themeChanged && gotBrightness) return;
-
-    previousBackgroundColor = now;
-    if (this.context == null) {
-      brightness = Brightness.light;
-      gotBrightness = true;
-      return;
-    }
-
-    bool isDark = now.computeLuminance() < 0.179;
-    brightness = isDark ? Brightness.dark : Brightness.light;
-    gotBrightness = true;
-    if (this.mounted) setState(() {});
-  }
-
   @override
   Widget build(BuildContext context) {
-    loadBrightness();
-
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle(
-        systemNavigationBarColor: Theme.of(context).backgroundColor,
-      ),
+      value: SystemUiOverlayStyle(systemNavigationBarColor: Get.theme.backgroundColor),
       child: Scaffold(
-        backgroundColor: Theme.of(context).backgroundColor,
+        backgroundColor: Get.theme.backgroundColor,
         appBar: PreferredSize(
-          preferredSize: Size(MediaQuery.of(context).size.width, 80),
+          preferredSize: Size(Get.mediaQuery.size.width, 80),
           child: ClipRRect(
             child: BackdropFilter(
               child: AppBar(
-                brightness: brightness,
+                brightness: ThemeData.estimateBrightnessForColor(Get.theme.backgroundColor),
                 toolbarHeight: 100.0,
                 elevation: 0,
                 leading: IconButton(
                   icon: Icon(SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_back_ios : Icons.arrow_back,
-                      color: Theme.of(context).primaryColor),
+                      color: Get.theme.primaryColor),
                   onPressed: () {
                     Navigator.of(context).pop();
                   },
                 ),
-                backgroundColor: Theme.of(context).accentColor.withOpacity(0.5),
+                backgroundColor: Get.theme.accentColor.withOpacity(0.5),
                 title: Text(
                   "Theming & Styles",
-                  style: Theme.of(context).textTheme.headline1,
+                  style: Get.theme.textTheme.headline1,
                 ),
               ),
               filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
@@ -133,7 +107,7 @@ class _ThemePanelState extends State<ThemePanel> {
                     title: "Theming",
                     trailing: Icon(
                         SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_forward_ios : Icons.arrow_forward,
-                        color: Theme.of(context).primaryColor),
+                        color: Get.theme.primaryColor),
                     onTap: () async {
                       Navigator.of(context).push(
                         CupertinoPageRoute(
@@ -181,7 +155,7 @@ class _ThemePanelState extends State<ThemePanel> {
                     title: "Custom Avatar Colors",
                     trailing: Icon(
                         SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_forward_ios : Icons.arrow_forward,
-                        color: Theme.of(context).primaryColor),
+                        color: Get.theme.primaryColor),
                     onTap: () async {
                       Navigator.of(context).push(
                         CupertinoPageRoute(
