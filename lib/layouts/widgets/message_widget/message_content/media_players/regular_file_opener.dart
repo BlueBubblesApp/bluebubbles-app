@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
@@ -29,7 +30,7 @@ class _RegularFileOpenerState extends State<RegularFileOpener> {
     return Container(
       height: 140,
       width: 200,
-      color: Get.theme.accentColor,
+      color: Theme.of(context).accentColor,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
@@ -38,12 +39,12 @@ class _RegularFileOpenerState extends State<RegularFileOpener> {
             textAlign: TextAlign.center,
             maxLines: 3,
             overflow: TextOverflow.ellipsis,
-            style: Get.theme.textTheme.bodyText2,
+            style: Theme.of(context).textTheme.bodyText2,
           ),
           CupertinoButton(
             child: Icon(
               fileIcon,
-              color: Get.theme.textTheme.bodyText2.color,
+              color: Theme.of(context).textTheme.bodyText2.color,
             ),
             onPressed: () async {
               try {
@@ -55,12 +56,11 @@ class _RegularFileOpenerState extends State<RegularFileOpener> {
                   },
                 );
               } catch (ex) {
-                final snackBar = SnackBar(content: Text("No handler for this file type!"));
-                Scaffold.of(context).showSnackBar(snackBar);
+                showSnackbar('Error', "No handler for this file type!");
               }
             },
           ),
-          Text(widget.attachment.mimeType, style: Get.theme.textTheme.bodyText2),
+          Text(widget.attachment.mimeType, style: Theme.of(context).textTheme.bodyText2),
         ],
       ),
     );

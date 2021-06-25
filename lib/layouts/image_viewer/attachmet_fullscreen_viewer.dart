@@ -115,7 +115,7 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
       child: Container(
         height: 150,
         width: 200,
-        color: Get.theme.accentColor,
+        color: Theme.of(context).accentColor,
       ),
     );
     return AnnotatedRegion<SystemUiOverlayStyle>(
@@ -191,7 +191,7 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
                         if (snapshot.hasError) {
                           return Text(
                             "Error loading",
-                            style: Get.theme.textTheme.bodyText1,
+                            style: Theme.of(context).textTheme.bodyText1,
                           );
                         }
                         if (snapshot.data is File) {
@@ -228,7 +228,7 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
                                         (content.attachment.mimeType != null)
                                             ? Text(
                                                 content.attachment.mimeType,
-                                                style: Get.theme.textTheme.bodyText1,
+                                                style: Theme.of(context).textTheme.bodyText1,
                                               )
                                             : Container()
                                       ],
@@ -247,7 +247,7 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
                       children: [
                         Text(
                           "Error loading",
-                          style: Get.theme.textTheme.bodyText1,
+                          style: Theme.of(context).textTheme.bodyText1,
                         ),
                       ],
                     );

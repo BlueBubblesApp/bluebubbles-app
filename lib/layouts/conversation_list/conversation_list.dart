@@ -136,13 +136,7 @@ class _ConversationListState extends State<ConversationList> {
     EventDispatcher().stream.listen((Map<String, dynamic> event) {
       if (!event.containsKey("type")) return;
 
-      if (event["type"] == 'show-snackbar') {
-        // Make sure that the app is open and the conversation list is present
-        if (!LifeCycleManager().isAlive || CurrentChat.activeChat != null || context == null) return;
-        final snackBar = SnackBar(content: Text(event["data"]["text"]));
-        Scaffold.of(context).hideCurrentSnackBar();
-        Scaffold.of(context).showSnackBar(snackBar);
-      } else if (event["type"] == 'refresh' && this.mounted) {
+      if (event["type"] == 'refresh' && this.mounted) {
         setState(() {});
       } else if (event["type"] == 'theme-update' && this.mounted) {
         setState(() {});
@@ -159,7 +153,7 @@ class _ConversationListState extends State<ConversationList> {
   }
 
   void scrollListener() {
-    !_isAppBarExpanded ? theme = Colors.transparent : theme = Get.theme.accentColor.withOpacity(0.5);
+    !_isAppBarExpanded ? theme = Colors.transparent : theme = Theme.of(context).accentColor.withOpacity(0.5);
   }
 
   bool get _isAppBarExpanded {
@@ -167,7 +161,7 @@ class _ConversationListState extends State<ConversationList> {
   }
 
   List<Widget> getHeaderTextWidgets({double size}) {
-    TextStyle style = Get.theme.textTheme.headline1;
+    TextStyle style = Theme.of(context).textTheme.headline1;
     if (size != null) style = style.copyWith(fontSize: size);
 
     return [Text(widget.showArchivedChats ? "Archive" : "Messages", style: style), Container(width: 10)];
@@ -186,8 +180,8 @@ class _ConversationListState extends State<ConversationList> {
           if (skinSet == Skins.IOS) {
             return Theme(
               data: ThemeData(
-                cupertinoOverrideTheme:
-                    CupertinoThemeData(brightness: ThemeData.estimateBrightnessForColor(Get.theme.backgroundColor)),
+                cupertinoOverrideTheme: CupertinoThemeData(
+                    brightness: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor)),
               ),
               child: CupertinoActivityIndicator(
                 radius: 6.5,
@@ -199,7 +193,7 @@ class _ConversationListState extends State<ConversationList> {
               constraints: BoxConstraints(maxHeight: 15, maxWidth: 15),
               child: CircularProgressIndicator(
                 strokeWidth: 2.0,
-                valueColor: AlwaysStoppedAnimation<Color>(Get.theme.primaryColor),
+                valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
               ));
         },
       )
@@ -231,7 +225,7 @@ class _ConversationListState extends State<ConversationList> {
 
   Widget buildSettingsButton() => !widget.showArchivedChats
       ? PopupMenuButton(
-          color: Get.theme.accentColor,
+          color: Theme.of(context).accentColor,
           onSelected: (value) {
             if (value == 0) {
               ChatBloc().markAllAsRead();
@@ -259,21 +253,21 @@ class _ConversationListState extends State<ConversationList> {
                 value: 0,
                 child: Text(
                   'Mark all as read',
-                  style: Get.theme.textTheme.bodyText1,
+                  style: Theme.of(context).textTheme.bodyText1,
                 ),
               ),
               PopupMenuItem(
                 value: 1,
                 child: Text(
                   'Archived',
-                  style: Get.theme.textTheme.bodyText1,
+                  style: Theme.of(context).textTheme.bodyText1,
                 ),
               ),
               PopupMenuItem(
                 value: 2,
                 child: Text(
                   'Settings',
-                  style: Get.theme.textTheme.bodyText1,
+                  style: Theme.of(context).textTheme.bodyText1,
                 ),
               ),
             ];
@@ -284,22 +278,22 @@ class _ConversationListState extends State<ConversationList> {
               height: 20,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(40),
-                color: Get.theme.accentColor,
+                color: Theme.of(context).accentColor,
               ),
               child: Icon(
                 Icons.more_horiz,
-                color: Get.theme.primaryColor,
+                color: Theme.of(context).primaryColor,
                 size: 15,
               ),
             ),
             materialSkin: Icon(
               Icons.more_vert,
-              color: Get.theme.textTheme.bodyText1.color,
+              color: Theme.of(context).textTheme.bodyText1.color,
               size: 25,
             ),
             samsungSkin: Icon(
               Icons.more_vert,
-              color: Get.theme.textTheme.bodyText1.color,
+              color: Theme.of(context).textTheme.bodyText1.color,
               size: 25,
             ),
           ),
@@ -308,7 +302,7 @@ class _ConversationListState extends State<ConversationList> {
 
   FloatingActionButton buildFloatinActionButton() {
     return FloatingActionButton(
-        backgroundColor: Get.theme.primaryColor,
+        backgroundColor: Theme.of(context).primaryColor,
         child: Icon(Icons.message, color: Colors.white, size: 25),
         onPressed: openNewChatCreator);
   }
@@ -350,10 +344,10 @@ class _Cupertino extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Brightness brightness = ThemeData.estimateBrightnessForColor(Get.theme.backgroundColor);
+    Brightness brightness = ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor);
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: Get.theme.backgroundColor,
+        systemNavigationBarColor: Theme.of(context).backgroundColor,
       ),
       child: Scaffold(
         appBar: PreferredSize(
@@ -372,7 +366,7 @@ class _Cupertino extends StatelessWidget {
                           parent.theme == Colors.transparent ? CrossFadeState.showFirst : CrossFadeState.showSecond,
                       duration: Duration(milliseconds: 250),
                       secondChild: AppBar(
-                        iconTheme: IconThemeData(color: Get.theme.primaryColor),
+                        iconTheme: IconThemeData(color: Theme.of(context).primaryColor),
                         elevation: 0,
                         backgroundColor: parent.theme,
                         centerTitle: true,
@@ -382,7 +376,7 @@ class _Cupertino extends StatelessWidget {
                           children: <Widget>[
                             Text(
                               parent.widget.showArchivedChats ? "Archive" : "Messages",
-                              style: Get.theme.textTheme.bodyText1,
+                              style: Theme.of(context).textTheme.bodyText1,
                             ),
                           ],
                         ),
@@ -391,14 +385,14 @@ class _Cupertino extends StatelessWidget {
                         leading: new Container(),
                         elevation: 0,
                         brightness: brightness,
-                        backgroundColor: Get.theme.backgroundColor,
+                        backgroundColor: Theme.of(context).backgroundColor,
                       ),
                     );
                   }),
             ),
           ),
         ),
-        backgroundColor: Get.theme.backgroundColor,
+        backgroundColor: Theme.of(context).backgroundColor,
         extendBodyBehindAppBar: true,
         body: CustomScrollView(
           controller: parent.scrollController,
@@ -414,7 +408,7 @@ class _Cupertino extends StatelessWidget {
                           (SettingsManager().settings.skin == Skins.IOS && parent.widget.showArchivedChats)
                               ? Icons.arrow_back_ios
                               : Icons.arrow_back,
-                          color: Get.theme.primaryColor),
+                          color: Theme.of(context).primaryColor),
                       onPressed: () {
                         Navigator.of(context).pop();
                       },
@@ -458,12 +452,12 @@ class _Cupertino extends StatelessWidget {
                           if (!parent.widget.showArchivedChats)
                             ClipOval(
                               child: Material(
-                                color: Get.theme.accentColor, // button color
+                                color: Theme.of(context).accentColor, // button color
                                 child: InkWell(
                                     child: SizedBox(
                                         width: 20,
                                         height: 20,
-                                        child: Icon(Icons.search, color: Get.theme.primaryColor, size: 12)),
+                                        child: Icon(Icons.search, color: Theme.of(context).primaryColor, size: 12)),
                                     onTap: () async {
                                       Navigator.of(context).push(
                                         CupertinoPageRoute(
@@ -477,12 +471,12 @@ class _Cupertino extends StatelessWidget {
                           if (parent.moveChatCreatorButton && !parent.widget.showArchivedChats)
                             ClipOval(
                               child: Material(
-                                color: Get.theme.accentColor, // button color
+                                color: Theme.of(context).accentColor, // button color
                                 child: InkWell(
                                     child: SizedBox(
                                         width: 20,
                                         height: 20,
-                                        child: Icon(Icons.create, color: Get.theme.primaryColor, size: 12)),
+                                        child: Icon(Icons.create, color: Theme.of(context).primaryColor, size: 12)),
                                     onTap: this.parent.openNewChatCreator),
                               ),
                             ),
@@ -529,7 +523,7 @@ class _Cupertino extends StatelessWidget {
                             (parent.widget.showArchivedChats)
                                 ? "You have no archived chats :("
                                 : "You have no chats :(",
-                            style: Get.theme.textTheme.subtitle1,
+                            style: Theme.of(context).textTheme.subtitle1,
                           ),
                         ),
                       ),
@@ -724,7 +718,7 @@ class __MaterialState extends State<_Material> {
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: Get.theme.backgroundColor,
+        systemNavigationBarColor: Theme.of(context).backgroundColor,
       ),
       child: Scaffold(
         appBar: PreferredSize(
@@ -733,11 +727,11 @@ class __MaterialState extends State<_Material> {
             duration: Duration(milliseconds: 500),
             child: selected.isEmpty
                 ? AppBar(
-                    iconTheme: IconThemeData(color: Get.theme.primaryColor),
-                    brightness: ThemeData.estimateBrightnessForColor(Get.theme.backgroundColor),
+                    iconTheme: IconThemeData(color: Theme.of(context).primaryColor),
+                    brightness: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor),
                     bottom: PreferredSize(
                       child: Container(
-                        color: Get.theme.dividerColor,
+                        color: Theme.of(context).dividerColor,
                         height: 0,
                       ),
                       preferredSize: Size.fromHeight(0.5),
@@ -765,7 +759,7 @@ class __MaterialState extends State<_Material> {
                                 padding: const EdgeInsets.all(8.0),
                                 child: Icon(
                                   Icons.search,
-                                  color: Get.theme.textTheme.bodyText1.color,
+                                  color: Theme.of(context).textTheme.bodyText1.color,
                                 ),
                               ),
                             )
@@ -787,7 +781,7 @@ class __MaterialState extends State<_Material> {
                                 padding: const EdgeInsets.all(8.0),
                                 child: Icon(
                                   Icons.create,
-                                  color: Get.theme.textTheme.bodyText1.color,
+                                  color: Theme.of(context).textTheme.bodyText1.color,
                                 ),
                               ),
                             )
@@ -803,7 +797,7 @@ class __MaterialState extends State<_Material> {
                         ),
                       ),
                     ],
-                    backgroundColor: Get.theme.backgroundColor,
+                    backgroundColor: Theme.of(context).backgroundColor,
                   )
                 : Padding(
                     padding: const EdgeInsets.all(20.0),
@@ -830,7 +824,7 @@ class __MaterialState extends State<_Material> {
                                   padding: const EdgeInsets.all(8.0),
                                   child: Icon(
                                     selected[0].hasUnreadMessage ? Icons.mark_chat_read : Icons.mark_chat_unread,
-                                    color: Get.theme.textTheme.bodyText1.color,
+                                    color: Theme.of(context).textTheme.bodyText1.color,
                                   ),
                                 ),
                               ),
@@ -849,7 +843,7 @@ class __MaterialState extends State<_Material> {
                                   padding: const EdgeInsets.all(8.0),
                                   child: Icon(
                                     selected[0].isMuted ? Icons.notifications_active : Icons.notifications_off,
-                                    color: Get.theme.textTheme.bodyText1.color,
+                                    color: Theme.of(context).textTheme.bodyText1.color,
                                   ),
                                 ),
                               ),
@@ -870,7 +864,7 @@ class __MaterialState extends State<_Material> {
                                   padding: const EdgeInsets.all(8.0),
                                   child: Icon(
                                     selected[0].isPinned ? Icons.star_outline : Icons.star,
-                                    color: Get.theme.textTheme.bodyText1.color,
+                                    color: Theme.of(context).textTheme.bodyText1.color,
                                   ),
                                 ),
                               ),
@@ -890,7 +884,7 @@ class __MaterialState extends State<_Material> {
                                 padding: const EdgeInsets.all(8.0),
                                 child: Icon(
                                   widget.parent.widget.showArchivedChats ? Icons.restore_from_trash : Icons.delete,
-                                  color: Get.theme.textTheme.bodyText1.color,
+                                  color: Theme.of(context).textTheme.bodyText1.color,
                                 ),
                               ),
                             ),
@@ -908,7 +902,7 @@ class __MaterialState extends State<_Material> {
                                   padding: const EdgeInsets.all(8.0),
                                   child: Icon(
                                     Icons.delete_forever,
-                                    color: Get.theme.textTheme.bodyText1.color,
+                                    color: Theme.of(context).textTheme.bodyText1.color,
                                   ),
                                 ),
                               ),
@@ -919,7 +913,7 @@ class __MaterialState extends State<_Material> {
                   ),
           ),
         ),
-        backgroundColor: Get.theme.backgroundColor,
+        backgroundColor: Theme.of(context).backgroundColor,
         body: StreamBuilder(
           stream: ChatBloc().chatStream,
           builder: (context, snapshot) {
@@ -931,7 +925,7 @@ class __MaterialState extends State<_Material> {
                     padding: EdgeInsets.only(top: 50.0),
                     child: Text(
                       "You have no archived chats :(",
-                      style: Get.theme.textTheme.subtitle1,
+                      style: Theme.of(context).textTheme.subtitle1,
                     ),
                   ),
                 );
@@ -1192,7 +1186,7 @@ class _SamsungState extends State<_Samsung> {
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: Get.theme.backgroundColor,
+        systemNavigationBarColor: Theme.of(context).backgroundColor,
       ),
       child: Scaffold(
         appBar: PreferredSize(
@@ -1202,11 +1196,11 @@ class _SamsungState extends State<_Samsung> {
             child: selected.isEmpty
                 ? AppBar(
                     shadowColor: Colors.transparent,
-                    iconTheme: IconThemeData(color: Get.theme.primaryColor),
-                    brightness: ThemeData.estimateBrightnessForColor(Get.theme.backgroundColor),
+                    iconTheme: IconThemeData(color: Theme.of(context).primaryColor),
+                    brightness: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor),
                     bottom: PreferredSize(
                       child: Container(
-                        color: Get.theme.dividerColor,
+                        color: Theme.of(context).dividerColor,
                         height: 0,
                       ),
                       preferredSize: Size.fromHeight(0.5),
@@ -1233,7 +1227,7 @@ class _SamsungState extends State<_Samsung> {
                                 padding: const EdgeInsets.all(8.0),
                                 child: Icon(
                                   Icons.search,
-                                  color: Get.theme.textTheme.bodyText1.color,
+                                  color: Theme.of(context).textTheme.bodyText1.color,
                                 ),
                               ),
                             )
@@ -1255,7 +1249,7 @@ class _SamsungState extends State<_Samsung> {
                                 padding: const EdgeInsets.all(8.0),
                                 child: Icon(
                                   Icons.create,
-                                  color: Get.theme.textTheme.bodyText1.color,
+                                  color: Theme.of(context).textTheme.bodyText1.color,
                                 ),
                               ),
                             )
@@ -1271,7 +1265,7 @@ class _SamsungState extends State<_Samsung> {
                         ),
                       ),
                     ],
-                    backgroundColor: Get.theme.backgroundColor,
+                    backgroundColor: Theme.of(context).backgroundColor,
                   )
                 : Padding(
                     padding: const EdgeInsets.all(20.0),
@@ -1297,7 +1291,7 @@ class _SamsungState extends State<_Samsung> {
                                   padding: const EdgeInsets.all(8.0),
                                   child: Icon(
                                     Icons.notifications_off,
-                                    color: Get.theme.textTheme.bodyText1.color,
+                                    color: Theme.of(context).textTheme.bodyText1.color,
                                   ),
                                 ),
                               ),
@@ -1317,7 +1311,7 @@ class _SamsungState extends State<_Samsung> {
                                 padding: const EdgeInsets.all(8.0),
                                 child: Icon(
                                   widget.parent.widget.showArchivedChats ? Icons.restore_from_trash : Icons.delete,
-                                  color: Get.theme.textTheme.bodyText1.color,
+                                  color: Theme.of(context).textTheme.bodyText1.color,
                                 ),
                               ),
                             ),
@@ -1337,7 +1331,7 @@ class _SamsungState extends State<_Samsung> {
                                 padding: const EdgeInsets.all(8.0),
                                 child: Icon(
                                   Icons.star,
-                                  color: Get.theme.textTheme.bodyText1.color,
+                                  color: Theme.of(context).textTheme.bodyText1.color,
                                 ),
                               ),
                             ),
@@ -1348,7 +1342,7 @@ class _SamsungState extends State<_Samsung> {
                   ),
           ),
         ),
-        backgroundColor: Get.theme.backgroundColor,
+        backgroundColor: Theme.of(context).backgroundColor,
         body: StreamBuilder(
           stream: ChatBloc().chatStream,
           builder: (context, snapshot) {
@@ -1360,7 +1354,7 @@ class _SamsungState extends State<_Samsung> {
                     padding: EdgeInsets.only(top: 50.0),
                     child: Text(
                       "You have no archived chats :(",
-                      style: Get.theme.textTheme.subtitle1,
+                      style: Theme.of(context).textTheme.subtitle1,
                     ),
                   ),
                 );
@@ -1385,8 +1379,8 @@ class _SamsungState extends State<_Samsung> {
                     if (hasPinned)
                       Container(
                         padding: EdgeInsets.all(6.0),
-                        decoration:
-                            new BoxDecoration(color: Get.theme.accentColor, borderRadius: BorderRadius.circular(20)),
+                        decoration: new BoxDecoration(
+                            color: Theme.of(context).accentColor, borderRadius: BorderRadius.circular(20)),
                         child: ListView.builder(
                           shrinkWrap: true,
                           physics: NeverScrollableScrollPhysics(),
@@ -1487,7 +1481,7 @@ class _SamsungState extends State<_Samsung> {
                       Container(
                         padding: const EdgeInsets.all(6.0),
                         decoration: new BoxDecoration(
-                            color: Get.theme.accentColor,
+                            color: Theme.of(context).accentColor,
                             borderRadius: new BorderRadius.only(
                               topLeft: const Radius.circular(20.0),
                               topRight: const Radius.circular(20.0),

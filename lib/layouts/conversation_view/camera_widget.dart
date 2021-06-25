@@ -65,12 +65,6 @@ class _CameraWidgetState extends State<CameraWidget> with WidgetsBindingObserver
     super.dispose();
   }
 
-  void showSnackbar(String text) {
-    if (context == null) return;
-    final snackBar = SnackBar(content: Text(text));
-    Scaffold.of(context).showSnackBar(snackBar);
-  }
-
   Future<void> openFullCamera({String type: 'camera'}) async {
     // Create a file that the camera can write to
     String appDocPath = SettingsManager().appDocDir.path;
@@ -117,7 +111,7 @@ class _CameraWidgetState extends State<CameraWidget> with WidgetsBindingObserver
             child: ClipRRect(
               borderRadius: BorderRadius.circular(20),
               child: Container(
-                color: Get.theme.accentColor,
+                color: Theme.of(context).accentColor,
                 child: Center(
                   child: Text("Camera"),
                 ),
@@ -149,13 +143,13 @@ class _CameraWidgetState extends State<CameraWidget> with WidgetsBindingObserver
 
                 // Fail if the file doesn't exist after taking the picture
                 if (!file.existsSync()) {
-                  return this.showSnackbar('Failed to take picture! File improperly saved by Camera lib');
+                  return showSnackbar('Error', 'Failed to take picture! File improperly saved by Camera lib');
                 }
 
                 // Fail if the file size is equal to 0
                 if (file.statSync().size == 0) {
                   file.deleteSync();
-                  return this.showSnackbar('Failed to take picture! File was empty!');
+                  return showSnackbar('Error', 'Failed to take picture! File was empty!');
                 }
 
                 // If all passes, add the attachment

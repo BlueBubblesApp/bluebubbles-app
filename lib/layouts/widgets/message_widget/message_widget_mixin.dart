@@ -74,20 +74,22 @@ abstract class MessageWidgetMixin {
         linkIndexMatches.add(match.end);
       });
 
-      TextStyle textStyle = Get.theme.textTheme.bodyText2;
+      TextStyle textStyle = Theme.of(context).textTheme.bodyText2;
       if (!message.isFromMe) {
         if (SettingsManager().settings.colorfulBubbles) {
           if (!isNullOrEmpty(colors)) {
             bool dark = colors[0].computeLuminance() < 0.179;
             if (!dark) {
-              textStyle = Get.theme.textTheme.bodyText2
+              textStyle = Theme.of(context)
+                  .textTheme
+                  .bodyText2
                   .apply(color: hideContent ? Colors.transparent : darken(colors[0], 0.35));
             } else {
-              textStyle = Get.theme.textTheme.bodyText2;
+              textStyle = Theme.of(context).textTheme.bodyText2;
               if (hideContent) textStyle = textStyle.apply(color: Colors.transparent);
             }
           } else {
-            textStyle = Get.theme.textTheme.bodyText2.apply(
+            textStyle = Theme.of(context).textTheme.bodyText2.apply(
                 color: hideContent
                     ? Colors.transparent
                     : darken(toColorGradient(message?.handle?.address ?? "")[0], 0.35));

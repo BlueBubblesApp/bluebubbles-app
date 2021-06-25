@@ -32,8 +32,8 @@ class SentMessageHelper {
       bool margin = true}) {
     Color bubbleColor;
     bubbleColor = message == null || message.guid.startsWith("temp")
-        ? darken(Get.theme.primaryColor, 0.2)
-        : Get.theme.primaryColor;
+        ? darken(Theme.of(context).primaryColor, 0.2)
+        : Theme.of(context).primaryColor;
 
     final bool hideContent = SettingsManager().settings.redactedMode && SettingsManager().settings.hideMessageContent;
     final bool hideType = SettingsManager().settings.redactedMode && SettingsManager().settings.hideAttachmentTypes;
@@ -53,13 +53,13 @@ class SentMessageHelper {
           children: <Widget>[
             Text(
               message.text,
-              style: Get.theme.textTheme.bodyText2.apply(fontSizeFactor: 4),
+              style: Theme.of(context).textTheme.bodyText2.apply(fontSizeFactor: 4),
             ),
             if (hideContent)
               Positioned.fill(
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(25.0),
-                  child: Container(color: Get.theme.accentColor),
+                  child: Container(color: Theme.of(context).accentColor),
                 ),
               ),
             if (hideContent && !hideType)
@@ -69,7 +69,7 @@ class SentMessageHelper {
                   child: Text(
                     "emoji",
                     textAlign: TextAlign.center,
-                    style: Get.theme.textTheme.bodyText1,
+                    style: Theme.of(context).textTheme.bodyText1,
                   ),
                 ),
               ),
@@ -129,7 +129,7 @@ class SentMessageHelper {
                 ? RichText(
                     text: TextSpan(
                       children: MessageWidgetMixin.buildMessageSpans(context, message),
-                      style: Get.theme.textTheme.bodyText1.apply(color: Colors.white),
+                      style: Theme.of(context).textTheme.bodyText1.apply(color: Colors.white),
                     ),
                   )
                 : customContent,

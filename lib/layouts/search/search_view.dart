@@ -138,30 +138,30 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: Get.theme.backgroundColor,
+        systemNavigationBarColor: Theme.of(context).backgroundColor,
       ),
       child: Scaffold(
         // extendBodyBehindAppBar: true,
-        backgroundColor: Get.theme.backgroundColor,
+        backgroundColor: Theme.of(context).backgroundColor,
         appBar: PreferredSize(
           preferredSize: Size(Get.mediaQuery.size.width, 80),
           child: ClipRRect(
             child: BackdropFilter(
               child: AppBar(
-                brightness: ThemeData.estimateBrightnessForColor(Get.theme.backgroundColor),
+                brightness: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor),
                 toolbarHeight: 100.0,
                 elevation: 0,
                 leading: IconButton(
                   icon: Icon(SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_back_ios : Icons.arrow_back,
-                      color: Get.theme.primaryColor),
+                      color: Theme.of(context).primaryColor),
                   onPressed: () {
                     Navigator.of(context).pop();
                   },
                 ),
-                backgroundColor: Get.theme.accentColor.withOpacity(0.5),
+                backgroundColor: Theme.of(context).accentColor.withOpacity(0.5),
                 title: Text(
                   "Search",
-                  style: Get.theme.textTheme.headline1,
+                  style: Theme.of(context).textTheme.headline1,
                 ),
               ),
               filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
@@ -177,7 +177,7 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Icon(Icons.search, color: Get.theme.textTheme.bodyText1.color),
+                      Icon(Icons.search, color: Theme.of(context).textTheme.bodyText1.color),
                       Container(padding: EdgeInsets.only(right: 5.0)),
                       Flexible(
                           fit: FlexFit.loose,
@@ -190,18 +190,19 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
                             padding: EdgeInsets.symmetric(horizontal: 15.0, vertical: 10),
                             controller: textEditingController,
                             placeholder: "Enter a search term...",
-                            style: Get.theme.textTheme.bodyText1,
-                            placeholderStyle: Get.theme.textTheme.subtitle1,
+                            style: Theme.of(context).textTheme.bodyText1,
+                            placeholderStyle: Theme.of(context).textTheme.subtitle1,
                             decoration: BoxDecoration(
-                                color: Get.theme.backgroundColor,
+                                color: Theme.of(context).backgroundColor,
                                 borderRadius: BorderRadius.circular(20),
-                                border: Border.all(color: Get.theme.accentColor)),
+                                border: Border.all(color: Theme.of(context).accentColor)),
                             maxLines: 1,
                           )),
                       (!this.isSearching)
                           ? CupertinoButton(
                               padding: EdgeInsets.all(0),
-                              child: Icon(Icons.arrow_forward, color: Get.theme.textTheme.bodyText1.color, size: 30),
+                              child: Icon(Icons.arrow_forward,
+                                  color: Theme.of(context).textTheme.bodyText1.color, size: 30),
                               onPressed: () {
                                 search(textEditingController.text);
                               })
@@ -210,17 +211,18 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
                               child: Theme(
                                 data: ThemeData(
                                   cupertinoOverrideTheme: CupertinoThemeData(
-                                      brightness: ThemeData.estimateBrightnessForColor(Get.theme.backgroundColor)),
+                                      brightness:
+                                          ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor)),
                                 ),
                                 child: CupertinoActivityIndicator(),
                               ),
                             )
                     ])),
-            Divider(color: Get.theme.accentColor),
+            Divider(color: Theme.of(context).accentColor),
             (!this.isSearching && noResults)
                 ? Padding(
                     padding: EdgeInsets.only(top: 25.0),
-                    child: Text("No results found!", style: Get.theme.textTheme.bodyText1))
+                    child: Text("No results found!", style: Theme.of(context).textTheme.bodyText1))
                 : (!this.isSearching)
                     ? Flexible(
                         fit: FlexFit.loose,
@@ -252,20 +254,22 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
                               // Add the beginning string
                               spans.add(TextSpan(
                                   text: subText.substring(0, termIndex).trimLeft(),
-                                  style: Get.theme.textTheme.subtitle1));
+                                  style: Theme.of(context).textTheme.subtitle1));
 
                               // Add the search term
                               spans.add(TextSpan(
                                   text: subText.substring(termIndex, termEnd),
-                                  style: Get.theme.textTheme.subtitle1
-                                      .apply(color: Get.theme.primaryColor, fontWeightDelta: 2)));
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .subtitle1
+                                      .apply(color: Theme.of(context).primaryColor, fontWeightDelta: 2)));
 
                               // Add the ending string
                               spans.add(TextSpan(
                                   text: subText.substring(termEnd, subText.length).trimRight(),
-                                  style: Get.theme.textTheme.subtitle1));
+                                  style: Theme.of(context).textTheme.subtitle1));
                             } else {
-                              spans.add(TextSpan(text: message.text, style: Get.theme.textTheme.subtitle1));
+                              spans.add(TextSpan(text: message.text, style: Theme.of(context).textTheme.subtitle1));
                             }
 
                             return Column(
@@ -299,9 +303,9 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
                                     mainAxisAlignment: MainAxisAlignment.start,
                                     children: [
                                       Text("${buildDate(message.dateCreated)}",
-                                          style: Get.theme.textTheme.subtitle1.apply(fontSizeDelta: -2)),
+                                          style: Theme.of(context).textTheme.subtitle1.apply(fontSizeDelta: -2)),
                                       Container(height: 5.0),
-                                      Text(chat?.title, style: Get.theme.textTheme.bodyText1),
+                                      Text(chat?.title, style: Theme.of(context).textTheme.bodyText1),
                                     ],
                                   ),
                                   subtitle: Padding(
@@ -312,10 +316,10 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
                                   ),
                                   trailing: Icon(
                                     Icons.arrow_forward_ios,
-                                    color: Get.theme.textTheme.bodyText1.color,
+                                    color: Theme.of(context).textTheme.bodyText1.color,
                                   ),
                                 ),
-                                Divider(color: Get.theme.accentColor)
+                                Divider(color: Theme.of(context).accentColor)
                               ],
                             );
                           },

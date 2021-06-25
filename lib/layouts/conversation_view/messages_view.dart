@@ -352,7 +352,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
           border: Border.all(
             width: 2,
             style: BorderStyle.solid,
-            color: Get.theme.accentColor,
+            color: Theme.of(context).accentColor,
           ),
           borderRadius: BorderRadius.circular(19),
         ),
@@ -367,7 +367,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
             padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 13.0),
             child: Text(
               text,
-              style: Get.theme.textTheme.bodyText1,
+              style: Theme.of(context).textTheme.bodyText1,
             ),
           ),
         ),

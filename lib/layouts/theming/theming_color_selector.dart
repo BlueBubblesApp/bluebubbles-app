@@ -1,4 +1,5 @@
 import 'package:bluebubbles/helpers/themes.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/theming/theming_color_picker_popup.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/theme_entry.dart';
@@ -48,15 +49,7 @@ class _ThemingColorSelectorState extends State<ThemingColorSelector> {
                   ),
                 );
               } else {
-                Scaffold.of(context).hideCurrentSnackBar();
-                Scaffold.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      "Please click the edit button to start customizing!",
-                    ),
-                    behavior: SnackBarBehavior.floating,
-                  ),
-                );
+                showSnackbar('Customization', "Please click the edit button to start customizing!");
               }
             },
             child: Container(

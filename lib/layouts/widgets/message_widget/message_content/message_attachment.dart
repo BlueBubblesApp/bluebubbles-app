@@ -196,7 +196,7 @@ class _MessageAttachmentState extends State<MessageAttachment> with AutomaticKee
                       (content.attachment.mimeType != null)
                           ? Text(
                               content.attachment.mimeType,
-                              style: Get.theme.textTheme.bodyText1,
+                              style: Theme.of(context).textTheme.bodyText1,
                             )
                           : Container()
                     ],
@@ -210,7 +210,7 @@ class _MessageAttachmentState extends State<MessageAttachment> with AutomaticKee
     } else {
       return Text(
         "Error loading",
-        style: Get.theme.textTheme.bodyText1,
+        style: Theme.of(context).textTheme.bodyText1,
       );
       //     return Container();
     }
@@ -221,7 +221,7 @@ class _MessageAttachmentState extends State<MessageAttachment> with AutomaticKee
         child: Container(
           height: 150,
           width: 200,
-          color: Get.theme.accentColor,
+          color: Theme.of(context).accentColor,
         ),
       );
 

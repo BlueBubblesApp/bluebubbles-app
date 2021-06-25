@@ -46,7 +46,7 @@ class _MediaFileState extends State<MediaFile> {
               if (snapshot.hasError) {
                 return Text(
                   "Unable to send",
-                  style: Get.theme.textTheme.bodyText1,
+                  style: Theme.of(context).textTheme.bodyText1,
                 );
               }
 
@@ -85,7 +85,7 @@ class _MediaFileState extends State<MediaFile> {
         if (hideAttachments)
           Positioned.fill(
             child: Container(
-              color: Get.theme.accentColor,
+              color: Theme.of(context).accentColor,
             ),
           ),
         if (hideAttachments && !hideAttachmentTypes)

@@ -42,7 +42,7 @@ class _ConnectingAlertState extends State<ConnectingAlert> {
           title: Text("Connecting..."),
           content: LinearProgressIndicator(
             backgroundColor: Colors.grey,
-            valueColor: AlwaysStoppedAnimation<Color>(Get.theme.primaryColor),
+            valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
           ),
         ),
       );

@@ -157,18 +157,18 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget> with TickerProvider
       stream: loadingStateStream.stream,
       builder: (context, snapshot) {
         if (data == null && isLoading) {
-          return Text("Loading Preview...", style: Get.theme.textTheme.bodyText1.apply(fontWeightDelta: 2));
+          return Text("Loading Preview...", style: Theme.of(context).textTheme.bodyText1.apply(fontWeightDelta: 2));
         } else if (data != null && data.title != null && data.title != "Image Preview") {
           return Text(
             data?.title ?? "<No Title>",
-            style: Get.theme.textTheme.bodyText1.apply(fontWeightDelta: 2),
+            style: Theme.of(context).textTheme.bodyText1.apply(fontWeightDelta: 2),
             overflow: TextOverflow.ellipsis,
             maxLines: 2,
           );
         } else if (data?.title == "Image Preview") {
           return Container();
         } else {
-          return Text("Unable to Load Preview", style: Get.theme.textTheme.bodyText1.apply(fontWeightDelta: 2));
+          return Text("Unable to Load Preview", style: Theme.of(context).textTheme.bodyText1.apply(fontWeightDelta: 2));
         }
       },
     );
@@ -215,14 +215,14 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget> with TickerProvider
                             data.description,
                             maxLines: 3,
                             overflow: TextOverflow.ellipsis,
-                            style: Get.theme.textTheme.bodyText1.apply(fontSizeDelta: -5),
+                            style: Theme.of(context).textTheme.bodyText1.apply(fontSizeDelta: -5),
                           ))
                       : Container(),
                   Padding(
                     padding: EdgeInsets.only(top: (data?.title == "Image Preview" ? 0 : 5.0), bottom: 10.0),
                     child: Text(
                       widget.message.text.replaceAll("https://", "").replaceAll("http://", "").toLowerCase(),
-                      style: Get.theme.textTheme.subtitle2,
+                      style: Theme.of(context).textTheme.subtitle2,
                       overflow: TextOverflow.ellipsis,
                       maxLines: 1,
                     ),
@@ -254,7 +254,7 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget> with TickerProvider
       if (hideContent)
         Positioned.fill(
           child: Container(
-            color: Get.theme.accentColor,
+            color: Theme.of(context).accentColor,
           ),
         ),
       if (hideContent && !hideType)
@@ -282,7 +282,7 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget> with TickerProvider
         child: ClipRRect(
           borderRadius: BorderRadius.circular(20),
           child: Material(
-            color: Get.theme.accentColor,
+            color: Theme.of(context).accentColor,
             child: InkResponse(
               borderRadius: BorderRadius.circular(20),
               onTap: () {

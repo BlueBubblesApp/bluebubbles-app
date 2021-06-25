@@ -21,10 +21,10 @@ class _PrepareToDownloadState extends State<PrepareToDownload> {
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: Get.theme.backgroundColor,
+        systemNavigationBarColor: Theme.of(context).backgroundColor,
       ),
       child: Scaffold(
-        backgroundColor: Get.theme.accentColor,
+        backgroundColor: Theme.of(context).accentColor,
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -33,7 +33,7 @@ class _PrepareToDownloadState extends State<PrepareToDownload> {
                 padding: EdgeInsets.symmetric(horizontal: 20.0),
                 child: Text(
                   "For the final step, BlueBubbles will download the first 25 messages for each of your chats.",
-                  style: Get.theme.textTheme.bodyText1.apply(fontSizeFactor: 1.5),
+                  style: Theme.of(context).textTheme.bodyText1.apply(fontSizeFactor: 1.5),
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -42,7 +42,7 @@ class _PrepareToDownloadState extends State<PrepareToDownload> {
                 padding: EdgeInsets.symmetric(horizontal: 20.0),
                 child: Text(
                   "Don't worry, you can see your chat history by scrolling up in a chat.",
-                  style: Get.theme.textTheme.bodyText1.apply(fontSizeFactor: 1.5),
+                  style: Theme.of(context).textTheme.bodyText1.apply(fontSizeFactor: 1.5),
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -51,7 +51,7 @@ class _PrepareToDownloadState extends State<PrepareToDownload> {
                 padding: EdgeInsets.symmetric(horizontal: 20.0),
                 child: Text(
                   "Number of Messages to Sync Per Chat: $numberOfMessages",
-                  style: Get.theme.textTheme.bodyText1,
+                  style: Theme.of(context).textTheme.bodyText1,
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -81,18 +81,18 @@ class _PrepareToDownloadState extends State<PrepareToDownload> {
               //     children: [
               //       Text(
               //         "Download Attachments (long sync)",
-              //         style: Get.theme.textTheme.bodyText1,
+              //         style: Theme.of(context).textTheme.bodyText1,
               //         textAlign: TextAlign.center,
               //       ),
               //       Switch(
               //         value: downloadAttachments,
-              //         activeColor: Get.theme.primaryColor,
+              //         activeColor: Theme.of(context).primaryColor,
               //         activeTrackColor:
-              //             Get.theme.primaryColor.withAlpha(200),
+              //             Theme.of(context).primaryColor.withAlpha(200),
               //         inactiveTrackColor:
-              //             Get.theme.primaryColor.withAlpha(75),
+              //             Theme.of(context).primaryColor.withAlpha(75),
               //         inactiveThumbColor:
-              //             Get.theme.textTheme.bodyText1.color,
+              //             Theme.of(context).textTheme.bodyText1.color,
               //         onChanged: (bool value) {
               //           if (!this.mounted) return;
 
@@ -112,15 +112,15 @@ class _PrepareToDownloadState extends State<PrepareToDownload> {
                   children: [
                     Text(
                       "Skip empty chats",
-                      style: Get.theme.textTheme.bodyText1,
+                      style: Theme.of(context).textTheme.bodyText1,
                       textAlign: TextAlign.center,
                     ),
                     Switch(
                       value: skipEmptyChats,
-                      activeColor: Get.theme.primaryColor,
-                      activeTrackColor: Get.theme.primaryColor.withAlpha(200),
-                      inactiveTrackColor: Get.theme.primaryColor.withAlpha(75),
-                      inactiveThumbColor: Get.theme.textTheme.bodyText1.color,
+                      activeColor: Theme.of(context).primaryColor,
+                      activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
+                      inactiveTrackColor: Theme.of(context).primaryColor.withAlpha(75),
+                      inactiveThumbColor: Theme.of(context).textTheme.bodyText1.color,
                       onChanged: (bool value) {
                         if (!this.mounted) return;
 

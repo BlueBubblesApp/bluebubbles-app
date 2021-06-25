@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
-import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/layouts/conversation_list/conversation_list.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/setup/failure_to_start.dart';
@@ -15,6 +14,7 @@ import 'package:bluebubbles/managers/navigator_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/database.dart';
+import 'package:bluebubbles/repository/models/theme_object.dart';
 // import 'package:sentry/sentry.dart';
 
 import 'package:bluebubbles/socket_manager.dart';
@@ -85,7 +85,13 @@ Future<Null> main() async {
 
   if (exception == null) {
     runZonedGuarded<Future<Null>>(() async {
-      runApp(Main());
+      ThemeObject light = await ThemeObject.getLightTheme();
+      ThemeObject dark = await ThemeObject.getDarkTheme();
+
+      runApp(Main(
+        lightTheme: light.themeData,
+        darkTheme: dark.themeData,
+      ));
     }, (Object error, StackTrace stackTrace) async {
       // Whenever an error occurs, call the `_reportError` function. This sends
       // Dart errors to the dev console or Sentry depending on the environment.
@@ -104,15 +110,17 @@ Future<Null> main() async {
 ///     - [NavgatorManager]
 ///     - [Home] widget
 class Main extends StatelessWidget with WidgetsBindingObserver {
-  const Main({Key key}) : super(key: key);
+  final ThemeData darkTheme;
+  final ThemeData lightTheme;
+  const Main({Key key, @required this.lightTheme, @required this.darkTheme}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return AdaptiveTheme(
       /// These are the default white and dark themes.
       /// These will be changed by [SettingsManager] when you set a custom theme
-      light: whiteLightTheme,
-      dark: oledDarkTheme,
+      light: this.lightTheme,
+      dark: this.darkTheme,
 
       /// The default is that the dark and light themes will follow the system theme
       /// This will be changed by [SettingsManager]
@@ -272,13 +280,12 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
-      systemNavigationBarColor: Get.theme.backgroundColor, // navigation bar color
+      systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
       statusBarColor: Colors.transparent, // status bar color
     ));
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle(
-          systemNavigationBarColor: Get.theme.backgroundColor),
+      value: SystemUiOverlayStyle(systemNavigationBarColor: Theme.of(context).backgroundColor),
       child: Scaffold(
         backgroundColor: Colors.black,
         // The stream builder connects to the [SocketManager] to check if the app has finished the setup or not

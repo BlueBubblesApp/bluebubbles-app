@@ -17,17 +17,17 @@ class _SearchTextBoxState extends State<SearchTextBox> {
     return Hero(
       tag: "search_text_box",
       child: CupertinoTextField(
-        cursorColor: Get.theme.primaryColor,
+        cursorColor: Theme.of(context).primaryColor,
         autofocus: widget.autoFocus,
         decoration: BoxDecoration(
-          color: Get.theme.accentColor,
+          color: Theme.of(context).accentColor,
           borderRadius: BorderRadius.circular(10),
         ),
         placeholder: "Search",
-        placeholderStyle: Get.theme.textTheme.bodyText1.apply(
-          color: lightenOrDarken(Get.theme.textTheme.bodyText1.color, 40),
-        ),
-        style: Get.theme.textTheme.bodyText1,
+        placeholderStyle: Theme.of(context).textTheme.bodyText1.apply(
+              color: lightenOrDarken(Theme.of(context).textTheme.bodyText1.color, 40),
+            ),
+        style: Theme.of(context).textTheme.bodyText1,
         padding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
       ),
     );

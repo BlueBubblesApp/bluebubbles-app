@@ -10,10 +10,10 @@ class SetupMacApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: Get.theme.accentColor,
+        systemNavigationBarColor: Theme.of(context).accentColor,
       ),
       child: Scaffold(
-        backgroundColor: Get.theme.accentColor,
+        backgroundColor: Theme.of(context).accentColor,
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -22,14 +22,14 @@ class SetupMacApp extends StatelessWidget {
                 padding: EdgeInsets.symmetric(horizontal: 20.0),
                 child: Text(
                   "Before using the Android App, please verify that you have already installed the macOS Server app. Additionally, make sure that your iMessage app is signed into an iCloud/Apple account.",
-                  style: Get.theme.textTheme.bodyText1.apply(fontSizeFactor: 1.5),
+                  style: Theme.of(context).textTheme.bodyText1.apply(fontSizeFactor: 1.5),
                   textAlign: TextAlign.center,
                 ),
               ),
               Container(height: 20.0),
               ClipOval(
                 child: Material(
-                  color: Get.theme.primaryColor, // button color
+                  color: Theme.of(context).primaryColor, // button color
                   child: InkWell(
                     child: SizedBox(width: 60, height: 60, child: Icon(Icons.check, color: Colors.white)),
                     onTap: () async {
@@ -46,7 +46,7 @@ class SetupMacApp extends StatelessWidget {
                 padding: EdgeInsets.symmetric(horizontal: 20.0),
                 child: Text(
                   "If you have not installed the macOS Server app, please go to the following link on your macOS device to download it:\n\nhttps://bluebubbles.app",
-                  style: Get.theme.textTheme.bodyText1.apply(fontSizeFactor: 1.5),
+                  style: Theme.of(context).textTheme.bodyText1.apply(fontSizeFactor: 1.5),
                   textAlign: TextAlign.center,
                 ),
               ),

@@ -58,12 +58,12 @@ class _ChatSelectorTextFieldState extends State<ChatSelectorTextField> {
               borderRadius: BorderRadius.all(Radius.circular(5.0)),
               child: Container(
                 padding: EdgeInsets.all(5.0),
-                color: Get.theme.primaryColor,
+                color: Theme.of(context).primaryColor,
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
-                    Text(contact.displayName.trim(), style: Get.theme.textTheme.bodyText1),
+                    Text(contact.displayName.trim(), style: Theme.of(context).textTheme.bodyText1),
                     SizedBox(
                       width: 5.0,
                     ),
@@ -86,7 +86,7 @@ class _ChatSelectorTextFieldState extends State<ChatSelectorTextField> {
       ConstrainedBox(
         constraints: BoxConstraints(maxWidth: 255.0),
         child: ContactSelectorCustomCupertinoTextfield(
-          cursorColor: Get.theme.primaryColor,
+          cursorColor: Theme.of(context).primaryColor,
           focusNode: inputFieldNode,
           onSubmitted: (String done) async {
             FocusScope.of(context).requestFocus(inputFieldNode);
@@ -101,11 +101,7 @@ class _ChatSelectorTextFieldState extends State<ChatSelectorTextField> {
               }
             } else {
               if (widget.allContacts.isEmpty) {
-                Scaffold.of(context).showSnackBar(SnackBar(
-                  content: Text("Invalid Number/Email, $done"),
-                  duration: Duration(milliseconds: 500),
-                ));
-
+                showSnackbar('Error', "Invalid Number/Email, $done");
                 // This is 4 chars due to invisible character
               } else if (widget.controller.text.length >= 4) {
                 widget.onSelected(widget.allContacts[0]);
@@ -117,17 +113,17 @@ class _ChatSelectorTextFieldState extends State<ChatSelectorTextField> {
           maxLines: 1,
           autocorrect: false,
           placeholder: "  Type a name...",
-          placeholderStyle: Get.theme.textTheme.subtitle1,
+          placeholderStyle: Theme.of(context).textTheme.subtitle1,
           padding: EdgeInsets.only(right: 5.0, top: 2.0, bottom: 2.0),
           autofocus: true,
-          style: Get.theme.textTheme.bodyText1.apply(
-            color: ThemeData.estimateBrightnessForColor(Get.theme.backgroundColor) == Brightness.light
-                ? Colors.black
-                : Colors.white,
-            fontSizeDelta: -0.25,
-          ),
+          style: Theme.of(context).textTheme.bodyText1.apply(
+                color: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor) == Brightness.light
+                    ? Colors.black
+                    : Colors.white,
+                fontSizeDelta: -0.25,
+              ),
           decoration: BoxDecoration(
-            color: Get.theme.backgroundColor,
+            color: Theme.of(context).backgroundColor,
           ),
         ),
       ),
@@ -143,7 +139,7 @@ class _ChatSelectorTextFieldState extends State<ChatSelectorTextField> {
             padding: const EdgeInsets.only(right: 12),
             child: Text(
               "To: ",
-              style: Get.theme.textTheme.subtitle1,
+              style: Theme.of(context).textTheme.subtitle1,
             ),
           ),
           Flexible(
@@ -161,13 +157,13 @@ class _ChatSelectorTextFieldState extends State<ChatSelectorTextField> {
           // Padding(
           //   padding: EdgeInsets.only(left: 12, right: 10.0),
           //   child: FlatButton(
-          //     color: Get.theme.accentColor,
+          //     color: Theme.of(context).accentColor,
           //     onPressed: () async {
           //       // widget.onCreate();
           //     },
           //     child: Text(
           //       ChatSelector.of(context).widget.isCreator ? "Create" : "Add",
-          //       style: Get.theme.textTheme.bodyText1,
+          //       style: Theme.of(context).textTheme.bodyText1,
           //     ),
           //   ),
           // )

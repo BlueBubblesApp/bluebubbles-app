@@ -72,17 +72,17 @@ class _AddingParticipantPopupState extends State<AddingParticipantPopup> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      backgroundColor: Get.theme.accentColor,
+      backgroundColor: Theme.of(context).accentColor,
       title: Text(
         title,
-        style: Get.theme.textTheme.bodyText1,
+        style: Theme.of(context).textTheme.bodyText1,
       ),
       content: Container(
         height: 5,
         child: Center(
           child: LinearProgressIndicator(
             backgroundColor: Colors.grey,
-            valueColor: AlwaysStoppedAnimation<Color>(Get.theme.primaryColor),
+            valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
             value: (index) / widget.contacts.length,
           ),
         ),

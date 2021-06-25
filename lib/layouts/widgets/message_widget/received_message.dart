@@ -101,13 +101,13 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
           children: <Widget>[
             Text(
               message.text,
-              style: Get.theme.textTheme.bodyText2.apply(fontSizeFactor: 4),
+              style: Theme.of(context).textTheme.bodyText2.apply(fontSizeFactor: 4),
             ),
             if (hideContent)
               Positioned.fill(
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(25.0),
-                  child: Container(color: Get.theme.accentColor),
+                  child: Container(color: Theme.of(context).accentColor),
                 ),
               ),
             if (hideContent && !hideType)
@@ -117,7 +117,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                   child: Text(
                     "emoji",
                     textAlign: TextAlign.center,
-                    style: Get.theme.textTheme.bodyText1,
+                    style: Theme.of(context).textTheme.bodyText1,
                   ),
                 ),
               ),
@@ -126,7 +126,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
       );
     }
 
-    List<Color> bubbleColors = [Get.theme.accentColor, Get.theme.accentColor];
+    List<Color> bubbleColors = [Theme.of(context).accentColor, Theme.of(context).accentColor];
     if (SettingsManager().settings.colorfulBubbles) {
       if (message?.handle?.color == null) {
         bubbleColors = toColorGradient(message?.handle?.address);
@@ -199,7 +199,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
             text: TextSpan(
               children: MessageWidgetMixin.buildMessageSpans(context, widget.message,
                   colors: widget.message?.handle?.color != null ? bubbleColors : null),
-              style: Get.theme.textTheme.bodyText2,
+              style: Theme.of(context).textTheme.bodyText2,
             ),
           ),
         ),
@@ -223,7 +223,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
         Padding(
           padding: EdgeInsets.only(left: 15.0, top: 5.0, bottom: widget.message.getReactions().length > 0 ? 0.0 : 3.0),
           child: Text(getContactName(context, contactTitle, widget.message.handle.address),
-              style: Get.theme.textTheme.subtitle1),
+              style: Theme.of(context).textTheme.subtitle1),
         ),
       );
     }

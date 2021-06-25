@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:ui';
 
+import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/layouts/theming/theming_color_options_list.dart';
@@ -30,7 +31,7 @@ class _ThemingPanelState extends State<ThemingPanel> with TickerProviderStateMix
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (Get.isDarkMode) {
+    if (AdaptiveTheme.of(context).mode == AdaptiveThemeMode.dark) {
       controller = TabController(vsync: this, initialIndex: 1, length: 2);
     } else {
       controller = TabController(vsync: this, initialIndex: 0, length: 2);

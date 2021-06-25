@@ -71,10 +71,10 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: Get.theme.accentColor,
+        systemNavigationBarColor: Theme.of(context).accentColor,
       ),
       child: Scaffold(
-        backgroundColor: Get.theme.accentColor,
+        backgroundColor: Theme.of(context).accentColor,
         body: Padding(
           padding: const EdgeInsets.symmetric(vertical: 80.0, horizontal: 24.0),
           child: Stack(
@@ -85,9 +85,9 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
                   opacity: opacityTitle,
                   child: Text(
                     "Welcome to BlueBubbles",
-                    style: Get.theme.textTheme.headline1.apply(
-                      fontSizeDelta: 7,
-                    ),
+                    style: Theme.of(context).textTheme.headline1.apply(
+                          fontSizeDelta: 7,
+                        ),
                   ),
                 ),
               ),
@@ -97,7 +97,7 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
                   opacity: opacitySubtitle,
                   child: Text(
                     "Let's get started",
-                    style: Get.theme.textTheme.headline1,
+                    style: Theme.of(context).textTheme.headline1,
                   ),
                 ),
               ),
@@ -106,7 +106,7 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
                   opacity: opacityButton,
                   child: ClipOval(
                     child: Material(
-                      color: Get.theme.primaryColor, // button color
+                      color: Theme.of(context).primaryColor, // button color
                       child: InkWell(
                           child: SizedBox(width: 60, height: 60, child: Icon(Icons.arrow_forward, color: Colors.white)),
                           onTap: () async {
