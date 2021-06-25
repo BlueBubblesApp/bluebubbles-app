@@ -2,9 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
-import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/themes.dart';
-import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_list/conversation_list.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/setup/failure_to_start.dart';
@@ -17,7 +15,6 @@ import 'package:bluebubbles/managers/navigator_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/database.dart';
-import 'package:bluebubbles/repository/models/theme_object.dart';
 // import 'package:sentry/sentry.dart';
 
 import 'package:bluebubbles/socket_manager.dart';
@@ -88,19 +85,7 @@ Future<Null> main() async {
 
   if (exception == null) {
     runZonedGuarded<Future<Null>>(() async {
-      // runApp(Main());
-
-      Get.lazyPut<ThemeController>(() => ThemeController());
-      ThemeController.to.getThemeModeFromPreferences();
-
-      runApp(GetMaterialApp(
-          title: 'BlueBubbles',
-          theme: (await ThemeObject.getLightTheme()).themeData,
-          darkTheme: (await ThemeObject.getDarkTheme()).themeData,
-          themeMode: ThemeController.to.themeMode ?? ThemeMode.system,
-          debugShowCheckedModeBanner: false,
-          navigatorKey: NavigatorManager().navigatorKey,
-          home: Home()));
+      runApp(Main());
     }, (Object error, StackTrace stackTrace) async {
       // Whenever an error occurs, call the `_reportError` function. This sends
       // Dart errors to the dev console or Sentry depending on the environment.
@@ -132,7 +117,7 @@ class Main extends StatelessWidget with WidgetsBindingObserver {
       /// The default is that the dark and light themes will follow the system theme
       /// This will be changed by [SettingsManager]
       initial: AdaptiveThemeMode.system,
-      builder: (theme, darkTheme) => MaterialApp(
+      builder: (theme, darkTheme) => GetMaterialApp(
         /// Hide the debug banner in debug mode
         debugShowCheckedModeBanner: false,
 
@@ -293,7 +278,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-          systemNavigationBarColor: Get.theme.backgroundColor, systemNavigationBarIconBrightness: Get.theme.brightness),
+          systemNavigationBarColor: Get.theme.backgroundColor),
       child: Scaffold(
         backgroundColor: Colors.black,
         // The stream builder connects to the [SocketManager] to check if the app has finished the setup or not
@@ -329,55 +314,5 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
         ),
       ),
     );
-  }
-}
-
-class ThemeController extends GetxController {
-  static ThemeController get to => Get.find();
-
-  ThemeMode _themeMode;
-  ThemeMode get themeMode => _themeMode;
-  Skins _skin;
-  Skins get skin => _skin;
-  ThemeData _themeData;
-  ThemeData get themeData => _themeData;
-
-  Future<void> setThemeData(ThemeData themeData, {bool updateState = true}) async {
-    Get.changeTheme(themeData);
-
-    _themeData = themeData;
-    if (updateState) update();
-  }
-
-  Future<void> setSkin(Skins skin) async {
-    _skin = skin;
-    update();
-
-    SettingsManager().settings.skin = skin;
-    await SettingsManager().saveSettings(SettingsManager().settings);
-  }
-
-  Future<void> setThemeMode(ThemeMode themeMode) async {
-    Get.changeThemeMode(themeMode);
-    _themeMode = themeMode;
-
-    // After setting the mode, we need to use the selected theme data to update the theme
-    ThemeData lightTheme = (await ThemeObject.getLightTheme()).themeData;
-    ThemeData darkTheme = (await ThemeObject.getDarkTheme()).themeData;
-
-    ThemeData usedTheme = lightTheme;
-    if (Get.mediaQuery.platformBrightness == Brightness.dark || themeMode == ThemeMode.dark) {
-      usedTheme = darkTheme;
-    }
-
-    setThemeData(usedTheme, updateState: false);
-    update();
-
-    SettingsManager().settings.theme = themeMode;
-    await SettingsManager().saveSettings(SettingsManager().settings);
-  }
-
-  getThemeModeFromPreferences() async {
-    return SettingsManager()?.settings?.theme ?? ThemeMode.system;
   }
 }
