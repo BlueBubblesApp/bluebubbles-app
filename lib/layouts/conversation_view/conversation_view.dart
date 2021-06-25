@@ -48,6 +48,7 @@ class ConversationView extends StatefulWidget {
     this.onMessagesViewComplete,
     this.selected,
     this.type = ChatSelectorTypes.ALL,
+    this.showSnackbar = false,
   }) : super(key: key);
 
   final Chat chat;
@@ -58,6 +59,7 @@ class ConversationView extends StatefulWidget {
   final bool isCreator;
   final MessageBloc customMessageBloc;
   final Function onMessagesViewComplete;
+  final bool showSnackbar;
 
   @override
   ConversationViewState createState() => ConversationViewState();
@@ -294,6 +296,11 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
     if (messageBloc == null) {
       messageBloc = initMessageBloc();
       messageBloc.getMessages();
+    }
+
+    if (widget.showSnackbar) {
+      final snackBar = SnackBar(content: Text('Support for creating chats is currently limited on MacOS 11 (Big Sur) and up due to limitations imposed by Apple!'));
+      Scaffold.of(context).showSnackBar(snackBar);
     }
 
     Widget textField = BlueBubblesTextField(
