@@ -178,8 +178,11 @@ class SocketManager {
         });
         debugPrint("disconnected");
         state = SocketState.DISCONNECTED;
-
-        EventDispatcher().emit("show-snackbar", {"text": "Disconnected from socket! 🔌"});
+        Timer(const Duration(seconds: 5), () {
+          if (SocketManager().state == SocketState.DISCONNECTED) {
+            EventDispatcher().emit("show-snackbar", {"text": "Disconnected from socket! 🔌"});
+          }
+        });
         return;
       case "reconnect":
         debugPrint("RECONNECTED");
