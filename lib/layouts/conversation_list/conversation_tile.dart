@@ -8,7 +8,9 @@ import 'package:bluebubbles/helpers/socket_singletons.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_group_widget.dart';
+import 'package:bluebubbles/layouts/widgets/message_widget/typing_indicator.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
+import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -68,6 +70,9 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
   bool removeLetterAvatars = true;
   bool generateFakeContactNames = false;
   bool generateFakeMessageContent = false;
+
+  // Typing indicator
+  bool showTypingIndicator = false;
 
   void loadBrightness() {
     Color now = Theme.of(context).backgroundColor;
@@ -241,7 +246,7 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
           caption: widget.chat.isPinned ? 'Unpin' : 'Pin',
           color: Colors.yellow[800],
           foregroundColor: Theme.of(context).textTheme.bodyText1.color,
-          icon: Icons.star,
+          icon: widget.chat.isPinned ? Icons.star_outline : Icons.star,
           onTap: () async {
             if (widget.chat.isPinned) {
               await widget.chat.unpin();
@@ -276,20 +281,19 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
               Chat.deleteChat(widget.chat);
             },
           ),
-        if (!widget.chat.hasUnreadMessage)
-          IconSlideAction(
-            caption: 'Mark Unread',
-            color: Colors.blue,
-            icon: Icons.notifications,
-            onTap: () {
-              widget.chat.setUnreadStatus(true);
-              ChatBloc().updateChatPosition(widget.chat);
-            },
-          ),
+        IconSlideAction(
+          caption: widget.chat.hasUnreadMessage ? 'Mark Read' : 'Mark Unread',
+          color: Colors.blue,
+          icon: widget.chat.hasUnreadMessage ? Icons.mark_chat_read : Icons.mark_chat_unread,
+          onTap: () {
+            widget.chat.setUnreadStatus(true);
+            ChatBloc().updateChatPosition(widget.chat);
+          },
+        ),
         IconSlideAction(
           caption: widget.chat.isArchived ? 'UnArchive' : 'Archive',
           color: widget.chat.isArchived ? Colors.blue : Colors.red,
-          icon: widget.chat.isArchived ? Icons.replay : Icons.delete,
+          icon: widget.chat.isArchived ? Icons.restore_from_trash_rounded : Icons.delete,
           onTap: () {
             if (widget.chat.isArchived) {
               ChatBloc().unArchiveChat(widget.chat);
@@ -323,28 +327,59 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
   }
 
   Widget buildSubtitle() {
-    final hideContent = redactedMode && hideMessageContent;
-    final generateContent = redactedMode && generateFakeMessageContent;
-
-    TextStyle style = Theme.of(context).textTheme.subtitle1.apply(
-          color: Theme.of(context).textTheme.subtitle1.color.withOpacity(
-                0.85,
+    return StreamBuilder<Map<String, dynamic>>(
+      stream: CurrentChat.getCurrentChat(widget.chat).stream,
+      builder: (BuildContext context, AsyncSnapshot snapshot) {
+        if (snapshot.connectionState == ConnectionState.active &&
+            snapshot.hasData &&
+            snapshot.data["type"] == CurrentChatEvent.TypingStatus) {
+          showTypingIndicator = snapshot.data["data"];
+        }
+        if (showTypingIndicator) {
+          double height = Theme.of(context).textTheme.subtitle1.fontSize;
+          double indicatorHeight = (height * 2).clamp(height, height + 13);
+          return Container(
+            height: height,
+            child: OverflowBox(
+              alignment: Alignment.topLeft,
+              maxHeight: indicatorHeight,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxHeight: indicatorHeight),
+                child: FittedBox(
+                  alignment: Alignment.centerLeft,
+                  child: TypingIndicator(
+                    visible: true,
+                  ),
+                ),
               ),
-        );
-    String message = widget.chat.latestMessageText != null ? widget.chat.latestMessageText : "";
-
-    if (generateContent)
-      message = widget.chat.fakeLatestMessageText;
-    else if (hideContent) style = style.copyWith(color: Colors.transparent);
-
-    return widget.chat.latestMessageText != null && !(widget.chat.latestMessageText is String)
-        ? widget.chat.latestMessageText
-        : Text(
-            message != null ? message : "",
-            style: style,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+            ),
           );
+        }
+
+        final hideContent = redactedMode && hideMessageContent;
+        final generateContent = redactedMode && generateFakeMessageContent;
+
+        TextStyle style = Theme.of(context).textTheme.subtitle1.apply(
+              color: Theme.of(context).textTheme.subtitle1.color.withOpacity(
+                    0.85,
+                  ),
+            );
+        String message = widget.chat.latestMessageText != null ? widget.chat.latestMessageText : "";
+
+        if (generateContent)
+          message = widget.chat.fakeLatestMessageText;
+        else if (hideContent) style = style.copyWith(color: Colors.transparent);
+
+        return widget.chat.latestMessageText != null && !(widget.chat.latestMessageText is String)
+            ? widget.chat.latestMessageText
+            : Text(
+                message != null ? message : "",
+                style: style,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              );
+      },
+    );
   }
 
   Widget buildLeading() {
@@ -380,15 +415,15 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
     return Padding(padding: EdgeInsets.only(top: 2, right: 2), child: avatar);
   }
 
-  Widget _buildDate() => Center(
-          child: Text(
-        buildDate(widget.chat.latestMessageDate),
-        textAlign: TextAlign.right,
-        style: Theme.of(context)
-            .textTheme
-            .subtitle2
-            .apply(color: Theme.of(context).textTheme.subtitle2.color.withOpacity(0.85)),
-      ));
+  Widget _buildDate() => ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: 100.0),
+        child: Text(buildDate(widget.chat.latestMessageDate),
+            textAlign: TextAlign.right,
+            style: Theme.of(context).textTheme.subtitle2.apply(
+                  color: Theme.of(context).textTheme.subtitle2.color.withOpacity(0.85),
+                ),
+            overflow: TextOverflow.clip),
+      );
 
   void onTap() {
     if (widget.onTapGoToChat != null && widget.onTapGoToChat) {
@@ -503,7 +538,7 @@ class __CupertinoState extends State<_Cupertino> {
             alignment: Alignment.centerLeft,
             children: <Widget>[
               Padding(
-                padding: const EdgeInsets.only(left: 30.0),
+                padding: const EdgeInsets.only(left: 20.0),
                 child: Container(
                   decoration: BoxDecoration(
                     border: (!widget.parent.hideDividers)
@@ -522,31 +557,33 @@ class __CupertinoState extends State<_Cupertino> {
                     subtitle: widget.parent.buildSubtitle(),
                     leading: widget.parent.buildLeading(),
                     trailing: Container(
-                      padding: EdgeInsets.only(right: 3),
-                      width: 80,
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: <Widget>[
-                          Container(
-                            padding: EdgeInsets.only(right: 2),
-                            child: widget.parent._buildDate(),
-                          ),
-                          Icon(
-                            SettingsManager().settings.skin == Skins.IOS
-                                ? Icons.arrow_forward_ios
-                                : Icons.arrow_forward,
-                            color: Theme.of(context).textTheme.subtitle1.color,
-                            size: 15,
-                          ),
-                        ],
+                      padding: EdgeInsets.only(right: 8),
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: <Widget>[
+                            Container(
+                              padding: EdgeInsets.only(right: 3),
+                              child: widget.parent._buildDate(),
+                            ),
+                            Icon(
+                              SettingsManager().settings.skin == Skins.IOS
+                                  ? Icons.arrow_forward_ios
+                                  : Icons.arrow_forward,
+                              color: Theme.of(context).textTheme.subtitle1.color,
+                              size: 15,
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.only(left: 8.0),
+                padding: const EdgeInsets.only(left: 6.0),
                 child: Container(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.end,
@@ -558,16 +595,17 @@ class __CupertinoState extends State<_Cupertino> {
                           (!widget.parent.widget.chat.isMuted && widget.parent.widget.chat.hasUnreadMessage)
                               ? Container(
                                   decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(35),
-                                      color: Theme.of(context).primaryColor.withOpacity(0.8)),
-                                  width: 15,
-                                  height: 15,
+                                    borderRadius: BorderRadius.circular(35),
+                                    color: Theme.of(context).primaryColor.withOpacity(0.8),
+                                  ),
+                                  width: 10,
+                                  height: 10,
                                 )
                               : Container(),
                           (widget.parent.widget.chat.isPinned)
                               ? Icon(
                                   Icons.star,
-                                  size: 15,
+                                  size: 10,
                                   color: Colors
                                       .yellow[AdaptiveTheme.of(context).mode == AdaptiveThemeMode.dark ? 100 : 700],
                                 )
@@ -580,8 +618,8 @@ class __CupertinoState extends State<_Cupertino> {
                               color: widget.parentProps.chat.hasUnreadMessage
                                   ? Theme.of(context).primaryColor.withOpacity(0.8)
                                   : Theme.of(context).textTheme.subtitle1.color,
-                              width: 15,
-                              height: 15,
+                              width: 10,
+                              height: 10,
                             )
                           : Container()
                     ],
@@ -641,10 +679,10 @@ class _Material extends StatelessWidget {
                 parent.buildLeading(),
                 if (!parent.widget.chat.isMuted)
                   Container(
-                    width: 15,
-                    height: 15,
+                    width: 10,
+                    height: 10,
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(30),
+                      borderRadius: BorderRadius.circular(20),
                       color: parent.widget.chat.hasUnreadMessage ? Theme.of(context).primaryColor : Colors.transparent,
                     ),
                   ),
@@ -652,23 +690,27 @@ class _Material extends StatelessWidget {
             ),
             trailing: Container(
               padding: EdgeInsets.only(right: 3),
-              width: 80,
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: <Widget>[
-                  if (parent.widget.chat.isPinned) Icon(Icons.star, size: 15, color: Colors.yellow),
-                  if (parent.widget.chat.isMuted)
-                    Icon(
-                      Icons.notifications_off,
-                      color: Theme.of(context).textTheme.subtitle1.color,
-                      size: 15,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: <Widget>[
+                    if (parent.widget.chat.isPinned) Icon(Icons.star, size: 15, color: Colors.yellow),
+                    if (parent.widget.chat.isMuted)
+                      Icon(
+                        Icons.notifications_off,
+                        color: parent.widget.chat.hasUnreadMessage
+                            ? Theme.of(context).primaryColor.withOpacity(0.8)
+                            : Theme.of(context).textTheme.subtitle1.color,
+                        size: 15,
+                      ),
+                    Container(
+                      padding: EdgeInsets.only(right: 2, left: 2),
+                      child: parent._buildDate(),
                     ),
-                  Container(
-                    padding: EdgeInsets.only(right: 2, left: 2),
-                    child: parent._buildDate(),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -737,23 +779,25 @@ class _Samsung extends StatelessWidget {
             ),
             trailing: Container(
               padding: EdgeInsets.only(right: 3),
-              width: 80,
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: <Widget>[
-                  if (parent.widget.chat.isPinned) Icon(Icons.star, size: 15, color: Colors.yellow),
-                  if (parent.widget.chat.isMuted)
-                    Icon(
-                      Icons.notifications_off,
-                      color: Theme.of(context).textTheme.subtitle1.color,
-                      size: 15,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: <Widget>[
+                    if (parent.widget.chat.isPinned) Icon(Icons.star, size: 15, color: Colors.yellow),
+                    if (parent.widget.chat.isMuted)
+                      Icon(
+                        Icons.notifications_off,
+                        color: Theme.of(context).textTheme.subtitle1.color,
+                        size: 15,
+                      ),
+                    Container(
+                      padding: EdgeInsets.only(right: 2, left: 2),
+                      child: parent._buildDate(),
                     ),
-                  Container(
-                    padding: EdgeInsets.only(right: 2, left: 2),
-                    child: parent._buildDate(),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
