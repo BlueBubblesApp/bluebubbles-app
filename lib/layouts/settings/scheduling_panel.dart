@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/settings/scheduler_panel.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -88,7 +89,7 @@ class _SchedulingPanelState extends State<SchedulingPanel> {
           child: ClipRRect(
             child: BackdropFilter(
               child: AppBar(
-                brightness: Get.theme.brightness,
+                brightness: getBrightness(context),
                 toolbarHeight: 100.0,
                 elevation: 0,
                 leading: IconButton(

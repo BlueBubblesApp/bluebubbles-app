@@ -875,7 +875,7 @@ class __MaterialState extends State<_Material> {
                                   padding: const EdgeInsets.all(8.0),
                                   child: Icon(
                                     selected[0].hasUnreadMessage ? Icons.mark_chat_read : Icons.mark_chat_unread,
-                                    color: Theme.of(context).textTheme.bodyText1.color,
+                                    color: Get.theme.textTheme.bodyText1.color,
                                   ),
                                 ),
                               ),
@@ -894,7 +894,7 @@ class __MaterialState extends State<_Material> {
                                   padding: const EdgeInsets.all(8.0),
                                   child: Icon(
                                     selected[0].isMuted ? Icons.notifications_active : Icons.notifications_off,
-                                    color: Theme.of(context).textTheme.bodyText1.color,
+                                    color: Get.theme.textTheme.bodyText1.color,
                                   ),
                                 ),
                               ),
@@ -915,7 +915,7 @@ class __MaterialState extends State<_Material> {
                                   padding: const EdgeInsets.all(8.0),
                                   child: Icon(
                                     selected[0].isPinned ? Icons.star_outline : Icons.star,
-                                    color: Theme.of(context).textTheme.bodyText1.color,
+                                    color: Get.theme.textTheme.bodyText1.color,
                                   ),
                                 ),
                               ),
@@ -953,7 +953,7 @@ class __MaterialState extends State<_Material> {
                                   padding: const EdgeInsets.all(8.0),
                                   child: Icon(
                                     Icons.delete_forever,
-                                    color: Theme.of(context).textTheme.bodyText1.color,
+                                    color: Get.theme.textTheme.bodyText1.color,
                                   ),
                                 ),
                               ),

@@ -23,7 +23,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
-import 'package:get/get.dart';
 import 'package:html/parser.dart';
 import 'package:http/http.dart' show get;
 import 'package:image_size_getter/image_size_getter.dart' as IMG;
@@ -498,6 +497,10 @@ Future<IMG.Size> getVideoDimensions(Attachment attachment, {Uint8List bytes}) as
   );
 
   return IMG.ImageSizeGetter.getSize(IMG.MemoryInput(imageData));
+}
+
+Brightness getBrightness(BuildContext context) {
+  return AdaptiveTheme.of(context).mode == AdaptiveThemeMode.dark ? Brightness.dark : Brightness.light;
 }
 
 /// Take the passed [address] or serverAddress from Settings

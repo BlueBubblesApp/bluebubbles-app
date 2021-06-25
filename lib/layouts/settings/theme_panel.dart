@@ -50,7 +50,7 @@ class _ThemePanelState extends State<ThemePanel> {
   }
 
   void loadBrightness() {
-    Color now = Theme.of(context).backgroundColor;
+    Color now = Get.theme.backgroundColor;
     bool themeChanged = previousBackgroundColor == null || previousBackgroundColor != now;
     if (!themeChanged && gotBrightness) return;
 
@@ -77,10 +77,10 @@ class _ThemePanelState extends State<ThemePanel> {
 
   @override
   Widget build(BuildContext context) {
+    loadBrightness();
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle(
-        systemNavigationBarColor: Get.theme.backgroundColor,
-      ),
+      value: SystemUiOverlayStyle(systemNavigationBarColor: Get.theme.backgroundColor),
       child: Scaffold(
         backgroundColor: Get.theme.backgroundColor,
         appBar: PreferredSize(
@@ -88,7 +88,7 @@ class _ThemePanelState extends State<ThemePanel> {
           child: ClipRRect(
             child: BackdropFilter(
               child: AppBar(
-                brightness: Get.theme.brightness,
+                brightness: brightness,
                 toolbarHeight: 100.0,
                 elevation: 0,
                 leading: IconButton(
