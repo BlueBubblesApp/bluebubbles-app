@@ -555,12 +555,13 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                   autofocus: SettingsManager().settings.autoOpenKeyboard,
                   cursorColor: Get.theme.primaryColor,
                   key: _searchFormKey,
-                  style: Get.theme.textTheme.bodyText1.apply(
-                    color: ThemeData.estimateBrightnessForColor(Get.theme.backgroundColor) == Brightness.light
-                        ? Colors.black
-                        : Colors.white,
-                    fontSizeDelta: -0.25,
-                  ),
+                  style: Theme.of(context).textTheme.bodyText1.apply(
+                        color:
+                            ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor) == Brightness.light
+                                ? Colors.black
+                                : Colors.white,
+                        fontSizeDelta: -0.25,
+                      ),
                   onContentCommited: onContentCommit,
                   decoration: InputDecoration(
                     isDense: true,
@@ -609,12 +610,13 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                   autofocus: SettingsManager().settings.autoOpenKeyboard,
                   cursorColor: Get.theme.primaryColor,
                   key: _searchFormKey,
-                  style: Get.theme.textTheme.bodyText1.apply(
-                    color: ThemeData.estimateBrightnessForColor(Get.theme.backgroundColor) == Brightness.light
-                        ? Colors.black
-                        : Colors.white,
-                    fontSizeDelta: -0.25,
-                  ),
+                  style: Theme.of(context).textTheme.bodyText1.apply(
+                        color:
+                            ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor) == Brightness.light
+                                ? Colors.black
+                                : Colors.white,
+                        fontSizeDelta: -0.25,
+                      ),
                   onContentCommited: onContentCommit,
                   decoration: InputDecoration(
                     isDense: true,
