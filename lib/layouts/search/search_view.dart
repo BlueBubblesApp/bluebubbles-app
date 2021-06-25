@@ -30,9 +30,6 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
   final Duration animationDuration = Duration(milliseconds: 400);
   final TextEditingController textEditingController = new TextEditingController();
 
-  Brightness brightness;
-  Color previousBackgroundColor;
-  bool gotBrightness = false;
   bool isSearching = false;
   Map<String, Chat> chatCache = {};
   FocusNode _focusNode = new FocusNode();
@@ -48,9 +45,7 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
     EventDispatcher().stream.listen((Map<String, dynamic> event) {
       if (!event.containsKey("type")) return;
       if (event["type"] == 'theme-update' && this.mounted) {
-        setState(() {
-          gotBrightness = false;
-        });
+        setState(() {});
       }
     });
 
@@ -64,24 +59,6 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
     });
 
     _focusNode.requestFocus();
-  }
-
-  void loadBrightness() {
-    Color now = Get.theme.backgroundColor;
-    bool themeChanged = previousBackgroundColor == null || previousBackgroundColor != now;
-    if (!themeChanged && gotBrightness) return;
-
-    previousBackgroundColor = now;
-    if (this.context == null) {
-      brightness = Brightness.light;
-      gotBrightness = true;
-      return;
-    }
-
-    bool isDark = now.computeLuminance() < 0.179;
-    brightness = isDark ? Brightness.dark : Brightness.light;
-    gotBrightness = true;
-    if (this.mounted) setState(() {});
   }
 
   Future<void> search(String term) async {
@@ -159,8 +136,6 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    loadBrightness();
-
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: Get.theme.backgroundColor,
@@ -173,7 +148,7 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
           child: ClipRRect(
             child: BackdropFilter(
               child: AppBar(
-                brightness: brightness,
+                brightness: ThemeData.estimateBrightnessForColor(Get.theme.backgroundColor),
                 toolbarHeight: 100.0,
                 elevation: 0,
                 leading: IconButton(
@@ -234,7 +209,8 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
                               padding: const EdgeInsets.all(12.0),
                               child: Theme(
                                 data: ThemeData(
-                                  cupertinoOverrideTheme: CupertinoThemeData(brightness: brightness),
+                                  cupertinoOverrideTheme: CupertinoThemeData(
+                                      brightness: ThemeData.estimateBrightnessForColor(Get.theme.backgroundColor)),
                                 ),
                                 child: CupertinoActivityIndicator(),
                               ),

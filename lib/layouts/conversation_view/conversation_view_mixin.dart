@@ -55,9 +55,6 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
   Settings _settingsCopy;
   List<DisplayMode> modes;
   DisplayMode currentMode;
-  Brightness brightness;
-  Color previousBackgroundColor;
-  bool gotBrightness = false;
   bool markingAsRead = false;
   bool markedAsRead = false;
   String previousSearch = '';
@@ -65,24 +62,6 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
 
   final _contactStreamController = StreamController<List<UniqueContact>>.broadcast();
   Stream<List<UniqueContact>> get contactStream => _contactStreamController.stream;
-
-  void loadBrightness() {
-    Color now = Get.theme.backgroundColor;
-    bool themeChanged = previousBackgroundColor == null || previousBackgroundColor != now;
-    if (!themeChanged && gotBrightness) return;
-
-    previousBackgroundColor = now;
-    if (this.context == null) {
-      brightness = Brightness.light;
-      gotBrightness = true;
-      return;
-    }
-
-    bool isDark = now.computeLuminance() < 0.179;
-    brightness = isDark ? Brightness.dark : Brightness.light;
-    gotBrightness = true;
-    if (this.mounted) setState(() {});
-  }
 
   TextEditingController chatSelectorController = new TextEditingController(text: " ");
 
@@ -272,7 +251,9 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
             padding: EdgeInsets.only(right: SettingsManager().settings.colorblindMode ? 15.0 : 10.0),
             child: Theme(
               data: ThemeData(
-                cupertinoOverrideTheme: Cupertino.CupertinoThemeData(brightness: brightness),
+                cupertinoOverrideTheme: Cupertino.CupertinoThemeData(
+                  brightness: ThemeData.estimateBrightnessForColor(Get.theme.backgroundColor),
+                ),
               ),
               child: Cupertino.CupertinoActivityIndicator(
                 radius: 12,
@@ -319,7 +300,6 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
   }
 
   Widget buildConversationViewHeader() {
-    loadBrightness();
     Color backgroundColor = Get.theme.backgroundColor;
     Color fontColor = Get.theme.textTheme.headline1.color;
     String title = chat.title;
@@ -334,7 +314,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
 
     if (SettingsManager().settings.skin == Skins.Material || SettingsManager().settings.skin == Skins.Samsung) {
       return AppBar(
-        brightness: brightness,
+        brightness: ThemeData.estimateBrightnessForColor(Get.theme.backgroundColor),
         title: Text(
           title,
           style: Get.theme.textTheme.headline1.apply(color: fontColor),

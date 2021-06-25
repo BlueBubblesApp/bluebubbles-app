@@ -41,11 +41,7 @@ class _ConversationListState extends State<ConversationList> {
   bool showSyncIndicator = false;
   bool moveChatCreatorButton = false;
 
-  Brightness brightness = Brightness.light;
-  Color previousBackgroundColor;
-
   Color currentHeaderColor;
-  bool gotBrightness = false;
   bool hasPinnedChata = false;
 
   // ignore: close_sinks
@@ -149,9 +145,7 @@ class _ConversationListState extends State<ConversationList> {
       } else if (event["type"] == 'refresh' && this.mounted) {
         setState(() {});
       } else if (event["type"] == 'theme-update' && this.mounted) {
-        setState(() {
-          gotBrightness = false;
-        });
+        setState(() {});
       }
     });
   }
@@ -166,24 +160,6 @@ class _ConversationListState extends State<ConversationList> {
 
   void scrollListener() {
     !_isAppBarExpanded ? theme = Colors.transparent : theme = Get.theme.accentColor.withOpacity(0.5);
-  }
-
-  void loadBrightness() {
-    Color now = Get.theme.backgroundColor;
-    bool themeChanged = previousBackgroundColor == null || previousBackgroundColor != now;
-    if (!themeChanged && gotBrightness) return;
-
-    previousBackgroundColor = now;
-    if (this.context == null) {
-      brightness = Brightness.light;
-      gotBrightness = true;
-      return;
-    }
-
-    bool isDark = now.computeLuminance() < 0.179;
-    brightness = isDark ? Brightness.dark : Brightness.light;
-    gotBrightness = true;
-    if (this.mounted) setState(() {});
   }
 
   bool get _isAppBarExpanded {
@@ -210,7 +186,8 @@ class _ConversationListState extends State<ConversationList> {
           if (skinSet == Skins.IOS) {
             return Theme(
               data: ThemeData(
-                cupertinoOverrideTheme: CupertinoThemeData(brightness: brightness),
+                cupertinoOverrideTheme:
+                    CupertinoThemeData(brightness: ThemeData.estimateBrightnessForColor(Get.theme.backgroundColor)),
               ),
               child: CupertinoActivityIndicator(
                 radius: 6.5,
@@ -358,7 +335,6 @@ class _ConversationListState extends State<ConversationList> {
 
   @override
   Widget build(BuildContext context) {
-    loadBrightness();
     return ThemeSwitcher(
       iOSSkin: _Cupertino(parent: this),
       materialSkin: _Material(parent: this),
@@ -374,6 +350,7 @@ class _Cupertino extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Brightness brightness = ThemeData.estimateBrightnessForColor(Get.theme.backgroundColor);
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: Get.theme.backgroundColor,
@@ -399,7 +376,7 @@ class _Cupertino extends StatelessWidget {
                         elevation: 0,
                         backgroundColor: parent.theme,
                         centerTitle: true,
-                        brightness: parent.brightness,
+                        brightness: brightness,
                         title: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: <Widget>[
@@ -413,7 +390,7 @@ class _Cupertino extends StatelessWidget {
                       firstChild: AppBar(
                         leading: new Container(),
                         elevation: 0,
-                        brightness: parent.brightness,
+                        brightness: brightness,
                         backgroundColor: Get.theme.backgroundColor,
                       ),
                     );
@@ -595,30 +572,9 @@ class _Material extends StatefulWidget {
 }
 
 class __MaterialState extends State<_Material> {
-  Brightness brightness;
   DisplayMode currentMode;
-  bool gotBrightness = false;
   List<DisplayMode> modes;
-  Color previousBackgroundColor;
   List<Chat> selected = [];
-
-  void loadBrightness() {
-    Color now = Get.theme.backgroundColor;
-    bool themeChanged = previousBackgroundColor == null || previousBackgroundColor != now;
-    if (!themeChanged && gotBrightness) return;
-
-    previousBackgroundColor = now;
-    if (this.context == null) {
-      brightness = Brightness.light;
-      gotBrightness = true;
-      return;
-    }
-
-    bool isDark = now.computeLuminance() < 0.179;
-    brightness = isDark ? Brightness.dark : Brightness.light;
-    gotBrightness = true;
-    if (this.mounted) setState(() {});
-  }
 
   bool hasPinnedChat() {
     for (var i = 0; i < widget.parent.chats.length; i++) {
@@ -765,7 +721,6 @@ class __MaterialState extends State<_Material> {
   @override
   Widget build(BuildContext context) {
     hasPinnedChat();
-    loadBrightness();
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
@@ -779,7 +734,7 @@ class __MaterialState extends State<_Material> {
             child: selected.isEmpty
                 ? AppBar(
                     iconTheme: IconThemeData(color: Get.theme.primaryColor),
-                    brightness: brightness,
+                    brightness: ThemeData.estimateBrightnessForColor(Get.theme.backgroundColor),
                     bottom: PreferredSize(
                       child: Container(
                         color: Get.theme.dividerColor,
@@ -1087,30 +1042,9 @@ class _Samsung extends StatefulWidget {
 }
 
 class _SamsungState extends State<_Samsung> {
-  Brightness brightness;
   DisplayMode currentMode;
-  bool gotBrightness = false;
   List<DisplayMode> modes;
-  Color previousBackgroundColor;
   List<Chat> selected = [];
-
-  void loadBrightness() {
-    Color now = Get.theme.backgroundColor;
-    bool themeChanged = previousBackgroundColor == null || previousBackgroundColor != now;
-    if (!themeChanged && gotBrightness) return;
-
-    previousBackgroundColor = now;
-    if (this.context == null) {
-      brightness = Brightness.light;
-      gotBrightness = true;
-      return;
-    }
-
-    bool isDark = now.computeLuminance() < 0.179;
-    brightness = isDark ? Brightness.dark : Brightness.light;
-    gotBrightness = true;
-    if (this.mounted) setState(() {});
-  }
 
   bool hasPinnedChat() {
     for (var i = 0; i < widget.parent.chats.length; i++) {
@@ -1256,7 +1190,6 @@ class _SamsungState extends State<_Samsung> {
 
   @override
   Widget build(BuildContext context) {
-    loadBrightness();
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: Get.theme.backgroundColor,
@@ -1270,7 +1203,7 @@ class _SamsungState extends State<_Samsung> {
                 ? AppBar(
                     shadowColor: Colors.transparent,
                     iconTheme: IconThemeData(color: Get.theme.primaryColor),
-                    brightness: brightness,
+                    brightness: ThemeData.estimateBrightnessForColor(Get.theme.backgroundColor),
                     bottom: PreferredSize(
                       child: Container(
                         color: Get.theme.dividerColor,

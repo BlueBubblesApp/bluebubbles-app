@@ -25,9 +25,6 @@ class ServerManagementPanel extends StatefulWidget {
 class _ServerManagementPanelState extends State<ServerManagementPanel> {
   int latency;
   String fetchStatus;
-  Brightness brightness;
-  Color previousBackgroundColor;
-  bool gotBrightness = false;
 
   // Restart trackers
   int lastRestart;
@@ -35,27 +32,8 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
   bool isRestarting = false;
   bool isRestartingMessages = false;
 
-  void loadBrightness() {
-    Color now = Get.theme.backgroundColor;
-    bool themeChanged = previousBackgroundColor == null || previousBackgroundColor != now;
-    if (!themeChanged && gotBrightness) return;
-
-    previousBackgroundColor = now;
-    if (this.context == null) {
-      brightness = Brightness.light;
-      gotBrightness = true;
-      return;
-    }
-
-    bool isDark = now.computeLuminance() < 0.179;
-    brightness = isDark ? Brightness.dark : Brightness.light;
-    gotBrightness = true;
-    if (this.mounted) setState(() {});
-  }
-
   @override
   Widget build(BuildContext context) {
-    loadBrightness();
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: Get.theme.backgroundColor,
@@ -67,7 +45,7 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
           child: ClipRRect(
             child: BackdropFilter(
               child: AppBar(
-                brightness: brightness,
+                brightness: ThemeData.estimateBrightnessForColor(Get.theme.backgroundColor),
                 toolbarHeight: 100.0,
                 elevation: 0,
                 leading: IconButton(
