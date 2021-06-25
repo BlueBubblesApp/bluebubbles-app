@@ -49,7 +49,7 @@ class _CameraWidgetState extends State<CameraWidget> with WidgetsBindingObserver
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     // Call the [LifeCycleManager] events based on the [state]
-    if (state == AppLifecycleState.paused && controller != null) {
+    if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive && controller != null) {
       controller?.dispose();
     } else if (state == AppLifecycleState.resumed) {
       initCameras();
@@ -62,6 +62,7 @@ class _CameraWidgetState extends State<CameraWidget> with WidgetsBindingObserver
       debugPrint("Disposing of camera!");
       controller?.dispose();
     }
+
     super.dispose();
   }
 
