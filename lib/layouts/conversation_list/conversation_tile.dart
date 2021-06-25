@@ -10,7 +10,6 @@ import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_group_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/typing_indicator.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
-import 'package:bluebubbles/managers/attachment_info_bloc.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
@@ -74,7 +73,6 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
 
   // Typing indicator
   bool showTypingIndicator = false;
-  StreamSubscription chatStream;
 
   void loadBrightness() {
     Color now = Theme.of(context).backgroundColor;
@@ -171,30 +169,6 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
       await fetchChatSingleton(widget.chat.guid);
       this.setNewChatData(forceUpdate: true);
     });
-
-    if (SettingsManager().settings.enablePrivateAPI) {
-      CurrentChat currentChat = AttachmentInfoBloc().getCurrentChat(widget.chat.guid);
-      if (currentChat != null) {
-        chatStream = currentChat.stream.listen((event) {});
-        showTypingIndicator = currentChat.showTypingIndicator;
-        chatStream.onData((event) {
-          setState(() {
-            if (showTypingIndicator != currentChat.showTypingIndicator) {
-              showTypingIndicator = currentChat.showTypingIndicator;
-            }
-          });
-        });
-      }
-    }
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-
-    if (chatStream != null) {
-      chatStream.cancel();
-    }
   }
 
   void setNewChatData({forceUpdate: false}) async {
@@ -353,48 +327,59 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
   }
 
   Widget buildSubtitle() {
-    double height = Theme.of(context).textTheme.subtitle1.fontSize;
-    if (showTypingIndicator) {
-      return Container(
-        height: height,
-        child: OverflowBox(
-          alignment: Alignment.topLeft,
-          maxHeight: height * 2,
-          child: ConstrainedBox(
-            constraints: BoxConstraints(maxHeight: height * 2),
-            child: FittedBox(
-              alignment: Alignment.centerLeft,
-              child: TypingIndicator(
-                visible: true,
+    return StreamBuilder<Map<String, dynamic>>(
+      stream: CurrentChat.getCurrentChat(widget.chat).stream,
+      builder: (BuildContext context, AsyncSnapshot snapshot) {
+        if (snapshot.connectionState == ConnectionState.active &&
+            snapshot.hasData &&
+            snapshot.data["type"] == CurrentChatEvent.TypingStatus) {
+          showTypingIndicator = snapshot.data["data"];
+        }
+        if (showTypingIndicator) {
+          double height = Theme.of(context).textTheme.subtitle1.fontSize;
+          double indicatorHeight = (height * 2).clamp(height, height + 13);
+          return Container(
+            height: height,
+            child: OverflowBox(
+              alignment: Alignment.topLeft,
+              maxHeight: indicatorHeight,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxHeight: indicatorHeight),
+                child: FittedBox(
+                  alignment: Alignment.centerLeft,
+                  child: TypingIndicator(
+                    visible: true,
+                  ),
+                ),
               ),
             ),
-          ),
-        ),
-      );
-    }
-
-    final hideContent = redactedMode && hideMessageContent;
-    final generateContent = redactedMode && generateFakeMessageContent;
-
-    TextStyle style = Theme.of(context).textTheme.subtitle1.apply(
-          color: Theme.of(context).textTheme.subtitle1.color.withOpacity(
-                0.85,
-              ),
-        );
-    String message = widget.chat.latestMessageText != null ? widget.chat.latestMessageText : "";
-
-    if (generateContent)
-      message = widget.chat.fakeLatestMessageText;
-    else if (hideContent) style = style.copyWith(color: Colors.transparent);
-
-    return widget.chat.latestMessageText != null && !(widget.chat.latestMessageText is String)
-        ? widget.chat.latestMessageText
-        : Text(
-            message != null ? message : "",
-            style: style,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
           );
+        }
+
+        final hideContent = redactedMode && hideMessageContent;
+        final generateContent = redactedMode && generateFakeMessageContent;
+
+        TextStyle style = Theme.of(context).textTheme.subtitle1.apply(
+              color: Theme.of(context).textTheme.subtitle1.color.withOpacity(
+                    0.85,
+                  ),
+            );
+        String message = widget.chat.latestMessageText != null ? widget.chat.latestMessageText : "";
+
+        if (generateContent)
+          message = widget.chat.fakeLatestMessageText;
+        else if (hideContent) style = style.copyWith(color: Colors.transparent);
+
+        return widget.chat.latestMessageText != null && !(widget.chat.latestMessageText is String)
+            ? widget.chat.latestMessageText
+            : Text(
+                message != null ? message : "",
+                style: style,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              );
+      },
+    );
   }
 
   Widget buildLeading() {
