@@ -1,13 +1,14 @@
 import 'dart:async';
 import 'dart:ui';
 
+import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/layouts/settings/custom_avatar_panel.dart';
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
 import 'package:bluebubbles/layouts/theming/theming_panel.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
-import 'package:bluebubbles/main.dart';
+import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:flutter/cupertino.dart';
@@ -27,11 +28,43 @@ class _ThemePanelState extends State<ThemePanel> {
   Settings _settingsCopy;
   List<DisplayMode> modes;
   DisplayMode currentMode;
+  Brightness brightness;
+  Color previousBackgroundColor;
+  bool gotBrightness = false;
 
   @override
   void initState() {
     super.initState();
     _settingsCopy = SettingsManager().settings;
+
+    // Listen for any incoming events
+    EventDispatcher().stream.listen((Map<String, dynamic> event) {
+      if (!event.containsKey("type")) return;
+
+      if (event["type"] == 'theme-update' && this.mounted) {
+        setState(() {
+          gotBrightness = false;
+        });
+      }
+    });
+  }
+
+  void loadBrightness() {
+    Color now = Theme.of(context).backgroundColor;
+    bool themeChanged = previousBackgroundColor == null || previousBackgroundColor != now;
+    if (!themeChanged && gotBrightness) return;
+
+    previousBackgroundColor = now;
+    if (this.context == null) {
+      brightness = Brightness.light;
+      gotBrightness = true;
+      return;
+    }
+
+    bool isDark = now.computeLuminance() < 0.179;
+    brightness = isDark ? Brightness.dark : Brightness.light;
+    gotBrightness = true;
+    if (this.mounted) setState(() {});
   }
 
   @override
@@ -82,12 +115,15 @@ class _ThemePanelState extends State<ThemePanel> {
               delegate: SliverChildListDelegate(
                 <Widget>[
                   Container(padding: EdgeInsets.only(top: 5.0)),
-                  SettingsOptions<ThemeMode>(
-                    initial: SettingsManager()?.settings?.theme ?? ThemeMode.system,
-                    onChanged: (val) async {
-                      ThemeController.to.setThemeMode(val);
+                  SettingsOptions<AdaptiveThemeMode>(
+                    initial: AdaptiveTheme.of(context).mode,
+                    onChanged: (val) {
+                      AdaptiveTheme.of(context).setThemeMode(val);
+
+                      // This needs to be on a delay so the background color has time to change
+                      Timer(Duration(seconds: 1), () => EventDispatcher().emit('theme-update', null));
                     },
-                    options: ThemeMode.values,
+                    options: AdaptiveThemeMode.values,
                     textProcessing: (dynamic val) => val.toString().split(".").last,
                     title: "App Theme",
                     showDivider: false,

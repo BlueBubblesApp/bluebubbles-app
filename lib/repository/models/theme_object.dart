@@ -250,7 +250,6 @@ class ThemeObject {
     }
 
     return ThemeData(
-        brightness: this.data?.brightness ?? Brightness.light,
         textTheme: TextTheme(
           headline1: data[ThemeColors.Headline1].style,
           headline2: data[ThemeColors.Headline2].style,
