@@ -1,3 +1,4 @@
+import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';

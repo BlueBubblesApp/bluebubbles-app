@@ -2,8 +2,6 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
-import 'package:bluebubbles/helpers/themes.dart';
-import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_list/conversation_list.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/setup/failure_to_start.dart';
@@ -16,6 +14,7 @@ import 'package:bluebubbles/managers/navigator_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/database.dart';
+import 'package:bluebubbles/repository/models/theme_object.dart';
 // import 'package:sentry/sentry.dart';
 
 import 'package:bluebubbles/socket_manager.dart';
@@ -24,6 +23,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart' hide Priority;
 import 'package:flutter/services.dart';
 import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
+import 'package:get/get.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
@@ -78,12 +78,20 @@ Future<Null> main() async {
   try {
     await DBProvider.db.initDB();
     await initializeDateFormatting('fr_FR', null);
+    await SettingsManager().getSavedSettings(headless: true);
   } catch (e) {
     exception = e;
   }
+
   if (exception == null) {
     runZonedGuarded<Future<Null>>(() async {
-      runApp(Main());
+      ThemeObject light = await ThemeObject.getLightTheme();
+      ThemeObject dark = await ThemeObject.getDarkTheme();
+
+      runApp(Main(
+        lightTheme: light.themeData,
+        darkTheme: dark.themeData,
+      ));
     }, (Object error, StackTrace stackTrace) async {
       // Whenever an error occurs, call the `_reportError` function. This sends
       // Dart errors to the dev console or Sentry depending on the environment.
@@ -102,20 +110,22 @@ Future<Null> main() async {
 ///     - [NavgatorManager]
 ///     - [Home] widget
 class Main extends StatelessWidget with WidgetsBindingObserver {
-  const Main({Key key}) : super(key: key);
+  final ThemeData darkTheme;
+  final ThemeData lightTheme;
+  const Main({Key key, @required this.lightTheme, @required this.darkTheme}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return AdaptiveTheme(
       /// These are the default white and dark themes.
       /// These will be changed by [SettingsManager] when you set a custom theme
-      light: whiteLightTheme,
-      dark: oledDarkTheme,
+      light: this.lightTheme,
+      dark: this.darkTheme,
 
       /// The default is that the dark and light themes will follow the system theme
       /// This will be changed by [SettingsManager]
       initial: AdaptiveThemeMode.system,
-      builder: (theme, darkTheme) => MaterialApp(
+      builder: (theme, darkTheme) => GetMaterialApp(
         /// Hide the debug banner in debug mode
         debugShowCheckedModeBanner: false,
 
@@ -154,6 +164,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
+
     // Initalize a bunch of managers
     SettingsManager().init();
     MethodChannelInterface().init();
@@ -166,8 +177,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
 
     // Get sharing media from files shared to the app from cold start
     // This one only handles files, not text
-    ReceiveSharingIntent.getInitialMedia()
-        .then((List<SharedMediaFile> value) async {
+    ReceiveSharingIntent.getInitialMedia().then((List<SharedMediaFile> value) async {
       if (value == null) return;
 
       // If we don't have storage permission, we can't do anything
@@ -233,8 +243,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     );
 
     // Get the saved settings from the settings manager after the first frame
-    SchedulerBinding.instance.addPostFrameCallback(
-        (_) => SettingsManager().getSavedSettings(context: context));
+    SchedulerBinding.instance.addPostFrameCallback((_) => SettingsManager().getSavedSettings(context: context));
 
     // Bind the lifecycle events
     WidgetsBinding.instance.addObserver(this);
@@ -271,16 +280,12 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
-      systemNavigationBarColor:
-          Theme.of(context).backgroundColor, // navigation bar color
-      systemNavigationBarIconBrightness: getBrightness(context),
+      systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
       statusBarColor: Colors.transparent, // status bar color
     ));
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle(
-        systemNavigationBarColor: Theme.of(context).backgroundColor,
-      ),
+      value: SystemUiOverlayStyle(systemNavigationBarColor: Theme.of(context).backgroundColor),
       child: Scaffold(
         backgroundColor: Colors.black,
         // The stream builder connects to the [SocketManager] to check if the app has finished the setup or not

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:ui';
 
+import 'package:get/get.dart';
 import 'package:bluebubbles/blocs/text_field_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -257,11 +258,21 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
   }
 
   Future<void> initializeCameraController() async {
+    // If we are already initialized, don't do anything
+    bool alreadyInit = cameraController?.value?.isInitialized ?? false;
+    if (alreadyInit) {
+      await cameraController.dispose();
+    }
+
+    // Enumerate the cameras
     cameras = await availableCameras();
 
     // Disable audio so that background music doesn't stop playing
     cameraController = CameraController(cameras[cameraIndex], ResolutionPreset.max, enableAudio: false);
+
+    // Initialize the camera, then update the state
     await cameraController.initialize();
+    if (this.mounted) setState(() {});
   }
 
   Future<void> toggleShareMenu() async {

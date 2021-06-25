@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/share.dart';
@@ -34,7 +35,7 @@ class _VideoViewerState extends State<VideoViewer> {
   void initState() {
     super.initState();
     controller = new VideoPlayerController.file(widget.file);
-    controller.setVolume(1);
+    controller.setVolume(0);
     this.createListener(controller);
     showPlayPauseOverlay = !controller.value.isPlaying;
   }
@@ -164,8 +165,8 @@ class _VideoViewerState extends State<VideoViewer> {
                     children: <Widget>[
                       Container(
                         constraints: BoxConstraints(
-                          maxHeight: MediaQuery.of(context).size.height,
-                          maxWidth: MediaQuery.of(context).size.width,
+                          maxHeight: Get.mediaQuery.size.height,
+                          maxWidth: Get.mediaQuery.size.width,
                         ),
                         child: AspectRatio(
                           aspectRatio: controller.value.aspectRatio,
@@ -233,7 +234,7 @@ class _VideoViewerState extends State<VideoViewer> {
                             children: [
                               Expanded(
                                 child: SizedBox(
-                                  height: MediaQuery.of(context).size.height * 1 / 10,
+                                  height: Get.mediaQuery.size.height * 1 / 10,
                                   child: Slider(
                                     min: 0,
                                     max: controller.value.duration.inMilliseconds.toDouble(),

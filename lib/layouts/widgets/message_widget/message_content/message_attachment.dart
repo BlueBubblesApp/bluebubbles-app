@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/attachment_downloader_widget.dart';
@@ -64,7 +65,7 @@ class _MessageAttachmentState extends State<MessageAttachment> with AutomaticKee
       borderRadius: BorderRadius.circular(20),
       child: Container(
         constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 3 / 4,
+          maxWidth: Get.mediaQuery.size.width * 3 / 4,
           // maxHeight: 600,
         ),
         child: _buildAttachmentWidget(),

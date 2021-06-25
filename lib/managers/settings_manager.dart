@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
+import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/models/fcm_data.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
@@ -10,6 +11,7 @@ import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
+import 'package:get/get.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -77,16 +79,9 @@ class SettingsManager {
     for (ThemeObject theme in themes) {
       await theme.fetchData();
     }
-    // If [context] is null, then we can't set the theme, and we shouldn't anyway
-    if (context != null) {
-      // Set the theme to match those of the settings
-      ThemeObject light = await ThemeObject.getLightTheme();
-      ThemeObject dark = await ThemeObject.getDarkTheme();
-      AdaptiveTheme.of(context).setTheme(
-        light: light.themeData,
-        dark: dark.themeData,
-      );
-    }
+
+    // // If [context] is null, then we can't set the theme, and we shouldn't anyway
+    await loadTheme(context);
 
     try {
       // Set the [displayMode] to that saved in settings
@@ -101,8 +96,10 @@ class SettingsManager {
 
     // If we aren't running in the background, then we should auto start the socket and authorize fcm just in case we haven't
     if (!headless) {
-      SocketManager().startSocketIO();
-      SocketManager().authFCM();
+      try {
+        SocketManager().startSocketIO();
+        SocketManager().authFCM();
+      } catch (e) {}
     }
   }
 

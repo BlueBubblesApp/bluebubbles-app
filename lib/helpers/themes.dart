@@ -1,3 +1,4 @@
+import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/repository/models/theme_object.dart';
 import 'package:flutter/material.dart';
@@ -142,3 +143,15 @@ ThemeData whiteLightTheme = ThemeData(
   dividerColor: HexColor('e5e5ea').withOpacity(0.5),
   backgroundColor: Colors.white,
 );
+
+Future<void> loadTheme(BuildContext context, {ThemeObject lightOverride, ThemeObject darkOverride}) async {
+  if (context == null) return;
+
+  // Set the theme to match those of the settings
+  ThemeObject light = lightOverride ?? await ThemeObject.getLightTheme();
+  ThemeObject dark = darkOverride ?? await ThemeObject.getDarkTheme();
+  AdaptiveTheme.of(context).setTheme(
+    light: light.themeData,
+    dark: dark.themeData,
+  );
+}

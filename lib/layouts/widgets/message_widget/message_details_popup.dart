@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:ui';
 
+import 'package:get/get.dart';
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
@@ -96,8 +97,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
     SchedulerBinding.instance.addPostFrameCallback((_) {
       if (this.mounted) {
         setState(() {
-          double totalHeight =
-              MediaQuery.of(context).size.height - MediaQuery.of(context).viewInsets.bottom - detailsMenuHeight - 20;
+          double totalHeight = Get.mediaQuery.size.height - Get.mediaQuery.viewInsets.bottom - detailsMenuHeight - 20;
           double offset = (widget.childOffset.dy + widget.childSize.height) - totalHeight;
           messageTopOffset = widget.childOffset.dy.clamp(topMinimum + 40, double.infinity);
           if (offset > 0) {
@@ -207,7 +207,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                             child: Container(
                               alignment: Alignment.center,
                               height: 120,
-                              width: MediaQuery.of(context).size.width - 20,
+                              width: Get.mediaQuery.size.width - 20,
                               color: Theme.of(context).accentColor,
                               child: Padding(
                                 padding: EdgeInsets.symmetric(horizontal: 0),
@@ -242,7 +242,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
   }
 
   Widget buildReactionMenu() {
-    Size size = MediaQuery.of(context).size;
+    Size size = Get.mediaQuery.size;
 
     double reactionIconSize = ((8.5 / 10 * size.width) / (ReactionTypes.toList().length).toDouble());
     double maxMenuWidth = (ReactionTypes.toList().length * reactionIconSize).toDouble();
@@ -250,7 +250,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
     double topPadding = -20;
     double topOffset = (messageTopOffset - menuHeight)
         .toDouble()
-        .clamp(topMinimum, size.height - MediaQuery.of(context).viewInsets.bottom - 120 - menuHeight);
+        .clamp(topMinimum, size.height - Get.mediaQuery.viewInsets.bottom - 120 - menuHeight);
     double leftOffset =
         (widget.message.isFromMe ? size.width - maxMenuWidth - 25 : 25 + (currentChat.chat.isGroup() ? 20 : 0))
             .toDouble();
@@ -339,7 +339,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
   }
 
   Widget buildCopyPasteMenu() {
-    Size size = MediaQuery.of(context).size;
+    Size size = Get.mediaQuery.size;
 
     double maxMenuWidth = size.width * 2 / 3;
 
@@ -538,7 +538,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                     );
                     Widget content = Container(
                       constraints: BoxConstraints(
-                        maxHeight: MediaQuery.of(context).size.height * 2 / 3,
+                        maxHeight: Get.mediaQuery.size.height * 2 / 3,
                       ),
                       child: SingleChildScrollView(
                         physics: ThemeSwitcher.getScrollPhysics(),
@@ -706,7 +706,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
       ),
     );
 
-    double upperLimit = size.height - MediaQuery.of(context).viewInsets.bottom - detailsMenuHeight;
+    double upperLimit = size.height - Get.mediaQuery.viewInsets.bottom - detailsMenuHeight;
     if (topMinimum > upperLimit) {
       topMinimum = upperLimit;
     }

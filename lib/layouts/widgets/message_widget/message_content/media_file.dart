@@ -1,3 +1,4 @@
+import 'package:get/get.dart';
 import 'package:bluebubbles/layouts/widgets/circle_progress_bar.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';

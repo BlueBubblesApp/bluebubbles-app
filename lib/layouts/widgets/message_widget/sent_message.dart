@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:get/get.dart';
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
@@ -91,7 +92,7 @@ class SentMessageHelper {
               right: margin ? 10 : 0,
             ),
             constraints: BoxConstraints(
-              maxWidth: MediaQuery.of(context).size.width * MessageWidgetMixin.MAX_SIZE + (!padding ? 100 : 0),
+              maxWidth: Get.mediaQuery.size.width * MessageWidgetMixin.MAX_SIZE + (!padding ? 100 : 0),
             ),
             padding: EdgeInsets.symmetric(
               vertical: padding ? 8 : 0,

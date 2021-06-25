@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:ui';
 
+import 'package:get/get.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/setup_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
@@ -40,11 +41,7 @@ class _ConversationListState extends State<ConversationList> {
   bool showSyncIndicator = false;
   bool moveChatCreatorButton = false;
 
-  Brightness brightness = Brightness.light;
-  Color previousBackgroundColor;
-
   Color currentHeaderColor;
-  bool gotBrightness = false;
   bool hasPinnedChata = false;
 
   // ignore: close_sinks
@@ -139,18 +136,10 @@ class _ConversationListState extends State<ConversationList> {
     EventDispatcher().stream.listen((Map<String, dynamic> event) {
       if (!event.containsKey("type")) return;
 
-      if (event["type"] == 'show-snackbar') {
-        // Make sure that the app is open and the conversation list is present
-        if (!LifeCycleManager().isAlive || CurrentChat.activeChat != null || context == null) return;
-        final snackBar = SnackBar(content: Text(event["data"]["text"]));
-        Scaffold.of(context).hideCurrentSnackBar();
-        Scaffold.of(context).showSnackBar(snackBar);
-      } else if (event["type"] == 'refresh' && this.mounted) {
+      if (event["type"] == 'refresh' && this.mounted) {
         setState(() {});
       } else if (event["type"] == 'theme-update' && this.mounted) {
-        setState(() {
-          gotBrightness = false;
-        });
+        setState(() {});
       }
     });
   }
@@ -165,24 +154,6 @@ class _ConversationListState extends State<ConversationList> {
 
   void scrollListener() {
     !_isAppBarExpanded ? theme = Colors.transparent : theme = Theme.of(context).accentColor.withOpacity(0.5);
-  }
-
-  void loadBrightness() {
-    Color now = Theme.of(context).backgroundColor;
-    bool themeChanged = previousBackgroundColor == null || previousBackgroundColor != now;
-    if (!themeChanged && gotBrightness) return;
-
-    previousBackgroundColor = now;
-    if (this.context == null) {
-      brightness = Brightness.light;
-      gotBrightness = true;
-      return;
-    }
-
-    bool isDark = now.computeLuminance() < 0.179;
-    brightness = isDark ? Brightness.dark : Brightness.light;
-    gotBrightness = true;
-    if (this.mounted) setState(() {});
   }
 
   bool get _isAppBarExpanded {
@@ -209,7 +180,8 @@ class _ConversationListState extends State<ConversationList> {
           if (skinSet == Skins.IOS) {
             return Theme(
               data: ThemeData(
-                cupertinoOverrideTheme: CupertinoThemeData(brightness: brightness),
+                cupertinoOverrideTheme: CupertinoThemeData(
+                    brightness: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor)),
               ),
               child: CupertinoActivityIndicator(
                 radius: 6.5,
@@ -359,7 +331,6 @@ class _ConversationListState extends State<ConversationList> {
 
   @override
   Widget build(BuildContext context) {
-    loadBrightness();
     return ThemeSwitcher(
       iOSSkin: _Cupertino(parent: this),
       materialSkin: _Material(parent: this),
@@ -375,6 +346,7 @@ class _Cupertino extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Brightness brightness = ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor);
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: Theme.of(context).backgroundColor,
@@ -382,7 +354,7 @@ class _Cupertino extends StatelessWidget {
       child: Scaffold(
         appBar: PreferredSize(
           preferredSize: Size(
-            MediaQuery.of(context).size.width,
+            Get.mediaQuery.size.width,
             parent.reducedForehead ? 10 : 40,
           ),
           child: ClipRRect(
@@ -400,7 +372,7 @@ class _Cupertino extends StatelessWidget {
                         elevation: 0,
                         backgroundColor: parent.theme,
                         centerTitle: true,
-                        brightness: parent.brightness,
+                        brightness: brightness,
                         title: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: <Widget>[
@@ -414,7 +386,7 @@ class _Cupertino extends StatelessWidget {
                       firstChild: AppBar(
                         leading: new Container(),
                         elevation: 0,
-                        brightness: parent.brightness,
+                        brightness: brightness,
                         backgroundColor: Theme.of(context).backgroundColor,
                       ),
                     );
@@ -596,30 +568,9 @@ class _Material extends StatefulWidget {
 }
 
 class __MaterialState extends State<_Material> {
-  Brightness brightness;
   DisplayMode currentMode;
-  bool gotBrightness = false;
   List<DisplayMode> modes;
-  Color previousBackgroundColor;
   List<Chat> selected = [];
-
-  void loadBrightness() {
-    Color now = Theme.of(context).backgroundColor;
-    bool themeChanged = previousBackgroundColor == null || previousBackgroundColor != now;
-    if (!themeChanged && gotBrightness) return;
-
-    previousBackgroundColor = now;
-    if (this.context == null) {
-      brightness = Brightness.light;
-      gotBrightness = true;
-      return;
-    }
-
-    bool isDark = now.computeLuminance() < 0.179;
-    brightness = isDark ? Brightness.dark : Brightness.light;
-    gotBrightness = true;
-    if (this.mounted) setState(() {});
-  }
 
   bool hasPinnedChat() {
     for (var i = 0; i < widget.parent.chats.length; i++) {
@@ -766,7 +717,6 @@ class __MaterialState extends State<_Material> {
   @override
   Widget build(BuildContext context) {
     hasPinnedChat();
-    loadBrightness();
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
@@ -780,7 +730,7 @@ class __MaterialState extends State<_Material> {
             child: selected.isEmpty
                 ? AppBar(
                     iconTheme: IconThemeData(color: Theme.of(context).primaryColor),
-                    brightness: brightness,
+                    brightness: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor),
                     bottom: PreferredSize(
                       child: Container(
                         color: Theme.of(context).dividerColor,
@@ -860,7 +810,27 @@ class __MaterialState extends State<_Material> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
-                            if (selected.length <= 1)
+                            if (([0, selected.length])
+                                .contains(selected.where((element) => element.hasUnreadMessage).length))
+                              GestureDetector(
+                                onTap: () {
+                                  selected.forEach((element) async {
+                                    element.hasUnreadMessage = !element.hasUnreadMessage;
+                                    await element.save(updateLocalVals: true);
+                                  });
+                                  if (this.mounted) setState(() {});
+                                  selected = [];
+                                  setState(() {});
+                                },
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Icon(
+                                    selected[0].hasUnreadMessage ? Icons.mark_chat_read : Icons.mark_chat_unread,
+                                    color: Theme.of(context).textTheme.bodyText1.color,
+                                  ),
+                                ),
+                              ),
+                            if (([0, selected.length]).contains(selected.where((element) => element.isMuted).length))
                               GestureDetector(
                                 onTap: () {
                                   selected.forEach((element) async {
@@ -874,7 +844,28 @@ class __MaterialState extends State<_Material> {
                                 child: Padding(
                                   padding: const EdgeInsets.all(8.0),
                                   child: Icon(
-                                    Icons.notifications_off,
+                                    selected[0].isMuted ? Icons.notifications_active : Icons.notifications_off,
+                                    color: Theme.of(context).textTheme.bodyText1.color,
+                                  ),
+                                ),
+                              ),
+                            if (([0, selected.length]).contains(selected.where((element) => element.isPinned).length))
+                              GestureDetector(
+                                onTap: () {
+                                  selected.forEach((element) {
+                                    if (element.isPinned) {
+                                      element.unpin();
+                                    } else {
+                                      element.pin();
+                                    }
+                                  });
+                                  selected = [];
+                                  setState(() {});
+                                },
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Icon(
+                                    selected[0].isPinned ? Icons.star_outline : Icons.star,
                                     color: Theme.of(context).textTheme.bodyText1.color,
                                   ),
                                 ),
@@ -899,26 +890,24 @@ class __MaterialState extends State<_Material> {
                                 ),
                               ),
                             ),
-                            GestureDetector(
-                              onTap: () {
-                                selected.forEach((element) {
-                                  if (element.isPinned) {
-                                    element.unpin();
-                                  } else {
-                                    element.pin();
-                                  }
-                                });
-                                selected = [];
-                                setState(() {});
-                              },
-                              child: Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Icon(
-                                  Icons.star,
-                                  color: Theme.of(context).textTheme.bodyText1.color,
+                            if (selected[0].isArchived)
+                              GestureDetector(
+                                onTap: () {
+                                  selected.forEach((element) {
+                                    ChatBloc().deleteChat(element);
+                                    Chat.deleteChat(element);
+                                  });
+                                  selected = [];
+                                  setState(() {});
+                                },
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Icon(
+                                    Icons.delete_forever,
+                                    color: Theme.of(context).textTheme.bodyText1.color,
+                                  ),
                                 ),
                               ),
-                            ),
                           ],
                         ),
                       ],
@@ -1049,30 +1038,9 @@ class _Samsung extends StatefulWidget {
 }
 
 class _SamsungState extends State<_Samsung> {
-  Brightness brightness;
   DisplayMode currentMode;
-  bool gotBrightness = false;
   List<DisplayMode> modes;
-  Color previousBackgroundColor;
   List<Chat> selected = [];
-
-  void loadBrightness() {
-    Color now = Theme.of(context).backgroundColor;
-    bool themeChanged = previousBackgroundColor == null || previousBackgroundColor != now;
-    if (!themeChanged && gotBrightness) return;
-
-    previousBackgroundColor = now;
-    if (this.context == null) {
-      brightness = Brightness.light;
-      gotBrightness = true;
-      return;
-    }
-
-    bool isDark = now.computeLuminance() < 0.179;
-    brightness = isDark ? Brightness.dark : Brightness.light;
-    gotBrightness = true;
-    if (this.mounted) setState(() {});
-  }
 
   bool hasPinnedChat() {
     for (var i = 0; i < widget.parent.chats.length; i++) {
@@ -1218,7 +1186,6 @@ class _SamsungState extends State<_Samsung> {
 
   @override
   Widget build(BuildContext context) {
-    loadBrightness();
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: Theme.of(context).backgroundColor,
@@ -1232,7 +1199,7 @@ class _SamsungState extends State<_Samsung> {
                 ? AppBar(
                     shadowColor: Colors.transparent,
                     iconTheme: IconThemeData(color: Theme.of(context).primaryColor),
-                    brightness: brightness,
+                    brightness: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor),
                     bottom: PreferredSize(
                       child: Container(
                         color: Theme.of(context).dividerColor,

@@ -1,3 +1,4 @@
+import 'package:get/get.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/sent_message.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
@@ -65,7 +66,7 @@ class _SendWidgetState extends State<SendWidget> {
         children: [
           Container(
             constraints: BoxConstraints(
-              minWidth: MediaQuery.of(context).size.width * 3 / 37,
+              minWidth: Get.mediaQuery.size.width * 3 / 37,
             ),
             child: SentMessageHelper.buildMessageWithTail(
               context,
@@ -106,7 +107,7 @@ class _SendWidgetState extends State<SendWidget> {
                   fillColor: Colors.transparent,
                   border: InputBorder.none,
                 ),
-                autofocus: MediaQuery.of(context).viewInsets.bottom > 0,
+                autofocus: Get.mediaQuery.viewInsets.bottom > 0,
               ),
             ),
             Padding(
@@ -144,7 +145,7 @@ class _SendWidgetState extends State<SendWidget> {
   Widget buildAnimation(flightContext, _animation, flightDirection, fromHeroContext, toHeroContext) {
     Animation<double> animation = _animation.drive(
       Tween<double>(
-        end: MediaQuery.of(context).size.width * 3 / 4 + 37,
+        end: Get.mediaQuery.size.width * 3 / 4 + 37,
         begin: 0,
       ),
     );
@@ -172,8 +173,8 @@ class _SendWidgetState extends State<SendWidget> {
                     constraints: BoxConstraints(
                       minWidth: animation.value,
                       maxWidth: animation.value.clamp(
-                        MediaQuery.of(context).size.width * MessageWidgetMixin.MAX_SIZE,
-                        MediaQuery.of(context).size.width * 3 / 4 + 37,
+                        Get.mediaQuery.size.width * MessageWidgetMixin.MAX_SIZE,
+                        Get.mediaQuery.size.width * 3 / 4 + 37,
                       ),
                     ),
                     child: child,

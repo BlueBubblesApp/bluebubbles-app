@@ -1,3 +1,4 @@
+import 'package:get/get.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:clipboard/clipboard.dart';
 import 'package:flutter/material.dart';

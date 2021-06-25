@@ -1,3 +1,4 @@
+import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
@@ -156,7 +157,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
             right: 10,
           ),
           constraints: BoxConstraints(
-            maxWidth: MediaQuery.of(context).size.width * MessageWidgetMixin.MAX_SIZE,
+            maxWidth: Get.mediaQuery.size.width * MessageWidgetMixin.MAX_SIZE,
           ),
           padding: EdgeInsets.symmetric(
             vertical: 8,
