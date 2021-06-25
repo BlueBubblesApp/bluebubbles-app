@@ -38,7 +38,7 @@ class _VideoWidgetState extends State<VideoWidget> with TickerProviderStateMixin
   Uint8List thumbnail;
   PlayerStatus status = PlayerStatus.NONE;
   bool hasListener = false;
-  bool muted = false;
+  bool muted = true;
 
   @override
   void initState() {
