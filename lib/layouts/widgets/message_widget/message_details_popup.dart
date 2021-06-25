@@ -631,38 +631,39 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
             ),
           ),
         ),
-      Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () async {
-            if (widget.message.hasAttachments && !widget.message.isUrlPreview()) {
-              for (Attachment element in widget.message.attachments) {
-                await Share.file(
-                  "Shared ${element.mimeType.split("/")[0]} from BlueBubbles: ${element.transferName}",
-                  element.transferName,
-                  element.getPath(),
-                  element.mimeType,
+      if (widget.message.hasAttachments || widget.message.text.length > 0)
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () async {
+              if (widget.message.hasAttachments && !widget.message.isUrlPreview()) {
+                for (Attachment element in widget.message.attachments) {
+                  await Share.file(
+                    "Shared ${element.mimeType.split("/")[0]} from BlueBubbles: ${element.transferName}",
+                    element.transferName,
+                    element.getPath(),
+                    element.mimeType,
+                  );
+                }
+              } else if (widget.message.text.length > 0) {
+                await Share.text(
+                  "Shared text from BlueBubbles: ${widget.message.text}",
+                  widget.message.text,
                 );
               }
-            } else {
-              await Share.text(
-                "Shared text from BlueBubbles: ${widget.message.text}",
-                widget.message.text,
-              );
-            }
-          },
-          child: ListTile(
-            title: Text(
-              "Share",
-              style: Theme.of(context).textTheme.bodyText1,
-            ),
-            trailing: Icon(
-              Icons.share,
-              color: Theme.of(context).textTheme.bodyText1.color,
+            },
+            child: ListTile(
+              title: Text(
+                "Share",
+                style: Theme.of(context).textTheme.bodyText1,
+              ),
+              trailing: Icon(
+                Icons.share,
+                color: Theme.of(context).textTheme.bodyText1.color,
+              ),
             ),
           ),
         ),
-      ),
     ];
 
     List<Widget> detailsActions = [];
