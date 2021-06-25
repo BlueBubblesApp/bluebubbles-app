@@ -25,6 +25,14 @@ class Share {
     await _channel.invokeMethod('share-file', argsMap);
   }
 
+  /// Share text with other apps.
+  static Future<void> text(String subject, String text) async {
+    Map<String, dynamic> argsMap = Map<String, dynamic>();
+
+    argsMap.addAll({'subject': '$subject', 'text': '$text'});
+    await _channel.invokeMethod('share-text', argsMap);
+  }
+
   static Future<void> location(Chat chat) async {
     // If we don't have a permission, return
     if (!(await Permission.locationWhenInUse.request().isGranted)) return;
