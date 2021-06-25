@@ -20,7 +20,6 @@ class Themes {
 }
 
 ThemeData oledDarkTheme = ThemeData(
-  brightness: Brightness.dark,
   primarySwatch: Colors.blue,
   splashFactory: InkRipple.splashFactory,
   textTheme: TextTheme(
@@ -63,7 +62,6 @@ ThemeData oledDarkTheme = ThemeData(
 );
 
 ThemeData nordDarkTheme = ThemeData(
-  brightness: Brightness.dark,
   primarySwatch: Colors.blue,
   splashFactory: InkRipple.splashFactory,
   textTheme: TextTheme(
@@ -106,7 +104,6 @@ ThemeData nordDarkTheme = ThemeData(
 );
 
 ThemeData whiteLightTheme = ThemeData(
-  brightness: Brightness.light,
   primarySwatch: Colors.blue,
   splashFactory: InkRipple.splashFactory,
   textTheme: TextTheme(
