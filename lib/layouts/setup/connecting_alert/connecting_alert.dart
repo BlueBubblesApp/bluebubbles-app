@@ -1,3 +1,4 @@
+import 'package:get/get.dart';
 import 'package:bluebubbles/layouts/setup/connecting_alert/failed_to_connect_dialog.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/material.dart';

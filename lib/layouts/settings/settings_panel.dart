@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:ui';
 
+import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import "package:bluebubbles/helpers/string_extension.dart";
@@ -44,9 +45,6 @@ class _SettingsPanelState extends State<SettingsPanel> {
   FCMData _fcmDataCopy;
   bool needToReconnect = false;
   bool showUrl = false;
-  Brightness brightness;
-  Color previousBackgroundColor;
-  bool gotBrightness = false;
   int lastRestart;
 
   @override
@@ -60,35 +58,13 @@ class _SettingsPanelState extends State<SettingsPanel> {
       if (!event.containsKey("type")) return;
 
       if (event["type"] == 'theme-update' && this.mounted) {
-        setState(() {
-          gotBrightness = false;
-        });
+        setState(() {});
       }
     });
   }
 
-  void loadBrightness() {
-    Color now = Theme.of(context).backgroundColor;
-    bool themeChanged = previousBackgroundColor == null || previousBackgroundColor != now;
-    if (!themeChanged && gotBrightness) return;
-
-    previousBackgroundColor = now;
-    if (this.context == null) {
-      brightness = Brightness.light;
-      gotBrightness = true;
-      return;
-    }
-
-    bool isDark = now.computeLuminance() < 0.179;
-    brightness = isDark ? Brightness.dark : Brightness.light;
-    gotBrightness = true;
-    if (this.mounted) setState(() {});
-  }
-
   @override
   Widget build(BuildContext context) {
-    loadBrightness();
-
     Widget nextIcon = Icon(
       SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_forward_ios : Icons.arrow_forward,
       color: Theme.of(context).primaryColor,
@@ -101,11 +77,11 @@ class _SettingsPanelState extends State<SettingsPanel> {
       child: Scaffold(
         backgroundColor: Theme.of(context).backgroundColor,
         appBar: PreferredSize(
-          preferredSize: Size(MediaQuery.of(context).size.width, 80),
+          preferredSize: Size(Get.mediaQuery.size.width, 80),
           child: ClipRRect(
             child: BackdropFilter(
               child: AppBar(
-                brightness: brightness,
+                brightness: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor),
                 toolbarHeight: 100.0,
                 elevation: 0,
                 leading: IconButton(
@@ -193,8 +169,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                           },
                           onLongPress: () {
                             Clipboard.setData(new ClipboardData(text: _settingsCopy.serverAddress));
-                            final snackBar = SnackBar(content: Text("Address copied to clipboard"));
-                            Scaffold.of(context).showSnackBar(snackBar);
+                            showSnackbar('Copied', "Address copied to clipboard");
                           },
                           trailing: getIndicatorIcon(connectionStatus),
                         );
@@ -682,7 +657,7 @@ class _SettingsOptionsState<T> extends State<SettingsOptions<T>> {
                       return DropdownMenuItem(
                         value: e,
                         child: Text(
-                          widget.textProcessing(e).capitalize(),
+                          GetUtils.capitalize(widget.textProcessing(e)),
                           style: Theme.of(context).textTheme.bodyText1,
                         ),
                       );

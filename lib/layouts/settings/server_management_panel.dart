@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:ui';
 
+import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/share.dart';
@@ -24,9 +25,6 @@ class ServerManagementPanel extends StatefulWidget {
 class _ServerManagementPanelState extends State<ServerManagementPanel> {
   int latency;
   String fetchStatus;
-  Brightness brightness;
-  Color previousBackgroundColor;
-  bool gotBrightness = false;
 
   // Restart trackers
   int lastRestart;
@@ -34,27 +32,8 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
   bool isRestarting = false;
   bool isRestartingMessages = false;
 
-  void loadBrightness() {
-    Color now = Theme.of(context).backgroundColor;
-    bool themeChanged = previousBackgroundColor == null || previousBackgroundColor != now;
-    if (!themeChanged && gotBrightness) return;
-
-    previousBackgroundColor = now;
-    if (this.context == null) {
-      brightness = Brightness.light;
-      gotBrightness = true;
-      return;
-    }
-
-    bool isDark = now.computeLuminance() < 0.179;
-    brightness = isDark ? Brightness.dark : Brightness.light;
-    gotBrightness = true;
-    if (this.mounted) setState(() {});
-  }
-
   @override
   Widget build(BuildContext context) {
-    loadBrightness();
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: Theme.of(context).backgroundColor,
@@ -62,11 +41,11 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
       child: Scaffold(
         backgroundColor: Theme.of(context).backgroundColor,
         appBar: PreferredSize(
-          preferredSize: Size(MediaQuery.of(context).size.width, 80),
+          preferredSize: Size(Get.mediaQuery.size.width, 80),
           child: ClipRRect(
             child: BackdropFilter(
               child: AppBar(
-                brightness: brightness,
+                brightness: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor),
                 toolbarHeight: 100.0,
                 elevation: 0,
                 leading: IconButton(
@@ -370,18 +349,19 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                           List<Widget> metaWidgets = [
                             RichText(
                                 text: TextSpan(children: [
-                                  TextSpan(
-                                      text: "MacOS Version: ",
-                                      style: Theme.of(context).textTheme.bodyText1.apply(fontWeightDelta: 2)),
-                                  TextSpan(text: res['data']['os_version'], style: Theme.of(context).textTheme.bodyText1)
-                                ])),
+                              TextSpan(
+                                  text: "MacOS Version: ",
+                                  style: Theme.of(context).textTheme.bodyText1.apply(fontWeightDelta: 2)),
+                              TextSpan(text: res['data']['os_version'], style: Theme.of(context).textTheme.bodyText1)
+                            ])),
                             RichText(
                                 text: TextSpan(children: [
-                                  TextSpan(
-                                      text: "BlueBubbles Server Version: ",
-                                      style: Theme.of(context).textTheme.bodyText1.apply(fontWeightDelta: 2)),
-                                  TextSpan(text: res['data']['server_version'], style: Theme.of(context).textTheme.bodyText1)
-                                ]))
+                              TextSpan(
+                                  text: "BlueBubbles Server Version: ",
+                                  style: Theme.of(context).textTheme.bodyText1.apply(fontWeightDelta: 2)),
+                              TextSpan(
+                                  text: res['data']['server_version'], style: Theme.of(context).textTheme.bodyText1)
+                            ]))
                           ];
                           showDialog(
                             context: context,
@@ -393,8 +373,8 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                               ),
                               backgroundColor: Theme.of(context).accentColor,
                               content: SizedBox(
-                                width: MediaQuery.of(context).size.width * 3 / 5,
-                                height: MediaQuery.of(context).size.height * 1 / 4,
+                                width: Get.mediaQuery.size.width * 3 / 5,
+                                height: Get.mediaQuery.size.height * 1 / 4,
                                 child: Container(
                                   padding: EdgeInsets.all(10.0),
                                   decoration: BoxDecoration(
@@ -413,8 +393,8 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                                   child: Text(
                                     "Close",
                                     style: Theme.of(context).textTheme.bodyText1.copyWith(
-                                      color: Theme.of(context).primaryColor,
-                                    ),
+                                          color: Theme.of(context).primaryColor,
+                                        ),
                                   ),
                                   onPressed: () => Navigator.of(context).pop(),
                                 ),

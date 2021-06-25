@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/text_field/blue_bubbles_text_field.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
@@ -48,7 +49,7 @@ class _CameraWidgetState extends State<CameraWidget> with WidgetsBindingObserver
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     // Call the [LifeCycleManager] events based on the [state]
-    if (state == AppLifecycleState.paused && controller != null) {
+    if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive && controller != null) {
       controller?.dispose();
     } else if (state == AppLifecycleState.resumed) {
       initCameras();
@@ -61,13 +62,8 @@ class _CameraWidgetState extends State<CameraWidget> with WidgetsBindingObserver
       debugPrint("Disposing of camera!");
       controller?.dispose();
     }
-    super.dispose();
-  }
 
-  void showSnackbar(String text) {
-    if (context == null) return;
-    final snackBar = SnackBar(content: Text(text));
-    Scaffold.of(context).showSnackBar(snackBar);
+    super.dispose();
   }
 
   Future<void> openFullCamera({String type: 'camera'}) async {
@@ -97,7 +93,7 @@ class _CameraWidgetState extends State<CameraWidget> with WidgetsBindingObserver
 
     if (controller == null || !controller.value.isInitialized) return Container();
     return AspectRatio(
-      aspectRatio: MediaQuery.of(context).orientation == Orientation.portrait
+      aspectRatio: Get.mediaQuery.orientation == Orientation.portrait
           ? (controller.value.previewSize.height / controller.value.previewSize.width)
           : 1 / (controller.value.previewSize.height / controller.value.previewSize.width),
       child: Stack(
@@ -132,11 +128,11 @@ class _CameraWidgetState extends State<CameraWidget> with WidgetsBindingObserver
         children: <Widget>[
           RotatedBox(
             child: CameraPreview(controller),
-            quarterTurns: MediaQuery.of(context).orientation == Orientation.portrait ? 0 : 3,
+            quarterTurns: Get.mediaQuery.orientation == Orientation.portrait ? 0 : 3,
           ),
           Padding(
             padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).size.height / 30,
+              bottom: Get.mediaQuery.size.height / 30,
             ),
             child: FlatButton(
               color: Colors.transparent,
@@ -148,13 +144,13 @@ class _CameraWidgetState extends State<CameraWidget> with WidgetsBindingObserver
 
                 // Fail if the file doesn't exist after taking the picture
                 if (!file.existsSync()) {
-                  return this.showSnackbar('Failed to take picture! File improperly saved by Camera lib');
+                  return showSnackbar('Error', 'Failed to take picture! File improperly saved by Camera lib');
                 }
 
                 // Fail if the file size is equal to 0
                 if (file.statSync().size == 0) {
                   file.deleteSync();
-                  return this.showSnackbar('Failed to take picture! File was empty!');
+                  return showSnackbar('Error', 'Failed to take picture! File was empty!');
                 }
 
                 // If all passes, add the attachment
@@ -173,7 +169,7 @@ class _CameraWidgetState extends State<CameraWidget> with WidgetsBindingObserver
         alignment: Alignment.topLeft,
         child: Padding(
           padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).size.height / 30,
+            bottom: Get.mediaQuery.size.height / 30,
           ),
           child: FlatButton(
             padding: EdgeInsets.only(left: 10),
@@ -195,7 +191,7 @@ class _CameraWidgetState extends State<CameraWidget> with WidgetsBindingObserver
         alignment: Alignment.topCenter,
         child: Padding(
           padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).size.height / 30,
+            bottom: Get.mediaQuery.size.height / 30,
           ),
           child: FlatButton(
             padding: EdgeInsets.all(0),
@@ -215,7 +211,7 @@ class _CameraWidgetState extends State<CameraWidget> with WidgetsBindingObserver
       ),
       Padding(
         padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).size.height / 30,
+          bottom: Get.mediaQuery.size.height / 30,
         ),
         child: FlatButton(
           padding: EdgeInsets.only(right: 10),

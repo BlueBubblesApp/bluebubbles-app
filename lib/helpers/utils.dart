@@ -23,6 +23,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
+import 'package:get/get.dart';
 import 'package:html/parser.dart';
 import 'package:http/http.dart' show get;
 import 'package:image_size_getter/image_size_getter.dart' as IMG;
@@ -44,7 +45,7 @@ bool isNullOrEmpty(dynamic input, {trimString = false}) {
     input = input.trim();
   }
 
-  return input.isEmpty;
+  return GetUtils.isNullOrBlank(input);
 }
 
 bool isNullOrZero(int input) {
@@ -62,7 +63,7 @@ Size textSize(String text, TextStyle style) {
 
 Future<String> formatPhoneNumber(String str) async {
   // If the string is an email, we don't want to format it
-  if (str.contains("@")) return str;
+  if (isEmail(str)) return str;
   str = str.trim();
 
   String countryCode = SettingsManager().countryCode ?? "US";
@@ -90,12 +91,12 @@ Future<String> formatPhoneNumber(String str) async {
 }
 
 Future<List<String>> getCompareOpts(Handle handle) async {
-  if (handle.address.contains('@')) return [handle.address];
+  if (isEmail(handle.address)) return [handle.address];
 
   // Build a list of formatted address (max: 3)
   String formatted = handle.address.toString();
   List<String> opts = [];
-  int maxOpts = 4;  // This is relatively arbitrary
+  int maxOpts = 4; // This is relatively arbitrary
   for (int i = 0; i < formatted.length; i += 1) {
     String val = formatted.substring(i);
     if (val.length == 0) break;
@@ -117,7 +118,7 @@ bool sameAddress(List<String> options, String compared) {
       break;
     }
 
-    if (opt.contains('@') && !compared.contains('@')) continue;
+    if (isEmail(opt) && !isEmail(compared)) continue;
 
     String formatted = Slugify(compared, delimiter: '').toString().replaceAll('-', '');
     if (options.contains(formatted)) {
@@ -127,23 +128,6 @@ bool sameAddress(List<String> options, String compared) {
   }
 
   return match;
-
-  // // Handle easiest option
-  // if (handle.address == compared) return true;
-
-  // // Handle easy non-email address comparison
-  // if (handle.address.contains('@') && !compared.contains('@')) return false;
-
-  // // Handle phone numbers
-  // String formattedNumber1 = Slugify(handle.address, delimiter: '');
-
-  // String country = handle?.country ?? "US";
-
-  // print("Match Attempt");
-  // print(matchOptions);
-  // print(formattedNumber2);
-  // print(matchOptions.contains(formattedNumber2));
-  // return matchOptions.contains(formattedNumber2);
 }
 
 // Future<Uint8List> blurHashDecode(String blurhash, int width, int height) async {
@@ -170,6 +154,11 @@ Future<Map<String, dynamic>> parsePhoneNumber(String number, String region) asyn
   }
 }
 
+bool isEmail(String val) {
+  if (val == null || !val.contains('@')) return false;
+  return GetUtils.isEmail(val);
+}
+
 String randomString(int length) {
   var rand = new Random();
   var codeUnits = new List.generate(length, (index) {
@@ -177,6 +166,14 @@ String randomString(int length) {
   });
 
   return new String.fromCharCodes(codeUnits);
+}
+
+void showSnackbar(String title, String message) {
+  Get.snackbar(title, message,
+      snackPosition: SnackPosition.BOTTOM,
+      colorText: Get.textTheme.bodyText1.color,
+      backgroundColor: Get.theme.accentColor,
+      margin: EdgeInsets.only(bottom: 10));
 }
 
 bool sameSender(Message first, Message second) {
@@ -251,6 +248,14 @@ extension ColorHelpers on Color {
     } else {
       return this.lighten(percent);
     }
+  }
+}
+
+Color lightenOrDarken(Color color, [double percent = 10]) {
+  if (color.computeLuminance() >= 0.5) {
+    return color.darken(percent);
+  } else {
+    return color.lighten(percent);
   }
 }
 

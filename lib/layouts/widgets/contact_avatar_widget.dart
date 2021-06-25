@@ -1,3 +1,4 @@
+import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/theming/avatar_color_picker_popup.dart';
@@ -96,7 +97,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
     if (contact == null && !isInvalid) {
       List<Contact> contactRes = [];
       List<Contact> contacts = ContactManager().contacts ?? [];
-      if (widget.handle.address.contains("@")) {
+      if (isEmail(widget.handle.address)) {
         contactRes = contacts.where((element) => element.emails.any((e) => e.value == widget.handle.address)).toList();
       } else {
         contactRes = contacts.where((element) => element.phones.any((e) => e.value == widget.handle.address)).toList();
@@ -123,7 +124,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
   Future<String> getInitials({Handle handle, double size = 30}) async {
     if (handle == null) return "Y";
     String name = await ContactManager().getContactTitle(handle);
-    if (name.contains("@")) return name[0].toUpperCase();
+    if (isEmail(name)) return name[0].toUpperCase();
 
     // Check if it's just a regular number, no contact
     String test = name.replaceAll(RegExp(r'[-() \.]'), '');

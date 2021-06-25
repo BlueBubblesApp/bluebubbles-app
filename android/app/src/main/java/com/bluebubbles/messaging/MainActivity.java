@@ -12,6 +12,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.ClipData;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
@@ -109,24 +110,12 @@ public class MainActivity extends FlutterActivity {
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == PICK_IMAGE) {
             if (resultCode == RESULT_OK) {
-                File sharedFiles = new File(getApplicationContext().getFilesDir().getAbsolutePath() + "/sharedFiles/");
-                if (!sharedFiles.exists()) {
-                    sharedFiles.mkdir();
+                List<String> images = readPathsFromIntent(data);
+                if (result != null) {
+                    result.success(images);
                 }
-                File file = new File(getApplicationContext().getFilesDir().getAbsolutePath() + "/sharedFiles/" + getFileName(data.getData()));
-                try {
-                    file.createNewFile();
-                    writeBytesFromURI(data.getData(), file);
-                    if (result != null) {
-                        result.success(file.getAbsolutePath());
-                        Log.d("PICK_FILE", "Result is okay! " + file.getAbsolutePath());
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-
             } else {
-                Log.d("PICK_FILE", "Something went wrong");
+                Log.d("PICK_FILE", "Nothing selected, or something went wrong");
                 result.success(null);
             }
             result = null;
@@ -138,6 +127,49 @@ public class MainActivity extends FlutterActivity {
                 result.success(null);
             }
         }
+    }
+
+    List<String> readPathsFromIntent(Intent intent) {
+        // Try to get the initial data
+        Uri fileUri = intent.getData();
+        List<Uri> fileUris = new ArrayList<Uri>();
+        List<String> images = new ArrayList<String>();
+
+        // If the initial data is null, we need to get the clip data
+        if (fileUri == null) {
+            ClipData clipData = intent.getClipData();
+
+            // If we have clip data, pull out all the URIs of the items in it
+            if (clipData != null) {
+                for (int i = 0; i < clipData.getItemCount(); i++) {
+                    fileUris.add(clipData.getItemAt(i).getUri());
+                }
+            }
+        } else {
+            fileUris.add(fileUri);
+        }
+
+        // Create the shared files directory if it doesn't exist
+        File filesDir = new File(getFilesDir().getPath() + "/sharedFiles/");
+        if (!filesDir.exists()) {
+            filesDir.mkdir();
+        }
+
+        // For each of the URIs, write the attachments to the shared directory
+        for (Uri uri : fileUris) {
+            try {
+                File file = new File(getFilesDir().getPath() + "/sharedFiles/" + getFileName(uri));
+                file.createNewFile();
+                images.add(file.getPath());
+                writeBytesFromURI(uri, file);
+            } catch (Exception e) {
+                Log.d("share", "FAILURE");
+                e.printStackTrace();
+            }
+        }
+
+        // Return the new local file paths
+        return images;
     }
 
 

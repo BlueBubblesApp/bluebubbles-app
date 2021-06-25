@@ -26,6 +26,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'package:socket_io_client/socket_io_client.dart';
+import 'package:get/get.dart';
 
 enum SocketState {
   CONNECTED,
@@ -178,8 +179,11 @@ class SocketManager {
         });
         debugPrint("disconnected");
         state = SocketState.DISCONNECTED;
-
-        EventDispatcher().emit("show-snackbar", {"text": "Disconnected from socket! 🔌"});
+        Timer(const Duration(seconds: 5), () {
+          if (SocketManager().state == SocketState.DISCONNECTED) {
+            showSnackbar('Socket Disconnected', 'You are not longer connected to the socket 🔌');
+          }
+        });
         return;
       case "reconnect":
         debugPrint("RECONNECTED");
@@ -399,7 +403,7 @@ class SocketManager {
     try {
       // First, try to send what we currently have
       debugPrint('[FCM Auth] -> Authenticating with FCM');
-      result = await MethodChannelInterface().invokeMethod('auth', SettingsManager().fcmData.toMap());
+      result = await MethodChannelInterface()?.invokeMethod('auth', SettingsManager().fcmData.toMap());
     } on PlatformException catch (ex) {
       debugPrint('[FCM Auth] -> Failed to perform initial FCM authentication: ${ex.toString()}');
       debugPrint('[FCM Auth] -> Fetching FCM data from the server...');

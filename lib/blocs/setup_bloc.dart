@@ -12,6 +12,7 @@ import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 enum SetupOutputType { ERROR, LOG }
 
@@ -294,7 +295,7 @@ class SetupBloc {
 
     if (SettingsManager().settings.showIncrementalSync)
       // Show a nice lil toast/snackbar
-      EventDispatcher().emit("show-snackbar", {"text": "🔄 Incremental sync complete 🔄"});
+      showSnackbar('Success', '🔄 Incremental sync complete 🔄');
 
     if (onComplete != null) {
       onComplete();

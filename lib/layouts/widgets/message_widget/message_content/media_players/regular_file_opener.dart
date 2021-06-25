@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:bluebubbles/helpers/utils.dart';
+import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
@@ -54,8 +56,7 @@ class _RegularFileOpenerState extends State<RegularFileOpener> {
                   },
                 );
               } catch (ex) {
-                final snackBar = SnackBar(content: Text("No handler for this file type!"));
-                Scaffold.of(context).showSnackBar(snackBar);
+                showSnackbar('Error', "No handler for this file type!");
               }
             },
           ),

@@ -1,3 +1,4 @@
+import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view_mixin.dart';
 import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/contact_selector_custom_cupertino_textfield.dart';
@@ -100,11 +101,7 @@ class _ChatSelectorTextFieldState extends State<ChatSelectorTextField> {
               }
             } else {
               if (widget.allContacts.isEmpty) {
-                Scaffold.of(context).showSnackBar(SnackBar(
-                  content: Text("Invalid Number/Email, $done"),
-                  duration: Duration(milliseconds: 500),
-                ));
-
+                showSnackbar('Error', "Invalid Number/Email, $done");
                 // This is 4 chars due to invisible character
               } else if (widget.controller.text.length >= 4) {
                 widget.onSelected(widget.allContacts[0]);

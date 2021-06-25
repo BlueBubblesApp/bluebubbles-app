@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:get/get.dart';
 import 'package:assets_audio_player/assets_audio_player.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:flutter/material.dart';
@@ -94,7 +95,7 @@ class _AudioPlayerWigetState extends State<AudioPlayerWiget> {
   @override
   Widget build(BuildContext context) {
     Playing playing = player.current.value;
-    double maxWidth = widget.width ?? MediaQuery.of(context).size.width * 3 / 4;
+    double maxWidth = widget.width ?? Get.mediaQuery.size.width * 3 / 4;
 
     double currentValue = current?.inSeconds?.toDouble() ?? 0.0;
     double maxValue = (playing?.audio?.duration ?? current).inSeconds.toDouble();

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/metadata_helper.dart';
@@ -292,7 +293,7 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget> with TickerProvider
               },
               child: Container(
                 // The minus 5 here is so the timestamps show OK during swipe
-                width: (MediaQuery.of(context).size.width * 2 / 3) - 5,
+                width: (Get.mediaQuery.size.width * 2 / 3) - 5,
                 child: (hideContent || hideType) ? Stack(children: items) : Column(children: items),
               ),
             ),

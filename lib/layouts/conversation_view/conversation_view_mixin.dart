@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:get/get.dart';
 import 'package:assorted_layout_widgets/assorted_layout_widgets.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
@@ -54,9 +55,6 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
   Settings _settingsCopy;
   List<DisplayMode> modes;
   DisplayMode currentMode;
-  Brightness brightness;
-  Color previousBackgroundColor;
-  bool gotBrightness = false;
   bool markingAsRead = false;
   bool markedAsRead = false;
   String previousSearch = '';
@@ -64,24 +62,6 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
 
   final _contactStreamController = StreamController<List<UniqueContact>>.broadcast();
   Stream<List<UniqueContact>> get contactStream => _contactStreamController.stream;
-
-  void loadBrightness() {
-    Color now = Theme.of(context).backgroundColor;
-    bool themeChanged = previousBackgroundColor == null || previousBackgroundColor != now;
-    if (!themeChanged && gotBrightness) return;
-
-    previousBackgroundColor = now;
-    if (this.context == null) {
-      brightness = Brightness.light;
-      gotBrightness = true;
-      return;
-    }
-
-    bool isDark = now.computeLuminance() < 0.179;
-    brightness = isDark ? Brightness.dark : Brightness.light;
-    gotBrightness = true;
-    if (this.mounted) setState(() {});
-  }
 
   TextEditingController chatSelectorController = new TextEditingController(text: " ");
 
@@ -271,7 +251,9 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
             padding: EdgeInsets.only(right: SettingsManager().settings.colorblindMode ? 15.0 : 10.0),
             child: Theme(
               data: ThemeData(
-                cupertinoOverrideTheme: Cupertino.CupertinoThemeData(brightness: brightness),
+                cupertinoOverrideTheme: Cupertino.CupertinoThemeData(
+                  brightness: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor),
+                ),
               ),
               child: Cupertino.CupertinoActivityIndicator(
                 radius: 12,
@@ -318,7 +300,6 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
   }
 
   Widget buildConversationViewHeader() {
-    loadBrightness();
     Color backgroundColor = Theme.of(context).backgroundColor;
     Color fontColor = Theme.of(context).textTheme.headline1.color;
     String title = chat.title;
@@ -333,7 +314,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
 
     if (SettingsManager().settings.skin == Skins.Material || SettingsManager().settings.skin == Skins.Samsung) {
       return AppBar(
-        brightness: brightness,
+        brightness: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor),
         title: Text(
           title,
           style: Theme.of(context).textTheme.headline1.apply(color: fontColor),
@@ -566,12 +547,12 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
         int matches = 0;
         for (UniqueContact contact in selected) {
           bool match = false;
-          bool isEmail = contact.address.contains('@');
+          bool isEmailAddr = isEmail(contact.address);
           String lastDigits = contact.address.substring(contact.address.length - 4, contact.address.length);
 
           for (var participant in i.participants) {
             // If one is an email and the other isn't, skip
-            if (isEmail && !participant.address.contains('@')) continue;
+            if (isEmailAddr && !isEmail(participant.address)) continue;
 
             // If the last 4 digits don't match, skip
             if (!participant.address.endsWith(lastDigits)) continue;

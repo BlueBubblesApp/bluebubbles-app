@@ -1,3 +1,4 @@
+import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/material.dart';
@@ -21,7 +22,6 @@ class MessageTimeStampSeparator extends StatelessWidget {
     if (newerMessage != null &&
         (!isEmptyString(message.fullText) || message.hasAttachments) &&
         withinTimeThreshold(message, newerMessage, threshold: 30)) {
-
       DateTime timeOfnewerMessage = newerMessage.dateCreated;
       String time = new DateFormat.jm().format(timeOfnewerMessage);
       String date = timeOfnewerMessage.isToday() ? "Today" : buildDate(timeOfnewerMessage);
