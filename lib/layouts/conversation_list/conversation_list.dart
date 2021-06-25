@@ -859,7 +859,27 @@ class __MaterialState extends State<_Material> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
-                            if (selected.length <= 1)
+                            if (([0, selected.length])
+                                .contains(selected.where((element) => element.hasUnreadMessage).length))
+                              GestureDetector(
+                                onTap: () {
+                                  selected.forEach((element) async {
+                                    element.hasUnreadMessage = !element.hasUnreadMessage;
+                                    await element.save(updateLocalVals: true);
+                                  });
+                                  if (this.mounted) setState(() {});
+                                  selected = [];
+                                  setState(() {});
+                                },
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Icon(
+                                    selected[0].hasUnreadMessage ? Icons.mark_chat_read : Icons.mark_chat_unread,
+                                    color: Theme.of(context).textTheme.bodyText1.color,
+                                  ),
+                                ),
+                              ),
+                            if (([0, selected.length]).contains(selected.where((element) => element.isMuted).length))
                               GestureDetector(
                                 onTap: () {
                                   selected.forEach((element) async {
@@ -873,8 +893,29 @@ class __MaterialState extends State<_Material> {
                                 child: Padding(
                                   padding: const EdgeInsets.all(8.0),
                                   child: Icon(
-                                    Icons.notifications_off,
-                                    color: Get.theme.textTheme.bodyText1.color,
+                                    selected[0].isMuted ? Icons.notifications_active : Icons.notifications_off,
+                                    color: Theme.of(context).textTheme.bodyText1.color,
+                                  ),
+                                ),
+                              ),
+                            if (([0, selected.length]).contains(selected.where((element) => element.isPinned).length))
+                              GestureDetector(
+                                onTap: () {
+                                  selected.forEach((element) {
+                                    if (element.isPinned) {
+                                      element.unpin();
+                                    } else {
+                                      element.pin();
+                                    }
+                                  });
+                                  selected = [];
+                                  setState(() {});
+                                },
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Icon(
+                                    selected[0].isPinned ? Icons.star_outline : Icons.star,
+                                    color: Theme.of(context).textTheme.bodyText1.color,
                                   ),
                                 ),
                               ),
@@ -898,26 +939,24 @@ class __MaterialState extends State<_Material> {
                                 ),
                               ),
                             ),
-                            GestureDetector(
-                              onTap: () {
-                                selected.forEach((element) {
-                                  if (element.isPinned) {
-                                    element.unpin();
-                                  } else {
-                                    element.pin();
-                                  }
-                                });
-                                selected = [];
-                                setState(() {});
-                              },
-                              child: Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Icon(
-                                  Icons.star,
-                                  color: Get.theme.textTheme.bodyText1.color,
+                            if (selected[0].isArchived)
+                              GestureDetector(
+                                onTap: () {
+                                  selected.forEach((element) {
+                                    ChatBloc().deleteChat(element);
+                                    Chat.deleteChat(element);
+                                  });
+                                  selected = [];
+                                  setState(() {});
+                                },
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Icon(
+                                    Icons.delete_forever,
+                                    color: Theme.of(context).textTheme.bodyText1.color,
+                                  ),
                                 ),
                               ),
-                            ),
                           ],
                         ),
                       ],

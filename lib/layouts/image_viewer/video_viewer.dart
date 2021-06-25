@@ -35,7 +35,7 @@ class _VideoViewerState extends State<VideoViewer> {
   void initState() {
     super.initState();
     controller = new VideoPlayerController.file(widget.file);
-    controller.setVolume(1);
+    controller.setVolume(0);
     this.createListener(controller);
     showPlayPauseOverlay = !controller.value.isPlaying;
   }
