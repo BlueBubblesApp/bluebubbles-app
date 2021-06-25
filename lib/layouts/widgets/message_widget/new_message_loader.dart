@@ -11,7 +11,7 @@ class NewMessageLoader extends StatelessWidget {
           padding: const EdgeInsets.all(8.0),
           child: Text(
             "Loading more messages...",
-            style: Get.theme.textTheme.subtitle2,
+            style: Theme.of(context).textTheme.subtitle2,
           ),
         ),
         Padding(

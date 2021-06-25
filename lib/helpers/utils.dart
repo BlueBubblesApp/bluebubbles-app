@@ -168,6 +168,14 @@ String randomString(int length) {
   return new String.fromCharCodes(codeUnits);
 }
 
+void showSnackbar(String title, String message) {
+  Get.snackbar(title, message,
+      snackPosition: SnackPosition.BOTTOM,
+      colorText: Get.textTheme.bodyText1.color,
+      backgroundColor: Get.theme.accentColor,
+      margin: EdgeInsets.only(bottom: 10));
+}
+
 bool sameSender(Message first, Message second) {
   return (first != null &&
       second != null &&

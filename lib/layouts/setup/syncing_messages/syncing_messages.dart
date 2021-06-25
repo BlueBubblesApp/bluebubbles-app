@@ -57,10 +57,10 @@ class _SyncingMessagesState extends State<SyncingMessages> {
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: Get.theme.accentColor,
+        systemNavigationBarColor: Theme.of(context).accentColor,
       ),
       child: Scaffold(
-        backgroundColor: Get.theme.accentColor,
+        backgroundColor: Theme.of(context).accentColor,
         body: StreamBuilder(
           stream: SocketManager().setup.stream,
           builder: (BuildContext context, AsyncSnapshot<SetupData> snapshot) {
@@ -76,7 +76,7 @@ class _SyncingMessagesState extends State<SyncingMessages> {
                     ),
                     Text(
                       "${progress.floor()}%",
-                      style: Get.theme.textTheme.bodyText1.apply(fontSizeFactor: 1.5),
+                      style: Theme.of(context).textTheme.bodyText1.apply(fontSizeFactor: 1.5),
                     ),
                     Spacer(
                       flex: 5,
@@ -88,7 +88,7 @@ class _SyncingMessagesState extends State<SyncingMessages> {
                         child: LinearProgressIndicator(
                           value: progress != 100.0 && progress != 0.0 ? (progress / 100) : null,
                           backgroundColor: Colors.white,
-                          valueColor: AlwaysStoppedAnimation<Color>(Get.theme.primaryColor),
+                          valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
                         ),
                       ),
                     ),
@@ -138,7 +138,7 @@ class _SyncingMessagesState extends State<SyncingMessages> {
                       ),
                       Text(
                         getProgressText(progress),
-                        style: Get.theme.textTheme.bodyText1,
+                        style: Theme.of(context).textTheme.bodyText1,
                       ),
                       Spacer(
                         flex: 5,
@@ -147,7 +147,7 @@ class _SyncingMessagesState extends State<SyncingMessages> {
                         borderRadius: BorderRadius.circular(20),
                         child: LinearProgressIndicator(
                           backgroundColor: Colors.white,
-                          valueColor: AlwaysStoppedAnimation<Color>(Get.theme.primaryColor),
+                          valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
                         ),
                       ),
                       Spacer(

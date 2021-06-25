@@ -80,7 +80,7 @@ class _SendWidgetState extends State<SendWidget> {
               customContent: RichText(
                 text: TextSpan(
                   text: widget.text,
-                  style: Get.theme.textTheme.bodyText2.apply(color: Colors.white),
+                  style: Theme.of(context).textTheme.bodyText2.apply(color: Colors.white),
                 ),
               ),
             ),
@@ -92,7 +92,7 @@ class _SendWidgetState extends State<SendWidget> {
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: Get.theme.backgroundColor,
+        systemNavigationBarColor: Theme.of(context).backgroundColor,
       ),
       child: Scaffold(
         backgroundColor: Colors.transparent,
@@ -194,7 +194,7 @@ class _SendWidgetState extends State<SendWidget> {
               customContent: RichText(
                 text: TextSpan(
                   text: widget.text,
-                  style: Get.theme.textTheme.bodyText2.apply(color: Colors.white),
+                  style: Theme.of(context).textTheme.bodyText2.apply(color: Colors.white),
                 ),
               ),
             ),

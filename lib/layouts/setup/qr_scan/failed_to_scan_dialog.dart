@@ -28,7 +28,7 @@ class FailedToScan extends StatelessWidget {
         FlatButton(
           child: Text(
             "Ok",
-            style: Get.theme.textTheme.bodyText1.apply(color: Get.theme.primaryColor),
+            style: Theme.of(context).textTheme.bodyText1.apply(color: Theme.of(context).primaryColor),
           ),
           onPressed: () => Navigator.of(context).pop(),
         ),
@@ -36,7 +36,7 @@ class FailedToScan extends StatelessWidget {
           FlatButton(
             child: Text(
               "Copy",
-              style: Get.theme.textTheme.bodyText1.apply(color: Get.theme.primaryColor),
+              style: Theme.of(context).textTheme.bodyText1.apply(color: Theme.of(context).primaryColor),
             ),
             onPressed: () {
               FlutterClipboard.copy(exception);

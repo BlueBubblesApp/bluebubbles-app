@@ -88,7 +88,7 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
         if (hideAttachments)
           Positioned.fill(
             child: Container(
-              color: Get.theme.accentColor,
+              color: Theme.of(context).accentColor,
             ),
           ),
         if (hideAttachments && !hideAttachmentTypes)
@@ -112,7 +112,7 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
             child: LinearProgressIndicator(
               backgroundColor: Colors.grey,
               valueColor: AlwaysStoppedAnimation(
-                Get.theme.primaryColor,
+                Theme.of(context).primaryColor,
               ),
             ),
           ),
@@ -126,14 +126,14 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
         return Container(
           height: 100,
           width: 100,
-          color: Get.theme.accentColor,
+          color: Theme.of(context).accentColor,
           padding: EdgeInsets.only(top: 20),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(
                 AttachmentHelper.getIcon(mimeType),
-                color: Get.theme.textTheme.bodyText1.color,
+                color: Theme.of(context).textTheme.bodyText1.color,
               ),
               Align(
                 alignment: Alignment.bottomCenter,
@@ -141,7 +141,7 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
                   padding: const EdgeInsets.fromLTRB(8, 0, 8, 10),
                   child: Text(
                     name,
-                    style: Get.theme.textTheme.bodyText1.apply(fontSizeDelta: -2),
+                    style: Theme.of(context).textTheme.bodyText1.apply(fontSizeDelta: -2),
                     textAlign: TextAlign.center,
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,

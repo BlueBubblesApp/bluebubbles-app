@@ -84,7 +84,7 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> w
                                 if (res == null) return;
                                 widget.onAddAttachment(File(res));
                               },
-                              color: Get.theme.accentColor,
+                              color: Theme.of(context).accentColor,
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: <Widget>[
@@ -92,13 +92,13 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> w
                                     padding: const EdgeInsets.all(8.0),
                                     child: Icon(
                                       Icons.video_library,
-                                      color: Get.theme.textTheme.bodyText1.color,
+                                      color: Theme.of(context).textTheme.bodyText1.color,
                                     ),
                                   ),
                                   Text(
                                     "Files",
                                     style: TextStyle(
-                                      color: Get.theme.textTheme.bodyText1.color,
+                                      color: Theme.of(context).textTheme.bodyText1.color,
                                       fontSize: 13,
                                     ),
                                   ),
@@ -117,17 +117,17 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> w
                                 showDialog(
                                   context: context,
                                   builder: (buildContext) => AlertDialog(
-                                    backgroundColor: Get.theme.accentColor,
+                                    backgroundColor: Theme.of(context).accentColor,
                                     title: Text(
                                       "Send Current Location?",
-                                      style: Get.theme.textTheme.headline1,
+                                      style: Theme.of(context).textTheme.headline1,
                                     ),
                                     actions: <Widget>[
                                       FlatButton(
                                         color: Colors.blue[600],
                                         child: Text(
                                           "Send",
-                                          style: Get.theme.textTheme.bodyText1,
+                                          style: Theme.of(context).textTheme.bodyText1,
                                         ),
                                         onPressed: () async {
                                           Share.location(CurrentChat.of(context).chat);
@@ -137,7 +137,7 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> w
                                       FlatButton(
                                         child: Text(
                                           "Cancel",
-                                          style: Get.theme.textTheme.bodyText1,
+                                          style: Theme.of(context).textTheme.bodyText1,
                                         ),
                                         color: Colors.red,
                                         onPressed: () {
@@ -148,7 +148,7 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> w
                                   ),
                                 );
                               },
-                              color: Get.theme.accentColor,
+                              color: Theme.of(context).accentColor,
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: <Widget>[
@@ -156,13 +156,13 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> w
                                     padding: const EdgeInsets.all(8.0),
                                     child: Icon(
                                       Icons.location_on,
-                                      color: Get.theme.textTheme.bodyText1.color,
+                                      color: Theme.of(context).textTheme.bodyText1.color,
                                     ),
                                   ),
                                   Text(
                                     "Location",
                                     style: TextStyle(
-                                      color: Get.theme.textTheme.bodyText1.color,
+                                      color: Theme.of(context).textTheme.bodyText1.color,
                                       fontSize: 13,
                                     ),
                                   ),

@@ -209,12 +209,12 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       context: originalContext,
       builder: (BuildContext context) {
         return AlertDialog(
-          backgroundColor: Get.theme.accentColor,
-          title: new Text("Send it?", style: Get.theme.textTheme.headline1),
+          backgroundColor: Theme.of(context).accentColor,
+          title: new Text("Send it?", style: Theme.of(context).textTheme.headline1),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text("Review your audio snippet before sending it", style: Get.theme.textTheme.subtitle1),
+              Text("Review your audio snippet before sending it", style: Theme.of(context).textTheme.subtitle1),
               Container(height: 10.0),
               AudioPlayerWiget(
                 key: new Key("AudioMessage-${file.length().toString()}"),
@@ -225,7 +225,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
           ),
           actions: <Widget>[
             new FlatButton(
-                child: new Text("Discard", style: Get.theme.textTheme.subtitle1),
+                child: new Text("Discard", style: Theme.of(context).textTheme.subtitle1),
                 onPressed: () {
                   // Dispose of the audio controller
                   CurrentChat.of(originalContext)?.audioPlayers?.removeWhere((key, _) => key == file.path);
@@ -239,7 +239,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
             new FlatButton(
               child: new Text(
                 "Send",
-                style: Get.theme.textTheme.bodyText1,
+                style: Theme.of(context).textTheme.bodyText1,
               ),
               onPressed: () async {
                 widget.onSend([file], "");
@@ -373,7 +373,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       margin: EdgeInsets.only(left: 5.0, right: 5.0),
       child: ClipOval(
         child: Material(
-          color: Get.theme.primaryColor,
+          color: Theme.of(context).primaryColor,
           child: InkWell(
             onTap: toggleShareMenu,
             child: Padding(
@@ -461,7 +461,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                   enabled: sendCountdown == null,
                   textInputAction:
                       SettingsManager().settings.sendWithReturn ? TextInputAction.send : TextInputAction.newline,
-                  cursorColor: Get.theme.primaryColor,
+                  cursorColor: Theme.of(context).primaryColor,
                   onLongPressStart: () {
                     Feedback.forLongPress(context);
                   },
@@ -525,23 +525,24 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                   autocorrect: true,
                   controller: controller,
                   scrollPhysics: CustomBouncingScrollPhysics(),
-                  style: Get.theme.textTheme.bodyText1.apply(
-                    color: ThemeData.estimateBrightnessForColor(Get.theme.backgroundColor) == Brightness.light
-                        ? Colors.black
-                        : Colors.white,
-                    fontSizeDelta: -0.25,
-                  ),
+                  style: Theme.of(context).textTheme.bodyText1.apply(
+                        color:
+                            ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor) == Brightness.light
+                                ? Colors.black
+                                : Colors.white,
+                        fontSizeDelta: -0.25,
+                      ),
                   keyboardType: TextInputType.multiline,
                   maxLines: 14,
                   minLines: 1,
                   placeholder: SettingsManager().settings.recipientAsPlaceholder == true ? placeholder : "BlueBubbles",
                   padding: EdgeInsets.only(left: 10, top: 10, right: 40, bottom: 10),
-                  placeholderStyle: Get.theme.textTheme.subtitle1,
+                  placeholderStyle: Theme.of(context).textTheme.subtitle1,
                   autofocus: SettingsManager().settings.autoOpenKeyboard,
                   decoration: BoxDecoration(
-                    color: Get.theme.backgroundColor,
+                    color: Theme.of(context).backgroundColor,
                     border: Border.all(
-                      color: Get.theme.dividerColor,
+                      color: Theme.of(context).dividerColor,
                       width: 1.5,
                     ),
                     borderRadius: BorderRadius.circular(20),
@@ -553,20 +554,21 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                   textCapitalization: TextCapitalization.sentences,
                   autocorrect: true,
                   autofocus: SettingsManager().settings.autoOpenKeyboard,
-                  cursorColor: Get.theme.primaryColor,
+                  cursorColor: Theme.of(context).primaryColor,
                   key: _searchFormKey,
-                  style: Get.theme.textTheme.bodyText1.apply(
-                    color: ThemeData.estimateBrightnessForColor(Get.theme.backgroundColor) == Brightness.light
-                        ? Colors.black
-                        : Colors.white,
-                    fontSizeDelta: -0.25,
-                  ),
+                  style: Theme.of(context).textTheme.bodyText1.apply(
+                        color:
+                            ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor) == Brightness.light
+                                ? Colors.black
+                                : Colors.white,
+                        fontSizeDelta: -0.25,
+                      ),
                   onContentCommited: onContentCommit,
                   decoration: InputDecoration(
                     isDense: true,
                     enabledBorder: OutlineInputBorder(
                       borderSide: BorderSide(
-                        color: Get.theme.dividerColor,
+                        color: Theme.of(context).dividerColor,
                         width: 1.5,
                         style: BorderStyle.solid,
                       ),
@@ -574,7 +576,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                     ),
                     disabledBorder: OutlineInputBorder(
                       borderSide: BorderSide(
-                        color: Get.theme.dividerColor,
+                        color: Theme.of(context).dividerColor,
                         width: 1.5,
                         style: BorderStyle.solid,
                       ),
@@ -582,14 +584,14 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderSide: BorderSide(
-                        color: Get.theme.dividerColor,
+                        color: Theme.of(context).dividerColor,
                         width: 1.5,
                         style: BorderStyle.solid,
                       ),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     hintText: SettingsManager().settings.recipientAsPlaceholder == true ? placeholder : "BlueBubbles",
-                    hintStyle: Get.theme.textTheme.subtitle1,
+                    hintStyle: Theme.of(context).textTheme.subtitle1,
                     contentPadding: EdgeInsets.only(
                       left: 10,
                       top: 15,
@@ -607,20 +609,21 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                   textCapitalization: TextCapitalization.sentences,
                   autocorrect: true,
                   autofocus: SettingsManager().settings.autoOpenKeyboard,
-                  cursorColor: Get.theme.primaryColor,
+                  cursorColor: Theme.of(context).primaryColor,
                   key: _searchFormKey,
-                  style: Get.theme.textTheme.bodyText1.apply(
-                    color: ThemeData.estimateBrightnessForColor(Get.theme.backgroundColor) == Brightness.light
-                        ? Colors.black
-                        : Colors.white,
-                    fontSizeDelta: -0.25,
-                  ),
+                  style: Theme.of(context).textTheme.bodyText1.apply(
+                        color:
+                            ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor) == Brightness.light
+                                ? Colors.black
+                                : Colors.white,
+                        fontSizeDelta: -0.25,
+                      ),
                   onContentCommited: onContentCommit,
                   decoration: InputDecoration(
                     isDense: true,
                     enabledBorder: OutlineInputBorder(
                       borderSide: BorderSide(
-                        color: Get.theme.dividerColor,
+                        color: Theme.of(context).dividerColor,
                         width: 1.5,
                         style: BorderStyle.solid,
                       ),
@@ -628,7 +631,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                     ),
                     disabledBorder: OutlineInputBorder(
                       borderSide: BorderSide(
-                        color: Get.theme.dividerColor,
+                        color: Theme.of(context).dividerColor,
                         width: 1.5,
                         style: BorderStyle.solid,
                       ),
@@ -636,14 +639,14 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderSide: BorderSide(
-                        color: Get.theme.dividerColor,
+                        color: Theme.of(context).dividerColor,
                         width: 1.5,
                         style: BorderStyle.solid,
                       ),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     hintText: SettingsManager().settings.recipientAsPlaceholder == true ? placeholder : "BlueBubbles",
-                    hintStyle: Get.theme.textTheme.subtitle1,
+                    hintStyle: Theme.of(context).textTheme.subtitle1,
                     contentPadding: EdgeInsets.only(
                       left: 10,
                       top: 15,
@@ -766,7 +769,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                     padding: EdgeInsets.symmetric(
                       horizontal: 0,
                     ),
-                    color: Get.theme.primaryColor,
+                    color: Theme.of(context).primaryColor,
                     onPressed: sendAction,
                     child: Stack(
                       alignment: Alignment.center,
@@ -824,7 +827,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                       padding: EdgeInsets.symmetric(
                         horizontal: 0,
                       ),
-                      color: Get.theme.primaryColor,
+                      color: Theme.of(context).primaryColor,
                       onPressed: sendAction,
                       child: Stack(
                         alignment: Alignment.center,

@@ -242,7 +242,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
   }
 
   Widget buildCupertinoTrailing() {
-    Color fontColor = Get.theme.textTheme.headline1.color;
+    Color fontColor = Theme.of(context).textTheme.headline1.color;
     bool manualMark = SettingsManager().settings.enablePrivateAPI && SettingsManager().settings.privateManualMarkAsRead;
     bool showManual = !SettingsManager().settings.privateMarkChatAsRead && !(widget.chat?.isGroup() ?? false);
     List<Widget> items = [
@@ -252,7 +252,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
             child: Theme(
               data: ThemeData(
                 cupertinoOverrideTheme: Cupertino.CupertinoThemeData(
-                  brightness: ThemeData.estimateBrightnessForColor(Get.theme.backgroundColor),
+                  brightness: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor),
                 ),
               ),
               child: Cupertino.CupertinoActivityIndicator(
@@ -300,8 +300,8 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
   }
 
   Widget buildConversationViewHeader() {
-    Color backgroundColor = Get.theme.backgroundColor;
-    Color fontColor = Get.theme.textTheme.headline1.color;
+    Color backgroundColor = Theme.of(context).backgroundColor;
+    Color fontColor = Theme.of(context).textTheme.headline1.color;
     String title = chat.title;
 
     final hideTitle = SettingsManager().settings.redactedMode && SettingsManager().settings.hideContactInfo;
@@ -314,21 +314,21 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
 
     if (SettingsManager().settings.skin == Skins.Material || SettingsManager().settings.skin == Skins.Samsung) {
       return AppBar(
-        brightness: ThemeData.estimateBrightnessForColor(Get.theme.backgroundColor),
+        brightness: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor),
         title: Text(
           title,
-          style: Get.theme.textTheme.headline1.apply(color: fontColor),
+          style: Theme.of(context).textTheme.headline1.apply(color: fontColor),
         ),
         bottom: PreferredSize(
           child: Container(
-            color: Get.theme.dividerColor,
+            color: Theme.of(context).dividerColor,
             height: 0.5,
           ),
           preferredSize: Size.fromHeight(0.5),
         ),
         backgroundColor: backgroundColor,
-        actionsIconTheme: IconThemeData(color: Get.theme.primaryColor),
-        iconTheme: IconThemeData(color: Get.theme.primaryColor),
+        actionsIconTheme: IconThemeData(color: Theme.of(context).primaryColor),
+        iconTheme: IconThemeData(color: Theme.of(context).primaryColor),
         actions: [
           if (SettingsManager().settings.showConnectionIndicator)
             StreamBuilder(
@@ -350,7 +350,8 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
                     child: SizedBox(
                   width: 20,
                   height: 20,
-                  child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Get.theme.primaryColor)),
+                  child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor)),
                 ))),
           if (SettingsManager().settings.enablePrivateAPI &&
               SettingsManager().settings.privateManualMarkAsRead &&
@@ -388,14 +389,14 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
           width: 42.0, // 2 px larger than the diameter
           child: CircleAvatar(
             radius: 20,
-            backgroundColor: Get.theme.accentColor,
+            backgroundColor: Theme.of(context).accentColor,
             child: ContactAvatarWidget(handle: participant, borderThickness: 0.1, editable: false, onTap: openDetails),
           ),
         ),
       );
     });
 
-    TextStyle titleStyle = Get.theme.textTheme.bodyText1;
+    TextStyle titleStyle = Theme.of(context).textTheme.bodyText1;
     if (!generateTitle && hideTitle) titleStyle = titleStyle.copyWith(color: Colors.transparent);
 
     // Calculate separation factor
@@ -404,12 +405,12 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     if (distance <= -30.0 && distance > -60) distance = -30.0;
     if (distance <= -60.0) distance = -35.0;
     return CupertinoNavigationBar(
-        backgroundColor: Get.theme.accentColor.withAlpha(125),
+        backgroundColor: Theme.of(context).accentColor.withAlpha(125),
         border: Border(
           bottom: BorderSide(color: Colors.white.withOpacity(0.2), width: 0.2),
         ),
         leading: CustomCupertinoNavigationBarBackButton(
-          color: Get.theme.primaryColor,
+          color: Theme.of(context).primaryColor,
           notifications: newMessages.length,
         ),
         middle: ListView(
@@ -434,7 +435,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
                       overflow: Cupertino.TextOverflow.ellipsis,
                       textAlign: TextAlign.center,
                       text: TextSpan(
-                        style: Get.theme.textTheme.headline2,
+                        style: Theme.of(context).textTheme.headline2,
                         children: [
                           TextSpan(
                             text: title,
@@ -442,7 +443,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
                           ),
                           TextSpan(
                             text: " >",
-                            style: Get.theme.textTheme.subtitle1,
+                            style: Theme.of(context).textTheme.subtitle1,
                           ),
                         ],
                       ),
@@ -747,10 +748,10 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            backgroundColor: Get.theme.accentColor,
+            backgroundColor: Theme.of(context).accentColor,
             title: Text(
               "Creating a new chat...",
-              style: Get.theme.textTheme.bodyText1,
+              style: Theme.of(context).textTheme.bodyText1,
             ),
             content:
                 Row(mainAxisSize: MainAxisSize.min, mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
@@ -758,7 +759,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
                 // height: 70,
                 // color: Colors.black,
                 child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(Get.theme.primaryColor),
+                  valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
                 ),
               ),
             ]),
@@ -879,11 +880,11 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
   Widget buildChatSelectorHeader() => PreferredSize(
         preferredSize: Size.fromHeight(40),
         child: CupertinoNavigationBar(
-          backgroundColor: Get.theme.accentColor.withOpacity(0.5),
+          backgroundColor: Theme.of(context).accentColor.withOpacity(0.5),
           middle: Container(
             child: Text(
               widget.customHeading ?? "New Message",
-              style: Get.theme.textTheme.headline2,
+              style: Theme.of(context).textTheme.headline2,
             ),
           ),
           leading: Container(),

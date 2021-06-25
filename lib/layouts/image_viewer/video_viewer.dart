@@ -139,10 +139,10 @@ class _VideoViewerState extends State<VideoViewer> {
     }
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: Get.theme.backgroundColor,
+        systemNavigationBarColor: Theme.of(context).backgroundColor,
       ),
       child: Scaffold(
-        backgroundColor: Get.theme.backgroundColor,
+        backgroundColor: Theme.of(context).backgroundColor,
         body: Stack(
           alignment: Alignment.bottomCenter,
           children: <Widget>[
@@ -270,7 +270,7 @@ class _VideoViewerState extends State<VideoViewer> {
                                   padding: const EdgeInsets.only(right: 20.0),
                                   child: Icon(
                                     controller.value.volume == 0.0 ? Icons.volume_mute : Icons.volume_up,
-                                    color: Get.theme.primaryColor,
+                                    color: Theme.of(context).primaryColor,
                                   ),
                                 ),
                                 onTap: () {

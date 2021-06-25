@@ -204,7 +204,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
           padding: EdgeInsets.all(widget.borderThickness),
           // borde width
           decoration: new BoxDecoration(
-            color: Get.theme.backgroundColor, // border color
+            color: Theme.of(context).backgroundColor, // border color
             shape: BoxShape.circle,
           ),
           child: CircleAvatar(

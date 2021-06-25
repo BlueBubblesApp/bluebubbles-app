@@ -113,8 +113,7 @@ class _ContactTileState extends State<ContactTile> {
     return InkWell(
       onLongPress: () {
         Clipboard.setData(new ClipboardData(text: widget.handle.address));
-        final snackBar = SnackBar(content: Text("Address copied to clipboard"));
-        Scaffold.of(context).showSnackBar(snackBar);
+        showSnackbar('Copied', 'Address copied to clipboard');
       },
       onTap: () async {
         if (contact == null) {
@@ -128,7 +127,7 @@ class _ContactTileState extends State<ContactTile> {
         title: (contact?.displayName != null || hideInfo || generateName)
             ? Text(
                 getContactName(context, contact?.displayName, widget.handle?.address, currentChat: widget.chat),
-                style: Get.theme.textTheme.bodyText1,
+                style: Theme.of(context).textTheme.bodyText1,
               )
             : FutureBuilder(
                 future: formatPhoneNumber(widget.handle?.address ?? ""),
@@ -136,13 +135,13 @@ class _ContactTileState extends State<ContactTile> {
                   if (!snapshot.hasData) {
                     return Text(
                       widget.handle?.address ?? "",
-                      style: Get.theme.textTheme.bodyText1,
+                      style: Theme.of(context).textTheme.bodyText1,
                     );
                   }
 
                   return Text(
                     snapshot.data,
-                    style: Get.theme.textTheme.bodyText1,
+                    style: Theme.of(context).textTheme.bodyText1,
                   );
                 }),
         subtitle: (contact == null || hideInfo || generateName)
@@ -153,13 +152,13 @@ class _ContactTileState extends State<ContactTile> {
                   if (!snapshot.hasData) {
                     return Text(
                       widget.handle?.address ?? "",
-                      style: Get.theme.textTheme.subtitle1.apply(fontSizeDelta: -0.5),
+                      style: Theme.of(context).textTheme.subtitle1.apply(fontSizeDelta: -0.5),
                     );
                   }
 
                   return Text(
                     snapshot.data,
-                    style: Get.theme.textTheme.subtitle1.apply(fontSizeDelta: -0.5),
+                    style: Theme.of(context).textTheme.subtitle1.apply(fontSizeDelta: -0.5),
                   );
                 }),
         leading: ContactAvatarWidget(
@@ -176,7 +175,7 @@ class _ContactTileState extends State<ContactTile> {
                       minWidth: 1,
                       child: FlatButton(
                         shape: CircleBorder(),
-                        color: Get.theme.accentColor,
+                        color: Theme.of(context).accentColor,
                         onPressed: () {
                           List<Item> phones = getUniqueNumbers(contact.phones);
                           if (phones.length == 1) {
@@ -186,9 +185,9 @@ class _ContactTileState extends State<ContactTile> {
                               context: context,
                               builder: (BuildContext context) {
                                 return AlertDialog(
-                                  backgroundColor: Get.theme.accentColor,
+                                  backgroundColor: Theme.of(context).accentColor,
                                   title: new Text("Select a Phone Number",
-                                      style: TextStyle(color: Get.theme.textTheme.bodyText1.color)),
+                                      style: TextStyle(color: Theme.of(context).textTheme.bodyText1.color)),
                                   content: Column(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     mainAxisSize: MainAxisSize.min,
@@ -197,7 +196,7 @@ class _ContactTileState extends State<ContactTile> {
                                       for (int i = 0; i < phones.length; i++)
                                         FlatButton(
                                           child: Text("${phones[i].value} (${phones[i].label})",
-                                              style: TextStyle(color: Get.theme.textTheme.bodyText1.color),
+                                              style: TextStyle(color: Theme.of(context).textTheme.bodyText1.color),
                                               textAlign: TextAlign.start),
                                           onPressed: () async {
                                             makeCall(phones[i].value);
@@ -213,7 +212,7 @@ class _ContactTileState extends State<ContactTile> {
                         },
                         child: Icon(
                           Icons.call,
-                          color: Get.theme.primaryColor,
+                          color: Theme.of(context).primaryColor,
                         ),
                       ),
                     )

@@ -42,7 +42,7 @@ class ContactSelectorOption extends StatelessWidget {
     var getTextWidget = (String text) {
       return Text(
         text,
-        style: Get.theme.textTheme.subtitle1,
+        style: Theme.of(context).textTheme.subtitle1,
         overflow: TextOverflow.ellipsis,
       );
     };
@@ -52,7 +52,7 @@ class ContactSelectorOption extends StatelessWidget {
       onTap: () => onSelected(item),
       title: Text(
         !item.isChat ? "${item.displayName}${getTypeStr(item.label)}" : item.chat.title ?? "Group Chat",
-        style: Get.theme.textTheme.bodyText1,
+        style: Theme.of(context).textTheme.bodyText1,
         overflow: TextOverflow.ellipsis,
       ),
       subtitle: (!item.isChat || item.chat.participants.length == 1)
@@ -81,7 +81,7 @@ class ContactSelectorOption extends StatelessWidget {
       trailing: item.isChat
           ? Icon(
               SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_forward_ios : Icons.arrow_forward,
-              color: Get.theme.primaryColor,
+              color: Theme.of(context).primaryColor,
             )
           : null,
     );

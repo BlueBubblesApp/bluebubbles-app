@@ -55,28 +55,28 @@ class _ThemePanelState extends State<ThemePanel> {
   @override
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle(systemNavigationBarColor: Get.theme.backgroundColor),
+      value: SystemUiOverlayStyle(systemNavigationBarColor: Theme.of(context).backgroundColor),
       child: Scaffold(
-        backgroundColor: Get.theme.backgroundColor,
+        backgroundColor: Theme.of(context).backgroundColor,
         appBar: PreferredSize(
           preferredSize: Size(Get.mediaQuery.size.width, 80),
           child: ClipRRect(
             child: BackdropFilter(
               child: AppBar(
-                brightness: ThemeData.estimateBrightnessForColor(Get.theme.backgroundColor),
+                brightness: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor),
                 toolbarHeight: 100.0,
                 elevation: 0,
                 leading: IconButton(
                   icon: Icon(SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_back_ios : Icons.arrow_back,
-                      color: Get.theme.primaryColor),
+                      color: Theme.of(context).primaryColor),
                   onPressed: () {
                     Navigator.of(context).pop();
                   },
                 ),
-                backgroundColor: Get.theme.accentColor.withOpacity(0.5),
+                backgroundColor: Theme.of(context).accentColor.withOpacity(0.5),
                 title: Text(
                   "Theming & Styles",
-                  style: Get.theme.textTheme.headline1,
+                  style: Theme.of(context).textTheme.headline1,
                 ),
               ),
               filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
@@ -107,7 +107,7 @@ class _ThemePanelState extends State<ThemePanel> {
                     title: "Theming",
                     trailing: Icon(
                         SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_forward_ios : Icons.arrow_forward,
-                        color: Get.theme.primaryColor),
+                        color: Theme.of(context).primaryColor),
                     onTap: () async {
                       Navigator.of(context).push(
                         CupertinoPageRoute(
@@ -155,7 +155,7 @@ class _ThemePanelState extends State<ThemePanel> {
                     title: "Custom Avatar Colors",
                     trailing: Icon(
                         SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_forward_ios : Icons.arrow_forward,
-                        color: Get.theme.primaryColor),
+                        color: Theme.of(context).primaryColor),
                     onTap: () async {
                       Navigator.of(context).push(
                         CupertinoPageRoute(

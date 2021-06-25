@@ -81,7 +81,7 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
     if (hideAttachments && !hideAttachmentTypes)
       return Container(
         alignment: Alignment.center,
-        color: Get.theme.accentColor,
+        color: Theme.of(context).accentColor,
         child: Text(
           widget.attachment.mimeType,
           textAlign: TextAlign.center,
@@ -89,14 +89,14 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
       );
     if (hideAttachments)
       return Container(
-        color: Get.theme.accentColor,
+        color: Theme.of(context).accentColor,
       );
     if (!file.existsSync()) {
       return Stack(
         alignment: Alignment.center,
         children: <Widget>[
           Container(
-            color: Get.theme.accentColor,
+            color: Theme.of(context).accentColor,
           ),
           Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -115,13 +115,13 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
                         children: <Widget>[
                           Text(
                             attachment.getFriendlySize(),
-                            style: Get.theme.textTheme.bodyText1,
+                            style: Theme.of(context).textTheme.bodyText1,
                           ),
                           Icon(Icons.cloud_download, size: 28.0),
                           (attachment.mimeType != null)
                               ? Text(
                                   basename(file.path),
-                                  style: Get.theme.textTheme.bodyText1,
+                                  style: Theme.of(context).textTheme.bodyText1,
                                 )
                               : Container()
                         ],
@@ -259,7 +259,7 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
       );
     } else {
       return Container(
-        color: Get.theme.accentColor,
+        color: Theme.of(context).accentColor,
         child: Center(
           child: RegularFileOpener(
             file: file,

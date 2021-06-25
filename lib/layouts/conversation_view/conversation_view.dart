@@ -208,9 +208,9 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
           child: widget.selectIcon ??
               Icon(
                 Icons.check,
-                color: Get.theme.textTheme.bodyText1.color,
+                color: Theme.of(context).textTheme.bodyText1.color,
               ),
-          backgroundColor: Get.theme.primaryColor,
+          backgroundColor: Theme.of(context).primaryColor,
         ),
       );
     } else if (currentChat != null &&
@@ -222,9 +222,9 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
           onPressed: currentChat.scrollToBottom,
           child: Icon(
             Icons.arrow_downward,
-            color: Get.theme.textTheme.bodyText1.color,
+            color: Theme.of(context).textTheme.bodyText1.color,
           ),
-          backgroundColor: Get.theme.accentColor,
+          backgroundColor: Theme.of(context).accentColor,
         ),
       );
     } else if (currentChat != null && currentChat.showScrollDown && SettingsManager().settings.skin == Skins.IOS) {
@@ -240,7 +240,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                 child: Container(
                   height: 35,
                   decoration: BoxDecoration(
-                    color: Get.theme.accentColor.withOpacity(0.7),
+                    color: Theme.of(context).accentColor.withOpacity(0.7),
                     borderRadius: BorderRadius.circular(10.0),
                   ),
                   padding: EdgeInsets.symmetric(horizontal: 10),
@@ -250,7 +250,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                       child: Text(
                         "\u{2193} Scroll to bottom \u{2193}",
                         textAlign: TextAlign.center,
-                        style: Get.theme.textTheme.bodyText1,
+                        style: Theme.of(context).textTheme.bodyText1,
                       ),
                     ),
                   ),
@@ -266,7 +266,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
   }
 
   void loadBrightness() {
-    Color now = Get.theme.backgroundColor;
+    Color now = Theme.of(context).backgroundColor;
     bool themeChanged = previousBackgroundColor == null || previousBackgroundColor != now;
     if (!themeChanged && gotBrightness) return;
 
@@ -307,10 +307,10 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: Get.theme.backgroundColor,
+        systemNavigationBarColor: Theme.of(context).backgroundColor,
       ),
       child: Scaffold(
-        backgroundColor: Get.theme.backgroundColor,
+        backgroundColor: Theme.of(context).backgroundColor,
         extendBodyBehindAppBar: !isCreator,
         appBar: !isCreator ? buildConversationViewHeader() : buildChatSelectorHeader(),
         resizeToAvoidBottomInset: wasCreator,

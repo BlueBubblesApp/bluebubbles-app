@@ -76,7 +76,7 @@ class _TextInputURLState extends State<TextInputURL> {
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
-              cursorColor: Get.theme.primaryColor,
+              cursorColor: Theme.of(context).primaryColor,
               autocorrect: false,
               autofocus: true,
               controller: urlController,
@@ -86,7 +86,7 @@ class _TextInputURLState extends State<TextInputURL> {
               ),
             ),
             TextField(
-              cursorColor: Get.theme.primaryColor,
+              cursorColor: Theme.of(context).primaryColor,
               autocorrect: false,
               autofocus: true,
               controller: passwordController,

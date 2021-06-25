@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/constants.dart';
@@ -125,15 +126,16 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
                         metaWidgets.add(RichText(
                             text: TextSpan(children: [
                           TextSpan(
-                              text: "${entry.key}: ", style: Get.theme.textTheme.bodyText1.apply(fontWeightDelta: 2)),
-                          TextSpan(text: entry.value.toString(), style: Get.theme.textTheme.bodyText1)
+                              text: "${entry.key}: ",
+                              style: Theme.of(context).textTheme.bodyText1.apply(fontWeightDelta: 2)),
+                          TextSpan(text: entry.value.toString(), style: Theme.of(context).textTheme.bodyText1)
                         ])));
                       }
 
                       if (metaWidgets.length == 0) {
                         metaWidgets.add(Text(
                           "No metadata available",
-                          style: Get.theme.textTheme.bodyText1.apply(fontWeightDelta: 2),
+                          style: Theme.of(context).textTheme.bodyText1.apply(fontWeightDelta: 2),
                           textAlign: TextAlign.center,
                         ));
                       }
@@ -143,17 +145,17 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
                         builder: (context) => AlertDialog(
                           title: Text(
                             "Metadata",
-                            style: Get.theme.textTheme.headline1,
+                            style: Theme.of(context).textTheme.headline1,
                             textAlign: TextAlign.center,
                           ),
-                          backgroundColor: Get.theme.accentColor,
+                          backgroundColor: Theme.of(context).accentColor,
                           content: SizedBox(
                             width: Get.mediaQuery.size.width * 3 / 5,
                             height: Get.mediaQuery.size.height * 1 / 4,
                             child: Container(
                               padding: EdgeInsets.all(10.0),
                               decoration: BoxDecoration(
-                                  color: Get.theme.backgroundColor,
+                                  color: Theme.of(context).backgroundColor,
                                   borderRadius: BorderRadius.all(Radius.circular(10))),
                               child: ListView(
                                 physics: AlwaysScrollableScrollPhysics(
@@ -167,9 +169,9 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
                             FlatButton(
                               child: Text(
                                 "Close",
-                                style: Get.theme.textTheme.bodyText1.copyWith(
-                                  color: Get.theme.primaryColor,
-                                ),
+                                style: Theme.of(context).textTheme.bodyText1.copyWith(
+                                      color: Theme.of(context).primaryColor,
+                                    ),
                               ),
                               onPressed: () => Navigator.of(context).pop(),
                             ),
@@ -192,9 +194,7 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
                         CurrentChat.of(context)?.clearImageData(widget.attachment);
                       }
 
-                      final snackBar = SnackBar(content: Text('Redownloading attachment. Please wait...'));
-                      Scaffold.of(context).showSnackBar(snackBar);
-
+                      showSnackbar('In Progress', 'Redownloading attachment. Please wait...');
                       await AttachmentHelper.redownloadAttachment(widget.attachment, onComplete: () {
                         initBytes();
                       }, onError: () {
@@ -248,8 +248,8 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
 
     var loader = Center(
       child: CircularProgressIndicator(
-        backgroundColor: Get.theme.accentColor,
-        valueColor: AlwaysStoppedAnimation(Get.theme.primaryColor),
+        backgroundColor: Theme.of(context).accentColor,
+        valueColor: AlwaysStoppedAnimation(Theme.of(context).primaryColor),
       ),
     );
 

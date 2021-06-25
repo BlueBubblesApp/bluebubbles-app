@@ -105,7 +105,7 @@ class _AudioPlayerWigetState extends State<AudioPlayerWiget> {
 
     return Container(
       alignment: Alignment.center,
-      color: Get.theme.accentColor,
+      color: Theme.of(context).accentColor,
       constraints: new BoxConstraints(maxWidth: maxWidth),
       child: GestureDetector(
         onTap: () async {
@@ -127,12 +127,12 @@ class _AudioPlayerWigetState extends State<AudioPlayerWiget> {
               Padding(
                 padding: EdgeInsets.only(right: 20.0),
                 child: (playing == null)
-                    ? Text("00:00 / 00:00", style: Get.theme.textTheme.bodyText1)
+                    ? Text("00:00 / 00:00", style: Theme.of(context).textTheme.bodyText1)
                     : Text(
                         (playing.audio.duration == null || playing.audio.duration.inSeconds == 0)
                             ? formatDuration(current)
                             : "${formatDuration(current)} / ${formatDuration(playing.audio.duration)}",
-                        style: Get.theme.textTheme.bodyText1),
+                        style: Theme.of(context).textTheme.bodyText1),
               ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -143,17 +143,17 @@ class _AudioPlayerWigetState extends State<AudioPlayerWiget> {
                       ? Icon(
                           Icons.pause_circle_outline,
                           size: 50.0,
-                          color: Get.theme.textTheme.subtitle1.color,
+                          color: Theme.of(context).textTheme.subtitle1.color,
                         )
                       : Icon(
                           Icons.play_circle_filled,
                           size: 50.0,
-                          color: Get.theme.textTheme.subtitle1.color,
+                          color: Theme.of(context).textTheme.subtitle1.color,
                         ),
                   Flexible(
                     child: Slider(
-                      activeColor: Get.theme.primaryColor,
-                      inactiveColor: Get.theme.backgroundColor,
+                      activeColor: Theme.of(context).primaryColor,
+                      inactiveColor: Theme.of(context).backgroundColor,
                       value: currentValue,
                       min: 0.0,
                       max: maxValue,

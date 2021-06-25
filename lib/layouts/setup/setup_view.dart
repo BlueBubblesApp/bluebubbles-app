@@ -87,7 +87,7 @@ class _SetupViewState extends State<SetupView> {
             children: <Widget>[
               Text(
                 "$currentPage/6",
-                style: Get.theme.textTheme.bodyText1,
+                style: Theme.of(context).textTheme.bodyText1,
               ),
             ],
           ),

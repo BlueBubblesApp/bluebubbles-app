@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:adaptive_theme/adaptive_theme.dart';
+import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/models/fcm_data.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
@@ -78,16 +80,7 @@ class SettingsManager {
     }
 
     // // If [context] is null, then we can't set the theme, and we shouldn't anyway
-    // if (context != null) {
-    //   // Set the theme to match those of the settings
-    //   ThemeObject light = await ThemeObject.getLightTheme();
-    //   ThemeObject dark = await ThemeObject.getDarkTheme();
-    //   Get.changeTheme(settings.);
-    //   AdaptiveGet.theme.setTheme(
-    //     light: light.themeData,
-    //     dark: dark.themeData,
-    //   );
-    // }
+    await loadTheme(context);
 
     try {
       // Set the [displayMode] to that saved in settings
@@ -139,12 +132,14 @@ class SettingsManager {
     await selectedLightTheme?.save();
     await selectedDarkTheme?.save();
     await ThemeObject.setSelectedTheme(light: selectedLightTheme?.id ?? null, dark: selectedDarkTheme?.id ?? null);
+
     ThemeData lightTheme = (await ThemeObject.getLightTheme()).themeData;
     ThemeData darkTheme = (await ThemeObject.getDarkTheme()).themeData;
-
-    lightTheme = lightTheme ?? darkTheme;
-    darkTheme = darkTheme ?? lightTheme;
-    Get.changeTheme(Get.isDarkMode ? darkTheme : lightTheme);
+    AdaptiveTheme.of(context).setTheme(
+      light: lightTheme,
+      dark: darkTheme,
+      isDefault: true,
+    );
   }
 
   /// Updates FCM data and saves to disk. It will also run [authFCM] automatically

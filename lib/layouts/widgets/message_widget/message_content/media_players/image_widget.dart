@@ -143,10 +143,10 @@ class _ImageWidgetState extends State<ImageWidget> with TickerProviderStateMixin
         child: Container(
             width: widget.attachment.width.toDouble(),
             height: widget.attachment.height.toDouble(),
-            color: Get.theme.accentColor,
+            color: Theme.of(context).accentColor,
             child: Center(
-                child:
-                    CircularProgressIndicator(valueColor: new AlwaysStoppedAnimation<Color>(Get.theme.primaryColor)))),
+                child: CircularProgressIndicator(
+                    valueColor: new AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor)))),
       );
     } else {
       return Container(
@@ -155,7 +155,7 @@ class _ImageWidgetState extends State<ImageWidget> with TickerProviderStateMixin
         child: ClipRRect(
           borderRadius: BorderRadius.circular(20),
           child: Container(
-            color: Get.theme.accentColor,
+            color: Theme.of(context).accentColor,
             child: Center(
               child: Text("Invalid Image"),
             ),

@@ -50,7 +50,7 @@ class _ContactWidgetState extends State<ContactWidget> {
         height: 60,
         width: 250,
         child: Material(
-          color: Get.theme.accentColor,
+          color: Theme.of(context).accentColor,
           child: InkWell(
             onTap: () async {
               MethodChannelInterface().invokeMethod(
@@ -74,11 +74,11 @@ class _ContactWidgetState extends State<ContactWidget> {
                         children: [
                           Text(
                             "Contact Card",
-                            style: Get.theme.textTheme.subtitle2,
+                            style: Theme.of(context).textTheme.subtitle2,
                           ),
                           Text(
                             contact?.displayName ?? "No Name",
-                            style: Get.theme.textTheme.bodyText1,
+                            style: Theme.of(context).textTheme.bodyText1,
                             overflow: TextOverflow.ellipsis,
                             maxLines: 2,
                             softWrap: true,
@@ -100,7 +100,7 @@ class _ContactWidgetState extends State<ContactWidget> {
                         child: Container(
                           child: Text(
                             contact?.initials() ?? "?",
-                            style: Get.theme.textTheme.headline1,
+                            style: Theme.of(context).textTheme.headline1,
                           ),
                           alignment: AlignmentDirectional.center,
                         ),

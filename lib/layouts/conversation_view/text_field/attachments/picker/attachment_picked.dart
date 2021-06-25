@@ -69,7 +69,7 @@ class _AttachmentPickedState extends State<AttachmentPicked> with AutomaticKeepA
                       if (hideAttachments)
                         Positioned.fill(
                           child: Container(
-                            color: Get.theme.accentColor,
+                            color: Theme.of(context).accentColor,
                           ),
                         ),
                       if (hideAttachments && !hideAttachmentTypes)
@@ -123,9 +123,9 @@ class _AttachmentPickedState extends State<AttachmentPicked> with AutomaticKeepA
             height: 100,
             child: Center(
               child: CircularProgressIndicator(
-                backgroundColor: Get.theme.backgroundColor,
+                backgroundColor: Theme.of(context).backgroundColor,
                 valueColor: AlwaysStoppedAnimation<Color>(
-                  Get.theme.primaryColor,
+                  Theme.of(context).primaryColor,
                 ),
               ),
             ),

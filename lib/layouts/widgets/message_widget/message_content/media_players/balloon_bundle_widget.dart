@@ -72,7 +72,7 @@ class _BalloonBubbleState extends State<BalloonBundleWidget> {
           ),
           child: Container(
             width: 200,
-            color: Get.theme.accentColor,
+            color: Theme.of(context).accentColor,
             child: Padding(
               padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 10.0),
               child: Column(
@@ -82,14 +82,14 @@ class _BalloonBubbleState extends State<BalloonBundleWidget> {
                       textAlign: TextAlign.center,
                       maxLines: 3,
                       overflow: TextOverflow.ellipsis,
-                      style: Get.theme.textTheme.headline1),
+                      style: Theme.of(context).textTheme.headline1),
                   Text("Interactive Message",
-                      textAlign: TextAlign.center, maxLines: 1, style: Get.theme.textTheme.subtitle1),
+                      textAlign: TextAlign.center, maxLines: 1, style: Theme.of(context).textTheme.subtitle1),
                   Container(height: 10.0),
-                  Icon(bundleIcon, color: Get.theme.textTheme.bodyText1.color, size: 48),
+                  Icon(bundleIcon, color: Theme.of(context).textTheme.bodyText1.color, size: 48),
                   Container(height: 10.0),
                   Text("(Cannot open on Android)",
-                      textAlign: TextAlign.center, maxLines: 1, style: Get.theme.textTheme.subtitle2),
+                      textAlign: TextAlign.center, maxLines: 1, style: Theme.of(context).textTheme.subtitle2),
                 ],
               ),
             ),

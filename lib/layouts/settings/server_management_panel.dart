@@ -36,29 +36,29 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: Get.theme.backgroundColor,
+        systemNavigationBarColor: Theme.of(context).backgroundColor,
       ),
       child: Scaffold(
-        backgroundColor: Get.theme.backgroundColor,
+        backgroundColor: Theme.of(context).backgroundColor,
         appBar: PreferredSize(
           preferredSize: Size(Get.mediaQuery.size.width, 80),
           child: ClipRRect(
             child: BackdropFilter(
               child: AppBar(
-                brightness: ThemeData.estimateBrightnessForColor(Get.theme.backgroundColor),
+                brightness: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor),
                 toolbarHeight: 100.0,
                 elevation: 0,
                 leading: IconButton(
                   icon: Icon(SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_back_ios : Icons.arrow_back,
-                      color: Get.theme.primaryColor),
+                      color: Theme.of(context).primaryColor),
                   onPressed: () {
                     Navigator.of(context).pop();
                   },
                 ),
-                backgroundColor: Get.theme.accentColor.withOpacity(0.5),
+                backgroundColor: Theme.of(context).accentColor.withOpacity(0.5),
                 title: Text(
                   "Server Management",
-                  style: Get.theme.textTheme.headline1,
+                  style: Theme.of(context).textTheme.headline1,
                 ),
               ),
               filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
@@ -278,7 +278,7 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                               }
                             },
                             trailing: (!isRestartingMessages)
-                                ? Icon(Icons.refresh, color: Get.theme.primaryColor)
+                                ? Icon(Icons.refresh, color: Theme.of(context).primaryColor)
                                 : Container(
                                     constraints: BoxConstraints(
                                       maxHeight: 20,
@@ -286,7 +286,7 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                                     ),
                                     child: CircularProgressIndicator(
                                       strokeWidth: 3,
-                                      valueColor: AlwaysStoppedAnimation<Color>(Get.theme.primaryColor),
+                                      valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
                                     )));
                       }),
                   SettingsTile(
@@ -331,7 +331,7 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                         });
                       },
                       trailing: (!isRestarting)
-                          ? Icon(Icons.refresh, color: Get.theme.primaryColor)
+                          ? Icon(Icons.refresh, color: Theme.of(context).primaryColor)
                           : Container(
                               constraints: BoxConstraints(
                                 maxHeight: 20,
@@ -339,7 +339,7 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                               ),
                               child: CircularProgressIndicator(
                                 strokeWidth: 3,
-                                valueColor: AlwaysStoppedAnimation<Color>(Get.theme.primaryColor),
+                                valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
                               ))),
                   SettingsTile(
                       title: "Server Info",
@@ -351,15 +351,16 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                                 text: TextSpan(children: [
                               TextSpan(
                                   text: "MacOS Version: ",
-                                  style: Get.theme.textTheme.bodyText1.apply(fontWeightDelta: 2)),
-                              TextSpan(text: res['data']['os_version'], style: Get.theme.textTheme.bodyText1)
+                                  style: Theme.of(context).textTheme.bodyText1.apply(fontWeightDelta: 2)),
+                              TextSpan(text: res['data']['os_version'], style: Theme.of(context).textTheme.bodyText1)
                             ])),
                             RichText(
                                 text: TextSpan(children: [
                               TextSpan(
                                   text: "BlueBubbles Server Version: ",
-                                  style: Get.theme.textTheme.bodyText1.apply(fontWeightDelta: 2)),
-                              TextSpan(text: res['data']['server_version'], style: Get.theme.textTheme.bodyText1)
+                                  style: Theme.of(context).textTheme.bodyText1.apply(fontWeightDelta: 2)),
+                              TextSpan(
+                                  text: res['data']['server_version'], style: Theme.of(context).textTheme.bodyText1)
                             ]))
                           ];
                           showDialog(
@@ -367,17 +368,17 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                             builder: (context) => AlertDialog(
                               title: Text(
                                 "Metadata",
-                                style: Get.theme.textTheme.headline1,
+                                style: Theme.of(context).textTheme.headline1,
                                 textAlign: TextAlign.center,
                               ),
-                              backgroundColor: Get.theme.accentColor,
+                              backgroundColor: Theme.of(context).accentColor,
                               content: SizedBox(
                                 width: Get.mediaQuery.size.width * 3 / 5,
                                 height: Get.mediaQuery.size.height * 1 / 4,
                                 child: Container(
                                   padding: EdgeInsets.all(10.0),
                                   decoration: BoxDecoration(
-                                      color: Get.theme.backgroundColor,
+                                      color: Theme.of(context).backgroundColor,
                                       borderRadius: BorderRadius.all(Radius.circular(10))),
                                   child: ListView(
                                     physics: AlwaysScrollableScrollPhysics(
@@ -391,9 +392,9 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                                 FlatButton(
                                   child: Text(
                                     "Close",
-                                    style: Get.theme.textTheme.bodyText1.copyWith(
-                                      color: Get.theme.primaryColor,
-                                    ),
+                                    style: Theme.of(context).textTheme.bodyText1.copyWith(
+                                          color: Theme.of(context).primaryColor,
+                                        ),
                                   ),
                                   onPressed: () => Navigator.of(context).pop(),
                                 ),
@@ -402,7 +403,7 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                           );
                         });
                       },
-                      trailing: Icon(Icons.info, color: Get.theme.primaryColor)),
+                      trailing: Icon(Icons.info, color: Theme.of(context).primaryColor)),
                 ],
               ),
             ),
@@ -482,7 +483,7 @@ class _SyncDialogState extends State<SyncDialog> {
           child: LinearProgressIndicator(
             value: progress,
             backgroundColor: Colors.white,
-            valueColor: AlwaysStoppedAnimation(Get.theme.primaryColor),
+            valueColor: AlwaysStoppedAnimation(Theme.of(context).primaryColor),
           ),
         ),
       );
@@ -495,9 +496,9 @@ class _SyncDialogState extends State<SyncDialog> {
         },
         child: Text(
           "Ok",
-          style: Get.theme.textTheme.bodyText1.apply(
-            color: Get.theme.primaryColor,
-          ),
+          style: Theme.of(context).textTheme.bodyText1.apply(
+                color: Theme.of(context).primaryColor,
+              ),
         ),
       )
     ];
@@ -511,7 +512,7 @@ class _SyncDialogState extends State<SyncDialog> {
             padding: EdgeInsets.symmetric(horizontal: 20.0),
             child: Text(
               "Days: ${lookback?.inDays ?? "1"}",
-              style: Get.theme.textTheme.bodyText1,
+              style: Theme.of(context).textTheme.bodyText1,
               textAlign: TextAlign.center,
             ),
           ),
@@ -547,17 +548,17 @@ class _SyncDialogState extends State<SyncDialog> {
           },
           child: Text(
             "Sync",
-            style: Get.theme.textTheme.bodyText1.apply(
-              color: Get.theme.primaryColor,
-            ),
+            style: Theme.of(context).textTheme.bodyText1.apply(
+                  color: Theme.of(context).primaryColor,
+                ),
           ),
         )
       ];
     }
 
     return AlertDialog(
-      backgroundColor: Get.theme.backgroundColor,
-      title: Text(title, style: Get.theme.textTheme.headline1),
+      backgroundColor: Theme.of(context).backgroundColor,
+      title: Text(title, style: Theme.of(context).textTheme.headline1),
       content: content,
       actions: actions,
     );

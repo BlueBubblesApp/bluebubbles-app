@@ -61,7 +61,7 @@ class _TypingIndicatorState extends State<TypingIndicator> with TickerProviderSt
                     Container(
                       margin: EdgeInsets.only(left: 2),
                       decoration: BoxDecoration(
-                        color: Get.theme.accentColor,
+                        color: Theme.of(context).accentColor,
                         borderRadius: BorderRadius.circular(40),
                       ),
                       width: 10,
@@ -70,7 +70,7 @@ class _TypingIndicatorState extends State<TypingIndicator> with TickerProviderSt
                     Container(
                       margin: EdgeInsets.only(left: 9, bottom: 10),
                       decoration: BoxDecoration(
-                        color: Get.theme.accentColor,
+                        color: Theme.of(context).accentColor,
                         borderRadius: BorderRadius.circular(40),
                       ),
                       width: 15,
@@ -91,7 +91,7 @@ class _TypingIndicatorState extends State<TypingIndicator> with TickerProviderSt
                       ),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(20),
-                        color: Get.theme.accentColor,
+                        color: Theme.of(context).accentColor,
                       ),
                       child: Stack(
                         alignment: Alignment.center,
@@ -121,7 +121,7 @@ class _TypingIndicatorState extends State<TypingIndicator> with TickerProviderSt
         builder: (context, child) {
           return Container(
             decoration: BoxDecoration(
-              color: lightenOrDarken(Get.theme.accentColor,
+              color: lightenOrDarken(Theme.of(context).accentColor,
                   (Math.sin(animation.value + (index) * Math.pi / 4).abs() * 20).clamp(1, 20).toDouble()),
               borderRadius: BorderRadius.circular(30),
             ),
