@@ -34,7 +34,7 @@ public class PickFile implements Handler{
         pickIntent.setType("*/*");
         pickIntent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
 
-        Intent chooserIntent = Intent.createChooser(getIntent, "Select File");
+        Intent chooserIntent = Intent.createChooser(getIntent, "Select Files");
         chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Intent[] {pickIntent});
 
         try {
