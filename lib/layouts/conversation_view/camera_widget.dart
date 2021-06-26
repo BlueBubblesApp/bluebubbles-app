@@ -8,6 +8,7 @@ import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 
 class CameraWidget extends StatefulWidget {
@@ -32,10 +33,13 @@ class _CameraWidgetState extends State<CameraWidget> with WidgetsBindingObserver
   @override
   void initState() {
     super.initState();
-    initCameras();
 
     // Bind the lifecycle events
     WidgetsBinding.instance.addObserver(this);
+
+    SchedulerBinding.instance.addPostFrameCallback((_) async {
+      await initCameras();
+    });
   }
 
   Future<void> initCameras() async {
