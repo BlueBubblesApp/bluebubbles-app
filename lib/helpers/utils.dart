@@ -63,7 +63,7 @@ Size textSize(String text, TextStyle style) {
 
 Future<String> formatPhoneNumber(String str) async {
   // If the string is an email, we don't want to format it
-  if (isEmail(str)) return str;
+  if (str.isEmail) return str;
   str = str.trim();
 
   String countryCode = SettingsManager().countryCode ?? "US";
@@ -91,7 +91,7 @@ Future<String> formatPhoneNumber(String str) async {
 }
 
 Future<List<String>> getCompareOpts(Handle handle) async {
-  if (isEmail(handle.address)) return [handle.address];
+  if (handle.address.isEmail) return [handle.address];
 
   // Build a list of formatted address (max: 3)
   String formatted = handle.address.toString();
@@ -118,7 +118,7 @@ bool sameAddress(List<String> options, String compared) {
       break;
     }
 
-    if (isEmail(opt) && !isEmail(compared)) continue;
+    if (opt.isEmail && !compared.isEmail) continue;
 
     String formatted = Slugify(compared, delimiter: '').toString().replaceAll('-', '');
     if (options.contains(formatted)) {
@@ -152,11 +152,6 @@ Future<Map<String, dynamic>> parsePhoneNumber(String number, String region) asyn
   } catch (ex) {
     return meta;
   }
-}
-
-bool isEmail(String val) {
-  if (val == null || !val.contains('@')) return false;
-  return GetUtils.isEmail(val);
 }
 
 String randomString(int length) {
@@ -376,7 +371,7 @@ Future<MemoryImage> loadAvatar(Chat chat, Handle handle) async {
 
 List<RegExpMatch> parseLinks(String text) {
   RegExp exp = new RegExp(
-      r'((([hH])ttps?://)|(www\.))[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}([-a-zA-Z0-9/()@:%_.~#?&=*\[\]]*)');
+      r"^((((H|h)(T|t)|(F|f))(T|t)(P|p)((S|s)?))\://)?(www.|[a-zA-Z0-9].)[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,6}(\:[0-9]{1,5})*(/($|[a-zA-Z0-9\.\,\;\?\'\\\+&amp;%\$#\=~_\-]+))*$");
   return exp.allMatches(text).toList();
 }
 
@@ -401,16 +396,6 @@ String cleansePhoneNumber(String input) {
 
 Future<dynamic> loadAsset(String path) {
   return rootBundle.load(path);
-}
-
-bool isValidAddress(String value) {
-  value = value.trim();
-
-  String phonePattern = r'^\+?(\+?\d{1,2}\s?)?\-?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}$';
-  String emailPattern = r'^\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$';
-  RegExp regExpPhone = new RegExp(phonePattern);
-  RegExp regExpEmail = new RegExp(emailPattern);
-  return regExpPhone.hasMatch(value) || regExpEmail.hasMatch(value);
 }
 
 String stripHtmlTags(String htmlString) {

@@ -91,7 +91,8 @@ class _ChatSelectorTextFieldState extends State<ChatSelectorTextField> {
           onSubmitted: (String done) async {
             FocusScope.of(context).requestFocus(inputFieldNode);
             if (done.isEmpty) return;
-            if (isValidAddress(done)) {
+            done = done.trim();
+            if (done.isEmail || done.isPhoneNumber) {
               Contact contact = ContactManager().getCachedContactSync(done);
               if (contact == null) {
                 widget
