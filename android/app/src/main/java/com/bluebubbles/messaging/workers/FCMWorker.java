@@ -18,7 +18,6 @@ import androidx.work.WorkerParameters;
 import com.baseflow.permissionhandler.PermissionHandlerPlugin;
 import com.bluebubbles.messaging.helpers.NotifyRunnable;
 import com.bluebubbles.messaging.method_call_handler.MethodCallHandler;
-import com.itsclicking.clickapp.fluttersocketio.FlutterSocketIoPlugin;
 import com.tekartik.sqflite.SqflitePlugin;
 
 import flutter.plugins.contactsservice.contactsservice.ContactsServicePlugin;
@@ -88,7 +87,6 @@ public class FCMWorker extends Worker implements DartWorker {
             PluginRegistry registry = backgroundView.getPluginRegistry();
             SqflitePlugin.registerWith(registry.registrarFor("com.tekartik.sqflite.SqflitePlugin"));
             PathProviderPlugin.registerWith(registry.registrarFor("plugins.flutter.io/path_provider"));
-            FlutterSocketIoPlugin.registerWith(registry.registrarFor("flutter_socket_io"));
             PermissionHandlerPlugin.registerWith(registry.registrarFor("flutter.baseflow.com/permissions/methods"));
             ContactsServicePlugin.registerWith(registry.registrarFor("github.com/clovisnicolas/flutter_contacts"));
             SharedPreferencesPlugin.registerWith(registry.registrarFor("plugins.flutter.io/shared_preferences"));

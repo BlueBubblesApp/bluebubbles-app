@@ -24,8 +24,8 @@ import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_socket_io/flutter_socket_io.dart';
-import 'package:flutter_socket_io/socket_io_manager.dart';
+import 'package:socket_io_client/socket_io_client.dart' as IO;
+import 'package:socket_io_client/socket_io_client.dart';
 import 'package:get/get.dart';
 
 enum SocketState {
@@ -56,7 +56,7 @@ class SocketManager {
   StreamController<bool> finishedSetup = StreamController<bool>();
 
   //Socket io
-  SocketIO socket;
+  IO.Socket socket;
 
   Map<String, AttachmentDownloader> attachmentDownloaders = Map();
   Map<String, AttachmentSender> attachmentSenders = Map();
@@ -198,7 +198,7 @@ class SocketManager {
   }
 
   Future<String> handleNewMessage(_data) async {
-    Map<String, dynamic> data = jsonDecode(_data);
+    Map<String, dynamic> data = _data;
     IncomingQueue().add(new QueueItem(event: "handle-message", item: {"data": data}));
     return new Future.value("");
   }
@@ -206,7 +206,7 @@ class SocketManager {
   Future<String> handleChatStatusChange(_data) async {
     if (!SettingsManager().settings.enablePrivateAPI) return new Future.value("");
 
-    Map<String, dynamic> data = jsonDecode(_data);
+    Map<String, dynamic> data = _data;
     IncomingQueue().add(new QueueItem(event: IncomingQueue.HANDLE_CHAT_STATUS_CHANGE, item: {"data": data}));
     return new Future.value("");
   }
@@ -240,23 +240,33 @@ class SocketManager {
 
     try {
       // Create a new socket connection
-      _manager.socket = SocketIOManager().createSocketIO(serverAddress, "/",
+      /*_manager.socket = SocketIOManager().createSocketIO(serverAddress, "/",
           query: "guid=${encodeUri(SettingsManager().settings.guidAuthKey)}",
-          socketStatusCallback: (data) => socketStatusUpdate(data));
+          socketStatusCallback: (data) => socketStatusUpdate(data));*/
+      _manager.socket = IO.io(serverAddress,
+          OptionBuilder()
+              .setQuery({"guid": encodeUri(SettingsManager().settings.guidAuthKey)})
+              .setTransports(['websocket'])
+              .disableAutoConnect()
+              .build()
+      );
 
       if (_manager.socket == null) {
         debugPrint("Socket was never created. Can't connect to server...");
         return;
       }
 
-      await _manager.socket.init();
       _manager.socket.connect();
-      _manager.socket.unSubscribesAll();
+      _manager.socket.clearListeners();
 
+      _manager.socket.onConnect((data) => socketStatusUpdate("connect"));
+      _manager.socket.onReconnect((data) => socketStatusUpdate("reconnect"));
+      _manager.socket.onDisconnect((data) => socketStatusUpdate("disconnect"));
+      _manager.socket.onConnectError((data) => socketStatusUpdate("connect_error"));
       /**
        * Callback event for when the server successfully added a new FCM device
        */
-      _manager.socket.subscribe("fcm-device-id-added", (data) {
+      _manager.socket.on("fcm-device-id-added", (data) {
         // TODO: Possibly turn this into a notification for the user?
         // This could act as a "pseudo" security measure so they're alerted
         // when a new device is registered
@@ -266,27 +276,27 @@ class SocketManager {
       /**
        * If the server sends us an error it ran into, handle it
        */
-      _manager.socket.subscribe("error", (data) {
+      _manager.socket.on("error", (data) {
         debugPrint("An error occurred: " + data.toString());
       });
 
       /**
        * Handle new messages detected by the server
        */
-      _manager.socket.subscribe("new-message", handleNewMessage);
-      _manager.socket.subscribe("group-name-change", handleNewMessage);
-      _manager.socket.subscribe("participant-removed", handleNewMessage);
-      _manager.socket.subscribe("participant-added", handleNewMessage);
-      _manager.socket.subscribe("participant-left", handleNewMessage);
+      _manager.socket.on("new-message", handleNewMessage);
+      _manager.socket.on("group-name-change", handleNewMessage);
+      _manager.socket.on("participant-removed", handleNewMessage);
+      _manager.socket.on("participant-added", handleNewMessage);
+      _manager.socket.on("participant-left", handleNewMessage);
 
       /**
        * Handle Private API features
        */
-      _manager.socket.subscribe("chat-read-status-changed", handleChatStatusChange);
-      _manager.socket.subscribe("typing-indicator", (_data) {
+      _manager.socket.on("chat-read-status-changed", handleChatStatusChange);
+      _manager.socket.on("typing-indicator", (_data) {
         if (!SettingsManager().settings.enablePrivateAPI) return;
 
-        Map<String, dynamic> data = jsonDecode(_data);
+        Map<String, dynamic> data = _data;
         CurrentChat currentChat = AttachmentInfoBloc().getCurrentChat(data["guid"]);
         if (currentChat == null) return;
         if (data["display"]) {
@@ -299,8 +309,8 @@ class SocketManager {
       /**
        * Handle errors sent by the server
        */
-      _manager.socket.subscribe("message-send-error", (_data) async {
-        Map<String, dynamic> data = jsonDecode(_data);
+      _manager.socket.on("message-send-error", (_data) async {
+        Map<String, dynamic> data = _data;
         Message message = Message.fromMap(data);
 
         // If there are no chats, try to find it in the DB via the message
@@ -333,9 +343,9 @@ class SocketManager {
        * handle it by replacing the temp-guid with error-guid so we can do
        * something about it (or at least just track it)
        */
-      _manager.socket.subscribe("message-timeout", (_data) async {
+      _manager.socket.on("message-timeout", (_data) async {
         debugPrint("Client received message timeout");
-        Map<String, dynamic> data = jsonDecode(_data);
+        Map<String, dynamic> data = _data;
 
         Message message = await Message.findOne({"guid": data["tempGuid"]});
         if (message == null) return new Future.value("");
@@ -349,8 +359,8 @@ class SocketManager {
        * When an updated message comes in, update it in the database.
        * This may be when a read/delivered date has been changed.
        */
-      _manager.socket.subscribe("updated-message", (_data) async {
-        IncomingQueue().add(new QueueItem(event: "handle-updated-message", item: {"data": jsonDecode(_data)}));
+      _manager.socket.on("updated-message", (_data) async {
+        IncomingQueue().add(new QueueItem(event: "handle-updated-message", item: {"data": _data}));
       });
     } catch (e) {
       if (!catchException) {
@@ -488,8 +498,8 @@ class SocketManager {
       ]
     };
 
-    _manager.socket.sendMessage("get-messages", jsonEncode(params), (String data) async {
-      dynamic json = jsonDecode(data);
+    _manager.socket.emitWithAck("get-messages", jsonEncode(params), ack: (data) async {
+      dynamic json = data;
       if (json["status"] != 200) return completer.completeError(json);
 
       List<dynamic> output = [];
@@ -607,8 +617,7 @@ class SocketManager {
         if (awaitResponse) _manager.finishSocketProcess(_processId);
       } else {
         if (path == null) {
-          _manager.socket.sendMessage(event, jsonEncode(message), (String data) {
-            Map<String, dynamic> response = jsonDecode(data);
+          _manager.socket.emitWithAck(event, message, ack: (response) {
             if (response.containsKey('encrypted') && response['encrypted']) {
               try {
                 response['data'] =
@@ -623,10 +632,13 @@ class SocketManager {
             if (awaitResponse) _manager.finishSocketProcess(_processId);
           });
         } else {
-          _manager.socket.sendMessageWithoutReturn(
-              event, jsonEncode(message), path, SettingsManager().settings.guidAuthKey, (String data) {
-            debugPrint(data);
-            Map<String, dynamic> response = jsonDecode(data);
+          _manager.socket.emitWithAck(
+              event, message, ack: (response) async {
+            await MethodChannelInterface().invokeMethod("download-file", {
+              "data": response['data'],
+              "path": path,
+            });
+            response['byteLength'] = base64.decode(response['data']).length;
             cb(response);
             completer.complete(response);
             if (awaitResponse) _manager.finishSocketProcess(_processId);
