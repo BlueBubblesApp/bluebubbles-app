@@ -119,7 +119,6 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
                           value.data = value.themeData;
                           await value.save();
 
-                          print("SAVING: ${widget.isDarkMode}");
                           if (widget.isDarkMode) {
                             SettingsManager().saveSelectedTheme(context, selectedDarkTheme: value);
                           } else {

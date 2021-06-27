@@ -1,4 +1,3 @@
-import 'package:get/get.dart';
 import 'package:bluebubbles/layouts/setup/connecting_alert/failed_to_connect_dialog.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/material.dart';
@@ -15,6 +14,14 @@ class _ConnectingAlertState extends State<ConnectingAlert> {
   @override
   void initState() {
     super.initState();
+
+    // If we are already connected, continue
+    if (SocketManager().state == SocketState.CONNECTED) {
+      widget.onConnect(true);
+      return;
+    }
+
+    // Setup a listener to wait for connect events
     SocketManager().connectionStateStream.listen((event) {
       if (!this.mounted) return;
       debugPrint("Connection Status Changed");
@@ -23,6 +30,7 @@ class _ConnectingAlertState extends State<ConnectingAlert> {
       } else if (event == SocketState.ERROR || event == SocketState.DISCONNECTED) {
         widget.onConnect(false);
       }
+
       if (this.mounted) setState(() {});
     });
   }
