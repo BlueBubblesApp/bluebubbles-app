@@ -137,13 +137,17 @@ class SetupBloc {
 
         try {
           chat = Chat.fromMap(item);
-          await chat.save();
+          if (!(chat.chatIdentifier ?? "").startsWith("urn:biz")) {
+            await chat.save();
 
-          // Re-match the handles with the contacts
-          await ContactManager().matchHandles();
+            // Re-match the handles with the contacts
+            await ContactManager().matchHandles();
 
-          await syncChat(chat);
-          addOutput("Finished syncing chat, '${chat.chatIdentifier}'", SetupOutputType.LOG);
+            await syncChat(chat);
+            addOutput("Finished syncing chat, '${chat.chatIdentifier}'", SetupOutputType.LOG);
+          } else {
+            addOutput("Skipping syncing chat, '${chat.chatIdentifier}'", SetupOutputType.LOG);
+          }
         } catch (ex, stacktrace) {
           if (chat != null) {
             addOutput("Failed to sync chat, '${chat.chatIdentifier}'", SetupOutputType.ERROR);
