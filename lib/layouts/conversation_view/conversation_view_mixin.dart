@@ -547,12 +547,12 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
         int matches = 0;
         for (UniqueContact contact in selected) {
           bool match = false;
-          bool isEmailAddr = isEmail(contact.address);
+          bool isEmailAddr = contact.address.isEmail;
           String lastDigits = contact.address.substring(contact.address.length - 4, contact.address.length);
 
           for (var participant in i.participants) {
             // If one is an email and the other isn't, skip
-            if (isEmailAddr && !isEmail(participant.address)) continue;
+            if (isEmailAddr && !participant.address.isEmail) continue;
 
             // If the last 4 digits don't match, skip
             if (!participant.address.endsWith(lastDigits)) continue;

@@ -4,6 +4,7 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:contacts_service/contacts_service.dart';
+import 'package:get/get.dart';
 import 'package:faker/faker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -175,7 +176,7 @@ class ContactManager {
 
     // Get a list of comparable options
     dynamic opts = await getCompareOpts(handle);
-    bool isEmailAddr = isEmail(handle.address);
+    bool isEmailAddr = handle.address.isEmail;
     String lastDigits = handle.address.length < 4
         ? handle.address
         : handle.address.substring(handle.address.length - 4, handle.address.length);
@@ -238,7 +239,7 @@ class ContactManager {
 
     try {
       String contactTitle = address;
-      bool isEmailAddr = isEmail(contactTitle);
+      bool isEmailAddr = contactTitle.isEmail;
       if (contactTitle == address && !isEmailAddr) {
         return await formatPhoneNumber(contactTitle);
       }

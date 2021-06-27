@@ -200,12 +200,14 @@ class _ConversationListState extends State<ConversationList> {
     ];
   }
 
-  void openNewChatCreator() {
+  void openNewChatCreator() async {
+    bool shouldShowSnackbar = (await SettingsManager().getMacOSVersion()) >= 11;
     Navigator.of(context).push(
       CupertinoPageRoute(
         builder: (BuildContext context) {
           return ConversationView(
             isCreator: true,
+            showSnackbar: shouldShowSnackbar,
           );
         },
       ),

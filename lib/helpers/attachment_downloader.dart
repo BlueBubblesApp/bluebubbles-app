@@ -44,7 +44,7 @@ class AttachmentDownloader {
     params["chunkSize"] = _chunkSize;
     params["compress"] = false;
     SocketManager().sendMessage("get-attachment-chunk", params, (attachmentResponse) async {
-      if (attachmentResponse['status'] != "200" ||
+      if (attachmentResponse['status'] != 200 ||
           (attachmentResponse.containsKey("error") && attachmentResponse["error"] != null)) {
         File file = new File(attachment.getPath());
         if (await file.exists()) {

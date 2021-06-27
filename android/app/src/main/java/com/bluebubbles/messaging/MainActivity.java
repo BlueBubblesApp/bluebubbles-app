@@ -31,7 +31,6 @@ import androidx.work.WorkManager;
 import com.bluebubbles.messaging.method_call_handler.MethodCallHandler;
 import com.bluebubbles.messaging.method_call_handler.handlers.SocketIssueWarning;
 import com.bluebubbles.messaging.sharing.ShareShortcutManager;
-import com.itsclicking.clickapp.fluttersocketio.SocketIOManager;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -303,7 +302,6 @@ public class MainActivity extends FlutterActivity {
     @Override
     protected void onDestroy() {
         Log.d("MainActivity", "Removing Activity from memory");
-        SocketIOManager.getInstance().destroyAllSockets();
         engine = null;
         super.onDestroy();
     }
