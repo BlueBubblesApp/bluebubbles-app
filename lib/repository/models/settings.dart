@@ -1,6 +1,7 @@
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/models/config_entry.dart';
+import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:sqflite/sqflite.dart';
@@ -10,7 +11,7 @@ class Settings {
   String serverAddress = "";
   bool finishedSetup = false;
   int chunkSize = 500;
-  bool autoDownload = true;
+  RxBool autoDownload = true.obs;
   bool onlyWifiDownload = false;
   bool autoOpenKeyboard = true;
   bool hideTextPreviews = false;
@@ -84,7 +85,7 @@ class Settings {
       } else if (entry.name == "autoOpenKeyboard") {
         settings.autoOpenKeyboard = entry.value;
       } else if (entry.name == "autoDownload") {
-        settings.autoDownload = entry.value;
+        settings.autoDownload.value = entry.value;
       } else if (entry.name == "onlyWifiDownload") {
         settings.onlyWifiDownload = entry.value;
       } else if (entry.name == "hideTextPreviews") {

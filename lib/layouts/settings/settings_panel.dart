@@ -527,7 +527,7 @@ class SettingsTextField extends StatelessWidget {
   }
 }
 
-class SettingsSwitch extends StatefulWidget {
+class SettingsSwitch extends StatelessWidget {
   SettingsSwitch({
     Key key,
     this.initialVal,
@@ -539,39 +539,18 @@ class SettingsSwitch extends StatefulWidget {
   final String title;
 
   @override
-  _SettingsSwitchState createState() => _SettingsSwitchState();
-}
-
-class _SettingsSwitchState extends State<SettingsSwitch> {
-  bool _value;
-
-  @override
-  void initState() {
-    super.initState();
-    _value = widget.initialVal;
-  }
-
-  @override
   Widget build(BuildContext context) {
     return SwitchListTile(
       title: Text(
-        widget.title,
+        title,
         style: Theme.of(context).textTheme.bodyText1,
       ),
-      value: _value,
+      value: initialVal,
       activeColor: Theme.of(context).primaryColor,
       activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
       inactiveTrackColor: Theme.of(context).accentColor.withOpacity(0.6),
       inactiveThumbColor: Theme.of(context).accentColor,
-      onChanged: (bool val) {
-        widget.onChanged(val);
-
-        if (!this.mounted) return;
-
-        setState(() {
-          _value = val;
-        });
-      },
+      onChanged: onChanged,
     );
   }
 }

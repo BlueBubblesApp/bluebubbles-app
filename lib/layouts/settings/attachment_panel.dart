@@ -77,13 +77,13 @@ class _AttachmentPanelState extends State<AttachmentPanel> {
               delegate: SliverChildListDelegate(
                 <Widget>[
                   Container(padding: EdgeInsets.only(top: 5.0)),
-                  SettingsSwitch(
+                  Obx(() => SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.autoDownload = val;
+                      _settingsCopy.autoDownload.value = val;
                     },
-                    initialVal: _settingsCopy.autoDownload,
+                    initialVal: _settingsCopy.autoDownload.value,
                     title: "Auto-download Attachments",
-                  ),
+                  )),
                   SettingsSwitch(
                     onChanged: (bool val) {
                       _settingsCopy.onlyWifiDownload = val;
