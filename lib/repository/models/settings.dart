@@ -10,9 +10,9 @@ class Settings {
   String guidAuthKey = "";
   String serverAddress = "";
   bool finishedSetup = false;
-  int chunkSize = 500;
+  RxInt chunkSize = 500.obs;
   RxBool autoDownload = true.obs;
-  bool onlyWifiDownload = false;
+  RxBool onlyWifiDownload = false.obs;
   bool autoOpenKeyboard = true;
   bool hideTextPreviews = false;
   bool showIncrementalSync = false;
@@ -43,7 +43,7 @@ class Settings {
   int smartReplySampleSize = 2;
   bool colorblindMode = false;
   bool showDeliveryTimestamps = false;
-  int previewCompressionQuality = 25;
+  RxInt previewCompressionQuality = 25.obs;
   bool filteredChatList = false;
 
   // String emojiFontFamily;
@@ -71,6 +71,7 @@ class Settings {
 
   Settings();
 
+  //todo make sure to change here!!
   factory Settings.fromConfigEntries(List<ConfigEntry> entries) {
     Settings settings = new Settings();
     for (ConfigEntry entry in entries) {
@@ -81,13 +82,13 @@ class Settings {
       } else if (entry.name == "finishedSetup") {
         settings.finishedSetup = entry.value;
       } else if (entry.name == "chunkSize") {
-        settings.chunkSize = entry.value;
+        settings.chunkSize.value = entry.value;
       } else if (entry.name == "autoOpenKeyboard") {
         settings.autoOpenKeyboard = entry.value;
       } else if (entry.name == "autoDownload") {
         settings.autoDownload.value = entry.value;
       } else if (entry.name == "onlyWifiDownload") {
-        settings.onlyWifiDownload = entry.value;
+        settings.onlyWifiDownload.value = entry.value;
       } else if (entry.name == "hideTextPreviews") {
         settings.hideTextPreviews = entry.value;
       } else if (entry.name == "showIncrementalSync") {
@@ -181,7 +182,7 @@ class Settings {
       } else if (entry.name == "generateFakeMessageContent") {
         settings.generateFakeMessageContent = entry.value;
       } else if (entry.name == "previewCompressionQuality") {
-        settings.previewCompressionQuality = entry.value;
+        settings.previewCompressionQuality.value = entry.value;
       } else if (entry.name == "filteredChatList") {
         settings.filteredChatList = entry.value;
       }
@@ -229,6 +230,7 @@ class Settings {
     return Settings.fromConfigEntries(entries);
   }
 
+  //todo make sure to change here!!
   List<ConfigEntry> toEntries() => [
         ConfigEntry(
           name: "serverAddress",
@@ -247,7 +249,7 @@ class Settings {
         ),
         ConfigEntry(
           name: "chunkSize",
-          value: this.chunkSize,
+          value: this.chunkSize.value,
           type: this.chunkSize.runtimeType,
         ),
         ConfigEntry(
@@ -257,12 +259,12 @@ class Settings {
         ),
         ConfigEntry(
           name: "autoDownload",
-          value: this.autoDownload,
+          value: this.autoDownload.value,
           type: this.autoDownload.runtimeType,
         ),
         ConfigEntry(
           name: "onlyWifiDownload",
-          value: this.onlyWifiDownload,
+          value: this.onlyWifiDownload.value,
           type: this.onlyWifiDownload.runtimeType,
         ),
         ConfigEntry(
@@ -487,7 +489,7 @@ class Settings {
         ),
         ConfigEntry(
           name: "previewCompressionQuality",
-          value: this.previewCompressionQuality,
+          value: this.previewCompressionQuality.value,
           type: this.previewCompressionQuality.runtimeType,
         ),
         ConfigEntry(

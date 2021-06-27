@@ -51,7 +51,7 @@ class SettingsManager {
       return 10;
     }
 
-    return SettingsManager().settings.previewCompressionQuality;
+    return SettingsManager().settings.previewCompressionQuality.value;
   }
 
   /// [sharedPreferences] is just an instance of [SharedPreferences] and it is stored here because it is commonly used

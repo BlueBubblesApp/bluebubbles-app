@@ -179,7 +179,7 @@ class _UXPanelState extends State<UXPanel> {
                   if (SettingsManager().settings.skin == Skins.IOS)
                     SettingsSlider(
                         text: "Scroll Speed Multiplier",
-                        startingVal: _settingsCopy.scrollVelocity,
+                        currentVal: _settingsCopy.scrollVelocity,
                         update: (double val) {
                           _settingsCopy.scrollVelocity = double.parse(val.toStringAsFixed(2));
                         },
@@ -199,7 +199,7 @@ class _UXPanelState extends State<UXPanel> {
                   if (!isNullOrZero(SettingsManager().settings.sendDelay))
                     SettingsSlider(
                         text: "Send Delay (Seconds)",
-                        startingVal: _settingsCopy.sendDelay.toDouble(),
+                        currentVal: _settingsCopy.sendDelay.toDouble(),
                         update: (double val) {
                           _settingsCopy.sendDelay = val.toInt();
                         },
