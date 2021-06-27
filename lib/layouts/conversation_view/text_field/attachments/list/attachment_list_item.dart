@@ -170,17 +170,17 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
                 color: Colors.white,
               ),
             ),
-          Align(
-            alignment: Alignment.topRight,
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(80),
-                color: Colors.black,
-              ),
-              width: 25,
-              height: 25,
-              child: GestureDetector(
-                onTap: widget.onRemove,
+          GestureDetector(
+            onTap: widget.onRemove,
+            child: Align(
+              alignment: Alignment.topRight,
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(80),
+                  color: Colors.black,
+                ),
+                width: 25,
+                height: 25,
                 child: Icon(
                   Icons.close,
                   color: Colors.white,

@@ -12,6 +12,7 @@ import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/socket_manager.dart';
+import 'package:get/get.dart';
 import 'package:faker/faker.dart';
 import 'package:flutter/widgets.dart';
 import 'package:metadata_fetch/metadata_fetch.dart';
@@ -47,11 +48,7 @@ Future<String> getFullChatTitle(Chat _chat) async {
     for (int i = 0; i < chat.participants.length; i++) {
       String name = await ContactManager().getContactTitle(chat.participants[i]);
 
-      String test = name.replaceAll(RegExp(r'[-() \.]'), '');
-      test = test.replaceAll(RegExp(r'[^0-9]'), "").trim();
-      bool isNumber = test.length > 0;
-
-      if (chat.participants.length > 1 && !isNumber) {
+      if (chat.participants.length > 1 && !name.isPhoneNumber) {
         name = name.trim().split(" ")[0];
       } else {
         name = name.trim();
