@@ -43,7 +43,7 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> w
       _images = images;
     }
 
-    setState(() {});
+    if (this.mounted) setState(() {});
   }
 
   @override

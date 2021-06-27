@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/repository/models/message.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:html/dom.dart';
 import 'package:html/parser.dart' as parser;
 import 'package:http/http.dart' as http;
@@ -134,7 +135,7 @@ class MetadataHelper {
       try {
         data = await extract(url);
       } catch (ex) {
-        print('An error occurred while fetching URL Preview Metadata: ${ex.toString()}');
+        debugPrint('An error occurred while fetching URL Preview Metadata: ${ex.toString()}');
       }
     }
 
@@ -198,7 +199,7 @@ class MetadataHelper {
       document = parser.parse(response.body.toString());
       document.requestUrl = response.request.url.toString();
     } catch (err) {
-      print("Error parsing HTML document: ${err.toString()}");
+      debugPrint("Error parsing HTML document: ${err.toString()}");
       return document;
     }
 
@@ -232,7 +233,7 @@ class MetadataHelper {
         }
       }
     } catch (ex) {
-      print('Failed to manually get metadata: ${ex.toString()}');
+      debugPrint('Failed to manually get metadata: ${ex.toString()}');
     }
 
     return meta;
