@@ -56,6 +56,11 @@ class SetupBloc {
 
   Future<void> connectToServer(FCMData data, String serverURL, String password) async {
     Settings settingsCopy = SettingsManager().settings;
+    if (SocketManager().state == SocketState.CONNECTED && settingsCopy.serverAddress == serverURL) {
+      debugPrint("Not reconnecting to server we are already connected to!");
+      return;
+    }
+
     settingsCopy.serverAddress = getServerAddress(address: serverURL);
     settingsCopy.guidAuthKey = password;
 
