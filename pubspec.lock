@@ -461,6 +461,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.5.1"
+  flutter_native_splash:
+    dependency: "direct dev"
+    description:
+      name: flutter_native_splash
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.3.2"
   flutter_slidable:
     dependency: "direct main"
     description:
