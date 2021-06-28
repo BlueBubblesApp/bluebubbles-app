@@ -643,7 +643,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
               if (widget.message.hasAttachments && !widget.message.isUrlPreview()) {
                 for (Attachment element in widget.message.attachments) {
                   await Share.file(
-                    "Shared ${element.mimeType.split("/")[0]} from BlueBubbles: ${element.transferName}",
+                    "${element.mimeType.split("/")[0].capitalizeFirst} shared from BlueBubbles: ${element.transferName}",
                     element.transferName,
                     element.getPath(),
                     element.mimeType,
@@ -651,7 +651,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                 }
               } else if (widget.message.text.length > 0) {
                 await Share.text(
-                  "Shared text from BlueBubbles: ${widget.message.text}",
+                  "Text shared from BlueBubbles",
                   widget.message.text,
                 );
               }
