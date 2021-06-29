@@ -67,7 +67,7 @@ class _ThemePanelState extends State<ThemePanel> {
                 toolbarHeight: 100.0,
                 elevation: 0,
                 leading: IconButton(
-                  icon: Icon(SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_back_ios : Icons.arrow_back,
+                  icon: Icon(SettingsManager().settings.skin == Skins.iOS ? Icons.arrow_back_ios : Icons.arrow_back,
                       color: Theme.of(context).primaryColor),
                   onPressed: () {
                     Navigator.of(context).pop();
@@ -106,7 +106,7 @@ class _ThemePanelState extends State<ThemePanel> {
                   SettingsTile(
                     title: "Theming",
                     trailing: Icon(
-                        SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_forward_ios : Icons.arrow_forward,
+                        SettingsManager().settings.skin == Skins.iOS ? Icons.arrow_forward_ios : Icons.arrow_forward,
                         color: Theme.of(context).primaryColor),
                     onTap: () async {
                       Navigator.of(context).push(
@@ -132,6 +132,7 @@ class _ThemePanelState extends State<ThemePanel> {
                     },
                     options: Skins.values.where((item) => item != Skins.Samsung).toList(),
                     textProcessing: (dynamic val) => val.toString().split(".").last,
+                    capitalize: false,
                     title: "App Skin",
                     showDivider: false,
                   ),
@@ -154,7 +155,7 @@ class _ThemePanelState extends State<ThemePanel> {
                   SettingsTile(
                     title: "Custom Avatar Colors",
                     trailing: Icon(
-                        SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_forward_ios : Icons.arrow_forward,
+                        SettingsManager().settings.skin == Skins.iOS ? Icons.arrow_forward_ios : Icons.arrow_forward,
                         color: Theme.of(context).primaryColor),
                     onTap: () async {
                       Navigator.of(context).push(
@@ -181,7 +182,7 @@ class _ThemePanelState extends State<ThemePanel> {
                     initialVal: _settingsCopy.denseChatTiles,
                     title: "Dense Conversation Tiles",
                   ),
-                  if (SettingsManager().settings.skin == Skins.IOS)
+                  if (SettingsManager().settings.skin == Skins.iOS)
                     SettingsSwitch(
                       onChanged: (bool val) {
                         _settingsCopy.reducedForehead = val;

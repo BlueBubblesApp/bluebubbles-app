@@ -17,7 +17,7 @@ class ThemeManager {
       return AlwaysScrollableScrollPhysics(
         parent: ClampingScrollPhysics(),
       );
-    } else if (SettingsManager().settings.skin == Skins.IOS) {
+    } else if (SettingsManager().settings.skin == Skins.iOS) {
       return AlwaysScrollableScrollPhysics(
         parent: CustomBouncingScrollPhysics(),
       );

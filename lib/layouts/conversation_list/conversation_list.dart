@@ -177,7 +177,7 @@ class _ConversationListState extends State<ConversationList> {
         builder: (context, snapshot) {
           if (!snapshot.hasData || snapshot.data.progress < 1 || snapshot.data.progress >= 100) return Container();
 
-          if (skinSet == Skins.IOS) {
+          if (skinSet == Skins.iOS) {
             return Theme(
               data: ThemeData(
                 cupertinoOverrideTheme: CupertinoThemeData(
@@ -401,13 +401,13 @@ class _Cupertino extends StatelessWidget {
           physics: ThemeManager().scrollPhysics,
           slivers: <Widget>[
             SliverAppBar(
-              leading: ((SettingsManager().settings.skin == Skins.IOS && parent.widget.showArchivedChats) ||
+              leading: ((SettingsManager().settings.skin == Skins.iOS && parent.widget.showArchivedChats) ||
                       (SettingsManager().settings.skin == Skins.Material ||
                               SettingsManager().settings.skin == Skins.Samsung) &&
                           !parent.widget.showArchivedChats)
                   ? IconButton(
                       icon: Icon(
-                          (SettingsManager().settings.skin == Skins.IOS && parent.widget.showArchivedChats)
+                          (SettingsManager().settings.skin == Skins.iOS && parent.widget.showArchivedChats)
                               ? Icons.arrow_back_ios
                               : Icons.arrow_back,
                           color: Theme.of(context).primaryColor),
