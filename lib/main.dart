@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/layouts/conversation_list/conversation_list.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
+import 'package:bluebubbles/layouts/settings/about_panel.dart';
 import 'package:bluebubbles/layouts/settings/attachment_panel.dart';
 import 'package:bluebubbles/layouts/settings/custom_avatar_panel.dart';
 import 'package:bluebubbles/layouts/setup/failure_to_start.dart';
@@ -148,6 +149,7 @@ class Main extends StatelessWidget with WidgetsBindingObserver {
         defaultTransition: Transition.cupertino,
 
         getPages: [
+          GetPage(page: () => AboutPanel(), name: "/settings/about-panel", binding: AboutPanelBinding()),
           GetPage(page: () => AttachmentPanel(), name: "/settings/attachment-panel", binding: AttachmentPanelBinding()),
           GetPage(page: () => CustomAvatarPanel(), name: "/settings/custom-avatar-panel", binding: CustomAvatarPanelBinding())
         ],

@@ -14,56 +14,33 @@ import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
-class AboutPanel extends StatefulWidget {
-  AboutPanel({Key key}) : super(key: key);
-
+class AboutPanelBinding extends Bindings {
   @override
-  _AboutPanelState createState() => _AboutPanelState();
+  void dependencies() {
+    Get.lazyPut<AboutPanelController>(() => AboutPanelController());
+  }
 }
 
-class _AboutPanelState extends State<AboutPanel> {
-  Brightness brightness;
-  bool gotBrightness = false;
-  Color previousBackgroundColor;
-
+class AboutPanelController extends GetxController {
   @override
-  void initState() {
-    super.initState();
+  void onInit() {
+    super.onInit();
 
     // Listen for any incoming events
     EventDispatcher().stream.listen((Map<String, dynamic> event) {
       if (!event.containsKey("type")) return;
 
-      if (event["type"] == 'theme-update' && this.mounted) {
-        setState(() {
-          gotBrightness = false;
-        });
+      if (event["type"] == 'theme-update') {
+        update();
       }
     });
   }
+}
 
-  void loadBrightness() {
-    Color now = Theme.of(context).backgroundColor;
-    bool themeChanged = previousBackgroundColor == null || previousBackgroundColor != now;
-    if (!themeChanged && gotBrightness) return;
-
-    previousBackgroundColor = now;
-    if (this.context == null) {
-      brightness = Brightness.light;
-      gotBrightness = true;
-      return;
-    }
-
-    bool isDark = now.computeLuminance() < 0.179;
-    brightness = isDark ? Brightness.dark : Brightness.light;
-    gotBrightness = true;
-    if (this.mounted) setState(() {});
-  }
+class AboutPanel extends GetView<AboutPanelController> {
 
   @override
   Widget build(BuildContext context) {
-    loadBrightness();
-
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: Theme.of(context).backgroundColor,
@@ -83,7 +60,7 @@ class _AboutPanelState extends State<AboutPanel> {
                   icon: Icon(SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_back_ios : Icons.arrow_back,
                       color: Theme.of(context).primaryColor),
                   onPressed: () {
-                    Navigator.of(context).pop();
+                    Get.back();
                   },
                 ),
                 backgroundColor: Theme.of(context).accentColor.withOpacity(0.5),

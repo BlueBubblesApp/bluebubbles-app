@@ -301,11 +301,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                   SettingsTile(
                     title: "About & Links",
                     onTap: () {
-                      Navigator.of(context).push(
-                        CupertinoPageRoute(
-                          builder: (context) => AboutPanel(),
-                        ),
-                      );
+                      Get.toNamed("/settings/about-panel");
                     },
                     trailing: nextIcon,
                   ),
