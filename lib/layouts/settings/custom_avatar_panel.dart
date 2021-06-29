@@ -14,33 +14,30 @@ import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_displaymode/flutter_displaymode.dart';
 
-class CustomAvatarPanel extends StatefulWidget {
-  CustomAvatarPanel({Key key}) : super(key: key);
-
+class CustomAvatarPanelBinding implements Bindings {
   @override
-  _CustomAvatarPanelState createState() => _CustomAvatarPanelState();
+  void dependencies() {
+    Get.lazyPut<CustomAvatarPanelController>(() => CustomAvatarPanelController());
+  }
 }
 
-class _CustomAvatarPanelState extends State<CustomAvatarPanel> {
+class CustomAvatarPanelController extends GetxController {
   Settings _settingsCopy;
-  List<DisplayMode> modes;
-  DisplayMode currentMode;
   bool isFetching = false;
-  List<Widget> handleWidgets = [];
+  RxList<Widget> handleWidgets = <Widget>[].obs;
 
   @override
-  void initState() {
-    super.initState();
+  void onInit() {
+    super.onInit();
     _settingsCopy = SettingsManager().settings;
 
     // Listen for any incoming events
     EventDispatcher().stream.listen((Map<String, dynamic> event) {
       if (!event.containsKey("type")) return;
 
-      if (event["type"] == 'theme-update' && this.mounted) {
-        setState(() {});
+      if (event["type"] == 'theme-update') {
+        update();
       }
     });
 
@@ -49,7 +46,7 @@ class _CustomAvatarPanelState extends State<CustomAvatarPanel> {
 
   Future<void> getCustomHandles({force: false}) async {
     // If we are already fetching or have results,
-    if (!false && (isFetching || !isNullOrEmpty(this.handleWidgets))) return;
+    if (!false && (isFetching || !isNullOrEmpty(handleWidgets))) return;
     List<Handle> handles = await Handle.find();
     if (isNullOrEmpty(handles)) return;
 
@@ -60,18 +57,25 @@ class _CustomAvatarPanelState extends State<CustomAvatarPanel> {
     for (var item in handles) {
       items.add(SettingsTile(
         title:
-            ContactManager().getCachedContactSync(item.address)?.displayName ?? await formatPhoneNumber(item.address),
+        ContactManager().getCachedContactSync(item.address)?.displayName ?? await formatPhoneNumber(item.address),
         subTitle: "Tap avatar to change color",
         trailing: ContactAvatarWidget(handle: item),
       ));
     }
 
-    if (!isNullOrEmpty(items) && this.mounted) {
-      setState(() {
-        this.handleWidgets = items;
-      });
+    if (!isNullOrEmpty(items)) {
+      handleWidgets.assignAll(items);
     }
   }
+
+  @override
+  void dispose() {
+    SettingsManager().saveSettings(_settingsCopy);
+    super.dispose();
+  }
+}
+
+class CustomAvatarPanel extends GetView<CustomAvatarPanelController> {
 
   @override
   Widget build(BuildContext context) {
@@ -92,7 +96,7 @@ class _CustomAvatarPanelState extends State<CustomAvatarPanel> {
                 leading: IconButton(
                   icon: Icon(Icons.arrow_back_ios, color: Theme.of(context).primaryColor),
                   onPressed: () {
-                    Navigator.of(context).pop();
+                   Get.back();
                   },
                 ),
                 backgroundColor: Theme.of(context).accentColor.withOpacity(0.5),
@@ -110,11 +114,11 @@ class _CustomAvatarPanelState extends State<CustomAvatarPanel> {
             parent: CustomBouncingScrollPhysics(),
           ),
           slivers: <Widget>[
-            SliverList(
+            Obx(() => SliverList(
               delegate: SliverChildListDelegate(
                 <Widget>[
                   Container(padding: EdgeInsets.only(top: 5.0)),
-                  if (this.handleWidgets.length == 0)
+                  if (controller.handleWidgets.length == 0)
                     Container(
                         padding: EdgeInsets.all(30),
                         child: Text(
@@ -122,10 +126,10 @@ class _CustomAvatarPanelState extends State<CustomAvatarPanel> {
                           style: Theme.of(context).textTheme.subtitle1,
                           textAlign: TextAlign.center,
                         )),
-                  for (Widget handleWidget in this.handleWidgets ?? []) handleWidget
+                  for (Widget handleWidget in controller.handleWidgets ?? []) handleWidget
                 ],
               ),
-            ),
+            )),
             SliverList(
               delegate: SliverChildListDelegate(
                 <Widget>[],
@@ -135,15 +139,5 @@ class _CustomAvatarPanelState extends State<CustomAvatarPanel> {
         ),
       ),
     );
-  }
-
-  void saveSettings() {
-    SettingsManager().saveSettings(_settingsCopy);
-  }
-
-  @override
-  void dispose() {
-    saveSettings();
-    super.dispose();
   }
 }

@@ -157,11 +157,7 @@ class _ThemePanelState extends State<ThemePanel> {
                         SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_forward_ios : Icons.arrow_forward,
                         color: Theme.of(context).primaryColor),
                     onTap: () async {
-                      Navigator.of(context).push(
-                        CupertinoPageRoute(
-                          builder: (context) => CustomAvatarPanel(),
-                        ),
-                      );
+                      Get.toNamed("/settings/custom-avatar-panel");
                     },
                   ),
                   if (SettingsManager().settings.skin != Skins.Samsung)
