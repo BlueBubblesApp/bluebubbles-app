@@ -46,9 +46,9 @@ class _AttachmentPickedState extends State<AttachmentPicked> with AutomaticKeepA
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    final bool hideAttachments = SettingsManager().settings.redactedMode && SettingsManager().settings.hideAttachments;
+    final bool hideAttachments = SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideAttachments.value;
     final bool hideAttachmentTypes =
-        SettingsManager().settings.redactedMode && SettingsManager().settings.hideAttachmentTypes;
+        SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideAttachmentTypes.value;
     return image != null
         ? AnimatedContainer(
             duration: Duration(milliseconds: 250),

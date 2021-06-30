@@ -11,116 +11,47 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-class RedactedModePanel extends StatefulWidget {
-  RedactedModePanel({Key key}) : super(key: key);
-
+class RedactedModePanelBinding extends Bindings {
   @override
-  _RedactedModePanelState createState() => _RedactedModePanelState();
+  void dependencies() {
+    Get.lazyPut<RedactedModePanelController>(() => RedactedModePanelController());
+  }
 }
 
-class _RedactedModePanelState extends State<RedactedModePanel> {
+class RedactedModePanelController extends GetxController {
   Settings _settingsCopy;
-  bool redactedMode = false;
 
   @override
-  void initState() {
-    super.initState();
+  void onInit() {
+    super.onInit();
     _settingsCopy = SettingsManager().settings;
-    redactedMode = _settingsCopy.redactedMode;
 
     // Listen for any incoming events
     EventDispatcher().stream.listen((Map<String, dynamic> event) {
       if (!event.containsKey("type")) return;
 
-      if (event["type"] == 'theme-update' && this.mounted) {
-        setState(() {});
+      if (event["type"] == 'theme-update') {
+        update();
       }
     });
   }
 
+  void saveSettings() {
+    SettingsManager().saveSettings(_settingsCopy);
+  }
+
+  @override
+  void dispose() {
+    saveSettings();
+    super.dispose();
+  }
+
+}
+
+class RedactedModePanel extends GetView<RedactedModePanelController> {
+
   @override
   Widget build(BuildContext context) {
-    List<Widget> redactedWidgets = [];
-    if (redactedMode) {
-      redactedWidgets.addAll([
-        SettingsSwitch(
-          onChanged: (bool val) {
-            _settingsCopy.hideMessageContent = val;
-            saveSettings();
-          },
-          initialVal: _settingsCopy.hideMessageContent,
-          title: "Hide Message Content",
-        ),
-        Divider(),
-        SettingsSwitch(
-          onChanged: (bool val) {
-            _settingsCopy.hideReactions = val;
-            saveSettings();
-          },
-          initialVal: _settingsCopy.hideReactions,
-          title: "Hide Reactions",
-        ),
-        SettingsSwitch(
-          onChanged: (bool val) {
-            _settingsCopy.hideAttachments = val;
-            saveSettings();
-          },
-          initialVal: _settingsCopy.hideAttachments,
-          title: "Hide Attachments",
-        ),
-        SettingsSwitch(
-          onChanged: (bool val) {
-            _settingsCopy.hideAttachmentTypes = val;
-            saveSettings();
-          },
-          initialVal: _settingsCopy.hideAttachmentTypes,
-          title: "Hide Attachment Types",
-        ),
-        Divider(),
-        SettingsSwitch(
-          onChanged: (bool val) {
-            _settingsCopy.hideContactPhotos = val;
-            saveSettings();
-          },
-          initialVal: _settingsCopy.hideContactPhotos,
-          title: "Hide Contact Photos",
-        ),
-        SettingsSwitch(
-          onChanged: (bool val) {
-            _settingsCopy.hideContactInfo = val;
-            saveSettings();
-          },
-          initialVal: _settingsCopy.hideContactInfo,
-          title: "Hide Contact Info",
-        ),
-        SettingsSwitch(
-          onChanged: (bool val) {
-            _settingsCopy.removeLetterAvatars = val;
-            saveSettings();
-          },
-          initialVal: _settingsCopy.removeLetterAvatars,
-          title: "Remove Letter Avatars",
-        ),
-        Divider(),
-        SettingsSwitch(
-          onChanged: (bool val) {
-            _settingsCopy.generateFakeContactNames = val;
-            saveSettings();
-          },
-          initialVal: _settingsCopy.generateFakeContactNames,
-          title: "Generate Fake Contact Names",
-        ),
-        SettingsSwitch(
-          onChanged: (bool val) {
-            _settingsCopy.generateFakeMessageContent = val;
-            saveSettings();
-          },
-          initialVal: _settingsCopy.generateFakeMessageContent,
-          title: "Generate Fake Message Content",
-        ),
-      ]);
-    }
-
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: Theme.of(context).backgroundColor,
@@ -139,7 +70,7 @@ class _RedactedModePanelState extends State<RedactedModePanel> {
                   icon: Icon(SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_back_ios : Icons.arrow_back,
                       color: Theme.of(context).primaryColor),
                   onPressed: () {
-                    Navigator.of(context).pop();
+                    Get.back();
                   },
                 ),
                 backgroundColor: Theme.of(context).accentColor.withOpacity(0.5),
@@ -163,42 +94,102 @@ class _RedactedModePanelState extends State<RedactedModePanel> {
                       title: "What is Redacted Mode?",
                       subTitle:
                           ("Redacted Mode hides your personal information such as contact names, message content, and more. This is useful when taking screenshots to send to developers.")),
-                  SettingsSwitch(
+                  Obx(() => SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.redactedMode = val;
-                      if (this.mounted) {
-                        setState(() {
-                          redactedMode = val;
-                        });
-                      }
+                      controller._settingsCopy.redactedMode.value = val;
 
-                      saveSettings();
+                      controller.saveSettings();
                     },
-                    initialVal: _settingsCopy.redactedMode,
+                    initialVal: controller._settingsCopy.redactedMode.value,
                     title: "Enable Redacted Mode",
-                  ),
-                  ...redactedWidgets
+                  )),
                 ],
               ),
             ),
-            SliverList(
+            Obx(() => SliverList(
               delegate: SliverChildListDelegate(
-                <Widget>[],
+                  controller._settingsCopy.redactedMode.value ? <Widget>[
+                    SettingsSwitch(
+                      onChanged: (bool val) {
+                        controller._settingsCopy.hideMessageContent.value = val;
+                        controller.saveSettings();
+                      },
+                      initialVal: controller._settingsCopy.hideMessageContent.value,
+                      title: "Hide Message Content",
+                    ),
+                    Divider(),
+                    SettingsSwitch(
+                      onChanged: (bool val) {
+                        controller._settingsCopy.hideReactions.value = val;
+                        controller.saveSettings();
+                      },
+                      initialVal: controller._settingsCopy.hideReactions.value,
+                      title: "Hide Reactions",
+                    ),
+                    SettingsSwitch(
+                      onChanged: (bool val) {
+                        controller._settingsCopy.hideAttachments.value = val;
+                        controller.saveSettings();
+                      },
+                      initialVal: controller._settingsCopy.hideAttachments.value,
+                      title: "Hide Attachments",
+                    ),
+                    SettingsSwitch(
+                      onChanged: (bool val) {
+                        controller._settingsCopy.hideAttachmentTypes.value = val;
+                        controller.saveSettings();
+                      },
+                      initialVal: controller._settingsCopy.hideAttachmentTypes.value,
+                      title: "Hide Attachment Types",
+                    ),
+                    Divider(),
+                    SettingsSwitch(
+                      onChanged: (bool val) {
+                        controller._settingsCopy.hideContactPhotos.value = val;
+                        controller.saveSettings();
+                      },
+                      initialVal: controller._settingsCopy.hideContactPhotos.value,
+                      title: "Hide Contact Photos",
+                    ),
+                    SettingsSwitch(
+                      onChanged: (bool val) {
+                        controller._settingsCopy.hideContactInfo.value = val;
+                        controller.saveSettings();
+                      },
+                      initialVal: controller._settingsCopy.hideContactInfo.value,
+                      title: "Hide Contact Info",
+                    ),
+                    SettingsSwitch(
+                      onChanged: (bool val) {
+                        controller._settingsCopy.removeLetterAvatars.value = val;
+                        controller.saveSettings();
+                      },
+                      initialVal: controller._settingsCopy.removeLetterAvatars.value,
+                      title: "Remove Letter Avatars",
+                    ),
+                    Divider(),
+                    SettingsSwitch(
+                      onChanged: (bool val) {
+                        controller._settingsCopy.generateFakeContactNames.value = val;
+                        controller.saveSettings();
+                      },
+                      initialVal: controller._settingsCopy.generateFakeContactNames.value,
+                      title: "Generate Fake Contact Names",
+                    ),
+                    SettingsSwitch(
+                      onChanged: (bool val) {
+                        controller._settingsCopy.generateFakeMessageContent.value = val;
+                        controller.saveSettings();
+                      },
+                      initialVal: controller._settingsCopy.generateFakeMessageContent.value,
+                      title: "Generate Fake Message Content",
+                    ),
+                  ] : <Widget>[]
               ),
-            )
+            ))
           ],
         ),
       ),
     );
-  }
-
-  void saveSettings() {
-    SettingsManager().saveSettings(_settingsCopy);
-  }
-
-  @override
-  void dispose() {
-    saveSettings();
-    super.dispose();
   }
 }

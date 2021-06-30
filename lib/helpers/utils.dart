@@ -317,7 +317,8 @@ Future<String> getGroupEventText(Message message) async {
     }
   }
 
-  final bool hideNames = SettingsManager().settings.redactedMode && SettingsManager().settings.hideContactInfo;
+  final bool hideNames = SettingsManager().settings.redactedMode.value
+      && SettingsManager().settings.hideContactInfo.value;
   if (hideNames) {
     handle = "Someone";
     other = "someone";

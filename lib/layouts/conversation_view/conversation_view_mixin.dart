@@ -306,9 +306,9 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     Color fontColor = Theme.of(context).textTheme.headline1.color;
     String title = chat.title;
 
-    final hideTitle = SettingsManager().settings.redactedMode && SettingsManager().settings.hideContactInfo;
+    final hideTitle = SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideContactInfo.value;
     final generateTitle =
-        SettingsManager().settings.redactedMode && SettingsManager().settings.generateFakeContactNames;
+        SettingsManager().settings.redactedMode.value && SettingsManager().settings.generateFakeContactNames.value;
 
     if (generateTitle)
       title = chat.fakeParticipants.length > 1 ? "Group Chat" : chat.fakeParticipants[0];

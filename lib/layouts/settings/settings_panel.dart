@@ -275,12 +275,8 @@ class _SettingsPanelState extends State<SettingsPanel> {
                   SettingsTile(
                     title: "Redacted Mode",
                     trailing: nextIcon,
-                    onTap: () async {
-                      Navigator.of(context).push(
-                        CupertinoPageRoute(
-                          builder: (context) => RedactedModePanel(),
-                        ),
-                      );
+                    onTap: () {
+                      Get.toNamed("/settings/redacted-mode-panel");
                     },
                   ),
                   SettingsTile(

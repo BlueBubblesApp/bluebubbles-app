@@ -9,6 +9,7 @@ import 'package:bluebubbles/layouts/settings/attachment_panel.dart';
 import 'package:bluebubbles/layouts/settings/custom_avatar_panel.dart';
 import 'package:bluebubbles/layouts/settings/messages_view_ux_panel.dart';
 import 'package:bluebubbles/layouts/settings/private_api_panel.dart';
+import 'package:bluebubbles/layouts/settings/redacted_mode_panel.dart';
 import 'package:bluebubbles/layouts/setup/failure_to_start.dart';
 import 'package:bluebubbles/layouts/setup/setup_view.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
@@ -156,6 +157,7 @@ class Main extends StatelessWidget with WidgetsBindingObserver {
           GetPage(page: () => CustomAvatarPanel(), name: "/settings/custom-avatar-panel", binding: CustomAvatarPanelBinding()),
           GetPage(page: () => ConvoSettings(), name: "/settings/convo-panel", binding: ConvoSettingsBinding()),
           GetPage(page: () => PrivateAPIPanel(), name: "/settings/private-api-panel", binding: PrivateAPIPanelBinding()),
+          GetPage(page: () => RedactedModePanel(), name: "/settings/redacted-mode-panel", binding: RedactedModePanelBinding()),
         ],
       ),
     );

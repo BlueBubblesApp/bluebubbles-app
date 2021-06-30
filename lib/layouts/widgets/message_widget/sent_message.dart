@@ -35,8 +35,8 @@ class SentMessageHelper {
         ? darken(Theme.of(context).primaryColor, 0.2)
         : Theme.of(context).primaryColor;
 
-    final bool hideContent = SettingsManager().settings.redactedMode && SettingsManager().settings.hideMessageContent;
-    final bool hideType = SettingsManager().settings.redactedMode && SettingsManager().settings.hideAttachmentTypes;
+    final bool hideContent = SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideMessageContent.value;
+    final bool hideType = SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideAttachmentTypes.value;
 
     Widget msg;
     bool hasReactions = (message?.getReactions() ?? []).length > 0 ?? false;

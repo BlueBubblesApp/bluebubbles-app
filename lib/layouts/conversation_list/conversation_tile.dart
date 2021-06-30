@@ -105,13 +105,13 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
 
     hideDividers = SettingsManager().settings.hideDividers;
     denseTiles = SettingsManager().settings.denseChatTiles;
-    redactedMode = SettingsManager().settings.redactedMode;
-    hideMessageContent = SettingsManager().settings.hideMessageContent;
-    hideContactPhotos = SettingsManager().settings.hideContactPhotos;
-    hideContactInfo = SettingsManager().settings.hideContactInfo;
-    removeLetterAvatars = SettingsManager().settings.removeLetterAvatars;
-    generateFakeContactNames = SettingsManager().settings.generateFakeContactNames;
-    generateFakeMessageContent = SettingsManager().settings.generateFakeMessageContent;
+    redactedMode = SettingsManager().settings.redactedMode.value;
+    hideMessageContent = SettingsManager().settings.hideMessageContent.value;
+    hideContactPhotos = SettingsManager().settings.hideContactPhotos.value;
+    hideContactInfo = SettingsManager().settings.hideContactInfo.value;
+    removeLetterAvatars = SettingsManager().settings.removeLetterAvatars.value;
+    generateFakeContactNames = SettingsManager().settings.generateFakeContactNames.value;
+    generateFakeMessageContent = SettingsManager().settings.generateFakeMessageContent.value;
     SettingsManager().stream.listen((Settings newSettings) {
       if (!this.mounted) return;
 
@@ -125,33 +125,33 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
         setState(() {
           denseTiles = newSettings.denseChatTiles;
         });
-      } else if (newSettings.redactedMode != redactedMode) {
+      } else if (newSettings.redactedMode.value != redactedMode) {
         setState(() {
-          redactedMode = newSettings.redactedMode;
+          redactedMode = newSettings.redactedMode.value;
         });
-      } else if (newSettings.hideMessageContent != hideMessageContent) {
+      } else if (newSettings.hideMessageContent.value != hideMessageContent) {
         setState(() {
-          hideMessageContent = newSettings.hideMessageContent;
+          hideMessageContent = newSettings.hideMessageContent.value;
         });
-      } else if (newSettings.hideContactPhotos != hideContactPhotos) {
+      } else if (newSettings.hideContactPhotos.value != hideContactPhotos) {
         setState(() {
-          hideContactPhotos = newSettings.hideContactPhotos;
+          hideContactPhotos = newSettings.hideContactPhotos.value;
         });
-      } else if (newSettings.hideContactInfo != hideContactInfo) {
+      } else if (newSettings.hideContactInfo.value != hideContactInfo) {
         setState(() {
-          hideContactInfo = newSettings.hideContactInfo;
+          hideContactInfo = newSettings.hideContactInfo.value;
         });
-      } else if (newSettings.removeLetterAvatars != removeLetterAvatars) {
+      } else if (newSettings.removeLetterAvatars.value != removeLetterAvatars) {
         setState(() {
-          removeLetterAvatars = newSettings.removeLetterAvatars;
+          removeLetterAvatars = newSettings.removeLetterAvatars.value;
         });
-      } else if (newSettings.generateFakeContactNames != generateFakeContactNames) {
+      } else if (newSettings.generateFakeContactNames.value != generateFakeContactNames) {
         setState(() {
-          generateFakeContactNames = newSettings.generateFakeContactNames;
+          generateFakeContactNames = newSettings.generateFakeContactNames.value;
         });
-      } else if (newSettings.generateFakeMessageContent != generateFakeMessageContent) {
+      } else if (newSettings.generateFakeMessageContent.value != generateFakeMessageContent) {
         setState(() {
-          generateFakeMessageContent = newSettings.generateFakeMessageContent;
+          generateFakeMessageContent = newSettings.generateFakeMessageContent.value;
         });
       }
     });

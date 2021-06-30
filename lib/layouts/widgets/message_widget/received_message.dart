@@ -87,8 +87,8 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
   /// Builds the message bubble with teh tail (if applicable)
   Widget _buildMessageWithTail(Message message) {
     if (message.isBigEmoji()) {
-      final bool hideContent = SettingsManager().settings.redactedMode && SettingsManager().settings.hideMessageContent;
-      final bool hideType = SettingsManager().settings.redactedMode && SettingsManager().settings.hideAttachmentTypes;
+      final bool hideContent = SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideMessageContent.value;
+      final bool hideType = SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideAttachmentTypes.value;
 
       bool hasReactions = (message?.getReactions() ?? []).length > 0 ?? false;
       return Padding(

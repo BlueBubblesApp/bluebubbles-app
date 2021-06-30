@@ -75,9 +75,9 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
     File file = new File(
       "${SettingsManager().appDocDir.path}/attachments/${attachment.guid}/${attachment.transferName}",
     );
-    final bool hideAttachments = SettingsManager().settings.redactedMode && SettingsManager().settings.hideAttachments;
+    final bool hideAttachments = SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideAttachments.value;
     final bool hideAttachmentTypes =
-        SettingsManager().settings.redactedMode && SettingsManager().settings.hideAttachmentTypes;
+        SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideAttachmentTypes.value;
     if (hideAttachments && !hideAttachmentTypes)
       return Container(
         alignment: Alignment.center,
