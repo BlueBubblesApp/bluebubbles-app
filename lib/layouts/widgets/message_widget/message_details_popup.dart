@@ -560,7 +560,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                         },
                       ),
                     ];
-                    if (SettingsManager().settings.skin == Skins.IOS) {
+                    if (SettingsManager().settings.skin == Skins.iOS) {
                       return CupertinoAlertDialog(
                         title: title,
                         backgroundColor: Theme.of(context).accentColor,
@@ -713,7 +713,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: moreActions,
                             );
-                            if (SettingsManager().settings.skin == Skins.IOS) {
+                            if (SettingsManager().settings.skin == Skins.iOS) {
                               return CupertinoAlertDialog(
                                 backgroundColor: Theme.of(context).accentColor,
                                 content: content,

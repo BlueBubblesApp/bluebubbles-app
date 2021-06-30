@@ -39,7 +39,7 @@ abstract class ThemeColors {
 }
 
 enum Skins {
-  IOS,
+  iOS,
   Material,
   Samsung,
 }

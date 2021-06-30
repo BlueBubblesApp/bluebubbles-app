@@ -66,7 +66,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
   @override
   Widget build(BuildContext context) {
     Widget nextIcon = Icon(
-      SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_forward_ios : Icons.arrow_forward,
+      SettingsManager().settings.skin == Skins.iOS ? Icons.arrow_forward_ios : Icons.arrow_forward,
       color: Theme.of(context).primaryColor,
     );
 
@@ -85,7 +85,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                 toolbarHeight: 100.0,
                 elevation: 0,
                 leading: IconButton(
-                  icon: Icon(SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_back_ios : Icons.arrow_back,
+                  icon: Icon(SettingsManager().settings.skin == Skins.iOS ? Icons.arrow_back_ios : Icons.arrow_back,
                       color: Theme.of(context).primaryColor),
                   onPressed: () {
                     Navigator.of(context).pop();
@@ -270,7 +270,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                   SettingsTile(
                     title: "Private API Features",
                     trailing: Icon(
-                        SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_forward_ios : Icons.arrow_forward,
+                        SettingsManager().settings.skin == Skins.iOS ? Icons.arrow_forward_ios : Icons.arrow_forward,
                         color: Theme.of(context).primaryColor),
                     onTap: () async {
                       Navigator.of(context).push(
@@ -586,6 +586,7 @@ class SettingsOptions<T> extends StatefulWidget {
     this.title,
     this.subtitle,
     this.showDivider = true,
+    this.capitalize = true,
   }) : super(key: key);
   final String title;
   final Function(dynamic) onChanged;
@@ -594,6 +595,7 @@ class SettingsOptions<T> extends StatefulWidget {
   final String Function(dynamic) textProcessing;
   final bool showDivider;
   final String subtitle;
+  final bool capitalize;
 
   @override
   _SettingsOptionsState createState() => _SettingsOptionsState();
@@ -657,7 +659,7 @@ class _SettingsOptionsState<T> extends State<SettingsOptions<T>> {
                       return DropdownMenuItem(
                         value: e,
                         child: Text(
-                          GetUtils.capitalize(widget.textProcessing(e)),
+                          widget.capitalize ? GetUtils.capitalize(widget.textProcessing(e)) : widget.textProcessing(e),
                           style: Theme.of(context).textTheme.bodyText1,
                         ),
                       );
