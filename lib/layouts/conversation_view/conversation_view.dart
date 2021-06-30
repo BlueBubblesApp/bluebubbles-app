@@ -236,7 +236,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
           backgroundColor: Theme.of(context).accentColor,
         ),
       );
-    } else if (currentChat != null && currentChat.showScrollDown && SettingsManager().settings.skin == Skins.IOS) {
+    } else if (currentChat != null && currentChat.showScrollDown && SettingsManager().settings.skin == Skins.iOS) {
       return Row(mainAxisAlignment: MainAxisAlignment.center, children: [
         Padding(
           padding: EdgeInsets.only(left: 25.0, bottom: 45),

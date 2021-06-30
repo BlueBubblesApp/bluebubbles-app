@@ -13,7 +13,7 @@ class ThemeSwitcher extends StatefulWidget {
 
   static PageRoute buildPageRoute({@required Function(BuildContext context) builder}) {
     switch (SettingsManager().settings.skin) {
-      case Skins.IOS:
+      case Skins.iOS:
         return CupertinoPageRoute(builder: builder);
         break;
       case Skins.Material:
@@ -27,7 +27,7 @@ class ThemeSwitcher extends StatefulWidget {
 
   static ScrollPhysics getScrollPhysics() {
     switch (SettingsManager().settings.skin) {
-      case Skins.IOS:
+      case Skins.iOS:
         return AlwaysScrollableScrollPhysics(
           parent: CustomBouncingScrollPhysics(),
         );
@@ -70,7 +70,7 @@ class _ThemeSwitcherState extends State<ThemeSwitcher> {
   @override
   Widget build(BuildContext context) {
     switch (skin) {
-      case Skins.IOS:
+      case Skins.iOS:
         return widget.iOSSkin;
       case Skins.Material:
         return widget.materialSkin;

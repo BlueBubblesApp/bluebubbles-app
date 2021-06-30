@@ -560,7 +560,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                         },
                       ),
                     ];
-                    if (SettingsManager().settings.skin == Skins.IOS) {
+                    if (SettingsManager().settings.skin == Skins.iOS) {
                       return CupertinoAlertDialog(
                         title: title,
                         backgroundColor: Theme.of(context).accentColor,
@@ -639,10 +639,10 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
         Material(
           color: Colors.transparent,
           child: InkWell(
-            onTap: () async {
+            onTap: () {
               if (widget.message.hasAttachments && !widget.message.isUrlPreview()) {
                 for (Attachment element in widget.message.attachments) {
-                  await Share.file(
+                  Share.file(
                     "${element.mimeType.split("/")[0].capitalizeFirst} shared from BlueBubbles: ${element.transferName}",
                     element.transferName,
                     element.getPath(),
@@ -650,7 +650,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                   );
                 }
               } else if (widget.message.text.length > 0) {
-                await Share.text(
+                Share.text(
                   "Text shared from BlueBubbles",
                   widget.message.text,
                 );
@@ -713,7 +713,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: moreActions,
                             );
-                            if (SettingsManager().settings.skin == Skins.IOS) {
+                            if (SettingsManager().settings.skin == Skins.iOS) {
                               return CupertinoAlertDialog(
                                 backgroundColor: Theme.of(context).accentColor,
                                 content: content,
