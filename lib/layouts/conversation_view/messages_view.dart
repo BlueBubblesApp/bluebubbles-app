@@ -71,7 +71,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
   }
 
   bool get showSmartReplies =>
-      SettingsManager().settings.smartReply &&
+      SettingsManager().settings.smartReply.value &&
       (!SettingsManager().settings.redactedMode || !SettingsManager().settings.hideMessageContent);
 
   @override
@@ -136,7 +136,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
     if (isNullOrEmpty(filtered)) return resetReplies();
 
     // Calculate the max amount of items
-    int max = SettingsManager().settings.smartReplySampleSize;
+    int max = SettingsManager().settings.smartReplySampleSize.value;
     if (max > filtered.length) {
       max = filtered.length;
     }

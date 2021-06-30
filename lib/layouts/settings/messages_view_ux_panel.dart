@@ -11,32 +11,43 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-class ConvoSettings extends StatefulWidget {
-  ConvoSettings({Key key}) : super(key: key);
-
+class ConvoSettingsBinding extends Bindings {
   @override
-  _ConvoSettingsState createState() => _ConvoSettingsState();
+  void dependencies() {
+    Get.lazyPut<ConvoSettingsController>(() => ConvoSettingsController());
+  }
 }
 
-class _ConvoSettingsState extends State<ConvoSettings> {
+class ConvoSettingsController extends GetxController {
   Settings _settingsCopy;
-  bool needToReconnect = false;
-  bool showUrl = false;
 
   @override
-  void initState() {
-    super.initState();
+  void onInit() {
+    super.onInit();
     _settingsCopy = SettingsManager().settings;
 
     // Listen for any incoming events
     EventDispatcher().stream.listen((Map<String, dynamic> event) {
       if (!event.containsKey("type")) return;
 
-      if (event["type"] == 'theme-update' && this.mounted) {
-        setState(() {});
+      if (event["type"] == 'theme-update') {
+        update();
       }
     });
   }
+
+  void saveSettings() {
+    SettingsManager().saveSettings(_settingsCopy);
+  }
+
+  @override
+  void dispose() {
+    saveSettings();
+    super.dispose();
+  }
+}
+
+class ConvoSettings extends GetView<ConvoSettingsController> {
 
   @override
   Widget build(BuildContext context) {
@@ -74,74 +85,74 @@ class _ConvoSettingsState extends State<ConvoSettings> {
         body: CustomScrollView(
           physics: ThemeSwitcher.getScrollPhysics(),
           slivers: <Widget>[
-            SliverList(
+            Obx(() => SliverList(
               delegate: SliverChildListDelegate(
                 <Widget>[
                   Container(padding: EdgeInsets.only(top: 5.0)),
-                  SettingsSwitch(
+                  Obx(() => SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.showDeliveryTimestamps = val;
-                      saveSettings();
+                      controller._settingsCopy.showDeliveryTimestamps.value = val;
+                      controller.saveSettings();
                     },
-                    initialVal: _settingsCopy.showDeliveryTimestamps,
+                    initialVal: controller._settingsCopy.showDeliveryTimestamps.value,
                     title: "Show Delivery Timestamps",
-                  ),
-                  SettingsSwitch(
+                  )),
+                  Obx(() => SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.autoOpenKeyboard = val;
-                      saveSettings();
+                      controller._settingsCopy.autoOpenKeyboard.value = val;
+                      controller.saveSettings();
                     },
-                    initialVal: _settingsCopy.autoOpenKeyboard,
+                    initialVal: controller._settingsCopy.autoOpenKeyboard.value,
                     title: "Auto-open Keyboard",
-                  ),
-                  SettingsSwitch(
+                  )),
+                  Obx(() => SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.swipeToCloseKeyboard = val;
-                      saveSettings();
+                      controller._settingsCopy.swipeToCloseKeyboard.value = val;
+                      controller.saveSettings();
                     },
-                    initialVal: _settingsCopy.swipeToCloseKeyboard,
+                    initialVal: controller._settingsCopy.swipeToCloseKeyboard.value,
                     title: "Swipe TextField to Close Keyboard",
-                  ),
-                  SettingsSwitch(
+                  )),
+                  Obx(() => SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.swipeToOpenKeyboard = val;
-                      saveSettings();
+                      controller._settingsCopy.swipeToOpenKeyboard.value = val;
+                      controller.saveSettings();
                     },
-                    initialVal: _settingsCopy.swipeToOpenKeyboard,
+                    initialVal: controller._settingsCopy.swipeToOpenKeyboard.value,
                     title: "Swipe TextField to Open Keyboard",
-                  ),
-                  SettingsSwitch(
+                  )),
+                  Obx(() => SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.hideKeyboardOnScroll = val;
-                      saveSettings();
+                      controller._settingsCopy.hideKeyboardOnScroll.value = val;
+                      controller.saveSettings();
                     },
-                    initialVal: _settingsCopy.hideKeyboardOnScroll,
+                    initialVal: controller._settingsCopy.hideKeyboardOnScroll.value,
                     title: "Hide Keyboard on Scroll",
-                  ),
-                  SettingsSwitch(
+                  )),
+                  Obx(() => SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.openKeyboardOnSTB = val;
-                      saveSettings();
+                      controller._settingsCopy.openKeyboardOnSTB.value = val;
+                      controller.saveSettings();
                     },
-                    initialVal: _settingsCopy.openKeyboardOnSTB,
+                    initialVal: controller._settingsCopy.openKeyboardOnSTB.value,
                     title: "Open Keyboard on Scrolling to Bottom Tap",
-                  ),
-                  SettingsSwitch(
+                  )),
+                  Obx(() => SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.recipientAsPlaceholder = val;
-                      saveSettings();
+                      controller._settingsCopy.recipientAsPlaceholder.value = val;
+                      controller.saveSettings();
                     },
-                    initialVal: _settingsCopy.recipientAsPlaceholder,
+                    initialVal: controller._settingsCopy.recipientAsPlaceholder.value,
                     title: "Show Recipient (or Group Name) as Placeholder",
-                  ),
-                  SettingsSwitch(
+                  )),
+                  Obx(() => SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.doubleTapForDetails = val;
-                      saveSettings();
+                      controller._settingsCopy.doubleTapForDetails.value = val;
+                      controller.saveSettings();
                     },
-                    initialVal: _settingsCopy.doubleTapForDetails,
+                    initialVal: controller._settingsCopy.doubleTapForDetails.value,
                     title: "Double-Tap Message for Details",
-                  ),
+                  )),
                   // SettingsSwitch(
                   //   onChanged: (bool val) {
                   //     _settingsCopy.sendTypingIndicators = val;
@@ -149,37 +160,38 @@ class _ConvoSettingsState extends State<ConvoSettings> {
                   //   initialVal: _settingsCopy.sendTypingIndicators,
                   //   title: "Send typing indicators (BlueBubblesHelper ONLY)",
                   // ),
-                  SettingsSwitch(
+                  Obx(() => SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.smartReply = val;
-                      saveSettings();
-                      setState(() {});
+                      controller._settingsCopy.smartReply.value = val;
+                      controller.saveSettings();
                     },
-                    initialVal: _settingsCopy.smartReply,
+                    initialVal: controller._settingsCopy.smartReply.value,
                     title: "Smart Replies",
-                  ),
-                  if (_settingsCopy.smartReply)
-                    SettingsSlider(
+                  )),
+                  if (controller._settingsCopy.smartReply.value)
+                    Obx(() => SettingsSlider(
                         text: "Smart Reply Sample Size",
-                        currentVal: _settingsCopy.smartReplySampleSize.toDouble(),
+                        currentVal: controller._settingsCopy.smartReplySampleSize.value.toDouble(),
                         update: (double val) {
-                          _settingsCopy.smartReplySampleSize = val.toInt();
+                          controller._settingsCopy.smartReplySampleSize.value = val.toInt();
+                          controller.saveSettings();
                         },
                         formatValue: ((double val) => val.toStringAsFixed(2)),
                         min: 1,
                         max: 10,
-                        divisions: 9),
-                  SettingsSwitch(
+                        divisions: 9
+                    )),
+                  Obx(() => SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.sendWithReturn = val;
-                      saveSettings();
+                      controller._settingsCopy.sendWithReturn.value = val;
+                      controller.saveSettings();
                     },
-                    initialVal: _settingsCopy.sendWithReturn,
+                    initialVal: controller._settingsCopy.sendWithReturn.value,
                     title: "Send Message with Return Key",
-                  ),
+                  )),
                 ],
               ),
-            ),
+            )),
             SliverList(
               delegate: SliverChildListDelegate(
                 <Widget>[],
@@ -189,15 +201,5 @@ class _ConvoSettingsState extends State<ConvoSettings> {
         ),
       ),
     );
-  }
-
-  void saveSettings() {
-    SettingsManager().saveSettings(_settingsCopy);
-  }
-
-  @override
-  void dispose() {
-    saveSettings();
-    super.dispose();
   }
 }

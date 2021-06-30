@@ -13,7 +13,7 @@ class Settings {
   RxInt chunkSize = 500.obs;
   RxBool autoDownload = true.obs;
   RxBool onlyWifiDownload = false.obs;
-  bool autoOpenKeyboard = true;
+  RxBool autoOpenKeyboard = true.obs;
   bool hideTextPreviews = false;
   bool showIncrementalSync = false;
   bool lowMemoryMode = false;
@@ -24,25 +24,25 @@ class Settings {
   bool hideDividers = false;
   bool sendTypingIndicators = false;
   double scrollVelocity = 1.00;
-  bool sendWithReturn = false;
-  bool doubleTapForDetails = false;
+  RxBool sendWithReturn = false.obs;
+  RxBool doubleTapForDetails = false.obs;
   bool denseChatTiles = false;
-  bool smartReply = false;
+  RxBool smartReply = false.obs;
   bool reducedForehead = false;
   bool preCachePreviewImages = true;
   bool showConnectionIndicator = false;
   bool showSyncIndicator = true;
   int sendDelay;
-  bool recipientAsPlaceholder = false;
-  bool hideKeyboardOnScroll = false;
+  RxBool recipientAsPlaceholder = false.obs;
+  RxBool hideKeyboardOnScroll = false.obs;
   bool moveChatCreatorToHeader = false;
-  bool swipeToCloseKeyboard = false;
-  bool swipeToOpenKeyboard = false;
-  bool openKeyboardOnSTB = false;
+  RxBool swipeToCloseKeyboard = false.obs;
+  RxBool swipeToOpenKeyboard = false.obs;
+  RxBool openKeyboardOnSTB = false.obs;
   bool swipableConversationTiles = false;
-  int smartReplySampleSize = 2;
+  RxInt smartReplySampleSize = 2.obs;
   bool colorblindMode = false;
-  bool showDeliveryTimestamps = false;
+  RxBool showDeliveryTimestamps = false.obs;
   RxInt previewCompressionQuality = 25.obs;
   bool filteredChatList = false;
 
@@ -84,7 +84,7 @@ class Settings {
       } else if (entry.name == "chunkSize") {
         settings.chunkSize.value = entry.value;
       } else if (entry.name == "autoOpenKeyboard") {
-        settings.autoOpenKeyboard = entry.value;
+        settings.autoOpenKeyboard.value = entry.value;
       } else if (entry.name == "autoDownload") {
         settings.autoDownload.value = entry.value;
       } else if (entry.name == "onlyWifiDownload") {
@@ -114,13 +114,13 @@ class Settings {
       } else if (entry.name == "scrollVelocity") {
         settings.scrollVelocity = entry.value;
       } else if (entry.name == "sendWithReturn") {
-        settings.sendWithReturn = entry.value;
+        settings.sendWithReturn.value = entry.value;
       } else if (entry.name == "doubleTapForDetails") {
-        settings.doubleTapForDetails = entry.value;
+        settings.doubleTapForDetails.value = entry.value;
       } else if (entry.name == "denseChatTiles") {
         settings.denseChatTiles = entry.value;
       } else if (entry.name == "smartReply") {
-        settings.smartReply = entry.value;
+        settings.smartReply.value = entry.value;
       } else if (entry.name == "reducedForehead") {
         settings.reducedForehead = entry.value;
       } else if (entry.name == "preCachePreviewImages") {
@@ -130,19 +130,19 @@ class Settings {
       } else if (entry.name == "sendDelay") {
         settings.sendDelay = entry.value;
       } else if (entry.name == "recipientAsPlaceholder") {
-        settings.recipientAsPlaceholder = entry.value;
+        settings.recipientAsPlaceholder.value = entry.value;
       } else if (entry.name == "hideKeyboardOnScroll") {
-        settings.hideKeyboardOnScroll = entry.value;
+        settings.hideKeyboardOnScroll.value = entry.value;
       } else if (entry.name == "swipeToOpenKeyboard") {
-        settings.swipeToOpenKeyboard = entry.value;
+        settings.swipeToOpenKeyboard.value = entry.value;
       } else if (entry.name == "newMessageMenuBar") {
         settings.moveChatCreatorToHeader = entry.value;
       } else if (entry.name == "swipeToCloseKeyboard") {
-        settings.swipeToCloseKeyboard = entry.value;
+        settings.swipeToCloseKeyboard.value = entry.value;
       } else if (entry.name == "moveChatCreatorToHeader") {
         settings.moveChatCreatorToHeader = entry.value;
       } else if (entry.name == "openKeyboardOnSTB") {
-        settings.openKeyboardOnSTB = entry.value;
+        settings.openKeyboardOnSTB.value = entry.value;
       } else if (entry.name == "swipableConversationTiles") {
         settings.swipableConversationTiles = entry.value;
       } else if (entry.name == "enablePrivateAPI") {
@@ -150,7 +150,7 @@ class Settings {
       } else if (entry.name == "privateSendTypingIndicators") {
         settings.privateSendTypingIndicators = entry.value;
       } else if (entry.name == "smartReplySampleSize") {
-        settings.smartReplySampleSize = entry.value;
+        settings.smartReplySampleSize.value = entry.value;
       } else if (entry.name == "colorblindMode") {
         settings.colorblindMode = entry.value;
       } else if (entry.name == "privateMarkChatAsRead") {
@@ -160,7 +160,7 @@ class Settings {
       } else if (entry.name == "showSyncIndicator") {
         settings.showSyncIndicator = entry.value;
       } else if (entry.name == "showDeliveryTimestamps") {
-        settings.showDeliveryTimestamps = entry.value;
+        settings.showDeliveryTimestamps.value = entry.value;
       } else if (entry.name == "redactedMode") {
         settings.redactedMode = entry.value;
       } else if (entry.name == "hideMessageContent") {
@@ -254,7 +254,7 @@ class Settings {
         ),
         ConfigEntry(
           name: "autoOpenKeyboard",
-          value: this.autoOpenKeyboard,
+          value: this.autoOpenKeyboard.value,
           type: this.autoOpenKeyboard.runtimeType,
         ),
         ConfigEntry(
@@ -329,12 +329,12 @@ class Settings {
         ),
         ConfigEntry(
           name: "sendWithReturn",
-          value: this.sendWithReturn,
+          value: this.sendWithReturn.value,
           type: this.sendWithReturn.runtimeType,
         ),
         ConfigEntry(
           name: "doubleTapForDetails",
-          value: this.doubleTapForDetails,
+          value: this.doubleTapForDetails.value,
           type: this.doubleTapForDetails.runtimeType,
         ),
         ConfigEntry(
@@ -344,12 +344,12 @@ class Settings {
         ),
         ConfigEntry(
           name: "smartReply",
-          value: this.smartReply,
+          value: this.smartReply.value,
           type: this.smartReply.runtimeType,
         ),
         ConfigEntry(
           name: "hideKeyboardOnScroll",
-          value: this.hideKeyboardOnScroll,
+          value: this.hideKeyboardOnScroll.value,
           type: this.hideKeyboardOnScroll.runtimeType,
         ),
         ConfigEntry(
@@ -374,7 +374,7 @@ class Settings {
         ),
         ConfigEntry(
           name: "recipientAsPlaceholder",
-          value: this.recipientAsPlaceholder,
+          value: this.recipientAsPlaceholder.value,
           type: this.recipientAsPlaceholder.runtimeType,
         ),
         ConfigEntry(
@@ -384,17 +384,17 @@ class Settings {
         ),
         ConfigEntry(
           name: "swipeToCloseKeyboard",
-          value: this.swipeToCloseKeyboard,
+          value: this.swipeToCloseKeyboard.value,
           type: this.swipeToCloseKeyboard.runtimeType,
         ),
         ConfigEntry(
           name: "swipeToOpenKeyboard",
-          value: this.swipeToOpenKeyboard,
+          value: this.swipeToOpenKeyboard.value,
           type: this.swipeToOpenKeyboard.runtimeType,
         ),
         ConfigEntry(
           name: "openKeyboardOnSTB",
-          value: this.openKeyboardOnSTB,
+          value: this.openKeyboardOnSTB.value,
           type: this.openKeyboardOnSTB.runtimeType,
         ),
         ConfigEntry(
@@ -414,7 +414,7 @@ class Settings {
         ),
         ConfigEntry(
           name: "smartReplySampleSize",
-          value: this.smartReplySampleSize,
+          value: this.smartReplySampleSize.value,
           type: this.smartReplySampleSize.runtimeType,
         ),
         ConfigEntry(
@@ -435,7 +435,7 @@ class Settings {
         ConfigEntry(name: "showSyncIndicator", value: this.showSyncIndicator, type: this.showSyncIndicator.runtimeType),
         ConfigEntry(
             name: "showDeliveryTimestamps",
-            value: this.showDeliveryTimestamps,
+            value: this.showDeliveryTimestamps.value,
             type: this.showDeliveryTimestamps.runtimeType),
         ConfigEntry(
           name: "showSyncIndicator",

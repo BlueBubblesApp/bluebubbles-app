@@ -496,7 +496,7 @@ class SettingsTextField extends StatelessWidget {
                   placeholder: placeholder ?? "Enter your text here",
                   padding: EdgeInsets.only(left: 10, top: 10, right: 40, bottom: 10),
                   placeholderStyle: Theme.of(context).textTheme.subtitle1,
-                  autofocus: SettingsManager().settings.autoOpenKeyboard,
+                  autofocus: SettingsManager().settings.autoOpenKeyboard.value,
                   decoration: BoxDecoration(
                     color: Theme.of(context).backgroundColor,
                     border: Border.all(

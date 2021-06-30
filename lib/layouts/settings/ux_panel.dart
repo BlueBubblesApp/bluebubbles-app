@@ -83,11 +83,7 @@ class _UXPanelState extends State<UXPanel> {
                   SettingsTile(
                     title: "Conversation Settings",
                     onTap: () {
-                      Navigator.of(context).push(
-                        CupertinoPageRoute(
-                          builder: (context) => ConvoSettings(),
-                        ),
-                      );
+                      Get.toNamed("/settings/convo-panel");
                     },
                     trailing: Icon(
                       SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_forward_ios : Icons.arrow_forward,

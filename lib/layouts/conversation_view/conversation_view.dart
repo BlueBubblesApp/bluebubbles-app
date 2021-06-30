@@ -326,7 +326,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
         body: FooterLayout(
           footer: KeyboardAttachable(
             child: widget.onSelect == null
-                ? (SettingsManager().settings.swipeToCloseKeyboard)
+                ? (SettingsManager().settings.swipeToCloseKeyboard.value)
                     ? GestureDetector(
                         onPanUpdate: (details) {
                           if (details.delta.dy > 0 && (currentChat?.keyboardOpen ?? false)) {
