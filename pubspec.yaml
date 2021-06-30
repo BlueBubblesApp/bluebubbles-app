@@ -77,12 +77,21 @@ dependencies:
 dev_dependencies:
   build_runner: ^1.6.5
   build_verify: ^1.1.0
-  flutter_launcher_icons: "^0.7.3"
+  flutter_launcher_icons: ^0.7.5
+  flutter_native_splash: ^0.3.0
 
 flutter_icons:
   android: true
-  ios: true
+  ios: false
   image_path: "assets/icon/icon.png"
+  adaptive_icon_foreground: "assets/icon/adaptive-foreground.png"
+  adaptive_icon_background: "#4990de"
+
+flutter_native_splash:
+  color: "#4990de"
+  color_dark: "#000000"
+  image: "assets/icon/splash-foreground-light.png"
+  image_dark: "assets/icon/splash-foreground-dark.png"
 
 #   flutter_test:
 #     sdk: flutter

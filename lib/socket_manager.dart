@@ -11,7 +11,6 @@ import 'package:bluebubbles/helpers/crypto.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/attachment_info_bloc.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
-import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/incoming_queue.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
@@ -26,7 +25,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'package:socket_io_client/socket_io_client.dart';
-import 'package:get/get.dart';
 
 enum SocketState {
   CONNECTED,
@@ -54,6 +52,7 @@ class SocketManager {
 
   SetupBloc setup = new SetupBloc();
   StreamController<bool> finishedSetup = StreamController<bool>();
+  bool isAuthingFcm = false;
 
   //Socket io
   IO.Socket socket;
@@ -124,6 +123,8 @@ class SocketManager {
   String token;
 
   void socketStatusUpdate(data) {
+    debugPrint("Socket status update: $data");
+
     switch (data) {
       case "connect":
         authFCM();
@@ -144,7 +145,6 @@ class SocketManager {
           });
         return;
       case "connect_error":
-        debugPrint("CONNECT ERROR");
         if (state != SocketState.ERROR && state != SocketState.FAILED) {
           state = SocketState.ERROR;
           Timer(Duration(seconds: 5), () {
@@ -243,13 +243,15 @@ class SocketManager {
       /*_manager.socket = SocketIOManager().createSocketIO(serverAddress, "/",
           query: "guid=${encodeUri(SettingsManager().settings.guidAuthKey)}",
           socketStatusCallback: (data) => socketStatusUpdate(data));*/
-      _manager.socket = IO.io(serverAddress,
+      _manager.socket = IO.io(
+          serverAddress,
           OptionBuilder()
               .setQuery({"guid": encodeUri(SettingsManager().settings.guidAuthKey)})
               .setTransports(['websocket'])
-              .disableAutoConnect()
-              .build()
-      );
+              .enableAutoConnect()
+              .disableForceNewConnection()
+              .enableReconnection()
+              .build());
 
       if (_manager.socket == null) {
         debugPrint("Socket was never created. Can't connect to server...");
@@ -263,6 +265,13 @@ class SocketManager {
       _manager.socket.onReconnect((data) => socketStatusUpdate("reconnect"));
       _manager.socket.onDisconnect((data) => socketStatusUpdate("disconnect"));
       _manager.socket.onConnectError((data) => socketStatusUpdate("connect_error"));
+      _manager.socket.onConnectTimeout((data) => socketStatusUpdate("connect_timeout"));
+      _manager.socket.onReconnectAttempt((data) => socketStatusUpdate("reconnect_attempt"));
+      _manager.socket.onConnecting((data) => socketStatusUpdate("connecting"));
+      _manager.socket.onReconnect((data) => socketStatusUpdate("reconnect"));
+      _manager.socket.onReconnecting((data) => socketStatusUpdate("reconnecting"));
+      _manager.socket.onError((data) => socketStatusUpdate("error"));
+
       /**
        * Callback event for when the server successfully added a new FCM device
        */
@@ -386,8 +395,16 @@ class SocketManager {
   }
 
   Future<void> authFCM({bool catchException = true, bool force = false}) async {
+    if (isAuthingFcm && !force) {
+      debugPrint('Currently authenticating with FCM, not doing it again...');
+      return;
+    }
+
+    isAuthingFcm = true;
+
     if (SettingsManager().fcmData.isNull) {
       debugPrint("[FCM Auth] -> No FCM Auth data found. Skipping FCM authentication");
+      isAuthingFcm = false;
       return;
     }
 
@@ -395,6 +412,7 @@ class SocketManager {
     if (token != null && !force) {
       debugPrint("[FCM Auth] -> Already authorized FCM device! Token: $token");
       await registerDevice(deviceName, token);
+      isAuthingFcm = false;
       return;
     }
 
@@ -423,6 +441,7 @@ class SocketManager {
         result = await MethodChannelInterface().invokeMethod('auth', SettingsManager().fcmData.toMap());
       } on PlatformException catch (e) {
         if (!catchException) {
+          isAuthingFcm = false;
           throw Exception("[FCM Auth] -> " + e.toString());
         } else {
           debugPrint("[FCM Auth] -> Failed to register with FCM: " + e.toString());
@@ -439,9 +458,12 @@ class SocketManager {
       debugPrint('[FCM Auth] -> Registering device with server...');
       await registerDevice(deviceName, token);
     } catch (ex) {
+      isAuthingFcm = false;
       debugPrint('[FCM Auth] -> Failed to register device with server: ${ex.toString()}');
       throw Exception("Failed to add FCM device to the server! Token: $token");
     }
+
+    isAuthingFcm = false;
   }
 
   Future<void> registerDevice(String name, String token) {
@@ -466,6 +488,7 @@ class SocketManager {
     Completer<List<dynamic>> completer = new Completer();
     if (_manager.socket == null) return null;
 
+    debugPrint("Sending request for '$path'");
     _manager.sendMessage(path, params, (Map<String, dynamic> data) async {
       if (data["status"] != 200) return completer.completeError(data);
 
@@ -632,8 +655,7 @@ class SocketManager {
             if (awaitResponse) _manager.finishSocketProcess(_processId);
           });
         } else {
-          _manager.socket.emitWithAck(
-              event, message, ack: (response) async {
+          _manager.socket.emitWithAck(event, message, ack: (response) async {
             await MethodChannelInterface().invokeMethod("download-file", {
               "data": response['data'],
               "path": path,
@@ -667,6 +689,11 @@ class SocketManager {
   Future<void> newServer(String serverAddress) async {
     // We copy the settings to a local variable
     Settings settingsCopy = SettingsManager().settings;
+    if (settingsCopy.serverAddress == serverAddress) {
+      debugPrint("Server address didn't actually change. Ignoring...");
+      return;
+    }
+
     // Update the address of the copied settings
     settingsCopy.serverAddress = getServerAddress(address: serverAddress);
 
