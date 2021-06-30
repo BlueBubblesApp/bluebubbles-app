@@ -60,14 +60,14 @@ class NotificationManager {
     CurrentChat.getCurrentChat(chat)?.isAlive = true;
     await chat.setUnreadStatus(false);
 
-    if (SettingsManager().settings.enablePrivateAPI) {
-      if (SettingsManager().settings.privateMarkChatAsRead) {
+    if (SettingsManager().settings.enablePrivateAPI.value) {
+      if (SettingsManager().settings.privateMarkChatAsRead.value) {
         SocketManager()
             .sendMessage("mark-chat-read", {"chatGuid": chat.guid}, (data) {});
       }
 
       if (!MethodChannelInterface().headless &&
-          SettingsManager().settings.sendTypingIndicators) {
+          SettingsManager().settings.sendTypingIndicators.value) {
         SocketManager().sendMessage(
             "update-typing-status", {"chatGuid": chat.guid}, (data) {});
       }

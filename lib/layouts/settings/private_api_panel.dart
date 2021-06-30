@@ -12,66 +12,46 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-class PrivateAPIPanel extends StatefulWidget {
-  PrivateAPIPanel({Key key}) : super(key: key);
-
+class PrivateAPIPanelBinding extends Bindings {
   @override
-  _PrivateAPIPanelState createState() => _PrivateAPIPanelState();
+  void dependencies() {
+    Get.lazyPut<PrivateAPIPanelController>(() => PrivateAPIPanelController());
+  }
 }
 
-class _PrivateAPIPanelState extends State<PrivateAPIPanel> {
+class PrivateAPIPanelController extends GetxController {
   Settings _settingsCopy;
-  bool enablePrivateAPI = false;
 
   @override
-  void initState() {
-    super.initState();
+  void onInit() {
+    super.onInit();
     _settingsCopy = SettingsManager().settings;
-    enablePrivateAPI = _settingsCopy.enablePrivateAPI;
 
     // Listen for any incoming events
     EventDispatcher().stream.listen((Map<String, dynamic> event) {
       if (!event.containsKey("type")) return;
 
-      if (event["type"] == 'theme-update' && this.mounted) {
-        setState(() {});
+      if (event["type"] == 'theme-update') {
+        update();
       }
     });
   }
 
+  void saveSettings() async {
+    await SettingsManager().saveSettings(_settingsCopy);
+  }
+
+  @override
+  void dispose() {
+    saveSettings();
+    super.dispose();
+  }
+}
+
+class PrivateAPIPanel extends GetView<PrivateAPIPanelController> {
+
   @override
   Widget build(BuildContext context) {
-    List<Widget> privateWidgets = [];
-    if (enablePrivateAPI) {
-      privateWidgets.addAll([
-        SettingsSwitch(
-          onChanged: (bool val) {
-            _settingsCopy.sendTypingIndicators = val;
-            saveSettings();
-          },
-          initialVal: _settingsCopy.sendTypingIndicators,
-          title: "Send Typing Indicators",
-        ),
-        SettingsSwitch(
-          onChanged: (bool val) {
-            _settingsCopy.privateMarkChatAsRead = val;
-            saveSettings(updateState: true);
-          },
-          initialVal: _settingsCopy.privateMarkChatAsRead,
-          title: "Mark Chats as Read / Send Read Receipts",
-        ),
-        if (!_settingsCopy.privateMarkChatAsRead)
-          SettingsSwitch(
-            onChanged: (bool val) {
-              _settingsCopy.privateManualMarkAsRead = val;
-              saveSettings();
-            },
-            initialVal: _settingsCopy.privateManualMarkAsRead,
-            title: "Show Manually Mark Chat as Read Button",
-          ),
-      ]);
-    }
-
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: Theme.of(context).backgroundColor,
@@ -90,7 +70,7 @@ class _PrivateAPIPanelState extends State<PrivateAPIPanel> {
                   icon: Icon(SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_back_ios : Icons.arrow_back,
                       color: Theme.of(context).primaryColor),
                   onPressed: () {
-                    Navigator.of(context).pop();
+                    Get.back();
                   },
                 ),
                 backgroundColor: Theme.of(context).accentColor.withOpacity(0.5),
@@ -128,45 +108,54 @@ class _PrivateAPIPanelState extends State<PrivateAPIPanel> {
                       color: Theme.of(context).primaryColor,
                     ),
                   ),
-                  SettingsSwitch(
+                  Obx(() => SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.enablePrivateAPI = val;
-                      if (this.mounted) {
-                        setState(() {
-                          enablePrivateAPI = val;
-                        });
-                      }
-
-                      saveSettings();
+                      controller._settingsCopy.enablePrivateAPI.value = val;
+                      controller.saveSettings();
                     },
-                    initialVal: _settingsCopy.enablePrivateAPI,
+                    initialVal: controller._settingsCopy.enablePrivateAPI.value,
                     title: "Enable Private API Features",
-                  ),
-                  ...privateWidgets
+                  )),
                 ],
               ),
             ),
-            SliverList(
+            Obx(() => controller._settingsCopy.enablePrivateAPI.value ? SliverList(
+              delegate: SliverChildListDelegate(
+                <Widget>[
+                  Obx(() => SettingsSwitch(
+                    onChanged: (bool val) {
+                      controller._settingsCopy.sendTypingIndicators.value = val;
+                      controller.saveSettings();
+                    },
+                    initialVal: controller._settingsCopy.sendTypingIndicators.value,
+                    title: "Send Typing Indicators",
+                  )),
+                  Obx(() => SettingsSwitch(
+                    onChanged: (bool val) {
+                      controller._settingsCopy.privateMarkChatAsRead.value = val;
+                      controller.saveSettings();
+                    },
+                    initialVal: controller._settingsCopy.privateMarkChatAsRead.value,
+                    title: "Mark Chats as Read / Send Read Receipts",
+                  )),
+                  Obx(() => !controller._settingsCopy.privateMarkChatAsRead.value ? SettingsSwitch(
+                    onChanged: (bool val) {
+                      controller._settingsCopy.privateManualMarkAsRead.value = val;
+                      controller.saveSettings();
+                    },
+                    initialVal: controller._settingsCopy.privateManualMarkAsRead.value,
+                    title: "Show Manually Mark Chat as Read Button",
+                  ) : Container()),
+                ],
+              ),
+            ) : SliverList(
               delegate: SliverChildListDelegate(
                 <Widget>[],
               ),
-            )
+            )),
           ],
         ),
       ),
     );
-  }
-
-  void saveSettings({bool updateState = false}) async {
-    await SettingsManager().saveSettings(_settingsCopy);
-    if (updateState && this.mounted) {
-      this.setState(() {});
-    }
-  }
-
-  @override
-  void dispose() {
-    saveSettings();
-    super.dispose();
   }
 }

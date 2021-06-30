@@ -243,8 +243,10 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
 
   Widget buildCupertinoTrailing() {
     Color fontColor = Theme.of(context).textTheme.headline1.color;
-    bool manualMark = SettingsManager().settings.enablePrivateAPI && SettingsManager().settings.privateManualMarkAsRead;
-    bool showManual = !SettingsManager().settings.privateMarkChatAsRead && !(widget.chat?.isGroup() ?? false);
+    bool manualMark = SettingsManager().settings.enablePrivateAPI.value
+        && SettingsManager().settings.privateManualMarkAsRead.value;
+    bool showManual = !SettingsManager().settings.privateMarkChatAsRead.value
+        && !(widget.chat?.isGroup() ?? false);
     List<Widget> items = [
       if (showManual && manualMark && markingAsRead)
         Padding(
@@ -343,7 +345,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
 
                   return getIndicatorIcon(connectionStatus, size: 12);
                 }),
-          if (SettingsManager().settings.privateManualMarkAsRead && markingAsRead)
+          if (SettingsManager().settings.privateManualMarkAsRead.value && markingAsRead)
             Padding(
                 padding: const EdgeInsets.only(right: 8.0),
                 child: Center(
@@ -353,8 +355,8 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
                   child: CircularProgressIndicator(
                       valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor)),
                 ))),
-          if (SettingsManager().settings.enablePrivateAPI &&
-              SettingsManager().settings.privateManualMarkAsRead &&
+          if (SettingsManager().settings.enablePrivateAPI.value &&
+              SettingsManager().settings.privateManualMarkAsRead.value &&
               !markingAsRead)
             Padding(
               padding: const EdgeInsets.only(right: 8.0),
