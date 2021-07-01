@@ -58,7 +58,8 @@ dependencies:
   fluttertoast: ^8.0.7
   map_launcher: ^2.1.1
   latlong2: ^0.8.0
-  flutter_colorpicker: ^0.5.0
+  # Pinned to 0.4.0 for now because Flutter 2 stable doesn't support the stuff in 0.5.0 yet
+  flutter_colorpicker: 0.4.0
   image_gallery_saver: ^1.6.9
   flutter_image_compress: ^1.0.0
   extended_text_field:

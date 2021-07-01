@@ -20,7 +20,7 @@ public class OpenContactForm implements Handler{
     private MethodCall call;
     private MethodChannel.Result result;
 
-    public OpenFile(Context context, MethodCall call,  MethodChannel.Result result) {
+    public OpenContactForm(Context context, MethodCall call,  MethodChannel.Result result) {
         this.context = context;
         this.call = call;
         this.result = result;
