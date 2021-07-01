@@ -119,9 +119,9 @@ class _VideoViewerState extends State<VideoViewer> {
           child: Align(
             alignment: Alignment.topRight,
             child: CupertinoButton(
-              onPressed: () async {
+              onPressed: () {
                 // final Uint8List bytes = await widget.file.readAsBytes();
-                await Share.file(
+                Share.file(
                   "Shared ${widget.attachment.mimeType.split("/")[0]} from BlueBubbles: ${widget.attachment.transferName}",
                   widget.attachment.transferName,
                   widget.file.path,

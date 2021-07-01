@@ -57,7 +57,7 @@ class _UXPanelState extends State<UXPanel> {
                 toolbarHeight: 100.0,
                 elevation: 0,
                 leading: IconButton(
-                  icon: Icon(SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_back_ios : Icons.arrow_back,
+                  icon: Icon(SettingsManager().settings.skin == Skins.iOS ? Icons.arrow_back_ios : Icons.arrow_back,
                       color: Theme.of(context).primaryColor),
                   onPressed: () {
                     Navigator.of(context).pop();
@@ -90,7 +90,7 @@ class _UXPanelState extends State<UXPanel> {
                       );
                     },
                     trailing: Icon(
-                      SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_forward_ios : Icons.arrow_forward,
+                      SettingsManager().settings.skin == Skins.iOS ? Icons.arrow_forward_ios : Icons.arrow_forward,
                       color: Theme.of(context).primaryColor,
                     ),
                   ),
@@ -176,7 +176,7 @@ class _UXPanelState extends State<UXPanel> {
                     initialVal: _settingsCopy.showIncrementalSync,
                     title: "Notify when incremental sync complete",
                   ),
-                  if (SettingsManager().settings.skin == Skins.IOS)
+                  if (SettingsManager().settings.skin == Skins.iOS)
                     SettingsSlider(
                         text: "Scroll Speed Multiplier",
                         startingVal: _settingsCopy.scrollVelocity,
