@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
-import 'package:contacts_service/contacts_service.dart';
+import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:get/get.dart';
 import 'package:faker/faker.dart';
 import 'package:flutter/cupertino.dart';
@@ -96,7 +96,7 @@ class ContactManager {
 
     // Fetch the current list of contacts
     debugPrint("ContactManager -> Fetching contacts");
-    contacts = ((await ContactsService.getContacts(withThumbnails: false)) ?? []).toList();
+    contacts = ((await FlutterContacts.getContacts(withThumbnail: false, withPhoto: false)) ?? []).toList();
 
     // Match handles in the database with contacts
     await this.matchHandles();
@@ -154,12 +154,11 @@ class ContactManager {
       Contact contact = handleToContact[address];
       if (handleToContact[address] == null) continue;
 
-      ContactsService.getAvatar(handleToContact[address], photoHighRes: false).then((avatar) {
-        if (avatar == null) return;
+      FlutterContacts.getContact(contact.id, withPhoto: true, withThumbnail: true).then((specificContact) {
+        if (specificContact == null) return;
 
-        // Update the avatar in the master list
-        contact.avatar = avatar;
-        handleToContact[address].avatar = avatar;
+        contact = specificContact;
+        handleToContact[address] = contact;
 
         // Add the handle to the stream to update the subscribers
         _stream.sink.add([address]);
@@ -191,10 +190,10 @@ class ContactManager {
     for (Contact c in contacts ?? []) {
       // Get a phone number match
       if (!isEmailAddr) {
-        for (Item item in c?.phones ?? []) {
-          if (!item.value.endsWith(lastDigits)) continue;
+        for (Phone item in c?.phones ?? []) {
+          if (!item.number.endsWith(lastDigits)) continue;
 
-          if (sameAddress(opts, item.value)) {
+          if (sameAddress(opts, item.number)) {
             contact = c;
             break;
           }
@@ -203,8 +202,8 @@ class ContactManager {
 
       // Get an email match
       if (isEmailAddr) {
-        for (Item item in c?.emails ?? []) {
-          if (item.value == handle.address) {
+        for (Email item in c?.emails ?? []) {
+          if (item.address == handle.address) {
             contact = c;
             break;
           }
@@ -216,7 +215,8 @@ class ContactManager {
     }
 
     if (fetchAvatar) {
-      contact.avatar = await ContactsService.getAvatar(contact, photoHighRes: false);
+      Contact contactWithAvatar = await FlutterContacts.getContact(contact.id, withPhoto: true, withThumbnail: true);
+      contact = contactWithAvatar;
     }
 
     return contact;

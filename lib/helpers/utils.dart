@@ -130,6 +130,21 @@ bool sameAddress(List<String> options, String compared) {
   return match;
 }
 
+String getInitials(Contact contact) {
+  if (contact == null) return null;
+
+  // Set default initials
+  String initials = (contact.name?.first?.isNotEmpty == true ? contact.name.first[0] : "") +
+      (contact.name?.last?.isNotEmpty == true ? contact.name.last[0] : "");
+
+  // If the initials are empty, get them from the display name
+  if (initials.trim().isEmpty) {
+    initials = contact.displayName != null ? contact.displayName[0] : "";
+  }
+
+  return initials.toUpperCase();
+}
+
 // Future<Uint8List> blurHashDecode(String blurhash, int width, int height) async {
 //   List<int> result = await compute(blurHashDecodeCompute,
 //       jsonEncode({"hash": blurhash, "width": width, "height": height}));

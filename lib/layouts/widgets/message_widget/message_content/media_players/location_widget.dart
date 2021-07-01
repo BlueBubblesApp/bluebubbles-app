@@ -1,11 +1,10 @@
 import 'dart:io';
 
-import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong/latlong.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:map_launcher/map_launcher.dart' as ML;
 
 class LocationWidget extends StatefulWidget {

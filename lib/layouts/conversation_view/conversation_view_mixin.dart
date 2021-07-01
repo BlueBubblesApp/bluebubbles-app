@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:get/get.dart';
 import 'package:assorted_layout_widgets/assorted_layout_widgets.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
@@ -26,7 +27,6 @@ import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:bluebubbles/socket_manager.dart';
-import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/cupertino.dart' as Cupertino;
 import 'package:flutter/material.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
@@ -526,7 +526,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     // If it's just one recipient, try manual lookup
     if (selected.length == 1) {
       try {
-        Chat existingChat = await Chat.findOne({"chatIdentifier": Slugify(selected[0].address, delimiter: '')});
+        Chat existingChat = await Chat.findOne({"chatIdentifier": slugify(selected[0].address, delimiter: '')});
         if (existingChat != null) {
           matchingChats.add(existingChat);
         }
@@ -648,42 +648,42 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     }
 
     Function slugText = (String text) {
-      return Slugify((text ?? ""), delimiter: '').toString().replaceAll('-', '');
+      return slugify((text ?? ""), delimiter: '').toString().replaceAll('-', '');
     };
 
-    // Slugify the search query for matching
+    // slugify the search query for matching
     searchQuery = slugText(searchQuery);
 
     List<UniqueContact> _contacts = [];
     List<String> cache = [];
     Function addContactEntries = (Contact contact, {conditionally = false}) {
-      for (Item phone in contact.phones) {
-        String cleansed = slugText(phone.value);
+      for (Phone phone in contact.phones) {
+        String cleansed = slugText(phone.number);
         if (conditionally && !cleansed.contains(searchQuery)) continue;
 
         if (!cache.contains(cleansed)) {
           cache.add(cleansed);
           _contacts.add(
             new UniqueContact(
-              address: phone.value,
+              address: phone.number,
               displayName: contact.displayName,
-              label: phone.label,
+              label: phone.customLabel ?? phone.label.toString(),
             ),
           );
         }
       }
 
-      for (Item email in contact.emails) {
-        String emailVal = slugText(email.value);
+      for (Email email in contact.emails) {
+        String emailVal = slugText(email.address);
         if (conditionally && !emailVal.contains(searchQuery)) continue;
 
         if (!cache.contains(emailVal)) {
           cache.add(emailVal);
           _contacts.add(
             new UniqueContact(
-              address: email.value,
+              address: email.address,
               displayName: contact.displayName,
-              label: email.label,
+              label: email.customLabel ?? email.label.toString(),
             ),
           );
         }
@@ -779,7 +779,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     // If there is only 1 participant, try to find the chat
     Chat existingChat;
     if (participants.length == 1) {
-      existingChat = await Chat.findOne({"chatIdentifier": Slugify(participants[0], delimiter: '')});
+      existingChat = await Chat.findOne({"chatIdentifier": slugify(participants[0], delimiter: '')});
     }
 
     if (existingChat == null) {

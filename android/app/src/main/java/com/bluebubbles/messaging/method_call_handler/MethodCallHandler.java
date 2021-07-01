@@ -27,6 +27,7 @@ import com.bluebubbles.messaging.method_call_handler.handlers.PushShareTargets;
 import com.bluebubbles.messaging.method_call_handler.handlers.SaveToFile;
 import com.bluebubbles.messaging.method_call_handler.handlers.SocketIssueWarning;
 import com.bluebubbles.messaging.method_call_handler.handlers.SetNextRestart;
+import com.bluebubbles.messaging.method_call_handler.handlers.OpenContactForm;
 import com.bluebubbles.messaging.workers.DartWorker;
 
 import io.flutter.plugin.common.MethodCall;
@@ -84,6 +85,8 @@ public class MethodCallHandler {
             new SetNextRestart(context, call, result).Handle();
         } else if (call.method.equals(DownloadHandler.TAG)) {
             new DownloadHandler(context, call, result).Handle();
+        } else if (call.method.equals(OpenContactForm.TAG)) {
+            new OpenContactForm(context, call, result).Handle();
         } else {
             result.notImplemented();
         }

@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:ui';
 
-import 'package:get/get.dart';
 import 'package:bluebubbles/blocs/text_field_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -18,11 +17,11 @@ import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:camera/camera.dart';
-import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:mime_type/mime_type.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:photo_manager/photo_manager.dart';
@@ -686,7 +685,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     if (file.existsSync()) file.deleteSync();
 
     if (!isRecording) {
-      await Record.start(
+      await Record().start(
         path: pathName, // required
         encoder: AudioEncoder.AAC, // by default
         bitRate: 196000, // by default
@@ -705,7 +704,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     HapticFeedback.lightImpact();
 
     if (isRecording) {
-      await Record.stop();
+      await Record().stop();
 
       if (this.mounted) {
         setState(() {

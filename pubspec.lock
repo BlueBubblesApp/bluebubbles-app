@@ -487,13 +487,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "2.0.1"
-  google_ml_kit:
-    dependency: "direct main"
-    description:
-      name: google_ml_kit
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "0.6.0"
   graphs:
     dependency: transitive
     description:
@@ -593,12 +586,19 @@ packages:
     source: hosted
     version: "2.0.0"
   latlong2:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: latlong2
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.8.0"
+  learning_smart_reply:
+    dependency: "direct main"
+    description:
+      name: learning_smart_reply
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.0.2"
   lists:
     dependency: transitive
     description:

@@ -11,7 +11,6 @@ import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
-import 'package:get/get.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -85,7 +84,7 @@ class SettingsManager {
 
     try {
       // Set the [displayMode] to that saved in settings
-      await FlutterDisplayMode.setMode(await settings.getDisplayMode());
+      await FlutterDisplayMode.setPreferredMode(await settings.getDisplayMode());
     } catch (e) {}
 
     // Change the [finishedSetup] status to that of the settings
@@ -112,7 +111,7 @@ class SettingsManager {
     await settings.save();
     try {
       // Set the [displayMode] to that saved in settings
-      await FlutterDisplayMode.setMode(await settings.getDisplayMode());
+      await FlutterDisplayMode.setPreferredMode(await settings.getDisplayMode());
     } catch (e) {}
 
     _stream.sink.add(newSettings);

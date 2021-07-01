@@ -8,8 +8,8 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/socket_manager.dart';
-import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_contacts/flutter_contacts.dart';
 
 /// [NotificationManager] holds data relating to the current chat, and manages things such as
 class NotificationManager {
@@ -62,25 +62,20 @@ class NotificationManager {
 
     if (SettingsManager().settings.enablePrivateAPI) {
       if (SettingsManager().settings.privateMarkChatAsRead) {
-        SocketManager()
-            .sendMessage("mark-chat-read", {"chatGuid": chat.guid}, (data) {});
+        SocketManager().sendMessage("mark-chat-read", {"chatGuid": chat.guid}, (data) {});
       }
 
-      if (!MethodChannelInterface().headless &&
-          SettingsManager().settings.sendTypingIndicators) {
-        SocketManager().sendMessage(
-            "update-typing-status", {"chatGuid": chat.guid}, (data) {});
+      if (!MethodChannelInterface().headless && SettingsManager().settings.sendTypingIndicators) {
+        SocketManager().sendMessage("update-typing-status", {"chatGuid": chat.guid}, (data) {});
       }
     }
 
-    MethodChannelInterface()
-        .invokeMethod("clear-chat-notifs", {"chatGuid": chat.guid});
+    MethodChannelInterface().invokeMethod("clear-chat-notifs", {"chatGuid": chat.guid});
   }
 
   /// Creates notification channel for android
   /// This is done through native code and all of this data is hard coded for now
-  Future<void> createNotificationChannel(
-      String channelID, String channelName, String channelDescription) async {
+  Future<void> createNotificationChannel(String channelID, String channelName, String channelDescription) async {
     await MethodChannelInterface().invokeMethod("create-notif-channel", {
       "channel_name": channelName,
       "channel_description": channelDescription,
@@ -111,24 +106,14 @@ class NotificationManager {
   /// @param [handle] optional parameter of the handle of the message
   ///
   /// @param [contact] optional parameter of the contact of the message
-  void createNewNotification(
-      String contentTitle,
-      String contentText,
-      String group,
-      Chat chat,
-      int id,
-      int summaryId,
-      int timeStamp,
-      String senderName,
-      bool groupConversation,
-      Handle handle,
-      Contact contact) async {
+  void createNewNotification(String contentTitle, String contentText, String group, Chat chat, int id, int summaryId,
+      int timeStamp, String senderName, bool groupConversation, Handle handle, Contact contact) async {
     Uint8List contactIcon;
 
     try {
       // If there is a contact specified, we can use it's avatar
       if (contact != null) {
-        if (contact.avatar.length > 0) contactIcon = contact.avatar;
+        if (contact.photoOrThumbnail.length > 0) contactIcon = contact.photoOrThumbnail;
         // Otherwise if there isn't, we use the [defaultAvatar]
       } else {
         // If [defaultAvatar] is not loaded, load it from assets
@@ -162,9 +147,7 @@ class NotificationManager {
 
   /// Creates a notification for when the socket is disconnected
   void createSocketWarningNotification() {
-    MethodChannelInterface()
-        .platform
-        .invokeMethod("create-socket-issue-warning", {
+    MethodChannelInterface().platform.invokeMethod("create-socket-issue-warning", {
       "CHANNEL_ID": SOCKET_ERROR_CHANNEL,
     });
   }

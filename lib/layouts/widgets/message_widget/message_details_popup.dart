@@ -24,11 +24,11 @@ import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:clipboard/clipboard.dart';
-import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/cupertino.dart' as cupertino;
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 import 'package:sprung/sprung.dart';
@@ -198,7 +198,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                 child: AnimatedSize(
                   vsync: this,
                   duration: Duration(milliseconds: 500),
-                  curve: Sprung(damped: Damped.under),
+                  curve: Sprung.underDamped,
                   alignment: Alignment.center,
                   child: reactionWidgets.length > 0
                       ? ClipRRect(
@@ -477,43 +477,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
           color: Colors.transparent,
           child: InkWell(
             onTap: () {
-              FlutterClipboard.copy(widget.message.fullText);
-              FlutterToast flutterToast = FlutterToast(context);
-              Widget toast = ClipRRect(
-                borderRadius: BorderRadius.circular(25.0),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(25.0),
-                      color: Theme.of(context).accentColor.withOpacity(0.1),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          !isEmptyString(widget.message.fullText) ? Icons.check : Icons.close,
-                          color: Theme.of(context).textTheme.bodyText1.color,
-                        ),
-                        SizedBox(
-                          width: 12.0,
-                        ),
-                        Text(
-                          "Copied to clipboard",
-                          style: Theme.of(context).textTheme.bodyText1,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              );
-
-              flutterToast.showToast(
-                child: toast,
-                gravity: ToastGravity.BOTTOM,
-                toastDuration: Duration(seconds: 2),
-              );
+              showSnackbar("Copied", "Copied to clipboard!");
             },
             child: ListTile(
               title: Text("Copy", style: Theme.of(context).textTheme.bodyText1),

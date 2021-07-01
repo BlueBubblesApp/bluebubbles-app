@@ -1,14 +1,14 @@
 import 'dart:io';
 
-import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
-import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:path/path.dart';
 
 class ContactWidget extends StatefulWidget {
@@ -99,7 +99,7 @@ class _ContactWidgetState extends State<ContactWidget> {
                         ),
                         child: Container(
                           child: Text(
-                            contact?.initials() ?? "?",
+                            getInitials(contact) ?? "?",
                             style: Theme.of(context).textTheme.headline1,
                           ),
                           alignment: AlignmentDirectional.center,

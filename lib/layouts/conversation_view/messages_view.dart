@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:ui';
 
-import 'package:get/get.dart';
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
@@ -21,7 +20,7 @@ import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:flutter_smart_reply/flutter_smart_reply.dart';
+import 'package:learning_smart_reply/learning_smart_reply.dart' as SmartReply;
 
 class MessagesView extends StatefulWidget {
   final MessageBloc messageBloc;
@@ -54,7 +53,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
   CurrentChat currentChat;
   bool keyboardOpen = false;
 
-  List<TextMessage> currentMessages = [];
+  List<Message> currentMessages = [];
   List<String> replies = [];
 
   StreamController<List<String>> smartReplyController;
@@ -143,21 +142,20 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
 
     // Get the first 'x' messages
     List<Message> msgs = filtered.toList().sublist(0, max);
-    List<TextMessage> texts = [];
+    List<SmartReply.Message> texts = [];
     for (var msg in msgs) {
       // Skip empty messages
       if (isEmptyString(msg.fullText, stripWhitespace: true)) continue;
 
       // Add to list based on who sent the message
-      if (msg.isFromMe) {
-        texts.add(TextMessage.createForLocalUser(msg.fullText, msg.dateCreated.millisecondsSinceEpoch));
-      } else {
-        texts.add(TextMessage.createForRemoteUser(msg.fullText, msg.dateCreated.millisecondsSinceEpoch));
-      }
+      texts.add(SmartReply.Message(msg.fullText, user: msg.handle?.address ?? "You", timestamp: msg.dateCreated.millisecondsSinceEpoch));
     }
 
     debugPrint("Getting smart replies for ${texts.length} texts");
-    replies = await FlutterSmartReply.getSmartReplies(texts.reversed.toList());
+    SmartReply.SmartReplyGenerator smartReply = SmartReply.SmartReplyGenerator();
+    replies = await smartReply.generateReplies(texts.reversed.toList());
+    smartReply.dispose();
+
     if (replies == null) return;
 
     // De-duplicate the list

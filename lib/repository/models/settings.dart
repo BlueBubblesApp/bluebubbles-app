@@ -194,14 +194,14 @@ class Settings {
   }
 
   Future<DisplayMode> getDisplayMode() async {
-    if (displayMode == null) return FlutterDisplayMode.current;
+    if (displayMode == null) return FlutterDisplayMode.active;
 
     List<DisplayMode> modes = await FlutterDisplayMode.supported;
     modes = modes.where((element) => element.id == displayMode).toList();
 
     DisplayMode mode;
     if (modes.isEmpty) {
-      mode = await FlutterDisplayMode.current;
+      mode = await FlutterDisplayMode.active;
     } else {
       mode = modes.first;
     }

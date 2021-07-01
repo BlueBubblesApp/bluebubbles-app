@@ -148,7 +148,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
     if (isCreator) {
       if (chat == null && selected.length == 1) {
         try {
-          chat = await Chat.findOne({"chatIdentifier": Slugify(selected[0].address, delimiter: '')});
+          chat = await Chat.findOne({"chatIdentifier": slugify(selected[0].address, delimiter: '')});
         } catch (ex) {}
       }
 

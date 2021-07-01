@@ -1,5 +1,7 @@
 import 'dart:ui';
 
+import 'package:bluebubbles/managers/method_channel_interface.dart';
+import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:get/get.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/redacted_helper.dart';
@@ -68,7 +70,7 @@ class _ContactTileState extends State<ContactTile> {
   void getContact() {
     ContactManager().getCachedContact(widget.handle).then((Contact contact) {
       if (contact != null) {
-        if (this.contact == null || this.contact.identifier != contact.identifier) {
+        if (this.contact == null || this.contact.id != contact.id) {
           this.contact = contact;
           if (this.mounted) setState(() {});
         }
@@ -82,12 +84,12 @@ class _ContactTileState extends State<ContactTile> {
     }
   }
 
-  List<Item> getUniqueNumbers(Iterable<Item> numbers) {
-    List<Item> phones = [];
-    for (Item phone in numbers) {
+  List<Phone> getUniqueNumbers(Iterable<Phone> numbers) {
+    List<Phone> phones = [];
+    for (Phone phone in numbers) {
       bool exists = false;
-      for (Item current in phones) {
-        if (cleansePhoneNumber(phone.value) == cleansePhoneNumber(current.value)) {
+      for (Phone current in phones) {
+        if (cleansePhoneNumber(phone.number) == cleansePhoneNumber(current.number)) {
           exists = true;
           break;
         }
@@ -112,10 +114,12 @@ class _ContactTileState extends State<ContactTile> {
       },
       onTap: () async {
         if (contact == null) {
-          await ContactsService.openContactForm(
-              address: widget.handle.address, addressType: widget.handle.address.isEmail ? 'email' : 'phone');
+          await MethodChannelInterface().invokeMethod("open-contact-form", {
+            'address': widget.handle.address,
+            'addressType': widget.handle.address.isEmail ? 'email' : 'phone'
+          });
         } else {
-          await ContactsService.openExistingContact(contact);
+          await FlutterContacts.openExternalView(contact.id);
         }
       },
       child: ListTile(
@@ -172,9 +176,9 @@ class _ContactTileState extends State<ContactTile> {
                         shape: CircleBorder(),
                         color: Theme.of(context).accentColor,
                         onPressed: () {
-                          List<Item> phones = getUniqueNumbers(contact.phones);
+                          List<Phone> phones = getUniqueNumbers(contact.phones);
                           if (phones.length == 1) {
-                            makeCall(contact.phones.elementAt(0).value);
+                            makeCall(contact.phones.elementAt(0).number);
                           } else {
                             showDialog(
                               context: context,
@@ -190,11 +194,11 @@ class _ContactTileState extends State<ContactTile> {
                                     children: [
                                       for (int i = 0; i < phones.length; i++)
                                         FlatButton(
-                                          child: Text("${phones[i].value} (${phones[i].label})",
+                                          child: Text("${phones[i].number} (${phones[i].label})",
                                               style: TextStyle(color: Theme.of(context).textTheme.bodyText1.color),
                                               textAlign: TextAlign.start),
                                           onPressed: () async {
-                                            makeCall(phones[i].value);
+                                            makeCall(phones[i].number);
                                             Navigator.of(context).pop();
                                           },
                                         )
