@@ -12,8 +12,7 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
-import 'package:contacts_service/contacts_service.dart';
-import 'package:emojis/emoji.dart';
+import 'emoji_regex.dart';
 
 class EmojiConst {
   static final String charNonSpacingMark = String.fromCharCode(0xfe0f);

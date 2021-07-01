@@ -10,13 +10,11 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/socket_manager.dart';
-import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
-import 'package:intent/action.dart' as android_action;
-import 'package:intent/intent.dart' as android_intent;
 import 'package:permission_handler/permission_handler.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ContactTile extends StatefulWidget {
   final Handle handle;
@@ -80,10 +78,7 @@ class _ContactTileState extends State<ContactTile> {
 
   Future<void> makeCall(String phoneNumber) async {
     if (await Permission.phone.request().isGranted) {
-      android_intent.Intent()
-        ..setAction(android_action.Action.ACTION_CALL)
-        ..setData(Uri(scheme: "tel", path: phoneNumber))
-        ..startActivity().catchError((e) => print(e));
+      launch("tel://$phoneNumber");
     }
   }
 
