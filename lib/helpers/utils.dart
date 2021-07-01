@@ -16,12 +16,12 @@ import 'package:bluebubbles/repository/models/fcm_data.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/socket_manager.dart';
-import 'package:contacts_service/contacts_service.dart';
 import 'package:convert/convert.dart';
 import 'package:device_info/device_info.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
 import 'package:get/get.dart';
 import 'package:html/parser.dart';
@@ -120,7 +120,7 @@ bool sameAddress(List<String> options, String compared) {
 
     if (opt.isEmail && !compared.isEmail) continue;
 
-    String formatted = Slugify(compared, delimiter: '').toString().replaceAll('-', '');
+    String formatted = slugify(compared, delimiter: '').toString().replaceAll('-', '');
     if (options.contains(formatted)) {
       match = true;
       break;
@@ -297,7 +297,7 @@ String uriToFilename(String uri, String mimeType) {
   }
 
   // Slugify the filename
-  filename = Slugify(filename, delimiter: '_');
+  filename = slugify(filename, delimiter: '_');
 
   // Rebuild the filename
   return (ext != null && ext.length > 0) ? '$filename.$ext' : filename;
@@ -361,12 +361,13 @@ Future<MemoryImage> loadAvatar(Chat chat, Handle handle) async {
 
   // Get the contact
   Contact contact = await ContactManager().getCachedContact(handle);
-  if (isNullOrEmpty(contact?.avatar)) return null;
+  Uint8List avatar = contact?.photoOrThumbnail;
+  if (isNullOrEmpty(avatar)) return null;
 
   // Set the contact image
   // NOTE: Don't compress this. It will increase load time significantly
   // NOTE: These don't need to be compressed. They are usually already small
-  return MemoryImage(contact.avatar);
+  return MemoryImage(avatar);
 }
 
 List<RegExpMatch> parseLinks(String text) {
@@ -559,7 +560,7 @@ Future<File> saveImageFromUrl(String guid, String url) async {
   if (filename == null) return null;
 
   try {
-    var response = await get(url);
+    var response = await get(Uri.parse(url));
 
     Directory baseDir = new Directory("${AttachmentHelper.getBaseAttachmentsPath()}/$guid");
     if (!baseDir.existsSync()) {

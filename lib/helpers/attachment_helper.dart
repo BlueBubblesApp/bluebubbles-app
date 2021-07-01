@@ -4,6 +4,7 @@ import 'dart:ui';
 
 import 'package:bluebubbles/helpers/simple_vcard_parser.dart';
 import 'package:flutter_contacts/contact.dart';
+import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -83,45 +84,54 @@ class AttachmentHelper {
     info.printLines();
 
     Contact contact = Contact();
-    if (_contact.containsKey("N") && _contact["N"].toString().isNotEmpty) {
-      String firstName = (_contact["N"] + " ").split(";")[1];
-      String lastName = _contact["N"].split(";")[0];
-      contact.displayName = firstName + " " + lastName;
-    } else if (_contact.containsKey("FN")) {
-      contact.displayName = _contact["FN"];
+    contact.displayName = info.formattedName;
+
+    List<Email> emails = [];
+    List<Phone> phones = [];
+    List<Address> addresses = [];
+
+    // Parse emails from results
+    for (dynamic email in info.typedEmail) {
+      EmailLabel label = EmailLabel.home;
+      String customLabel;
+      if (email.length > 1 && email[1].length > 0 && email[1][1] != null) {
+        String realLabel = email[1][1];
+        label = emailLabelMap.containsKey(email[1]) ? emailLabelMap[realLabel] : EmailLabel.custom;
+        customLabel = realLabel;
+      }
+
+      emails.add(new Email(email[0], label: label, customLabel: customLabel));
     }
 
-    List<Item> emails = <Item>[];
-    List<Item> phones = <Item>[];
-    _contact.keys.forEach((String key) {
-      if (key.contains("EMAIL")) {
-        String label = 'HOME';
-
-        // Try to parse out the type of email
-        if (key.contains('type=')) {
-          List<String> splitData = key.split('type=');
-          if (splitData.length >= 2) {
-            label = splitData[2].replaceAll(';', '');
-          }
-        }
-
-        emails.add(
-          Item(
-            value: (_contact[key] as Map<String, dynamic>)["value"],
-            label: label,
-          ),
-        );
-      } else if (key.contains("TEL")) {
-        phones.add(
-          Item(
-            label: "HOME",
-            value: (_contact[key] as Map<String, dynamic>)["value"],
-          ),
-        );
+    // Parse phone numbers from results
+    for (dynamic phone in info.typedTelephone) {
+      PhoneLabel label = PhoneLabel.mobile;
+      String customLabel;
+      if (phone.length > 1 && phone[1].length > 0 && phone[1][1] != null) {
+        String realLabel = phone[1][1];
+        label = phoneLabelMap.containsKey(phone[1]) ? phoneLabelMap[realLabel] : PhoneLabel.custom;
+        customLabel = realLabel;
       }
-    });
-    contact.emails = emails;
+
+      phones.add(new Phone(phone[0], label: label, customLabel: customLabel));
+    }
+
+    // Parse addresses numbers from results
+    for (dynamic address in info.typedAddress) {
+      AddressLabel label = AddressLabel.home;
+      String customLabel;
+      if (address.length > 1 && address[1].length > 0 && address[1][1] != null) {
+        String realLabel = address[1][1];
+        label = addressLabelMap.containsKey(address[1]) ? addressLabelMap[realLabel] : PhoneLabel.custom;
+        customLabel = realLabel;
+      }
+
+      addresses.add(new Address(address[0], label: label, customLabel: customLabel));
+    }
+
     contact.phones = phones;
+    contact.addresses = addresses;
+    contact.emails = emails;
 
     return contact;
   }
@@ -161,37 +171,7 @@ class AttachmentHelper {
   static Future<void> saveToGallery(BuildContext context, File file) async {
     if (await Permission.storage.request().isGranted) {
       await ImageGallerySaver.saveFile(file.absolute.path);
-      FlutterToast(context).showToast(
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(25.0),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(25.0),
-                color: Theme.of(context).accentColor.withOpacity(0.1),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.check,
-                    color: Theme.of(context).textTheme.bodyText1.color,
-                  ),
-                  SizedBox(
-                    width: 12.0,
-                  ),
-                  Text(
-                    "Saved to gallery",
-                    style: Theme.of(context).textTheme.bodyText1,
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      );
+      showSnackbar('Success', 'Saved to gallery!');
     }
   }
 

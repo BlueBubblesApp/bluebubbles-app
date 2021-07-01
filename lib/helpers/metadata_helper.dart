@@ -63,11 +63,11 @@ class MetadataHelper {
     }
 
     String originalUrl = url;
-    String newUrl = MetadataHelper._reformatUrl(url);
+    Uri newUrl = Uri.tryParse(MetadataHelper._reformatUrl(url));
 
     // Handle specific cases
     bool alreadyManual = false;
-    if (newUrl.contains('https://www.youtube.com/oembed')) {
+    if (newUrl != null && newUrl.toString().contains('https://www.youtube.com/oembed')) {
       // Manually request this URL
       var response = await http.get(newUrl);
 
@@ -85,7 +85,7 @@ class MetadataHelper {
 
       // Set the URL to the original URL
       data.url = url;
-    } else if (newUrl.contains("https://publish.twitter.com/oembed")) {
+    } else if (newUrl != null && newUrl.toString().contains("https://publish.twitter.com/oembed")) {
       // Manually request this URL
       var response = await http.get(newUrl);
 
@@ -102,9 +102,9 @@ class MetadataHelper {
 
       // Set the URL to the original URL
       data.url = url;
-    } else if (url.contains("redd.it/")) {
-      var response = await http.get(url);
-      var document = responseToDocument(response);
+    } else if (newUrl != null && newUrl.toString().contains("redd.it/")) {
+      var response = await http.get(newUrl);
+      var document = MetadataFetch.responseToDocument(response);
 
       // Since this is a short-URL, we need to get the actual URL out
       String href;
@@ -133,7 +133,7 @@ class MetadataHelper {
       alreadyManual = true;
     } else {
       try {
-        data = await extract(url);
+        data = await MetadataFetch.extract(url);
       } catch (ex) {
         debugPrint('An error occurred while fetching URL Preview Metadata: ${ex.toString()}');
       }
@@ -211,7 +211,8 @@ class MetadataHelper {
     Metadata meta = new Metadata();
 
     try {
-      var response = await http.get(url);
+      Uri uri = Uri.parse(url);
+      var response = await http.get(uri);
       var document = MetadataHelper._responseToDocument(response);
 
       if (document == null) return meta;

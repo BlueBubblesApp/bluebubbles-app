@@ -9,8 +9,8 @@ import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_contacts/flutter_contacts.dart';
 
 import '../repository/models/chat.dart';
 import '../repository/models/handle.dart';
@@ -193,8 +193,8 @@ class ChatBloc {
         chat.participants.length == 1 ? await ContactManager().getCachedContact(chat.participants.first) : null;
     try {
       // If there is a contact specified, we can use it's avatar
-      if (contact != null && contact.avatar.isNotEmpty) {
-        icon = contact.avatar;
+      if (contact != null && contact.thumbnail .isNotEmpty) {
+        icon = contact.thumbnail;
         // Otherwise if there isn't, we use the [defaultAvatar]
       } else {
         // If [defaultAvatar] is not loaded, load it from assets
