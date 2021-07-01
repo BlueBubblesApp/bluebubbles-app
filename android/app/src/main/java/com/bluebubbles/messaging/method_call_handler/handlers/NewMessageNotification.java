@@ -174,7 +174,7 @@ public class NewMessageNotification implements Handler {
         // }
 
         // Build the actual notification
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, call.argument("CHANNEL_ID"))
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, (String) call.argument("CHANNEL_ID"))
                 .setSmallIcon(R.mipmap.ic_stat_icon)
                 .setAllowSystemGeneratedContextualActions(true)
                 .setAutoCancel(true)

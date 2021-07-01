@@ -6,6 +6,8 @@ import android.net.Uri;
 import android.util.Log;
 
 import androidx.core.content.FileProvider;
+import android.provider.ContactsContract;
+import android.provider.ContactsContract.Intents;
 
 import java.io.File;
 
