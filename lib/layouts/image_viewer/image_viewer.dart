@@ -45,26 +45,6 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
   void initState() {
     super.initState();
     controller = new PhotoViewController();
-
-    controller.outputStateStream.listen((event) {
-      if (AttachmentFullscreenViewer.of(context) == null || event.boundaries == null || event.scale == null) return;
-      if (this.mounted) {
-        AttachmentFullscreenViewerState state = AttachmentFullscreenViewer.of(context);
-        if (event.scale > event.boundaries.minScale) {
-          if (state.physics != NeverScrollableScrollPhysics()) {
-            AttachmentFullscreenViewer.of(context).setState(() {
-              AttachmentFullscreenViewer.of(context).physics = NeverScrollableScrollPhysics();
-            });
-          }
-        } else {
-          if (state.physics != ThemeSwitcher.getScrollPhysics()) {
-            AttachmentFullscreenViewer.of(context).setState(() {
-              AttachmentFullscreenViewer.of(context).physics = ThemeSwitcher.getScrollPhysics();
-            });
-          }
-        }
-      }
-    });
   }
 
   @override
@@ -278,8 +258,28 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
                       loadingBuilder: (BuildContext context, ImageChunkEvent ev) {
                         return loader;
                       },
-                      loadFailedChild: Center(
-                          child: Text("Failed to display image", style: TextStyle(fontSize: 16, color: Colors.white))))
+                      scaleStateChangedCallback: (scale) {
+                        if (AttachmentFullscreenViewer.of(context) == null) return;
+                        if (this.mounted) {
+                          AttachmentFullscreenViewerState state = AttachmentFullscreenViewer.of(context);
+                          if (scale == PhotoViewScaleState.zoomedIn) {
+                            if (state.physics != NeverScrollableScrollPhysics()) {
+                              AttachmentFullscreenViewer.of(context).setState(() {
+                                AttachmentFullscreenViewer.of(context).physics = NeverScrollableScrollPhysics();
+                              });
+                            }
+                          } else {
+                            if (state.physics != ThemeSwitcher.getScrollPhysics()) {
+                              AttachmentFullscreenViewer.of(context).setState(() {
+                                AttachmentFullscreenViewer.of(context).physics = ThemeSwitcher.getScrollPhysics();
+                              });
+                            }
+                          }
+                        }
+                      },
+                      errorBuilder: (context, object, stacktrace) => Center(
+                          child: Text("Failed to display image", style: TextStyle(fontSize: 16, color: Colors.white)))
+                    )
                   : loader,
               overlay
             ],
