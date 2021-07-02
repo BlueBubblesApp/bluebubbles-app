@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:get/get.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
@@ -104,6 +105,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
         appBar: SettingsManager().settings.skin == Skins.iOS
             ? CupertinoNavigationBar(
                 backgroundColor: Theme.of(context).accentColor.withAlpha(125),
+                leading: buildBackButton(context),
                 middle: Text(
                   "Details",
                   style: Theme.of(context).textTheme.headline1,

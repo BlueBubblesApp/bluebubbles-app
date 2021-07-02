@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:get/get.dart';
 import 'package:assorted_layout_widgets/assorted_layout_widgets.dart';
@@ -413,7 +414,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
           mainAxisSize: Cupertino.MainAxisSize.min,
           mainAxisAlignment: Cupertino.MainAxisAlignment.start,
           children: [
-            Icon(Icons.chevron_left, color: Theme.of(context).primaryColor, size: 34),
+            buildBackButton(context),
             if (newMessages.length > 0)
               Container(
                 width: 25.0,
