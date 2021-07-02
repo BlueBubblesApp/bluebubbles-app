@@ -1,4 +1,4 @@
-import 'package:flutter_contacts/flutter_contacts.dart';
+import 'package:contacts_service/contacts_service.dart';
 import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -97,29 +97,22 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
       List<Contact> contactRes = [];
       List<Contact> contacts = ContactManager().contacts ?? [];
       if (widget.handle.address.isEmail) {
-        contactRes =
-            contacts.where((element) => element.emails.any((e) => e.address == widget.handle.address)).toList();
+        contactRes = contacts.where((element) => element.emails.any((e) => e.value == widget.handle.address)).toList();
       } else {
-        contactRes = contacts.where((element) => element.phones.any((e) => e.number == widget.handle.address)).toList();
+        contactRes = contacts.where((element) => element.phones.any((e) => e.value == widget.handle.address)).toList();
       }
 
       if (contactRes.length > 0) {
         contact = contactRes.first;
-        if (isNullOrEmpty(contact.photoOrThumbnail)) {
-          Contact theContact = await FlutterContacts.getContact(contact.id, withPhoto: true, withThumbnail: true);
-          if (theContact != null) {
-            contact = theContact;
-          }
+        if (isNullOrEmpty(contact.avatar)) {
+          contact.avatar = await ContactsService.getAvatar(contact);
         }
       }
     }
 
-    if (contact != null &&
-        contact.photoOrThumbnail != null &&
-        contact.photoOrThumbnail.isNotEmpty &&
-        state.contactImage == null) {
+    if (contact != null && contact.avatar != null && contact.avatar.isNotEmpty && state.contactImage == null) {
       try {
-        state.contactImage = MemoryImage(contact.photoOrThumbnail);
+        state.contactImage = MemoryImage(contact.avatar);
       } catch (e) {}
     }
 

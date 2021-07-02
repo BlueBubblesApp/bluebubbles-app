@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:flutter_contacts/flutter_contacts.dart';
+import 'package:contacts_service/contacts_service.dart';
 import 'package:get/get.dart';
 import 'package:assorted_layout_widgets/assorted_layout_widgets.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
@@ -657,33 +657,33 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     List<UniqueContact> _contacts = [];
     List<String> cache = [];
     Function addContactEntries = (Contact contact, {conditionally = false}) {
-      for (Phone phone in contact.phones) {
-        String cleansed = slugText(phone.number);
+      for (Item phone in contact.phones) {
+        String cleansed = slugText(phone.value);
         if (conditionally && !cleansed.contains(searchQuery)) continue;
 
         if (!cache.contains(cleansed)) {
           cache.add(cleansed);
           _contacts.add(
             new UniqueContact(
-              address: phone.number,
+              address: phone.value,
               displayName: contact.displayName,
-              label: phone.customLabel ?? phone.label.toString(),
+              label: phone.label,
             ),
           );
         }
       }
 
-      for (Email email in contact.emails) {
-        String emailVal = slugText(email.address);
+      for (Item email in contact.emails) {
+        String emailVal = slugText(email.value);
         if (conditionally && !emailVal.contains(searchQuery)) continue;
 
         if (!cache.contains(emailVal)) {
           cache.add(emailVal);
           _contacts.add(
             new UniqueContact(
-              address: email.address,
+              address: email.value,
               displayName: contact.displayName,
-              label: email.customLabel ?? email.label.toString(),
+              label: email.label,
             ),
           );
         }

@@ -191,6 +191,8 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
         });
       }
 
+      if (attachments.length == 0) return;
+
       // Go to the new chat creator, with all of our attachments
       Navigator.of(context).pushAndRemoveUntil(
         ThemeSwitcher.buildPageRoute(
