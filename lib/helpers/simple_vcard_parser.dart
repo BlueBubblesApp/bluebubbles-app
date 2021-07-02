@@ -1,37 +1,5 @@
 import 'dart:convert';
 
-import 'package:flutter_contacts/flutter_contacts.dart';
-
-Map<String, EmailLabel> emailLabelMap = {
-  'HOME': EmailLabel.home,
-  'INTERNET': EmailLabel.other,
-  'WORK': EmailLabel.work,
-  'OTHER': EmailLabel.other,
-  'MOBILE': EmailLabel.mobile,
-  'SCHOOL': EmailLabel.school,
-  'ICLOUD': EmailLabel.iCloud
-};
-
-Map<String, PhoneLabel> phoneLabelMap = {
-  'TEXT': PhoneLabel.mms,
-  'TEXTPHONE': PhoneLabel.mms,
-  'VOICE': PhoneLabel.other,
-  'VIDEO': PhoneLabel.other,
-  'CELL': PhoneLabel.mobile,
-  'PAGER': PhoneLabel.pager,
-  'FAX': PhoneLabel.faxHome,
-  'HOME': PhoneLabel.home,
-  'WORK': PhoneLabel.work,
-  'OTHER': PhoneLabel.other,
-};
-
-Map<String, AddressLabel> addressLabelMap = {
-  'HOME': AddressLabel.home,
-  'WORK': AddressLabel.work,
-  'POSTAL': AddressLabel.other,
-  'DOM': AddressLabel.other,
-};
-
 class VCard {
   String _vCardString;
   List<String> lines;
@@ -42,9 +10,7 @@ class VCard {
 
     lines = LineSplitter().convert(this._vCardString);
     for (var i = lines.length - 1; i >= 0; i--) {
-      if (lines[i].startsWith("BEGIN:VCARD") ||
-          lines[i].startsWith("END:VCARD") ||
-          lines[i].trim().isEmpty) {
+      if (lines[i].startsWith("BEGIN:VCARD") || lines[i].startsWith("END:VCARD") || lines[i].trim().isEmpty) {
         lines.removeAt(i);
       }
     }

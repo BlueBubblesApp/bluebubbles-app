@@ -16,12 +16,12 @@ import 'package:bluebubbles/repository/models/fcm_data.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/socket_manager.dart';
+import 'package:contacts_service/contacts_service.dart';
 import 'package:convert/convert.dart';
 import 'package:device_info/device_info.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
 import 'package:get/get.dart';
 import 'package:html/parser.dart';
@@ -134,8 +134,8 @@ String getInitials(Contact contact) {
   if (contact == null) return null;
 
   // Set default initials
-  String initials = (contact.name?.first?.isNotEmpty == true ? contact.name.first[0] : "") +
-      (contact.name?.last?.isNotEmpty == true ? contact.name.last[0] : "");
+  String initials = (contact.givenName.isNotEmpty == true ? contact.givenName[0] : "") +
+      (contact.familyName.isNotEmpty == true ? contact.familyName[0] : "");
 
   // If the initials are empty, get them from the display name
   if (initials.trim().isEmpty) {
@@ -376,7 +376,7 @@ Future<MemoryImage> loadAvatar(Chat chat, Handle handle) async {
 
   // Get the contact
   Contact contact = await ContactManager().getCachedContact(handle);
-  Uint8List avatar = contact?.photoOrThumbnail;
+  Uint8List avatar = contact?.avatar;
   if (isNullOrEmpty(avatar)) return null;
 
   // Set the contact image

@@ -12,7 +12,7 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
-import 'package:flutter_contacts/flutter_contacts.dart';
+import 'package:contacts_service/contacts_service.dart';
 import 'emoji_regex.dart';
 
 class EmojiConst {
@@ -288,7 +288,7 @@ class MessageHelper {
       if (!message.isFromMe && message.handle != null) {
         Contact contact = await ContactManager().getCachedContact(message.handle);
         if (contact != null) {
-          sender = contact.name?.nickname ?? contact.name?.first ?? contact.displayName;
+          sender = contact.givenName ?? contact.displayName;
         }
       }
 
