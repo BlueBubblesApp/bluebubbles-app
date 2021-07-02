@@ -1,7 +1,7 @@
 import 'dart:ui';
 
 import 'package:bluebubbles/managers/method_channel_interface.dart';
-import 'package:flutter_contacts/flutter_contacts.dart';
+import 'package:contacts_service/contacts_service.dart';
 import 'package:get/get.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/redacted_helper.dart';
@@ -70,7 +70,7 @@ class _ContactTileState extends State<ContactTile> {
   void getContact() {
     ContactManager().getCachedContact(widget.handle).then((Contact contact) {
       if (contact != null) {
-        if (this.contact == null || this.contact.id != contact.id) {
+        if (this.contact == null || this.contact.identifier != contact.identifier) {
           this.contact = contact;
           if (this.mounted) setState(() {});
         }
@@ -84,12 +84,12 @@ class _ContactTileState extends State<ContactTile> {
     }
   }
 
-  List<Phone> getUniqueNumbers(Iterable<Phone> numbers) {
-    List<Phone> phones = [];
-    for (Phone phone in numbers) {
+  List<Item> getUniqueNumbers(Iterable<Item> numbers) {
+    List<Item> phones = [];
+    for (Item phone in numbers) {
       bool exists = false;
-      for (Phone current in phones) {
-        if (cleansePhoneNumber(phone.number) == cleansePhoneNumber(current.number)) {
+      for (Item current in phones) {
+        if (cleansePhoneNumber(phone.value) == cleansePhoneNumber(current.value)) {
           exists = true;
           break;
         }
@@ -114,12 +114,10 @@ class _ContactTileState extends State<ContactTile> {
       },
       onTap: () async {
         if (contact == null) {
-          await MethodChannelInterface().invokeMethod("open-contact-form", {
-            'address': widget.handle.address,
-            'addressType': widget.handle.address.isEmail ? 'email' : 'phone'
-          });
+          await MethodChannelInterface().invokeMethod("open-contact-form",
+              {'address': widget.handle.address, 'addressType': widget.handle.address.isEmail ? 'email' : 'phone'});
         } else {
-          await FlutterContacts.openExternalView(contact.id);
+          await ContactsService.openExistingContact(contact);
         }
       },
       child: ListTile(
@@ -176,9 +174,9 @@ class _ContactTileState extends State<ContactTile> {
                         shape: CircleBorder(),
                         color: Theme.of(context).accentColor,
                         onPressed: () {
-                          List<Phone> phones = getUniqueNumbers(contact.phones);
+                          List<Item> phones = getUniqueNumbers(contact.phones);
                           if (phones.length == 1) {
-                            makeCall(contact.phones.elementAt(0).number);
+                            makeCall(contact.phones.elementAt(0).value);
                           } else {
                             showDialog(
                               context: context,
@@ -194,11 +192,11 @@ class _ContactTileState extends State<ContactTile> {
                                     children: [
                                       for (int i = 0; i < phones.length; i++)
                                         FlatButton(
-                                          child: Text("${phones[i].number} (${phones[i].label})",
+                                          child: Text("${phones[i].value} (${phones[i].label})",
                                               style: TextStyle(color: Theme.of(context).textTheme.bodyText1.color),
                                               textAlign: TextAlign.start),
                                           onPressed: () async {
-                                            makeCall(phones[i].number);
+                                            makeCall(phones[i].value);
                                             Navigator.of(context).pop();
                                           },
                                         )

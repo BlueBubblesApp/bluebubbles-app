@@ -8,8 +8,8 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/socket_manager.dart';
+import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_contacts/flutter_contacts.dart';
 
 /// [NotificationManager] holds data relating to the current chat, and manages things such as
 class NotificationManager {
@@ -113,7 +113,7 @@ class NotificationManager {
     try {
       // If there is a contact specified, we can use it's avatar
       if (contact != null) {
-        if (contact.photoOrThumbnail.length > 0) contactIcon = contact.photoOrThumbnail;
+        if (contact.avatar.length > 0) contactIcon = contact.avatar;
         // Otherwise if there isn't, we use the [defaultAvatar]
       } else {
         // If [defaultAvatar] is not loaded, load it from assets

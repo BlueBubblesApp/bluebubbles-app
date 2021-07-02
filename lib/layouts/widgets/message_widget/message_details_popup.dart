@@ -23,13 +23,11 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
-import 'package:clipboard/clipboard.dart';
+import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/cupertino.dart' as cupertino;
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_contacts/flutter_contacts.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 import 'package:sprung/sprung.dart';
 
@@ -477,6 +475,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
           color: Colors.transparent,
           child: InkWell(
             onTap: () {
+              Clipboard.setData(new ClipboardData(text: widget.message.fullText));
               showSnackbar("Copied", "Copied to clipboard!");
             },
             child: ListTile(
