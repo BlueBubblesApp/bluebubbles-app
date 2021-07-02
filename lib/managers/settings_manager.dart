@@ -11,7 +11,6 @@ import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
-import 'package:get/get.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -73,6 +72,8 @@ class SettingsManager {
   Future<void> getSavedSettings({bool headless = false, BuildContext context}) async {
     await DBProvider.setupConfigRows();
     settings = await Settings.getSettings();
+    _stream.sink.add(settings);
+
     fcmData = await FCMData.getFCM();
     // await DBProvider.setupDefaultPresetThemes(await DBProvider.db.database);
     themes = await ThemeObject.getThemes();

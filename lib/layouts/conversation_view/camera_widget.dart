@@ -37,7 +37,8 @@ class _CameraWidgetState extends State<CameraWidget> with WidgetsBindingObserver
     // Bind the lifecycle events
     WidgetsBinding.instance.addObserver(this);
 
-    SchedulerBinding.instance.addPostFrameCallback((_) async {
+    // The delay here just needs to be bigger than the SlideTransition
+    new Future.delayed(const Duration(milliseconds: 400), () async {
       await initCameras();
     });
   }
@@ -62,11 +63,8 @@ class _CameraWidgetState extends State<CameraWidget> with WidgetsBindingObserver
 
   @override
   void dispose() {
-    if (controller != null) {
-      debugPrint("Disposing of camera!");
-      controller?.dispose();
-    }
-
+    debugPrint("Disposing of camera!");
+    controller?.dispose();
     super.dispose();
   }
 

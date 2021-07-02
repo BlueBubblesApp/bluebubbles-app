@@ -113,47 +113,43 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
     generateFakeContactNames = SettingsManager().settings.generateFakeContactNames;
     generateFakeMessageContent = SettingsManager().settings.generateFakeMessageContent;
     SettingsManager().stream.listen((Settings newSettings) {
-      if (!this.mounted) return;
-
       if (newSettings.hideDividers != hideDividers) {
-        setState(() {
-          hideDividers = newSettings.hideDividers;
-        });
+        hideDividers = newSettings.hideDividers;
       }
 
       if (newSettings.denseChatTiles != denseTiles) {
-        setState(() {
-          denseTiles = newSettings.denseChatTiles;
-        });
-      } else if (newSettings.redactedMode != redactedMode) {
-        setState(() {
-          redactedMode = newSettings.redactedMode;
-        });
-      } else if (newSettings.hideMessageContent != hideMessageContent) {
-        setState(() {
-          hideMessageContent = newSettings.hideMessageContent;
-        });
-      } else if (newSettings.hideContactPhotos != hideContactPhotos) {
-        setState(() {
-          hideContactPhotos = newSettings.hideContactPhotos;
-        });
-      } else if (newSettings.hideContactInfo != hideContactInfo) {
-        setState(() {
-          hideContactInfo = newSettings.hideContactInfo;
-        });
-      } else if (newSettings.removeLetterAvatars != removeLetterAvatars) {
-        setState(() {
-          removeLetterAvatars = newSettings.removeLetterAvatars;
-        });
-      } else if (newSettings.generateFakeContactNames != generateFakeContactNames) {
-        setState(() {
-          generateFakeContactNames = newSettings.generateFakeContactNames;
-        });
-      } else if (newSettings.generateFakeMessageContent != generateFakeMessageContent) {
-        setState(() {
-          generateFakeMessageContent = newSettings.generateFakeMessageContent;
-        });
+        denseTiles = newSettings.denseChatTiles;
       }
+
+      if (newSettings.redactedMode != redactedMode) {
+        redactedMode = newSettings.redactedMode;
+      }
+
+      if (newSettings.hideMessageContent != hideMessageContent) {
+        hideMessageContent = newSettings.hideMessageContent;
+      }
+
+      if (newSettings.hideContactPhotos != hideContactPhotos) {
+        hideContactPhotos = newSettings.hideContactPhotos;
+      }
+
+      if (newSettings.hideContactInfo != hideContactInfo) {
+        hideContactInfo = newSettings.hideContactInfo;
+      }
+
+      if (newSettings.removeLetterAvatars != removeLetterAvatars) {
+        removeLetterAvatars = newSettings.removeLetterAvatars;
+      }
+
+      if (newSettings.generateFakeContactNames != generateFakeContactNames) {
+        generateFakeContactNames = newSettings.generateFakeContactNames;
+      }
+
+      if (newSettings.generateFakeMessageContent != generateFakeMessageContent) {
+        generateFakeMessageContent = newSettings.generateFakeMessageContent;
+      }
+
+      if (this.mounted) setState(() {});
     });
 
     // Listen for changes in the group
