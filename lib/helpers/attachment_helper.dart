@@ -3,8 +3,7 @@ import 'dart:typed_data';
 import 'dart:ui';
 
 import 'package:bluebubbles/helpers/simple_vcard_parser.dart';
-import 'package:flutter_contacts/contact.dart';
-import 'package:flutter_contacts/flutter_contacts.dart';
+import 'package:contacts_service/contacts_service.dart';
 import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -80,57 +79,53 @@ class AttachmentHelper {
   }
 
   static Contact parseAppleContact(String appleContact) {
-    VCard info = VCard(appleContact);
-    info.printLines();
+    VCard _contact = VCard(appleContact);
+    _contact.printLines();
 
     Contact contact = Contact();
-    contact.displayName = info.formattedName;
+    contact.displayName = _contact.formattedName;
 
-    List<Email> emails = [];
-    List<Phone> phones = [];
-    List<Address> addresses = [];
+    List<Item> emails = <Item>[];
+    List<Item> phones = <Item>[];
+    List<PostalAddress> addresses = <PostalAddress>[];
 
     // Parse emails from results
-    for (dynamic email in info.typedEmail) {
-      EmailLabel label = EmailLabel.home;
-      String customLabel;
+    for (dynamic email in _contact.typedEmail) {
+      String label = "HOME";
       if (email.length > 1 && email[1].length > 0 && email[1][1] != null) {
-        String realLabel = email[1][1];
-        label = emailLabelMap.containsKey(email[1]) ? emailLabelMap[realLabel] : EmailLabel.custom;
-        customLabel = realLabel;
+        label = email[1][1] ?? label;
       }
 
-      emails.add(new Email(email[0], label: label, customLabel: customLabel));
+      emails.add(new Item(value: email[0], label: label));
     }
 
     // Parse phone numbers from results
-    for (dynamic phone in info.typedTelephone) {
-      PhoneLabel label = PhoneLabel.mobile;
-      String customLabel;
+    for (dynamic phone in _contact.typedTelephone) {
+      String label = "HOME";
       if (phone.length > 1 && phone[1].length > 0 && phone[1][1] != null) {
-        String realLabel = phone[1][1];
-        label = phoneLabelMap.containsKey(phone[1]) ? phoneLabelMap[realLabel] : PhoneLabel.custom;
-        customLabel = realLabel;
+        label = phone[1][1] ?? label;
       }
 
-      phones.add(new Phone(phone[0], label: label, customLabel: customLabel));
+      phones.add(new Item(value: phone[0], label: label));
     }
 
     // Parse addresses numbers from results
-    for (dynamic address in info.typedAddress) {
-      AddressLabel label = AddressLabel.home;
-      String customLabel;
+    for (dynamic address in _contact.typedAddress) {
+      String street = address[0].length > 0 ? address[0][0] : '';
+      String city = address[0].length > 1 ? address[0][1] : '';
+      String state = address[0].length > 2 ? address[0][2] : '';
+      String country = address[0].length > 3 ? address[0][3] : '';
+
+      String label = "HOME";
       if (address.length > 1 && address[1].length > 0 && address[1][1] != null) {
-        String realLabel = address[1][1];
-        label = addressLabelMap.containsKey(address[1]) ? addressLabelMap[realLabel] : PhoneLabel.custom;
-        customLabel = realLabel;
+        label = address[1][1] ?? label;
       }
 
-      addresses.add(new Address(address[0], label: label, customLabel: customLabel));
+      addresses.add(new PostalAddress(label: label, street: street, city: city, region: state, country: country));
     }
 
     contact.phones = phones;
-    contact.addresses = addresses;
+    contact.postalAddresses = addresses;
     contact.emails = emails;
 
     return contact;
