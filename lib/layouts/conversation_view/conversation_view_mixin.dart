@@ -430,7 +430,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
         ),
         middle: ListView(
           physics: Cupertino.NeverScrollableScrollPhysics(),
-          padding: EdgeInsets.only(right: newMessages.length > 0 ? 20 : 1),
+          padding: EdgeInsets.only(right: newMessages.length > 0 ? 30 : 6),
           children: <Widget>[
             Container(height: 10.0),
             GestureDetector(
