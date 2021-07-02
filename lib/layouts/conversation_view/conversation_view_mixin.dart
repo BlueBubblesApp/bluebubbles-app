@@ -25,7 +25,6 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/repository/models/message.dart';
-import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart' as Cupertino;
 import 'package:flutter/material.dart';
@@ -52,7 +51,6 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
   String searchQuery = "";
   bool currentlyProcessingDeleteKey = false;
   CurrentChat currentChat;
-  Settings _settingsCopy;
   List<DisplayMode> modes;
   DisplayMode currentMode;
   bool markingAsRead = false;
@@ -236,7 +234,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
 
     SocketManager().sendMessage("mark-chat-read", {"chatGuid": chat.guid}, (data) {
       setProgress(false);
-    }).catchError(() {
+    }).catchError((_) {
       setProgress(false);
     });
   }

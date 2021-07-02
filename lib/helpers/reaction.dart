@@ -1,4 +1,3 @@
-import 'package:get/get.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
@@ -162,7 +161,6 @@ class Reaction {
 
     return Stack(
       clipBehavior: Clip.hardEdge,
-      overflow: Overflow.clip,
       fit: StackFit.passthrough,
       alignment: Alignment.centerLeft,
       children: reactionList,

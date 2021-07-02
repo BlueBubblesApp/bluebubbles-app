@@ -447,8 +447,8 @@ class _CupertinoNavigationBarState extends State<CupertinoNavigationBar> {
     );
 
     final Color actionsForegroundColor = CupertinoDynamicColor.resolve(
-      widget.actionsForegroundColor,
       // ignore: deprecated_member_use_from_same_package
+      widget.actionsForegroundColor,
       context,
     );
     if (!widget.transitionBetweenRoutes || !_isTransitionable(context)) {

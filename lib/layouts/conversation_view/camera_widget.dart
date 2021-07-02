@@ -136,8 +136,10 @@ class _CameraWidgetState extends State<CameraWidget> with WidgetsBindingObserver
             padding: EdgeInsets.only(
               bottom: Get.mediaQuery.size.height / 30,
             ),
-            child: FlatButton(
-              color: Colors.transparent,
+            child: TextButton(
+              style: TextButton.styleFrom(
+                backgroundColor: Colors.transparent,
+              ),
               onPressed: () async {
                 HapticFeedback.mediumImpact();
 
@@ -173,10 +175,12 @@ class _CameraWidgetState extends State<CameraWidget> with WidgetsBindingObserver
           padding: EdgeInsets.only(
             bottom: Get.mediaQuery.size.height / 30,
           ),
-          child: FlatButton(
-            padding: EdgeInsets.only(left: 10),
-            minWidth: 30,
-            color: Colors.transparent,
+          child: TextButton(
+            style: TextButton.styleFrom(
+              padding: EdgeInsets.only(left: 10),
+              minimumSize: Size.square(30),
+              backgroundColor: Colors.transparent,
+            ),
             onPressed: () async {
               HapticFeedback.lightImpact();
               await this.openFullCamera(type: 'camera');
@@ -195,10 +199,12 @@ class _CameraWidgetState extends State<CameraWidget> with WidgetsBindingObserver
           padding: EdgeInsets.only(
             bottom: Get.mediaQuery.size.height / 30,
           ),
-          child: FlatButton(
-            padding: EdgeInsets.all(0),
-            minWidth: 30,
-            color: Colors.transparent,
+          child: TextButton(
+            style: TextButton.styleFrom(
+              padding: EdgeInsets.all(0),
+              minimumSize: Size.square(30),
+              backgroundColor: Colors.transparent,
+            ),
             onPressed: () async {
               HapticFeedback.lightImpact();
               await this.openFullCamera(type: 'video');
@@ -215,10 +221,12 @@ class _CameraWidgetState extends State<CameraWidget> with WidgetsBindingObserver
         padding: EdgeInsets.only(
           bottom: Get.mediaQuery.size.height / 30,
         ),
-        child: FlatButton(
-          padding: EdgeInsets.only(right: 10),
-          minWidth: 30,
-          color: Colors.transparent,
+        child: TextButton(
+          style: TextButton.styleFrom(
+            padding: EdgeInsets.only(right: 10),
+            minimumSize: Size.square(30),
+            backgroundColor: Colors.transparent,
+          ),
           onPressed: () async {
             if (BlueBubblesTextField.of(context) == null) return;
 

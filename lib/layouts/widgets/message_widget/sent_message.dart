@@ -174,7 +174,7 @@ class SentMessageHelper {
                   title: new Text("Message failed to send", style: TextStyle(color: Colors.black)),
                   content: new Text("Error ($errorCode): $errorText"),
                   actions: <Widget>[
-                    new FlatButton(
+                    new TextButton(
                       child: new Text("Retry"),
                       onPressed: () {
                         // Remove the OG alert dialog
@@ -183,7 +183,7 @@ class SentMessageHelper {
                       },
                     ),
                     if (chat != null)
-                      new FlatButton(
+                      new TextButton(
                         child: new Text("Remove"),
                         onPressed: () async {
                           Navigator.of(context).pop();
@@ -203,7 +203,7 @@ class SentMessageHelper {
                           await ChatBloc().updateChatPosition(chat);
                         },
                       ),
-                    new FlatButton(
+                    new TextButton(
                       child: new Text("Cancel"),
                       onPressed: () {
                         Navigator.of(context).pop();

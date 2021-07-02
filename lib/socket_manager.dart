@@ -596,7 +596,6 @@ class SocketManager {
       int after,
       bool onlyAttachments: false,
       List<Map<String, dynamic>> where: const []}) async {
-    Completer<List<dynamic>> completer = new Completer();
     debugPrint("(Fetch Messages) Fetching data.");
 
     Map<String, dynamic> params = Map();

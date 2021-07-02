@@ -513,7 +513,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                       ),
                     );
                     List<Widget> actions = <Widget>[
-                      FlatButton(
+                      TextButton(
                         child: Text(
                           "Done",
                           // style: Theme.of(context).textTheme.bodyText1,

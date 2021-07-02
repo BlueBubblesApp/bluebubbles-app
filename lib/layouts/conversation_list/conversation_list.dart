@@ -951,7 +951,7 @@ class __MaterialState extends State<_Material> {
                               if (!widget.parent.widget.showArchivedChats) widget.parent.chats[index].unpin();
 
                               setState(() {
-                                Scaffold.of(context).hideCurrentSnackBar();
+                                ScaffoldMessenger.of(context).hideCurrentSnackBar();
                                 (!widget.parent.widget.showArchivedChats)
                                     ? ChatBloc().archiveChat(widget.parent.chats[index])
                                     : ChatBloc().unArchiveChat(widget.parent.chats[index]);
@@ -959,7 +959,7 @@ class __MaterialState extends State<_Material> {
                               });
                             } else {
                               setState(() {
-                                Scaffold.of(context).hideCurrentSnackBar();
+                                ScaffoldMessenger.of(context).hideCurrentSnackBar();
                                 if (widget.parent.chats[index].isPinned) {
                                   widget.parent.chats[index].unpin();
                                   widget.parent.chats.remove(index);
@@ -1400,7 +1400,7 @@ class _SamsungState extends State<_Samsung> {
                                   if (direction == DismissDirection.endToStart) {
                                     if (!widget.parent.widget.showArchivedChats) widget.parent.chats[index].unpin();
                                     setState(() {
-                                      Scaffold.of(context).hideCurrentSnackBar();
+                                      ScaffoldMessenger.of(context).hideCurrentSnackBar();
                                       (!widget.parent.widget.showArchivedChats)
                                           ? ChatBloc().archiveChat(widget.parent.chats[index])
                                           : ChatBloc().unArchiveChat(widget.parent.chats[index]);
@@ -1409,7 +1409,7 @@ class _SamsungState extends State<_Samsung> {
                                     });
                                   } else {
                                     setState(() {
-                                      Scaffold.of(context).hideCurrentSnackBar();
+                                      ScaffoldMessenger.of(context).hideCurrentSnackBar();
                                       widget.parent.chats[index].unpin();
                                     });
                                   }
@@ -1507,7 +1507,7 @@ class _SamsungState extends State<_Samsung> {
                                   if (direction == DismissDirection.endToStart) {
                                     if (!widget.parent.widget.showArchivedChats) widget.parent.chats[index].unpin();
                                     setState(() {
-                                      Scaffold.of(context).hideCurrentSnackBar();
+                                      ScaffoldMessenger.of(context).hideCurrentSnackBar();
                                       (!widget.parent.widget.showArchivedChats)
                                           ? ChatBloc().archiveChat(widget.parent.chats[index])
                                           : ChatBloc().unArchiveChat(widget.parent.chats[index]);
@@ -1515,7 +1515,7 @@ class _SamsungState extends State<_Samsung> {
                                     });
                                   } else {
                                     setState(() {
-                                      Scaffold.of(context).hideCurrentSnackBar();
+                                      ScaffoldMessenger.of(context).hideCurrentSnackBar();
                                       widget.parent.chats[index].pin();
                                     });
                                   }

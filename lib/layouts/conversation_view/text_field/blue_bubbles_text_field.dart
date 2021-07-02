@@ -223,7 +223,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
             ],
           ),
           actions: <Widget>[
-            new FlatButton(
+            new TextButton(
                 child: new Text("Discard", style: Theme.of(context).textTheme.subtitle1),
                 onPressed: () {
                   // Dispose of the audio controller
@@ -235,7 +235,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                   // Remove the OG alert dialog
                   Navigator.of(originalContext).pop();
                 }),
-            new FlatButton(
+            new TextButton(
               child: new Text(
                 "Send",
                 style: Theme.of(context).textTheme.bodyText1,
@@ -286,21 +286,6 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     }
     showImagePicker = !showImagePicker;
     if (this.mounted) setState(() {});
-  }
-
-  Future<File> _downloadFile(String url, String filename) async {
-    HttpClient httpClient = HttpClient();
-    var request = await httpClient.getUrl(Uri.parse(url));
-    var response = await request.close();
-    var bytes = await consolidateHttpClientResponseBytes(response);
-    String dir = SettingsManager().appDocDir.path;
-    Directory tempAssets = Directory("$dir/tempAssets");
-    if (!await tempAssets.exists()) {
-      await tempAssets.create();
-    }
-    File file = new File('$dir/tempAssets/$filename');
-    await file.writeAsBytes(bytes);
-    return file;
   }
 
   Future<File> _saveData(List<int> data, String filename) async {
@@ -776,11 +761,16 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
               ? ButtonTheme(
                   minWidth: 30,
                   height: 30,
-                  child: RaisedButton(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 0,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 0,
+                      ),
+                      primary: Theme.of(context).primaryColor,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(40),
+                      ),
                     ),
-                    color: Theme.of(context).primaryColor,
                     onPressed: sendAction,
                     child: Stack(
                       alignment: Alignment.center,
@@ -817,9 +807,6 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                         ),
                       ],
                     ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(40),
-                    ),
                   ),
                 )
               : GestureDetector(
@@ -834,11 +821,16 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                   child: ButtonTheme(
                     minWidth: 40,
                     height: 40,
-                    child: RaisedButton(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 0,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 0,
+                        ),
+                        primary: Theme.of(context).primaryColor,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(40),
+                        ),
                       ),
-                      color: Theme.of(context).primaryColor,
                       onPressed: sendAction,
                       child: Stack(
                         alignment: Alignment.center,
@@ -876,9 +868,6 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                             ),
                           ),
                         ],
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(40),
                       ),
                     ),
                   ),

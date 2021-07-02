@@ -69,7 +69,6 @@ class _ReactionsWidgetState extends State<ReactionsWidget> with TickerProviderSt
       alignment: Alignment.center,
       child: Stack(
         clipBehavior: Clip.hardEdge,
-        overflow: Overflow.clip,
         fit: StackFit.passthrough,
         alignment: Alignment.bottomLeft,
         children: reactionWidgets,

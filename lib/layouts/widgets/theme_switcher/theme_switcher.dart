@@ -22,6 +22,9 @@ class ThemeSwitcher extends StatefulWidget {
       case Skins.Samsung:
         return MaterialPageRoute(builder: builder);
         break;
+      default:
+        return CupertinoPageRoute(builder: builder);
+        break;
     }
   }
 
@@ -40,6 +43,11 @@ class ThemeSwitcher extends StatefulWidget {
       case Skins.Samsung:
         return AlwaysScrollableScrollPhysics(
           parent: ClampingScrollPhysics(),
+        );
+        break;
+      default:
+        return AlwaysScrollableScrollPhysics(
+          parent: CustomBouncingScrollPhysics(),
         );
         break;
     }
@@ -76,6 +84,8 @@ class _ThemeSwitcherState extends State<ThemeSwitcher> {
         return widget.materialSkin;
       case Skins.Samsung:
         return widget.samsungSkin;
+      default:
+        return widget.iOSSkin;
     }
   }
 }

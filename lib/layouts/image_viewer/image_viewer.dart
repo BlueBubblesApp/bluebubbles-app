@@ -146,7 +146,7 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
                             ),
                           ),
                           actions: [
-                            FlatButton(
+                            TextButton(
                               child: Text(
                                 "Close",
                                 style: Theme.of(context).textTheme.bodyText1.copyWith(

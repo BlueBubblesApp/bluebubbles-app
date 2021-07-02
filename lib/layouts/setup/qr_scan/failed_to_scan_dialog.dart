@@ -1,4 +1,3 @@
-import 'package:get/get.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:clipboard/clipboard.dart';
 import 'package:flutter/material.dart';
@@ -25,7 +24,7 @@ class FailedToScan extends StatelessWidget {
         ),
       ),
       actions: [
-        FlatButton(
+        TextButton(
           child: Text(
             "Ok",
             style: Theme.of(context).textTheme.bodyText1.apply(color: Theme.of(context).primaryColor),
@@ -33,7 +32,7 @@ class FailedToScan extends StatelessWidget {
           onPressed: () => Navigator.of(context).pop(),
         ),
         if (showCopy)
-          FlatButton(
+          TextButton(
             child: Text(
               "Copy",
               style: Theme.of(context).textTheme.bodyText1.apply(color: Theme.of(context).primaryColor),

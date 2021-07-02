@@ -4,7 +4,6 @@ import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/theming/theming_color_selector.dart';
-import 'package:bluebubbles/layouts/theming/theming_panel.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -15,7 +14,7 @@ import 'package:flutter/material.dart';
 class ThemingColorOptionsList extends StatefulWidget {
   ThemingColorOptionsList({Key key, this.isDarkMode, this.controller}) : super(key: key);
   final bool isDarkMode;
-  final EditController controller;
+  final StreamController controller;
 
   @override
   _ThemingColorOptionsListState createState() => _ThemingColorOptionsListState();
@@ -157,12 +156,14 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
               ),
               if (!currentTheme.isPreset)
                 SliverToBoxAdapter(
-                  child: FlatButton(
+                  child: TextButton(
+                    style: TextButton.styleFrom(
+                        backgroundColor: whiteLightTheme.accentColor,
+                    ),
                     child: Text(
                       "Delete",
                       style: TextStyle(color: Colors.red),
                     ),
-                    color: whiteLightTheme.accentColor,
                     onPressed: () async {
                       allThemes.removeWhere((element) => element == this.currentTheme);
                       await this.currentTheme.delete();
@@ -209,7 +210,7 @@ class _NewThemeCreateAlertState extends State<NewThemeCreateAlert> {
   Widget build(BuildContext context) {
     return AlertDialog(
       actions: [
-        FlatButton(
+        TextButton(
           child: Text("OK"),
           onPressed: () async {
             if ((await ThemeObject.findOne({"name": controller.text})) != null || controller.text.isEmpty) {
@@ -221,7 +222,7 @@ class _NewThemeCreateAlertState extends State<NewThemeCreateAlert> {
             }
           },
         ),
-        FlatButton(
+        TextButton(
           child: Text("Cancel"),
           onPressed: widget.onCancel,
         )

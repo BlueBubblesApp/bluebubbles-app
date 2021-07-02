@@ -175,9 +175,11 @@ class _ContactTileState extends State<ContactTile> {
               if (isEmail)
                 ButtonTheme(
                   minWidth: 1,
-                  child: FlatButton(
-                    shape: CircleBorder(),
-                    color: Theme.of(context).accentColor,
+                  child: TextButton(
+                    style: TextButton.styleFrom(
+                      shape: CircleBorder(),
+                      backgroundColor: Theme.of(context).accentColor,
+                    ),
                     onPressed: () {
                       startEmail(widget.handle.address);
                     },
@@ -187,9 +189,11 @@ class _ContactTileState extends State<ContactTile> {
               ((contact == null && !isEmail) || (contact?.phones?.length ?? 0) > 0)
                   ? ButtonTheme(
                       minWidth: 1,
-                      child: FlatButton(
-                        shape: CircleBorder(),
-                        color: Theme.of(context).accentColor,
+                      child: TextButton(
+                        style: TextButton.styleFrom(
+                          shape: CircleBorder(),
+                          backgroundColor: Theme.of(context).accentColor,
+                        ),
                         onPressed: () {
                           if (contact == null) {
                             makeCall(widget.handle.address);
@@ -211,7 +215,7 @@ class _ContactTileState extends State<ContactTile> {
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
                                         for (int i = 0; i < phones.length; i++)
-                                          FlatButton(
+                                          TextButton(
                                             child: Text("${phones[i].value} (${phones[i].label})",
                                                 style: TextStyle(color: Theme.of(context).textTheme.bodyText1.color),
                                                 textAlign: TextAlign.start),

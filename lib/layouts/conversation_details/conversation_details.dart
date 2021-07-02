@@ -1,7 +1,6 @@
 import 'dart:ui';
 
 import 'package:bluebubbles/helpers/ui_helpers.dart';
-import 'package:get/get.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
@@ -191,7 +190,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                                                   ],
                                                 ),
                                                 actions: <Widget>[
-                                                  FlatButton(
+                                                  TextButton(
                                                       child: Text("OK",
                                                           style: Theme.of(context)
                                                               .textTheme
@@ -211,17 +210,18 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                             if (chat.displayName.isEmpty)
                               Padding(
                                 padding: const EdgeInsets.only(left: 8.0, right: 16.0, bottom: 8.0),
-                                child: RaisedButton(
-                                  highlightColor: Colors.red,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(18),
+                                child: ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    primary: Theme.of(context).accentColor,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(18),
+                                    ),
                                   ),
                                   onPressed: () async {
                                     setState(() {
                                       showNameField = false;
                                     });
                                   },
-                                  color: Theme.of(context).accentColor,
                                   child: Text(
                                     "CANCEL",
                                     style: TextStyle(
@@ -236,16 +236,18 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                       : !hideInfo
                           ? Padding(
                               padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 8.0),
-                              child: RaisedButton(
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(18),
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  primary: Theme.of(context).accentColor,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(18),
+                                  ),
                                 ),
                                 onPressed: () async {
                                   setState(() {
                                     showNameField = true;
                                   });
                                 },
-                                color: Theme.of(context).accentColor,
                                 child: Text(
                                   "ADD NAME",
                                   style: TextStyle(
@@ -615,7 +617,7 @@ class _SyncDialogState extends State<SyncDialog> {
               ),
             ),
       actions: [
-        FlatButton(
+        TextButton(
           onPressed: () {
             Navigator.of(context).pop();
           },

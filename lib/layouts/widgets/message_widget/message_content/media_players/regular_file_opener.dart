@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';

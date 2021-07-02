@@ -62,7 +62,7 @@ class _ThemingColorPickerPopupState extends State<ThemingColorPickerPopup> {
         ),
       ),
       actions: <Widget>[
-        FlatButton(
+        TextButton(
           child: Text("OK", style: whiteLightTheme.textTheme.bodyText1.apply(color: Colors.white)),
           onPressed: () {
             widget.onSet(currentColor, fontSize: currentFontSize);

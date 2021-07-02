@@ -55,14 +55,14 @@ class _AvatarColorPickerPopupState extends State<AvatarColorPickerPopup> {
         ),
       ),
       actions: <Widget>[
-        FlatButton(
+        TextButton(
           child: Text("RESTORE", style: whiteLightTheme.textTheme.bodyText1.apply(color: Colors.white)),
           onPressed: () {
             widget.onReset();
             Navigator.of(context).pop();
           },
         ),
-        FlatButton(
+        TextButton(
           child: Text("OK", style: whiteLightTheme.textTheme.bodyText1.apply(color: Colors.white)),
           onPressed: () {
             widget.onSet(currentColor);

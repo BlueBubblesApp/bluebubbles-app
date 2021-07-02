@@ -5,7 +5,6 @@ import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
-import "package:bluebubbles/helpers/string_extension.dart";
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/settings/about_panel.dart';
 import 'package:bluebubbles/layouts/settings/attachment_panel.dart';
@@ -343,7 +342,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                             ),
                             backgroundColor: Theme.of(context).backgroundColor,
                             actions: <Widget>[
-                              FlatButton(
+                              TextButton(
                                 child: Text("Yes"),
                                 onPressed: () async {
                                   await DBProvider.deleteDB();
@@ -353,7 +352,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                   Navigator.of(context).popUntil((route) => route.isFirst);
                                 },
                               ),
-                              FlatButton(
+                              TextButton(
                                 child: Text("Cancel"),
                                 onPressed: () {
                                   Navigator.of(context).pop();

@@ -1,4 +1,3 @@
-import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/setup/connecting_alert/connecting_alert.dart';
 import 'package:bluebubbles/layouts/setup/qr_scan/failed_to_scan_dialog.dart';
@@ -99,7 +98,7 @@ class _TextInputURLState extends State<TextInputURL> {
           ],
         ),
         actions: [
-          FlatButton(
+          TextButton(
             child: Text("OK"),
             onPressed: () {
               connect(urlController.text, passwordController.text);
@@ -107,7 +106,7 @@ class _TextInputURLState extends State<TextInputURL> {
               if (this.mounted) setState(() {});
             },
           ),
-          FlatButton(
+          TextButton(
             child: Text("Cancel"),
             onPressed: widget.onClose,
           )

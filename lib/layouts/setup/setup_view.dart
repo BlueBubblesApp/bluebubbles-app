@@ -1,4 +1,3 @@
-import 'package:get/get.dart';
 import 'package:bluebubbles/layouts/setup/connecting_alert/failed_to_connect_dialog.dart';
 import 'package:bluebubbles/layouts/setup/prepare_to_download/prepare_to_download.dart';
 import 'package:bluebubbles/layouts/setup/qr_scan/qr_scan.dart';

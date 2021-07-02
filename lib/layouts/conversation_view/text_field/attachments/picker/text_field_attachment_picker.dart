@@ -70,9 +70,12 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> w
                           SizedBox(
                             width: 90,
                             height: 120,
-                            child: RaisedButton(
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(18),
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(18),
+                                ),
+                                primary: Theme.of(context).accentColor,
                               ),
                               onPressed: () async {
                                 List<dynamic> res = await MethodChannelInterface().invokeMethod("pick-file");
@@ -82,7 +85,6 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> w
                                   widget.onAddAttachment(File(path.toString()));
                                 }
                               },
-                              color: Theme.of(context).accentColor,
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: <Widget>[
@@ -107,9 +109,12 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> w
                           SizedBox(
                             width: 90,
                             height: 120,
-                            child: RaisedButton(
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(18),
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(18),
+                                ),
+                                primary: Theme.of(context).accentColor,
                               ),
                               onPressed: () async {
                                 showDialog(
@@ -121,8 +126,10 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> w
                                       style: Theme.of(context).textTheme.headline1,
                                     ),
                                     actions: <Widget>[
-                                      FlatButton(
-                                        color: Colors.blue[600],
+                                      TextButton(
+                                        style: TextButton.styleFrom(
+                                            backgroundColor: Colors.blue[600],
+                                        ),
                                         child: Text(
                                           "Send",
                                           style: Theme.of(context).textTheme.bodyText1,
@@ -132,12 +139,14 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> w
                                           Navigator.of(context).pop();
                                         },
                                       ),
-                                      FlatButton(
+                                      TextButton(
+                                        style: TextButton.styleFrom(
+                                          backgroundColor: Colors.red,
+                                        ),
                                         child: Text(
                                           "Cancel",
                                           style: Theme.of(context).textTheme.bodyText1,
                                         ),
-                                        color: Colors.red,
                                         onPressed: () {
                                           Navigator.of(context).pop();
                                         },
@@ -146,7 +155,6 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> w
                                   ),
                                 );
                               },
-                              color: Theme.of(context).accentColor,
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: <Widget>[

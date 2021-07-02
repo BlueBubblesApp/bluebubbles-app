@@ -3,7 +3,6 @@ import 'dart:ui';
 
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:get/get.dart';
-import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/share.dart';
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
@@ -265,7 +264,7 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                                 // If it fails or there is an endpoint error, stop the loader
                                 await SocketManager().sendMessage("restart-imessage", null, (_) {
                                   stopRestarting();
-                                }).catchError(() {
+                                }).catchError((_) {
                                   stopRestarting();
                                 });
                               } finally {
@@ -384,7 +383,7 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                                 ),
                               ),
                               actions: [
-                                FlatButton(
+                                TextButton(
                                   child: Text(
                                     "Close",
                                     style: Theme.of(context).textTheme.bodyText1.copyWith(
@@ -485,7 +484,7 @@ class _SyncDialogState extends State<SyncDialog> {
     }
 
     List<Widget> actions = [
-      FlatButton(
+      TextButton(
         onPressed: () {
           Navigator.of(context).pop();
         },
@@ -532,7 +531,7 @@ class _SyncDialogState extends State<SyncDialog> {
       );
 
       actions = [
-        FlatButton(
+        TextButton(
           onPressed: () {
             if (!this.mounted) return;
             if (lookback == null) lookback = new Duration(days: 1);

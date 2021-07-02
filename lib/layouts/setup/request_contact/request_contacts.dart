@@ -1,4 +1,3 @@
-import 'package:get/get.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -77,7 +76,7 @@ class _ContactPermissionWarningDialogState extends State<ContactPermissionWarnin
   Widget build(BuildContext context) {
     return AlertDialog(
       actions: [
-        FlatButton(
+        TextButton(
           child: Text(
             "Accept",
             style: Theme.of(context).textTheme.bodyText1.apply(color: Theme.of(context).primaryColor),
@@ -86,7 +85,7 @@ class _ContactPermissionWarningDialogState extends State<ContactPermissionWarnin
             Navigator.of(context).pop(true);
           },
         ),
-        FlatButton(
+        TextButton(
           child: Text(
             "Cancel",
             style: Theme.of(context).textTheme.bodyText1.apply(color: Theme.of(context).primaryColor),

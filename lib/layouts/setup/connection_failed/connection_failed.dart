@@ -1,4 +1,3 @@
-import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 
 class ConnectionFailedPopup extends StatefulWidget {
@@ -16,7 +15,7 @@ class _ConnectionFailedPopupState extends State<ConnectionFailedPopup> {
       content: Text(
           "Ooops, looks like the app could not connect to the server. Please ensure that you are connected to wifi and that your server is online."),
       actions: [
-        FlatButton(
+        TextButton(
           child: Text(
             "Start over",
             style: Theme.of(context).textTheme.bodyText1.apply(
