@@ -84,6 +84,10 @@ class _ContactTileState extends State<ContactTile> {
     }
   }
 
+  Future<void> startEmail(String email) async {
+    launch('mailto:$email');
+  }
+
   List<Item> getUniqueNumbers(Iterable<Item> numbers) {
     List<Item> phones = [];
     for (Item phone in numbers) {
@@ -107,6 +111,7 @@ class _ContactTileState extends State<ContactTile> {
     final bool redactedMode = SettingsManager()?.settings?.redactedMode ?? false;
     final bool hideInfo = redactedMode && (SettingsManager()?.settings?.hideContactInfo ?? false);
     final bool generateName = redactedMode && (SettingsManager()?.settings?.generateFakeContactNames ?? false);
+    final bool isEmail = widget.handle?.address?.isEmail ?? false;
     return InkWell(
       onLongPress: () {
         Clipboard.setData(new ClipboardData(text: widget.handle.address));
@@ -162,12 +167,24 @@ class _ContactTileState extends State<ContactTile> {
           handle: widget.handle,
           borderThickness: 0.1,
         ),
-        trailing: SizedBox(
-          width: Get.mediaQuery.size.width / 5,
+        trailing: FittedBox(
           child: Row(
             mainAxisAlignment: MainAxisAlignment.end,
+            mainAxisSize: MainAxisSize.max,
             children: <Widget>[
-              ((contact == null && !widget.handle.address.isEmail) || (contact?.phones?.length ?? 0) > 0)
+              if (isEmail)
+                ButtonTheme(
+                  minWidth: 1,
+                  child: FlatButton(
+                    shape: CircleBorder(),
+                    color: Theme.of(context).accentColor,
+                    onPressed: () {
+                      startEmail(widget.handle.address);
+                    },
+                    child: Icon(Icons.email, color: Theme.of(context).primaryColor, size: 20),
+                  ),
+                ),
+              ((contact == null && !isEmail) || (contact?.phones?.length ?? 0) > 0)
                   ? ButtonTheme(
                       minWidth: 1,
                       child: FlatButton(
@@ -211,10 +228,7 @@ class _ContactTileState extends State<ContactTile> {
                             }
                           }
                         },
-                        child: Icon(
-                          Icons.call,
-                          color: Theme.of(context).primaryColor,
-                        ),
+                        child: Icon(Icons.call, color: Theme.of(context).primaryColor, size: 20),
                       ),
                     )
                   : Container()
