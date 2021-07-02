@@ -409,13 +409,28 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
         border: Border(
           bottom: BorderSide(color: Colors.white.withOpacity(0.2), width: 0.2),
         ),
-        leading: CustomCupertinoNavigationBarBackButton(
-          color: Theme.of(context).primaryColor,
-          notifications: newMessages.length,
+        leading: Row(
+          mainAxisSize: Cupertino.MainAxisSize.min,
+          mainAxisAlignment: Cupertino.MainAxisAlignment.start,
+          children: [
+            Icon(Icons.chevron_left, color: Theme.of(context).primaryColor, size: 34),
+            if (newMessages.length > 0)
+              Container(
+                width: 25.0,
+                height: 20.0,
+                decoration: BoxDecoration(
+                    color: Theme.of(context).primaryColor,
+                    shape: BoxShape.rectangle,
+                    borderRadius: BorderRadius.circular(10)),
+                child: Center(
+                    child: Text(newMessages.length.toString(),
+                        textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 12.0))),
+              )
+          ],
         ),
         middle: ListView(
           physics: Cupertino.NeverScrollableScrollPhysics(),
-          padding: EdgeInsets.only(right: 5),
+          padding: EdgeInsets.only(right: newMessages.length > 0 ? 20 : 1),
           children: <Widget>[
             Container(height: 10.0),
             GestureDetector(
