@@ -29,7 +29,7 @@ dependencies:
   encrypt: ^5.0.0
   assorted_layout_widgets: ^5.0.1
   record: ^3.0.0
-  flutter_contacts: ^1.1.0+3
+  contacts_service: ^0.6.1
   permission_handler: ^8.1.2
   path_provider: ^2.0.2
   sqflite: ^2.0.0+3
