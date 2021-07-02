@@ -117,7 +117,7 @@ class _ContactTileState extends State<ContactTile> {
           await MethodChannelInterface().invokeMethod("open-contact-form",
               {'address': widget.handle.address, 'addressType': widget.handle.address.isEmail ? 'email' : 'phone'});
         } else {
-          await ContactsService.openExistingContact(contact);
+          await MethodChannelInterface().invokeMethod("view-contact-form", {'id': contact.identifier});
         }
       },
       child: ListTile(
