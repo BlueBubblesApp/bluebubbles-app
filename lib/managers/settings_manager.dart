@@ -72,6 +72,8 @@ class SettingsManager {
   Future<void> getSavedSettings({bool headless = false, BuildContext context}) async {
     await DBProvider.setupConfigRows();
     settings = await Settings.getSettings();
+    _stream.sink.add(settings);
+
     fcmData = await FCMData.getFCM();
     // await DBProvider.setupDefaultPresetThemes(await DBProvider.db.database);
     themes = await ThemeObject.getThemes();

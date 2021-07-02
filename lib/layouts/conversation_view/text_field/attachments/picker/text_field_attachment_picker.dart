@@ -52,7 +52,7 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> w
       getAttachments();
     }
     return AnimatedSize(
-      duration: Duration(milliseconds: 100),
+      duration: Duration(milliseconds: 300),
       vsync: this,
       curve: Curves.easeInOut,
       child: widget.visible

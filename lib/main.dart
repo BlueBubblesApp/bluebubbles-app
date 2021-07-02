@@ -78,6 +78,7 @@ Future<Null> main() async {
   try {
     await DBProvider.db.initDB();
     await initializeDateFormatting('fr_FR', null);
+    await SettingsManager().init();
     await SettingsManager().getSavedSettings(headless: true);
   } catch (e) {
     exception = e;

@@ -270,7 +270,9 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     cameraController = CameraController(cameras[cameraIndex], ResolutionPreset.max, enableAudio: false);
 
     // Initialize the camera, then update the state
-    await cameraController.initialize();
+    if (!cameraController.value.isInitialized) {
+      await cameraController.initialize();
+    }
     if (this.mounted) setState(() {});
   }
 

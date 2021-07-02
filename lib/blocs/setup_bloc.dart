@@ -68,10 +68,14 @@ class SetupBloc {
     connectionSubscription = SocketManager().connectionStateStream.listen((event) {
       if (_connectionStatusStream.isClosed) return;
       _connectionStatusStream.sink.add(event);
+
       if (isSyncing) {
         switch (event) {
           case SocketState.DISCONNECTED:
             addOutput("Disconnected from socket!", SetupOutputType.ERROR);
+            break;
+          case SocketState.CONNECTED:
+            addOutput("Connected to socket!", SetupOutputType.LOG);
             break;
           case SocketState.ERROR:
             addOutput("Socket connection error!", SetupOutputType.ERROR);

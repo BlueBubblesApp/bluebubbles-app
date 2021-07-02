@@ -11,9 +11,7 @@ import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/search/search_view.dart';
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
-import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
-import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/managers/theme_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
@@ -98,36 +96,35 @@ class _ConversationListState extends State<ConversationList> {
     skinSet = SettingsManager().settings.skin;
 
     SettingsManager().stream.listen((Settings newSettings) {
-      if (!this.mounted) return;
       if (newSettings.colorfulAvatars != colorfulAvatars) {
-        setState(() {
-          colorfulAvatars = newSettings.colorfulAvatars;
-        });
-      } else if (newSettings.reducedForehead != reducedForehead) {
-        setState(() {
-          reducedForehead = newSettings.reducedForehead;
-        });
-      } else if (newSettings.showConnectionIndicator != showIndicator) {
-        setState(() {
-          showIndicator = newSettings.showConnectionIndicator;
-        });
-      } else if (newSettings.moveChatCreatorToHeader != moveChatCreatorButton) {
-        setState(() {
-          moveChatCreatorButton = newSettings.moveChatCreatorToHeader;
-        });
-      } else if (newSettings.swipableConversationTiles != swipableTiles) {
-        setState(() {
-          swipableTiles = newSettings.swipableConversationTiles;
-        });
-      } else if (newSettings.skin != skinSet) {
-        setState(() {
-          skinSet = newSettings.skin;
-        });
-      } else if (newSettings.showSyncIndicator != showSyncIndicator) {
-        setState(() {
-          showSyncIndicator = newSettings.showSyncIndicator;
-        });
+        colorfulAvatars = newSettings.colorfulAvatars;
       }
+
+      if (newSettings.reducedForehead != reducedForehead) {
+        reducedForehead = newSettings.reducedForehead;
+      }
+
+      if (newSettings.showConnectionIndicator != showIndicator) {
+        showIndicator = newSettings.showConnectionIndicator;
+      }
+
+      if (newSettings.moveChatCreatorToHeader != moveChatCreatorButton) {
+        moveChatCreatorButton = newSettings.moveChatCreatorToHeader;
+      }
+
+      if (newSettings.swipableConversationTiles != swipableTiles) {
+        swipableTiles = newSettings.swipableConversationTiles;
+      }
+
+      if (newSettings.skin != skinSet) {
+        skinSet = newSettings.skin;
+      }
+
+      if (newSettings.showSyncIndicator != showSyncIndicator) {
+        showSyncIndicator = newSettings.showSyncIndicator;
+      }
+
+      if (this.mounted) setState(() {});
     });
 
     scrollController = ScrollController()..addListener(scrollListener);
@@ -315,6 +312,7 @@ class _ConversationListState extends State<ConversationList> {
     return [
       StreamBuilder(
           stream: SocketManager().connectionStateStream,
+          initialData: SocketManager().state ?? SocketState.DISCONNECTED,
           builder: (context, AsyncSnapshot<SocketState> snapshot) {
             SocketState connectionStatus;
             if (snapshot.hasData) {
