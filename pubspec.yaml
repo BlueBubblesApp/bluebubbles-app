@@ -61,8 +61,6 @@ dependencies:
   flutter_colorpicker: 0.4.0
   image_gallery_saver: ^1.6.9
   flutter_image_compress: ^1.0.0
-  extended_text_field:
-    path: packages/extended_text_field
   visibility_detector: ^0.2.0
   flutter_displaymode: ^0.3.2
   flutter_libphonenumber: ^1.1.0

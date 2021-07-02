@@ -316,20 +316,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "5.0.0"
-  extended_text_field:
-    dependency: "direct main"
-    description:
-      path: "packages/extended_text_field"
-      relative: true
-    source: path
-    version: "4.0.0"
-  extended_text_library:
-    dependency: transitive
-    description:
-      name: extended_text_library
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "4.0.3"
   fake_async:
     dependency: transitive
     description:
