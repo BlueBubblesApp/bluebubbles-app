@@ -43,7 +43,7 @@ class _CameraWidgetState extends State<CameraWidget> with WidgetsBindingObserver
   }
 
   Future<void> initCameras() async {
-    if (!this.hasCameraContext) return;
+    if (!this.mounted || !this.hasCameraContext) return;
     await BlueBubblesTextField.of(context).initializeCameraController();
     if (!this.hasCameraContext) return; // After the await, so could have been some time
     if (this.mounted) setState(() {});
