@@ -16,6 +16,12 @@ import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:image_size_getter/image_size_getter.dart' as IMG;
 import 'package:permission_handler/permission_handler.dart';
 
+class AppleLocation {
+  double longitude;
+  double latitude;
+  AppleLocation({@required this.latitude, @required this.longitude});
+}
+
 class AttachmentHelper {
   static String createAppleLocation(double longitude, double latitude, {iosVersion = "13.4.1"}) {
     List<String> lines = [
@@ -33,9 +39,8 @@ class AttachmentHelper {
     return lines.join("\n");
   }
 
-  static Map<String, double> parseAppleLocation(String appleLocation) {
+  static AppleLocation parseAppleLocation(String appleLocation) {
     List<String> lines = appleLocation.split("\n");
-    var emptyLocation = {'longitude': null, 'latitude': null};
 
     try {
       String url;
@@ -45,7 +50,7 @@ class AttachmentHelper {
         }
       }
 
-      if (url == null) return emptyLocation;
+      if (url == null) return AppleLocation(latitude: null, longitude: null);
 
       String query;
       List<String> opts = ["&q=", "&ll="];
@@ -58,23 +63,26 @@ class AttachmentHelper {
         }
       }
 
-      if (query == null) return emptyLocation;
+      if (query == null) return AppleLocation(latitude: null, longitude: null);
       if (query.contains("&")) {
         query = query.split("&").first;
       }
 
       if (query.contains("\\")) {
-        return {
-          "longitude": double.tryParse((query.split("\\,")[0])),
-          "latitude": double.tryParse(query.split("\\,")[1])
-        };
+        return AppleLocation(
+            latitude: double.tryParse(query.split("\\,")[1]),
+            longitude: double.tryParse(query.split("\\,")[0])
+        );
       } else {
-        return {"longitude": double.tryParse((query.split(",")[0])), "latitude": double.tryParse(query.split(",")[1])};
+        return AppleLocation(
+            latitude: double.tryParse(query.split(",")[1]),
+            longitude: double.tryParse(query.split(",")[0])
+        );
       }
     } catch (ex) {
       debugPrint("Faled to parse location!");
       debugPrint(ex.toString());
-      return emptyLocation;
+      return AppleLocation(latitude: null, longitude: null);
     }
   }
 
