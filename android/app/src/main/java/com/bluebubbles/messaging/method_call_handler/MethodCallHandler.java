@@ -25,7 +25,6 @@ import com.bluebubbles.messaging.method_call_handler.handlers.OpenLink;
 import com.bluebubbles.messaging.method_call_handler.handlers.PickFile;
 import com.bluebubbles.messaging.method_call_handler.handlers.PushShareTargets;
 import com.bluebubbles.messaging.method_call_handler.handlers.SaveToFile;
-import com.bluebubbles.messaging.method_call_handler.handlers.ShareFile;
 import com.bluebubbles.messaging.method_call_handler.handlers.SocketIssueWarning;
 import com.bluebubbles.messaging.method_call_handler.handlers.SetNextRestart;
 import com.bluebubbles.messaging.workers.DartWorker;
@@ -75,8 +74,6 @@ public class MethodCallHandler {
             new InitializeBackgroundHandle(context, call, result).Handle();
         } else if (call.method.equals(GetServerUrl.TAG)) {
             new GetServerUrl(context, call, result).Handle();
-        } else if (call.method.equals(ShareFile.TAG)) {
-            new ShareFile(context, call, result).Handle();
         } else if (call.method.equals(PickFile.TAG)) {
             new PickFile(context, call, result).Handle();
         } else if(call.method.equals(OpenCamera.TAG)) {

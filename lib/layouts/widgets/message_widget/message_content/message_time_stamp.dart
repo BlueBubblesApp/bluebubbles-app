@@ -29,7 +29,7 @@ class MessageTimeStamp extends StatelessWidget {
 
           return AnimatedContainer(
             duration: Duration(milliseconds: offset == 0 ? 150 : 0),
-            width: (SettingsManager().settings.skin == Skins.IOS || SettingsManager().settings.skin == Skins.Material)
+            width: (SettingsManager().settings.skin == Skins.iOS || SettingsManager().settings.skin == Skins.Material)
                 ? (-offset).clamp(0, 70).toDouble()
                 : (singleLine)
                     ? 100

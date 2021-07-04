@@ -2,12 +2,12 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:ui';
 
-import 'package:get/get.dart';
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/reaction.dart';
+import 'package:bluebubbles/helpers/share.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
@@ -30,6 +30,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:get/get.dart';
 import 'package:sprung/sprung.dart';
 
 class MessageDetailsPopup extends StatefulWidget {
@@ -559,7 +560,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                         },
                       ),
                     ];
-                    if (SettingsManager().settings.skin == Skins.IOS) {
+                    if (SettingsManager().settings.skin == Skins.iOS) {
                       return CupertinoAlertDialog(
                         title: title,
                         backgroundColor: Theme.of(context).accentColor,
@@ -634,6 +635,39 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
             ),
           ),
         ),
+      if (widget.message.hasAttachments || widget.message.text.length > 0)
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () {
+              if (widget.message.hasAttachments && !widget.message.isUrlPreview()) {
+                for (Attachment element in widget.message.attachments) {
+                  Share.file(
+                    "${element.mimeType.split("/")[0].capitalizeFirst} shared from BlueBubbles: ${element.transferName}",
+                    element.transferName,
+                    element.getPath(),
+                    element.mimeType,
+                  );
+                }
+              } else if (widget.message.text.length > 0) {
+                Share.text(
+                  "Text shared from BlueBubbles",
+                  widget.message.text,
+                );
+              }
+            },
+            child: ListTile(
+              title: Text(
+                "Share",
+                style: Theme.of(context).textTheme.bodyText1,
+              ),
+              trailing: Icon(
+                Icons.share,
+                color: Theme.of(context).textTheme.bodyText1.color,
+              ),
+            ),
+          ),
+        ),
     ];
 
     List<Widget> detailsActions = [];
@@ -679,7 +713,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: moreActions,
                             );
-                            if (SettingsManager().settings.skin == Skins.IOS) {
+                            if (SettingsManager().settings.skin == Skins.iOS) {
                               return CupertinoAlertDialog(
                                 backgroundColor: Theme.of(context).accentColor,
                                 content: content,

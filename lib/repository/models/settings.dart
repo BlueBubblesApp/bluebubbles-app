@@ -65,7 +65,7 @@ class Settings {
   bool generateFakeContactNames = false;
   bool generateFakeMessageContent = false;
 
-  Skins skin = Skins.IOS;
+  Skins skin = Skins.iOS;
   ThemeMode theme = ThemeMode.system;
 
   Settings();

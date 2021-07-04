@@ -108,7 +108,7 @@ class _ContactWidgetState extends State<ContactWidget> {
                       Padding(
                         padding: EdgeInsets.only(left: 5.0),
                         child: Icon(
-                          SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_forward_ios : Icons.arrow_forward,
+                          SettingsManager().settings.skin == Skins.iOS ? Icons.arrow_forward_ios : Icons.arrow_forward,
                           color: Colors.grey,
                           size: 15,
                         ),

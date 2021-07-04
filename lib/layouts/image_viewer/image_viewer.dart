@@ -108,7 +108,7 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
                   Navigator.pop(context);
                 },
                 child: Icon(
-                  SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_back_ios : Icons.arrow_back,
+                  SettingsManager().settings.skin == Skins.iOS ? Icons.arrow_back_ios : Icons.arrow_back,
                   color: Colors.white,
                 ),
               ),
@@ -228,7 +228,7 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
                   child: CupertinoButton(
                     padding: EdgeInsets.symmetric(horizontal: 5),
                     onPressed: () async {
-                      await Share.file(
+                      Share.file(
                         "Shared ${widget.attachment.mimeType.split("/")[0]} from BlueBubbles: ${widget.attachment.transferName}",
                         widget.attachment.transferName,
                         widget.file.path,

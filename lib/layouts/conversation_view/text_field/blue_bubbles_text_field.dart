@@ -271,7 +271,9 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     cameraController = CameraController(cameras[cameraIndex], ResolutionPreset.max, enableAudio: false);
 
     // Initialize the camera, then update the state
-    await cameraController.initialize();
+    if (!cameraController.value.isInitialized) {
+      await cameraController.initialize();
+    }
     if (this.mounted) setState(() {});
   }
 
@@ -376,7 +378,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
   }
 
   Widget buildShareButton() {
-    double size = SettingsManager().settings.skin == Skins.IOS ? 35 : 40;
+    double size = SettingsManager().settings.skin == Skins.iOS ? 35 : 40;
     return Container(
       height: size,
       width: size,
@@ -667,7 +669,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                 ),
               ),
             ),
-            if (SettingsManager().settings.skin == Skins.IOS) buildSendButton(canRecord),
+            if (SettingsManager().settings.skin == Skins.iOS) buildSendButton(canRecord),
           ],
         ),
       ),
@@ -771,7 +773,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
         alignment: Alignment.bottomRight,
         child: Row(mainAxisAlignment: MainAxisAlignment.end, crossAxisAlignment: CrossAxisAlignment.center, children: [
           if (sendCountdown != null) Text(sendCountdown.toString()),
-          (SettingsManager().settings.skin == Skins.IOS)
+          (SettingsManager().settings.skin == Skins.iOS)
               ? ButtonTheme(
                   minWidth: 30,
                   height: 30,

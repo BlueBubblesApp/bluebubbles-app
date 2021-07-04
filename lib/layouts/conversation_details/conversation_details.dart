@@ -101,7 +101,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
       ),
       child: Scaffold(
         backgroundColor: Theme.of(context).backgroundColor,
-        appBar: SettingsManager().settings.skin == Skins.IOS
+        appBar: SettingsManager().settings.skin == Skins.iOS
             ? CupertinoNavigationBar(
                 backgroundColor: Theme.of(context).accentColor.withAlpha(125),
                 middle: Text(
@@ -124,11 +124,11 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                   preferredSize: Size.fromHeight(0.5),
                 ),
               ),
-        extendBodyBehindAppBar: SettingsManager().settings.skin == Skins.IOS ? true : false,
+        extendBodyBehindAppBar: SettingsManager().settings.skin == Skins.iOS ? true : false,
         body: CustomScrollView(
           physics: ThemeSwitcher.getScrollPhysics(),
           slivers: <Widget>[
-            if (SettingsManager().settings.skin == Skins.IOS)
+            if (SettingsManager().settings.skin == Skins.iOS)
               SliverToBoxAdapter(
                 child: Container(
                   height: 100,
