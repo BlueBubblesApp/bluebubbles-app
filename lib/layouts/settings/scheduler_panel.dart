@@ -12,6 +12,7 @@ import 'package:bluebubbles/repository/models/scheduled.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:get/get.dart';
 
 List<dynamic> timeOptions = [
   [300, "5 Minutes"],
@@ -106,7 +107,7 @@ class _SchedulePanelState extends State<SchedulePanel> {
       child: Scaffold(
         backgroundColor: Theme.of(context).backgroundColor,
         appBar: PreferredSize(
-          preferredSize: Size(MediaQuery.of(context).size.width, 80),
+          preferredSize: Size(Get.mediaQuery.size.width, 80),
           child: ClipRRect(
             child: BackdropFilter(
               child: AppBar(
@@ -114,7 +115,7 @@ class _SchedulePanelState extends State<SchedulePanel> {
                 toolbarHeight: 100.0,
                 elevation: 0,
                 leading: IconButton(
-                  icon: Icon(SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_back_ios : Icons.arrow_back,
+                  icon: Icon(SettingsManager().settings.skin == Skins.iOS ? Icons.arrow_back_ios : Icons.arrow_back,
                       color: Theme.of(context).primaryColor),
                   onPressed: () {
                     Navigator.of(context).pop();

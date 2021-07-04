@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:ui';
 
+import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
@@ -26,9 +27,6 @@ class _CustomAvatarPanelState extends State<CustomAvatarPanel> {
   Settings _settingsCopy;
   List<DisplayMode> modes;
   DisplayMode currentMode;
-  Brightness brightness;
-  Color previousBackgroundColor;
-  bool gotBrightness = false;
   bool isFetching = false;
   List<Widget> handleWidgets = [];
 
@@ -42,31 +40,11 @@ class _CustomAvatarPanelState extends State<CustomAvatarPanel> {
       if (!event.containsKey("type")) return;
 
       if (event["type"] == 'theme-update' && this.mounted) {
-        setState(() {
-          gotBrightness = false;
-        });
+        setState(() {});
       }
     });
 
     getCustomHandles();
-  }
-
-  void loadBrightness() {
-    Color now = Theme.of(context).backgroundColor;
-    bool themeChanged = previousBackgroundColor == null || previousBackgroundColor != now;
-    if (!themeChanged && gotBrightness) return;
-
-    previousBackgroundColor = now;
-    if (this.context == null) {
-      brightness = Brightness.light;
-      gotBrightness = true;
-      return;
-    }
-
-    bool isDark = now.computeLuminance() < 0.179;
-    brightness = isDark ? Brightness.dark : Brightness.light;
-    gotBrightness = true;
-    if (this.mounted) setState(() {});
   }
 
   Future<void> getCustomHandles({force: false}) async {
@@ -97,8 +75,6 @@ class _CustomAvatarPanelState extends State<CustomAvatarPanel> {
 
   @override
   Widget build(BuildContext context) {
-    loadBrightness();
-
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: Theme.of(context).backgroundColor,
@@ -106,11 +82,11 @@ class _CustomAvatarPanelState extends State<CustomAvatarPanel> {
       child: Scaffold(
         backgroundColor: Theme.of(context).backgroundColor,
         appBar: PreferredSize(
-          preferredSize: Size(MediaQuery.of(context).size.width, 80),
+          preferredSize: Size(Get.mediaQuery.size.width, 80),
           child: ClipRRect(
             child: BackdropFilter(
               child: AppBar(
-                brightness: brightness,
+                brightness: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor),
                 toolbarHeight: 100.0,
                 elevation: 0,
                 leading: IconButton(

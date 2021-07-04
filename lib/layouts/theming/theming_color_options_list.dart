@@ -1,8 +1,12 @@
+import 'dart:async';
+
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/themes.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/theming/theming_color_selector.dart';
 import 'package:bluebubbles/layouts/theming/theming_panel.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
+import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/theme_object.dart';
 import 'package:flutter/cupertino.dart';
@@ -27,15 +31,10 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
     super.initState();
     widget.controller.stream.listen((event) {
       if (!currentTheme.isPreset) {
-        Scaffold.of(context).hideCurrentSnackBar();
-        Scaffold.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Click on an item to customize"),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+        showSnackbar('Customization', "Click on an item to customize");
         return;
       }
+
       BuildContext _context = context;
       showDialog(
         context: context,
@@ -119,6 +118,7 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
                         onChanged: (value) async {
                           value.data = value.themeData;
                           await value.save();
+
                           if (widget.isDarkMode) {
                             SettingsManager().saveSelectedTheme(context, selectedDarkTheme: value);
                           } else {
@@ -127,6 +127,8 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
                           currentTheme = value;
                           editable = currentTheme != null && !currentTheme.isPreset;
                           setState(() {});
+
+                          EventDispatcher().emit('theme-update', null);
                         },
                         value: currentTheme,
                         hint: Text(

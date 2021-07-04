@@ -16,11 +16,16 @@ import 'package:flutter/material.dart';
 import 'package:metadata_fetch/metadata_fetch.dart';
 import 'package:video_player/video_player.dart';
 
+enum CurrentChatEvent {
+  TypingStatus,
+  VideoPlaying,
+}
+
 /// Holds cached metadata for the currently opened chat
 ///
 /// This allows us to get around passing data through the trees and we can just store it here
 class CurrentChat {
-  StreamController _stream = StreamController.broadcast();
+  StreamController<Map<String, dynamic>> _stream = StreamController.broadcast();
 
   Stream get stream => _stream.stream;
 
@@ -281,14 +286,24 @@ class CurrentChat {
 
   void displayTypingIndicator() {
     showTypingIndicator = true;
-    _stream.sink.add(null);
+    _stream.sink.add(
+      {
+        "type": CurrentChatEvent.TypingStatus,
+        "data": true,
+      },
+    );
   }
 
   void hideTypingIndicator() {
     indicatorHideTimer?.cancel();
     indicatorHideTimer = null;
     showTypingIndicator = false;
-    _stream.sink.add(null);
+    _stream.sink.add(
+      {
+        "type": CurrentChatEvent.TypingStatus,
+        "data": false,
+      },
+    );
   }
 
   /// Retrieve all of the attachments associated with a chat
@@ -304,7 +319,12 @@ class CurrentChat {
       });
     }
     currentPlayingVideo = video;
-    _stream.sink.add(null);
+    _stream.sink.add(
+      {
+        "type": CurrentChatEvent.VideoPlaying,
+        "data": video,
+      },
+    );
   }
 
   void tryUpdateMessageMarkers(Message msg) {

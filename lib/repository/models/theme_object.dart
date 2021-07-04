@@ -1,3 +1,5 @@
+import 'dart:core';
+
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/repository/database.dart';
@@ -20,8 +22,7 @@ class ThemeObject {
     this.selectedDarkTheme = false,
     this.data,
   });
-  factory ThemeObject.fromData(ThemeData data, String name,
-      {bool isPreset = false}) {
+  factory ThemeObject.fromData(ThemeData data, String name, {bool isPreset = false}) {
     ThemeObject object = new ThemeObject(
       data: data.copyWith(),
       name: name,
@@ -40,10 +41,7 @@ class ThemeObject {
     );
   }
 
-  bool get isPreset =>
-      this.name == "OLED Dark" ||
-      this.name == "Bright White" ||
-      this.name == "Nord Theme";
+  bool get isPreset => this.name == "OLED Dark" || this.name == "Bright White" || this.name == "Nord Theme";
 
   List<ThemeEntry> toEntries() => [
         ThemeEntry.fromStyle(ThemeColors.Headline1, data.textTheme.headline1),
@@ -52,22 +50,10 @@ class ThemeObject {
         ThemeEntry.fromStyle(ThemeColors.Bodytext2, data.textTheme.bodyText2),
         ThemeEntry.fromStyle(ThemeColors.Subtitle1, data.textTheme.subtitle1),
         ThemeEntry.fromStyle(ThemeColors.Subtitle2, data.textTheme.subtitle2),
-        ThemeEntry(
-            name: ThemeColors.AccentColor,
-            color: data.accentColor,
-            isFont: false),
-        ThemeEntry(
-            name: ThemeColors.DividerColor,
-            color: data.dividerColor,
-            isFont: false),
-        ThemeEntry(
-            name: ThemeColors.BackgroundColor,
-            color: data.backgroundColor,
-            isFont: false),
-        ThemeEntry(
-            name: ThemeColors.PrimaryColor,
-            color: data.primaryColor,
-            isFont: false),
+        ThemeEntry(name: ThemeColors.AccentColor, color: data.accentColor, isFont: false),
+        ThemeEntry(name: ThemeColors.DividerColor, color: data.dividerColor, isFont: false),
+        ThemeEntry(name: ThemeColors.BackgroundColor, color: data.backgroundColor, isFont: false),
+        ThemeEntry(name: ThemeColors.PrimaryColor, color: data.primaryColor, isFont: false),
       ];
 
   Future<ThemeObject> save({bool updateIfAbsent = true}) async {
@@ -110,11 +96,9 @@ class ThemeObject {
     if (this.id == null) await this.save(updateIfAbsent: false);
     await this.fetchData();
     for (ThemeEntry entry in this.entries) {
-      await db
-          .delete("theme_values", where: "ROWID = ?", whereArgs: [entry.id]);
+      await db.delete("theme_values", where: "ROWID = ?", whereArgs: [entry.id]);
     }
-    await db
-        .delete("theme_value_join", where: "themeId = ?", whereArgs: [this.id]);
+    await db.delete("theme_value_join", where: "themeId = ?", whereArgs: [this.id]);
     await db.delete("themes", where: "ROWID = ?", whereArgs: [this.id]);
   }
 
@@ -141,8 +125,7 @@ class ThemeObject {
 
   static Future<ThemeObject> getLightTheme() async {
     List<ThemeObject> res = await ThemeObject.getThemes();
-    List<ThemeObject> themes =
-        res.where((element) => element.selectedLightTheme).toList();
+    List<ThemeObject> themes = res.where((element) => element.selectedLightTheme).toList();
     if (themes.isEmpty) {
       return Themes.themes[1];
     }
@@ -153,8 +136,7 @@ class ThemeObject {
 
   static Future<ThemeObject> getDarkTheme() async {
     List<ThemeObject> res = await ThemeObject.getThemes();
-    List<ThemeObject> themes =
-        res.where((element) => element.selectedDarkTheme).toList();
+    List<ThemeObject> themes = res.where((element) => element.selectedDarkTheme).toList();
     if (themes.isEmpty) {
       return Themes.themes[0];
     }
@@ -167,13 +149,11 @@ class ThemeObject {
     final Database db = await DBProvider.db.database;
     if (light != null) {
       await db.update("themes", {"selectedLightTheme": 0});
-      await db.update("themes", {"selectedLightTheme": 1},
-          where: "ROWID = ?", whereArgs: [light]);
+      await db.update("themes", {"selectedLightTheme": 1}, where: "ROWID = ?", whereArgs: [light]);
     }
     if (dark != null) {
       await db.update("themes", {"selectedDarkTheme": 0});
-      await db.update("themes", {"selectedDarkTheme": 1},
-          where: "ROWID = ?", whereArgs: [dark]);
+      await db.update("themes", {"selectedDarkTheme": 1}, where: "ROWID = ?", whereArgs: [dark]);
     }
   }
 
@@ -186,8 +166,7 @@ class ThemeObject {
     filters.keys.forEach((filter) => whereParams.add('$filter = ?'));
     List<dynamic> whereArgs = [];
     filters.values.forEach((filter) => whereArgs.add(filter));
-    var res = await db.query("themes",
-        where: whereParams.join(" AND "), whereArgs: whereArgs, limit: 1);
+    var res = await db.query("themes", where: whereParams.join(" AND "), whereArgs: whereArgs, limit: 1);
 
     if (res.isEmpty) {
       return null;
@@ -201,9 +180,7 @@ class ThemeObject {
     var res = await db.query("themes");
     if (res.isEmpty) return Themes.themes;
 
-    return (res.isNotEmpty)
-        ? res.map((c) => ThemeObject.fromMap(c)..fetchData()).toList()
-        : Themes.themes;
+    return (res.isNotEmpty) ? res.map((c) => ThemeObject.fromMap(c)..fetchData()).toList() : Themes.themes;
   }
 
   Future<List<ThemeEntry>> fetchData() async {
@@ -215,6 +192,7 @@ class ThemeObject {
       } else if (name == "Nord Theme") {
         this.data = nordDarkTheme;
       }
+
       this.entries = this.toEntries();
       return this.entries;
     }
@@ -232,8 +210,7 @@ class ThemeObject {
         " JOIN theme_values ON theme_values.ROWID = tvj.themeValueId"
         " WHERE themes.ROWID = ?;",
         [this.id]);
-    this.entries =
-        (res.isNotEmpty) ? res.map((t) => ThemeEntry.fromMap(t)).toList() : [];
+    this.entries = (res.isNotEmpty) ? res.map((t) => ThemeEntry.fromMap(t)).toList() : [];
     this.data = themeData;
     return this.entries;
   }
@@ -289,10 +266,7 @@ class ThemeObject {
 
   @override
   bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is ThemeObject &&
-          runtimeType == other.runtimeType &&
-          name == other.name;
+      identical(this, other) || other is ThemeObject && runtimeType == other.runtimeType && name == other.name;
 
   @override
   int get hashCode => name.hashCode;

@@ -4,6 +4,7 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:contacts_service/contacts_service.dart';
+import 'package:get/get.dart';
 import 'package:faker/faker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -17,8 +18,7 @@ class ContactManager {
 
   StreamController<List<String>> _stream = new StreamController.broadcast();
 
-  StreamController<Map<String, Color>> _colorStream =
-      new StreamController.broadcast();
+  StreamController<Map<String, Color>> _colorStream = new StreamController.broadcast();
 
   Stream<Map<String, Color>> get colorStream => _colorStream.stream;
 
@@ -54,16 +54,14 @@ class ContactManager {
     try {
       PermissionStatus status = await Permission.contacts.status;
       if (status.isGranted) return true;
-      debugPrint(
-          "[ContactManager] -> Contacts Permission Status: ${status.toString()}");
+      debugPrint("[ContactManager] -> Contacts Permission Status: ${status.toString()}");
 
       // If it's not permanently denied, request access
       if (!status.isPermanentlyDenied) {
         return (await Permission.contacts.request()).isGranted;
       }
 
-      debugPrint(
-          "[ContactManager] -> Contacts permissions are permanently denied...");
+      debugPrint("[ContactManager] -> Contacts permissions are permanently denied...");
     } catch (ex) {
       debugPrint("[ContactManager] -> Error getting access to contacts!");
       debugPrint(ex.toString());
@@ -75,8 +73,7 @@ class ContactManager {
   Future getContacts({bool headless = false, bool force = false}) async {
     // If we are fetching the contacts, return the current future so we can await it
     if (getContactsFuture != null && !getContactsFuture.isCompleted) {
-      debugPrint(
-          "[ContactManager] -> Already fetching contacts, returning future...");
+      debugPrint("[ContactManager] -> Already fetching contacts, returning future...");
       return getContactsFuture.future;
     }
 
@@ -84,8 +81,7 @@ class ContactManager {
     // If we have, exit, we don't need to re-fetch the chats again
     int now = DateTime.now().toUtc().millisecondsSinceEpoch;
     if (!force && lastRefresh != 0 && now < lastRefresh + (60000 * 5)) {
-      debugPrint(
-          "[ContactManager] -> Not fetching contacts; Not enough time has elapsed");
+      debugPrint("[ContactManager] -> Not fetching contacts; Not enough time has elapsed");
       return;
     }
 
@@ -99,16 +95,13 @@ class ContactManager {
     getContactsFuture = new Completer<bool>();
 
     // Fetch the current list of contacts
-    debugPrint("ContactManager -> Fetching contacts");
-    contacts =
-        ((await ContactsService.getContacts(withThumbnails: false)) ?? [])
-            .toList();
+    debugPrint("[ContactManager] -> Fetching contacts");
+    contacts = ((await ContactsService.getContacts(withThumbnails: false)) ?? []).toList();
 
     // Match handles in the database with contacts
     await this.matchHandles();
 
-    debugPrint(
-        "ContactManager -> Finished fetching contacts (${handleToContact.length})");
+    debugPrint("[ContactManager] -> Finished fetching contacts (${handleToContact.length})");
     getContactsFuture.complete(true);
 
     // Lazy load thumbnails after rendering initial contacts.
@@ -143,8 +136,7 @@ class ContactManager {
     }
 
     handleToFakeName = Map.fromEntries(handleToContact.entries.map((entry) =>
-        !handleToFakeName.keys.contains(entry.key) ||
-                handleToFakeName[entry.key] == null
+        !handleToFakeName.keys.contains(entry.key) || handleToFakeName[entry.key] == null
             ? MapEntry(entry.key, faker.person.name())
             : MapEntry(entry.key, handleToFakeName[entry.key])));
   }
@@ -157,13 +149,12 @@ class ContactManager {
     // Create a new completer for this
     getAvatarsFuture = new Completer();
 
-    debugPrint("ContactManager -> Fetching Avatars");
+    debugPrint("[ContactManager] -> Fetching Avatars");
     for (String address in handleToContact.keys) {
       Contact contact = handleToContact[address];
       if (handleToContact[address] == null) continue;
 
-      ContactsService.getAvatar(handleToContact[address], photoHighRes: false)
-          .then((avatar) {
+      ContactsService.getAvatar(handleToContact[address], photoHighRes: false).then((avatar) {
         if (avatar == null) return;
 
         // Update the avatar in the master list
@@ -175,7 +166,7 @@ class ContactManager {
       });
     }
 
-    debugPrint("ContactManager -> Finished fetching avatars");
+    debugPrint("[ContactManager] -> Finished fetching avatars");
     getAvatarsFuture.complete();
   }
 
@@ -185,11 +176,10 @@ class ContactManager {
 
     // Get a list of comparable options
     dynamic opts = await getCompareOpts(handle);
-    bool isEmail = handle.address.contains('@');
+    bool isEmailAddr = handle.address.isEmail;
     String lastDigits = handle.address.length < 4
         ? handle.address
-        : handle.address
-            .substring(handle.address.length - 4, handle.address.length);
+        : handle.address.substring(handle.address.length - 4, handle.address.length);
 
     // If the contact list is null, get the contacts
     try {
@@ -200,7 +190,7 @@ class ContactManager {
 
     for (Contact c in contacts ?? []) {
       // Get a phone number match
-      if (!isEmail) {
+      if (!isEmailAddr) {
         for (Item item in c?.phones ?? []) {
           if (!item.value.endsWith(lastDigits)) continue;
 
@@ -212,7 +202,7 @@ class ContactManager {
       }
 
       // Get an email match
-      if (isEmail) {
+      if (isEmailAddr) {
         for (Item item in c?.emails ?? []) {
           if (item.value == handle.address) {
             contact = c;
@@ -226,8 +216,7 @@ class ContactManager {
     }
 
     if (fetchAvatar) {
-      contact.avatar =
-          await ContactsService.getAvatar(contact, photoHighRes: false);
+      contact.avatar = await ContactsService.getAvatar(contact, photoHighRes: false);
     }
 
     return contact;
@@ -238,26 +227,25 @@ class ContactManager {
     if (contacts == null) await getContacts();
 
     String address = handle.address;
-    if (handleToContact.containsKey(address) &&
-        handleToContact[address] != null)
+    if (handleToContact.containsKey(address) && handleToContact[address] != null)
       return handleToContact[address].displayName;
 
     try {
       Contact contact = await getContact(handle);
-      if (contact != null && contact.displayName != null)
-        return contact.displayName;
+      if (contact != null && contact.displayName != null) return contact.displayName;
     } catch (ex) {
       debugPrint('Failed to getContact() in getContactTitle(), for address, "$address": ${ex.toString()}');
     }
-  
+
     try {
       String contactTitle = address;
-      if (contactTitle == address && !contactTitle.contains("@")) {
+      bool isEmailAddr = contactTitle.isEmail;
+      if (contactTitle == address && !isEmailAddr) {
         return await formatPhoneNumber(contactTitle);
       }
 
       // If it's an email and starts with "e:", strip it out
-      if (contactTitle.contains("@") && contactTitle.startsWith("e:")) {
+      if (isEmailAddr && contactTitle.startsWith("e:")) {
         contactTitle = contactTitle.substring(2);
       }
 

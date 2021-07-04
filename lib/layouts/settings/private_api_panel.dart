@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
@@ -20,9 +21,6 @@ class PrivateAPIPanel extends StatefulWidget {
 
 class _PrivateAPIPanelState extends State<PrivateAPIPanel> {
   Settings _settingsCopy;
-  Brightness brightness;
-  Color previousBackgroundColor;
-  bool gotBrightness = false;
   bool enablePrivateAPI = false;
 
   @override
@@ -36,35 +34,13 @@ class _PrivateAPIPanelState extends State<PrivateAPIPanel> {
       if (!event.containsKey("type")) return;
 
       if (event["type"] == 'theme-update' && this.mounted) {
-        setState(() {
-          gotBrightness = false;
-        });
+        setState(() {});
       }
     });
   }
 
-  void loadBrightness() {
-    Color now = Theme.of(context).backgroundColor;
-    bool themeChanged = previousBackgroundColor == null || previousBackgroundColor != now;
-    if (!themeChanged && gotBrightness) return;
-
-    previousBackgroundColor = now;
-    if (this.context == null) {
-      brightness = Brightness.light;
-      gotBrightness = true;
-      return;
-    }
-
-    bool isDark = now.computeLuminance() < 0.179;
-    brightness = isDark ? Brightness.dark : Brightness.light;
-    gotBrightness = true;
-    if (this.mounted) setState(() {});
-  }
-
   @override
   Widget build(BuildContext context) {
-    loadBrightness();
-
     List<Widget> privateWidgets = [];
     if (enablePrivateAPI) {
       privateWidgets.addAll([
@@ -103,15 +79,15 @@ class _PrivateAPIPanelState extends State<PrivateAPIPanel> {
       child: Scaffold(
         backgroundColor: Theme.of(context).backgroundColor,
         appBar: PreferredSize(
-          preferredSize: Size(MediaQuery.of(context).size.width, 80),
+          preferredSize: Size(Get.mediaQuery.size.width, 80),
           child: ClipRRect(
             child: BackdropFilter(
               child: AppBar(
-                brightness: brightness,
+                brightness: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor),
                 toolbarHeight: 100.0,
                 elevation: 0,
                 leading: IconButton(
-                  icon: Icon(SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_back_ios : Icons.arrow_back,
+                  icon: Icon(SettingsManager().settings.skin == Skins.iOS ? Icons.arrow_back_ios : Icons.arrow_back,
                       color: Theme.of(context).primaryColor),
                   onPressed: () {
                     Navigator.of(context).pop();

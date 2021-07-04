@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/layouts/image_viewer/attachmet_fullscreen_viewer.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -169,17 +170,17 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
                 color: Colors.white,
               ),
             ),
-          Align(
-            alignment: Alignment.topRight,
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(80),
-                color: Colors.black,
-              ),
-              width: 25,
-              height: 25,
-              child: GestureDetector(
-                onTap: widget.onRemove,
+          GestureDetector(
+            onTap: widget.onRemove,
+            child: Align(
+              alignment: Alignment.topRight,
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(80),
+                  color: Colors.black,
+                ),
+                width: 25,
+                height: 25,
                 child: Icon(
                   Icons.close,
                   color: Colors.white,

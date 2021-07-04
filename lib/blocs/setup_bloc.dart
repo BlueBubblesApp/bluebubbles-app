@@ -12,6 +12,7 @@ import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 enum SetupOutputType { ERROR, LOG }
 
@@ -55,6 +56,11 @@ class SetupBloc {
 
   Future<void> connectToServer(FCMData data, String serverURL, String password) async {
     Settings settingsCopy = SettingsManager().settings;
+    if (SocketManager().state == SocketState.CONNECTED && settingsCopy.serverAddress == serverURL) {
+      debugPrint("Not reconnecting to server we are already connected to!");
+      return;
+    }
+
     settingsCopy.serverAddress = getServerAddress(address: serverURL);
     settingsCopy.guidAuthKey = password;
 
@@ -65,10 +71,14 @@ class SetupBloc {
     connectionSubscription = SocketManager().connectionStateStream.listen((event) {
       if (_connectionStatusStream.isClosed) return;
       _connectionStatusStream.sink.add(event);
+
       if (isSyncing) {
         switch (event) {
           case SocketState.DISCONNECTED:
             addOutput("Disconnected from socket!", SetupOutputType.ERROR);
+            break;
+          case SocketState.CONNECTED:
+            addOutput("Connected to socket!", SetupOutputType.LOG);
             break;
           case SocketState.ERROR:
             addOutput("Socket connection error!", SetupOutputType.ERROR);
@@ -136,13 +146,17 @@ class SetupBloc {
 
         try {
           chat = Chat.fromMap(item);
-          await chat.save();
+          if (!(chat.chatIdentifier ?? "").startsWith("urn:biz")) {
+            await chat.save();
 
-          // Re-match the handles with the contacts
-          await ContactManager().matchHandles();
+            // Re-match the handles with the contacts
+            await ContactManager().matchHandles();
 
-          await syncChat(chat);
-          addOutput("Finished syncing chat, '${chat.chatIdentifier}'", SetupOutputType.LOG);
+            await syncChat(chat);
+            addOutput("Finished syncing chat, '${chat.chatIdentifier}'", SetupOutputType.LOG);
+          } else {
+            addOutput("Skipping syncing chat, '${chat.chatIdentifier}'", SetupOutputType.LOG);
+          }
         } catch (ex, stacktrace) {
           if (chat != null) {
             addOutput("Failed to sync chat, '${chat.chatIdentifier}'", SetupOutputType.ERROR);
@@ -294,7 +308,7 @@ class SetupBloc {
 
     if (SettingsManager().settings.showIncrementalSync)
       // Show a nice lil toast/snackbar
-      EventDispatcher().emit("show-snackbar", {"text": "🔄 Incremental sync complete 🔄"});
+      showSnackbar('Success', '🔄 Incremental sync complete 🔄');
 
     if (onComplete != null) {
       onComplete();

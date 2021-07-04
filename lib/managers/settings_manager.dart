@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
+import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/models/fcm_data.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
@@ -42,6 +43,7 @@ class SettingsManager {
   FCMData fcmData;
   List<ThemeObject> themes;
   String countryCode;
+  int _macOSVersion;
 
   int get compressionQuality {
     if (settings.lowMemoryMode) {
@@ -70,22 +72,17 @@ class SettingsManager {
   Future<void> getSavedSettings({bool headless = false, BuildContext context}) async {
     await DBProvider.setupConfigRows();
     settings = await Settings.getSettings();
+    _stream.sink.add(settings);
+
     fcmData = await FCMData.getFCM();
     // await DBProvider.setupDefaultPresetThemes(await DBProvider.db.database);
     themes = await ThemeObject.getThemes();
     for (ThemeObject theme in themes) {
       await theme.fetchData();
     }
-    // If [context] is null, then we can't set the theme, and we shouldn't anyway
-    if (context != null) {
-      // Set the theme to match those of the settings
-      ThemeObject light = await ThemeObject.getLightTheme();
-      ThemeObject dark = await ThemeObject.getDarkTheme();
-      AdaptiveTheme.of(context).setTheme(
-        light: light.themeData,
-        dark: dark.themeData,
-      );
-    }
+
+    // // If [context] is null, then we can't set the theme, and we shouldn't anyway
+    await loadTheme(context);
 
     try {
       // Set the [displayMode] to that saved in settings
@@ -100,8 +97,10 @@ class SettingsManager {
 
     // If we aren't running in the background, then we should auto start the socket and authorize fcm just in case we haven't
     if (!headless) {
-      SocketManager().startSocketIO();
-      SocketManager().authFCM();
+      try {
+        SocketManager().startSocketIO();
+        SocketManager().authFCM();
+      } catch (e) {}
     }
   }
 
@@ -165,5 +164,13 @@ class SettingsManager {
 
   void dispose() {
     _stream.close();
+  }
+
+  FutureOr<int> getMacOSVersion() async {
+    if (_macOSVersion == null) {
+      var res = await SocketManager().sendMessage("get-server-metadata", {}, (_) {});
+      _macOSVersion = int.tryParse(res['data']['os_version'].split(".")[0]);
+    }
+    return _macOSVersion;
   }
 }

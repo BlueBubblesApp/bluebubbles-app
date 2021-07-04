@@ -14,16 +14,25 @@ class _ConnectingAlertState extends State<ConnectingAlert> {
   @override
   void initState() {
     super.initState();
+
+    // Setup a listener to wait for connect events
     SocketManager().connectionStateStream.listen((event) {
       if (!this.mounted) return;
+
       debugPrint("Connection Status Changed");
       if (event == SocketState.CONNECTED) {
         widget.onConnect(true);
       } else if (event == SocketState.ERROR || event == SocketState.DISCONNECTED) {
         widget.onConnect(false);
       }
+
       if (this.mounted) setState(() {});
     });
+
+    // If we are already connected, invoke the connect callback
+    if (SocketManager().state == SocketState.CONNECTED) {
+      widget.onConnect(true);
+    }
   }
 
   @override

@@ -7,6 +7,7 @@ import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/reaction.dart';
+import 'package:bluebubbles/helpers/share.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
@@ -29,6 +30,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:get/get.dart';
 import 'package:sprung/sprung.dart';
 
 class MessageDetailsPopup extends StatefulWidget {
@@ -96,8 +98,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
     SchedulerBinding.instance.addPostFrameCallback((_) {
       if (this.mounted) {
         setState(() {
-          double totalHeight =
-              MediaQuery.of(context).size.height - MediaQuery.of(context).viewInsets.bottom - detailsMenuHeight - 20;
+          double totalHeight = Get.mediaQuery.size.height - Get.mediaQuery.viewInsets.bottom - detailsMenuHeight - 20;
           double offset = (widget.childOffset.dy + widget.childSize.height) - totalHeight;
           messageTopOffset = widget.childOffset.dy.clamp(topMinimum + 40, double.infinity);
           if (offset > 0) {
@@ -207,7 +208,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                             child: Container(
                               alignment: Alignment.center,
                               height: 120,
-                              width: MediaQuery.of(context).size.width - 20,
+                              width: Get.mediaQuery.size.width - 20,
                               color: Theme.of(context).accentColor,
                               child: Padding(
                                 padding: EdgeInsets.symmetric(horizontal: 0),
@@ -242,7 +243,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
   }
 
   Widget buildReactionMenu() {
-    Size size = MediaQuery.of(context).size;
+    Size size = Get.mediaQuery.size;
 
     double reactionIconSize = ((8.5 / 10 * size.width) / (ReactionTypes.toList().length).toDouble());
     double maxMenuWidth = (ReactionTypes.toList().length * reactionIconSize).toDouble();
@@ -250,7 +251,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
     double topPadding = -20;
     double topOffset = (messageTopOffset - menuHeight)
         .toDouble()
-        .clamp(topMinimum, size.height - MediaQuery.of(context).viewInsets.bottom - 120 - menuHeight);
+        .clamp(topMinimum, size.height - Get.mediaQuery.viewInsets.bottom - 120 - menuHeight);
     double leftOffset =
         (widget.message.isFromMe ? size.width - maxMenuWidth - 25 : 25 + (currentChat.chat.isGroup() ? 20 : 0))
             .toDouble();
@@ -339,7 +340,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
   }
 
   Widget buildCopyPasteMenu() {
-    Size size = MediaQuery.of(context).size;
+    Size size = Get.mediaQuery.size;
 
     double maxMenuWidth = size.width * 2 / 3;
 
@@ -381,6 +382,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
             splashColor: Colors.transparent,
             highlightColor: Colors.transparent,
             onTap: () async {
+              bool shouldShowSnackbar = (await SettingsManager().getMacOSVersion()) >= 11;
               String address = widget.message.handle.address;
               Contact contact = ContactManager().getCachedContactSync(address);
               UniqueContact uniqueContact;
@@ -396,6 +398,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                     return ConversationView(
                       isCreator: true,
                       selected: [uniqueContact],
+                      showSnackbar: shouldShowSnackbar,
                     );
                   },
                 ),
@@ -416,7 +419,8 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
       Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () {
+          onTap: () async {
+            bool shouldShowSnackbar = (await SettingsManager().getMacOSVersion()) >= 11;
             Navigator.pushReplacement(
               context,
               cupertino.CupertinoPageRoute(
@@ -430,6 +434,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                     isCreator: true,
                     existingText: widget.message.text,
                     existingAttachments: existingAttachments,
+                    showSnackbar: shouldShowSnackbar,
                   );
                 },
               ),
@@ -534,7 +539,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                     );
                     Widget content = Container(
                       constraints: BoxConstraints(
-                        maxHeight: MediaQuery.of(context).size.height * 2 / 3,
+                        maxHeight: Get.mediaQuery.size.height * 2 / 3,
                       ),
                       child: SingleChildScrollView(
                         physics: ThemeSwitcher.getScrollPhysics(),
@@ -555,7 +560,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                         },
                       ),
                     ];
-                    if (SettingsManager().settings.skin == Skins.IOS) {
+                    if (SettingsManager().settings.skin == Skins.iOS) {
                       return CupertinoAlertDialog(
                         title: title,
                         backgroundColor: Theme.of(context).accentColor,
@@ -630,6 +635,39 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
             ),
           ),
         ),
+      if (widget.message.hasAttachments || widget.message.text.length > 0)
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () {
+              if (widget.message.hasAttachments && !widget.message.isUrlPreview()) {
+                for (Attachment element in widget.message.attachments) {
+                  Share.file(
+                    "${element.mimeType.split("/")[0].capitalizeFirst} shared from BlueBubbles: ${element.transferName}",
+                    element.transferName,
+                    element.getPath(),
+                    element.mimeType,
+                  );
+                }
+              } else if (widget.message.text.length > 0) {
+                Share.text(
+                  "Text shared from BlueBubbles",
+                  widget.message.text,
+                );
+              }
+            },
+            child: ListTile(
+              title: Text(
+                "Share",
+                style: Theme.of(context).textTheme.bodyText1,
+              ),
+              trailing: Icon(
+                Icons.share,
+                color: Theme.of(context).textTheme.bodyText1.color,
+              ),
+            ),
+          ),
+        ),
     ];
 
     List<Widget> detailsActions = [];
@@ -675,7 +713,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: moreActions,
                             );
-                            if (SettingsManager().settings.skin == Skins.IOS) {
+                            if (SettingsManager().settings.skin == Skins.iOS) {
                               return CupertinoAlertDialog(
                                 backgroundColor: Theme.of(context).accentColor,
                                 content: content,
@@ -702,7 +740,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
       ),
     );
 
-    double upperLimit = size.height - MediaQuery.of(context).viewInsets.bottom - detailsMenuHeight;
+    double upperLimit = size.height - Get.mediaQuery.viewInsets.bottom - detailsMenuHeight;
     if (topMinimum > upperLimit) {
       topMinimum = upperLimit;
     }

@@ -1,3 +1,4 @@
+import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/material.dart';
@@ -67,7 +68,7 @@ class _BalloonBubbleState extends State<BalloonBundleWidget> {
       borderRadius: BorderRadius.circular(20),
       child: Container(
           constraints: BoxConstraints(
-            maxWidth: MediaQuery.of(context).size.width * 3 / 4,
+            maxWidth: Get.mediaQuery.size.width * 3 / 4,
           ),
           child: Container(
             width: 200,

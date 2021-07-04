@@ -23,6 +23,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
+import 'package:get/get.dart';
 import 'package:html/parser.dart';
 import 'package:http/http.dart' show get;
 import 'package:image_size_getter/image_size_getter.dart' as IMG;
@@ -44,7 +45,7 @@ bool isNullOrEmpty(dynamic input, {trimString = false}) {
     input = input.trim();
   }
 
-  return input.isEmpty;
+  return GetUtils.isNullOrBlank(input);
 }
 
 bool isNullOrZero(int input) {
@@ -62,7 +63,7 @@ Size textSize(String text, TextStyle style) {
 
 Future<String> formatPhoneNumber(String str) async {
   // If the string is an email, we don't want to format it
-  if (str.contains("@")) return str;
+  if (str.isEmail) return str;
   str = str.trim();
 
   String countryCode = SettingsManager().countryCode ?? "US";
@@ -90,12 +91,12 @@ Future<String> formatPhoneNumber(String str) async {
 }
 
 Future<List<String>> getCompareOpts(Handle handle) async {
-  if (handle.address.contains('@')) return [handle.address];
+  if (handle.address.isEmail) return [handle.address];
 
   // Build a list of formatted address (max: 3)
   String formatted = handle.address.toString();
   List<String> opts = [];
-  int maxOpts = 4;  // This is relatively arbitrary
+  int maxOpts = 4; // This is relatively arbitrary
   for (int i = 0; i < formatted.length; i += 1) {
     String val = formatted.substring(i);
     if (val.length == 0) break;
@@ -117,7 +118,7 @@ bool sameAddress(List<String> options, String compared) {
       break;
     }
 
-    if (opt.contains('@') && !compared.contains('@')) continue;
+    if (opt.isEmail && !compared.isEmail) continue;
 
     String formatted = Slugify(compared, delimiter: '').toString().replaceAll('-', '');
     if (options.contains(formatted)) {
@@ -127,23 +128,6 @@ bool sameAddress(List<String> options, String compared) {
   }
 
   return match;
-
-  // // Handle easiest option
-  // if (handle.address == compared) return true;
-
-  // // Handle easy non-email address comparison
-  // if (handle.address.contains('@') && !compared.contains('@')) return false;
-
-  // // Handle phone numbers
-  // String formattedNumber1 = Slugify(handle.address, delimiter: '');
-
-  // String country = handle?.country ?? "US";
-
-  // print("Match Attempt");
-  // print(matchOptions);
-  // print(formattedNumber2);
-  // print(matchOptions.contains(formattedNumber2));
-  // return matchOptions.contains(formattedNumber2);
 }
 
 // Future<Uint8List> blurHashDecode(String blurhash, int width, int height) async {
@@ -177,6 +161,14 @@ String randomString(int length) {
   });
 
   return new String.fromCharCodes(codeUnits);
+}
+
+void showSnackbar(String title, String message) {
+  Get.snackbar(title, message,
+      snackPosition: SnackPosition.BOTTOM,
+      colorText: Get.textTheme.bodyText1.color,
+      backgroundColor: Get.theme.accentColor,
+      margin: EdgeInsets.only(bottom: 10));
 }
 
 bool sameSender(Message first, Message second) {
@@ -251,6 +243,14 @@ extension ColorHelpers on Color {
     } else {
       return this.lighten(percent);
     }
+  }
+}
+
+Color lightenOrDarken(Color color, [double percent = 10]) {
+  if (color.computeLuminance() >= 0.5) {
+    return color.darken(percent);
+  } else {
+    return color.lighten(percent);
   }
 }
 
@@ -371,7 +371,7 @@ Future<MemoryImage> loadAvatar(Chat chat, Handle handle) async {
 
 List<RegExpMatch> parseLinks(String text) {
   RegExp exp = new RegExp(
-      r'((([hH])ttps?://)|(www\.))[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}([-a-zA-Z0-9/()@:%_.~#?&=*\[\]]*)');
+      r"^((((H|h)(T|t)|(F|f))(T|t)(P|p)((S|s)?))\://)?(www.|[a-zA-Z0-9].)[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,6}(\:[0-9]{1,5})*(/($|[a-zA-Z0-9\.\,\;\?\'\\\+&amp;%\$#\=~_\-]+))*$");
   return exp.allMatches(text).toList();
 }
 
@@ -396,16 +396,6 @@ String cleansePhoneNumber(String input) {
 
 Future<dynamic> loadAsset(String path) {
   return rootBundle.load(path);
-}
-
-bool isValidAddress(String value) {
-  value = value.trim();
-
-  String phonePattern = r'^\+?(\+?\d{1,2}\s?)?\-?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}$';
-  String emailPattern = r'^\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$';
-  RegExp regExpPhone = new RegExp(phonePattern);
-  RegExp regExpEmail = new RegExp(emailPattern);
-  return regExpPhone.hasMatch(value) || regExpEmail.hasMatch(value);
 }
 
 String stripHtmlTags(String htmlString) {

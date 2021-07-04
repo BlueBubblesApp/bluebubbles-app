@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:ui';
 
+import 'package:get/get.dart';
 import 'package:bluebubbles/blocs/text_field_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -257,11 +258,23 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
   }
 
   Future<void> initializeCameraController() async {
+    // If we are already initialized, don't do anything
+    bool alreadyInit = cameraController?.value?.isInitialized ?? false;
+    if (alreadyInit) {
+      await cameraController.dispose();
+    }
+
+    // Enumerate the cameras
     cameras = await availableCameras();
 
     // Disable audio so that background music doesn't stop playing
     cameraController = CameraController(cameras[cameraIndex], ResolutionPreset.max, enableAudio: false);
-    await cameraController.initialize();
+
+    // Initialize the camera, then update the state
+    if (!cameraController.value.isInitialized) {
+      await cameraController.initialize();
+    }
+    if (this.mounted) setState(() {});
   }
 
   Future<void> toggleShareMenu() async {
@@ -365,7 +378,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
   }
 
   Widget buildShareButton() {
-    double size = SettingsManager().settings.skin == Skins.IOS ? 35 : 40;
+    double size = SettingsManager().settings.skin == Skins.iOS ? 35 : 40;
     return Container(
       height: size,
       width: size,
@@ -656,7 +669,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                 ),
               ),
             ),
-            if (SettingsManager().settings.skin == Skins.IOS) buildSendButton(canRecord),
+            if (SettingsManager().settings.skin == Skins.iOS) buildSendButton(canRecord),
           ],
         ),
       ),
@@ -760,7 +773,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
         alignment: Alignment.bottomRight,
         child: Row(mainAxisAlignment: MainAxisAlignment.end, crossAxisAlignment: CrossAxisAlignment.center, children: [
           if (sendCountdown != null) Text(sendCountdown.toString()),
-          (SettingsManager().settings.skin == Skins.IOS)
+          (SettingsManager().settings.skin == Skins.iOS)
               ? ButtonTheme(
                   minWidth: 30,
                   height: 30,

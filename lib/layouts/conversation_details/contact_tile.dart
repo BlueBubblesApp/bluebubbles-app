@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:get/get.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/redacted_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -112,13 +113,12 @@ class _ContactTileState extends State<ContactTile> {
     return InkWell(
       onLongPress: () {
         Clipboard.setData(new ClipboardData(text: widget.handle.address));
-        final snackBar = SnackBar(content: Text("Address copied to clipboard"));
-        Scaffold.of(context).showSnackBar(snackBar);
+        showSnackbar('Copied', 'Address copied to clipboard');
       },
       onTap: () async {
         if (contact == null) {
           await ContactsService.openContactForm(
-              address: widget.handle.address, addressType: widget.handle.address.contains('@') ? 'email' : 'phone');
+              address: widget.handle.address, addressType: widget.handle.address.isEmail ? 'email' : 'phone');
         } else {
           await ContactsService.openExistingContact(contact);
         }
@@ -166,7 +166,7 @@ class _ContactTileState extends State<ContactTile> {
           borderThickness: 0.1,
         ),
         trailing: SizedBox(
-          width: MediaQuery.of(context).size.width / 5,
+          width: Get.mediaQuery.size.width / 5,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: <Widget>[

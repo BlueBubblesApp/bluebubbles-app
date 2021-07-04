@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:bluebubbles/helpers/share.dart';
 import 'package:bluebubbles/layouts/conversation_view/camera_widget.dart';
 import 'package:bluebubbles/layouts/conversation_view/text_field/attachments/picker/attachment_picked.dart';
-import 'package:bluebubbles/layouts/conversation_view/text_field/blue_bubbles_text_field.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
@@ -38,15 +37,13 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> w
 
   Future<void> getAttachments() async {
     if (!this.mounted) return;
-    List<AssetPathEntity> list =
-        await PhotoManager.getAssetPathList(onlyAll: true);
+    List<AssetPathEntity> list = await PhotoManager.getAssetPathList(onlyAll: true);
     if (list.length > 0) {
-      List<AssetEntity> images =
-          await list.first.getAssetListRange(start: 0, end: 60);
+      List<AssetEntity> images = await list.first.getAssetListRange(start: 0, end: 60);
       _images = images;
     }
 
-    setState(() {});
+    if (this.mounted) setState(() {});
   }
 
   @override
@@ -55,7 +52,7 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> w
       getAttachments();
     }
     return AnimatedSize(
-      duration: Duration(milliseconds: 100),
+      duration: Duration(milliseconds: 300),
       vsync: this,
       curve: Curves.easeInOut,
       child: widget.visible
@@ -78,12 +75,12 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> w
                                 borderRadius: BorderRadius.circular(18),
                               ),
                               onPressed: () async {
-                                await BlueBubblesTextField.of(context).cameraController?.dispose();
-                                String res = await MethodChannelInterface().invokeMethod("pick-file");
+                                List<dynamic> res = await MethodChannelInterface().invokeMethod("pick-file");
+                                if (res == null || res.isEmpty) return;
 
-                                await BlueBubblesTextField.of(context).initializeCameraController();
-                                if (res == null) return;
-                                widget.onAddAttachment(File(res));
+                                for (dynamic path in res) {
+                                  widget.onAddAttachment(File(path.toString()));
+                                }
                               },
                               color: Theme.of(context).accentColor,
                               child: Column(

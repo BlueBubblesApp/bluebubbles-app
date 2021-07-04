@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:get/get.dart';
 import 'package:bluebubbles/layouts/conversation_view/text_field/blue_bubbles_text_field.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/material.dart';

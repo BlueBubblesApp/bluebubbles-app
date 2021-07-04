@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:get/get.dart';
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
@@ -79,7 +80,7 @@ class SentMessageHelper {
       msg = Stack(
         alignment: AlignmentDirectional.bottomEnd,
         children: [
-          if (showTail && currentSkin == Skins.IOS)
+          if (showTail && currentSkin == Skins.iOS)
             MessageTail(
               message: message,
               color: customColor ?? bubbleColor,
@@ -91,14 +92,14 @@ class SentMessageHelper {
               right: margin ? 10 : 0,
             ),
             constraints: BoxConstraints(
-              maxWidth: MediaQuery.of(context).size.width * MessageWidgetMixin.MAX_SIZE + (!padding ? 100 : 0),
+              maxWidth: Get.mediaQuery.size.width * MessageWidgetMixin.MAX_SIZE + (!padding ? 100 : 0),
             ),
             padding: EdgeInsets.symmetric(
               vertical: padding ? 8 : 0,
               horizontal: padding ? 14 : 0,
             ),
             decoration: BoxDecoration(
-              borderRadius: currentSkin == Skins.IOS
+              borderRadius: currentSkin == Skins.iOS
                   ? BorderRadius.only(
                       bottomLeft: Radius.circular(20),
                       bottomRight: Radius.circular(17),
@@ -287,7 +288,7 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
 
     // Third, let's add the message or URL preview
     Widget message;
-    if (widget.message.hasDdResults && this.hasHyperlinks) {
+    if (widget.message.isUrlPreview()) {
       message = Padding(
         padding: EdgeInsets.only(left: 10.0),
         child: widget.urlPreviewWidget,
@@ -344,15 +345,15 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
       Padding(
         // Padding to shift the bubble up a bit, relative to the avatar
         padding: EdgeInsets.only(
-            top: (SettingsManager().settings.skin != Skins.IOS &&
+            top: (SettingsManager().settings.skin != Skins.iOS &&
                     widget.message?.isFromMe == widget.olderMessage?.isFromMe)
-                ? (SettingsManager().settings.skin != Skins.IOS)
+                ? (SettingsManager().settings.skin != Skins.iOS)
                     ? 0
                     : 3
-                : (SettingsManager().settings.skin == Skins.IOS)
+                : (SettingsManager().settings.skin == Skins.iOS)
                     ? 0.0
                     : 10,
-            bottom: (SettingsManager().settings.skin == Skins.IOS &&
+            bottom: (SettingsManager().settings.skin == Skins.iOS &&
                     widget.showTail &&
                     !isEmptyString(widget.message.fullText))
                 ? 5.0
@@ -371,9 +372,9 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
       mainAxisSize: MainAxisSize.max,
       mainAxisAlignment: MainAxisAlignment.end,
       crossAxisAlignment:
-          (SettingsManager().settings.skin == Skins.IOS) ? CrossAxisAlignment.center : CrossAxisAlignment.end,
+          (SettingsManager().settings.skin == Skins.iOS) ? CrossAxisAlignment.center : CrossAxisAlignment.end,
       children: [
-        if (SettingsManager().settings.skin == Skins.IOS || SettingsManager().settings.skin == Skins.Material)
+        if (SettingsManager().settings.skin == Skins.iOS || SettingsManager().settings.skin == Skins.Material)
           MessagePopupHolder(
             message: widget.message,
             child: Row(

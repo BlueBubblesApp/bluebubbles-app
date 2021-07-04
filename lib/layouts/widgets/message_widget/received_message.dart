@@ -1,3 +1,4 @@
+import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
@@ -140,7 +141,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
     return Stack(
       alignment: AlignmentDirectional.bottomStart,
       children: [
-        if (widget.showTail && SettingsManager().settings.skin == Skins.IOS)
+        if (widget.showTail && SettingsManager().settings.skin == Skins.iOS)
           MessageTail(
             message: message,
             color: bubbleColors[0],
@@ -156,14 +157,14 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
             right: 10,
           ),
           constraints: BoxConstraints(
-            maxWidth: MediaQuery.of(context).size.width * MessageWidgetMixin.MAX_SIZE,
+            maxWidth: Get.mediaQuery.size.width * MessageWidgetMixin.MAX_SIZE,
           ),
           padding: EdgeInsets.symmetric(
             vertical: 8,
             horizontal: 14,
           ),
           decoration: BoxDecoration(
-            borderRadius: SettingsManager().settings.skin == Skins.IOS
+            borderRadius: SettingsManager().settings.skin == Skins.iOS
                 ? BorderRadius.only(
                     bottomLeft: Radius.circular(17),
                     bottomRight: Radius.circular(20),
@@ -312,16 +313,16 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
     return Padding(
       // Add padding when we are showing the avatar
       padding: EdgeInsets.only(
-          top: (SettingsManager().settings.skin != Skins.IOS &&
+          top: (SettingsManager().settings.skin != Skins.iOS &&
                   widget.message?.isFromMe == widget.olderMessage?.isFromMe)
               ? 3.0
               : 0.0,
           left: (!widget.showTail && (isGroup || SettingsManager().settings.skin == Skins.Samsung)) ? 35.0 : 0.0,
-          bottom: (widget.showTail && SettingsManager().settings.skin == Skins.IOS) ? 10.0 : 0.0),
+          bottom: (widget.showTail && SettingsManager().settings.skin == Skins.iOS) ? 10.0 : 0.0),
       child: Row(
         mainAxisSize: MainAxisSize.max,
         mainAxisAlignment:
-            (SettingsManager().settings.skin == Skins.IOS || SettingsManager().settings.skin == Skins.Material)
+            (SettingsManager().settings.skin == Skins.iOS || SettingsManager().settings.skin == Skins.Material)
                 ? MainAxisAlignment.spaceBetween
                 : MainAxisAlignment.start,
         crossAxisAlignment:

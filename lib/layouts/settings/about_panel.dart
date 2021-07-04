@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
@@ -71,15 +72,15 @@ class _AboutPanelState extends State<AboutPanel> {
         // extendBodyBehindAppBar: true,
         backgroundColor: Theme.of(context).backgroundColor,
         appBar: PreferredSize(
-          preferredSize: Size(MediaQuery.of(context).size.width, 80),
+          preferredSize: Size(Get.mediaQuery.size.width, 80),
           child: ClipRRect(
             child: BackdropFilter(
               child: AppBar(
-                brightness: brightness,
+                brightness: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor),
                 toolbarHeight: 100.0,
                 elevation: 0,
                 leading: IconButton(
-                  icon: Icon(SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_back_ios : Icons.arrow_back,
+                  icon: Icon(SettingsManager().settings.skin == Skins.iOS ? Icons.arrow_back_ios : Icons.arrow_back,
                       color: Theme.of(context).primaryColor),
                   onPressed: () {
                     Navigator.of(context).pop();
@@ -209,8 +210,8 @@ class _AboutPanelState extends State<AboutPanel> {
                           ),
                           backgroundColor: Theme.of(context).accentColor,
                           content: SizedBox(
-                            width: MediaQuery.of(context).size.width * 3 / 5,
-                            height: MediaQuery.of(context).size.height * 1 / 9,
+                            width: Get.mediaQuery.size.width * 3 / 5,
+                            height: Get.mediaQuery.size.height * 1 / 9,
                             child: ListView(
                               physics: AlwaysScrollableScrollPhysics(
                                 parent: BouncingScrollPhysics(),

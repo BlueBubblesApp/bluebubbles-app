@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:ui';
 
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
@@ -19,6 +20,7 @@ import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:keyboard_attachable/keyboard_attachable.dart';
@@ -48,6 +50,7 @@ class ConversationView extends StatefulWidget {
     this.onMessagesViewComplete,
     this.selected,
     this.type = ChatSelectorTypes.ALL,
+    this.showSnackbar = false,
   }) : super(key: key);
 
   final Chat chat;
@@ -58,6 +61,7 @@ class ConversationView extends StatefulWidget {
   final bool isCreator;
   final MessageBloc customMessageBloc;
   final Function onMessagesViewComplete;
+  final bool showSnackbar;
 
   @override
   ConversationViewState createState() => ConversationViewState();
@@ -110,6 +114,12 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
         await _chat.getParticipants();
         currentChat.chat = _chat;
         if (this.mounted) setState(() {});
+      }
+    });
+
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      if (widget.showSnackbar) {
+        showSnackbar('Warning', 'Support for creating chats is currently limited on MacOS 11 (Big Sur) and up due to limitations imposed by Apple');
       }
     });
   }
@@ -226,7 +236,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
           backgroundColor: Theme.of(context).accentColor,
         ),
       );
-    } else if (currentChat != null && currentChat.showScrollDown && SettingsManager().settings.skin == Skins.IOS) {
+    } else if (currentChat != null && currentChat.showScrollDown && SettingsManager().settings.skin == Skins.iOS) {
       return Row(mainAxisAlignment: MainAxisAlignment.center, children: [
         Padding(
           padding: EdgeInsets.only(left: 25.0, bottom: 45),

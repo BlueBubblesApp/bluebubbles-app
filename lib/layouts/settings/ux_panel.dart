@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/settings/messages_view_ux_panel.dart';
@@ -23,9 +24,6 @@ class _UXPanelState extends State<UXPanel> {
   Settings _settingsCopy;
   bool needToReconnect = false;
   bool showUrl = false;
-  Brightness brightness;
-  Color previousBackgroundColor;
-  bool gotBrightness = false;
 
   @override
   void initState() {
@@ -37,35 +35,13 @@ class _UXPanelState extends State<UXPanel> {
       if (!event.containsKey("type")) return;
 
       if (event["type"] == 'theme-update' && this.mounted) {
-        setState(() {
-          gotBrightness = false;
-        });
+        setState(() {});
       }
     });
   }
 
-  void loadBrightness() {
-    Color now = Theme.of(context).backgroundColor;
-    bool themeChanged = previousBackgroundColor == null || previousBackgroundColor != now;
-    if (!themeChanged && gotBrightness) return;
-
-    previousBackgroundColor = now;
-    if (this.context == null) {
-      brightness = Brightness.light;
-      gotBrightness = true;
-      return;
-    }
-
-    bool isDark = now.computeLuminance() < 0.179;
-    brightness = isDark ? Brightness.dark : Brightness.light;
-    gotBrightness = true;
-    if (this.mounted) setState(() {});
-  }
-
   @override
   Widget build(BuildContext context) {
-    loadBrightness();
-
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: Theme.of(context).backgroundColor,
@@ -73,15 +49,15 @@ class _UXPanelState extends State<UXPanel> {
       child: Scaffold(
         backgroundColor: Theme.of(context).backgroundColor,
         appBar: PreferredSize(
-          preferredSize: Size(MediaQuery.of(context).size.width, 80),
+          preferredSize: Size(Get.mediaQuery.size.width, 80),
           child: ClipRRect(
             child: BackdropFilter(
               child: AppBar(
-                brightness: brightness,
+                brightness: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor),
                 toolbarHeight: 100.0,
                 elevation: 0,
                 leading: IconButton(
-                  icon: Icon(SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_back_ios : Icons.arrow_back,
+                  icon: Icon(SettingsManager().settings.skin == Skins.iOS ? Icons.arrow_back_ios : Icons.arrow_back,
                       color: Theme.of(context).primaryColor),
                   onPressed: () {
                     Navigator.of(context).pop();
@@ -114,7 +90,7 @@ class _UXPanelState extends State<UXPanel> {
                       );
                     },
                     trailing: Icon(
-                      SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_forward_ios : Icons.arrow_forward,
+                      SettingsManager().settings.skin == Skins.iOS ? Icons.arrow_forward_ios : Icons.arrow_forward,
                       color: Theme.of(context).primaryColor,
                     ),
                   ),
@@ -200,7 +176,7 @@ class _UXPanelState extends State<UXPanel> {
                     initialVal: _settingsCopy.showIncrementalSync,
                     title: "Notify when incremental sync complete",
                   ),
-                  if (SettingsManager().settings.skin == Skins.IOS)
+                  if (SettingsManager().settings.skin == Skins.iOS)
                     SettingsSlider(
                         text: "Scroll Speed Multiplier",
                         startingVal: _settingsCopy.scrollVelocity,

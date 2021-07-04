@@ -1,3 +1,4 @@
+import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view_mixin.dart';
@@ -57,15 +58,15 @@ class ContactSelectorOption extends StatelessWidget {
       subtitle: (!item.isChat || item.chat.participants.length == 1)
           ? getTextWidget(item?.address ?? item.chat.participants[0]?.address ?? "Person")
           : FutureBuilder(
-            future: chatParticipants,
-            builder: (context, snapshot) {
-              if (!snapshot.hasData) {
-                return getTextWidget(item.displayName ?? item.address ?? "Person");
-              }
+              future: chatParticipants,
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) {
+                  return getTextWidget(item.displayName ?? item.address ?? "Person");
+                }
 
-              return getTextWidget(snapshot.data);
-            },
-          ),
+                return getTextWidget(snapshot.data);
+              },
+            ),
       leading: !item.isChat
           ? ContactAvatarWidget(
               handle: Handle(address: item.address),
@@ -79,7 +80,7 @@ class ContactSelectorOption extends StatelessWidget {
             ),
       trailing: item.isChat
           ? Icon(
-              SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_forward_ios : Icons.arrow_forward,
+              SettingsManager().settings.skin == Skins.iOS ? Icons.arrow_forward_ios : Icons.arrow_forward,
               color: Theme.of(context).primaryColor,
             )
           : null,

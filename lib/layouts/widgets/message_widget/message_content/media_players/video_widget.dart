@@ -11,6 +11,7 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:video_player/video_player.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
 import 'package:visibility_detector/visibility_detector.dart';
@@ -38,7 +39,7 @@ class _VideoWidgetState extends State<VideoWidget> with TickerProviderStateMixin
   Uint8List thumbnail;
   PlayerStatus status = PlayerStatus.NONE;
   bool hasListener = false;
-  bool muted = false;
+  bool muted = true;
 
   @override
   void initState() {
@@ -170,8 +171,8 @@ class _VideoWidgetState extends State<VideoWidget> with TickerProviderStateMixin
         child: controller.value.aspectRatio != null
             ? Container(
                 constraints: BoxConstraints(
-                  maxWidth: MediaQuery.of(context).size.width / 2,
-                  maxHeight: MediaQuery.of(context).size.height / 2,
+                  maxWidth: Get.mediaQuery.size.width / 2,
+                  maxHeight: Get.mediaQuery.size.height / 2,
                 ),
                 child: Hero(
                   tag: widget.attachment.guid,
@@ -278,8 +279,8 @@ class _VideoWidgetState extends State<VideoWidget> with TickerProviderStateMixin
           children: [
             Container(
               constraints: BoxConstraints(
-                maxWidth: MediaQuery.of(context).size.width / 2,
-                maxHeight: MediaQuery.of(context).size.height / 2,
+                maxWidth: Get.mediaQuery.size.width / 2,
+                maxHeight: Get.mediaQuery.size.height / 2,
               ),
               child: buildSwitcher(),
             ),

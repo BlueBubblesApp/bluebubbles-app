@@ -5,6 +5,7 @@
 import 'dart:math' as math;
 import 'dart:ui' show ImageFilter;
 
+import 'package:get/get.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
@@ -697,7 +698,7 @@ class _CupertinoSliverNavigationBarState extends State<CupertinoSliverNavigation
       actionsForegroundColor,
       context,
       MediaQuery(
-        data: MediaQuery.of(context).copyWith(textScaleFactor: 1),
+        data: Get.mediaQuery.copyWith(textScaleFactor: 1),
         child: SliverPersistentHeader(
           pinned: true, // iOS navigation bars are always pinned.
           delegate: _LargeTitleNavigationBarSliverDelegate(
@@ -712,7 +713,7 @@ class _CupertinoSliverNavigationBarState extends State<CupertinoSliverNavigation
             actionsForegroundColor: actionsForegroundColor,
             transitionBetweenRoutes: widget.transitionBetweenRoutes,
             heroTag: widget.heroTag,
-            persistentHeight: _kNavBarPersistentHeight + MediaQuery.of(context).padding.top,
+            persistentHeight: _kNavBarPersistentHeight + Get.mediaQuery.padding.top,
             alwaysShowMiddle: widget.middle != null,
           ),
         ),
@@ -942,7 +943,7 @@ class _PersistentNavigationBar extends StatelessWidget {
     }
 
     return SizedBox(
-      height: _kNavBarPersistentHeight + MediaQuery.of(context).padding.top,
+      height: _kNavBarPersistentHeight + Get.mediaQuery.padding.top,
       child: SafeArea(
         bottom: false,
         child: paddedToolbar,
@@ -1610,7 +1611,7 @@ class _NavigationBarTransition extends StatelessWidget {
     // can actually be outside the linearly lerp'ed Rect in the middle of
     // the animation, such as the topLargeTitle.
     return SizedBox(
-      height: math.max(heightTween.begin, heightTween.end) + MediaQuery.of(context).padding.top,
+      height: math.max(heightTween.begin, heightTween.end) + Get.mediaQuery.padding.top,
       width: double.infinity,
       child: Stack(
         children: children,
