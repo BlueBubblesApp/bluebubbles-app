@@ -2,6 +2,29 @@
 
 Below are the last few BlueBubbles App release changelogs
 
+## v1.3.0
+
+* Feature: Typing indicators can now show inside the chat list
+* Feature: Videos now have a mute/unmute button in their previews (muted by default)
+* Feature: You can now choose multiple files via the share menu
+* Feature: You can now choose over apps to load files from via the share menu
+* Feature: Adds ability to share text via the message details popup
+* UX: Variable animation speeds for progress circles
+* UX: Warning message now shows when trying to start a new chat when the server is running on Big Sur
+* UX: New snackbar style
+* UX: Adaptive Icon support
+* UX: Improves hitbox for the remove attachment button in the share preview
+* UX: Improves animation when opening the share menu
+* UX: Adds Battery Optimization page to the setup
+* Bug Fix: TIFF Images now get handled using the regular file opener widget
+* Bug Fix: Fixes issue where some messages would show up as a link preview
+* Bug Fix: Fixes issues with initializing the camera after taking a picture
+* Bug Fix: Fixes issue with syncing business chats (they are ignored now)
+* Bug Fix: Marking all chats as read now removes the notifications as well
+* Optimization: Better support for sharing text & audio attachments
+* Optimization: Migrated to new Socket IO plugin
+* Optimization: Migrated to using the GetX package for Flutter
+
 ## v1.2.0
 
 * UX: Adds `%` symbol to the attachment preview quality slider
