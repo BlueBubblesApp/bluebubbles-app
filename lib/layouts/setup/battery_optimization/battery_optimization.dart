@@ -44,7 +44,7 @@ class BatteryOptimizationPage extends StatelessWidget {
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 20.0),
                     child: Text(
-                      "Click the button below to go to your phone's battery optomization settings where you can disable the it for BlueBubbles.",
+                      "Click the button below to go to your phone's battery optimization settings where you can disable the it for BlueBubbles.",
                       style: Theme.of(context).textTheme.bodyText1.apply(fontSizeFactor: 1.5),
                       textAlign: TextAlign.center,
                     ),
