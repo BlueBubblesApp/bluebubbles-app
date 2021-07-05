@@ -329,6 +329,8 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
       widget.message.attachments.where((element) => element.mimeStart != null).length > 0 &&
       widget.message.attachments.where((element) => AttachmentHelper.getContent(element) is File).length > 0;
 
+  bool get isSent => !widget.message.guid.startsWith('temp') && !widget.message.guid.startsWith('error');
+
   double get detailsMenuHeight {
     return height;
   }
@@ -550,7 +552,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
             ),
           ),
         ),
-      if (showDownload)
+      if (showDownload && isSent)
         Material(
           color: Colors.transparent,
           child: InkWell(
