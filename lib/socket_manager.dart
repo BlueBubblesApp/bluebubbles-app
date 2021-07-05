@@ -179,9 +179,21 @@ class SocketManager {
         });
         debugPrint("disconnected");
         state = SocketState.DISCONNECTED;
-        Timer(const Duration(seconds: 5), () {
+        Timer t;
+        t = Timer(const Duration(seconds: 5), () {
           if (state == SocketState.DISCONNECTED && LifeCycleManager().isAlive) {
             showSnackbar('Socket Disconnected', 'You are not longer connected to the socket 🔌');
+          }
+        });
+        LifeCycleManager().stream.listen((event) {
+          if (!event && t != null && t.isActive) {
+            t.cancel();
+          } else {
+            t = Timer(const Duration(seconds: 5), () {
+              if (state == SocketState.DISCONNECTED && LifeCycleManager().isAlive) {
+                showSnackbar('Socket Disconnected', 'You are not longer connected to the socket 🔌');
+              }
+            });
           }
         });
         return;

@@ -24,7 +24,7 @@ class LifeCycleManager {
   bool get isAlive => _isAlive;
 
   StreamController<bool> _stream = new StreamController.broadcast();
-  Stream get stream => _stream.stream;
+  Stream<bool> get stream => _stream.stream;
 
   LifeCycleManager._internal() {
     // Listen to the socket processes that are updated
