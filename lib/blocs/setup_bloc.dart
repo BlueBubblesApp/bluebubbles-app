@@ -209,6 +209,7 @@ class SetupBloc {
 
       // If we want to download the attachments, do it, and wait for them to finish before continuing
       // Commented out because I think this negatively effects sync performance and causes disconnects
+      // todo
       // if (downloadAttachments) {
       //   await MessageHelper.bulkDownloadAttachments(chat, messages.reversed.toList());
       // }

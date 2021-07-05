@@ -10,10 +10,10 @@ import 'package:flutter/cupertino.dart';
 /// This class is a singleton
 class TextFieldBloc {
   factory TextFieldBloc() {
-    return _chatBloc;
+    return _textFieldBloc;
   }
 
-  static final TextFieldBloc _chatBloc = TextFieldBloc._internal();
+  static final TextFieldBloc _textFieldBloc = TextFieldBloc._internal();
 
   TextFieldBloc._internal();
 
