@@ -23,7 +23,6 @@ import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:get/get.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'package:socket_io_client/socket_io_client.dart';
 
