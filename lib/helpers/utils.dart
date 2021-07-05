@@ -183,7 +183,9 @@ void showSnackbar(String title, String message) {
       snackPosition: SnackPosition.BOTTOM,
       colorText: Get.textTheme.bodyText1.color,
       backgroundColor: Get.theme.accentColor,
-      margin: EdgeInsets.only(bottom: 10));
+      margin: EdgeInsets.only(bottom: 10),
+      maxWidth: Get.width - 20,
+  );
 }
 
 bool sameSender(Message first, Message second) {
