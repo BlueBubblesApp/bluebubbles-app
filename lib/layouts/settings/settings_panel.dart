@@ -583,10 +583,10 @@ class SettingsOptions<T> extends StatefulWidget {
     this.capitalize = true,
   }) : super(key: key);
   final String title;
-  final Function(dynamic) onChanged;
+  final Function(T) onChanged;
   final List<T> options;
   final T initial;
-  final String Function(dynamic) textProcessing;
+  final String Function(T) textProcessing;
   final bool showDivider;
   final String subtitle;
   final bool capitalize;

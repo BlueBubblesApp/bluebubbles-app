@@ -272,7 +272,7 @@ String uriToFilename(String uri, String mimeType) {
 
   // Get the extension
   if (filename.contains('.')) {
-    dynamic split = filename.split('.');
+    List<String> split = filename.split('.');
     ext = split[1];
     filename = split[0];
   }

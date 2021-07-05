@@ -250,7 +250,7 @@ class Chat {
 
     // Only update the latestMessage info if it's not null,
     // and it's not some time in the future
-    dynamic now = DateTime.now().toUtc().millisecondsSinceEpoch;
+    int now = DateTime.now().toUtc().millisecondsSinceEpoch;
     if (this.latestMessageDate != null && now > this.latestMessageDate.millisecondsSinceEpoch) {
       params["latestMessageText"] = this.latestMessageText;
       params["latestMessageDate"] = this.latestMessageDate.millisecondsSinceEpoch;
@@ -453,8 +453,8 @@ class Chat {
 
   static Future<int> count() async {
     final Database db = await DBProvider.db.database;
-    dynamic test = await db.rawQuery("SELECT COUNT(*) FROM chat;");
-    return (test[0] as Map<String, dynamic>)['COUNT(*)'];
+    List<Map<String, dynamic>> test = await db.rawQuery("SELECT COUNT(*) FROM chat;");
+    return test[0]['COUNT(*)'];
   }
 
   static Future<List<Attachment>> getAttachments(Chat chat, {int offset = 0, int limit = 25}) async {

@@ -80,7 +80,7 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
         isSearching = true;
       });
 
-    List<dynamic> results = await SocketManager().fetchMessages(null, limit: 50, where: [
+    List<Map<String, dynamic>> results = await SocketManager().fetchMessages(null, limit: 50, where: [
       {
         'statement': 'message.text LIKE :term',
         'args': {'term': "%${textEditingController.text}%"}
@@ -88,8 +88,8 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
       {'statement': 'message.associated_message_guid IS NULL', 'args': null}
     ]);
 
-    List<dynamic> _results = [];
-    for (dynamic item in results) {
+    List<Map<String, dynamic>> _results = [];
+    for (Map<String, dynamic> item in results) {
       // Build the data map
       Map<String, dynamic> data = {'message': Message.fromMap(item), 'chat': Chat.fromMap(item['chats'][0])};
 

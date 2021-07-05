@@ -386,9 +386,9 @@ class ActionHandler {
         NewMessageManager().removeMessage(chats.first, data['tempGuid']);
       } else {
         await Message.replaceMessage(data["tempGuid"], message, chat: chats.first);
-        List<dynamic> attachments = data.containsKey("attachments") ? data['attachments'] : [];
+        List<Map<String, dynamic>> attachments = data.containsKey("attachments") ? data['attachments'] : [];
         message.attachments = [];
-        for (dynamic attachmentItem in attachments) {
+        for (Map<String, dynamic> attachmentItem in attachments) {
           Attachment file = Attachment.fromMap(attachmentItem);
 
           try {

@@ -27,7 +27,7 @@ Map<String, String> nameMap = {
 };
 
 class MessageHelper {
-  static Future<List<Message>> bulkAddMessages(Chat chat, List<dynamic> messages,
+  static Future<List<Message>> bulkAddMessages(Chat chat, List<Map<String, dynamic>> messages,
       {bool notifyForNewMessage = false,
       bool notifyMessageManager = true,
       bool checkForLatestMessageText = true,
@@ -47,7 +47,7 @@ class MessageHelper {
     }
 
     // Iterate over each message to parse it
-    for (dynamic item in messages) {
+    for (Map<String, dynamic> item in messages) {
       if (onProgress != null) {
         onProgress(_messages.length, messages.length);
       }
@@ -118,7 +118,7 @@ class MessageHelper {
     return _messages;
   }
 
-  static Future<void> bulkDownloadAttachments(Chat chat, List<dynamic> messages) async {
+  static Future<void> bulkDownloadAttachments(Chat chat, List<Map<String, dynamic>> messages) async {
     // Create master list for all the messages and a chat cache
     Map<String, Chat> chats = <String, Chat>{};
 
@@ -131,7 +131,7 @@ class MessageHelper {
     }
 
     // Iterate over each message to parse it
-    for (dynamic item in messages) {
+    for (Map<String, dynamic> item in messages) {
       // Pull the chats out of the message, if there isnt a default
       Chat msgChat = chat;
       if (msgChat == null) {
@@ -151,8 +151,8 @@ class MessageHelper {
       if (msgChat == null) continue;
 
       // Create the attachments
-      List<dynamic> attachments = item['attachments'];
-      for (dynamic attachmentItem in attachments) {
+      List<Map<String, dynamic>> attachments = item['attachments'];
+      for (Map<String, dynamic> attachmentItem in attachments) {
         Attachment file = Attachment.fromMap(attachmentItem);
         await MessageHelper.downloadAttachmentSync(file);
       }

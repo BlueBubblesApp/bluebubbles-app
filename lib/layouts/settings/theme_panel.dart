@@ -94,7 +94,7 @@ class _ThemePanelState extends State<ThemePanel> {
                       Timer(Duration(seconds: 1), () => EventDispatcher().emit('theme-update', null));
                     },
                     options: AdaptiveThemeMode.values,
-                    textProcessing: (dynamic val) => val.toString().split(".").last,
+                    textProcessing: (AdaptiveThemeMode val) => val.toString().split(".").last,
                     title: "App Theme",
                     showDivider: false,
                   ),
@@ -126,7 +126,7 @@ class _ThemePanelState extends State<ThemePanel> {
                       setState(() {});
                     },
                     options: Skins.values.where((item) => item != Skins.Samsung).toList(),
-                    textProcessing: (dynamic val) => val.toString().split(".").last,
+                    textProcessing: (Skins val) => val.toString().split(".").last,
                     capitalize: false,
                     title: "App Skin",
                     showDivider: false,
@@ -197,7 +197,7 @@ class _ThemePanelState extends State<ThemePanel> {
                         _settingsCopy.displayMode = currentMode.id;
                       },
                       options: modes,
-                      textProcessing: (dynamic val) => val.toString(),
+                      textProcessing: (DisplayMode val) => val.toString(),
                       title: "Display",
                     ),
                   // SettingsOptions<String>(

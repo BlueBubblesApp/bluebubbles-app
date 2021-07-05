@@ -194,7 +194,7 @@ class SetupBloc {
       {"statement": "message.service = 'iMessage'", "args": null}
     ];
 
-    List<dynamic> messages = await SocketManager().getChatMessages(params);
+    List<Map<String, dynamic>> messages = await SocketManager().getChatMessages(params);
     addOutput("Received ${messages?.length ?? 0} messages for chat, '${chat.chatIdentifier}'!", SetupOutputType.LOG);
 
     // Since we got the messages in desc order, we want to reverse it.

@@ -498,11 +498,11 @@ class SocketManager {
     return chats;
   }
 
-  Future<List<dynamic>> getMessages(Map<String, dynamic> params, {Function(List<dynamic>) cb}) {
+  Future<List<Map<String, dynamic>>> getMessages(Map<String, dynamic> params, {Function(List<dynamic>) cb}) {
     return request('get-messages', params, cb: cb);
   }
 
-  Future<List<dynamic>> getChatMessages(Map<String, dynamic> params, {Function(List<dynamic>) cb}) {
+  Future<List<Map<String, dynamic>>> getChatMessages(Map<String, dynamic> params, {Function(List<dynamic>) cb}) {
     return request('get-chat-messages', params, cb: cb);
   }
 
@@ -612,7 +612,7 @@ class SocketManager {
     return completer.future;
   }
 
-  Future<List<dynamic>> fetchMessages(Chat chat,
+  Future<List<Map<String, dynamic>>> fetchMessages(Chat chat,
       {int offset: 0,
       int limit: 100,
       int after,

@@ -99,7 +99,7 @@ Future<Null> main() async {
       await _reportError(error, stackTrace);
     });
   } else {
-    runApp(FailureToStrt(e: exception));
+    runApp(FailureToStart(e: exception));
   }
 }
 

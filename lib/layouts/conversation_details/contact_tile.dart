@@ -49,7 +49,7 @@ class _ContactTileState extends State<ContactTile> {
     ContactManager().stream.listen((List<String> addresses) {
       // Check if any of the addresses are members of the chat
       List<Handle> participants = widget.chat.participants ?? [];
-      dynamic handles = participants.map((Handle handle) => handle.address);
+      List<String> handles = participants.map((Handle handle) => handle.address);
       for (String addr in addresses) {
         if (handles.contains(addr)) {
           fetchAvatar();

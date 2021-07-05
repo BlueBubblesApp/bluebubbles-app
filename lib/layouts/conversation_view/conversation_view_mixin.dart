@@ -571,7 +571,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
             if (!participant.address.endsWith(lastDigits)) continue;
 
             // Get a list of comparable options
-            dynamic opts = await getCompareOpts(participant);
+            List<String> opts = await getCompareOpts(participant);
             match = sameAddress(opts, contact.address);
             if (match) break;
           }
