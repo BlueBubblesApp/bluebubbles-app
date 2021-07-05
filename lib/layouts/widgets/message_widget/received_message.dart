@@ -133,7 +133,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
       } else {
         bubbleColors = [
           HexColor(message.handle.color),
-          lighten(HexColor(message.handle.color), 0.02),
+          HexColor(message.handle.color).lightenAmount(0.02),
         ];
       }
     }

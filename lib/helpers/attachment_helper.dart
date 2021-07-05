@@ -80,7 +80,7 @@ class AttachmentHelper {
         );
       }
     } catch (ex) {
-      debugPrint("Faled to parse location!");
+      debugPrint("Failed to parse location!");
       debugPrint(ex.toString());
       return AppleLocation(latitude: null, longitude: null);
     }

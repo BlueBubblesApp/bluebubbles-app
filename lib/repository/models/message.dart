@@ -158,9 +158,9 @@ class Message {
       subject: json.containsKey("subject") ? json["subject"] : null,
       country: json.containsKey("country") ? json["country"] : null,
       error: json.containsKey("error") ? json["error"] : 0,
-      dateCreated: json.containsKey("dateCreated") ? parseDate(json["dateCreated"]) : null,
-      dateRead: json.containsKey("dateRead") ? parseDate(json["dateRead"]) : null,
-      dateDelivered: json.containsKey("dateDelivered") ? parseDate(json["dateDelivered"]) : null,
+      dateCreated: json.containsKey("dateCreated") ? DateTime.tryParse(json["dateCreated"].toString()).toLocal() : null,
+      dateRead: json.containsKey("dateRead") ? DateTime.tryParse(json["dateRead"].toString()).toLocal() : null,
+      dateDelivered: json.containsKey("dateDelivered") ? DateTime.tryParse(json["dateDelivered"].toString()).toLocal() : null,
       isFromMe: (json["isFromMe"] is bool) ? json['isFromMe'] : ((json['isFromMe'] == 1) ? true : false),
       isDelayed: (json["isDelayed"] is bool) ? json['isDelayed'] : ((json['isDelayed'] == 1) ? true : false),
       isAutoReply: (json["isAutoReply"] is bool) ? json['isAutoReply'] : ((json['isAutoReply'] == 1) ? true : false),
@@ -176,7 +176,7 @@ class Message {
       cacheRoomnames: json.containsKey("cacheRoomnames") ? json["cacheRoomnames"] : null,
       isAudioMessage:
           (json["isAudioMessage"] is bool) ? json['isAudioMessage'] : ((json['isAudioMessage'] == 1) ? true : false),
-      datePlayed: json.containsKey("datePlayed") ? parseDate(json["datePlayed"]) : null,
+      datePlayed: json.containsKey("datePlayed") ? DateTime.tryParse(json["datePlayed"].toString()).toLocal() : null,
       itemType: json.containsKey("itemType") ? json["itemType"] : null,
       groupTitle: json.containsKey("groupTitle") ? json["groupTitle"] : null,
       groupActionType: (json["groupActionType"] != null) ? json["groupActionType"] : 0,
@@ -186,12 +186,12 @@ class Message {
       associatedMessageType: json.containsKey("associatedMessageType") ? json["associatedMessageType"] : null,
       expressiveSendStyleId: json.containsKey("expressiveSendStyleId") ? json["expressiveSendStyleId"] : null,
       timeExpressiveSendStyleId:
-          json.containsKey("timeExpressiveSendStyleId") ? parseDate(json["timeExpressiveSendStyleId"]) : null,
+          json.containsKey("timeExpressiveSendStyleId") ? DateTime.tryParse(json["timeExpressiveSendStyleId"].toString()).toLocal() : null,
       handle: json.containsKey("handle") ? (json['handle'] != null ? Handle.fromMap(json['handle']) : null) : null,
       hasAttachments: hasAttachments,
       attachments: attachments,
       hasReactions: json.containsKey('hasReactions') ? ((json['hasReactions'] == 1) ? true : false) : false,
-      dateDeleted: json.containsKey("dateDeleted") ? parseDate(json["dateDeleted"]) : null,
+      dateDeleted: json.containsKey("dateDeleted") ? DateTime.tryParse(json["dateDeleted"].toString()).toLocal() : null,
       metadata: metadata is String ? null : metadata,
     );
 

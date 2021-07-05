@@ -82,7 +82,7 @@ abstract class MessageWidgetMixin {
               textStyle = Theme.of(context)
                   .textTheme
                   .bodyText2
-                  .apply(color: hideContent ? Colors.transparent : darken(colors[0], 0.35));
+                  .apply(color: hideContent ? Colors.transparent : colors[0].darkenAmount(0.35));
             } else {
               textStyle = Theme.of(context).textTheme.bodyText2;
               if (hideContent) textStyle = textStyle.apply(color: Colors.transparent);
@@ -91,7 +91,7 @@ abstract class MessageWidgetMixin {
             textStyle = Theme.of(context).textTheme.bodyText2.apply(
                 color: hideContent
                     ? Colors.transparent
-                    : darken(toColorGradient(message?.handle?.address ?? "")[0], 0.35));
+                    : toColorGradient(message?.handle?.address ?? "")[0].darkenAmount(0.35));
           }
         } else if (hideContent) textStyle = textStyle.apply(color: Colors.transparent);
       } else {

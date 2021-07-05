@@ -16,6 +16,7 @@ import 'package:bluebubbles/repository/models/fcm_data.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/socket_manager.dart';
+import 'package:collection/collection.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:convert/convert.dart';
 import 'package:device_info/device_info.dart';
@@ -31,13 +32,6 @@ import 'package:intl/intl.dart' as intl;
 import 'package:slugify/slugify.dart';
 import 'package:video_player/video_player.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
-
-DateTime parseDate(dynamic value) {
-  if (value == null) return null;
-  if (value is int) return DateTime.fromMillisecondsSinceEpoch(value);
-  if (value is DateTime) return value;
-  return null;
-}
 
 bool isNullOrEmpty(dynamic input, {trimString = false}) {
   if (input == null) return true;
@@ -72,9 +66,10 @@ Future<String> formatPhoneNumber(String str) async {
   try {
     meta = await FlutterLibphonenumber().parse(str, region: countryCode);
   } catch (ex) {
-    if (!str.startsWith("+") && getCodeMap().containsKey(countryCode)) {
+    CountryCode cc = getCountryCodes().firstWhereOrNull((e) => e.code == countryCode);
+    if (!str.startsWith("+") && cc != null) {
       try {
-        meta = await FlutterLibphonenumber().parse("${getCodeMap()[countryCode]}$str", region: countryCode);
+        meta = await FlutterLibphonenumber().parse("${cc.dialCode}$str", region: countryCode);
       } catch (x) {}
     }
   }
@@ -237,37 +232,6 @@ extension DateHelpers on DateTime {
     } else {
       throw new Exception("No timerange specified!");
     }
-  }
-}
-
-extension ColorHelpers on Color {
-  Color darken([double percent = 10]) {
-    assert(1 <= percent && percent <= 100);
-    var f = 1 - percent / 100;
-    return Color.fromARGB(this.alpha, (this.red * f).round(), (this.green * f).round(), (this.blue * f).round());
-  }
-
-  Color lighten([double percent = 10]) {
-    assert(1 <= percent && percent <= 100);
-    var p = percent / 100;
-    return Color.fromARGB(this.alpha, this.red + ((255 - this.red) * p).round(),
-        this.green + ((255 - this.green) * p).round(), this.blue + ((255 - this.blue) * p).round());
-  }
-
-  Color lightenOrDarken([double percent = 10]) {
-    if (this.computeLuminance() >= 0.5) {
-      return this.darken(percent);
-    } else {
-      return this.lighten(percent);
-    }
-  }
-}
-
-Color lightenOrDarken(Color color, [double percent = 10]) {
-  if (color.computeLuminance() >= 0.5) {
-    return color.darken(percent);
-  } else {
-    return color.lighten(percent);
   }
 }
 

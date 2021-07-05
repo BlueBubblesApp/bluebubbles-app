@@ -32,7 +32,7 @@ class SentMessageHelper {
       bool margin = true}) {
     Color bubbleColor;
     bubbleColor = message == null || message.guid.startsWith("temp")
-        ? darken(Theme.of(context).primaryColor, 0.2)
+        ? Theme.of(context).primaryColor.darkenAmount(0.2)
         : Theme.of(context).primaryColor;
 
     final bool hideContent = SettingsManager().settings.redactedMode && SettingsManager().settings.hideMessageContent;

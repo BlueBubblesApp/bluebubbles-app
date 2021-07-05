@@ -61,7 +61,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
           colors = toColorGradient(widget.handle.address);
           widget.handle.color = null;
         } else {
-          colors = [lighten(color, 0.02), color];
+          colors = [color.lightenAmount(0.02), color];
           widget.handle.color = color.value.toRadixString(16);
         }
 
@@ -84,7 +84,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
       colors = toColorGradient(widget.handle?.address);
     } else {
       colors = [
-        lighten(HexColor(widget.handle.color), 0.02),
+        HexColor(widget.handle.color).lightenAmount(0.02),
         HexColor(widget.handle.color),
       ];
     }

@@ -1,4 +1,4 @@
-import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -24,7 +24,7 @@ class _SearchTextBoxState extends State<SearchTextBox> {
         ),
         placeholder: "Search",
         placeholderStyle: Theme.of(context).textTheme.bodyText1.apply(
-              color: lightenOrDarken(Theme.of(context).textTheme.bodyText1.color, 40),
+              color: Theme.of(context).textTheme.bodyText1.color.lightenOrDarken(40),
             ),
         style: Theme.of(context).textTheme.bodyText1,
         padding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
