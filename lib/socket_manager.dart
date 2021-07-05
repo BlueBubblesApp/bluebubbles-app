@@ -484,8 +484,18 @@ class SocketManager {
     return request("add-fcm-device", params);
   }
 
-  Future<List<dynamic>> getChats(Map<String, dynamic> params, {Function(List<dynamic>) cb}) {
-    return request('get-chats', params, cb: cb);
+  Future<List<Chat>> getChats(Map<String, dynamic> params, {Function(List<dynamic>) cb}) async {
+    List<Chat> chats = [];
+    List<Map<String, dynamic>> data = await request('get-chats', params, cb: cb);
+    for (var item in data) {
+      try {
+        var chat = Chat.fromMap(item);
+        chats.add(chat);
+      } catch (ex) {
+        chats.add(Chat(guid: "ERROR", displayName: item.toString()));
+      }
+    }
+    return chats;
   }
 
   Future<List<dynamic>> getMessages(Map<String, dynamic> params, {Function(List<dynamic>) cb}) {
@@ -519,7 +529,7 @@ class SocketManager {
   Future<List<dynamic>> getAttachments(String chatGuid, String messageGuid, {Function(List<dynamic>) cb}) {
     Completer<List<dynamic>> completer = new Completer();
 
-    dynamic params = {
+    Map<String, dynamic> params = {
       'after': 1,
       'identifier': chatGuid,
       'limit': 1,

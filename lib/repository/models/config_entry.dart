@@ -2,10 +2,10 @@ import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/helpers/db_converter.dart';
 import 'package:sqflite/sqflite.dart';
 
-class ConfigEntry {
+class ConfigEntry<T> {
   int id;
   String name;
-  dynamic value;
+  T value;
   Type type;
 
   ConfigEntry({
@@ -15,15 +15,38 @@ class ConfigEntry {
     this.type,
   });
 
-  factory ConfigEntry.fromMap(Map<String, dynamic> json) {
+  static ConfigEntry fromMap(Map<String, dynamic> json) {
     String _type = json["type"];
-
-    return ConfigEntry(
-      id: json["ROWID"],
-      name: json["name"],
-      value: DBConverter.getValue(json["value"], _type),
-      type: DBConverter.getType(_type),
-    );
+    Type t = DBConverter.getType(_type);
+    if (t is bool) {
+      return ConfigEntry<bool>(
+        id: json["ROWID"],
+        name: json["name"],
+        value: DBConverter.getValue(json["value"], _type),
+        type: t,
+      );
+    } else if (t is double) {
+      return ConfigEntry<double>(
+        id: json["ROWID"],
+        name: json["name"],
+        value: DBConverter.getValue(json["value"], _type),
+        type: t,
+      );
+    } else if (t is int) {
+      return ConfigEntry<int>(
+        id: json["ROWID"],
+        name: json["name"],
+        value: DBConverter.getValue(json["value"], _type),
+        type: t,
+      );
+    } else {
+      return ConfigEntry<String>(
+        id: json["ROWID"],
+        name: json["name"],
+        value: DBConverter.getValue(json["value"], _type),
+        type: t,
+      );
+    }
   }
 
   Future<ConfigEntry> save(String table,
@@ -93,7 +116,7 @@ class ConfigEntry {
       return null;
     }
 
-    return ConfigEntry.fromMap(res.first);
+    return fromMap(res.first);
   }
 
   Map<String, dynamic> toMap() => {

@@ -126,7 +126,7 @@ class SetupBloc {
 
     try {
       addOutput("Getting Chats...", SetupOutputType.LOG);
-      List<dynamic> chats = await SocketManager().getChats({});
+      List<Chat> chats = await SocketManager().getChats({});
 
       // If we got chats, cancel the timer
       timer.cancel();
@@ -138,28 +138,25 @@ class SetupBloc {
       }
 
       addOutput("Received initial chat list. Size: ${chats.length}", SetupOutputType.LOG);
-      for (dynamic item in chats) {
-        Chat chat;
+      for (Chat chat in chats) {
+        if (chat.guid == "ERROR") {
+          addOutput("Failed to save chat data, '${chat.displayName}'", SetupOutputType.ERROR);
+        } else {
+          try {
+            if (!(chat.chatIdentifier ?? "").startsWith("urn:biz")) {
+              await chat.save();
 
-        try {
-          chat = Chat.fromMap(item);
-          if (!(chat.chatIdentifier ?? "").startsWith("urn:biz")) {
-            await chat.save();
+              // Re-match the handles with the contacts
+              await ContactManager().matchHandles();
 
-            // Re-match the handles with the contacts
-            await ContactManager().matchHandles();
-
-            await syncChat(chat);
-            addOutput("Finished syncing chat, '${chat.chatIdentifier}'", SetupOutputType.LOG);
-          } else {
-            addOutput("Skipping syncing chat, '${chat.chatIdentifier}'", SetupOutputType.LOG);
-          }
-        } catch (ex, stacktrace) {
-          if (chat != null) {
+              await syncChat(chat);
+              addOutput("Finished syncing chat, '${chat.chatIdentifier}'", SetupOutputType.LOG);
+            } else {
+              addOutput("Skipping syncing chat, '${chat.chatIdentifier}'", SetupOutputType.LOG);
+            }
+          } catch (ex, stacktrace) {
             addOutput("Failed to sync chat, '${chat.chatIdentifier}'", SetupOutputType.ERROR);
             addOutput(stacktrace.toString(), SetupOutputType.ERROR);
-          } else {
-            addOutput("Failed to save chat data, '${item.toString()}'", SetupOutputType.ERROR);
           }
         }
 

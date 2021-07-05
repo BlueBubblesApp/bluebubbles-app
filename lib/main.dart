@@ -62,7 +62,7 @@ Future<Null> _reportError(dynamic error, dynamic stackTrace) async {
 
 Future<Null> main() async {
   // This captures errors reported by the Flutter framework.
-  FlutterError.onError = (FlutterErrorDetails details) async {
+  FlutterError.onError = (FlutterErrorDetails details) {
     if (isInDebugMode) {
       // In development mode simply print to console.
       FlutterError.dumpErrorToConsole(details);
