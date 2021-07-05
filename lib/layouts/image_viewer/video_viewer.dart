@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
@@ -35,7 +36,7 @@ class _VideoViewerState extends State<VideoViewer> {
   void initState() {
     super.initState();
     controller = new VideoPlayerController.file(widget.file);
-    controller.setVolume(0);
+    controller.setVolume(SettingsManager().settings.startVideosMutedFullscreen ? 0 : 1);
     this.createListener(controller);
     showPlayPauseOverlay = !controller.value.isPlaying;
   }

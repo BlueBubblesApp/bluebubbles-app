@@ -44,6 +44,8 @@ class Settings {
   bool showDeliveryTimestamps = false;
   int previewCompressionQuality = 25;
   bool filteredChatList = false;
+  bool startVideosMuted = false;
+  bool startVideosMutedFullscreen = false;
 
   // String emojiFontFamily;
 
