@@ -79,7 +79,7 @@ class LifeCycleManager {
     }
   }
 
-  dipose() {
+  dispose() {
     _stream.close();
   }
 }

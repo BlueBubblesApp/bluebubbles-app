@@ -175,7 +175,7 @@ class ContactManager {
     Contact contact;
 
     // Get a list of comparable options
-    dynamic opts = await getCompareOpts(handle);
+    List<String> opts = await getCompareOpts(handle);
     bool isEmailAddr = handle.address.isEmail;
     String lastDigits = handle.address.length < 4
         ? handle.address
