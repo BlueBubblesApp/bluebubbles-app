@@ -84,9 +84,12 @@ class _SetupViewState extends State<SetupView> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.end,
             children: <Widget>[
-              Text(
-                "$currentPage/6",
-                style: Theme.of(context).textTheme.bodyText1,
+              Padding(
+                padding: EdgeInsets.only(bottom: 10),
+                child: Text(
+                  "$currentPage/6",
+                  style: Theme.of(context).textTheme.bodyText1,
+                ),
               ),
             ],
           ),
