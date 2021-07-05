@@ -169,6 +169,9 @@ class ChatBloc {
     // Mark them as unread
     for (Chat chat in unread) {
       await chat.setUnreadStatus(false);
+
+      // Remove from notification shade
+      MethodChannelInterface().invokeMethod("clear-chat-notifs", {"chatGuid": chat.guid});
     }
 
     // Update their position in the chat list

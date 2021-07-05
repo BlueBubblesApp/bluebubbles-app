@@ -96,13 +96,13 @@ class ContactManager {
     getContactsFuture = new Completer<bool>();
 
     // Fetch the current list of contacts
-    debugPrint("ContactManager -> Fetching contacts");
+    debugPrint("[ContactManager] -> Fetching contacts");
     contacts = ((await ContactsService.getContacts(withThumbnails: false)) ?? []).toList();
 
     // Match handles in the database with contacts
     await this.matchHandles();
 
-    debugPrint("ContactManager -> Finished fetching contacts (${handleToContact.length})");
+    debugPrint("[ContactManager] -> Finished fetching contacts (${handleToContact.length})");
     getContactsFuture.complete(true);
 
     // Lazy load thumbnails after rendering initial contacts.
@@ -150,7 +150,7 @@ class ContactManager {
     // Create a new completer for this
     getAvatarsFuture = new Completer();
 
-    debugPrint("ContactManager -> Fetching Avatars");
+    debugPrint("[ContactManager] -> Fetching Avatars");
     for (String address in handleToContact.keys) {
       Contact contact = handleToContact[address];
       if (handleToContact[address] == null) continue;
@@ -166,7 +166,7 @@ class ContactManager {
       });
     }
 
-    debugPrint("ContactManager -> Finished fetching avatars");
+    debugPrint("[ContactManager] -> Finished fetching avatars");
     getAvatarsFuture.complete();
   }
 

@@ -23,6 +23,7 @@ import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:get/get.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'package:socket_io_client/socket_io_client.dart';
 
@@ -123,7 +124,7 @@ class SocketManager {
   String token;
 
   void socketStatusUpdate(data) {
-    debugPrint("Socket status update: $data");
+    debugPrint("[Socket] -> Socket status update: $data");
 
     switch (data) {
       case "connect":
@@ -153,7 +154,7 @@ class SocketManager {
           });
           Timer(Duration(seconds: 20), () {
             if (state != SocketState.ERROR) return;
-            debugPrint("UNABLE TO CONNECT");
+            debugPrint("[Socket] -> Unable to connect");
 
             // Only show the notification if setup is finished
             if (SettingsManager().settings.finishedSetup) {
@@ -180,7 +181,7 @@ class SocketManager {
         debugPrint("disconnected");
         state = SocketState.DISCONNECTED;
         Timer(const Duration(seconds: 5), () {
-          if (SocketManager().state == SocketState.DISCONNECTED) {
+          if (state == SocketState.DISCONNECTED && LifeCycleManager().isAlive) {
             showSnackbar('Socket Disconnected', 'You are not longer connected to the socket 🔌');
           }
         });
@@ -213,12 +214,12 @@ class SocketManager {
 
   Future<void> startSocketIO({bool forceNewConnection = false, bool catchException = true}) async {
     if (SettingsManager().settings == null) {
-      debugPrint("Settings have not loaded yet, not starting socket...");
+      debugPrint("[Socket] -> Settings have not loaded yet, not starting socket...");
       return;
     }
 
     if ((state == SocketState.CONNECTING || state == SocketState.CONNECTED) && !forceNewConnection) {
-      debugPrint("already connected");
+      debugPrint("[Socket] -> Already connected");
       return;
     }
     if (state == SocketState.FAILED) {
@@ -232,11 +233,11 @@ class SocketManager {
 
     String serverAddress = getServerAddress();
     if (serverAddress == null) {
-      debugPrint("Server Address is not yet configured. Not connecting...");
+      debugPrint("[Socket] -> Server Address is not yet configured. Not connecting...");
       return;
     }
 
-    debugPrint("Starting socket io with the server: $serverAddress");
+    debugPrint("[Socket] -> Starting socket io with the server: $serverAddress");
 
     try {
       // Create a new socket connection
@@ -254,7 +255,7 @@ class SocketManager {
               .build());
 
       if (_manager.socket == null) {
-        debugPrint("Socket was never created. Can't connect to server...");
+        debugPrint("[Socket] -> Socket was never created. Can't connect to server...");
         return;
       }
 
@@ -279,14 +280,14 @@ class SocketManager {
         // TODO: Possibly turn this into a notification for the user?
         // This could act as a "pseudo" security measure so they're alerted
         // when a new device is registered
-        debugPrint("fcm device added: " + data.toString());
+        debugPrint("[Socket] -> FCM device added: " + data.toString());
       });
 
       /**
        * If the server sends us an error it ran into, handle it
        */
       _manager.socket.on("error", (data) {
-        debugPrint("An error occurred: " + data.toString());
+        debugPrint("[Socket] -> An error occurred: " + data.toString());
       });
 
       /**
@@ -353,7 +354,7 @@ class SocketManager {
        * something about it (or at least just track it)
        */
       _manager.socket.on("message-timeout", (_data) async {
-        debugPrint("Client received message timeout");
+        debugPrint("[Socket] -> Client received message timeout");
         Map<String, dynamic> data = _data;
 
         Message message = await Message.findOne({"guid": data["tempGuid"]});
@@ -373,9 +374,9 @@ class SocketManager {
       });
     } catch (e) {
       if (!catchException) {
-        throw (("(SocketManager) -> ") + e.toString());
+        throw ("[Socket] -> " + e.toString());
       } else {
-        debugPrint("FAILED TO CONNECT");
+        debugPrint("[Socket] -> Failed to connect");
       }
     }
   }
@@ -488,7 +489,7 @@ class SocketManager {
     Completer<List<dynamic>> completer = new Completer();
     if (_manager.socket == null) return null;
 
-    debugPrint("Sending request for '$path'");
+    debugPrint("[Socket] -> Sending request for '$path'");
     _manager.sendMessage(path, params, (Map<String, dynamic> data) async {
       if (data["status"] != 200) return completer.completeError(data);
 
