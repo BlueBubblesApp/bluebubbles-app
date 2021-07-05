@@ -180,6 +180,15 @@ class ChatBloc {
     }
   }
 
+  void markRead(Chat chat) async {
+    await chat.setUnreadStatus(false);
+
+    // Remove from notification shade
+    MethodChannelInterface().invokeMethod("clear-chat-notifs", {"chatGuid": chat.guid});
+
+    this.updateChatPosition(chat);
+  }
+
   Future<void> updateAllShareTargets() async {
     List<Chat> chats = this.chats.sublist(0);
     chats.sort(Chat.sort);

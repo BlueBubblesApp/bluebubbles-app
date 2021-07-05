@@ -282,8 +282,7 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
           color: Colors.blue,
           icon: widget.chat.hasUnreadMessage ? Icons.mark_chat_read : Icons.mark_chat_unread,
           onTap: () {
-            widget.chat.setUnreadStatus(true);
-            ChatBloc().updateChatPosition(widget.chat);
+            ChatBloc().markRead(widget.chat);
           },
         ),
         IconSlideAction(
@@ -527,6 +526,9 @@ class __CupertinoState extends State<_Cupertino> {
           },
           onLongPress: () async {
             HapticFeedback.mediumImpact();
+            if (widget.parent.widget.chat.hasUnreadMessage) {
+              ChatBloc().markRead(widget.parent.widget.chat);
+            }
             await widget.parent.widget.chat.setUnreadStatus(!widget.parent.widget.chat.hasUnreadMessage);
             if (this.mounted) setState(() {});
           },
