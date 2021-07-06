@@ -1,8 +1,9 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:ui';
 
+import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:get/get.dart';
-import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/share.dart';
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
@@ -16,19 +17,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 class ServerManagementPanel extends StatefulWidget {
-  ServerManagementPanel({Key key}) : super(key: key);
+  ServerManagementPanel({Key? key}) : super(key: key);
 
   @override
   _ServerManagementPanelState createState() => _ServerManagementPanelState();
 }
 
 class _ServerManagementPanelState extends State<ServerManagementPanel> {
-  int latency;
-  String fetchStatus;
+  int? latency;
+  String? fetchStatus;
 
   // Restart trackers
-  int lastRestart;
-  int lastRestartMessages;
+  int? lastRestart;
+  int? lastRestartMessages;
   bool isRestarting = false;
   bool isRestartingMessages = false;
 
@@ -48,13 +49,7 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                 brightness: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor),
                 toolbarHeight: 100.0,
                 elevation: 0,
-                leading: IconButton(
-                  icon: Icon(SettingsManager().settings.skin == Skins.iOS ? Icons.arrow_back_ios : Icons.arrow_back,
-                      color: Theme.of(context).primaryColor),
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                ),
+                leading: buildBackButton(context),
                 backgroundColor: Theme.of(context).accentColor.withOpacity(0.5),
                 title: Text(
                   "Server Management",
@@ -75,7 +70,7 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                   StreamBuilder(
                       stream: SocketManager().connectionStateStream,
                       builder: (context, AsyncSnapshot<SocketState> snapshot) {
-                        SocketState connectionStatus;
+                        SocketState? connectionStatus;
                         if (snapshot.hasData) {
                           connectionStatus = snapshot.data;
                         } else {
@@ -113,7 +108,7 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                   StreamBuilder(
                       stream: SocketManager().connectionStateStream,
                       builder: (context, AsyncSnapshot<SocketState> snapshot) {
-                        SocketState connectionStatus;
+                        SocketState? connectionStatus;
                         if (snapshot.hasData) {
                           connectionStatus = snapshot.data;
                         } else {
@@ -142,13 +137,13 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                   StreamBuilder(
                       stream: SocketManager().connectionStateStream,
                       builder: (context, AsyncSnapshot<SocketState> snapshot) {
-                        SocketState connectionStatus;
+                        SocketState? connectionStatus;
                         if (snapshot.hasData) {
                           connectionStatus = snapshot.data;
                         } else {
                           connectionStatus = SocketManager().state;
                         }
-                        String subtitle;
+                        String? subtitle;
 
                         if (fetchStatus == null) {
                           switch (connectionStatus) {
@@ -216,13 +211,13 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                   StreamBuilder(
                       stream: SocketManager().connectionStateStream,
                       builder: (context, AsyncSnapshot<SocketState> snapshot) {
-                        SocketState connectionStatus;
+                        SocketState? connectionStatus;
                         if (snapshot.hasData) {
                           connectionStatus = snapshot.data;
                         } else {
                           connectionStatus = SocketManager().state;
                         }
-                        String subtitle;
+                        String? subtitle;
 
                         if (fetchStatus == null) {
                           switch (connectionStatus) {
@@ -251,7 +246,7 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
 
                               // Prevent restarting more than once every 30 seconds
                               int now = DateTime.now().toUtc().millisecondsSinceEpoch;
-                              if (lastRestartMessages != null && now - lastRestartMessages < 1000 * 30) return;
+                              if (lastRestartMessages != null && now - lastRestartMessages! < 1000 * 30) return;
 
                               // Save the last time we restarted
                               lastRestartMessages = now;
@@ -270,7 +265,7 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                                 // If it fails or there is an endpoint error, stop the loader
                                 await SocketManager().sendMessage("restart-imessage", null, (_) {
                                   stopRestarting();
-                                }).catchError(() {
+                                }).catchError((_) {
                                   stopRestarting();
                                 });
                               } finally {
@@ -304,7 +299,7 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
 
                         // Prevent restarting more than once every 30 seconds
                         int now = DateTime.now().toUtc().millisecondsSinceEpoch;
-                        if (lastRestart != null && now - lastRestart < 1000 * 30) return;
+                        if (lastRestart != null && now - lastRestart! < 1000 * 30) return;
 
                         // Save the last time we restarted
                         lastRestart = now;
@@ -341,69 +336,91 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                                 strokeWidth: 3,
                                 valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
                               ))),
-                  SettingsTile(
-                      title: "Server Info",
-                      subTitle: "Fetch server version & OS",
-                      onTap: () async {
-                        SocketManager().sendMessage("get-server-metadata", {}, (Map<String, dynamic> res) {
-                          List<Widget> metaWidgets = [
-                            RichText(
-                                text: TextSpan(children: [
-                              TextSpan(
-                                  text: "MacOS Version: ",
-                                  style: Theme.of(context).textTheme.bodyText1.apply(fontWeightDelta: 2)),
-                              TextSpan(text: res['data']['os_version'], style: Theme.of(context).textTheme.bodyText1)
-                            ])),
-                            RichText(
-                                text: TextSpan(children: [
-                              TextSpan(
-                                  text: "BlueBubbles Server Version: ",
-                                  style: Theme.of(context).textTheme.bodyText1.apply(fontWeightDelta: 2)),
-                              TextSpan(
-                                  text: res['data']['server_version'], style: Theme.of(context).textTheme.bodyText1)
-                            ]))
-                          ];
-                          showDialog(
-                            context: context,
-                            builder: (context) => AlertDialog(
-                              title: Text(
-                                "Metadata",
-                                style: Theme.of(context).textTheme.headline1,
-                                textAlign: TextAlign.center,
-                              ),
-                              backgroundColor: Theme.of(context).accentColor,
-                              content: SizedBox(
-                                width: Get.mediaQuery.size.width * 3 / 5,
-                                height: Get.mediaQuery.size.height * 1 / 4,
-                                child: Container(
-                                  padding: EdgeInsets.all(10.0),
-                                  decoration: BoxDecoration(
-                                      color: Theme.of(context).backgroundColor,
-                                      borderRadius: BorderRadius.all(Radius.circular(10))),
-                                  child: ListView(
-                                    physics: AlwaysScrollableScrollPhysics(
-                                      parent: BouncingScrollPhysics(),
+                  StreamBuilder(
+                      stream: SocketManager().connectionStateStream,
+                      builder: (context, AsyncSnapshot<SocketState> snapshot) {
+                        SocketState? connectionStatus;
+                        if (snapshot.hasData) {
+                          connectionStatus = snapshot.data;
+                        } else {
+                          connectionStatus = SocketManager().state;
+                        }
+                        String subtitle;
+
+                        switch (connectionStatus) {
+                          case SocketState.CONNECTED:
+                            subtitle = "Fetch server version & OS";
+                            break;
+                          default:
+                            subtitle = "Disconnected (cannot fetch data)";
+                        }
+
+                        return SettingsTile(
+                            title: "Server Info",
+                            subTitle: subtitle,
+                            onTap: () async {
+                              if (connectionStatus != SocketState.CONNECTED) return;
+
+                              SocketManager().sendMessage("get-server-metadata", {}, (Map<String, dynamic> res) {
+                                List<Widget> metaWidgets = [
+                                  RichText(
+                                      text: TextSpan(children: [
+                                        TextSpan(
+                                            text: "MacOS Version: ",
+                                            style: Theme.of(context).textTheme.bodyText1!.apply(fontWeightDelta: 2)),
+                                        TextSpan(text: res['data']['os_version'], style: Theme.of(context).textTheme.bodyText1)
+                                      ])),
+                                  RichText(
+                                      text: TextSpan(children: [
+                                        TextSpan(
+                                            text: "BlueBubbles Server Version: ",
+                                            style: Theme.of(context).textTheme.bodyText1!.apply(fontWeightDelta: 2)),
+                                        TextSpan(
+                                            text: res['data']['server_version'], style: Theme.of(context).textTheme.bodyText1)
+                                      ]))
+                                ];
+                                showDialog(
+                                  context: context,
+                                  builder: (context) => AlertDialog(
+                                    title: Text(
+                                      "Metadata",
+                                      style: Theme.of(context).textTheme.headline1,
+                                      textAlign: TextAlign.center,
                                     ),
-                                    children: metaWidgets,
-                                  ),
-                                ),
-                              ),
-                              actions: [
-                                FlatButton(
-                                  child: Text(
-                                    "Close",
-                                    style: Theme.of(context).textTheme.bodyText1.copyWith(
-                                          color: Theme.of(context).primaryColor,
+                                    backgroundColor: Theme.of(context).accentColor,
+                                    content: SizedBox(
+                                      width: Get.mediaQuery.size.width * 3 / 5,
+                                      height: Get.mediaQuery.size.height * 1 / 4,
+                                      child: Container(
+                                        padding: EdgeInsets.all(10.0),
+                                        decoration: BoxDecoration(
+                                            color: Theme.of(context).backgroundColor,
+                                            borderRadius: BorderRadius.all(Radius.circular(10))),
+                                        child: ListView(
+                                          physics: AlwaysScrollableScrollPhysics(
+                                            parent: BouncingScrollPhysics(),
+                                          ),
+                                          children: metaWidgets,
                                         ),
+                                      ),
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        child: Text(
+                                          "Close",
+                                          style: Theme.of(context).textTheme.bodyText1!.copyWith(
+                                            color: Theme.of(context).primaryColor,
+                                          ),
+                                        ),
+                                        onPressed: () => Navigator.of(context).pop(),
+                                      ),
+                                    ],
                                   ),
-                                  onPressed: () => Navigator.of(context).pop(),
-                                ),
-                              ],
-                            ),
-                          );
-                        });
-                      },
-                      trailing: Icon(Icons.info, color: Theme.of(context).primaryColor)),
+                                );
+                              });
+                            },
+                            trailing: Icon(Icons.info, color: Theme.of(context).primaryColor));
+                      }),
                 ],
               ),
             ),
@@ -420,25 +437,25 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
 }
 
 class SyncDialog extends StatefulWidget {
-  SyncDialog({Key key}) : super(key: key);
+  SyncDialog({Key? key}) : super(key: key);
 
   @override
   _SyncDialogState createState() => _SyncDialogState();
 }
 
 class _SyncDialogState extends State<SyncDialog> {
-  String errorCode;
+  String? errorCode;
   bool finished = false;
-  String message;
-  double progress;
-  Duration lookback;
+  String? message;
+  double? progress;
+  Duration? lookback;
   int page = 0;
 
   void syncMessages() async {
     if (lookback == null) return;
 
-    DateTime now = DateTime.now().toUtc().subtract(lookback);
-    SocketManager().fetchMessages(null, after: now.millisecondsSinceEpoch).then((List<dynamic> messages) {
+    DateTime now = DateTime.now().toUtc().subtract(lookback!);
+    SocketManager().fetchMessages(null, after: now.millisecondsSinceEpoch)!.then((dynamic messages) {
       if (this.mounted) {
         setState(() {
           message = "Adding ${messages.length} messages...";
@@ -459,10 +476,12 @@ class _SyncDialogState extends State<SyncDialog> {
       }).then((List<Message> items) {
         onFinish(true, items.length);
       });
-    }).catchError((_) => onFinish(false, 0));
+    }).catchError((_) {
+      onFinish(false, 0);
+    });
   }
 
-  void onFinish([bool success = true, int total]) {
+  void onFinish([bool success = true, int? total]) {
     if (!this.mounted) return;
 
     this.progress = 100;
@@ -475,7 +494,7 @@ class _SyncDialogState extends State<SyncDialog> {
     String title = errorCode != null ? "Error!" : message ?? "";
     Widget content = Container();
     if (errorCode != null) {
-      content = Text(errorCode);
+      content = Text(errorCode!);
     } else {
       content = Container(
         height: 5,
@@ -490,13 +509,13 @@ class _SyncDialogState extends State<SyncDialog> {
     }
 
     List<Widget> actions = [
-      FlatButton(
+      TextButton(
         onPressed: () {
           Navigator.of(context).pop();
         },
         child: Text(
           "Ok",
-          style: Theme.of(context).textTheme.bodyText1.apply(
+          style: Theme.of(context).textTheme.bodyText1!.apply(
                 color: Theme.of(context).primaryColor,
               ),
         ),
@@ -519,7 +538,7 @@ class _SyncDialogState extends State<SyncDialog> {
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 20.0),
             child: Slider(
-              value: lookback?.inDays?.toDouble() ?? 1.0,
+              value: lookback?.inDays.toDouble() ?? 1.0,
               onChanged: (double value) {
                 if (!this.mounted) return;
 
@@ -527,7 +546,7 @@ class _SyncDialogState extends State<SyncDialog> {
                   lookback = new Duration(days: value.toInt());
                 });
               },
-              label: lookback?.inDays?.toString() ?? "1",
+              label: lookback?.inDays.toString() ?? "1",
               divisions: 29,
               min: 1,
               max: 30,
@@ -537,7 +556,7 @@ class _SyncDialogState extends State<SyncDialog> {
       );
 
       actions = [
-        FlatButton(
+        TextButton(
           onPressed: () {
             if (!this.mounted) return;
             if (lookback == null) lookback = new Duration(days: 1);
@@ -548,7 +567,7 @@ class _SyncDialogState extends State<SyncDialog> {
           },
           child: Text(
             "Sync",
-            style: Theme.of(context).textTheme.bodyText1.apply(
+            style: Theme.of(context).textTheme.bodyText1!.apply(
                   color: Theme.of(context).primaryColor,
                 ),
           ),

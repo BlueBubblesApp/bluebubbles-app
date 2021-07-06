@@ -21,17 +21,17 @@ import 'package:path/path.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
 
 class AttachmentDetailsCard extends StatefulWidget {
-  AttachmentDetailsCard({Key key, this.attachment, this.allAttachments}) : super(key: key);
-  final Attachment attachment;
-  final List<Attachment> allAttachments;
+  AttachmentDetailsCard({Key? key, this.attachment, this.allAttachments}) : super(key: key);
+  final Attachment? attachment;
+  final List<Attachment>? allAttachments;
 
   @override
   _AttachmentDetailsCardState createState() => _AttachmentDetailsCardState();
 }
 
 class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
-  StreamSubscription downloadStream;
-  Uint8List previewImage;
+  StreamSubscription? downloadStream;
+  Uint8List? previewImage;
   double aspectRatio = 4 / 3;
 
   @override
@@ -42,13 +42,13 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
 
   @override
   void dispose() {
-    if (downloadStream != null) downloadStream.cancel();
+    downloadStream?.cancel();
     super.dispose();
   }
 
   void subscribeToDownloadStream() {
-    if (SocketManager().attachmentDownloaders.containsKey(widget.attachment.guid) && downloadStream == null) {
-      downloadStream = SocketManager().attachmentDownloaders[widget.attachment.guid].stream.listen((event) {
+    if (SocketManager().attachmentDownloaders.containsKey(widget.attachment!.guid) && downloadStream == null) {
+      downloadStream = SocketManager().attachmentDownloaders[widget.attachment!.guid]!.stream.listen((event) {
         if (event is File && this.mounted) {
           Future.delayed(Duration(milliseconds: 500), () {
             setState(() {});
@@ -59,8 +59,8 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
   }
 
   void getCompressedImage() {
-    String path = AttachmentHelper.getAttachmentPath(widget.attachment);
-    FlutterImageCompress.compressWithFile(path, quality: SettingsManager().compressionQuality).then((data) {
+    String path = AttachmentHelper.getAttachmentPath(widget.attachment!);
+    FlutterImageCompress.compressWithFile(path, quality: SettingsManager().compressionQuality!).then((data) {
       if (this.mounted) {
         setState(() {
           previewImage = data;
@@ -71,7 +71,7 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
 
   @override
   Widget build(BuildContext context) {
-    Attachment attachment = widget.attachment;
+    Attachment attachment = widget.attachment!;
     File file = new File(
       "${SettingsManager().appDocDir.path}/attachments/${attachment.guid}/${attachment.transferName}",
     );
@@ -83,7 +83,7 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
         alignment: Alignment.center,
         color: Theme.of(context).accentColor,
         child: Text(
-          widget.attachment.mimeType,
+          widget.attachment!.mimeType!,
           textAlign: TextAlign.center,
         ),
       );
@@ -128,12 +128,12 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
                       ),
                     )
                   : StreamBuilder<Object>(
-                      stream: SocketManager().attachmentDownloaders[attachment.guid].stream,
+                      stream: SocketManager().attachmentDownloaders[attachment.guid]!.stream as Stream<Object>?,
                       builder: (context, snapshot) {
                         double value = 0;
                         if (snapshot.hasData) {
                           if (snapshot.data is Map) {
-                            value = (snapshot.data as Map<String, num>)["progress"].toDouble();
+                            value = (snapshot.data as Map<String, num>)["progress"]!.toDouble();
                           } else if (snapshot.data is File) {
                             value = 1;
                           }
@@ -165,15 +165,15 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
       imageFormat: ImageFormat.JPEG,
       quality: 50,
     );
-    Size size = ImageSizeGetter.getSize(MemoryInput(previewImage));
-    widget.attachment.width = size.width;
-    widget.attachment.height = size.height;
+    Size size = ImageSizeGetter.getSize(MemoryInput(previewImage!));
+    widget.attachment!.width = size.width;
+    widget.attachment!.height = size.height;
     aspectRatio = size.width / size.height;
     if (this.mounted) setState(() {});
   }
 
   Widget _buildPreview(File file, BuildContext context) {
-    if (widget.attachment.mimeType.startsWith("image/")) {
+    if (widget.attachment!.mimeType!.startsWith("image/")) {
       if (previewImage == null) {
         getCompressedImage();
       }
@@ -182,10 +182,10 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
         children: <Widget>[
           SizedBox(
             child: Hero(
-                tag: widget.attachment.guid,
+                tag: widget.attachment!.guid!,
                 child: (previewImage != null)
                     ? Image.memory(
-                        previewImage,
+                        previewImage!,
                         fit: BoxFit.cover,
                         filterQuality: FilterQuality.low,
                         alignment: Alignment.center,
@@ -198,7 +198,7 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
             color: Colors.transparent,
             child: InkWell(
               onTap: () {
-                CurrentChat currentChat = CurrentChat.of(context);
+                CurrentChat? currentChat = CurrentChat.of(context);
                 Navigator.of(context).push(
                   ThemeSwitcher.buildPageRoute(
                     builder: (context) => AttachmentFullscreenViewer(
@@ -213,17 +213,17 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
           )
         ],
       );
-    } else if (widget.attachment.mimeType.startsWith("video/")) {
+    } else if (widget.attachment!.mimeType!.startsWith("video/")) {
       getVideoPreview(file);
 
       return Stack(
         children: <Widget>[
           SizedBox(
             child: Hero(
-              tag: widget.attachment.guid,
+              tag: widget.attachment!.guid!,
               child: previewImage != null
                   ? Image.memory(
-                      previewImage,
+                      previewImage!,
                       fit: BoxFit.cover,
                       filterQuality: FilterQuality.low,
                       alignment: Alignment.center,

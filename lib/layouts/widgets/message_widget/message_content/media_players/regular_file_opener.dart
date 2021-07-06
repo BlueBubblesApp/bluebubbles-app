@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
@@ -11,12 +10,12 @@ import 'package:path/path.dart';
 
 class RegularFileOpener extends StatefulWidget {
   RegularFileOpener({
-    Key key,
+    Key? key,
     this.attachment,
     this.file,
   }) : super(key: key);
-  final Attachment attachment;
-  final File file;
+  final Attachment? attachment;
+  final File? file;
 
   @override
   _RegularFileOpenerState createState() => _RegularFileOpenerState();
@@ -25,7 +24,7 @@ class RegularFileOpener extends StatefulWidget {
 class _RegularFileOpenerState extends State<RegularFileOpener> {
   @override
   Widget build(BuildContext context) {
-    IconData fileIcon = AttachmentHelper.getIcon(widget.attachment.mimeType);
+    IconData fileIcon = AttachmentHelper.getIcon(widget.attachment!.mimeType);
 
     return Container(
       height: 140,
@@ -35,7 +34,7 @@ class _RegularFileOpenerState extends State<RegularFileOpener> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
           Text(
-            basename(widget.file.path),
+            basename(widget.file!.path),
             textAlign: TextAlign.center,
             maxLines: 3,
             overflow: TextOverflow.ellipsis,
@@ -44,15 +43,15 @@ class _RegularFileOpenerState extends State<RegularFileOpener> {
           CupertinoButton(
             child: Icon(
               fileIcon,
-              color: Theme.of(context).textTheme.bodyText2.color,
+              color: Theme.of(context).textTheme.bodyText2!.color,
             ),
             onPressed: () async {
               try {
                 await MethodChannelInterface().invokeMethod(
                   "open_file",
                   {
-                    "path": "/attachments/" + widget.attachment.guid + "/" + basename(widget.file.path),
-                    "mimeType": widget.attachment.mimeType,
+                    "path": "/attachments/" + widget.attachment!.guid! + "/" + basename(widget.file!.path),
+                    "mimeType": widget.attachment!.mimeType,
                   },
                 );
               } catch (ex) {
@@ -60,7 +59,7 @@ class _RegularFileOpenerState extends State<RegularFileOpener> {
               }
             },
           ),
-          Text(widget.attachment.mimeType, style: Theme.of(context).textTheme.bodyText2),
+          Text(widget.attachment!.mimeType!, style: Theme.of(context).textTheme.bodyText2),
         ],
       ),
     );

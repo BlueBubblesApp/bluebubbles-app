@@ -16,7 +16,7 @@ import 'package:share_plus/share_plus.dart' as sp;
 
 class Share {
   /// Share a file with other apps.
-  static void file(String subject, String filename, String filepath, String mimeType) async {
+  static void file(String subject, String? filename, String filepath, String? mimeType) async {
     sp.Share.shareFiles([filepath], text: subject);
   }
 

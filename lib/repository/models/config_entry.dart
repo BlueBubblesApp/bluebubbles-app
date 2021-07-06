@@ -1,12 +1,14 @@
+import 'dart:async';
+
 import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/helpers/db_converter.dart';
 import 'package:sqflite/sqflite.dart';
 
-class ConfigEntry {
-  int id;
-  String name;
-  dynamic value;
-  Type type;
+class ConfigEntry<T> {
+  int? id;
+  String? name;
+  T? value;
+  Type? type;
 
   ConfigEntry({
     this.id,
@@ -15,24 +17,47 @@ class ConfigEntry {
     this.type,
   });
 
-  factory ConfigEntry.fromMap(Map<String, dynamic> json) {
-    String _type = json["type"];
-
-    return ConfigEntry(
-      id: json["ROWID"],
-      name: json["name"],
-      value: DBConverter.getValue(json["value"], _type),
-      type: DBConverter.getType(_type),
-    );
+  static ConfigEntry fromMap(Map<String, dynamic> json) {
+    String? _type = json["type"];
+    Type t = DBConverter.getType(_type) ?? String;
+    if (t == bool) {
+      return ConfigEntry<bool>(
+        id: json["ROWID"],
+        name: json["name"],
+        value: DBConverter.getValue(json["value"], _type),
+        type: t,
+      );
+    } else if (t == double) {
+      return ConfigEntry<double>(
+        id: json["ROWID"],
+        name: json["name"],
+        value: DBConverter.getValue(json["value"], _type),
+        type: t,
+      );
+    } else if (t == int) {
+      return ConfigEntry<int>(
+        id: json["ROWID"],
+        name: json["name"],
+        value: DBConverter.getValue(json["value"], _type),
+        type: t,
+      );
+    } else {
+      return ConfigEntry<String>(
+        id: json["ROWID"],
+        name: json["name"],
+        value: DBConverter.getValue(json["value"], _type),
+        type: t,
+      );
+    }
   }
 
   Future<ConfigEntry> save(String table,
-      {bool updateIfAbsent = true, Database database}) async {
-    final Database db =
+      {bool updateIfAbsent = true, Database? database}) async {
+    final Database? db =
         database != null ? database : await DBProvider.db.database;
 
     // Try to find an existing ConfigEntry before saving it
-    ConfigEntry existing = await ConfigEntry.findOne(table, {"name": this.name},
+    ConfigEntry? existing = await ConfigEntry.findOne(table, {"name": this.name},
         database: database);
     if (existing != null) {
       this.id = existing.id;
@@ -44,7 +69,7 @@ class ConfigEntry {
       var map = this.toMap();
       map.remove("ROWID");
       try {
-        this.id = await db.insert(table, map);
+        this.id = await db!.insert(table, map);
       } catch (e) {
         this.id = null;
       }
@@ -55,13 +80,13 @@ class ConfigEntry {
     return this;
   }
 
-  Future<ConfigEntry> update(String table, {Database database}) async {
-    final Database db =
+  Future<ConfigEntry> update(String table, {Database? database}) async {
+    final Database? db =
         database != null ? database : await DBProvider.db.database;
 
     // If it already exists, update it
     if (this.id != null) {
-      await db.update(
+      await db!.update(
           table,
           {
             "name": this.name,
@@ -77,10 +102,10 @@ class ConfigEntry {
     return this;
   }
 
-  static Future<ConfigEntry> findOne(String table, Map<String, dynamic> filters,
-      {Database database}) async {
+  static Future<ConfigEntry?> findOne(String table, Map<String, dynamic> filters,
+      {Database? database}) async {
     final Database db =
-        database != null ? database : await DBProvider.db.database;
+        database != null ? database : (await DBProvider.db.database)!;
 
     List<String> whereParams = [];
     filters.keys.forEach((filter) => whereParams.add('$filter = ?'));
@@ -93,7 +118,7 @@ class ConfigEntry {
       return null;
     }
 
-    return ConfigEntry.fromMap(res.first);
+    return fromMap(res.first);
   }
 
   Map<String, dynamic> toMap() => {

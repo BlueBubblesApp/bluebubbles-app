@@ -5,6 +5,7 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
+import android.content.res.AssetManager;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
@@ -24,13 +25,21 @@ import java.util.Map;
 
 import flutter.plugins.contactsservice.contactsservice.ContactsServicePlugin;
 import io.flutter.plugin.common.MethodChannel;
-import io.flutter.plugin.common.PluginRegistry;
 import io.flutter.plugins.pathprovider.PathProviderPlugin;
 import io.flutter.plugins.sharedpreferences.SharedPreferencesPlugin;
 import io.flutter.view.FlutterCallbackInformation;
 import io.flutter.view.FlutterMain;
 import io.flutter.view.FlutterNativeView;
 import io.flutter.view.FlutterRunArguments;
+import io.flutter.FlutterInjector;
+
+import io.flutter.embedding.engine.loader.FlutterLoader;
+import io.flutter.embedding.engine.loader.ApplicationInfoLoader;
+import io.flutter.embedding.engine.loader.FlutterApplicationInfo;
+import io.flutter.embedding.engine.FlutterEngine;
+import io.flutter.embedding.engine.plugins.PluginRegistry;
+import io.flutter.embedding.engine.dart.DartExecutor;
+import io.flutter.embedding.engine.dart.DartExecutor.DartCallback;
 
 import static com.bluebubbles.messaging.MainActivity.engine;
 import static com.bluebubbles.messaging.method_call_handler.handlers.InitializeBackgroundHandle.BACKGROUND_HANDLE_SHARED_PREF_KEY;
@@ -38,12 +47,14 @@ import static com.bluebubbles.messaging.method_call_handler.handlers.InitializeB
 
 public class NotificationWorker extends Worker implements DartWorker {
 
-    private FlutterNativeView backgroundView;
+    private FlutterEngine backgroundEngine;
     private MethodChannel backgroundChannel;
+    private Context context;
 
 
     public NotificationWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
         super(context, workerParams);
+        this.context = context;
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
@@ -78,42 +89,46 @@ public class NotificationWorker extends Worker implements DartWorker {
 
     @RequiresApi(api = Build.VERSION_CODES.P)
     private void initHeadlessThread() {
-        if (backgroundView == null) {
-            FlutterMain.ensureInitializationComplete(getApplicationContext(), null);
+        Context context = (this.context != null) ? this.context : getApplicationContext();
+        FlutterMain.startInitialization(context);
+        FlutterMain.ensureInitializationComplete(getApplicationContext(), null);
 
-            Long callbackHandle = getApplicationContext().getSharedPreferences(BACKGROUND_SERVICE_SHARED_PREF, Context.MODE_PRIVATE).getLong(BACKGROUND_HANDLE_SHARED_PREF_KEY, 0);
+        FlutterApplicationInfo info = ApplicationInfoLoader.load(context);
+        String appBundlePath = info.flutterAssetsDir;
+        AssetManager assets = context.getAssets();
+
+        if (engine == null) {
+            engine = new FlutterEngine(context);
+            DartExecutor executor = engine.getDartExecutor();
+            Long callbackHandle = context.getSharedPreferences(BACKGROUND_SERVICE_SHARED_PREF, Context.MODE_PRIVATE).getLong(BACKGROUND_HANDLE_SHARED_PREF_KEY, -1);
             FlutterCallbackInformation callbackInformation = FlutterCallbackInformation.lookupCallbackInformation(callbackHandle);
 
-            backgroundView = new FlutterNativeView(getApplicationContext(), true);
-            PluginRegistry registry = backgroundView.getPluginRegistry();
-            SqflitePlugin.registerWith(registry.registrarFor("com.tekartik.sqflite.SqflitePlugin"));
-            PathProviderPlugin.registerWith(registry.registrarFor("plugins.flutter.io/path_provider"));
-            PermissionHandlerPlugin.registerWith(registry.registrarFor("flutter.baseflow.com/permissions/methods"));
-            ContactsServicePlugin.registerWith(registry.registrarFor("github.com/clovisnicolas/flutter_contacts"));
-            SharedPreferencesPlugin.registerWith(registry.registrarFor("plugins.flutter.io/shared_preferences"));
+            if (callbackInformation == null) {
+                Log.e("Error", "Fatal: failed to find callback: " + callbackHandle);
+                return;
+            }
 
+            DartExecutor.DartCallback dartCallback = new DartExecutor.DartCallback(
+                    assets,
+                    appBundlePath,
+                    callbackInformation
+            );
+            executor.executeDartCallback(dartCallback);
 
-            FlutterRunArguments args = new FlutterRunArguments();
-            args.bundlePath = FlutterMain.findAppBundlePath();
-            args.entrypoint = callbackInformation.callbackName;
-            args.libraryPath = callbackInformation.callbackLibraryPath;
-
-            backgroundView.runFromBundle(args);
-            backgroundChannel = new MethodChannel(backgroundView, "background_isolate");
-
-            backgroundChannel.setMethodCallHandler((call, result) -> MethodCallHandler.methodCallHandler(call, result, getApplicationContext(),  this));
+            backgroundChannel = new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), "background_isolate");
+            backgroundChannel.setMethodCallHandler((call, result) -> MethodCallHandler.methodCallHandler(call, result, context, this));
         }
     }
 
     @Override
     public MethodChannel destroyHeadlessThread() {
-        if (backgroundView == null) return null;
+        if (engine == null) return null;
         new Handler(Looper.getMainLooper()).post(() -> {
-            if (backgroundView != null) {
+            if (engine != null) {
                 try {
                     Log.d("Destroy", "Destroying Notification Worker isolate...");
-                    backgroundView.destroy();
-                    backgroundView = null;
+                    engine.destroy();
+                    engine = null;
                     backgroundChannel = null;
                 } catch (Exception e) {
                     Log.d("Destroy", "Failed to destroy Notification Worker isolate!");

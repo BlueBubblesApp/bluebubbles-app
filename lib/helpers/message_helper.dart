@@ -27,16 +27,16 @@ Map<String, String> nameMap = {
 };
 
 class MessageHelper {
-  static Future<List<Message>> bulkAddMessages(Chat chat, List<dynamic> messages,
+  static Future<List<Message>> bulkAddMessages(Chat? chat, List<dynamic> messages,
       {bool notifyForNewMessage = false,
       bool notifyMessageManager = true,
       bool checkForLatestMessageText = true,
       bool isIncremental = false,
-      Function(int progress, int length) onProgress}) async {
+      Function(int progress, int length)? onProgress}) async {
     // Create master list for all the messages and a chat cache
     List<Message> _messages = <Message>[];
-    Map<Message, String> notificationMessages = <Message, String>{};
-    Map<String, Chat> chats = <String, Chat>{};
+    Map<Message, String?> notificationMessages = <Message, String?>{};
+    Map<String?, Chat> chats = <String?, Chat>{};
 
     // Add the chat in the cache and save it if it hasn't been saved yet
     if (chat != null) {
@@ -53,7 +53,7 @@ class MessageHelper {
       }
 
       // Pull the chats out of the message, if there isnt a default
-      Chat msgChat = chat;
+      Chat? msgChat = chat;
       if (msgChat == null) {
         List<Chat> msgChats = parseChats(item);
         msgChat = msgChats.length > 0 ? msgChats.first : null;
@@ -71,7 +71,7 @@ class MessageHelper {
       if (msgChat == null) continue;
 
       Message message = Message.fromMap(item);
-      Message existing = await Message.findOne({"guid": message.guid});
+      Message? existing = await Message.findOne({"guid": message.guid});
       await msgChat.addMessage(
         message,
         changeUnreadStatus: notifyForNewMessage,
@@ -101,7 +101,7 @@ class MessageHelper {
 
     if (notifyForNewMessage && notifyMessageManager) {
       notificationMessages.forEach((message, value) async {
-        Chat msgChat = chats[value];
+        Chat? msgChat = chats[value];
 
         if (notifyForNewMessage) {
           await MessageHelper.handleNotification(message, msgChat, force: true);
@@ -118,9 +118,9 @@ class MessageHelper {
     return _messages;
   }
 
-  static Future<void> bulkDownloadAttachments(Chat chat, List<dynamic> messages) async {
+  static Future<void> bulkDownloadAttachments(Chat? chat, List<dynamic> messages) async {
     // Create master list for all the messages and a chat cache
-    Map<String, Chat> chats = <String, Chat>{};
+    Map<String?, Chat> chats = <String?, Chat>{};
 
     // Add the chat in the cache and save it if it hasn't been saved yet
     if (chat != null) {
@@ -133,7 +133,7 @@ class MessageHelper {
     // Iterate over each message to parse it
     for (dynamic item in messages) {
       // Pull the chats out of the message, if there isnt a default
-      Chat msgChat = chat;
+      Chat? msgChat = chat;
       if (msgChat == null) {
         List<Chat> msgChats = parseChats(item);
         msgChat = msgChats.length > 0 ? msgChats[0] : null;
@@ -183,9 +183,9 @@ class MessageHelper {
     return chats;
   }
 
-  static Future<void> handleNotification(Message message, Chat chat, {bool force = false}) async {
+  static Future<void> handleNotification(Message message, Chat? chat, {bool force = false}) async {
     // See if there is an existing message for the given GUID
-    Message existingMessage;
+    Message? existingMessage;
     if (!force) existingMessage = await Message.findOne({"guid": message.guid});
 
     // If we've already processed the GUID, skip it
@@ -196,20 +196,20 @@ class MessageHelper {
 
     // Handle all the cases that would mean we don't show the notification
     if (!SettingsManager().settings.finishedSetup) return; // Don't notify if not fully setup
-    if (existingMessage != null || chat.isMuted) return; // Don''t notify if the chat is muted
-    if (message.isFromMe || message.handle == null) return; // Don't notify if the text is from me
+    if (existingMessage != null || chat!.isMuted!) return; // Don''t notify if the chat is muted
+    if (message.isFromMe! || message.handle == null) return; // Don't notify if the text is from me
 
-    CurrentChat currChat = CurrentChat.activeChat;
+    CurrentChat? currChat = CurrentChat.activeChat;
     if (LifeCycleManager().isAlive && (currChat == null || currChat.chat.guid == chat.guid)) {
       // Don't notify if the the chat is the active chat
       return;
     }
 
     // Create the notification
-    String contactTitle = await ContactManager().getContactTitle(message.handle);
-    Contact contact = await ContactManager().getCachedContact(message.handle);
+    String? contactTitle = await ContactManager().getContactTitle(message.handle);
+    Contact? contact = await ContactManager().getCachedContact(message.handle);
     String title = await getFullChatTitle(chat);
-    String notification = await MessageHelper.getNotificationText(message);
+    String? notification = await MessageHelper.getNotificationText(message);
     if (SettingsManager().settings.hideTextPreviews) {
       notification = "iMessage";
     }
@@ -220,7 +220,7 @@ class MessageHelper {
       chat,
       Random().nextInt(9998) + 1,
       chat.id,
-      message.dateCreated.millisecondsSinceEpoch,
+      message.dateCreated!.millisecondsSinceEpoch,
       contactTitle,
       chat.participants.length > 1,
       message.handle,
@@ -228,7 +228,7 @@ class MessageHelper {
     );
   }
 
-  static Future<String> getNotificationText(Message message) async {
+  static Future<String?> getNotificationText(Message message) async {
     // If the item type is not 0, it's a group event
     if (message.isGroupEvent()) {
       return await getGroupEventText(message);
@@ -238,12 +238,12 @@ class MessageHelper {
       return "Interactive: ${MessageHelper.getInteractiveText(message)}";
     }
 
-    if (isNullOrEmpty(message.text, trimString: true) && !message.hasAttachments) {
+    if (isNullOrEmpty(message.text, trimString: true)! && !message.hasAttachments) {
       return "Empty message";
     }
 
     // Parse/search for links
-    List<RegExpMatch> matches = parseLinks(message.text);
+    List<RegExpMatch> matches = parseLinks(message.text!);
 
     // If there are attachments, return the number of attachments
     int aCount = (message.attachments ?? []).length;
@@ -251,8 +251,8 @@ class MessageHelper {
       // Build the attachment output by counting the attachments
       String output = "Attachment${aCount > 1 ? "s" : ""}";
       Map<String, int> counts = {};
-      for (Attachment attachment in message.attachments ?? []) {
-        String mime = attachment.mimeType;
+      for (Attachment? attachment in message.attachments ?? []) {
+        String? mime = attachment!.mimeType;
         String key;
         if (mime == null) {
           key = "link";
@@ -270,10 +270,8 @@ class MessageHelper {
           key = mime.split("/").first;
         }
 
-        if (key != null) {
-          int current = counts.containsKey(key) ? counts[key] : 0;
-          counts[key] = current + 1;
-        }
+        int current = counts.containsKey(key) ? counts[key]! : 0;
+        counts[key] = current + 1;
       }
 
       List<String> attachmentStr = [];
@@ -284,9 +282,9 @@ class MessageHelper {
       return "$output: ${attachmentStr.join(attachmentStr.length == 2 ? " & " : ", ")}";
     } else if (![null, ""].contains(message.associatedMessageGuid)) {
       // It's a reaction message, get the "sender"
-      String sender = (message.isFromMe) ? "You" : await formatPhoneNumber(message.handle.address);
-      if (!message.isFromMe && message.handle != null) {
-        Contact contact = await ContactManager().getCachedContact(message.handle);
+      String? sender = message.isFromMe! ? "You" : await formatPhoneNumber(message.handle!.address!);
+      if (!message.isFromMe! && message.handle != null) {
+        Contact? contact = await ContactManager().getCachedContact(message.handle);
         if (contact != null) {
           sender = contact.givenName ?? contact.displayName;
         }
@@ -299,11 +297,11 @@ class MessageHelper {
     }
   }
 
-  static bool shouldShowBigEmoji(String text) {
+  static bool shouldShowBigEmoji(String? text) {
     if (isEmptyString(text)) return false;
 
     RegExp pattern = emojiRegex;
-    List<RegExpMatch> matches = pattern.allMatches(text).toList();
+    List<RegExpMatch> matches = pattern.allMatches(text!).toList();
     if (matches.isEmpty) return false;
 
     List<String> items = matches.map((m) => m.toString()).toList();
@@ -327,13 +325,13 @@ class MessageHelper {
     return normalized;
   }
 
-  static String getInteractiveText(Message message) {
+  static String? getInteractiveText(Message message) {
     if (message.balloonBundleId == null) return "Null Balloon Bundle ID";
     if (nameMap.containsKey(message.balloonBundleId)) {
-      return nameMap[message.balloonBundleId];
+      return nameMap[message.balloonBundleId!];
     }
 
-    String val = message.balloonBundleId.toLowerCase();
+    String val = message.balloonBundleId!.toLowerCase();
     if (val.contains("gamepigeon")) {
       return "Game Pigeon";
     } else if (val.contains("contextoptional")) {
@@ -351,20 +349,20 @@ class MessageHelper {
     return (items.length > 0) ? items[0] : val;
   }
 
-  static bool withinTimeThreshold(Message first, Message second, {threshold: 5}) {
+  static bool withinTimeThreshold(Message? first, Message? second, {threshold: 5}) {
     if (first == null || second == null) return false;
-    return second.dateCreated.difference(first.dateCreated).inMinutes.abs() > threshold;
+    return second.dateCreated!.difference(first.dateCreated!).inMinutes.abs() > threshold;
   }
 
-  static bool getShowTail(Message message, Message newerMessage) =>
+  static bool getShowTail(Message? message, Message? newerMessage) =>
       MessageHelper.withinTimeThreshold(message, newerMessage, threshold: 1) ||
       !sameSender(message, newerMessage) ||
-      (message.isFromMe &&
-          newerMessage.isFromMe &&
+      (message!.isFromMe! &&
+          newerMessage!.isFromMe! &&
           message.dateDelivered != null &&
           newerMessage.dateDelivered == null);
 
-  static bool getShowTailReversed(Message message, Message olderMessage) => getShowTail(message, olderMessage);
+  static bool getShowTailReversed(Message? message, Message? olderMessage) => getShowTail(message, olderMessage);
 
 // static List<TextSpan> buildEmojiText(String text, TextStyle style) {
 //   final children = <TextSpan>[];

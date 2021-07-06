@@ -1,7 +1,7 @@
 import 'dart:ui';
 
+import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:get/get.dart';
-import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
@@ -13,14 +13,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 class AttachmentPanel extends StatefulWidget {
-  AttachmentPanel({Key key}) : super(key: key);
+  AttachmentPanel({Key? key}) : super(key: key);
 
   @override
   _AttachmentPanelState createState() => _AttachmentPanelState();
 }
 
 class _AttachmentPanelState extends State<AttachmentPanel> {
-  Settings _settingsCopy;
+  late Settings _settingsCopy;
 
   @override
   void initState() {
@@ -53,13 +53,7 @@ class _AttachmentPanelState extends State<AttachmentPanel> {
                 brightness: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor),
                 toolbarHeight: 100.0,
                 elevation: 0,
-                leading: IconButton(
-                  icon: Icon(SettingsManager().settings.skin == Skins.iOS ? Icons.arrow_back_ios : Icons.arrow_back,
-                      color: Theme.of(context).primaryColor),
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                ),
+                leading: buildBackButton(context),
                 backgroundColor: Theme.of(context).accentColor.withOpacity(0.5),
                 title: Text(
                   "Attachment Settings",

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:ui';
 
+import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
@@ -17,16 +18,16 @@ import 'package:flutter/services.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
 
 class CustomAvatarPanel extends StatefulWidget {
-  CustomAvatarPanel({Key key}) : super(key: key);
+  CustomAvatarPanel({Key? key}) : super(key: key);
 
   @override
   _CustomAvatarPanelState createState() => _CustomAvatarPanelState();
 }
 
 class _CustomAvatarPanelState extends State<CustomAvatarPanel> {
-  Settings _settingsCopy;
-  List<DisplayMode> modes;
-  DisplayMode currentMode;
+  late Settings _settingsCopy;
+  List<DisplayMode>? modes;
+  DisplayMode? currentMode;
   bool isFetching = false;
   List<Widget> handleWidgets = [];
 
@@ -49,9 +50,9 @@ class _CustomAvatarPanelState extends State<CustomAvatarPanel> {
 
   Future<void> getCustomHandles({force: false}) async {
     // If we are already fetching or have results,
-    if (!false && (isFetching || !isNullOrEmpty(this.handleWidgets))) return;
+    if (!false && (isFetching || !isNullOrEmpty(this.handleWidgets)!)) return;
     List<Handle> handles = await Handle.find();
-    if (isNullOrEmpty(handles)) return;
+    if (isNullOrEmpty(handles)!) return;
 
     // Filter handles down by ones with colors
     handles = handles.where((element) => element.color != null).toList();
@@ -60,13 +61,13 @@ class _CustomAvatarPanelState extends State<CustomAvatarPanel> {
     for (var item in handles) {
       items.add(SettingsTile(
         title:
-            ContactManager().getCachedContactSync(item.address)?.displayName ?? await formatPhoneNumber(item.address),
+            ContactManager().getCachedContactSync(item.address)?.displayName ?? await formatPhoneNumber(item.address!),
         subTitle: "Tap avatar to change color",
         trailing: ContactAvatarWidget(handle: item),
       ));
     }
 
-    if (!isNullOrEmpty(items) && this.mounted) {
+    if (!isNullOrEmpty(items)! && this.mounted) {
       setState(() {
         this.handleWidgets = items;
       });
@@ -89,12 +90,7 @@ class _CustomAvatarPanelState extends State<CustomAvatarPanel> {
                 brightness: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor),
                 toolbarHeight: 100.0,
                 elevation: 0,
-                leading: IconButton(
-                  icon: Icon(Icons.arrow_back_ios, color: Theme.of(context).primaryColor),
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                ),
+                leading: buildBackButton(context),
                 backgroundColor: Theme.of(context).accentColor.withOpacity(0.5),
                 title: Text(
                   "Custom Avatar Colors",
@@ -122,7 +118,7 @@ class _CustomAvatarPanelState extends State<CustomAvatarPanel> {
                           style: Theme.of(context).textTheme.subtitle1,
                           textAlign: TextAlign.center,
                         )),
-                  for (Widget handleWidget in this.handleWidgets ?? []) handleWidget
+                  for (Widget handleWidget in this.handleWidgets) handleWidget
                 ],
               ),
             ),

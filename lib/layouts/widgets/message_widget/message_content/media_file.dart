@@ -1,4 +1,3 @@
-import 'package:get/get.dart';
 import 'package:bluebubbles/layouts/widgets/circle_progress_bar.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
@@ -8,12 +7,12 @@ import 'package:flutter/material.dart';
 
 class MediaFile extends StatefulWidget {
   MediaFile({
-    Key key,
-    @required this.child,
-    @required this.attachment,
+    Key? key,
+    required this.child,
+    required this.attachment,
   }) : super(key: key);
   final Widget child;
-  final Attachment attachment;
+  final Attachment? attachment;
 
   @override
   _MediaFileState createState() => _MediaFileState();
@@ -24,7 +23,7 @@ class _MediaFileState extends State<MediaFile> {
   void initState() {
     super.initState();
     SocketManager().attachmentSenderCompleter.listen((event) {
-      if (event == widget.attachment.guid && this.mounted) {
+      if (event == widget.attachment!.guid && this.mounted) {
         setState(() {});
       }
     });
@@ -36,7 +35,7 @@ class _MediaFileState extends State<MediaFile> {
     final bool hideAttachmentTypes =
         SettingsManager().settings.redactedMode && SettingsManager().settings.hideAttachmentTypes;
 
-    if (SocketManager().attachmentSenders.containsKey(widget.attachment.guid)) {
+    if (SocketManager().attachmentSenders.containsKey(widget.attachment!.guid)) {
       return Stack(
         alignment: Alignment.center,
         children: <Widget>[
@@ -58,16 +57,16 @@ class _MediaFileState extends State<MediaFile> {
                       backgroundColor: Colors.grey,
                       value: snapshot.hasData
                           ? snapshot.data
-                          : SocketManager().attachmentSenders[widget.attachment.guid].progress));
+                          : SocketManager().attachmentSenders[widget.attachment!.guid]!.progress));
             },
-            stream: SocketManager().attachmentSenders[widget.attachment.guid].stream,
+            stream: SocketManager().attachmentSenders[widget.attachment!.guid]!.stream,
           ),
         ],
       );
     } else {
       return Stack(alignment: Alignment.center, children: [
         widget.child,
-        if (widget.attachment.originalROWID == null)
+        if (widget.attachment!.originalROWID == null)
           Container(
             child: Theme(
               data: ThemeData(
@@ -93,7 +92,7 @@ class _MediaFileState extends State<MediaFile> {
             child: Container(
               alignment: Alignment.center,
               child: Text(
-                widget.attachment.mimeType,
+                widget.attachment!.mimeType!,
                 textAlign: TextAlign.center,
               ),
             ),

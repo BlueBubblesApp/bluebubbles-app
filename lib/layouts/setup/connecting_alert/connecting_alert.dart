@@ -3,7 +3,7 @@ import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/material.dart';
 
 class ConnectingAlert extends StatefulWidget {
-  ConnectingAlert({Key key, @required this.onConnect}) : super(key: key);
+  ConnectingAlert({Key? key, required this.onConnect}) : super(key: key);
   final Function(bool) onConnect;
 
   @override
@@ -15,15 +15,10 @@ class _ConnectingAlertState extends State<ConnectingAlert> {
   void initState() {
     super.initState();
 
-    // If we are already connected, continue
-    if (SocketManager().state == SocketState.CONNECTED) {
-      widget.onConnect(true);
-      return;
-    }
-
     // Setup a listener to wait for connect events
     SocketManager().connectionStateStream.listen((event) {
       if (!this.mounted) return;
+
       debugPrint("Connection Status Changed");
       if (event == SocketState.CONNECTED) {
         widget.onConnect(true);
@@ -33,6 +28,11 @@ class _ConnectingAlertState extends State<ConnectingAlert> {
 
       if (this.mounted) setState(() {});
     });
+
+    // If we are already connected, invoke the connect callback
+    if (SocketManager().state == SocketState.CONNECTED) {
+      widget.onConnect(true);
+    }
   }
 
   @override

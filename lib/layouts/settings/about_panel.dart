@@ -1,13 +1,12 @@
 import 'dart:ui';
 
+import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:get/get.dart';
-import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -15,16 +14,16 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 class AboutPanel extends StatefulWidget {
-  AboutPanel({Key key}) : super(key: key);
+  AboutPanel({Key? key}) : super(key: key);
 
   @override
   _AboutPanelState createState() => _AboutPanelState();
 }
 
 class _AboutPanelState extends State<AboutPanel> {
-  Brightness brightness;
+  Brightness? brightness;
   bool gotBrightness = false;
-  Color previousBackgroundColor;
+  Color? previousBackgroundColor;
 
   @override
   void initState() {
@@ -48,11 +47,6 @@ class _AboutPanelState extends State<AboutPanel> {
     if (!themeChanged && gotBrightness) return;
 
     previousBackgroundColor = now;
-    if (this.context == null) {
-      brightness = Brightness.light;
-      gotBrightness = true;
-      return;
-    }
 
     bool isDark = now.computeLuminance() < 0.179;
     brightness = isDark ? Brightness.dark : Brightness.light;
@@ -79,13 +73,7 @@ class _AboutPanelState extends State<AboutPanel> {
                 brightness: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor),
                 toolbarHeight: 100.0,
                 elevation: 0,
-                leading: IconButton(
-                  icon: Icon(SettingsManager().settings.skin == Skins.iOS ? Icons.arrow_back_ios : Icons.arrow_back,
-                      color: Theme.of(context).primaryColor),
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                ),
+                leading: buildBackButton(context),
                 backgroundColor: Theme.of(context).accentColor.withOpacity(0.5),
                 title: Text(
                   "About & Links",
@@ -156,15 +144,15 @@ class _AboutPanelState extends State<AboutPanel> {
                               ).copyWith(
                                 h1: Theme.of(context)
                                     .textTheme
-                                    .headline1
+                                    .headline1!
                                     .copyWith(fontSize: 20, fontWeight: FontWeight.bold),
                                 h2: Theme.of(context)
                                     .textTheme
-                                    .headline2
+                                    .headline2!
                                     .copyWith(fontSize: 18, fontWeight: FontWeight.bold),
                                 h3: Theme.of(context)
                                     .textTheme
-                                    .headline3
+                                    .headline3!
                                     .copyWith(fontSize: 17, fontWeight: FontWeight.bold),
                               ),
                             ),
@@ -237,10 +225,10 @@ class _AboutPanelState extends State<AboutPanel> {
                             ),
                           ),
                           actions: [
-                            FlatButton(
+                            TextButton(
                               child: Text(
                                 "Close",
-                                style: Theme.of(context).textTheme.bodyText1.copyWith(
+                                style: Theme.of(context).textTheme.bodyText1!.copyWith(
                                       color: Theme.of(context).primaryColor,
                                     ),
                               ),

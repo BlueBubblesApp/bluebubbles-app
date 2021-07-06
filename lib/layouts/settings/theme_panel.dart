@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/layouts/settings/custom_avatar_panel.dart';
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
 import 'package:bluebubbles/layouts/theming/theming_panel.dart';
@@ -18,16 +19,16 @@ import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:get/get.dart';
 
 class ThemePanel extends StatefulWidget {
-  ThemePanel({Key key}) : super(key: key);
+  ThemePanel({Key? key}) : super(key: key);
 
   @override
   _ThemePanelState createState() => _ThemePanelState();
 }
 
 class _ThemePanelState extends State<ThemePanel> {
-  Settings _settingsCopy;
-  List<DisplayMode> modes;
-  DisplayMode currentMode;
+  late Settings _settingsCopy;
+  List<DisplayMode>? modes;
+  DisplayMode? currentMode;
 
   @override
   void initState() {
@@ -66,13 +67,7 @@ class _ThemePanelState extends State<ThemePanel> {
                 brightness: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor),
                 toolbarHeight: 100.0,
                 elevation: 0,
-                leading: IconButton(
-                  icon: Icon(SettingsManager().settings.skin == Skins.iOS ? Icons.arrow_back_ios : Icons.arrow_back,
-                      color: Theme.of(context).primaryColor),
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                ),
+                leading: buildBackButton(context),
                 backgroundColor: Theme.of(context).accentColor.withOpacity(0.5),
                 title: Text(
                   "Theming & Styles",
@@ -99,7 +94,7 @@ class _ThemePanelState extends State<ThemePanel> {
                       Timer(Duration(seconds: 1), () => EventDispatcher().emit('theme-update', null));
                     },
                     options: AdaptiveThemeMode.values,
-                    textProcessing: (dynamic val) => val.toString().split(".").last,
+                    textProcessing: (val) => val.toString().split(".").last,
                     title: "App Theme",
                     showDivider: false,
                   ),
@@ -131,7 +126,7 @@ class _ThemePanelState extends State<ThemePanel> {
                       setState(() {});
                     },
                     options: Skins.values.where((item) => item != Skins.Samsung).toList(),
-                    textProcessing: (dynamic val) => val.toString().split(".").last,
+                    textProcessing: (val) => val.toString().split(".").last,
                     capitalize: false,
                     title: "App Skin",
                     showDivider: false,
@@ -199,10 +194,10 @@ class _ThemePanelState extends State<ThemePanel> {
                       showDivider: false,
                       onChanged: (val) async {
                         currentMode = val;
-                        _settingsCopy.displayMode = currentMode.id;
+                        _settingsCopy.displayMode = currentMode!.id;
                       },
                       options: modes,
-                      textProcessing: (dynamic val) => val.toString(),
+                      textProcessing: (val) => val.toString(),
                       title: "Display",
                     ),
                   // SettingsOptions<String>(

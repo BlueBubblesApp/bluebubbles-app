@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:sqflite/sqflite.dart';
@@ -16,12 +17,12 @@ String handleToJson(Handle data) {
 }
 
 class Handle {
-  int id;
-  int originalROWID;
-  String address;
-  String country;
-  String color;
-  String uncanonicalizedId;
+  int? id;
+  int? originalROWID;
+  String? address;
+  String? country;
+  String? color;
+  String? uncanonicalizedId;
 
   Handle({
     this.id,
@@ -54,10 +55,10 @@ class Handle {
   }
 
   Future<Handle> save([bool updateIfAbsent = false]) async {
-    final Database db = await DBProvider.db.database;
+    final Database? db = await DBProvider.db.database;
 
     // Try to find an existing handle before saving it
-    Handle existing = await Handle.findOne({"address": this.address});
+    Handle? existing = await Handle.findOne({"address": this.address});
     if (existing != null) {
       this.id = existing.id;
     }
@@ -68,7 +69,7 @@ class Handle {
       var map = this.toMap();
       map.remove("ROWID");
       try {
-        this.id = await db.insert("handle", map);
+        this.id = await db!.insert("handle", map);
       } catch (e) {
         this.id = null;
       }
@@ -80,7 +81,7 @@ class Handle {
   }
 
   Future<Handle> update() async {
-    final Database db = await DBProvider.db.database;
+    final Database? db = await DBProvider.db.database;
 
     // If it already exists, update it
     if (this.id != null) {
@@ -95,7 +96,7 @@ class Handle {
         params["originalROWID"] = this.originalROWID;
       }
 
-      await db
+      await db!
           .update("handle", params, where: "ROWID = ?", whereArgs: [this.id]);
     } else {
       await this.save(false);
@@ -104,19 +105,19 @@ class Handle {
     return this;
   }
 
-  Future<Handle> updateColor(String newColor) async {
-    final Database db = await DBProvider.db.database;
+  Future<Handle> updateColor(String? newColor) async {
+    final Database? db = await DBProvider.db.database;
     if (this.id == null) return this;
 
-    await db.update("handle", {"color": newColor},
+    await db!.update("handle", {"color": newColor},
         where: "ROWID = ?", whereArgs: [this.id]);
 
     return this;
   }
 
-  static Future<Handle> findOne(Map<String, dynamic> filters) async {
-    final Database db = await DBProvider.db.database;
-
+  static Future<Handle?> findOne(Map<String, dynamic> filters) async {
+    final Database? db = await DBProvider.db.database;
+    if (db == null) return null;
     List<String> whereParams = [];
     filters.keys.forEach((filter) => whereParams.add('$filter = ?'));
     List<dynamic> whereArgs = [];
@@ -133,13 +134,13 @@ class Handle {
 
   static Future<List<Handle>> find(
       [Map<String, dynamic> filters = const {}]) async {
-    final Database db = await DBProvider.db.database;
+    final Database? db = await DBProvider.db.database;
 
     List<String> whereParams = [];
     filters.keys.forEach((filter) => whereParams.add('$filter = ?'));
     List<dynamic> whereArgs = [];
     filters.values.forEach((filter) => whereArgs.add(filter));
-    var res = await db.query("handle",
+    var res = await db!.query("handle",
         where: (whereParams.length > 0) ? whereParams.join(" AND ") : null,
         whereArgs: (whereArgs.length > 0) ? whereArgs : null);
 
@@ -147,9 +148,9 @@ class Handle {
   }
 
   static Future<List<Chat>> getChats(Handle handle) async {
-    final Database db = await DBProvider.db.database;
+    final Database? db = await DBProvider.db.database;
 
-    var res = await db.rawQuery(
+    var res = await db!.rawQuery(
         "SELECT"
         " chat.ROWID AS ROWID,"
         " chat.originalROWID AS originalROWID,"
@@ -168,7 +169,8 @@ class Handle {
   }
 
   static flush() async {
-    final Database db = await DBProvider.db.database;
+    final Database? db = await DBProvider.db.database;
+    if (db == null) return;
     await db.delete("handle");
   }
 

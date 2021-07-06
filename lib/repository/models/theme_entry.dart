@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/models/theme_object.dart';
@@ -5,12 +7,12 @@ import 'package:flutter/material.dart';
 import 'package:sqflite/sqflite.dart';
 
 class ThemeEntry {
-  int id;
-  int themeId;
-  String name;
-  Color color;
-  bool isFont;
-  int fontSize;
+  int? id;
+  int? themeId;
+  String? name;
+  Color? color;
+  bool? isFont;
+  int? fontSize;
 
   ThemeEntry({
     this.id,
@@ -33,16 +35,15 @@ class ThemeEntry {
   }
 
   factory ThemeEntry.fromStyle(String title, TextStyle style) {
-    assert(style != null);
     return ThemeEntry(
       color: style.color,
       name: title,
       isFont: true,
-      fontSize: style.fontSize != null ? style.fontSize.toInt() : 14,
+      fontSize: style.fontSize != null ? style.fontSize!.toInt() : 14,
     );
   }
 
-  dynamic get style => isFont
+  dynamic get style => isFont!
       ? TextStyle(
           color: this.color,
           fontWeight: FontWeight.normal,
@@ -52,13 +53,13 @@ class ThemeEntry {
 
   Future<ThemeEntry> save(ThemeObject theme,
       {bool updateIfAbsent = true}) async {
-    final Database db = await DBProvider.db.database;
+    final Database? db = await DBProvider.db.database;
 
     assert(theme.id != null);
     this.themeId = theme.id;
 
     // Try to find an existing ConfigEntry before saving it
-    ThemeEntry existing =
+    ThemeEntry? existing =
         await ThemeEntry.findOne({"name": this.name, "themeId": this.themeId});
     if (existing != null) {
       this.id = existing.id;
@@ -70,13 +71,13 @@ class ThemeEntry {
       var map = this.toMap();
       map.remove("ROWID");
       try {
-        this.id = await db.insert("theme_values", map);
+        this.id = await db!.insert("theme_values", map);
       } catch (e) {
         this.id = null;
       }
 
       if (this.id != null && theme.id != null) {
-        await db.insert(
+        await db!.insert(
             "theme_value_join", {"themeValueId": this.id, "themeId": theme.id});
       }
     } else if (updateIfAbsent) {
@@ -87,16 +88,16 @@ class ThemeEntry {
   }
 
   Future<ThemeEntry> update(ThemeObject theme) async {
-    final Database db = await DBProvider.db.database;
+    final Database? db = await DBProvider.db.database;
 
     // If it already exists, update it
     if (this.id != null) {
-      await db.update(
+      await db!.update(
           "theme_values",
           {
             "name": this.name,
-            "color": this.color.value.toRadixString(16),
-            "isFont": this.isFont ? 1 : 0,
+            "color": this.color!.value.toRadixString(16),
+            "isFont": this.isFont! ? 1 : 0,
             "fontSize": this.fontSize,
           },
           where: "ROWID = ?",
@@ -108,10 +109,10 @@ class ThemeEntry {
     return this;
   }
 
-  static Future<ThemeEntry> findOne(Map<String, dynamic> filters,
-      {Database database}) async {
+  static Future<ThemeEntry?> findOne(Map<String, dynamic> filters,
+      {Database? database}) async {
     final Database db =
-        database != null ? database : await DBProvider.db.database;
+        database != null ? database : (await DBProvider.db.database)!;
 
     List<String> whereParams = [];
     filters.keys.forEach((filter) => whereParams.add('$filter = ?'));
@@ -131,8 +132,8 @@ class ThemeEntry {
         "ROWID": this.id,
         "name": this.name,
         "themeId": this.themeId,
-        "color": this.color.value.toRadixString(16),
-        "isFont": this.isFont ? 1 : 0,
+        "color": this.color!.value.toRadixString(16),
+        "isFont": this.isFont! ? 1 : 0,
         "fontSize": this.fontSize,
       };
 }

@@ -24,26 +24,26 @@ class AttachmentSender {
 
   int _totalChunks = 0;
   int _chunkSize = 500;
-  Chat _chat;
+  Chat? _chat;
 
   // String _tempGuid;
 
-  File _attachment;
-  String _attachmentGuid;
-  List<int> _imageBytes;
-  String _text;
-  String _attachmentName;
-  Attachment messageAttachment;
-  Message sentMessage;
-  Message messageWithText;
+  late File _attachment;
+  String? _attachmentGuid;
+  late List<int> _imageBytes;
+  String? _text;
+  String? _attachmentName;
+  Attachment? messageAttachment;
+  Message? sentMessage;
+  Message? messageWithText;
   double progress = 0.0;
 
-  String get guid => _attachmentGuid;
+  String? get guid => _attachmentGuid;
 
   AttachmentSender(
     File attachment,
-    Chat chat,
-    String text,
+    Chat? chat,
+    String? text,
   ) {
     // Set default chunk size to what is set in the settings
     _chunkSize = SettingsManager().settings.chunkSize * 1024;
@@ -59,10 +59,10 @@ class AttachmentSender {
   //         _chunksize * 1024, _cb);
   // }
 
-  sendChunkRecursive(int index, int total, String tempGuid) {
+  sendChunkRecursive(int index, int total, String? tempGuid) {
     // if (index < ) {
     Map<String, dynamic> params = new Map();
-    params["guid"] = _chat.guid;
+    params["guid"] = _chat!.guid;
     params["tempGuid"] = tempGuid;
     params["message"] = _text;
     params["attachmentGuid"] = _attachmentGuid;
@@ -93,20 +93,20 @@ class AttachmentSender {
         }
       } else {
         debugPrint("failed to send");
-        String tempGuid = sentMessage.guid;
-        sentMessage.guid = sentMessage.guid.replaceAll("temp", "error-${response['error']['message']}");
-        sentMessage.error = response['status'] == 400 ? MessageError.BAD_REQUEST.code : MessageError.SERVER_ERROR.code;
+        String? tempGuid = sentMessage!.guid;
+        sentMessage!.guid = sentMessage!.guid!.replaceAll("temp", "error-${response['error']['message']}");
+        sentMessage!.error = response['status'] == 400 ? MessageError.BAD_REQUEST.code : MessageError.SERVER_ERROR.code;
 
         await Message.replaceMessage(tempGuid, sentMessage);
-        NewMessageManager().updateMessage(_chat, tempGuid, sentMessage);
+        NewMessageManager().updateMessage(_chat, tempGuid, sentMessage!);
         if (messageWithText != null) {
-          tempGuid = messageWithText.guid;
-          messageWithText.guid = messageWithText.guid.replaceAll("temp", "error-${response['error']['message']}");
-          messageWithText.error =
+          tempGuid = messageWithText!.guid;
+          messageWithText!.guid = messageWithText!.guid!.replaceAll("temp", "error-${response['error']['message']}");
+          messageWithText!.error =
               response['status'] == 400 ? MessageError.BAD_REQUEST.code : MessageError.SERVER_ERROR.code;
 
           await Message.replaceMessage(tempGuid, messageWithText);
-          NewMessageManager().updateMessage(_chat, tempGuid, messageWithText);
+          NewMessageManager().updateMessage(_chat, tempGuid, messageWithText!);
         }
         SocketManager().finishSender(_attachmentGuid);
         _stream.sink.addError("failed to send");
@@ -130,8 +130,8 @@ class AttachmentSender {
       uti: "public.jpg",
       transferName: _attachmentName,
       mimeType: mime(_attachmentName),
-      width: mime(_attachmentName).startsWith("image") ? ImageSizeGetter.getSize(FileInput(_attachment)).width : null,
-      height: mime(_attachmentName).startsWith("image") ? ImageSizeGetter.getSize(FileInput(_attachment)).height : null,
+      width: mime(_attachmentName)!.startsWith("image") ? ImageSizeGetter.getSize(FileInput(_attachment)).width : null,
+      height: mime(_attachmentName)!.startsWith("image") ? ImageSizeGetter.getSize(FileInput(_attachment)).height : null,
     );
 
     sentMessage = Message(
@@ -152,7 +152,7 @@ class AttachmentSender {
 
     // Save the attachment to device
     String appDocPath = SettingsManager().appDocDir.path;
-    String pathName = "$appDocPath/attachments/${messageAttachment.guid}/$_attachmentName";
+    String pathName = "$appDocPath/attachments/${messageAttachment!.guid}/$_attachmentName";
     debugPrint("(Sigabrt) Before saving to device");
     File file = await new File(pathName).create(recursive: true);
     await file.writeAsBytes(Uint8List.fromList(_imageBytes));
@@ -160,18 +160,18 @@ class AttachmentSender {
 
     // Add the message to the chat.
     // This will save the message, attachments, and chat
-    await _chat.addMessage(sentMessage);
+    await _chat!.addMessage(sentMessage!);
     NewMessageManager().addMessage(_chat, sentMessage, outgoing: true);
 
     // If there is any text, save the text too
     if (messageWithText != null) {
-      await _chat.addMessage(messageWithText);
+      await _chat!.addMessage(messageWithText!);
       NewMessageManager().addMessage(_chat, messageWithText, outgoing: true);
     }
 
     _totalChunks = numOfChunks;
     SocketManager().addAttachmentSender(this);
     debugPrint("(Sigabrt) Before sending first chunk");
-    sendChunkRecursive(0, _totalChunks, messageWithText == null ? "temp-${randomString(8)}" : messageWithText.guid);
+    sendChunkRecursive(0, _totalChunks, messageWithText == null ? "temp-${randomString(8)}" : messageWithText!.guid);
   }
 }

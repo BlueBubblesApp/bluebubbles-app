@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-// @dart = 2.8
+
 
 import 'dart:ui' as ui show BoxHeightStyle, BoxWidthStyle;
 
@@ -40,11 +40,6 @@ const BoxDecoration _kDefaultRoundedBorderDecoration = BoxDecoration(
   ),
   border: _kDefaultRoundedBorder,
   borderRadius: BorderRadius.all(Radius.circular(5.0)),
-);
-
-const Color _kDisabledBackground = CupertinoDynamicColor.withBrightness(
-  color: Color(0xFFFAFAFA),
-  darkColor: Color(0xFF050505),
 );
 
 // Value inspected from Xcode 11 & iOS 13.0 Simulator.
@@ -88,7 +83,7 @@ enum OverlayVisibilityMode {
 
 class _CupertinoTextFieldSelectionGestureDetectorBuilder extends TextSelectionGestureDetectorBuilder {
   _CupertinoTextFieldSelectionGestureDetectorBuilder({
-    @required _CupertinoTextFieldState state,
+    required _CupertinoTextFieldState state,
   })  : _state = state,
         super(delegate: state);
 
@@ -101,7 +96,7 @@ class _CupertinoTextFieldSelectionGestureDetectorBuilder extends TextSelectionGe
     // this handler. If the clear button widget recognizes the up event,
     // then do not handle it.
     if (_state._clearGlobalKey.currentContext != null) {
-      final RenderBox renderBox = _state._clearGlobalKey.currentContext.findRenderObject() as RenderBox;
+      final RenderBox renderBox = _state._clearGlobalKey.currentContext!.findRenderObject() as RenderBox;
       final Offset localOffset = renderBox.globalToLocal(details.globalPosition);
       if (renderBox.hitTest(BoxHitTestResult(), position: localOffset)) {
         return;
@@ -113,13 +108,13 @@ class _CupertinoTextFieldSelectionGestureDetectorBuilder extends TextSelectionGe
     }
 
     _state._requestKeyboard();
-    if (_state.widget.onTap != null) _state.widget.onTap();
+    if (_state.widget.onTap != null) _state.widget.onTap!();
   }
 
   @override
   void onSingleLongTapStart(LongPressStartDetails details) {
     super.onSingleLongTapStart(details);
-    if (_state.widget.onLongPressStart != null) _state.widget.onLongPressStart();
+    if (_state.widget.onLongPressStart != null) _state.widget.onLongPressStart!();
   }
 
   @override
@@ -225,7 +220,7 @@ class ContactSelectorCustomCupertinoTextfield extends StatefulWidget {
   ///  * [maxLength], which discusses the precise meaning of "number of
   ///    characters" and how it may differ from the intuitive meaning.
   const ContactSelectorCustomCupertinoTextfield({
-    Key key,
+    Key? key,
     this.controller,
     this.focusNode,
     this.decoration = _kDefaultRoundedBorderDecoration,
@@ -240,22 +235,22 @@ class ContactSelectorCustomCupertinoTextfield extends StatefulWidget {
     this.suffix,
     this.suffixMode = OverlayVisibilityMode.always,
     this.clearButtonMode = OverlayVisibilityMode.never,
-    TextInputType keyboardType,
+    TextInputType? keyboardType,
     this.textInputAction,
     this.textCapitalization = TextCapitalization.none,
-    this.style,
+    required this.style,
     this.strutStyle,
     this.textAlign = TextAlign.start,
     this.textAlignVertical,
     this.readOnly = false,
-    ToolbarOptions toolbarOptions,
+    ToolbarOptions? toolbarOptions,
     this.showCursor,
     this.autofocus = false,
     this.obscuringCharacter = '•',
     this.obscureText = false,
     this.autocorrect = true,
-    SmartDashesType smartDashesType,
-    SmartQuotesType smartQuotesType,
+    SmartDashesType? smartDashesType,
+    SmartQuotesType? smartQuotesType,
     this.enableSuggestions = true,
     this.maxLines = 1,
     this.minLines,
@@ -284,36 +279,21 @@ class ContactSelectorCustomCupertinoTextfield extends StatefulWidget {
     this.scrollPhysics,
     this.autofillHints,
     this.restorationId,
-  })  : assert(textAlign != null),
-        assert(readOnly != null),
-        assert(autofocus != null),
-        assert(obscuringCharacter != null && obscuringCharacter.length == 1),
-        assert(obscureText != null),
-        assert(autocorrect != null),
+  })  : assert(obscuringCharacter.length == 1),
         smartDashesType = smartDashesType ?? (obscureText ? SmartDashesType.disabled : SmartDashesType.enabled),
         smartQuotesType = smartQuotesType ?? (obscureText ? SmartQuotesType.disabled : SmartQuotesType.enabled),
-        assert(enableSuggestions != null),
-        assert(maxLengthEnforced != null),
-        assert(scrollPadding != null),
-        assert(dragStartBehavior != null),
-        assert(selectionHeightStyle != null),
-        assert(selectionWidthStyle != null),
-        assert(maxLines == null || maxLines > 0),
+        assert(maxLines > 0),
         assert(minLines == null || minLines > 0),
         assert(
-          (maxLines == null) || (minLines == null) || (maxLines >= minLines),
+          (minLines == null) || (maxLines >= minLines),
           "minLines can't be greater than maxLines",
         ),
-        assert(expands != null),
         assert(
-          !expands || (maxLines == null && minLines == null),
+          !expands || minLines == null,
           'minLines and maxLines must be null when expands is true.',
         ),
         assert(!obscureText || maxLines == 1, 'Obscured fields cannot be multiline.'),
         assert(maxLength == null || maxLength > 0),
-        assert(clearButtonMode != null),
-        assert(prefixMode != null),
-        assert(suffixMode != null),
         // Assert the following instead of setting it directly to avoid surprising the user by silently changing the value they set.
         assert(
             !identical(textInputAction, TextInputAction.newline) ||
@@ -338,10 +318,10 @@ class ContactSelectorCustomCupertinoTextfield extends StatefulWidget {
   /// Controls the text being edited.
   ///
   /// If null, this widget will create its own [TextEditingController].
-  final TextEditingController controller;
+  final TextEditingController? controller;
 
   /// {@macro flutter.widgets.Focus.focusNode}
-  final FocusNode focusNode;
+  final FocusNode? focusNode;
 
   /// Controls the [BoxDecoration] of the box behind the text input.
   ///
@@ -362,7 +342,7 @@ class ContactSelectorCustomCupertinoTextfield extends StatefulWidget {
   ///
   /// The text style of the placeholder text matches that of the text field's
   /// main text entry except a lighter font weight and a grey font color.
-  final String placeholder;
+  final String? placeholder;
 
   /// The style to use for the placeholder text.
   ///
@@ -376,7 +356,7 @@ class ContactSelectorCustomCupertinoTextfield extends StatefulWidget {
   final TextStyle placeholderStyle;
 
   /// An optional [Widget] to display before the text.
-  final Widget prefix;
+  final Widget? prefix;
 
   /// Controls the visibility of the [prefix] widget based on the state of
   /// text entry when the [prefix] argument is not null.
@@ -387,7 +367,7 @@ class ContactSelectorCustomCupertinoTextfield extends StatefulWidget {
   final OverlayVisibilityMode prefixMode;
 
   /// An optional [Widget] to display after the text.
-  final Widget suffix;
+  final Widget? suffix;
 
   /// Controls the visibility of the [suffix] widget based on the state of
   /// text entry when the [suffix] argument is not null.
@@ -414,7 +394,7 @@ class ContactSelectorCustomCupertinoTextfield extends StatefulWidget {
   ///
   /// Defaults to [TextInputAction.newline] if [keyboardType] is
   /// [TextInputType.multiline] and [TextInputAction.done] otherwise.
-  final TextInputAction textInputAction;
+  final TextInputAction? textInputAction;
 
   /// {@macro flutter.widgets.editableText.textCapitalization}
   final TextCapitalization textCapitalization;
@@ -427,7 +407,7 @@ class ContactSelectorCustomCupertinoTextfield extends StatefulWidget {
   final TextStyle style;
 
   /// {@macro flutter.widgets.editableText.strutStyle}
-  final StrutStyle strutStyle;
+  final StrutStyle? strutStyle;
 
   /// {@macro flutter.widgets.editableText.textAlign}
   final TextAlign textAlign;
@@ -440,13 +420,13 @@ class ContactSelectorCustomCupertinoTextfield extends StatefulWidget {
   final ToolbarOptions toolbarOptions;
 
   /// {@macro flutter.widgets.inputDecorator.textAlignVertical}
-  final TextAlignVertical textAlignVertical;
+  final TextAlignVertical? textAlignVertical;
 
   /// {@macro flutter.widgets.editableText.readOnly}
   final bool readOnly;
 
   /// {@macro flutter.widgets.editableText.showCursor}
-  final bool showCursor;
+  final bool? showCursor;
 
   /// {@macro flutter.widgets.editableText.autofocus}
   final bool autofocus;
@@ -473,7 +453,7 @@ class ContactSelectorCustomCupertinoTextfield extends StatefulWidget {
   final int maxLines;
 
   /// {@macro flutter.widgets.editableText.minLines}
-  final int minLines;
+  final int? minLines;
 
   /// {@macro flutter.widgets.editableText.expands}
   final bool expands;
@@ -520,7 +500,7 @@ class ContactSelectorCustomCupertinoTextfield extends StatefulWidget {
   ///
   ///  * [LengthLimitingTextInputFormatter] for more information on how it
   ///    counts characters, and how it may differ from the intuitive meaning.
-  final int maxLength;
+  final int? maxLength;
 
   /// If true, prevents the field from allowing more than [maxLength]
   /// characters.
@@ -531,13 +511,13 @@ class ContactSelectorCustomCupertinoTextfield extends StatefulWidget {
   final bool maxLengthEnforced;
 
   /// {@macro flutter.widgets.editableText.onChanged}
-  final ValueChanged<String> onChanged;
+  final ValueChanged<String>? onChanged;
 
   /// Once new content is commited...
-  final ValueChanged<Map<String, Object>> onContentCommited;
+  final ValueChanged<Map<String, Object>>? onContentCommited;
 
   /// {@macro flutter.widgets.editableText.onEditingComplete}
-  final VoidCallback onEditingComplete;
+  final VoidCallback? onEditingComplete;
 
   /// {@macro flutter.widgets.editableText.onSubmitted}
   ///
@@ -546,23 +526,23 @@ class ContactSelectorCustomCupertinoTextfield extends StatefulWidget {
   ///  * [EditableText.onSubmitted] for an example of how to handle moving to
   ///    the next/previous field when using [TextInputAction.next] and
   ///    [TextInputAction.previous] for [textInputAction].
-  final ValueChanged<String> onSubmitted;
+  final ValueChanged<String>? onSubmitted;
 
   /// {@macro flutter.widgets.editableText.inputFormatters}
-  final List<TextInputFormatter> inputFormatters;
+  final List<TextInputFormatter>? inputFormatters;
 
   /// Disables the text field when false.
   ///
   /// Text fields in disabled states have a light grey background and don't
   /// respond to touch events including the [prefix], [suffix] and the clear
   /// button.
-  final bool enabled;
+  final bool? enabled;
 
   /// {@macro flutter.widgets.editableText.cursorWidth}
   final double cursorWidth;
 
   /// {@macro flutter.widgets.editableText.cursorHeight}
-  final double cursorHeight;
+  final double? cursorHeight;
 
   /// {@macro flutter.widgets.editableText.cursorRadius}
   final Radius cursorRadius;
@@ -572,7 +552,7 @@ class ContactSelectorCustomCupertinoTextfield extends StatefulWidget {
   /// Defaults to the [CupertinoThemeData.primaryColor] of the ambient theme,
   /// which itself defaults to [CupertinoColors.activeBlue] in the light theme
   /// and [CupertinoColors.activeOrange] in the dark theme.
-  final Color cursorColor;
+  final Color? cursorColor;
 
   /// Controls how tall the selection highlight boxes are computed to be.
   ///
@@ -589,7 +569,7 @@ class ContactSelectorCustomCupertinoTextfield extends StatefulWidget {
   /// This setting is only honored on iOS devices.
   ///
   /// If null, defaults to [Brightness.light].
-  final Brightness keyboardAppearance;
+  final Brightness? keyboardAppearance;
 
   /// {@macro flutter.widgets.editableText.scrollPadding}
   final EdgeInsets scrollPadding;
@@ -601,26 +581,26 @@ class ContactSelectorCustomCupertinoTextfield extends StatefulWidget {
   final DragStartBehavior dragStartBehavior;
 
   /// {@macro flutter.widgets.editableText.scrollController}
-  final ScrollController scrollController;
+  final ScrollController? scrollController;
 
   /// {@macro flutter.widgets.editableText.scrollPhysics}
-  final ScrollPhysics scrollPhysics;
+  final ScrollPhysics? scrollPhysics;
 
   /// {@macro flutter.widgets.editableText.selectionEnabled}
   bool get selectionEnabled => enableInteractiveSelection;
 
   /// {@macro flutter.material.textfield.onTap}
-  final GestureTapCallback onTap;
+  final GestureTapCallback? onTap;
 
   /// {@macro flutter.material.textfield.onLongPressStart}
-  final GestureTapCallback onLongPressStart;
+  final GestureTapCallback? onLongPressStart;
 
   /// {@macro flutter.widgets.editableText.autofillHints}
   /// {@macro flutter.services.autofill.autofillHints}
-  final Iterable<String> autofillHints;
+  final Iterable<String>? autofillHints;
 
   /// {@macro flutter.material.textfield.restorationId}
-  final String restorationId;
+  final String? restorationId;
 
   @override
   _CupertinoTextFieldState createState() => _CupertinoTextFieldState();
@@ -671,17 +651,17 @@ class _CupertinoTextFieldState extends State<ContactSelectorCustomCupertinoTextf
     implements TextSelectionGestureDetectorBuilderDelegate {
   final GlobalKey _clearGlobalKey = GlobalKey();
 
-  TextEditingController _controller;
+  TextEditingController? _controller;
 
-  TextEditingController get _effectiveController => widget.controller ?? _controller;
+  TextEditingController? get _effectiveController => widget.controller ?? _controller;
 
-  FocusNode _focusNode;
+  FocusNode? _focusNode;
 
   FocusNode get _effectiveFocusNode => widget.focusNode ?? (_focusNode ??= FocusNode());
 
   bool _showSelectionHandles = false;
 
-  _CupertinoTextFieldSelectionGestureDetectorBuilder _selectionGestureDetectorBuilder;
+  late _CupertinoTextFieldSelectionGestureDetectorBuilder _selectionGestureDetectorBuilder;
 
   // API for TextSelectionGestureDetectorBuilderDelegate.
   @override
@@ -701,7 +681,7 @@ class _CupertinoTextFieldState extends State<ContactSelectorCustomCupertinoTextf
     _selectionGestureDetectorBuilder = _CupertinoTextFieldSelectionGestureDetectorBuilder(state: this);
     if (widget.controller == null) {
       _controller = TextEditingController();
-      _controller.addListener(updateKeepAlive);
+      _controller!.addListener(updateKeepAlive);
     }
   }
 
@@ -709,10 +689,10 @@ class _CupertinoTextFieldState extends State<ContactSelectorCustomCupertinoTextf
   void didUpdateWidget(ContactSelectorCustomCupertinoTextfield oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.controller == null && oldWidget.controller != null) {
-      _controller = TextEditingController.fromValue(oldWidget.controller.value);
-      _controller.addListener(updateKeepAlive);
+      _controller = TextEditingController.fromValue(oldWidget.controller!.value);
+      _controller!.addListener(updateKeepAlive);
     } else if (widget.controller != null && oldWidget.controller == null) {
-      _controller.dispose();
+      _controller!.dispose();
       _controller = null;
     }
     final bool isEnabled = widget.enabled ?? true;
@@ -722,7 +702,7 @@ class _CupertinoTextFieldState extends State<ContactSelectorCustomCupertinoTextf
     }
   }
 
-  String get restorationId => widget.restorationId;
+  String? get restorationId => widget.restorationId;
 
   @override
   void dispose() {
@@ -731,28 +711,28 @@ class _CupertinoTextFieldState extends State<ContactSelectorCustomCupertinoTextf
     super.dispose();
   }
 
-  EditableTextState get _editableText => editableTextKey.currentState;
+  EditableTextState? get _editableText => editableTextKey.currentState;
 
   void _requestKeyboard() {
     _editableText?.requestKeyboard();
   }
 
-  bool _shouldShowSelectionHandles(SelectionChangedCause cause) {
+  bool _shouldShowSelectionHandles(SelectionChangedCause? cause) {
     // When the text field is activated by something that doesn't trigger the
     // selection overlay, we shouldn't show the handles either.
     if (!_selectionGestureDetectorBuilder.shouldShowSelectionToolbar) return false;
 
     // On iOS, we don't show handles when the selection is collapsed.
-    if (_effectiveController.selection.isCollapsed) return false;
+    if (_effectiveController!.selection.isCollapsed) return false;
 
     if (cause == SelectionChangedCause.keyboard) return false;
 
-    if (_effectiveController.text.isNotEmpty) return true;
+    if (_effectiveController!.text.isNotEmpty) return true;
 
     return false;
   }
 
-  void _handleSelectionChanged(TextSelection selection, SelectionChangedCause cause) {
+  void _handleSelectionChanged(TextSelection selection, SelectionChangedCause? cause) {
     if (cause == SelectionChangedCause.longPress) {
       _editableText?.bringIntoView(selection.base);
     }
@@ -765,11 +745,11 @@ class _CupertinoTextFieldState extends State<ContactSelectorCustomCupertinoTextf
   }
 
   @override
-  bool get wantKeepAlive => _controller?.value?.text?.isNotEmpty == true;
+  bool get wantKeepAlive => _controller?.value.text.isNotEmpty == true;
 
-  bool _shouldShowAttachment({
-    OverlayVisibilityMode attachment,
-    bool hasText,
+  bool? _shouldShowAttachment({
+    OverlayVisibilityMode? attachment,
+    bool? hasText,
   }) {
     switch (attachment) {
       case OverlayVisibilityMode.never:
@@ -779,10 +759,11 @@ class _CupertinoTextFieldState extends State<ContactSelectorCustomCupertinoTextf
       case OverlayVisibilityMode.editing:
         return hasText;
       case OverlayVisibilityMode.notEditing:
-        return !hasText;
+        return !hasText!;
+      default:
+        assert(false);
+        return null;
     }
-    assert(false);
-    return null;
   }
 
   bool _showPrefixWidget(TextEditingValue text) {
@@ -790,7 +771,7 @@ class _CupertinoTextFieldState extends State<ContactSelectorCustomCupertinoTextf
         _shouldShowAttachment(
           attachment: widget.prefixMode,
           hasText: text.text.isNotEmpty,
-        );
+        )!;
   }
 
   bool _showSuffixWidget(TextEditingValue text) {
@@ -798,10 +779,10 @@ class _CupertinoTextFieldState extends State<ContactSelectorCustomCupertinoTextf
         _shouldShowAttachment(
           attachment: widget.suffixMode,
           hasText: text.text.isNotEmpty,
-        );
+        )!;
   }
 
-  bool _showClearButton(TextEditingValue text) {
+  bool? _showClearButton(TextEditingValue text) {
     return _shouldShowAttachment(
       attachment: widget.clearButtonMode,
       hasText: text.text.isNotEmpty,
@@ -819,7 +800,7 @@ class _CupertinoTextFieldState extends State<ContactSelectorCustomCupertinoTextf
   // Provide default behavior if widget.textAlignVertical is not set.
   // CustomCupertinoTextField has top alignment by default, unless it has decoration
   // like a prefix or suffix, in which case it's aligned to the center.
-  TextAlignVertical get _textAlignVertical {
+  TextAlignVertical? get _textAlignVertical {
     if (widget.textAlignVertical != null) {
       return widget.textAlignVertical;
     }
@@ -827,9 +808,6 @@ class _CupertinoTextFieldState extends State<ContactSelectorCustomCupertinoTextf
   }
 
   Widget _addTextDependentAttachments(Widget editableText, TextStyle textStyle, TextStyle placeholderStyle) {
-    assert(editableText != null);
-    assert(textStyle != null);
-    assert(placeholderStyle != null);
     // If there are no surrounding widgets, just return the core editable text
     // part.
     if (!_hasDecoration) {
@@ -838,13 +816,13 @@ class _CupertinoTextFieldState extends State<ContactSelectorCustomCupertinoTextf
 
     // Otherwise, listen to the current state of the text entry.
     return ValueListenableBuilder<TextEditingValue>(
-      valueListenable: _effectiveController,
+      valueListenable: _effectiveController!,
       child: editableText,
-      builder: (BuildContext context, TextEditingValue text, Widget child) {
+      builder: (BuildContext context, TextEditingValue text, Widget? child) {
         return Row(children: <Widget>[
           // Insert a prefix at the front if the prefix visibility mode matches
           // the current text state.
-          if (_showPrefixWidget(text)) widget.prefix,
+          if (_showPrefixWidget(text)) widget.prefix!,
           // In the middle part, stack the placeholder on top of the main EditableText
           // if needed.
           Expanded(
@@ -856,7 +834,7 @@ class _CupertinoTextFieldState extends State<ContactSelectorCustomCupertinoTextf
                     child: Padding(
                       padding: widget.padding,
                       child: Text(
-                        widget.placeholder,
+                        widget.placeholder!,
                         maxLines: widget.maxLines,
                         overflow: TextOverflow.ellipsis,
                         style: placeholderStyle,
@@ -864,24 +842,24 @@ class _CupertinoTextFieldState extends State<ContactSelectorCustomCupertinoTextf
                       ),
                     ),
                   ),
-                child,
+                child ?? SizedBox.shrink(),
               ],
             ),
           ),
           // First add the explicit suffix if the suffix visibility mode matches.
           if (_showSuffixWidget(text))
-            widget.suffix
+            widget.suffix!
           // Otherwise, try to show a clear button if its visibility mode matches.
-          else if (_showClearButton(text))
+          else if (_showClearButton(text)!)
             GestureDetector(
               key: _clearGlobalKey,
               onTap: widget.enabled ?? true
                   ? () {
                       // Special handle onChanged for ClearButton
                       // Also call onChanged when the clear button is tapped.
-                      final bool textChanged = _effectiveController.text.isNotEmpty;
-                      _effectiveController.clear();
-                      if (widget.onChanged != null && textChanged) widget.onChanged(_effectiveController.text);
+                      final bool textChanged = _effectiveController!.text.isNotEmpty;
+                      _effectiveController!.clear();
+                      if (widget.onChanged != null && textChanged) widget.onChanged!(_effectiveController!.text);
                     }
                   : null,
               child: Padding(
@@ -902,7 +880,7 @@ class _CupertinoTextFieldState extends State<ContactSelectorCustomCupertinoTextf
   Widget build(BuildContext context) {
     super.build(context); // See AutomaticKeepAliveClientMixin.
     assert(debugCheckHasDirectionality(context));
-    final TextEditingController controller = _effectiveController;
+    final TextEditingController controller = _effectiveController!;
     final List<TextInputFormatter> formatters = widget.inputFormatters ?? <TextInputFormatter>[];
     final bool enabled = widget.enabled ?? true;
     final Offset cursorOffset = Offset(_iOSHorizontalCursorOffsetPixels / Get.mediaQuery.devicePixelRatio, 0);
@@ -910,29 +888,27 @@ class _CupertinoTextFieldState extends State<ContactSelectorCustomCupertinoTextf
       formatters.add(LengthLimitingTextInputFormatter(widget.maxLength));
     }
     final CupertinoThemeData themeData = CupertinoTheme.of(context);
-
-    final TextStyle resolvedStyle = widget.style?.copyWith(
-      color: CupertinoDynamicColor.resolve(widget.style?.color, context),
-      backgroundColor: CupertinoDynamicColor.resolve(widget.style?.backgroundColor, context),
+    final TextStyle? resolvedStyle = widget.style.copyWith(
+      color: CupertinoDynamicColor.maybeResolve(widget.style.color, context),
+      backgroundColor: CupertinoDynamicColor.maybeResolve(widget.style.backgroundColor, context),
     );
 
     final TextStyle textStyle = themeData.textTheme.textStyle.merge(resolvedStyle);
 
-    final TextStyle resolvedPlaceholderStyle = widget.placeholderStyle?.copyWith(
-      color: CupertinoDynamicColor.resolve(widget.placeholderStyle?.color, context),
-      backgroundColor: CupertinoDynamicColor.resolve(widget.placeholderStyle?.backgroundColor, context),
+    final TextStyle? resolvedPlaceholderStyle = widget.placeholderStyle.copyWith(
+      color: CupertinoDynamicColor.maybeResolve(widget.placeholderStyle.color, context),
+      backgroundColor: CupertinoDynamicColor.maybeResolve(widget.placeholderStyle.backgroundColor, context),
     );
 
     final TextStyle placeholderStyle = textStyle.merge(resolvedPlaceholderStyle);
 
     final Brightness keyboardAppearance = widget.keyboardAppearance ?? CupertinoTheme.brightnessOf(context);
-    final Color cursorColor = CupertinoDynamicColor.resolve(widget.cursorColor, context) ?? themeData.primaryColor;
-    final Color disabledColor = CupertinoDynamicColor.resolve(_kDisabledBackground, context);
+    final Color cursorColor = CupertinoDynamicColor.maybeResolve(widget.cursorColor, context) ?? themeData.primaryColor;
 
-    final Color decorationColor = CupertinoDynamicColor.resolve(widget.decoration?.color, context);
+    final Color? decorationColor = CupertinoDynamicColor.maybeResolve(widget.decoration.color, context);
 
-    final BoxBorder border = widget.decoration?.border;
-    Border resolvedBorder = border as Border;
+    final BoxBorder? border = widget.decoration.border;
+    Border? resolvedBorder = border as Border?;
     if (border is Border) {
       BorderSide resolveBorderSide(BorderSide side) {
         return side == BorderSide.none
@@ -940,7 +916,7 @@ class _CupertinoTextFieldState extends State<ContactSelectorCustomCupertinoTextf
             : side.copyWith(color: CupertinoDynamicColor.resolve(side.color, context));
       }
 
-      resolvedBorder = border == null || border.runtimeType != Border
+      resolvedBorder = border.runtimeType != Border
           ? border
           : Border(
               top: resolveBorderSide(border.top),
@@ -950,9 +926,9 @@ class _CupertinoTextFieldState extends State<ContactSelectorCustomCupertinoTextf
             );
     }
 
-    final BoxDecoration effectiveDecoration = widget.decoration?.copyWith(
+    final BoxDecoration? effectiveDecoration = widget.decoration.copyWith(
       border: resolvedBorder,
-      color: enabled ? decorationColor : (decorationColor ?? disabledColor),
+      color: decorationColor,
     );
 
     final Color selectionColor = CupertinoTheme.of(context).primaryColor.withOpacity(0.2);
@@ -1031,7 +1007,7 @@ class _CupertinoTextFieldState extends State<ContactSelectorCustomCupertinoTextf
           child: _selectionGestureDetectorBuilder.buildGestureDetector(
             behavior: HitTestBehavior.translucent,
             child: Align(
-              alignment: Alignment(-1.0, _textAlignVertical.y),
+              alignment: Alignment(-1.0, _textAlignVertical!.y),
               widthFactor: 1.0,
               heightFactor: 1.0,
               child: _addTextDependentAttachments(paddedEditable, textStyle, placeholderStyle),

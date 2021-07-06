@@ -1,4 +1,3 @@
-import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view_mixin.dart';
@@ -10,12 +9,12 @@ import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:flutter/material.dart';
 
 class ContactSelectorOption extends StatelessWidget {
-  const ContactSelectorOption({Key key, @required this.item, @required this.onSelected}) : super(key: key);
+  const ContactSelectorOption({Key? key, required this.item, required this.onSelected}) : super(key: key);
   final UniqueContact item;
   final Function(UniqueContact item) onSelected;
 
-  String getTypeStr(String type) {
-    if (isNullOrEmpty(type)) return "";
+  String getTypeStr(String? type) {
+    if (isNullOrEmpty(type)!) return "";
     return " ($type)";
   }
 
@@ -23,15 +22,13 @@ class ContactSelectorOption extends StatelessWidget {
     if (!item.isChat) return "";
 
     List<String> formatted = [];
-    for (var item in item.chat.participants) {
-      String contact = ContactManager().getCachedContactSync(item.address)?.displayName;
+    for (var item in item.chat!.participants) {
+      String? contact = ContactManager().getCachedContactSync(item.address)?.displayName;
       if (contact == null) {
-        contact = await formatPhoneNumber(item.address);
+        contact = await formatPhoneNumber(item.address!);
       }
 
-      if (contact != null) {
-        formatted.add(contact);
-      }
+      formatted.add(contact);
     }
 
     return formatted.join(", ");
@@ -39,9 +36,9 @@ class ContactSelectorOption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    var getTextWidget = (String text) {
+    var getTextWidget = (String? text) {
       return Text(
-        text,
+        text!,
         style: Theme.of(context).textTheme.subtitle1,
         overflow: TextOverflow.ellipsis,
       );
@@ -51,13 +48,13 @@ class ContactSelectorOption extends StatelessWidget {
       key: new Key("chat-${item.displayName}"),
       onTap: () => onSelected(item),
       title: Text(
-        !item.isChat ? "${item.displayName}${getTypeStr(item.label)}" : item.chat.title ?? "Group Chat",
+        !item.isChat ? "${item.displayName}${getTypeStr(item.label)}" : item.chat!.title ?? "Group Chat",
         style: Theme.of(context).textTheme.bodyText1,
         overflow: TextOverflow.ellipsis,
       ),
-      subtitle: (!item.isChat || item.chat.participants.length == 1)
-          ? getTextWidget(item?.address ?? item.chat.participants[0]?.address ?? "Person")
-          : FutureBuilder(
+      subtitle: (!item.isChat || item.chat!.participants.length == 1)
+          ? getTextWidget(item.address ?? item.chat!.participants[0].address ?? "Person")
+          : FutureBuilder<String>(
               future: chatParticipants,
               builder: (context, snapshot) {
                 if (!snapshot.hasData) {
@@ -75,7 +72,7 @@ class ContactSelectorOption extends StatelessWidget {
             )
           : ContactAvatarGroupWidget(
               chat: item.chat,
-              participants: item.chat.participants,
+              participants: item.chat!.participants,
               editable: false,
             ),
       trailing: item.isChat

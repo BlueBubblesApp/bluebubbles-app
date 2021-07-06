@@ -10,29 +10,29 @@ import 'package:http/http.dart' as http;
 import 'package:metadata_fetch/metadata_fetch.dart';
 
 /// Adds getter/setter for the original [Response.request.url]
-extension HttpRequestData on Document {
-  static String _requestUrl;
+extension HttpRequestData on Document? {
+  static String? _requestUrl;
 
-  String get requestUrl {
+  String? get requestUrl {
     return _requestUrl;
   }
 
-  set requestUrl(String newValue) {
+  set requestUrl(String? newValue) {
     _requestUrl = newValue;
   }
 }
 
 class MetadataHelper {
-  static bool mapIsNotEmpty(Map<String, dynamic> data) {
+  static bool mapIsNotEmpty(Map<String, dynamic>? data) {
     if (data == null) return false;
     return data.containsKey("title") && data["title"] != null;
   }
 
-  static bool isNotEmpty(Metadata data) {
+  static bool isNotEmpty(Metadata? data) {
     return data?.title != null || data?.description != null || data?.image != null;
   }
 
-  static Map<String, dynamic> safeJsonDecode(String input) {
+  static Map<String, dynamic>? safeJsonDecode(String input) {
     try {
       return jsonDecode(input);
     } catch (ex) {
@@ -40,16 +40,16 @@ class MetadataHelper {
     }
   }
 
-  static Map<String, Completer<Metadata>> _metaCache = {};
+  static Map<String?, Completer<Metadata>> _metaCache = {};
 
-  static Future<Metadata> fetchMetadata(Message message) async {
-    Metadata data;
+  static Future<Metadata?> fetchMetadata(Message? message) async {
+    Metadata? data;
 
     if (message == null || isEmptyString(message.text)) return null;
 
     // If we have a cached item for this already, return that future
     if (_metaCache.containsKey(message.guid)) {
-      return _metaCache[message.guid].future;
+      return _metaCache[message.guid]!.future;
     }
 
     // Create a new completer for this request
@@ -57,13 +57,13 @@ class MetadataHelper {
     _metaCache[message.guid] = completer;
 
     // Make sure there is a schema with the URL
-    String url = message.text;
+    String url = message.text!;
     if (!url.toLowerCase().startsWith("http://") && !url.toLowerCase().startsWith("https://")) {
       url = "https://" + url;
     }
 
     String originalUrl = url;
-    Uri newUrl = Uri.tryParse(MetadataHelper._reformatUrl(url));
+    Uri? newUrl = Uri.tryParse(MetadataHelper._reformatUrl(url));
 
     // Handle specific cases
     bool alreadyManual = false;
@@ -72,14 +72,14 @@ class MetadataHelper {
       var response = await http.get(newUrl);
 
       // Manually load it into a metadata object via JSON
-      Map json = MetadataHelper.safeJsonDecode(response.body);
-      if (isNullOrEmpty(json)) {
+      Map? json = MetadataHelper.safeJsonDecode(response.body);
+      if (isNullOrEmpty(json)!) {
         completer.complete(null);
         return completer.future;
       }
 
       data = Metadata();
-      data.image = json.containsKey("thumbnail_url") ? json["thumbnail_url"] : null;
+      data.image = json!.containsKey("thumbnail_url") ? json["thumbnail_url"] : null;
       data.title = json.containsKey("title") ? json["title"] : null;
       data.description = json.containsKey("author_name") ? "User: ${json["author_name"]}" : null;
 
@@ -90,14 +90,14 @@ class MetadataHelper {
       var response = await http.get(newUrl);
 
       // Manually load it into a metadata object via JSON
-      Map res = MetadataHelper.safeJsonDecode(response.body);
-      if (isNullOrEmpty(res)) {
+      Map? res = MetadataHelper.safeJsonDecode(response.body);
+      if (isNullOrEmpty(res)!) {
         completer.complete(null);
         return completer.future;
       }
 
       data = new Metadata();
-      data.title = (res.containsKey("author_name")) ? res["author_name"] : "";
+      data.title = (res!.containsKey("author_name")) ? res["author_name"] : "";
       data.description = (res.containsKey("html")) ? stripHtmlTags(res["html"].replaceAll("<br>", "\n")).trim() : "";
 
       // Set the URL to the original URL
@@ -107,14 +107,14 @@ class MetadataHelper {
       var document = MetadataFetch.responseToDocument(response);
 
       // Since this is a short-URL, we need to get the actual URL out
-      String href;
+      String? href;
       for (var i in document?.head?.children ?? []) {
         // Skip over all links
         if (i.localName != "link") continue;
 
         // Find an href and save it
         for (var entry in i.attributes.entries) {
-          String prop = entry.key as String;
+          String? prop = entry.key as String?;
           if (prop != "href" || entry.value.contains("amp.") || !entry.value.contains("reddit.com")) continue;
           href = entry.value;
           break;
@@ -140,13 +140,13 @@ class MetadataHelper {
     }
 
     // If the data or title was null, try to manually parse
-    if (!alreadyManual && isNullOrEmpty(data?.title)) {
+    if (!alreadyManual && isNullOrEmpty(data?.title)!) {
       data = await MetadataHelper._manuallyGetMetadata(url);
     }
 
     // If the URL is supposedly to an actual image, set the image to the URL manually
     RegExp exp = new RegExp(r"(.png|.jpg|.gif|.tiff|.jpeg)$");
-    if (data?.image == null && data?.title == null && data.url != null && exp.hasMatch(data.url)) {
+    if (data?.image == null && data?.title == null && data!.url != null && exp.hasMatch(data.url!)) {
       data.image = data.url;
       data.title = "Image Preview";
     }
@@ -162,7 +162,7 @@ class MetadataHelper {
     if (data?.description == "null") data?.description = null;
 
     // Set the OG URL
-    data.url = originalUrl;
+    data!.url = originalUrl;
 
     // Delete from the cache after 15 seconds (arbitrary)
     Future.delayed(Duration(seconds: 15), () {
@@ -189,15 +189,15 @@ class MetadataHelper {
   /// Takes an [http.Response] and returns a [html.Document]
   /// NOTE: I overrode this method from the library because there is
   /// a bug in the library's code with parsing the document.
-  static Document _responseToDocument(http.Response response) {
+  static Document? _responseToDocument(http.Response response) {
     if (response.statusCode != 200) {
       return null;
     }
 
-    Document document;
+    Document? document;
     try {
       document = parser.parse(response.body.toString());
-      document.requestUrl = response.request.url.toString();
+      document.requestUrl = response.request!.url.toString();
     } catch (err) {
       debugPrint("Error parsing HTML document: ${err.toString()}");
       return document;
@@ -220,11 +220,11 @@ class MetadataHelper {
       for (var i in document.head?.children ?? []) {
         if (i.localName != "meta") continue;
         for (var entry in i.attributes.entries) {
-          String prop = entry.key as String;
-          String value = entry.value;
+          String? prop = entry.key as String?;
+          String? value = entry.value;
           if (prop != "property" && prop != "name") continue;
 
-          if (value.contains("title")) {
+          if (value!.contains("title")) {
             meta.title = i.attributes["content"];
           } else if (value.contains("description")) {
             meta.description = i.attributes["content"];

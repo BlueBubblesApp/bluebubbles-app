@@ -14,7 +14,7 @@ import java.io.File;
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 
-public class OpenContactForm implements Handler{
+public class OpenContactForm implements Handler {
     public static String TAG = "open-contact-form";
     private static final int REQUEST_OPEN_CONTACT_FORM = 52941;
 

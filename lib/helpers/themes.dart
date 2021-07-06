@@ -144,7 +144,7 @@ ThemeData whiteLightTheme = ThemeData(
   backgroundColor: Colors.white,
 );
 
-Future<void> loadTheme(BuildContext context, {ThemeObject lightOverride, ThemeObject darkOverride}) async {
+Future<void> loadTheme(BuildContext? context, {ThemeObject? lightOverride, ThemeObject? darkOverride}) async {
   if (context == null) return;
 
   // Set the theme to match those of the settings

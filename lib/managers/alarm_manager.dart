@@ -23,7 +23,7 @@ class AlarmManager {
 
   /// Defines what to do when a specific alarm goes off
   /// @param [id] is the id of the alarm
-  Future<void> onReceiveAlarm(int id) async {
+  Future<void> onReceiveAlarm(int? id) async {
     // TODO do something here!
     debugPrint("(ALARM MANAGER) -> Receive alarm $id");
 

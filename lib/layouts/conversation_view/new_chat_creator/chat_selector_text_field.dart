@@ -9,17 +9,17 @@ import 'package:flutter/material.dart';
 
 class ChatSelectorTextField extends StatefulWidget {
   ChatSelectorTextField({
-    Key key,
-    @required this.controller,
-    @required this.onRemove,
-    @required this.selectedContacts,
-    @required this.allContacts,
-    @required this.isCreator,
-    @required this.onSelected,
+    Key? key,
+    required this.controller,
+    required this.onRemove,
+    required this.selectedContacts,
+    required this.allContacts,
+    required this.isCreator,
+    required this.onSelected,
   }) : super(key: key);
   final TextEditingController controller;
   final Function(UniqueContact) onRemove;
-  final bool isCreator;
+  final bool? isCreator;
   final List<UniqueContact> selectedContacts;
   final List<UniqueContact> allContacts;
   final Function(UniqueContact item) onSelected;
@@ -29,7 +29,7 @@ class ChatSelectorTextField extends StatefulWidget {
 }
 
 class _ChatSelectorTextFieldState extends State<ChatSelectorTextField> {
-  FocusNode inputFieldNode;
+  FocusNode? inputFieldNode;
 
   @override
   void initState() {
@@ -39,7 +39,7 @@ class _ChatSelectorTextFieldState extends State<ChatSelectorTextField> {
 
   @override
   void dispose() {
-    inputFieldNode.dispose();
+    inputFieldNode!.dispose();
     super.dispose();
   }
 
@@ -63,7 +63,7 @@ class _ChatSelectorTextFieldState extends State<ChatSelectorTextField> {
                   mainAxisAlignment: MainAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
-                    Text(contact.displayName.trim(), style: Theme.of(context).textTheme.bodyText1),
+                    Text(contact.displayName!.trim(), style: Theme.of(context).textTheme.bodyText1),
                     SizedBox(
                       width: 5.0,
                     ),
@@ -93,10 +93,10 @@ class _ChatSelectorTextFieldState extends State<ChatSelectorTextField> {
             if (done.isEmpty) return;
             done = done.trim();
             if (done.isEmail || done.isPhoneNumber) {
-              Contact contact = ContactManager().getCachedContactSync(done);
+              Contact? contact = ContactManager().getCachedContactSync(done);
               if (contact == null) {
                 widget
-                    .onSelected(new UniqueContact(address: done, displayName: (await formatPhoneNumber(done)) ?? done));
+                    .onSelected(new UniqueContact(address: done, displayName: await formatPhoneNumber(done)));
               } else {
                 widget.onSelected(new UniqueContact(address: done, displayName: contact.displayName ?? done));
               }
@@ -114,10 +114,10 @@ class _ChatSelectorTextFieldState extends State<ChatSelectorTextField> {
           maxLines: 1,
           autocorrect: false,
           placeholder: "  Type a name...",
-          placeholderStyle: Theme.of(context).textTheme.subtitle1,
+          placeholderStyle: Theme.of(context).textTheme.subtitle1!,
           padding: EdgeInsets.only(right: 5.0, top: 2.0, bottom: 2.0),
           autofocus: true,
-          style: Theme.of(context).textTheme.bodyText1.apply(
+          style: Theme.of(context).textTheme.bodyText1!.apply(
                 color: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor) == Brightness.light
                     ? Colors.black
                     : Colors.white,

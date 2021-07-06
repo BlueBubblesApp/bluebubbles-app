@@ -27,25 +27,25 @@ class SettingsManager {
 
   SettingsManager._internal();
 
-  StreamController<Settings> _stream = new StreamController.broadcast();
-  Stream<Settings> get stream => _stream.stream;
+  StreamController<Settings?> _stream = new StreamController.broadcast();
+  Stream<Settings?> get stream => _stream.stream;
 
   /// [appDocDir] is just a directory that is commonly used
   /// It cannot be accessed by the user, and is private to the app
-  Directory appDocDir;
+  late Directory appDocDir;
 
   /// [sharedFilesPath] is the path where most temporary files like those inserted from the keyboard or shared to the app are stored
   /// The getter simply is a helper to that path
   String get sharedFilesPath => "${appDocDir.path}/sharedFiles";
 
   /// [settings] is just an instance of the current settings that are saved
-  Settings settings;
-  FCMData fcmData;
-  List<ThemeObject> themes;
-  String countryCode;
-  int _macOSVersion;
+  late Settings settings;
+  FCMData? fcmData;
+  late List<ThemeObject> themes;
+  String? countryCode;
+  int? _macOSVersion;
 
-  int get compressionQuality {
+  int? get compressionQuality {
     if (settings.lowMemoryMode) {
       return 10;
     }
@@ -54,7 +54,7 @@ class SettingsManager {
   }
 
   /// [sharedPreferences] is just an instance of [SharedPreferences] and it is stored here because it is commonly used
-  SharedPreferences sharedPreferences;
+  SharedPreferences? sharedPreferences;
 
   /// [init] is run at start and fetches both the [appDocDir] and sets the [settings] to a default value
   Future<void> init() async {
@@ -69,9 +69,11 @@ class SettingsManager {
   ///
   /// @param [context] is an optional parameter to be used for setting the adaptive theme based on the settings.
   /// Setting to null will prevent the theme from being set and will be set to null in the background isolate
-  Future<void> getSavedSettings({bool headless = false, BuildContext context}) async {
+  Future<void> getSavedSettings({bool headless = false, BuildContext? context}) async {
     await DBProvider.setupConfigRows();
     settings = await Settings.getSettings();
+    _stream.sink.add(settings);
+
     fcmData = await FCMData.getFCM();
     // await DBProvider.setupDefaultPresetThemes(await DBProvider.db.database);
     themes = await ThemeObject.getThemes();
@@ -126,8 +128,8 @@ class SettingsManager {
   /// @param [context] is the [BuildContext] used to set the theme of the new settings
   Future<void> saveSelectedTheme(
     BuildContext context, {
-    ThemeObject selectedLightTheme,
-    ThemeObject selectedDarkTheme,
+    ThemeObject? selectedLightTheme,
+    ThemeObject? selectedDarkTheme,
   }) async {
     await selectedLightTheme?.save();
     await selectedDarkTheme?.save();
@@ -145,9 +147,9 @@ class SettingsManager {
   /// Updates FCM data and saves to disk. It will also run [authFCM] automatically
   ///
   /// @param [data] is the [FCMData] to save
-  Future<void> saveFCMData(FCMData data) async {
+  Future<void> saveFCMData(FCMData? data) async {
     fcmData = data;
-    await fcmData.save();
+    await fcmData!.save();
     SocketManager().authFCM();
   }
 
@@ -164,7 +166,7 @@ class SettingsManager {
     _stream.close();
   }
 
-  FutureOr<int> getMacOSVersion() async {
+  FutureOr<int?> getMacOSVersion() async {
     if (_macOSVersion == null) {
       var res = await SocketManager().sendMessage("get-server-metadata", {}, (_) {});
       _macOSVersion = int.tryParse(res['data']['os_version'].split(".")[0]);

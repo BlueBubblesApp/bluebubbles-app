@@ -5,23 +5,22 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class ThemeSwitcher extends StatefulWidget {
-  ThemeSwitcher({Key key, @required this.iOSSkin, @required this.materialSkin, @required this.samsungSkin})
+  ThemeSwitcher({Key? key, required this.iOSSkin, required this.materialSkin, required this.samsungSkin})
       : super(key: key);
   final Widget iOSSkin;
   final Widget materialSkin;
   final Widget samsungSkin;
 
-  static PageRoute buildPageRoute({@required Function(BuildContext context) builder}) {
+  static PageRoute buildPageRoute({required Function(BuildContext context) builder}) {
     switch (SettingsManager().settings.skin) {
       case Skins.iOS:
-        return CupertinoPageRoute(builder: builder);
-        break;
+        return CupertinoPageRoute(builder: builder as Widget Function(BuildContext));
       case Skins.Material:
-        return MaterialPageRoute(builder: builder);
-        break;
+        return MaterialPageRoute(builder: builder as Widget Function(BuildContext));
       case Skins.Samsung:
-        return MaterialPageRoute(builder: builder);
-        break;
+        return MaterialPageRoute(builder: builder as Widget Function(BuildContext));
+      default:
+        return CupertinoPageRoute(builder: builder as Widget Function(BuildContext));
     }
   }
 
@@ -31,17 +30,18 @@ class ThemeSwitcher extends StatefulWidget {
         return AlwaysScrollableScrollPhysics(
           parent: CustomBouncingScrollPhysics(),
         );
-        break;
       case Skins.Material:
         return AlwaysScrollableScrollPhysics(
           parent: ClampingScrollPhysics(),
         );
-        break;
       case Skins.Samsung:
         return AlwaysScrollableScrollPhysics(
           parent: ClampingScrollPhysics(),
         );
-        break;
+      default:
+        return AlwaysScrollableScrollPhysics(
+          parent: CustomBouncingScrollPhysics(),
+        );
     }
   }
 
@@ -50,7 +50,7 @@ class ThemeSwitcher extends StatefulWidget {
 }
 
 class _ThemeSwitcherState extends State<ThemeSwitcher> {
-  Skins skin;
+  Skins? skin;
 
   @override
   void initState() {
@@ -60,7 +60,7 @@ class _ThemeSwitcherState extends State<ThemeSwitcher> {
     SettingsManager().stream.listen((event) {
       if (!this.mounted) return;
 
-      if (event.skin != skin) {
+      if (event!.skin != skin) {
         skin = event.skin;
         setState(() {});
       }
@@ -76,6 +76,8 @@ class _ThemeSwitcherState extends State<ThemeSwitcher> {
         return widget.materialSkin;
       case Skins.Samsung:
         return widget.samsungSkin;
+      default:
+        return widget.iOSSkin;
     }
   }
 }

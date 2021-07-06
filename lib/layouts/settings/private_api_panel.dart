@@ -1,7 +1,7 @@
 import 'dart:ui';
 
+import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:get/get.dart';
-import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
@@ -13,15 +13,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 class PrivateAPIPanel extends StatefulWidget {
-  PrivateAPIPanel({Key key}) : super(key: key);
+  PrivateAPIPanel({Key? key}) : super(key: key);
 
   @override
   _PrivateAPIPanelState createState() => _PrivateAPIPanelState();
 }
 
 class _PrivateAPIPanelState extends State<PrivateAPIPanel> {
-  Settings _settingsCopy;
-  bool enablePrivateAPI = false;
+  late Settings _settingsCopy;
+  bool? enablePrivateAPI = false;
 
   @override
   void initState() {
@@ -42,7 +42,7 @@ class _PrivateAPIPanelState extends State<PrivateAPIPanel> {
   @override
   Widget build(BuildContext context) {
     List<Widget> privateWidgets = [];
-    if (enablePrivateAPI) {
+    if (enablePrivateAPI!) {
       privateWidgets.addAll([
         SettingsSwitch(
           onChanged: (bool val) {
@@ -86,13 +86,7 @@ class _PrivateAPIPanelState extends State<PrivateAPIPanel> {
                 brightness: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor),
                 toolbarHeight: 100.0,
                 elevation: 0,
-                leading: IconButton(
-                  icon: Icon(SettingsManager().settings.skin == Skins.iOS ? Icons.arrow_back_ios : Icons.arrow_back,
-                      color: Theme.of(context).primaryColor),
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                ),
+                leading: buildBackButton(context),
                 backgroundColor: Theme.of(context).accentColor.withOpacity(0.5),
                 title: Text(
                   "Private API Features",

@@ -19,21 +19,21 @@ import 'package:flutter/material.dart';
 
 class MessageAttachment extends StatefulWidget {
   MessageAttachment({
-    Key key,
-    @required this.attachment,
-    @required this.updateAttachment,
-    @required this.message,
+    Key? key,
+    required this.attachment,
+    required this.updateAttachment,
+    required this.message,
   }) : super(key: key);
-  final Attachment attachment;
+  final Attachment? attachment;
   final Function() updateAttachment;
-  final Message message;
+  final Message? message;
 
   @override
   _MessageAttachmentState createState() => _MessageAttachmentState();
 }
 
 class _MessageAttachmentState extends State<MessageAttachment> with AutomaticKeepAliveClientMixin {
-  Widget attachmentWidget;
+  Widget? attachmentWidget;
   var content;
 
   @override
@@ -44,7 +44,7 @@ class _MessageAttachmentState extends State<MessageAttachment> with AutomaticKee
 
   void updateContent() async {
     // Ge the current attachment content (status)
-    content = AttachmentHelper.getContent(widget.attachment);
+    content = AttachmentHelper.getContent(widget.attachment!);
 
     // If we can download it, do so
     if (await AttachmentHelper.canAutoDownload() && content is Attachment) {
@@ -76,9 +76,9 @@ class _MessageAttachmentState extends State<MessageAttachment> with AutomaticKee
   Widget _buildAttachmentWidget() {
     // If it's a file, it's already been downlaoded, so just display it
     if (content is File) {
-      String mimeType = widget.attachment.mimeType;
+      String? mimeType = widget.attachment!.mimeType;
       if (mimeType != null) mimeType = mimeType.substring(0, mimeType.indexOf("/"));
-      if (mimeType == "image" && !widget.attachment.mimeType.endsWith("tiff")) {
+      if (mimeType == "image" && !widget.attachment!.mimeType!.endsWith("tiff")) {
         return MediaFile(
           attachment: widget.attachment,
           child: ImageWidget(
@@ -94,12 +94,12 @@ class _MessageAttachmentState extends State<MessageAttachment> with AutomaticKee
             file: content,
           ),
         );
-      } else if (mimeType == "audio" && !widget.attachment.mimeType.contains("caf")) {
+      } else if (mimeType == "audio" && !widget.attachment!.mimeType!.contains("caf")) {
         return MediaFile(
           attachment: widget.attachment,
           child: AudioPlayerWiget(file: content, context: context, width: 250),
         );
-      } else if (widget.attachment.mimeType == "text/x-vlocation" || widget.attachment.uti == 'public.vlocation') {
+      } else if (widget.attachment!.mimeType == "text/x-vlocation" || widget.attachment!.uti == 'public.vlocation') {
         return MediaFile(
           attachment: widget.attachment,
           child: LocationWidget(
@@ -107,7 +107,7 @@ class _MessageAttachmentState extends State<MessageAttachment> with AutomaticKee
             attachment: widget.attachment,
           ),
         );
-      } else if (widget.attachment.mimeType == "text/vcard") {
+      } else if (widget.attachment!.mimeType == "text/vcard") {
         return MediaFile(
           attachment: widget.attachment,
           child: ContactWidget(
@@ -115,7 +115,7 @@ class _MessageAttachmentState extends State<MessageAttachment> with AutomaticKee
             attachment: widget.attachment,
           ),
         );
-      } else if (widget.attachment.mimeType == null) {
+      } else if (widget.attachment!.mimeType == null) {
         return Container();
       } else {
         return MediaFile(
@@ -140,7 +140,7 @@ class _MessageAttachmentState extends State<MessageAttachment> with AutomaticKee
 
       // If it's an AttachmentDownloader, it is currently being downloaded
     } else if (content is AttachmentDownloader) {
-      if (widget.attachment.mimeType == null) return Container();
+      if (widget.attachment!.mimeType == null) return Container();
       return StreamBuilder(
         stream: content.stream,
         builder: (BuildContext context, AsyncSnapshot snapshot) {
@@ -163,7 +163,7 @@ class _MessageAttachmentState extends State<MessageAttachment> with AutomaticKee
             return _buildAttachmentWidget();
           }
 
-          double progress = 0.0;
+          double? progress = 0.0;
           if (snapshot.hasData) {
             progress = snapshot.data["progress"];
           } else {
@@ -190,7 +190,7 @@ class _MessageAttachmentState extends State<MessageAttachment> with AutomaticKee
                           ),
                         ),
                       ),
-                      ((content as AttachmentDownloader).attachment.mimeType != null)
+                      ((content as AttachmentDownloader).attachment!.mimeType != null)
                           ? Container(height: 5.0)
                           : Container(),
                       (content.attachment.mimeType != null)

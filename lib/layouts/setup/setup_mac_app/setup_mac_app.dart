@@ -1,9 +1,8 @@
-import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 class SetupMacApp extends StatelessWidget {
-  const SetupMacApp({Key key, @required this.controller}) : super(key: key);
+  const SetupMacApp({Key? key, required this.controller}) : super(key: key);
   final PageController controller;
 
   @override
@@ -22,7 +21,7 @@ class SetupMacApp extends StatelessWidget {
                 padding: EdgeInsets.symmetric(horizontal: 20.0),
                 child: Text(
                   "Before using the Android App, please verify that you have already installed the macOS Server app. Additionally, make sure that your iMessage app is signed into an iCloud/Apple account.",
-                  style: Theme.of(context).textTheme.bodyText1.apply(fontSizeFactor: 1.5),
+                  style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.5),
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -46,7 +45,7 @@ class SetupMacApp extends StatelessWidget {
                 padding: EdgeInsets.symmetric(horizontal: 20.0),
                 child: Text(
                   "If you have not installed the macOS Server app, please go to the following link on your macOS device to download it:\n\nhttps://bluebubbles.app",
-                  style: Theme.of(context).textTheme.bodyText1.apply(fontSizeFactor: 1.5),
+                  style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.5),
                   textAlign: TextAlign.center,
                 ),
               ),

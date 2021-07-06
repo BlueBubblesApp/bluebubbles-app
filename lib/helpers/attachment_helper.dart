@@ -16,8 +16,14 @@ import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:image_size_getter/image_size_getter.dart' as IMG;
 import 'package:permission_handler/permission_handler.dart';
 
+class AppleLocation {
+  double? longitude;
+  double? latitude;
+  AppleLocation({required this.latitude, required this.longitude});
+}
+
 class AttachmentHelper {
-  static String createAppleLocation(double longitude, double latitude, {iosVersion = "13.4.1"}) {
+  static String createAppleLocation(double? longitude, double? latitude, {iosVersion = "13.4.1"}) {
     List<String> lines = [
       "BEGIN:VCARD",
       "VERSION:3.0",
@@ -33,21 +39,20 @@ class AttachmentHelper {
     return lines.join("\n");
   }
 
-  static Map<String, double> parseAppleLocation(String appleLocation) {
+  static AppleLocation parseAppleLocation(String appleLocation) {
     List<String> lines = appleLocation.split("\n");
-    var emptyLocation = {'longitude': null, 'latitude': null};
 
     try {
-      String url;
+      String? url;
       for (var i in lines) {
         if (i.contains("URL:") || i.contains("URL;")) {
           url = i;
         }
       }
 
-      if (url == null) return emptyLocation;
+      if (url == null) return AppleLocation(latitude: null, longitude: null);
 
-      String query;
+      String? query;
       List<String> opts = ["&q=", "&ll="];
       for (var i in opts) {
         if (url.contains(i)) {
@@ -58,23 +63,26 @@ class AttachmentHelper {
         }
       }
 
-      if (query == null) return emptyLocation;
+      if (query == null) return AppleLocation(latitude: null, longitude: null);
       if (query.contains("&")) {
         query = query.split("&").first;
       }
 
       if (query.contains("\\")) {
-        return {
-          "longitude": double.tryParse((query.split("\\,")[0])),
-          "latitude": double.tryParse(query.split("\\,")[1])
-        };
+        return AppleLocation(
+            latitude: double.tryParse(query.split("\\,")[1]),
+            longitude: double.tryParse(query.split("\\,")[0])
+        );
       } else {
-        return {"longitude": double.tryParse((query.split(",")[0])), "latitude": double.tryParse(query.split(",")[1])};
+        return AppleLocation(
+            latitude: double.tryParse(query.split(",")[1]),
+            longitude: double.tryParse(query.split(",")[0])
+        );
       }
     } catch (ex) {
-      debugPrint("Faled to parse location!");
+      debugPrint("Failed to parse location!");
       debugPrint(ex.toString());
-      return emptyLocation;
+      return AppleLocation(latitude: null, longitude: null);
     }
   }
 
@@ -111,10 +119,10 @@ class AttachmentHelper {
 
     // Parse addresses numbers from results
     for (dynamic address in _contact.typedAddress) {
-      String street = address[0].length > 0 ? address[0][0] : '';
-      String city = address[0].length > 1 ? address[0][1] : '';
-      String state = address[0].length > 2 ? address[0][2] : '';
-      String country = address[0].length > 3 ? address[0][3] : '';
+      String? street = address[0].length > 0 ? address[0][0] : '';
+      String? city = address[0].length > 1 ? address[0][1] : '';
+      String? state = address[0].length > 2 ? address[0][2] : '';
+      String? country = address[0].length > 3 ? address[0][3] : '';
 
       String label = "HOME";
       if (address.length > 1 && address[1].length > 0 && address[1][1] != null) {
@@ -132,13 +140,13 @@ class AttachmentHelper {
   }
 
   static String getPreviewPath(Attachment attachment) {
-    String fileName = attachment.transferName;
+    String? fileName = attachment.transferName;
     String appDocPath = SettingsManager().appDocDir.path;
     String pathName = AttachmentHelper.getAttachmentPath(attachment);
 
     // If the file is an image, compress it for the preview
     if ((attachment.mimeType ?? "").startsWith("image/")) {
-      String fn = fileName.split(".").sublist(0, fileName.length - 1).join("") + "prev";
+      String fn = fileName!.split(".").sublist(0, fileName.length - 1).join("") + "prev";
       String ext = fileName.split(".").last;
       pathName = "$appDocPath/attachments/${attachment.guid}/$fn.$ext";
     }
@@ -163,9 +171,9 @@ class AttachmentHelper {
     return (width / factor) / width;
   }
 
-  static Future<void> saveToGallery(BuildContext context, File file) async {
+  static Future<void> saveToGallery(BuildContext context, File? file) async {
     if (await Permission.storage.request().isGranted) {
-      await ImageGallerySaver.saveFile(file.absolute.path);
+      await ImageGallerySaver.saveFile(file!.absolute.path);
       showSnackbar('Success', 'Saved to gallery!');
     }
   }
@@ -176,7 +184,7 @@ class AttachmentHelper {
   }
 
   static String getAttachmentPath(Attachment attachment) {
-    String fileName = attachment.transferName;
+    String? fileName = attachment.transferName;
     return "${getBaseAttachmentsPath()}/${attachment.guid}/$fileName";
   }
 
@@ -186,7 +194,7 @@ class AttachmentHelper {
     return !(FileSystemEntity.typeSync(pathName) == FileSystemEntityType.notFound);
   }
 
-  static dynamic getContent(Attachment attachment, {String path}) {
+  static dynamic getContent(Attachment attachment, {String? path}) {
     String appDocPath = SettingsManager().appDocDir.path;
     String pathName = path ?? "$appDocPath/attachments/${attachment.guid}/${attachment.transferName}";
 
@@ -194,14 +202,14 @@ class AttachmentHelper {
       return SocketManager().attachmentDownloaders[attachment.guid];
     } else if (FileSystemEntity.typeSync(pathName) != FileSystemEntityType.notFound) {
       return File(pathName);
-    } else if (attachment.mimeType == null || attachment.mimeType.startsWith("text/")) {
+    } else if (attachment.mimeType == null || attachment.mimeType!.startsWith("text/")) {
       return AttachmentDownloader(attachment);
     } else {
       return attachment;
     }
   }
 
-  static IconData getIcon(String mimeType) {
+  static IconData getIcon(String? mimeType) {
     if (mimeType == null) return Icons.open_in_new;
     if (mimeType == "application/pdf") {
       return Icons.picture_as_pdf;
@@ -230,30 +238,30 @@ class AttachmentHelper {
             (SettingsManager().settings.onlyWifiDownload && status == ConnectivityResult.wifi)));
   }
 
-  static Future<void> setDimensions(Attachment attachment, {Uint8List data}) async {
+  static Future<void> setDimensions(Attachment attachment, {Uint8List? data}) async {
     // Handle break cases
     if (attachment.width != null && attachment.height != null && attachment.height != 0 && attachment.width != 0)
       return;
     if (attachment.mimeType == null) return;
 
     // Make sure the attachment is an image or video
-    String mimeStart = attachment.mimeType.split("/").first;
+    String mimeStart = attachment.mimeType!.split("/").first;
     if (!["image", "video"].contains(mimeStart)) return;
 
-    Uint8List previewData = data;
+    Uint8List? previewData = data;
     if (data == null) {
       previewData = new File(AttachmentHelper.getAttachmentPath(attachment)).readAsBytesSync();
     }
 
     if (attachment.mimeType == "image/gif") {
-      Size size = getGifDimensions(previewData);
+      Size size = getGifDimensions(previewData!);
 
       if (size.width != 0 && size.height != 0) {
         attachment.width = size.width.toInt();
         attachment.height = size.height.toInt();
       }
     } else if (mimeStart == "image") {
-      IMG.Size size = IMG.ImageSizeGetter.getSize(IMG.MemoryInput(previewData));
+      IMG.Size size = IMG.ImageSizeGetter.getSize(IMG.MemoryInput(previewData!));
       if (size.width != 0 && size.height != 0) {
         attachment.width = size.width;
         attachment.height = size.height;
@@ -267,7 +275,7 @@ class AttachmentHelper {
     }
   }
 
-  static Future<void> redownloadAttachment(Attachment attachment, {Function() onComplete, Function() onError}) async {
+  static Future<void> redownloadAttachment(Attachment attachment, {Function()? onComplete, Function()? onError}) async {
     // 1. Delete the old file
     File file = new File(attachment.getPath());
     if (!file.existsSync()) return;

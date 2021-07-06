@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:bluebubbles/helpers/message_helper.dart';
@@ -24,47 +25,47 @@ String messageToJson(Message data) {
 }
 
 class Message {
-  int id;
-  int originalROWID;
-  String guid;
-  int handleId;
-  int otherHandle;
-  String text;
-  String subject;
-  String country;
-  int error;
-  DateTime dateCreated;
-  DateTime dateRead;
-  DateTime dateDelivered;
-  bool isFromMe;
-  bool isDelayed;
-  bool isAutoReply;
-  bool isSystemMessage;
-  bool isServiceMessage;
-  bool isForward;
-  bool isArchived;
-  bool hasDdResults;
-  String cacheRoomnames;
-  bool isAudioMessage;
-  DateTime datePlayed;
-  int itemType;
-  String groupTitle;
-  int groupActionType;
-  bool isExpired;
-  String balloonBundleId;
-  String associatedMessageGuid;
-  String associatedMessageType;
-  String expressiveSendStyleId;
-  DateTime timeExpressiveSendStyleId;
-  Handle handle;
+  int? id;
+  int? originalROWID;
+  String? guid;
+  int? handleId;
+  int? otherHandle;
+  String? text;
+  String? subject;
+  String? country;
+  int? error;
+  DateTime? dateCreated;
+  DateTime? dateRead;
+  DateTime? dateDelivered;
+  bool? isFromMe;
+  bool? isDelayed;
+  bool? isAutoReply;
+  bool? isSystemMessage;
+  bool? isServiceMessage;
+  bool? isForward;
+  bool? isArchived;
+  bool? hasDdResults;
+  String? cacheRoomnames;
+  bool? isAudioMessage;
+  DateTime? datePlayed;
+  int? itemType;
+  String? groupTitle;
+  int? groupActionType;
+  bool? isExpired;
+  String? balloonBundleId;
+  String? associatedMessageGuid;
+  String? associatedMessageType;
+  String? expressiveSendStyleId;
+  DateTime? timeExpressiveSendStyleId;
+  Handle? handle;
   bool hasAttachments;
   bool hasReactions;
-  DateTime dateDeleted;
-  Map<String, dynamic> metadata;
+  DateTime? dateDeleted;
+  Map<String, dynamic>? metadata;
 
-  List<Attachment> attachments = [];
+  List<Attachment?>? attachments = [];
   List<Message> associatedMessages = [];
-  bool bigEmoji;
+  bool? bigEmoji;
 
   Message(
       {this.id,
@@ -106,7 +107,7 @@ class Message {
       this.dateDeleted,
       this.metadata});
 
-  String get fullText {
+  String? get fullText {
     String fullText = this.subject ?? "";
     if (fullText.isNotEmpty) {
       fullText += "\n";
@@ -130,7 +131,7 @@ class Message {
 
     // Load the metadata
     dynamic metadata = json.containsKey("metadata") ? json["metadata"] : null;
-    if (!isNullOrEmpty(metadata)) {
+    if (!isNullOrEmpty(metadata)!) {
       // If the metadata is a string, convert it to JSON
       if (metadata is String) {
         try {
@@ -139,7 +140,7 @@ class Message {
       }
     }
 
-    String associatedMessageGuid;
+    String? associatedMessageGuid;
     if (json.containsKey("associatedMessageGuid") && json["associatedMessageGuid"] != null) {
       if ((json["associatedMessageGuid"] as String).contains("/")) {
         associatedMessageGuid = (json["associatedMessageGuid"] as String).split("/").last;
@@ -160,7 +161,7 @@ class Message {
       error: json.containsKey("error") ? json["error"] : 0,
       dateCreated: json.containsKey("dateCreated") ? parseDate(json["dateCreated"]) : null,
       dateRead: json.containsKey("dateRead") ? parseDate(json["dateRead"]) : null,
-      dateDelivered: json.containsKey("dateDelivered") ? parseDate(json["dateDelivered"]) : null,
+      dateDelivered: json.containsKey("dateDelivered") ?parseDate(json["dateDelivered"]) : null,
       isFromMe: (json["isFromMe"] is bool) ? json['isFromMe'] : ((json['isFromMe'] == 1) ? true : false),
       isDelayed: (json["isDelayed"] is bool) ? json['isDelayed'] : ((json['isDelayed'] == 1) ? true : false),
       isAutoReply: (json["isAutoReply"] is bool) ? json['isAutoReply'] : ((json['isAutoReply'] == 1) ? true : false),
@@ -186,7 +187,7 @@ class Message {
       associatedMessageType: json.containsKey("associatedMessageType") ? json["associatedMessageType"] : null,
       expressiveSendStyleId: json.containsKey("expressiveSendStyleId") ? json["expressiveSendStyleId"] : null,
       timeExpressiveSendStyleId:
-          json.containsKey("timeExpressiveSendStyleId") ? parseDate(json["timeExpressiveSendStyleId"]) : null,
+          json.containsKey("timeExpressiveSendStyleId") ? DateTime.tryParse(json["timeExpressiveSendStyleId"].toString())?.toLocal() : null,
       handle: json.containsKey("handle") ? (json['handle'] != null ? Handle.fromMap(json['handle']) : null) : null,
       hasAttachments: hasAttachments,
       attachments: attachments,
@@ -204,26 +205,26 @@ class Message {
   }
 
   Future<Message> save([bool updateIfAbsent = true]) async {
-    final Database db = await DBProvider.db.database;
+    final Database? db = await DBProvider.db.database;
     // Try to find an existing chat before saving it
-    Message existing = await Message.findOne({"guid": this.guid});
+    Message? existing = await Message.findOne({"guid": this.guid});
     if (existing != null) {
       this.id = existing.id;
     }
 
     // Save the participant & set the handle ID to the new participant
     if (this.handle != null) {
-      await this.handle.save();
-      this.handleId = this.handle.id;
+      await this.handle!.save();
+      this.handleId = this.handle!.id;
     }
     if (this.associatedMessageType != null && this.associatedMessageGuid != null) {
-      Message associatedMessage = await Message.findOne({"guid": this.associatedMessageGuid});
+      Message? associatedMessage = await Message.findOne({"guid": this.associatedMessageGuid});
       if (associatedMessage != null) {
         associatedMessage.hasReactions = true;
         await associatedMessage.save();
       }
     } else if (!this.hasReactions) {
-      Message reaction = await Message.findOne({"associatedMessageGuid": this.guid});
+      Message? reaction = await Message.findOne({"associatedMessageGuid": this.guid});
       if (reaction != null) {
         this.hasReactions = true;
       }
@@ -241,7 +242,7 @@ class Message {
         map.remove("handle");
       }
 
-      this.id = await db.insert("message", map);
+      this.id = await db!.insert("message", map);
     } else if (updateIfAbsent) {
       await this.update();
     }
@@ -249,10 +250,10 @@ class Message {
     return this;
   }
 
-  static Future<Message> replaceMessage(String oldGuid, Message newMessage,
-      {bool awaitNewMessageEvent = true, Chat chat}) async {
-    final Database db = await DBProvider.db.database;
-    Message existing = await Message.findOne({"guid": oldGuid});
+  static Future<Message?> replaceMessage(String? oldGuid, Message? newMessage,
+      {bool awaitNewMessageEvent = true, Chat? chat}) async {
+    final Database? db = await DBProvider.db.database;
+    Message? existing = await Message.findOne({"guid": oldGuid});
 
     if (existing == null) {
       if (awaitNewMessageEvent) {
@@ -260,7 +261,7 @@ class Message {
         return replaceMessage(oldGuid, newMessage, awaitNewMessageEvent: false, chat: chat);
       } else {
         if (chat != null) {
-          await chat.addMessage(newMessage);
+          await chat.addMessage(newMessage!);
           NewMessageManager().addMessage(chat, newMessage, outgoing: false);
           return newMessage;
         }
@@ -269,7 +270,7 @@ class Message {
       return newMessage;
     }
 
-    Map<String, dynamic> params = newMessage.toMap();
+    Map<String, dynamic> params = newMessage!.toMap();
     if (params.containsKey("ROWID")) {
       params.remove("ROWID");
     }
@@ -295,35 +296,35 @@ class Message {
       newMessage.metadata = existing.metadata;
     }
 
-    await db.update("message", params, where: "ROWID = ?", whereArgs: [existing.id]);
+    await db!.update("message", params, where: "ROWID = ?", whereArgs: [existing.id]);
 
     return newMessage;
   }
 
-  Future<Message> updateMetadata(Metadata metadata) async {
-    final Database db = await DBProvider.db.database;
+  Future<Message> updateMetadata(Metadata? metadata) async {
+    final Database? db = await DBProvider.db.database;
     if (this.id == null) return this;
-    this.metadata = metadata.toJson();
+    this.metadata = metadata!.toJson();
 
-    await db.update("message", {"metadata": (isNullOrEmpty(this.metadata)) ? null : jsonEncode(this.metadata)},
+    await db!.update("message", {"metadata": isNullOrEmpty(this.metadata)! ? null : jsonEncode(this.metadata)},
         where: "ROWID = ?", whereArgs: [this.id]);
 
     return this;
   }
 
   Future<Message> update() async {
-    final Database db = await DBProvider.db.database;
+    final Database? db = await DBProvider.db.database;
 
     Map<String, dynamic> params = {
-      "dateCreated": (this.dateCreated == null) ? null : this.dateCreated.millisecondsSinceEpoch,
-      "dateRead": (this.dateRead == null) ? null : this.dateRead.millisecondsSinceEpoch,
-      "dateDelivered": (this.dateDelivered == null) ? null : this.dateDelivered.millisecondsSinceEpoch,
-      "isArchived": (this.isArchived) ? 1 : 0,
-      "datePlayed": (this.datePlayed == null) ? null : this.datePlayed.millisecondsSinceEpoch,
+      "dateCreated": (this.dateCreated == null) ? null : this.dateCreated!.millisecondsSinceEpoch,
+      "dateRead": (this.dateRead == null) ? null : this.dateRead!.millisecondsSinceEpoch,
+      "dateDelivered": (this.dateDelivered == null) ? null : this.dateDelivered!.millisecondsSinceEpoch,
+      "isArchived": this.isArchived! ? 1 : 0,
+      "datePlayed": (this.datePlayed == null) ? null : this.datePlayed!.millisecondsSinceEpoch,
       "error": this.error,
       "hasReactions": this.hasReactions ? 1 : 0,
-      "hasDdResults": this.hasDdResults ? 1 : 0,
-      "metadata": (isNullOrEmpty(this.metadata)) ? null : jsonEncode(this.metadata)
+      "hasDdResults": this.hasDdResults! ? 1 : 0,
+      "metadata": isNullOrEmpty(this.metadata)! ? null : jsonEncode(this.metadata)
     };
 
     if (this.originalROWID != null) {
@@ -332,7 +333,7 @@ class Message {
 
     // If it already exists, update it
     if (this.id != null) {
-      await db.update("message", params, where: "ROWID = ?", whereArgs: [this.id]);
+      await db!.update("message", params, where: "ROWID = ?", whereArgs: [this.id]);
     } else {
       await this.save(false);
     }
@@ -340,20 +341,20 @@ class Message {
     return this;
   }
 
-  Future<List<Attachment>> fetchAttachments({CurrentChat currentChat}) async {
-    if (this.hasAttachments && this.attachments != null && this.attachments.length != 0) {
+  Future<List<Attachment?>?> fetchAttachments({CurrentChat? currentChat}) async {
+    if (this.hasAttachments && this.attachments != null && this.attachments!.length != 0) {
       return this.attachments;
     }
 
     if (currentChat != null) {
       this.attachments = currentChat.getAttachmentsForMessage(this);
-      if (this.attachments.length != 0) return this.attachments;
+      if (this.attachments!.length != 0) return this.attachments;
     }
 
-    final Database db = await DBProvider.db.database;
+    final Database? db = await DBProvider.db.database;
     if (this.id == null) return [];
 
-    var res = await db.rawQuery(
+    var res = await db!.rawQuery(
         "SELECT"
         " attachment.ROWID AS ROWID,"
         " attachment.originalROWID AS originalROWID,"
@@ -381,9 +382,9 @@ class Message {
     return this.attachments;
   }
 
-  static Future<Chat> getChat(Message message) async {
-    final Database db = await DBProvider.db.database;
-
+  static Future<Chat?> getChat(Message message) async {
+    final Database? db = await DBProvider.db.database;
+    if (db == null) return null;
     var res = await db.rawQuery(
         "SELECT"
         " chat.ROWID AS ROWID,"
@@ -404,14 +405,14 @@ class Message {
 
   Future<Message> fetchAssociatedMessages() async {
     associatedMessages = await Message.find({"associatedMessageGuid": this.guid});
-    associatedMessages.sort((a, b) => a.originalROWID.compareTo(b.originalROWID));
+    associatedMessages.sort((a, b) => a.originalROWID!.compareTo(b.originalROWID!));
     associatedMessages = MessageHelper.normalizedAssociatedMessages(associatedMessages);
     return this;
   }
 
-  Future<Handle> getHandle() async {
-    final Database db = await DBProvider.db.database;
-
+  Future<Handle?> getHandle() async {
+    final Database? db = await DBProvider.db.database;
+    if (db == null) return null;
     var res = await db.rawQuery(
         "SELECT"
         " handle.ROWID AS ROWID,"
@@ -429,9 +430,9 @@ class Message {
     return this.handle;
   }
 
-  static Future<Message> findOne(Map<String, dynamic> filters) async {
-    final Database db = await DBProvider.db.database;
-
+  static Future<Message?> findOne(Map<String, dynamic> filters) async {
+    final Database? db = await DBProvider.db.database;
+    if (db == null) return null;
     List<String> whereParams = [];
     filters.keys.forEach((filter) => whereParams.add('$filter = ?'));
     List<dynamic> whereArgs = [];
@@ -446,21 +447,21 @@ class Message {
   }
 
   static Future<List<Message>> find([Map<String, dynamic> filters = const {}]) async {
-    final Database db = await DBProvider.db.database;
+    final Database? db = await DBProvider.db.database;
 
     List<String> whereParams = [];
     filters.keys.forEach((filter) => whereParams.add('$filter = ?'));
     List<dynamic> whereArgs = [];
     filters.values.forEach((filter) => whereArgs.add(filter));
 
-    var res = await db.query("message",
+    var res = await db!.query("message",
         where: (whereParams.length > 0) ? whereParams.join(" AND ") : null,
         whereArgs: (whereArgs.length > 0) ? whereArgs : null);
     return (res.isNotEmpty) ? res.map((c) => Message.fromMap(c)).toList() : [];
   }
 
   static Future<void> delete(Map<String, dynamic> where) async {
-    final Database db = await DBProvider.db.database;
+    final Database? db = await DBProvider.db.database;
 
     List<String> whereParams = [];
     where.keys.forEach((filter) => whereParams.add('$filter = ?'));
@@ -469,13 +470,13 @@ class Message {
 
     List<Message> toDelete = await Message.find(where);
     for (Message msg in toDelete) {
-      await db.delete("chat_message_join", where: "messageId = ?", whereArgs: [msg.id]);
+      await db!.delete("chat_message_join", where: "messageId = ?", whereArgs: [msg.id]);
       await db.delete("message", where: "ROWID = ?", whereArgs: [msg.id]);
     }
   }
 
   static Future<void> softDelete(Map<String, dynamic> where) async {
-    final Database db = await DBProvider.db.database;
+    final Database? db = await DBProvider.db.database;
 
     List<String> whereParams = [];
     where.keys.forEach((filter) => whereParams.add('$filter = ?'));
@@ -483,21 +484,22 @@ class Message {
     where.values.forEach((filter) => whereArgs.add(filter));
 
     List<Message> toDelete = await Message.find(where);
-    for (Message msg in toDelete ?? []) {
-      await db.update("message", {'dateDeleted': DateTime.now().toUtc().millisecondsSinceEpoch},
+    for (Message msg in toDelete) {
+      await db!.update("message", {'dateDeleted': DateTime.now().toUtc().millisecondsSinceEpoch},
           where: "ROWID = ?", whereArgs: [msg.id]);
     }
   }
 
   static flush() async {
-    final Database db = await DBProvider.db.database;
+    final Database? db = await DBProvider.db.database;
+    if (db == null) return;
     await db.delete("message");
   }
 
   bool isUrlPreview() {
     return this.balloonBundleId != null &&
         this.balloonBundleId == "com.apple.messages.URLBalloonProvider" &&
-        this.hasDdResults;
+        this.hasDdResults!;
   }
 
   bool isInteractive() {
@@ -512,7 +514,7 @@ class Message {
     return isEmptyString(this.fullText) && !this.hasAttachments && this.balloonBundleId == null;
   }
 
-  bool isBigEmoji() {
+  bool? isBigEmoji() {
     // We are checking the variable first because we want to
     // avoid processing twice for this as it won't change
     if (this.bigEmoji == null) {
@@ -522,12 +524,12 @@ class Message {
     return this.bigEmoji;
   }
 
-  List<Attachment> getRealAttachments() {
-    return this.attachments.where((item) => item.mimeType != null).toList();
+  List<Attachment?> getRealAttachments() {
+    return this.attachments!.where((item) => item!.mimeType != null).toList();
   }
 
-  List<Attachment> getPreviewAttachments() {
-    return this.attachments.where((item) => item.mimeType == null).toList();
+  List<Attachment?> getPreviewAttachments() {
+    return this.attachments!.where((item) => item!.mimeType == null).toList();
   }
 
   List<Message> getReactions() {
@@ -537,8 +539,8 @@ class Message {
         .toList();
   }
 
-  static Future<int> countForChat(Chat chat) async {
-    final Database db = await DBProvider.db.database;
+  static Future<int?> countForChat(Chat? chat) async {
+    final Database? db = await DBProvider.db.database;
     if (chat == null || chat.id == null) return 0;
 
     String query = ("SELECT"
@@ -549,10 +551,10 @@ class Message {
         " WHERE chat.ROWID = ?");
 
     // Execute the query
-    var res = await db.rawQuery("$query;", [chat.id]);
-    if (res == null || res.length == 0) return 0;
+    var res = await db!.rawQuery("$query;", [chat.id]);
+    if (res.length == 0) return 0;
 
-    return res[0]["count"];
+    return res[0]["count"] as int?;
   }
 
   void merge(Message otherMessage) {
@@ -598,34 +600,34 @@ class Message {
         "subject": subject,
         "country": country,
         "error": error,
-        "dateCreated": (dateCreated == null) ? null : dateCreated.millisecondsSinceEpoch,
-        "dateRead": (dateRead == null) ? null : dateRead.millisecondsSinceEpoch,
-        "dateDelivered": (dateDelivered == null) ? null : dateDelivered.millisecondsSinceEpoch,
-        "isFromMe": isFromMe ? 1 : 0,
-        "isDelayed": isDelayed ? 1 : 0,
-        "isAutoReply": isAutoReply ? 1 : 0,
-        "isSystemMessage": isSystemMessage ? 1 : 0,
-        "isServiceMessage": isServiceMessage ? 1 : 0,
-        "isForward": isForward ? 1 : 0,
-        "isArchived": isArchived ? 1 : 0,
-        "hasDdResults": hasDdResults ? 1 : 0,
+        "dateCreated": (dateCreated == null) ? null : dateCreated!.millisecondsSinceEpoch,
+        "dateRead": (dateRead == null) ? null : dateRead!.millisecondsSinceEpoch,
+        "dateDelivered": (dateDelivered == null) ? null : dateDelivered!.millisecondsSinceEpoch,
+        "isFromMe": isFromMe! ? 1 : 0,
+        "isDelayed": isDelayed! ? 1 : 0,
+        "isAutoReply": isAutoReply! ? 1 : 0,
+        "isSystemMessage": isSystemMessage! ? 1 : 0,
+        "isServiceMessage": isServiceMessage! ? 1 : 0,
+        "isForward": isForward! ? 1 : 0,
+        "isArchived": isArchived! ? 1 : 0,
+        "hasDdResults": hasDdResults! ? 1 : 0,
         "cacheRoomnames": cacheRoomnames,
-        "isAudioMessage": isAudioMessage ? 1 : 0,
-        "datePlayed": (datePlayed == null) ? null : datePlayed.millisecondsSinceEpoch,
+        "isAudioMessage": isAudioMessage! ? 1 : 0,
+        "datePlayed": (datePlayed == null) ? null : datePlayed!.millisecondsSinceEpoch,
         "itemType": itemType,
         "groupTitle": groupTitle,
         "groupActionType": groupActionType,
-        "isExpired": isExpired ? 1 : 0,
+        "isExpired": isExpired! ? 1 : 0,
         "balloonBundleId": balloonBundleId,
         "associatedMessageGuid": associatedMessageGuid,
         "associatedMessageType": associatedMessageType,
         "expressiveSendStyleId": expressiveSendStyleId,
         "timeExpressiveSendStyleId":
-            (timeExpressiveSendStyleId == null) ? null : timeExpressiveSendStyleId.millisecondsSinceEpoch,
-        "handle": (handle != null) ? handle.toMap() : null,
+            (timeExpressiveSendStyleId == null) ? null : timeExpressiveSendStyleId!.millisecondsSinceEpoch,
+        "handle": (handle != null) ? handle!.toMap() : null,
         "hasAttachments": hasAttachments ? 1 : 0,
         "hasReactions": hasReactions ? 1 : 0,
-        "dateDeleted": (dateDeleted == null) ? null : dateDeleted.millisecondsSinceEpoch,
+        "dateDeleted": (dateDeleted == null) ? null : dateDeleted!.millisecondsSinceEpoch,
         "metadata": jsonEncode(metadata),
       };
 }

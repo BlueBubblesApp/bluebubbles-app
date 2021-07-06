@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/material.dart';
@@ -14,10 +13,10 @@ enum ItemTypes {
 
 class GroupEvent extends StatefulWidget {
   GroupEvent({
-    Key key,
-    @required this.message,
+    Key? key,
+    required this.message,
   }) : super(key: key);
-  final Message message;
+  final Message? message;
 
   @override
   _GroupEventState createState() => _GroupEventState();
@@ -25,7 +24,7 @@ class GroupEvent extends StatefulWidget {
 
 class _GroupEventState extends State<GroupEvent> {
   String text = "";
-  Completer<void> completer;
+  Completer<void>? completer;
 
   @override
   initState() {
@@ -34,20 +33,20 @@ class _GroupEventState extends State<GroupEvent> {
   }
 
   Future<void> getEventText() async {
-    if (completer != null) return completer.future;
+    if (completer != null) return completer!.future;
     completer = new Completer();
 
     try {
-      String text = await getGroupEventText(widget.message);
+      String text = await getGroupEventText(widget.message!);
       if (this.text != text && this.mounted) {
         setState(() {
           this.text = text;
         });
       }
 
-      completer.complete();
+      completer!.complete();
     } catch (ex) {
-      completer.completeError(ex);
+      completer!.completeError(ex);
     }
   }
 

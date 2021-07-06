@@ -13,25 +13,25 @@ import 'package:path/path.dart';
 
 class ContactWidget extends StatefulWidget {
   ContactWidget({
-    Key key,
+    Key? key,
     this.file,
     this.attachment,
   }) : super(key: key);
-  final File file;
-  final Attachment attachment;
+  final File? file;
+  final Attachment? attachment;
 
   @override
   _ContactWidgetState createState() => _ContactWidgetState();
 }
 
 class _ContactWidgetState extends State<ContactWidget> {
-  Contact contact;
+  Contact? contact;
 
   @override
   void initState() {
     super.initState();
 
-    String appleContact = widget.file.readAsStringSync();
+    String appleContact = widget.file!.readAsStringSync();
 
     try {
       contact = AttachmentHelper.parseAppleContact(appleContact);
@@ -56,7 +56,7 @@ class _ContactWidgetState extends State<ContactWidget> {
               MethodChannelInterface().invokeMethod(
                 "open_file",
                 {
-                  "path": "/attachments/" + widget.attachment.guid + "/" + basename(widget.file.path),
+                  "path": "/attachments/" + widget.attachment!.guid! + "/" + basename(widget.file!.path),
                   "mimeType": "text/x-vcard",
                 },
               );

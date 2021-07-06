@@ -15,8 +15,8 @@ class CameraWidget extends StatefulWidget {
   final Function addAttachment;
 
   CameraWidget({
-    Key key,
-    @required this.addAttachment,
+    Key? key,
+    required this.addAttachment,
   }) : super(key: key);
 
   @override
@@ -24,10 +24,10 @@ class CameraWidget extends StatefulWidget {
 }
 
 class _CameraWidgetState extends State<CameraWidget> with WidgetsBindingObserver {
-  CameraController controller;
+  CameraController? controller;
 
   get hasCameraContext {
-    return context != null && BlueBubblesTextField.of(context) != null;
+    return BlueBubblesTextField.of(context) != null;
   }
 
   @override
@@ -35,16 +35,17 @@ class _CameraWidgetState extends State<CameraWidget> with WidgetsBindingObserver
     super.initState();
 
     // Bind the lifecycle events
-    WidgetsBinding.instance.addObserver(this);
+    WidgetsBinding.instance!.addObserver(this);
 
-    SchedulerBinding.instance.addPostFrameCallback((_) async {
+    // The delay here just needs to be bigger than the SlideTransition
+    new Future.delayed(const Duration(milliseconds: 400), () async {
       await initCameras();
     });
   }
 
   Future<void> initCameras() async {
-    if (!this.hasCameraContext) return;
-    await BlueBubblesTextField.of(context).initializeCameraController();
+    if (!this.mounted || !this.hasCameraContext) return;
+    await BlueBubblesTextField.of(context)!.initializeCameraController();
     if (!this.hasCameraContext) return; // After the await, so could have been some time
     if (this.mounted) setState(() {});
   }
@@ -62,11 +63,8 @@ class _CameraWidgetState extends State<CameraWidget> with WidgetsBindingObserver
 
   @override
   void dispose() {
-    if (controller != null) {
-      debugPrint("Disposing of camera!");
-      controller?.dispose();
-    }
-
+    debugPrint("Disposing of camera!");
+    controller?.dispose();
     super.dispose();
   }
 
@@ -93,13 +91,13 @@ class _CameraWidgetState extends State<CameraWidget> with WidgetsBindingObserver
   @override
   Widget build(BuildContext context) {
     if (BlueBubblesTextField.of(context) == null) return Container();
-    controller = BlueBubblesTextField.of(context).cameraController;
+    controller = BlueBubblesTextField.of(context)!.cameraController;
 
-    if (controller == null || !controller.value.isInitialized) return Container();
+    if (controller == null || !controller!.value.isInitialized) return Container();
     return AspectRatio(
       aspectRatio: Get.mediaQuery.orientation == Orientation.portrait
-          ? (controller.value.previewSize.height / controller.value.previewSize.width)
-          : 1 / (controller.value.previewSize.height / controller.value.previewSize.width),
+          ? (controller!.value.previewSize!.height / controller!.value.previewSize!.width)
+          : 1 / (controller!.value.previewSize!.height / controller!.value.previewSize!.width),
       child: Stack(
         alignment: Alignment.topRight,
         children: _buildCameraStack(context),
@@ -131,19 +129,21 @@ class _CameraWidgetState extends State<CameraWidget> with WidgetsBindingObserver
         alignment: Alignment.bottomCenter,
         children: <Widget>[
           RotatedBox(
-            child: CameraPreview(controller),
+            child: CameraPreview(controller!),
             quarterTurns: Get.mediaQuery.orientation == Orientation.portrait ? 0 : 3,
           ),
           Padding(
             padding: EdgeInsets.only(
               bottom: Get.mediaQuery.size.height / 30,
             ),
-            child: FlatButton(
-              color: Colors.transparent,
+            child: TextButton(
+              style: TextButton.styleFrom(
+                backgroundColor: Colors.transparent,
+              ),
               onPressed: () async {
                 HapticFeedback.mediumImpact();
 
-                XFile savedImage = await controller.takePicture();
+                XFile savedImage = await controller!.takePicture();
                 File file = new File(savedImage.path);
 
                 // Fail if the file doesn't exist after taking the picture
@@ -175,10 +175,12 @@ class _CameraWidgetState extends State<CameraWidget> with WidgetsBindingObserver
           padding: EdgeInsets.only(
             bottom: Get.mediaQuery.size.height / 30,
           ),
-          child: FlatButton(
-            padding: EdgeInsets.only(left: 10),
-            minWidth: 30,
-            color: Colors.transparent,
+          child: TextButton(
+            style: TextButton.styleFrom(
+              padding: EdgeInsets.only(left: 10),
+              minimumSize: Size.square(30),
+              backgroundColor: Colors.transparent,
+            ),
             onPressed: () async {
               HapticFeedback.lightImpact();
               await this.openFullCamera(type: 'camera');
@@ -197,10 +199,12 @@ class _CameraWidgetState extends State<CameraWidget> with WidgetsBindingObserver
           padding: EdgeInsets.only(
             bottom: Get.mediaQuery.size.height / 30,
           ),
-          child: FlatButton(
-            padding: EdgeInsets.all(0),
-            minWidth: 30,
-            color: Colors.transparent,
+          child: TextButton(
+            style: TextButton.styleFrom(
+              padding: EdgeInsets.all(0),
+              minimumSize: Size.square(30),
+              backgroundColor: Colors.transparent,
+            ),
             onPressed: () async {
               HapticFeedback.lightImpact();
               await this.openFullCamera(type: 'video');
@@ -217,16 +221,18 @@ class _CameraWidgetState extends State<CameraWidget> with WidgetsBindingObserver
         padding: EdgeInsets.only(
           bottom: Get.mediaQuery.size.height / 30,
         ),
-        child: FlatButton(
-          padding: EdgeInsets.only(right: 10),
-          minWidth: 30,
-          color: Colors.transparent,
+        child: TextButton(
+          style: TextButton.styleFrom(
+            padding: EdgeInsets.only(right: 10),
+            minimumSize: Size.square(30),
+            backgroundColor: Colors.transparent,
+          ),
           onPressed: () async {
             if (BlueBubblesTextField.of(context) == null) return;
 
             HapticFeedback.lightImpact();
-            BlueBubblesTextField.of(context).cameraIndex = (BlueBubblesTextField.of(context).cameraIndex - 1).abs();
-            await BlueBubblesTextField.of(context).initializeCameraController();
+            BlueBubblesTextField.of(context)!.cameraIndex = (BlueBubblesTextField.of(context)!.cameraIndex - 1).abs();
+            await BlueBubblesTextField.of(context)!.initializeCameraController();
             if (this.mounted) setState(() {});
           },
           child: Icon(

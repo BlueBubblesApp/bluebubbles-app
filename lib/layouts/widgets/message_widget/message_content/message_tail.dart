@@ -1,18 +1,17 @@
-import 'package:get/get.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 
 class MessageTail extends StatelessWidget {
-  final Color color;
-  final Message message;
+  final Color? color;
+  final Message? message;
 
-  const MessageTail({Key key, @required this.message, this.color}) : super(key: key);
+  const MessageTail({Key? key, required this.message, this.color}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    ModalRoute routeCtx = ModalRoute.of(context);
-    bool hideTail = ((routeCtx?.settings?.arguments ?? {"hideTail": false}) as Map)["hideTail"] ?? false;
+    ModalRoute? routeCtx = ModalRoute.of(context);
+    bool hideTail = ((routeCtx?.settings.arguments ?? {"hideTail": false}) as Map)["hideTail"] ?? false;
     if (hideTail) return Container();
 
     bool isFromMe = message?.isFromMe ?? true;

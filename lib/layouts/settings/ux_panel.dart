@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -14,14 +15,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 class UXPanel extends StatefulWidget {
-  UXPanel({Key key}) : super(key: key);
+  UXPanel({Key? key}) : super(key: key);
 
   @override
   _UXPanelState createState() => _UXPanelState();
 }
 
 class _UXPanelState extends State<UXPanel> {
-  Settings _settingsCopy;
+  late Settings _settingsCopy;
   bool needToReconnect = false;
   bool showUrl = false;
 
@@ -56,13 +57,7 @@ class _UXPanelState extends State<UXPanel> {
                 brightness: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor),
                 toolbarHeight: 100.0,
                 elevation: 0,
-                leading: IconButton(
-                  icon: Icon(SettingsManager().settings.skin == Skins.iOS ? Icons.arrow_back_ios : Icons.arrow_back,
-                      color: Theme.of(context).primaryColor),
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                ),
+                leading: buildBackButton(context),
                 backgroundColor: Theme.of(context).accentColor.withOpacity(0.5),
                 title: Text(
                   "User Experience",
@@ -199,7 +194,7 @@ class _UXPanelState extends State<UXPanel> {
                   if (!isNullOrZero(SettingsManager().settings.sendDelay))
                     SettingsSlider(
                         text: "Send Delay (Seconds)",
-                        startingVal: _settingsCopy.sendDelay.toDouble(),
+                        startingVal: _settingsCopy.sendDelay!.toDouble(),
                         update: (double val) {
                           _settingsCopy.sendDelay = val.toInt();
                         },
@@ -207,6 +202,14 @@ class _UXPanelState extends State<UXPanel> {
                         min: 1,
                         max: 10,
                         divisions: 9),
+                  SettingsSwitch(
+                    onChanged: (bool val) {
+                      _settingsCopy.startVideosMutedFullscreen = val;
+                      saveSettings();
+                    },
+                    initialVal: _settingsCopy.startVideosMutedFullscreen,
+                    title: "Play Videos Muted by Default in Fullscreen Player",
+                  ),
                 ],
               ),
             ),

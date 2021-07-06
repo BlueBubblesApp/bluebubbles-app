@@ -20,48 +20,48 @@ abstract class MessageBlocEventType {
 }
 
 class MessageBlocEvent {
-  List<Message> messages;
-  Message message;
-  String remove;
-  String oldGuid;
-  bool outGoing = false;
-  int index;
-  String type;
+  List<Message?>? messages;
+  Message? message;
+  String? remove;
+  String? oldGuid;
+  bool? outGoing = false;
+  int? index;
+  String? type;
 }
 
 class MessageBloc {
   final _messageController = StreamController<MessageBlocEvent>.broadcast();
 
   Stream<MessageBlocEvent> get stream => _messageController.stream;
-  LinkedHashMap<String, Message> _allMessages = new LinkedHashMap();
+  LinkedHashMap<String?, Message?> _allMessages = new LinkedHashMap();
 
   int _reactions = 0;
   bool showDeleted = false;
   bool _canLoadMore = true;
   bool _isGettingMore = false;
 
-  LinkedHashMap<String, Message> get messages {
+  LinkedHashMap<String?, Message?> get messages {
     if (!showDeleted) {
-      _allMessages.removeWhere((key, value) => value.dateDeleted != null);
+      _allMessages.removeWhere((key, value) => value!.dateDeleted != null);
     }
 
     return _allMessages;
   }
 
-  Chat _currentChat;
+  Chat? _currentChat;
 
-  Chat get currentChat => _currentChat;
+  Chat? get currentChat => _currentChat;
 
-  String get firstSentMessage {
-    for (Message message in _allMessages.values) {
-      if (message.isFromMe) {
+  String? get firstSentMessage {
+    for (Message? message in _allMessages.values) {
+      if (message!.isFromMe!) {
         return message.guid;
       }
     }
     return "no sent message found";
   }
 
-  MessageBloc(Chat chat, {bool canLoadMore = true}) {
+  MessageBloc(Chat? chat, {bool canLoadMore = true}) {
     _canLoadMore = canLoadMore;
     _currentChat = chat;
 
@@ -69,7 +69,7 @@ class MessageBloc {
       if (_messageController.isClosed) return;
 
       // Ignore any events that don't have to do with the current chat
-      if (msgEvent?.chatGuid != currentChat?.guid) return;
+      if (msgEvent.chatGuid != currentChat?.guid) return;
 
       // Iterate over each action that needs to take place on the chat
       bool addToSink = true;
@@ -103,10 +103,10 @@ class MessageBloc {
     });
   }
 
-  void insert(Message message, {bool sentFromThisClient = false, bool addToSink = true}) {
+  void insert(Message message, {bool? sentFromThisClient = false, bool addToSink = true}) {
     if (message.associatedMessageGuid != null) {
       if (_allMessages.containsKey(message.associatedMessageGuid)) {
-        Message messageWithReaction = _allMessages[message.associatedMessageGuid];
+        Message messageWithReaction = _allMessages[message.associatedMessageGuid]!;
         messageWithReaction.hasReactions = true;
         _allMessages.update(message.associatedMessageGuid, (value) => messageWithReaction);
         if (addToSink) {
@@ -137,18 +137,18 @@ class MessageBloc {
       return;
     }
 
-    if (sentFromThisClient) {
-      _allMessages = linkedHashMapInsert(_allMessages, 0, message.guid, message);
+    if (sentFromThisClient!) {
+      _allMessages = linkedHashMapInsert(_allMessages, 0, message.guid, message) as LinkedHashMap<String?, Message?>;
     } else {
-      List<Message> messages = _allMessages.values.toList();
+      List<Message?> messages = _allMessages.values.toList();
       for (int i = 0; i < messages.length; i++) {
         //if _allMessages[i] dateCreated is earlier than the new message, insert at that index
-        if ((messages[i].originalROWID != null &&
+        if ((messages[i]!.originalROWID != null &&
                 message.originalROWID != null &&
-                message.originalROWID > messages[i].originalROWID) ||
-            ((messages[i].originalROWID == null || message.originalROWID == null) &&
-                messages[i].dateCreated.compareTo(message.dateCreated) < 0)) {
-          _allMessages = linkedHashMapInsert(_allMessages, i, message.guid, message);
+                message.originalROWID! > messages[i]!.originalROWID!) ||
+            ((messages[i]!.originalROWID == null || message.originalROWID == null) &&
+                messages[i]!.dateCreated!.compareTo(message.dateCreated!) < 0)) {
+          _allMessages = linkedHashMapInsert(_allMessages, i, message.guid, message) as LinkedHashMap<String?, Message?>;
           index = i;
 
           break;
@@ -184,7 +184,7 @@ class MessageBloc {
     }
   }
 
-  Future<LinkedHashMap<String, Message>> getMessages() async {
+  Future<LinkedHashMap<String?, Message?>> getMessages() async {
     // If we are already fetching, return empty
     if (_isGettingMore || !this._canLoadMore) return new LinkedHashMap();
     _isGettingMore = true;
@@ -192,7 +192,7 @@ class MessageBloc {
     // Fetch messages
     List<Message> messages = await Chat.getMessagesSingleton(_currentChat);
 
-    if (isNullOrEmpty(messages)) {
+    if (isNullOrEmpty(messages)!) {
       _allMessages = new LinkedHashMap();
     } else {
       for (var element in messages) {
@@ -251,7 +251,7 @@ class MessageBloc {
   }
 
   Future<LoadMessageResult> loadMessageChunk(int offset,
-      {bool includeReactions = true, bool checkLocal = true, CurrentChat currentChat}) async {
+      {bool includeReactions = true, bool checkLocal = true, CurrentChat? currentChat}) async {
     int reactionCnt = includeReactions ? _reactions : 0;
     Completer<LoadMessageResult> completer = new Completer();
     if (!this._canLoadMore) {
@@ -259,7 +259,7 @@ class MessageBloc {
       return completer.future;
     }
 
-    Chat currChat = currentChat?.chat ?? _currentChat;
+    Chat? currChat = currentChat?.chat ?? _currentChat;
 
     if (currChat != null) {
       List<Message> messages = [];
@@ -270,14 +270,14 @@ class MessageBloc {
 
       // Fetch messages from the socket
       count = messages.length;
-      if (isNullOrEmpty(messages)) {
+      if (isNullOrEmpty(messages)!) {
         try {
           // Fetch messages from the server
           List<dynamic> _messages = await SocketManager().loadMessageChunk(currChat, offset + reactionCnt);
           count = _messages.length;
 
           // Handle the messages
-          if (isNullOrEmpty(_messages)) {
+          if (isNullOrEmpty(_messages)!) {
             debugPrint("(CHUNK) No message chunks left from server");
             completer.complete(LoadMessageResult.RETREIVED_NO_MESSAGES);
           } else {
@@ -288,7 +288,7 @@ class MessageBloc {
 
             // If the handle is empty, load it
             for (Message msg in messages) {
-              if (msg.isFromMe || msg.handle != null) continue;
+              if (msg.isFromMe! || msg.handle != null) continue;
               await msg.getHandle();
             }
           }

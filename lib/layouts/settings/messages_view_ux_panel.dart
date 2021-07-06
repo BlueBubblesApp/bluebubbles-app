@@ -1,7 +1,7 @@
 import 'dart:ui';
 
+import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:get/get.dart';
-import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
@@ -12,14 +12,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 class ConvoSettings extends StatefulWidget {
-  ConvoSettings({Key key}) : super(key: key);
+  ConvoSettings({Key? key}) : super(key: key);
 
   @override
   _ConvoSettingsState createState() => _ConvoSettingsState();
 }
 
 class _ConvoSettingsState extends State<ConvoSettings> {
-  Settings _settingsCopy;
+  late Settings _settingsCopy;
   bool needToReconnect = false;
   bool showUrl = false;
 
@@ -54,13 +54,7 @@ class _ConvoSettingsState extends State<ConvoSettings> {
                 brightness: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor),
                 toolbarHeight: 100.0,
                 elevation: 0,
-                leading: IconButton(
-                  icon: Icon(SettingsManager().settings.skin == Skins.iOS ? Icons.arrow_back_ios : Icons.arrow_back,
-                      color: Theme.of(context).primaryColor),
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                ),
+                leading: buildBackButton(context),
                 backgroundColor: Theme.of(context).accentColor.withOpacity(0.5),
                 title: Text(
                   "Conversation Settings",
@@ -176,6 +170,14 @@ class _ConvoSettingsState extends State<ConvoSettings> {
                     },
                     initialVal: _settingsCopy.sendWithReturn,
                     title: "Send Message with Return Key",
+                  ),
+                  SettingsSwitch(
+                    onChanged: (bool val) {
+                      _settingsCopy.startVideosMuted = val;
+                      saveSettings();
+                    },
+                    initialVal: _settingsCopy.startVideosMuted,
+                    title: "Play Videos Muted by Default in Mini-Player",
                   ),
                 ],
               ),

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/models/config_entry.dart';
@@ -31,7 +33,7 @@ class Settings {
   bool preCachePreviewImages = true;
   bool showConnectionIndicator = false;
   bool showSyncIndicator = true;
-  int sendDelay;
+  int? sendDelay;
   bool recipientAsPlaceholder = false;
   bool hideKeyboardOnScroll = false;
   bool moveChatCreatorToHeader = false;
@@ -44,6 +46,8 @@ class Settings {
   bool showDeliveryTimestamps = false;
   int previewCompressionQuality = 25;
   bool filteredChatList = false;
+  bool startVideosMuted = false;
+  bool startVideosMutedFullscreen = false;
 
   // String emojiFontFamily;
 
@@ -194,8 +198,6 @@ class Settings {
   }
 
   Future<DisplayMode> getDisplayMode() async {
-    if (displayMode == null) return FlutterDisplayMode.active;
-
     List<DisplayMode> modes = await FlutterDisplayMode.supported;
     modes = modes.where((element) => element.id == displayMode).toList();
 
@@ -217,9 +219,9 @@ class Settings {
   }
 
   static Future<Settings> getSettings() async {
-    Database db = await DBProvider.db.database;
+    Database? db = await DBProvider.db.database;
 
-    List<Map<String, dynamic>> result = await db.query("config");
+    List<Map<String, dynamic>> result = await db!.query("config");
     if (result.isEmpty) return new Settings();
     List<ConfigEntry> entries = [];
     for (Map<String, dynamic> setting in result) {

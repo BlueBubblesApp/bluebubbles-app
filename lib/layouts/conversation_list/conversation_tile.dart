@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:get/get.dart';
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/socket_singletons.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_group_widget.dart';
@@ -28,17 +28,17 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 class ConversationTile extends StatefulWidget {
-  final Chat chat;
-  final bool onTapGoToChat;
-  final Function onTapCallback;
-  final List<File> existingAttachments;
-  final String existingText;
-  final Function(bool) onSelect;
+  final Chat? chat;
+  final bool? onTapGoToChat;
+  final Function? onTapCallback;
+  final List<File>? existingAttachments;
+  final String? existingText;
+  final Function(bool)? onSelect;
   final bool inSelectMode;
-  final List<Chat> selected;
+  final List<Chat?>? selected;
 
   ConversationTile({
-    Key key,
+    Key? key,
     this.chat,
     this.onTapGoToChat,
     this.existingAttachments,
@@ -54,26 +54,26 @@ class ConversationTile extends StatefulWidget {
 }
 
 class _ConversationTileState extends State<ConversationTile> with AutomaticKeepAliveClientMixin {
-  bool hideDividers = false;
+  bool? hideDividers = false;
   bool isFetching = false;
-  bool denseTiles = false;
-  List<DisplayMode> modes;
-  DisplayMode currentMode;
-  Brightness brightness;
-  Color previousBackgroundColor;
+  bool? denseTiles = false;
+  List<DisplayMode>? modes;
+  DisplayMode? currentMode;
+  Brightness? brightness;
+  Color? previousBackgroundColor;
   bool gotBrightness = false;
 
   // Redacted Mode stuff that's visible on this screen (to detect and respond to changes)
-  bool redactedMode = false;
-  bool hideMessageContent = true;
-  bool hideContactPhotos = true;
-  bool hideContactInfo = true;
-  bool removeLetterAvatars = true;
-  bool generateFakeContactNames = false;
-  bool generateFakeMessageContent = false;
+  bool? redactedMode = false;
+  bool? hideMessageContent = true;
+  bool? hideContactPhotos = true;
+  bool? hideContactInfo = true;
+  bool? removeLetterAvatars = true;
+  bool? generateFakeContactNames = false;
+  bool? generateFakeMessageContent = false;
 
   // Typing indicator
-  bool showTypingIndicator = false;
+  bool? showTypingIndicator = false;
 
   void loadBrightness() {
     Color now = Theme.of(context).backgroundColor;
@@ -81,11 +81,6 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
     if (!themeChanged && gotBrightness) return;
 
     previousBackgroundColor = now;
-    if (this.context == null) {
-      brightness = Brightness.light;
-      gotBrightness = true;
-      return;
-    }
 
     bool isDark = now.computeLuminance() < 0.179;
     brightness = isDark ? Brightness.dark : Brightness.light;
@@ -95,7 +90,7 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
 
   bool get selected {
     if (widget.selected == null) return false;
-    return widget.selected.where((element) => widget.chat.guid == element.guid).isNotEmpty;
+    return widget.selected!.where((element) => widget.chat!.guid == element!.guid).isNotEmpty;
   }
 
   @override
@@ -112,54 +107,50 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
     removeLetterAvatars = SettingsManager().settings.removeLetterAvatars;
     generateFakeContactNames = SettingsManager().settings.generateFakeContactNames;
     generateFakeMessageContent = SettingsManager().settings.generateFakeMessageContent;
-    SettingsManager().stream.listen((Settings newSettings) {
-      if (!this.mounted) return;
-
-      if (newSettings.hideDividers != hideDividers) {
-        setState(() {
-          hideDividers = newSettings.hideDividers;
-        });
+    SettingsManager().stream.listen((Settings? newSettings) {
+      if (newSettings!.hideDividers != hideDividers) {
+        hideDividers = newSettings.hideDividers;
       }
 
       if (newSettings.denseChatTiles != denseTiles) {
-        setState(() {
-          denseTiles = newSettings.denseChatTiles;
-        });
-      } else if (newSettings.redactedMode != redactedMode) {
-        setState(() {
-          redactedMode = newSettings.redactedMode;
-        });
-      } else if (newSettings.hideMessageContent != hideMessageContent) {
-        setState(() {
-          hideMessageContent = newSettings.hideMessageContent;
-        });
-      } else if (newSettings.hideContactPhotos != hideContactPhotos) {
-        setState(() {
-          hideContactPhotos = newSettings.hideContactPhotos;
-        });
-      } else if (newSettings.hideContactInfo != hideContactInfo) {
-        setState(() {
-          hideContactInfo = newSettings.hideContactInfo;
-        });
-      } else if (newSettings.removeLetterAvatars != removeLetterAvatars) {
-        setState(() {
-          removeLetterAvatars = newSettings.removeLetterAvatars;
-        });
-      } else if (newSettings.generateFakeContactNames != generateFakeContactNames) {
-        setState(() {
-          generateFakeContactNames = newSettings.generateFakeContactNames;
-        });
-      } else if (newSettings.generateFakeMessageContent != generateFakeMessageContent) {
-        setState(() {
-          generateFakeMessageContent = newSettings.generateFakeMessageContent;
-        });
+        denseTiles = newSettings.denseChatTiles;
       }
+
+      if (newSettings.redactedMode != redactedMode) {
+        redactedMode = newSettings.redactedMode;
+      }
+
+      if (newSettings.hideMessageContent != hideMessageContent) {
+        hideMessageContent = newSettings.hideMessageContent;
+      }
+
+      if (newSettings.hideContactPhotos != hideContactPhotos) {
+        hideContactPhotos = newSettings.hideContactPhotos;
+      }
+
+      if (newSettings.hideContactInfo != hideContactInfo) {
+        hideContactInfo = newSettings.hideContactInfo;
+      }
+
+      if (newSettings.removeLetterAvatars != removeLetterAvatars) {
+        removeLetterAvatars = newSettings.removeLetterAvatars;
+      }
+
+      if (newSettings.generateFakeContactNames != generateFakeContactNames) {
+        generateFakeContactNames = newSettings.generateFakeContactNames;
+      }
+
+      if (newSettings.generateFakeMessageContent != generateFakeMessageContent) {
+        generateFakeMessageContent = newSettings.generateFakeMessageContent;
+      }
+
+      if (this.mounted) setState(() {});
     });
 
     // Listen for changes in the group
     NewMessageManager().stream.listen((NewMessageEvent event) async {
       // Make sure we have the required data to qualify for this tile
-      if (event.chatGuid != widget.chat.guid) return;
+      if (event.chatGuid != widget.chat!.guid) return;
       if (!event.event.containsKey("message")) return;
 
       // Make sure the message is a group event
@@ -167,22 +158,22 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
       if (!message.isGroupEvent()) return;
 
       // If it's a group event, let's fetch the new information and save it
-      await fetchChatSingleton(widget.chat.guid);
+      await fetchChatSingleton(widget.chat!.guid);
       this.setNewChatData(forceUpdate: true);
     });
   }
 
   void setNewChatData({forceUpdate: false}) async {
     // Save the current participant list and get the latest
-    List<Handle> ogParticipants = widget.chat.participants;
-    await widget.chat.getParticipants();
+    List<Handle> ogParticipants = widget.chat!.participants;
+    await widget.chat!.getParticipants();
 
     // Save the current title and generate the new one
-    String ogTitle = widget.chat.title;
-    await widget.chat.getTitle();
+    String? ogTitle = widget.chat!.title;
+    await widget.chat!.getTitle();
 
     // If the original data is different, update the state
-    if (ogTitle != widget.chat.title || ogParticipants.length != widget.chat.participants.length || forceUpdate) {
+    if (ogTitle != widget.chat!.title || ogParticipants.length != widget.chat!.participants.length || forceUpdate) {
       if (this.mounted) setState(() {});
     }
   }
@@ -192,9 +183,9 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
     isFetching = true;
 
     // If our chat does not have any participants, get them
-    if (isNullOrEmpty(widget.chat.participants)) {
-      await widget.chat.getParticipants();
-      if (!isNullOrEmpty(widget.chat.participants) && this.mounted) {
+    if (isNullOrEmpty(widget.chat!.participants)!) {
+      await widget.chat!.getParticipants();
+      if (!isNullOrEmpty(widget.chat!.participants)! && this.mounted) {
         setState(() {});
       }
     }
@@ -203,7 +194,7 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
   }
 
   void onTapUp(details) {
-    if (widget.onTapGoToChat != null && widget.onTapGoToChat) {
+    if (widget.onTapGoToChat != null && widget.onTapGoToChat!) {
       Navigator.of(context).pushAndRemoveUntil(
         CupertinoPageRoute(
           builder: (BuildContext context) {
@@ -217,7 +208,7 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
         (route) => route.isFirst,
       );
     } else if (widget.onTapCallback != null) {
-      widget.onTapCallback();
+      widget.onTapCallback!();
     } else if (widget.inSelectMode && widget.onSelect != null) {
       onSelect();
     } else {
@@ -244,15 +235,15 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
       actionPane: SlidableStrechActionPane(),
       actions: [
         IconSlideAction(
-          caption: widget.chat.isPinned ? 'Unpin' : 'Pin',
+          caption: widget.chat!.isPinned! ? 'Unpin' : 'Pin',
           color: Colors.yellow[800],
-          foregroundColor: Theme.of(context).textTheme.bodyText1.color,
-          icon: widget.chat.isPinned ? Icons.star_outline : Icons.star,
+          foregroundColor: Theme.of(context).textTheme.bodyText1!.color,
+          icon: widget.chat!.isPinned! ? Icons.star_outline : Icons.star,
           onTap: () async {
-            if (widget.chat.isPinned) {
-              await widget.chat.unpin();
+            if (widget.chat!.isPinned!) {
+              await widget.chat!.unpin();
             } else {
-              await widget.chat.pin();
+              await widget.chat!.pin();
             }
 
             EventDispatcher().emit("refresh", null);
@@ -261,45 +252,44 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
         ),
       ],
       secondaryActions: <Widget>[
-        if (!widget.chat.isArchived)
+        if (!widget.chat!.isArchived!)
           IconSlideAction(
-            caption: widget.chat.isMuted ? 'Show Alerts' : 'Hide Alerts',
+            caption: widget.chat!.isMuted! ? 'Show Alerts' : 'Hide Alerts',
             color: Colors.purple[700],
-            icon: widget.chat.isMuted ? Icons.notifications_active : Icons.notifications_off,
+            icon: widget.chat!.isMuted! ? Icons.notifications_active : Icons.notifications_off,
             onTap: () async {
-              widget.chat.isMuted = !widget.chat.isMuted;
-              await widget.chat.save(updateLocalVals: true);
+              widget.chat!.isMuted = !widget.chat!.isMuted!;
+              await widget.chat!.save(updateLocalVals: true);
               if (this.mounted) setState(() {});
             },
           ),
-        if (widget.chat.isArchived)
+        if (widget.chat!.isArchived!)
           IconSlideAction(
             caption: "Delete",
             color: Colors.red,
             icon: Icons.delete_forever,
             onTap: () async {
               ChatBloc().deleteChat(widget.chat);
-              Chat.deleteChat(widget.chat);
+              Chat.deleteChat(widget.chat!);
             },
           ),
         IconSlideAction(
-          caption: widget.chat.hasUnreadMessage ? 'Mark Read' : 'Mark Unread',
+          caption: widget.chat!.hasUnreadMessage! ? 'Mark Read' : 'Mark Unread',
           color: Colors.blue,
-          icon: widget.chat.hasUnreadMessage ? Icons.mark_chat_read : Icons.mark_chat_unread,
+          icon: widget.chat!.hasUnreadMessage! ? Icons.mark_chat_read : Icons.mark_chat_unread,
           onTap: () {
-            widget.chat.setUnreadStatus(true);
-            ChatBloc().updateChatPosition(widget.chat);
+            ChatBloc().markRead(widget.chat!);
           },
         ),
         IconSlideAction(
-          caption: widget.chat.isArchived ? 'UnArchive' : 'Archive',
-          color: widget.chat.isArchived ? Colors.blue : Colors.red,
-          icon: widget.chat.isArchived ? Icons.restore_from_trash_rounded : Icons.delete,
+          caption: widget.chat!.isArchived! ? 'UnArchive' : 'Archive',
+          color: widget.chat!.isArchived! ? Colors.blue : Colors.red,
+          icon: widget.chat!.isArchived! ? Icons.restore_from_trash_rounded : Icons.delete,
           onTap: () {
-            if (widget.chat.isArchived) {
-              ChatBloc().unArchiveChat(widget.chat);
+            if (widget.chat!.isArchived!) {
+              ChatBloc().unArchiveChat(widget.chat!);
             } else {
-              ChatBloc().archiveChat(widget.chat);
+              ChatBloc().archiveChat(widget.chat!);
             }
           },
         ),
@@ -309,18 +299,18 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
   }
 
   Widget buildTitle() {
-    final hideInfo = redactedMode && hideContactInfo;
-    final generateNames = redactedMode && generateFakeContactNames;
+    final hideInfo = redactedMode! && hideContactInfo!;
+    final generateNames = redactedMode! && generateFakeContactNames!;
 
-    TextStyle style = Theme.of(context).textTheme.bodyText1;
-    String title = widget.chat.title != null ? widget.chat.title : "";
+    TextStyle? style = Theme.of(context).textTheme.bodyText1;
+    String? title = widget.chat!.title != null ? widget.chat!.title : "";
 
     if (generateNames)
-      title = widget.chat.fakeParticipants.length == 1 ? widget.chat.fakeParticipants[0] : "Group Chat";
-    else if (hideInfo) style = style.copyWith(color: Colors.transparent);
+      title = widget.chat!.fakeParticipants.length == 1 ? widget.chat!.fakeParticipants[0] : "Group Chat";
+    else if (hideInfo) style = style!.copyWith(color: Colors.transparent);
 
     return Text(
-      title,
+      title!,
       style: style,
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
@@ -329,15 +319,15 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
 
   Widget buildSubtitle() {
     return StreamBuilder<Map<String, dynamic>>(
-      stream: CurrentChat.getCurrentChat(widget.chat).stream,
+      stream: CurrentChat.getCurrentChat(widget.chat)?.stream as Stream<Map<String, dynamic>>?,
       builder: (BuildContext context, AsyncSnapshot snapshot) {
         if (snapshot.connectionState == ConnectionState.active &&
             snapshot.hasData &&
             snapshot.data["type"] == CurrentChatEvent.TypingStatus) {
           showTypingIndicator = snapshot.data["data"];
         }
-        if (showTypingIndicator) {
-          double height = Theme.of(context).textTheme.subtitle1.fontSize;
+        if (showTypingIndicator!) {
+          double height = Theme.of(context).textTheme.subtitle1!.fontSize!;
           double indicatorHeight = (height * 2).clamp(height, height + 13);
           return Container(
             height: height,
@@ -357,22 +347,22 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
           );
         }
 
-        final hideContent = redactedMode && hideMessageContent;
-        final generateContent = redactedMode && generateFakeMessageContent;
+        final hideContent = redactedMode! && hideMessageContent!;
+        final generateContent = redactedMode! && generateFakeMessageContent!;
 
-        TextStyle style = Theme.of(context).textTheme.subtitle1.apply(
-              color: Theme.of(context).textTheme.subtitle1.color.withOpacity(
+        TextStyle style = Theme.of(context).textTheme.subtitle1!.apply(
+              color: Theme.of(context).textTheme.subtitle1!.color!.withOpacity(
                     0.85,
                   ),
             );
-        String message = widget.chat.latestMessageText != null ? widget.chat.latestMessageText : "";
+        String? message = widget.chat!.latestMessageText != null ? widget.chat!.latestMessageText : "";
 
         if (generateContent)
-          message = widget.chat.fakeLatestMessageText;
+          message = widget.chat!.fakeLatestMessageText;
         else if (hideContent) style = style.copyWith(color: Colors.transparent);
 
-        return widget.chat.latestMessageText != null && !(widget.chat.latestMessageText is String)
-            ? widget.chat.latestMessageText
+        return widget.chat!.latestMessageText != null && !(widget.chat!.latestMessageText is String)
+            ? widget.chat!.latestMessageText as Widget
             : Text(
                 message != null ? message : "",
                 style: style,
@@ -388,7 +378,7 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
 
     if (!selected) {
       avatar = ContactAvatarGroupWidget(
-        participants: widget.chat.participants,
+        participants: widget.chat!.participants,
         chat: widget.chat,
         width: 40,
         height: 40,
@@ -406,7 +396,7 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
         child: Center(
           child: Icon(
             Icons.check,
-            color: Theme.of(context).textTheme.bodyText1.color,
+            color: Theme.of(context).textTheme.bodyText1!.color,
             size: 20,
           ),
         ),
@@ -418,16 +408,16 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
 
   Widget _buildDate() => ConstrainedBox(
         constraints: BoxConstraints(maxWidth: 100.0),
-        child: Text(buildDate(widget.chat.latestMessageDate),
+        child: Text(buildDate(widget.chat!.latestMessageDate),
             textAlign: TextAlign.right,
-            style: Theme.of(context).textTheme.subtitle2.apply(
-                  color: Theme.of(context).textTheme.subtitle2.color.withOpacity(0.85),
+            style: Theme.of(context).textTheme.subtitle2!.apply(
+                  color: Theme.of(context).textTheme.subtitle2!.color!.withOpacity(0.85),
                 ),
             overflow: TextOverflow.clip),
       );
 
   void onTap() {
-    if (widget.onTapGoToChat != null && widget.onTapGoToChat) {
+    if (widget.onTapGoToChat != null && widget.onTapGoToChat!) {
       Navigator.of(context).pushAndRemoveUntil(
         ThemeSwitcher.buildPageRoute(
           builder: (BuildContext context) {
@@ -441,7 +431,7 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
         (route) => route.isFirst,
       );
     } else if (widget.onTapCallback != null) {
-      widget.onTapCallback();
+      widget.onTapCallback!();
     } else {
       Navigator.of(context).push(
         ThemeSwitcher.buildPageRoute(
@@ -459,7 +449,7 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
 
   void onSelect() {
     if (widget.onSelect != null) {
-      widget.onSelect(!selected);
+      widget.onSelect!(!selected);
       setState(() {});
     }
   }
@@ -489,7 +479,7 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
 }
 
 class _Cupertino extends StatefulWidget {
-  _Cupertino({Key key, @required this.parent, @required this.parentProps}) : super(key: key);
+  _Cupertino({Key? key, required this.parent, required this.parentProps}) : super(key: key);
   final _ConversationTileState parent;
   final ConversationTile parentProps;
 
@@ -532,7 +522,10 @@ class __CupertinoState extends State<_Cupertino> {
           },
           onLongPress: () async {
             HapticFeedback.mediumImpact();
-            await widget.parent.widget.chat.setUnreadStatus(!widget.parent.widget.chat.hasUnreadMessage);
+            if (widget.parent.widget.chat!.hasUnreadMessage!) {
+              ChatBloc().markRead(widget.parent.widget.chat!);
+            }
+            await widget.parent.widget.chat!.setUnreadStatus(!widget.parent.widget.chat!.hasUnreadMessage!);
             if (this.mounted) setState(() {});
           },
           child: Stack(
@@ -542,7 +535,7 @@ class __CupertinoState extends State<_Cupertino> {
                 padding: const EdgeInsets.only(left: 20.0),
                 child: Container(
                   decoration: BoxDecoration(
-                    border: (!widget.parent.hideDividers)
+                    border: (!widget.parent.hideDividers!)
                         ? Border(
                             top: BorderSide(
                               color: Theme.of(context).dividerColor,
@@ -573,7 +566,7 @@ class __CupertinoState extends State<_Cupertino> {
                               SettingsManager().settings.skin == Skins.iOS
                                   ? Icons.arrow_forward_ios
                                   : Icons.arrow_forward,
-                              color: Theme.of(context).textTheme.subtitle1.color,
+                              color: Theme.of(context).textTheme.subtitle1!.color,
                               size: 15,
                             ),
                           ],
@@ -593,7 +586,7 @@ class __CupertinoState extends State<_Cupertino> {
                       Stack(
                         alignment: AlignmentDirectional.centerStart,
                         children: [
-                          (!widget.parent.widget.chat.isMuted && widget.parent.widget.chat.hasUnreadMessage)
+                          (!widget.parent.widget.chat!.isMuted! && widget.parent.widget.chat!.hasUnreadMessage!)
                               ? Container(
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(35),
@@ -603,7 +596,7 @@ class __CupertinoState extends State<_Cupertino> {
                                   height: 10,
                                 )
                               : Container(),
-                          (widget.parent.widget.chat.isPinned)
+                          widget.parent.widget.chat!.isPinned!
                               ? Icon(
                                   Icons.star,
                                   size: 10,
@@ -613,12 +606,12 @@ class __CupertinoState extends State<_Cupertino> {
                               : Container(),
                         ],
                       ),
-                      (widget.parent.widget.chat.isMuted)
+                      widget.parent.widget.chat!.isMuted!
                           ? SvgPicture.asset(
                               "assets/icon/moon.svg",
-                              color: widget.parentProps.chat.hasUnreadMessage
+                              color: widget.parentProps.chat!.hasUnreadMessage!
                                   ? Theme.of(context).primaryColor.withOpacity(0.8)
-                                  : Theme.of(context).textTheme.subtitle1.color,
+                                  : Theme.of(context).textTheme.subtitle1!.color,
                               width: 10,
                               height: 10,
                             )
@@ -636,7 +629,7 @@ class __CupertinoState extends State<_Cupertino> {
 }
 
 class _Material extends StatelessWidget {
-  const _Material({Key key, @required this.parent, @required this.parentProps}) : super(key: key);
+  const _Material({Key? key, required this.parent, required this.parentProps}) : super(key: key);
   final _ConversationTileState parent;
   final ConversationTile parentProps;
 
@@ -661,7 +654,7 @@ class _Material extends StatelessWidget {
         },
         child: Container(
           decoration: BoxDecoration(
-            border: (!parent.hideDividers)
+            border: (!parent.hideDividers!)
                 ? Border(
                     top: BorderSide(
                       color: Theme.of(context).dividerColor,
@@ -678,13 +671,13 @@ class _Material extends StatelessWidget {
               alignment: Alignment.topRight,
               children: [
                 parent.buildLeading(),
-                if (!parent.widget.chat.isMuted)
+                if (!parent.widget.chat!.isMuted!)
                   Container(
                     width: 10,
                     height: 10,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(20),
-                      color: parent.widget.chat.hasUnreadMessage ? Theme.of(context).primaryColor : Colors.transparent,
+                      color: parent.widget.chat!.hasUnreadMessage! ? Theme.of(context).primaryColor : Colors.transparent,
                     ),
                   ),
               ],
@@ -697,13 +690,13 @@ class _Material extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: <Widget>[
-                    if (parent.widget.chat.isPinned) Icon(Icons.star, size: 15, color: Colors.yellow),
-                    if (parent.widget.chat.isMuted)
+                    if (parent.widget.chat!.isPinned!) Icon(Icons.star, size: 15, color: Colors.yellow),
+                    if (parent.widget.chat!.isMuted!)
                       Icon(
                         Icons.notifications_off,
-                        color: parent.widget.chat.hasUnreadMessage
+                        color: parent.widget.chat!.hasUnreadMessage!
                             ? Theme.of(context).primaryColor.withOpacity(0.8)
-                            : Theme.of(context).textTheme.subtitle1.color,
+                            : Theme.of(context).textTheme.subtitle1!.color,
                         size: 15,
                       ),
                     Container(
@@ -722,7 +715,7 @@ class _Material extends StatelessWidget {
 }
 
 class _Samsung extends StatelessWidget {
-  const _Samsung({Key key, @required this.parent, @required this.parentProps}) : super(key: key);
+  const _Samsung({Key? key, required this.parent, required this.parentProps}) : super(key: key);
   final _ConversationTileState parent;
   final ConversationTile parentProps;
 
@@ -749,7 +742,7 @@ class _Samsung extends StatelessWidget {
         child: Container(
           decoration: BoxDecoration(
             color: Theme.of(context).accentColor,
-            border: (!parent.hideDividers)
+            border: (!parent.hideDividers!)
                 ? Border(
                     top: BorderSide(
                       //
@@ -767,13 +760,13 @@ class _Samsung extends StatelessWidget {
               alignment: Alignment.topRight,
               children: [
                 parent.buildLeading(),
-                if (!parent.widget.chat.isMuted)
+                if (!parent.widget.chat!.isMuted!)
                   Container(
                     width: 15,
                     height: 15,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(30),
-                      color: parent.widget.chat.hasUnreadMessage ? Theme.of(context).primaryColor : Colors.transparent,
+                      color: parent.widget.chat!.hasUnreadMessage! ? Theme.of(context).primaryColor : Colors.transparent,
                     ),
                   ),
               ],
@@ -786,11 +779,11 @@ class _Samsung extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: <Widget>[
-                    if (parent.widget.chat.isPinned) Icon(Icons.star, size: 15, color: Colors.yellow),
-                    if (parent.widget.chat.isMuted)
+                    if (parent.widget.chat!.isPinned!) Icon(Icons.star, size: 15, color: Colors.yellow),
+                    if (parent.widget.chat!.isMuted!)
                       Icon(
                         Icons.notifications_off,
-                        color: Theme.of(context).textTheme.subtitle1.color,
+                        color: Theme.of(context).textTheme.subtitle1!.color,
                         size: 15,
                       ),
                     Container(
