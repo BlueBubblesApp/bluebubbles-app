@@ -56,7 +56,11 @@ class _ThemePanelState extends State<ThemePanel> {
   @override
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle(systemNavigationBarColor: Theme.of(context).backgroundColor),
+      value: SystemUiOverlayStyle(
+        systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
+        systemNavigationBarIconBrightness: Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        statusBarColor: Colors.transparent, // status bar color
+      ),
       child: Scaffold(
         backgroundColor: Theme.of(context).backgroundColor,
         appBar: PreferredSize(
@@ -92,11 +96,6 @@ class _ThemePanelState extends State<ThemePanel> {
 
                       // This needs to be on a delay so the background color has time to change
                       Timer(Duration(seconds: 1), () {
-                        SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
-                          systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
-                          systemNavigationBarIconBrightness: Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
-                          statusBarColor: Colors.transparent, // status bar color
-                        ));
                         EventDispatcher().emit('theme-update', null);
                       });
                     },
