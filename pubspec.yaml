@@ -21,6 +21,7 @@ dependencies:
   flutter:
     sdk: flutter
   get: ^4.1.4
+  cupertino_icons: ^1.0.3
   shared_preferences: ^2.0.6
   socket_io_client: ^1.0.1
   url_launcher: ^6.0.8

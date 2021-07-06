@@ -67,7 +67,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
   late List<CameraDescription> cameras;
   int? sendCountdown;
   bool? stopSending;
-  String? placeholder = "BlueBubbles";
+  String placeholder = "BlueBubbles";
 
   // bool selfTyping = false;
 
@@ -386,7 +386,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
   }
 
   Future<void> getPlaceholder() async {
-    String? placeholder = "BlueBubbles";
+    String placeholder = "BlueBubbles";
 
     try {
       // Don't do anything if this setting isn't enabled
@@ -405,12 +405,12 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
           } else {
             String? title = await CurrentChat.of(context)?.chat.getTitle();
             if (!isNullOrEmpty(title)!) {
-              placeholder = title;
+              placeholder = title!;
             }
           }
         } else if (!isNullOrEmpty(CurrentChat.of(context)?.chat.participants)!) {
           if (generateNames) {
-            placeholder = CurrentChat.of(context)!.chat.fakeParticipants[0];
+            placeholder = CurrentChat.of(context)!.chat.fakeParticipants[0] ?? "BlueBubbles";
           } else if (hideInfo) {
             placeholder = "BlueBubbles";
           } else {
