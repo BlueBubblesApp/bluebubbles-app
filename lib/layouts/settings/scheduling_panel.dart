@@ -12,7 +12,7 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
 class SchedulingPanel extends StatefulWidget {
-  SchedulingPanel({Key key}) : super(key: key);
+  SchedulingPanel({Key? key}) : super(key: key);
 
   @override
   _SchedulingPanelState createState() => _SchedulingPanelState();
@@ -38,7 +38,7 @@ class _SchedulingPanelState extends State<SchedulingPanel> {
     List<TableRow> rows = [];
 
     for (ScheduledMessage msg in messages) {
-      DateTime time = DateTime.fromMillisecondsSinceEpoch(msg.epochTime);
+      DateTime time = DateTime.fromMillisecondsSinceEpoch(msg.epochTime!);
       String timeStr = DateFormat.yMd().add_jm().format(time).replaceFirst(" ", "\n");
       rows.add(TableRow(children: [
         Padding(
@@ -53,7 +53,7 @@ class _SchedulingPanelState extends State<SchedulingPanel> {
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.bodyText1,
               ),
-              Text(msg.message,
+              Text(msg.message!,
                   maxLines: 4, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.subtitle1)
             ],
           ),
@@ -74,8 +74,8 @@ class _SchedulingPanelState extends State<SchedulingPanel> {
   Widget build(BuildContext context) {
     DateTime now = DateTime.now();
     Iterable<ScheduledMessage> upcoming =
-        (scheduled ?? []).where((item) => now.millisecondsSinceEpoch <= item.epochTime);
-    Iterable<ScheduledMessage> old = (scheduled ?? []).where((item) => now.millisecondsSinceEpoch > item.epochTime);
+        scheduled.where((item) => now.millisecondsSinceEpoch <= item.epochTime!);
+    Iterable<ScheduledMessage> old = scheduled.where((item) => now.millisecondsSinceEpoch > item.epochTime!);
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(

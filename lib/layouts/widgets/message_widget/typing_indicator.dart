@@ -6,16 +6,16 @@ import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.
 import 'package:flutter/material.dart';
 
 class TypingIndicator extends StatefulWidget {
-  TypingIndicator({Key key, this.visible}) : super(key: key);
-  final bool visible;
+  TypingIndicator({Key? key, this.visible}) : super(key: key);
+  final bool? visible;
 
   @override
   _TypingIndicatorState createState() => _TypingIndicatorState();
 }
 
 class _TypingIndicatorState extends State<TypingIndicator> with TickerProviderStateMixin {
-  AnimationController _controller;
-  Animation animation;
+  late AnimationController _controller;
+  late Animation animation;
 
   @override
   void initState() {
@@ -51,7 +51,7 @@ class _TypingIndicatorState extends State<TypingIndicator> with TickerProviderSt
     return AnimatedSize(
       vsync: this,
       duration: Duration(milliseconds: 200),
-      child: widget.visible
+      child: widget.visible!
           ? Row(
               mainAxisAlignment: MainAxisAlignment.start,
               children: [

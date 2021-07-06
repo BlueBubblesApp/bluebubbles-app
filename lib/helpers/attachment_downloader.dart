@@ -15,28 +15,28 @@ class AttachmentDownloader {
   int _currentChunk = 0;
   int _totalChunks = 0;
   int _chunkSize = 500; // Default to 500
-  Function _cb;
-  Attachment _attachment;
-  Function _onComplete;
+  Function? _cb;
+  Attachment? _attachment;
+  Function? _onComplete;
 
   double get progress => (_totalChunks == 0) ? 0 : (_currentChunk) / _totalChunks;
 
-  Attachment get attachment => _attachment;
+  Attachment? get attachment => _attachment;
 
-  AttachmentDownloader(Attachment attachment, {Function onComplete, Function onError, bool autoFetch = true}) {
+  AttachmentDownloader(Attachment? attachment, {Function? onComplete, Function? onError, bool autoFetch = true}) {
     // Set default chunk size based on the current settings
     _chunkSize = SettingsManager().settings.chunkSize * 1024;
     _attachment = attachment;
     _onComplete = onComplete;
 
-    if (File(_attachment.getPath()).existsSync()) {
+    if (File(_attachment!.getPath()).existsSync()) {
       return;
     }
 
-    if (autoFetch) fetchAttachment(attachment);
+    if (autoFetch) fetchAttachment(attachment!);
   }
 
-  getChunkRecursive(String guid, int index, int total, List<int> currentBytes, Function cb) {
+  getChunkRecursive(String? guid, int index, int total, List<int> currentBytes, Function? cb) {
     // if (index <= total) {
     Map<String, dynamic> params = new Map();
     params["identifier"] = guid;
@@ -46,14 +46,14 @@ class AttachmentDownloader {
     SocketManager().sendMessage("get-attachment-chunk", params, (attachmentResponse) async {
       if (attachmentResponse['status'] != 200 ||
           (attachmentResponse.containsKey("error") && attachmentResponse["error"] != null)) {
-        File file = new File(attachment.getPath());
+        File file = new File(attachment!.getPath());
         if (await file.exists()) {
           await file.delete();
         }
 
         // Finish the downloader
-        SocketManager().finishDownloader(attachment.guid);
-        if (_onComplete != null) _onComplete();
+        SocketManager().finishDownloader(attachment!.guid);
+        if (_onComplete != null) _onComplete!();
 
         _stream.sink.addError("Error");
 
@@ -61,7 +61,7 @@ class AttachmentDownloader {
         return;
       }
 
-      int numBytes = attachmentResponse["byteLength"];
+      int? numBytes = attachmentResponse["byteLength"];
 
       if (numBytes == _chunkSize) {
         // Calculate some stats
@@ -79,7 +79,7 @@ class AttachmentDownloader {
         debugPrint("Finished fetching attachment");
         if (cb != null) await cb();
       }
-    }, reason: "Attachment downloader " + attachment.guid, path: _attachment.getPath());
+    }, reason: "Attachment downloader " + attachment!.guid!, path: _attachment!.getPath());
   }
 
   Future<void> fetchAttachment(Attachment attachment) async {
@@ -87,7 +87,7 @@ class AttachmentDownloader {
       _stream.close();
       return;
     }
-    int numOfChunks = (attachment.totalBytes / _chunkSize).ceil();
+    int numOfChunks = (attachment.totalBytes! / _chunkSize).ceil();
     debugPrint("Fetching $numOfChunks attachment chunks");
     Stopwatch stopwatch = new Stopwatch();
     stopwatch.start();
@@ -110,7 +110,7 @@ class AttachmentDownloader {
 
       // Finish the downloader
       SocketManager().finishDownloader(attachment.guid);
-      if (_onComplete != null) _onComplete();
+      if (_onComplete != null) _onComplete!();
 
       // Add attachment to sink based on if we got data
       _stream.sink.add(file);
@@ -125,7 +125,7 @@ class AttachmentDownloader {
   }
 
   void setProgress(double value) {
-    if (value == null || value.isNaN) {
+    if (value.isNaN) {
       value = 0;
     } else if (progress.isInfinite) {
       value = 1.0;

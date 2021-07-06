@@ -34,18 +34,18 @@ import '../setup/qr_code_scanner.dart';
 List disconnectedStates = [SocketState.DISCONNECTED, SocketState.ERROR, SocketState.FAILED];
 
 class SettingsPanel extends StatefulWidget {
-  SettingsPanel({Key key}) : super(key: key);
+  SettingsPanel({Key? key}) : super(key: key);
 
   @override
   _SettingsPanelState createState() => _SettingsPanelState();
 }
 
 class _SettingsPanelState extends State<SettingsPanel> {
-  Settings _settingsCopy;
-  FCMData _fcmDataCopy;
+  late Settings _settingsCopy;
+  FCMData? _fcmDataCopy;
   bool needToReconnect = false;
   bool showUrl = false;
-  int lastRestart;
+  int? lastRestart;
 
   @override
   void initState() {
@@ -105,13 +105,13 @@ class _SettingsPanelState extends State<SettingsPanel> {
                   StreamBuilder(
                       stream: SocketManager().connectionStateStream,
                       builder: (context, AsyncSnapshot<SocketState> snapshot) {
-                        SocketState connectionStatus;
+                        SocketState? connectionStatus;
                         if (snapshot.hasData) {
                           connectionStatus = snapshot.data;
                         } else {
                           connectionStatus = SocketManager().state;
                         }
-                        String subtitle;
+                        String? subtitle;
 
                         switch (connectionStatus) {
                           case SocketState.CONNECTED:
@@ -133,6 +133,9 @@ class _SettingsPanelState extends State<SettingsPanel> {
                           case SocketState.FAILED:
                             subtitle = "Failed to connect (Tap to restart Server)";
                             break;
+                          default:
+                            subtitle = "Error (Tap to restart Server)";
+                            break;
                         }
 
                         return SettingsTile(
@@ -143,7 +146,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                             if (disconnectedStates.contains(connectionStatus)) {
                               // Prevent restarting more than once per 30 seconds
                               int now = DateTime.now().toUtc().millisecondsSinceEpoch;
-                              if (lastRestart != null && now - lastRestart < 1000 * 30) return;
+                              if (lastRestart != null && now - lastRestart! < 1000 * 30) return;
 
                               // Restart the server
                               MethodChannelInterface().invokeMethod(
@@ -186,7 +189,8 @@ class _SettingsPanelState extends State<SettingsPanel> {
                       } catch (e) {
                         return;
                       }
-                      if (fcmData != null) {
+                      if (fcmData != null && fcmData[0] != null
+                          && getServerAddress(address: fcmData[1]) != null) {
                         _fcmDataCopy = FCMData(
                           projectID: fcmData[2],
                           storageBucket: fcmData[3],
@@ -196,7 +200,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                           applicationID: fcmData[7],
                         );
                         _settingsCopy.guidAuthKey = fcmData[0];
-                        _settingsCopy.serverAddress = getServerAddress(address: fcmData[1]);
+                        _settingsCopy.serverAddress = getServerAddress(address: fcmData[1])!;
 
                         SettingsManager().saveSettings(_settingsCopy);
                         SettingsManager().saveFCMData(_fcmDataCopy);
@@ -394,33 +398,33 @@ class _SettingsPanelState extends State<SettingsPanel> {
 }
 
 class SettingsTile extends StatelessWidget {
-  const SettingsTile({Key key, this.onTap, this.onLongPress, this.title, this.trailing, this.subTitle})
+  const SettingsTile({Key? key, this.onTap, this.onLongPress, this.title, this.trailing, this.subTitle})
       : super(key: key);
 
-  final Function onTap;
-  final Function onLongPress;
-  final String subTitle;
-  final String title;
-  final Widget trailing;
+  final Function? onTap;
+  final Function? onLongPress;
+  final String? subTitle;
+  final String? title;
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
     return Material(
       color: Theme.of(context).backgroundColor,
       child: InkWell(
-        onLongPress: this.onLongPress,
-        onTap: this.onTap,
+        onLongPress: this.onLongPress as void Function()?,
+        onTap: this.onTap as void Function()?,
         child: Column(
           children: <Widget>[
             ListTile(
               title: Text(
-                this.title,
+                this.title!,
                 style: Theme.of(context).textTheme.bodyText1,
               ),
               trailing: this.trailing,
               subtitle: subTitle != null
                   ? Text(
-                      subTitle,
+                      subTitle!,
                       style: Theme.of(context).textTheme.subtitle1,
                     )
                   : null,
@@ -438,22 +442,22 @@ class SettingsTile extends StatelessWidget {
 
 class SettingsTextField extends StatelessWidget {
   const SettingsTextField(
-      {Key key,
+      {Key? key,
       this.onTap,
       this.title,
       this.trailing,
-      @required this.controller,
+      required this.controller,
       this.placeholder,
       this.maxLines = 14,
       this.keyboardType = TextInputType.multiline,
       this.inputFormatters = const []})
       : super(key: key);
 
-  final TextEditingController controller;
-  final Function onTap;
-  final String title;
-  final String placeholder;
-  final Widget trailing;
+  final TextEditingController? controller;
+  final Function? onTap;
+  final String? title;
+  final String? placeholder;
+  final Widget? trailing;
   final int maxLines;
   final TextInputType keyboardType;
   final List<TextInputFormatter> inputFormatters;
@@ -463,12 +467,12 @@ class SettingsTextField extends StatelessWidget {
     return Material(
       color: Theme.of(context).backgroundColor,
       child: InkWell(
-        onTap: this.onTap,
+        onTap: this.onTap as void Function()?,
         child: Column(
           children: <Widget>[
             ListTile(
               title: Text(
-                this.title,
+                this.title!,
                 style: Theme.of(context).textTheme.bodyText1,
               ),
               trailing: this.trailing,
@@ -487,7 +491,7 @@ class SettingsTextField extends StatelessWidget {
                   autocorrect: true,
                   controller: controller,
                   scrollPhysics: CustomBouncingScrollPhysics(),
-                  style: Theme.of(context).textTheme.bodyText1.apply(
+                  style: Theme.of(context).textTheme.bodyText1!.apply(
                       color: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor) == Brightness.light
                           ? Colors.black
                           : Colors.white,
@@ -523,21 +527,21 @@ class SettingsTextField extends StatelessWidget {
 
 class SettingsSwitch extends StatefulWidget {
   SettingsSwitch({
-    Key key,
+    Key? key,
     this.initialVal,
     this.onChanged,
     this.title,
   }) : super(key: key);
-  final bool initialVal;
-  final Function(bool) onChanged;
-  final String title;
+  final bool? initialVal;
+  final Function(bool)? onChanged;
+  final String? title;
 
   @override
   _SettingsSwitchState createState() => _SettingsSwitchState();
 }
 
 class _SettingsSwitchState extends State<SettingsSwitch> {
-  bool _value;
+  bool? _value;
 
   @override
   void initState() {
@@ -549,16 +553,16 @@ class _SettingsSwitchState extends State<SettingsSwitch> {
   Widget build(BuildContext context) {
     return SwitchListTile(
       title: Text(
-        widget.title,
+        widget.title!,
         style: Theme.of(context).textTheme.bodyText1,
       ),
-      value: _value,
+      value: _value!,
       activeColor: Theme.of(context).primaryColor,
       activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
       inactiveTrackColor: Theme.of(context).accentColor.withOpacity(0.6),
       inactiveThumbColor: Theme.of(context).accentColor,
       onChanged: (bool val) {
-        widget.onChanged(val);
+        widget.onChanged!(val);
 
         if (!this.mounted) return;
 
@@ -572,7 +576,7 @@ class _SettingsSwitchState extends State<SettingsSwitch> {
 
 class SettingsOptions<T> extends StatefulWidget {
   SettingsOptions({
-    Key key,
+    Key? key,
     this.onChanged,
     this.options,
     this.initial,
@@ -582,21 +586,21 @@ class SettingsOptions<T> extends StatefulWidget {
     this.showDivider = true,
     this.capitalize = true,
   }) : super(key: key);
-  final String title;
-  final Function(T) onChanged;
-  final List<T> options;
-  final T initial;
-  final String Function(T) textProcessing;
+  final String? title;
+  final Function(dynamic)? onChanged;
+  final List<T>? options;
+  final T? initial;
+  final String Function(dynamic)? textProcessing;
   final bool showDivider;
-  final String subtitle;
+  final String? subtitle;
   final bool capitalize;
 
   @override
   _SettingsOptionsState createState() => _SettingsOptionsState();
 }
 
-class _SettingsOptionsState<T> extends State<SettingsOptions<T>> {
-  T currentVal;
+class _SettingsOptionsState<T> extends State<SettingsOptions<T?>> {
+  T? currentVal;
 
   @override
   void initState() {
@@ -618,7 +622,7 @@ class _SettingsOptionsState<T> extends State<SettingsOptions<T>> {
                 children: [
                   Container(
                     child: Text(
-                      widget.title,
+                      widget.title!,
                       style: Theme.of(context).textTheme.bodyText1,
                     ),
                   ),
@@ -646,20 +650,20 @@ class _SettingsOptionsState<T> extends State<SettingsOptions<T>> {
                     dropdownColor: Theme.of(context).accentColor,
                     icon: Icon(
                       Icons.arrow_drop_down,
-                      color: Theme.of(context).textTheme.bodyText1.color,
+                      color: Theme.of(context).textTheme.bodyText1!.color,
                     ),
                     value: currentVal,
-                    items: widget.options.map<DropdownMenuItem<T>>((e) {
+                    items: widget.options!.map<DropdownMenuItem<T>>((e) {
                       return DropdownMenuItem(
                         value: e,
                         child: Text(
-                          widget.capitalize ? GetUtils.capitalize(widget.textProcessing(e)) : widget.textProcessing(e),
+                          widget.capitalize ? GetUtils.capitalize(widget.textProcessing!(e))! : widget.textProcessing!(e),
                           style: Theme.of(context).textTheme.bodyText1,
                         ),
                       );
                     }).toList(),
-                    onChanged: (T val) {
-                      widget.onChanged(val);
+                    onChanged: (T? val) {
+                      widget.onChanged!(val);
 
                       if (!this.mounted) return;
 
@@ -687,20 +691,20 @@ class _SettingsOptionsState<T> extends State<SettingsOptions<T>> {
 
 class SettingsSlider extends StatefulWidget {
   SettingsSlider(
-      {@required this.startingVal,
+      {required this.startingVal,
       this.update,
-      @required this.text,
+      required this.text,
       this.formatValue,
-      @required this.min,
-      @required this.max,
-      @required this.divisions,
-      Key key})
+      required this.min,
+      required this.max,
+      required this.divisions,
+      Key? key})
       : super(key: key);
 
   final double startingVal;
-  final Function(double val) update;
+  final Function(double val)? update;
   final String text;
-  final Function(double value) formatValue;
+  final Function(double value)? formatValue;
   final double min;
   final double max;
   final int divisions;
@@ -724,7 +728,7 @@ class _SettingsSliderState extends State<SettingsSlider> {
   Widget build(BuildContext context) {
     String value = currentVal.toString();
     if (widget.formatValue != null) {
-      value = widget.formatValue(currentVal);
+      value = widget.formatValue!(currentVal);
     }
 
     return Column(
@@ -743,7 +747,7 @@ class _SettingsSliderState extends State<SettingsSlider> {
 
               setState(() {
                 currentVal = value;
-                widget.update(currentVal);
+                widget.update!(currentVal);
               });
             },
             label: value,

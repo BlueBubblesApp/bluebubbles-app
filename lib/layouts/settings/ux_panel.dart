@@ -15,14 +15,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 class UXPanel extends StatefulWidget {
-  UXPanel({Key key}) : super(key: key);
+  UXPanel({Key? key}) : super(key: key);
 
   @override
   _UXPanelState createState() => _UXPanelState();
 }
 
 class _UXPanelState extends State<UXPanel> {
-  Settings _settingsCopy;
+  late Settings _settingsCopy;
   bool needToReconnect = false;
   bool showUrl = false;
 
@@ -194,7 +194,7 @@ class _UXPanelState extends State<UXPanel> {
                   if (!isNullOrZero(SettingsManager().settings.sendDelay))
                     SettingsSlider(
                         text: "Send Delay (Seconds)",
-                        startingVal: _settingsCopy.sendDelay.toDouble(),
+                        startingVal: _settingsCopy.sendDelay!.toDouble(),
                         update: (double val) {
                           _settingsCopy.sendDelay = val.toInt();
                         },

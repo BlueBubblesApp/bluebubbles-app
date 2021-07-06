@@ -7,22 +7,22 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 class MessageTimeStamp extends StatelessWidget {
-  const MessageTimeStamp({Key key, this.message, this.singleLine = false, this.useYesterday = false}) : super(key: key);
-  final Message message;
+  const MessageTimeStamp({Key? key, this.message, this.singleLine = false, this.useYesterday = false}) : super(key: key);
+  final Message? message;
   final bool singleLine;
   final bool useYesterday;
 
   @override
   Widget build(BuildContext context) {
-    if (context == null || CurrentChat.of(context) == null) return Container();
+    if (CurrentChat.of(context) == null) return Container();
 
     return StreamBuilder<double>(
-        stream: CurrentChat.of(context)?.timeStampOffsetStream?.stream,
+        stream: CurrentChat.of(context)?.timeStampOffsetStream.stream,
         builder: (context, snapshot) {
-          double offset = CurrentChat.of(context)?.timeStampOffset;
-          String text = DateFormat('h:mm a').format(message.dateCreated).toLowerCase();
-          if (!message.dateCreated.isToday()) {
-            String formatted = buildDate(message.dateCreated);
+          double offset = CurrentChat.of(context)!.timeStampOffset;
+          String text = DateFormat('h:mm a').format(message!.dateCreated!).toLowerCase();
+          if (!message!.dateCreated!.isToday()) {
+            String formatted = buildDate(message!.dateCreated);
             text = "$formatted${singleLine ? " " : "\n"}$text";
           }
 
@@ -33,9 +33,9 @@ class MessageTimeStamp extends StatelessWidget {
                 : (singleLine)
                     ? 100
                     : 70,
-            height: (!message.dateCreated.isToday() && !singleLine) ? 24 : 12,
+            height: (!message!.dateCreated!.isToday() && !singleLine) ? 24 : 12,
             child: Stack(
-              alignment: (message.isFromMe) ? Alignment.bottomRight : Alignment.bottomLeft,
+              alignment: message!.isFromMe! ? Alignment.bottomRight : Alignment.bottomLeft,
               children: [
                 AnimatedPositioned(
                   // width: ,
@@ -44,10 +44,10 @@ class MessageTimeStamp extends StatelessWidget {
                   duration: Duration(milliseconds: offset == 0 ? 150 : 0),
                   child: Text(
                     text,
-                    textAlign: (message.isFromMe && SettingsManager().settings.skin == Skins.Samsung)
+                    textAlign: (message!.isFromMe! && SettingsManager().settings.skin == Skins.Samsung)
                         ? TextAlign.right
                         : TextAlign.left,
-                    style: Theme.of(context).textTheme.subtitle1.apply(fontSizeFactor: 0.8),
+                    style: Theme.of(context).textTheme.subtitle1!.apply(fontSizeFactor: 0.8),
                     overflow: TextOverflow.visible,
                     maxLines: 2,
                   ),

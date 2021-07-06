@@ -17,14 +17,14 @@ class TextFieldBloc {
 
   TextFieldBloc._internal();
 
-  Map<String, TextFieldData> _textFields = new Map();
+  Map<String?, TextFieldData> _textFields = new Map();
 
-  TextFieldData getTextField(String chatGuid) {
+  TextFieldData? getTextField(String? chatGuid) {
     if (_textFields.containsKey(chatGuid)) {
       return _textFields[chatGuid];
     } else {
       _textFields[chatGuid] = new TextFieldData();
-      _textFields[chatGuid].controller = new TextEditingController();
+      _textFields[chatGuid]!.controller = new TextEditingController();
       return _textFields[chatGuid];
     }
   }
@@ -32,6 +32,6 @@ class TextFieldBloc {
 
 /// [TextFieldData] holds a TextEditingController and a list of strings that link to attachments
 class TextFieldData {
-  TextEditingController controller;
+  TextEditingController? controller;
   List<File> attachments = [];
 }

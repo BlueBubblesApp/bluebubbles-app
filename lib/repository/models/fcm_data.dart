@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/models/config_entry.dart';
 import 'package:sqflite/sqflite.dart';
@@ -55,7 +57,7 @@ class FCMData {
     return data;
   }
 
-  Future<FCMData> save({Database database}) async {
+  Future<FCMData> save({Database? database}) async {
     List<ConfigEntry> entries = this.toEntries();
     for (ConfigEntry entry in entries) {
       await entry.save("fcm", database: database);
@@ -64,9 +66,9 @@ class FCMData {
   }
 
   static Future<FCMData> getFCM() async {
-    Database db = await DBProvider.db.database;
+    Database? db = await DBProvider.db.database;
 
-    List<Map<String, dynamic>> result = await db.query("fcm");
+    List<Map<String, dynamic>> result = await db!.query("fcm");
     if (result.isEmpty) return new FCMData();
     List<ConfigEntry> entries = [];
     for (Map<String, dynamic> setting in result) {

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class FailedToConnectDialog extends StatelessWidget {
-  const FailedToConnectDialog({Key key, @required this.onDismiss}) : super(key: key);
+  const FailedToConnectDialog({Key? key, required this.onDismiss}) : super(key: key);
   final Function() onDismiss;
 
   @override
@@ -20,7 +20,7 @@ class FailedToConnectDialog extends StatelessWidget {
           TextButton(
             child: Text(
               "Ok",
-              style: Theme.of(context).textTheme.bodyText1.apply(color: Theme.of(context).primaryColor),
+              style: Theme.of(context).textTheme.bodyText1!.apply(color: Theme.of(context).primaryColor),
             ),
             onPressed: onDismiss,
           ),

@@ -11,14 +11,14 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 class ThemingPanel extends StatefulWidget {
-  ThemingPanel({Key key}) : super(key: key);
+  ThemingPanel({Key? key}) : super(key: key);
 
   @override
   _ThemingPanelState createState() => _ThemingPanelState();
 }
 
 class _ThemingPanelState extends State<ThemingPanel> with TickerProviderStateMixin {
-  TabController controller;
+  TabController? controller;
   StreamController streamController = StreamController.broadcast();
 
   @override
@@ -106,13 +106,13 @@ class _ThemingPanelState extends State<ThemingPanel> with TickerProviderStateMix
             Tab(
               icon: Icon(
                 Icons.brightness_high,
-                color: whiteLightTheme.textTheme.bodyText1.color,
+                color: whiteLightTheme.textTheme.bodyText1!.color,
               ),
             ),
             Tab(
               icon: Icon(
                 Icons.brightness_3,
-                color: whiteLightTheme.textTheme.bodyText1.color,
+                color: whiteLightTheme.textTheme.bodyText1!.color,
               ),
             ),
           ],

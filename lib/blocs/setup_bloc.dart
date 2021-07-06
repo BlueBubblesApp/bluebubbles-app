@@ -30,7 +30,7 @@ class SetupOutputData {
 class SetupBloc {
   StreamController<SetupData> _stream = StreamController<SetupData>.broadcast();
   StreamController<SocketState> _connectionStatusStream = StreamController<SocketState>.broadcast();
-  StreamSubscription connectionSubscription;
+  StreamSubscription? connectionSubscription;
 
   Stream<SocketState> get conenctionStatus => _connectionStatusStream.stream;
 
@@ -45,7 +45,7 @@ class SetupBloc {
   Stream<SetupData> get stream => _stream.stream;
 
   double get progress => _progress;
-  int processId;
+  int? processId;
 
   List<SetupOutputData> output = [];
 
@@ -58,7 +58,7 @@ class SetupBloc {
       return;
     }
 
-    settingsCopy.serverAddress = getServerAddress(address: serverURL);
+    settingsCopy.serverAddress = getServerAddress(address: serverURL) ?? settingsCopy.serverAddress;
     settingsCopy.guidAuthKey = password;
 
     await SettingsManager().saveSettings(settingsCopy);
@@ -194,8 +194,8 @@ class SetupBloc {
       {"statement": "message.service = 'iMessage'", "args": null}
     ];
 
-    List<Map<String, dynamic>> messages = await SocketManager().getChatMessages(params);
-    addOutput("Received ${messages?.length ?? 0} messages for chat, '${chat.chatIdentifier}'!", SetupOutputType.LOG);
+    List<dynamic> messages = await SocketManager().getChatMessages(params)!;
+    addOutput("Received ${messages.length} messages for chat, '${chat.chatIdentifier}'!", SetupOutputType.LOG);
 
     // Since we got the messages in desc order, we want to reverse it.
     // Reversing it will add older messages before newer one. This should help fix
@@ -234,7 +234,7 @@ class SetupBloc {
   }
 
   Future<void> startIncrementalSync(Settings settings,
-      {String chatGuid, bool saveDate = true, Function onConnectionError, Function onComplete}) async {
+      {String? chatGuid, bool saveDate = true, Function? onConnectionError, Function? onComplete}) async {
     // If we are already syncing, don't sync again
     // Or, if we haven't finished setup, or we aren't connected, don't sync
     if (isSyncing || !settings.finishedSetup || SocketManager().state != SocketState.CONNECTED) return;
@@ -270,7 +270,7 @@ class SetupBloc {
       {"statement": "message.service = 'iMessage'", "args": null}
     ];
 
-    List<dynamic> messages = await SocketManager().getMessages(params);
+    List<dynamic> messages = await SocketManager().getMessages(params)!;
     if (messages.isEmpty) {
       addOutput("No new messages found during incremental sync", SetupOutputType.LOG);
     } else {

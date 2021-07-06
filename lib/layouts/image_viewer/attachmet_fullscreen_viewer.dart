@@ -15,18 +15,16 @@ import 'package:flutter/services.dart';
 
 class AttachmentFullscreenViewer extends StatefulWidget {
   AttachmentFullscreenViewer({
-    Key key,
-    @required this.attachment,
-    @required this.showInteractions,
+    Key? key,
+    required this.attachment,
+    required this.showInteractions,
     this.currentChat,
   }) : super(key: key);
-  final CurrentChat currentChat;
-  final Attachment attachment;
+  final CurrentChat? currentChat;
+  final Attachment? attachment;
   final bool showInteractions;
 
-  static AttachmentFullscreenViewerState of(BuildContext context) {
-    if (context == null) return null;
-
+  static AttachmentFullscreenViewerState? of(BuildContext context) {
     return context.findAncestorStateOfType<AttachmentFullscreenViewerState>() ?? null;
   }
 
@@ -35,12 +33,12 @@ class AttachmentFullscreenViewer extends StatefulWidget {
 }
 
 class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> {
-  PageController controller;
-  int startingIndex;
-  int currentIndex;
-  Widget placeHolder;
-  ScrollPhysics physics;
-  StreamSubscription<NewMessageEvent> newMessageEventStream;
+  PageController? controller;
+  int? startingIndex;
+  late int currentIndex;
+  late Widget placeHolder;
+  ScrollPhysics? physics;
+  StreamSubscription<NewMessageEvent>? newMessageEventStream;
 
   @override
   void initState() {
@@ -64,20 +62,20 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
         if (event.type != NewMessageType.ADD) return;
 
         // If the new message event isn't for this particular chat, don't do anything
-        if (event.chatGuid != widget.currentChat.chat.guid) return;
+        if (event.chatGuid != widget.currentChat!.chat.guid) return;
 
-        List<Attachment> older = widget.currentChat.chatAttachments.sublist(0);
+        List<Attachment> older = widget.currentChat!.chatAttachments.sublist(0);
 
         // Update all of the attachments
-        await widget.currentChat.updateChatAttachments();
-        List<Attachment> newer = widget.currentChat.chatAttachments.sublist(0);
+        await widget.currentChat!.updateChatAttachments();
+        List<Attachment> newer = widget.currentChat!.chatAttachments.sublist(0);
         if (newer.length > older.length) {
           debugPrint("Increasing currentIndex from " +
               currentIndex.toString() +
               " to " +
               (newer.length - older.length + currentIndex).toString());
           currentIndex += newer.length - older.length;
-          controller.animateToPage(currentIndex, duration: Duration(milliseconds: 0), curve: Curves.easeIn);
+          controller!.animateToPage(currentIndex, duration: Duration(milliseconds: 0), curve: Curves.easeIn);
         }
       });
 
@@ -87,8 +85,8 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
 
   void getStartingIndex() {
     if (widget.currentChat == null) return;
-    for (int i = 0; i < widget.currentChat.chatAttachments.length; i++) {
-      if (widget.currentChat.chatAttachments[i].guid == widget.attachment.guid) {
+    for (int i = 0; i < widget.currentChat!.chatAttachments.length; i++) {
+      if (widget.currentChat!.chatAttachments[i].guid == widget.attachment!.guid) {
         startingIndex = i;
       }
     }
@@ -126,41 +124,41 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
         body: controller != null
             ? PageView.builder(
                 physics: physics,
-                itemCount: widget.currentChat?.chatAttachments?.length ?? 1,
+                itemCount: widget.currentChat?.chatAttachments.length ?? 1,
                 itemBuilder: (BuildContext context, int index) {
                   debugPrint("Showing index: " + index.toString());
                   Attachment attachment =
-                      widget.currentChat != null ? widget.currentChat.chatAttachments[index] : widget.attachment;
-                  String mimeType = attachment.mimeType;
+                      widget.currentChat != null ? widget.currentChat!.chatAttachments[index] : widget.attachment!;
+                  String mimeType = attachment.mimeType!;
                   mimeType = mimeType.substring(0, mimeType.indexOf("/"));
                   dynamic content = AttachmentHelper.getContent(attachment,
                       path: attachment.guid == null ? attachment.transferName : null);
 
                   if (content is File) {
-                    content = content as File;
+                    content = content;
                     if (mimeType == "image") {
                       return ImageViewer(
-                        key: Key(attachment.guid),
+                        key: Key(attachment.guid!),
                         attachment: attachment,
                         file: content,
                         showInteractions: widget.showInteractions,
                       );
                     } else if (mimeType == "video") {
                       return VideoViewer(
-                        key: Key(attachment.guid),
+                        key: Key(attachment.guid!),
                         file: content,
                         attachment: attachment,
                         showInteractions: widget.showInteractions,
                       );
                     }
                   } else if (content is Attachment) {
-                    content = content as Attachment;
+                    content = content;
                     return Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Center(
                           child: AttachmentDownloaderWidget(
-                            key: Key(attachment.guid),
+                            key: Key(attachment.guid!),
                             attachment: attachment,
                             onPressed: () {
                               new AttachmentDownloader(attachment);
@@ -173,9 +171,9 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
                       ],
                     );
                   } else if (content is AttachmentDownloader) {
-                    content = content as AttachmentDownloader;
-                    if (widget.attachment.mimeType == null) return Container();
-                    (content as AttachmentDownloader).stream.listen((event) {
+                    content = content;
+                    if (widget.attachment!.mimeType == null) return Container();
+                    content.stream.listen((event) {
                       if (event is File) {
                         content = event;
                         if (this.mounted) setState(() {});
@@ -197,7 +195,7 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
                           content = snapshot.data;
                           return Container();
                         } else {
-                          double progress = 0.0;
+                          double? progress = 0.0;
                           if (snapshot.hasData) {
                             progress = snapshot.data["Progress"];
                           } else {
@@ -205,7 +203,7 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
                           }
 
                           return KeyedSubtree(
-                            key: Key(attachment.guid),
+                            key: Key(attachment.guid!),
                             child: Stack(
                               alignment: Alignment.center,
                               children: <Widget>[
@@ -221,7 +219,7 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
                                           backgroundColor: Colors.grey,
                                           valueColor: AlwaysStoppedAnimation(Colors.white),
                                         ),
-                                        ((content as AttachmentDownloader).attachment.mimeType != null)
+                                        ((content as AttachmentDownloader).attachment!.mimeType != null)
                                             ? Container(height: 5.0)
                                             : Container(),
                                         (content.attachment.mimeType != null)

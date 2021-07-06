@@ -33,7 +33,14 @@ import 'package:slugify/slugify.dart';
 import 'package:video_player/video_player.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
 
-bool isNullOrEmpty(dynamic input, {trimString = false}) {
+DateTime? parseDate(dynamic value) {
+  if (value == null) return null;
+  if (value is int) return DateTime.fromMillisecondsSinceEpoch(value);
+  if (value is DateTime) return value;
+  return null;
+}
+
+bool? isNullOrEmpty(dynamic input, {trimString = false}) {
   if (input == null) return true;
   if (input is String) {
     input = input.trim();
@@ -42,7 +49,7 @@ bool isNullOrEmpty(dynamic input, {trimString = false}) {
   return GetUtils.isNullOrBlank(input);
 }
 
-bool isNullOrZero(int input) {
+bool isNullOrZero(int? input) {
   if (input == null) return true;
   if (input == 0) return true;
   return false;
@@ -66,7 +73,7 @@ Future<String> formatPhoneNumber(String str) async {
   try {
     meta = await FlutterLibphonenumber().parse(str, region: countryCode);
   } catch (ex) {
-    CountryCode cc = getCountryCodes().firstWhereOrNull((e) => e.code == countryCode);
+    CountryCode? cc = getCountryCodes().firstWhereOrNull((e) => e.code == countryCode);
     if (!str.startsWith("+") && cc != null) {
       try {
         meta = await FlutterLibphonenumber().parse("${cc.dialCode}$str", region: countryCode);
@@ -85,8 +92,8 @@ Future<String> formatPhoneNumber(String str) async {
   return meta['national'];
 }
 
-Future<List<String>> getCompareOpts(Handle handle) async {
-  if (handle.address.isEmail) return [handle.address];
+Future<List<String?>> getCompareOpts(Handle handle) async {
+  if (handle.address!.isEmail) return [handle.address];
 
   // Build a list of formatted address (max: 3)
   String formatted = handle.address.toString();
@@ -100,22 +107,22 @@ Future<List<String>> getCompareOpts(Handle handle) async {
     if (i + 1 >= maxOpts) break;
   }
 
-  Map<String, dynamic> parsed = await parsePhoneNumber(handle.address, handle.country ?? "US");
+  Map<String, dynamic> parsed = await parsePhoneNumber(handle.address!, handle.country ?? "US");
   opts.addAll(parsed.values.map((item) => item.toString()).where((item) => item != 'fixedOrMobile'));
   return opts;
 }
 
-bool sameAddress(List<String> options, String compared) {
+bool sameAddress(List<String?> options, String? compared) {
   bool match = false;
-  for (String opt in options) {
+  for (String? opt in options) {
     if (opt == compared) {
       match = true;
       break;
     }
 
-    if (opt.isEmail && !compared.isEmail) continue;
+    if (opt!.isEmail && !compared!.isEmail) continue;
 
-    String formatted = slugify(compared, delimiter: '').toString().replaceAll('-', '');
+    String formatted = slugify(compared!, delimiter: '').toString().replaceAll('-', '');
     if (options.contains(formatted)) {
       match = true;
       break;
@@ -125,16 +132,16 @@ bool sameAddress(List<String> options, String compared) {
   return match;
 }
 
-String getInitials(Contact contact) {
+String? getInitials(Contact? contact) {
   if (contact == null) return null;
 
   // Set default initials
-  String initials = (contact.givenName.isNotEmpty == true ? contact.givenName[0] : "") +
-      (contact.familyName.isNotEmpty == true ? contact.familyName[0] : "");
+  String initials = (contact.givenName!.isNotEmpty == true ? contact.givenName![0] : "") +
+      (contact.familyName!.isNotEmpty == true ? contact.familyName![0] : "");
 
   // If the initials are empty, get them from the display name
   if (initials.trim().isEmpty) {
-    initials = contact.displayName != null ? contact.displayName[0] : "";
+    initials = contact.displayName != null ? contact.displayName![0] : "";
   }
 
   return initials.toUpperCase();
@@ -176,23 +183,23 @@ String randomString(int length) {
 void showSnackbar(String title, String message) {
   Get.snackbar(title, message,
       snackPosition: SnackPosition.BOTTOM,
-      colorText: Get.textTheme.bodyText1.color,
+      colorText: Get.textTheme.bodyText1!.color,
       backgroundColor: Get.theme.accentColor,
       margin: EdgeInsets.only(bottom: 10),
       maxWidth: Get.width - 20,
   );
 }
 
-bool sameSender(Message first, Message second) {
+bool sameSender(Message? first, Message? second) {
   return (first != null &&
       second != null &&
-      (first.isFromMe && second.isFromMe ||
-          (!first.isFromMe &&
-              !second.isFromMe &&
-              (first.handle != null && second.handle != null && first.handle.address == second.handle.address))));
+      (first.isFromMe! && second.isFromMe! ||
+          (!first.isFromMe! &&
+              !second.isFromMe! &&
+              (first.handle != null && second.handle != null && first.handle!.address == second.handle!.address))));
 }
 
-String buildDate(DateTime dateTime) {
+String buildDate(DateTime? dateTime) {
   if (dateTime == null || dateTime.millisecondsSinceEpoch == 0) return "";
   String time = new intl.DateFormat.jm().format(dateTime);
   String date;
@@ -219,7 +226,7 @@ extension DateHelpers on DateTime {
     return yesterday.day == this.day && yesterday.month == this.month && yesterday.year == this.year;
   }
 
-  bool isWithin(DateTime other, {int ms, int seconds, int minutes, int hours}) {
+  bool isWithin(DateTime other, {int? ms, int? seconds, int? minutes, int? hours}) {
     Duration diff = this.difference(other);
     if (ms != null) {
       return diff.inMilliseconds < ms;
@@ -235,32 +242,31 @@ extension DateHelpers on DateTime {
   }
 }
 
-String sanitizeString(String input) {
+String? sanitizeString(String? input) {
   if (input == null) return "";
   input = input.replaceAll(String.fromCharCode(65532), '');
   return input;
 }
 
-bool isEmptyString(String input, {stripWhitespace = false}) {
+bool isEmptyString(String? input, {stripWhitespace = false}) {
   if (input == null) return true;
   input = sanitizeString(input);
   if (stripWhitespace) {
-    input = input.trim();
+    input = input!.trim();
   }
 
-  return input.isEmpty;
+  return input!.isEmpty;
 }
 
 bool isParticipantEvent(Message message) {
-  if (message == null) return false;
   if (message.itemType == 1 && [0, 1].contains(message.groupActionType)) return true;
   if ([2, 3].contains(message.itemType)) return true;
   return false;
 }
 
-String uriToFilename(String uri, String mimeType) {
+String uriToFilename(String? uri, String? mimeType) {
   // Handle any unknown cases
-  String ext = mimeType != null ? mimeType.split('/')[1] : null;
+  String? ext = mimeType != null ? mimeType.split('/')[1] : null;
   ext = (ext != null && ext.contains('+')) ? ext.split('+')[0] : ext;
   if (uri == null) return (ext != null) ? 'unknown.$ext' : 'unknown';
 
@@ -286,13 +292,13 @@ String uriToFilename(String uri, String mimeType) {
 
 Future<String> getGroupEventText(Message message) async {
   String text = "Unknown group event";
-  String handle = "You";
-  if (!message.isFromMe && message.handleId != null && message.handle != null)
+  String? handle = "You";
+  if (!message.isFromMe! && message.handleId != null && message.handle != null)
     handle = await ContactManager().getContactTitle(message.handle);
 
-  String other = "someone";
+  String? other = "someone";
   if (message.otherHandle != null && [1, 2].contains(message.itemType)) {
-    Handle item = await Handle.findOne({"originalROWID": message.otherHandle});
+    Handle? item = await Handle.findOne({"originalROWID": message.otherHandle});
     if (item != null) {
       other = await ContactManager().getContactTitle(item);
     }
@@ -317,38 +323,35 @@ Future<String> getGroupEventText(Message message) async {
   return text;
 }
 
-Future<MemoryImage> loadAvatar(Chat chat, Handle handle) async {
+Future<MemoryImage?> loadAvatar(Chat? chat, Handle? handle) async {
   if (chat != null) {
     // If the chat hasn't been saved, save it
     if (chat.id == null) await chat.save();
 
     // If there are no participants, get them
-    if (isNullOrEmpty(chat.participants)) {
+    if (isNullOrEmpty(chat.participants)!) {
       await chat.getParticipants();
     }
 
-    // If there are no participants, return
-    if (chat.participants == null) return null;
-
-    String address = handle != null ? handle.address : null;
+    String? address = handle != null ? handle.address : null;
     if (address == null) {
       address = chat.participants.first.address;
     }
 
     // See if the update contains the current conversation
-    int matchIdx = chat.participants.map((i) => i.address).toList().indexOf(handle.address);
+    int matchIdx = chat.participants.map((i) => i.address).toList().indexOf(handle!.address);
     if (matchIdx == -1) return null;
   }
 
   // Get the contact
-  Contact contact = await ContactManager().getCachedContact(handle);
-  Uint8List avatar = contact?.avatar;
-  if (isNullOrEmpty(avatar)) return null;
+  Contact? contact = await ContactManager().getCachedContact(handle);
+  Uint8List? avatar = contact?.avatar;
+  if (isNullOrEmpty(avatar)!) return null;
 
   // Set the contact image
   // NOTE: Don't compress this. It will increase load time significantly
   // NOTE: These don't need to be compressed. They are usually already small
-  return MemoryImage(avatar);
+  return MemoryImage(avatar!);
 }
 
 List<RegExpMatch> parseLinks(String text) {
@@ -380,9 +383,9 @@ Future<dynamic> loadAsset(String path) {
   return rootBundle.load(path);
 }
 
-String stripHtmlTags(String htmlString) {
+String stripHtmlTags(String? htmlString) {
   final document = parse(htmlString);
-  final String parsedString = parse(document.body.text).documentElement.text;
+  final String parsedString = parse(document.body!.text).documentElement!.text;
 
   return parsedString;
 }
@@ -397,12 +400,12 @@ String stripHtmlTags(String htmlString) {
 //   return hash;
 // }
 
-List<Color> toColorGradient(String str) {
-  if (isNullOrEmpty(str)) return [HexColor("686868"), HexColor("928E8E")];
+List<Color> toColorGradient(String? str) {
+  if (isNullOrEmpty(str)!) return [HexColor("686868"), HexColor("928E8E")];
 
   int total = 0;
   for (int i = 0; i < (str ?? "").length; i++) {
-    total += str.codeUnitAt(i);
+    total += str!.codeUnitAt(i);
   }
 
   Random random = new Random(total);
@@ -427,12 +430,6 @@ List<Color> toColorGradient(String str) {
   }
 }
 
-bool shouldBeRainbow(Chat chat) {
-  Chat theChat = chat;
-  if (theChat == null) return false;
-  return SettingsManager().settings.colorfulAvatars;
-}
-
 Size getGifDimensions(Uint8List bytes) {
   String hexString = "";
 
@@ -453,14 +450,14 @@ Size getGifDimensions(Uint8List bytes) {
   return size;
 }
 
-Future<IMG.Size> getVideoDimensions(Attachment attachment, {Uint8List bytes}) async {
-  Uint8List imageData = await VideoThumbnail.thumbnailData(
+Future<IMG.Size> getVideoDimensions(Attachment attachment, {Uint8List? bytes}) async {
+  Uint8List? imageData = await VideoThumbnail.thumbnailData(
     video: AttachmentHelper.getAttachmentPath(attachment),
     imageFormat: ImageFormat.JPEG,
     quality: 50,
   );
 
-  return IMG.ImageSizeGetter.getSize(IMG.MemoryInput(imageData));
+  return IMG.ImageSizeGetter.getSize(IMG.MemoryInput(imageData!));
 }
 
 Brightness getBrightness(BuildContext context) {
@@ -469,9 +466,8 @@ Brightness getBrightness(BuildContext context) {
 
 /// Take the passed [address] or serverAddress from Settings
 /// and sanitize it, making sure it includes an http schema
-String getServerAddress({String address}) {
-  String serverAddress = address ?? SettingsManager().settings.serverAddress;
-  if (serverAddress == null) return null;
+String? getServerAddress({String? address}) {
+  String? serverAddress = address ?? SettingsManager().settings.serverAddress;
 
   String sanitized = serverAddress.replaceAll("https://", "").replaceAll("http://", "").trim();
   if (sanitized.isEmpty) return null;
@@ -498,9 +494,7 @@ Future<String> getDeviceName() async {
     AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
 
     // Gather device info
-    List<String> items = [androidInfo?.brand ?? androidInfo?.manufacturer, androidInfo?.model, androidInfo?.androidId]
-        .where((element) => element != null)
-        .toList();
+    List<String> items = [androidInfo.brand, androidInfo.model, androidInfo.androidId].toList();
 
     // Set device name
     if (items.length > 0) {
@@ -512,15 +506,15 @@ Future<String> getDeviceName() async {
   }
 
   // Fallback for if it happens to be empty or null, somehow... idk
-  if (isNullOrEmpty((deviceName ?? "").trim())) {
+  if (isNullOrEmpty(deviceName.trim())!) {
     deviceName = "android-client";
   }
 
   return deviceName;
 }
 
-String getFilenameFromUrl(String url) {
-  if (isNullOrEmpty(url)) return null;
+String? getFilenameFromUrl(String url) {
+  if (isNullOrEmpty(url)!) return null;
 
   // Return everything after the last slash
   if (url.contains("/")) {
@@ -532,12 +526,12 @@ String getFilenameFromUrl(String url) {
   return null;
 }
 
-Future<File> saveImageFromUrl(String guid, String url) async {
+Future<File?> saveImageFromUrl(String? guid, String url) async {
   // Make sure the URL is "formed"
   if (!url.contains("/")) return null;
 
   // Get the filename from the URL
-  String filename = getFilenameFromUrl(url);
+  String? filename = getFilenameFromUrl(url);
   if (filename == null) return null;
 
   try {
@@ -558,7 +552,7 @@ Future<File> saveImageFromUrl(String guid, String url) async {
   }
 }
 
-Icon getIndicatorIcon(SocketState socketState, {double size = 24}) {
+Icon getIndicatorIcon(SocketState? socketState, {double size = 24}) {
   Icon icon;
 
   if (SettingsManager().settings.colorblindMode) {
@@ -608,7 +602,6 @@ String encodeUri(String uri) {
 }
 
 Future<PlayerStatus> getControllerStatus(VideoPlayerController controller) async {
-  if (controller == null) return PlayerStatus.NONE;
 
   Duration currentPos = controller.value.position;
   if (controller.value.duration == currentPos) {

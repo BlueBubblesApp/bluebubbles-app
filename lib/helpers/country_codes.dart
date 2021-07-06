@@ -1,5 +1,4 @@
 import 'package:collection/collection.dart';
-import 'package:flutter/material.dart';
 
 List<CountryCode> countryCodes = [];
 
@@ -1253,13 +1252,13 @@ List<CountryCode> getCountryCodes() {
 }
 
 class CountryCode {
-  String name;
-  String code;
-  String dialCode;
+  String? name;
+  String? code;
+  String? dialCode;
 
   CountryCode({
-    @required this.name,
-    @required this.code,
-    @required this.dialCode,
+    required this.name,
+    required this.code,
+    required this.dialCode,
   });
 }

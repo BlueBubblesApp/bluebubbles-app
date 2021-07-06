@@ -20,12 +20,12 @@ enum PlayerStatus { NONE, STOPPED, PAUSED, PLAYING, ENDED }
 
 class VideoWidget extends StatefulWidget {
   VideoWidget({
-    Key key,
-    @required this.file,
-    @required this.attachment,
+    Key? key,
+    required this.file,
+    required this.attachment,
   }) : super(key: key);
-  final File file;
-  final Attachment attachment;
+  final File? file;
+  final Attachment? attachment;
 
   @override
   _VideoWidgetState createState() => _VideoWidgetState();
@@ -34,9 +34,9 @@ class VideoWidget extends StatefulWidget {
 class _VideoWidgetState extends State<VideoWidget> with TickerProviderStateMixin {
   bool showPlayPauseOverlay = true;
   bool isVisible = false;
-  Timer hideOverlayTimer;
+  Timer? hideOverlayTimer;
   bool navigated = false;
-  Uint8List thumbnail;
+  Uint8List? thumbnail;
   PlayerStatus status = PlayerStatus.NONE;
   bool hasListener = false;
   bool muted = true;
@@ -45,27 +45,24 @@ class _VideoWidgetState extends State<VideoWidget> with TickerProviderStateMixin
   void initState() {
     super.initState();
     muted = SettingsManager().settings.startVideosMuted;
-    Map<String, VideoPlayerController> controllers = CurrentChat.of(context).currentPlayingVideo ?? {};
-    showPlayPauseOverlay = controllers == null ||
-        !controllers.containsKey(widget.attachment.guid) ||
-        !controllers[widget.attachment.guid].value.isPlaying;
+    Map<String?, VideoPlayerController?> controllers = CurrentChat.of(context)!.currentPlayingVideo ?? {};
+    showPlayPauseOverlay = !controllers.containsKey(widget.attachment!.guid) ||
+        !controllers[widget.attachment!.guid]!.value.isPlaying;
 
-    if (controllers.containsKey(widget.attachment.guid)) {
-      createListener(controllers[widget.attachment.guid]);
+    if (controllers.containsKey(widget.attachment!.guid)) {
+      createListener(controllers[widget.attachment!.guid]);
     }
   }
 
-  void createListener(VideoPlayerController controller) {
+  void createListener(VideoPlayerController? controller) {
     if (controller == null || hasListener) return;
 
     controller.addListener(() async {
-      if (controller == null) return;
-
       // Get the current status
       PlayerStatus currentStatus = await getControllerStatus(controller);
 
       // If the status hasn't changed, don't do anything
-      if (controller == null || currentStatus == status) return;
+      if (currentStatus == status) return;
       this.status = currentStatus;
 
       // If the status is ended, restart
@@ -88,25 +85,25 @@ class _VideoWidgetState extends State<VideoWidget> with TickerProviderStateMixin
   }
 
   void getThumbnail() async {
-    thumbnail = CurrentChat.of(context).getImageData(widget.attachment);
+    thumbnail = CurrentChat.of(context)!.getImageData(widget.attachment!);
     if (thumbnail != null) return;
     thumbnail = await VideoThumbnail.thumbnailData(
-      video: widget.file.path,
+      video: widget.file!.path,
       imageFormat: ImageFormat.JPEG,
-      quality: SettingsManager().compressionQuality,
+      quality: SettingsManager().compressionQuality!,
     );
 
-    CurrentChat.of(context)?.saveImageData(thumbnail, widget.attachment);
+    CurrentChat.of(context)?.saveImageData(thumbnail, widget.attachment!);
     if (this.mounted) this.setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
-    VideoPlayerController controller;
-    Map<String, VideoPlayerController> controllers = CurrentChat.of(context).currentPlayingVideo;
+    VideoPlayerController? controller;
+    Map<String?, VideoPlayerController?>? controllers = CurrentChat.of(context)!.currentPlayingVideo;
     // If the currently playing video is this attachment guid
-    if (controllers != null && controllers.containsKey(widget.attachment.guid)) {
-      controller = controllers[widget.attachment.guid];
+    if (controllers != null && controllers.containsKey(widget.attachment!.guid)) {
+      controller = controllers[widget.attachment!.guid];
       this.createListener(controller);
     }
 
@@ -114,12 +111,12 @@ class _VideoWidgetState extends State<VideoWidget> with TickerProviderStateMixin
       onVisibilityChanged: (info) {
         if (info.visibleFraction == 0 && isVisible && !navigated) {
           isVisible = false;
-          if (controller != null && context != null) {
+          if (controller != null) {
             controller = null;
             CurrentChat.of(context)?.changeCurrentPlayingVideo(null);
           }
-          if (SettingsManager().settings.lowMemoryMode && context != null) {
-            CurrentChat.of(context)?.clearImageData(widget.attachment);
+          if (SettingsManager().settings.lowMemoryMode) {
+            CurrentChat.of(context)?.clearImageData(widget.attachment!);
           }
         } else if (!isVisible) {
           isVisible = true;
@@ -129,7 +126,7 @@ class _VideoWidgetState extends State<VideoWidget> with TickerProviderStateMixin
         }
         if (this.mounted) setState(() {});
       },
-      key: Key(widget.attachment.guid),
+      key: Key(widget.attachment!.guid!),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(8.0),
         child: AnimatedSize(
@@ -137,7 +134,7 @@ class _VideoWidgetState extends State<VideoWidget> with TickerProviderStateMixin
           curve: Curves.easeInOut,
           alignment: Alignment.center,
           duration: Duration(milliseconds: 250),
-          child: controller != null ? buildPlayer(controller) : buildPreview(),
+          child: controller != null ? buildPlayer(controller!) : buildPreview(),
         ),
       ),
     );
@@ -154,7 +151,7 @@ class _VideoWidgetState extends State<VideoWidget> with TickerProviderStateMixin
             setState(() {
               navigated = true;
             });
-            CurrentChat currentChat = CurrentChat.of(context);
+            CurrentChat? currentChat = CurrentChat.of(context);
             await Navigator.of(context).push(
               ThemeSwitcher.buildPageRoute(
                 builder: (context) => AttachmentFullscreenViewer(
@@ -169,14 +166,14 @@ class _VideoWidgetState extends State<VideoWidget> with TickerProviderStateMixin
             });
           }
         },
-        child: controller.value.aspectRatio != null
-            ? Container(
+        // ignore: unnecessary_null_comparison
+        child: Container(
                 constraints: BoxConstraints(
                   maxWidth: Get.mediaQuery.size.width / 2,
                   maxHeight: Get.mediaQuery.size.height / 2,
                 ),
                 child: Hero(
-                  tag: widget.attachment.guid,
+                  tag: widget.attachment!.guid!,
                   child: Stack(
                     alignment: Alignment.center,
                     children: <Widget>[
@@ -264,17 +261,16 @@ class _VideoWidgetState extends State<VideoWidget> with TickerProviderStateMixin
                     ],
                   ),
                 ),
-              )
-            : Container(),
+              ),
       );
 
   Widget buildPreview() => GestureDetector(
         onTap: () async {
-          VideoPlayerController controller = VideoPlayerController.file(widget.file);
+          VideoPlayerController controller = VideoPlayerController.file(widget.file!);
           await controller.initialize();
           controller.setVolume(muted ? 0.0 : 1.0);
           controller.play();
-          CurrentChat.of(context).changeCurrentPlayingVideo({widget.attachment.guid: controller});
+          CurrentChat.of(context)!.changeCurrentPlayingVideo({widget.attachment!.guid: controller});
         },
         child: Stack(
           children: [
@@ -331,16 +327,16 @@ class _VideoWidgetState extends State<VideoWidget> with TickerProviderStateMixin
 
   Widget buildSwitcher() => AnimatedSwitcher(
         duration: Duration(milliseconds: 150),
-        child: thumbnail != null ? Image.memory(thumbnail) : buildPlaceHolder(),
+        child: thumbnail != null ? Image.memory(thumbnail!) : buildPlaceHolder(),
       );
 
   Widget buildPlaceHolder() {
-    if (widget.attachment.hasValidSize) {
+    if (widget.attachment!.hasValidSize) {
       return AspectRatio(
-        aspectRatio: widget.attachment.width.toDouble() / widget.attachment.height.toDouble(),
+        aspectRatio: widget.attachment!.width!.toDouble() / widget.attachment!.height!.toDouble(),
         child: Container(
-          width: widget.attachment.width.toDouble(),
-          height: widget.attachment.height.toDouble(),
+          width: widget.attachment!.width!.toDouble(),
+          height: widget.attachment!.height!.toDouble(),
         ),
       );
     } else {

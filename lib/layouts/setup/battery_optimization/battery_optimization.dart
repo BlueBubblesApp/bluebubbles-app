@@ -5,7 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:battery_optimization/battery_optimization.dart';
 
 class BatteryOptimizationPage extends StatelessWidget {
-  const BatteryOptimizationPage({Key key, @required this.controller}) : super(key: key);
+  const BatteryOptimizationPage({Key? key, required this.controller}) : super(key: key);
   final PageController controller;
 
   @override
@@ -14,7 +14,7 @@ class BatteryOptimizationPage extends StatelessWidget {
         onInit: () {
           // If battery optimizations are already disabled, go to the next page
           BatteryOptimization.isIgnoringBatteryOptimizations().then((isDisabled) {
-            if (isDisabled) {
+            if (isDisabled!) {
               controller.nextPage(
                 duration: Duration(milliseconds: 300),
                 curve: Curves.easeInOut,
@@ -36,7 +36,7 @@ class BatteryOptimizationPage extends StatelessWidget {
                     padding: EdgeInsets.symmetric(horizontal: 20.0),
                     child: Text(
                       "By default, your phone manufacturer may utilize strict memory management techiques on background processes. As a result, we recommend disabling Battery Optimizations so that the app functions properly and delivers all notifications.",
-                      style: Theme.of(context).textTheme.bodyText1.apply(fontSizeFactor: 1.5),
+                      style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.5),
                       textAlign: TextAlign.center,
                     ),
                   ),
@@ -45,7 +45,7 @@ class BatteryOptimizationPage extends StatelessWidget {
                     padding: EdgeInsets.symmetric(horizontal: 20.0),
                     child: Text(
                       "Click the button below to go to your phone's battery optimization settings where you can disable the it for BlueBubbles.",
-                      style: Theme.of(context).textTheme.bodyText1.apply(fontSizeFactor: 1.5),
+                      style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.5),
                       textAlign: TextAlign.center,
                     ),
                   ),

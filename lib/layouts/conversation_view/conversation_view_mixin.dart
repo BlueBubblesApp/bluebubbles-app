@@ -33,14 +33,14 @@ import 'package:slugify/slugify.dart';
 
 mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on State<ConversationView> {
   /// Commonly shared variables
-  Chat chat;
-  bool isCreator;
-  MessageBloc messageBloc;
+  Chat? chat;
+  bool? isCreator;
+  MessageBloc? messageBloc;
 
   /// Regular conversation view variables
-  OverlayEntry entry;
+  OverlayEntry? entry;
   LayerLink layerLink = LayerLink();
-  List<String> newMessages = [];
+  List<String?> newMessages = [];
   bool processingParticipants = false;
 
   /// Chat selector variables
@@ -48,14 +48,14 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
   List<UniqueContact> contacts = [];
   List<UniqueContact> selected = [];
   List<UniqueContact> prevSelected = [];
-  String searchQuery = "";
+  String? searchQuery = "";
   bool currentlyProcessingDeleteKey = false;
-  CurrentChat currentChat;
-  List<DisplayMode> modes;
-  DisplayMode currentMode;
+  CurrentChat? currentChat;
+  List<DisplayMode>? modes;
+  DisplayMode? currentMode;
   bool markingAsRead = false;
   bool markedAsRead = false;
-  String previousSearch = '';
+  String? previousSearch = '';
   int previousContactCount = 0;
 
   final _contactStreamController = StreamController<List<UniqueContact>>.broadcast();
@@ -68,11 +68,11 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
   ///
   /// ===========================================================
   void initConversationViewState() {
-    if (isCreator) return;
+    if (isCreator!) return;
     NotificationManager().switchChat(chat);
 
     fetchParticipants();
-    ContactManager().stream.listen((List<String> addresses) async {
+    ContactManager().stream.listen((List<String?> addresses) async {
       fetchParticipants();
     });
 
@@ -81,8 +81,8 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
       if (!event["data"].containsKey("chatGuid")) return;
 
       // Ignore any events having to do with this chat
-      String chatGuid = event["data"]["chatGuid"];
-      if (chat.guid == chatGuid) return;
+      String? chatGuid = event["data"]["chatGuid"];
+      if (chat!.guid == chatGuid) return;
 
       int preLength = newMessages.length;
       if (event["type"] == "add-unread-chat" && !newMessages.contains(chatGuid)) {
@@ -98,7 +98,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     // Listen for changes in the group
     NewMessageManager().stream.listen((NewMessageEvent event) async {
       // Make sure we have the required data to qualify for this tile
-      if (event.chatGuid != widget.chat.guid) return;
+      if (event.chatGuid != widget.chat!.guid) return;
       if (!event.event.containsKey("message")) return;
 
       // Make sure the message is a group event
@@ -106,44 +106,44 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
       if (!message.isGroupEvent()) return;
 
       // If it's a group event, let's fetch the new information and save it
-      await fetchChatSingleton(widget.chat.guid);
+      await fetchChatSingleton(widget.chat!.guid);
       setNewChatData(forceUpdate: true);
     });
   }
 
   void setNewChatData({forceUpdate: false}) async {
     // Save the current participant list and get the latest
-    List<Handle> ogParticipants = widget.chat.participants;
-    await widget.chat.getParticipants();
+    List<Handle> ogParticipants = widget.chat!.participants;
+    await widget.chat!.getParticipants();
 
     // Save the current title and generate the new one
-    String ogTitle = widget.chat.title;
-    await widget.chat.getTitle();
+    String? ogTitle = widget.chat!.title;
+    await widget.chat!.getTitle();
 
     // If the original data is different, update the state
-    if (ogTitle != widget.chat.title || ogParticipants.length != widget.chat.participants.length || forceUpdate) {
+    if (ogTitle != widget.chat!.title || ogParticipants.length != widget.chat!.participants.length || forceUpdate) {
       if (this.mounted) setState(() {});
     }
   }
 
   void didChangeDependenciesConversationView() {
-    if (isCreator) return;
-    SocketManager().removeChatNotification(chat);
+    if (isCreator!) return;
+    SocketManager().removeChatNotification(chat!);
   }
 
-  void initCurrentChat(Chat chat) {
+  void initCurrentChat(Chat? chat) {
     currentChat = CurrentChat.getCurrentChat(chat);
-    currentChat.init();
-    currentChat.updateChatAttachments().then((value) {
+    currentChat!.init();
+    currentChat!.updateChatAttachments().then((value) {
       if (this.mounted) setState(() {});
     });
 
-    currentChat.stream.listen((event) {
+    currentChat!.stream.listen((event) {
       if (this.mounted) setState(() {});
     });
   }
 
-  MessageBloc initMessageBloc() {
+  MessageBloc? initMessageBloc() {
     messageBloc = new MessageBloc(chat);
     return messageBloc;
   }
@@ -156,17 +156,17 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
   }
 
   Future<void> fetchParticipants() async {
-    if (isCreator) return;
+    if (isCreator!) return;
     // Prevent multiple calls to fetch participants
     if (processingParticipants) return;
     processingParticipants = true;
 
     // If we don't have participants, get them
-    if (chat.participants.isEmpty) {
-      await chat.getParticipants();
+    if (chat!.participants.isEmpty) {
+      await chat!.getParticipants();
 
       // If we have participants, refresh the state
-      if (chat.participants.isNotEmpty) {
+      if (chat!.participants.isNotEmpty) {
         if (this.mounted) setState(() {});
         return;
       }
@@ -175,11 +175,11 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
 
       try {
         // If we don't have participants, we should fetch them from the server
-        Chat data = await fetchChatSingleton(chat.guid);
+        Chat? data = await fetchChatSingleton(chat!.guid);
         // If we got data back, fetch the participants and update the state
         if (data != null) {
-          await chat.getParticipants();
-          if (chat.participants.isNotEmpty) {
+          await chat!.getParticipants();
+          if (chat!.participants.isNotEmpty) {
             debugPrint("(Convo View) Got new chat participants. Updating state.");
             if (this.mounted) setState(() {});
           } else {
@@ -196,7 +196,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
   }
 
   Future<void> openDetails() async {
-    Chat _chat = await chat.getParticipants();
+    Chat _chat = await chat!.getParticipants();
     Navigator.of(context).push(
       ThemeSwitcher.buildPageRoute(
         builder: (context) => ConversationDetails(
@@ -232,7 +232,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     // Set that we are
     setProgress(true);
 
-    SocketManager().sendMessage("mark-chat-read", {"chatGuid": chat.guid}, (data) {
+    SocketManager().sendMessage("mark-chat-read", {"chatGuid": chat!.guid}, (data) {
       setProgress(false);
     }).catchError((_) {
       setProgress(false);
@@ -240,7 +240,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
   }
 
   Widget buildCupertinoTrailing() {
-    Color fontColor = Theme.of(context).textTheme.headline1.color;
+    Color? fontColor = Theme.of(context).textTheme.headline1!.color;
     bool manualMark = SettingsManager().settings.enablePrivateAPI && SettingsManager().settings.privateManualMarkAsRead;
     bool showManual = !SettingsManager().settings.privateMarkChatAsRead && !(widget.chat?.isGroup() ?? false);
     List<Widget> items = [
@@ -274,7 +274,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
       items.add(StreamBuilder(
           stream: SocketManager().connectionStateStream,
           builder: (context, AsyncSnapshot<SocketState> snapshot) {
-            SocketState connectionStatus;
+            SocketState? connectionStatus;
             if (snapshot.hasData) {
               connectionStatus = snapshot.data;
             } else {
@@ -299,23 +299,23 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
 
   Widget buildConversationViewHeader() {
     Color backgroundColor = Theme.of(context).backgroundColor;
-    Color fontColor = Theme.of(context).textTheme.headline1.color;
-    String title = chat.title;
+    Color? fontColor = Theme.of(context).textTheme.headline1!.color;
+    String? title = chat!.title;
 
     final hideTitle = SettingsManager().settings.redactedMode && SettingsManager().settings.hideContactInfo;
     final generateTitle =
         SettingsManager().settings.redactedMode && SettingsManager().settings.generateFakeContactNames;
 
     if (generateTitle)
-      title = chat.fakeParticipants.length > 1 ? "Group Chat" : chat.fakeParticipants[0];
+      title = chat!.fakeParticipants.length > 1 ? "Group Chat" : chat!.fakeParticipants[0];
     else if (hideTitle) fontColor = Colors.transparent;
 
     if (SettingsManager().settings.skin == Skins.Material || SettingsManager().settings.skin == Skins.Samsung) {
       return AppBar(
         brightness: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor),
         title: Text(
-          title,
-          style: Theme.of(context).textTheme.headline1.apply(color: fontColor),
+          title!,
+          style: Theme.of(context).textTheme.headline1!.apply(color: fontColor),
         ),
         bottom: PreferredSize(
           child: Container(
@@ -332,7 +332,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
             StreamBuilder(
                 stream: SocketManager().connectionStateStream,
                 builder: (context, AsyncSnapshot<SocketState> snapshot) {
-                  SocketState connectionStatus;
+                  SocketState? connectionStatus;
                   if (snapshot.hasData) {
                     connectionStatus = snapshot.data;
                   } else {
@@ -380,7 +380,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
 
     // Build the stack
     List<Widget> avatars = [];
-    chat.participants.forEach((Handle participant) {
+    chat!.participants.forEach((Handle participant) {
       avatars.add(
         Container(
           height: 42.0, // 2 px larger than the diameter
@@ -394,8 +394,8 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
       );
     });
 
-    TextStyle titleStyle = Theme.of(context).textTheme.bodyText1;
-    if (!generateTitle && hideTitle) titleStyle = titleStyle.copyWith(color: Colors.transparent);
+    TextStyle? titleStyle = Theme.of(context).textTheme.bodyText1;
+    if (!generateTitle && hideTitle) titleStyle = titleStyle!.copyWith(color: Colors.transparent);
 
     // Calculate separation factor
     // Anything below -60 won't work due to the alignment
@@ -475,7 +475,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
   ///
   /// ===========================================================
   void initChatSelector() {
-    if (!isCreator) return;
+    if (!isCreator!) return;
 
     loadEntries();
 
@@ -509,7 +509,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
   }
 
   void resetCursor() {
-    if (!isCreator) return;
+    if (!isCreator!) return;
     chatSelectorController.text = " ";
     chatSelectorController.selection = TextSelection.fromPosition(
       TextPosition(offset: 1),
@@ -517,7 +517,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
   }
 
   Future<void> fetchCurrentChat() async {
-    if (!isCreator) return;
+    if (!isCreator!) return;
     if (selected.length == 1 && selected.first.isChat) {
       chat = selected.first.chat;
     }
@@ -534,12 +534,12 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     }
 
     // Check and see if there are any matching chats to the select participants
-    List<Chat> matchingChats = [];
+    List<Chat?> matchingChats = [];
 
     // If it's just one recipient, try manual lookup
     if (selected.length == 1) {
       try {
-        Chat existingChat = await Chat.findOne({"chatIdentifier": slugify(selected[0].address, delimiter: '')});
+        Chat? existingChat = await Chat.findOne({"chatIdentifier": slugify(selected[0].address!, delimiter: '')});
         if (existingChat != null) {
           matchingChats.add(existingChat);
         }
@@ -548,30 +548,30 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
 
     if (matchingChats.length == 0) {
       // If we haven't completed the chats request, wait for it to finish
-      if (!ChatBloc().chatRequest.isCompleted) {
-        await ChatBloc().chatRequest.future;
+      if (!ChatBloc().chatRequest!.isCompleted) {
+        await ChatBloc().chatRequest!.future;
       }
 
       for (var i in ChatBloc().chats) {
         // If the lengths don't match continue
-        if (i.participants.length != selected.length) continue;
+        if (i!.participants.length != selected.length) continue;
 
         // Iterate over each selected contact
         int matches = 0;
         for (UniqueContact contact in selected) {
           bool match = false;
-          bool isEmailAddr = contact.address.isEmail;
-          String lastDigits = contact.address.substring(contact.address.length - 4, contact.address.length);
+          bool isEmailAddr = contact.address!.isEmail;
+          String lastDigits = contact.address!.substring(contact.address!.length - 4, contact.address!.length);
 
           for (var participant in i.participants) {
             // If one is an email and the other isn't, skip
-            if (isEmailAddr && !participant.address.isEmail) continue;
+            if (isEmailAddr && !participant.address!.isEmail) continue;
 
             // If the last 4 digits don't match, skip
-            if (!participant.address.endsWith(lastDigits)) continue;
+            if (!participant.address!.endsWith(lastDigits)) continue;
 
             // Get a list of comparable options
-            List<String> opts = await getCompareOpts(participant);
+            List<String?> opts = await getCompareOpts(participant);
             match = sameAddress(opts, contact.address);
             if (match) break;
           }
@@ -589,7 +589,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     }
 
     // Sort the chats and take the first one
-    matchingChats.sort((a, b) => a.participants.length.compareTo(b.participants.length));
+    matchingChats.sort((a, b) => a!.participants.length.compareTo(b!.participants.length));
     chat = matchingChats.first;
 
     // Re-initialize the current chat and message bloc for the found chats
@@ -602,17 +602,17 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
   }
 
   Future<void> loadEntries() async {
-    if (!isCreator) return;
+    if (!isCreator!) return;
 
     // If we don't have chats, fetch them
-    if (ChatBloc().chats == null) {
+    if (ChatBloc().chats.isEmpty) {
       await ChatBloc().refreshChats();
     }
 
     Function setChats = (List<Chat> newChats) async {
       conversations = newChats;
       for (int i = 0; i < conversations.length; i++) {
-        if (isNullOrEmpty(conversations[i].participants)) {
+        if (isNullOrEmpty(conversations[i].participants)!) {
           await conversations[i].getParticipants();
         }
       }
@@ -621,8 +621,8 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     };
 
     // If there are any changes to the chatbloc, use them
-    ChatBloc().chatStream.listen((List<Chat> chats) async {
-      if (chats == null || chats.length == 0) return;
+    ChatBloc().chatStream.listen((List<Chat?> chats) async {
+      if (chats.length == 0) return;
 
       // Make sure the contact count changed, otherwise, don't set the chats
       if (chats.length == previousContactCount) return;
@@ -638,7 +638,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
 
     // When the chat request is finished, set the chats
     if (ChatBloc().chatRequest != null) {
-      await ChatBloc().chatRequest.future;
+      await ChatBloc().chatRequest!.future;
       await setChats(ChatBloc().chats);
     }
   }
@@ -655,24 +655,24 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
   }
 
   void filterContacts() {
-    if (!isCreator) return;
+    if (!isCreator!) return;
     if (selected.length == 1 && selected.first.isChat) {
       this.setContacts([], addToStream: false);
     }
 
     Function slugText = (String text) {
-      return slugify((text ?? ""), delimiter: '').toString().replaceAll('-', '');
+      return slugify(text, delimiter: '').toString().replaceAll('-', '');
     };
 
     // slugify the search query for matching
     searchQuery = slugText(searchQuery);
 
     List<UniqueContact> _contacts = [];
-    List<String> cache = [];
+    List<String?> cache = [];
     Function addContactEntries = (Contact contact, {conditionally = false}) {
-      for (Item phone in contact.phones) {
-        String cleansed = slugText(phone.value);
-        if (conditionally && !cleansed.contains(searchQuery)) continue;
+      for (Item phone in contact.phones!) {
+        String? cleansed = slugText(phone.value);
+        if (conditionally && !cleansed!.contains(searchQuery!)) continue;
 
         if (!cache.contains(cleansed)) {
           cache.add(cleansed);
@@ -686,9 +686,9 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
         }
       }
 
-      for (Item email in contact.emails) {
-        String emailVal = slugText(email.value);
-        if (conditionally && !emailVal.contains(searchQuery)) continue;
+      for (Item email in contact.emails!) {
+        String? emailVal = slugText(email.value);
+        if (conditionally && !emailVal!.contains(searchQuery!)) continue;
 
         if (!cache.contains(emailVal)) {
           cache.add(emailVal);
@@ -706,7 +706,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     if (widget.type != ChatSelectorTypes.ONLY_EXISTING) {
       for (Contact contact in ContactManager().contacts ?? []) {
         String name = slugText(contact.displayName);
-        if (name.contains(searchQuery)) {
+        if (name.contains(searchQuery!)) {
           addContactEntries(contact);
         } else {
           addContactEntries(contact, conditionally: true);
@@ -716,9 +716,9 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
 
     List<UniqueContact> _conversations = [];
     if (selected.length == 0 && widget.type != ChatSelectorTypes.ONLY_CONTACTS) {
-      for (Chat chat in conversations ?? []) {
-        String title = slugText(chat?.title);
-        if (title.contains(searchQuery)) {
+      for (Chat chat in conversations) {
+        String title = slugText(chat.title);
+        if (title.contains(searchQuery!)) {
           if (!cache.contains(chat.guid)) {
             cache.add(chat.guid);
             _conversations.add(
@@ -733,14 +733,14 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     }
 
     _conversations.addAll(_contacts);
-    if (searchQuery.length > 0)
+    if (searchQuery!.length > 0)
       _conversations.sort((a, b) {
-        if (a.isChat && a.chat.participants.length == 1) return -1;
-        if (b.isChat && b.chat.participants.length == 1) return 1;
+        if (a.isChat && a.chat!.participants.length == 1) return -1;
+        if (b.isChat && b.chat!.participants.length == 1) return 1;
         if (a.isChat && !b.isChat) return 1;
         if (b.isChat && !a.isChat) return -1;
         if (!b.isChat && !a.isChat) return 0;
-        return a.chat.participants.length.compareTo(b.chat.participants.length);
+        return a.chat!.participants.length.compareTo(b.chat!.participants.length);
       });
 
     bool shouldRefreshState = searchQuery != previousSearch || contacts.length == 0 || conversations.length == 0;
@@ -748,14 +748,14 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     previousSearch = searchQuery;
   }
 
-  Future<Chat> createChat() async {
+  Future<Chat?> createChat() async {
     if (chat != null) return chat;
     Completer<Chat> completer = Completer();
-    if (searchQuery.length > 0) {
+    if (searchQuery!.length > 0) {
       selected.add(new UniqueContact(address: searchQuery, displayName: searchQuery));
     }
 
-    List<String> participants = selected.map((e) => cleansePhoneNumber(e.address)).toList();
+    List<String> participants = selected.map((e) => cleansePhoneNumber(e.address!)).toList();
     Map<String, dynamic> params = {};
     showDialog(
         context: context,
@@ -790,7 +790,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     };
 
     // If there is only 1 participant, try to find the chat
-    Chat existingChat;
+    Chat? existingChat;
     if (participants.length == 1) {
       existingChat = await Chat.findOne({"chatIdentifier": slugify(participants[0], delimiter: '')});
     }
@@ -850,11 +850,11 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
         chat = item.chat;
         this.setContacts([], addToStream: false, refreshState: true);
       } else {
-        for (Handle e in item?.chat?.participants ?? []) {
+        for (Handle e in item.chat?.participants ?? []) {
           UniqueContact contact = new UniqueContact(
               address: e.address,
               displayName:
-                  ContactManager().getCachedContactSync(e.address)?.displayName ?? await formatPhoneNumber(e.address));
+                  ContactManager().getCachedContactSync(e.address)?.displayName ?? await formatPhoneNumber(e.address!));
           selected.add(contact);
         }
 
@@ -878,11 +878,11 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
       initialData: contacts,
       stream: contactStream,
       builder: (BuildContext context, AsyncSnapshot<List<UniqueContact>> snapshot) {
-        List data = snapshot.hasData ? snapshot.data : [];
+        List? data = snapshot.hasData ? snapshot.data : [];
         return ListView.builder(
           physics: ThemeSwitcher.getScrollPhysics(),
           itemBuilder: (BuildContext context, int index) => ContactSelectorOption(
-            key: new Key("selector-${data[index].displayName}"),
+            key: new Key("selector-${data![index].displayName}"),
             item: data[index],
             onSelected: onSelected,
           ),
@@ -892,7 +892,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
 
   Widget buildChatSelectorHeader() => PreferredSize(
         preferredSize: Size.fromHeight(40),
-        child: CupertinoNavigationBar(
+        child: Cupertino.CupertinoNavigationBar(
           backgroundColor: Theme.of(context).accentColor.withOpacity(0.5),
           middle: Container(
             child: Text(
@@ -906,10 +906,10 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
 }
 
 class UniqueContact {
-  final String displayName;
-  final String label;
-  final String address;
-  final Chat chat;
+  final String? displayName;
+  final String? label;
+  final String? address;
+  final Chat? chat;
 
   bool get isChat => chat != null;
 

@@ -23,7 +23,7 @@ import 'package:flutter/material.dart';
 
 class MessageWidget extends StatefulWidget {
   MessageWidget({
-    Key key,
+    Key? key,
     this.message,
     this.olderMessage,
     this.newerMessage,
@@ -33,13 +33,13 @@ class MessageWidget extends StatefulWidget {
     this.onUpdate,
   }) : super(key: key);
 
-  final Message message;
-  final Message newerMessage;
-  final Message olderMessage;
-  final bool showHandle;
-  final bool isFirstSentMessage;
-  final bool showHero;
-  final Message Function(NewMessageEvent event) onUpdate;
+  final Message? message;
+  final Message? newerMessage;
+  final Message? olderMessage;
+  final bool? showHandle;
+  final bool? isFirstSentMessage;
+  final bool? showHero;
+  final Message? Function(NewMessageEvent event)? onUpdate;
 
   @override
   _MessageState createState() => _MessageState();
@@ -47,18 +47,18 @@ class MessageWidget extends StatefulWidget {
 
 class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMixin {
   bool showTail = true;
-  Completer<void> associatedMessageRequest;
-  Completer<void> attachmentsRequest;
-  Completer<void> handleRequest;
+  Completer<void>? associatedMessageRequest;
+  Completer<void>? attachmentsRequest;
+  Completer<void>? handleRequest;
   int lastRequestCount = -1;
   int attachmentCount = 0;
   int associatedCount = 0;
   bool handledInit = false;
-  CurrentChat currentChat;
-  StreamSubscription<NewMessageEvent> subscription;
-  Message _message;
-  Message _newerMessage;
-  Message _olderMessage;
+  CurrentChat? currentChat;
+  StreamSubscription<NewMessageEvent>? subscription;
+  Message? _message;
+  Message? _newerMessage;
+  Message? _olderMessage;
 
   @override
   void initState() {
@@ -73,7 +73,7 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
   }
 
   void init() {
-    if (context != null) currentChat = CurrentChat.of(context);
+    currentChat = CurrentChat.of(context);
     if (handledInit) return;
     handledInit = true;
     _message = widget.message;
@@ -90,34 +90,34 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
     // Listen for new messages
     subscription = NewMessageManager().stream.listen((data) {
       // If the message doesn't apply to this chat, ignore it
-      if (data.chatGuid != currentChat?.chat?.guid) return;
+      if (data.chatGuid != currentChat?.chat.guid) return;
 
       if (data.type == NewMessageType.ADD) {
         // Check if the new message has an associated GUID that matches this message
         bool fetchAssoc = false;
         bool fetchAttach = false;
-        Message message = data.event["message"];
+        Message? message = data.event["message"];
         if (message == null) return;
-        if (message.associatedMessageGuid == widget.message.guid) fetchAssoc = true;
+        if (message.associatedMessageGuid == widget.message!.guid) fetchAssoc = true;
         if (message.hasAttachments) fetchAttach = true;
 
         // If the associated message GUID matches this one, fetch associated messages
         if (fetchAssoc) fetchAssociatedMessages(forceReload: true);
         if (fetchAttach) fetchAttachments(forceReload: true);
       } else if (data.type == NewMessageType.UPDATE) {
-        String oldGuid = data.event["oldGuid"];
+        String? oldGuid = data.event["oldGuid"];
         // If the guid does not match our current guid, then it's not meant for us
         if (oldGuid != _message?.guid && oldGuid != _newerMessage?.guid) return;
 
         // Tell the [MessagesView] to update with the new event, to ensure that things are done synchronously
         if (widget.onUpdate != null) {
-          Message result = widget.onUpdate(data);
+          Message? result = widget.onUpdate!(data);
           if (result != null) {
             if (this.mounted)
               setState(() {
-                if (_message.guid == oldGuid) {
+                if (_message!.guid == oldGuid) {
                   _message = result;
-                } else if (_newerMessage.guid == oldGuid) {
+                } else if (_newerMessage!.guid == oldGuid) {
                   _newerMessage = result;
                 }
               });
@@ -129,45 +129,45 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
 
   @override
   void dispose() {
-    subscription.cancel();
+    subscription?.cancel();
     super.dispose();
   }
 
   Future<void> checkHandle() async {
     // If we've already started, return the request
-    if (handleRequest != null) return handleRequest.future;
+    if (handleRequest != null) return handleRequest!.future;
     handleRequest = new Completer();
 
     // Checks ordered in a specific way to ever so slightly reduce processing
-    if (_message.isFromMe) return handleRequest.complete();
-    if (_message.handle != null) return handleRequest.complete();
+    if (_message!.isFromMe!) return handleRequest!.complete();
+    if (_message!.handle != null) return handleRequest!.complete();
 
     try {
-      Handle handle = await _message.getHandle();
+      Handle? handle = await _message!.getHandle();
       if (this.mounted && handle != null) {
         setState(() {});
       }
     } catch (ex) {
-      handleRequest.completeError(ex);
+      handleRequest!.completeError(ex);
     }
   }
 
   Future<void> fetchAssociatedMessages({bool forceReload = false}) async {
     // If there is already a request being made, return that request
-    if (!forceReload && associatedMessageRequest != null) return associatedMessageRequest.future;
+    if (!forceReload && associatedMessageRequest != null) return associatedMessageRequest!.future;
 
     // Create a new request and get the messages
     associatedMessageRequest = new Completer();
 
     try {
-      await _message.fetchAssociatedMessages();
+      await _message!.fetchAssociatedMessages();
     } catch (ex) {
-      return associatedMessageRequest.completeError(ex);
+      return associatedMessageRequest!.completeError(ex);
     }
 
     bool hasChanges = false;
-    if (_message.associatedMessages.length != associatedCount || forceReload) {
-      associatedCount = _message.associatedMessages.length;
+    if (_message!.associatedMessages.length != associatedCount || forceReload) {
+      associatedCount = _message!.associatedMessages.length;
       hasChanges = true;
     }
 
@@ -175,46 +175,46 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
     if (hasChanges) {
       // If we don't think there are reactions, and we found reactions,
       // Update the DB so it saves that we have reactions
-      if (!_message.hasReactions && _message.getReactions().length > 0) {
-        _message.hasReactions = true;
-        _message.update();
+      if (!_message!.hasReactions && _message!.getReactions().length > 0) {
+        _message!.hasReactions = true;
+        _message!.update();
       }
 
       if (this.mounted) setState(() {});
     }
 
-    associatedMessageRequest.complete();
+    associatedMessageRequest!.complete();
   }
 
   Future<void> fetchAttachments({bool forceReload = false}) async {
     // If there is already a request being made, return that request
-    if (!forceReload && attachmentsRequest != null) return attachmentsRequest.future;
+    if (!forceReload && attachmentsRequest != null) return attachmentsRequest!.future;
 
     // Create a new request and get the attachments
     attachmentsRequest = new Completer();
-    if (!this.mounted) return attachmentsRequest.complete();
+    if (!this.mounted) return attachmentsRequest!.complete();
 
     try {
-      await _message.fetchAttachments(currentChat: currentChat);
+      await _message!.fetchAttachments(currentChat: currentChat);
     } catch (ex) {
-      return attachmentsRequest.completeError(ex);
+      return attachmentsRequest!.completeError(ex);
     }
 
     // If this is a URL preview and we don't have attachments, we need to get them
-    List<Attachment> nullAttachments = _message.getPreviewAttachments();
-    if (_message.isUrlPreview() && nullAttachments.isEmpty) {
+    List<Attachment?> nullAttachments = _message!.getPreviewAttachments();
+    if (_message!.isUrlPreview() && nullAttachments.isEmpty) {
       if (lastRequestCount != nullAttachments.length) {
         lastRequestCount = nullAttachments.length;
 
-        List<dynamic> msgs = await SocketManager().getAttachments(currentChat.chat.guid, _message.guid);
+        List<dynamic> msgs = await SocketManager().getAttachments(currentChat!.chat.guid, _message!.guid);
 
         for (var msg in msgs) await ActionHandler.handleMessage(msg, forceProcess: true);
       }
     }
 
     bool hasChanges = false;
-    if (_message.attachments.length != this.attachmentCount || forceReload) {
-      this.attachmentCount = _message.attachments.length;
+    if (_message!.attachments!.length != this.attachmentCount || forceReload) {
+      this.attachmentCount = _message!.attachments!.length;
       hasChanges = true;
     }
 
@@ -223,7 +223,7 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
       setState(() {});
     }
 
-    if (!attachmentsRequest.isCompleted) attachmentsRequest.complete();
+    if (!attachmentsRequest!.isCompleted) attachmentsRequest!.complete();
   }
 
   @override
@@ -231,7 +231,7 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
     super.build(context);
 
     if (_newerMessage != null) {
-      if (_newerMessage.isGroupEvent()) {
+      if (_newerMessage!.isGroupEvent()) {
         showTail = true;
       } else if (SettingsManager().settings.skin == Skins.Samsung) {
         showTail = MessageHelper.getShowTailReversed(_message, _olderMessage);
@@ -240,8 +240,8 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
       }
     }
 
-    if (_message.isGroupEvent()) {
-      return GroupEvent(key: Key("group-event-${_message.guid}"), message: _message);
+    if (_message!.isGroupEvent()) {
+      return GroupEvent(key: Key("group-event-${_message!.guid}"), message: _message);
     }
 
     ////////// READ //////////
@@ -261,17 +261,17 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
     );
 
     UrlPreviewWidget urlPreviewWidget = UrlPreviewWidget(
-        key: new Key("preview-${_message.guid}"), linkPreviews: _message.getPreviewAttachments(), message: _message);
+        key: new Key("preview-${_message!.guid}"), linkPreviews: _message!.getPreviewAttachments(), message: _message);
     StickersWidget stickersWidget =
-        StickersWidget(key: new Key("stickers-${associatedCount.toString()}"), messages: _message.associatedMessages);
+        StickersWidget(key: new Key("stickers-${associatedCount.toString()}"), messages: _message!.associatedMessages);
     ReactionsWidget reactionsWidget = ReactionsWidget(
         key: new Key("reactions-${associatedCount.toString()}"),
         message: _message,
-        associatedMessages: _message.associatedMessages);
+        associatedMessages: _message!.associatedMessages);
 
     // Add the correct type of message to the message stack
     Widget message;
-    if (_message.isFromMe) {
+    if (_message!.isFromMe!) {
       message = SentMessage(
         showTail: showTail,
         olderMessage: widget.olderMessage,
@@ -281,7 +281,7 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
         stickersWidget: stickersWidget,
         attachmentsWidget: widgetAttachments,
         reactionsWidget: reactionsWidget,
-        shouldFadeIn: currentChat?.sentMessages?.contains(_message.guid),
+        shouldFadeIn: currentChat?.sentMessages.contains(_message!.guid),
         showHero: widget.showHero,
         showDeliveredReceipt: widget.isFirstSentMessage,
       );

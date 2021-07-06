@@ -12,24 +12,24 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class ThemingColorOptionsList extends StatefulWidget {
-  ThemingColorOptionsList({Key key, this.isDarkMode, this.controller}) : super(key: key);
-  final bool isDarkMode;
-  final StreamController controller;
+  ThemingColorOptionsList({Key? key, this.isDarkMode, this.controller}) : super(key: key);
+  final bool? isDarkMode;
+  final StreamController? controller;
 
   @override
   _ThemingColorOptionsListState createState() => _ThemingColorOptionsListState();
 }
 
 class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
-  ThemeObject currentTheme;
+  ThemeObject? currentTheme;
   List<ThemeObject> allThemes = [];
   bool editable = false;
 
   @override
   void initState() {
     super.initState();
-    widget.controller.stream.listen((event) {
-      if (!currentTheme.isPreset) {
+    widget.controller!.stream.listen((event) {
+      if (!currentTheme!.isPreset) {
         showSnackbar('Customization', "Click on an item to customize");
         return;
       }
@@ -40,10 +40,10 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
         builder: (context) => NewThemeCreateAlert(
           onCreate: (String name) async {
             Navigator.of(context).pop();
-            ThemeObject newTheme = new ThemeObject(data: currentTheme.themeData, name: name);
+            ThemeObject newTheme = new ThemeObject(data: currentTheme!.themeData, name: name);
             allThemes.add(newTheme);
             currentTheme = newTheme;
-            if (widget.isDarkMode) {
+            if (widget.isDarkMode!) {
               await SettingsManager().saveSelectedTheme(_context, selectedDarkTheme: currentTheme);
             } else {
               await SettingsManager().saveSelectedTheme(_context, selectedLightTheme: currentTheme);
@@ -62,12 +62,12 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
   @override
   void didChangeDependencies() async {
     super.didChangeDependencies();
-    if (widget.isDarkMode) {
+    if (widget.isDarkMode!) {
       currentTheme = await ThemeObject.getDarkTheme();
     } else {
       currentTheme = await ThemeObject.getLightTheme();
     }
-    await currentTheme.fetchData();
+    await currentTheme!.fetchData();
 
     allThemes = await ThemeObject.getThemes();
     for (ThemeObject theme in allThemes) {
@@ -79,7 +79,7 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
 
   @override
   Widget build(BuildContext context) {
-    editable = currentTheme != null && !currentTheme.isPreset;
+    editable = currentTheme != null && !currentTheme!.isPreset;
     return currentTheme != null
         ? CustomScrollView(
             physics: ThemeSwitcher.getScrollPhysics(),
@@ -89,7 +89,7 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 20),
                   child: Container(
                     child: Text(
-                      widget.isDarkMode ? "Dark Theme" : "Light Theme",
+                      widget.isDarkMode! ? "Dark Theme" : "Light Theme",
                       style: whiteLightTheme.textTheme.headline1,
                     ),
                   ),
@@ -108,23 +108,23 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
                             .map(
                               (e) => DropdownMenuItem(
                                 child: Text(
-                                  e.name.toUpperCase().replaceAll("_", " "),
+                                  e.name!.toUpperCase().replaceAll("_", " "),
                                 ),
                                 value: e,
                               ),
                             )
                             .toList(),
                         onChanged: (value) async {
-                          value.data = value.themeData;
+                          value!.data = value.themeData;
                           await value.save();
 
-                          if (widget.isDarkMode) {
+                          if (widget.isDarkMode!) {
                             SettingsManager().saveSelectedTheme(context, selectedDarkTheme: value);
                           } else {
                             SettingsManager().saveSelectedTheme(context, selectedLightTheme: value);
                           }
                           currentTheme = value;
-                          editable = currentTheme != null && !currentTheme.isPreset;
+                          editable = currentTheme != null && !currentTheme!.isPreset;
                           setState(() {});
 
                           EventDispatcher().emit('theme-update', null);
@@ -144,7 +144,7 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
                   (context, index) {
                     return ThemingColorSelector(
                       currentTheme: currentTheme,
-                      entry: currentTheme.entries[index],
+                      entry: currentTheme!.entries[index],
                       editable: editable,
                     );
                   },
@@ -154,7 +154,7 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
                   crossAxisCount: 2,
                 ),
               ),
-              if (!currentTheme.isPreset)
+              if (!currentTheme!.isPreset)
                 SliverToBoxAdapter(
                   child: TextButton(
                     style: TextButton.styleFrom(
@@ -166,11 +166,11 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
                     ),
                     onPressed: () async {
                       allThemes.removeWhere((element) => element == this.currentTheme);
-                      await this.currentTheme.delete();
+                      await this.currentTheme!.delete();
                       this.currentTheme =
-                          widget.isDarkMode ? await ThemeObject.getDarkTheme() : await ThemeObject.getLightTheme();
+                          widget.isDarkMode! ? await ThemeObject.getDarkTheme() : await ThemeObject.getLightTheme();
                       allThemes = await ThemeObject.getThemes();
-                      if (widget.isDarkMode) {
+                      if (widget.isDarkMode!) {
                         await SettingsManager().saveSelectedTheme(context, selectedDarkTheme: currentTheme);
                       } else {
                         await SettingsManager().saveSelectedTheme(context, selectedLightTheme: currentTheme);
@@ -194,9 +194,9 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
 }
 
 class NewThemeCreateAlert extends StatefulWidget {
-  NewThemeCreateAlert({Key key, this.onCreate, this.onCancel}) : super(key: key);
-  final Function(String name) onCreate;
-  final Function() onCancel;
+  NewThemeCreateAlert({Key? key, this.onCreate, this.onCancel}) : super(key: key);
+  final Function(String name)? onCreate;
+  final Function()? onCancel;
 
   @override
   _NewThemeCreateAlertState createState() => _NewThemeCreateAlertState();
@@ -218,7 +218,7 @@ class _NewThemeCreateAlertState extends State<NewThemeCreateAlert> {
                 showError = true;
               });
             } else {
-              widget.onCreate(controller.text);
+              widget.onCreate!(controller.text);
             }
           },
         ),

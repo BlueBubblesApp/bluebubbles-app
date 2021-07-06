@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:ui';
 
@@ -33,12 +34,12 @@ abstract class ChatSelectorTypes {
 }
 
 class ConversationView extends StatefulWidget {
-  final List<File> existingAttachments;
-  final String existingText;
-  final List<UniqueContact> selected;
+  final List<File>? existingAttachments;
+  final String? existingText;
+  final List<UniqueContact>? selected;
 
   ConversationView({
-    Key key,
+    Key? key,
     this.chat,
     this.existingAttachments,
     this.existingText,
@@ -53,14 +54,14 @@ class ConversationView extends StatefulWidget {
     this.showSnackbar = false,
   }) : super(key: key);
 
-  final Chat chat;
-  final Function(List<UniqueContact> items) onSelect;
-  final Widget selectIcon;
-  final String customHeading;
+  final Chat? chat;
+  final Function(List<UniqueContact> items)? onSelect;
+  final Widget? selectIcon;
+  final String? customHeading;
   final String type;
-  final bool isCreator;
-  final MessageBloc customMessageBloc;
-  final Function onMessagesViewComplete;
+  final bool? isCreator;
+  final MessageBloc? customMessageBloc;
+  final Function? onMessagesViewComplete;
   final bool showSnackbar;
 
   @override
@@ -68,12 +69,12 @@ class ConversationView extends StatefulWidget {
 }
 
 class ConversationViewState extends State<ConversationView> with ConversationViewMixin {
-  List<File> existingAttachments;
-  String existingText;
-  List<DisplayMode> modes;
-  DisplayMode currentMode;
-  Brightness brightness;
-  Color previousBackgroundColor;
+  List<File>? existingAttachments;
+  String? existingText;
+  List<DisplayMode>? modes;
+  DisplayMode? currentMode;
+  Brightness? brightness;
+  Color? previousBackgroundColor;
   bool gotBrightness = false;
 
   bool wasCreator = false;
@@ -110,14 +111,14 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
       }
 
       if (currentChat != null) {
-        Chat _chat = await Chat.findOne({"guid": currentChat.chat.guid});
+        Chat _chat = (await Chat.findOne({"guid": currentChat!.chat.guid}))!;
         await _chat.getParticipants();
-        currentChat.chat = _chat;
+        currentChat!.chat = _chat;
         if (this.mounted) setState(() {});
       }
     });
 
-    SchedulerBinding.instance.addPostFrameCallback((_) {
+    SchedulerBinding.instance!.addPostFrameCallback((_) {
       if (widget.showSnackbar) {
         showSnackbar('Warning', 'Support for creating chats is currently limited on MacOS 11 (Big Sur) and up due to limitations imposed by Apple');
       }
@@ -133,8 +134,8 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
   @override
   void dispose() {
     if (currentChat != null) {
-      currentChat.disposeControllers();
-      currentChat.dispose();
+      currentChat!.disposeControllers();
+      currentChat!.dispose();
     }
 
     // Switching chat to null will clear the currently active chat
@@ -143,12 +144,12 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
   }
 
   Future<bool> send(List<File> attachments, String text) async {
-    bool isDifferentChat = currentChat == null || currentChat?.chat?.guid != chat?.guid;
+    bool isDifferentChat = currentChat == null || currentChat?.chat.guid != chat?.guid;
 
-    if (isCreator) {
+    if (isCreator!) {
       if (chat == null && selected.length == 1) {
         try {
-          chat = await Chat.findOne({"chatIdentifier": slugify(selected[0].address, delimiter: '')});
+          chat = await Chat.findOne({"chatIdentifier": slugify(selected[0].address!, delimiter: '')});
         } catch (ex) {}
       }
 
@@ -163,13 +164,13 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
         initCurrentChat(chat);
       }
 
-      bool isDifferentBloc = messageBloc == null || messageBloc?.currentChat?.guid != chat.guid;
+      bool isDifferentBloc = messageBloc == null || messageBloc?.currentChat?.guid != chat!.guid;
 
       // Fetch messages
       if (isDifferentBloc) {
         // Init the states
         messageBloc = initMessageBloc();
-        messageBloc.getMessages();
+        messageBloc!.getMessages();
       }
     } else {
       if (isDifferentChat) {
@@ -197,7 +198,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
       ActionHandler.sendMessage(chat, text, messageBloc: messageBloc);
     }
 
-    if (isCreator) {
+    if (isCreator!) {
       isCreator = false;
       wasCreator = true;
       this.existingText = "";
@@ -213,30 +214,30 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
       return Padding(
         padding: const EdgeInsets.only(bottom: 55.0),
         child: FloatingActionButton(
-          onPressed: () => widget.onSelect(selected),
+          onPressed: () => widget.onSelect!(selected),
           child: widget.selectIcon ??
               Icon(
                 Icons.check,
-                color: Theme.of(context).textTheme.bodyText1.color,
+                color: Theme.of(context).textTheme.bodyText1!.color,
               ),
           backgroundColor: Theme.of(context).primaryColor,
         ),
       );
     } else if (currentChat != null &&
-        currentChat.showScrollDown &&
+        currentChat!.showScrollDown &&
         (SettingsManager().settings.skin == Skins.Material || SettingsManager().settings.skin == Skins.Samsung)) {
       return Padding(
         padding: const EdgeInsets.only(bottom: 55.0),
         child: FloatingActionButton(
-          onPressed: currentChat.scrollToBottom,
+          onPressed: currentChat!.scrollToBottom,
           child: Icon(
             Icons.arrow_downward,
-            color: Theme.of(context).textTheme.bodyText1.color,
+            color: Theme.of(context).textTheme.bodyText1!.color,
           ),
           backgroundColor: Theme.of(context).accentColor,
         ),
       );
-    } else if (currentChat != null && currentChat.showScrollDown && SettingsManager().settings.skin == Skins.iOS) {
+    } else if (currentChat != null && currentChat!.showScrollDown && SettingsManager().settings.skin == Skins.iOS) {
       return Row(mainAxisAlignment: MainAxisAlignment.center, children: [
         Padding(
           padding: EdgeInsets.only(left: 25.0, bottom: 45),
@@ -255,7 +256,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                   padding: EdgeInsets.symmetric(horizontal: 10),
                   child: Center(
                     child: GestureDetector(
-                      onTap: currentChat.scrollToBottom,
+                      onTap: currentChat!.scrollToBottom,
                       child: Text(
                         "\u{2193} Scroll to bottom \u{2193}",
                         textAlign: TextAlign.center,
@@ -280,11 +281,6 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
     if (!themeChanged && gotBrightness) return;
 
     previousBackgroundColor = now;
-    if (this.context == null) {
-      brightness = Brightness.light;
-      gotBrightness = true;
-      return;
-    }
 
     bool isDark = now.computeLuminance() < 0.179;
     brightness = isDark ? Brightness.dark : Brightness.light;
@@ -303,7 +299,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
 
     if (messageBloc == null) {
       messageBloc = initMessageBloc();
-      messageBloc.getMessages();
+      messageBloc!.getMessages();
     }
 
     Widget textField = BlueBubblesTextField(
@@ -320,13 +316,13 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
       ),
       child: Scaffold(
         backgroundColor: Theme.of(context).backgroundColor,
-        extendBodyBehindAppBar: !isCreator,
-        appBar: !isCreator ? buildConversationViewHeader() : buildChatSelectorHeader(),
+        extendBodyBehindAppBar: !isCreator!,
+        appBar: !isCreator! ? buildConversationViewHeader() as PreferredSizeWidget? : buildChatSelectorHeader() as PreferredSizeWidget?,
         resizeToAvoidBottomInset: wasCreator,
         body: FooterLayout(
           footer: KeyboardAttachable(
             child: widget.onSelect == null
-                ? (SettingsManager().settings.swipeToCloseKeyboard)
+                ? SettingsManager().settings.swipeToCloseKeyboard
                     ? GestureDetector(
                         onPanUpdate: (details) {
                           if (details.delta.dy > 0 && (currentChat?.keyboardOpen ?? false)) {
@@ -342,12 +338,12 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
           child: Column(
             mainAxisAlignment: MainAxisAlignment.end,
             children: <Widget>[
-              if (isCreator)
+              if (isCreator!)
                 ChatSelectorTextField(
                   controller: chatSelectorController,
                   onRemove: (UniqueContact item) {
                     if (item.isChat) {
-                      selected.removeWhere((e) => (e.chat?.guid ?? null) == item.chat.guid);
+                      selected.removeWhere((e) => (e.chat?.guid ?? null) == item.chat!.guid);
                     } else {
                       selected.removeWhere((e) => e.address == item.address);
                     }
@@ -362,11 +358,11 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                   selectedContacts: selected,
                 ),
               Expanded(
-                child: (searchQuery.length == 0 || !isCreator) && chat != null
+                child: (searchQuery!.length == 0 || !isCreator!) && chat != null
                     ? MessagesView(
                         key: new Key(chat?.guid ?? "unknown-chat"),
                         messageBloc: messageBloc,
-                        showHandle: chat.participants.length > 1,
+                        showHandle: chat!.participants.length > 1,
                         chat: chat,
                         initComplete: widget.onMessagesViewComplete,
                       )
@@ -377,11 +373,11 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
         ),
         floatingActionButton: currentChat != null
             ? StreamBuilder<bool>(
-                stream: currentChat.showScrollDownStream.stream,
+                stream: currentChat!.showScrollDownStream.stream,
                 builder: (context, snapshot) {
                   return AnimatedOpacity(
                       duration: Duration(milliseconds: 250),
-                      opacity: (snapshot?.data ?? false) ? 1 : 0,
+                      opacity: (snapshot.data ?? false) ? 1 : 0,
                       curve: Curves.easeInOut,
                       child: buildFAB());
                 },

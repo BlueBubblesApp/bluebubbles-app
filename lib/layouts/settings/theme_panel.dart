@@ -19,16 +19,16 @@ import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:get/get.dart';
 
 class ThemePanel extends StatefulWidget {
-  ThemePanel({Key key}) : super(key: key);
+  ThemePanel({Key? key}) : super(key: key);
 
   @override
   _ThemePanelState createState() => _ThemePanelState();
 }
 
 class _ThemePanelState extends State<ThemePanel> {
-  Settings _settingsCopy;
-  List<DisplayMode> modes;
-  DisplayMode currentMode;
+  late Settings _settingsCopy;
+  List<DisplayMode>? modes;
+  DisplayMode? currentMode;
 
   @override
   void initState() {
@@ -94,7 +94,7 @@ class _ThemePanelState extends State<ThemePanel> {
                       Timer(Duration(seconds: 1), () => EventDispatcher().emit('theme-update', null));
                     },
                     options: AdaptiveThemeMode.values,
-                    textProcessing: (AdaptiveThemeMode val) => val.toString().split(".").last,
+                    textProcessing: (val) => val.toString().split(".").last,
                     title: "App Theme",
                     showDivider: false,
                   ),
@@ -126,7 +126,7 @@ class _ThemePanelState extends State<ThemePanel> {
                       setState(() {});
                     },
                     options: Skins.values.where((item) => item != Skins.Samsung).toList(),
-                    textProcessing: (Skins val) => val.toString().split(".").last,
+                    textProcessing: (val) => val.toString().split(".").last,
                     capitalize: false,
                     title: "App Skin",
                     showDivider: false,
@@ -194,10 +194,10 @@ class _ThemePanelState extends State<ThemePanel> {
                       showDivider: false,
                       onChanged: (val) async {
                         currentMode = val;
-                        _settingsCopy.displayMode = currentMode.id;
+                        _settingsCopy.displayMode = currentMode!.id;
                       },
                       options: modes,
-                      textProcessing: (DisplayMode val) => val.toString(),
+                      textProcessing: (val) => val.toString(),
                       title: "Display",
                     ),
                   // SettingsOptions<String>(

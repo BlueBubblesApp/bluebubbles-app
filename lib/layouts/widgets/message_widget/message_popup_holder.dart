@@ -7,12 +7,12 @@ import 'package:flutter/services.dart';
 
 class MessagePopupHolder extends StatefulWidget {
   final Widget child;
-  final Message message;
+  final Message? message;
 
   MessagePopupHolder({
-    Key key,
-    @required this.child,
-    @required this.message,
+    Key? key,
+    required this.child,
+    required this.message,
   }) : super(key: key);
 
   @override
@@ -22,11 +22,11 @@ class MessagePopupHolder extends StatefulWidget {
 class _MessagePopupHolderState extends State<MessagePopupHolder> {
   GlobalKey containerKey = GlobalKey();
   Offset childOffset = Offset(0, 0);
-  Size childSize;
+  Size? childSize;
   bool visible = true;
 
   void getOffset() {
-    RenderBox renderBox = containerKey.currentContext.findRenderObject();
+    RenderBox renderBox = containerKey.currentContext!.findRenderObject() as RenderBox;
     Size size = renderBox.size;
     Offset offset = renderBox.localToGlobal(Offset.zero);
     setState(() {
@@ -39,7 +39,7 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
     HapticFeedback.lightImpact();
     getOffset();
 
-    CurrentChat currentChat = CurrentChat.of(context);
+    CurrentChat? currentChat = CurrentChat.of(context);
     if (this.mounted) {
       setState(() {
         visible = false;
@@ -78,7 +78,7 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
   Widget build(BuildContext context) {
     return GestureDetector(
       key: containerKey,
-      onDoubleTap: SettingsManager().settings.doubleTapForDetails && !widget.message.guid.startsWith('temp')
+      onDoubleTap: SettingsManager().settings.doubleTapForDetails && !widget.message!.guid!.startsWith('temp')
           ? this.openMessageDetails
           : null,
       onLongPress: this.openMessageDetails,

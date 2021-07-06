@@ -12,14 +12,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 class ConvoSettings extends StatefulWidget {
-  ConvoSettings({Key key}) : super(key: key);
+  ConvoSettings({Key? key}) : super(key: key);
 
   @override
   _ConvoSettingsState createState() => _ConvoSettingsState();
 }
 
 class _ConvoSettingsState extends State<ConvoSettings> {
-  Settings _settingsCopy;
+  late Settings _settingsCopy;
   bool needToReconnect = false;
   bool showUrl = false;
 

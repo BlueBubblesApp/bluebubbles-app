@@ -13,14 +13,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 class AttachmentPanel extends StatefulWidget {
-  AttachmentPanel({Key key}) : super(key: key);
+  AttachmentPanel({Key? key}) : super(key: key);
 
   @override
   _AttachmentPanelState createState() => _AttachmentPanelState();
 }
 
 class _AttachmentPanelState extends State<AttachmentPanel> {
-  Settings _settingsCopy;
+  late Settings _settingsCopy;
 
   @override
   void initState() {

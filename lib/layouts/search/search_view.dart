@@ -15,7 +15,7 @@ import 'package:flutter/services.dart';
 
 class SearchView extends StatefulWidget {
   SearchView({
-    Key key,
+    Key? key,
   }) : super(key: key);
 
   @override
@@ -30,11 +30,11 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
   final TextEditingController textEditingController = new TextEditingController();
 
   bool isSearching = false;
-  Map<String, Chat> chatCache = {};
+  Map<String?, Chat?> chatCache = {};
   FocusNode _focusNode = new FocusNode();
   Map<String, int> resultCache = {};
   bool noResults = false;
-  String previousSearch;
+  String? previousSearch;
 
   @override
   void initState() {
@@ -61,7 +61,7 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
   }
 
   Future<void> search(String term) async {
-    if (isSearching || isNullOrEmpty(term) || term.length < 3) return;
+    if (isSearching || isNullOrEmpty(term)! || term.length < 3) return;
     _focusNode.unfocus();
     noResults = false;
     previousSearch = term;
@@ -80,16 +80,16 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
         isSearching = true;
       });
 
-    List<Map<String, dynamic>> results = await SocketManager().fetchMessages(null, limit: 50, where: [
+    List<dynamic> results = await SocketManager().fetchMessages(null, limit: 50, where: [
       {
         'statement': 'message.text LIKE :term',
         'args': {'term': "%${textEditingController.text}%"}
       },
       {'statement': 'message.associated_message_guid IS NULL', 'args': null}
-    ]);
+    ])!;
 
-    List<Map<String, dynamic>> _results = [];
-    for (Map<String, dynamic> item in results) {
+    List<dynamic> _results = [];
+    for (dynamic item in results) {
       // Build the data map
       Map<String, dynamic> data = {'message': Message.fromMap(item), 'chat': Chat.fromMap(item['chats'][0])};
 
@@ -119,7 +119,7 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
     _listKey = new GlobalKey<AnimatedListState>();
 
     // Let the animated list know it should update
-    _listKey?.currentState?.setState(() {});
+    _listKey.currentState?.setState(() {});
 
     // Add the cached result
     resultCache[term] = this.results.length;
@@ -170,7 +170,7 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Icon(Icons.search, color: Theme.of(context).textTheme.bodyText1.color),
+                      Icon(Icons.search, color: Theme.of(context).textTheme.bodyText1!.color),
                       Container(padding: EdgeInsets.only(right: 5.0)),
                       Flexible(
                           fit: FlexFit.loose,
@@ -195,7 +195,7 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
                           ? CupertinoButton(
                               padding: EdgeInsets.all(0),
                               child: Icon(Icons.arrow_forward,
-                                  color: Theme.of(context).textTheme.bodyText1.color, size: 30),
+                                  color: Theme.of(context).textTheme.bodyText1!.color, size: 30),
                               onPressed: () {
                                 search(textEditingController.text);
                               })
@@ -224,7 +224,7 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
                           initialItemCount: results.length,
                           itemBuilder: (BuildContext context, int index, Animation<double> animation) {
                             Message message = results[index]['message'];
-                            Chat chat = results[index]['chat'];
+                            Chat? chat = results[index]['chat'];
 
                             // Create the textspans
                             List<InlineSpan> spans = [];
@@ -237,8 +237,8 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
                             if (termIndex >= 0) {
                               // We only want a snippet of the text, so only get a 50x50 range
                               // of characters from the string, with the search term in the middle
-                              String subText = message.text.substring((termIndex - 50 >= 0) ? termIndex - 50 : 0,
-                                  (termEnd + 50 < message.text.length) ? termEnd + 50 : message.text.length);
+                              String subText = message.text!.substring((termIndex - 50 >= 0) ? termIndex - 50 : 0,
+                                  (termEnd + 50 < message.text!.length) ? termEnd + 50 : message.text!.length);
 
                               // Recarculate the term position in the snippet
                               termIndex = subText.toLowerCase().indexOf(textEditingController.text.toLowerCase());
@@ -254,7 +254,7 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
                                   text: subText.substring(termIndex, termEnd),
                                   style: Theme.of(context)
                                       .textTheme
-                                      .subtitle1
+                                      .subtitle1!
                                       .apply(color: Theme.of(context).primaryColor, fontWeightDelta: 2)));
 
                               // Add the ending string
@@ -296,9 +296,9 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
                                     mainAxisAlignment: MainAxisAlignment.start,
                                     children: [
                                       Text("${buildDate(message.dateCreated)}",
-                                          style: Theme.of(context).textTheme.subtitle1.apply(fontSizeDelta: -2)),
+                                          style: Theme.of(context).textTheme.subtitle1!.apply(fontSizeDelta: -2)),
                                       Container(height: 5.0),
-                                      Text(chat?.title, style: Theme.of(context).textTheme.bodyText1),
+                                      Text(chat?.title ?? "Unknown title", style: Theme.of(context).textTheme.bodyText1),
                                     ],
                                   ),
                                   subtitle: Padding(
@@ -309,7 +309,7 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
                                   ),
                                   trailing: Icon(
                                     Icons.arrow_forward_ios,
-                                    color: Theme.of(context).textTheme.bodyText1.color,
+                                    color: Theme.of(context).textTheme.bodyText1!.color,
                                   ),
                                 ),
                                 Divider(color: Theme.of(context).accentColor)

@@ -8,7 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 class SyncingMessages extends StatefulWidget {
-  SyncingMessages({Key key, @required this.controller}) : super(key: key);
+  SyncingMessages({Key? key, required this.controller}) : super(key: key);
   final PageController controller;
 
   @override
@@ -19,7 +19,7 @@ class _SyncingMessagesState extends State<SyncingMessages> {
   @override
   void initState() {
     super.initState();
-    StreamSubscription subscription;
+    late StreamSubscription subscription;
     subscription = SocketManager().setup.stream.listen((event) async {
       if (event.progress == -1) {
         subscription.cancel();
@@ -65,8 +65,8 @@ class _SyncingMessagesState extends State<SyncingMessages> {
           stream: SocketManager().setup.stream,
           builder: (BuildContext context, AsyncSnapshot<SetupData> snapshot) {
             double progress = SocketManager().setup.progress;
-            if (snapshot.hasData && snapshot.data.progress >= 0) {
-              progress = snapshot.data.progress;
+            if (snapshot.hasData && snapshot.data!.progress >= 0) {
+              progress = snapshot.data!.progress;
               return Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -76,7 +76,7 @@ class _SyncingMessagesState extends State<SyncingMessages> {
                     ),
                     Text(
                       "${progress.floor()}%",
-                      style: Theme.of(context).textTheme.bodyText1.apply(fontSizeFactor: 1.5),
+                      style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.5),
                     ),
                     Spacer(
                       flex: 5,
@@ -107,7 +107,7 @@ class _SyncingMessagesState extends State<SyncingMessages> {
                         child: ListView.builder(
                           physics: AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
                           itemBuilder: (context, index) {
-                            SetupOutputData data = snapshot.data.output.reversed.toList()[index];
+                            SetupOutputData data = snapshot.data!.output.reversed.toList()[index];
                             return Text(
                               data.text,
                               style: TextStyle(
@@ -116,7 +116,7 @@ class _SyncingMessagesState extends State<SyncingMessages> {
                               ),
                             );
                           },
-                          itemCount: snapshot?.data?.output?.length ?? 0,
+                          itemCount: snapshot.data?.output.length ?? 0,
                         ),
                       ),
                     ),

@@ -17,36 +17,36 @@ class ContactManager {
 
   static final ContactManager _manager = ContactManager._internal();
 
-  StreamController<List<String>> _stream = new StreamController.broadcast();
+  StreamController<List<String?>> _stream = new StreamController.broadcast();
 
   StreamController<Map<String, Color>> _colorStream = new StreamController.broadcast();
 
   Stream<Map<String, Color>> get colorStream => _colorStream.stream;
 
-  StreamController<Map<String, Color>> get colorStreamObject => _colorStream;
+  StreamController<Map<String?, Color?>> get colorStreamObject => _colorStream;
 
-  Stream<List<String>> get stream => _stream.stream;
+  Stream<List<String?>> get stream => _stream.stream;
 
   ContactManager._internal();
 
-  List<Contact> contacts;
-  Map<String, Contact> handleToContact = new Map();
-  Map<String, String> handleToFakeName = new Map();
-  Map<String, ContactAvatarWidgetState> contactWidgetStates = new Map();
+  List<Contact>? contacts;
+  Map<String?, Contact?> handleToContact = new Map();
+  Map<String?, String?> handleToFakeName = new Map();
+  Map<String?, ContactAvatarWidgetState> contactWidgetStates = new Map();
 
   // We need these so we don't have threads fetching at the same time
-  Completer getContactsFuture;
-  Completer getAvatarsFuture;
+  Completer? getContactsFuture;
+  Completer? getAvatarsFuture;
   int lastRefresh = 0;
 
-  Future<Contact> getCachedContact(Handle handle) async {
+  Future<Contact?> getCachedContact(Handle? handle) async {
     if (handle == null) return null;
     if (contacts == null) await getContacts();
     if (!handleToContact.containsKey(handle.address)) return null;
     return handleToContact[handle.address];
   }
 
-  Contact getCachedContactSync(String address) {
+  Contact? getCachedContactSync(String? address) {
     if (!handleToContact.containsKey(address)) return null;
     return handleToContact[address];
   }
@@ -73,9 +73,9 @@ class ContactManager {
 
   Future getContacts({bool headless = false, bool force = false}) async {
     // If we are fetching the contacts, return the current future so we can await it
-    if (getContactsFuture != null && !getContactsFuture.isCompleted) {
+    if (getContactsFuture != null && !getContactsFuture!.isCompleted) {
       debugPrint("[ContactManager] -> Already fetching contacts, returning future...");
-      return getContactsFuture.future;
+      return getContactsFuture!.future;
     }
 
     // Check if we've requested sometime in the last 5 minutes
@@ -97,13 +97,13 @@ class ContactManager {
 
     // Fetch the current list of contacts
     debugPrint("[ContactManager] -> Fetching contacts");
-    contacts = ((await ContactsService.getContacts(withThumbnails: false)) ?? []).toList();
+    contacts = (await ContactsService.getContacts(withThumbnails: false)).toList();
 
     // Match handles in the database with contacts
     await this.matchHandles();
 
     debugPrint("[ContactManager] -> Finished fetching contacts (${handleToContact.length})");
-    getContactsFuture.complete(true);
+    getContactsFuture!.complete(true);
 
     // Lazy load thumbnails after rendering initial contacts.
     getAvatars();
@@ -120,7 +120,7 @@ class ContactManager {
       }
 
       // Find a contact match
-      Contact contactMatch;
+      Contact? contactMatch;
 
       try {
         contactMatch = await getContact(handle);
@@ -143,19 +143,19 @@ class ContactManager {
   }
 
   Future<void> getAvatars() async {
-    if (getAvatarsFuture != null && !getAvatarsFuture.isCompleted) {
-      return getAvatarsFuture.future;
+    if (getAvatarsFuture != null && !getAvatarsFuture!.isCompleted) {
+      return getAvatarsFuture!.future;
     }
 
     // Create a new completer for this
     getAvatarsFuture = new Completer();
 
     debugPrint("[ContactManager] -> Fetching Avatars");
-    for (String address in handleToContact.keys) {
-      Contact contact = handleToContact[address];
+    for (String? address in handleToContact.keys) {
+      Contact? contact = handleToContact[address];
       if (handleToContact[address] == null) continue;
 
-      ContactsService.getAvatar(contact).then((avatar) {
+      ContactsService.getAvatar(contact!).then((avatar) {
         if (avatar == null) return;
 
         contact.avatar = avatar;
@@ -167,19 +167,18 @@ class ContactManager {
     }
 
     debugPrint("[ContactManager] -> Finished fetching avatars");
-    getAvatarsFuture.complete();
+    getAvatarsFuture!.complete();
   }
 
-  Future<Contact> getContact(Handle handle, {bool fetchAvatar = false}) async {
-    if (handle == null) return null;
-    Contact contact;
+  Future<Contact?> getContact(Handle handle, {bool fetchAvatar = false}) async {
+    Contact? contact;
 
     // Get a list of comparable options
-    List<String> opts = await getCompareOpts(handle);
-    bool isEmailAddr = handle.address.isEmail;
-    String lastDigits = handle.address.length < 4
+    List<String?> opts = await getCompareOpts(handle);
+    bool isEmailAddr = handle.address!.isEmail;
+    String? lastDigits = handle.address!.length < 4
         ? handle.address
-        : handle.address.substring(handle.address.length - 4, handle.address.length);
+        : handle.address!.substring(handle.address!.length - 4, handle.address!.length);
 
     // If the contact list is null, get the contacts
     try {
@@ -191,8 +190,8 @@ class ContactManager {
     for (Contact c in contacts ?? []) {
       // Get a phone number match
       if (!isEmailAddr) {
-        for (Item item in c?.phones ?? []) {
-          if (!item.value.endsWith(lastDigits)) continue;
+        for (Item item in c.phones ?? []) {
+          if (!item.value!.endsWith(lastDigits!)) continue;
 
           if (sameAddress(opts, item.value)) {
             contact = c;
@@ -203,7 +202,7 @@ class ContactManager {
 
       // Get an email match
       if (isEmailAddr) {
-        for (Item item in c?.emails ?? []) {
+        for (Item item in c.emails ?? []) {
           if (item.value == handle.address) {
             contact = c;
             break;
@@ -216,30 +215,30 @@ class ContactManager {
     }
 
     if (fetchAvatar) {
-      Uint8List avatar = await ContactsService.getAvatar(contact);
+      Uint8List? avatar = await ContactsService.getAvatar(contact!);
       contact.avatar = avatar;
     }
 
     return contact;
   }
 
-  Future<String> getContactTitle(Handle handle) async {
+  Future<String?> getContactTitle(Handle? handle) async {
     if (handle == null) return "You";
     if (contacts == null) await getContacts();
 
-    String address = handle.address;
+    String? address = handle.address;
     if (handleToContact.containsKey(address) && handleToContact[address] != null)
-      return handleToContact[address].displayName;
+      return handleToContact[address]!.displayName;
 
     try {
-      Contact contact = await getContact(handle);
+      Contact? contact = await getContact(handle);
       if (contact != null && contact.displayName != null) return contact.displayName;
     } catch (ex) {
       debugPrint('Failed to getContact() in getContactTitle(), for address, "$address": ${ex.toString()}');
     }
 
     try {
-      String contactTitle = address;
+      String contactTitle = address!;
       bool isEmailAddr = contactTitle.isEmail;
       if (contactTitle == address && !isEmailAddr) {
         return await formatPhoneNumber(contactTitle);
@@ -258,7 +257,7 @@ class ContactManager {
     return address;
   }
 
-  ContactAvatarWidgetState getState(String key) {
+  ContactAvatarWidgetState? getState(String? key) {
     if (contactWidgetStates.containsKey(key)) {
       return contactWidgetStates[key];
     }

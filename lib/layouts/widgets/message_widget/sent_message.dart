@@ -23,15 +23,15 @@ import 'package:flutter/material.dart';
 
 class SentMessageHelper {
   static Widget buildMessageWithTail(
-      BuildContext context, Message message, bool showTail, bool hasReactions, bool bigEmoji,
-      {Widget customContent,
-      Message olderMessage,
-      CurrentChat currentChat,
-      Color customColor,
+      BuildContext context, Message? message, bool showTail, bool hasReactions, bool? bigEmoji,
+      {Widget? customContent,
+      Message? olderMessage,
+      CurrentChat? currentChat,
+      Color? customColor,
       bool padding = true,
       bool margin = true}) {
     Color bubbleColor;
-    bubbleColor = message == null || message.guid.startsWith("temp")
+    bubbleColor = message == null || message.guid!.startsWith("temp")
         ? Theme.of(context).primaryColor.darkenAmount(0.2)
         : Theme.of(context).primaryColor;
 
@@ -39,7 +39,7 @@ class SentMessageHelper {
     final bool hideType = SettingsManager().settings.redactedMode && SettingsManager().settings.hideAttachmentTypes;
 
     Widget msg;
-    bool hasReactions = (message?.getReactions() ?? []).length > 0 ?? false;
+    bool hasReactions = (message?.getReactions() ?? []).length > 0;
     Skins currentSkin = SettingsManager().settings.skin;
 
     if (message?.isBigEmoji() ?? false) {
@@ -52,8 +52,8 @@ class SentMessageHelper {
         child: Stack(
           children: <Widget>[
             Text(
-              message.text,
-              style: Theme.of(context).textTheme.bodyText2.apply(fontSizeFactor: 4),
+              message!.text!,
+              style: Theme.of(context).textTheme.bodyText2!.apply(fontSizeFactor: 4),
             ),
             if (hideContent)
               Positioned.fill(
@@ -129,7 +129,7 @@ class SentMessageHelper {
                 ? RichText(
                     text: TextSpan(
                       children: MessageWidgetMixin.buildMessageSpans(context, message),
-                      style: Theme.of(context).textTheme.bodyText1.apply(color: Colors.white),
+                      style: Theme.of(context).textTheme.bodyText1!.apply(color: Colors.white),
                     ),
                   )
                 : customContent,
@@ -153,14 +153,14 @@ class SentMessageHelper {
     );
   }
 
-  static Widget getErrorWidget(BuildContext context, Message message, Chat chat, {double rightPadding = 8.0}) {
-    if (message != null && message.error > 0) {
-      int errorCode = message != null ? message.error : 0;
+  static Widget getErrorWidget(BuildContext context, Message? message, Chat? chat, {double rightPadding = 8.0}) {
+    if (message != null && message.error! > 0) {
+      int? errorCode = message.error != null ? message.error : 0;
       String errorText = "Server Error. Contact Support.";
       if (errorCode == 22) {
         errorText = "The recipient is not registered with iMessage!";
-      } else if (message != null && message.guid.startsWith("error-")) {
-        errorText = message.guid.split('-')[1];
+      } else if (message.guid!.startsWith("error-")) {
+        errorText = message.guid!.split('-')[1];
       }
 
       return Padding(
@@ -195,9 +195,8 @@ class SentMessageHelper {
 
                           // Get the "new" latest info
                           List<Message> latest = await Chat.getMessages(chat, limit: 1);
-                          chat.latestMessageDate = latest.first != null ? latest.first.dateCreated : null;
-                          chat.latestMessageText =
-                              latest.first != null ? await MessageHelper.getNotificationText(latest.first) : null;
+                          chat.latestMessageDate = latest.first.dateCreated;
+                          chat.latestMessageText = await MessageHelper.getNotificationText(latest.first);
 
                           // Update it in the Bloc
                           await ChatBloc().updateChatPosition(chat);
@@ -224,12 +223,12 @@ class SentMessageHelper {
 
 class SentMessage extends StatefulWidget {
   final bool showTail;
-  final Message message;
-  final Message olderMessage;
-  final Message newerMessage;
-  final bool showHero;
-  final bool shouldFadeIn;
-  final bool showDeliveredReceipt;
+  final Message? message;
+  final Message? olderMessage;
+  final Message? newerMessage;
+  final bool? showHero;
+  final bool? shouldFadeIn;
+  final bool? showDeliveredReceipt;
 
   // Sub-widgets
   final Widget stickersWidget;
@@ -238,20 +237,20 @@ class SentMessage extends StatefulWidget {
   final Widget urlPreviewWidget;
 
   SentMessage({
-    Key key,
-    @required this.showTail,
-    @required this.olderMessage,
-    @required this.newerMessage,
-    @required this.message,
-    @required this.showHero,
-    @required this.showDeliveredReceipt,
-    @required this.shouldFadeIn,
+    Key? key,
+    required this.showTail,
+    required this.olderMessage,
+    required this.newerMessage,
+    required this.message,
+    required this.showHero,
+    required this.showDeliveredReceipt,
+    required this.shouldFadeIn,
 
     // Sub-widgets
-    @required this.stickersWidget,
-    @required this.attachmentsWidget,
-    @required this.reactionsWidget,
-    @required this.urlPreviewWidget,
+    required this.stickersWidget,
+    required this.attachmentsWidget,
+    required this.reactionsWidget,
+    required this.urlPreviewWidget,
   }) : super(key: key);
 
   @override
@@ -262,7 +261,7 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
   @override
   void initState() {
     super.initState();
-    initMessageState(widget.message, false);
+    initMessageState(widget.message!, false);
   }
 
   @override
@@ -273,13 +272,13 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
     List<Widget> messageColumn = [];
 
     // Second, add the attachments
-    if (isEmptyString(widget.message.fullText)) {
+    if (isEmptyString(widget.message!.fullText)) {
       messageColumn.add(
         addStickersToWidget(
           message: addReactionsToWidget(
               messageWidget: widget.attachmentsWidget, reactions: widget.reactionsWidget, message: widget.message),
           stickers: widget.stickersWidget,
-          isFromMe: widget.message.isFromMe,
+          isFromMe: widget.message!.isFromMe!,
         ),
       );
     } else {
@@ -287,20 +286,20 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
     }
 
     // Third, let's add the message or URL preview
-    Widget message;
-    if (widget.message.isUrlPreview()) {
+    Widget? message;
+    if (widget.message!.isUrlPreview()) {
       message = Padding(
         padding: EdgeInsets.only(left: 10.0),
         child: widget.urlPreviewWidget,
       );
-    } else if (widget.message.balloonBundleId != null &&
-        widget.message.balloonBundleId != 'com.apple.messages.URLBalloonProvider') {
+    } else if (widget.message!.balloonBundleId != null &&
+        widget.message!.balloonBundleId != 'com.apple.messages.URLBalloonProvider') {
       message = BalloonBundleWidget(message: widget.message);
-    } else if (!isEmptyString(widget.message.text)) {
+    } else if (!isEmptyString(widget.message!.text)) {
       message = SentMessageHelper.buildMessageWithTail(
-          context, widget.message, widget.showTail, widget.message.hasReactions, widget.message.bigEmoji,
+          context, widget.message, widget.showTail, widget.message!.hasReactions, widget.message!.bigEmoji,
           olderMessage: widget.olderMessage);
-      if (widget.showHero) {
+      if (widget.showHero!) {
         message = Hero(
           tag: "first",
           child: Material(
@@ -323,7 +322,7 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
               reactions: widget.reactionsWidget,
               message: widget.message),
           stickers: widget.stickersWidget,
-          isFromMe: widget.message.isFromMe,
+          isFromMe: widget.message!.isFromMe!,
         ),
       );
     }
@@ -355,10 +354,10 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
                     : 10,
             bottom: (SettingsManager().settings.skin == Skins.iOS &&
                     widget.showTail &&
-                    !isEmptyString(widget.message.fullText))
+                    !isEmptyString(widget.message!.fullText))
                 ? 5.0
                 : 0,
-            right: isEmptyString(widget.message.fullText) && widget.message.error == 0 ? 10.0 : 0.0),
+            right: isEmptyString(widget.message!.fullText) && widget.message!.error == 0 ? 10.0 : 0.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.end,

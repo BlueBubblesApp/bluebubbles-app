@@ -14,12 +14,12 @@ class NewMessageType {
 }
 
 class NewMessageEvent {
-  String chatGuid;
+  String? chatGuid;
   String type;
   Map<String, dynamic> event;
 
   NewMessageEvent(
-      {@required this.chatGuid, @required this.type, @required this.event});
+      {required this.chatGuid, required this.type, required this.event});
 }
 
 class NewMessageManager {
@@ -44,7 +44,7 @@ class NewMessageManager {
 
   Stream<NewMessageEvent> get stream => _stream.stream;
 
-  void removeMessage(Chat chat, String guid) {
+  void removeMessage(Chat chat, String? guid) {
     _stream.sink.add(
       NewMessageEvent(
         chatGuid: chat.guid,
@@ -54,21 +54,21 @@ class NewMessageManager {
     );
   }
 
-  void updateMessage(Chat chat, String oldGuid, Message message) {
+  void updateMessage(Chat? chat, String? oldGuid, Message message) {
     // If the message is not from yourself, we don't need an update
     // Theoretically, addMessage will be called for all incoming messages
-    if (!message.isFromMe) return;
+    if (!message.isFromMe!) return;
 
     _stream.sink.add(
       NewMessageEvent(
-        chatGuid: chat.guid,
+        chatGuid: chat!.guid,
         type: NewMessageType.UPDATE,
         event: {"oldGuid": oldGuid, "message": message},
       ),
     );
   }
 
-  void addMessage(Chat chat, Message message, {bool outgoing = false}) {
+  void addMessage(Chat? chat, Message? message, {bool outgoing = false}) {
     if (chat == null) {
       debugPrint("No chat provided to NewMessageManager!");
       return;

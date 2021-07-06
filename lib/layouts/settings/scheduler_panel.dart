@@ -22,23 +22,23 @@ List<dynamic> timeOptions = [
 ];
 
 class SchedulePanel extends StatefulWidget {
-  final Chat chat;
+  final Chat? chat;
 
-  SchedulePanel({Key key, this.chat}) : super(key: key);
+  SchedulePanel({Key? key, this.chat}) : super(key: key);
 
   @override
   _SchedulePanelState createState() => _SchedulePanelState();
 }
 
 class _SchedulePanelState extends State<SchedulePanel> {
-  Chat _chat;
-  String title;
-  TextEditingController messageController;
-  TextEditingController customController;
-  bool customTime;
-  int scheduleSeconds = 300;
-  TimeOfDay messageTime;
-  DateTime messageDate;
+  Chat? _chat;
+  String? title;
+  TextEditingController? messageController;
+  TextEditingController? customController;
+  bool? customTime;
+  int? scheduleSeconds = 300;
+  TimeOfDay? messageTime;
+  DateTime? messageDate;
   List<String> errors = [];
 
   @override
@@ -47,8 +47,8 @@ class _SchedulePanelState extends State<SchedulePanel> {
     setChat(widget.chat);
 
     messageController = new TextEditingController();
-    messageController.addListener(() {
-      if (messageController.text.length > 0 && errors.length > 0 && this.mounted) {
+    messageController!.addListener(() {
+      if (messageController!.text.length > 0 && errors.length > 0 && this.mounted) {
         setState(() {
           errors = [];
         });
@@ -56,7 +56,7 @@ class _SchedulePanelState extends State<SchedulePanel> {
     });
   }
 
-  void fetchChatTitle(Chat chat) {
+  void fetchChatTitle(Chat? chat) {
     if (chat == null) return;
 
     getFullChatTitle(chat).then((String title) {
@@ -67,12 +67,12 @@ class _SchedulePanelState extends State<SchedulePanel> {
     });
   }
 
-  void setChat(Chat chat) {
+  void setChat(Chat? chat) {
     if (chat == null) return;
 
-    if (_chat == null || _chat.guid != chat.guid) {
+    if (_chat == null || _chat!.guid != chat.guid) {
       _chat = chat;
-      title = isNullOrEmpty(chat.displayName) ? chat.chatIdentifier : chat.displayName;
+      title = isNullOrEmpty(chat.displayName)! ? chat.chatIdentifier : chat.displayName;
 
       fetchChatTitle(_chat);
     }
@@ -80,7 +80,7 @@ class _SchedulePanelState extends State<SchedulePanel> {
 
   String getTimeText(BuildContext context) {
     String output = "Unknown";
-    for (List item in timeOptions) {
+    for (List item in timeOptions as Iterable<List<dynamic>>) {
       if (item[0] == scheduleSeconds) {
         output = item[1];
         break;
@@ -89,7 +89,7 @@ class _SchedulePanelState extends State<SchedulePanel> {
 
     if (scheduleSeconds == -1) {
       if (messageDate != null && messageTime != null) {
-        output = "${messageDate.year}-${messageDate.month}-${messageDate.day} ${messageTime.format(context)}";
+        output = "${messageDate!.year}-${messageDate!.month}-${messageDate!.day} ${messageTime!.format(context)}";
       }
       return "Custom: $output";
     } else {
@@ -193,8 +193,8 @@ class _SchedulePanelState extends State<SchedulePanel> {
                   ),
                   Center(
                       child: Text(
-                    isNullOrEmpty(errors) ? "" : errors.join("\n"),
-                    style: Theme.of(context).textTheme.bodyText1.apply(color: Colors.red[300]),
+                    isNullOrEmpty(errors)! ? "" : errors.join("\n"),
+                    style: Theme.of(context).textTheme.bodyText1!.apply(color: Colors.red[300]),
                     textAlign: TextAlign.center,
                   ))
                 ],
@@ -215,7 +215,7 @@ class _SchedulePanelState extends State<SchedulePanel> {
             if (_chat == null) errors.add("Please select a chat!");
             if (scheduleSeconds == -1 && (messageDate == null || messageTime == null))
               errors.add("Please set a date and time!");
-            if (messageController.text.length == 0) errors.add("Please enter a message!");
+            if (messageController!.text.length == 0) errors.add("Please enter a message!");
 
             if (errors.length > 0 && this.mounted) {
               setState(() {});
@@ -223,13 +223,13 @@ class _SchedulePanelState extends State<SchedulePanel> {
               DateTime occurs;
               if (scheduleSeconds == -1) {
                 occurs = new DateTime(
-                    messageDate.year, messageDate.month, messageDate.day, messageTime.hour, messageTime.minute);
+                    messageDate!.year, messageDate!.month, messageDate!.day, messageTime!.hour, messageTime!.minute);
               } else {
-                occurs = DateTime.now().add(Duration(seconds: scheduleSeconds));
+                occurs = DateTime.now().add(Duration(seconds: scheduleSeconds!));
               }
 
               ScheduledMessage scheduled = new ScheduledMessage(
-                  chatGuid: _chat.guid, message: messageController.text, epochTime: occurs.millisecondsSinceEpoch);
+                  chatGuid: _chat!.guid, message: messageController!.text, epochTime: occurs.millisecondsSinceEpoch);
 
               await scheduled.save();
               Navigator.of(context).pop();

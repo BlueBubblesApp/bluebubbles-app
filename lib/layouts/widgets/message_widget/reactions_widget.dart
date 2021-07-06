@@ -5,11 +5,11 @@ import 'package:flutter/material.dart';
 
 class ReactionsWidget extends StatefulWidget {
   ReactionsWidget({
-    Key key,
-    @required this.message,
-    @required this.associatedMessages,
+    Key? key,
+    required this.message,
+    required this.associatedMessages,
   }) : super(key: key);
-  final Message message;
+  final Message? message;
   final List<Message> associatedMessages;
 
   @override
@@ -38,7 +38,7 @@ class _ReactionsWidgetState extends State<ReactionsWidget> with TickerProviderSt
     List<Widget> reactionWidgets = [];
     int tmpIdx = 0;
     reactionsMap.forEach((String reactionType, Reaction item) {
-      Widget itemWidget = item.getSmallWidget(context);
+      Widget? itemWidget = item.getSmallWidget(context);
       if (itemWidget != null) {
         reactionWidgets.add(
           Padding(

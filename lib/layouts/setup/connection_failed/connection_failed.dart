@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class ConnectionFailedPopup extends StatefulWidget {
-  ConnectionFailedPopup({Key key}) : super(key: key);
+  ConnectionFailedPopup({Key? key}) : super(key: key);
 
   @override
   _ConnectionFailedPopupState createState() => _ConnectionFailedPopupState();
@@ -18,7 +18,7 @@ class _ConnectionFailedPopupState extends State<ConnectionFailedPopup> {
         TextButton(
           child: Text(
             "Start over",
-            style: Theme.of(context).textTheme.bodyText1.apply(
+            style: Theme.of(context).textTheme.bodyText1!.apply(
                   color: Theme.of(context).primaryColor,
                 ),
           ),

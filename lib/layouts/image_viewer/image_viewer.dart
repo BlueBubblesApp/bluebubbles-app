@@ -19,16 +19,16 @@ import 'package:photo_view/photo_view.dart';
 
 class ImageViewer extends StatefulWidget {
   ImageViewer({
-    Key key,
+    Key? key,
     this.tag,
     this.file,
     this.attachment,
     this.showInteractions,
   }) : super(key: key);
-  final String tag;
-  final File file;
-  final Attachment attachment;
-  final bool showInteractions;
+  final String? tag;
+  final File? file;
+  final Attachment? attachment;
+  final bool? showInteractions;
 
   @override
   _ImageViewerState createState() => _ImageViewerState();
@@ -37,9 +37,9 @@ class ImageViewer extends StatefulWidget {
 class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClientMixin {
   double top = 0;
   int duration = 0;
-  PhotoViewController controller;
+  PhotoViewController? controller;
   bool showOverlay = true;
-  Uint8List bytes;
+  Uint8List? bytes;
 
   @override
   void initState() {
@@ -54,17 +54,17 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
   }
 
   Future<void> initBytes() async {
-    if (widget.attachment.mimeType == "image/heic") {
-      bytes = await FlutterImageCompress.compressWithFile(widget.file.absolute.path, quality: 100);
+    if (widget.attachment!.mimeType == "image/heic") {
+      bytes = await FlutterImageCompress.compressWithFile(widget.file!.absolute.path, quality: 100);
     } else {
-      bytes = await widget.file.readAsBytes();
+      bytes = await widget.file!.readAsBytes();
     }
     if (this.mounted) setState(() {});
   }
 
   @override
   void dispose() {
-    controller.dispose();
+    controller!.dispose();
     super.dispose();
   }
 
@@ -102,12 +102,12 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
                     padding: EdgeInsets.symmetric(horizontal: 5),
                     onPressed: () async {
                       List<Widget> metaWidgets = [];
-                      for (var entry in widget.attachment.metadata?.entries ?? {}.entries) {
+                      for (var entry in widget.attachment!.metadata?.entries ?? {}.entries) {
                         metaWidgets.add(RichText(
                             text: TextSpan(children: [
                           TextSpan(
                               text: "${entry.key}: ",
-                              style: Theme.of(context).textTheme.bodyText1.apply(fontWeightDelta: 2)),
+                              style: Theme.of(context).textTheme.bodyText1!.apply(fontWeightDelta: 2)),
                           TextSpan(text: entry.value.toString(), style: Theme.of(context).textTheme.bodyText1)
                         ])));
                       }
@@ -115,7 +115,7 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
                       if (metaWidgets.length == 0) {
                         metaWidgets.add(Text(
                           "No metadata available",
-                          style: Theme.of(context).textTheme.bodyText1.apply(fontWeightDelta: 2),
+                          style: Theme.of(context).textTheme.bodyText1!.apply(fontWeightDelta: 2),
                           textAlign: TextAlign.center,
                         ));
                       }
@@ -149,7 +149,7 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
                             TextButton(
                               child: Text(
                                 "Close",
-                                style: Theme.of(context).textTheme.bodyText1.copyWith(
+                                style: Theme.of(context).textTheme.bodyText1!.copyWith(
                                       color: Theme.of(context).primaryColor,
                                     ),
                               ),
@@ -170,12 +170,10 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
                   child: CupertinoButton(
                     padding: EdgeInsets.symmetric(horizontal: 5),
                     onPressed: () async {
-                      if (context != null) {
-                        CurrentChat.of(context)?.clearImageData(widget.attachment);
-                      }
+                      CurrentChat.of(context)?.clearImageData(widget.attachment!);
 
                       showSnackbar('In Progress', 'Redownloading attachment. Please wait...');
-                      await AttachmentHelper.redownloadAttachment(widget.attachment, onComplete: () {
+                      await AttachmentHelper.redownloadAttachment(widget.attachment!, onComplete: () {
                         initBytes();
                       }, onError: () {
                         Navigator.pop(context);
@@ -209,10 +207,10 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
                     padding: EdgeInsets.symmetric(horizontal: 5),
                     onPressed: () async {
                       Share.file(
-                        "Shared ${widget.attachment.mimeType.split("/")[0]} from BlueBubbles: ${widget.attachment.transferName}",
-                        widget.attachment.transferName,
-                        widget.file.path,
-                        widget.attachment.mimeType,
+                        "Shared ${widget.attachment!.mimeType!.split("/")[0]} from BlueBubbles: ${widget.attachment!.transferName}",
+                        widget.attachment!.transferName,
+                        widget.file!.path,
+                        widget.attachment!.mimeType,
                       );
                     },
                     child: Icon(
@@ -241,7 +239,7 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
         backgroundColor: Colors.black,
         body: GestureDetector(
           onTap: () {
-            if (!this.mounted || !widget.showInteractions) return;
+            if (!this.mounted || !widget.showInteractions!) return;
 
             setState(() {
               showOverlay = !showOverlay;
@@ -254,24 +252,24 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
                       minScale: PhotoViewComputedScale.contained,
                       maxScale: PhotoViewComputedScale.contained * 13,
                       controller: controller,
-                      imageProvider: MemoryImage(bytes),
-                      loadingBuilder: (BuildContext context, ImageChunkEvent ev) {
+                      imageProvider: MemoryImage(bytes!),
+                      loadingBuilder: (BuildContext context, ImageChunkEvent? ev) {
                         return loader;
                       },
                       scaleStateChangedCallback: (scale) {
                         if (AttachmentFullscreenViewer.of(context) == null) return;
                         if (this.mounted) {
-                          AttachmentFullscreenViewerState state = AttachmentFullscreenViewer.of(context);
+                          AttachmentFullscreenViewerState? state = AttachmentFullscreenViewer.of(context);
                           if (scale == PhotoViewScaleState.zoomedIn) {
-                            if (state.physics != NeverScrollableScrollPhysics()) {
-                              AttachmentFullscreenViewer.of(context).setState(() {
-                                AttachmentFullscreenViewer.of(context).physics = NeverScrollableScrollPhysics();
+                            if (state!.physics != NeverScrollableScrollPhysics()) {
+                              AttachmentFullscreenViewer.of(context)!.setState(() {
+                                AttachmentFullscreenViewer.of(context)!.physics = NeverScrollableScrollPhysics();
                               });
                             }
                           } else {
-                            if (state.physics != ThemeSwitcher.getScrollPhysics()) {
-                              AttachmentFullscreenViewer.of(context).setState(() {
-                                AttachmentFullscreenViewer.of(context).physics = ThemeSwitcher.getScrollPhysics();
+                            if (state!.physics != ThemeSwitcher.getScrollPhysics()) {
+                              AttachmentFullscreenViewer.of(context)!.setState(() {
+                                AttachmentFullscreenViewer.of(context)!.physics = ThemeSwitcher.getScrollPhysics();
                               });
                             }
                           }

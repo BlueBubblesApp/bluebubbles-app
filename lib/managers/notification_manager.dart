@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
@@ -25,14 +26,14 @@ class NotificationManager {
 
   /// [processedItems] holds all of the notifications that have already been notified / processed
   /// This ensures that items don't get processed twice
-  List<String> processedItems = <String>[];
+  List<String?> processedItems = <String?>[];
 
   /// [defaultAvatar] is the avatar that is used if there is no contact icon
-  Uint8List defaultAvatar;
-  Uint8List defaultMultiUserAvatar;
+  Uint8List? defaultAvatar;
+  Uint8List? defaultMultiUserAvatar;
 
   /// Checks if a [guid] has been marked as processed
-  bool hasProcessed(String guid) {
+  bool hasProcessed(String? guid) {
     return processedItems.contains(guid);
   }
 
@@ -41,7 +42,7 @@ class NotificationManager {
   /// the list to 100 items. This is to mitigate memory issues
   /// when the app has been running for a while. We insert at
   /// index 0 to speed up the "search" process
-  void addProcessed(String guid) {
+  void addProcessed(String? guid) {
     processedItems.insert(0, guid);
     if (processedItems.length > 100) {
       processedItems = processedItems.sublist(0, 100);
@@ -51,7 +52,7 @@ class NotificationManager {
   /// Sets the currently active [chat]. As a result,
   /// the chat will be marked as read, and the notifications
   /// for the chat will be cleared
-  Future<void> switchChat(Chat chat) async {
+  Future<void> switchChat(Chat? chat) async {
     if (chat == null) {
       // CurrentChat.getCurrentChat(chat)?.dispose();
       return;
@@ -106,14 +107,14 @@ class NotificationManager {
   /// @param [handle] optional parameter of the handle of the message
   ///
   /// @param [contact] optional parameter of the contact of the message
-  void createNewNotification(String contentTitle, String contentText, String group, Chat chat, int id, int summaryId,
-      int timeStamp, String senderName, bool groupConversation, Handle handle, Contact contact) async {
-    Uint8List contactIcon;
+  void createNewNotification(String contentTitle, String? contentText, String? group, Chat chat, int id, int? summaryId,
+      int timeStamp, String? senderName, bool groupConversation, Handle? handle, Contact? contact) async {
+    Uint8List? contactIcon;
 
     try {
       // If there is a contact specified, we can use it's avatar
       if (contact != null) {
-        if (contact.avatar.length > 0) contactIcon = contact.avatar;
+        if (contact.avatar!.length > 0) contactIcon = contact.avatar;
         // Otherwise if there isn't, we use the [defaultAvatar]
       } else {
         // If [defaultAvatar] is not loaded, load it from assets

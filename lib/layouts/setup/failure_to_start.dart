@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 class FailureToStart extends StatelessWidget {
-  const FailureToStart({Key key, this.e}) : super(key: key);
+  const FailureToStart({Key? key, this.e}) : super(key: key);
   final dynamic e;
 
   @override

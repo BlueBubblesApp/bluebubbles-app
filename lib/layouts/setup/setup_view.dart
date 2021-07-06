@@ -12,7 +12,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class SetupView extends StatefulWidget {
-  SetupView({Key key}) : super(key: key);
+  SetupView({Key? key}) : super(key: key);
 
   @override
   _SetupViewState createState() => _SetupViewState();
@@ -26,7 +26,7 @@ class _SetupViewState extends State<SetupView> {
   void initState() {
     super.initState();
     SocketManager().connectionStateStream.listen((event) {
-      if (!SettingsManager().settings.finishedSetup && controller.page > 3) {
+      if (!SettingsManager().settings.finishedSetup && controller.page! > 3) {
         switch (event) {
           case SocketState.FAILED:
             showDialog(

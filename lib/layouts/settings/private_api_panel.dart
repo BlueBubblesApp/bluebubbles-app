@@ -13,15 +13,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 class PrivateAPIPanel extends StatefulWidget {
-  PrivateAPIPanel({Key key}) : super(key: key);
+  PrivateAPIPanel({Key? key}) : super(key: key);
 
   @override
   _PrivateAPIPanelState createState() => _PrivateAPIPanelState();
 }
 
 class _PrivateAPIPanelState extends State<PrivateAPIPanel> {
-  Settings _settingsCopy;
-  bool enablePrivateAPI = false;
+  late Settings _settingsCopy;
+  bool? enablePrivateAPI = false;
 
   @override
   void initState() {
@@ -42,7 +42,7 @@ class _PrivateAPIPanelState extends State<PrivateAPIPanel> {
   @override
   Widget build(BuildContext context) {
     List<Widget> privateWidgets = [];
-    if (enablePrivateAPI) {
+    if (enablePrivateAPI!) {
       privateWidgets.addAll([
         SettingsSwitch(
           onChanged: (bool val) {

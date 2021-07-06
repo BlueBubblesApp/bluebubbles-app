@@ -18,16 +18,16 @@ import 'package:flutter/services.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
 
 class CustomAvatarPanel extends StatefulWidget {
-  CustomAvatarPanel({Key key}) : super(key: key);
+  CustomAvatarPanel({Key? key}) : super(key: key);
 
   @override
   _CustomAvatarPanelState createState() => _CustomAvatarPanelState();
 }
 
 class _CustomAvatarPanelState extends State<CustomAvatarPanel> {
-  Settings _settingsCopy;
-  List<DisplayMode> modes;
-  DisplayMode currentMode;
+  late Settings _settingsCopy;
+  List<DisplayMode>? modes;
+  DisplayMode? currentMode;
   bool isFetching = false;
   List<Widget> handleWidgets = [];
 
@@ -50,9 +50,9 @@ class _CustomAvatarPanelState extends State<CustomAvatarPanel> {
 
   Future<void> getCustomHandles({force: false}) async {
     // If we are already fetching or have results,
-    if (!false && (isFetching || !isNullOrEmpty(this.handleWidgets))) return;
+    if (!false && (isFetching || !isNullOrEmpty(this.handleWidgets)!)) return;
     List<Handle> handles = await Handle.find();
-    if (isNullOrEmpty(handles)) return;
+    if (isNullOrEmpty(handles)!) return;
 
     // Filter handles down by ones with colors
     handles = handles.where((element) => element.color != null).toList();
@@ -61,13 +61,13 @@ class _CustomAvatarPanelState extends State<CustomAvatarPanel> {
     for (var item in handles) {
       items.add(SettingsTile(
         title:
-            ContactManager().getCachedContactSync(item.address)?.displayName ?? await formatPhoneNumber(item.address),
+            ContactManager().getCachedContactSync(item.address)?.displayName ?? await formatPhoneNumber(item.address!),
         subTitle: "Tap avatar to change color",
         trailing: ContactAvatarWidget(handle: item),
       ));
     }
 
-    if (!isNullOrEmpty(items) && this.mounted) {
+    if (!isNullOrEmpty(items)! && this.mounted) {
       setState(() {
         this.handleWidgets = items;
       });
@@ -118,7 +118,7 @@ class _CustomAvatarPanelState extends State<CustomAvatarPanel> {
                           style: Theme.of(context).textTheme.subtitle1,
                           textAlign: TextAlign.center,
                         )),
-                  for (Widget handleWidget in this.handleWidgets ?? []) handleWidget
+                  for (Widget handleWidget in this.handleWidgets) handleWidget
                 ],
               ),
             ),

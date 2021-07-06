@@ -12,9 +12,9 @@ class AttachmentInfoBloc {
 
   AttachmentInfoBloc._internal();
 
-  Map<String, CurrentChat> chatData = {};
+  Map<String?, CurrentChat> chatData = {};
 
-  CurrentChat getCurrentChat(String chatGuid) {
+  CurrentChat? getCurrentChat(String? chatGuid) {
     if (!chatData.containsKey(chatGuid)) {
       return null;
     }
@@ -33,11 +33,11 @@ class AttachmentInfoBloc {
     chatData[currentChat.chat.guid] = currentChat;
   }
 
-  Future<CurrentChat> initChat(Chat chat) async {
+  Future<CurrentChat?> initChat(Chat chat) async {
     if (!chatData.containsKey(chat.guid)) {
       chatData[chat.guid] = await _initChat(chat);
     } else {
-      await chatData[chat.guid].preloadMessageAttachments();
+      await chatData[chat.guid]!.preloadMessageAttachments();
     }
 
     return chatData[chat.guid];

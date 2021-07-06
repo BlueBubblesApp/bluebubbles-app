@@ -12,15 +12,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 class RedactedModePanel extends StatefulWidget {
-  RedactedModePanel({Key key}) : super(key: key);
+  RedactedModePanel({Key? key}) : super(key: key);
 
   @override
   _RedactedModePanelState createState() => _RedactedModePanelState();
 }
 
 class _RedactedModePanelState extends State<RedactedModePanel> {
-  Settings _settingsCopy;
-  bool redactedMode = false;
+  late Settings _settingsCopy;
+  bool? redactedMode = false;
 
   @override
   void initState() {
@@ -41,7 +41,7 @@ class _RedactedModePanelState extends State<RedactedModePanel> {
   @override
   Widget build(BuildContext context) {
     List<Widget> redactedWidgets = [];
-    if (redactedMode) {
+    if (redactedMode!) {
       redactedWidgets.addAll([
         SettingsSwitch(
           onChanged: (bool val) {

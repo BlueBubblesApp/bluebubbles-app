@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:ui';
 
@@ -16,19 +17,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 class ServerManagementPanel extends StatefulWidget {
-  ServerManagementPanel({Key key}) : super(key: key);
+  ServerManagementPanel({Key? key}) : super(key: key);
 
   @override
   _ServerManagementPanelState createState() => _ServerManagementPanelState();
 }
 
 class _ServerManagementPanelState extends State<ServerManagementPanel> {
-  int latency;
-  String fetchStatus;
+  int? latency;
+  String? fetchStatus;
 
   // Restart trackers
-  int lastRestart;
-  int lastRestartMessages;
+  int? lastRestart;
+  int? lastRestartMessages;
   bool isRestarting = false;
   bool isRestartingMessages = false;
 
@@ -69,7 +70,7 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                   StreamBuilder(
                       stream: SocketManager().connectionStateStream,
                       builder: (context, AsyncSnapshot<SocketState> snapshot) {
-                        SocketState connectionStatus;
+                        SocketState? connectionStatus;
                         if (snapshot.hasData) {
                           connectionStatus = snapshot.data;
                         } else {
@@ -107,7 +108,7 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                   StreamBuilder(
                       stream: SocketManager().connectionStateStream,
                       builder: (context, AsyncSnapshot<SocketState> snapshot) {
-                        SocketState connectionStatus;
+                        SocketState? connectionStatus;
                         if (snapshot.hasData) {
                           connectionStatus = snapshot.data;
                         } else {
@@ -136,13 +137,13 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                   StreamBuilder(
                       stream: SocketManager().connectionStateStream,
                       builder: (context, AsyncSnapshot<SocketState> snapshot) {
-                        SocketState connectionStatus;
+                        SocketState? connectionStatus;
                         if (snapshot.hasData) {
                           connectionStatus = snapshot.data;
                         } else {
                           connectionStatus = SocketManager().state;
                         }
-                        String subtitle;
+                        String? subtitle;
 
                         if (fetchStatus == null) {
                           switch (connectionStatus) {
@@ -210,13 +211,13 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                   StreamBuilder(
                       stream: SocketManager().connectionStateStream,
                       builder: (context, AsyncSnapshot<SocketState> snapshot) {
-                        SocketState connectionStatus;
+                        SocketState? connectionStatus;
                         if (snapshot.hasData) {
                           connectionStatus = snapshot.data;
                         } else {
                           connectionStatus = SocketManager().state;
                         }
-                        String subtitle;
+                        String? subtitle;
 
                         if (fetchStatus == null) {
                           switch (connectionStatus) {
@@ -245,7 +246,7 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
 
                               // Prevent restarting more than once every 30 seconds
                               int now = DateTime.now().toUtc().millisecondsSinceEpoch;
-                              if (lastRestartMessages != null && now - lastRestartMessages < 1000 * 30) return;
+                              if (lastRestartMessages != null && now - lastRestartMessages! < 1000 * 30) return;
 
                               // Save the last time we restarted
                               lastRestartMessages = now;
@@ -298,7 +299,7 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
 
                         // Prevent restarting more than once every 30 seconds
                         int now = DateTime.now().toUtc().millisecondsSinceEpoch;
-                        if (lastRestart != null && now - lastRestart < 1000 * 30) return;
+                        if (lastRestart != null && now - lastRestart! < 1000 * 30) return;
 
                         // Save the last time we restarted
                         lastRestart = now;
@@ -338,7 +339,7 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                   StreamBuilder(
                       stream: SocketManager().connectionStateStream,
                       builder: (context, AsyncSnapshot<SocketState> snapshot) {
-                        SocketState connectionStatus;
+                        SocketState? connectionStatus;
                         if (snapshot.hasData) {
                           connectionStatus = snapshot.data;
                         } else {
@@ -366,14 +367,14 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                                       text: TextSpan(children: [
                                         TextSpan(
                                             text: "MacOS Version: ",
-                                            style: Theme.of(context).textTheme.bodyText1.apply(fontWeightDelta: 2)),
+                                            style: Theme.of(context).textTheme.bodyText1!.apply(fontWeightDelta: 2)),
                                         TextSpan(text: res['data']['os_version'], style: Theme.of(context).textTheme.bodyText1)
                                       ])),
                                   RichText(
                                       text: TextSpan(children: [
                                         TextSpan(
                                             text: "BlueBubbles Server Version: ",
-                                            style: Theme.of(context).textTheme.bodyText1.apply(fontWeightDelta: 2)),
+                                            style: Theme.of(context).textTheme.bodyText1!.apply(fontWeightDelta: 2)),
                                         TextSpan(
                                             text: res['data']['server_version'], style: Theme.of(context).textTheme.bodyText1)
                                       ]))
@@ -407,7 +408,7 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                                       TextButton(
                                         child: Text(
                                           "Close",
-                                          style: Theme.of(context).textTheme.bodyText1.copyWith(
+                                          style: Theme.of(context).textTheme.bodyText1!.copyWith(
                                             color: Theme.of(context).primaryColor,
                                           ),
                                         ),
@@ -436,25 +437,25 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
 }
 
 class SyncDialog extends StatefulWidget {
-  SyncDialog({Key key}) : super(key: key);
+  SyncDialog({Key? key}) : super(key: key);
 
   @override
   _SyncDialogState createState() => _SyncDialogState();
 }
 
 class _SyncDialogState extends State<SyncDialog> {
-  String errorCode;
+  String? errorCode;
   bool finished = false;
-  String message;
-  double progress;
-  Duration lookback;
+  String? message;
+  double? progress;
+  Duration? lookback;
   int page = 0;
 
   void syncMessages() async {
     if (lookback == null) return;
 
-    DateTime now = DateTime.now().toUtc().subtract(lookback);
-    SocketManager().fetchMessages(null, after: now.millisecondsSinceEpoch).then((List<dynamic> messages) {
+    DateTime now = DateTime.now().toUtc().subtract(lookback!);
+    SocketManager().fetchMessages(null, after: now.millisecondsSinceEpoch)!.then((dynamic messages) {
       if (this.mounted) {
         setState(() {
           message = "Adding ${messages.length} messages...";
@@ -475,10 +476,12 @@ class _SyncDialogState extends State<SyncDialog> {
       }).then((List<Message> items) {
         onFinish(true, items.length);
       });
-    }).catchError((_) => onFinish(false, 0));
+    }).catchError((_) {
+      onFinish(false, 0);
+    });
   }
 
-  void onFinish([bool success = true, int total]) {
+  void onFinish([bool success = true, int? total]) {
     if (!this.mounted) return;
 
     this.progress = 100;
@@ -491,7 +494,7 @@ class _SyncDialogState extends State<SyncDialog> {
     String title = errorCode != null ? "Error!" : message ?? "";
     Widget content = Container();
     if (errorCode != null) {
-      content = Text(errorCode);
+      content = Text(errorCode!);
     } else {
       content = Container(
         height: 5,
@@ -512,7 +515,7 @@ class _SyncDialogState extends State<SyncDialog> {
         },
         child: Text(
           "Ok",
-          style: Theme.of(context).textTheme.bodyText1.apply(
+          style: Theme.of(context).textTheme.bodyText1!.apply(
                 color: Theme.of(context).primaryColor,
               ),
         ),
@@ -535,7 +538,7 @@ class _SyncDialogState extends State<SyncDialog> {
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 20.0),
             child: Slider(
-              value: lookback?.inDays?.toDouble() ?? 1.0,
+              value: lookback?.inDays.toDouble() ?? 1.0,
               onChanged: (double value) {
                 if (!this.mounted) return;
 
@@ -543,7 +546,7 @@ class _SyncDialogState extends State<SyncDialog> {
                   lookback = new Duration(days: value.toInt());
                 });
               },
-              label: lookback?.inDays?.toString() ?? "1",
+              label: lookback?.inDays.toString() ?? "1",
               divisions: 29,
               min: 1,
               max: 30,
@@ -564,7 +567,7 @@ class _SyncDialogState extends State<SyncDialog> {
           },
           child: Text(
             "Sync",
-            style: Theme.of(context).textTheme.bodyText1.apply(
+            style: Theme.of(context).textTheme.bodyText1!.apply(
                   color: Theme.of(context).primaryColor,
                 ),
           ),

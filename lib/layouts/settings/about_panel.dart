@@ -14,16 +14,16 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 class AboutPanel extends StatefulWidget {
-  AboutPanel({Key key}) : super(key: key);
+  AboutPanel({Key? key}) : super(key: key);
 
   @override
   _AboutPanelState createState() => _AboutPanelState();
 }
 
 class _AboutPanelState extends State<AboutPanel> {
-  Brightness brightness;
+  Brightness? brightness;
   bool gotBrightness = false;
-  Color previousBackgroundColor;
+  Color? previousBackgroundColor;
 
   @override
   void initState() {
@@ -47,11 +47,6 @@ class _AboutPanelState extends State<AboutPanel> {
     if (!themeChanged && gotBrightness) return;
 
     previousBackgroundColor = now;
-    if (this.context == null) {
-      brightness = Brightness.light;
-      gotBrightness = true;
-      return;
-    }
 
     bool isDark = now.computeLuminance() < 0.179;
     brightness = isDark ? Brightness.dark : Brightness.light;
@@ -149,15 +144,15 @@ class _AboutPanelState extends State<AboutPanel> {
                               ).copyWith(
                                 h1: Theme.of(context)
                                     .textTheme
-                                    .headline1
+                                    .headline1!
                                     .copyWith(fontSize: 20, fontWeight: FontWeight.bold),
                                 h2: Theme.of(context)
                                     .textTheme
-                                    .headline2
+                                    .headline2!
                                     .copyWith(fontSize: 18, fontWeight: FontWeight.bold),
                                 h3: Theme.of(context)
                                     .textTheme
-                                    .headline3
+                                    .headline3!
                                     .copyWith(fontSize: 17, fontWeight: FontWeight.bold),
                               ),
                             ),
@@ -233,7 +228,7 @@ class _AboutPanelState extends State<AboutPanel> {
                             TextButton(
                               child: Text(
                                 "Close",
-                                style: Theme.of(context).textTheme.bodyText1.copyWith(
+                                style: Theme.of(context).textTheme.bodyText1!.copyWith(
                                       color: Theme.of(context).primaryColor,
                                     ),
                               ),

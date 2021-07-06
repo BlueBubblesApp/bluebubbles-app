@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:bluebubbles/helpers/themes.dart';
@@ -31,14 +32,14 @@ class DBUpgradeItem {
   int addedInVersion;
   Function(Database) upgrade;
 
-  DBUpgradeItem({@required this.addedInVersion, @required this.upgrade});
+  DBUpgradeItem({required this.addedInVersion, required this.upgrade});
 }
 
 class DBProvider {
   DBProvider._();
   static final DBProvider db = DBProvider._();
 
-  static Database _database;
+  static Database? _database;
   static String _path = "";
   static int currentVersion = 8;
 
@@ -97,7 +98,7 @@ class DBProvider {
         }),
   ];
 
-  Future<Database> get database async {
+  Future<Database?> get database async {
     if (_database != null) return _database;
 
     // if _database is null we instantiate it
@@ -145,8 +146,8 @@ class DBProvider {
   }
 
   static Future<void> deleteDB() async {
-    Database db = await DBProvider.db.database;
-
+    Database? db = await DBProvider.db.database;
+    if (db == null) return;
     // Remove base tables
     await Handle.flush();
     await Chat.flush();

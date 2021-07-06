@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:sqflite/sqflite.dart';
@@ -16,11 +17,11 @@ String scheduledToJson(ScheduledMessage data) {
 }
 
 class ScheduledMessage {
-  int id;
-  String chatGuid;
-  String message;
-  int epochTime;
-  bool completed;
+  int? id;
+  String? chatGuid;
+  String? message;
+  int? epochTime;
+  bool? completed;
 
   ScheduledMessage(
       {this.id, this.chatGuid, this.message, this.epochTime, this.completed});
@@ -36,10 +37,10 @@ class ScheduledMessage {
   }
 
   Future<ScheduledMessage> save([bool updateIfAbsent = false]) async {
-    final Database db = await DBProvider.db.database;
+    final Database? db = await DBProvider.db.database;
 
     // Try to find an existing handle before saving it
-    ScheduledMessage existing = await ScheduledMessage.findOne({
+    ScheduledMessage? existing = await ScheduledMessage.findOne({
       "chatGuid": this.chatGuid,
       "message": this.message,
       "epochTime": this.epochTime
@@ -54,7 +55,7 @@ class ScheduledMessage {
       var map = this.toMap();
       map.remove("ROWID");
       try {
-        this.id = await db.insert("scheduled", map);
+        this.id = await db!.insert("scheduled", map);
       } catch (e) {
         this.id = null;
       }
@@ -66,17 +67,17 @@ class ScheduledMessage {
   }
 
   Future<ScheduledMessage> update() async {
-    final Database db = await DBProvider.db.database;
+    final Database? db = await DBProvider.db.database;
 
     // If it already exists, update it
     if (this.id != null) {
-      await db.update(
+      await db!.update(
           "scheduled",
           {
             "chatGuid": this.chatGuid,
             "message": this.message,
             "epochTime": this.epochTime,
-            "completed": this.completed ? 1 : 0
+            "completed": this.completed! ? 1 : 0
           },
           where: "ROWID = ?",
           whereArgs: [this.id]);
@@ -87,9 +88,9 @@ class ScheduledMessage {
     return this;
   }
 
-  static Future<ScheduledMessage> findOne(Map<String, dynamic> filters) async {
-    final Database db = await DBProvider.db.database;
-
+  static Future<ScheduledMessage?> findOne(Map<String, dynamic> filters) async {
+    final Database? db = await DBProvider.db.database;
+    if (db == null) return null;
     List<String> whereParams = [];
     filters.keys.forEach((filter) => whereParams.add('$filter = ?'));
     List<dynamic> whereArgs = [];
@@ -106,13 +107,13 @@ class ScheduledMessage {
 
   static Future<List<ScheduledMessage>> find(
       [Map<String, dynamic> filters = const {}]) async {
-    final Database db = await DBProvider.db.database;
+    final Database? db = await DBProvider.db.database;
 
     List<String> whereParams = [];
     filters.keys.forEach((filter) => whereParams.add('$filter = ?'));
     List<dynamic> whereArgs = [];
     filters.values.forEach((filter) => whereArgs.add(filter));
-    var res = await db.query("scheduled",
+    var res = await db!.query("scheduled",
         where: (whereParams.length > 0) ? whereParams.join(" AND ") : null,
         whereArgs: (whereArgs.length > 0) ? whereArgs : null);
 
@@ -122,9 +123,9 @@ class ScheduledMessage {
   }
 
   static Future<List<ScheduledMessage>> getScheduledMessages(Chat chat) async {
-    final Database db = await DBProvider.db.database;
+    final Database? db = await DBProvider.db.database;
 
-    var res = await db.rawQuery(
+    var res = await db!.rawQuery(
         "SELECT"
         " scheduled.ROWID AS ROWID,"
         " scheduled.chatGuid AS chatGuid,"
@@ -141,7 +142,8 @@ class ScheduledMessage {
   }
 
   static flush() async {
-    final Database db = await DBProvider.db.database;
+    final Database? db = await DBProvider.db.database;
+    if (db == null) return;
     await db.delete("scheduled");
   }
 
@@ -150,6 +152,6 @@ class ScheduledMessage {
         "chatGuid": chatGuid,
         "message": message,
         "epochTime": epochTime,
-        "completed": completed ? 1 : 0
+        "completed": completed! ? 1 : 0
       };
 }
