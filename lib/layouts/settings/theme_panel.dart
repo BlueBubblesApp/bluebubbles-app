@@ -91,7 +91,14 @@ class _ThemePanelState extends State<ThemePanel> {
                       AdaptiveTheme.of(context).setThemeMode(val);
 
                       // This needs to be on a delay so the background color has time to change
-                      Timer(Duration(seconds: 1), () => EventDispatcher().emit('theme-update', null));
+                      Timer(Duration(seconds: 1), () {
+                        SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+                          systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
+                          systemNavigationBarIconBrightness: Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+                          statusBarColor: Colors.transparent, // status bar color
+                        ));
+                        EventDispatcher().emit('theme-update', null);
+                      });
                     },
                     options: AdaptiveThemeMode.values,
                     textProcessing: (val) => val.toString().split(".").last,
