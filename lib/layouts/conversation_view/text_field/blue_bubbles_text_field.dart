@@ -320,7 +320,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
           children: [
             Expanded(
               child: Container(
-                padding: EdgeInsets.all(5),
+                padding: EdgeInsets.only(left: 5, top: 5, bottom: 5, right: 8),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
@@ -758,16 +758,13 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
           if (sendCountdown != null) Text(sendCountdown.toString()),
           (SettingsManager().settings.skin == Skins.iOS)
               ? Container(
-                  constraints: BoxConstraints(
-                    maxWidth: 40,
-                  ),
+                  constraints: BoxConstraints(maxWidth: 38, maxHeight: 37),
+                  padding: EdgeInsets.only(right: 4, top: 2, bottom: 2),
                   child: ButtonTheme(
-                    minWidth: 30,
-                    height: 30,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 0,
+                        padding: EdgeInsets.only(
+                          right: 0,
                         ),
                         primary: Theme.of(context).primaryColor,
                         shape: RoundedRectangleBorder(
