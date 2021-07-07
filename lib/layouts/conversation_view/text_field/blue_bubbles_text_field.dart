@@ -182,7 +182,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     super.dispose();
   }
 
-  void onContentCommit(Map<String, Object> content) async {
+  void onContentCommit(Map<String, dynamic> content) async {
     // Add some debugging logs
     debugPrint("[Content Commit] Keyboard received content");
     debugPrint("  -> Content Type: ${content['mimeType']}");
@@ -514,7 +514,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
 
                     if (this.mounted) setState(() {});
                   },
-                  onContentCommited: onContentCommit,
+                  onContentCommitted: onContentCommit,
                   textCapitalization: TextCapitalization.sentences,
                   focusNode: focusNode,
                   autocorrect: true,
