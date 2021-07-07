@@ -4,11 +4,15 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 Widget buildBackButton(BuildContext context) {
-  return IconButton(
-    icon: Icon(SettingsManager().settings.skin == Skins.iOS ? Icons.arrow_back_ios : Icons.arrow_back,
-        color: Theme.of(context).primaryColor),
-    onPressed: () {
-      Navigator.of(context).pop();
-    },
+  return Container(
+    padding: EdgeInsets.zero,
+    width: 25,
+    child: IconButton(
+      icon: Icon(SettingsManager().settings.skin == Skins.iOS ? Icons.arrow_back_ios : Icons.arrow_back,
+          color: Theme.of(context).primaryColor),
+      onPressed: () {
+        Navigator.of(context).pop();
+      },
+    ),
   );
 }

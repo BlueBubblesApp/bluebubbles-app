@@ -76,6 +76,8 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
       fetchParticipants();
     });
 
+    newMessages = ChatBloc().chats.where((element) => element != null && element != chat && (element.hasUnreadMessage ?? false)).map((e) => e!.guid).toList();
+
     EventDispatcher().stream.listen((Map<String, dynamic> event) {
       if (!["add-unread-chat", "remove-unread-chat", "refresh-messagebloc"].contains(event["type"])) return;
       if (!event["data"].containsKey("chatGuid")) return;
@@ -407,24 +409,29 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
         border: Border(
           bottom: BorderSide(color: Colors.white.withOpacity(0.2), width: 0.2),
         ),
-        leading: Row(
-          mainAxisSize: Cupertino.MainAxisSize.min,
-          mainAxisAlignment: Cupertino.MainAxisAlignment.start,
-          children: [
-            buildBackButton(context),
-            if (newMessages.length > 0)
-              Container(
-                width: 25.0,
-                height: 20.0,
-                decoration: BoxDecoration(
-                    color: Theme.of(context).primaryColor,
-                    shape: BoxShape.rectangle,
-                    borderRadius: BorderRadius.circular(10)),
-                child: Center(
-                    child: Text(newMessages.length.toString(),
-                        textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 12.0))),
-              )
-          ],
+        leading: GestureDetector(
+          onTap: () {
+            Navigator.of(context).pop();
+          },
+          child: Row(
+            mainAxisSize: Cupertino.MainAxisSize.min,
+            mainAxisAlignment: Cupertino.MainAxisAlignment.start,
+            children: [
+              buildBackButton(context),
+              if (newMessages.length > 0)
+                Container(
+                  width: 25.0,
+                  height: 20.0,
+                  decoration: BoxDecoration(
+                      color: Theme.of(context).primaryColor,
+                      shape: BoxShape.rectangle,
+                      borderRadius: BorderRadius.circular(10)),
+                  child: Center(
+                      child: Text(newMessages.length.toString(),
+                          textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 12.0))),
+                )
+            ],
+          ),
         ),
         middle: ListView(
           physics: Cupertino.NeverScrollableScrollPhysics(),
