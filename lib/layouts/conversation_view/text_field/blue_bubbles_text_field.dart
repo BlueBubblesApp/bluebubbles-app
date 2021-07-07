@@ -90,11 +90,11 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
 
     // Add the text listener to detect when we should send the typing indicators
     controller!.addListener(() {
-      if (mounted && CurrentChat.of(context)?.chat == null) return;
+      if (!mounted || CurrentChat.of(context)?.chat == null) return;
 
       // If the private API features are disabled, or sending the indicators is disabled, return
       if (!SettingsManager().settings.enablePrivateAPI || !SettingsManager().settings.sendTypingIndicators) {
-        if (this.mounted) setState(() {});
+        if (mounted) setState(() {});
         return;
       }
 
@@ -107,7 +107,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
           SocketManager().sendMessage("started-typing", {"chatGuid": CurrentChat.of(context)!.chat.guid}, (data) {});
       }
 
-      if (this.mounted) setState(() {});
+      if (mounted) setState(() {});
     });
 
     // Create the focus node and then add a an event emitter whenever
@@ -762,56 +762,58 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                     maxWidth: 40,
                   ),
                   child: ButtonTheme(
-                      minWidth: 30,
-                      height: 30,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 0,
-                          ),
-                          primary: Theme.of(context).primaryColor,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(40),
-                          ),
+                    minWidth: 30,
+                    height: 30,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 0,
                         ),
-                        onPressed: sendAction,
-                        child: Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            AnimatedOpacity(
-                              opacity: sendCountdown == null && controller!.text.isEmpty && pickedImages.isEmpty ? 1.0 : 0.0,
-                              duration: Duration(milliseconds: 150),
-                              child: Icon(
-                                Icons.mic,
-                                color: (isRecording) ? Colors.red : Colors.white,
-                                size: 20,
-                              ),
-                            ),
-                            AnimatedOpacity(
-                              opacity: (sendCountdown == null && (controller!.text.isNotEmpty || pickedImages.length > 0)) &&
-                                      !isRecording
-                                  ? 1.0
-                                  : 0.0,
-                              duration: Duration(milliseconds: 150),
-                              child: Icon(
-                                Icons.arrow_upward,
-                                color: Colors.white,
-                                size: 20,
-                              ),
-                            ),
-                            AnimatedOpacity(
-                              opacity: sendCountdown != null ? 1.0 : 0.0,
-                              duration: Duration(milliseconds: 50),
-                              child: Icon(
-                                Icons.cancel_outlined,
-                                color: Colors.red,
-                                size: 20,
-                              ),
-                            ),
-                          ],
+                        primary: Theme.of(context).primaryColor,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(40),
                         ),
                       ),
+                      onPressed: sendAction,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          AnimatedOpacity(
+                            opacity:
+                                sendCountdown == null && controller!.text.isEmpty && pickedImages.isEmpty ? 1.0 : 0.0,
+                            duration: Duration(milliseconds: 150),
+                            child: Icon(
+                              Icons.mic,
+                              color: (isRecording) ? Colors.red : Colors.white,
+                              size: 20,
+                            ),
+                          ),
+                          AnimatedOpacity(
+                            opacity:
+                                (sendCountdown == null && (controller!.text.isNotEmpty || pickedImages.length > 0)) &&
+                                        !isRecording
+                                    ? 1.0
+                                    : 0.0,
+                            duration: Duration(milliseconds: 150),
+                            child: Icon(
+                              Icons.arrow_upward,
+                              color: Colors.white,
+                              size: 20,
+                            ),
+                          ),
+                          AnimatedOpacity(
+                            opacity: sendCountdown != null ? 1.0 : 0.0,
+                            duration: Duration(milliseconds: 50),
+                            child: Icon(
+                              Icons.cancel_outlined,
+                              color: Colors.red,
+                              size: 20,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
+                  ),
                 )
               : GestureDetector(
                   onTapDown: (_) async {

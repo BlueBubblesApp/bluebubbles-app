@@ -1,6 +1,5 @@
 package com.bluebubbles.messaging;
 
-import java.util.ArrayList;
 import io.flutter.app.FlutterApplication;
 import io.flutter.plugin.common.PluginRegistry;
 
