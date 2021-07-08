@@ -76,7 +76,11 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
       fetchParticipants();
     });
 
-    newMessages = ChatBloc().chats.where((element) => element != null && element != chat && (element.hasUnreadMessage ?? false)).map((e) => e!.guid).toList();
+    newMessages = ChatBloc()
+        .chats
+        .where((element) => element != chat && (element.hasUnreadMessage ?? false))
+        .map((e) => e.guid)
+        .toList();
 
     EventDispatcher().stream.listen((Map<String, dynamic> event) {
       if (!["add-unread-chat", "remove-unread-chat", "refresh-messagebloc"].contains(event["type"])) return;
@@ -561,7 +565,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
 
       for (var i in ChatBloc().chats) {
         // If the lengths don't match continue
-        if (i!.participants.length != selected.length) continue;
+        if (i.participants.length != selected.length) continue;
 
         // Iterate over each selected contact
         int matches = 0;

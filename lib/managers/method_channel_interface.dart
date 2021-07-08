@@ -171,7 +171,7 @@ class MethodChannelInterface {
 
         // If it is a direct shortcut, try and find the chat and navigate to it
         if (guid != null) {
-          List<Chat?> chats = ChatBloc().chats.where((element) => element!.guid == guid).toList();
+          List<Chat?> chats = ChatBloc().chats.where((element) => element.guid == guid).toList();
 
           // If we did find a chat matching the criteria
           if (chats.length != 0) {
@@ -210,7 +210,7 @@ class MethodChannelInterface {
 
         // If it is a direct shortcut, try and find the chat and navigate to it
         if (guid != null) {
-          List<Chat?> chats = ChatBloc().chats.where((element) => element!.guid == guid).toList();
+          List<Chat?> chats = ChatBloc().chats.where((element) => element.guid == guid).toList();
 
           // If we did find a chat matching the criteria
           if (chats.length != 0) {

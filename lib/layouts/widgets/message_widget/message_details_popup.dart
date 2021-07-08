@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:ui';
+import 'package:collection/collection.dart';
 
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
@@ -72,10 +73,9 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
     messageTopOffset = widget.childOffset.dy;
     topMinimum = CupertinoNavigationBar().preferredSize.height + (widget.message!.hasReactions ? 110 : 50);
 
-    dmChat = ChatBloc().chats.firstWhere(
+    dmChat = ChatBloc().chats.firstWhereOrNull(
           (chat) =>
-              !chat!.isGroup() && chat.participants.where((handle) => handle.id == widget.message!.handleId).length == 1,
-          orElse: () => null,
+              !chat.isGroup() && chat.participants.where((handle) => handle.id == widget.message!.handleId).length == 1,
         );
 
     fetchReactions();
@@ -161,7 +161,8 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
-        systemNavigationBarIconBrightness: Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        systemNavigationBarIconBrightness:
+            Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
       ),
       child: Scaffold(
