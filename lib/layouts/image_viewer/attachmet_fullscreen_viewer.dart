@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
@@ -118,7 +119,8 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
-        systemNavigationBarIconBrightness: Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        systemNavigationBarIconBrightness:
+            Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
       ),
       child: Scaffold(
@@ -136,18 +138,20 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
                   dynamic content = AttachmentHelper.getContent(attachment,
                       path: attachment.guid == null ? attachment.transferName : null);
 
+                  String viewerKey = attachment.guid ?? attachment.transferName ?? Random().nextInt(100).toString();
+
                   if (content is File) {
                     content = content;
                     if (mimeType == "image") {
                       return ImageViewer(
-                        key: Key(attachment.guid!),
+                        key: Key(viewerKey),
                         attachment: attachment,
                         file: content,
                         showInteractions: widget.showInteractions,
                       );
                     } else if (mimeType == "video") {
                       return VideoViewer(
-                        key: Key(attachment.guid!),
+                        key: Key(viewerKey),
                         file: content,
                         attachment: attachment,
                         showInteractions: widget.showInteractions,
@@ -160,7 +164,7 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
                       children: [
                         Center(
                           child: AttachmentDownloaderWidget(
-                            key: Key(attachment.guid!),
+                            key: Key(attachment.guid ?? attachment.transferName ?? Random().nextInt(100).toString()),
                             attachment: attachment,
                             onPressed: () {
                               new AttachmentDownloader(attachment);
@@ -205,7 +209,7 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
                           }
 
                           return KeyedSubtree(
-                            key: Key(attachment.guid!),
+                            key: Key(viewerKey),
                             child: Stack(
                               alignment: Alignment.center,
                               children: <Widget>[

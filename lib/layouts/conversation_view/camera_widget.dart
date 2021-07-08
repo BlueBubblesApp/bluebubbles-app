@@ -24,10 +24,14 @@ class CameraWidget extends StatefulWidget {
 }
 
 class _CameraWidgetState extends State<CameraWidget> with WidgetsBindingObserver {
-  CameraController? controller;
-
-  get hasCameraContext {
+  double? aspectRatioCache;
+  get hasContext {
     return BlueBubblesTextField.of(context) != null;
+  }
+
+  get camerasAvailable {
+    CameraController? controller = BlueBubblesTextField.of(context)!.cameraController;
+    return controller != null && BlueBubblesTextField.of(context)?.cameraState == CameraState.ACTIVE;
   }
 
   @override
@@ -44,28 +48,29 @@ class _CameraWidgetState extends State<CameraWidget> with WidgetsBindingObserver
   }
 
   Future<void> initCameras() async {
-    if (!this.mounted || !this.hasCameraContext) return;
+    // If we aren't mounted or there is no context, don't do anything
+    if (!this.mounted || !this.hasContext) return;
+    // If the camera is already active, don't do anything
+    if (BlueBubblesTextField.of(context)!.cameraState == CameraState.ACTIVE) return;
+
+    // Initialize the camera
     await BlueBubblesTextField.of(context)!.initializeCameraController();
-    if (!this.hasCameraContext) return; // After the await, so could have been some time
+
+    // Update the state when finished
+    if (!this.hasContext) return; // After the await, so could have been some time
     if (this.mounted) setState(() {});
   }
 
   /// Called when the app is either closed or opened or paused
   @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
+  void didChangeAppLifecycleState(AppLifecycleState state) async {
     // Call the [LifeCycleManager] events based on the [state]
-    if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive && controller != null) {
-      controller?.dispose();
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive && BlueBubblesTextField.of(context)!.cameraController != null) {
+      await BlueBubblesTextField.of(context)!.disposeCameras();
     } else if (state == AppLifecycleState.resumed) {
       initCameras();
     }
-  }
-
-  @override
-  void dispose() {
-    debugPrint("Disposing of camera!");
-    controller?.dispose();
-    super.dispose();
   }
 
   Future<void> openFullCamera({String type: 'camera'}) async {
@@ -88,21 +93,54 @@ class _CameraWidgetState extends State<CameraWidget> with WidgetsBindingObserver
     widget.addAttachment(file);
   }
 
-  @override
-  Widget build(BuildContext context) {
-    if (BlueBubblesTextField.of(context) == null) return Container();
-    controller = BlueBubblesTextField.of(context)!.cameraController;
-
-    if (controller == null || !controller!.value.isInitialized) return Container();
-    return AspectRatio(
-      aspectRatio: Get.mediaQuery.orientation == Orientation.portrait
-          ? (controller!.value.previewSize!.height / controller!.value.previewSize!.width)
-          : 1 / (controller!.value.previewSize!.height / controller!.value.previewSize!.width),
-      child: Stack(
-        alignment: Alignment.topRight,
-        children: _buildCameraStack(context),
+  Widget cameraPlaceholder() {
+    return Positioned.fill(
+      child: Padding(
+        padding: EdgeInsets.all(5),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(20),
+          child: Container(color: Theme.of(context).accentColor),
+        ),
       ),
     );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // If we don't have context, return the placeholder
+    if (!this.hasContext) return cameraPlaceholder();
+    CameraController? controller = BlueBubblesTextField.of(context)!.cameraController;
+
+    // If the controller is null or the state is not active, return the placeholder
+    List<Widget> cameraWidgets = [];
+    double aspectRatio;
+    if (controller == null || BlueBubblesTextField.of(context)?.cameraState != CameraState.ACTIVE) {
+      cameraWidgets.add(cameraPlaceholder());
+      aspectRatio = 0.6;
+    } else {
+      cameraWidgets = _buildCameraStack(context);
+      if (aspectRatioCache != null) {
+        aspectRatio = aspectRatioCache!;
+      } else if (Get.mediaQuery.orientation == Orientation.portrait) {
+        aspectRatio = controller.value.previewSize!.height / controller.value.previewSize!.width;
+      } else {
+        aspectRatio = 1 / controller.value.previewSize!.height / controller.value.previewSize!.width;
+      }
+
+      // Cache the aspect ratio so we don't have to calculate it again
+      aspectRatioCache = aspectRatio;
+    }
+
+    return AnimatedOpacity(
+        opacity: camerasAvailable ? 1 : 0.2, // 0.2 because then you can see the placeholder box a bit
+        duration: Duration(milliseconds: 300), // 300 because I found that looked nice (in debug mode)
+        child: AspectRatio(
+          aspectRatio: aspectRatio,
+          child: Stack(
+            alignment: Alignment.topRight,
+            children: cameraWidgets,
+          ),
+        ));
   }
 
   List<Widget> _buildCameraStack(BuildContext context) {
@@ -124,6 +162,7 @@ class _CameraWidgetState extends State<CameraWidget> with WidgetsBindingObserver
         ),
       ];
 
+    CameraController? controller = BlueBubblesTextField.of(context)!.cameraController;
     return [
       Stack(
         alignment: Alignment.bottomCenter,
@@ -143,7 +182,7 @@ class _CameraWidgetState extends State<CameraWidget> with WidgetsBindingObserver
               onPressed: () async {
                 HapticFeedback.mediumImpact();
 
-                XFile savedImage = await controller!.takePicture();
+                XFile savedImage = await controller.takePicture();
                 File file = new File(savedImage.path);
 
                 // Fail if the file doesn't exist after taking the picture
@@ -228,7 +267,7 @@ class _CameraWidgetState extends State<CameraWidget> with WidgetsBindingObserver
             backgroundColor: Colors.transparent,
           ),
           onPressed: () async {
-            if (BlueBubblesTextField.of(context) == null) return;
+            if (!this.hasContext) return;
 
             HapticFeedback.lightImpact();
             BlueBubblesTextField.of(context)!.cameraIndex = (BlueBubblesTextField.of(context)!.cameraIndex - 1).abs();

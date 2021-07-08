@@ -2,8 +2,6 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-
-
 import 'dart:ui' as ui show BoxHeightStyle, BoxWidthStyle;
 
 import 'package:flutter/cupertino.dart';
@@ -258,7 +256,7 @@ class ContactSelectorCustomCupertinoTextfield extends StatefulWidget {
     this.maxLength,
     this.maxLengthEnforced = true,
     this.onChanged,
-    this.onContentCommited,
+    this.onContentCommitted,
     this.onEditingComplete,
     this.onSubmitted,
     this.inputFormatters,
@@ -514,7 +512,7 @@ class ContactSelectorCustomCupertinoTextfield extends StatefulWidget {
   final ValueChanged<String>? onChanged;
 
   /// Once new content is commited...
-  final ValueChanged<Map<String, Object>>? onContentCommited;
+  final ValueChanged<Map<String, dynamic>>? onContentCommitted;
 
   /// {@macro flutter.widgets.editableText.onEditingComplete}
   final VoidCallback? onEditingComplete;
@@ -963,7 +961,7 @@ class _CupertinoTextFieldState extends State<ContactSelectorCustomCupertinoTextf
           selectionColor: selectionColor,
           selectionControls: widget.selectionEnabled ? cupertinoTextSelectionControls : null,
           onChanged: widget.onChanged,
-          onContentCommited: widget.onContentCommited,
+          onContentCommitted: widget.onContentCommitted,
           onSelectionChanged: _handleSelectionChanged,
           onEditingComplete: widget.onEditingComplete,
           onSubmitted: widget.onSubmitted,

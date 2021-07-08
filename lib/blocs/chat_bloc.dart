@@ -33,14 +33,14 @@ class ChatBloc {
 
   static StreamSubscription<NewMessageEvent>? _messageSubscription;
 
-  List<Chat?> _chats = [];
+  List<Chat> _chats = [];
   bool? _hasChats;
   bool get hasChats => _hasChats == null || _hasChats!;
 
   // Remove duplicates when this gets accessed
-  List<Chat?> get chats {
-    final ids = _chats.map((e) => e!.guid).toSet();
-    _chats.retainWhere((element) => ids.remove(element!.guid));
+  List<Chat> get chats {
+    final ids = _chats.map((e) => e.guid).toSet();
+    _chats.retainWhere((element) => ids.remove(element.guid));
     return _chats;
   }
 
@@ -120,11 +120,11 @@ class ChatBloc {
     // and figure out if we need to update the chat.
     for (int i = 0; i < _chats.length; i++) {
       // Skip over non-matching chats
-      if (_chats[i]!.guid != chat.guid) continue;
+      if (_chats[i].guid != chat.guid) continue;
 
       // Don't move/update the chat if the latest message for it is newer than the incoming one
       int latest = chat.latestMessageDate != null ? chat.latestMessageDate!.millisecondsSinceEpoch : 0;
-      if (_chats[i]!.latestMessageDate != null && _chats[i]!.latestMessageDate!.millisecondsSinceEpoch > latest) {
+      if (_chats[i].latestMessageDate != null && _chats[i].latestMessageDate!.millisecondsSinceEpoch > latest) {
         shouldUpdate = false;
       }
 
@@ -144,9 +144,9 @@ class ChatBloc {
     if (currentIndex == -1) {
       for (int i = 0; i < _chats.length; i++) {
         // If the chat is older, that's where we want to insert
-        if (_chats[i]!.latestMessageDate == null ||
-                chat.latestMessageDate == null ||
-                _chats[i]!.latestMessageDate!.millisecondsSinceEpoch < chat.latestMessageDate!.millisecondsSinceEpoch) {
+        if (_chats[i].latestMessageDate == null ||
+            chat.latestMessageDate == null ||
+            _chats[i].latestMessageDate!.millisecondsSinceEpoch < chat.latestMessageDate!.millisecondsSinceEpoch) {
           _chats.insert(i, chat);
           break;
         }
@@ -163,7 +163,7 @@ class ChatBloc {
 
   Future<void> markAllAsRead() async {
     // Enumerate the unread chats
-    List<Chat?> unread = this.chats.where((element) => element!.hasUnreadMessage!).toList();
+    List<Chat?> unread = this.chats.where((element) => element.hasUnreadMessage!).toList();
 
     // Mark them as unread
     for (Chat? chat in unread) {
@@ -335,7 +335,7 @@ class ChatBloc {
   }
 
   void archiveChat(Chat chat) async {
-    _chats.removeWhere((element) => element!.guid == chat.guid);
+    _chats.removeWhere((element) => element.guid == chat.guid);
     _archivedChats.add(chat);
     chat.isArchived = true;
     await chat.save(updateLocalVals: true);
@@ -356,7 +356,7 @@ class ChatBloc {
 
   void deleteChat(Chat? chat) async {
     _archivedChats.removeWhere((element) => element.id == chat!.id);
-    _chats.removeWhere((element) => element!.id == chat!.id);
+    _chats.removeWhere((element) => element.id == chat!.id);
     _archivedChatController.sink.add(_archivedChats);
     await this.addToSink(this.chats);
   }
@@ -372,10 +372,10 @@ class ChatBloc {
     if (_chats.isEmpty) await refreshChats();
 
     for (int i = 0; i < _chats.length; i++) {
-      Chat _chat = _chats[i]!;
+      Chat _chat = _chats[i];
       if (_chat.guid == chat!.guid) {
         _chats[i] = chat;
-        await initTileValsForChat(chats[i]!);
+        await initTileValsForChat(chats[i]);
       }
     }
 

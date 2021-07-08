@@ -87,7 +87,7 @@ class _SetupViewState extends State<SetupView> {
             mainAxisAlignment: MainAxisAlignment.end,
             children: <Widget>[
               Padding(
-                padding: EdgeInsets.only(bottom: 10),
+                padding: EdgeInsets.only(bottom: 20),
                 child: Text(
                   "$currentPage/7",
                   style: Theme.of(context).textTheme.bodyText1,

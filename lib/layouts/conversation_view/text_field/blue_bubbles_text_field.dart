@@ -27,6 +27,8 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:photo_manager/photo_manager.dart';
 import 'package:record/record.dart';
 
+enum CameraState { INACTIVE, STARTING, ACTIVE, DISPOSING }
+
 class BlueBubblesTextField extends StatefulWidget {
   final List<File>? existingAttachments;
   final String? existingText;
@@ -61,10 +63,13 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
   StreamController _streamController = new StreamController.broadcast();
   CurrentChat? safeChat;
 
-  bool selfTyping = false;
+  // Camera Vars
+  CameraState cameraState = CameraState.INACTIVE;
   CameraController? cameraController;
   int cameraIndex = 0;
-  late List<CameraDescription> cameras;
+  List<CameraDescription> cameras = [];
+
+  bool selfTyping = false;
   int? sendCountdown;
   bool? stopSending;
   String placeholder = "BlueBubbles";
@@ -90,11 +95,11 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
 
     // Add the text listener to detect when we should send the typing indicators
     controller!.addListener(() {
-      if (mounted && CurrentChat.of(context)?.chat == null) return;
+      if (!mounted || CurrentChat.of(context)?.chat == null) return;
 
       // If the private API features are disabled, or sending the indicators is disabled, return
       if (!SettingsManager().settings.enablePrivateAPI || !SettingsManager().settings.sendTypingIndicators) {
-        if (this.mounted) setState(() {});
+        if (mounted) setState(() {});
         return;
       }
 
@@ -107,7 +112,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
           SocketManager().sendMessage("started-typing", {"chatGuid": CurrentChat.of(context)!.chat.guid}, (data) {});
       }
 
-      if (this.mounted) setState(() {});
+      if (mounted) setState(() {});
     });
 
     // Create the focus node and then add a an event emitter whenever
@@ -168,7 +173,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
   void dispose() {
     focusNode!.dispose();
     _streamController.close();
-    cameraController?.dispose();
+    this.disposeCameras();
+
     if (safeChat?.chat == null) controller!.dispose();
 
     String dir = SettingsManager().appDocDir.path;
@@ -182,7 +188,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     super.dispose();
   }
 
-  void onContentCommit(Map<String, Object> content) async {
+  void onContentCommit(Map<String, dynamic> content) async {
     // Add some debugging logs
     debugPrint("[Content Commit] Keyboard received content");
     debugPrint("  -> Content Type: ${content['mimeType']}");
@@ -256,23 +262,48 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
   }
 
   Future<void> initializeCameraController() async {
-    // If we are already initialized, don't do anything
-    bool alreadyInit = cameraController?.value.isInitialized ?? false;
-    if (alreadyInit) {
-      await cameraController!.dispose();
+    // If the state is active, we need to close it
+    if (cameraState == CameraState.ACTIVE) {
+      await this.disposeCameras();
     }
 
-    // Enumerate the cameras
-    cameras = await availableCameras();
+    debugPrint("[Camera Preview] -> Initializing camera preview");
 
+    // Enumerate the cameras (if we don't have them)
+    // We only need to do this once... it's not like it's gonna change very often
+    if (cameras.length == 0) {
+      cameras = await availableCameras();
+    }
+
+    if (cameras.length == 0) {
+      debugPrint("[Camera Preview] -> No available cameras!");
+      return;
+    }
+
+    // Update the camera state
+    cameraState = CameraState.STARTING;
+
+    // Re-initialize the camera controller
     // Disable audio so that background music doesn't stop playing
     cameraController = CameraController(cameras[cameraIndex], ResolutionPreset.max, enableAudio: false);
 
-    // Initialize the camera, then update the state
+    // Initialize the camera (if not done already), then update the state
     if (!cameraController!.value.isInitialized) {
-      await cameraController!.initialize();
+      await cameraController?.initialize();
     }
+
+    cameraState = CameraState.ACTIVE;
     if (this.mounted) setState(() {});
+    debugPrint("[Camera Preview] -> Finished initializing camera preview");
+  }
+
+  Future<void> disposeCameras() async {
+    debugPrint("[Camera Preview] -> Disposing camera preview");
+    cameraState = CameraState.DISPOSING;
+    await cameraController?.dispose();
+    cameraController = null;
+    cameraState = CameraState.INACTIVE;
+    debugPrint("[Camera Preview] -> Finished disposing camera preview");
   }
 
   Future<void> toggleShareMenu() async {
@@ -283,6 +314,12 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       if (this.mounted) setState(() {});
       return;
     }
+
+    // If we are closing, dispose the camera
+    if (showImagePicker) {
+      this.disposeCameras();
+    }
+
     showImagePicker = !showImagePicker;
     if (this.mounted) setState(() {});
   }
@@ -320,7 +357,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
           children: [
             Expanded(
               child: Container(
-                padding: EdgeInsets.all(5),
+                padding: EdgeInsets.only(left: 5, top: 5, bottom: 5, right: 8),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
@@ -514,7 +551,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
 
                     if (this.mounted) setState(() {});
                   },
-                  onContentCommited: onContentCommit,
+                  onContentCommitted: onContentCommit,
                   textCapitalization: TextCapitalization.sentences,
                   focusNode: focusNode,
                   autocorrect: true,
@@ -558,7 +595,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                 : Colors.white,
                         fontSizeDelta: -0.25,
                       ),
-                  onContentCommited: onContentCommit,
+                  onContentCommitted: onContentCommit,
                   decoration: InputDecoration(
                     isDense: true,
                     enabledBorder: OutlineInputBorder(
@@ -613,7 +650,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                 : Colors.white,
                         fontSizeDelta: -0.25,
                       ),
-                  onContentCommited: onContentCommit,
+                  onContentCommitted: onContentCommit,
                   decoration: InputDecoration(
                     isDense: true,
                     enabledBorder: OutlineInputBorder(
@@ -758,60 +795,59 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
           if (sendCountdown != null) Text(sendCountdown.toString()),
           (SettingsManager().settings.skin == Skins.iOS)
               ? Container(
-                  constraints: BoxConstraints(
-                    maxWidth: 40,
-                  ),
+                  constraints: BoxConstraints(maxWidth: 38, maxHeight: 37),
+                  padding: EdgeInsets.only(right: 4, top: 2, bottom: 2),
                   child: ButtonTheme(
-                      minWidth: 30,
-                      height: 30,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 0,
-                          ),
-                          primary: Theme.of(context).primaryColor,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(40),
-                          ),
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        padding: EdgeInsets.only(
+                          right: 0,
                         ),
-                        onPressed: sendAction,
-                        child: Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            AnimatedOpacity(
-                              opacity: sendCountdown == null && controller!.text.isEmpty && pickedImages.isEmpty ? 1.0 : 0.0,
-                              duration: Duration(milliseconds: 150),
-                              child: Icon(
-                                Icons.mic,
-                                color: (isRecording) ? Colors.red : Colors.white,
-                                size: 20,
-                              ),
-                            ),
-                            AnimatedOpacity(
-                              opacity: (sendCountdown == null && (controller!.text.isNotEmpty || pickedImages.length > 0)) &&
-                                      !isRecording
-                                  ? 1.0
-                                  : 0.0,
-                              duration: Duration(milliseconds: 150),
-                              child: Icon(
-                                Icons.arrow_upward,
-                                color: Colors.white,
-                                size: 20,
-                              ),
-                            ),
-                            AnimatedOpacity(
-                              opacity: sendCountdown != null ? 1.0 : 0.0,
-                              duration: Duration(milliseconds: 50),
-                              child: Icon(
-                                Icons.cancel_outlined,
-                                color: Colors.red,
-                                size: 20,
-                              ),
-                            ),
-                          ],
+                        primary: Theme.of(context).primaryColor,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(40),
                         ),
                       ),
+                      onPressed: sendAction,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          AnimatedOpacity(
+                            opacity:
+                                sendCountdown == null && controller!.text.isEmpty && pickedImages.isEmpty ? 1.0 : 0.0,
+                            duration: Duration(milliseconds: 150),
+                            child: Icon(
+                              Icons.mic,
+                              color: (isRecording) ? Colors.red : Colors.white,
+                              size: 20,
+                            ),
+                          ),
+                          AnimatedOpacity(
+                            opacity:
+                                (sendCountdown == null && (controller!.text.isNotEmpty || pickedImages.length > 0)) &&
+                                        !isRecording
+                                    ? 1.0
+                                    : 0.0,
+                            duration: Duration(milliseconds: 150),
+                            child: Icon(
+                              Icons.arrow_upward,
+                              color: Colors.white,
+                              size: 20,
+                            ),
+                          ),
+                          AnimatedOpacity(
+                            opacity: sendCountdown != null ? 1.0 : 0.0,
+                            duration: Duration(milliseconds: 50),
+                            child: Icon(
+                              Icons.cancel_outlined,
+                              color: Colors.red,
+                              size: 20,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
+                  ),
                 )
               : GestureDetector(
                   onTapDown: (_) async {
