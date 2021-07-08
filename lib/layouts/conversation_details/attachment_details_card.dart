@@ -127,8 +127,8 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
                         ],
                       ),
                     )
-                  : StreamBuilder<Object>(
-                      stream: SocketManager().attachmentDownloaders[attachment.guid]!.stream as Stream<Object>?,
+                  : StreamBuilder<dynamic>(
+                      stream: SocketManager().attachmentDownloaders[attachment.guid]!.stream,
                       builder: (context, snapshot) {
                         double value = 0;
                         if (snapshot.hasData) {
