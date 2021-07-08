@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:contacts_service/contacts_service.dart';
@@ -408,6 +409,89 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     double distance = avatars.length * -4.0;
     if (distance <= -30.0 && distance > -60) distance = -30.0;
     if (distance <= -60.0) distance = -35.0;
+
+    // NOTE: THIS IS ZACH TRYING TO FIX THE NAV BAR (REPLACE IT)
+    // IT KINDA WORKED BUT ULTIMATELY FAILED
+
+    // return PreferredSize(
+    //     preferredSize: Size(Get.width, 80),
+    //     child: ClipRect(
+    //         child: BackdropFilter(
+    //             filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+    //             child: Container(
+    //                 decoration: BoxDecoration(
+    //                   backgroundBlendMode: BlendMode.color,
+    //                   border: Border(
+    //                     bottom: BorderSide(color: Colors.white.withOpacity(0.2), width: 0.2),
+    //                   ),
+    //                   color: Theme.of(context).accentColor.withAlpha(125),
+    //                 ),
+    //                 child: Row(
+    //                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    //                     crossAxisAlignment: CrossAxisAlignment.center,
+    //                     children: [
+    //                       GestureDetector(
+    //                         onTap: () {
+    //                           Navigator.of(context).pop();
+    //                         },
+    //                         child: Row(
+    //                           mainAxisSize: MainAxisSize.min,
+    //                           mainAxisAlignment: MainAxisAlignment.start,
+    //                           crossAxisAlignment: Cupertino.CrossAxisAlignment.center,
+    //                           children: [
+    //                             buildBackButton(context),
+    //                             if (newMessages.length > 0)
+    //                               Container(
+    //                                 width: 25.0,
+    //                                 height: 20.0,
+    //                                 decoration: BoxDecoration(
+    //                                     color: Theme.of(context).primaryColor,
+    //                                     shape: BoxShape.rectangle,
+    //                                     borderRadius: BorderRadius.circular(10)),
+    //                                 child: Center(
+    //                                     child: Text(newMessages.length.toString(),
+    //                                         textAlign: TextAlign.center,
+    //                                         style: TextStyle(color: Colors.white, fontSize: 12.0))),
+    //                               ),
+    //                           ],
+    //                         ),
+    //                       ),
+    //                       GestureDetector(
+    //                         onTap: openDetails,
+    //                         child: Column(
+    //                           crossAxisAlignment: CrossAxisAlignment.center,
+    //                           mainAxisAlignment: Cupertino.MainAxisAlignment.center,
+    //                           children: [
+    //                             RowSuper(
+    //                               children: avatars,
+    //                               innerDistance: distance,
+    //                               alignment: Alignment.center,
+    //                             ),
+    //                             Container(height: 5.0),
+    //                             RichText(
+    //                               maxLines: 1,
+    //                               overflow: Cupertino.TextOverflow.ellipsis,
+    //                               textAlign: TextAlign.center,
+    //                               text: TextSpan(
+    //                                 style: Theme.of(context).textTheme.headline2,
+    //                                 children: [
+    //                                   TextSpan(
+    //                                     text: title,
+    //                                     style: titleStyle,
+    //                                   ),
+    //                                   TextSpan(
+    //                                     text: " >",
+    //                                     style: Theme.of(context).textTheme.subtitle1,
+    //                                   ),
+    //                                 ],
+    //                               ),
+    //                             ),
+    //                           ],
+    //                         ),
+    //                       ),
+    //                       this.buildCupertinoTrailing()
+    //                     ])))));
+
     return CupertinoNavigationBar(
         backgroundColor: Theme.of(context).accentColor.withAlpha(125),
         border: Border(
@@ -433,13 +517,13 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
                   child: Center(
                       child: Text(newMessages.length.toString(),
                           textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 12.0))),
-                )
+                ),
             ],
           ),
         ),
         middle: ListView(
           physics: Cupertino.NeverScrollableScrollPhysics(),
-          padding: EdgeInsets.only(right: newMessages.length > 0 ? 30 : 6),
+          padding: EdgeInsets.only(right: newMessages.length > 0 ? 10 : 0),
           children: <Widget>[
             Container(height: 10.0),
             GestureDetector(
