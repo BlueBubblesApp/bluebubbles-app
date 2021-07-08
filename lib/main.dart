@@ -134,10 +134,10 @@ class Main extends StatelessWidget with WidgetsBindingObserver {
         title: 'BlueBubbles',
 
         /// Set the light theme from the [AdaptiveTheme]
-        theme: theme,
+        theme: theme.copyWith(appBarTheme: theme.appBarTheme.copyWith(elevation: 0.0)),
 
         /// Set the dark theme from the [AdaptiveTheme]
-        darkTheme: darkTheme,
+        darkTheme: darkTheme.copyWith(appBarTheme: darkTheme.appBarTheme.copyWith(elevation: 0.0)),
 
         /// [NavigatorManager] is set as the navigator key so that we can control navigation from anywhere
         navigatorKey: NavigatorManager().navigatorKey,
