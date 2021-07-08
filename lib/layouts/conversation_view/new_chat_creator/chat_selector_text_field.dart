@@ -1,3 +1,4 @@
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -46,6 +47,9 @@ class _ChatSelectorTextFieldState extends State<ChatSelectorTextField> {
   @override
   Widget build(BuildContext context) {
     List<Widget> items = [];
+    final bool redactedMode = SettingsManager().settings.redactedMode;
+    final bool hideInfo = redactedMode && SettingsManager().settings.hideContactInfo;
+    final bool generateName = redactedMode && SettingsManager().settings.generateFakeContactNames;
     for (UniqueContact contact in widget.selectedContacts) {
       items.add(
         GestureDetector(
@@ -63,7 +67,8 @@ class _ChatSelectorTextFieldState extends State<ChatSelectorTextField> {
                   mainAxisAlignment: MainAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
-                    Text(contact.displayName!.trim(), style: Theme.of(context).textTheme.bodyText1),
+                    Text(generateName ? ContactManager().handleToFakeName[contact.address] ?? "" :
+                      hideInfo ? "          " : contact.displayName!.trim(), style: Theme.of(context).textTheme.bodyText1),
                     SizedBox(
                       width: 5.0,
                     ),
