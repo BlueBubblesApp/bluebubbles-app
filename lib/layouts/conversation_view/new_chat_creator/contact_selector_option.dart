@@ -1,3 +1,4 @@
+import 'package:assorted_layout_widgets/assorted_layout_widgets.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view_mixin.dart';
@@ -7,9 +8,11 @@ import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class ContactSelectorOption extends StatelessWidget {
-  const ContactSelectorOption({Key? key, required this.item, required this.onSelected, required this.index}) : super(key: key);
+  const ContactSelectorOption({Key? key, required this.item, required this.onSelected, required this.index})
+      : super(key: key);
   final UniqueContact item;
   final Function(UniqueContact item) onSelected;
   final int index;
@@ -35,15 +38,28 @@ class ContactSelectorOption extends StatelessWidget {
     return formatted.join(", ");
   }
 
+  FutureBuilder<String> formattedNumberFuture(String address) {
+    return FutureBuilder<String>(
+        future: formatPhoneNumber(address),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) {
+            return this.getTextWidget(context, address);
+          }
+
+          return this.getTextWidget(context, snapshot.data);
+        });
+  }
+
+  Widget getTextWidget(BuildContext context, String? text) {
+    return TextOneLine(
+      text!,
+      style: Theme.of(context).textTheme.subtitle1,
+      overflow: TextOverflow.ellipsis,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    var getTextWidget = (String? text) {
-      return Text(
-        text!,
-        style: Theme.of(context).textTheme.subtitle1,
-        overflow: TextOverflow.ellipsis,
-      );
-    };
     final bool redactedMode = SettingsManager().settings.redactedMode;
     final bool hideInfo = redactedMode && SettingsManager().settings.hideContactInfo;
     final bool generateName = redactedMode && SettingsManager().settings.generateFakeContactNames;
@@ -61,25 +77,46 @@ class ContactSelectorOption extends StatelessWidget {
         title = "${item.displayName}${getTypeStr(item.label)}";
       }
     }
+
+    Widget subtitle;
+    if (redactedMode) {
+      subtitle = getTextWidget(context, "");
+    } else if (!item.isChat || item.chat!.participants.length == 1) {
+      if (item.address != null) {
+        if (!GetUtils.isEmail(item.address!)) {
+          subtitle = formattedNumberFuture(item.address!);
+        } else {
+          subtitle = getTextWidget(context, item.address);
+        }
+      } else if (item.chat != null &&
+          item.chat!.participants[0].address != null &&
+          !GetUtils.isEmail(item.chat!.participants[0].address!)) {
+        subtitle = formattedNumberFuture(item.chat!.participants[0].address!);
+      } else {
+        subtitle = getTextWidget(context, "Person ${index + 1}");
+      }
+    } else {
+      subtitle = FutureBuilder<String>(
+        future: chatParticipants,
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) {
+            return getTextWidget(context, item.displayName ?? item.address ?? "Person ${index + 1}");
+          }
+
+          return getTextWidget(context, snapshot.data);
+        },
+      );
+    }
+
     return ListTile(
       key: new Key("chat-${item.displayName}"),
       onTap: () => onSelected(item),
-      title: Text(title,
+      title: Text(
+        title,
         style: Theme.of(context).textTheme.bodyText1,
         overflow: TextOverflow.ellipsis,
       ),
-      subtitle: redactedMode ? getTextWidget("") : (!item.isChat || item.chat!.participants.length == 1)
-          ? getTextWidget(item.address ?? item.chat!.participants[0].address ?? "Person ${index + 1}")
-          : FutureBuilder<String>(
-              future: chatParticipants,
-              builder: (context, snapshot) {
-                if (!snapshot.hasData) {
-                  return getTextWidget(item.displayName ?? item.address ?? "Person ${index + 1}");
-                }
-
-                return getTextWidget(snapshot.data);
-              },
-            ),
+      subtitle: subtitle,
       leading: !item.isChat
           ? ContactAvatarWidget(
               handle: Handle(address: item.address),
