@@ -9,9 +9,10 @@ import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:flutter/material.dart';
 
 class ContactSelectorOption extends StatelessWidget {
-  const ContactSelectorOption({Key? key, required this.item, required this.onSelected}) : super(key: key);
+  const ContactSelectorOption({Key? key, required this.item, required this.onSelected, required this.index}) : super(key: key);
   final UniqueContact item;
   final Function(UniqueContact item) onSelected;
+  final int index;
 
   String getTypeStr(String? type) {
     if (isNullOrEmpty(type)!) return "";
@@ -43,22 +44,37 @@ class ContactSelectorOption extends StatelessWidget {
         overflow: TextOverflow.ellipsis,
       );
     };
-
+    final bool redactedMode = SettingsManager().settings.redactedMode;
+    final bool hideInfo = redactedMode && SettingsManager().settings.hideContactInfo;
+    final bool generateName = redactedMode && SettingsManager().settings.generateFakeContactNames;
+    String title = "";
+    if (generateName) {
+      if (item.isChat) {
+        title = item.chat!.fakeParticipants.length == 1 ? item.chat!.fakeParticipants[0] ?? "Unknown" : "Group Chat";
+      } else {
+        title = "Person ${index + 1}";
+      }
+    } else if (!hideInfo) {
+      if (item.isChat) {
+        title = item.chat!.title ?? "Group Chat";
+      } else {
+        title = "${item.displayName}${getTypeStr(item.label)}";
+      }
+    }
     return ListTile(
       key: new Key("chat-${item.displayName}"),
       onTap: () => onSelected(item),
-      title: Text(
-        !item.isChat ? "${item.displayName}${getTypeStr(item.label)}" : item.chat!.title ?? "Group Chat",
+      title: Text(title,
         style: Theme.of(context).textTheme.bodyText1,
         overflow: TextOverflow.ellipsis,
       ),
-      subtitle: (!item.isChat || item.chat!.participants.length == 1)
-          ? getTextWidget(item.address ?? item.chat!.participants[0].address ?? "Person")
+      subtitle: redactedMode ? getTextWidget("") : (!item.isChat || item.chat!.participants.length == 1)
+          ? getTextWidget(item.address ?? item.chat!.participants[0].address ?? "Person ${index + 1}")
           : FutureBuilder<String>(
               future: chatParticipants,
               builder: (context, snapshot) {
                 if (!snapshot.hasData) {
-                  return getTextWidget(item.displayName ?? item.address ?? "Person");
+                  return getTextWidget(item.displayName ?? item.address ?? "Person ${index + 1}");
                 }
 
                 return getTextWidget(snapshot.data);

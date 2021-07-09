@@ -869,7 +869,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
 
   Future<Chat?> createChat() async {
     if (chat != null) return chat;
-    Completer<Chat> completer = Completer();
+    Completer<Chat?> completer = Completer();
     if (searchQuery!.length > 0) {
       selected.add(new UniqueContact(address: searchQuery, displayName: searchQuery));
     }
@@ -1004,6 +1004,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
             key: new Key("selector-${data![index].displayName}"),
             item: data[index],
             onSelected: onSelected,
+            index: index,
           ),
           itemCount: data?.length ?? 0,
         );
